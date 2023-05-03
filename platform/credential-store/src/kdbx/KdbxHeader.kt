@@ -60,7 +60,7 @@ private object HeaderType {
   const val COMMENT: Byte = 1
   const val CIPHER_ID: Byte = 2
   const val COMPRESSION_FLAGS: Byte = 3
-  const val MASTER_SEED: Byte = 4
+  const val MAIN_SEED: Byte = 4
   const val TRANSFORM_SEED: Byte = 5
   const val TRANSFORM_ROUNDS: Byte = 6
   const val ENCRYPTION_IV: Byte = 7
@@ -84,7 +84,7 @@ internal class KdbxHeader() {
   }
 
   constructor(random: SecureRandom) : this() {
-    masterSeed = random.generateBytes(32)
+    mainSeed = random.generateBytes(32)
     transformSeed = random.generateBytes(32)
     encryptionIv = random.generateBytes(16)
     // 64 bytes for ChaCha20
@@ -111,7 +111,7 @@ internal class KdbxHeader() {
   var compressionFlags = CompressionFlags.GZIP
     private set
 
-  private var masterSeed: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
+  private var mainSeed: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
   private var transformSeed: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
   private var transformRounds: Long = 6000
   private var encryptionIv: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
@@ -133,7 +133,7 @@ internal class KdbxHeader() {
    * Apply decryption to the passed encrypted input stream
    */
   fun createDecryptedStream(digest: ByteArray, inputStream: InputStream): InputStream {
-    val finalKeyDigest = getFinalKeyDigest(digest, masterSeed, transformSeed, transformRounds)
+    val finalKeyDigest = getFinalKeyDigest(digest, mainSeed, transformSeed, transformRounds)
     val cipher = createChipper(forEncryption = false, keyData = finalKeyDigest, ivData = encryptionIv)
     return CipherInputStream(inputStream, cipher)
   }
@@ -144,7 +144,7 @@ internal class KdbxHeader() {
    */
   fun createEncryptedStream(digest: ByteArray, outputStream: OutputStream): OutputStream {
     val finalKeyDigest = getFinalKeyDigest(key = digest,
-                                           masterSeed = masterSeed,
+                                           mainSeed = mainSeed,
                                            transformSeed = transformSeed,
                                            transformRounds = transformRounds)
     val cipher = createChipper(forEncryption = true, keyData = finalKeyDigest, ivData = encryptionIv)
@@ -196,7 +196,7 @@ internal class KdbxHeader() {
         HeaderType.COMPRESSION_FLAGS -> {
           compressionFlags = CompressionFlags.values()[readIntHeaderData(input)]
         }
-        HeaderType.MASTER_SEED -> masterSeed = readHeaderData(input)
+        HeaderType.MAIN_SEED -> mainSeed = readHeaderData(input)
         HeaderType.TRANSFORM_SEED -> transformSeed = readHeaderData(input)
         HeaderType.TRANSFORM_ROUNDS -> transformRounds = readLongHeaderData(input)
         HeaderType.ENCRYPTION_IV -> encryptionIv = readHeaderData(input)
@@ -243,9 +243,9 @@ internal class KdbxHeader() {
     output.writeShort(4)
     output.writeInt(compressionFlags.ordinal)
 
-    output.writeByte(HeaderType.MASTER_SEED.toInt())
-    output.writeShort(masterSeed.size)
-    output.write(masterSeed)
+    output.writeByte(HeaderType.MAIN_SEED.toInt())
+    output.writeShort(mainSeed.size)
+    output.write(mainSeed)
 
     output.writeByte(HeaderType.TRANSFORM_SEED.toInt())
     output.writeShort(transformSeed.size)
@@ -278,7 +278,7 @@ internal class KdbxHeader() {
   }
 }
 
-private fun getFinalKeyDigest(key: ByteArray, masterSeed: ByteArray, transformSeed: ByteArray, transformRounds: Long): ByteArray {
+private fun getFinalKeyDigest(key: ByteArray, mainSeed: ByteArray, transformSeed: ByteArray, transformRounds: Long): ByteArray {
   val engine = AESEngine()
   engine.init(true, KeyParameter(transformSeed))
 
@@ -294,7 +294,7 @@ private fun getFinalKeyDigest(key: ByteArray, masterSeed: ByteArray, transformSe
 
   val md = DigestUtil.sha256()
   val transformedKeyDigest = md.digest(transformedKey)
-  md.update(masterSeed)
+  md.update(mainSeed)
   return md.digest(transformedKeyDigest)
 }
 

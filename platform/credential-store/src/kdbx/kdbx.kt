@@ -17,7 +17,7 @@ import java.util.zip.GZIPInputStream
 
 // https://gist.github.com/lgg/e6ccc6e212d18dd2ecd8a8c116fb1e45
 
-@Throws(IncorrectMasterPasswordException::class)
+@Throws(IncorrectMainPasswordException::class)
 internal fun loadKdbx(file: Path, credentials: KeePassCredentials): KeePassDatabase {
   return file.inputStream().buffered().use { readKeePassDatabase(credentials, it) }
 }
@@ -28,7 +28,7 @@ private fun readKeePassDatabase(credentials: KeePassCredentials, inputStream: In
 
   val startBytes = decryptedInputStream.readNBytes(32)
   if (!startBytes.contentEquals(kdbxHeader.streamStartBytes)) {
-    throw IncorrectMasterPasswordException()
+    throw IncorrectMainPasswordException()
   }
 
   var resultInputStream: InputStream = HashedBlockInputStream(decryptedInputStream)
@@ -50,7 +50,7 @@ private fun readKeePassDatabase(credentials: KeePassCredentials, inputStream: In
 
 internal class KdbxPassword(password: ByteArray) : KeePassCredentials {
   companion object {
-    // KdbxPassword hashes value, so, it can be cleared before file write (to reduce time when master password exposed in memory)
+    // KdbxPassword hashes value, so, it can be cleared before file write (to reduce time when main password exposed in memory)
     fun createAndClear(value: ByteArray): KeePassCredentials {
       val result = KdbxPassword(value)
       value.fill(0)

@@ -4,7 +4,7 @@ package com.intellij.ide.passwordSafe.impl
 
 import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.credentialStore.*
-import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
+import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
 import com.intellij.credentialStore.keePass.*
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.notification.NotificationAction
@@ -61,7 +61,7 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
     _currentProvider.drop()
     if (isSave && store is KeePassCredentialStore) {
       try {
-        store.save(createMasterKeyEncryptionSpec())
+        store.save(createMainKeyEncryptionSpec())
       }
       catch (e: ProcessCanceledException) {
         throw e
@@ -75,7 +75,7 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
     }
   }
 
-  private fun createMasterKeyEncryptionSpec(): EncryptionSpec {
+  private fun createMainKeyEncryptionSpec(): EncryptionSpec {
     return when (val pgpKey = settings.state.pgpKeyId) {
       null -> EncryptionSpec(type = getDefaultEncryptionType(), pgpKeyId = null)
       else -> EncryptionSpec(type = EncryptionType.PGP_KEY, pgpKeyId = pgpKey)
@@ -131,7 +131,7 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
   suspend fun save() {
     val keePassCredentialStore = currentProviderIfComputed as? KeePassCredentialStore ?: return
     withContext(Dispatchers.IO) {
-      keePassCredentialStore.save(createMasterKeyEncryptionSpec())
+      keePassCredentialStore.save(createMainKeyEncryptionSpec())
     }
   }
 
@@ -196,9 +196,9 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
     if (settings.providerType == ProviderType.KEEPASS) {
       try {
         val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultKeePassDbFile()
-        return KeePassCredentialStore(dbFile, getDefaultMasterPasswordFile())
+        return KeePassCredentialStore(dbFile, getDefaultMainPasswordFile())
       }
-      catch (e: IncorrectMasterPasswordException) {
+      catch (e: IncorrectMainPasswordException) {
         LOG.warn(e)
         showError(if (e.isFileMissed) CredentialStoreBundle.message("notification.title.password.missing")
                   else CredentialStoreBundle.message("notification.title.password.incorrect"))
@@ -247,8 +247,8 @@ fun createPersistentCredentialStore(): CredentialStore? {
 }
 
 @TestOnly
-fun createKeePassStore(dbFile: Path, masterPasswordFile: Path): PasswordSafe {
-  val store = KeePassCredentialStore(dbFile, masterPasswordFile)
+fun createKeePassStore(dbFile: Path, mainPasswordFile: Path): PasswordSafe {
+  val store = KeePassCredentialStore(dbFile, mainPasswordFile)
   val settings = PasswordSafeSettings()
   settings.loadState(PasswordSafeOptions().apply {
     provider = ProviderType.KEEPASS
