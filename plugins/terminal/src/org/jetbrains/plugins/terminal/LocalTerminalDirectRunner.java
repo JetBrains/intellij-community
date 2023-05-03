@@ -2,9 +2,8 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.CommandLineUtil;
-import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.Disposable;
@@ -42,7 +41,6 @@ import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -50,7 +48,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -341,11 +338,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  protected ProcessHandler createProcessHandler(final PtyProcess process) {
-    return new PtyProcessHandler(process, getShellPath());
-  }
-
-  @Override
   public @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
     return new PtyProcessTtyConnector(process, myDefaultCharset) {
 
@@ -513,65 +505,5 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   private static boolean isLogin(@NotNull List<String> command) {
     return ContainerUtil.exists(command, LOGIN_CLI_OPTIONS::contains);
-  }
-
-  private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {
-
-    private final PtyProcess myProcess;
-    private final ProcessWaitFor myWaitFor;
-
-    PtyProcessHandler(PtyProcess process, @NotNull String presentableName) {
-      myProcess = process;
-      myWaitFor = new ProcessWaitFor(process, this, presentableName);
-    }
-
-    @Override
-    public void startNotify() {
-      addProcessListener(new ProcessAdapter() {
-        @Override
-        public void startNotified(@NotNull ProcessEvent event) {
-          try {
-            myWaitFor.setTerminationCallback(integer -> notifyProcessTerminated(integer));
-          }
-          finally {
-            removeProcessListener(this);
-          }
-        }
-      });
-
-      super.startNotify();
-    }
-
-    @Override
-    protected void destroyProcessImpl() {
-      myProcess.destroy();
-    }
-
-    @Override
-    protected void detachProcessImpl() {
-      destroyProcessImpl();
-    }
-
-    @Override
-    public boolean detachIsDefault() {
-      return false;
-    }
-
-    @Override
-    public boolean isSilentlyDestroyOnClose() {
-      return true;
-    }
-
-    @Nullable
-    @Override
-    public OutputStream getProcessInput() {
-      return myProcess.getOutputStream();
-    }
-
-    @NotNull
-    @Override
-    public Future<?> executeTask(@NotNull Runnable task) {
-      return AppExecutorUtil.getAppExecutorService().submit(task);
-    }
   }
 }

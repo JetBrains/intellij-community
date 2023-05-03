@@ -2,41 +2,27 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.NopProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
-import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.Alarm;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
-import com.jediterm.terminal.ui.TerminalSession;
 import com.pty4j.windows.WinPtyException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -69,40 +55,6 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   /**
-   * @deprecated {@link TerminalToolWindowManager} instead
-   */
-  @Deprecated
-  public void run() {
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, TerminalBundle.message("progress.title.running.terminal"), false) {
-      @SuppressWarnings("DialogTitleCapitalization")
-      @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
-        indicator.setText(TerminalBundle.message("progress.text.running.terminal"));
-        try {
-          doRun();
-        }
-        catch (final Exception e) {
-          LOG.warn("Error running terminal", e);
-
-          UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(AbstractTerminalRunner.this.getProject(), e.getMessage(), getTitle()));
-        }
-      }
-    });
-  }
-
-  private void doRun() {
-    // Create Server process
-    try {
-      final T process = createProcess(new ShellStartupOptions.Builder().build());
-
-      UIUtil.invokeLaterIfNeeded(() -> initConsoleUI(process));
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e.getMessage(), e);
-    }
-  }
-
-  /**
    * Used to calculate or adjust the options (like startup command, env variables and so on)
    * that will be used to configure the process and display the terminal.
    *
@@ -116,8 +68,6 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     //noinspection removal
     return createProcess(new TerminalProcessOptions(startupOptions.getWorkingDirectory(), startupOptions.getInitialTermSize()), null);
   }
-
-  protected abstract ProcessHandler createProcessHandler(T process);
 
   /**
    * @deprecated use {@link #createTerminalWidget(Disposable, VirtualFile, boolean)} instead
@@ -234,46 +184,8 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     });
   }
 
-  private void initConsoleUI(final T process) {
-    final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
-    final DefaultActionGroup toolbarActions = new DefaultActionGroup();
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("TerminalRunner", toolbarActions, false);
-
-
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
-
-
-    actionToolbar.setTargetComponent(panel);
-
-    ProcessHandler processHandler = createProcessHandler(process);
-
-    final RunContentDescriptor contentDescriptor =
-      new RunContentDescriptor(null, processHandler, panel, getDefaultTabTitle());
-
-    contentDescriptor.setAutoFocusContent(true);
-
-    toolbarActions.add(createCloseAction(defaultExecutor, contentDescriptor));
-
-    final JBTerminalSystemSettingsProvider provider = new JBTerminalSystemSettingsProvider();
-    JBTerminalWidget widget = new JBTerminalWidget(myProject, provider, contentDescriptor);
-
-    createAndStartSession(widget, createTtyConnector(process));
-
-    panel.add(widget.getComponent(), BorderLayout.CENTER);
-
-    showConsole(defaultExecutor, contentDescriptor, widget.getComponent());
-
-    processHandler.startNotify();
-  }
-
   public @Nullable String getCurrentWorkingDir(@Nullable TerminalTabState state) {
     return state != null ? state.myWorkingDirectory : null;
-  }
-
-  private static void createAndStartSession(@NotNull JBTerminalWidget terminal, @NotNull TtyConnector ttyConnector) {
-    TerminalSession session = terminal.createTerminalSession(ttyConnector);
-    session.start();
   }
 
   public @Nullable @NlsContexts.TabTitle String getDefaultTabTitle() {
@@ -284,27 +196,12 @@ public abstract class AbstractTerminalRunner<T extends Process> {
    * @deprecated use {@link #getDefaultTabTitle()} instead
    */
   @SuppressWarnings("unused")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected String getTerminalConnectionName(T process) {
     return getDefaultTabTitle();
   }
 
   public abstract @NotNull TtyConnector createTtyConnector(@NotNull T process);
-
-  protected AnAction createCloseAction(final Executor defaultExecutor, final RunContentDescriptor myDescriptor) {
-    return new CloseAction(defaultExecutor, myDescriptor, myProject);
-  }
-
-  protected void showConsole(Executor defaultExecutor, @NotNull RunContentDescriptor myDescriptor, final Component toFocus) {
-    // Show in run toolwindow
-    RunContentManager.getInstance(myProject).showRunContent(defaultExecutor, myDescriptor);
-
-    // Request focus
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(defaultExecutor.getId());
-    if (toolWindow != null) {
-      toolWindow.activate(() -> IdeFocusManager.getInstance(myProject).requestFocus(toFocus, true));
-    }
-  }
 
   @NotNull
   protected Project getProject() {
@@ -314,7 +211,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   /**
    * @deprecated use {@link #getDefaultTabTitle()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String runningTargetName() {
     return getDefaultTabTitle();
   }
@@ -415,6 +312,30 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   @Deprecated(forRemoval = true)
   protected T createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
     return createProcess(directory);
+  }
+
+  /**
+   * @deprecated {@link TerminalToolWindowManager} instead
+   */
+  @Deprecated(forRemoval = true)
+  public void run() {
+    TerminalToolWindowManager.getInstance(myProject).createNewSession(this);
+  }
+
+  /**
+   * @deprecated use {@link RunContentManager#showRunContent(Executor, RunContentDescriptor)} instead
+   */
+  @Deprecated(forRemoval = true)
+  protected void showConsole(@NotNull Executor defaultExecutor, @NotNull RunContentDescriptor myDescriptor, Component ignoredToFocus) {
+    RunContentManager.getInstance(myProject).showRunContent(defaultExecutor, myDescriptor);
+  }
+
+  /**
+   * @deprecated unused API, just remove overridden method
+   */
+  @Deprecated(forRemoval = true)
+  protected @NotNull ProcessHandler createProcessHandler(T ignoredProcess) {
+    return new NopProcessHandler();
   }
 
   private static class IncompatibleWidgetException extends RuntimeException {
