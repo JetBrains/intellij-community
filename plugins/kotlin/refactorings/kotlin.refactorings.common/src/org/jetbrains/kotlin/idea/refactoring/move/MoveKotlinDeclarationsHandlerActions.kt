@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
+package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
-internal interface MoveKotlinDeclarationsHandlerActions {
+interface MoveKotlinDeclarationsHandlerActions {
     fun invokeMoveKotlinNestedClassesRefactoring(
         project: Project,
         elementsToMove: List<KtClassOrObject>,
@@ -35,7 +35,10 @@ internal interface MoveKotlinDeclarationsHandlerActions {
     fun invokeKotlinSelectNestedClassChooser(nestedClass: KtClassOrObject, targetContainer: PsiElement?)
 
     fun invokeKotlinAwareMoveFilesOrDirectoriesRefactoring(
-        project: Project, initialDirectory: PsiDirectory?, elements: List<PsiFileSystemItem>, moveCallback: MoveCallback?
+        project: Project,
+        initialDirectory: PsiDirectory?,
+        elements: List<PsiFileSystemItem>,
+        moveCallback: MoveCallback?
     )
 
     fun showErrorHint(project: Project, editor: Editor?, message: String, title: String, helpId: String?)
