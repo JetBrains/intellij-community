@@ -29,6 +29,7 @@ import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -118,6 +119,8 @@ import javax.swing.JComponent
 import javax.swing.JTabbedPane
 import javax.swing.KeyStroke
 import kotlin.time.Duration.Companion.milliseconds
+
+private val LOG = logger<FileEditorManagerImpl>()
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @State(name = "FileEditorManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], getStateRequiresEdt = true)
@@ -311,8 +314,6 @@ open class FileEditorManagerImpl(
   }
 
   companion object {
-    private val LOG = logger<FileEditorManagerImpl>()
-
     @JvmField
     protected val DUMB_AWARE = Key.create<Boolean>("DUMB_AWARE")
 
@@ -339,8 +340,10 @@ open class FileEditorManagerImpl(
     /**
      * Works on [FileEditor] objects, allows forcing opening other editor tabs in the main window.
      * When determining a proper place to open a new editor tab, the currently selected file editor is checked
-     * whether is has this key set to TRUE. If that's the case, and the selected editor is a singleton in a split view,
-     * the new editor tab is opened in the sibling of that split window. If the singleton editor is not in a split view,
+     * whether it has this key set to TRUE.
+     * If that's the case, and the selected editor is a singleton in a split view,
+     * the new editor tab is opened in the sibling of that split window.
+     * If the singleton editor is not in a split view,
      * but in a separate detached window, then the new editors will be opened in the main window splitters.
      */
     @JvmField
@@ -1865,12 +1868,10 @@ open class FileEditorManagerImpl(
     override fun fileStatusesChanged() {
       LOG.debug("FileEditorManagerImpl.MyFileStatusListener.fileStatusesChanged()")
       for (file in openedFiles.asReversed()) {
-        ApplicationManager.getApplication().invokeLater({
-                                                          if (LOG.isDebugEnabled) {
-                                                            LOG.debug("updating file status in tab for " + file.path)
-                                                          }
-                                                          updateFileStatus(file)
-                                                        }, ModalityState.NON_MODAL, project.disposed)
+        coroutineScope.launch(Dispatchers.EDT) {
+          LOG.debug { "updating file status in tab for ${file.path}" }
+          updateFileStatus(file)
+        }
       }
     }
 
