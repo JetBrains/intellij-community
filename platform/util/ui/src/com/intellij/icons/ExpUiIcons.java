@@ -23,12 +23,15 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon GroupByMethod = load("expui/actions/groupByMethod.svg", 788449648, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByModule = load("expui/actions/groupByModule.svg", -245074045, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByTestProduction = load("expui/actions/groupByTestProduction.svg", 174137220, 2);
+    /** 16x16 */ public static final @NotNull Icon InSelection = load("expui/actions/inSelection.svg", -1349439138, 2);
     /** 16x16 */ public static final @NotNull Icon Install = load("expui/actions/install.svg", 1958136834, 2);
+    /** 16x16 */ public static final @NotNull Icon MoveToButton = load("expui/actions/moveToButton.svg", 2042731822, 2);
     /** 16x16 */ public static final @NotNull Icon NewFolder = load("expui/actions/newFolder.svg", 842314391, 2);
     /** 16x16 */ public static final @NotNull Icon PlayBack = load("expui/actions/playBack.svg", -1376414727, 2);
     /** 16x16 */ public static final @NotNull Icon PlayFirst = load("expui/actions/playFirst.svg", 1193006199, 2);
     /** 16x16 */ public static final @NotNull Icon PlayForward = load("expui/actions/playForward.svg", -93616033, 2);
     /** 16x16 */ public static final @NotNull Icon PlayLast = load("expui/actions/playLast.svg", 1499643216, 2);
+    /** 16x16 */ public static final @NotNull Icon ProfileCPU = load("expui/actions/profileCPU.svg", -773405423, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectDirectory = load("expui/actions/projectDirectory.svg", -1261963959, 2);
     /** 16x16 */ public static final @NotNull Icon ShowImportStatements = load("expui/actions/showImportStatements.svg", -570183774, 2);
     /** 16x16 */ public static final @NotNull Icon ShowReadAccess = load("expui/actions/showReadAccess.svg", 1924555825, 2);
@@ -107,6 +110,9 @@ public final class ExpUiIcons {
   }
 
   public static final class Debugger {
+    /** 16x16 */ public static final @NotNull Icon DbPrimitive = load("expui/debugger/dbPrimitive.svg", -205753943, 2);
+    /** 16x16 */ public static final @NotNull Icon Frame = load("expui/debugger/frame.svg", -425499240, 2);
+    /** 16x16 */ public static final @NotNull Icon Value = load("expui/debugger/value.svg", 1020592915, 2);
     /** 16x16 */ public static final @NotNull Icon Watch = load("expui/debugger/watch.svg", -1528144025, 2);
   }
 
@@ -431,6 +437,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon GeneratedTestRoot = load("expui/nodes/generatedTestRoot.svg", -1455438262, 2);
     /** 16x16 */ public static final @NotNull Icon Gvariable = load("expui/nodes/gvariable.svg", -678442424, 2);
     /** 16x16 */ public static final @NotNull Icon HomeFolder = load("expui/nodes/homeFolder.svg", -48822685, 2);
+    /** 16x16 */ public static final @NotNull Icon IdeaProject = load("expui/nodes/ideaProject.svg", 1122453174, 2);
     /** 16x16 */ public static final @NotNull Icon Interface = load("expui/nodes/interface.svg", 1965288180, 2);
     /** 16x16 */ public static final @NotNull Icon Jdk = load("expui/nodes/jdk.svg", -1900957683, 2);
     /** 16x16 */ public static final @NotNull Icon Lambda = load("expui/nodes/lambda.svg", -1876586099, 2);

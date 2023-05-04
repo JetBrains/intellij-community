@@ -8,12 +8,15 @@
       "groupByMethod.svg": "actions/groupByMethod.svg",
       "groupByModule.svg": "actions/GroupByModule.svg",
       "groupByTestProduction.svg": "actions/groupByTestProduction.svg",
+      "inSelection.svg": "actions/inSelection.svg",
       "install.svg": "actions/install.svg",
+      "moveToButton": "actions/move-to-button.svg",
       "newFolder.svg": "actions/newFolder.svg",
       "playFirst.svg": "actions/play_first.svg",
       "playBack.svg": "actions/play_back.svg",
       "playForward.svg": "actions/play_forward.svg",
       "playLast.svg": "actions/play_last.svg",
+      "profileCPU.svg": "actions/profileCPU.svg",
       "projectDirectory.svg": "actions/projectDirectory.svg",
       "showWriteAccess.svg": "actions/showWriteAccess.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
@@ -79,7 +82,10 @@
       "cwmUsers.svg": "users.svg"
     },
     "debugger": {
-      "watch.svg": "debugger/watch.svg"
+      "watch.svg": "debugger/watch.svg",
+      "dbPrimitive.svg": "debugger/db_primitive.svg",
+      "frame.svg": "debugger/frame.svg",
+      "value.svg": "debugger/value.svg"
     },
     "diff": {
       "applyNotConflicts.svg": "diff/applyNotConflicts.svg",
@@ -286,7 +292,10 @@
       "pluginUpdate.svg": "ide/notification/pluginUpdate.svg",
       "import.svg": "toolbarDecorator/import.svg",
       "informationDialog.svg": "general/informationDialog.svg",
-      "layout.svg": "debugger/restoreLayout.svg",
+      "layout.svg": [
+        "debugger/restoreLayout.svg",
+        "graph/layout.svg"
+      ],
       "left.svg": "actions/back.svg",
       "listFiles.svg": "actions/listFiles.svg",
       "locate.svg": "general/locate.svg",
@@ -486,6 +495,7 @@
       "generatedTestRoot.svg": "modules/generatedTestRoot.svg",
       "gvariable.svg": "nodes/gvariable.svg",
       "homeFolder.svg": "nodes/homeFolder.svg",
+      "ideaProject.svg": "nodes/ideaProject.svg",
       "interface.svg": "nodes/interface.svg",
       "jdk.svg": "nodes/ppJdk.svg",
       "lambda.svg": "nodes/lambda.svg",
