@@ -11,8 +11,8 @@
     <orderEntry type="module" module-name="intellij.idea.community.build" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.tools.jps.build.standalone" />
-    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
-    <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
+    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
   </component>
 </module>

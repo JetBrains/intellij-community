@@ -1,19 +1,24 @@
 package org.jetbrains.intellij.build.mps
 
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.impl.BaseLayout
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.PlatformLayout
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
-private val JAVA_IDE_IMPLEMENTATION_MODULES = listOf(
-    "intellij.xml.dom.impl",
-    "intellij.tools.testsBootstrap"
-)
+private val javaCompiler: (PlatformLayout, BuildContext) -> Unit = { layout, _ ->
+    for (name in listOf(
+        "intellij.java.compiler.antTasks",
+        "intellij.java.guiForms.compiler",
+        "intellij.java.compiler.instrumentationUtil.java8"
+    )) {
+        layout.withModule(name, "javac2.jar")
+    }
+}
 
 class MPSProperties : JetBrainsProductProperties() {
 
@@ -23,25 +28,20 @@ class MPSProperties : JetBrainsProductProperties() {
         toolsJarRequired = true
         scrambleMainJar = false
 
-        productLayout.mainJarName = "platform.jar"
         productLayout.mainModules = listOf("intellij.idea.community.main")
 
         productLayout.productApiModules = listOf("intellij.java.execution")
         productLayout.productImplementationModules = listOf(
             "intellij.platform.main",
             "intellij.java.execution.impl",
-            "intellij.java.compiler.instrumentationUtil"
+            "intellij.java.compiler.instrumentationUtil",
+            "intellij.idea.community.resources",
+            "intellij.java.ide.resources",
+            "intellij.xml.dom",
+            "intellij.platform.coverage"        // layout.withModule("intellij.platform.coverage", productLayout.mainJarName)
         )
 
-        productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources", "intellij.java.ide.resources", "intellij.xml.dom")
-
-        productLayout.withAdditionalPlatformJar("javac2.jar",
-            "intellij.java.compiler.antTasks",
-            "intellij.java.guiForms.compiler",
-            "intellij.java.compiler.instrumentationUtil",
-            "intellij.java.compiler.instrumentationUtil.java8")
-        productLayout.withAdditionalPlatformJar("util.jar",
-            "intellij.platform.util")
+        productLayout.addPlatformSpec(javaCompiler)
 
         productLayout.bundledPluginModules.add("intellij.java.plugin")
         productLayout.bundledPluginModules.add("intellij.java.ide.customization")
@@ -70,7 +70,7 @@ class MPSProperties : JetBrainsProductProperties() {
         val pluginLayouts = productLayout.pluginLayouts + JavaPluginLayout.javaPlugin()
         productLayout.pluginLayouts = pluginLayouts.toPersistentList()
 
-        productLayout.addPlatformCustomizer { layout, _ ->
+        productLayout.addPlatformSpec { layout, _ ->
 
             for (moduleName in listOf("intellij.platform.testFramework", "intellij.platform.testFramework.common", "intellij.java.testFramework", "intellij.platform.testFramework.core")) {
                 if (!productLayout.productApiModules.contains(moduleName)) {
@@ -78,16 +78,9 @@ class MPSProperties : JetBrainsProductProperties() {
                 }
             }
 
-            for (name in JAVA_IDE_IMPLEMENTATION_MODULES) {
-                layout.withModule(name)
-            }
-
+            layout.withModule("intellij.tools.testsBootstrap")
 
             layout.excludeFromModule("intellij.platform.testFramework", "mockito-extensions/**")
-
-            layout.withModule("intellij.platform.coverage", productLayout.mainJarName)
-            // TODO: experiment 2 fix
-            // layout.withModule("intellij.java.guiForms.rt")
 
             layout.withModule("intellij.java.rt", "idea_rt.jar")
             layout.withProjectLibrary("Eclipse", LibraryPackMode.MERGED)
@@ -99,7 +92,7 @@ class MPSProperties : JetBrainsProductProperties() {
         }
 
         additionalModulesToCompile = persistentListOf("intellij.tools.jps.build.standalone")
-        modulesToCompileTests = listOf(
+        modulesToCompileTests = persistentListOf(
             "intellij.platform.jps.build",
             "intellij.platform.jps.build.tests",
             "intellij.platform.jps.model.tests",

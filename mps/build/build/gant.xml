@@ -179,32 +179,6 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
-        <property name="frameIconOnWindows"
-                  value="${basedir}/patches/IDEA-315803-Frame_icon.patch"/>
-        <echo message="Applying ${frameIconOnWindows}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="${frameIconOnWindows}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${frameIconOnWindows}"/>
-        </exec>
-
-        <property name="trustedPathsSettings"
-                  value="${basedir}/patches/TrustedPathsSettings.patch"/>
-        <echo message="Applying ${trustedPathsSettings}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="${trustedPathsSettings}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${trustedPathsSettings}"/>
-        </exec>
-
         <property name="patchFileApplicationNamesInfo"
                   value="${basedir}/patches/ApplicationNamesInfo.patch"/>
         <echo message="Applying ${patchFileApplicationNamesInfo}"/>

@@ -20,11 +20,14 @@ class MPSBuilder {
             options.incrementalCompilation = true
             options.useCompiledClassesFromProjectOutput = false
             options.targetOs = OsFamily.ALL
+            options.validateImplicitPlatformModule = false
+            options.buildStepsToSkip.add(BuildOptions.MAC_SIGN_STEP)
+            options.buildStepsToSkip.add(BuildOptions.MAC_NOTARIZE_STEP)
 
             val fusp = FeatureUsageStatisticsProperties("FUS", "https://resources.jetbrains.com/storage/fus/config/v4/FUS/")
             val buildTools = ProprietaryBuildTools(ProprietaryBuildTools.DUMMY.signTool,
-                scrambleTool = null, macHostProperties = null, artifactsServer = null,
-                featureUsageStatisticsProperties = fusp, licenseServerHost = null
+                    scrambleTool = null, macHostProperties = null, artifactsServer = null,
+                    featureUsageStatisticsProperties = listOf(fusp), licenseServerHost = null
             )
 
             val buildContext = BuildContextImpl.createContextBlocking(
@@ -47,15 +50,6 @@ class MPSBuilder {
             buildTasks.buildDistributionsBlocking()
 
             val jpsArtifactDir = "$buildContext.paths.distAll/lib/jps"
-            /*
-        new LayoutBuilder(buildContext).layout(jpsArtifactDir) {
-            jar("jps-build-test.jar") {
-                moduleTests("intellij.platform.jps.build")
-                moduleTests("intellij.platform.jps.model.tests")
-                moduleTests("intellij.platform.jps.model.serialization.tests")
-            }
-        }
- */
             val jpsArtifactPath = Path.of(jpsArtifactDir)
             buildContext.notifyArtifactBuilt(jpsArtifactPath)
         }

@@ -24,36 +24,37 @@ diff --git a/platform/configuration-store-impl/src/ProjectStoreBridge.kt b/platf
          }
        }
      }
-Index: community/platform/workspaceModel/ide/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt
+Index: platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- community/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt	(revision 896edcd93e04c18a37f0366667c3a6216ad22d2e)
-+++ community/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt	(date 1615489946470)
+diff --git a/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt b/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt
+--- a/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt	(revision d309c49b7f8f453252c0bdfc700ba1a234b14021)
++++ b/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt	(date 1679351108298)
 @@ -20,7 +20,7 @@
        val directoryPath = JpsPathUtil.urlToPath(internalSource.directory.url)
-       val directoryName = PathUtil.getFileName(directoryPath)
-       val parentPath = PathUtil.getParentPath(directoryPath)
--      if (PathUtil.getFileName(parentPath) == ".idea" && (directoryName == "libraries" || directoryName == "artifacts")) {
-+      if (PathUtil.getFileName(parentPath) == ".mps" && (directoryName == "libraries" || directoryName == "artifacts")) {
-         JpsFileEntitySource.ExactFile(externalStorageRoot.append("project/$directoryName.xml"), projectLocation)
+       val directoryName = PathUtilRt.getFileName(directoryPath)
+       val parentPath = PathUtilRt.getParentPath(directoryPath)
+-      if (PathUtilRt.getFileName(parentPath) == ".idea" && (directoryName == "libraries" || directoryName == "artifacts")) {
++      if (PathUtilRt.getFileName(parentPath) == ".mps" && (directoryName == "libraries" || directoryName == "artifacts")) {
+         JpsProjectFileEntitySource.ExactFile(externalStorageRoot.append("project/$directoryName.xml"), projectLocation)
        }
        else {
-Index: platform/workspaceModel/ide/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt
+Index: platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- community/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt	(revision 896edcd93e04c18a37f0366667c3a6216ad22d2e)
-+++ community/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt	(date 1615489957498)
-@@ -610,7 +610,7 @@
+diff --git a/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt b/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt
+--- a/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt	(revision d309c49b7f8f453252c0bdfc700ba1a234b14021)
++++ b/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt	(date 1679351108298)
+@@ -875,7 +875,7 @@
  fun isExternalModuleFile(filePath: String): Boolean {
-   val parentPath = PathUtil.getParentPath(filePath)
-   return FileUtil.extensionEquals(filePath, "xml") && PathUtil.getFileName(parentPath) == "modules"
--         && PathUtil.getFileName(PathUtil.getParentPath(parentPath)) != ".idea"
-+         && PathUtil.getFileName(PathUtil.getParentPath(parentPath)) != ".mps"
+   val parentPath = PathUtilRt.getParentPath(filePath)
+   return FileUtil.extensionEquals(filePath, "xml") && PathUtilRt.getFileName(parentPath) == "modules"
+-         && PathUtilRt.getFileName(PathUtilRt.getParentPath(parentPath)) != ".idea"
++         && PathUtilRt.getFileName(PathUtilRt.getParentPath(parentPath)) != ".mps"
  }
  
  internal fun getInternalFileSource(source: EntitySource) = when (source) {
- 
