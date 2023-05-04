@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 import com.intellij.collaboration.async.associateBy
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
@@ -22,6 +23,7 @@ interface GitLabMergeRequestDiffReviewViewModel {
 
   companion object {
     val KEY: Key<GitLabMergeRequestDiffReviewViewModel> = Key.create("GitLab.Diff.Review.Discussions.ViewModel")
+    val DATA_KEY: DataKey<GitLabMergeRequestDiffChangeViewModel?> = DataKey.create("GitLab.Diff.Review.Discussions.ViewModel")
   }
 }
 

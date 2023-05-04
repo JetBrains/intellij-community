@@ -128,4 +128,5 @@ private fun EditorEx.hoveredLineFlow(): Flow<Int> =
 
 interface EditorMapped {
   val line: Flow<Int?>
+  val isVisible: Flow<Boolean>
 }

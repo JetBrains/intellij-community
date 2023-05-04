@@ -2,6 +2,8 @@
 
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.action.ImmutableToolbarLabelAction
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
 import com.intellij.collaboration.ui.icon.IconsProvider
@@ -14,6 +16,8 @@ import com.intellij.diff.requests.LoadingDiffRequest
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.ListSelection
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
@@ -31,10 +35,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.diff.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 fun createMergeRequestDiffRequestProcessor(project: Project,
@@ -58,7 +59,7 @@ fun createMergeRequestDiffRequestProcessor(project: Project,
   uiCs.launch(start = CoroutineStart.UNDISPATCHED) {
     projectData.mergeRequests.getShared(mergeRequestId).flatMapLatest { res ->
       res.fold(
-        onSuccess = { diffBridge.displayedChanges.mapToDiffChain(project, it.changes) },
+        onSuccess = { diffBridge.displayedChanges.mapToDiffChain(project, uiCs, reviewVm, it.changes) },
         onFailure = { flowOf(SimpleDiffRequestChain(ErrorDiffRequest(it))) }
       )
     }.collectLatest {
@@ -83,8 +84,12 @@ fun createMergeRequestDiffRequestProcessor(project: Project,
   return processor
 }
 
-private fun Flow<ChangesSelection>.mapToDiffChain(project: Project, changesFlow: Flow<GitLabMergeRequestChanges>)
-  : Flow<DiffRequestChain?> =
+private fun Flow<ChangesSelection>.mapToDiffChain(
+  project: Project,
+  uiCs: CoroutineScope,
+  reviewVm: GitLabMergeRequestDiffReviewViewModel,
+  changesFlow: Flow<GitLabMergeRequestChanges>
+): Flow<DiffRequestChain?> =
   combineTransformLatest(this, changesFlow) { selection, changes ->
     if (selection.changes.isEmpty()) {
       emit(null)
@@ -103,7 +108,7 @@ private fun Flow<ChangesSelection>.mapToDiffChain(project: Project, changesFlow:
     }
 
     val producers = selection.toProducersSelection { change, location ->
-      val changeDataKeys = createData(changesBundle, change, location)
+      val changeDataKeys = uiCs.createData(reviewVm, changesBundle, change, location)
       ChangeDiffRequestProducer.create(project, change, changeDataKeys)
     }
 
@@ -118,7 +123,8 @@ private suspend fun loadRevisionsAndParseChanges(changes: GitLabMergeRequestChan
     changes.getParsedChanges()
   }
 
-private fun createData(
+private fun CoroutineScope.createData(
+  reviewVm: GitLabMergeRequestDiffReviewViewModel,
   parsedChanges: GitBranchComparisonResult,
   change: Change,
   location: DiffLineLocation?
@@ -126,6 +132,15 @@ private fun createData(
   val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
 
   VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
+  val diffChangeVm: Flow<GitLabMergeRequestDiffChangeViewModel?> = reviewVm.getViewModelFor(change)
+  val dataProvider = GenericDataProvider()
+  requestDataKeys[DiffUserDataKeys.DATA_PROVIDER] = dataProvider
+
+  launch {
+    diffChangeVm.collect {
+      dataProvider.putData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY, it)
+    }
+  }
 
   val diffComputer = parsedChanges.patchesByChange[change]?.getDiffComputer()
   if (diffComputer != null) {
@@ -135,6 +150,11 @@ private fun createData(
   if (location != null) {
     requestDataKeys[DiffUserDataKeys.SCROLL_TO_LINE] = Pair(location.first, location.second)
   }
+
+  requestDataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] = listOf(
+    ImmutableToolbarLabelAction(CollaborationToolsBundle.message("review.diff.toolbar.label")),
+    ActionManager.getInstance().getAction("GitLab.Merge.Request.Diff.Discussions.View.Options")
+  )
 
   return requestDataKeys
 }

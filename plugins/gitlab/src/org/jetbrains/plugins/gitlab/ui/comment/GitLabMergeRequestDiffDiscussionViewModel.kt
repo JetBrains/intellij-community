@@ -42,7 +42,9 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
   parentCs: CoroutineScope,
   diffData: GitTextFilePatchWithHistory,
   currentUser: GitLabUserDTO,
-  discussion: GitLabMergeRequestDiscussion
+  discussion: GitLabMergeRequestDiscussion,
+  isDiscussionsVisible: Flow<Boolean>,
+  isResolvedDiscussionsVisible: Flow<Boolean>
 ) : GitLabMergeRequestDiffDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -89,6 +91,16 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
     mapToLocation(diffData, it)
   }
 
+  override val isVisible: Flow<Boolean> = combine(
+    resolveVm?.resolved ?: flowOf(false),
+    isDiscussionsVisible,
+    isResolvedDiscussionsVisible
+  ) { isResolved, isVisible, isResolvedVisible ->
+    if (!isVisible) return@combine false
+    if (isResolvedVisible) true
+    else !isResolved
+  }
+
   private fun GitLabMergeRequestDiscussion.firstNote(): Flow<GitLabMergeRequestNote?> =
     notes.map(List<GitLabMergeRequestNote>::firstOrNull).distinctUntilChangedBy { it?.id }
 
@@ -105,7 +117,8 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
 class GitLabMergeRequestDiffDraftDiscussionViewModel(
   parentCs: CoroutineScope,
   diffData: GitTextFilePatchWithHistory,
-  note: GitLabMergeRequestDraftNote
+  note: GitLabMergeRequestDraftNote,
+  isDiscussionsVisible: Flow<Boolean>,
 ) : GitLabMergeRequestDiffDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -120,6 +133,8 @@ class GitLabMergeRequestDiffDraftDiscussionViewModel(
     if (it == null) return@map null
     mapToLocation(diffData, it)
   }
+
+  override val isVisible: Flow<Boolean> = isDiscussionsVisible
 
   override val resolveVm: GitLabDiscussionResolveViewModel? = null
   override val replyVm: GitLabDiscussionReplyViewModel? = null

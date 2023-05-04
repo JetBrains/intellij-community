@@ -135,8 +135,10 @@ private fun <V : DiffViewerBase> V.viewerReadyFlow(
 
 interface DiffMapped {
   val location: Flow<DiffLineLocation?>
+  val isVisible: Flow<Boolean>
 }
 
 private class Wrapper<VM : DiffMapped>(val vm: VM, val mapper: (DiffLineLocation) -> Int?) : EditorMapped {
   override val line: Flow<Int?> = vm.location.map { it?.let(mapper) }
+  override val isVisible: Flow<Boolean> = vm.isVisible
 }

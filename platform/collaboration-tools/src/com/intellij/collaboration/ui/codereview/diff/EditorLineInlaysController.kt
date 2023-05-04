@@ -9,7 +9,8 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
@@ -73,16 +74,20 @@ private class InlayController<VM : EditorMapped>(
 
   init {
     cs.launchNow {
-      vm.line.filterNotNull().collectLatest {
-        coroutineScope {
-          withContext(NonCancellable) {
-            inlay?.let(Disposer::dispose)
+      combine(vm.line, vm.isVisible, ::Pair)
+        .distinctUntilChanged()
+        .collectLatest { (line, isVisible) ->
+          coroutineScope {
+            withContext(NonCancellable) {
+              inlay?.let(Disposer::dispose)
+            }
+            if (line != null && isVisible) {
+              val component = componentFactory(vm)
+              inlay = inlaysManager.insertAfter(line, component)
+              awaitCancellation()
+            }
           }
-          val component = componentFactory(vm)
-          inlay = inlaysManager.insertAfter(it, component)
-          awaitCancellation()
         }
-      }
     }.invokeOnCompletion {
       inlay?.let(Disposer::dispose)
     }

@@ -31,8 +31,14 @@ interface GitLabMergeRequestDiffChangeViewModel {
   val draftDiscussions: DiscussionsFlow
   val newDiscussions: NewDiscussionsFlow
 
+  val isDiscussionsVisible: StateFlow<Boolean>
+  val isResolvedDiscussionsVisible: StateFlow<Boolean>
+
   fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean)
   fun cancelNewDiscussion(location: DiffLineLocation)
+
+  fun setDiscussionsVisible(state: Boolean)
+  fun setResolvedDiscussionsVisible(state: Boolean)
 }
 
 private val LOG = logger<GitLabMergeRequestDiffChangeViewModel>()
@@ -49,20 +55,28 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
   override val discussions: DiscussionsFlow = mergeRequest.discussions
     .mapCaching(
       GitLabDiscussion::id,
-      { cs, disc -> GitLabMergeRequestDiffDiscussionViewModelImpl(cs, diffData, currentUser, disc) },
+      { cs, disc ->
+        GitLabMergeRequestDiffDiscussionViewModelImpl(cs, diffData, currentUser, disc, isDiscussionsVisible, isResolvedDiscussionsVisible)
+      },
       GitLabMergeRequestDiffDiscussionViewModelImpl::destroy
     ).modelFlow(cs, LOG)
 
   override val draftDiscussions: DiscussionsFlow = mergeRequest.standaloneDraftNotes
     .mapCaching(
       GitLabNote::id,
-      { cs, note -> GitLabMergeRequestDiffDraftDiscussionViewModel(cs, diffData, note) },
+      { cs, note -> GitLabMergeRequestDiffDraftDiscussionViewModel(cs, diffData, note, isDiscussionsVisible) },
       GitLabMergeRequestDiffDraftDiscussionViewModel::destroy
     ).modelFlow(cs, LOG)
 
 
   private val _newDiscussions = MutableStateFlow<Map<DiffLineLocation, NewGitLabNoteViewModel>>(emptyMap())
   override val newDiscussions: NewDiscussionsFlow = _newDiscussions.asStateFlow()
+
+  private val _isDiscussionsVisibleState: MutableStateFlow<Boolean> = MutableStateFlow(true)
+  override val isDiscussionsVisible: StateFlow<Boolean> = _isDiscussionsVisibleState.asStateFlow()
+
+  private val _isResolvedDiscussionsVisibleState: MutableStateFlow<Boolean> = MutableStateFlow(true)
+  override val isResolvedDiscussionsVisible: StateFlow<Boolean> = _isResolvedDiscussionsVisibleState.asStateFlow()
 
   override fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean) {
     _newDiscussions.updateAndGet {
@@ -122,6 +136,14 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
       }
       newMap
     }
+  }
+
+  override fun setDiscussionsVisible(state: Boolean) {
+    _isDiscussionsVisibleState.value = state
+  }
+
+  override fun setResolvedDiscussionsVisible(state: Boolean) {
+    _isResolvedDiscussionsVisibleState.value = state
   }
 
   suspend fun destroy() {
