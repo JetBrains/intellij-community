@@ -194,6 +194,9 @@ internal fun <V> capturePropagationAndCancellationContext(
   callable: Callable<V>,
   ns: Long,
 ): MyScheduledFutureTask<V> {
+  if (isContextAwareComputation(callable)) {
+    return wrapper.MyScheduledFutureTask(callable, ns)
+  }
   val (childContext, childJob) = createChildContext()
   var callable = callable
   if (childContext != EmptyCoroutineContext) {
@@ -226,4 +229,8 @@ internal fun capturePropagationAndCancellationContext(
   else {
     return wrapper.MyScheduledFutureTask<Void>(runnable, null, ns, period)
   }
+}
+
+fun contextAwareCallable(r : Runnable) : Callable<*> = ContextAwareCallable {
+  r.run()
 }
