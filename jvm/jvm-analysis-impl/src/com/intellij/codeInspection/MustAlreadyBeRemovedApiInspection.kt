@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UAnnotated
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.evaluateString
-import org.jetbrains.uast.sourcePsiElement
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 /**
@@ -57,8 +56,7 @@ class MustAlreadyBeRemovedApiInspection : AbstractBaseUastLocalInspectionTool() 
           )
         }
 
-        val identifierPsi = node.uastAnchor.sourcePsiElement ?: return true
-        problemsHolder.registerProblem(identifierPsi, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        problemsHolder.registerUProblem(node, message)
       }
       return true
     }
