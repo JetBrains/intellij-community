@@ -6,6 +6,7 @@ package com.intellij.ide.plugins
 import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.util.SystemProperties
 import com.intellij.util.xml.dom.XmlInterner
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
@@ -106,6 +107,14 @@ class DescriptorListLoadingContext(
               "Current plugin: $descriptor.")
     return true
   }
+  
+  val debugData: PluginDescriptorsDebugData? = 
+    if (SystemProperties.getBooleanProperty("intellij.platform.plugins.record.debug.data.for.descriptors", false)) {
+      PluginDescriptorsDebugData()
+    }
+    else {
+      null
+    }
 }
 
 // doesn't make sense to intern class name since it is a unique

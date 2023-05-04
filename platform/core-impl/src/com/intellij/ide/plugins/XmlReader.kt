@@ -903,6 +903,9 @@ private fun readInclude(reader: XMLStreamReader2,
     readError = e
     false
   }
+  if (read) {
+    (readContext as? DescriptorListLoadingContext)?.debugData?.recordIncludedPath(readInto, PluginXmlPathResolver.toLoadPath(path, includeBase))
+  }
 
   if (read || isOptional) {
     return

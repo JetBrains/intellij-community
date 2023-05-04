@@ -142,6 +142,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     raw.name = name
     val result = IdeaPluginDescriptorImpl(raw, path = path, isBundled = isBundled, id = id, moduleName = moduleName,
                                           useCoreClassLoader = useCoreClassLoader)
+    context.debugData?.recordDescriptorPath(result, raw, descriptorPath)
     result.descriptorPath = descriptorPath
     result.vendor = vendor
     result.version = version
