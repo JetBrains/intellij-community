@@ -67,7 +67,12 @@ interface VfsSnapshot {
         object UnknownYet : State
 
         sealed interface DefinedState<T> : State
-        class NotAvailable<T>(val cause: Throwable = UnspecifiedNotAvailableCause) : DefinedState<T>
+        class NotAvailable<T>(
+          // TODO: it's better to ensure a correct cause is always specified. It might be desired to know whether the cause
+          //       is a lack of information or some other exception (e.g. IOException) that should treated differently.
+          //       Such logic needs to be carefully adjusted along the computation paths if the need for it arises
+          val cause: Throwable = UnspecifiedNotAvailableCause
+        ) : DefinedState<T>
         class Ready<T>(val value: T) : DefinedState<T>
       }
 
@@ -85,6 +90,13 @@ interface VfsSnapshot {
 
       abstract class GenericNotAvailableException(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
       object UnspecifiedNotAvailableCause : GenericNotAvailableException("property value is not available")
+       /* TODO
+      abstract class GenericNotAvailableCause(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
+      abstract class GenericRecoveryFailureCause(message: String? = null, cause: Throwable? = null) : GenericNotAvailableCause(message, cause)
+      abstract class GenericNotEnoughInformationCause(message: String? = null, cause: Throwable? = null) : GenericNotAvailableCause(message, cause)
+      open class NotEnoughInformationCause(message: String = "not enough information to recover the property",
+                                           cause: Throwable? = null) : GenericNotEnoughInformationCause(message, cause)
+      */
     }
   }
 }
