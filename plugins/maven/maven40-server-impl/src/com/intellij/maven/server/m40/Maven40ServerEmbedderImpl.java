@@ -273,14 +273,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         new ArrayList<>(inactiveProfiles)
       );
 
-      return ContainerUtilRt.map2List(results, result -> {
-        try {
-          return createExecutionResult(result.getPomFile(), result);
-        }
-        catch (RemoteException e) {
-          throw new RuntimeException(e);
-        }
-      });
+      return ContainerUtilRt.map2List(results, result -> createExecutionResult(result.getPomFile(), result));
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -395,12 +388,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @NotNull
-  private MavenServerExecutionResult createExecutionResult(@Nullable File file, Maven40ExecutionResult result)
-    throws RemoteException {
+  private MavenServerExecutionResult createExecutionResult(@Nullable File file, Maven40ExecutionResult result) {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
     collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
 
-    Collection<MavenProjectProblem> unresolvedProblems = new HashSet<MavenProjectProblem>();
+    Collection<MavenProjectProblem> unresolvedProblems = new HashSet<>();
     collectUnresolvedArtifactProblems(file, result.getDependencyResolutionResult(), unresolvedProblems);
 
     MavenProject mavenProject = result.getMavenProject();
@@ -448,7 +440,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   private void collectProblems(@Nullable File file,
                                @NotNull Collection<? extends Exception> exceptions,
                                @NotNull List<? extends ModelProblem> modelProblems,
-                               @NotNull Collection<? super MavenProjectProblem> collector) throws RemoteException {
+                               @NotNull Collection<? super MavenProjectProblem> collector) {
     for (Throwable each : exceptions) {
       collector.addAll(collectExceptionProblems(file, each));
     }
@@ -489,7 +481,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-  private List<MavenProjectProblem> collectExceptionProblems(@Nullable File file, Throwable ex) throws RemoteException {
+  private List<MavenProjectProblem> collectExceptionProblems(@Nullable File file, Throwable ex) {
     List<MavenProjectProblem> result = new ArrayList<>();
     if (ex == null) return result;
 
@@ -539,7 +531,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @Nullable
-  private static Artifact getProblemTransferArtifact(Throwable each) throws RemoteException {
+  private static Artifact getProblemTransferArtifact(Throwable each) {
     Throwable[] throwables = ExceptionUtils.getThrowables(each);
     if (throwables == null) return null;
     for (Throwable throwable : throwables) {

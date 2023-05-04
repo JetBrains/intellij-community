@@ -556,14 +556,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         Collections.singletonList(listener)
       );
 
-      return ContainerUtilRt.map2List(results, result -> {
-        try {
-          return createExecutionResult(result.getPomFile(), result, listener.getRootNode());
-        }
-        catch (RemoteException e) {
-          throw new RuntimeException(e);
-        }
-      });
+      return ContainerUtilRt.map2List(results, result -> createExecutionResult(result.getPomFile(), result, listener.getRootNode()));
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -1030,8 +1023,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private MavenServerExecutionResult createExecutionResult(@Nullable File file, Maven3ExecutionResult result, DependencyNode rootNode)
-    throws RemoteException {
+  private MavenServerExecutionResult createExecutionResult(@Nullable File file, Maven3ExecutionResult result, DependencyNode rootNode) {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
     collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
 
@@ -1104,7 +1096,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   private void collectProblems(@Nullable File file,
                                @NotNull Collection<? extends Exception> exceptions,
                                @NotNull List<? extends ModelProblem> modelProblems,
-                               @NotNull Collection<? super MavenProjectProblem> collector) throws RemoteException {
+                               @NotNull Collection<? super MavenProjectProblem> collector) {
     for (Throwable each : exceptions) {
       collector.addAll(collectExceptionProblems(file, each));
     }
@@ -1139,7 +1131,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
-  private List<MavenProjectProblem> collectExceptionProblems(@Nullable File file, Throwable ex) throws RemoteException {
+  private List<MavenProjectProblem> collectExceptionProblems(@Nullable File file, Throwable ex) {
     List<MavenProjectProblem> result = new ArrayList<>();
     if (ex == null) return result;
 
@@ -1216,7 +1208,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Nullable
-  private static Artifact getProblemTransferArtifact(Throwable each) throws RemoteException {
+  private static Artifact getProblemTransferArtifact(Throwable each) {
     Throwable[] throwables = ExceptionUtils.getThrowables(each);
     if (throwables == null) return null;
     for (Throwable throwable : throwables) {

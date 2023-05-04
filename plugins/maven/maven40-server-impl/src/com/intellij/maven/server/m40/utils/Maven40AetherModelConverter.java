@@ -18,8 +18,6 @@ import java.util.*;
 
 /**
  * {@link Maven40AetherModelConverter} provides adapted methods of {@link Maven40ModelConverter} for aether models conversion
- *
- * @author Vladislav.Soroka
  */
 public final class Maven40AetherModelConverter extends Maven40ModelConverter {
   @NotNull
@@ -43,7 +41,7 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
     result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
     result.setPlugins(convertPlugins(model));
 
-    Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<Artifact, MavenArtifact>();
+    Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<>();
     result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
     result.setDependencyTree(convertAetherDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
     result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
@@ -60,7 +58,7 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
                                                                      Collection<? extends DependencyNode> nodes,
                                                                      Map<Artifact, MavenArtifact> nativeToConvertedMap,
                                                                      File localRepository) {
-    List<MavenArtifactNode> result = new ArrayList<MavenArtifactNode>(nodes.size());
+    List<MavenArtifactNode> result = new ArrayList<>(nodes.size());
     for (DependencyNode each : nodes) {
       Artifact a = toArtifact(each.getDependency());
       MavenArtifact ma = convertArtifact(a, nativeToConvertedMap, localRepository);
