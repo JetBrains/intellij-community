@@ -20,5 +20,6 @@ interface ProblemsViewTab {
   fun visibilityChangedTo(visible: Boolean) {
   }
 
-  fun isCloseable(): Boolean = false
+  val isCloseable: Boolean
+    get() = false
 }
