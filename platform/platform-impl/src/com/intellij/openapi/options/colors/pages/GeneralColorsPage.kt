@@ -29,7 +29,6 @@ import com.intellij.psi.codeStyle.DisplayPrioritySortable
 import com.intellij.ui.EditorCustomization
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.ScrollBarPainter
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -86,35 +85,35 @@ open class GeneralColorsPage : ColorSettingsPage, InspectionColorSettingsPage, D
   }
 
   companion object {
-    private const val STRING_TO_FOLD = "Folded text with highlighting"
-    private val DEMO_TEXT = """<todo>//TODO: Visit JB Web resources:</todo>
-JetBrains Home Page: <hyperlink_f>http://www.jetbrains.com</hyperlink_f>
-JetBrains Developer Community: <hyperlink>https://www.jetbrains.com/devnet</hyperlink>
-<ref_hyperlink>ReferenceHyperlink</ref_hyperlink>
-Inactive hyperlink in code: "<inactive_hyperlink>http://jetbrains.com</inactive_hyperlink>"
+    private val STRING_TO_FOLD = OptionsBundle.message("settings.color_scheme.general.demo.folded.text.highlighted")
+    private val DEMO_TEXT = """<todo>${OptionsBundle.message("settings.color_scheme.general.demo.todo")}</todo>
+${OptionsBundle.message("settings.color_scheme.general.demo.link.jetbrains.homePage")} <hyperlink_f>http://www.jetbrains.com</hyperlink_f>
+${OptionsBundle.message("settings.color_scheme.general.demo.link.jetbrains.developerCommunity")} <hyperlink>https://www.jetbrains.com/devnet</hyperlink>
+<ref_hyperlink>${OptionsBundle.message("settings.color_scheme.general.demo.hyperlink.reference")}</ref_hyperlink>
+${OptionsBundle.message("settings.color_scheme.general.demo.hyperlink.inactive")} "<inactive_hyperlink>http://jetbrains.com</inactive_hyperlink>"
 
-Search:
-  <search_result_wr>result</search_result_wr> = "<search_text>text</search_text>, <search_text>text</search_text>, <search_text>text</search_text>";
-  <identifier_write>i</identifier_write> = <search_result>result</search_result>
-  return <identifier>i;</identifier>
+${OptionsBundle.message("settings.color_scheme.general.demo.search.title")}
+  <search_result_wr>${OptionsBundle.message("settings.color_scheme.general.demo.search.result")}</search_result_wr> = "<search_text>${OptionsBundle.message("settings.color_scheme.general.demo.search.text")}</search_text>, <search_text>${OptionsBundle.message("settings.color_scheme.general.demo.search.text")}</search_text>, <search_text>${OptionsBundle.message("settings.color_scheme.general.demo.search.text")}</search_text>";
+  <identifier_write>${OptionsBundle.message("settings.color_scheme.general.demo.search.identifier")}</identifier_write> = <search_result>${OptionsBundle.message("settings.color_scheme.general.demo.search.result")}</search_result>
+  ${OptionsBundle.message("settings.color_scheme.general.demo.search.return")} <identifier>${OptionsBundle.message("settings.color_scheme.general.demo.search.identifier")};</identifier>
 
-<folded_text>Folded text</folded_text>
+<folded_text>${OptionsBundle.message("settings.color_scheme.general.demo.folded.text")}</folded_text>
 <folded_text_with_highlighting>$STRING_TO_FOLD</folded_text_with_highlighting>
-<deleted_text>Deleted text</deleted_text>
-Live Template: <template_active>active</template_active> <template_inactive>inactive</template_inactive> <template_var>${"$"}VARIABLE$</template_var>
-Injected language: <injected_lang>\.(gif|jpg|png)$</injected_lang>
+<deleted_text>${OptionsBundle.message("settings.color_scheme.general.demo.deleted.text")}</deleted_text>
+${OptionsBundle.message("settings.color_scheme.general.demo.template.live")} <template_active>${OptionsBundle.message("settings.color_scheme.general.demo.template.live.active")}</template_active> <template_inactive>${OptionsBundle.message("settings.color_scheme.general.demo.template.live.inactive")}</template_inactive> <template_var>${"$"}${OptionsBundle.message("settings.color_scheme.general.demo.template.live.variable")}$</template_var>
+${OptionsBundle.message("settings.color_scheme.general.demo.injected_language")} <injected_lang>\.(gif|jpg|png)$</injected_lang>
 
-Code Inspections:
-  <error>Error</error>
-  <warning>Warning</warning>
-  <weak_warning>Weak warning</weak_warning>
-  <deprecated>Deprecated symbol</deprecated>
-  <for_removal>Deprecated symbol marked for removal</for_removal>
-  <unused>Unused symbol</unused>
-  <wrong_ref>Unknown symbol</wrong_ref>
-  <runtime_error>Runtime problem</runtime_error>
-  <server_error>Problem from server</server_error>
-  <server_duplicate>Duplicate from server</server_duplicate>
+${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.title")}
+  <error>${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.error")}</error>
+  <warning>${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.warning")}</warning>
+  <weak_warning>${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.warning.weak")}</weak_warning>
+  <deprecated>${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.deprecated")}</deprecated>
+  <for_removal>${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.for_removal")}</for_removal>
+  <unused>${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.unused")}</unused>
+  <wrong_ref>${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.wrong_ref")}</wrong_ref>
+  <runtime_error>${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.runtime_error")}</runtime_error>
+  <server_error>${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.server_error")}</server_error>
+  <server_duplicate>${OptionsBundle.message("settings.color_scheme.general.demo.code_inspections.server_duplicate")}</server_duplicate>
 $customSeveritiesDemoText"""
     private val ATT_DESCRIPTORS = arrayOf(
       AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.default.text"), HighlighterColors.TEXT),
