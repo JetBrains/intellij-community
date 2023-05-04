@@ -43,9 +43,10 @@ extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: *con
     match &mut *HOOK_MESSAGES.lock().unwrap() {
         None => unsafe { vfprintf(fp, format, args) },
         Some(messages) => {
-            let mut buffer = [0u8; 4096];
-            let len = unsafe { vsnprintf(buffer.as_mut_ptr() as *mut c_char, buffer.len(), format, args) };
-            messages.push(CStr::from_bytes_until_nul(&buffer).unwrap().to_string_lossy().to_string());
+            let mut buffer = [0; 4096];
+            let len = unsafe { vsnprintf(buffer.as_mut_ptr(), buffer.len(), format, args) };
+            let c_str = unsafe { CStr::from_ptr(buffer.as_ptr()) };
+            messages.push(c_str.to_string_lossy().to_string());
             len
         }
     }
