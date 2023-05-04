@@ -13169,6 +13169,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/noOptIn.kt");
         }
 
+        @TestMetadata("optInIsNotRequired.kt")
+        public void testOptInIsNotRequired() throws Exception {
+            runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/optInIsNotRequired.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/simple.kt");

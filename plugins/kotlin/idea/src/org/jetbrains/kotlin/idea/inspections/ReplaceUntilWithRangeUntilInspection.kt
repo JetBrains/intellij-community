@@ -6,13 +6,17 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.getArguments
+import org.jetbrains.kotlin.idea.intentions.receiverType
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.util.projectStructure.module
+import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.nj2k.EXPERIMENTAL_STDLIB_API_ANNOTATION
 import org.jetbrains.kotlin.nj2k.areKotlinVersionsSufficientToUseRangeUntil
 import org.jetbrains.kotlin.psi.KtElement
@@ -20,6 +24,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptInAllowed
 
 /**
@@ -57,7 +62,26 @@ class ReplaceUntilWithRangeUntilInspection : AbstractRangeInspection() {
             val annotationFqName = FqName(EXPERIMENTAL_STDLIB_API_ANNOTATION)
             val languageVersionSettings = languageVersionSettings
             return module?.let { languageVersionSettings.areKotlinVersionsSufficientToUseRangeUntil(it, project) } == true &&
-                    context?.let { isOptInAllowed(annotationFqName, languageVersionSettings, it.value) } == true
+                    context?.let {
+                        !isOtpInRequiredForRangeUntil(annotationFqName, it.value) ||
+                                isOptInAllowed(annotationFqName, languageVersionSettings, it.value)
+                    } == true
+        }
+
+        private fun KtElement.isOtpInRequiredForRangeUntil(annotationFqName: FqName, context: BindingContext): Boolean {
+            val rangeUntilFunctionDescriptor = findRangeUntilFunctionDescriptor(context)
+                ?: return false
+            return rangeUntilFunctionDescriptor.annotations.hasAnnotation(annotationFqName)
+        }
+
+        private fun KtElement.findRangeUntilFunctionDescriptor(context: BindingContext): CallableDescriptor? {
+            val descriptor = getResolvedCall(context)?.resultingDescriptor
+            val receiverType = descriptor?.receiverType() ?: return null
+
+            // Opt-in will be removed simultaneously on all rangeUntil, so no need to search for matching overload.
+            return receiverType.memberScope
+                .getContributedFunctions(Name.identifier("rangeUntil"), NoLookupLocation.FROM_IDE)
+                .firstOrNull { it.isOperator }
         }
     }
 }
