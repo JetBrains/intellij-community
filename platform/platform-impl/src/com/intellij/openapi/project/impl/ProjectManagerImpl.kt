@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.project.impl
 
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
@@ -42,10 +43,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -690,7 +689,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       result?.let { project ->
         try {
           withContext(Dispatchers.EDT) {
-            closeProject(project, saveProject = false, checkCanClose = false)
+            blockingContext {
+              closeProject(project, saveProject = false, checkCanClose = false)
+            }
           }
         }
         catch (secondException: Throwable) {
@@ -725,7 +726,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (isRunStartUpActivitiesEnabled(project)) {
       (StartupManager.getInstance(project) as StartupManagerImpl).runPostStartupActivities()
     }
-    LifecycleUsageTriggerCollector.onProjectOpened(project)
+    blockingContext {
+      LifecycleUsageTriggerCollector.onProjectOpened(project)
+    }
 
     options.callback?.projectOpened(project, module ?: ModuleManager.getInstance(project).modules[0])
 
@@ -915,8 +918,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   private suspend fun closeAndDisposeKeepingFrame(project: Project): Boolean {
     return withContext(Dispatchers.EDT) {
-      (WindowManager.getInstance() as WindowManagerImpl).withFrameReuseEnabled().use {
-        closeProject(project, checkCanClose = true)
+      blockingContext {
+        (WindowManager.getInstance() as WindowManagerImpl).withFrameReuseEnabled().use {
+          closeProject(project, checkCanClose = true)
+        }
       }
     }
   }
@@ -957,12 +962,14 @@ fun CoroutineScope.runInitProjectActivities(project: Project) {
   }
 
   launch(CoroutineName("projectOpened component executing") + Dispatchers.EDT) {
-    for (component in projectComponents) {
-      runCatching {
-        val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER)
-        component.projectOpened()
-        componentActivity.end()
-      }.getOrLogException(LOG)
+    blockingContext {
+      for (component in projectComponents) {
+        runCatching {
+          val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER)
+          component.projectOpened()
+          componentActivity.end()
+        }.getOrLogException(LOG)
+      }
     }
   }
 }
@@ -1247,18 +1254,20 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
     }
 
     val openInExistingFrame = withContext(Dispatchers.EDT) {
-      if (options.isNewProject)
-        MessageDialogBuilder.yesNoCancel(IdeUICustomization.getInstance().projectMessage("title.new.project"), message)
-          .yesText(IdeBundle.message("button.existing.frame"))
-          .noText(IdeBundle.message("button.new.frame"))
-          .doNotAsk(ProjectNewWindowDoNotAskOption())
-          .guessWindowAndAsk()
-      else
-        MessageDialogBuilder.yesNoCancel(IdeUICustomization.getInstance().projectMessage("title.open.project"), message)
-          .yesText(IdeBundle.message("button.existing.frame"))
-          .noText(IdeBundle.message("button.new.frame"))
-          .doNotAsk(ProjectNewWindowDoNotAskOption())
-          .guessWindowAndAsk()
+      blockingContext {
+        if (options.isNewProject)
+          MessageDialogBuilder.yesNoCancel(IdeUICustomization.getInstance().projectMessage("title.new.project"), message)
+            .yesText(IdeBundle.message("button.existing.frame"))
+            .noText(IdeBundle.message("button.new.frame"))
+            .doNotAsk(ProjectNewWindowDoNotAskOption())
+            .guessWindowAndAsk()
+        else
+          MessageDialogBuilder.yesNoCancel(IdeUICustomization.getInstance().projectMessage("title.open.project"), message)
+            .yesText(IdeBundle.message("button.existing.frame"))
+            .noText(IdeBundle.message("button.new.frame"))
+            .doNotAsk(ProjectNewWindowDoNotAskOption())
+            .guessWindowAndAsk()
+      }
     }
 
     mode = when (openInExistingFrame) {

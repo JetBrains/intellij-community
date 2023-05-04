@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.application.*
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.Messages
@@ -22,7 +23,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.util.concurrent.Callable
 
 internal class PluginStartupActivity : ProjectActivity {
-    override suspend fun execute(project: Project) {
+    override suspend fun execute(project: Project) : Unit = blockingContext {
         excludedFromUpdateCheckPlugins.add("org.jetbrains.kotlin")
         checkPluginCompatibility()
         setupReportingFromRelease()
@@ -42,7 +43,7 @@ internal class PluginStartupActivity : ProjectActivity {
             }
             .submit(AppExecutorUtil.getAppExecutorService())
 
-        if (ApplicationManager.getApplication().isHeadlessEnvironment) return
+        if (ApplicationManager.getApplication().isHeadlessEnvironment) return@blockingContext
 
         ReadAction.nonBlocking(Callable { project.containsNonScriptKotlinFile() })
             .inSmartMode(project)

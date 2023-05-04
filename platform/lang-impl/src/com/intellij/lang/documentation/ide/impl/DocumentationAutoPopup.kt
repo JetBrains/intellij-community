@@ -4,11 +4,12 @@ package com.intellij.lang.documentation.ide.impl
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupManagerListener
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
 internal class DocumentationAutoPopup : ProjectActivity {
-  override suspend fun execute(project: Project) {
+  override suspend fun execute(project: Project) : Unit = blockingContext {
     project.messageBus.connect().subscribe(LookupManagerListener.TOPIC, DocumentationAutoPopupListener())
   }
 }

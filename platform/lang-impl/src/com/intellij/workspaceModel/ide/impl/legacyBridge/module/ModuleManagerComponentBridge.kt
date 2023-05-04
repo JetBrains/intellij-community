@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -46,7 +47,9 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
       val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
       var activity = StartUpMeasurer.startActivity("firing modules_added event")
       val modules = moduleManager.modules().toList()
-      fireModulesAdded(project, modules)
+      blockingContext {
+        fireModulesAdded(project, modules)
+      }
 
       activity = activity.endAndStart("deprecated module component moduleAdded calling")
       @Suppress("removal", "DEPRECATION")

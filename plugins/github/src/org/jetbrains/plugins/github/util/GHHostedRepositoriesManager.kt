@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.*

@@ -9,6 +9,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.wm.*
@@ -60,15 +61,17 @@ internal class DependencyToolWindowInitializer(
 ) {
   internal suspend fun createToolwindow() {
     withContext(Dispatchers.EDT) {
-      val toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(
-        RegisterToolWindowTask(
-          id = ToolWindowId.BUILD_DEPENDENCIES,
-          stripeTitle = DependencyToolWindowBundle.messagePointer("toolwindow.stripe.Dependencies"),
-          icon = PlatformDependencyToolwindowIcons.ArtifactSmall,
-          shouldBeAvailable = DependenciesToolWindowTabProvider.hasAnyExtensions()
+      blockingContext {
+        val toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(
+          RegisterToolWindowTask(
+            id = ToolWindowId.BUILD_DEPENDENCIES,
+            stripeTitle = DependencyToolWindowBundle.messagePointer("toolwindow.stripe.Dependencies"),
+            icon = PlatformDependencyToolwindowIcons.ArtifactSmall,
+            shouldBeAvailable = DependenciesToolWindowTabProvider.hasAnyExtensions()
+          )
         )
-      )
-      initialize(toolWindow)
+        initialize(toolWindow)
+      }
     }
   }
 

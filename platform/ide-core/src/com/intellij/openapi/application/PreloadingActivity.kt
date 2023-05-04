@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.blockingContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -23,7 +24,7 @@ abstract class PreloadingActivity {
   open fun preload() {}
 
   /** Perform the preloading. */
-  open suspend fun execute() {
+  open suspend fun execute() : Unit = blockingContext {
     preload()
   }
 

@@ -17,10 +17,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.TaskCancellation
-import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.util.NlsContexts
@@ -146,7 +143,9 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       }
 
       runCatching {
-        eventPublisher.beforeSave(task, forceExecuteImmediately)
+        blockingContext {
+          eventPublisher.beforeSave(task, forceExecuteImmediately)
+        }
         saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.project)
       }.getOrLogException(LOG)
     }
@@ -156,7 +155,9 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     // add listeners after some delay - doesn't make sense to listen earlier
     delay(15.seconds)
 
-    val settings = GeneralSettings.getInstance()
+    val settings = blockingContext {
+      GeneralSettings.getInstance()
+    }
 
     if (LISTEN_DELAY >= (settings.inactiveTimeout.seconds)) {
       executeOnIdle()
@@ -276,7 +277,9 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
           val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
           // update last modified for all project files that were modified between project open and close
           withContext(Dispatchers.IO) {
-            ConversionService.getInstance()?.saveConversionResult(path)
+            blockingContext {
+              ConversionService.getInstance()?.saveConversionResult(path)
+            }
           }
         }
       }
@@ -299,9 +302,11 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   private suspend fun doScheduledRefresh() {
     withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
-      eventPublisher.beforeRefresh()
-      refreshOpenFiles()
-      maybeRefresh(ModalityState.NON_MODAL)
+      blockingContext {
+        eventPublisher.beforeRefresh()
+        refreshOpenFiles()
+        maybeRefresh(ModalityState.NON_MODAL)
+      }
     }
   }
 

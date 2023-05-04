@@ -295,11 +295,15 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           }
           else if (configurator.isEdtRequired) {
             withContext(Dispatchers.EDT) {
-              configurator.configureProject(project, virtualFile, moduleRef, newProject)
+              blockingContext {
+                configurator.configureProject(project, virtualFile, moduleRef, newProject)
+              }
             }
           }
           else {
-            configurator.configureProject(project, virtualFile, moduleRef, newProject)
+            blockingContext {
+              configurator.configureProject(project, virtualFile, moduleRef, newProject)
+            }
           }
         }
         catch (e: ProcessCanceledException) {

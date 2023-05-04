@@ -9,6 +9,7 @@ import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.durationStep
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
@@ -43,12 +44,16 @@ suspend fun importOrOpenProjectAsync(args: OpenProjectArgs, indicator: ProgressI
 }
 
 private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
-  val vfsProject = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(args.projectDir)
-                   ?: throw RuntimeException("Project path ${args.projectDir} is not found")
+  val vfsProject = blockingContext {
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(args.projectDir)
+    ?: throw RuntimeException("Project path ${args.projectDir} is not found")
+  }
 
   runTaskAndLogTime("refresh VFS") {
     WarmupLogger.logInfo("Refreshing VFS ${args.projectDir}...")
-    VfsUtil.markDirtyAndRefresh(false, true, true, args.projectDir.toFile())
+    blockingContext {
+      VfsUtil.markDirtyAndRefresh(false, true, true, args.projectDir.toFile())
+    }
   }
   yieldThroughInvokeLater()
 
@@ -142,7 +147,9 @@ private suspend fun callProjectConversion(projectArgs: OpenProjectArgs) {
   runTaskAndLogTime("convert project") {
     WarmupLogger.logInfo("Checking if conversions are needed for the project")
     val conversionResult = withContext(Dispatchers.EDT) {
-      conversionService.convertSilently(projectArgs.projectDir, listener)
+      blockingContext {
+        conversionService.convertSilently(projectArgs.projectDir, listener)
+      }
     }
 
     if (conversionResult.openingIsCanceled()) {

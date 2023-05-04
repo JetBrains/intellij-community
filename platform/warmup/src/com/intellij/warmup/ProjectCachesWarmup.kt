@@ -5,6 +5,10 @@ import com.intellij.ide.environment.impl.EnvironmentUtil
 import com.intellij.ide.warmup.WarmupStatus
 import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModernApplicationStarter
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
@@ -91,7 +95,9 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
     })
 
     val project = withLoggingProgresses {
-      waitIndexInitialization()
+      blockingContext {
+        waitIndexInitialization()
+      }
       val project = try {
         importOrOpenProject(commandArgs, it)
       }
@@ -114,14 +120,18 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
 
     withLoggingProgresses {
       withContext(Dispatchers.EDT) {
-        ProjectManager.getInstance().closeAndDispose(project)
+        blockingContext {
+          ProjectManager.getInstance().closeAndDispose(project)
+        }
       }
     }
 
     WarmupStatus.statusChanged(application, WarmupStatus.Finished(totalIndexedFiles))
     WarmupLogger.logInfo("IDE Warm-up finished. $totalIndexedFiles files were indexed. Exiting the application...")
     withContext(Dispatchers.EDT) {
-      application.exit(false, true, false)
+      blockingContext {
+        application.exit(false, true, false)
+      }
     }
   }
 }

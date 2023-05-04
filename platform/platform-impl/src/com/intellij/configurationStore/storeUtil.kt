@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
@@ -129,7 +130,9 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
                                IdeBundle.message("notification.content.plugin.failed.to.save.settings", pluginId.idString, messagePostfix),
                                NotificationType.ERROR)
     }
-    notification.notify(componentManager as? Project)
+    blockingContext {
+      notification.notify(componentManager as? Project)
+    }
   }
   finally {
     storeReloadManager?.unblockReloadingProjectOnExternalChanges()

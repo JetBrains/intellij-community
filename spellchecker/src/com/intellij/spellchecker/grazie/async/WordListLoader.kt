@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
@@ -61,7 +62,9 @@ internal class WordListLoader(private val project: Project, private val coroutin
         isLoadingList.set(false)
 
         withContext(Dispatchers.EDT) {
-          AsyncUtils.restartInspection(ApplicationManager.getApplication())
+          blockingContext {
+            AsyncUtils.restartInspection(ApplicationManager.getApplication())
+          }
         }
       }
     }

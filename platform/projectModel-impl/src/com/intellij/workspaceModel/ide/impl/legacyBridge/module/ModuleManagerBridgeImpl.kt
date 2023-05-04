@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.ProjectTopics
@@ -137,13 +137,15 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       val result = loadedEntities.map { moduleEntity ->
         async {
           runCatching {
-            val module = createModuleInstanceWithoutCreatingComponents(moduleEntity = moduleEntity,
-                                                                       versionedStorage = entityStore,
-                                                                       diff = targetBuilder,
-                                                                       isNew = false,
-                                                                       precomputedExtensionModel = precomputedExtensionModel,
-                                                                       plugins = plugins,
-                                                                       corePlugin = corePlugin)
+            val module = blockingContext {
+              createModuleInstanceWithoutCreatingComponents(moduleEntity = moduleEntity,
+                                                            versionedStorage = entityStore,
+                                                            diff = targetBuilder,
+                                                            isNew = false,
+                                                            precomputedExtensionModel = precomputedExtensionModel,
+                                                            plugins = plugins,
+                                                            corePlugin = corePlugin)
+            }
             module.callCreateComponentsNonBlocking()
             moduleEntity to module
           }.getOrLogException(LOG)

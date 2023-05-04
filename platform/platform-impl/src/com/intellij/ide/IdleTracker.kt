@@ -10,6 +10,7 @@ import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -61,7 +62,9 @@ class IdleTracker(private val coroutineScope: CoroutineScope) {
         .debounce(delay)
         .collect {
           withContext(Dispatchers.EDT) {
-            listener.run()
+            blockingContext {
+              listener.run()
+            }
           }
         }
     }

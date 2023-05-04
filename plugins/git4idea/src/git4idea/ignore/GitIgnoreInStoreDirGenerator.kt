@@ -49,8 +49,10 @@ private class GitIgnoreInStoreDirGeneratorActivity : ProjectActivity {
     }
 
     val completableDeferred = CompletableDeferred<Unit>()
-    ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
-      completableDeferred.complete(Unit)
+    blockingContext {
+      ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
+        completableDeferred.complete(Unit)
+      }
     }
     completableDeferred.join()
     project.service<GitIgnoreInStoreDirGenerator>().run()
@@ -140,7 +142,7 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
       return
     }
 
-    if (skipGeneration(project, projectConfigDirVFile, projectConfigDirPath)) {
+    if (blockingContext { skipGeneration(project, projectConfigDirVFile, projectConfigDirPath) }) {
       return
     }
 

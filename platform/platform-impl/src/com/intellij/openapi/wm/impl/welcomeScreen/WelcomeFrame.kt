@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.*
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.help.HelpManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -153,9 +154,11 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
       // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
       @Suppress("DEPRECATION")
       ApplicationManager.getApplication().coroutineScope.launch {
-        ActionManager.getInstance()
-        if (SystemInfoRt.isMac) {
-          TouchbarSupport.initialize()
+        blockingContext {
+          ActionManager.getInstance()
+          if (SystemInfoRt.isMac) {
+            TouchbarSupport.initialize()
+          }
         }
       }
 
@@ -198,11 +201,13 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
       val show = prepareToShow() ?: return
       @Suppress("DEPRECATION")
       app.coroutineScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
-        val windowManager = WindowManager.getInstance() as WindowManagerImpl
-        windowManager.disposeRootFrame()
-        if (windowManager.projectFrameHelpers.isEmpty()) {
-          show.run()
-          lifecyclePublisher?.welcomeScreenDisplayed()
+        blockingContext {
+          val windowManager = WindowManager.getInstance() as WindowManagerImpl
+          windowManager.disposeRootFrame()
+          if (windowManager.projectFrameHelpers.isEmpty()) {
+            show.run()
+            lifecyclePublisher?.welcomeScreenDisplayed()
+          }
         }
       }
     }

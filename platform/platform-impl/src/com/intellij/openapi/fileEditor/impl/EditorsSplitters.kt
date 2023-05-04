@@ -29,6 +29,7 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splitter
@@ -906,18 +907,20 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
   private suspend fun processFiles(fileEntries: List<EditorSplitterState.FileEntry>, tabSizeLimit: Int, context: JPanel?): JPanel {
     return coroutineScope {
       val windowDeferred = async(Dispatchers.EDT) {
-        var editorWindow = context?.let(splitters::findWindowWith)
-        if (editorWindow == null) {
-          editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
-          editorWindow.panel.isFocusable = false
+        blockingContext {
+          var editorWindow = context?.let(splitters::findWindowWith)
+          if (editorWindow == null) {
+            editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
+            editorWindow.panel.isFocusable = false
+          }
+          else if (splitters.currentWindow == null) {
+            splitters.setCurrentWindow(window = editorWindow, requestFocus = false)
+          }
+          if (tabSizeLimit != 1) {
+            editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
+          }
+          editorWindow
         }
-        else if (splitters.currentWindow == null) {
-          splitters.setCurrentWindow(window = editorWindow, requestFocus = false)
-        }
-        if (tabSizeLimit != 1) {
-          editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
-        }
-        editorWindow
       }
 
       var focusedFile: VirtualFile? = null

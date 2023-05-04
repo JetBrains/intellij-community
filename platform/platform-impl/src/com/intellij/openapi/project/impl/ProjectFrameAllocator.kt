@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.guessProjectDir
@@ -186,7 +187,9 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
 
         // in a separate EDT task, as EDT is used for write actions and frame initialization, should not slow down project opening
         withContext(Dispatchers.EDT) {
-          frameHelper.init()
+          blockingContext {
+            frameHelper.init()
+          }
         }
         frameHelper.setInitBounds(getFrameInfo()?.bounds)
       }
@@ -213,17 +216,21 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
                                                                       device = frameProducer.deviceOrDefault)
     )
     val frameHelper = withContext(Dispatchers.EDT) {
-      val frameHelper = ProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
-      // must be after preInit (frame decorator is required to set a full-screen mode)
-      frameHelper.frame.isVisible = true
-      updateFullScreenState(frameHelper, frameInfo)
-      frameHelper
+      blockingContext {
+        val frameHelper = ProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
+        // must be after preInit (frame decorator is required to set a full-screen mode)
+        frameHelper.frame.isVisible = true
+        updateFullScreenState(frameHelper, frameInfo)
+        frameHelper
+      }
     }
 
     closeFrameOnCancel(frameHelper) {
       // in a separate EDT task, as EDT is used for write actions and frame initialization, should not slow down project opening
       withContext(Dispatchers.EDT) {
-        frameHelper.init()
+        blockingContext {
+          frameHelper.init()
+        }
       }
     }
     return loadingState
@@ -359,8 +366,10 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
       frameHelper.postInit()
     }
 
-    project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
-      LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime), frameHelper.isTabbedWindow)
+    blockingContext {
+      project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
+        LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime), frameHelper.isTabbedWindow)
+      }
     }
 
     if (!hasOpenFiles && !isNotificationSilentMode(project)) {
@@ -401,12 +410,14 @@ private fun CoroutineScope.initFrame(deferredProjectFrameHelper: Deferred<Projec
     val frameHelper = deferredProjectFrameHelper.await()
     val toolbarActionGroups = deferredToolbarActionGroups.await()
     withContext(Dispatchers.EDT) {
-      runActivity("toolbar init") {
-        frameHelper.rootPane.initToolbar(toolbarActionGroups)
-      }
+      blockingContext {
+        runActivity("toolbar init") {
+          frameHelper.rootPane.initToolbar(toolbarActionGroups)
+        }
 
-      runActivity("north components updating") {
-        frameHelper.rootPane.updateNorthComponents()
+        runActivity("north components updating") {
+          frameHelper.rootPane.updateNorthComponents()
+        }
       }
     }
   }
@@ -531,7 +542,9 @@ private fun findAndOpenReadmeIfNeeded(project: Project) {
     if (!readme.isDirectory) {
       @Suppress("DEPRECATION")
       project.coroutineScope.launch(Dispatchers.EDT) {
-        TextEditorWithPreview.openPreviewForFile(project, readme)
+        blockingContext {
+          TextEditorWithPreview.openPreviewForFile(project, readme)
+        }
       }
     }
   }

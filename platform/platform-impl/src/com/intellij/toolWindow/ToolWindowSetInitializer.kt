@@ -18,6 +18,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.*
@@ -88,9 +89,11 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       createAndLayoutToolWindows(manager = manager, tasks = tasks ?: return, reopeningEditorJob = reopeningEditorJob)
       // separate EDT task - ensure that more important tasks like editor restoring maybe executed
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        runActivity("toolwindow init pending tasks processing") {
-          while (true) {
-            (pendingTasks.poll() ?: break).run()
+        blockingContext {
+          runActivity("toolwindow init pending tasks processing") {
+            while (true) {
+              (pendingTasks.poll() ?: break).run()
+            }
           }
         }
       }
@@ -115,21 +118,23 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
     val list = addExtraTasks(tasks, project, ep)
 
     val entries = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val layout = pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout")
-      @Suppress("TestOnlyProblems")
-      manager.setLayoutOnInit(layout)
+      blockingContext {
+        val layout = pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout")
+        @Suppress("TestOnlyProblems")
+        manager.setLayoutOnInit(layout)
 
-      runActivity("toolwindow creating") {
-        // Register all tool windows for the default tool window pane. If there are any tool windows for other panes, we'll register them
-        // after the reopening editors job has created the panes
-        val entries = registerToolWindows(list, manager, layout) { it == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
-        for (toolWindowPane in manager.getToolWindowPanes()) {
-          toolWindowPane.buttonManager.initMoreButton()
-          toolWindowPane.buttonManager.revalidateNotEmptyStripes()
-          toolWindowPane.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable(toolWindowPane.paneId))
+        runActivity("toolwindow creating") {
+          // Register all tool windows for the default tool window pane. If there are any tool windows for other panes, we'll register them
+          // after the reopening editors job has created the panes
+          val entries = registerToolWindows(list, manager, layout) { it == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
+          for (toolWindowPane in manager.getToolWindowPanes()) {
+            toolWindowPane.buttonManager.initMoreButton()
+            toolWindowPane.buttonManager.revalidateNotEmptyStripes()
+            toolWindowPane.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable(toolWindowPane.paneId))
+          }
+
+          entries
         }
-
-        entries
       }
     }
 

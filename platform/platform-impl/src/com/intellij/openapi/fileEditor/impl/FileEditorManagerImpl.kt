@@ -49,6 +49,7 @@ import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.progress.runBlockingModal
@@ -229,12 +230,14 @@ open class FileEditorManagerImpl(
 
         // expected in EDT
         withContext(Dispatchers.EDT) {
-          kotlin.runCatching {
-            fireSelectionChanged(newComposite = state?.composite,
-                                 oldEditorWithProvider = oldEditorWithProvider,
-                                 newEditorWithProvider = newEditorWithProvider,
-                                 publisher = publisher)
-          }.getOrLogException(LOG)
+          blockingContext {
+            kotlin.runCatching {
+              fireSelectionChanged(newComposite = state?.composite,
+                                   oldEditorWithProvider = oldEditorWithProvider,
+                                   newEditorWithProvider = newEditorWithProvider,
+                                   publisher = publisher)
+            }.getOrLogException(LOG)
+          }
         }
       }
       .launchIn(coroutineScope)

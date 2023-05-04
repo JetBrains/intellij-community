@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
@@ -160,13 +161,15 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
   }
 
   launch(CoroutineName("icons preloading") + Dispatchers.IO) {
-    if (app.isInternal) {
-      IconLoader.setStrictGlobally(true)
-    }
+    blockingContext {
+      if (app.isInternal) {
+        IconLoader.setStrictGlobally(true)
+      }
 
-    AsyncProcessIcon("")
-    AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-    AnimatedIcon.FS()
+      AsyncProcessIcon("")
+      AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+      AnimatedIcon.FS()
+    }
   }
 
   launch {

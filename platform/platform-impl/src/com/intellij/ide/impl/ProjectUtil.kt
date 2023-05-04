@@ -718,14 +718,14 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun Project.executeOnPooledThread(task: Runnable) {
   @Suppress("DEPRECATION")
-  coroutineScope.launch { task.run() }
+  coroutineScope.launch { blockingContext { task.run() } }
 }
 
 @Internal
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun <T> Project.computeOnPooledThread(task: Callable<T>): CompletableFuture<T> {
   @Suppress("DEPRECATION")
-  return coroutineScope.async { task.call() }.asCompletableFuture()
+  return coroutineScope.async { blockingContext { task.call() } }.asCompletableFuture()
 }
 
 @Suppress("DeprecatedCallableAddReplaceWith")
@@ -733,5 +733,5 @@ fun <T> Project.computeOnPooledThread(task: Callable<T>): CompletableFuture<T> {
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun Project.executeOnPooledIoThread(task: Runnable) {
   @Suppress("DEPRECATION")
-  coroutineScope.launch(Dispatchers.IO) { task.run() }
+  coroutineScope.launch(Dispatchers.IO) { blockingContext { task.run() } }
 }
