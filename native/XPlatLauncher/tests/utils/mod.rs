@@ -6,7 +6,7 @@ use std::fmt::{Debug, Formatter};
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Command, ExitStatus, Output, Stdio};
+use std::process::{Command, ExitStatus, Stdio};
 use std::sync::Once;
 
 use anyhow::{bail, Context, Result};
@@ -14,7 +14,7 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 use tempfile::{Builder, TempDir};
 
-use xplat_launcher::{DEBUG_MODE_ENV_VAR, get_config_home, PathExt};
+use xplat_launcher::{DEBUG_MODE_ENV_VAR, get_config_home, is_executable, PathExt};
 
 static INIT: Once = Once::new();
 static mut SHARED: Option<TestEnvironmentShared> = None;
@@ -153,6 +153,8 @@ fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation, with_jbr: bool
 }
 
 fn init_test_environment_once() -> Result<TestEnvironmentShared> {
+    //xplat_launcher::mini_logger::init(log::LevelFilter::Debug)?;
+
     // clean environment variables
     env::remove_var("JDK_HOME");
     env::remove_var("JAVA_HOME");
@@ -166,8 +168,7 @@ fn init_test_environment_once() -> Result<TestEnvironmentShared> {
         bail!("Didn't find source launcher to layout, expected path: {:?}", launcher_path);
     }
 
-    // gradle_command_wrapper("clean");
-    gradle_command_wrapper("fatJar");
+    gradle_command_wrapper("fatJar")?;
 
     let jbr_root = get_jbr_sdk_from_project_root(&project_root)?;
 
@@ -194,48 +195,30 @@ fn get_jbr_sdk_from_project_root(project_root: &Path) -> Result<PathBuf> {
     Ok(sdk_root)
 }
 
-fn gradle_command_wrapper(gradle_command: &str) {
-    let current_dir = env::current_dir()
-        .expect("Failed to get current dir")
-        .canonicalize()
-        .expect("Failed to get canonical path to current dir");
-    println!("current_dir={current_dir:?}");
+fn gradle_command_wrapper(gradle_task: &str) -> Result<()> {
+    debug!("current_dir={:?}", env::current_dir());
 
-    let executable_name = get_gradlew_executable_name();
-    let executable = PathBuf::from("./resources/TestProject")
-        .join(executable_name);
+    let wrapper_name = if cfg!(target_os = "windows") { "gradlew.bat" } else { "gradlew" };
+    let wrapper_path = PathBuf::from("./resources/TestProject").join(wrapper_name).canonicalize()?;
+    if !is_executable(&wrapper_path).unwrap() {
+        bail!("Not an executable file: {:?}", wrapper_path);
+    }
 
-    assert!(executable.exists());
-
-    let gradlew = executable.canonicalize().expect("Failed to get canonical path to gradlew");
-    let command_to_execute = Command::new(gradlew)
-        .arg(gradle_command)
+    debug!("Running '{} :{}'", wrapper_path.display(), gradle_task);
+    let output = Command::new(wrapper_path)
+        .arg(gradle_task)
         .current_dir("./resources/TestProject")
         .output()
-        .expect(&format!("Failed to execute gradlew :{gradle_command}"));
+        .context(format!("Failed to execute 'gradlew :{gradle_task}'"))?;
 
-    command_handler(&command_to_execute);
-}
-
-#[cfg(target_os = "windows")]
-fn get_gradlew_executable_name() -> String {
-    "gradlew.bat".to_string()
-}
-
-#[cfg(target_family = "unix")]
-fn get_gradlew_executable_name() -> String {
-    "gradlew".to_string()
-}
-
-fn command_handler(command: &Output) {
-    let exit_status = command.status;
-    let stdout = String::from_utf8_lossy(&command.stdout);
-    let stderr = String::from_utf8_lossy(&command.stderr);
-
+    let exit_status = output.status;
     if !exit_status.success() {
-        let message = format!("Command didn't succeed,\n exit code: {exit_status},\n stdout: {stdout},\n stderr: {stderr}");
-        panic!("{}", message)
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        bail!("Command didn't succeed: exit code: {exit_status}\nstdout: <<<{stdout}>>>,\nstderr: <<<{stderr}>>>")
     }
+
+    Ok(())
 }
 
 fn get_child_dir(parent: &Path, prefix: &str) -> Result<PathBuf> {
@@ -535,8 +518,8 @@ pub fn run_launcher_ext(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) 
 }
 
 fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> Result<LauncherRunResult> {
-    println!("Starting '{}'\n  with args {:?}\n  in '{}'",
-             test_env.launcher_path.display(), run_spec.args, test_env.test_root_dir.path().display());
+    debug!("Starting '{}'\n  with args {:?}\n  in '{}'",
+           test_env.launcher_path.display(), run_spec.args, test_env.test_root_dir.path().display());
 
     let stdout_file_path = test_env.test_root_dir.path().join("out.txt");
     let stderr_file_path = test_env.test_root_dir.path().join("err.txt");
