@@ -435,6 +435,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
       new MavenServerExecutionResult.ProjectData(model, mavenModelMap, holder, activatedProfiles);
+    if (null == model.getBuild() || null == model.getBuild().getDirectory()) {
+      data = null;
+    }
     return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
   }
 
@@ -471,8 +474,14 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                              problem.getColumnNumber());
       Exception problemException = problem.getException();
       if (problemException != null) {
-        myConsoleWrapper.error("Maven model problem", problemException);
-        collector.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage()));
+        List<MavenProjectProblem> exceptionProblems = collectExceptionProblems(file, problemException);
+        if (exceptionProblems.isEmpty()) {
+          myConsoleWrapper.error("Maven model problem", problemException);
+          collector.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage()));
+        }
+        else {
+          collector.addAll(exceptionProblems);
+        }
       }
       else {
         collector.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage(), true));

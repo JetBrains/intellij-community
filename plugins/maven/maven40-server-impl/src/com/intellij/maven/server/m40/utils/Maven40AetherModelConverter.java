@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 
 import java.io.File;
-import java.rmi.RemoteException;
 import java.util.*;
 
 /**
@@ -30,7 +29,7 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
                                                                 Collection<? extends Artifact> dependencies,
                                                                 Collection<? extends DependencyNode> dependencyTree,
                                                                 Collection<? extends Artifact> extensions,
-                                                                File localRepository) throws RemoteException {
+                                                                File localRepository) {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
 
