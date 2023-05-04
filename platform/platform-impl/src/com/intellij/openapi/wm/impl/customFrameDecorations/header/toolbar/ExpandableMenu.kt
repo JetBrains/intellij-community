@@ -56,12 +56,13 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
     return !SystemInfoRt.isMac && Registry.`is`("ide.main.menu.expand.horizontal")
   }
 
-  fun isShowing(): Boolean {
+  private fun isShowing(): Boolean {
     return expandedMenuBar != null
   }
 
-  fun updateUI() {
+  private fun updateUI() {
     IJSwingUtilities.updateComponentTreeUI(ideMenu)
+    ideMenu.border = null
   }
 
   fun switchState(actionToShow: AnAction? = null) {
@@ -83,6 +84,8 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
       }
     }.apply { isOpaque = false }
 
+    // Menu wasn't a part of components tree, updateUI is needed
+    updateUI()
     updateBounds()
     updateColor()
     layeredPane.add(expandedMenuBar!!, (JLayeredPane.DEFAULT_LAYER - 2) as Any)
