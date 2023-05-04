@@ -177,18 +177,7 @@ final class UnindexedFilesFinder {
                         ("indexing state = " + myFileBasedIndex.getIndexingState(indexedFile, indexId)));
                     }
 
-                    long nowTime = System.nanoTime();
-                    boolean wasIndexedByInfrastructure;
-                    try {
-                      wasIndexedByInfrastructure = tryIndexWithoutContentViaInfrastructureExtension(indexedFile, inputId, indexId);
-                    }
-                    finally {
-                      fileStatusBuilder.timeIndexingWithoutContentViaInfrastructureExtension += (System.nanoTime() - nowTime);
-                    }
-                    if (wasIndexedByInfrastructure) {
-                      fileStatusBuilder.indexesWereProvidedByInfrastructureExtension = true;
-                    }
-                    else {
+                    if (!tryIndexWithoutContent(indexedFile, inputId, indexId, fileStatusBuilder)) {
                       fileStatusBuilder.shouldIndex = true;
                       // NOTE! Do not break the loop here. We must process ALL IDs and pass them to the FileIndexingStatusProcessor
                       // so that it can invalidate all "indexing states" (by means of clearing IndexingStamp)
@@ -278,6 +267,27 @@ final class UnindexedFilesFinder {
       finalization.get().run();
       return fileStatusBuilder.build();
     });
+  }
+
+  private boolean tryIndexWithoutContent(IndexedFileImpl indexedFile,
+                                         int inputId,
+                                         ID<?, ?> indexId,
+                                         UnindexedFileStatusBuilder fileStatusBuilder) {
+    long nowTime = System.nanoTime();
+    boolean wasIndexedByInfrastructure;
+    try {
+      wasIndexedByInfrastructure = tryIndexWithoutContentViaInfrastructureExtension(indexedFile, inputId, indexId);
+    }
+    finally {
+      fileStatusBuilder.timeIndexingWithoutContentViaInfrastructureExtension += (System.nanoTime() - nowTime);
+    }
+    if (wasIndexedByInfrastructure) {
+      fileStatusBuilder.indexesWereProvidedByInfrastructureExtension = true;
+      return true;
+    }
+    else {
+      return false;
+    }
   }
 
   private void finishGettingStatus(@NotNull VirtualFile file,
