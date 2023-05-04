@@ -1128,8 +1128,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
                              problem.getLineNumber() +
                              ":" +
                              problem.getColumnNumber());
-      if (problem.getException() != null) {
-        myConsoleWrapper.error("Maven model problem", problem.getException());
+      Exception problemException = problem.getException();
+      if (problemException != null) {
+        myConsoleWrapper.error("Maven model problem", problemException);
         collector.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage()));
       }
       else {
