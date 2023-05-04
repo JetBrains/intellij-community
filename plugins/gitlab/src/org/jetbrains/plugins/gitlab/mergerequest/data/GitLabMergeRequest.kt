@@ -120,9 +120,10 @@ internal class LoadedGitLabMergeRequest(
   override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.reviewers }
   override val pipeline: Flow<GitLabPipelineDTO?> = mergeRequestDetailsState.map { it.headPipeline }
   override val userPermissions: StateFlow<GitLabMergeRequestPermissionsDTO> = mergeRequestDetailsState.mapState(cs) { it.userPermissions }
-  override val changes: Flow<GitLabMergeRequestChanges> = mergeRequestDetailsState.map {
-    GitLabMergeRequestChangesImpl(project, cs, api, projectMapping, it)
-  }.modelFlow(cs, LOG)
+  override val changes: Flow<GitLabMergeRequestChanges> = mergeRequestDetailsState
+    .distinctUntilChangedBy(GitLabMergeRequestFullDetails::diffRefs).map {
+      GitLabMergeRequestChangesImpl(project, cs, api, projectMapping, it)
+    }.modelFlow(cs, LOG)
 
   private val stateEvents by lazy {
     cs.async(Dispatchers.IO) { api.loadMergeRequestStateEvents(glProject, mergeRequest).body().orEmpty() }
