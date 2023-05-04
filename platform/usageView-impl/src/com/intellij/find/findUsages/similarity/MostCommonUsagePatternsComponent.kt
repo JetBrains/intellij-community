@@ -279,10 +279,12 @@ class MostCommonUsagePatternsComponent(
       _loadedSnippets.value = queue.receiveBatch(initialBatchSize)
       _loadSnippetRequests.debounce(10.milliseconds).collect {
         val newBatch = queue.receiveBatch(CLUSTER_LIMIT)
-        _loadedSnippets.update {
-          it + newBatch
+        if (newBatch.isNotEmpty()) {
+          _loadedSnippets.update {
+            it + newBatch
+          }
+          logMoreSnippetsLoadedInClustersPreview(project, usageView, _loadedSnippets.value.size)
         }
-        logMoreSnippetsLoadedInClustersPreview(project, usageView, _loadedSnippets.value.size)
       }
     }
   }
