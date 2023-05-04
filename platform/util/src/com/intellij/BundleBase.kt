@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.util.ReflectionUtil
 import com.intellij.util.text.OrdinalFormat
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
@@ -41,7 +40,7 @@ object BundleBase {
   /**
    * Performs partial application of the pattern message from the bundle leaving some parameters unassigned.
    * It's expected that the message contains `params.length + unassignedParams` placeholders. Parameters
-   * `{0}..{params.length-1}` will be substituted using passed params array. The remaining parameters
+   * `{0}..{params.length-1}` will be substituted using a passed params array. The remaining parameters
    * will be renumbered: `{params.length}` will become `{0}` and so on, so the resulting template
    * could be applied once more.
    *
@@ -104,12 +103,11 @@ object BundleBase {
   @JvmStatic
   fun getDefaultMessage(bundle: ResourceBundle, key: String): String {
     try {
-      val parent = ReflectionUtil.getDeclaredField(ResourceBundle::class.java, "parent")
-      if (parent != null) {
-        val parentBundle = parent.get(bundle)
-        if (parentBundle is ResourceBundle) {
-          return parentBundle.getString(key)
-        }
+      val field = ResourceBundle::class.java.getDeclaredField("parent")
+      field.isAccessible = true
+      val parentBundle = field.get(bundle)
+      if (parentBundle is ResourceBundle) {
+        return parentBundle.getString(key)
       }
     }
     catch (e: IllegalAccessException) {
@@ -146,7 +144,7 @@ object BundleBase {
   fun postprocessValue(bundle: ResourceBundle, value: @Nls String, vararg params: Any?): @Nls String {
     @Suppress("NAME_SHADOWING") var value = value
     value = replaceMnemonicAmpersand(value)!!
-    if (params.size > 0 && value.indexOf('{') >= 0) {
+    if (params.isNotEmpty() && value.indexOf('{') >= 0) {
       val locale = bundle.locale
       value = try {
         val format = if (locale != null) MessageFormat(value, locale) else MessageFormat(value)
@@ -226,8 +224,7 @@ object BundleBase {
 private fun quotePattern(message: String): @NlsSafe String {
   var inQuotes = false
   val sb = StringBuilder(message.length + 5)
-  for (i in 0.until(message.length)) {
-    val c = message[i]
+  for (c in message) {
     val needToQuote = c == '{' || c == '}'
     if (needToQuote != inQuotes) {
       inQuotes = needToQuote
