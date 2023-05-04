@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
-import org.picocontainer.PicoContainer;
 
 import java.util.Map;
 
@@ -84,11 +83,6 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   @Override
   public boolean hasComponent(@NotNull Class<?> interfaceClass) {
     return false;
-  }
-
-  @Override
-  public @NotNull PicoContainer getPicoContainer() {
-    throw new UnsupportedOperationException("getPicoContainer is not implement in : " + getClass());
   }
 
   @Override

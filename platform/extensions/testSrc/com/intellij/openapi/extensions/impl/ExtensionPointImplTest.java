@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Test;
-import org.picocontainer.PicoContainer;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -364,11 +363,6 @@ public class ExtensionPointImplTest {
 
     @Override
     public boolean hasComponent(@NotNull Class<?> interfaceClass) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public @NotNull PicoContainer getPicoContainer() {
       throw new UnsupportedOperationException();
     }
 

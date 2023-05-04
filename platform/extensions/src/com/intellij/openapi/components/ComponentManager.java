@@ -14,7 +14,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.PicoContainer;
 
 import java.util.Collections;
 import java.util.List;
@@ -48,19 +47,11 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   /**
    * Checks whether there is a component with the specified interface class.
    *
-   * @param interfaceClass interface class of component to be checked
+   * @param interfaceClass interface class of a component to be checked
    * @return {@code true} if there is a component with the specified interface class;
    * {@code false} otherwise
    */
   boolean hasComponent(@NotNull Class<?> interfaceClass);
-
-  /**
-   * @deprecated Use ComponentManager API
-   */
-  @Deprecated
-  @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval
-  @NotNull PicoContainer getPicoContainer();
 
   @ApiStatus.Internal
   boolean isInjectionForExtensionSupported();

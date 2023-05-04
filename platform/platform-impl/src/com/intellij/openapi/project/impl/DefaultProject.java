@@ -25,7 +25,6 @@ import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.messages.MessageBus;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
-import org.picocontainer.PicoContainer;
 
 import java.util.Map;
 
@@ -228,11 +227,6 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   @Override
   public <T> T getComponent(@NotNull Class<T> interfaceClass) {
     return getDelegate().getComponent(interfaceClass);
-  }
-
-  @Override
-  public @NotNull PicoContainer getPicoContainer() {
-    throw new UnsupportedOperationException();
   }
 
   @Override

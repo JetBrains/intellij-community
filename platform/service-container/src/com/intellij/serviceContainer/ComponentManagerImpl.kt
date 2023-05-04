@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.serviceContainer
 
 import com.intellij.concurrency.resetThreadContext
@@ -17,6 +17,7 @@ import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -40,7 +41,6 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
-import org.picocontainer.PicoContainer
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -55,7 +55,9 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-internal val LOG = logger<ComponentManagerImpl>()
+internal val LOG: Logger
+  get() = logger<ComponentManagerImpl>()
+
 private val constructorParameterResolver = ConstructorParameterResolver()
 private val methodLookup = MethodHandles.lookup()
 private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
@@ -148,9 +150,11 @@ abstract class ComponentManagerImpl(
   @Volatile
   private var isServicePreloadingCancelled = false
 
-  private fun debugString(short: Boolean = false): String = "${if (short) javaClass.simpleName else javaClass.name}@${System.identityHashCode(this)}"
+  private fun debugString(short: Boolean = false): String {
+    return "${if (short) javaClass.simpleName else javaClass.name}@${System.identityHashCode(this)}"
+  }
 
-  internal val serviceParentDisposable = Disposer.newDisposable("services of ${debugString()}")
+  internal val serviceParentDisposable: Disposable = Disposer.newDisposable("services of ${debugString()}")
 
   protected open val isLightServiceSupported = parent?.parent == null
   protected open val isMessageBusSupported = parent?.parent == null
@@ -191,28 +195,12 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  private val picoContainerAdapter: PicoContainer = object : PicoContainer {
-    override fun getComponentInstance(componentKey: Any): Any? {
-      return this@ComponentManagerImpl.getComponentInstance(componentKey)
-    }
-
-    override fun getComponentInstanceOfType(componentType: Class<*>): Any? {
-      throw UnsupportedOperationException("Do not use getComponentInstanceOfType()")
-    }
-  }
-
   internal fun getComponentInstance(componentKey: Any): Any? {
     assertComponentsSupported()
 
     val adapter = componentKeyToAdapter.get(componentKey)
                   ?: if (componentKey is Class<*>) componentKeyToAdapter.get(componentKey.name) else null
     return if (adapter == null) parent?.getComponentInstance(componentKey) else adapter.componentInstance
-  }
-
-  @Deprecated("Use ComponentManager API", level = DeprecationLevel.ERROR)
-  final override fun getPicoContainer(): PicoContainer {
-    checkState()
-    return picoContainerAdapter
   }
 
   private fun registerAdapter(componentAdapter: ComponentAdapter, pluginDescriptor: PluginDescriptor?) {
@@ -292,8 +280,8 @@ abstract class ComponentManagerImpl(
 
     var activity = activityNamePrefix?.let { StartUpMeasurer.startActivity("${it}service and ep registration") }
 
-    // register services before registering extensions because plugins can access services in their
-    // extensions which can be invoked right away if the plugin is loaded dynamically
+    // register services before registering extensions because plugins can access services in their extensions,
+    // which can be invoked right away if the plugin is loaded dynamically
     val extensionPoints = if (precomputedExtensionModel == null) HashMap(extensionArea.extensionPoints) else null
     for (rootModule in modules) {
       executeRegisterTask(rootModule) { module ->
@@ -1488,7 +1476,7 @@ abstract class ComponentManagerImpl(
    * Key: plugin coroutine scope.
    * Value: intersection of this container scope and plugin coroutine scope.
    */
-  private val pluginScopes: AtomicReference<PersistentMap<CoroutineScope, CoroutineScope>> = AtomicReference(persistentHashMapOf())
+  private val pluginScopes = AtomicReference<PersistentMap<CoroutineScope, CoroutineScope>>(persistentHashMapOf())
 
   internal fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope {
     val pluginClassloader = pluginClass.classLoader
@@ -1498,10 +1486,11 @@ abstract class ComponentManagerImpl(
                         ?: pluginScope
       intersectionCoroutineScope(parentScope)
     }
-    else { // non-unloadable
+    else {
+      // non-unloadable
       getCoroutineScope()
     }
-    // The parent scope should become cancelled only when the container is disposed, or the plugin is unloaded.
+    // The parent scope should become canceled only when the container is disposed, or the plugin is unloaded.
     // Leaking the parent scope might lead to premature cancellation.
     // Fool proofing: a fresh child scope is created per instance to avoid leaking the parent to clients.
     return intersectionScope.namedChildScope(pluginClass.name)
@@ -1540,7 +1529,7 @@ abstract class ComponentManagerImpl(
   }
 
   private fun removePluginScope(pluginScope: CoroutineScope) {
-    pluginScopes.updateAndGet { scopes: PersistentMap<CoroutineScope, CoroutineScope> ->
+    pluginScopes.updateAndGet { scopes ->
       scopes.remove(pluginScope)
     }
   }
