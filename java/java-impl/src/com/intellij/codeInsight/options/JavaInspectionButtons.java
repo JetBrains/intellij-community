@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.options;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.ui.CustomComponentExtensionWithSwingRenderer;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.packageDependencies.ui.DependencyConfigurable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class JavaInspectionButtons extends CustomComponentExtensionWithSwingRenderer<JavaInspectionButtons.ButtonKind> {
   public JavaInspectionButtons() {
@@ -17,12 +17,16 @@ public class JavaInspectionButtons extends CustomComponentExtensionWithSwingRend
   }
 
   @Override
-  public @NotNull JComponent render(ButtonKind data, @Nullable Component parent) {
+  public @NotNull JComponent render(ButtonKind data, @NotNull Project project) {
+    if (project.isDefault()) {
+      // Do not provide button for default project
+      return new JPanel();
+    }
     return switch (data) {
-      case NULLABILITY_ANNOTATIONS -> NullableNotNullDialog.createConfigureAnnotationsButton(parent);
-      case ENTRY_POINT_CODE_PATTERNS -> EntryPointsManagerImpl.createConfigureClassPatternsButton();
-      case ENTRY_POINT_ANNOTATIONS -> EntryPointsManagerImpl.createConfigureAnnotationsButton();
-      case DEPENDENCY_CONFIGURATION -> DependencyConfigurable.getConfigureButton();
+      case NULLABILITY_ANNOTATIONS -> NullableNotNullDialog.createConfigureAnnotationsButton(project);
+      case ENTRY_POINT_CODE_PATTERNS -> EntryPointsManagerImpl.createConfigureClassPatternsButton(project);
+      case ENTRY_POINT_ANNOTATIONS -> EntryPointsManagerImpl.createConfigureAnnotationsButton(project);
+      case DEPENDENCY_CONFIGURATION -> DependencyConfigurable.getConfigureButton(project);
     };
   }
 

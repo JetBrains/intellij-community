@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -8,7 +8,6 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiAnnotation;
@@ -77,23 +76,22 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
     }.show();
   }
 
-  public static JButton createConfigureAnnotationsButton() {
+  public static JButton createConfigureAnnotationsButton(final Project project) {
     final JButton configureAnnotations = new JButton(JavaBundle.message("button.annotations"));
     configureAnnotations.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        getInstance(ProjectUtil.guessCurrentProject(configureAnnotations)).configureAnnotations();
+        getInstance(project).configureAnnotations();
       }
     });
     return configureAnnotations;
   }
 
-  public static JButton createConfigureClassPatternsButton() {
+  public static JButton createConfigureClassPatternsButton(final Project project) {
     final JButton configureClassPatterns = new JButton(JavaBundle.message("button.code.patterns"));
     configureClassPatterns.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final Project project = ProjectUtil.guessCurrentProject(configureClassPatterns);
         final EntryPointsManagerBase entryPointsManagerBase = getInstance(project);
         final ArrayList<ClassPattern> list = new ArrayList<>();
         for (ClassPattern pattern : entryPointsManagerBase.getPatterns()) {

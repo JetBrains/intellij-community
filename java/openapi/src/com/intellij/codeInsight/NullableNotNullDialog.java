@@ -1,18 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.ide.DataManager;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -45,9 +41,9 @@ public class NullableNotNullDialog extends DialogWrapper {
     setTitle(JavaBundle.message("nullable.notnull.configuration.dialog.title"));
   }
 
-  public static JButton createConfigureAnnotationsButton(Component context) {
+  public static JButton createConfigureAnnotationsButton(@NotNull Project project) {
     final JButton button = new JButton(JavaBundle.message("configure.annotations.option"));
-    button.addActionListener(createActionListener(context));
+    button.addActionListener(createActionListener(project));
     return button;
   }
 
@@ -56,7 +52,7 @@ public class NullableNotNullDialog extends DialogWrapper {
    * @param context  component where project context will be retrieved from
    * @return the action listener
    */
-  public static ActionListener createActionListener(Component context) {
+  private static ActionListener createActionListener(@NotNull Project context) {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -65,13 +61,11 @@ public class NullableNotNullDialog extends DialogWrapper {
     };
   }
 
-  public static void showDialogWithInstrumentationOptions(@NotNull Component context) {
-    showDialog(context, true);
+  public static void showDialogWithInstrumentationOptions(@NotNull Project project) {
+    showDialog(project, true);
   }
 
-  private static void showDialog(Component context, boolean showInstrumentationOptions) {
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(context));
-    if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+  private static void showDialog(@NotNull Project project, boolean showInstrumentationOptions) {
     NullableNotNullDialog dialog = new NullableNotNullDialog(project, showInstrumentationOptions);
     dialog.show();
   }
