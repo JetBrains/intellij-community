@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class GrayTextHandler constructor(private val scope: CoroutineScope) : CodeInsightActionHandler {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val inlineState = editor.getGrayTextState() ?: return

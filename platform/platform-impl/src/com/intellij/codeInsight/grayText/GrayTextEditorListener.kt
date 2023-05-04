@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.milliseconds
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 abstract class GrayTextEditorListener(private val scope: CoroutineScope) : EditorFactoryListener {
   open fun initDocumentListener(editor: EditorImpl) = GrayTextDocumentListener(editor, scope)
 
@@ -53,7 +53,7 @@ abstract class GrayTextEditorListener(private val scope: CoroutineScope) : Edito
 
 @Suppress("MemberVisibilityCanBePrivate")
 @OptIn(FlowPreview::class)
-@ApiStatus.Internal
+@ApiStatus.Experimental
 open class GrayTextDocumentListener(
   val editor: EditorImpl,
   private val scope: CoroutineScope,

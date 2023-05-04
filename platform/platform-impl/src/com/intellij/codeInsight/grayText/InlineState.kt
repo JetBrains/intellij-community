@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class InlineState private constructor(
   var suggestionIndex: Int = 0,
   var suggestions: List<GrayTextElement> = emptyList(),

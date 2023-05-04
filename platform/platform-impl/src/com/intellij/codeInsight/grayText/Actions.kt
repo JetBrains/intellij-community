@@ -19,14 +19,14 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class GrayTextCaretListener : CaretListener {
   override fun caretPositionChanged(event: CaretEvent) {
     event.editor.resetGrayTextContext()
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class GrayTextFocusListener : FocusChangeListener {
   override fun focusGained(editor: Editor) = Unit
   override fun focusLost(editor: Editor) {
@@ -34,7 +34,7 @@ class GrayTextFocusListener : FocusChangeListener {
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class GrayTextKeyListener(private val editor: Editor) : KeyAdapter() {
   private val usedKeys = listOf(
     KeyEvent.VK_ALT,
@@ -51,7 +51,7 @@ class GrayTextKeyListener(private val editor: Editor) : KeyAdapter() {
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class AcceptGrayTextAction : EditorAction(AcceptGrayTextHandler()), HintManagerImpl.ActionToIgnore {
   class AcceptGrayTextHandler : EditorWriteActionHandler() {
     override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
@@ -64,7 +64,7 @@ class AcceptGrayTextAction : EditorAction(AcceptGrayTextHandler()), HintManagerI
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class EscapeGrayTextHandler : EditorActionHandler() {
   public override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     if (isEnabled(editor, caret, dataContext)) {

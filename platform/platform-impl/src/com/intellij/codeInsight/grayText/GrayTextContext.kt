@@ -11,7 +11,7 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class GrayTextContext private constructor(val editor: Editor) : Disposable {
   private val keyListener = GrayTextKeyListener(editor)
   private val isSelecting = AtomicBoolean(false)

@@ -10,7 +10,7 @@ import java.awt.FontMetrics
 import java.awt.Graphics
 import java.awt.Rectangle
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class InlineBlockElementRenderer(private val editor: Editor, val lines: List<String>) : EditorCustomElementRenderer {
 
   private val width = editor.contentComponent.getFontMetrics(InlineFontUtils.font(editor)).stringWidth(lines.maxBy { it.length })

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Rectangle
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class InlineSuffixRenderer(private val editor: Editor, val suffix: String) : EditorCustomElementRenderer {
   private val width = editor.contentComponent.getFontMetrics(InlineFontUtils.font(editor)).stringWidth(suffix)
 

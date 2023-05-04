@@ -9,7 +9,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface GrayTextProvider {
   suspend fun getProposals(request: GrayTextRequest): List<GrayTextElement>
 
@@ -18,7 +18,7 @@ interface GrayTextProvider {
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 data class GrayTextRequest(val file: PsiFile, val event: DocumentEvent, val editor: Editor) {
   val document: Document
     get() = event.document
@@ -38,5 +38,5 @@ data class GrayTextRequest(val file: PsiFile, val event: DocumentEvent, val edit
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 data class GrayTextElement(val text: String)

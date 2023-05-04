@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Editor
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface GrayText : Disposable {
   val offset: Int?
   val isEmpty: Boolean

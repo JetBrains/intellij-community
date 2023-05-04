@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class EditorInlineGrayText(private val editor: Editor) : GrayText {
   private var suffixInlay: Inlay<*>? = null
   private var blockInlay: Inlay<*>? = null
