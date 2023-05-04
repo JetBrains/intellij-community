@@ -45,11 +45,11 @@ import com.intellij.ui.EditorNotifications
 import com.intellij.util.Alarm
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.util.*
 import java.util.function.Function
 import javax.swing.JComponent
@@ -67,11 +67,19 @@ private val excludeAction = object : MarkExcludeRootAction() {
  * Not internal service. Can be used directly in related modules.
  */
 @Service(Service.Level.PROJECT)
-class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(project, project) {
+class IgnoredToExcludedSynchronizer(project: Project, cs: CoroutineScope) : FilesProcessorImpl(project, project) {
   private val queue = MergingUpdateQueue("IgnoredToExcludedSynchronizer", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
   init {
-    project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, MyRootChangeListener())
+    cs.launch {
+      WorkspaceModel.getInstance(project).changesEventFlow.collect { event ->
+        // listen content roots, source roots, excluded roots
+        if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() ||
+            event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
+          updateNotificationState()
+        }
+      }
+    }
   }
 
   /**
@@ -149,16 +157,6 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
     }
     else if (needDoForCurrentProject()) {
       doActionOnChosenFiles(doFilterFiles(ignoredDirs))
-    }
-  }
-
-  private inner class MyRootChangeListener : WorkspaceModelChangeListener {
-    override fun changed(event: VersionedStorageChange) {
-      // listen content roots, source roots, excluded roots
-      if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() ||
-          event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
-        updateNotificationState()
-      }
     }
   }
 }
