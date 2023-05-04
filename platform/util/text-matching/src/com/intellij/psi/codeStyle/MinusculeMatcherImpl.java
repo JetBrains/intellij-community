@@ -209,16 +209,15 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
     }
 
     int length = name.length();
+    boolean isAscii = AsciiUtils.isAscii(name);
     int patternIndex = 0;
-    boolean isAscii = true;
     for (int i = 0; i < length; ++i) {
       char c = name.charAt(i);
-      if (c >= 128) {
-        isAscii = false;
-      }
-      if (patternIndex < myMeaningfulCharacters.length &&
-          (c == myMeaningfulCharacters[patternIndex] || c == myMeaningfulCharacters[patternIndex + 1])) {
+      if (c == myMeaningfulCharacters[patternIndex] || c == myMeaningfulCharacters[patternIndex + 1]) {
         patternIndex += 2;
+        if (patternIndex >= myMeaningfulCharacters.length) {
+          break;
+        }
       }
     }
     if (patternIndex < myMinNameLength * 2) {
