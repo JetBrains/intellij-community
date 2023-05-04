@@ -5,12 +5,12 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigConvertToPlainPatternQuickFix
 import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigCharClass
+import org.editorconfig.language.psi.EditorConfigCharClassPattern
 import org.editorconfig.language.psi.EditorConfigVisitor
 
-class EditorConfigCharClassRedundancyInspection : LocalInspectionTool() {
+class EditorConfigCharClassPatternRedundancyInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
-    override fun visitCharClass(charClass: EditorConfigCharClass) {
+    override fun visitCharClassPattern(charClass: EditorConfigCharClassPattern) {
       if (charClass.charClassExclamation != null) return
       if (charClass.charClassLetterList.size != 1) return
 

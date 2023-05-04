@@ -11,14 +11,14 @@ import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
 import org.editorconfig.language.psi.base.EditorConfigHeaderElementBase;
 import org.editorconfig.language.psi.*;
 
-public class EditorConfigCharClassImpl extends EditorConfigHeaderElementBase implements EditorConfigCharClass {
+public class EditorConfigCharClassPatternImpl extends EditorConfigHeaderElementBase implements EditorConfigCharClassPattern {
 
-  public EditorConfigCharClassImpl(@NotNull ASTNode node) {
+  public EditorConfigCharClassPatternImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull EditorConfigVisitor visitor) {
-    visitor.visitCharClass(this);
+    visitor.visitCharClassPattern(this);
   }
 
   @Override

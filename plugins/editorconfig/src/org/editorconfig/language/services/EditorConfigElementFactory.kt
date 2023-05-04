@@ -11,7 +11,7 @@ interface EditorConfigElementFactory {
   fun createSection(source: CharSequence): EditorConfigSection
   fun createHeader(source: CharSequence): EditorConfigHeader
   fun createPattern(source: CharSequence): EditorConfigPattern
-  fun createCharClass(source: CharSequence): EditorConfigCharClass
+  fun createCharClassPattern(source: CharSequence): EditorConfigCharClassPattern
   fun createAnyValue(source: CharSequence): EditorConfigDescribableElement
   fun createValueIdentifier(source: CharSequence): EditorConfigOptionValueIdentifier
   fun createOption(source: CharSequence): EditorConfigOption

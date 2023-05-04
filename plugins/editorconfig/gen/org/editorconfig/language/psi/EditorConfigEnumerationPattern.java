@@ -5,6 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface EditorConfigAsteriskPattern extends EditorConfigPattern {
+public interface EditorConfigEnumerationPattern extends EditorConfigPattern {
+
+  @NotNull
+  List<EditorConfigPattern> getPatternList();
 
 }

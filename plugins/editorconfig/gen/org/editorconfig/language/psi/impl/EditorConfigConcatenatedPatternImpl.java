@@ -8,23 +8,29 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
+import org.editorconfig.language.psi.base.EditorConfigHeaderElementBase;
 import org.editorconfig.language.psi.*;
 
-public class EditorConfigRawOptionValueImpl extends ASTWrapperPsiElement implements EditorConfigRawOptionValue {
+public class EditorConfigConcatenatedPatternImpl extends EditorConfigHeaderElementBase implements EditorConfigConcatenatedPattern {
 
-  public EditorConfigRawOptionValueImpl(@NotNull ASTNode node) {
+  public EditorConfigConcatenatedPatternImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull EditorConfigVisitor visitor) {
-    visitor.visitRawOptionValue(this);
+    visitor.visitConcatenatedPattern(this);
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof EditorConfigVisitor) accept((EditorConfigVisitor)visitor);
     else super.accept(visitor);
+  }
+
+  @Override
+  @NotNull
+  public List<EditorConfigPattern> getPatternList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigPattern.class);
   }
 
 }

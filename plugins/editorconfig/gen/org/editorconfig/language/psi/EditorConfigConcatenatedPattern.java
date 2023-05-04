@@ -4,9 +4,8 @@ package org.editorconfig.language.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
-import org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement;
 
-public interface EditorConfigPatternEnumeration extends EditorConfigHeaderElement {
+public interface EditorConfigConcatenatedPattern extends EditorConfigPattern {
 
   @NotNull
   List<EditorConfigPattern> getPatternList();

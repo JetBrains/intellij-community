@@ -11,14 +11,14 @@ import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
 import org.editorconfig.language.psi.base.EditorConfigHeaderElementBase;
 import org.editorconfig.language.psi.*;
 
-public class EditorConfigPatternEnumerationImpl extends EditorConfigHeaderElementBase implements EditorConfigPatternEnumeration {
+public class EditorConfigEnumerationPatternImpl extends EditorConfigHeaderElementBase implements EditorConfigEnumerationPattern {
 
-  public EditorConfigPatternEnumerationImpl(@NotNull ASTNode node) {
+  public EditorConfigEnumerationPatternImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull EditorConfigVisitor visitor) {
-    visitor.visitPatternEnumeration(this);
+    visitor.visitEnumerationPattern(this);
   }
 
   @Override

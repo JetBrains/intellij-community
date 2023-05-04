@@ -12,11 +12,7 @@ import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement;
 public class EditorConfigVisitor extends PsiElementVisitor {
 
   public void visitAsteriskPattern(@NotNull EditorConfigAsteriskPattern o) {
-    visitHeaderElement(o);
-  }
-
-  public void visitCharClass(@NotNull EditorConfigCharClass o) {
-    visitHeaderElement(o);
+    visitPattern(o);
   }
 
   public void visitCharClassExclamation(@NotNull EditorConfigCharClassExclamation o) {
@@ -27,8 +23,20 @@ public class EditorConfigVisitor extends PsiElementVisitor {
     visitHeaderElement(o);
   }
 
+  public void visitCharClassPattern(@NotNull EditorConfigCharClassPattern o) {
+    visitPattern(o);
+  }
+
+  public void visitConcatenatedPattern(@NotNull EditorConfigConcatenatedPattern o) {
+    visitPattern(o);
+  }
+
   public void visitDoubleAsteriskPattern(@NotNull EditorConfigDoubleAsteriskPattern o) {
-    visitHeaderElement(o);
+    visitPattern(o);
+  }
+
+  public void visitEnumerationPattern(@NotNull EditorConfigEnumerationPattern o) {
+    visitPattern(o);
   }
 
   public void visitFlatOptionKey(@NotNull EditorConfigFlatOptionKey o) {
@@ -36,7 +44,7 @@ public class EditorConfigVisitor extends PsiElementVisitor {
   }
 
   public void visitFlatPattern(@NotNull EditorConfigFlatPattern o) {
-    visitHeaderElement(o);
+    visitPattern(o);
   }
 
   public void visitHeader(@NotNull EditorConfigHeader o) {
@@ -63,10 +71,6 @@ public class EditorConfigVisitor extends PsiElementVisitor {
     visitHeaderElement(o);
   }
 
-  public void visitPatternEnumeration(@NotNull EditorConfigPatternEnumeration o) {
-    visitHeaderElement(o);
-  }
-
   public void visitQualifiedKeyPart(@NotNull EditorConfigQualifiedKeyPart o) {
     visitIdentifierElement(o);
   }
@@ -76,7 +80,7 @@ public class EditorConfigVisitor extends PsiElementVisitor {
   }
 
   public void visitQuestionPattern(@NotNull EditorConfigQuestionPattern o) {
-    visitHeaderElement(o);
+    visitPattern(o);
   }
 
   public void visitRawOptionValue(@NotNull EditorConfigRawOptionValue o) {

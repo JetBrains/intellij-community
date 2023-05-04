@@ -6,13 +6,13 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigSanitizeCharClassQuickFix
 import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigCharClass
 import org.editorconfig.language.psi.EditorConfigCharClassLetter
+import org.editorconfig.language.psi.EditorConfigCharClassPattern
 import org.editorconfig.language.psi.EditorConfigVisitor
 
 class EditorConfigCharClassLetterRedundancyInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
-    override fun visitCharClass(charClass: EditorConfigCharClass) {
+    override fun visitCharClassPattern(charClass: EditorConfigCharClassPattern) {
       val letters = charClass.charClassLetterList
       val message = EditorConfigBundle["inspection.charclass.duplicate.message"]
 

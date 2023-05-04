@@ -247,7 +247,7 @@ For more information, check the documentation for <a href="https://editorconfig.
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="WARNING"
-        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigCharClassRedundancyInspection"/>
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigCharClassPatternRedundancyInspection"/>
 
     <!-- Option inspections -->
     <localInspection

@@ -4,6 +4,7 @@ package org.editorconfig.language.services.impl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.util.PsiTreeUtil
 import org.editorconfig.language.filetype.EditorConfigFileConstants
 import org.editorconfig.language.filetype.EditorConfigFileType
 import org.editorconfig.language.psi.*
@@ -31,13 +32,10 @@ class EditorConfigElementFactoryImpl(private val project: Project) : EditorConfi
   override fun createPattern(source: CharSequence) =
     createSection("[$source]")
       .header
-      .patternList
-      .first<EditorConfigPattern>()
+      .pattern!!
 
-  override fun createCharClass(source: CharSequence) =
-    createPattern(source)
-      .charClassList
-      .first<EditorConfigCharClass>()
+  override fun createCharClassPattern(source: CharSequence) =
+    PsiTreeUtil.findChildOfType(createPattern(source), EditorConfigCharClassPattern::class.java, false)!!
 
   override fun createAnyValue(source: CharSequence) =
     createOption("foo=$source").anyValue!!
