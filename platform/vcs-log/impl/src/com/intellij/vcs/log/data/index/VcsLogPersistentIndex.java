@@ -592,16 +592,18 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     }
 
     private void checkShouldCancel(@NotNull ProgressIndicator indicator) {
-      if (myIdleIndexer.isEnabled()) return;
-
       long time = myIndexingTime.get(myRoot).get() + (getCurrentTimeMillis() - myStartTime);
       int limit = myIndexingLimit.get(myRoot).get();
-      boolean isOvertime = time >= (Math.max(limit, 1L) * 60 * 1000) && !myBigRepositoriesList.isBig(myRoot);
-      if (isOvertime || (myBigRepositoriesList.isBig(myRoot) && !indicator.isCanceled())) {
+      boolean isBigRoot = myBigRepositoriesList.isBig(myRoot);
+      boolean isOvertime = !myIdleIndexer.isEnabled()
+                           && (time >= (Math.max(limit, 1L) * 60 * 1000) && !isBigRoot);
+      if (isOvertime || (isBigRoot && !indicator.isCanceled())) {
         mySpan.setAttribute("cancelled", true);
         LOG.warn("Indexing " + myRoot.getName() + " was cancelled after " + StopWatch.formatTime(time));
-        if (isOvertime) {
+        if (!isBigRoot) {
           myBigRepositoriesList.addRepository(myRoot);
+        }
+        if (isOvertime) {
           myIndexingLimit.get(myRoot).compareAndSet(limit,
                                                     Math.max(limit + getIndexingLimit(),
                                                              (int)((time / (getIndexingLimit() * 60000) + 1) * getIndexingLimit())));
