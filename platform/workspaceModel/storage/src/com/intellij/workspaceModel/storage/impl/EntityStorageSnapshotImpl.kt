@@ -470,53 +470,11 @@ internal class MutableEntityStorageImpl(
 
       for ((entityId, change) in this.changeLog.changeLog) {
         when (change) {
-          is ChangeEntry.AddEntity -> {
-            changedEntityIds += entityId
-            //changedEntityIds += this.refs.getChildrenRefsOfParentBy(entityId.asParent()).values.flatten().map { it.id }
-            //changedEntityIds += this.refs.getParentRefsOfChild(entityId.asChild()).values.map { it.id }
-          }
-          is ChangeEntry.RemoveEntity -> {
-            changedEntityIds += entityId
-            //changedEntityIds += originalImpl.refs.getChildrenRefsOfParentBy(entityId.asParent()).values.flatten().map { it.id }
-            //changedEntityIds += originalImpl.refs.getParentRefsOfChild(entityId.asChild()).values.map { it.id }
-          }
-          is ChangeEntry.ReplaceEntity -> {
-            changedEntityIds += entityId
-
-            //if (change.references != null) {
-            //  changedEntityIds += (change.references.oldParents - change.references.modifiedParents).values.map { it.id }
-            //  changedEntityIds += (change.references.modifiedParents - change.references.oldParents).values.mapNotNull { it?.id }
-            //
-            //  val updatedChildren = change.references.removedChildren.map { it.second.id } + change.references.newChildren.map { it.second.id }
-            //  changedEntityIds += updatedChildren
-            //  updatedChildren.forEach { childId ->
-            //    val origParents: Set<EntityId> = originalImpl.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
-            //    val newParents: Set<EntityId> = this.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
-            //    changedEntityIds += (origParents - newParents)
-            //    changedEntityIds += (newParents - origParents)
-            //  }
-            //}
-          }
-          is ChangeEntry.ChangeEntitySource -> {
-            changedEntityIds += entityId
-          }
-          is ChangeEntry.ReplaceAndChangeSource -> {
-            changedEntityIds += entityId
-
-            //if (change.dataChange.references != null) {
-            //  changedEntityIds += (change.dataChange.references.oldParents - change.dataChange.references.modifiedParents).values.map { it.id }
-            //  changedEntityIds += (change.dataChange.references.modifiedParents - change.dataChange.references.oldParents).values.mapNotNull { it?.id }
-            //
-            //  val updatedChildren = change.dataChange.references.removedChildren.map { it.second.id } + change.dataChange.references.newChildren.map { it.second.id }
-            //  changedEntityIds += updatedChildren
-            //  updatedChildren.forEach { childId ->
-            //    val origParents: Set<EntityId> = originalImpl.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
-            //    val newParents: Set<EntityId> = this.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
-            //    changedEntityIds += (origParents - newParents)
-            //    changedEntityIds += (newParents - origParents)
-            //  }
-            //}
-          }
+          is ChangeEntry.AddEntity -> changedEntityIds += entityId
+          is ChangeEntry.RemoveEntity -> changedEntityIds += entityId
+          is ChangeEntry.ReplaceEntity -> changedEntityIds += entityId
+          is ChangeEntry.ChangeEntitySource -> changedEntityIds += entityId
+          is ChangeEntry.ReplaceAndChangeSource -> changedEntityIds += entityId
         }
       }
 
