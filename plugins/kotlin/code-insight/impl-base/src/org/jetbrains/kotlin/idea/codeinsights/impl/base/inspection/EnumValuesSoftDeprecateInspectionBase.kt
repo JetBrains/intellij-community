@@ -11,13 +11,14 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.codeInsight.getEntriesPropertyOfEnumClass
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.base.codeInsight.isSoftDeprecatedEnumValuesMethod
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -47,23 +48,31 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
                     return
                 }
                 analyze(callExpression) {
-                    if (!isOptInAllowed(callExpression, EXPERIMENTAL_ANNOTATION_CLASS_ID)) {
-                        return
-                    }
                     val resolvedCall = callExpression.resolveCall().successfulFunctionCallOrNull() ?: return
                     val resolvedCallSymbol = resolvedCall.partiallyAppliedSymbol.symbol
-                    if (isSoftDeprecatedEnumValuesMethod(resolvedCallSymbol)) {
-                        val quickFix = createQuickFix(callExpression, resolvedCallSymbol) ?: return
-                        session.updateDeprecationData { it.withDeprecatedFeature() }
-                        holder.registerProblem(
-                            callExpression,
-                            KotlinBundle.message("inspection.enum.values.method.soft.deprecate.migration.display.name"),
-                            quickFix
-                        )
+                    val enumClassSymbol = (resolvedCallSymbol.getContainingSymbol() as? KtClassOrObjectSymbol) ?: return
+
+                    if (!isSoftDeprecatedEnumValuesMethod(resolvedCallSymbol, enumClassSymbol)) {
+                        return
                     }
+                    val enumEntriesPropertySymbol = getEntriesPropertyOfEnumClass(enumClassSymbol) ?: return
+                    val optInRequired = isOptInRequired(enumEntriesPropertySymbol) ?: return
+                    if (optInRequired && !isOptInAllowed(callExpression, EXPERIMENTAL_ANNOTATION_CLASS_ID)) {
+                        return
+                    }
+                    val quickFix = createQuickFix(callExpression, resolvedCallSymbol) ?: return
+                    session.updateDeprecationData { it.withDeprecatedFeature() }
+                    holder.registerProblem(
+                        callExpression,
+                        KotlinBundle.message("inspection.enum.values.method.soft.deprecate.migration.display.name"),
+                        quickFix
+                    )
                 }
             })
         }
+
+    private fun KtAnalysisSession.isOptInRequired(enumEntriesPropertySymbol: KtCallableSymbol): Boolean? =
+        enumEntriesPropertySymbol.returnType.expandedClassSymbol?.hasAnnotation(EXPERIMENTAL_ANNOTATION_CLASS_ID)
 
     protected abstract fun KtAnalysisSession.isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean
 
