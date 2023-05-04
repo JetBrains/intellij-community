@@ -437,10 +437,10 @@
 
     <applicationService serviceInterface="com.intellij.ide.UiActivityMonitor" serviceImplementation="com.intellij.ide.UiActivityMonitorImpl"/>
 
-<!-- Android Studio: don't register IntelliJ forks
     <applicationService serviceImplementation="com.intellij.diagnostic.WindowsDefenderChecker"/>
+<!-- Android Studio: don't register IntelliJ fork
     <applicationService serviceImplementation="com.intellij.diagnostic.GcPauseWatcher"/>
-Android Studio: don't register IntelliJ forks -->
+Android Studio: don't register IntelliJ fork -->
 
     <applicationService serviceInterface="com.intellij.execution.process.ProcessHandlerFactory"
                         serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl" />
