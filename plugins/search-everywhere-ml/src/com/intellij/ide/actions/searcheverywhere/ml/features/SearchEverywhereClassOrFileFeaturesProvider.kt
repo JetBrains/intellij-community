@@ -15,11 +15,13 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiInvalidElementAccessException
@@ -40,6 +42,7 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
     internal val IS_SAME_MODULE_DATA_KEY = EventFields.Boolean("isSameModule")
     internal val PACKAGE_DISTANCE_DATA_KEY = EventFields.Int("packageDistance")
     internal val PACKAGE_DISTANCE_NORMALIZED_DATA_KEY = EventFields.Double("packageDistanceNorm")
+    internal val DIRECTORY_DEPTH_DATA_KEY = EventFields.Int("directoryDepth")
     internal val IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY = EventFields.Boolean("isSameFileTypeAsOpenedFile")
 
     internal val IS_IN_SOURCE_DATA_KEY = EventFields.Boolean("isInSource")
@@ -74,7 +77,8 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
     return arrayListOf(
       IS_ACCESSIBLE_FROM_MODULE,
       IS_SAME_MODULE_DATA_KEY, PACKAGE_DISTANCE_DATA_KEY,
-      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY, IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY,
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY, DIRECTORY_DEPTH_DATA_KEY,
+      IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY,
       IS_IN_SOURCE_DATA_KEY, IS_IN_TEST_SOURCES_DATA_KEY, IS_IN_LIBRARY_DATA_KEY,
       IS_EXCLUDED_DATA_KEY, FILETYPE_USAGE_RATIO_DATA_KEY,
       FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY, FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY,
@@ -168,6 +172,10 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
     calculatePackageDistance(file, project, cache.currentlyOpenedFile)?.let { (packageDistance, packageDistanceNorm) ->
       data.add(PACKAGE_DISTANCE_DATA_KEY.with(packageDistance))
       data.add(PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(packageDistanceNorm))
+    }
+
+    calculateRootDistance(file, project)?.let {
+      data.add(DIRECTORY_DEPTH_DATA_KEY.with(it))
     }
   }
 
@@ -274,6 +282,22 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
     val distance = maxDistance - 2 * common
     val normalizedDistance = roundDouble(if (maxDistance != 0) (distance.toDouble() / maxDistance) else 0.0)
     return Pair(distance, normalizedDistance)
+  }
+
+  private fun calculateRootDistance(file: VirtualFile, project: Project): Int? {
+    val contentRoot = project.guessProjectDir() ?: return null
+
+    val fileDirectoryPath = file.parent?.toNioPathOrNull() ?: return null
+    val contentRootPath = contentRoot.toNioPathOrNull() ?: return null
+
+    if (!fileDirectoryPath.startsWith(contentRootPath)) return null
+
+    val relativePath = contentRootPath.relativize(fileDirectoryPath)
+
+    // Empty path still has nameCount 1
+    if (relativePath.toString().isEmpty()) return 0
+
+    return relativePath.nameCount
   }
 
   private fun isSameFileTypeAsOpenedFile(file: VirtualFile, openedFile: VirtualFile?): Boolean? {

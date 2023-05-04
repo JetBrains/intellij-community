@@ -13,6 +13,7 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereCla
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.PACKAGE_DISTANCE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.PACKAGE_DISTANCE_NORMALIZED_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.RECENT_INDEX_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.DIRECTORY_DEPTH_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.TIME_SINCE_LAST_MODIFICATION_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.WAS_MODIFIED_IN_LAST_DAY_DATA_KEY
@@ -465,6 +466,67 @@ internal class SearchEverywhereClassOrFileFeaturesProviderTest
     val expected = listOf(
       PACKAGE_DISTANCE_DATA_KEY.with(4),
       PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(roundDouble(4 / (4 + 0).toDouble())),
+    )
+
+    val psiFile = foundFile!!.toPsi()
+    checkThatFeatures()
+      .ofElement(psiFile)
+      .isEqualTo(expected)
+  }
+
+  fun `test root distance for file in package`() {
+    var foundFile: VirtualFile? = null
+
+    module {
+      source {
+        createPackage("a.b.c.d") {
+          file("file.txt") { foundFile = it }
+        }
+      }
+    }
+
+    val expected = listOf(
+      DIRECTORY_DEPTH_DATA_KEY.with(4)
+    )
+
+    val psiFile = foundFile!!.toPsi()
+    checkThatFeatures()
+      .ofElement(psiFile)
+      .isEqualTo(expected)
+  }
+
+  fun `test root distance is 0 for root files`() {
+    var foundFile: VirtualFile? = null
+
+    module {
+      source {
+        file("file.txt") { foundFile = it }
+      }
+    }
+
+    val expected = listOf(
+      DIRECTORY_DEPTH_DATA_KEY.with(0)
+    )
+
+    val psiFile = foundFile!!.toPsi()
+    checkThatFeatures()
+      .ofElement(psiFile)
+      .isEqualTo(expected)
+  }
+
+  fun `test root distance is reported for directories`() {
+    var foundFile: VirtualFile? = null
+
+    module {
+      source {
+        createPackage("a.b.c") {
+          directory("dir") { foundFile = it }
+        }
+      }
+    }
+
+    val expected = listOf(
+      DIRECTORY_DEPTH_DATA_KEY.with(3)
     )
 
     val psiFile = foundFile!!.toPsi()

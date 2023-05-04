@@ -5,7 +5,10 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFil
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_BOOKMARK_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_DIRECTORY_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_EXACT_MATCH_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.REL_PATH_NAME_FEATURE_TO_FIELD
 import com.intellij.ide.bookmarks.BookmarkManager
+import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.psi.PsiFileSystemItem
 
 
@@ -83,5 +86,34 @@ internal class SearchEverywhereFileFeaturesProviderTest
       .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE + 1)
       .withQuery("${testFile.virtualFile.parent.name.last()}\\${testFile.virtualFile.name}")
       .isEqualTo(true)
+  }
+
+  fun `test exact relative path is true with slash`() {
+    checkThatFeature(IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY)
+      .ofElement(testFile)
+      .withQuery("${testFile.virtualFile.parent.name}/${testFile.virtualFile.name}")
+      .isEqualTo(true)
+  }
+
+  fun `test exact relative path is true with back slash`() {
+    checkThatFeature(IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY)
+      .ofElement(testFile)
+      .withQuery("${testFile.virtualFile.parent.name}\\${testFile.virtualFile.name}")
+      .isEqualTo(true)
+  }
+
+  fun `test exact relative path is false for just file`() {
+    checkThatFeature(IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY)
+      .ofElement(testFile)
+      .withQuery(testFile.virtualFile.name)
+      .isEqualTo(false)
+  }
+
+  fun `test relPathPrefixMatchedWordsRelative`() {
+    val relativePath = "${testFile.virtualFile.parent.name}\\${testFile.virtualFile.name}"
+    checkThatFeature(REL_PATH_NAME_FEATURE_TO_FIELD["prefix_matched_words_relative"]!! as EventField<Double>)
+      .ofElement(testFile)
+      .withQuery(relativePath)
+      .isEqualTo(1.0)
   }
 }

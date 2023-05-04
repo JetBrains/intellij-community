@@ -91,20 +91,28 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
     )
     features.forEach { (key, value) ->
       val field = nameFeatureToField[key]
-      if (value is Boolean && field is BooleanEventField) {
-        result.add(field.with(value))
-      }
-      else if (value is Double && field is DoubleEventField) {
-        result.add(field.with(roundDouble(value)))
-      }
-      else if (value is Int && field is IntEventField) {
-        result.add(field.with(value))
-      }
-      else if (value is Enum<*> && field is StringEventField) {
-        result.add(field.with(value.toString()))
+      setMatchValueToField(value, field)?.let {
+        result.add(it)
       }
     }
     return result
+  }
+
+  internal fun setMatchValueToField(matchValue: Any,
+                                    field: EventField<*>?): EventPair<*>? {
+    if (matchValue is Boolean && field is BooleanEventField) {
+      return field.with(matchValue)
+    }
+    else if (matchValue is Double && field is DoubleEventField) {
+      return field.with(roundDouble(matchValue))
+    }
+    else if (matchValue is Int && field is IntEventField) {
+      return field.with(matchValue)
+    }
+    else if (matchValue is Enum<*> && field is StringEventField) {
+      return field.with(matchValue.toString())
+    }
+    return null
   }
 }
 

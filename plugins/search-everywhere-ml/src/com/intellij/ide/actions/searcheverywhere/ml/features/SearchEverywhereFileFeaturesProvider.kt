@@ -11,10 +11,12 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toNioPath
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
-import com.intellij.util.PathUtil
+import com.intellij.textMatching.PrefixMatchingUtil
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 @ApiStatus.Internal
 @IntellijInternalApi
@@ -28,13 +30,31 @@ class SearchEverywhereFileFeaturesProvider
     internal val IS_EXACT_MATCH_DATA_KEY = EventFields.Boolean("isExactMatch")
     internal val FILETYPE_MATCHES_QUERY_DATA_KEY = EventFields.Boolean("fileTypeMatchesQuery")
     internal val IS_TOP_LEVEL_DATA_KEY = EventFields.Boolean("isTopLevel")
+    internal val IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY = EventFields.Boolean("isExactRelativePath")
+
+    internal val REL_PATH_NAME_FEATURE_TO_FIELD = hashMapOf<String, EventField<*>>(
+      "prefix_same_start_count" to EventFields.Int("relPathPrefixSameStartCount"),
+      "prefix_greedy_score" to EventFields.Double("relPathPrefixGreedyScore"),
+      "prefix_matched_words_score" to EventFields.Double("relPathPrefixMatchedWordsScore"),
+      "prefix_matched_words_relative" to EventFields.Double("relPathPrefixMatchedWordsRelative")
+    )
+
+    private fun VirtualFile.toNioPathOrNull(): Path? {
+      return try {
+        this.toNioPath()
+      }
+      catch (e: UnsupportedOperationException) {
+        null
+      }
+    }
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
     return arrayListOf<EventField<*>>(
       IS_DIRECTORY_DATA_KEY, FILETYPE_DATA_KEY, IS_BOOKMARK_DATA_KEY,
-      IS_EXACT_MATCH_DATA_KEY, FILETYPE_MATCHES_QUERY_DATA_KEY, IS_TOP_LEVEL_DATA_KEY
-    )
+      IS_EXACT_MATCH_DATA_KEY, FILETYPE_MATCHES_QUERY_DATA_KEY, IS_TOP_LEVEL_DATA_KEY,
+      IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY
+    ) + REL_PATH_NAME_FEATURE_TO_FIELD.values
   }
 
   override fun getElementFeatures(element: Any,
@@ -47,8 +67,11 @@ class SearchEverywhereFileFeaturesProvider
     val data = arrayListOf<EventPair<*>>(
       IS_BOOKMARK_DATA_KEY.with(isBookmark(item)),
       IS_DIRECTORY_DATA_KEY.with(item.isDirectory),
-      IS_EXACT_MATCH_DATA_KEY.with(isExactMatch(item, searchQuery, elementPriority))
+      IS_EXACT_MATCH_DATA_KEY.with(isExactMatch(item, searchQuery, elementPriority)),
+      IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY.with(isExactRelativePath(item, searchQuery))
     )
+
+    data.addAll(getRelativePathNameMatchingFeatures(item, searchQuery))
 
     data.putIfValueNotNull(IS_TOP_LEVEL_DATA_KEY, isTopLevel(item))
 
@@ -103,6 +126,34 @@ class SearchEverywhereFileFeaturesProvider
         val index = (filePath.length - searchQuery.length + searchQueryCharIndex).takeIf { it >= 0 } ?: return@filterIndexed true
         filePath[index] != c
       }.none()
+  }
+
+  private fun isExactRelativePath(item: PsiFileSystemItem, searchQuery: String): Boolean {
+    val filePath = item.virtualFile.toNioPathOrNull() ?: return false
+    val basePath = item.project.guessProjectDir()?.toNioPathOrNull() ?: return false
+    val queryPath = searchQuery.toNioPath()
+    val relativePath = basePath.relativize(filePath)
+
+    return queryPath == relativePath
+  }
+
+  internal fun getRelativePathNameMatchingFeatures(item: PsiFileSystemItem, searchQuery: String): Collection<EventPair<*>> {
+    val filePath = item.virtualFile.toNioPathOrNull() ?: return emptyList()
+    val basePath = item.project.guessProjectDir()?.toNioPathOrNull() ?: return emptyList()
+
+    val relativePath = basePath.relativize(filePath)
+
+    val features = mutableMapOf<String, Any>()
+    PrefixMatchingUtil.calculateFeatures(relativePath.toString(), searchQuery, features)
+
+    val result = arrayListOf<EventPair<*>>()
+    REL_PATH_NAME_FEATURE_TO_FIELD.forEach { (key, field) ->
+      val matchValue = features[key] ?: return@forEach
+      setMatchValueToField(matchValue, field)?.let {
+        result.add(it)
+      }
+    }
+    return result
   }
 
   private fun isTopLevel(item: PsiFileSystemItem): Boolean? {
