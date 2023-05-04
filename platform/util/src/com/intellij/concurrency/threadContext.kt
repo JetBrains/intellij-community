@@ -198,6 +198,15 @@ fun captureThreadContext(runnable: Runnable): Runnable {
 }
 
 /**
+ * Strips off internal elements from thread contexts.
+ * If you need to compare contexts by equality, most likely you need to use this method.
+ */
+fun getContextSkeleton(context: CoroutineContext): Set<CoroutineContext.Element> {
+  checkContextInstalled()
+  return context.minusKey(Job.Key).fold(HashSet()) { m, elem -> m.apply { add(elem) } }
+}
+
+/**
  * Same as [captureCallableThreadContext] but for [Callable].
  */
 fun <V> captureThreadContext(callable: Callable<V>): Callable<V> {

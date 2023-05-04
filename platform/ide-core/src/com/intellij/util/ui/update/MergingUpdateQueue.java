@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -345,7 +345,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       each.setRejected();
     }
     else {
-      each.run();
+      each.runUpdate();
     }
   }
 
@@ -360,7 +360,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     if (myPassThrough) {
-      update.run();
+      update.runUpdate();
       finishActivity();
       return;
     }
@@ -396,10 +396,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     for (Update eachInQueue : getAllScheduledUpdates()) {
-      if (eachInQueue.canEat(update)) {
+      if (eachInQueue.actuallyCanEat(update)) {
         return true;
       }
-      if (update.canEat(eachInQueue)) {
+      if (update.actuallyCanEat(eachInQueue)) {
         myScheduledUpdates.get(eachInQueue.getPriority()).remove(eachInQueue);
         eachInQueue.setRejected();
       }

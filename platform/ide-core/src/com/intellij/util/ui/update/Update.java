@@ -1,22 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update;
 
+import com.intellij.concurrency.ThreadContext;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Propagation;
+import kotlin.coroutines.CoroutineContext;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -32,6 +25,7 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
 
   private volatile boolean myProcessed;
   private volatile boolean myRejected;
+  private final @Nullable CoroutineContext myContext;
   private final boolean myExecuteInWriteAction;
 
   private final int myPriority;
@@ -49,7 +43,13 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
   }
 
   public Update(@NonNls Object identity, boolean executeInWriteAction, int priority) {
-    super(identity);
+    this(identity, executeInWriteAction, priority,
+         AppExecutorUtil.propagateContextOrCancellation() ? ThreadContext.currentThreadContext().minusKey(Job.Key) : null);
+  }
+
+  private Update(@NonNls Object identity, boolean executeInWriteAction, int priority, @Nullable CoroutineContext context) {
+    super(context == null ? new Object[]{identity} : new Object[]{identity, ThreadContext.getContextSkeleton(context)});
+    myContext = context;
     myExecuteInWriteAction = executeInWriteAction;
     myPriority = priority;
   }
@@ -81,6 +81,25 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
 
   public final int getPriority() {
     return myPriority;
+  }
+
+  final boolean actuallyCanEat(Update update) {
+    if (myContext != null) {
+      return update.myContext != null &&
+             ThreadContext.getContextSkeleton(myContext).equals(ThreadContext.getContextSkeleton(update.myContext)) &&
+             canEat(update);
+    } else {
+      return update.myContext == null &&
+             canEat(update);
+    }
+  }
+
+  final void runUpdate() {
+    if (myContext == null) {
+      run();
+    } else try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
+      run();
+    }
   }
 
   /**
