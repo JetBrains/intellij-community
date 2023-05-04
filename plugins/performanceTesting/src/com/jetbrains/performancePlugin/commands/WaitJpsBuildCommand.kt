@@ -39,19 +39,19 @@ class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutine
     if (jpsLoadingManager is JpsProjectLoadingManagerImpl) {
       if (!jpsLoadingManager.isProjectLoaded()) {
         val completableDeferred = CompletableDeferred<Boolean>()
-        Disposer.newDisposable().use { disposable ->
+        Disposer.newDisposable("waitJpsProjectLoaded").use { disposable ->
           //disposable will help to make a disconnect on dispose
-          //Example - MessageBusTest::
+          //Example - MessageBusTest::disconnectOnDisposeForImmediateDeliveryTopic
           project.messageBus.connect(disposable).subscribe<JpsProjectLoadedListener>(LOADED, object : JpsProjectLoadedListener {
             override fun loaded() {
               completableDeferred.complete(true)
             }
           })
-        }
 
-        withTimeoutOrNull(Duration.of(waitTimeout.toLong(), chronoUnit)) {
-          return@withTimeoutOrNull completableDeferred.await()
-        } ?: throw RuntimeException("Jps project wasn't loaded in $waitTimeout ${chronoUnit.name}")
+          withTimeoutOrNull(Duration.of(waitTimeout.toLong(), chronoUnit)) {
+            return@withTimeoutOrNull completableDeferred.await()
+          } ?: throw RuntimeException("Jps project wasn't loaded in $waitTimeout ${chronoUnit.name}")
+        }
       }
     }
     else {
