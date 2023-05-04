@@ -5,6 +5,7 @@ import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -87,7 +88,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
         }
 
         runBlocking {
-          shutDown()
+          shutDown(useRawSwingDispatcher = true)
         }
       }
     }
@@ -100,21 +101,21 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
           runBlockingModal(owner = ModalTaskOwner.project(project),
                            title = VcsLogBundle.message("vcs.log.closing.process"),
                            cancellation = TaskCancellation.nonCancellable()) {
-            shutDown()
+            shutDown(useRawSwingDispatcher = false)
           }
         }
       }
     })
   }
 
-  private suspend fun shutDown() {
+  private suspend fun shutDown(useRawSwingDispatcher: Boolean) {
     if (!disposeStarted.compareAndSet(false, true)) {
       return
     }
 
     try {
       withTimeout(CLOSE_LOG_TIMEOUT) {
-        disposeLog()
+        disposeLog(useRawSwingDispatcher = useRawSwingDispatcher)
       }
     }
     catch (e: TimeoutCancellationException) {
@@ -174,23 +175,19 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     }
   }
 
-  private suspend fun disposeLog() {
+  private suspend fun disposeLog(useRawSwingDispatcher: Boolean = false) {
     if (lazyVcsLogManager.cached == null) {
       return
     }
 
     mutex.withLock {
-      val logManager = withContext(Dispatchers.EDT + modality()) {
-        blockingContext {
-          val manager = lazyVcsLogManager.dropValue()
-          manager?.disposeUi()
-          manager
-        }
+      val logManager = withContext(if (useRawSwingDispatcher) RawSwingDispatcher else (Dispatchers.EDT + modality())) {
+        val manager = lazyVcsLogManager.dropValue()
+        manager?.disposeUi()
+        manager
       }
       if (logManager != null) {
-        blockingContext {
-          Disposer.dispose(logManager)
-        }
+        Disposer.dispose(logManager)
       }
     }
   }
@@ -223,9 +220,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
       }
 
       val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>().await()
-      val logProviders = blockingContext {
-        VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
-      }
+      val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
       if (logProviders.isEmpty()) {
         return null
       }
@@ -337,9 +332,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
 
           withContext(Dispatchers.EDT) {
             log.logManager?.let {
-              blockingContext {
-                action(it)
-              }
+              action(it)
             }
           }
         }
