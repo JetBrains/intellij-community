@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.nextLeaf
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
@@ -498,7 +499,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
 
                     (importList.add(newDirective) as KtImportDirective).also {
                         if (packageDirective == null) {
-                            val whiteSpace = importList.nextSibling
+                            val whiteSpace = importList.nextLeaf(true)
                             if (whiteSpace is PsiWhiteSpace) {
                                 val newLineBreak = if (whiteSpace.isMultiLine()) {
                                     psiFactory.createWhiteSpace("\n" + whiteSpace.text)
