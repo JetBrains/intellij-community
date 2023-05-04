@@ -30,6 +30,7 @@
         </JAVADOC>
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-3/org.eclipse.jgit-6.5.0.202303070854-r-custom-3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.13/JavaEWAH-1.1.13-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
