@@ -47,6 +47,22 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   protected final Path myFile;
   private final Version myVersion;
   private final boolean myDoCaching;
+
+  /**
+   * Lock protects enumerator internal state.
+   * If acquired, the lock must always be acquired _before_ storage lock ({@link #lockStorageWrite()}/{@link #lockStorageWrite()})
+   *
+   * TODO RC: initially RW lock was considered, but was found quite hard to find really read-only
+   * ops, so now it is used only as exclusive lock (i.e. only writeLock part is acquired for both
+   * read and write ops)
+   *
+   * FIXME RC: it seems that this lock is not really needed: all its acquisition are immediately
+   * followed by acquisition of apt. storage lock. Tried to remove it, but got stuck on a read
+   * lock part: i.e. right now all getReadLock().lock() statements really acquire exclusive write
+   * lock, not shared read lock -- hence by replacing getReadLock().lock() with lockStorageRead()
+   * we change semantics. If we replace getReadLock() with lockStorageWrite() -- we keep semantics,
+   * but increase contention on storage write lock -- which is already quite contended.
+   */
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
 
   private volatile boolean myDirtyStatusUpdateInProgress;
@@ -326,7 +342,6 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         return true;
       }
     });
-
   }
 
   @NotNull
@@ -583,7 +598,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       dumpKeysOnCorruption();
     }
 
-    lockStorageWrite();
+    getWriteLock().lock();
     try {
       if (!myCorrupted) {
         myCorrupted = true;
@@ -598,7 +613,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       }
     }
     finally {
-      unlockStorageWrite();
+      getWriteLock().unlock();
     }
   }
 
