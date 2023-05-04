@@ -644,7 +644,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           int fileId = getFileId(file);
           dirtyFileIds.add(fileId);
         }
-        dirtyFileIds.addAll(myStaleIds);
+        synchronized (myStaleIds) {
+          dirtyFileIds.addAll(myStaleIds);
+          myStaleIds.clear();
+        }
         PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), dirtyFileIds, ManagingFS.getInstance().getCreationTimestamp());
         getChangedFilesCollector().clearFilesToUpdate();
 
