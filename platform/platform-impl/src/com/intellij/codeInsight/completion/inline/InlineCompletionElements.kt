@@ -9,16 +9,16 @@ import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface InlineCompletionProvider {
-  suspend fun getProposals(request: InlineCompletionRequest): List<InlineCompletionProposal>
+interface GrayTextProvider {
+  suspend fun getProposals(request: GrayTextRequest): List<GrayTextElement>
 
-  object DUMMY : InlineCompletionProvider {
-    override suspend fun getProposals(request: InlineCompletionRequest): List<InlineCompletionProposal> = emptyList()
+  object DUMMY : GrayTextProvider {
+    override suspend fun getProposals(request: GrayTextRequest): List<GrayTextElement> = emptyList()
   }
 }
 
 @ApiStatus.Internal
-data class InlineCompletionRequest(val file: PsiFile, val event: DocumentEvent, val editor: Editor) {
+data class GrayTextRequest(val file: PsiFile, val event: DocumentEvent, val editor: Editor) {
   val document: Document
     get() = event.document
   val startOffset: Int
@@ -27,15 +27,15 @@ data class InlineCompletionRequest(val file: PsiFile, val event: DocumentEvent, 
     get() = event.offset + event.newLength
 
   companion object {
-    fun fromDocumentEvent(event: DocumentEvent, editor: Editor): InlineCompletionRequest? {
+    fun fromDocumentEvent(event: DocumentEvent, editor: Editor): GrayTextRequest? {
       val virtualFile = editor.virtualFile ?: return null
       val project = editor.project ?: return null
       val file = ReadAction.compute<PsiFile, Throwable> { PsiManager.getInstance(project).findFile(virtualFile) }
 
-      return InlineCompletionRequest(file, event, editor)
+      return GrayTextRequest(file, event, editor)
     }
   }
 }
 
 @ApiStatus.Internal
-data class InlineCompletionProposal(val text: String)
+data class GrayTextElement(val text: String)

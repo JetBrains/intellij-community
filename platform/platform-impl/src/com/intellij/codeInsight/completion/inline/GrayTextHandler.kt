@@ -1,9 +1,9 @@
 package com.intellij.codeInsight.completion.inline
 
 import com.intellij.codeInsight.CodeInsightActionHandler
-import com.intellij.codeInsight.completion.inline.InlineContext.Companion.initOrGetInlineContext
-import com.intellij.codeInsight.completion.inline.InlineState.Companion.getInlineState
-import com.intellij.codeInsight.completion.inline.InlineState.Companion.initOrGetInlineState
+import com.intellij.codeInsight.completion.inline.GrayTextContext.Companion.initOrGetGrayTextContext
+import com.intellij.codeInsight.completion.inline.InlineState.Companion.getGrayTextState
+import com.intellij.codeInsight.completion.inline.InlineState.Companion.initOrGetGrayTextState
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
@@ -18,26 +18,26 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
-class InlineCompletionHandler constructor(private val scope: CoroutineScope) : CodeInsightActionHandler {
+class GrayTextHandler constructor(private val scope: CoroutineScope) : CodeInsightActionHandler {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    val inlineState = editor.getInlineState() ?: return
+    val inlineState = editor.getGrayTextState() ?: return
 
     showInlineSuggestion(editor, inlineState, editor.caretModel.offset)
   }
 
-  fun invoke(event: DocumentEvent, editor: Editor, provider: InlineCompletionProvider,) {
-    val request = InlineCompletionRequest.fromDocumentEvent(event, editor) ?: return
+  fun invoke(event: DocumentEvent, editor: Editor, provider: GrayTextProvider,) {
+    val request = GrayTextRequest.fromDocumentEvent(event, editor) ?: return
     invoke(request, provider)
   }
 
-  fun invoke(request: InlineCompletionRequest, provider: InlineCompletionProvider) {
+  fun invoke(request: GrayTextRequest, provider: GrayTextProvider) {
     scope.launch {
       val result = provider.getProposals(request)
 
       val editor = request.editor
       val offset = request.endOffset
 
-      val inlineState = editor.initOrGetInlineState()
+      val inlineState = editor.initOrGetGrayTextState()
 
       inlineState.suggestions = result
       withContext(Dispatchers.EDT) {
@@ -60,7 +60,7 @@ class InlineCompletionHandler constructor(private val scope: CoroutineScope) : C
       return
     }
 
-    editor.initOrGetInlineContext().update(suggestions, suggestionIndex, startOffset)
+    editor.initOrGetGrayTextContext().update(suggestions, suggestionIndex, startOffset)
   }
 
   companion object {

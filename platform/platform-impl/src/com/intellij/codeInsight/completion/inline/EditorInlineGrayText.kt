@@ -7,15 +7,13 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
 @ApiStatus.Internal
-class EditorInlineInlayCompletion(private val editor: Editor) : InlayCompletion {
+class EditorInlineGrayText(private val editor: Editor) : GrayText {
   private var suffixInlay: Inlay<*>? = null
   private var blockInlay: Inlay<*>? = null
 
-  override val offset: Int?
-    get() = suffixInlay?.offset
+  override val offset = suffixInlay?.offset
 
-  override val isEmpty: Boolean
-    get() = suffixInlay == null && blockInlay == null
+  override val isEmpty = suffixInlay == null && blockInlay == null
 
   override fun getBounds(): Rectangle? {
     val bounds = blockInlay?.bounds?.let { Rectangle(it) }
@@ -23,7 +21,7 @@ class EditorInlineInlayCompletion(private val editor: Editor) : InlayCompletion 
     return bounds
   }
 
-  override fun render(proposal: InlineCompletionProposal, offset: Int) {
+  override fun render(proposal: GrayTextElement, offset: Int) {
     if (proposal.text.isEmpty()) return
     val lines = proposal.text.lines()
     renderSuffix(editor, lines.first(), offset)
@@ -68,7 +66,6 @@ class EditorInlineInlayCompletion(private val editor: Editor) : InlayCompletion 
     ) ?: return
 
     Disposer.tryRegister(this, element)
-
     blockInlay = element
   }
 }

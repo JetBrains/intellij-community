@@ -10,7 +10,6 @@ import java.awt.Rectangle
 
 @ApiStatus.Internal
 class InlineSuffixRenderer(private val editor: Editor, val suffix: String) : EditorCustomElementRenderer {
-
   private val width = editor.contentComponent.getFontMetrics(InlineFontUtils.font(editor)).stringWidth(suffix)
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {

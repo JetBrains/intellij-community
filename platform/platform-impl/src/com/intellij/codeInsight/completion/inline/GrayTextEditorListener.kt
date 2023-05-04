@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.completion.inline
 
 import com.intellij.codeInsight.completion.CompletionUtil
-import com.intellij.codeInsight.completion.inline.InlineContext.Companion.getInlineContextOrNull
+import com.intellij.codeInsight.completion.inline.GrayTextContext.Companion.getGrayTextContextOrNull
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -23,8 +23,8 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
-abstract class InlineCompletionEditorListener(private val scope: CoroutineScope) : EditorFactoryListener {
-  open fun initDocumentListener(editor: EditorImpl) = InlineCompletionDocumentListener(editor, scope)
+abstract class GrayTextEditorListener(private val scope: CoroutineScope) : EditorFactoryListener {
+  open fun initDocumentListener(editor: EditorImpl) = GrayTextDocumentListener(editor, scope)
 
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor
@@ -38,8 +38,8 @@ abstract class InlineCompletionEditorListener(private val scope: CoroutineScope)
     val moveCaretAction = ActionUtil.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) ?: return
 
     DumbAwareAction.create {
-      val toAct = if (editor.getInlineContextOrNull()?.isCurrentlyDisplayingInlays == true) {
-        AcceptInlineCompletionAction()
+      val toAct = if (editor.getGrayTextContextOrNull()?.isCurrentlyDisplayingInlays == true) {
+        AcceptGrayTextAction()
       }
       else {
         moveCaretAction
@@ -53,11 +53,11 @@ abstract class InlineCompletionEditorListener(private val scope: CoroutineScope)
 @Suppress("MemberVisibilityCanBePrivate")
 @OptIn(FlowPreview::class)
 @ApiStatus.Internal
-open class InlineCompletionDocumentListener(
+open class GrayTextDocumentListener(
   val editor: EditorImpl,
   private val scope: CoroutineScope,
 ) : DocumentListener, Disposable {
-  private val handler = InlineCompletionHandler(scope)
+  private val handler = GrayTextHandler(scope)
   private var flow = MutableSharedFlow<DocumentEvent>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   open val minimalDelayMillis = 300.milliseconds
@@ -66,7 +66,7 @@ open class InlineCompletionDocumentListener(
     return event.newFragment != CompletionUtil.DUMMY_IDENTIFIER && event.newLength >= 1
   }
 
-  open fun initProvider(event: DocumentEvent): InlineCompletionProvider = InlineCompletionProvider.DUMMY
+  open fun initProvider(event: DocumentEvent): GrayTextProvider = GrayTextProvider.DUMMY
 
   open fun documentChangedDebounced(event: DocumentEvent) {
     if (event.document.isInBulkUpdate) return
@@ -80,14 +80,14 @@ open class InlineCompletionDocumentListener(
     editor.document.addDocumentListener(this, this)
     editor.putUserData(KEY, this)
 
-    scope.launch(CoroutineName("full-line inline call")) {
+    scope.launch(CoroutineName("full-line GrayText call")) {
       flow.debounce(minimalDelayMillis)
         .collect(::documentChangedDebounced)
     }
   }
 
   override fun documentChanged(event: DocumentEvent) {
-    if (InlineCompletionHandler.isMuted.get() || !isEnabled(event)) {
+    if (GrayTextHandler.isMuted.get() || !isEnabled(event)) {
       return
     }
 
@@ -104,6 +104,6 @@ open class InlineCompletionDocumentListener(
   }
 
   companion object {
-    private val KEY = Key.create<InlineCompletionDocumentListener>("completion.inline.listener")
+    private val KEY = Key.create<GrayTextDocumentListener>("completion.gray.text.listener")
   }
 }

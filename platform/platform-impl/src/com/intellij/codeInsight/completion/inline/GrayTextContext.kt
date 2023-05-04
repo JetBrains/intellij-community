@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.completion.inline
 
-import com.intellij.codeInsight.completion.inline.InlineState.Companion.resetInlineState
+import com.intellij.codeInsight.completion.inline.InlineState.Companion.resetGrayTextState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
@@ -11,18 +11,18 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
-class InlineContext private constructor(val editor: Editor) : Disposable {
-  private val keyListener = InlineKeyListener(editor)
+class GrayTextContext private constructor(val editor: Editor) : Disposable {
+  private val keyListener = GrayTextKeyListener(editor)
   private val isSelecting = AtomicBoolean(false)
-  private val inlay = InlayCompletion.forEditor(editor)
+  private val inlay = GrayText.forEditor(editor)
 
-  private var completions = emptyList<InlineCompletionProposal>()
+  private var completions = emptyList<GrayTextElement>()
   private var selectedIndex = -1
 
   init {
-    editor.caretModel.addCaretListener(InlineCaretListener())
+    editor.caretModel.addCaretListener(GrayTextCaretListener())
     if (editor is EditorEx) {
-      editor.addFocusListener(InlineFocusListener())
+      editor.addFocusListener(GrayTextFocusListener())
     }
   }
 
@@ -32,7 +32,7 @@ class InlineContext private constructor(val editor: Editor) : Disposable {
   val startOffset: Int?
     get() = inlay.offset
 
-  fun update(proposals: List<InlineCompletionProposal>, selectedIndex: Int, offset: Int) {
+  fun update(proposals: List<GrayTextElement>, selectedIndex: Int, offset: Int) {
     this.completions = proposals
     this.selectedIndex = selectedIndex
     val proposal = proposals[selectedIndex]
@@ -59,12 +59,12 @@ class InlineContext private constructor(val editor: Editor) : Disposable {
     }
 
     editor.contentComponent.removeKeyListener(keyListener)
-    editor.resetInlineState()
+    editor.resetGrayTextState()
   }
 
   fun insert() {
     isSelecting.set(true)
-    InlineCompletionHandler.mute()
+    GrayTextHandler.mute()
     val offset = inlay.offset ?: return
     if (selectedIndex < 0) return
 
@@ -73,23 +73,23 @@ class InlineContext private constructor(val editor: Editor) : Disposable {
     editor.caretModel.moveToOffset(offset + currentCompletion.text.length)
 
     isSelecting.set(false)
-    InlineCompletionHandler.unmute()
-    editor.removeInlineContext()
+    GrayTextHandler.unmute()
+    editor.removeGrayTextContext()
     Disposer.dispose(this)
   }
 
   companion object {
-    private val INLINE_CONTEXT = Key.create<InlineContext>("inline.completion.context")
+    private val GRAY_TEXT_CONTEXT = Key.create<GrayTextContext>("gray.text.completion.context")
 
-    fun Editor.initOrGetInlineContext(): InlineContext = getUserData(INLINE_CONTEXT) ?: InlineContext(this).also {
-      putUserData(INLINE_CONTEXT, it)
+    fun Editor.initOrGetGrayTextContext(): GrayTextContext = getUserData(GRAY_TEXT_CONTEXT) ?: GrayTextContext(this).also {
+      putUserData(GRAY_TEXT_CONTEXT, it)
     }
 
-    fun Editor.getInlineContextOrNull(): InlineContext? = getUserData(INLINE_CONTEXT)
-    fun Editor.removeInlineContext() = putUserData(INLINE_CONTEXT, null)
-    fun Editor.resetInlineContext() = getInlineContextOrNull()?.let {
+    fun Editor.getGrayTextContextOrNull(): GrayTextContext? = getUserData(GRAY_TEXT_CONTEXT)
+    fun Editor.removeGrayTextContext() = putUserData(GRAY_TEXT_CONTEXT, null)
+    fun Editor.resetGrayTextContext() = getGrayTextContextOrNull()?.let {
       if (it.isCurrentlyDisplayingInlays) {
-        removeInlineContext()
+        removeGrayTextContext()
         Disposer.dispose(it)
       }
     }

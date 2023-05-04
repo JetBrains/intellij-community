@@ -6,17 +6,17 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
 @ApiStatus.Internal
-interface InlayCompletion : Disposable {
+interface GrayText : Disposable {
   val offset: Int?
   val isEmpty: Boolean
 
-  fun render(proposal: InlineCompletionProposal, offset: Int)
+  fun render(proposal: GrayTextElement, offset: Int)
   fun getBounds(): Rectangle?
   fun reset()
 
   companion object {
-    fun forEditor(editor: Editor): InlayCompletion {
-      return EditorInlineInlayCompletion(editor)
+    fun forEditor(editor: Editor): GrayText {
+      return EditorInlineGrayText(editor)
     }
   }
 }

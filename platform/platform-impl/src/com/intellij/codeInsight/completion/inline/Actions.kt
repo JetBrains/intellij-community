@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.completion.inline
 
-import com.intellij.codeInsight.completion.inline.InlineContext.Companion.getInlineContextOrNull
-import com.intellij.codeInsight.completion.inline.InlineContext.Companion.removeInlineContext
-import com.intellij.codeInsight.completion.inline.InlineContext.Companion.resetInlineContext
+import com.intellij.codeInsight.completion.inline.GrayTextContext.Companion.getGrayTextContextOrNull
+import com.intellij.codeInsight.completion.inline.GrayTextContext.Companion.removeGrayTextContext
+import com.intellij.codeInsight.completion.inline.GrayTextContext.Companion.resetGrayTextContext
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
@@ -19,22 +19,22 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 
 @ApiStatus.Internal
-class InlineCaretListener : CaretListener {
+class GrayTextCaretListener : CaretListener {
   override fun caretPositionChanged(event: CaretEvent) {
-    event.editor.resetInlineContext()
+    event.editor.resetGrayTextContext()
   }
 }
 
 @ApiStatus.Internal
-class InlineFocusListener : FocusChangeListener {
+class GrayTextFocusListener : FocusChangeListener {
   override fun focusGained(editor: Editor) = Unit
   override fun focusLost(editor: Editor) {
-    editor.resetInlineContext()
+    editor.resetGrayTextContext()
   }
 }
 
 @ApiStatus.Internal
-class InlineKeyListener(private val editor: Editor) : KeyAdapter() {
+class GrayTextKeyListener(private val editor: Editor) : KeyAdapter() {
   private val usedKeys = listOf(
     KeyEvent.VK_ALT,
     KeyEvent.VK_OPEN_BRACKET,
@@ -46,35 +46,35 @@ class InlineKeyListener(private val editor: Editor) : KeyAdapter() {
     if (usedKeys.contains(event.keyCode)) {
       return
     }
-    editor.resetInlineContext()
+    editor.resetGrayTextContext()
   }
 }
 
 @ApiStatus.Internal
-class AcceptInlineCompletionAction : EditorAction(AcceptInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
-  class AcceptInlineCompletionHandler : EditorWriteActionHandler() {
+class AcceptGrayTextAction : EditorAction(AcceptGrayTextHandler()), HintManagerImpl.ActionToIgnore {
+  class AcceptGrayTextHandler : EditorWriteActionHandler() {
     override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
-      editor.getInlineContextOrNull()?.insert()
+      editor.getGrayTextContextOrNull()?.insert()
     }
 
     override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
-      return editor.getInlineContextOrNull()?.startOffset == caret.offset
+      return editor.getGrayTextContextOrNull()?.startOffset == caret.offset
     }
   }
 }
 
 @ApiStatus.Internal
-class EscapeHandler : EditorActionHandler() {
+class EscapeGrayTextHandler : EditorActionHandler() {
   public override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     if (isEnabled(editor, caret, dataContext)) {
       execute(editor, caret, dataContext)
     }
 
-    editor.removeInlineContext()
-    editor.getInlineContextOrNull()?.let(Disposer::dispose)
+    editor.removeGrayTextContext()
+    editor.getGrayTextContextOrNull()?.let(Disposer::dispose)
   }
 
   public override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
-    return editor.getInlineContextOrNull() != null
+    return editor.getGrayTextContextOrNull() != null
   }
 }
