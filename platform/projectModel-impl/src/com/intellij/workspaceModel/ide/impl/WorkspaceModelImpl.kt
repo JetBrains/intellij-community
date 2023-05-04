@@ -108,7 +108,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
     entityStorage = VersionedEntityStorageImpl(projectEntities.toSnapshot())
     unloadedEntitiesStorage = VersionedEntityStorageImpl(unloadedEntities)
-    entityTracer.subscribe(project)
+    entityTracer.subscribe(project, cs)
     loadingTimeMs.addAndGet(System.currentTimeMillis() - start)
   }
 
