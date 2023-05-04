@@ -1106,53 +1106,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
                                @NotNull List<? extends ModelProblem> modelProblems,
                                @NotNull Collection<? super MavenProjectProblem> collector) throws RemoteException {
     for (Throwable each : exceptions) {
-      if (each == null) continue;
-
-      MavenServerGlobals.getLogger().print(ExceptionUtils.getFullStackTrace(each));
-      myConsoleWrapper.info("Validation error:", each);
-
-      Artifact problemTransferArtifact = getProblemTransferArtifact(each);
-      if (each instanceof IllegalStateException && each.getCause() != null) {
-        each = each.getCause();
-      }
-
-      String path = file == null ? "" : file.getPath();
-      if (path.isEmpty() && each instanceof ProjectBuildingException) {
-        File pomFile = ((ProjectBuildingException)each).getPomFile();
-        path = pomFile == null ? "" : pomFile.getPath();
-      }
-
-      if (each instanceof InvalidProjectModelException) {
-        ModelValidationResult modelValidationResult = ((InvalidProjectModelException)each).getValidationResult();
-        if (modelValidationResult != null) {
-          for (String eachValidationProblem : modelValidationResult.getMessages()) {
-            collector.add(MavenProjectProblem.createStructureProblem(path, eachValidationProblem));
-          }
-        }
-        else {
-          collector.add(MavenProjectProblem.createStructureProblem(path, each.getCause().getMessage()));
-        }
-      }
-      else if (each instanceof ProjectBuildingException) {
-        String causeMessage = each.getCause() != null ? each.getCause().getMessage() : each.getMessage();
-        collector.add(MavenProjectProblem.createStructureProblem(path, causeMessage));
-      }
-      else if (each.getStackTrace().length > 0 && each.getClass().getPackage().getName().equals("groovy.lang")) {
-        myConsoleWrapper.error("Maven server structure problem", each);
-        StackTraceElement traceElement = each.getStackTrace()[0];
-        collector.add(MavenProjectProblem.createStructureProblem(
-          traceElement.getFileName() + ":" + traceElement.getLineNumber(), each.getMessage()));
-      }
-      else if (problemTransferArtifact != null) {
-        myConsoleWrapper.error("[server] Maven transfer artifact problem: " + problemTransferArtifact);
-        String message = getRootMessage(each);
-        MavenArtifact mavenArtifact = Maven3ModelConverter.convertArtifact(problemTransferArtifact, getLocalRepositoryFile());
-        collector.add(MavenProjectProblem.createRepositoryProblem(path, message, true, mavenArtifact));
-      }
-      else {
-        myConsoleWrapper.error("Maven server structure problem", each);
-        collector.add(MavenProjectProblem.createStructureProblem(path, getRootMessage(each), true));
-      }
+      collector.addAll(collectExceptionProblems(file, each));
     }
     for (ModelProblem problem : modelProblems) {
       String source;
@@ -1182,6 +1136,58 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         collector.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage(), true));
       }
     }
+  }
+
+  private List<MavenProjectProblem> collectExceptionProblems(@Nullable File file, Throwable ex) throws RemoteException {
+    List<MavenProjectProblem> result = new ArrayList<>();
+    if (ex == null) return result;
+
+    MavenServerGlobals.getLogger().print(ExceptionUtils.getFullStackTrace(ex));
+    myConsoleWrapper.info("Validation error:", ex);
+
+    Artifact problemTransferArtifact = getProblemTransferArtifact(ex);
+    if (ex instanceof IllegalStateException && ex.getCause() != null) {
+      ex = ex.getCause();
+    }
+
+    String path = file == null ? "" : file.getPath();
+    if (path.isEmpty() && ex instanceof ProjectBuildingException) {
+      File pomFile = ((ProjectBuildingException)ex).getPomFile();
+      path = pomFile == null ? "" : pomFile.getPath();
+    }
+
+    if (ex instanceof InvalidProjectModelException) {
+      ModelValidationResult modelValidationResult = ((InvalidProjectModelException)ex).getValidationResult();
+      if (modelValidationResult != null) {
+        for (String eachValidationProblem : modelValidationResult.getMessages()) {
+          result.add(MavenProjectProblem.createStructureProblem(path, eachValidationProblem));
+        }
+      }
+      else {
+        result.add(MavenProjectProblem.createStructureProblem(path, ex.getCause().getMessage()));
+      }
+    }
+    else if (ex instanceof ProjectBuildingException) {
+      String causeMessage = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+      result.add(MavenProjectProblem.createStructureProblem(path, causeMessage));
+    }
+    else if (ex.getStackTrace().length > 0 && ex.getClass().getPackage().getName().equals("groovy.lang")) {
+      myConsoleWrapper.error("Maven server structure problem", ex);
+      StackTraceElement traceElement = ex.getStackTrace()[0];
+      result.add(MavenProjectProblem.createStructureProblem(
+        traceElement.getFileName() + ":" + traceElement.getLineNumber(), ex.getMessage()));
+    }
+    else if (problemTransferArtifact != null) {
+      myConsoleWrapper.error("[server] Maven transfer artifact problem: " + problemTransferArtifact);
+      String message = getRootMessage(ex);
+      MavenArtifact mavenArtifact = Maven3ModelConverter.convertArtifact(problemTransferArtifact, getLocalRepositoryFile());
+      result.add(MavenProjectProblem.createRepositoryProblem(path, message, true, mavenArtifact));
+    }
+    else {
+      myConsoleWrapper.error("Maven server structure problem", ex);
+      result.add(MavenProjectProblem.createStructureProblem(path, getRootMessage(ex), true));
+    }
+    return result;
   }
 
   private void collectUnresolvedArtifactProblems(@Nullable File file,
