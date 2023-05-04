@@ -6,6 +6,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceMilestoneEventDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceStateEventDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import java.util.*
@@ -61,7 +62,7 @@ sealed interface GitLabMergeRequestTimelineItem {
   }
 
   class UserDiscussion(
-    val discussion: GitLabDiscussion
+    val discussion: GitLabMergeRequestDiscussion
   ) : GitLabMergeRequestTimelineItem {
 
     override val id: String = discussion.id

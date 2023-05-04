@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
 
 sealed interface GitLabMergeRequestTimelineItemViewModel {
@@ -20,7 +21,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     parentCs: CoroutineScope,
     currentUser: GitLabUserDTO,
     mr: GitLabMergeRequest,
-    discussion: GitLabDiscussion
+    discussion: GitLabMergeRequestDiscussion
   ) : GitLabMergeRequestTimelineDiscussionViewModel
       by GitLabMergeRequestTimelineDiscussionViewModelImpl(parentCs, currentUser, mr, discussion) {
     override val id: String = discussion.id

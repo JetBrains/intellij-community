@@ -41,7 +41,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   parentCs: CoroutineScope,
   currentUser: GitLabUserDTO,
   private val mr: GitLabMergeRequest,
-  discussion: GitLabDiscussion
+  discussion: GitLabMergeRequestDiscussion
 ) : GitLabMergeRequestTimelineDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })

@@ -22,7 +22,7 @@ interface GitLabDiscussion {
   val id: String
 
   val createdAt: Date
-  val notes: Flow<List<GitLabMergeRequestNote>>
+  val notes: Flow<List<GitLabNote>>
   val canAddNotes: Boolean
 
   val resolvable: Boolean
