@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.core.CoreBundle;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Forceable;
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.io.GentleFlusherBase;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -36,7 +36,6 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -199,28 +198,34 @@ public final class PersistentFSConnection {
   }
 
   void createBrokenMarkerFile(@Nullable String message,
-                              @Nullable Throwable reason) {
-    final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    try (@SuppressWarnings("ImplicitDefaultCharsetUsage") PrintStream stream = new PrintStream(out)) {
-      new VFSCorruptedException(
-        message == null ? "(No specific reason of corruption was given)" : message,
-        reason
-      ).printStackTrace(stream);
+                              @Nullable Throwable errorCause) {
+    final VFSCorruptedException corruptedException = new VFSCorruptedException(
+      message == null ? "(No specific reason of corruption was given)" : message,
+      errorCause
+    );
+    if (errorCause == null) {
+      //Without 'errorCause' it is not an error, but, likely, an explicit 'invalidateCache' call:
+      // no need to print stacktrace then, also no need for a WARN
+      LOG.info("VFS is corrupted; Creating VFS corruption marker: " + message);
     }
-    LOG.info("Creating VFS corruption marker; Trace=\n" + out);
-
+    else {
+      LOG.warn("VFS is corrupted; Creating VFS corruption marker", corruptedException);
+    }
 
     try {
       final Path brokenMarker = myPersistentFSPaths.getCorruptionMarkerFile();
+      final ByteArrayOutputStream out = new ByteArrayOutputStream();
+      try (PrintStream stream = new PrintStream(out, false, UTF_8)) {
+        stream.println("VFS files are corrupted and must be rebuilt from the scratch on next startup");
+        corruptedException.printStackTrace(stream);
+      }
       Files.write(
         brokenMarker,
-        Collections.singletonList("These files are corrupted and must be rebuilt from the scratch on next startup"),
-        UTF_8,
+        out.toByteArray(),
         StandardOpenOption.WRITE, StandardOpenOption.CREATE
       );
     }
-    catch (IOException ex) {
-      // No luck:
+    catch (IOException ex) {// No luck:
       LOG.info("Can't create VFS corruption marker", ex);
     }
   }
@@ -326,20 +331,17 @@ public final class PersistentFSConnection {
 
   int getAttributeId(@NotNull String attId) {
     return myEnumeratedAttributes.enumerate(attId);
-    // do not invoke FSRecords.requestVfsRebuild under read lock to avoid deadlock
-    //return myAttributesList.getIdRaw(attId) + FIRST_ATTR_ID_OFFSET;
   }
 
   @Contract("_->fail")
   void handleError(@NotNull Throwable e) throws RuntimeException, Error {
-    // No need to forcibly mark VFS corrupted if it is already shut down
     try {
       if (myCorrupted.compareAndSet(false, true)) {
         createBrokenMarkerFile(e.getMessage(), e);
         if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
           showCorruptionNotification();
         }
-        doForce();
+        doForce();//forces connectionStatus=CORRUPTED to be written on disk
       }
     }
     catch (IOException ioException) {

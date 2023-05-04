@@ -32,6 +32,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor.hasDeletedFlag;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Static helper responsible for 'connecting' (opening, initializing) {@linkplain PersistentFSConnection} object,
@@ -99,7 +100,7 @@ final class PersistentFSConnector {
         }
       }
     }
-    throw new RuntimeException("Can't initialize filesystem storage", exception);
+    throw new RuntimeException("VFS can't be initialized (" + MAX_INITIALIZATION_ATTEMPTS + " attempts failed)", exception);
   }
 
   @VisibleForTesting
@@ -128,7 +129,8 @@ final class PersistentFSConnector {
     final Path corruptionMarkerFile = persistentFSPaths.getCorruptionMarkerFile();
     try {
       if (Files.exists(corruptionMarkerFile)) {
-        throw new IOException("Corruption marker file found");
+        final List<String> corruptionCause = Files.readAllLines(corruptionMarkerFile, UTF_8);
+        throw new IOException("Corruption marker file found\n\tcontent: " + corruptionCause);
       }
 
       logNameEnumeratorFiles(basePath, namesFile);
@@ -153,14 +155,19 @@ final class PersistentFSConnector {
         contentHashesEnumerator = null;
       }
 
-      //TODO RC: since we bump FSRecords version anyway, I'd like to have completely new Enumerator here:
+      //TODO RC: I'd like to have completely new Enumerator here:
       //         1. Without legacy issues with null vs 'null' strings
       //         2. With explicit 'id' stored in a file (instead of implicit id=row num)
       //         3. With CopyOnWrite concurrent strategy (hence very cheap .enumerate() for already enumerated values)
+      //         ...next time we bump FSRecords version
       final SimpleStringPersistentEnumerator attributesEnumerator = new SimpleStringPersistentEnumerator(enumeratedAttributesFile);
 
 
       recordsStorage = PersistentFSRecordsStorageFactory.createStorage(recordsFile);
+
+      LOG.info("VFS: impl (expected) version=" + expectedVersion +
+               ", " + recordsStorage.recordsCount() + " file records" +
+               ", " + contentsStorage.getRecordsCount() + " content blobs");
 
       ensureConsistentVersion(expectedVersion, attributesStorage, contentsStorage, recordsStorage);
 
@@ -176,7 +183,7 @@ final class PersistentFSConnector {
       }
       else {
         if (recordsStorage.getConnectionStatus() != PersistentFSHeaders.SAFELY_CLOSED_MAGIC) {
-          throw new IOException("FS repository wasn't safely shut down");
+          throw new IOException("FS repository wasn't safely shut down: records.connectionStatus != SAFELY_CLOSED");
         }
       }
 
@@ -354,7 +361,8 @@ final class PersistentFSConnector {
     int largestId = contentHashesEnumerator.getLargestId();
     int liveRecordsCount = contents.getRecordsCount();
     if (largestId != liveRecordsCount) {
-      throw new IOException("Content storage & enumerator corrupted");
+      throw new IOException("Content storage & enumerator corrupted: " +
+                            "contents.records(=" + liveRecordsCount + ") != contentHashes.largestId(=" + largestId + ")");
     }
   }
 

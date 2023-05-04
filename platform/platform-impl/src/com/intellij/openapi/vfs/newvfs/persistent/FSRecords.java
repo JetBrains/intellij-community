@@ -45,9 +45,6 @@ public final class FSRecords {
   static final Logger LOG = Logger.getInstance(FSRecords.class);
   static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
 
-  /** Limit on how many cached fs roots to log on error (could be too many of them in total) */
-  private static final int MAX_CACHED_ROOTS_TO_LOG = SystemProperties.getIntProperty("idea.vfs.max-roots-to-log", 128);
-
   static final boolean BACKGROUND_VFS_FLUSH = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
 
   /** Not a constant value but just key for a value, because could be changed (see TurbochargedSharedIndexes) */
@@ -533,12 +530,24 @@ public final class FSRecords {
 
   //========== aux: ========================================================
 
-  public static void invalidateCaches(@Nullable String diagnosticMessage) {
+  /** With method create 'VFS corruption marker', which forces VFS to rebuild on the next startup */
+  public static void invalidateCaches(@NotNull String diagnosticMessage,
+                                      @NotNull Throwable errorCause) {
+    implOrFail().invalidateCaches(diagnosticMessage, errorCause);
+  }
+
+  /**
+   * With method create 'VFS corruption marker', which forces VFS to rebuild on next startup.
+   * But contrary to the {@link #invalidateCaches(String, Throwable)} version, this method
+   * is not considered a scenario as 'an error', but as a regular request -- e.g. no errors logged.
+   */
+  public static void invalidateCaches(@NotNull String diagnosticMessage) {
     implOrFail().invalidateCaches(diagnosticMessage, null);
   }
 
-  /** Please use {@link #invalidateCaches(String)} instead -> provide explicit reason for invalidate caches */
+  /** @deprecated please use {@link #invalidateCaches(String)} instead -> provide explicit reason for invalidate caches */
   @ApiStatus.Obsolete
+  @Deprecated
   public static void invalidateCaches() {
     invalidateCaches("No description given");
   }

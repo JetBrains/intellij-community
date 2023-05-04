@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -1025,6 +1024,12 @@ final class FSRecordsImpl {
 
   //========== aux: ========================================
 
+  /**
+   * With method create 'VFS corruption marker', which forces VFS to rebuild on next startup.
+   * If cause argument is not null -- this scenario is considered an 'error', and warnings are
+   * logged, if cause is null -- the scenario is considered not an 'error', but a regular
+   * request -- e.g. no errors logged.
+   */
   void invalidateCaches(final @Nullable String diagnosticMessage,
                         final @Nullable Throwable cause) {
     checkNotDisposed();
@@ -1047,7 +1052,7 @@ final class FSRecordsImpl {
    */
   @Contract("_->fail")
   RuntimeException handleError(Throwable e) throws RuntimeException, Error {
-    if (e instanceof ClosedStorageException) {
+    if (e instanceof ClosedStorageException || disposed) {
       // no connection means IDE is closing...
       AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS already disposed");
       alreadyDisposed.addSuppressed(e);
@@ -1059,11 +1064,11 @@ final class FSRecordsImpl {
     if (e instanceof ProcessCanceledException) {
       throw (ProcessCanceledException)e;
     }
-    if (!disposed) {
-      connection.handleError(e);
-    }
-    // no connection means IDE is closing...
-    throw new ServiceNotReadyException();
+    
+    connection.handleError(e);
+
+    //connection.handleError() _must_ throw some exception:
+    throw new AssertionError("PersistentFSConnection doesn't processed the exception", e);
   }
 
   //========== diagnostic, sanity checks: ========================================
@@ -1095,8 +1100,6 @@ final class FSRecordsImpl {
       description+= "; parent.name=" + getName(parentId)
              + "; parent.children=" + list(parentId);
     }
-
-    invalidateCaches(description, null);
     return description;
   }
 }

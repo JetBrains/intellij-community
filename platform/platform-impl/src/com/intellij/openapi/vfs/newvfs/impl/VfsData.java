@@ -148,8 +148,9 @@ public final class VfsData {
     if (nameId <= 0) {
       String message = "nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() +
                              "; db.parent=" + FSRecords.getParent(id);
-      FSRecords.invalidateCaches(message);
-      throw new AssertionError(message);
+      final AssertionError error = new AssertionError(message);
+      FSRecords.invalidateCaches(message, error);
+      throw error;
     }
 
     if (o instanceof DirectoryData) {
@@ -201,7 +202,9 @@ public final class VfsData {
     Object existingData = segment.myObjectArray.get(offset);
     if (existingData != null) {
       String msg = FSRecords.describeAlreadyCreatedFile(id, nameId);
-      throw new FileAlreadyCreatedException(msg);
+      final FileAlreadyCreatedException exception = new FileAlreadyCreatedException(msg);
+      FSRecords.invalidateCaches(msg, exception);
+      throw exception;
     }
     segment.myObjectArray.set(offset, data);
   }

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.testFramework.TemporaryDirectory;
@@ -11,17 +10,19 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
 
 /**
  * Test VFS version management and VFS rebuild on implementation version change
  */
-public class VFSRebuildingTriggersTest {
+public class VFSRebuildingTest {
 
   @Rule
   public final TemporaryDirectory temporaryDirectory = new TemporaryDirectory();
@@ -145,11 +146,52 @@ public class VFSRebuildingTriggersTest {
     }
   }
 
+  @Test
+  public void connection_corruptionMarkerFileIsCreatedOnAsk_AndContainCorruptionReasonAndCauseExceptionTrace() throws IOException {
+    Path cachesDir = temporaryDirectory.createDir();
+
+    final String corruptionReason = "VFS corrupted because I said so";
+    final String corruptionCauseMessage = "Something happens here";
+
+    PersistentFSConnection connection = PersistentFSConnector.connect(
+      cachesDir,
+      /*version: */ 1,
+      true,
+      new InvertedNameIndex(),
+      Collections.emptyList()
+    );
+    final Path corruptionMarkerFile = connection.getPersistentFSPaths().getCorruptionMarkerFile();
+    try {
+      connection.createBrokenMarkerFile(
+        corruptionReason,
+        new Exception(corruptionCauseMessage)
+      );
+    }
+    finally {
+      PersistentFSConnector.disconnect(connection);
+    }
+
+    assertTrue(
+      "Corruption marker file " + corruptionMarkerFile + " must be created",
+      Files.exists(corruptionMarkerFile)
+    );
+
+    final String corruptingMarkerContent = Files.readString(corruptionMarkerFile, UTF_8);
+    assertTrue(
+      "Corruption file must contain corruption reason [" + corruptionReason + "]: " + corruptingMarkerContent,
+      corruptingMarkerContent.contains(corruptionReason)
+    );
+    assertTrue(
+      "Corruption file must contain corruption cause [" + corruptionCauseMessage + "]: " + corruptingMarkerContent,
+      corruptingMarkerContent.contains(corruptionCauseMessage)
+    );
+  }
+
   //==== more top-level tests
 
   @Test
   public void VFS_isRebuild_OnlyIf_ImplementationVersionChanged() throws Exception {
-    //skip IN_MEMORY impl, since it is not really persistent 
+    //skip IN_MEMORY impl, since it is not really persistent
     //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_VFS_ENABLED (will fail)
     final List<RecordsStorageKind> allKinds = PageCacheUtils.LOCK_FREE_VFS_ENABLED ?
                                               List.of(REGULAR, OVER_LOCK_FREE_FILE_CACHE, OVER_MMAPPED_FILE) :
@@ -198,7 +240,9 @@ public class VFSRebuildingTriggersTest {
   }
 
 
+
   //==== infrastructure:
+
   @After
   public void tearDown() throws Exception {
     PersistentFSRecordsStorageFactory.resetRecordsStorageImplementation();
@@ -216,24 +260,5 @@ public class VFSRebuildingTriggersTest {
       records.cleanRecord(records.allocateRecord());
     }
     connection.markDirty();
-  }
-
-  public static void main(String[] args) throws IOException {
-    Path cachesDir = FileUtil.createTempDirectory("vfs", "caches").toPath();
-    int version = 1;
-
-    PersistentFSConnection connection = PersistentFSConnector.connect(
-      cachesDir,
-      version,
-      true,
-      new InvertedNameIndex(),
-      Collections.emptyList()
-    );
-    try {
-      connection.createBrokenMarkerFile("Because I can!", new Exception("Something happens here"));
-    }
-    finally {
-      PersistentFSConnector.disconnect(connection);
-    }
   }
 }
