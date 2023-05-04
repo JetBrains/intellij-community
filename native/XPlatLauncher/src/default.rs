@@ -59,14 +59,9 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
     fn get_class_path(&self) -> Result<Vec<String>> {
         let lib_dir = self.ide_home.join("lib");
         let lib_path = lib_dir.to_str().expect(&format!("Inconvertible path: {:?}", lib_dir));
-        let mut class_path = Vec::new();
-
-        for item in &self.launch_data().bootClassPathJarNames {
-            let item_path = lib_path.to_string() + std::path::MAIN_SEPARATOR_STR + item;
-            let expanded = self.expand_vars(&item_path)?;
-            class_path.push(expanded);
-        }
-
+        let class_path = self.launch_data().bootClassPathJarNames.iter()
+            .map(|item| lib_path.to_string() + std::path::MAIN_SEPARATOR_STR + item)
+            .collect();
         Ok(class_path)
     }
 
