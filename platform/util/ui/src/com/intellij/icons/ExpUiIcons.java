@@ -98,7 +98,7 @@ public final class ExpUiIcons {
 
   public static final class CodeWithMe {
     /** 16x16 */ public static final @NotNull Icon CwmAccess = load("expui/codeWithMe/cwmAccess.svg", 2108404369, 2);
-    /** 20x20 */ public static final @NotNull Icon CwmAccess_20x20 = load("expui/codeWithMe/cwmAccess@20x20.svg", -1485426668, 2);
+    /** 20x20 */ public static final @NotNull Icon CwmAccess_20x20 = load("expui/codeWithMe/cwmAccess@20x20.svg", -1029761333, 2);
     /** 16x16 */ public static final @NotNull Icon CwmDisableCall = load("expui/codeWithMe/cwmDisableCall.svg", -846575598, 2);
     /** 16x16 */ public static final @NotNull Icon CwmEnableCall = load("expui/codeWithMe/cwmEnableCall.svg", 674693276, 2);
     /** 17x17 */ public static final @NotNull Icon CwmIconModificator = load("expui/codeWithMe/cwmIconModificator.svg", -1597124409, 2);
@@ -303,10 +303,10 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon RunAnything = load("expui/general/runAnything.svg", 112619201, 2);
     /** 16x16 */ public static final @NotNull Icon Save = load("expui/general/save.svg", 29183196, 2);
     /** 16x16 */ public static final @NotNull Icon ScrollDown = load("expui/general/scrollDown.svg", -2051028392, 2);
-    /** 16x16 */ public static final @NotNull Icon Search = load("expui/general/search.svg", -723337071, 2);
-    /** 20x20 */ public static final @NotNull Icon Search_20x20 = load("expui/general/search@20x20.svg", -476787384, 2);
-    /** 16x16 */ public static final @NotNull Icon Settings = load("expui/general/settings.svg", 1229985033, 2);
-    /** 20x20 */ public static final @NotNull Icon Settings_20x20 = load("expui/general/settings@20x20.svg", 1916974993, 2);
+    /** 16x16 */ public static final @NotNull Icon Search = load("expui/general/search.svg", 253832439, 2);
+    /** 20x20 */ public static final @NotNull Icon Search_20x20 = load("expui/general/search@20x20.svg", 677725643, 2);
+    /** 16x16 */ public static final @NotNull Icon Settings = load("expui/general/settings.svg", -572608346, 2);
+    /** 20x20 */ public static final @NotNull Icon Settings_20x20 = load("expui/general/settings@20x20.svg", -1050164769, 2);
     /** 16x16 */ public static final @NotNull Icon Show = load("expui/general/show.svg", -95335537, 2);
     /** 16x16 */ public static final @NotNull Icon ShowAsTree = load("expui/general/showAsTree.svg", -1947389292, 2);
     /** 16x16 */ public static final @NotNull Icon SoftWrap = load("expui/general/softWrap.svg", 682238533, 2);
@@ -321,7 +321,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon User = load("expui/general/user.svg", -2119542954, 2);
     /** 16x16 */ public static final @NotNull Icon Vcs = load("expui/general/vcs.svg", -1588068053, 2);
     /** 28x28 */ public static final @NotNull Icon WarningDialog = load("expui/general/warningDialog.svg", -1302877749, 2);
-    /** 20x20 */ public static final @NotNull Icon WindowsMenu_20x20 = load("expui/general/windowsMenu@20x20.svg", 1008242849, 2);
+    /** 20x20 */ public static final @NotNull Icon WindowsMenu_20x20 = load("expui/general/windowsMenu@20x20.svg", -1866593102, 2);
   }
 
   public static final class Gutter {
