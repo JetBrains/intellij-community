@@ -1,9 +1,10 @@
-package com.intellij.codeInsight.completion.inline
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.grayText
 
 import com.intellij.codeInsight.CodeInsightActionHandler
-import com.intellij.codeInsight.completion.inline.GrayTextContext.Companion.initOrGetGrayTextContext
-import com.intellij.codeInsight.completion.inline.InlineState.Companion.getGrayTextState
-import com.intellij.codeInsight.completion.inline.InlineState.Companion.initOrGetGrayTextState
+import com.intellij.codeInsight.grayText.GrayTextContext.Companion.initOrGetGrayTextContext
+import com.intellij.codeInsight.grayText.InlineState.Companion.getGrayTextState
+import com.intellij.codeInsight.grayText.InlineState.Companion.initOrGetGrayTextState
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor

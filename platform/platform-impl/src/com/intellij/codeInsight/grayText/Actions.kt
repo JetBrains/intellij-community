@@ -1,8 +1,9 @@
-package com.intellij.codeInsight.completion.inline
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.grayText
 
-import com.intellij.codeInsight.completion.inline.GrayTextContext.Companion.getGrayTextContextOrNull
-import com.intellij.codeInsight.completion.inline.GrayTextContext.Companion.removeGrayTextContext
-import com.intellij.codeInsight.completion.inline.GrayTextContext.Companion.resetGrayTextContext
+import com.intellij.codeInsight.grayText.GrayTextContext.Companion.getGrayTextContextOrNull
+import com.intellij.codeInsight.grayText.GrayTextContext.Companion.removeGrayTextContext
+import com.intellij.codeInsight.grayText.GrayTextContext.Companion.resetGrayTextContext
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret

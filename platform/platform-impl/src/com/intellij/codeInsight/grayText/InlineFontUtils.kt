@@ -1,4 +1,4 @@
-package com.intellij.codeInsight.completion.inline
+package com.intellij.codeInsight.grayText
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorFontType
