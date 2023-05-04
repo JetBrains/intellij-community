@@ -67,7 +67,7 @@ object BundleBase {
 
   @JvmStatic
   fun message(bundle: ResourceBundle, key: String, vararg params: Any): @Nls String {
-    return messageOrDefault(bundle, key, null, *params)!!
+    return messageOrDefault(bundle = bundle, key = key, defaultValue = null, params = params)!!
   }
 
   @JvmStatic
@@ -77,33 +77,28 @@ object BundleBase {
     }
 
     var resourceFound = true
-    var value: String
-    try {
-      value = bundle.getString(key)
+    val value = try {
+      bundle.getString(key)
     }
     catch (e: MissingResourceException) {
       resourceFound = false
-      value = useDefaultValue(bundle, key, defaultValue)
+      useDefaultValue(bundle = bundle, key = key, defaultValue = defaultValue)
     }
-    val result = postprocessValue(bundle, value, *params)
-    val consumer = translationConsumer
-    consumer?.accept(key, result)
-    if (!resourceFound) {
-      return result
+
+    val result = postprocessValue(bundle = bundle, value = value, params = params)
+    translationConsumer?.accept(key, result)
+    return when {
+      !resourceFound -> result
+      SHOW_KEYS && SHOW_DEFAULT_MESSAGES -> {
+        appendLocalizationSuffix(result = result, suffixToAppend = " ($key=${getDefaultMessage(bundle, key)})")
+      }
+      SHOW_KEYS -> appendLocalizationSuffix(result = result, suffixToAppend = " ($key)")
+      SHOW_DEFAULT_MESSAGES -> {
+        appendLocalizationSuffix(result = result, suffixToAppend = " (${getDefaultMessage(bundle, key)})")
+      }
+      SHOW_LOCALIZED_MESSAGES -> appendLocalizationSuffix(result = result, suffixToAppend = L10N_MARKER)
+      else -> result
     }
-    if (SHOW_KEYS && SHOW_DEFAULT_MESSAGES) {
-      return appendLocalizationSuffix(result, " (" + key + "=" + getDefaultMessage(bundle, key) + ")")
-    }
-    if (SHOW_KEYS) {
-      return appendLocalizationSuffix(result, " ($key)")
-    }
-    if (SHOW_DEFAULT_MESSAGES) {
-      return appendLocalizationSuffix(result, " (" + getDefaultMessage(bundle, key) + ")")
-    }
-    return if (SHOW_LOCALIZED_MESSAGES) {
-      appendLocalizationSuffix(result, L10N_MARKER)
-    }
-    else result
   }
 
   @JvmStatic
@@ -111,7 +106,7 @@ object BundleBase {
     try {
       val parent = ReflectionUtil.getDeclaredField(ResourceBundle::class.java, "parent")
       if (parent != null) {
-        val parentBundle = parent[bundle]
+        val parentBundle = parent.get(bundle)
         if (parentBundle is ResourceBundle) {
           return parentBundle.getString(key)
         }
