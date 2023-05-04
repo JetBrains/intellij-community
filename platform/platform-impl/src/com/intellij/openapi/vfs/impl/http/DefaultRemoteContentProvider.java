@@ -44,7 +44,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
   @Override
   public void saveContent(@NotNull final Url url, @NotNull final File file, @NotNull final DownloadingCallback callback) {
     Throwable startTrace = ApplicationManager.getApplication().isUnitTestMode() ? new Throwable() : null;
-    ProcessIOExecutorService.INSTANCE.execute(ThreadContext.captureThreadContext(() -> downloadContent(url, file, callback, startTrace)));
+    ProcessIOExecutorService.INSTANCE.execute(() -> downloadContent(url, file, callback, startTrace));
   }
 
   private void downloadContent(@NotNull Url url, @NotNull File file, @NotNull DownloadingCallback callback, @Nullable Throwable startTrace) {

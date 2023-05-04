@@ -42,6 +42,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
@@ -476,7 +477,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
 
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, modalityState);
-    LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(r));
+    LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(AppScheduledExecutorService.capturePropagationAndCancellationContext(r)));
   }
 
   private @NotNull Runnable wrapWithRunIntendedWriteAction(@NotNull Runnable runnable) {

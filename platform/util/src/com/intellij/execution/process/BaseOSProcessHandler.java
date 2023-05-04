@@ -37,7 +37,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
 
   @Override
   public @NotNull Future<?> executeTask(@NotNull Runnable task) {
-    return ProcessIOExecutorService.INSTANCE.submit(AppScheduledExecutorService.capturePropagationAndCancellationContext(task));
+    return ProcessIOExecutorService.INSTANCE.submit(task);
   }
 
   /**

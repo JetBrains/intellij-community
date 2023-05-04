@@ -116,14 +116,14 @@ object UpdateChecker {
   @JvmStatic
   fun updateAndShowResult(): ActionCallback {
     return ActionCallback().also {
-      ProcessIOExecutorService.INSTANCE.execute(captureThreadContext( Runnable {
+      ProcessIOExecutorService.INSTANCE.execute(Runnable {
         doUpdateAndShowResult(
           userInitiated = false,
           preferDialog = false,
           showSettingsLink = true,
           callback = it,
         )
-      }))
+      })
     }
   }
 

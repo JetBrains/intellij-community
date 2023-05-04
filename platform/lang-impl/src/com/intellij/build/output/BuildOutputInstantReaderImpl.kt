@@ -87,7 +87,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
       try {
         while (state.get() != State.Closed) {
           if (state.compareAndSet(State.Idle, State.Running)) {
-            ProcessIOExecutorService.INSTANCE.submit(captureThreadContext(readerRunnable))
+            ProcessIOExecutorService.INSTANCE.submit(readerRunnable)
           }
           if (channel.offer(line, 100, TimeUnit.MILLISECONDS)) {
             break

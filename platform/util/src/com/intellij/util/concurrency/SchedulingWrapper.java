@@ -304,7 +304,12 @@ class SchedulingWrapper implements ScheduledExecutorService {
     // return false if this is the last task in the queue
     boolean executeMeInBackendExecutor() {
       if (!isDone()) {  // optimization: can be cancelled already
-        backendExecutorService.execute(this);
+        if (backendExecutorService instanceof ContextPropagatingExecutor) {
+          // scheduled tasks have already captured the context
+          ((ContextPropagatingExecutor)backendExecutorService).executeRaw(this);
+        } else {
+          backendExecutorService.execute(this);
+        }
       }
       return true;
     }

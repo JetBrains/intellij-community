@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
+import com.intellij.util.concurrency.AppScheduledExecutorService;
+import com.intellij.util.concurrency.ContextPropagatingExecutor;
 import com.intellij.util.concurrency.CountingThreadFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +14,7 @@ import java.util.concurrent.*;
  * A thread pool for long-running workers needed for handling child processes or network requests,
  * to avoid occupying workers in the main application pool and constantly creating new threads there.
  */
-public final class ProcessIOExecutorService extends ThreadPoolExecutor {
+public final class ProcessIOExecutorService extends ThreadPoolExecutor implements ContextPropagatingExecutor {
   public static final @NonNls String POOLED_THREAD_PREFIX = "I/O pool ";
   public static final ExecutorService INSTANCE = new ProcessIOExecutorService();
 
@@ -23,6 +25,16 @@ public final class ProcessIOExecutorService extends ThreadPoolExecutor {
   @TestOnly
   public int getThreadCounter() {
     return ((CountingThreadFactory)getThreadFactory()).getCount();
+  }
+
+  @Override
+  public void executeRaw(@NotNull Runnable command) {
+    super.execute(command);
+  }
+
+  @Override
+  public void execute(@NotNull Runnable command) {
+    executeRaw(AppScheduledExecutorService.capturePropagationAndCancellationContext(command));
   }
 
   private static final class MyCountingThreadFactory extends CountingThreadFactory {

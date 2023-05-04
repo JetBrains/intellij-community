@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.*
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -121,6 +122,10 @@ class ThreadContextPropagationTest {
     doExecutorServiceTest(AppExecutorUtil.createBoundedApplicationPoolExecutor("Bounded", 1))
   }
 
+  @Test
+  fun processIOExecutor(): Unit = timeoutRunBlocking {
+    doExecutorServiceTest(ProcessIOExecutorService.INSTANCE)
+  }
   @Test
   fun boundedScheduledExecutorService(): Unit = timeoutRunBlocking {
     doScheduledExecutorServiceTest(AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled", 1))
