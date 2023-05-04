@@ -2,6 +2,8 @@
 package com.intellij.openapi.project
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.concurrency.captureThreadContext
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
@@ -14,6 +16,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupManager
 import kotlinx.coroutines.CoroutineScope
@@ -69,13 +72,15 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
 
     sc.launch {
       projectScanning.collect {
-        onFilesScanningChanged()
+        blockingContext {
+          onFilesScanningChanged()
+        }
       }
     }
   }
 
   private fun addLast(runnable: Runnable) {
-    val executor = ClientId.decorateRunnable(runnable)
+    val executor = captureThreadContext(ClientId.decorateRunnable(runnable))
     myRunWhenSmartQueue.addLast(if (executor === runnable) runnable else RunnableDelegate(runnable) { executor.run() })
   }
 
@@ -119,7 +124,9 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
     // in this case we should quit processing pending actions and postpone them until the newly started dumb mode finishes.
     while (isSmart()) {
       val runnable = myRunWhenSmartQueue.pollFirst() ?: break
-      doRun(runnable)
+      resetThreadContext().use {
+        doRun(runnable)
+      }
     }
   }
 
