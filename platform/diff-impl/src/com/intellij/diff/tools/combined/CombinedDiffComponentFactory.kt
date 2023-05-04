@@ -14,6 +14,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.update.UiNotifyConnector
 import java.awt.Dimension
 import kotlin.math.min
 
@@ -90,8 +91,6 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
       }
 
       combinedViewer.contentChanged()
-
-      combinedViewer.selectDiffBlock(blockIdToSelect, false)
     }
 
     @RequiresEdt
@@ -124,17 +123,18 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     val visibleBlockCount = min(combinedViewer.scrollPane.visibleRect.height / CombinedLazyDiffViewer.HEIGHT.get(), childCount)
     val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
 
-    try {
-      val allRequests = model.requests
-        .map { CombinedDiffModel.RequestData(it.key, it.value) }
+    val allRequests = model.requests
+      .map { CombinedDiffModel.RequestData(it.key, it.value) }
 
-      allRequests.forEachIndexed { index, childRequest ->
-        combinedViewer.addBlock(buildLoadingBlockContent(childRequest.blockId), index > 0 || visibleBlockCount > 0)
-      }
+    allRequests.forEachIndexed { index, childRequest ->
+      combinedViewer.addBlock(buildLoadingBlockContent(childRequest.blockId), index > 0 || visibleBlockCount > 0)
     }
-    finally {
-      combinedViewer.selectDiffBlock(blockToSelect, true)
-    }
+
+    UiNotifyConnector.doWhenFirstShown(
+      getMainComponent(),
+      { combinedViewer.selectDiffBlock(blockToSelect, true) },
+      ourDisposable
+    )
   }
 
   companion object {

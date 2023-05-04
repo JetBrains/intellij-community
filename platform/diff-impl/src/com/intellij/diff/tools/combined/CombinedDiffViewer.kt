@@ -60,7 +60,27 @@ import kotlin.math.roundToInt
 class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataProvider {
   private val project = context.project!! // CombinedDiffContext expected
 
-  internal val blocksPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false))
+  private val stubPanelAfterBlock: JPanel = object : JPanel(null) {
+    override fun getPreferredSize(): Dimension {
+      val preferredSize = super.getPreferredSize()
+      preferredSize.width = parent.width
+      preferredSize.height = 0
+
+      if (parent.componentCount > 1) {
+        val lastBlockHeight = parent.components[getDiffBlocksCount() - 1].height
+        val viewportHeight = scrollPane.viewport.height
+        if (viewportHeight > lastBlockHeight) {
+          preferredSize.height = viewportHeight - lastBlockHeight
+        }
+      }
+
+      return preferredSize
+    }
+  }
+
+  internal val blocksPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false)).apply {
+    add(stubPanelAfterBlock)
+  }
 
   internal val scrollPane = JBScrollPane(
     blocksPanel,
@@ -136,7 +156,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     val diffBlock = createDiffBlock(content, needBorder)
     val viewer = content.viewer
 
-    blocksPanel.add(diffBlock.component)
+    blocksPanel.add(diffBlock.component, blocksPanel.componentCount - 1)
     diffBlocks[blockId] = diffBlock
     diffViewers[blockId] = viewer
     diffBlocksPositions[blockId] = getDiffBlocksCount() - 1
@@ -303,6 +323,12 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
         continue
       }
 
+      if (blockRect.minY.toInt() == viewRect.minY.toInt()) {
+        anchorBlock = block.component
+        isTopBoundAnchor = true
+        break
+      }
+
       if (blockRect.maxY >= viewRect.minY && blockRect.maxY <= viewRect.maxY) {
         // the bottom of block in the viewport
         anchorBlock = block.component
@@ -413,8 +439,6 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
       onSelected()
       scrollSupport.blockIterable.index = index
       scrollSupport.scroll(index, block, scrollPolicy)
-      //in case of CombinedLazyDiffViewer, the block selection should be repeated once again, until diff viewer loaded, and it's size will be known.
-      context.putUserData(COMBINED_DIFF_SCROLL_TO_BLOCK, if (viewer is CombinedLazyDiffViewer) block.id else null)
     }
 
     if (!focusBlock) {
