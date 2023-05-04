@@ -37,7 +37,7 @@ import java.util.Collection;
  *    {@link CustomizingIndexingContributor#createGenericContentIterators(EntityReference, Collection, Object)} or
  *    {@link CustomizingIndexingContributor#createModuleAwareContentIterators(Module, EntityReference, Collection, Object)}
  *    depending on their {@link com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData} being subclass of
- *    {@link com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData}.
+ *    {@link com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData}.
  * <p>
  *    The difference between this two types of registrations is in {@link com.intellij.openapi.roots.ProjectFileIndex#getModuleForFile(VirtualFile)}
  *    and {@link com.intellij.openapi.roots.ProjectFileIndex#getContentRootForFile(VirtualFile)} behaviour.
@@ -66,7 +66,7 @@ public interface CustomizingIndexingContributor<E extends WorkspaceEntity, D> ex
    * @param roots         roots registered as {@link com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind#CONTENT} or
    *                      {@link com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind#TEST_CONTENT} for that entity,
    *                      with {@link com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData} being subclass of
-   *                      {@link com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData},
+   *                      {@link com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData},
    *                      and so the entity aware of a module. Currently, it's a recommended way to register content roots.
    * @param customization data precalculated in getCustomizationData
    * @return iterators that iterate roots, maybe filtering out some files.

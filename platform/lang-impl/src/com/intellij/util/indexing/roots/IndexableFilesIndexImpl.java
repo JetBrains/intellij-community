@@ -24,7 +24,7 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
-import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetVisitor;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
@@ -166,8 +166,8 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
         @Override
         public void visitIncludedRoot(@NotNull WorkspaceFileSet fileSet) {
           if (!(fileSet instanceof WorkspaceFileSetWithCustomData<?>)) return;
-          ModuleContentOrSourceRootData data =
-            ObjectUtils.tryCast(((WorkspaceFileSetWithCustomData<?>)fileSet).getData(), ModuleContentOrSourceRootData.class);
+          ModuleRelatedRootData data =
+            ObjectUtils.tryCast(((WorkspaceFileSetWithCustomData<?>)fileSet).getData(), ModuleRelatedRootData.class);
           if (data != null && data.getModule().equals(module)) {
             files.add(fileSet.getRoot());
           }

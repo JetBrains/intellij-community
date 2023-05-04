@@ -29,7 +29,7 @@ import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forMo
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor
-import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -58,10 +58,10 @@ fun optimizeRoots(roots: Collection<VirtualFile>): List<VirtualFile> {
     SmartList(roots.iterator().next())
   }
   else if (size > ROOTS_SIZE_OPTIMISING_LIMIT) {
-    java.util.ArrayList(roots)
+    ArrayList(roots)
   }
   else {
-    val filteredList: MutableList<VirtualFile> = java.util.ArrayList()
+    val filteredList: MutableList<VirtualFile> = ArrayList()
     val consumer: Consumer<VirtualFile> = object : Consumer<VirtualFile> {
       private var previousPath: String? = null
       override fun accept(file: VirtualFile) {
@@ -435,7 +435,7 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
     val entityReference = entity.createReference<E>()
     fillCustomizationValues(entity, entityReference)
 
-    if (customData is ModuleContentOrSourceRootData) {
+    if (customData is ModuleRelatedRootData) {
       if (contributor is CustomizingIndexingContributor<E, *>) {
         customizedModuleContentEntities.putValue(customData.module, entityReference)
         customizedModuleContentRoots.putValue(entityReference, root)
