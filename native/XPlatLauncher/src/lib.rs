@@ -33,7 +33,7 @@ variant_size_differences
 use std::env;
 use std::path::{Path, PathBuf};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use log::{debug, LevelFilter, warn};
 use serde::{Deserialize, Serialize};
 
@@ -82,7 +82,7 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     debug!("Mode: {}", if remote_dev { "remote-dev" } else { "standard" });
 
     debug!("** Preparing launch configuration");
-    let configuration = get_configuration(remote_dev, &strip_nt_prefix(exe_path)).context("Cannot detect a launch configuration")?;
+    let configuration = get_configuration(remote_dev, &strip_nt_prefix(exe_path)?).context("Cannot detect a launch configuration")?;
 
     debug!("** Locating runtime");
     let jre_home = configuration.prepare_for_launch().context("Cannot find a runtime")?;
@@ -149,8 +149,7 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
     match configuration.get_properties_file() {
         Ok(path) => {
             debug!("Custom properties file: {:?}", path);
-            let path_string = path.to_str().expect(&format!("Inconvertible path: {:?}", path));
-            vm_options.push(jvm_property!("idea.properties.file", path_string));
+            vm_options.push(jvm_property!("idea.properties.file", path.to_string_checked()?));
         }
         Err(e) => { debug!("Failed: {}", e.to_string()); }
     }
@@ -271,30 +270,36 @@ pub fn is_executable(_path: &Path) -> Result<bool> {
 }
 
 #[cfg(target_family = "unix")]
-pub fn strip_nt_prefix(path: PathBuf) -> PathBuf {
-    path
+pub fn strip_nt_prefix(path: PathBuf) -> Result<PathBuf> {
+    Ok(path)
 }
 
 #[cfg(target_os = "windows")]
-pub fn strip_nt_prefix(path: PathBuf) -> PathBuf {
-    let path_str = path.to_string_lossy();
-    if path_str.starts_with("\\\\?\\") {
+pub fn strip_nt_prefix(path: PathBuf) -> Result<PathBuf> {
+    let path_str = path.to_string_checked()?;
+    Ok(if path_str.starts_with("\\\\?\\") {
         // NT object directory paths are misunderstood both by JVM and classloaders
-        return PathBuf::from(&path_str[4..])
+        PathBuf::from(&path_str[4..])
     } else {
         path
-    }
+    })
 }
 
 pub trait PathExt {
     fn parent_or_err(&self) -> Result<PathBuf>;
+    fn to_string_checked(&self) -> Result<String>;
 }
 
 impl PathExt for Path {
     fn parent_or_err(&self) -> Result<PathBuf> {
-        match self.parent() {
-            Some(path) => Ok(path.to_path_buf()),
-            None => bail!("No parent dir for '{self:?}'")
-        }
+        self.parent()
+            .map(|p| p.to_path_buf())
+            .ok_or_else(|| anyhow!("No parent dir for '{self:?}'"))
+    }
+
+    fn to_string_checked(&self) -> Result<String> {
+        self.to_str()
+            .map(|s| s.to_string())
+            .ok_or_else(|| anyhow!("Inconvertible path: {:?}", self))
     }
 }

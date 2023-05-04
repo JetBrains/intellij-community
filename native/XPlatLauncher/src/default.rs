@@ -57,8 +57,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
-        let lib_dir = self.ide_home.join("lib");
-        let lib_path = lib_dir.to_str().expect(&format!("Inconvertible path: {:?}", lib_dir));
+        let lib_path = self.ide_home.join("lib").to_string_checked()?;
         let class_path = self.launch_data().bootClassPathJarNames.iter()
             .map(|item| lib_path.to_string() + std::path::MAIN_SEPARATOR_STR + item)
             .collect();
@@ -71,7 +70,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
             .parent_or_err()?
             .parent_or_err()?;
 
-        return Ok(strip_nt_prefix(java_home));
+        return strip_nt_prefix(java_home);
     }
 }
 
@@ -244,8 +243,7 @@ impl DefaultLaunchConfiguration {
             Ok(path) => {
                 debug!("Custom VM options file: {:?}", path);
                 vm_options.extend(read_vm_options(&path)?);
-                let path_string = path.to_str().expect(&format!("Inconvertible path: {:?}", path));
-                vm_options.push(jvm_property!("jb.vmOptionsFile", path_string));
+                vm_options.push(jvm_property!("jb.vmOptionsFile", path.to_string_checked()?));
                 return Ok(());
             }
             Err(e) => { debug!("Failed: {}", e.to_string()); }
@@ -275,8 +273,7 @@ impl DefaultLaunchConfiguration {
 
         vm_options.extend(user_vm_options);
 
-        let path_string = vm_options_path.to_str().expect(&format!("Inconvertible path: {:?}", vm_options_path));
-        vm_options.push(jvm_property!("jb.vmOptionsFile", path_string));
+        vm_options.push(jvm_property!("jb.vmOptionsFile", vm_options_path.to_string_checked()?));
 
         return Ok(());
     }
