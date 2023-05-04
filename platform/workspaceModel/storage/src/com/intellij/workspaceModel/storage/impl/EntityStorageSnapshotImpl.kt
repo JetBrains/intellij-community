@@ -72,12 +72,13 @@ internal class EntityStorageSnapshotImpl(
 
   override fun toSnapshot(): EntityStorageSnapshot = this
 
-  internal fun getCachedEntityById(entityId: EntityId, orPut: (() -> WorkspaceEntity)): WorkspaceEntity {
+  override fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T {
     val found = entitiesCache[entityId]
     if (found != null) {
-      return found
+      @Suppress("UNCHECKED_CAST")
+      return found as T
     }
-    val newData = orPut()
+    val newData = newInstance()
     entitiesCache[entityId] = newData
     return newData
   }
@@ -1025,6 +1026,9 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
   }
 
   override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
+
+
+  override fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T = newInstance()
 
   internal fun assertConsistencyInStrictMode(message: String,
                                              sourceFilter: ((EntitySource) -> Boolean)?,
