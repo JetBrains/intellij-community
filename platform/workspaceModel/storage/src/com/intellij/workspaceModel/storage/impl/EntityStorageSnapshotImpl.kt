@@ -18,6 +18,9 @@ import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapp
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
+import com.intellij.workspaceModel.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.workspaceModel.storage.instrumentation.EntityStorageSnapshotInstrumentation
+import com.intellij.workspaceModel.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import io.opentelemetry.api.metrics.Meter
@@ -52,7 +55,7 @@ internal class EntityStorageSnapshotImpl(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
   override val indexes: StorageIndexes
-) : EntityStorageSnapshot, AbstractEntityStorage() {
+) : EntityStorageSnapshotInstrumentation, AbstractEntityStorage() {
 
   // This cache should not be transferred to other versions of storage
   private val symbolicIdCache = ConcurrentHashMap<SymbolicEntityId<*>, WorkspaceEntity>()
@@ -92,7 +95,7 @@ internal class MutableEntityStorageImpl(
   override val indexes: MutableStorageIndexes,
   @Volatile
   private var trackStackTrace: Boolean = false
-) : MutableEntityStorage, AbstractEntityStorage() {
+) : MutableEntityStorageInstrumentation, AbstractEntityStorage() {
 
   /**
    * This log collects the log of operations, not the log of state changes.
@@ -941,7 +944,7 @@ internal class MutableEntityStorageImpl(
   }
 }
 
-internal sealed class AbstractEntityStorage : EntityStorage {
+internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
 
   internal abstract val entitiesByType: EntitiesBarrel
   internal abstract val refs: AbstractRefsTable
