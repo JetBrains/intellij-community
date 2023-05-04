@@ -19,10 +19,12 @@ import com.intellij.maven.testFramework.MavenCompilingTestCase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -622,6 +624,9 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
   public void testUpdatingWhenPropertiesInModelAreChanged() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${project.name}");
 
+    var moduleManager = ModuleManager.getInstance(myProject);
+    var mavenProjectsManager = MavenProjectsManager.getInstance(myProject);
+
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -636,6 +641,9 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                       </resources>
                     </build>
                     """);
+    assertResources("project", "resources");
+    assertEquals("val1", mavenProjectsManager.findProject(moduleManager.findModuleByName("project")).getModelMap().get("name"));
+
     compileModules("project");
     assertResult("target/classes/file.properties", "value=val1");
 
@@ -653,6 +661,9 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                       </resources>
                     </build>
                     """);
+    assertResources("project", "resources");
+    assertEquals("val2", mavenProjectsManager.findProject(moduleManager.findModuleByName("project")).getModelMap().get("name"));
+
     compileModules("project");
     assertResult("target/classes/file.properties", "value=val2");
   }
