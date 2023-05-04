@@ -9,12 +9,11 @@ import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForClass
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtParameterDeclaration
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtPropertyDeclaration
 import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightingVisitor
-import org.jetbrains.kotlin.idea.highlighting.beforeResolve.AbstractBeforeResolveHighlightingVisitor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
-internal class DeclarationHighlightingVisitor(holder: HighlightInfoHolder) : AbstractBeforeResolveHighlightingVisitor(holder) {
+internal class DeclarationHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHighlightingVisitor(holder) {
     override fun visitTypeAlias(typeAlias: KtTypeAlias) {
         highlightNamedDeclaration(typeAlias, Colors.TYPE_ALIAS)
         super.visitTypeAlias(typeAlias)
