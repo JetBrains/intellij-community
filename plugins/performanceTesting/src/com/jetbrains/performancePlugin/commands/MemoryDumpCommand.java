@@ -31,13 +31,7 @@ public final class MemoryDumpCommand extends AbstractCommand {
     //noinspection CallToSystemGC
     System.gc();
 
-    String memoryDumpPath = System.getProperties().getProperty("memory.snapshots.path");
-    String path = "";
-    if (memoryDumpPath != null) {
-      path += memoryDumpPath + File.separator;
-    }
-    String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
-    path += Timer.instance.getActivityName() + '-' + currentTime + ".zip";
+    String path = getMemoryDumpPath();
 
     try {
       MemoryDumpHelper.captureMemoryDumpZipped(path);
@@ -47,5 +41,17 @@ public final class MemoryDumpCommand extends AbstractCommand {
     catch (Exception e) {
       return Promises.rejectedPromise("Memory dump can't be collected");
     }
+  }
+
+  @NotNull
+  public static String getMemoryDumpPath() {
+    String memoryDumpPath = System.getProperties().getProperty("memory.snapshots.path");
+    String path = "";
+    if (memoryDumpPath != null) {
+      path += memoryDumpPath + File.separator;
+    }
+    String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+    path += Timer.instance.getActivityName() + '-' + currentTime + ".zip";
+    return path;
   }
 }
