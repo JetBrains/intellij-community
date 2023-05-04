@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.action.ImmutableToolbarLabelAction
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUtil
@@ -33,7 +35,6 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRFilesManager
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
-import org.jetbrains.plugins.github.util.GHToolbarLabelAction
 import java.util.*
 
 internal class GHPRDiffPreview(private val prId: GHPRIdentifier?,
@@ -110,7 +111,7 @@ internal abstract class GHPRCombinedDiffPreviewBase(private val dataProvider: GH
     }
 
     context.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, listOf(
-      GHToolbarLabelAction(GithubBundle.message("pull.request.diff.review.label")),
+      ImmutableToolbarLabelAction(CollaborationToolsBundle.message("review.diff.toolbar.label")),
       viewOptionsGroup,
       GHPRCombinedDiffReviewThreadsReloadAction(model),
       ActionManager.getInstance().getAction("Github.PullRequest.Review.Submit")))

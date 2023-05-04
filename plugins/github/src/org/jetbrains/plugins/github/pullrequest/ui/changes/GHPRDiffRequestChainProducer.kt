@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.action.ImmutableToolbarLabelAction
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.diff.chains.AsyncDiffRequestChain
 import com.intellij.diff.chains.DiffRequestChain
@@ -24,7 +26,6 @@ import com.intellij.openapi.vcs.history.VcsDiffUtil
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.getDiffComputer
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImpl
@@ -36,7 +37,6 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataS
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
-import org.jetbrains.plugins.github.util.GHToolbarLabelAction
 import java.util.concurrent.CompletableFuture
 
 open class GHPRDiffRequestChainProducer(
@@ -98,14 +98,14 @@ open class GHPRDiffRequestChainProducer(
       }
       val viewOptionsGroup = NonEmptyActionGroup().apply {
         isPopup = true
-        templatePresentation.text = GithubBundle.message("pull.request.diff.view.options")
+        templatePresentation.text = CollaborationToolsBundle.message("review.diff.toolbar.view.options")
         templatePresentation.icon = AllIcons.Actions.Show
         add(GHPRDiffReviewThreadsToggleAction())
         add(GHPRDiffReviewResolvedThreadsToggleAction())
       }
 
       requestDataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] = listOf(
-        GHToolbarLabelAction(GithubBundle.message("pull.request.diff.review.label")),
+        ImmutableToolbarLabelAction(CollaborationToolsBundle.message("review.diff.toolbar.label")),
         viewOptionsGroup,
         GHPRDiffReviewThreadsReloadAction(),
         ActionManager.getInstance().getAction("Github.PullRequest.Review.Submit"))

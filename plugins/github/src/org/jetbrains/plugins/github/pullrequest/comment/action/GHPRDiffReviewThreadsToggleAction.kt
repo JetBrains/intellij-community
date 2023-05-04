@@ -1,15 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.action
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 
 class GHPRDiffReviewThreadsToggleAction
-  : ToggleAction({ GithubBundle.message("pull.request.review.show.comments.action") },
-                 { GithubBundle.message("pull.request.review.show.comments.action.description") },
+  : ToggleAction({ CollaborationToolsBundle.message("review.diff.toolbar.show.comments.action") },
+                 { CollaborationToolsBundle.message("review.diff.toolbar.show.comments.action.description") },
                  null) {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
