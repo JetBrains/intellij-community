@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -9,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
+import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +46,7 @@ final class ApplierCompleter<T> extends CountedCompleter<Void> {
   volatile Throwable throwable;
   private static final AtomicFieldUpdater<ApplierCompleter, Throwable> throwableUpdater = AtomicFieldUpdater.forFieldOfType(ApplierCompleter.class, Throwable.class);
 
+  private final CoroutineContext threadContext;
   // if not null, the read action has failed and this list contains unfinished subtasks
   private final Collection<ApplierCompleter<T>> failedSubTasks;
 
@@ -75,15 +78,18 @@ final class ApplierCompleter<T> extends CountedCompleter<Void> {
     this.hi = hi;
     this.failedSubTasks = failedSubTasks;
     this.next = next;
+    this.threadContext = ThreadContext.currentThreadContext();
   }
 
   @Override
   public void compute() {
-    if (failFastOnAcquireReadAction) {
-      ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()-> wrapInReadActionAndIndicator(this::execAndForkSubTasks));
-    }
-    else {
-      wrapInReadActionAndIndicator(this::execAndForkSubTasks);
+    try (AccessToken ignored = ThreadContext.installThreadContext(threadContext, true)) {
+      if (failFastOnAcquireReadAction) {
+        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()-> wrapInReadActionAndIndicator(this::execAndForkSubTasks));
+      }
+      else {
+        wrapInReadActionAndIndicator(this::execAndForkSubTasks);
+      }
     }
   }
 
