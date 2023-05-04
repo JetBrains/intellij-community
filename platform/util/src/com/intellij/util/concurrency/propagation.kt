@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair as JBPair
 private object Holder {
   var propagateThreadContext: Boolean = Registry.`is`("ide.propagate.context")
   var propagateThreadCancellation: Boolean = Registry.`is`("ide.propagate.cancellation")
+  var checkIdeAssertion: Boolean = Registry.`is`("ide.check.context.assertion")
 }
 
 @TestOnly
@@ -56,6 +57,9 @@ internal val isPropagateThreadContext: Boolean
 
 internal val isPropagateCancellation: Boolean
   get() = Holder.propagateThreadCancellation
+
+internal val isCheckContextAssertions: Boolean
+  get() = Holder.checkIdeAssertion
 
 @Internal
 class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(BlockingJob) {

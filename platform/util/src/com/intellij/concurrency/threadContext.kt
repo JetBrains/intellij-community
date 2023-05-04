@@ -4,10 +4,13 @@
 
 package com.intellij.concurrency
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.concurrency.isCheckContextAssertions
 import com.intellij.util.concurrency.captureCallableThreadContext
 import com.intellij.util.concurrency.captureRunnableThreadContext
+import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -28,7 +31,76 @@ fun currentThreadContextOrNull(): CoroutineContext? {
  * @return current thread context
  */
 fun currentThreadContext(): CoroutineContext {
+  checkContextInstalled()
   return tlCoroutineContext.get() ?: EmptyCoroutineContext
+}
+
+private fun checkContextInstalled() {
+  if (LoadingState.APP_STARTED.isOccurred && isCheckContextAssertions && tlCoroutineContext.get() == null && !isKnownViolator()) {
+    LOG.warn("Missing thread context. Most likely there is no `blockingContext` on the boundary of coroutine code and blocking code.", Throwable())
+  }
+}
+
+private val VIOLATORS : List<String> = listOf(
+  /*
+   * EDT-level checks, operating on lower level than contexts
+   */
+  "com.intellij.diagnostic",
+  /*
+   * TODO, is not needed on current stage
+   */
+  "com.intellij.openapi.actionSystem",
+  /*
+   * TODO
+   */
+  "org.jetbrains.idea.maven.server",
+  /*
+   * mostly FUS, can operate without contexts (maybe TODO)
+   */
+  "com.intellij.internal.statistic",
+  /*
+   * Logging does not need contexts (for now), can be ignored
+   */
+  "com.intellij.openapi.diagnostic.Logger",
+  /*
+   * We can tolerate the absence of context in 'getExtensions'
+   */
+  "com.intellij.openapi.extensions.impl.ExtensionPointImpl.getExtensionList",
+  "com.intellij.openapi.extensions.impl.ExtensionPointImpl.getExtensions",
+  /*
+   * TODO
+   */
+  "com.intellij.openapi.project.SmartModeScheduler.onStateChanged",
+  /*
+   * Swing-related code is not supported now
+   */
+  "javax.swing.JComponent.paint",
+  "com.intellij.openapi.application.impl.LaterInvocator.leaveModal",
+  "com.intellij.openapi.application.impl.LaterInvocator.invokeAndWait",
+  "com.intellij.util.animation.JBAnimator.animate",
+  /*
+   * TODO
+   */
+  "com.intellij.util.messages.impl.SimpleMessageBusConnectionImpl.disconnect",
+  /*
+   * TODO
+   */
+  "com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl.scheduleUpdateRunnable",
+  "com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl.stopProcess",
+  /*
+   * TODO
+   */
+  "com.intellij.openapi.wm.impl.WindowCloseListener.windowClosing",
+  "com.intellij.ide.ApplicationActivationStateManager.updateState",
+  /*
+   * Gentle flusher's initialization is scheduled before app loads completely, so we do not have context on the moment of scheduling
+   */
+  "com.intellij.openapi.util.io.GentleFlusherBase",
+)
+
+private fun isKnownViolator() : Boolean {
+  val stackTrace = Throwable().stackTrace.map { it.className + "." + it.methodName }
+  return VIOLATORS.any { badTrace -> stackTrace.any { it.startsWith(badTrace) } }
 }
 
 /**
