@@ -6,7 +6,7 @@ use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Result};
-use log::{debug, warn};
+use log::debug;
 
 use crate::*;
 
@@ -57,36 +57,17 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
-        let class_path = &self.launch_data().bootClassPathJarNames;
-        let lib_path = &self.ide_home.join("lib");
-        let lib_path_canonical = std::fs::canonicalize(lib_path)?;
+        let lib_dir = self.ide_home.join("lib");
+        let lib_path = lib_dir.to_str().expect(&format!("Inconvertible path: {:?}", lib_dir));
+        let mut class_path = Vec::new();
 
-        let mut canonical_class_path = Vec::new();
-
-        for item in class_path {
-            let item_path = lib_path_canonical.join(item);
-
-            // JBR doesn't like UNC in classpath
-            let item_canonical_path = match canonical_non_unc(&item_path) {
-                Ok(x) => { x }
-                Err(e) => {
-                    match e.is::<std::io::Error>() {
-                        true => {
-                            // this handles non-existent file probably
-                            warn!("{item_path:?}: IoError {e:?} when trying to get canonical path");
-                            continue
-                        }
-                        false => bail!("Failed to get canonical non-UNC path for {item_path:?} {e:?}"),
-                    }
-                }
-            };
-
-            let expanded = self.expand_vars(&item_canonical_path)?;
-
-            canonical_class_path.push(expanded);
+        for item in &self.launch_data().bootClassPathJarNames {
+            let item_path = lib_path.to_string() + std::path::MAIN_SEPARATOR_STR + item;
+            let expanded = self.expand_vars(&item_path)?;
+            class_path.push(expanded);
         }
 
-        Ok(canonical_class_path)
+        Ok(class_path)
     }
 
     fn prepare_for_launch(&self) -> Result<PathBuf> {
@@ -95,7 +76,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
             .parent_or_err()?
             .parent_or_err()?;
 
-        return Ok(java_home.to_path_buf());
+        return Ok(strip_nt_prefix(java_home));
     }
 }
 

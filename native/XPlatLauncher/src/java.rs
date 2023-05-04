@@ -21,9 +21,6 @@ use {
 };
 
 #[cfg(target_os = "windows")]
-use crate::canonical_non_unc;
-
-#[cfg(target_os = "windows")]
 const LIBJVM_REL_PATH: &str = "bin\\server\\jvm.dll";
 #[cfg(target_os = "macos")]
 const LIBJVM_REL_PATH: &str = "lib/server/libjvm.dylib";
@@ -172,16 +169,12 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
 
 #[cfg(target_os = "windows")]
 fn load_libjvm(jre_home: &Path, libjvm_path: &Path) -> Result<libloading::Library> {
-    // using UNC for libjvm leads to crash when trying to resolve `jimage`
-    // classloader.cpp:  guarantee(name != NULL, "jimage file name is null");
-    let non_unc_bin = canonical_non_unc(&jre_home.join("bin"))?;
-    debug!("[JVM] Changing working dir to {non_unc_bin:?}, so that 'libjvm.dll' can find its dependencies");
-    env::set_current_dir(&non_unc_bin)?;
+    let jre_bin_dir = jre_home.join("bin");
+    debug!("[JVM] Changing working dir to {jre_bin_dir:?}, so that 'libjvm.dll' can find its dependencies");
+    env::set_current_dir(&jre_bin_dir)?;
 
-    let load_path = canonical_non_unc(&libjvm_path).context("Failed to get canonical path for 'libjvm.dll'")?;
-    debug!("[JVM] Loading {load_path:?}");
     unsafe {
-        libloading::Library::new(load_path)
+        libloading::Library::new(libjvm_path)
     }.context("Failed to load 'libjvm.dll'")
 }
 

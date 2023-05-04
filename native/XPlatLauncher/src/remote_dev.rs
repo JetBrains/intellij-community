@@ -242,13 +242,13 @@ impl RemoteDevLaunchConfiguration {
 
     fn create(exe_path: &Path, project_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
         // prevent opening of 2 backends for the same directory via symlinks
-        let canonical_project_path = canonical_non_unc(project_path)?;
+        let canonical_project_path = strip_nt_prefix(project_path.canonicalize()?);
 
-        if project_path != project_path.canonicalize()? {
+        if project_path != canonical_project_path {
             info!("Will use canonical form '{canonical_project_path:?}' of '{project_path:?}' to avoid concurrent IDE instances on the same project");
         }
 
-        let per_project_config_dir_name = canonical_project_path
+        let per_project_config_dir_name = canonical_project_path.to_string_lossy()
             .replace("/", "_")
             .replace("\\", "_")
             .replace(":", "_");

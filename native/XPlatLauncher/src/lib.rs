@@ -82,7 +82,7 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     debug!("Mode: {}", if remote_dev { "remote-dev" } else { "standard" });
 
     debug!("** Preparing launch configuration");
-    let configuration = get_configuration(remote_dev, &exe_path).context("Cannot detect a launch configuration")?;
+    let configuration = get_configuration(remote_dev, &strip_nt_prefix(exe_path)).context("Cannot detect a launch configuration")?;
 
     debug!("** Locating runtime");
     let jre_home = configuration.prepare_for_launch().context("Cannot find a runtime")?;
@@ -270,19 +270,20 @@ pub fn is_executable(_path: &Path) -> Result<bool> {
     Ok(true)
 }
 
-#[cfg(target_os = "windows")]
-pub fn canonical_non_unc(path: &Path) -> Result<String> {
-    let canonical = path.canonicalize()?;
-    let os_str = canonical.as_os_str().to_string_lossy().to_string();
-    let stripped_unc = os_str.strip_prefix("\\\\?\\").unwrap().to_string();
-    Ok(stripped_unc)
+#[cfg(target_family = "unix")]
+pub fn strip_nt_prefix(path: PathBuf) -> PathBuf {
+    path
 }
 
-#[cfg(target_family = "unix")]
-pub fn canonical_non_unc(path: &Path) -> Result<String> {
-    let canonical = path.canonicalize()?;
-    let os_str = canonical.as_os_str().to_string_lossy().to_string();
-    Ok(os_str)
+#[cfg(target_os = "windows")]
+pub fn strip_nt_prefix(path: PathBuf) -> PathBuf {
+    let path_str = path.to_string_lossy();
+    if path_str.starts_with("\\\\?\\") {
+        // NT object directory paths are misunderstood both by JVM and classloaders
+        return PathBuf::from(&path_str[4..])
+    } else {
+        path
+    }
 }
 
 pub trait PathExt {
