@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.http;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,7 +44,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
   @Override
   public void saveContent(@NotNull final Url url, @NotNull final File file, @NotNull final DownloadingCallback callback) {
     Throwable startTrace = ApplicationManager.getApplication().isUnitTestMode() ? new Throwable() : null;
-    ProcessIOExecutorService.INSTANCE.execute(() -> downloadContent(url, file, callback, startTrace));
+    ProcessIOExecutorService.INSTANCE.execute(ThreadContext.captureThreadContext(() -> downloadContent(url, file, callback, startTrace)));
   }
 
   private void downloadContent(@NotNull Url url, @NotNull File file, @NotNull DownloadingCallback callback, @Nullable Throwable startTrace) {

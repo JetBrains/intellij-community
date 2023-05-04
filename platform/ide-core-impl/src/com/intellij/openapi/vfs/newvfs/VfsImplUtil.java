@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -125,7 +126,7 @@ public final class VfsImplUtil {
   /** An experimental refresh-and-find routine that doesn't require a write-lock (and hence EDT). */
   @ApiStatus.Experimental
   public static void refreshAndFindFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path, @NotNull Consumer<? super @Nullable NewVirtualFile> consumer) {
-    ProcessIOExecutorService.INSTANCE.execute(() -> {
+    ProcessIOExecutorService.INSTANCE.execute(ThreadContext.captureThreadContext(() -> {
       Pair<NewVirtualFile, Iterable<String>> rootAndPath = prepare(vfs, path);
       if (rootAndPath == null) {
         consumer.accept(null);
@@ -133,7 +134,7 @@ public final class VfsImplUtil {
       else {
         refreshAndFindFileByPath(rootAndPath.first, rootAndPath.second.iterator(), consumer);
       }
-    });
+    }));
   }
 
   private static void refreshAndFindFileByPath(@Nullable NewVirtualFile file, @NotNull Iterator<String> path, @NotNull Consumer<? super @Nullable NewVirtualFile> consumer) {
