@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::{env, mem, thread};
-use std::ffi::{c_void, CString};
+use std::ffi::{c_char, c_void, c_int, CString, CStr};
 use std::path::Path;
+use std::sync::Mutex;
 use std::thread::JoinHandle;
 
 use anyhow::{anyhow, bail, Context, Error, Result};
@@ -28,6 +29,27 @@ const LIBJVM_REL_PATH: &str = "bin\\server\\jvm.dll";
 const LIBJVM_REL_PATH: &str = "lib/server/libjvm.dylib";
 #[cfg(target_os = "linux")]
 const LIBJVM_REL_PATH: &str = "lib/server/libjvm.so";
+
+static HOOK_NAME: &str = "vfprintf";
+static HOOK_MESSAGES: Mutex<Option<Vec<String>>> = Mutex::new(None);
+
+#[no_mangle]
+extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: *const c_void) -> jint {
+    extern "C" {
+        fn vfprintf(fp: *const c_void, format: *const c_char, args: *const c_void) -> c_int;
+        fn vsnprintf(s: *mut c_char, n: usize, format: *const c_char, args: *const c_void) -> c_int;
+    }
+
+    match &mut *HOOK_MESSAGES.lock().unwrap() {
+        None => unsafe { vfprintf(fp, format, args) },
+        Some(messages) => {
+            let mut buffer = [0u8; 4096];
+            let len = unsafe { vsnprintf(buffer.as_mut_ptr() as *mut c_char, buffer.len(), format, args) };
+            messages.push(CStr::from_bytes_until_nul(&buffer).unwrap().to_string_lossy().to_string());
+            len
+        }
+    }
+}
 
 const MAIN_CLASS_NAME: &str = "com/intellij/idea/Main";
 const MAIN_METHOD_NAME: &str = "main";
@@ -94,7 +116,7 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, args: Ve
 }
 
 #[cfg(target_family = "unix")]
-fn reset_signal_handler(signal: std::ffi::c_int) -> Result<()> {
+fn reset_signal_handler(signal: c_int) -> Result<()> {
     unsafe {
         let mut action: libc::sigaction = mem::zeroed();
         action.sa_sigaction = libc::SIG_DFL;
@@ -124,6 +146,7 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
     let (jvm_init_args, jni_options) = get_jvm_init_args(vm_options)?;
 
     debug!("[JVM] Creating JVM");
+    *HOOK_MESSAGES.lock().unwrap() = Some(Vec::new());
     let create_jvm_result = unsafe {
         create_jvm_call(
             &mut java_vm as *mut *mut jni::sys::JavaVM,
@@ -135,8 +158,11 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
     release_jvm_init_args(jni_options);
 
     if create_jvm_result != jni::sys::JNI_OK {
-        bail!("JNI_CreateJavaVM() failed (error {})", create_jvm_result);
+        let message = HOOK_MESSAGES.lock().unwrap().as_ref().unwrap().join("\n");
+        bail!("{}", if message.is_empty() { format!("Unknown error (JNI_CreateJavaVM: {})", create_jvm_result) } else { message });
     }
+
+    *HOOK_MESSAGES.lock().unwrap() = None;
 
     let jni_env = unsafe { JNIEnv::from_raw(jni_env) }?;
 
@@ -168,13 +194,19 @@ fn load_libjvm(_jre_home: &Path, libjvm_path: &Path) -> Result<libloading::Libra
 }
 
 fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArgs, Vec<jni::sys::JavaVMOption>)> {
-    let mut jni_options = Vec::with_capacity(vm_options.len());
+    let mut jni_options = Vec::with_capacity(vm_options.len() + 1);
+
     for opt in vm_options {
         jni_options.push(jni::sys::JavaVMOption {
             optionString: CString::new(opt.as_str())?.into_raw(),
             extraInfo: std::ptr::null_mut(),
         });
     }
+
+    jni_options.push(jni::sys::JavaVMOption {
+        optionString: CString::new(HOOK_NAME)?.into_raw(),
+        extraInfo: unsafe { mem::transmute::<extern "C" fn(*const c_void, *const c_char, *const c_void) -> jint, *mut c_void>(vfprintf_hook) },
+    });
 
     let jvm_init_args = jni::sys::JavaVMInitArgs {
         version: jni::sys::JNI_VERSION_1_8,

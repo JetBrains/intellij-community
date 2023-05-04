@@ -219,8 +219,15 @@ mod tests {
 
         assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
 
-        let error_marker = "Cannot start the IDE";
-        assert!(result.stderr.contains(error_marker), "Error message ('{}') is missing: {:?}", error_marker, result);
+        let header = "Cannot start the IDE";
+        let header_present = result.stderr.find(header);
+        assert!(header_present.is_some(), "Error header ('{}') is missing: {:?}", header, result);
+
+        let jvm_message = "Conflicting collector combinations in option list";
+        let jvm_message_present = result.stderr.find(jvm_message);
+        assert!(jvm_message_present.is_some(), "JVM error message ('{}') is missing: {:?}", jvm_message, result);
+
+        assert!(header_present.unwrap() < jvm_message_present.unwrap(), "JVM error message wasn't captured: {:?}", result);
     }
 
     #[test]
