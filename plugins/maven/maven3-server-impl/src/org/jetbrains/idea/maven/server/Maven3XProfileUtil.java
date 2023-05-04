@@ -111,8 +111,8 @@ public final class Maven3XProfileUtil {
 
   @NotNull
   public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
-    Model result = Maven3ModelConverter.toNativeModel(model);
-    result = doInterpolate(result, basedir);
+    Model nativeModel = Maven3ModelConverter.toNativeModel(model);
+    Model result = doInterpolate(nativeModel, basedir);
     org.apache.maven.project.path.PathTranslator pathTranslator = new DefaultPathTranslator();
     pathTranslator.alignToBaseDirectory(result, basedir);
     return Maven3ModelConverter.convertModel(result, null);

@@ -165,11 +165,11 @@ public final class Maven40ProfileUtil {
 
   @NotNull
   public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
-    Model result = Maven40ModelConverter.toNativeModel(model);
+    Model nativeModel = Maven40ModelConverter.toNativeModel(model);
     DefaultPathTranslator pathTranslator = new DefaultPathTranslator();
     DefaultUrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
     StringVisitorModelInterpolator interpolator = new StringVisitorModelInterpolator(pathTranslator, urlNormalizer);
-    result = doInterpolate(interpolator, result, basedir);
+    Model result = doInterpolate(interpolator, nativeModel, basedir);
     MyDefaultPathTranslator myPathTranslator = new MyDefaultPathTranslator(pathTranslator);
     myPathTranslator.alignToBaseDirectory(result, basedir);
     return Maven40ModelConverter.convertModel(result, null);
