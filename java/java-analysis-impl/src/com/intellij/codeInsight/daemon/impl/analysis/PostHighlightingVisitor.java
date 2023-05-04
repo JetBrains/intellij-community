@@ -14,6 +14,7 @@ import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
@@ -27,6 +28,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,6 +44,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -74,7 +77,23 @@ class PostHighlightingVisitor {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
     myDeadCodeInspection = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, myFile);
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || myDeadCodeInspection != null);
+    if (!ApplicationManager.getApplication().isUnitTestMode() && myDeadCodeInspection == null) {
+      String s;
+      if (profile instanceof InspectionProfileImpl) {
+        ToolsImpl tools = ((InspectionProfileImpl)profile).getToolsOrNull(UnusedDeclarationInspectionBase.SHORT_NAME, myProject);
+        String toolsState = "";
+        if (tools != null) {
+          Element x = new Element("x");
+          tools.writeExternal(x);
+          toolsState = JDOMUtil.write(x);
+        }
+        s = "tools=" + tools + "; state:"+toolsState;
+      }
+      else {
+        s = "profile=" + profile + " (" + profile.getClass() + ")";
+      }
+      LOG.error("can't find " + myDeadCodeKey + " in profile `" + profile.getDisplayName() + "`. enabled=" + profile.isToolEnabled(myDeadCodeKey) + "; " + s);
+    }
     myUnusedSymbolInspection = myDeadCodeInspection == null ? null : myDeadCodeInspection.getSharedLocalInspectionTool();
     myDeadCodeInfoType = myDeadCodeKey == null ? HighlightInfoType.UNUSED_SYMBOL
                          : new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(myDeadCodeKey, myFile).getSeverity(),
