@@ -464,7 +464,7 @@ abstract class ComponentManagerImpl(
     }
 
     for (componentAdapter in componentAdapters.getImmutableSet()) {
-      componentAdapter.getInstanceAsync<Any>(this, keyClass = null).await()
+      componentAdapter.getInstanceAsync<Any>(this, keyClass = null).join()
     }
 
     activity?.end()

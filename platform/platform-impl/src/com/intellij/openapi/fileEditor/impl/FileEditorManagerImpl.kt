@@ -112,7 +112,6 @@ import java.lang.Runnable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.LongAdder
 import javax.swing.JComponent
@@ -139,7 +138,10 @@ open class FileEditorManagerImpl(
   lateinit var mainSplitters: EditorsSplitters
     private set
 
-  private val isInitialized = AtomicBoolean()
+  private val isInitialized = CompletableDeferred<Boolean>()
+
+  internal val initialized: Job
+    get() = isInitialized
 
   private val dockable = lazy {
     DockableEditorTabbedContainer(splitters = mainSplitters, disposeWhenEmpty = false, coroutineScope = coroutineScope)
@@ -259,7 +261,7 @@ open class FileEditorManagerImpl(
     closeFilesOnFileEditorRemoval()
 
     if (ApplicationManager.getApplication().isUnitTestMode || forceUseUiInHeadlessMode()) {
-      isInitialized.set(true)
+      isInitialized.complete(true)
       mainSplitters = EditorsSplitters(manager = this, coroutineScope = coroutineScope)
       check(splitterFlow.tryEmit(mainSplitters))
     }
@@ -267,7 +269,7 @@ open class FileEditorManagerImpl(
 
   @RequiresEdt
   internal fun init(): kotlin.Pair<EditorsSplitters, EditorSplitterState?> {
-    if (isInitialized.get()) {
+    if (isInitialized.isCompleted) {
       LOG.error("already initialized")
     }
 
@@ -278,7 +280,7 @@ open class FileEditorManagerImpl(
     check(splitterFlow.tryEmit(component))
 
     // set after we set mainSplitters
-    if (!isInitialized.compareAndSet(false, true)) {
+    if (!isInitialized.complete(true)) {
       LOG.error("already initialized")
     }
 
@@ -595,7 +597,7 @@ open class FileEditorManagerImpl(
    * should be opened in the myEditor, otherwise the method throws an assertion.
    */
   override fun updateFileColor(file: VirtualFile) {
-    if (!isInitialized.get()) {
+    if (!isInitialized.isCompleted) {
       return
     }
 
@@ -704,7 +706,7 @@ open class FileEditorManagerImpl(
       if (!ClientId.isCurrentlyUnderLocalId) {
         return clientFileEditorManager?.getSelectedFile()
       }
-      if (!isInitialized.get()) {
+      if (!isInitialized.isCompleted) {
         return null
       }
       return getActiveSplitterSync().currentFile
@@ -715,7 +717,7 @@ open class FileEditorManagerImpl(
 
   override var currentWindow: EditorWindow?
     get() {
-      if (!ClientId.isCurrentlyUnderLocalId || !isInitialized.get()) {
+      if (!ClientId.isCurrentlyUnderLocalId || !isInitialized.isCompleted) {
         return null
       }
       if (!ApplicationManager.getApplication().isDispatchThread) {
@@ -1473,7 +1475,7 @@ open class FileEditorManagerImpl(
   override fun getSelectedTextEditor(): Editor? = getSelectedTextEditor(isLockFree = false)
 
   fun getSelectedTextEditor(isLockFree: Boolean): Editor? {
-    if (!isInitialized.get()) {
+    if (!isInitialized.isCompleted) {
       return null
     }
 
@@ -1529,7 +1531,7 @@ open class FileEditorManagerImpl(
   override fun hasOpenFiles(): Boolean = !openedComposites.isEmpty()
 
   override fun getSelectedFiles(): Array<VirtualFile> {
-    if (!isInitialized.get()) {
+    if (!isInitialized.isCompleted) {
       return VirtualFile.EMPTY_ARRAY
     }
     if (!ClientId.isCurrentlyUnderLocalId) {
@@ -1548,7 +1550,7 @@ open class FileEditorManagerImpl(
   }
 
   override fun getSelectedEditors(): Array<FileEditor> {
-    if (!isInitialized.get()) {
+    if (!isInitialized.isCompleted) {
       return FileEditor.EMPTY_ARRAY
     }
 
@@ -1567,7 +1569,7 @@ open class FileEditorManagerImpl(
 
   @get:RequiresEdt
   override val activeSplittersComposites: List<EditorComposite>
-    get() = if (isInitialized.get()) getActiveSplitterSync().getAllComposites() else emptyList()
+    get() = if (isInitialized.isCompleted) getActiveSplitterSync().getAllComposites() else emptyList()
 
   fun getLastFocusedSplitters(): EditorsSplitters? {
     if (ApplicationManager.getApplication().isDispatchThread) {
@@ -1586,7 +1588,7 @@ open class FileEditorManagerImpl(
     if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.getSelectedEditor()
     }
-    if (!isInitialized.get()) {
+    if (!isInitialized.isCompleted) {
       return null
     }
 
@@ -1642,7 +1644,7 @@ open class FileEditorManagerImpl(
   }
 
   override fun getAllEditors(): Array<FileEditor> {
-    if (!isInitialized.get()) {
+    if (!isInitialized.isCompleted) {
       return FileEditor.EMPTY_ARRAY
     }
 
@@ -1690,7 +1692,7 @@ open class FileEditorManagerImpl(
   }
 
   override fun getState(): Element? {
-    if (!isInitialized.get()) {
+    if (!isInitialized.isCompleted) {
       return null
     }
 

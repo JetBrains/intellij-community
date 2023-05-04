@@ -29,6 +29,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -36,6 +37,8 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ModalTaskOwner
@@ -1187,11 +1190,19 @@ private suspend fun initProject(file: Path,
 
       rawProjectDeferred?.complete(project)
 
+      val beforeComponentCreation: Job? = if (rawProjectDeferred == null) {
+        null
+      }
+      else {
+        (project.serviceAsync<FileEditorManager>().await() as? FileEditorManagerImpl)?.initialized
+      }
+
       if (preloadServices) {
         preloadServices(project)
       }
 
       launch {
+        beforeComponentCreation?.join()
         project.createComponentsNonBlocking()
       }
 
