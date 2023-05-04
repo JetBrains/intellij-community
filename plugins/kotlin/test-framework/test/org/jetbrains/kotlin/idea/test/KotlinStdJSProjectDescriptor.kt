@@ -20,3 +20,15 @@ object KotlinStdJSProjectDescriptor : KotlinLightProjectDescriptor() {
         }
     }
 }
+
+object KotlinStdJSWithStdLibProjectDescriptor : KotlinLightProjectDescriptor() {
+    override fun getSdk(): Sdk? = null
+
+    override fun configureModule(module: Module, model: ModifiableRootModel) {
+        ConfigLibraryUtil.addLibrary(model, "kotlin-stdlib-js", KotlinJavaScriptLibraryKind) {
+            addRoot(VfsUtil.getUrlForLibraryRoot(TestKotlinArtifacts.kotlinStdlibJs), OrderRootType.CLASSES)
+            addRoot(VfsUtil.getUrlForLibraryRoot(TestKotlinArtifacts.kotlinStdlib), OrderRootType.CLASSES)
+            addRoot(VfsUtil.getUrlForLibraryRoot(TestKotlinArtifacts.kotlinStdlibSources), OrderRootType.SOURCES)
+        }
+    }
+}
