@@ -3,9 +3,9 @@ package org.jetbrains.plugins.gradle.properties
 
 import org.jetbrains.plugins.gradle.properties.base.BaseProperties
 
-interface LocalProperties : BaseProperties {
+interface GradleLocalProperties : BaseProperties {
 
-  object EMPTY : LocalProperties {
+  object EMPTY : GradleLocalProperties {
     override val javaHomeProperty: Nothing? = null
   }
 }

@@ -18,7 +18,7 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
     withGradleProperties(externalProjectPath, java = latestSdk) {
       assertGradleJvmSuggestion(expected = USE_GRADLE_JAVA_HOME)
     }
-    withLocalProperties(externalProjectPath, java = latestSdk) {
+    withGradleLocalProperties(externalProjectPath, java = latestSdk) {
       assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
     }
     withRegisteredSdks(earliestSdk, latestSdk, unsupportedSdk) {
@@ -97,29 +97,29 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
   }
 
   @Test
-  fun `test gradle jvm resolution (local properties)`() {
-    withLocalProperties(externalProjectPath, java = earliestSdk) {
+  fun `test gradle jvm resolution (gradle local properties)`() {
+    withGradleLocalProperties(externalProjectPath, java = earliestSdk) {
       assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
     }
-    withLocalProperties(externalProjectPath, java = latestSdk) {
+    withGradleLocalProperties(externalProjectPath, java = latestSdk) {
       assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
     }
-    withLocalProperties(externalProjectPath, java = unsupportedSdk) {
+    withGradleLocalProperties(externalProjectPath, java = unsupportedSdk) {
       assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
     }
   }
 
   @Test
-  fun `test local properties resolution (project properties)`() {
-    assertLocalProperties(java = null)
-    withLocalProperties(externalProjectPath, java = earliestSdk) {
-      assertLocalProperties(java = earliestSdk)
+  fun `test gradle local properties resolution (project properties)`() {
+    assertGradleLocalProperties(java = null)
+    withGradleLocalProperties(externalProjectPath, java = earliestSdk) {
+      assertGradleLocalProperties(java = earliestSdk)
     }
-    withLocalProperties(externalProjectPath, java = latestSdk) {
-      assertLocalProperties(java = latestSdk)
+    withGradleLocalProperties(externalProjectPath, java = latestSdk) {
+      assertGradleLocalProperties(java = latestSdk)
     }
-    withLocalProperties(externalProjectPath, java = null) {
-      assertLocalProperties(java = null)
+    withGradleLocalProperties(externalProjectPath, java = null) {
+      assertGradleLocalProperties(java = null)
     }
   }
 
