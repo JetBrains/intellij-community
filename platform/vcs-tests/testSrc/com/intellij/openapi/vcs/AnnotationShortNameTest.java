@@ -25,6 +25,12 @@ public class AnnotationShortNameTest extends TestCase {
     doTest("Vasya Pavlovich Pupkin <asdasd@localhost>",
            "Vasya", "Pupkin", "VPP",
            "Vasya Pavlovich Pupkin", "asdasd@localhost");
+    doTest("danah boyd <danah@datasociety.net>",
+           "danah", "boyd", "DB",
+           "danah boyd", "danah@datasociety.net");
+    doTest("geohot <geohot@gmail.com>",
+           "geohot", "geohot", "G",
+           "geohot", "geohot@gmail.com");
     doTest("Vasya Pavlovich Pupkin",
            "Vasya", "Pupkin", "VPP",
            "Vasya Pavlovich Pupkin", "Vasya Pavlovich Pupkin");
@@ -35,16 +41,19 @@ public class AnnotationShortNameTest extends TestCase {
            "Vasya", "Pupkin", "VPP",
            "vasya-pavlovich-pupkin@localhost.com", "vasya-pavlovich-pupkin@localhost.com");
     doTest("vasya",
-           "Vasya", "Vasya", "V",
+           "vasya", "vasya", "V",
            "vasya", "vasya");
     doTest("Vasya  Pupkin",
            "Vasya", "Pupkin", "VP",
            "Vasya Pupkin", "Vasya Pupkin");
+    doTest("Catherine Zeta-Jones",
+           "Catherine", "Zeta-Jones", "CZJ",
+           "Catherine Zeta-Jones", "Catherine Zeta-Jones");
     doTest("vasya-pupkin",
-           "Vasya", "Pupkin", "VP",
+           "vasya-pupkin", "vasya-pupkin", "VP",
            "vasya-pupkin", "vasya-pupkin");
     doTest("vasya.pupkin",
-           "Vasya", "Pupkin", "VP",
+           "vasya.pupkin", "vasya.pupkin", "VP",
            "vasya.pupkin", "vasya.pupkin");
     doTest("<asdasd@localhost> Vasya Pupkin",
            "Vasya", "Pupkin", "VP",
@@ -53,17 +62,20 @@ public class AnnotationShortNameTest extends TestCase {
            "Vasya", "Pupkin", "VP",
            "vasya.pupkin@localhost", "vasya.pupkin@localhost");
     doTest("pupkin <vasya@localhost>",
-           "Pupkin", "Pupkin", "P",
+           "pupkin", "pupkin", "P",
            "pupkin", "vasya@localhost");
     doTest("@localhost",
            "@localhost", "@localhost", "@",
            "@localhost", "@localhost");
     doTest("vasya <email>",
-           "Vasya", "Email", "VE",
+           "vasya", "<email>", "VE",
            "vasya <email>", "vasya <email>");
     doTest("vasya <.email.>",
-           "Vasya", "Email", "VE",
+           "vasya", "<.email.>", "VE",
            "vasya <.email.>", "vasya <.email.>");
+    doTest("Vasya-TEST@localhost",
+           "Vasya", "TEST", "VT",
+           "Vasya-TEST@localhost", "Vasya-TEST@localhost");
   }
 
   private static void doTest(@NotNull String input,
@@ -72,10 +84,10 @@ public class AnnotationShortNameTest extends TestCase {
                              @NotNull String initials,
                              @NotNull String fullName,
                              @NotNull String email) {
-    assertEquals(firstName, shorten(input, FIRSTNAME));
-    assertEquals(lastName, shorten(input, LASTNAME));
-    assertEquals(initials, shorten(input, INITIALS));
-    assertEquals(fullName, shorten(input, NONE));
-    assertEquals(email, shorten(input, EMAIL));
+    assertEquals(input, firstName, shorten(input, FIRSTNAME));
+    assertEquals(input, lastName, shorten(input, LASTNAME));
+    assertEquals(input, initials, shorten(input, INITIALS));
+    assertEquals(input, fullName, shorten(input, NONE));
+    assertEquals(input, email, shorten(input, EMAIL));
   }
 }
