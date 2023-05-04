@@ -1529,7 +1529,21 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
 
+  @NotNull
+  @Override
+  public MavenArtifactResolveResult resolveArtifactsTransitively(
+    @NotNull final List<MavenArtifactInfo> artifacts,
+    @NotNull final List<MavenRemoteRepository> remoteRepositories,
+    MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
 
+    List<MavenArtifact> resolvedArtifacts = new ArrayList<>();
+    for (MavenArtifactInfo artifact : artifacts) {
+      resolvedArtifacts.add(doResolveArtifact(artifact, remoteRepositories));
+    }
+
+    return new MavenArtifactResolveResult(resolvedArtifacts, null);
+  }
 
 
 
@@ -1587,17 +1601,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
     }
-  }
-
-  @NotNull
-  @Override
-  public MavenArtifactResolveResult resolveArtifactsTransitively(@NotNull List<MavenArtifactInfo> artifacts,
-                                                                 @NotNull List<MavenRemoteRepository> remoteRepositories,
-                                                                 MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-    return null;
   }
 
   @Override
