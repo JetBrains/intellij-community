@@ -21,7 +21,7 @@ use {
 };
 
 #[cfg(target_os = "windows")]
-use crate::{canonical_non_unc, PathExt};
+use crate::canonical_non_unc;
 
 #[cfg(target_os = "windows")]
 const LIBJVM_REL_PATH: &str = "bin\\server\\jvm.dll";
