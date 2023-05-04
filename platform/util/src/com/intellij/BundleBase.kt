@@ -1,252 +1,252 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij;
+package com.intellij
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.text.OrdinalFormat;
-import org.jetbrains.annotations.*;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.text.OrdinalFormat
+import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
+import java.text.MessageFormat
+import java.util.*
+import java.util.function.BiConsumer
 
-import java.lang.reflect.Field;
-import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-import java.util.function.BiConsumer;
+private val LOG: Logger
+  get() = logger<BundleBase>()
 
-@ApiStatus.NonExtendable
-public abstract class BundleBase {
-  public static final char MNEMONIC = 0x1B;
-  public static final @NlsSafe String MNEMONIC_STRING = Character.toString(MNEMONIC);
-  public static final boolean SHOW_LOCALIZED_MESSAGES = Boolean.getBoolean("idea.l10n");
-  public static final boolean SHOW_DEFAULT_MESSAGES = Boolean.getBoolean("idea.l10n.english");
-  public static final boolean SHOW_KEYS = Boolean.getBoolean("idea.l10n.keys");
+private var assertOnMissedKeys = false
+private val SUFFIXES = arrayOf("</body></html>", "</html>")
 
-  static final String L10N_MARKER = "🔅";
+@Volatile
+private var translationConsumer: BiConsumer<String, String>? = null
 
-  private static final Logger LOG = Logger.getInstance(BundleBase.class);
+object BundleBase {
+  const val MNEMONIC: Char = 0x1B.toChar()
+  const val MNEMONIC_STRING: @NlsSafe String = MNEMONIC.toString()
+  @JvmField
+  val SHOW_LOCALIZED_MESSAGES: Boolean = java.lang.Boolean.getBoolean("idea.l10n")
+  @JvmField
+  val SHOW_DEFAULT_MESSAGES: Boolean = java.lang.Boolean.getBoolean("idea.l10n.english")
+  @JvmField
+  val SHOW_KEYS: Boolean = java.lang.Boolean.getBoolean("idea.l10n.keys")
+  const val L10N_MARKER: String = "🔅"
 
-  private static boolean assertOnMissedKeys;
-
-  public static void assertOnMissedKeys(boolean doAssert) {
-    assertOnMissedKeys = doAssert;
+  fun assertOnMissedKeys(doAssert: Boolean) {
+    assertOnMissedKeys = doAssert
   }
 
   /**
    * Performs partial application of the pattern message from the bundle leaving some parameters unassigned.
-   * It's expected that the message contains {@code params.length + unassignedParams} placeholders. Parameters
-   * {@code {0}..{params.length-1}} will be substituted using passed params array. The remaining parameters
-   * will be renumbered: {@code {params.length}} will become {@code {0}} and so on, so the resulting template
+   * It's expected that the message contains `params.length + unassignedParams` placeholders. Parameters
+   * `{0}..{params.length-1}` will be substituted using passed params array. The remaining parameters
+   * will be renumbered: `{params.length}` will become `{0}` and so on, so the resulting template
    * could be applied once more.
    *
    * @param bundle resource bundle to find the message in
    * @param key resource key
    * @param unassignedParams number of unassigned parameters
    * @param params assigned parameters
-   * @return a template suitable to pass to {@link MessageFormat#format(Object)} having the specified number of placeholders left
+   * @return a template suitable to pass to [MessageFormat.format] having the specified number of placeholders left
    */
-  public static @Nls String partialMessage(@NotNull ResourceBundle bundle,
-                                           @NotNull String key,
-                                           int unassignedParams,
-                                           Object @NotNull ... params) {
-    if (unassignedParams <= 0) throw new IllegalArgumentException();
-    Object[] newParams = Arrays.copyOf(params, params.length + unassignedParams);
-    String prefix = "#$$$TemplateParameter$$$#", suffix = "#$$$/TemplateParameter$$$#";
-    for (int i = 0; i < unassignedParams; i++) {
-      newParams[i + params.length] = prefix + i + suffix;
+  @JvmStatic
+  fun partialMessage(bundle: ResourceBundle, key: String, unassignedParams: Int, params: Array<Any>): @Nls String {
+    require(unassignedParams > 0)
+
+    val newParams = params.copyOf(params.size + unassignedParams)
+    val prefix = "#$$\$TemplateParameter$$$#"
+    val suffix = "#$$$/TemplateParameter$$$#"
+    for (i in 0 until unassignedParams) {
+      newParams[i + params.size] = prefix + i + suffix
     }
-    String message = message(bundle, key, newParams);
-    return quotePattern(message).replace(prefix, "{").replace(suffix, "}");
+    val message = message(bundle, key, newParams)
+    return quotePattern(message).replace(prefix, "{").replace(suffix, "}")
   }
 
-  private static @NlsSafe String quotePattern(String message) {
-    boolean inQuotes = false;
-    StringBuilder sb = new StringBuilder(message.length() + 5);
-    for (int i = 0; i < message.length(); i++) {
-      char c = message.charAt(i);
-      boolean needToQuote = c == '{' || c == '}';
-      if (needToQuote != inQuotes) {
-        inQuotes = needToQuote;
-        sb.append('\'');
-      }
-      if (c == '\'') {
-        sb.append("''");
-      }
-      else {
-        sb.append(c);
-      }
-    }
-    if (inQuotes) {
-      sb.append('\'');
-    }
-    return sb.toString();
+  @JvmStatic
+  fun message(bundle: ResourceBundle, key: String, vararg params: Any): @Nls String {
+    return messageOrDefault(bundle, key, null, *params)!!
   }
 
-  public static @Nls @NotNull String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
-    return messageOrDefault(bundle, key, null, params);
-  }
+  @JvmStatic
+  fun messageOrDefault(bundle: ResourceBundle?, key: String, defaultValue: @Nls String?, vararg params: Any?): @Nls String? {
+    if (bundle == null) {
+      return defaultValue
+    }
 
-  public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
-                                             @NotNull String key,
-                                             @Nullable @Nls String defaultValue,
-                                             Object @NotNull ... params) {
-    if (bundle == null) return defaultValue;
-
-    boolean resourceFound = true;
-
-    String value;
+    var resourceFound = true
+    var value: String
     try {
-      value = bundle.getString(key);
+      value = bundle.getString(key)
     }
-    catch (MissingResourceException e) {
-      resourceFound = false;
-      value = useDefaultValue(bundle, key, defaultValue);
+    catch (e: MissingResourceException) {
+      resourceFound = false
+      value = useDefaultValue(bundle, key, defaultValue)
     }
-
-    String result = postprocessValue(bundle, value, params);
-
-    BiConsumer<? super String, ? super String> consumer = ourTranslationConsumer;
-    if (consumer != null) consumer.accept(key, result);
-
+    val result = postprocessValue(bundle, value, *params)
+    val consumer = translationConsumer
+    consumer?.accept(key, result)
     if (!resourceFound) {
-      return result;
+      return result
     }
-
     if (SHOW_KEYS && SHOW_DEFAULT_MESSAGES) {
-      return appendLocalizationSuffix(result, " (" + key + "=" + getDefaultMessage(bundle, key) + ")");
+      return appendLocalizationSuffix(result, " (" + key + "=" + getDefaultMessage(bundle, key) + ")")
     }
     if (SHOW_KEYS) {
-      return appendLocalizationSuffix(result, " (" + key + ")");
+      return appendLocalizationSuffix(result, " ($key)")
     }
     if (SHOW_DEFAULT_MESSAGES) {
-      return appendLocalizationSuffix(result, " (" + getDefaultMessage(bundle, key) + ")");
+      return appendLocalizationSuffix(result, " (" + getDefaultMessage(bundle, key) + ")")
     }
-    if (SHOW_LOCALIZED_MESSAGES) {
-      return appendLocalizationSuffix(result, L10N_MARKER);
+    return if (SHOW_LOCALIZED_MESSAGES) {
+      appendLocalizationSuffix(result, L10N_MARKER)
     }
-    return result;
+    else result
   }
 
-  public static @NotNull String getDefaultMessage(@NotNull ResourceBundle bundle, @NotNull String key) {
+  @JvmStatic
+  fun getDefaultMessage(bundle: ResourceBundle, key: String): String {
     try {
-      Field parent = ReflectionUtil.getDeclaredField(ResourceBundle.class, "parent");
+      val parent = ReflectionUtil.getDeclaredField(ResourceBundle::class.java, "parent")
       if (parent != null) {
-        Object parentBundle = parent.get(bundle);
-        if (parentBundle instanceof ResourceBundle) {
-          return ((ResourceBundle)parentBundle).getString(key);
+        val parentBundle = parent[bundle]
+        if (parentBundle is ResourceBundle) {
+          return parentBundle.getString(key)
         }
       }
     }
-    catch (IllegalAccessException e) {
-      LOG.warn("Cannot fetch default message with 'idea.l10n.english' enabled, by key '" + key + "'");
+    catch (e: IllegalAccessException) {
+      LOG.warn("Cannot fetch default message with 'idea.l10n.english' enabled, by key '$key'")
     }
-
-    return "undefined";
+    return "undefined"
   }
 
-  private static final String[] SUFFIXES = {"</body></html>", "</html>"};
-
-  protected static @NlsSafe @NotNull String appendLocalizationSuffix(@NotNull String result, @NotNull String suffixToAppend) {
-    for (String suffix : SUFFIXES) {
-      if (result.endsWith(suffix)) return result.substring(0, result.length() - suffix.length()) + L10N_MARKER + suffix;
+  @JvmStatic
+  fun appendLocalizationSuffix(result: String, suffixToAppend: String): @NlsSafe String {
+    for (suffix in SUFFIXES) {
+      if (result.endsWith(suffix)) {
+        return result.substring(0, result.length - suffix.length) + L10N_MARKER + suffix
+      }
     }
-    return result + suffixToAppend;
+    return result + suffixToAppend
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
-  static @Nls @NotNull String useDefaultValue(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable @Nls String defaultValue) {
+  @JvmStatic
+  @Suppress("HardCodedStringLiteral")
+  fun useDefaultValue(bundle: ResourceBundle?, key: String, defaultValue: @Nls String?): @Nls String {
     if (defaultValue != null) {
-      return defaultValue;
+      return defaultValue
     }
-
     if (assertOnMissedKeys) {
-      String bundleName = bundle != null ? "(" + bundle.getBaseBundleName() + ")" : "";
-      LOG.error("'" + key + "' is not found in " + bundle + bundleName);
+      val bundleName = if (bundle != null) "(" + bundle.baseBundleName + ")" else ""
+      LOG.error("'$key' is not found in $bundle$bundleName")
     }
-
-    return "!" + key + "!";
+    return "!$key!"
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
-  static @Nls @NotNull String postprocessValue(@NotNull ResourceBundle bundle, @NotNull @Nls String value, Object @NotNull ... params) {
-    value = replaceMnemonicAmpersand(value);
-
-    if (params.length > 0 && value.indexOf('{') >= 0) {
-      Locale locale = bundle.getLocale();
-      try {
-        MessageFormat format = locale != null ? new MessageFormat(value, locale) : new MessageFormat(value);
-        OrdinalFormat.apply(format);
-        value = format.format(params);
+  @JvmStatic
+  @Suppress("HardCodedStringLiteral")
+  fun postprocessValue(bundle: ResourceBundle, value: @Nls String, vararg params: Any?): @Nls String {
+    @Suppress("NAME_SHADOWING") var value = value
+    value = replaceMnemonicAmpersand(value)!!
+    if (params.size > 0 && value.indexOf('{') >= 0) {
+      val locale = bundle.locale
+      value = try {
+        val format = if (locale != null) MessageFormat(value, locale) else MessageFormat(value)
+        OrdinalFormat.apply(format)
+        format.format(params)
       }
-      catch (IllegalArgumentException e) {
-        value = "!invalid format: `" + value + "`!";
+      catch (e: IllegalArgumentException) {
+        "!invalid format: `$value`!"
       }
     }
-
-    return value;
+    return value
   }
 
+  @JvmStatic
   @Contract(pure = true)
-  public static @NotNull String format(@NotNull String value, Object @NotNull ... params) {
-    return params.length > 0 && value.indexOf('{') >= 0 ? MessageFormat.format(value, params) : value;
+  fun format(value: String, vararg params: Any): String {
+    return if (params.isNotEmpty() && value.indexOf('{') >= 0) MessageFormat.format(value, *params) else value
   }
 
+  @JvmStatic
   @Contract("null -> null; !null -> !null")
-  public static @Nls String replaceMnemonicAmpersand(@Nullable @Nls String value) {
+  fun replaceMnemonicAmpersand(value: @Nls String?): @Nls String? {
     if (value == null || value.indexOf('&') < 0 || value.indexOf(MNEMONIC) >= 0) {
-      return value;
+      return value
     }
 
-    StringBuilder builder = new StringBuilder();
-    boolean macMnemonic = value.contains("&&");
-    boolean mnemonicAdded = false;
-    int i = 0;
-    while (i < value.length()) {
-      char c = value.charAt(i);
+    val builder = StringBuilder()
+    val macMnemonic = value.contains("&&")
+    var mnemonicAdded = false
+    var i = 0
+    while (i < value.length) {
+      val c = value[i]
       if (c == '\\') {
-        if (i < value.length() - 1 && value.charAt(i + 1) == '&') {
-          builder.append('&');
-          i++;
+        if (i < value.length - 1 && value[i + 1] == '&') {
+          builder.append('&')
+          i++
         }
         else {
-          builder.append(c);
+          builder.append(c)
         }
       }
       else if (c == '&') {
-        if (i < value.length() - 1 && value.charAt(i + 1) == '&') {
+        if (i < value.length - 1 && value[i + 1] == '&') {
           if (SystemInfoRt.isMac) {
             if (!mnemonicAdded) {
-              mnemonicAdded = true;
-              builder.append(MNEMONIC);
+              mnemonicAdded = true
+              builder.append(MNEMONIC)
             }
           }
-          i++;
+          i++
         }
         else if (!SystemInfoRt.isMac || !macMnemonic) {
           if (!mnemonicAdded) {
-            mnemonicAdded = true;
-            builder.append(MNEMONIC);
+            mnemonicAdded = true
+            builder.append(MNEMONIC)
           }
         }
       }
       else {
-        builder.append(c);
+        builder.append(c)
       }
-      i++;
+      i++
     }
-    @NlsSafe String result = builder.toString();
-    return result;
+    @Suppress("HardCodedStringLiteral")
+    return builder.toString()
   }
 
-  //<editor-fold desc="Test stuff">
-  private static volatile BiConsumer<? super String, ? super String> ourTranslationConsumer;
-
-  /** The consumer is used by the "robot-server" plugin to collect key/text pairs - handy for writing UI tests for different locales. */
+  /** The consumer is used by the "robot-server" plugin to collect key/text pairs - handy for writing UI tests for different locales.  */
+  @Suppress("unused")
   @TestOnly
-  public static void setTranslationConsumer(@Nullable BiConsumer<? super String, ? super String> consumer) {
-    ourTranslationConsumer = consumer;
+  @JvmStatic
+  fun setTranslationConsumer(consumer: BiConsumer<String, String>?) {
+    translationConsumer = consumer
   }
-  //</editor-fold>
+}
+
+private fun quotePattern(message: String): @NlsSafe String {
+  var inQuotes = false
+  val sb = StringBuilder(message.length + 5)
+  for (i in 0.until(message.length)) {
+    val c = message[i]
+    val needToQuote = c == '{' || c == '}'
+    if (needToQuote != inQuotes) {
+      inQuotes = needToQuote
+      sb.append('\'')
+    }
+    if (c == '\'') {
+      sb.append("''")
+    }
+    else {
+      sb.append(c)
+    }
+  }
+  if (inQuotes) {
+    sb.append('\'')
+  }
+  return sb.toString()
 }

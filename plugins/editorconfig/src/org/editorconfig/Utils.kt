@@ -82,7 +82,7 @@ object Utils {
     val message = if (configValue != null) {
       BundleBase.messageOrDefault(EditorConfigBundle.resourceBundle, "invalid.config.value",
                                   null,
-                                  configValue, configKey.ifEmpty { "?" }, filePath)
+                                  configValue, configKey.ifEmpty { "?" }, filePath)!!
     }
     else {
       EditorConfigBundle.message("read.failure")
