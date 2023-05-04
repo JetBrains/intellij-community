@@ -5,7 +5,9 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.MouseEvent;
 
 /**
@@ -17,15 +19,39 @@ public abstract class XDebuggerTreeNodeHyperlink {
 
   @Nls
   private final String linkText;
+  
+  @Nullable
+  @Nls
+  private final String linkTooltip;
+
+  @Nullable
+  private final Icon linkIcon;
 
   protected XDebuggerTreeNodeHyperlink(@NotNull @Nls String linkText) {
+    this(linkText, null, null);
+  }
+
+  protected XDebuggerTreeNodeHyperlink(@NotNull @Nls String linkText, @Nullable @Nls String toolTipText, @Nullable Icon icon) {
     this.linkText = linkText;
+    this.linkTooltip = toolTipText;
+    this.linkIcon = icon;
   }
 
   @NotNull
   @Nls
   public String getLinkText() {
     return linkText;
+  }
+
+  @Nullable
+  @Nls
+  public String getLinkTooltip() {
+    return linkTooltip;
+  }
+
+  @Nullable
+  public Icon getLinkIcon() {
+    return linkIcon;
   }
 
   @NotNull

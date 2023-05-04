@@ -84,6 +84,28 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, (SimpleColoredComponent)this, false, selected);
   }
 
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    String toolTip = myLink.getToolTipText();
+    if (isInLinkArea(event.getX()) && toolTip != null) {
+      return toolTip;
+    }
+
+    return super.getToolTipText(event);
+  }
+
+  private boolean isInLinkArea(int x) {
+    int linkXCoordinate = x - myLinkOffset;
+    if (linkXCoordinate < 0)
+      return false;
+
+    int index = myLink.findFragmentAt(linkXCoordinate);
+    if (index == SimpleColoredComponent.FRAGMENT_ICON)
+      return true;
+
+    return index >= 0 && myLink.getFragmentTag(index) != null;
+  }
+
   private void updateIcon(XDebuggerTreeNode node) {
     Icon icon = node instanceof XValueNodeImpl &&
                 node.getTree().getPinToTopManager().isEnabled() &&
@@ -101,9 +123,19 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   @Override
   public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
-    if (tag instanceof XDebuggerTreeNodeHyperlink && ((XDebuggerTreeNodeHyperlink)tag).alwaysOnScreen()) {
+    if (tag instanceof XDebuggerTreeNodeHyperlink tagValue && ((XDebuggerTreeNodeHyperlink)tag).alwaysOnScreen()) {
       myHaveLink = true;
       myLink.append(fragment, attributes, tag);
+
+      Icon icon = tagValue.getLinkIcon();
+      if (icon != null) {
+        myLink.setIcon(icon);
+      }
+
+      String tooltipText = tagValue.getLinkTooltip();
+      if (tooltipText != null) {
+        myLink.setToolTipText(tooltipText);
+      }
     }
     else {
       super.append(fragment, attributes, tag);

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -17,7 +18,11 @@ import java.awt.*;
  */
 public abstract class XFullValueEvaluator {
   private final @Nls String myLinkText;
+  private final @Nullable @Nls String myLinkTooltipText;
+  private final @Nullable Icon myLinkIcon;
   private boolean myShowValuePopup = true;
+  
+  private boolean myIsEnabled = true;
 
   protected XFullValueEvaluator() {
     this(XDebuggerBundle.message("node.test.show.full.value"));
@@ -31,16 +36,29 @@ public abstract class XFullValueEvaluator {
    * @param linkText text of the link what will be appended to a variables tree node text
    */
   protected XFullValueEvaluator(@NotNull @Nls String linkText) {
+    this(linkText, null, null);
+  }
+ 
+  protected XFullValueEvaluator(@NotNull @Nls String linkText, @Nullable @Nls String tooltipText, @Nullable @Nls Icon linkIcon) {
     myLinkText = linkText;
+    myLinkTooltipText = tooltipText;
+    myLinkIcon = linkIcon;
   }
 
   public boolean isShowValuePopup() {
     return myShowValuePopup;
   }
+  public boolean isEnabled() { return myIsEnabled; }
 
   @NotNull
   public XFullValueEvaluator setShowValuePopup(boolean value) {
     myShowValuePopup = value;
+    return this;
+  }
+
+  @NotNull
+  public XFullValueEvaluator setIsEnabled(boolean value) {
+    myIsEnabled = value;
     return this;
   }
 
@@ -51,10 +69,18 @@ public abstract class XFullValueEvaluator {
    */
   public abstract void startEvaluation(@NotNull XFullValueEvaluationCallback callback);
 
-  public @Nls String getLinkText() {
+  public @Nls @NotNull String getLinkText() {
     return myLinkText;
   }
 
+  public @Nls @Nullable String getLinkTooltipText() {
+    return myLinkTooltipText;
+  }
+
+  public @Nullable Icon getLinkIcon() {
+    return myLinkIcon;
+  }
+  
   public interface XFullValueEvaluationCallback extends Obsolescent, XValueCallback {
     void evaluated(@NotNull String fullValue);
 
