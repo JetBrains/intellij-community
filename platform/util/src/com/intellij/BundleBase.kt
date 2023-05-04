@@ -60,7 +60,8 @@ object BundleBase {
     for (i in 0 until unassignedParams) {
       newParams[i + params.size] = prefix + i + suffix
     }
-    val message = message(bundle, key, newParams)
+    @Suppress("UNCHECKED_CAST")
+    val message = message(bundle = bundle, key = key, params = newParams as Array<Any>)
     return quotePattern(message).replace(prefix, "{").replace(suffix, "}")
   }
 
@@ -70,9 +71,9 @@ object BundleBase {
   }
 
   @JvmStatic
-  fun messageOrDefault(bundle: ResourceBundle?, key: String, defaultValue: @Nls String?, vararg params: Any?): @Nls String? {
+  fun messageOrDefault(bundle: ResourceBundle?, key: String, defaultValue: @Nls String?, vararg params: Any?): @Nls String {
     if (bundle == null) {
-      return defaultValue
+      return defaultValue!!
     }
 
     var resourceFound = true
@@ -133,7 +134,7 @@ object BundleBase {
       return defaultValue
     }
     if (assertOnMissedKeys) {
-      val bundleName = if (bundle != null) "(" + bundle.baseBundleName + ")" else ""
+      val bundleName = if (bundle == null) "" else "(${bundle.baseBundleName})"
       LOG.error("'$key' is not found in $bundle$bundleName")
     }
     return "!$key!"
@@ -144,10 +145,10 @@ object BundleBase {
   fun postprocessValue(bundle: ResourceBundle, value: @Nls String, vararg params: Any?): @Nls String {
     @Suppress("NAME_SHADOWING") var value = value
     value = replaceMnemonicAmpersand(value)!!
-    if (params.isNotEmpty() && value.indexOf('{') >= 0) {
+    if (params.isNotEmpty() && value.contains('{')) {
       val locale = bundle.locale
       value = try {
-        val format = if (locale != null) MessageFormat(value, locale) else MessageFormat(value)
+        val format = if (locale == null) MessageFormat(value) else MessageFormat(value, locale)
         OrdinalFormat.apply(format)
         format.format(params)
       }
@@ -167,7 +168,7 @@ object BundleBase {
   @JvmStatic
   @Contract("null -> null; !null -> !null")
   fun replaceMnemonicAmpersand(value: @Nls String?): @Nls String? {
-    if (value == null || value.indexOf('&') < 0 || value.indexOf(MNEMONIC) >= 0) {
+    if (value == null || !value.contains('&') || value.contains(MNEMONIC)) {
       return value
     }
 
@@ -176,35 +177,36 @@ object BundleBase {
     var mnemonicAdded = false
     var i = 0
     while (i < value.length) {
-      val c = value[i]
-      if (c == '\\') {
-        if (i < value.length - 1 && value[i + 1] == '&') {
-          builder.append('&')
-          i++
+      when (val c = value[i]) {
+        '\\' -> {
+          if (i < value.length - 1 && value[i + 1] == '&') {
+            builder.append('&')
+            i++
+          }
+          else {
+            builder.append(c)
+          }
         }
-        else {
-          builder.append(c)
-        }
-      }
-      else if (c == '&') {
-        if (i < value.length - 1 && value[i + 1] == '&') {
-          if (SystemInfoRt.isMac) {
+        '&' -> {
+          if (i < value.length - 1 && value[i + 1] == '&') {
+            if (SystemInfoRt.isMac) {
+              if (!mnemonicAdded) {
+                mnemonicAdded = true
+                builder.append(MNEMONIC)
+              }
+            }
+            i++
+          }
+          else if (!SystemInfoRt.isMac || !macMnemonic) {
             if (!mnemonicAdded) {
               mnemonicAdded = true
               builder.append(MNEMONIC)
             }
           }
-          i++
         }
-        else if (!SystemInfoRt.isMac || !macMnemonic) {
-          if (!mnemonicAdded) {
-            mnemonicAdded = true
-            builder.append(MNEMONIC)
-          }
+        else -> {
+          builder.append(c)
         }
-      }
-      else {
-        builder.append(c)
       }
       i++
     }
