@@ -10,8 +10,8 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Operat
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshotUtils.fullPath
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsTimeMachine
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.fullPath
 import com.intellij.util.io.PersistentStringEnumerator
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
@@ -164,6 +164,8 @@ private fun vFileEventIterCheck(log: VfsLog, names: PersistentStringEnumerator) 
   var vfileEvents = 0
   var vfileEventContentOps = 0
 
+  val vfsTimeMachine = VfsTimeMachine(log.query { operationLogStorage.begin() }, id2name = names::valueOf)
+
   val time = measureTime {
     log.query {
       val iter = IteratorUtils.VFileEventBasedIterator(operationLogStorage.begin())
@@ -176,7 +178,7 @@ private fun vFileEventIterCheck(log: VfsLog, names: PersistentStringEnumerator) 
             rec.iterator().next() // read it
           }
           is ReadResult.VFileEventRange -> {
-            val snapshot = VfsTimeMachine.getSnapshot(rec.begin(), names::valueOf)
+            val snapshot = vfsTimeMachine.getSnapshot(rec.begin())
             vfileEvents++
             println()
             println(rec.startTag)
@@ -188,7 +190,7 @@ private fun vFileEventIterCheck(log: VfsLog, names: PersistentStringEnumerator) 
                 println("PATH: ${file.fullPath()}")
                 val oldParent = snapshot.getFileById(startOp.oldParentId)
                 val newParent = snapshot.getFileById(startOp.newParentId)
-                println("MOVE FROM PARENT ${oldParent.name.value} to ${newParent.name.value}")
+                println("MOVE FROM PARENT ${oldParent.name} to ${newParent.name}")
               }
               VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE -> {
                 val startOp =

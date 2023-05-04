@@ -1,11 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine
 
-import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
-import java.lang.ref.SoftReference
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
 interface VfsSnapshot {
   val point: () -> OperationLogStorage.Iterator
@@ -14,65 +10,81 @@ interface VfsSnapshot {
   fun getFileByIdIfExists(fileId: Int): VirtualFileSnapshot?
 
   interface VirtualFileSnapshot {
-    val nameId: Lazy<Int?>
-    val name: Lazy<String?>
-    val parentId: Lazy<Int?>
-    val parent: Lazy<VirtualFileSnapshot?>
-  }
-}
+    val fileId: Int
 
-open class VfsSnapshotBase(point: OperationLogStorage.Iterator, private val id2name: (Int) -> String?) : VfsSnapshot {
-  override val point = point.constCopier()
+    val nameId: Property<Int>
+    val name: Property<String>
+    val parentId: Property<Int>
+    val parent: Property<VirtualFileSnapshot?>
 
-  protected val fileCache: ConcurrentMap<Int, VfsSnapshot.VirtualFileSnapshot> = ConcurrentHashMap()
+    abstract class Property<T> {
+      var state: State = State.UnknownYet
+        protected set
 
-  override fun getFileById(fileId: Int): VfsSnapshot.VirtualFileSnapshot = fileCache.computeIfAbsent(fileId) { VirtualFileSnapshotBase(fileId) }
-  override fun getFileByIdIfExists(fileId: Int): VfsSnapshot.VirtualFileSnapshot? = fileCache.get(fileId)
+      protected abstract fun compute(): State.DefinedState<T>
 
-  open inner class VirtualFileSnapshotBase(val fileId: Int) : VfsSnapshot.VirtualFileSnapshot {
-    override val nameId: Lazy<Int?> = lazy { VfsChronicle.figureOutNameId(point(), fileId) }
-    override val name: Lazy<String?> = lazy { nameId.value?.let(id2name) }
+      @Suppress("UNCHECKED_CAST")
+      fun observeState(): State.DefinedState<T> =
+        when (val s = state) {
+          is State.DefinedState<*> -> s as State.DefinedState<T>
+          is State.UnknownYet -> synchronized(this) {
+            if (state is State.UnknownYet) {
+              val result = compute()
+              state = result
+              return result
+            }
+            return state as State.DefinedState<T>
+          }
+        }
 
-    override val parentId: Lazy<Int?> = lazy { VfsChronicle.figureOutParentId(point(), fileId) }
-    override val parent: Lazy<VfsSnapshot.VirtualFileSnapshot?> = lazy { parentId.value?.let(::getFileById) }
-  }
-}
+      inline fun <R> observe(onNotAvailable: (cause: Throwable) -> R, onReady: (value: T) -> R): R =
+        when (val s = observeState()) {
+          is State.Ready<T> -> onReady(s.value)
+          is State.NotAvailable -> onNotAvailable(s.cause)
+        }
 
-class VfsSnapshotWithInheritance(
-  point: OperationLogStorage.Iterator,
-  id2name: (Int) -> String?,
-  precedingSnapshot: VfsSnapshot
-) : VfsSnapshotBase(point, id2name) {
-  val precedingSnapshot = SoftReference(precedingSnapshot)
-  val precedingPoint = precedingSnapshot.point().constCopier()
+      fun get(): T = observe(onNotAvailable = { throw IllegalStateException("property expected to be Ready") }) { it }
+      fun getOrNull(): T? = observe(onNotAvailable = { null }) { it }
 
-  override fun getFileById(fileId: Int): VfsSnapshot.VirtualFileSnapshot =
-    fileCache.computeIfAbsent(fileId) { VirtualFileSnapshotWithInheritance(fileId) }
+      fun <R> fmap(f: (T) -> R): Property<R> = DependentPropertyFmap(this, f)
+      fun <R> bind(f: (T) -> State.DefinedState<R>): Property<R> = DependentPropertyBind(this, f)
 
-  inner class VirtualFileSnapshotWithInheritance(fileId: Int) : VirtualFileSnapshotBase(fileId) {
-    override val nameId: Lazy<Int?> = lazy {
-      val splitIter = precedingPoint()
-      VfsChronicle.figureOutNameId(point(), fileId) { it != splitIter }?.let { return@lazy it }
-      precedingSnapshot.get()?.getFileByIdIfExists(fileId)?.let { println("DELEGATE nameId"); return@lazy it.nameId.value }
-      VfsChronicle.figureOutNameId(splitIter, fileId)
-    }
-    override val parentId: Lazy<Int?> = lazy {
-      val splitIter = precedingPoint()
-      VfsChronicle.figureOutParentId(point(), fileId) { it != splitIter }?.let { return@lazy it }
-      precedingSnapshot.get()?.getFileByIdIfExists(fileId)?.let { println("DELEGATE parentId"); return@lazy it.parentId.value }
-      VfsChronicle.figureOutParentId(splitIter, fileId)
-    }
-  }
-}
-
-fun VfsSnapshot.VirtualFileSnapshot.fullPath(): String? =
-  if (parentId.value != null) {
-    parent.value?.fullPath()?.let { parPath ->
-      name.value?.let { name ->
-        return "$parPath/$name"
+      private class DependentPropertyFmap<T, R>(private val original: Property<T>,
+                                                private val transformValue: (T) -> R) : Property<R>() {
+        override fun compute(): State.DefinedState<R> {
+          return original.observeState().fmap(transformValue)
+        }
       }
+
+      private class DependentPropertyBind<T, R>(private val original: Property<T>,
+                                                private val transformValue: (T) -> State.DefinedState<R>) : Property<R>() {
+        override fun compute(): State.DefinedState<R> {
+          return original.observeState().bind(transformValue)
+        }
+      }
+
+      sealed interface State {
+        object UnknownYet : State
+
+        sealed interface DefinedState<T> : State
+        class NotAvailable<T>(val cause: Throwable = UnspecifiedNotAvailableCause) : DefinedState<T>
+        class Ready<T>(val value: T) : DefinedState<T>
+      }
+
+      @Suppress("UNCHECKED_CAST")
+      fun <T, R> State.DefinedState<T>.fmap(f: (T) -> R): State.DefinedState<R> = when (this) {
+        is State.NotAvailable -> this as State.NotAvailable<R>
+        is State.Ready<T> -> State.Ready(f(value))
+      }
+
+      @Suppress("UNCHECKED_CAST")
+      fun <T, R> State.DefinedState<T>.bind(f: (T) -> State.DefinedState<R>): State.DefinedState<R> = when (this) {
+        is State.NotAvailable -> this as State.NotAvailable<R>
+        is State.Ready<T> -> f(value)
+      }
+
+      abstract class GenericNotAvailableException(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
+      object UnspecifiedNotAvailableCause : GenericNotAvailableException("property value is not available")
     }
   }
-  else {
-    name.value ?: ""
-  }
+}
