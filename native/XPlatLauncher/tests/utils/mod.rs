@@ -75,6 +75,27 @@ impl<'a> TestEnvironment<'a> {
             .write_all(content.as_bytes())
             .expect(&format!("Cannot write {:?}", &file));
     }
+
+    #[cfg(target_os = "windows")]
+    pub fn to_unc(&self) -> Self {
+        let unc_temp_dir = Self::convert_to_unc(self.test_root_dir.path().parent().unwrap());
+        TestEnvironment {
+            dist_root: Self::convert_to_unc(&self.dist_root),
+            project_dir: Self::convert_to_unc(&self.project_dir),
+            launcher_path: Self::convert_to_unc(&self.launcher_path),
+            shared_env: self.shared_env,
+            test_root_dir: Builder::new().prefix("xplat_launcher_test_").tempdir_in(unc_temp_dir).unwrap(),
+            to_delete: Vec::new()
+        }
+    }
+
+    // "C:\some\path" -> "\\127.0.0.1\\C$\some\path"
+    #[cfg(target_os = "windows")]
+    fn convert_to_unc(path: &Path) -> PathBuf {
+        assert!(path.has_root(), "Invalid path: {:?}", path);
+        let path_str = path.to_str().unwrap();
+        PathBuf::from(String::from("\\\\127.0.0.1\\") + &path_str[0..1] + "$" + &path_str[2..])
+    }
 }
 
 impl<'a> Drop for TestEnvironment<'a> {
@@ -514,7 +535,8 @@ pub fn run_launcher_ext(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) 
 }
 
 fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> Result<LauncherRunResult> {
-    println!("Starting {:?} with args {:?}", &test_env.launcher_path, run_spec.args);
+    println!("Starting '{}'\n  with args {:?}\n  in '{}'",
+             test_env.launcher_path.display(), run_spec.args, test_env.test_root_dir.path().display());
 
     let stdout_file_path = test_env.test_root_dir.path().join("out.txt");
     let stderr_file_path = test_env.test_root_dir.path().join("err.txt");
@@ -554,7 +576,7 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
     }
 
     let mut launcher_process = Command::new(&test_env.launcher_path)
-        .current_dir(&test_env.test_root_dir)
+        .current_dir(&test_env.test_root_dir.path())
         .args(full_args)
         .stdout(Stdio::from(File::create(&stdout_file_path)?))
         .stderr(Stdio::from(File::create(&stderr_file_path)?))
