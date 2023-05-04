@@ -520,6 +520,30 @@ public class EditorImplTest extends AbstractEditorTest {
     verifySoftWrapPositions();
   }
 
+  public void testMoveCaretLeftWithVirtualSpace() {
+    initText("abc\nde<caret>f");
+    getEditor().getSettings().setVirtualSpace(true);
+    left();
+    assertEquals(5, getEditor().getCaretModel().getOffset());
+    getEditor().getSettings().setVirtualSpace(false);
+  }
+
+  public void testMoveCaretAtLineStartLeftWithVirtualSpace() {
+    initText("abc\n<caret>def");
+    getEditor().getSettings().setVirtualSpace(true);
+    left();
+    assertEquals(3, getEditor().getCaretModel().getOffset());
+    getEditor().getSettings().setVirtualSpace(false);
+  }
+
+  public void testMoveCaretAtFileStartLeftWithVirtualSpace() {
+    initText("<caret>abc\ndef");
+    getEditor().getSettings().setVirtualSpace(true);
+    left();
+    assertEquals(0, getEditor().getCaretModel().getOffset());
+    getEditor().getSettings().setVirtualSpace(false);
+  }
+
   public void testDocumentChangeAfterEditorDisposal() {
     EditorFactory editorFactory = EditorFactory.getInstance();
 
