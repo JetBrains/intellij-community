@@ -134,8 +134,11 @@ internal class ModuleBridgeImpl(
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: MutableList<in Runnable>?) {
-    registerComponents(modules.find { it.pluginId == PluginManagerCore.CORE_ID }, modules, precomputedExtensionModel, app,
-                       listenerCallbacks)
+    registerComponents(corePlugin = modules.find { it.pluginId == PluginManagerCore.CORE_ID },
+                       modules = modules,
+                       precomputedExtensionModel = precomputedExtensionModel,
+                       app = app,
+                       listenerCallbacks = listenerCallbacks)
   }
 
   override fun callCreateComponents() {

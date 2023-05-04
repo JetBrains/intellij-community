@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.extensions.impl.createExtensionPoints
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Condition
@@ -311,7 +312,7 @@ abstract class ComponentManagerImpl(
 
         if (extensionPoints != null) {
           containerDescriptor.extensionPoints?.let {
-            ExtensionsAreaImpl.createExtensionPoints(it, this, extensionPoints, module)
+            createExtensionPoints(points = it, componentManager = this, result = extensionPoints, pluginDescriptor = module)
           }
         }
       }
@@ -361,10 +362,10 @@ abstract class ComponentManagerImpl(
 
     val result = HashMap<String, ExtensionPointImpl<*>>(precomputedExtensionModel.extensionPointTotalCount)
     for (i in 0 until n) {
-      ExtensionsAreaImpl.createExtensionPoints(precomputedExtensionModel.extensionPoints[i],
-                                               this,
-                                               result,
-                                               precomputedExtensionModel.pluginDescriptors[i])
+      createExtensionPoints(points = precomputedExtensionModel.extensionPoints[i],
+                            componentManager = this,
+                            result = result,
+                            pluginDescriptor = precomputedExtensionModel.pluginDescriptors[i])
     }
 
     val immutableExtensionPoints = java.util.Map.copyOf(result)
@@ -1043,7 +1044,11 @@ abstract class ComponentManagerImpl(
 
   final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId): T {
     return resetThreadContext().use {
-      instantiateUsingPicoContainer(aClass, key, pluginId, this, constructorParameterResolver)
+      instantiateUsingPicoContainer(aClass = aClass,
+                                    requestorKey = key,
+                                    pluginId = pluginId,
+                                    componentManager = this,
+                                    parameterResolver = constructorParameterResolver)
     }
   }
 

@@ -8,6 +8,8 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CompletableDeferred
 
+private val isDebugEnabled = LOG.isDebugEnabled
+
 internal class ServiceComponentAdapter(
   @JvmField val descriptor: ServiceDescriptor,
   pluginDescriptor: PluginDescriptor,
@@ -15,10 +17,6 @@ internal class ServiceComponentAdapter(
   implementationClass: Class<*>? = null,
   deferred: CompletableDeferred<Any> = CompletableDeferred()
 ) : BaseComponentAdapter(componentManager, pluginDescriptor, deferred, implementationClass) {
-  companion object {
-    private val isDebugEnabled = LOG.isDebugEnabled
-  }
-
   override val implementationClassName: String
     get() = descriptor.implementation!!
 

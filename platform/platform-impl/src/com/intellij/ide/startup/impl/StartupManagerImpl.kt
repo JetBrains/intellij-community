@@ -4,6 +4,7 @@
 package com.intellij.ide.startup.impl
 
 import com.intellij.diagnostic.*
+import com.intellij.diagnostic.telemetry.*
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
