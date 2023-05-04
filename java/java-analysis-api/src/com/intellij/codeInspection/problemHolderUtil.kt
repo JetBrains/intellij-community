@@ -11,7 +11,11 @@ fun ProblemsHolder.registerUProblem(
   vararg fixes: LocalQuickFix,
   highlightType: ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 ) {
-  val anchor = element.methodIdentifier?.sourcePsi ?: return
+  val anchor = when (element.kind) {
+    UastCallKind.METHOD_CALL -> element.methodIdentifier
+    UastCallKind.CONSTRUCTOR_CALL -> element.classReference
+    else -> element
+  }?.sourcePsi ?: return
   registerProblem(anchor, descriptionTemplate, highlightType, *fixes)
 }
 
