@@ -51,7 +51,7 @@ public class InvertedNameIndexBenchmark {
   @Benchmark
   public void removeManyFilesWithSameName(final Context context) {
     final int[] fileIdsToRemove = context.fileIds;
-    final int nameId = Context.nameId;
+    final int nameId = context.nameId;
     final InvertedNameIndex invertedNameIndex = context.invertedNameIndex;
     for (int fileId : fileIdsToRemove) {
       invertedNameIndex.updateFileName(fileId, InvertedNameIndex.NULL_NAME_ID, nameId);
