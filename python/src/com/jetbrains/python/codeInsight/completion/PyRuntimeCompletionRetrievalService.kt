@@ -52,6 +52,7 @@ interface PyRuntimeCompletionRetrievalService {
       val dfColumns = completePandasDataFrameColumns(debugValue.treeColumns, listOfCalls) ?: return null
       return CompletionResultData(dfColumns, PyRuntimeCompletionType.DATA_FRAME_COLUMNS)
     }
+    computeChildrenIfNeeded(node)
     return CompletionResultData(node.loadedChildren.mapNotNull { (it as? XValueNodeImpl)?.name }.toSet(),
                                 PyRuntimeCompletionType.DYNAMIC_CLASS)
   }

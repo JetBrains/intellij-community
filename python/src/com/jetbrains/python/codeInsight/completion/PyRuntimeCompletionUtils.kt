@@ -273,17 +273,22 @@ fun extractChildByName(childrenNodes: List<TreeNode>, name: String): XValueNodeI
 }
 
 fun getParentNodeByName(children: List<TreeNode>, psiName: String): XValueNodeImpl? {
-  for (node in children) {
-    if (node is XValueGroupNodeImpl && (node.valueContainer as PyXValueGroup).groupType == ProcessDebugger.GROUP_TYPE.SPECIAL) {
-      computeChildrenIfNeeded(node)
-      extractChildByName(node.loadedChildren, psiName)?.let {
-        return it
-      }
+  /**
+   * For preventing an extra load of "Special variables".
+   * Firstly, looking through loaded variables and if not found - load values inside the group (make a request to jupyter server).
+   */
+  val globalVariables = children.filterIsInstance<XValueNodeImpl>()
+  globalVariables.forEach { node ->
+    if (node.name == psiName) {
+      return node
     }
-    else if (node is XValueNodeImpl) {
-      if (node.name == psiName) {
-        return node
-      }
+  }
+  val specialVariables = children.filterIsInstance<XValueGroupNodeImpl>()
+    .filter { node -> (node.valueContainer as PyXValueGroup).groupType == ProcessDebugger.GROUP_TYPE.SPECIAL }
+  specialVariables.forEach { node ->
+    computeChildrenIfNeeded(node)
+    extractChildByName(node.loadedChildren, psiName)?.let {
+      return it
     }
   }
   return null
@@ -302,7 +307,6 @@ fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?, listOfCall: List<St
       }
     }
   }
-  computeChildrenIfNeeded(currentNode)
   return Pair(currentNode, emptyList())
 }
 
