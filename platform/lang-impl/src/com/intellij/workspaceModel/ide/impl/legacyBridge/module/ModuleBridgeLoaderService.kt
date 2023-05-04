@@ -6,6 +6,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
@@ -38,7 +39,7 @@ private val LOG = logger<ModuleBridgeLoaderService>()
 
 private val modulesLoadingTimeMs: AtomicLong = AtomicLong()
 
-private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+private fun setupOpenTelemetryReporting(meter: Meter) {
   val modulesLoadingTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridgeLoader.loading.modules.ms")
     .ofLongs().setDescription("Total time spent in method").buildObserver()
 
@@ -51,6 +52,12 @@ private fun setupOpenTelemetryReporting(meter: Meter): Unit {
 }
 
 private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedListener {
+  companion object {
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
+  }
+
   override suspend fun execute(project: Project) {
     val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
     val workspaceModel = project.serviceAsync<WorkspaceModel>().await() as WorkspaceModelImpl
@@ -100,10 +107,8 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
       val jdkTableDeferred = ApplicationManager.getApplication().serviceAsync<ProjectJdkTable>()
       val projectRootManager = project.serviceAsync<ProjectRootManager>().await() as ProjectRootManagerBridge
       jdkTableDeferred.join()
-      withContext(Dispatchers.EDT) {
-        ApplicationManager.getApplication().runWriteAction {
-          projectRootManager.setupTrackedLibrariesAndJdks()
-        }
+      writeAction {
+        projectRootManager.setupTrackedLibrariesAndJdks()
       }
     }
     runActivity("workspace file index initialization") {
@@ -112,12 +117,6 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
 
     modulesLoadingTimeMs.addAndGet(System.currentTimeMillis() - start)
     WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
-  }
-
-  companion object {
-    init {
-      setupOpenTelemetryReporting(jpsMetrics.meter)
-    }
   }
 }
 
