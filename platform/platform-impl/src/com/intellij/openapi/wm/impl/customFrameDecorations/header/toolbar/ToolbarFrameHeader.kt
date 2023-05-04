@@ -50,7 +50,7 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
   private var toolbar : MainToolbar? = null
   private val myToolbarPlaceholder = createToolbarPlaceholder()
   private val myHeaderContent = createHeaderContent()
-  private val expandableMenu = ExpandableMenu(this)
+  private val expandableMenu = ExpandableMenu(myHeaderContent)
   private val toolbarHeaderTitle = SimpleCustomDecorationPath(frame).apply {
     isOpaque = false
   }
@@ -241,9 +241,6 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
   }
 
   private fun createHeaderContent(): JPanel {
-    val res = NonOpaquePanel(CardLayout())
-    res.border = JBUI.Borders.emptyLeft(JBUI.scale(16))
-
     val menuPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
       add(menuBarContainer, gb.next().fillCellVertically().weighty(1.0))
@@ -255,10 +252,14 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
       add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCell())
     }
 
-    res.add(ShowMode.MENU.name, menuPnl)
-    res.add(ShowMode.TOOLBAR.name, toolbarPnl)
+    val result = NonOpaquePanel(CardLayout()).apply {
+      border = JBUI.Borders.emptyLeft(JBUI.scale(16))
+      background = null
+      add(ShowMode.MENU.name, menuPnl)
+      add(ShowMode.TOOLBAR.name, toolbarPnl)
+    }
 
-    return res
+    return result
   }
 
   private fun updateLayout(settings: UISettings) {
