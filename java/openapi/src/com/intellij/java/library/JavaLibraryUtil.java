@@ -38,7 +38,6 @@ import static com.intellij.openapi.util.text.StringUtil.isDecimalDigit;
 import static com.intellij.psi.search.GlobalSearchScope.allScope;
 import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope;
 import static java.util.Collections.emptyMap;
-import static kotlin.text.StringsKt.removeSuffix;
 
 @ApiStatus.Experimental
 public final class JavaLibraryUtil {
@@ -230,11 +229,26 @@ public final class JavaLibraryUtil {
           for (VirtualFile libraryFile : libraryFiles) {
             if (libraryFile.getFileSystem() != jarFileSystem) continue;
 
-            String nameWithoutExtension = removeSuffix(libraryFile.getNameWithoutExtension(), "-SNAPSHOT");
+            String nameWithoutExtension = libraryFile.getNameWithoutExtension();
 
             jarLibrariesIndex.put(nameWithoutExtension, nameWithoutExtension);
 
-            String indexNamePart = StringUtil.substringBeforeLast(nameWithoutExtension, "-");
+            String[] nameParts = nameWithoutExtension.split("-");
+            StringBuilder nameBuilder = new StringBuilder();
+
+            for (int i = 0; i < nameParts.length; i++) {
+              String part = nameParts[i];
+              if (!part.isEmpty() && isDecimalDigit(part.charAt(0))) {
+                break;
+              }
+
+              if (i > 0) {
+                nameBuilder.append("-");
+              }
+              nameBuilder.append(part);
+            }
+
+            String indexNamePart = nameBuilder.toString();
             if (!indexNamePart.equals(nameWithoutExtension)) {
               jarLibrariesIndex.put(indexNamePart, nameWithoutExtension);
             }
