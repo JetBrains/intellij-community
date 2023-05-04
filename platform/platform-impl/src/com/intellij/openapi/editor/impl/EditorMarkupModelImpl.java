@@ -1604,7 +1604,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
         @Override
         public Insets getBorderInsets(Component c) {
-          return showNavigation ? JBUI.insets(2, 0) : JBUI.insets(2);
+          return showNavigation ? JBUI.insets(2, 2, 2, 0) : JBUI.insets(2);
         }
       });
     }
