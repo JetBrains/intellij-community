@@ -31,8 +31,6 @@ internal class IdleVcsLogIndexer(private val project: Project,
 
   private val isRunning = AtomicBoolean(false)
 
-  private var indexingResumed = false
-
   private var initJob: Job? = null
   private var startIndexJob: Job? = null
   private var stopIndexJob: Job? = null
@@ -83,14 +81,12 @@ internal class IdleVcsLogIndexer(private val project: Project,
         if (isIndexingPaused(index)) {
           VcsLogUsageTriggerCollector.idleIndexerTriggered(project)
           toggleIndexing(index.indexingRoots, index)
-          indexingResumed = true
         }
       }
 
       stopIndexJob = launch("Stop VCS log indexing on IDE active", 100.milliseconds) {
-        if (indexingResumed) {
+        if (!isIndexingPaused(index)) {
           toggleIndexing(index.indexingRoots, index)
-          indexingResumed = false
         }
       }
     }
