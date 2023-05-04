@@ -234,8 +234,9 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         }
 
         is OptExpandableString -> {
-          expandableTextField({s -> s.split(component.separator).toMutableList()}, 
+          expandableTextField({s -> s.split(component.separator).toMutableList()},
                               {list -> list.joinToString(component.separator)})
+            .label(component.label.label(), position = LabelPosition.TOP)
             .resizableColumn()
             .align(Align.FILL)
             .applyToComponent {
@@ -244,7 +245,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             .onChanged {
               context.setOption(component.bindId, it.text)
             }
-            .comment(component.description?.toString(), 50)
+            .comment(component.description?.toString(), 40)
         }
 
         is OptNumber -> {
@@ -424,7 +425,6 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
   private val OptComponent.splitLabel: LocMessage.PrefixSuffix?
     get() = when (this) {
-      is OptExpandableString -> LocMessage.PrefixSuffix(label.label(), "") // TODO: display label above the control instead?
       is OptString -> splitLabel.splitLabel()
       is OptNumber -> splitLabel.splitLabel()
       is OptDropdown -> splitLabel.splitLabel()
