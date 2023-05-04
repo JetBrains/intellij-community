@@ -34,7 +34,7 @@ class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutine
   }
 
   @Suppress("TestOnlyProblems")
-  suspend fun waitJpsProjectLoaded(project: Project, waitTimeout: Int, chronoUnit: ChronoUnit) {
+  private suspend fun waitJpsProjectLoaded(project: Project, waitTimeout: Int, chronoUnit: ChronoUnit) {
     val jpsLoadingManager = JpsProjectLoadingManager.Companion.getInstance(project)
     if (jpsLoadingManager is JpsProjectLoadingManagerImpl) {
       if (!jpsLoadingManager.isProjectLoaded()) {
@@ -60,9 +60,10 @@ class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutine
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    //firstGroup - don't delete, due to it collected as first arg after regExp processing
-    val (firstGroup, timeout, timeunit) = ARGS_PATTERN.find(extractCommandArgument(PREFIX))!!.groupValues
-    waitJpsProjectLoaded(context.project, timeout.toInt(), POSSIBLE_VALUES[timeunit]!!)
+    val (_, timeout, timeunit) = ARGS_PATTERN.find(extractCommandArgument(PREFIX))?.groupValues
+                                 ?: throw RuntimeException("Wrong command format\nExample of usage '%waitJpsBuild 4ms'")
+    waitJpsProjectLoaded(context.project, timeout.toInt(), POSSIBLE_VALUES[timeunit]
+                                                           ?: throw RuntimeException("Following timeunit supported - 'ms','s','m'"))
   }
 
   override fun getName(): String {
