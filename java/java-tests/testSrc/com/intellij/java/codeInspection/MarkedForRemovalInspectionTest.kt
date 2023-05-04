@@ -70,7 +70,7 @@ class MarkedForRemovalInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   fun testWeakWarningSeverity() = doSeverityTest(HighlightDisplayLevel.WEAK_WARNING)
 
   private fun doSeverityTest(severityLevel: HighlightDisplayLevel) {
-    val forRemovalKey = HighlightDisplayKey.find(DeprecationUtil.FOR_REMOVAL_SHORT_NAME)
+    val forRemovalKey = HighlightDisplayKey.find(DeprecationUtil.FOR_REMOVAL_SHORT_NAME)!!
     val profile = InspectionProjectProfileManager.getInstance(myFixture.project).currentProfile
     val oldLevel = profile.getErrorLevel(forRemovalKey, myFixture.file)
     profile.setErrorLevel(forRemovalKey, severityLevel, myFixture.project)
