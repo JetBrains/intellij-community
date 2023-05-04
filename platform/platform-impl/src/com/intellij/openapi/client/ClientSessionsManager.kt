@@ -128,11 +128,16 @@ open class ClientAppSessionsManager : ClientSessionsManager<ClientAppSession>() 
 open class ClientProjectSessionsManager(project: Project) : ClientSessionsManager<ClientProjectSession>() {
   init {
     if (project is ProjectImpl) {
-      registerSession(project, ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, project))
+      @Suppress("LeakingThis")
+      registerSession(project, createLocalSession(project))
     } else if (project.isDefault) {
       (project.actualComponentManager as? ClientAwareComponentManager)?.let { componentManager ->
         registerSession(project, ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, componentManager, project))
       }
     }
+  }
+
+  protected open fun createLocalSession(project: ProjectImpl): ClientProjectSessionImpl {
+    return ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, project)
   }
 }
