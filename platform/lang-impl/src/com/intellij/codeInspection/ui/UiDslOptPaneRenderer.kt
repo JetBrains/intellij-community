@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.Settings
@@ -34,18 +35,18 @@ import kotlin.math.max
 
 class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
-  private data class RendererContext(val controller: OptionController, val parent: Disposable, val project: Project)
+  private data class RendererContext(val controller: OptionController, val parent: Disposable?, val project: Project?)
 
   override fun render(tool: InspectionProfileEntry,
                       pane: OptPane,
-                      parent: Disposable,
-                      project: Project): JComponent {
+                      parent: Disposable?,
+                      project: Project?): JComponent {
     return panel {
       pane.components.forEachIndexed { i, component ->
         render(component, RendererContext(tool.optionController, parent, project), i == 0, component.hasBottomGap)
       }
     }
-      .apply { registerValidators(parent) }
+      .apply { if (parent != null) registerValidators(parent) }
   }
 
   /**
@@ -122,7 +123,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
               component.children.forEach { checkbox ->
                 addItem(checkbox.bindId, checkbox.label.label(), context.getOption(checkbox.bindId) == true)
               }
-              // Show the correct panel on checkbox selection
+              // Show correct panel on checkbox selection
               addListSelectionListener {
                 panels.forEachIndexed { index, panel -> panel
                   .visible(index == selectedIndex)
@@ -294,9 +295,9 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
             val settings = Settings.KEY.getData(dataContext)
             if (settings == null) {
-              val prj = context.project
+              val prj = context.project ?: CommonDataKeys.PROJECT.getData(dataContext) ?: return@addHyperlinkListener
               // Settings dialog was opened without configurable hierarchy tree in the left area
-              // (e.g., by invoking "Edit inspection profile setting" fix)
+              // (e.g. by invoking "Edit inspection profile setting" fix)
               ShowSettingsUtil.getInstance().showSettingsDialog(
                 prj, { conf -> ConfigurableVisitor.getId(conf) == component.configurableID }
               ) { conf -> component.controlLabel?.let { label -> conf.focusOn(label) } }
@@ -371,7 +372,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           if (extension !is CustomComponentExtensionWithSwingRenderer<*>) {
             throw IllegalStateException("Component does not implement ")
           }
-          cell(extension.render(component, context.project))
+          cell(extension.render(component, context.project!!))
         }
 
         is OptCheckboxPanel, is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }

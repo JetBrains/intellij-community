@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -28,8 +28,8 @@ public interface InspectionOptionPaneRenderer {
    * @param project context project
    * @return swing options panel described by supplied inspection
    */
-  @NotNull JComponent render(@NotNull InspectionProfileEntry tool, @NotNull OptPane pane, @NotNull Disposable parent,
-                             @NotNull Project project);
+  @NotNull JComponent render(@NotNull InspectionProfileEntry tool, @NotNull OptPane pane, @Nullable Disposable parent,
+                             @Nullable Project project);
 
   /**
    * @param tool    inspection tool
@@ -37,7 +37,7 @@ public interface InspectionOptionPaneRenderer {
    * @param project context project
    * @return swing options panel for supplied inspection; null if inspection provides no options
    */
-  static JComponent createOptionsPanel(@NotNull InspectionProfileEntry tool, @NotNull Disposable parent, @NotNull Project project) {
+  static JComponent createOptionsPanel(@NotNull InspectionProfileEntry tool, @Nullable Disposable parent, @NotNull Project project) {
     OptPane pane = tool.getOptionsPane();
     if (pane.equals(OptPane.EMPTY)) {
       return tool.createOptionsPanel();
