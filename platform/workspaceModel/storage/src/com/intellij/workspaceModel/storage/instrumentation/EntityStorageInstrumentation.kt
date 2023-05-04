@@ -7,6 +7,13 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.EntityId
 
+/**
+ * Instrumentation level of the storage.
+ *
+ * This level of function contains the functionality that should be publicly available, but not the part of the common storage API.
+ *
+ * For example, entity implementations may use some advanced functionality of the storage (e.g. get entities by reference).
+ */
 interface EntityStorageInstrumentation : EntityStorage {
   /**
    * Create entity using [newInstance] function.
