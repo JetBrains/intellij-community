@@ -20,6 +20,10 @@ import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,16 +47,19 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
   @Nullable
   private final TaintValueFactory myTaintValueFactory;
 
+  private final boolean myNext;
   TaintNode(@Nullable TaintNode parent,
             @Nullable PsiElement psiElement,
             @Nullable PsiElement ref,
-            @Nullable TaintValueFactory taintValueFactory) {
+            @Nullable TaintValueFactory taintValueFactory,
+            boolean next) {
     super(parent == null ? null : parent.myProject, parent);
     myPsiElement = psiElement == null ? null : SmartPointerManager.createPointer(psiElement);
     myRef = ref == null ? null : SmartPointerManager.createPointer(ref);
     myTaintValueFactory = taintValueFactory;
     int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
     myIcon = psiElement == null ? null : psiElement.getIcon(flags);
+    myNext = next;
   }
 
   @Override
@@ -87,8 +94,11 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
 
   private @NotNull List<TaintNode> propagate(@NotNull PsiElement psiElement, @NotNull PsiElement elementRef) {
     if (myTaintValueFactory == null) return List.of();
+    if (!myNext) return List.of();
     TaintAnalyzer taintAnalyzer = new TaintAnalyzer(myTaintValueFactory);
-    TaintValue taintValue = taintAnalyzer.fromElement(psiElement, elementRef, true);
+    UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(elementRef, UCallExpression.class, UReferenceExpression.class);
+    if(uExpression == null) return Collections.emptyList();
+    TaintValue taintValue = taintAnalyzer.analyzeExpression(uExpression, true);
     myTaintValue = taintValue;
     if (taintValue == TaintValue.UNTAINTED) return Collections.emptyList();
     if (taintValue == TaintValue.TAINTED) {
@@ -100,7 +110,7 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
     List<TaintNode> children = new ArrayList<>();
     for (NonMarkedElement nonMarkedElement : taintAnalyzer.getNonMarkedElements()) {
       if (parents.contains(nonMarkedElement.myNonMarked)) continue;
-      TaintNode child = new TaintNode(this, nonMarkedElement.myNonMarked, nonMarkedElement.myRef, myTaintValueFactory);
+      TaintNode child = new TaintNode(this, nonMarkedElement.myNonMarked, nonMarkedElement.myRef, myTaintValueFactory, nonMarkedElement.myNext);
       children.add(child);
     }
     return children;

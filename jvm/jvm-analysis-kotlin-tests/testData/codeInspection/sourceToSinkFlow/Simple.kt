@@ -13,6 +13,11 @@ class Simple {
 
   fun unknown() {
     val s = foo()
+    sink(s)
+  }
+
+  fun unknown2(v: String) {
+    val s = foo2(v)
     sink(<warning descr="Unknown string is used as safe parameter">s</warning>)
   }
 
@@ -51,7 +56,7 @@ class Simple {
     var s1 = <warning descr="[VARIABLE_WITH_REDUNDANT_INITIALIZER] Variable 's1' initializer is redundant">(source())</warning>
     s1 = (foo())
     val s = (s1)
-    sink((<warning descr="Unsafe string is used as safe parameter">s</warning>))
+    sink(<warning descr="Unsafe string is used as safe parameter">(s)</warning>)
   }
 
   fun unsafeReturn(): @Untainted String? {
@@ -62,16 +67,21 @@ class Simple {
     @Tainted val s = source()
     val s1 = "safe"
     val s2 = "safe2"
-    sink(s1 + <warning descr="Unsafe string is used as safe parameter">s</warning> + s2)
+    sink(<warning descr="Unsafe string is used as safe parameter">s1 + s + s2</warning>)
   }
 
   fun unsafeTernary(b: Boolean) {
     @Tainted val s = source()
-    sink(if (b) <warning descr="Unsafe string is used as safe parameter">s</warning> else null)
+    sink(<warning descr="Unsafe string is used as safe parameter">if (b) s else null</warning>)
   }
 
   fun unknownIfExpression(b: Boolean): @Untainted String {
     var s: String = if (b) bar() else foo()
+    return s
+  }
+
+  fun unknownIfExpression(b: Boolean, v: String): @Untainted String {
+    var s: String = if (b) bar() else foo2(v)
     return <warning descr="Unknown string is returned from safe method">s</warning>
   }
 
@@ -81,6 +91,10 @@ class Simple {
 
   fun foo(): String {
     return "some"
+  }
+
+  fun foo2(v: String): String {
+    return v
   }
 
   fun bar(): String {

@@ -34,10 +34,11 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
     import com.jetbrains.OtherClass;
     import org.checkerframework.checker.tainting.qual.*;
     class A {
+        String tainted;
         void callSink() {}
         void sink(@Untainted String s) {}
         static @Tainted String source() { return "unsafe"; }
-        static String foo() { return "bar"; }
+        static String foo(String... a) { return a.length==0? "bar" : a[0]; }
         static @Untainted String safe() { return "safe"; }
     }""";
 
@@ -75,7 +76,7 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
                          import org.checkerframework.checker.tainting.qual.*;
                          class OtherClass {
                              static @Tainted String source() { return "unsafe"; }
-                             static String foo() { return "bar"; }
+                             static String foo(String... a) { return a.length==0? "bar" : a[0]; }
                              static @Untainted String safe() { return "safe"; }
                          }""");
     PropertyChecker.customized()
@@ -191,11 +192,11 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
     }
 
     public void declareField(@NotNull String varName, @NotNull String declarationText) {
-      declarationText = String.format("private String %s = %s", varName, declarationText);
+      declarationText = String.format("public String %s = %s", varName, declarationText);
       PsiField field = myFactory.createFieldFromText(declarationText, null);
       PsiClass containingClass = myMethod.getContainingClass();
-      PsiElement lBrace = containingClass.getLBrace();
-      containingClass.addAfter(field, lBrace);
+      PsiElement previousField = PsiTreeUtil.findChildOfType(containingClass, PsiField.class);
+      containingClass.addAfter(field, previousField);
     }
 
     public void declareLocalVariable(@NotNull String varName, @NotNull String declarationText) {
@@ -231,6 +232,9 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
 
     @Override
     public @NotNull String getText() {
+      if (myIsExternal && myCallType.methodName().equals("foo")) {
+        return "OtherClass.foo(tainted)";
+      }
       return (myIsExternal ? "OtherClass." : "") + myCallType.methodName() + "()";
     }
 

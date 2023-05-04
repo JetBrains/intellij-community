@@ -1,7 +1,7 @@
 import org.checkerframework.checker.tainting.qual.Untainted;
 
 class CommonCases {
-  private @Untainted String sField;
+  public @Untainted String sField;
 
   @Untainted
   private String test(@Untainted String s) {

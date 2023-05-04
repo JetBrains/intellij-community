@@ -6,7 +6,7 @@ class Simple {
         String s = "";
         String s1 = id(id(s));
         s += s1;
-        sink(id(<caret>s));
+        sink(id<caret>(s));
     }
 
     String id(String s) {

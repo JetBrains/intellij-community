@@ -1,5 +1,6 @@
 package com.intellij.codeInspection.tests.kotlin.sourceToSink
 
+import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.tests.sourceToSink.SourceToSinkFlowInspectionTestBase
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.testFramework.TestDataPath
@@ -23,7 +24,7 @@ class KotlinSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase(
   fun testKotlinPropertyPropagateFix() {
     prepareCheckFramework()
     myFixture.configureByFile("Property.kt")
-    val propagateAction = myFixture.getAvailableIntention("Show propagation tree from 'getF'")!!
+    val propagateAction = myFixture.getAvailableIntention(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.text"))!!
     myFixture.launchAction(propagateAction)
     myFixture.checkResultByFile("Property.after.kt")
   }

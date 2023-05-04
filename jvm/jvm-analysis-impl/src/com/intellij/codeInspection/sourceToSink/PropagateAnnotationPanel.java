@@ -438,7 +438,7 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
 
     @Contract("_, _ -> new")
     private static @NotNull PropagateTree create(@NotNull Disposable parent, @NotNull TaintNode root) {
-      TaintNode rootWrapper = new TaintNode(null, null, null, null) {
+      TaintNode rootWrapper = new TaintNode(null, null, null, null, true) {
         @Override
         public List<TaintNode> calcChildren() {
           return Collections.singletonList(root);

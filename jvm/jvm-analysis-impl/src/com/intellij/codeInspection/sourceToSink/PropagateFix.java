@@ -30,19 +30,14 @@ import java.util.function.Consumer;
 public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   @NotNull
-  private final String myName;
-
-  @NotNull
   private final TaintValueFactory myTaintValueFactory;
 
   private final boolean supportRefactoring;
 
-  public PropagateFix(@NotNull PsiElement psiElement,
-                      @NotNull String name,
+   PropagateFix(@NotNull PsiElement sourcePsi,
                       @NotNull TaintValueFactory taintValueFactory,
                       boolean supportRefactoring) {
-    super(psiElement);
-    myName = name;
+    super(sourcePsi);
     myTaintValueFactory = taintValueFactory;
     this.supportRefactoring = supportRefactoring;
   }
@@ -55,7 +50,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   @Override
   public @NotNull String getText() {
-    return JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.text", myName);
+    return JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.text");
   }
 
   @Override
@@ -73,9 +68,9 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     PsiElement reportedElement = uExpression.getSourcePsi();
     if (reportedElement == null) return;
     TaintAnalyzer analyzer = new TaintAnalyzer(myTaintValueFactory);
-    if (analyzer.analyze(uExpression) != TaintValue.UNKNOWN) return;
+    if (analyzer.analyzeExpression(uExpression, false) != TaintValue.UNKNOWN) return;
     PsiElement target = ((UResolvable)uExpression).resolve();
-    TaintNode root = new TaintNode(null, target, reportedElement, myTaintValueFactory);
+    TaintNode root = new TaintNode(null, target, reportedElement, myTaintValueFactory, true);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       Set<TaintNode> toAnnotate = new HashSet<>();
       toAnnotate = PropagateAnnotationPanel.getSelectedElements(root, toAnnotate);

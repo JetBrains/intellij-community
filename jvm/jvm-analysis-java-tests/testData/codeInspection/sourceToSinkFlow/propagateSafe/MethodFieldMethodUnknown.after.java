@@ -17,7 +17,7 @@ class Simple {
     this.field = bar();
   }
 
-    @Untainted String bar() {
+  String bar() {
     return "safe";
   }
 

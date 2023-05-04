@@ -9,7 +9,7 @@ class Simple {
       sink(s2);
     }
 
-    String foo() {
+    @Untainted String foo() {
       return "foo";
     }
 

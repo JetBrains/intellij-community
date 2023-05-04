@@ -1,8 +1,7 @@
 import javax.annotation.Untainted;
 
 class CommonCases {
-    @Untainted
-    private String sField;
+  private String sField;
 
   @Untainted
   private String test(@Untainted String s) {

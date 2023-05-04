@@ -1,4 +1,3 @@
-// "Mark 's' as requiring validation" "false"
 package org.checkerframework.checker.tainting.qual;
 
 class Simple {

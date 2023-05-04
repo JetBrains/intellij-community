@@ -15,9 +15,14 @@ class Simple {
   
     void unknown() {
       String s = foo();
+      sink(s);
+    }
+
+    void unknown2(String f) {
+      String s = foo2(f);
       sink(<warning descr="Unknown string is used as safe parameter">s</warning>);
     }
-  
+
     void literalOnly() {
       String s = null;
       s = "safe";
@@ -53,7 +58,7 @@ class Simple {
       String s1 = (source());
       s1 = (foo());
       String s = (s1);
-      sink((<warning descr="Unsafe string is used as safe parameter">s</warning>));
+      sink(<warning descr="Unsafe string is used as safe parameter">(s)</warning>);
     }
   
     @Untainted String unsafeReturn() {
@@ -69,19 +74,19 @@ class Simple {
       @Tainted String s = source();
       String s1 = "safe";
       String s2 = "safe2";
-      sink(s1 + <warning descr="Unsafe string is used as safe parameter">s</warning> + s2);
+      sink(<warning descr="Unsafe string is used as safe parameter">s1 + s + s2</warning>);
     }
 
     void unsafeTernary(boolean b) {
       @Tainted String s = source();
-      sink(b ? <warning descr="Unsafe string is used as safe parameter">s</warning> : null);
+      sink(<warning descr="Unsafe string is used as safe parameter">b ? s : null</warning>);
     }
   
     void fieldFromGetter() {
       String s = getField();
       sink(<warning descr="Unknown string is used as safe parameter">s</warning>);
     }
-    
+
     void assignToSafeLocalVar() {
       String s1 = getField();
       @Untainted String safe = <warning descr="Unknown string is assigned to safe variable">s1</warning>;
@@ -99,8 +104,12 @@ class Simple {
       return source();
     }
 
-    String foo() {
+    private String foo() {
       return "some";
+    }
+
+    String foo2(String a) {
+      return a;
     }
 
     @Untainted

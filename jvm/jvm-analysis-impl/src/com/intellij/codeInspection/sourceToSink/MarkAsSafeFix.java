@@ -28,33 +28,29 @@ import com.intellij.util.containers.MultiMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.ExternalAnnotationsManager.AnnotationPlace;
-import static com.intellij.codeInspection.sourceToSink.TaintValueFactory.UntaintedContext;
 
-public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
-
-  @NotNull
-  private final String myName;
+class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
 
   @NotNull
   private final TaintValueFactory myTaintValueFactory;
 
-  protected MarkAsSafeFix(@NotNull PsiElement element,
-                          @NotNull String name,
+  protected MarkAsSafeFix(@NotNull PsiElement sourcePsi,
                           @NotNull TaintValueFactory taintValueFactory) {
-    super(element);
-    myName = name;
+    super(sourcePsi);
     this.myTaintValueFactory = taintValueFactory;
   }
 
   @Override
   public @NotNull String getText() {
-    return JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.mark.as.safe.text", myName);
+    return JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.mark.as.safe.text");
   }
 
   @Override
@@ -72,7 +68,7 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
                      @NotNull PsiFile file,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(startElement, UCallExpression.class, UReferenceExpression.class);
+    UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(startElement, UExpression.class);
     if (uExpression == null) return;
     List<PsiElement> elements = getElementsToMark(uExpression);
     if (elements == null) return;
@@ -82,15 +78,15 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
   @Nullable
   private List<PsiElement> getElementsToMark(@NotNull UExpression uExpression) {
     TaintAnalyzer taintAnalyzer = new TaintAnalyzer(myTaintValueFactory);
-    TaintValue taintValue = taintAnalyzer.analyze(uExpression);
+    TaintValue taintValue = taintAnalyzer.analyzeExpression(uExpression, false);
     if (taintValue != TaintValue.UNKNOWN) return null;
     return ContainerUtil.map(taintAnalyzer.getNonMarkedElements(), e -> e.myNonMarked);
   }
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(previewDescriptor.getStartElement(),
-                                                                      UCallExpression.class, UReferenceExpression.class);
+    UExpression uExpression =
+      (UExpression)UastContextKt.getUastParentOfTypes(previewDescriptor.getStartElement(), new Class[]{UExpression.class});
 
     if (uExpression == null) return IntentionPreviewInfo.EMPTY;
     List<PsiElement> toAnnotate = getElementsToMark(uExpression);
@@ -118,7 +114,7 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
 
   private static @NotNull Map<PsiElement, AnnotationPlace> getPlace(Project project, @NotNull Collection<PsiElement> toAnnotate) {
     ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
-    return StreamEx.of(toAnnotate).toMap(e -> e, e -> annotationsManager.chooseAnnotationsPlaceNoUi(e));
+    return StreamEx.of(toAnnotate).distinct().toMap(e -> e, e -> annotationsManager.chooseAnnotationsPlaceNoUi(e));
   }
 
   private static void annotate(@NotNull Project project,
@@ -191,30 +187,30 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     PsiFile[] files = filesToAnnotate(toAnnotate);
     WriteCommandAction.runWriteCommandAction(project, title, null, () -> {
       annotateInCode(project, toAnnotate, taintValueFactory, true, new ArrayList<>());
-      addToConfig(project, toConfig, taintValueFactory.getContext());
+      addToConfig(project, toConfig, taintValueFactory.getConfiguration());
     }, files);
   }
 
-  private static void addToConfig(@NotNull Project project, @NotNull List<PsiElement> config, @NotNull UntaintedContext context) {
-    UntaintedContext previousContext = context.copy();
+  private static void addToConfig(@NotNull Project project, @NotNull List<PsiElement> config, @NotNull UntaintedConfiguration context) {
+    UntaintedConfiguration previousContext = context.copy();
     InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, model -> {
       for (PsiElement element : config) {
         if (element instanceof JvmMethod jvmMethod) {
           JvmClass containingClass = jvmMethod.getContainingClass();
           if (containingClass == null) continue;
-          context.methodClass().add(containingClass.getQualifiedName());
-          context.methodPatterns().add(jvmMethod.getName());
+          context.getMethodClass().add(containingClass.getQualifiedName());
+          context.getMethodNames().add(jvmMethod.getName());
         }
         if (element instanceof JvmField jvmField) {
           JvmClass containingClass = jvmField.getContainingClass();
           if (containingClass == null) continue;
-          context.fieldClass().add(containingClass.getQualifiedName());
-          context.fieldPatterns().add(jvmField.getName());
+          context.getFieldClass().add(containingClass.getQualifiedName());
+          context.getFieldNames().add(jvmField.getName());
         }
       }
     });
 
-    UntaintedContext newContext = context.copy();
+    UntaintedConfiguration newContext = context.copy();
 
     UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
       @Override
@@ -231,15 +227,15 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
         });
       }
 
-      private static void copyContext(@NotNull UntaintedContext context, UntaintedContext newContext) {
-        context.methodPatterns().clear();
-        context.methodClass().clear();
-        context.fieldClass().clear();
-        context.fieldPatterns().clear();
-        context.methodPatterns().addAll(newContext.methodPatterns());
-        context.methodClass().addAll(newContext.methodClass());
-        context.fieldPatterns().addAll(newContext.fieldPatterns());
-        context.fieldClass().addAll(newContext.fieldClass());
+      private static void copyContext(@NotNull UntaintedConfiguration context, UntaintedConfiguration newContext) {
+        context.getMethodNames().clear();
+        context.getMethodClass().clear();
+        context.getFieldClass().clear();
+        context.getFieldNames().clear();
+        context.getMethodNames().addAll(newContext.getMethodNames());
+        context.getMethodClass().addAll(newContext.getMethodClass());
+        context.getFieldNames().addAll(newContext.getFieldNames());
+        context.getFieldClass().addAll(newContext.getFieldClass());
       }
     });
   }
@@ -312,7 +308,7 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     PsiAnnotation.TargetType[] location = AnnotationTargetUtil.getTargetsForLocation(listOwner.getModifierList());
     Set<PsiAnnotation.TargetType> currentTypes = EnumSet.copyOf(targets);
     currentTypes.retainAll(Arrays.asList(location));
-    if (currentTypes.size() == 0) {
+    if (currentTypes.isEmpty()) {
       return false;
     }
 

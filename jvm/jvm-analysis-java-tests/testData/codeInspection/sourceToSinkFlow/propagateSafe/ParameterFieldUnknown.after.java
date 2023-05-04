@@ -2,7 +2,7 @@ import org.checkerframework.checker.tainting.qual.*;
 
 class Simple {
 
-    @Untainted String field = "safe";
+  String field = "safe";
 
   void callTest() {
     String s = field;

@@ -11,7 +11,7 @@ class Simple {
     return "unsafe";
   }
 
-  void test(String s) {
+  void test(@Untainted String s) {
     sink(<caret>s);
   }
 

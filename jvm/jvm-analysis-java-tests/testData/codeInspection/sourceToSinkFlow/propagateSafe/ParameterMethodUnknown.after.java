@@ -7,7 +7,7 @@ class Simple {
     test(s);
   }
 
-    @Untainted String foo() {
+   String foo() {
     return "safe";
   }
 
