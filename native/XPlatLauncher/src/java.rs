@@ -121,16 +121,19 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
     debug!("[JVM] Constructing JVM init args");
     let mut java_vm: *mut jni::sys::JavaVM = std::ptr::null_mut();
     let mut jni_env: *mut jni::sys::JNIEnv = std::ptr::null_mut();
-    let args = get_jvm_init_args(vm_options)?;
+    let (jvm_init_args, jni_options) = get_jvm_init_args(vm_options)?;
 
     debug!("[JVM] Creating JVM");
     let create_jvm_result = unsafe {
         create_jvm_call(
             &mut java_vm as *mut *mut jni::sys::JavaVM,
             &mut jni_env as *mut *mut jni::sys::JNIEnv as *mut *mut c_void,
-            &args as *const jni::sys::JavaVMInitArgs as *mut c_void)
+            &jvm_init_args as *const jni::sys::JavaVMInitArgs as *mut c_void)
     };
     debug!("[JVM] JNI_CreateJavaVM(): {}", create_jvm_result);
+
+    release_jvm_init_args(jni_options);
+
     if create_jvm_result != jni::sys::JNI_OK {
         bail!("JNI_CreateJavaVM() failed (error {})", create_jvm_result);
     }
@@ -164,28 +167,27 @@ fn load_libjvm(_jre_home: &Path, libjvm_path: &Path) -> Result<libloading::Libra
     }.context("Failed to load 'libjvm'")
 }
 
-fn get_jvm_init_args(vm_options: Vec<String>) -> Result<jni::sys::JavaVMInitArgs> {
-    let mut jni_opts = Vec::with_capacity(vm_options.len());
+fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArgs, Vec<jni::sys::JavaVMOption>)> {
+    let mut jni_options = Vec::with_capacity(vm_options.len());
     for opt in vm_options {
-        jni_opts.push(jni::sys::JavaVMOption {
-            // TODO: possible memory leak
+        jni_options.push(jni::sys::JavaVMOption {
             optionString: CString::new(opt.as_str())?.into_raw(),
             extraInfo: std::ptr::null_mut(),
         });
     }
 
-    let args = jni::sys::JavaVMInitArgs {
+    let jvm_init_args = jni::sys::JavaVMInitArgs {
         version: jni::sys::JNI_VERSION_1_8,
-        nOptions: jni_opts.len() as jint,
-        options: jni_opts.as_ptr() as *mut jni::sys::JavaVMOption,
+        nOptions: jni_options.len() as jint,
+        options: jni_options.as_ptr() as *mut jni::sys::JavaVMOption,
         ignoreUnrecognized: true as jboolean
     };
 
-    // TODO: PhantomData?
-    // vm_init_args live longer then jni_opts vec
-    mem::forget(jni_opts);
+    Ok((jvm_init_args, jni_options))
+}
 
-    Ok(args)
+fn release_jvm_init_args(jni_options: Vec<jni::sys::JavaVMOption>) {
+    jni_options.into_iter().for_each(|option| drop(unsafe { CString::from_raw(option.optionString) }));
 }
 
 fn call_main_method(mut jni_env: JNIEnv<'_>, main_class_name: &str, args: Vec<String>) -> Result<()> {
