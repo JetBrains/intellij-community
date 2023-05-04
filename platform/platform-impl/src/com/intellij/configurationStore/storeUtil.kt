@@ -26,16 +26,19 @@ import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CalledInAny
 import java.nio.file.Path
 
-private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
+private val LOG: Logger
+  get() = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
 
 /**
  * Only for Java clients.
  * Clients in kotlin should use corresponding package-level suspending functions.
  */
+@ApiStatus.Obsolete
 object StoreUtil {
   /**
    * Don't use this method in tests, instead directly save using state store.
