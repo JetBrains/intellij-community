@@ -50,6 +50,24 @@ final class UnindexedFilesFinder {
     long timeProcessingUpToDateFiles = 0;
     long timeUpdatingContentLessIndexes = 0;
     long timeIndexingWithoutContentViaInfrastructureExtension = 0;
+    private final List<Computable<Boolean>> appliersAndRemovers;
+    final boolean applyIndexValuesSeparately;
+
+    UnindexedFileStatusBuilder(boolean applyIndexValuesSeparately) {
+      this.applyIndexValuesSeparately = applyIndexValuesSeparately;
+      appliersAndRemovers = applyIndexValuesSeparately ? new SmartList<>() : Collections.emptyList();
+    }
+
+    void addOrRunApplierOrRemover(@Nullable Computable<Boolean> applierOrRemover) {
+      if (applierOrRemover == null) return;
+
+      if (applyIndexValuesSeparately) {
+        appliersAndRemovers.add(applierOrRemover);
+      }
+      else {
+        applierOrRemover.compute();
+      }
+    }
 
     @Contract(" -> new")
     @NotNull UnindexedFileStatus build() {
@@ -95,7 +113,7 @@ final class UnindexedFilesFinder {
       }
       FileType fileType = checker.get() ? cachedFileType : null;
 
-      UnindexedFileStatusBuilder fileStatusBuilder = new UnindexedFileStatusBuilder();
+      UnindexedFileStatusBuilder fileStatusBuilder = new UnindexedFileStatusBuilder(applyIndexValuesSeparately);
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, fileType, myProject);
       int inputId = FileBasedIndex.getFileId(file);
@@ -202,7 +220,6 @@ final class UnindexedFilesFinder {
 
         boolean mayMarkFileIndexed = true;
         long nowTime = System.nanoTime();
-        List<Computable<Boolean>> appliersAndRemovers = applyIndexValuesSeparately ? new SmartList<>() : Collections.emptyList();
         try {
           for (ID<?, ?> indexId : myFileBasedIndex.getContentLessIndexes(isDirectory)) {
             if (!RebuildStatus.isOk(indexId)) {
@@ -226,16 +243,7 @@ final class UnindexedFilesFinder {
                 if (remover != null) applierOrRemover = remover::remove;
               }
 
-              if (applierOrRemover == null) {
-                continue;
-              }
-
-              if (applyIndexValuesSeparately) {
-                appliersAndRemovers.add(applierOrRemover);
-              }
-              else {
-                applierOrRemover.compute();
-              }
+              fileStatusBuilder.addOrRunApplierOrRemover(applierOrRemover);
             }
           }
         }
@@ -243,7 +251,7 @@ final class UnindexedFilesFinder {
           fileStatusBuilder.timeUpdatingContentLessIndexes += (System.nanoTime() - nowTime);
         }
 
-        if (appliersAndRemovers.isEmpty()) {
+        if (fileStatusBuilder.appliersAndRemovers.isEmpty()) {
           finishGettingStatus(file, indexedFile, inputId, fileStatusBuilder, mayMarkFileIndexed);
           finalization.set(EmptyRunnable.getInstance());
         }
@@ -252,7 +260,7 @@ final class UnindexedFilesFinder {
           finalization.set(() -> {
             long applyingStart = System.nanoTime();
             try {
-              for (Computable<Boolean> applierOrRemover : appliersAndRemovers) {
+              for (Computable<Boolean> applierOrRemover : fileStatusBuilder.appliersAndRemovers) {
                 applierOrRemover.compute();
               }
             }
