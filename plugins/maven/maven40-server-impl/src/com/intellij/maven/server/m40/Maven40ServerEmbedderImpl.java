@@ -657,7 +657,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       RepositoryUtils.toArtifacts(
         artifacts,
         resolutionResult.getDependencyGraph().getChildren(),
-        Collections.singletonList(project.getArtifact().getId()),
+        null == project.getArtifact() ? Collections.emptyList() : Collections.singletonList(project.getArtifact().getId()),
         null);
 
       // Maven 2.x quirk: an artifact always points at the local repo, regardless whether resolved or not
