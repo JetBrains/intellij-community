@@ -1,12 +1,16 @@
 package com.intellij.cce.metric
 
 import com.intellij.cce.actions.selectedWithoutPrefix
+import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
+import org.apache.commons.lang.StringUtils
 
 internal fun createCompletionGolfMetrics(): List<Metric> =
   listOf(
     MatchedRatio(),
+    PrefixSimilarity(),
+    EditSimilarity(),
     MovesCount(),
     TypingsCount(),
     NavigationsCount(),
@@ -137,32 +141,56 @@ internal class MovesCountNormalised : Metric {
   }
 }
 
-internal class MatchedRatio : Metric {
-  private var totalMatched: Int = 0
-  private var totalExpected: Int = 0
+internal abstract class SimilarityMetric : Metric {
+  private var totalMatched: Double = 0.0
+  private var totalExpected: Double = 0.0
 
-  override val name = "Matched Ratio"
   override val valueType = MetricValueType.DOUBLE
   override val showByDefault: Boolean = false
   override val value: Double
-    get() = totalMatched.toDouble() / totalExpected
+    get() = totalMatched / totalExpected
 
   override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    var matched = 0
-    var expected = 0
+    var matched = 0.0
+    var expected = 0.0
     for (session in sessions) {
       for (lookup in session.lookups) {
         val expectedText = session.expectedText.substring(lookup.offset)
         expected += expectedText.length
-        lookup.selectedWithoutPrefix()?.let {
-          matched += it.length
-        }
+        matched += computeSimilarity(lookup, expectedText) ?: 0.0
       }
     }
     totalMatched += matched
     totalExpected += expected
-    return matched.toDouble() / expected
+    return matched / expected
   }
+
+  abstract fun computeSimilarity(lookup: Lookup, expectedText: String): Double?
+}
+
+internal class MatchedRatio : SimilarityMetric() {
+  override val name = "Matched Ratio"
+
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? =
+    lookup.selectedWithoutPrefix()?.length?.toDouble()
+}
+
+internal class PrefixSimilarity : SimilarityMetric() {
+  override val name = "Prefix Similarity"
+
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? =
+    lookup.suggestions.maxOfOrNull {
+      StringUtils.getCommonPrefix(arrayOf(it.text.drop(lookup.prefix.length), expectedText)).length
+    }?.toDouble()
+}
+
+internal class EditSimilarity : SimilarityMetric() {
+  override val name = "Edit Similarity"
+
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? =
+    lookup.suggestions.maxOfOrNull {
+      expectedText.length - StringUtils.getLevenshteinDistance(it.text.drop(lookup.prefix.length), expectedText)
+    }?.toDouble()
 }
 
 internal class PerfectLine : CompletionGolfMetric<Int>() {
