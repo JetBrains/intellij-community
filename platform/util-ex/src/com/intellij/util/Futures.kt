@@ -43,7 +43,7 @@ object Futures {
    */
   @JvmStatic
   @JvmOverloads
-  fun inEdt(modalityState: ModalityState? = null) = Executor { runnable -> runInEdt(modalityState) { runnable.run() } }
+  fun inEdt(modalityState: ModalityState? = null): Executor = Executor { runnable -> runInEdt(modalityState) { runnable.run() } }
 
   /**
    * Is used to specify that the action should be executed on the EDT inside write action.
@@ -57,7 +57,7 @@ object Futures {
    */
   @JvmStatic
   @JvmOverloads
-  fun inWriteAction(modalityState: ModalityState? = null) = Executor { runnable ->
+  fun inWriteAction(modalityState: ModalityState? = null): Executor = Executor { runnable ->
     runInEdt(modalityState) {
       ApplicationManager.getApplication().runWriteAction(runnable)
     }
