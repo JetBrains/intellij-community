@@ -10,14 +10,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.TextComponentEmptyText
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
 import java.util.function.Predicate
 
 class EmailBlock(property: ObservableMutableProperty<String>,
                  val myProject: Project?,
                  private val showFeedbackSystemInfoDialog: () -> Unit) : SingleInputFeedbackBlock<String>(property) {
 
-  private var checkBoxEmailProperty: Boolean = false
   private var checkBoxEmail: JBCheckBox? = null
 
   override fun addToPanel(panel: Panel) {
@@ -25,7 +27,6 @@ class EmailBlock(property: ObservableMutableProperty<String>,
       panel {
         row {
           checkBox(CommonFeedbackBundle.message("dialog.feedback.email.checkbox.label"))
-            .bindSelected(::checkBoxEmailProperty)
             .applyToComponent {
               checkBoxEmail = this
             }
@@ -35,17 +36,17 @@ class EmailBlock(property: ObservableMutableProperty<String>,
           row {
             textField().bindText(myProperty).columns(TEXT_FIELD_EMAIL_COLUMN_SIZE).applyToComponent {
               emptyText.text = CommonFeedbackBundle.message("dialog.feedback.email.textfield.placeholder")
-              isEnabled = checkBoxEmailProperty
+              isEnabled = checkBoxEmail?.isSelected ?: false
 
               checkBoxEmail?.addActionListener { _ ->
-                isEnabled = checkBoxEmailProperty
+                isEnabled = checkBoxEmail?.isSelected ?: false
               }
               putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
                                 Predicate<JBTextField> { textField -> textField.text.isEmpty() })
             }.errorOnApply(CommonFeedbackBundle.message("dialog.feedback.email.textfield.required")) {
-              checkBoxEmailProperty && it.text.isBlank()
+              checkBoxEmail?.isSelected ?: false && it.text.isBlank()
             }.errorOnApply(CommonFeedbackBundle.message("dialog.feedback.email.textfield.invalid")) {
-              checkBoxEmailProperty && it.text.isNotBlank() && !it.text.matches(EMAIL_REGEX)
+              checkBoxEmail?.isSelected ?: false && it.text.isNotBlank() && !it.text.matches(EMAIL_REGEX)
             }
           }.bottomGap(BottomGap.MEDIUM)
         }
