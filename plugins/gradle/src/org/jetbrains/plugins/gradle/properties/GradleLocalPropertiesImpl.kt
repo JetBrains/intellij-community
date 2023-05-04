@@ -3,6 +3,6 @@ package org.jetbrains.plugins.gradle.properties
 
 import org.jetbrains.plugins.gradle.properties.models.Property
 
-data class LocalPropertiesImpl(
+data class GradleLocalPropertiesImpl(
   override val javaHomeProperty: Property<String>?,
-) : LocalProperties
+) : GradleLocalProperties
