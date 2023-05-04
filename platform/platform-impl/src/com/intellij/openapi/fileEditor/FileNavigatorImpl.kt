@@ -1,132 +1,115 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.fileEditor;
+package com.intellij.openapi.fileEditor
 
-import com.intellij.ide.*;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.INativeFileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.*
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.INativeFileType
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.Navigatable
+import org.jetbrains.annotations.ApiStatus
 
-import java.util.List;
+class FileNavigatorImpl : FileNavigator {
+  private val ignoreContextEditor = ThreadLocal<Boolean?>()
 
-import static com.intellij.openapi.fileEditor.OpenFileDescriptor.unfoldCurrentLine;
-
-public final class FileNavigatorImpl implements FileNavigator {
-  private final ThreadLocal<Boolean> myIgnoreContextEditor = new ThreadLocal<>();
-
-  @Override
-  public boolean canNavigate(@NotNull OpenFileDescriptor descriptor) {
-    return FileNavigator.super.canNavigate(descriptor);
+  override fun canNavigateToSource(descriptor: OpenFileDescriptor): Boolean {
+    val file = descriptor.file
+    if (file.isValid) {
+      return FileEditorManagerEx.getInstanceEx(descriptor.project).canOpenFile(file) || file.fileType is INativeFileType
+    }
+    else {
+      return false
+    }
   }
 
-  @Override
-  public boolean canNavigateToSource(@NotNull OpenFileDescriptor descriptor) {
-    VirtualFile file = descriptor.getFile();
-    if (!file.isValid()) {
-      return false;
+  override fun navigate(descriptor: OpenFileDescriptor, requestFocus: Boolean) {
+    check(canNavigate(descriptor)) { "target not valid" }
+    if (!descriptor.file.isDirectory && navigateInEditorOrNativeApp(descriptor, requestFocus)) {
+      return
     }
-
-    return FileEditorManagerEx.getInstanceEx(descriptor.getProject()).canOpenFile(file) || file.getFileType() instanceof INativeFileType;
+    else if (navigateInProjectView(descriptor.project, descriptor.file, requestFocus)) {
+      return
+    }
+    val message = IdeBundle.message("error.files.of.this.type.cannot.be.opened", ApplicationNamesInfo.getInstance().productName)
+    Messages.showErrorDialog(descriptor.project, message, IdeBundle.message("title.cannot.open.file"))
   }
 
-  @Override
-  public void navigate(@NotNull OpenFileDescriptor descriptor, boolean requestFocus) {
-    if (!canNavigate(descriptor)) {
-      throw new IllegalStateException("target not valid");
+  private fun navigateInEditorOrNativeApp(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
+    val type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(descriptor.file, descriptor.project)
+    if (type == null || !descriptor.file.isValid) {
+      return false
     }
 
-    if (!descriptor.getFile().isDirectory() && navigateInEditorOrNativeApp(descriptor, requestFocus)) {
-      return;
+    if (type is INativeFileType) {
+      return type.openFileInAssociatedApplication(descriptor.project, descriptor.file)
     }
-
-    if (navigateInProjectView(descriptor.getProject(), descriptor.getFile(), requestFocus)) {
-      return;
+    else {
+      return navigateInEditor(descriptor, requestFocus)
     }
-
-    String message = IdeBundle.message("error.files.of.this.type.cannot.be.opened", ApplicationNamesInfo.getInstance().getProductName());
-    Messages.showErrorDialog(descriptor.getProject(), message, IdeBundle.message("title.cannot.open.file"));
   }
 
-  private boolean navigateInEditorOrNativeApp(@NotNull OpenFileDescriptor descriptor, boolean requestFocus) {
-    FileType type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(descriptor.getFile(), descriptor.getProject());
-    if (type == null || !descriptor.getFile().isValid()) {
-      return false;
-    }
-
-    if (type instanceof INativeFileType) {
-      return ((INativeFileType)type).openFileInAssociatedApplication(descriptor.getProject(), descriptor.getFile());
-    }
-
-    return navigateInEditor(descriptor, requestFocus);
+  override fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
+    return navigateInRequestedEditor(descriptor) || navigateInAnyFileEditor(descriptor, requestFocus)
   }
 
-  private static boolean navigateInProjectView(@NotNull Project project, @NotNull VirtualFile file, boolean requestFocus) {
-    SelectInContext context = new FileSelectInContext(project, file, null);
-    for (SelectInTarget target : SelectInManager.getInstance(project).getTargetList()) {
-      if (context.selectIn(target, requestFocus)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public boolean navigateInEditor(@NotNull OpenFileDescriptor descriptor, boolean requestFocus) {
-    return navigateInRequestedEditor(descriptor) || navigateInAnyFileEditor(descriptor, requestFocus);
-  }
-
-  private boolean navigateInRequestedEditor(@NotNull OpenFileDescriptor descriptor) {
-    if (myIgnoreContextEditor.get() == Boolean.TRUE) return false;
-    @SuppressWarnings("deprecation") DataContext ctx = DataManager.getInstance().getDataContext();
-    Editor e = OpenFileDescriptor.NAVIGATE_IN_EDITOR.getData(ctx);
-    if (e == null) {
-      return false;
-    }
-    if (e.isDisposed()) {
-      Logger.getInstance(FileNavigatorImpl.class).error("Disposed editor returned for NAVIGATE_IN_EDITOR from " + ctx);
-      return false;
-    }
-    if (!Comparing.equal(FileDocumentManager.getInstance().getFile(e.getDocument()), descriptor.getFile())) {
-      return false;
+  private fun navigateInRequestedEditor(descriptor: OpenFileDescriptor): Boolean {
+    if (ignoreContextEditor.get() == true) {
+      return false
     }
 
-    OpenFileDescriptor.navigateInEditor(descriptor, e);
-    return true;
-  }
-
-  private static boolean navigateInAnyFileEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
-    FileEditorManager fileEditorManager = FileEditorManager.getInstance(descriptor.getProject());
-    List<FileEditor> editors = fileEditorManager.openEditor(descriptor, focusEditor);
-    for (FileEditor editor : editors) {
-      if (editor instanceof TextEditor) {
-        Editor e = ((TextEditor)editor).getEditor();
-        fileEditorManager.runWhenLoaded(e, () -> unfoldCurrentLine(e));
-      }
+    @Suppress("DEPRECATION")
+    val dataContext = DataManager.getInstance().dataContext
+    val e = OpenFileDescriptor.NAVIGATE_IN_EDITOR.getData(dataContext) ?: return false
+    if (e.isDisposed) {
+      logger<FileNavigatorImpl>().error("Disposed editor returned for NAVIGATE_IN_EDITOR from $dataContext")
+      return false
     }
-    return !editors.isEmpty();
+    if (FileDocumentManager.getInstance().getFile(e.document) != descriptor.file) {
+      return false
+    }
+    OpenFileDescriptor.navigateInEditor(descriptor, e)
+    return true
   }
 
   @ApiStatus.Experimental
-  public boolean navigateIgnoringContextEditor(@NotNull Navigatable navigatable) {
-    if (!navigatable.canNavigate()) return false;
-    myIgnoreContextEditor.set(Boolean.TRUE);
+  fun navigateIgnoringContextEditor(navigatable: Navigatable): Boolean {
+    if (!navigatable.canNavigate()) {
+      return false
+    }
+
+    ignoreContextEditor.set(true)
     try {
-      navigatable.navigate(true);
+      navigatable.navigate(true)
     }
     finally {
-      myIgnoreContextEditor.set(null);
+      ignoreContextEditor.set(null)
     }
-    return true;
+    return true
   }
+}
+
+private fun navigateInProjectView(project: Project, file: VirtualFile, requestFocus: Boolean): Boolean {
+  val context: SelectInContext = FileSelectInContext(project, file, null)
+  for (target in SelectInManager.getInstance(project).targetList) {
+    if (context.selectIn(target, requestFocus)) {
+      return true
+    }
+  }
+  return false
+}
+
+private fun navigateInAnyFileEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Boolean {
+  val fileEditorManager = FileEditorManager.getInstance(descriptor.project)
+  val editors = fileEditorManager.openEditor(descriptor, focusEditor)
+  for (editor in editors) {
+    if (editor is TextEditor) {
+      val e = editor.editor
+      fileEditorManager.runWhenLoaded(e) { OpenFileDescriptor.unfoldCurrentLine(e) }
+    }
+  }
+  return !editors.isEmpty()
 }
