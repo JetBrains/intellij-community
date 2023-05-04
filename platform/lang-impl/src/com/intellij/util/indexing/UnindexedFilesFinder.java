@@ -58,14 +58,14 @@ final class UnindexedFilesFinder {
       appliersAndRemovers = applyIndexValuesSeparately ? new SmartList<>() : Collections.emptyList();
     }
 
-    void addOrRunApplierOrRemover(@Nullable Computable<Boolean> applierOrRemover) {
-      if (applierOrRemover == null) return;
+    boolean addOrRunApplierOrRemover(@Nullable Computable<Boolean> applierOrRemover) {
+      if (applierOrRemover == null) return true;
 
       if (applyIndexValuesSeparately) {
-        appliersAndRemovers.add(applierOrRemover);
+        return appliersAndRemovers.add(applierOrRemover);
       }
       else {
-        applierOrRemover.compute();
+        return applierOrRemover.compute();
       }
     }
 
@@ -230,20 +230,13 @@ final class UnindexedFilesFinder {
               continue;
             }
             if (myFileBasedIndex.shouldIndexFile(indexedFile, indexId).updateRequired()) {
-              Computable<Boolean> applierOrRemover = null;
               if (myFileBasedIndex.acceptsInput(indexId, indexedFile)) {
-                SingleIndexValueApplier<?> applier =
-                  myFileBasedIndex.createSingleIndexValueApplier(indexId, file, inputId, new IndexedFileWrapper(indexedFile),
-                                                                 applyIndexValuesSeparately);
-                if (applier != null) applierOrRemover = applier::apply;
+                boolean indexed = tryIndexWithoutContent(indexedFile, inputId, indexId, fileStatusBuilder);
+                LOG.assertTrue(indexed, "Failed to apply contentless indexer");
               } else {
-                SingleIndexValueRemover remover =
-                  myFileBasedIndex.createSingleIndexRemover(indexId, file, new IndexedFileWrapper(indexedFile), inputId,
-                                                                 applyIndexValuesSeparately);
-                if (remover != null) applierOrRemover = remover::remove;
+                boolean removed = removeIndexedValue(indexedFile, inputId, indexId, fileStatusBuilder);
+                LOG.assertTrue(removed, "Failed to remove value from contentless index");
               }
-
-              fileStatusBuilder.addOrRunApplierOrRemover(applierOrRemover);
             }
           }
         }
@@ -277,24 +270,53 @@ final class UnindexedFilesFinder {
     });
   }
 
+  private boolean removeIndexedValue(IndexedFileImpl indexedFile,
+                                     int inputId,
+                                     ID<?, ?> indexId,
+                                     UnindexedFileStatusBuilder fileStatusBuilder) {
+
+    SingleIndexValueRemover remover =
+      myFileBasedIndex.createSingleIndexRemover(indexId, indexedFile.getFile(), new IndexedFileWrapper(indexedFile), inputId,
+                                                fileStatusBuilder.applyIndexValuesSeparately);
+    if (remover != null) {
+      return fileStatusBuilder.addOrRunApplierOrRemover(remover::remove);
+    }
+    else {
+      return true;
+    }
+  }
+
   private boolean tryIndexWithoutContent(IndexedFileImpl indexedFile,
                                          int inputId,
                                          ID<?, ?> indexId,
                                          UnindexedFileStatusBuilder fileStatusBuilder) {
-    long nowTime = System.nanoTime();
-    boolean wasIndexedByInfrastructure;
-    try {
-      wasIndexedByInfrastructure = tryIndexWithoutContentViaInfrastructureExtension(indexedFile, inputId, indexId);
-    }
-    finally {
-      fileStatusBuilder.timeIndexingWithoutContentViaInfrastructureExtension += (System.nanoTime() - nowTime);
-    }
-    if (wasIndexedByInfrastructure) {
-      fileStatusBuilder.indexesWereProvidedByInfrastructureExtension = true;
-      return true;
+    if (myFileBasedIndex.needsFileContentLoading(indexId)) {
+      long nowTime = System.nanoTime();
+      boolean wasIndexedByInfrastructure;
+      try {
+        wasIndexedByInfrastructure = tryIndexWithoutContentViaInfrastructureExtension(indexedFile, inputId, indexId);
+      }
+      finally {
+        fileStatusBuilder.timeIndexingWithoutContentViaInfrastructureExtension += (System.nanoTime() - nowTime);
+      }
+      if (wasIndexedByInfrastructure) {
+        fileStatusBuilder.indexesWereProvidedByInfrastructureExtension = true;
+        return true;
+      }
+      else {
+        return false;
+      }
     }
     else {
-      return false;
+      SingleIndexValueApplier<?> applier =
+        myFileBasedIndex.createSingleIndexValueApplier(indexId, indexedFile.getFile(), inputId, new IndexedFileWrapper(indexedFile),
+                                                       fileStatusBuilder.applyIndexValuesSeparately);
+      if (applier != null) {
+        return fileStatusBuilder.addOrRunApplierOrRemover(applier::apply);
+      }
+      else {
+        return true;
+      }
     }
   }
 
