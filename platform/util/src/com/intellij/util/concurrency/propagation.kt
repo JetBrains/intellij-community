@@ -5,6 +5,7 @@
 
 package com.intellij.util.concurrency
 
+import com.intellij.concurrency.ContextAwareCallable
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.util.Condition
@@ -120,12 +121,12 @@ internal fun <V> captureCallableThreadContext(callable: Callable<V>): Callable<V
   return callable
 }
 
-private fun isContextAwareRunnable(runnable: Runnable) : Boolean {
-  return runnable is Continuation<*> || runnable is ContextAwareRunnable
+private fun isContextAwareComputation(runnable: Any) : Boolean {
+  return runnable is Continuation<*> || runnable is ContextAwareRunnable || runnable is ContextAwareCallable<*>
 }
 
 internal fun capturePropagationAndCancellationContext(command: Runnable): Runnable {
-  if (isContextAwareRunnable(command)) {
+  if (isContextAwareComputation(command)) {
     return command
   }
   val (childContext, childJob) = createChildContext()
@@ -143,7 +144,7 @@ fun capturePropagationAndCancellationContext(
   command: Runnable,
   expired: Condition<*>,
 ): JBPair<Runnable, Condition<*>> {
-  if (isContextAwareRunnable(command)) {
+  if (isContextAwareComputation(command)) {
     return JBPair.create(command, expired)
   }
   val (childContext, childJob) = createChildContext()
