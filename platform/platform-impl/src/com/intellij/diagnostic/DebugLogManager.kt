@@ -44,9 +44,13 @@ class DebugLogManager {
   }
 
   fun clearCategories(categories: List<Category>) {
-    categories.forEach {
-      Logger.getLogger(it.category)?.level = null
-    }
+    categories.flatMap {
+      val trimmed = it.category.trimStart('#')
+      listOf(it.category, trimmed, "#$trimmed")
+    }.distinct()
+      .forEach {
+        Logger.getLogger(it)?.level = null
+      }
     customizedLoggers.clear()
   }
 
