@@ -50,6 +50,13 @@
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
+    },
+    {
+      "number": 16,
+      "description": "Full Line trigger model",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
     }
   ],
   "languages": [
@@ -62,7 +69,7 @@
     {
       "id": "python",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 11, 12, 13, 15],
+      "includeGroups": [ 7, 8, 11, 12, 13, 15, 16 ],
       "shouldLogElementFeatures": true
     },
     {
