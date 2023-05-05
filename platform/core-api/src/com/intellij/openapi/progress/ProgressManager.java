@@ -199,11 +199,13 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
    * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
    */
+  @RequiresBlockingContext
   public abstract void run(@NotNull Task task);
 
   /**
    * Runs a specified computation with a modal progress dialog.
    */
+  @RequiresBlockingContext
   public <T, E extends Exception> T run(@NotNull Task.WithResult<T, E> task) throws E {
     run((Task)task);
     return task.getResult();
@@ -264,6 +266,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, @Nullable ProgressIndicator indicator);
 
+  @RequiresBlockingContext
   public abstract boolean isInNonCancelableSection();
 
   /**
