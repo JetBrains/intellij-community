@@ -34,12 +34,14 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Path
 
-internal class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerBridgeImpl(project, ModuleRootListenerBridgeImpl) {
+internal class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
+  : ModuleManagerBridgeImpl(project = project, coroutineScope = coroutineScope, moduleRootListenerBridge = ModuleRootListenerBridgeImpl) {
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   internal class ModuleManagerInitProjectActivity : InitProjectActivity {

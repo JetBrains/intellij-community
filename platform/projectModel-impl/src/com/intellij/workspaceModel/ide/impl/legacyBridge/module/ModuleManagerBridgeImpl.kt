@@ -5,7 +5,10 @@ import com.intellij.ProjectTopics
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.debug
@@ -20,7 +23,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
@@ -68,23 +70,17 @@ private const val MODULE_BRIDGE_MAPPING_ID = "intellij.modules.bridge"
 @Suppress("OVERRIDE_DEPRECATION")
 @ApiStatus.Internal
 abstract class ModuleManagerBridgeImpl(private val project: Project,
+                                       private val coroutineScope: CoroutineScope,
                                        moduleRootListenerBridge: ModuleRootListenerBridge) : ModuleManagerEx(), Disposable {
   private val unloadedModules: MutableMap<String, UnloadedModuleDescription> = LinkedHashMap()
 
   init {
     // default project doesn't have modules
     if (!project.isDefault) {
-      val busConnection = project.messageBus.connect(this)
-      busConnection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-        override fun projectClosed(project: Project) {
-          if (this@ModuleManagerBridgeImpl.project == project) {
-            for (module in modules()) {
-              module.projectClosed()
-            }
-          }
-        }
-      })
-      busConnection.subscribe(WorkspaceModelTopics.CHANGED, LegacyProjectModelListenersBridge(project, this, moduleRootListenerBridge))
+      val busConnection = project.messageBus.connect(coroutineScope)
+      busConnection.subscribe(WorkspaceModelTopics.CHANGED, LegacyProjectModelListenersBridge(project = project,
+                                                                                              moduleModificationTracker = this,
+                                                                                              moduleRootListenerBridge = moduleRootListenerBridge))
       busConnection.subscribe(WorkspaceModelTopics.CHANGED, LoadedModulesListUpdater())
       busConnection.subscribe(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED, object : WorkspaceModelChangeListener {
         override fun changed(event: VersionedStorageChange) {
@@ -182,7 +178,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     // Facets that are loaded from the cache do not generate "EntityAdded" event and aren't initialized
     // We initialize the facets manually here (after modules loading).
     if (initializeFacets) {
-      invokeLater {
+      coroutineScope.launch(Dispatchers.EDT) {
         for (module in modules) {
           if (!module.isDisposed) {
             module.initFacets()
@@ -202,7 +198,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
   }
 
   override fun getModifiableModel(): ModifiableModuleModel {
-    return ModifiableModuleModelBridgeImpl(project, this, MutableEntityStorage.from(entityStore.current))
+    return ModifiableModuleModelBridgeImpl(project = project, moduleManager = this, diff = MutableEntityStorage.from(entityStore.current))
   }
 
   fun getModifiableModel(diff: MutableEntityStorage): ModifiableModuleModel {

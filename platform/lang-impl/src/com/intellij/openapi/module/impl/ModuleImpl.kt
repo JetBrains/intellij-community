@@ -163,16 +163,6 @@ open class ModuleImpl @ApiStatus.Internal constructor(name: String, project: Pro
     return pluginDescriptor.moduleContainerDescriptor
   }
 
-  @Suppress("removal", "DEPRECATION")
-  override fun projectClosed() {
-    val components = collectInitializedComponents(com.intellij.openapi.module.ModuleComponent::class.java)
-    for (i in components.indices.reversed()) {
-      runCatching {
-        components.get(i).projectClosed()
-      }.getOrLogException(LOG)
-    }
-  }
-
   override fun getProject(): Project = project
 
   override fun getName(): String = name!!
