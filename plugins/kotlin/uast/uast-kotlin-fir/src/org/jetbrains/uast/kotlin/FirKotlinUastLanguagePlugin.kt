@@ -4,12 +4,16 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.project.structure.KtNotUnderContentRootModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.uast.DEFAULT_TYPES_LIST
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
@@ -46,6 +50,19 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
             }
 
             val containingFile = containingFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
+
+            // `getKtModule` can be slow (KTIJ-25470). Since most files will be in a module or library, we can optimize this hot path using
+            // `ProjectFileIndex`.
+            val virtualFile = containingFile.virtualFile
+            if (virtualFile != null) {
+                val fileIndex = ProjectRootManager.getInstance(containingFile.project).fileIndex
+                if (fileIndex.isInSource(virtualFile) || fileIndex.isInLibrary(virtualFile)) {
+                    return true
+                }
+            }
+
+            // The checks above might not work in all possible situations (e.g. scripts) and `getKtModule` is able to give a definitive
+            // answer.
             return containingFile.getKtModule(project) !is KtNotUnderContentRootModule
         }
 
