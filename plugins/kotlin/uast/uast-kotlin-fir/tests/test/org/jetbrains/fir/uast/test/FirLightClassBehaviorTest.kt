@@ -68,4 +68,8 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
     fun testUpperBoundWildcardForVar() {
         checkUpperBoundWildcardForVar(myFixture)
     }
+
+    fun testDefaultValueOfAnnotation() {
+        checkDefaultValueOfAnnotation(myFixture)
+    }
 }

@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.uast.*
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.test.util.joinToArrayString
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 // NB: Similar to [UastResolveApiFixtureTestBase], but focusing on light classes, not `resolve`
@@ -471,6 +473,40 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
             .orFail("can't find val sum")
         val sum = top.javaPsi as? PsiField
         TestCase.assertEquals("kotlin.jvm.functions.Function1<java.lang.Integer,java.lang.Integer>", sum?.type?.canonicalText)
+    }
+
+    fun checkDefaultValueOfAnnotation(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                annotation class IntDef(
+                    vararg val value: Int = [],
+                    val flag: Boolean = false,
+                    val open: Boolean = false
+                )
+                
+                @IntDef(value = [DisconnectReasons.ENGINE_DIED, DisconnectReasons.ENGINE_DETACHED])
+                annotation class DisconnectReason
+
+                object DisconnectReasons {
+                    const val ENGINE_DIED: Int = 1
+                    const val ENGINE_DETACHED: Int = 2
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val klass = uFile.findElementByTextFromPsi<UClass>("class DisconnectReason", strict = false)
+            .orFail("cant convert to UClass")
+        val lc = klass.uAnnotations.single().javaPsi!!
+        val intValues = (lc.findAttributeValue("value") as? PsiArrayInitializerMemberValue)?.initializers
+        TestCase.assertEquals(
+            "[1, 2]",
+            intValues?.joinToString(separator = ", ", prefix = "[", postfix = "]") { annoValue ->
+                (annoValue as? PsiLiteral)?.value?.toString() ?: annoValue.text
+            }
+        )
+        val flagValue = (lc.findAttributeValue("flag") as? PsiLiteral)?.value
+        TestCase.assertEquals("false", flagValue?.toString())
     }
 
 }
