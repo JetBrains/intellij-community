@@ -77,14 +77,14 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   private final Map<String, Task> myIssueCache = Collections.synchronizedMap(new LinkedHashMap<>());
 
-  private final Map<String, LocalTask> myTasks = Collections.synchronizedMap(new LinkedHashMap<>() {
+  private final Map<String, LocalTaskImpl> myTasks = Collections.synchronizedMap(new LinkedHashMap<>() {
     @Override
-    public LocalTask put(String key, LocalTask task) {
-      LocalTask result = super.put(key, task);
+    public LocalTaskImpl put(String key, LocalTaskImpl task) {
+      LocalTaskImpl result = super.put(key, task);
       if (size() > myConfig.taskHistoryLength) {
-        ArrayList<Map.Entry<String, LocalTask>> list = new ArrayList<>(entrySet());
+        ArrayList<Map.Entry<String, LocalTaskImpl>> list = new ArrayList<>(entrySet());
         list.sort((o1, o2) -> TASK_UPDATE_COMPARATOR.compare(o2.getValue(), o1.getValue()));
-        for (Map.Entry<String, LocalTask> oldest : list) {
+        for (Map.Entry<String, LocalTaskImpl> oldest : list) {
           LocalTask value = oldest.getValue();
           if (!value.isDefault() && value.isClosed()) {
             remove(oldest.getKey());
@@ -97,7 +97,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   });
 
   @NotNull
-  private LocalTask myActiveTask = createDefaultTask();
+  private LocalTaskImpl myActiveTask = createDefaultTask();
   private Timer myCacheRefreshTimer;
 
   private volatile boolean myUpdating;
@@ -241,7 +241,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   @Nullable
   @Override
-  public LocalTask findTask(String id) {
+  public LocalTaskImpl findTask(String id) {
     return myTasks.get(id);
   }
 
@@ -743,16 +743,16 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   @Override
   public void initializeComponent() {
     // make sure that the default task is exist
-    LocalTask defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
+    LocalTaskImpl defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     if (defaultTask == null) {
       defaultTask = createDefaultTask();
       addTask(defaultTask);
     }
 
     // search for active task
-    LocalTask activeTask = null;
-    final List<LocalTask> tasks = ContainerUtil.sorted(getLocalTasks(), TASK_UPDATE_COMPARATOR);
-    for (LocalTask task : tasks) {
+    LocalTaskImpl activeTask = null;
+    final List<LocalTaskImpl> tasks = ContainerUtil.map(ContainerUtil.sorted(getLocalTasks(), TASK_UPDATE_COMPARATOR), task -> (LocalTaskImpl)task);
+    for (LocalTaskImpl task : tasks) {
       if (activeTask == null) {
         if (task.isActive()) {
           activeTask = task;
@@ -833,7 +833,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       }
       // update local tasks
       synchronized (myTasks) {
-        for (Map.Entry<String, LocalTask> entry : myTasks.entrySet()) {
+        for (Map.Entry<String, LocalTaskImpl> entry : myTasks.entrySet()) {
           Task issue = myIssueCache.get(entry.getKey());
           if (issue != null) {
             entry.getValue().updateFromIssue(issue);
