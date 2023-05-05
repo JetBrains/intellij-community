@@ -23,7 +23,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -108,48 +107,7 @@ public final class ModCommands {
       positionDocument = document;
     }
     String oldText = targetFile.getText();
-    var context = new PsiUpdateContext() {
-      @Nullable RangeMarker mySelectionRange = actionContext.selection().getStartOffset() == -1 ? null :
-                                               positionDocument.createRangeMarker(actionContext.selection().getStartOffset(),
-                                                                          actionContext.selection().getEndOffset(), true);
-      @Nullable RangeMarker myCaretRange = actionContext.offset() == -1 ? null :
-                                           positionDocument.createRangeMarker(actionContext.offset(), actionContext.offset(), true);
-
-      @Override
-      public void select(@NotNull PsiElement element) {
-        validate(element);
-        manager.doPostponedOperationsAndUnblockDocument(document);
-        if (mySelectionRange != null) {
-          mySelectionRange.dispose();
-        }
-        if (myCaretRange != null) {
-          myCaretRange.dispose();
-        }
-        if (injected) {
-          element = PsiTreeUtil.findSameElementInCopy(element, targetFile);
-        }
-        mySelectionRange = positionDocument.createRangeMarker(element.getTextRange());
-        myCaretRange = positionDocument.createRangeMarker(element.getTextRange().getStartOffset(), element.getTextRange().getStartOffset());
-      }
-
-      @Override
-      public void moveTo(@NotNull PsiElement element) {
-        validate(element);
-        manager.doPostponedOperationsAndUnblockDocument(document);
-        if (myCaretRange != null) {
-          myCaretRange.dispose();
-        }
-        if (injected) {
-          element = PsiTreeUtil.findSameElementInCopy(element, targetFile);
-        }
-        myCaretRange = positionDocument.createRangeMarker(element.getTextRange().getStartOffset(), element.getTextRange().getStartOffset());
-      }
-
-      private void validate(@NotNull PsiElement element) {
-        if (!element.isValid()) throw new IllegalArgumentException();
-        if (!PsiTreeUtil.isAncestor(copyFile, element, false)) throw new IllegalArgumentException();
-      }
-    };
+    var context = new PsiUpdateContextImpl(actionContext, positionDocument, manager, document, injected, targetFile, copyFile);
     aspect.postponeFormattingInside(
       () -> aspect.forcePostprocessFormatInside(copyFile, () -> updater.accept(copy, context)));
     manager.commitDocument(document);
@@ -159,23 +117,19 @@ public final class ModCommands {
     VirtualFile origVirtualFile = origFile.getOriginalFile().getVirtualFile();
     if (origVirtualFile != null) {
       int start = -1, end = -1, caret = -1;
-      if (context.mySelectionRange != null && context.mySelectionRange.getEndOffset() <= newText.length()) {
+      if (context.mySelectionRange.getEndOffset() <= newText.length()) {
         start = context.mySelectionRange.getStartOffset();
         end = context.mySelectionRange.getEndOffset();
       }
-      if (context.myCaretRange != null && context.myCaretRange.getStartOffset() <= newText.length()) {
+      if (context.myCaretRange.getStartOffset() <= newText.length()) {
         caret = context.myCaretRange.getStartOffset();
       }
       if (start != -1 || end != -1 || caret != -1) {
         command = command.andThen(new ModNavigate(origVirtualFile, start, end, caret));
       }
     }
-    if (context.mySelectionRange != null) {
-      context.mySelectionRange.dispose();
-    }
-    if (context.myCaretRange != null) {
-      context.myCaretRange.dispose();
-    }
+    context.mySelectionRange.dispose();
+    context.myCaretRange.dispose();
     if (disposable != null) {
       Disposer.dispose(disposable);
     }
@@ -226,5 +180,77 @@ public final class ModCommands {
         LocalTimeCounter.currentTime(), false);
     }
     return new ModCommandAction.ActionContext(project, copyFile, offset, TextRange.create(start, end));
+  }
+
+  private static class PsiUpdateContextImpl implements PsiUpdateContext {
+    private final @NotNull Document myPositionDocument;
+    private final @NotNull PsiDocumentManager myManager;
+    private final @NotNull Document myDocument;
+    private final boolean myInjected;
+    private final @NotNull PsiFile myTargetFile;
+    private final @NotNull PsiFile myCopyFile;
+    @NotNull RangeMarker mySelectionRange;
+    @NotNull RangeMarker myCaretRange;
+
+    private PsiUpdateContextImpl(@NotNull ModCommandAction.ActionContext actionContext,
+                                 @NotNull Document positionDocument,
+                                 @NotNull PsiDocumentManager manager,
+                                 @NotNull Document document,
+                                 boolean injected,
+                                 @NotNull PsiFile targetFile,
+                                 @NotNull PsiFile copyFile) {
+      myPositionDocument = positionDocument;
+      myManager = manager;
+      myDocument = document;
+      myInjected = injected;
+      myTargetFile = targetFile;
+      myCopyFile = copyFile;
+      mySelectionRange = myPositionDocument.createRangeMarker(actionContext.selection().getStartOffset(),
+                                                              actionContext.selection().getEndOffset(), true);
+      myCaretRange = myPositionDocument.createRangeMarker(actionContext.offset(), actionContext.offset(), true);
+    }
+
+    @Override
+    public void select(@NotNull PsiElement element) {
+      validate(element);
+      myManager.doPostponedOperationsAndUnblockDocument(myDocument);
+      mySelectionRange.dispose();
+      myCaretRange.dispose();
+      if (myInjected) {
+        element = PsiTreeUtil.findSameElementInCopy(element, myTargetFile);
+      }
+      mySelectionRange = myPositionDocument.createRangeMarker(element.getTextRange());
+      myCaretRange = myPositionDocument.createRangeMarker(element.getTextRange().getStartOffset(), element.getTextRange().getStartOffset());
+    }
+
+    @Override
+    public void moveTo(@NotNull PsiElement element) {
+      validate(element);
+      myManager.doPostponedOperationsAndUnblockDocument(myDocument);
+      if (myInjected) {
+        element = PsiTreeUtil.findSameElementInCopy(element, myTargetFile);
+      }
+      int offset = element.getTextRange().getStartOffset();
+      moveToOffset(offset);
+    }
+
+    private void moveToOffset(int offset) {
+      myCaretRange.dispose();
+      myCaretRange = myPositionDocument.createRangeMarker(offset, offset);
+    }
+
+    @Override
+    public void moveToPrevious(char ch) {
+      myManager.doPostponedOperationsAndUnblockDocument(myDocument);
+      String text = myPositionDocument.getText();
+      int idx = text.lastIndexOf(ch, myCaretRange.getStartOffset());
+      if (idx == -1) return;
+      moveToOffset(idx);
+    }
+
+    private void validate(@NotNull PsiElement element) {
+      if (!element.isValid()) throw new IllegalArgumentException();
+      if (!PsiTreeUtil.isAncestor(myCopyFile, element, false)) throw new IllegalArgumentException();
+    }
   }
 }

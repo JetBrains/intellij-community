@@ -25,4 +25,10 @@ public interface PsiUpdateContext {
    * @param element element to navigate to
    */
   void moveTo(@NotNull PsiElement element);
+
+  /**
+   * Moves caret to a previous occurrence of character ch. Do nothing if no such occurrence is found 
+   * @param ch character to find
+   */
+  void moveToPrevious(char ch);
 }
