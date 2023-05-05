@@ -6,8 +6,11 @@ import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
+import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/experimentalTier")
@@ -31,7 +34,12 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
 
     @Test
     fun testJvmAndAndroidSource() {
-        doTest()
+        doTest {
+            // highlighting for the 1.8.0 is different
+            if (kotlinPluginVersion < KotlinToolingVersion("1.9.0")) {
+                disableCheckers(HighlightingChecker)
+            }
+        }
     }
 
     @Test
@@ -133,6 +141,7 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
     }
 
     @Test
+    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+") // targetHierarchy used
     fun testSimilarTargetsBamboo() {
         doTest {
             onlyCheckers(KotlinFacetSettingsChecker, OrderEntriesChecker)

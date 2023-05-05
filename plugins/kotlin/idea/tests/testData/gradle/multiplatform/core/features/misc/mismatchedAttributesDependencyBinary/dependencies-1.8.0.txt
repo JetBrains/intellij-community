@@ -10,12 +10,10 @@ project.consumer.commonTest
     org.jetbrains.kotlin.mpp.tests:producer:commonMain:1.0 (TEST)
 
 project.consumer.jsMain
-    org.jetbrains.kotlin.mpp.tests:producer-js:1.0 (COMPILE)
-    org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin.mpp.tests:producer-js:klib:1.0 (COMPILE)
 
 project.consumer.jsTest
-    org.jetbrains.kotlin.mpp.tests:producer-js:1.0 (TEST)
-    org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin.mpp.tests:producer-js:klib:1.0 (TEST)
 
 project.consumer.linuxX64Main
     org.jetbrains.kotlin.mpp.tests:producer:1.0 (COMPILE)
