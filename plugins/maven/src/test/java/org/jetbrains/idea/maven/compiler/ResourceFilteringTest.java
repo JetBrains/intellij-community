@@ -25,10 +25,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.jps.maven.model.impl.MavenIdBean;
+import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 
 public class ResourceFilteringTest extends MavenCompilingTestCase {
 
@@ -620,6 +623,16 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.properties", "value=val2");
   }
 
+
+  private MavenModuleResourceConfiguration newMavenModuleResourceConfiguration(Map<String, String> modelMap) {
+    var config = new MavenModuleResourceConfiguration();
+    config.id = new MavenIdBean();
+    config.directory = "";
+    config.delimitersPattern = "";
+    config.modelMap = modelMap;
+    return config;
+  }
+
   @Test
   public void testUpdatingWhenPropertiesInModelAreChanged() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${project.name}");
@@ -641,8 +654,11 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                       </resources>
                     </build>
                     """);
+    var modelMap1 = mavenProjectsManager.findProject(moduleManager.findModuleByName("project")).getModelMap();
+    var config1 = newMavenModuleResourceConfiguration(modelMap1);
+
     assertResources("project", "resources");
-    assertEquals("val1", mavenProjectsManager.findProject(moduleManager.findModuleByName("project")).getModelMap().get("name"));
+    assertEquals("val1", modelMap1.get("name"));
 
     compileModules("project");
     assertResult("target/classes/file.properties", "value=val1");
@@ -661,8 +677,13 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                       </resources>
                     </build>
                     """);
+    var modelMap2 = mavenProjectsManager.findProject(moduleManager.findModuleByName("project")).getModelMap();
+    var config2 = newMavenModuleResourceConfiguration(modelMap2);
+
     assertResources("project", "resources");
-    assertEquals("val2", mavenProjectsManager.findProject(moduleManager.findModuleByName("project")).getModelMap().get("name"));
+    assertEquals("val2", modelMap2.get("name"));
+    assertFalse("Config hash didn't change. Module may not be recompiled properly",
+                config1.computeModuleConfigurationHash() == config2.computeModuleConfigurationHash());
 
     compileModules("project");
     assertResult("target/classes/file.properties", "value=val2");
