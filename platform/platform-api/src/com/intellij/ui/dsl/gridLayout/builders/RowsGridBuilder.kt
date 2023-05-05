@@ -54,6 +54,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
+  @ApiStatus.ScheduledForRemoval
   fun cell(component: JComponent,
            width: Int = 1,
            horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
@@ -108,6 +109,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
+  @ApiStatus.ScheduledForRemoval
   fun constraints(width: Int = 1,
                   horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
                   verticalAlign: VerticalAlign = defaultVerticalAlign,
@@ -154,6 +156,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
+  @ApiStatus.ScheduledForRemoval
   fun subGrid(width: Int = 1,
               horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
               verticalAlign: VerticalAlign = defaultVerticalAlign,
@@ -185,6 +188,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
+  @ApiStatus.ScheduledForRemoval
   fun subGridBuilder(width: Int = 1,
                      horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
                      verticalAlign: VerticalAlign = defaultVerticalAlign,
