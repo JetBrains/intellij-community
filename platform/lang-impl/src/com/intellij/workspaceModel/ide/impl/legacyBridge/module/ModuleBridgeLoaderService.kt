@@ -122,9 +122,6 @@ private suspend fun loadModules(project: Project,
                                 targetUnloadedEntitiesBuilder: MutableEntityStorage?,
                                 loadedFromCache: Boolean) {
   val childActivity = activity?.startChild("modules instantiation")
-  // ModuleManagerComponentBridge calls WorkspaceModel in init - getting entityStorage
-  project.serviceAsync<WorkspaceModel>().await()
-
   val moduleManager = project.serviceAsync<ModuleManager>().await() as ModuleManagerComponentBridge
   if (targetBuilder != null && targetUnloadedEntitiesBuilder != null) {
     moduleManager.unloadNewlyAddedModulesIfPossible(targetBuilder, targetUnloadedEntitiesBuilder)
