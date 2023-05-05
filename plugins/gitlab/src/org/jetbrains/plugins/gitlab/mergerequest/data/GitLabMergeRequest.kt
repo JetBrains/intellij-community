@@ -177,6 +177,7 @@ internal class LoadedGitLabMergeRequest(
                                                        withSquash = false).getResultOrThrow()
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
+    discussionsContainer.checkUpdates()
   }
 
   override suspend fun squashAndMerge(commitMessage: String) {
@@ -189,6 +190,7 @@ internal class LoadedGitLabMergeRequest(
                                                        withSquash = true).getResultOrThrow()
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
+    discussionsContainer.checkUpdates()
   }
 
   override suspend fun approve() {
@@ -202,6 +204,7 @@ internal class LoadedGitLabMergeRequest(
 
       mergeRequestDetailsState.value = mergeRequestDetailsState.value.copy(approvedBy = mergeRequest.approvedBy)
     }
+    discussionsContainer.checkUpdates()
   }
 
   override suspend fun unApprove() {
@@ -215,6 +218,7 @@ internal class LoadedGitLabMergeRequest(
 
       mergeRequestDetailsState.value = mergeRequestDetailsState.value.copy(approvedBy = mergeRequest.approvedBy)
     }
+    discussionsContainer.checkUpdates()
   }
 
   override suspend fun close() {
@@ -241,6 +245,7 @@ internal class LoadedGitLabMergeRequest(
         .getResultOrThrow()
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
+    discussionsContainer.checkUpdates()
   }
 
   override suspend fun setReviewers(reviewers: List<GitLabUserDTO>) {
@@ -249,6 +254,7 @@ internal class LoadedGitLabMergeRequest(
         .getResultOrThrow()
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
+    discussionsContainer.checkUpdates()
   }
 
   private val discussionsContainer = GitLabMergeRequestDiscussionsContainerImpl(parentCs, api, projectMapping.repository, this)
