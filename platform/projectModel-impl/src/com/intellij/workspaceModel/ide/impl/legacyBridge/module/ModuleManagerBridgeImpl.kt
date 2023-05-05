@@ -131,6 +131,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
 
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
     val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
+    @Suppress("OPT_IN_USAGE")
     val result = coroutineScope {
       val precomputedExtensionModel = precomputeExtensionModel()
 
@@ -155,7 +156,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       UnloadedModuleDescriptionBridge.createDescriptions(unloadedEntities).associateByTo(unloadedModules) { it.name }
 
       result
-    }.awaitAll()
+    }.map { it.getCompleted() }
 
     val modules = LinkedHashSet<ModuleBridge>(result.size)
 
@@ -181,12 +182,10 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     // Facets that are loaded from the cache do not generate "EntityAdded" event and aren't initialized
     // We initialize the facets manually here (after modules loading).
     if (initializeFacets) {
-      blockingContext {
-        invokeLater {
-          for (module in modules) {
-            if (!module.isDisposed) {
-              module.initFacets()
-            }
+      invokeLater {
+        for (module in modules) {
+          if (!module.isDisposed) {
+            module.initFacets()
           }
         }
       }
@@ -195,8 +194,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     loadAllModulesTimeMs.addAndGet(System.currentTimeMillis() - start)
   }
 
-  override fun unloadNewlyAddedModulesIfPossible(builder: MutableEntityStorage,
-                                                 unloadedEntityBuilder: MutableEntityStorage) {
+  override fun unloadNewlyAddedModulesIfPossible(builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage) {
     val currentModuleNames = HashSet<String>()
     builder.entities(ModuleEntity::class.java).mapTo(currentModuleNames) { it.name }
     unloadedEntityBuilder.entities(ModuleEntity::class.java).mapTo(currentModuleNames) { it.name }
@@ -208,7 +206,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
   }
 
   fun getModifiableModel(diff: MutableEntityStorage): ModifiableModuleModel {
-    return ModifiableModuleModelBridgeImpl(project, this, diff, false)
+    return ModifiableModuleModelBridgeImpl(project = project, moduleManager = this, diff = diff, cacheStorageResult = false)
   }
 
   override fun newModule(filePath: String, moduleTypeId: String): Module {
@@ -430,7 +428,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     }
     else {
       val moduleStore = module.getService(IComponentStore::class.java) as ModuleStore
-      moduleStore.setPath(moduleFileUrl.toPath(), null, isNew)
+      moduleStore.setPath(path = moduleFileUrl.toPath(), virtualFile = null, isNew = isNew)
     }
     return module
   }
