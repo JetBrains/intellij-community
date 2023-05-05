@@ -54,14 +54,19 @@ mod tests {
         assert_vm_option_presence(&dump, "-Xmx256m");
         assert_vm_option_presence(&dump, "-XX:+UseG1GC");
         assert_vm_option_presence(&dump, "-Dsun.io.useCanonCaches=false");
+
         // `product-info.json`
         assert_vm_option_presence(&dump, "-Didea.vendor.name=JetBrains");
         assert_vm_option_presence(&dump, "-Didea.paths.selector=XPlatLauncherTest");
 
+        // options injected by the launcher
         let vm_option = dump.vmOptions.iter().find(|s| s.starts_with("-Djb.vmOptionsFile="))
-            .expect(&format!("'jb.vmOptionsFile' is not in {:?}", dump.vmOptions));
+            .expect(&format!("'-Djb.vmOptionsFile=' is not in {:?}", dump.vmOptions));
         let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
         assert_eq!(vm_options_file.canonicalize().unwrap(), path.canonicalize().unwrap());
+
+        dump.vmOptions.iter().find(|s| s.starts_with("-XX:ErrorFile="))
+            .expect(&format!("'-XX:ErrorFile=' is not in {:?}", dump.vmOptions));
     }
 
     #[test]
