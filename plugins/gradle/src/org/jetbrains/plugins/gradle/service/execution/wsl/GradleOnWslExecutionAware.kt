@@ -107,7 +107,7 @@ class GradleOnWslExecutionAware : GradleExecutionAware {
       }
       override val pathMapper = getTargetPathMapper(wslDistribution)
       override fun getServerBindingAddress(targetEnvironmentConfiguration: TargetEnvironmentConfiguration): HostPort {
-        return HostPort(wslDistribution.wslIp, 0)
+        return HostPort(wslDistribution.wslIpAddress.hostAddress, 0)
       }
     }
   }
