@@ -34,13 +34,13 @@
 
     <refactoring.moveMemberHandler
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinMemberHandler"/>
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.java.MoveKotlinMemberHandler"/>
     <refactoring.moveInnerHandler
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinInnerHandler"/>
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.java.MoveKotlinInnerHandler"/>
     <refactoring.moveInnerClassUsagesHandler
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.MoveJavaInnerClassKotlinUsagesHandler"/>
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.java.MoveJavaInnerClassKotlinUsagesHandler"/>
 
   </extensions>
 

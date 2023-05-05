@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.refactoring.move
+package org.jetbrains.kotlin.idea.refactoring.move.java
 
 import com.intellij.refactoring.move.moveInner.MoveJavaInnerHandler
 import com.intellij.usageView.UsageInfo
