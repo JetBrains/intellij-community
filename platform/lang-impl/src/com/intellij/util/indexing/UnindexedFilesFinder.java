@@ -154,7 +154,8 @@ final class UnindexedFilesFinder {
       ((FileTypeManagerImpl)ex).freezeFileTypeTemporarilyWithProvidedValueIn(file, fileType, () -> {
         boolean isDirectory = file.isDirectory();
         FileIndexingState fileTypeIndexState = null;
-        if (!isDirectory && !myFileBasedIndex.isTooLarge(file)) {
+        boolean needContentIndexing = !isDirectory && !myFileBasedIndex.isTooLarge(file);
+        if (needContentIndexing) {
           if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, indexedFile)) == FileIndexingState.OUT_DATED) {
             if (myFileBasedIndex.doTraceIndexUpdates()) {
               LOG.info("Scheduling full indexing of " + indexedFile.getFileName() + " because file type index is outdated");
