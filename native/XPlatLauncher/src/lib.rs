@@ -227,6 +227,13 @@ fn get_xdg_dir(env_var_name: &str, fallback: &str) -> Result<PathBuf> {
     Ok(get_user_home()?.join(fallback))
 }
 
+#[cfg(target_family = "windows")]
+fn get_user_home() -> Result<PathBuf> {
+    env::var("USERPROFILE")  //todo fallback to `GetUserProfileDirectory`
+        .map(|s| PathBuf::from(s))
+        .context("Cannot detect a user home directory")
+}
+
 #[cfg(target_family = "unix")]
 #[allow(deprecated)]
 fn get_user_home() -> Result<PathBuf> {
