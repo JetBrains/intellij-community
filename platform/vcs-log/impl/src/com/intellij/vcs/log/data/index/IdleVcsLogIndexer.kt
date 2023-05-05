@@ -48,21 +48,23 @@ internal class IdleVcsLogIndexer(private val project: Project,
 
   fun start() {
     initJob?.cancel()
-    initJob = cs.childScope().launch(CoroutineName("IdleVcsLogIndexer.scheduleInit")) {
-      while (!isRunning.get()) {
-        if (needIndexing(index)) {
-          withContext(Dispatchers.EDT) {
-            if (idleDelayValue.asInteger() >= 0) {
-              doInit()
+    initJob = cs.childScope().launch(CoroutineName("IdleVcsLogIndexer start/stop")) {
+      if (idleDelayValue.asInteger() < 0) {
+        stop()
+      }
+      else {
+        withContext(Dispatchers.Default) {
+          while (!isRunning.get()) {
+            if (needIndexing(index)) {
+              withContext(Dispatchers.EDT) {
+                doInit()
+                cancel()
+              }
             }
-            else {
-              stop()
-            }
-            cancel()
+
+            delay(10000)
           }
         }
-
-        delay(10000)
       }
     }
   }
