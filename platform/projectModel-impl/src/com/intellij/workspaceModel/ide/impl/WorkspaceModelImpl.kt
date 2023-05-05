@@ -160,13 +160,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
         before.assertConsistency()
         newStorage.assertConsistency()
       }
-      val change = entityStorage.replace(newStorage, changes, this@WorkspaceModelImpl::onBeforeChanged,
-                                         this@WorkspaceModelImpl::onChanged)
-      if (change != null) {
-        cs.launch {
-          updatesFlow.emit(change)
-        }
-      }
+      entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged)
     }.apply {
       totalUpdatesTimeMs.addAndGet(this)
       updatesCounter.incrementAndGet()
@@ -228,12 +222,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
         before.assertConsistency()
         newStorage.assertConsistency()
       }
-      val change = entityStorage.replace(newStorage, changes, {}, {})
-      if (change != null) {
-        cs.launch {
-          updatesFlow.emit(change)
-        }
-      }
+      entityStorage.replace(newStorage, changes, {}, {})
     }.apply {
       totalUpdatesTimeMs.addAndGet(this)
       updatesCounter.incrementAndGet()
@@ -299,13 +288,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       measureTimeMillis {
         val builder = replacement.builder
         this.initializeBridges(replacement.changes, builder)
-        val change = entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
-
-        if (change != null) {
-          cs.launch {
-            updatesFlow.emit(change)
-          }
-        }
+        entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
       })
 
     return true
@@ -353,6 +336,9 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.indexData?.onEntitiesChanged(change,
                                                                                                                 EntityStorageKind.MAIN)
     }
+
+    // We emit async changes before running other listeners under write action
+    cs.launch { updatesFlow.emit(change) }
 
     logErrorOnEventHandling {
       project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).changed(change)

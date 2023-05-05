@@ -180,17 +180,14 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
    * We may calculate the change in this function as we won't need the changes for bridges initialization.
    */
   @Synchronized
-  fun replace(newStorage: EntityStorageSnapshot,
-              changes: Map<Class<*>, Set<EntityChange<*>>>,
-              beforeChanged: (VersionedStorageChange) -> Unit,
-              afterChanged: (VersionedStorageChange) -> Unit): VersionedStorageChange? {
+  fun replace(newStorage: EntityStorageSnapshot, changes: Map<Class<*>, Set<EntityChange<*>>>,
+              beforeChanged: (VersionedStorageChange) -> Unit, afterChanged: (VersionedStorageChange) -> Unit) {
     val oldCopy = currentPointer
-    if (oldCopy.storage == newStorage) return null
+    if (oldCopy.storage == newStorage) return
     val change = VersionedStorageChangeImpl(this, oldCopy.storage, newStorage, changes)
     beforeChanged(change)
     currentPointer = Current(version = oldCopy.version + 1, storage = newStorage)
     afterChanged(change)
-    return change
   }
 }
 
