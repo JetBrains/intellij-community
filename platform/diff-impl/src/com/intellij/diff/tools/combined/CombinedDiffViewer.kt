@@ -298,13 +298,13 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     }
 
     if (hiddenBlocks.isNotEmpty()) {
-      blockListeners.multicaster.blocksHidden(hiddenBlocks)
+      blockListeners.multicaster.blocksHidden(hiddenBlocks.map(CombinedDiffBlock<*>::id))
     }
 
-    val totalVisible = beforeViewport.filterNotNull() + blocksInViewport + afterViewport.filterNotNull()
+    val totalVisible = blocksInViewport + afterViewport.filterNotNull() + beforeViewport.filterNotNull()
 
     if (totalVisible.isNotEmpty()) {
-      blockListeners.multicaster.blocksVisible(totalVisible, context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK))
+      blockListeners.multicaster.blocksVisible(totalVisible.map(CombinedDiffBlock<*>::id))
     }
   }
 
@@ -555,6 +555,6 @@ internal val DiffViewer?.isEditorBased: Boolean
           this !is TwosideBinaryDiffViewer
 
 internal interface BlockListener : EventListener {
-  fun blocksHidden(blocks: Collection<CombinedDiffBlock<*>>)
-  fun blocksVisible(blocks: Collection<CombinedDiffBlock<*>>, blockToSelect: CombinedBlockId?)
+  fun blocksHidden(blockIds: Collection<CombinedBlockId>)
+  fun blocksVisible(blockIds: Collection<CombinedBlockId>)
 }

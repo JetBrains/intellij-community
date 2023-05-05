@@ -81,13 +81,11 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     }
 
     @RequiresEdt
-    override fun onRequestsLoaded(requests: Map<CombinedBlockId, DiffRequest>, blockIdToSelect: CombinedBlockId?) {
-      for ((blockId, request) in requests) {
-        buildBlockContent(mainUi, model.context, request, blockId)?.let { newContent ->
-          mainUi.countDifferences(blockId, newContent.viewer)
-          combinedViewer.updateBlockContent(newContent)
-          request.onAssigned(true)
-        }
+    override fun onRequestsLoaded(blockId: CombinedBlockId, request: DiffRequest) {
+      buildBlockContent(mainUi, model.context, request, blockId)?.let { newContent ->
+        mainUi.countDifferences(blockId, newContent.viewer)
+        combinedViewer.updateBlockContent(newContent)
+        request.onAssigned(true)
       }
 
       combinedViewer.contentChanged()
@@ -107,14 +105,12 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
   private inner class MyBlockListener : BlockListener {
 
-    override fun blocksHidden(blocks: Collection<CombinedDiffBlock<*>>) {
-      val blockIds = blocks.asSequence().map(CombinedDiffBlock<*>::id).toSet()
+    override fun blocksHidden(blockIds: Collection<CombinedBlockId>) {
       model.unloadRequestContents(blockIds)
     }
 
-    override fun blocksVisible(blocks: Collection<CombinedDiffBlock<*>>, blockToSelect: CombinedBlockId?) {
-      val blockIds = blocks.asSequence().map(CombinedDiffBlock<*>::id).toSet()
-      model.loadRequestContents(blockIds, blockToSelect)
+    override fun blocksVisible(blockIds: Collection<CombinedBlockId>) {
+      model.loadRequestContents(blockIds)
     }
   }
 

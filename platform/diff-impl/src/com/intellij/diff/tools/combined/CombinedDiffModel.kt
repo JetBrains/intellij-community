@@ -31,7 +31,7 @@ interface CombinedDiffModel {
 
   fun getLoadedRequests(): List<DiffRequest>
 
-  fun loadRequestContents(blockIds: Collection<CombinedBlockId>, blockToSelect: CombinedBlockId?)
+  fun loadRequestContents(blockIds: Collection<CombinedBlockId>)
   fun unloadRequestContents(blockIds: Collection<CombinedBlockId>)
 
   fun addListener(listener: CombinedDiffModelListener, disposable: Disposable)
@@ -44,7 +44,7 @@ interface CombinedDiffModelListener : EventListener {
   fun onModelReset()
 
   @RequiresEdt
-  fun onRequestsLoaded(requests: Map<CombinedBlockId, DiffRequest>, blockIdToSelect: CombinedBlockId? = null)
+  fun onRequestsLoaded(blockId: CombinedBlockId, request: DiffRequest)
 
   @RequiresEdt
   fun onRequestContentsUnloaded(requests: Map<CombinedBlockId, DiffRequest>)
