@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory
+import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.getNamesInPackage
 import org.jetbrains.kotlin.idea.stubindex.*
@@ -78,16 +79,7 @@ private class IdeKotlinDeclarationProvider(
     }
 
     override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> {
-        val result = mutableSetOf<Name>()
-        KotlinTopLevelFunctionByPackageIndex.processElements(packageFqName.asString(), project, scope) {
-            result.add(it.nameAsSafeName)
-            true
-        }
-        KotlinTopLevelPropertyByPackageIndex.processElements(packageFqName.asString(), project, scope) {
-            result.add(it.nameAsSafeName)
-            true
-        }
-        return result
+        return getNamesInPackage(KotlinTopLevelCallableByPackageShortNameIndex.NAME, packageFqName, scope)
     }
 
     override fun getTopLevelKotlinClassLikeDeclarationNamesInPackage(packageFqName: FqName): Set<Name> {
