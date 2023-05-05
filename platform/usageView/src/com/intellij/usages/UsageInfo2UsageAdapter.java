@@ -35,13 +35,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-
-import static com.intellij.reference.SoftReference.dereference;
 
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
@@ -54,10 +50,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   private @NotNull Object myMergedUsageInfos; // contains all merged infos, including myUsageInfo. Either UsageInfo or UsageInfo[]
   private final int myLineNumber;
   private final int myOffset;
+  private volatile UsageNodePresentation myCachedPresentation;
   @Nullable private final VirtualFile myVirtualFile;
   private final int myOffsetToCompareUsages;
-  // allow to be gced and recreated on-demand because it requires a lot of memory
-  private volatile Reference<UsageNodePresentation> myCachedPresentation;
   private volatile UsageType myUsageType;
 
   private static class ComputedData {
@@ -114,6 +109,10 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     myVirtualFile = data.virtualFile;
     myOffsetToCompareUsages = data.offsetToCompareUsages;
     myModificationStamp = getCurrentModificationStamp();
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      updateCachedPresentation();
+    }
   }
 
   @Override
@@ -423,7 +422,11 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     UsageInfo[] merged = ArrayUtil.mergeArrays(getMergedInfos(), u2.getMergedInfos());
     myMergedUsageInfos = merged.length == 1 ? merged[0] : merged;
     Arrays.sort(getMergedInfos(), BY_NAVIGATION_OFFSET);
-    myCachedPresentation = null; // presentation will be rebuilt lazily (IDEA-126048)
+
+    // Invalidate cached presentation, so it'll be updated later
+    // Do not reset it to still have something to present
+    myModificationStamp = Long.MIN_VALUE;
+
     return true;
   }
 
@@ -431,7 +434,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myMergedUsageInfos = myUsageInfo;
-    myCachedPresentation = new SoftReference<>(new UsageNodePresentation(computeIcon(), computeText(), computeBackgroundColor()));
+    resetCachedPresentation();
+  }
+
+  protected final void resetCachedPresentation() {
+    // Invalidate cached presentation, so it'll be updated later
+    // Do not clear it to still have something to present
+    myModificationStamp = Long.MIN_VALUE;
   }
 
   @Override
@@ -495,32 +504,34 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   @Override
   public TextChunk @NotNull [] getText() {
-    return doUpdateCachedPresentation().getText();
+    return getNotNullCachedPresentation().getText();
   }
 
   @Override
   public final @Nullable UsageNodePresentation getCachedPresentation() {
-    return dereference(myCachedPresentation);
+    return myCachedPresentation;
   }
 
   @Override
   public final void updateCachedPresentation() {
-    doUpdateCachedPresentation();
-  }
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
+    }
 
-  private @NotNull UsageNodePresentation doUpdateCachedPresentation() {
     UsageNodePresentation cachedPresentation = getCachedPresentation();
     long currentModificationStamp = getCurrentModificationStamp();
     boolean isModified = currentModificationStamp != myModificationStamp;
     if (cachedPresentation == null || isModified && isValid()) {
-      UsageNodePresentation presentation = new UsageNodePresentation(computeIcon(), computeText(), computeBackgroundColor());
-      myCachedPresentation = new SoftReference<>(presentation);
+      myCachedPresentation = new UsageNodePresentation(computeIcon(), computeText(), computeBackgroundColor());
       myModificationStamp = currentModificationStamp;
-      return presentation;
     }
-    else {
-      return cachedPresentation;
-    }
+  }
+
+  private @NotNull UsageNodePresentation getNotNullCachedPresentation() {
+    // Presentation is expected to be always externally updated by calling updateCachedPresentation
+    // Here we just return cached result because it must be always available for painting or speed search
+    UsageNodePresentation cachedPresentation = getCachedPresentation();
+    return cachedPresentation != null ? cachedPresentation : UsageNodePresentation.EMPTY;
   }
 
   @NotNull
@@ -569,12 +580,12 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   @Override
   public @Nullable Color getBackgroundColor() {
-    return doUpdateCachedPresentation().getBackgroundColor();
+    return getNotNullCachedPresentation().getBackgroundColor();
   }
 
   @Override
   public Icon getIcon() {
-    return doUpdateCachedPresentation().getIcon();
+    return getNotNullCachedPresentation().getIcon();
   }
 
   @Nullable

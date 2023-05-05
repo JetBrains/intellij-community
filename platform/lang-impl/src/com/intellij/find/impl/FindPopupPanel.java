@@ -1208,11 +1208,20 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
           FindPopupItem newItem;
           boolean merged = !myHelper.isReplaceState() && recentItem != null && recentItem.getUsage().merge(usage);
           if (!merged) {
+            if (usage instanceof UsageInfo2UsageAdapter) {
+              ((UsageInfo2UsageAdapter)usage).updateCachedPresentation();
+            }
+
             newItem = new FindPopupItem(usage, usagePresentation(project, scope, usage));
           }
           else {
             // recompute presentation of a merged instance
-            newItem = recentItem.withPresentation(usagePresentation(project, scope, recentItem.getUsage()));
+            UsageInfoAdapter recentItemUsage = recentItem.getUsage();
+            if (recentItemUsage instanceof UsageInfo2UsageAdapter) {
+              ((UsageInfo2UsageAdapter)recentItemUsage).updateCachedPresentation();
+            }
+
+            newItem = recentItem.withPresentation(usagePresentation(project, scope, recentItemUsage));
           }
           recentItemRef.set(new WeakReference<>(newItem));
 

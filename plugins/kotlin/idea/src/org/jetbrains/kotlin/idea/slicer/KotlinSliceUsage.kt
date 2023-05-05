@@ -46,6 +46,7 @@ open class KotlinSliceUsage : SliceUsage {
     //TODO: it's all hacks due to UsageInfo stored in the base class - fix it in IDEA
     private fun initializeUsageInfo() {
         usageInfo = getUsageInfo().element?.let { AdaptedUsageInfo(it, mode) }
+        resetCachedPresentation()
     }
 
     override fun getUsageInfo(): UsageInfo {
