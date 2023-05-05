@@ -17,6 +17,8 @@ import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.Alarm
 import com.intellij.util.IJSwingUtilities
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.event.*
 import javax.swing.*
@@ -63,7 +65,7 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
     ideMenu.border = null
   }
 
-  fun switchState(actionToShow: AnAction? = null) {
+  fun switchState(buttonSize: Dimension, actionToShow: AnAction? = null) {
     if (isShowing() && actionToShow == null) {
       hideExpandedMenuBar()
       return
@@ -75,7 +77,11 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
     expandedMenuBar = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
         row {
-          cell(wrapComponent(createMenuButton(CloseExpandedMenuAction())))
+          val closeButton = createMenuButton(CloseExpandedMenuAction()).apply {
+            setMinimumButtonSize(JBDimension(JBUI.unscale(buttonSize.width), JBUI.unscale(buttonSize.height)))
+          }
+
+          cell(wrapComponent(closeButton))
           cell(wrapComponent(ideMenu)).align(AlignY.FILL)
           cell(shadowComponent).align(Align.FILL)
         }

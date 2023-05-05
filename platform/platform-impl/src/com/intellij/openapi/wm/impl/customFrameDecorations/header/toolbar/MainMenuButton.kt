@@ -136,7 +136,7 @@ internal class MainMenuButton {
 
     override fun actionPerformed(e: AnActionEvent) {
       if (expandableMenu?.isEnabled() == true) {
-        expandableMenu!!.switchState()
+        expandableMenu!!.switchState(button.size)
       } else {
         showPopup(e.dataContext)
       }
@@ -171,7 +171,7 @@ internal class MainMenuButton {
     override fun actionPerformed(e: ActionEvent?) {
       if (!UISettings.getInstance().disableMnemonics) {
         if (expandableMenu?.isEnabled() == true) {
-          expandableMenu!!.switchState(actionToShow)
+          expandableMenu!!.switchState(button.size, actionToShow)
         } else {
           val component = IdeFocusManager.getGlobalInstance().focusOwner ?: button
           showPopup(DataManager.getInstance().getDataContext(component), actionToShow)
