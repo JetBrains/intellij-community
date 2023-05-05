@@ -170,8 +170,14 @@ final class UnindexedFilesFinder {
           }
         }
 
+        boolean mayMarkFileIndexed = true;
         for (ID<?, ?> indexId : affectedContentIndexCandidates) {
           if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) continue;
+          if (!RebuildStatus.isOk(indexId)) {
+            mayMarkFileIndexed = false;
+            continue;
+          }
+
           try {
             FileIndexingState fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
             if (fileIndexingState == FileIndexingState.UP_TO_DATE && myShouldProcessUpToDateFiles) {
@@ -212,10 +218,10 @@ final class UnindexedFilesFinder {
           }
         }
 
-        boolean mayMarkFileIndexed = true;
         long nowTime = System.nanoTime();
         try {
           for (ID<?, ?> indexId : myFileBasedIndex.getContentLessIndexes(isDirectory)) {
+            if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) continue;
             if (!RebuildStatus.isOk(indexId)) {
               mayMarkFileIndexed = false;
               continue;
