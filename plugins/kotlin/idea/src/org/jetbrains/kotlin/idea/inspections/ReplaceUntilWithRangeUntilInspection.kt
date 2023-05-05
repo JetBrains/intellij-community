@@ -9,13 +9,13 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector
 import org.jetbrains.kotlin.idea.statistics.NewAndDeprecatedFeaturesInspectionData
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.RANGE_UNTIL
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.UNTIL
+import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.EXPERIMENTAL_STDLIB_API_ANNOTATION
 import org.jetbrains.kotlin.nj2k.areKotlinVersionsSufficientToUseRangeUntil

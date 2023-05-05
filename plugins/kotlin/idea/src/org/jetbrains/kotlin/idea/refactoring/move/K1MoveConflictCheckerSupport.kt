@@ -41,7 +41,10 @@ import org.jetbrains.kotlin.idea.base.platforms.forcedTargetPlatform
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.*
+import org.jetbrains.kotlin.idea.base.util.and
+import org.jetbrains.kotlin.idea.base.util.getPackage
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.base.util.not
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.hasJavaResolutionFacade
@@ -187,7 +190,7 @@ class K1MoveConflictCheckerSupport : KotlinMoveConflictCheckerSupport {
         targetScope: VirtualFile
     ): MultiMap<PsiElement, String> {
         val conflicts = MultiMap<PsiElement, String>()
-        val targetModule = targetScope.getModule(moveChecker.project) ?: return MultiMap.empty()
+        val targetModule = ModuleUtilCore.findModuleForFile(targetScope, moveChecker.project) ?: return MultiMap.empty()
         val fileIndex = ModuleRootManager.getInstance(targetModule).fileIndex
         val isInTestSources = fileIndex.getKotlinSourceRootType(targetScope) == TestSourceKotlinRootType
         NextUsage@ for (usage in usages) {
@@ -252,7 +255,7 @@ class K1MoveConflictCheckerSupport : KotlinMoveConflictCheckerSupport {
     ): MultiMap<PsiElement, String> {
         val conflicts = MultiMap<PsiElement, String>()
         val targetScope = moveCheckerInfo.moveTarget.targetFileOrDir ?: return MultiMap.empty()
-        val targetModule = targetScope.getModule(moveCheckerInfo.project) ?: return MultiMap.empty()
+        val targetModule = ModuleUtilCore.findModuleForFile(targetScope, moveCheckerInfo.project) ?: return MultiMap.empty()
         val resolveScope = getScopeWithPlatformAwareDependencies(targetModule)
         fun isInScope(targetElement: PsiElement, targetDescriptor: DeclarationDescriptor): Boolean {
             if (targetElement in resolveScope) return true
