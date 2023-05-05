@@ -34,6 +34,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -75,7 +76,6 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BooleanSupplier
 import java.util.function.Supplier
@@ -89,7 +89,8 @@ import javax.swing.plaf.metal.MetalLookAndFeel
 // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
 private const val WINDOW_ALPHA = "Window.alpha"
 
-private val LOG = logger<LafManagerImpl>()
+private val LOG: Logger
+  get() = logger<LafManagerImpl>()
 
 private const val ELEMENT_LAF: @NonNls String = "laf"
 private const val ELEMENT_PREFERRED_LIGHT_LAF: @NonNls String = "preferred-light-laf"
@@ -122,7 +123,8 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     val name = ApplicationInfoEx.getInstanceEx().defaultDarkLaf
     if (name == null) {
       findLafByName("Dark") ?: error("Default dark LookAndFeel 'Dark' not found")
-    } else {
+    }
+    else {
       findLafByName(name) ?: error("Default dark LookAndFeel '$name' not found")
     }
   }
@@ -308,23 +310,22 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
   private fun addThemeAndDynamicPluginListeners() {
     UIThemeProvider.EP_NAME.addExtensionPointListener(UiThemeEpListener(), this)
-    ApplicationManager.getApplication().messageBus.connect(this)
-      .subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
-        override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-          isUpdatingPlugin = isUpdate
-          themeIdBeforePluginUpdate = if (myCurrentLaf is UIThemeBasedLookAndFeelInfo) {
-            (myCurrentLaf as UIThemeBasedLookAndFeelInfo).theme.id
-          }
-          else {
-            null
-          }
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+        isUpdatingPlugin = isUpdate
+        themeIdBeforePluginUpdate = if (myCurrentLaf is UIThemeBasedLookAndFeelInfo) {
+          (myCurrentLaf as UIThemeBasedLookAndFeelInfo).theme.id
         }
+        else {
+          null
+        }
+      }
 
-        override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-          isUpdatingPlugin = false
-          themeIdBeforePluginUpdate = null
-        }
-      })
+      override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+        isUpdatingPlugin = false
+        themeIdBeforePluginUpdate = null
+      }
+    })
   }
 
   private fun detectAndSyncLaf() {
@@ -922,7 +923,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   /**
-   * Repaints all displayable window.
+   * Repaints all displayable windows.
    */
   override fun repaintUI() {
     val frames = Frame.getFrames()
@@ -1352,7 +1353,7 @@ private fun patchTreeUI(defaults: UIDefaults) {
 /**
  * @param icon an icon retrieved from L&F
  * @return `true` if an icon is not specified or if it is declared in some Swing L&F
- * (such icons do not have a variant to paint in selected row)
+ * (such icons do not have a variant to paint in the selected row)
  */
 private fun isUnsupported(icon: Icon?): Boolean {
   val name = icon?.javaClass?.name
@@ -1420,8 +1421,8 @@ private fun patchRowHeight(defaults: UIDefaults, key: String, prevScale: Float) 
 
 /**
  * The following code is a trick! By default, Swing uses lightweight and "medium" weight
- * popups to show JPopupMenu. The code below force the creation of real heavyweight menus -
- * this increases speed of popups and allows getting rid of some drawing artifacts.
+ * popups to show JPopupMenu. The code below forces the creation of real heavyweight menus -
+ * this increases the speed of popups and allows getting rid of some drawing artifacts.
  */
 private fun fixPopupWeight() {
   var popupWeight = OurPopupFactory.WEIGHT_MEDIUM
