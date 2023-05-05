@@ -255,7 +255,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
     //rebuild();
   }
 
-  override fun selectCurrentElement(fileEditor: FileEditor, file: VirtualFile, requestFocus: Boolean): Boolean {
+  override fun selectCurrentElement(fileEditor: FileEditor?, file: VirtualFile?, requestFocus: Boolean): Boolean {
     //todo [kirillk]
     // this is dirty hack since some bright minds decided to used different TreeUi every time, so selection may be followed
     // by rebuild on completely different instance of TreeUi
