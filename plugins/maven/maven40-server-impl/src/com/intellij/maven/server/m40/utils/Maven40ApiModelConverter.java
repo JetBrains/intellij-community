@@ -2,9 +2,8 @@
 package com.intellij.maven.server.m40.utils;
 
 import com.intellij.util.ReflectionUtilRt;
+import org.apache.maven.api.Artifact;
 import org.apache.maven.api.model.*;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -17,6 +16,7 @@ import org.jetbrains.idea.maven.server.MavenServerGlobals;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.*;
 
 public class Maven40ApiModelConverter {
@@ -155,7 +155,7 @@ public class Maven40ApiModelConverter {
   }
 
   public static MavenId createMavenId(Artifact artifact) {
-    return new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
+    return new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion().asString());
   }
 
   public static List<MavenResource> convertResources(List<Resource> resources) {
@@ -224,11 +224,7 @@ public class Maven40ApiModelConverter {
   }
 
   private static String convertExtension(Artifact artifact) {
-    ArtifactHandler handler = artifact.getArtifactHandler();
-    String result = null;
-    if (handler != null) result = handler.getExtension();
-    if (result == null) result = artifact.getType();
-    return result;
+    return artifact.getExtension();
   }
 
   public static List<MavenProfile> convertProfiles(Collection<? extends Profile> profiles) {
@@ -326,44 +322,45 @@ public class Maven40ApiModelConverter {
            || Xpp3Dom.class.isAssignableFrom(clazz);
   }
 
-  public static List<MavenArtifact> convertArtifacts(Collection<? extends Artifact> artifacts,
+  private static List<MavenArtifact> convertArtifacts(Collection<? extends Artifact> artifacts,
                                                      Map<Artifact, MavenArtifact> nativeToConvertedMap,
                                                      File localRepository) {
-    if (artifacts == null) return new ArrayList<MavenArtifact>();
+    if (artifacts == null) return new ArrayList<>();
 
-    Set<MavenArtifact> result = new LinkedHashSet<MavenArtifact>(artifacts.size());
+    Set<MavenArtifact> result = new LinkedHashSet<>(artifacts.size());
     for (Artifact each : artifacts) {
       result.add(convertArtifact(each, nativeToConvertedMap, localRepository));
     }
-    return new ArrayList<MavenArtifact>(result);
+    return new ArrayList<>(result);
   }
 
-  public static MavenArtifact convertArtifact(Artifact artifact, Map<Artifact, MavenArtifact> nativeToConvertedMap, File localRepository) {
+  private static MavenArtifact convertArtifact(Artifact artifact, Map<Artifact, MavenArtifact> nativeToConvertedMap, File localRepository) {
     MavenArtifact result = nativeToConvertedMap.get(artifact);
     if (result == null) {
-      result = convertArtifact(artifact, localRepository);
+      // TODO: artifact path
+      result = convertArtifactAndPath(artifact, null, localRepository);
       nativeToConvertedMap.put(artifact, result);
     }
     return result;
   }
 
-  public static MavenArtifact convertArtifact(Artifact artifact, File localRepository) {
+  public static MavenArtifact convertArtifactAndPath(Artifact artifact, Path artifactPath, File localRepository) {
     return new MavenArtifact(artifact.getGroupId(),
                              artifact.getArtifactId(),
-                             artifact.getVersion(),
-                             artifact.getBaseVersion(),
-                             artifact.getType(),
+                             artifact.getVersion().asString(),
+                             artifact.getVersion().asString(),
+                             "", //artifact.getType(),
                              artifact.getClassifier(),
 
-                             artifact.getScope(),
-                             artifact.isOptional(),
+                             "", //artifact.getScope(),
+                             false, //artifact.isOptional(),
 
                              convertExtension(artifact),
 
-                             artifact.getFile(),
+                             null == artifactPath ? null : artifactPath.toFile(),
                              localRepository,
 
-                             artifact.isResolved(),
+                             null != artifactPath,
                              false /*artifact instanceof CustomMaven3Artifact && ((CustomMaven3Artifact)artifact).isStub()*/);
   }
 }

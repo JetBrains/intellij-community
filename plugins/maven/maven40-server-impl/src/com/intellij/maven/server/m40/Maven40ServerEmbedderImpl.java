@@ -9,6 +9,12 @@ import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.apache.commons.cli.ParseException;
 import org.apache.maven.*;
+import org.apache.maven.api.ArtifactCoordinate;
+import org.apache.maven.api.DependencyCoordinate;
+import org.apache.maven.api.Node;
+import org.apache.maven.api.Session;
+import org.apache.maven.api.services.ArtifactResolver;
+import org.apache.maven.api.services.ArtifactResolverResult;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.artifact.InvalidRepositoryException;
@@ -17,6 +23,8 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.cli.internal.extension.model.CoreExtension;
 import org.apache.maven.execution.*;
+import org.apache.maven.internal.impl.DefaultSession;
+import org.apache.maven.internal.impl.DefaultSessionFactory;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Repository;
@@ -65,10 +73,12 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static com.intellij.maven.server.m40.utils.Maven40ModelConverter.convertRemoteRepositories;
 
@@ -1544,15 +1554,71 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     @NotNull final List<MavenRemoteRepository> remoteRepositories,
     MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
+    try {
+      return resolveArtifactsTransitively(artifacts, remoteRepositories);
+    }
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
 
+  private MavenArtifactResolveResult resolveArtifactsTransitively(
+    @NotNull final List<MavenArtifactInfo> artifacts,
+    @NotNull final List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
+    DefaultSessionFactory sessionFactory = getComponent(DefaultSessionFactory.class);
+    MavenExecutionRequest request = createRequest(null, null, null, null);
+    request.setRemoteRepositories(convertRepositories(remoteRepositories));
+    DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
+    MavenSession mavenSession = createMavenSession(request, maven);
+    Session session = sessionFactory.getSession(mavenSession);
+
+    Map<org.apache.maven.api.Artifact, Path> resolvedArtifactMap = new HashMap<>();
+    SessionScope sessionScope = getComponent(SessionScope.class);
+    try {
+      sessionScope.enter();
+      sessionScope.seed(DefaultSession.class, (DefaultSession)session);
+
+      for (MavenArtifactInfo mavenArtifactInfo : artifacts) {
+        ArtifactCoordinate coordinate = session.createArtifactCoordinate(
+          mavenArtifactInfo.getGroupId(),
+          mavenArtifactInfo.getArtifactId(),
+          mavenArtifactInfo.getVersion(),
+          mavenArtifactInfo.getClassifier(),
+          mavenArtifactInfo.getPackaging(),
+          null);
+
+        ArtifactResolver artifactResolver = session.getService(ArtifactResolver.class);
+        ArtifactResolverResult resolved = artifactResolver.resolve(session, Collections.singleton(coordinate));
+        resolvedArtifactMap.putAll(resolved.getArtifacts());
+
+        DependencyCoordinate dependencyCoordinate = session.createDependencyCoordinate(coordinate);
+
+        Node dependencyNode = session.collectDependencies(dependencyCoordinate);
+
+        List<DependencyCoordinate> dependencyCoordinates = dependencyNode.stream()
+          .filter(node -> node != dependencyNode)
+          .filter(node -> node.getDependency() != null)
+          .map(node -> node.getDependency().toCoordinate())
+          .collect(Collectors.toList());
+        ArtifactResolverResult resolvedChildren = artifactResolver.resolve(session, dependencyCoordinates);
+
+        resolvedArtifactMap.putAll(resolvedChildren.getArtifacts());
+      }
+    }
+    finally {
+      sessionScope.exit();
+    }
+
+    File localRepositoryFile = getLocalRepositoryFile();
     List<MavenArtifact> resolvedArtifacts = new ArrayList<>();
-    for (MavenArtifactInfo artifact : artifacts) {
-      resolvedArtifacts.add(doResolveArtifact(artifact, remoteRepositories));
+    for (org.apache.maven.api.Artifact apiArtifact : resolvedArtifactMap.keySet()) {
+      Path artifactPath = resolvedArtifactMap.get(apiArtifact);
+      MavenArtifact mavenArtifact = Maven40ApiModelConverter.convertArtifactAndPath(apiArtifact, artifactPath, localRepositoryFile);
+      resolvedArtifacts.add(mavenArtifact);
     }
 
     return new MavenArtifactResolveResult(resolvedArtifacts, null);
   }
-
 
 
 
