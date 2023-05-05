@@ -82,7 +82,7 @@ internal class PortableCompilationCacheUploader(
   private fun uploadToS3() {
     if (remoteCache.shouldBeSyncedToS3) {
       spanBuilder("aws s3 sync").useWithScope {
-        context.messages.info(awsS3Cli("sync", "--no-progress", "--include", "*", "$s3Folder", "s3://intellij-jps-cache"))
+        awsS3Cli("cp", "--no-progress", "--include", "*", "--recursive", "$s3Folder", "s3://intellij-jps-cache", returnStdOut = false)
       }
     }
   }
