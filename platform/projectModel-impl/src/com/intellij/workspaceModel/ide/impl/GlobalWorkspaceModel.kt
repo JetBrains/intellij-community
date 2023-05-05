@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspaceModel.jps.JpsGlobalFileEntitySource
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
@@ -135,6 +136,7 @@ class GlobalWorkspaceModel : Disposable {
 
   override fun dispose() = Unit
 
+  @RequiresWriteLock
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     logErrorOnEventHandling {
@@ -148,6 +150,7 @@ class GlobalWorkspaceModel : Disposable {
     GlobalLibraryTableBridge.getInstance().handleBeforeChangeEvents(change)
   }
 
+  @RequiresWriteLock
   private fun onChanged(change: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
@@ -160,6 +163,7 @@ class GlobalWorkspaceModel : Disposable {
     isFromGlobalWorkspaceModel = false
   }
 
+  @RequiresWriteLock
   fun applyStateToProject(targetProject: Project) {
     val start = System.currentTimeMillis()
 
@@ -188,6 +192,7 @@ class GlobalWorkspaceModel : Disposable {
       })
   }
 
+  @RequiresWriteLock
   fun syncEntitiesWithProject(sourceProject: Project) {
     val start = System.currentTimeMillis()
 

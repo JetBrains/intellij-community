@@ -244,20 +244,22 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   }
 
   override fun addListener(listener: LibraryTable.Listener) = dispatcher.addListener(listener)
-  override fun addListener(listener: LibraryTable.Listener, parentDisposable: Disposable) =
+  override fun addListener(listener: LibraryTable.Listener, parentDisposable: Disposable) {
     dispatcher.addListener(listener, parentDisposable)
+  }
 
   override fun removeListener(listener: LibraryTable.Listener) = dispatcher.removeListener(listener)
 
   companion object {
-    private fun List<EntityChange<LibraryEntity>>.filterGlobalLibraryChanges() =
-      filter {
+    private fun List<EntityChange<LibraryEntity>>.filterGlobalLibraryChanges(): List<EntityChange<LibraryEntity>> {
+      return filter {
         when (it) {
           is EntityChange.Added -> it.entity.tableId is LibraryTableId.GlobalLibraryTableId
           is EntityChange.Removed -> it.entity.tableId is LibraryTableId.GlobalLibraryTableId
           is EntityChange.Replaced -> it.oldEntity.tableId is LibraryTableId.GlobalLibraryTableId
         }
       }
+    }
 
     private val GLOBAL_LIBRARY_TABLE_PRESENTATION: LibraryTablePresentation = object : LibraryTablePresentation() {
       override fun getDisplayName(plural: Boolean): String {
@@ -283,7 +285,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
     private val createLibraryTimeMs: AtomicLong = AtomicLong()
     private val getLibraryByNameTimeMs: AtomicLong = AtomicLong()
 
-    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+    private fun setupOpenTelemetryReporting(meter: Meter) {
       val initializeLibraryBridgesTimeGauge = meter.gaugeBuilder("jps.global.initialize.library.bridges.ms")
         .ofLongs().setDescription("How many time spent in method").buildObserver()
 

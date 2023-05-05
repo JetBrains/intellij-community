@@ -37,7 +37,7 @@ class WorkspaceModelTopics : Disposable {
   companion object {
     @Topic.ProjectLevel
     @JvmField
-    val CHANGED = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
+    val CHANGED: Topic<WorkspaceModelChangeListener> = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
 
     /**
      * Subscribe to this topic to be notified about changes in unloaded entities. 
@@ -45,13 +45,14 @@ class WorkspaceModelTopics : Disposable {
      */
     @Topic.ProjectLevel
     @JvmField
-    val UNLOADED_ENTITIES_CHANGED = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
+    val UNLOADED_ENTITIES_CHANGED: Topic<WorkspaceModelChangeListener> = Topic(WorkspaceModelChangeListener::class.java,
+                                                                               Topic.BroadcastDirection.NONE, true)
 
-    @JvmStatic
     fun getInstance(project: Project): WorkspaceModelTopics = project.service()
   }
 
   var modulesAreLoaded = false
+    private set
 
   fun notifyModulesAreLoaded() {
     modulesAreLoaded = true

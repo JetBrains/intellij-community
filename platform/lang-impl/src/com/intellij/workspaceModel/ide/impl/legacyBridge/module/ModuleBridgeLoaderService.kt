@@ -5,7 +5,6 @@ import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -31,13 +30,11 @@ import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import io.opentelemetry.api.metrics.Meter
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicLong
 
 private val LOG = logger<ModuleBridgeLoaderService>()
 
-private val modulesLoadingTimeMs: AtomicLong = AtomicLong()
+private val moduleLoadingTimeMs: AtomicLong = AtomicLong()
 
 private fun setupOpenTelemetryReporting(meter: Meter) {
   val modulesLoadingTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridgeLoader.loading.modules.ms")
@@ -45,7 +42,7 @@ private fun setupOpenTelemetryReporting(meter: Meter) {
 
   meter.batchCallback(
     {
-      modulesLoadingTimeGauge.record(modulesLoadingTimeMs.get())
+      modulesLoadingTimeGauge.record(moduleLoadingTimeMs.get())
     },
     modulesLoadingTimeGauge
   )
@@ -78,10 +75,9 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
                   targetUnloadedEntitiesBuilder = null,
                   loadedFromCache = workspaceModel.loadedFromCache)
       if (GlobalLibraryTableBridge.isEnabled()) {
-        withContext(Dispatchers.EDT) {
-          ApplicationManager.getApplication().runWriteAction {
-            GlobalWorkspaceModel.getInstance().applyStateToProject(project)
-          }
+        val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
+        writeAction {
+          globalWorkspaceModel.applyStateToProject(project)
         }
       }
     }
@@ -115,7 +111,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
       (project.serviceAsync<WorkspaceFileIndex>().await() as WorkspaceFileIndexEx).initialize()
     }
 
-    modulesLoadingTimeMs.addAndGet(System.currentTimeMillis() - start)
+    moduleLoadingTimeMs.addAndGet(System.currentTimeMillis() - start)
     WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
   }
 }
