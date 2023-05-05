@@ -33,10 +33,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
-import java.io.DataInputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Comparator;
@@ -143,25 +140,20 @@ public final class FSRecordsImpl {
   private static int calculateVersion() {
     //bumped main version (59 -> 60) because of VfsDependentEnumerator removal, and filenames change
     final int mainVFSFormatVersion = 60;
-    return nextMask(mainVFSFormatVersion +
-                    (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()),  /* acceptable range is [0..255] */ 8,
-                    nextMask(USE_CONTENT_HASHES,
-                             nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
-                                      nextMask(false, // feel free to re-use
-                                               nextMask(INLINE_ATTRIBUTES,
-                                                        nextMask(SystemProperties.getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER,
-                                                                                                     false),
-                                                                 nextMask(false, // feel free to re-use
-                                                                          nextMask(USE_SMALL_ATTR_TABLE,
-                                                                                   nextMask(
-                                                                                     PersistentHashMapValueStorage.COMPRESSION_ENABLED,
-                                                                                     nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
-                                                                                              nextMask(
-                                                                                                ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
-                                                                                                nextMask(USE_FAST_NAMES_IMPLEMENTATION,
-                                                                                                         nextMask(
-                                                                                                           USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION,
-                                                                                                           0)))))))))))));
+    return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
+           nextMask(USE_CONTENT_HASHES,
+           nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
+           nextMask(false, // feel free to re-use
+           nextMask(INLINE_ATTRIBUTES,
+           nextMask(SystemProperties.getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
+           nextMask(false, // feel free to re-use
+           nextMask(USE_SMALL_ATTR_TABLE,
+           nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
+           nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+           nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
+           nextMask(USE_FAST_NAMES_IMPLEMENTATION,
+           nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION,
+           0)))))))))))));
   }
 
 
@@ -960,32 +952,43 @@ public final class FSRecordsImpl {
     try {
       return contentAccessor.readContent(fileId);
     }
-    catch (OutOfMemoryError outOfMemoryError) {
-      throw outOfMemoryError;
+    catch (InterruptedIOException ie){
+      //RC: goal is to just bypass handleError(), which likely mark VFS corrupted
+      //    but thread interruption doesn't lead to VFS corruption
+      throw new RuntimeException(ie);
+    }
+    catch (OutOfMemoryError oom) {
+      throw oom;
     }
     catch (ZipException e) {
       // we use zip to compress content
       String fileName = getName(fileId);
       long length = getLength(fileId);
-      IOException diagnosticException =
-        new IOException("Failed to decompress file's content for file. File name = " + fileName + ", length = " + length);
+      IOException diagnosticException = new IOException(
+        "Failed to decompress file's content for file. File name = " + fileName + ", length = " + length);
       diagnosticException.addSuppressed(e);
-      handleError(diagnosticException);
+      throw handleError(diagnosticException);
     }
     catch (Throwable e) {
-      handleError(e);
+      throw handleError(e);
     }
-    return null;
   }
 
   @NotNull DataInputStream readContentById(int contentId) {
     try {
       return contentAccessor.readContentDirectly(contentId);
     }
-    catch (Throwable e) {
-      handleError(e);
+    catch (InterruptedIOException ie){
+      //RC: goal is to just not go into handleError(), which likely mark VFS corrupted
+      //    but thread interruption doesn't lead to VFS corruption
+      throw new RuntimeException(ie);
     }
-    return null;
+    catch (OutOfMemoryError oom) {
+      throw oom;
+    }
+    catch (Throwable e) {
+      throw handleError(e);
+    }
   }
 
   int acquireFileContent(int fileId) {
@@ -1031,8 +1034,13 @@ public final class FSRecordsImpl {
     try {
       contentAccessor.writeContent(fileId, bytes, readOnly);
     }
-    catch (IOException e) {
-      throw handleError(e);
+    //TODO RC: catch and rethrow InterruptedIOException & OoMError as in readContent(),
+    //         thus bypassing handleError() and VFS rebuild. But I'm not sure that writeContent
+    //         is really safe against thread-interruption/OoM: i.e. it could be InterruptedException
+    //         or OoM really left RefCountingContentStorage in a inconsistent state -- more
+    //         thoughtful analysis (and likely a tests!) needed
+    catch (Throwable t) {
+      throw handleError(t);
     }
   }
 
