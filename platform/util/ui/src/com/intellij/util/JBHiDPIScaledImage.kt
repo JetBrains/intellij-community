@@ -4,14 +4,13 @@
 package com.intellij.util
 
 import com.intellij.ui.paint.PaintUtil
-import com.intellij.ui.scale.JBUIScale.sysScale
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ui.ImageUtil
 import org.imgscalr.Scalr
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
-import java.awt.GraphicsConfiguration
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.awt.image.ImageObserver
@@ -30,25 +29,11 @@ open class JBHiDPIScaledImage : BufferedImage {
   val scale: Double
 
   @Deprecated("Use IconManager instead.")
-  constructor(width: Int, height: Int, type: Int) : this(gc = null, width = width.toDouble(), height = height.toDouble(), type = type)
-
-  /**
-   * Creates a scaled HiDPI-aware BufferedImage, targeting the graphics config.
-   *
-   * @param gc the graphics config which provides the target scale
-   * @param width the width in user coordinate space
-   * @param height the height in user coordinate space
-   * @param type the type
-   */
-  internal constructor(gc: GraphicsConfiguration?,
-                       width: Double,
-                       height: Double,
-                       type: Int,
-                       rm: PaintUtil.RoundingMode = PaintUtil.RoundingMode.FLOOR) : this(scale = sysScale(gc = gc).toDouble(),
-                                                                                         width = width,
-                                                                                         height = height,
-                                                                                         type = type,
-                                                                                         roundingMode = rm)
+  constructor(width: Int, height: Int, type: Int) : this(scale = JBUIScale.sysScale().toDouble(),
+                                                         width = width.toDouble(),
+                                                         height = height.toDouble(),
+                                                         type = type,
+                                                         roundingMode = PaintUtil.RoundingMode.FLOOR)
 
   protected constructor(scale: Double, width: Double, height: Double, type: Int, roundingMode: PaintUtil.RoundingMode) :
     super(roundingMode.round(width * scale), roundingMode.round(height * scale), type) {
