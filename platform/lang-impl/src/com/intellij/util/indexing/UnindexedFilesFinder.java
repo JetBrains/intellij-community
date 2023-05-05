@@ -52,6 +52,7 @@ final class UnindexedFilesFinder {
     long timeIndexingWithoutContentViaInfrastructureExtension = 0;
     private final List<Computable<Boolean>> appliersAndRemovers;
     final boolean applyIndexValuesSeparately;
+    boolean indexInfrastructureExtensionInvalidated = false;
 
     UnindexedFileStatusBuilder(boolean applyIndexValuesSeparately) {
       this.applyIndexValuesSeparately = applyIndexValuesSeparately;
@@ -169,28 +170,14 @@ final class UnindexedFilesFinder {
               try {
                 if (myFileBasedIndex.needsFileContentLoading(indexId)) {
                   FileIndexingState fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
-                  boolean indexInfrastructureExtensionInvalidated = false;
                   if (fileIndexingState == FileIndexingState.UP_TO_DATE && myShouldProcessUpToDateFiles) {
-                    for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor p : myStateProcessors) {
-                      long nowTime = System.nanoTime();
-                      try {
-                        if (!p.processUpToDateFile(indexedFile, inputId, indexId)) {
-                          indexInfrastructureExtensionInvalidated = true;
-                        }
-                      }
-                      finally {
-                        fileStatusBuilder.timeProcessingUpToDateFiles += (System.nanoTime() - nowTime);
-                      }
-                    }
-                  }
-                  if (indexInfrastructureExtensionInvalidated) {
-                    fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
+                    fileIndexingState = processUpToDateFileByInfrastructureExtensions(indexedFile, inputId, indexId, fileStatusBuilder);
                   }
                   if (fileIndexingState.updateRequired()) {
                     if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
                       FileBasedIndexImpl.LOG.info(
                         "Scheduling indexing of " + indexedFile.getFileName() + " by request of index; " + indexId +
-                        (indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : "") +
+                        (fileStatusBuilder.indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : "") +
                         ((myFileBasedIndex.acceptsInput(indexId, indexedFile)) ? " accepted;" : " unaccepted;") +
                         ("indexing state = " + myFileBasedIndex.getIndexingState(indexedFile, indexId)));
                     }
@@ -268,6 +255,28 @@ final class UnindexedFilesFinder {
       finalization.get().run();
       return fileStatusBuilder.build();
     });
+  }
+
+  private FileIndexingState processUpToDateFileByInfrastructureExtensions(IndexedFileImpl indexedFile,
+                                                                          int inputId,
+                                                                          ID<?, ?> indexId,
+                                                                          UnindexedFileStatusBuilder fileStatusBuilder) {
+    long nowTime = System.nanoTime();
+    try {
+      FileIndexingState ret = FileIndexingState.UP_TO_DATE;
+      for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor p : myStateProcessors) {
+        if (!p.processUpToDateFile(indexedFile, inputId, indexId)) {
+          fileStatusBuilder.indexInfrastructureExtensionInvalidated = true;
+        }
+      }
+      if (fileStatusBuilder.indexInfrastructureExtensionInvalidated) {
+        ret = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
+      }
+      return ret;
+    }
+    finally {
+      fileStatusBuilder.timeProcessingUpToDateFiles += (System.nanoTime() - nowTime);
+    }
   }
 
   private boolean removeIndexedValue(IndexedFileImpl indexedFile,
