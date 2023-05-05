@@ -10,12 +10,12 @@ project.commonTest
 
 project.supportedMain
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
-    Kotlin/Native: stdlib (COMPILE)
+    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
     commonMain (refines, COMPILE)
 
 project.supportedTest
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
-    Kotlin/Native: stdlib (TEST)
+    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     supportedMain (friend, TEST)
