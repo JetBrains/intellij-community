@@ -18,7 +18,9 @@ public final class CopyPasteUtil {
   private CopyPasteUtil() { }
 
   public static void copyTextToClipboard(@NotNull String text) {
-    CopyPasteManager.getInstance().setContents(new StringSelection(text));
+    try {
+      CopyPasteManager.getInstance().setContents(new StringSelection(text));
+    } catch (Exception ignore) { }
   }
 
   public static PsiElement[] getElementsInTransferable(Transferable t) {
