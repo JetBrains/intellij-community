@@ -44,6 +44,9 @@
     <refactoring.moveClassHandler
             order="first"
             implementation="org.jetbrains.kotlin.idea.refactoring.move.java.MoveKotlinClassHandler"/>
+    <refactoring.moveClassHandler
+            order="first"
+            implementation="org.jetbrains.kotlin.idea.refactoring.move.java.MoveKotlinAliasClassHandler"/>
 
   </extensions>
 

@@ -61,10 +61,6 @@
             implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.KotlinMoveDirectoryWithClassesHelper"
             order="first" />
 
-    <refactoring.moveClassHandler
-            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinAliasClassHandler"
-            order="first"/>
-
     <refactoring.copyHandler
             id="kotlinClass"
             implementation="org.jetbrains.kotlin.idea.refactoring.copy.CopyKotlinDeclarationsHandler"
