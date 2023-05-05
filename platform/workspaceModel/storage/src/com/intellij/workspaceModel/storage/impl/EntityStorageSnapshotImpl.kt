@@ -931,12 +931,6 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     return entityFamily.getOrFail(id.arrayId) ?: error("Cannot find an entity by id $id")
   }
 
-  override fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>,
-                                                                    property: KProperty1<R, EntityReference<E>>): Sequence<R> {
-    TODO()
-    //return entities(entityClass.java).filter { property.get(it).resolve(this) == e }
-  }
-
   override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(id: SymbolicEntityId<E>,
                                                                                   entityClass: Class<R>): Sequence<R> {
     val classId = entityClass.toClassId()
