@@ -123,7 +123,10 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   override fun handleChangedEvents(event: VersionedStorageChange) {
     val start = System.currentTimeMillis()
 
-    val changes = event.getChanges(LibraryEntity::class.java).filterGlobalLibraryChanges()
+    val changes = event.getChanges(LibraryEntity::class.java)
+      .filterGlobalLibraryChanges()
+      // Since the listener is not deprecated, it will be better to keep the order of events as remove -> replace -> add
+      .orderToRemoveReplaceAdd()
     if (changes.isEmpty()) return
 
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage

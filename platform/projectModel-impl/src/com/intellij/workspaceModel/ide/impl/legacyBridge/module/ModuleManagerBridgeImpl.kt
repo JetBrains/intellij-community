@@ -84,7 +84,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       busConnection.subscribe(WorkspaceModelTopics.CHANGED, LoadedModulesListUpdater())
       busConnection.subscribe(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED, object : WorkspaceModelChangeListener {
         override fun changed(event: VersionedStorageChange) {
-          for (change in event.getChanges(ModuleEntity::class.java)) {
+          for (change in event.getChanges(ModuleEntity::class.java).orderToRemoveReplaceAdd()) {
             change.oldEntity?.name?.let { unloadedModules.remove(it) }
             change.newEntity?.let {
               unloadedModules[it.name] = UnloadedModuleDescriptionBridge.createDescription(it)

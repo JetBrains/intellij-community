@@ -19,9 +19,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
@@ -76,7 +74,12 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
   }
 
   private fun processBeforeChangeEvents(event: VersionedStorageChange, workspaceFacetContributor: WorkspaceFacetContributor<ModuleSettingsBase>) {
-    event.getChanges(workspaceFacetContributor.rootEntityType).forEach { change ->
+    event
+      .getChanges(workspaceFacetContributor.rootEntityType)
+      // There are no actual implementations of the facet listener that care about the order of fireFacet* events,
+      //   but since the listener is not deprecated, it will be better to keep the order of events.
+      .orderToRemoveReplaceAdd()
+      .forEach { change ->
       when (change) {
         is EntityChange.Added -> {
           val existingFacetBridge = event.storageAfter.facetMapping().getDataByEntity(change.entity)
@@ -110,7 +113,11 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
       result
     }
 
-    event.getChanges(workspaceFacetContributor.rootEntityType).forEach { change ->
+    event.getChanges(workspaceFacetContributor.rootEntityType)
+      // There are no actual implementations of the facet listener that care about the order of fireFacet* events,
+      //   but since the listener is not deprecated, it will be better to keep the order of events.
+      .orderToRemoveReplaceAdd()
+      .forEach { change ->
       when (change) {
         is EntityChange.Added -> {
           val existingFacetBridge = event.storageAfter.facetMapping().getDataByEntity(change.entity)
@@ -162,7 +169,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
     }
 
     workspaceFacetContributor.childEntityTypes.forEach { entityType ->
-      event.getChanges(entityType).forEach { change ->
+      event.getChanges(entityType).orderToRemoveReplaceAdd().forEach { change ->
         when (change) {
           is EntityChange.Added -> {
             // We shouldn't fire `facetConfigurationChanged` for newly added spring settings
