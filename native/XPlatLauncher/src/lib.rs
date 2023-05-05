@@ -85,7 +85,7 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     let configuration = get_configuration(remote_dev, &strip_nt_prefix(exe_path)?).context("Cannot detect a launch configuration")?;
 
     debug!("** Locating runtime");
-    let jre_home = configuration.prepare_for_launch().context("Cannot find a runtime")?;
+    let (jre_home, main_class) = configuration.prepare_for_launch().context("Cannot find a runtime")?;
     debug!("Resolved runtime: {jre_home:?}");
 
     debug!("** Collecting JVM options");
@@ -94,7 +94,7 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
 
     debug!("** Launching JVM");
     let args = configuration.get_args();
-    java::run_jvm_and_event_loop(&jre_home, vm_options, args.to_vec()).context("Cannot start the runtime")?;
+    java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec()).context("Cannot start the runtime")?;
 
     Ok(())
 }
@@ -118,7 +118,8 @@ pub struct ProductInfo {
 pub struct ProductInfoLaunchField {
     pub vmOptionsFilePath: String,
     pub bootClassPathJarNames: Vec<String>,
-    pub additionalJvmArguments: Vec<String>
+    pub additionalJvmArguments: Vec<String>,
+    pub mainClass: String
 }
 
 pub trait LaunchConfiguration {
@@ -126,7 +127,7 @@ pub trait LaunchConfiguration {
     fn get_vm_options(&self) -> Result<Vec<String>>;
     fn get_properties_file(&self) -> Result<PathBuf>;
     fn get_class_path(&self) -> Result<Vec<String>>;
-    fn prepare_for_launch(&self) -> Result<PathBuf>;
+    fn prepare_for_launch(&self) -> Result<(PathBuf, &str)>;
 }
 
 fn get_configuration(is_remote_dev: bool, exe_path: &Path) -> Result<Box<dyn LaunchConfiguration>> {

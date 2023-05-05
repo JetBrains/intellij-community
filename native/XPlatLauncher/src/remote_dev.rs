@@ -47,7 +47,7 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         self.default.get_class_path()
     }
 
-    fn prepare_for_launch(&self) -> Result<PathBuf> {
+    fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
         init_env_vars(&self.launcher_name)?;
         let project_trust_file = self.init_project_trust_file_if_needed()?;
         debug!("Project trust file is: {:?}", project_trust_file);

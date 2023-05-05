@@ -73,9 +73,9 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
         Ok(class_path)
     }
 
-    fn prepare_for_launch(&self) -> Result<PathBuf> {
-        let java_home = self.locate_runtime()?;
-        return strip_nt_prefix(java_home);
+    fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
+        let jre_home = strip_nt_prefix(self.locate_runtime()?)?;
+        return Ok((jre_home, &self.product_info.launch[0].mainClass));
     }
 }
 

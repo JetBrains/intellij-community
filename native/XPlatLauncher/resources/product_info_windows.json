@@ -21,7 +21,8 @@
         "-Didea.vendor.name=JetBrains",
         "-Didea.paths.selector=XPlatLauncherTest",
         "-Dpath.macro.test=%IDE_HOME%"
-      ]
+      ],
+      "mainClass": "com.intellij.idea.TestMain"
     }
   ],
   "bundledPlugins": [

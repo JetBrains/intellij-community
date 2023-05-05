@@ -49,7 +49,6 @@ extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: *con
     }
 }
 
-const MAIN_CLASS_NAME: &str = "com/intellij/idea/Main";
 const MAIN_METHOD_NAME: &str = "main";
 const MAIN_METHOD_SIGNATURE: &str = "([Ljava/lang/String;)V";
 
@@ -58,7 +57,7 @@ type CreateJvmCall<'lib> = libloading::Symbol<
     unsafe extern "C" fn(*mut *mut jni::sys::JavaVM, *mut *mut c_void, *mut c_void) -> jint
 >;
 
-pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, args: Vec<String>) -> Result<()> {
+pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_class: &str, args: Vec<String>) -> Result<()> {
     debug!("Preparing a JVM environment");
 
     #[cfg(target_family = "unix")]
@@ -68,7 +67,8 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, args: Ve
         reset_signal_handler(libc::SIGSEGV)?;
     }
 
-    let jre_home = jre_home.to_path_buf();
+    let jre_home = jre_home.to_owned();
+    let main_class = main_class.to_owned();
     let (tx, rx) = std::sync::mpsc::channel();
 
     // JNI docs says that JVM should not be created on primordial thread
@@ -89,7 +89,7 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, args: Ve
             }
         };
 
-        match call_main_method(jni_env, MAIN_CLASS_NAME, args) {
+        match call_main_method(jni_env, &main_class, args) {
             Ok(_) => {
                 debug!("[JVM] main method finished peacefully");
                 std::process::exit(0);
@@ -216,8 +216,9 @@ fn release_jvm_init_args(jni_options: Vec<jni::sys::JavaVMOption>) {
     jni_options.into_iter().for_each(|option| drop(unsafe { CString::from_raw(option.optionString) }));
 }
 
-fn call_main_method(mut jni_env: JNIEnv<'_>, main_class_name: &str, args: Vec<String>) -> Result<()> {
+fn call_main_method(mut jni_env: JNIEnv<'_>, main_class: &str, args: Vec<String>) -> Result<()> {
     debug!("[JVM] Preparing args: {:?}", args);
+    let main_class_name = main_class.replace('.', "/");
     let args_array = jni_env.new_object_array(args.len() as jsize, "java/lang/String", JObject::null())?;
     for (i, arg) in args.iter().enumerate() {
         jni_env.set_object_array_element(&args_array, i as jsize, jni_env.new_string(arg)?)?;

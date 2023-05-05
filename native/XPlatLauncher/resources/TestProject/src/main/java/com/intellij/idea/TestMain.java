@@ -12,7 +12,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.IntStream;
 
-public class Main {
+public class TestMain {
   @SuppressWarnings("RedundantLabeledSwitchRuleCodeBlock")
   public static void main(String[] args) throws Exception {
     if (args.length > 0) {
@@ -35,7 +35,7 @@ public class Main {
         default -> {
           System.err.println(
             "unexpected command: " + Arrays.toString(args) + '\n' +
-            "usage: " + Main.class.getName() + " [command [options ...]]\n" +
+            "usage: " + TestMain.class.getName() + " [command [options ...]]\n" +
             "commands:\n" +
             "  dump-launch-parameters [test-args ...] --output /path/to/output/file\n" +
             "  vm-options-overloading <property>\n" +

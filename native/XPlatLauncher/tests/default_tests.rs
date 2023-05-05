@@ -238,7 +238,7 @@ mod tests {
 
         let exception = "java.lang.UnsupportedOperationException: aw, snap";
         assert!(result.stderr.contains(exception), "Exception message ('{}') is missing: {:?}", exception, result);
-        assert!(result.stderr.contains("at com.intellij.idea.Main.exception"), "Stacktrace is missing: {:?}", result);
+        assert!(result.stderr.contains("at com.intellij.idea.TestMain.exception"), "Stacktrace is missing: {:?}", result);
     }
 
     #[test]
