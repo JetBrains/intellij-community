@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.impl
 
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.containers.tail
 import com.intellij.vcs.log.RefGroup
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.VcsRefType
@@ -25,34 +24,31 @@ class SimpleRefGroup @JvmOverloads constructor(private val name: @Nls String,
 
   companion object {
     @JvmStatic
-    fun buildGroups(groupedRefs: MultiMap<VcsRefType, VcsRef>,
+    fun buildGroups(refGroups: List<RefGroup>,
+                    refs: MultiMap<VcsRefType, VcsRef>,
                     compact: Boolean,
-                    showTagNames: Boolean,
-                    result: MutableList<RefGroup>) {
-      if (groupedRefs.isEmpty) return
+                    showTagNames: Boolean): List<RefGroup> {
+      if (refs.isEmpty) return refGroups
       if (compact) {
-        if (result.isEmpty()) {
-          val firstRef = groupedRefs.values().first()
-          result.add(SimpleRefGroup(if (firstRef.type.isBranch || showTagNames) firstRef.name else "",
-                                    groupedRefs.values().toMutableList()))
+        if (refGroups.isEmpty()) {
+          val firstRef = refs.values().first()
+          return listOf(SimpleRefGroup(if (firstRef.type.isBranch || showTagNames) firstRef.name else "",
+                                       refs.values().toMutableList()))
+        }
+        val allRefs = refGroups.flatMap { it.refs } + refs.values()
+        return listOf(SimpleRefGroup(refGroups.first().name, allRefs.toMutableList()))
+      }
+      val result = mutableListOf<RefGroup>()
+      result.addAll(refGroups)
+      for ((refType, refsOfType) in refs.entrySet()) {
+        if (refType.isBranch) {
+          result.addAll(refsOfType.map { ref -> SimpleRefGroup(ref.name, arrayListOf(ref)) })
         }
         else {
-          val firstGroup = result.first()
-          firstGroup.refs.addAll(result.tail().flatMap { it.refs })
-          firstGroup.refs.addAll(groupedRefs.values())
-          result.retainAll(listOf(firstGroup))
+          result.add(SimpleRefGroup(if (showTagNames) refsOfType.first().name else "", refsOfType.toMutableList()))
         }
       }
-      else {
-        for ((refType, refs) in groupedRefs.entrySet()) {
-          if (refType.isBranch) {
-            result.addAll(refs.map { ref -> SimpleRefGroup(ref.name, arrayListOf(ref)) })
-          }
-          else {
-            result.add(SimpleRefGroup(if (showTagNames) refs.first().name else "", refs.toMutableList()))
-          }
-        }
-      }
+      return result
     }
   }
 }

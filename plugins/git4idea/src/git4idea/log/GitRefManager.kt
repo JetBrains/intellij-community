@@ -27,7 +27,6 @@ import java.io.DataInput
 import java.io.DataOutput
 import java.io.IOException
 import java.util.*
-import java.util.function.Consumer
 
 /**
  * @author Kirill Likhodedov
@@ -87,36 +86,35 @@ class GitRefManager(project: Project, private val repositoryManager: RepositoryM
   }
 
   override fun groupForTable(references: Collection<VcsRef>, compact: Boolean, showTagNames: Boolean): List<RefGroup> {
+    if (references.isEmpty()) return emptyList()
+
     val sortedReferences = ContainerUtil.sorted(references, labelsComparator)
     val groupedRefs = ContainerUtil.groupBy(sortedReferences) { it.type }
-
-    val result = ArrayList<RefGroup>()
-    if (groupedRefs.isEmpty) return result
 
     val headRefs = groupedRefs.remove(HEAD)
 
     val repository = getRepository(references)
-    if (repository != null) {
-      result.addAll(repository.getTrackedRefs(groupedRefs))
-    }
-    result.forEach(Consumer { refGroup: RefGroup ->
+
+    val trackedRefs = repository?.getTrackedRefs(groupedRefs) ?: emptyList()
+    trackedRefs.forEach { refGroup: RefGroup ->
       groupedRefs.remove(LOCAL_BRANCH, refGroup.refs[0])
       groupedRefs.remove(REMOTE_BRANCH, refGroup.refs[1])
-    })
+    }
 
-    buildGroups(groupedRefs, compact, showTagNames, result)
+    val refGroups = buildGroups(trackedRefs, groupedRefs, compact, showTagNames)
+    if (headRefs.isNullOrEmpty()) return refGroups
 
-    if (!headRefs.isNullOrEmpty()) {
-      if (repository != null && !repository.isOnBranch) {
-        result.add(0, SimpleRefGroup("!", headRefs.toMutableList()))
+    val result = ArrayList<RefGroup>()
+    result.addAll(refGroups)
+    if (repository != null && !repository.isOnBranch) {
+      result.add(0, SimpleRefGroup("!", headRefs.toMutableList()))
+    }
+    else {
+      if (!result.isEmpty()) {
+        result.first().refs.addAll(0, headRefs.toMutableList())
       }
       else {
-        if (!result.isEmpty()) {
-          result.first().refs.addAll(0, headRefs.toMutableList())
-        }
-        else {
-          result.add(0, SimpleRefGroup("", headRefs.toMutableList()))
-        }
+        result.add(0, SimpleRefGroup("", headRefs.toMutableList()))
       }
     }
     return result
