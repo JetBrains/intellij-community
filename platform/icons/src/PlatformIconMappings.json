@@ -10,7 +10,7 @@
       "groupByTestProduction.svg": "actions/groupByTestProduction.svg",
       "inSelection.svg": "actions/inSelection.svg",
       "install.svg": "actions/install.svg",
-      "moveToButton": "actions/move-to-button.svg",
+      "moveToButton.svg": "actions/move-to-button.svg",
       "newFolder.svg": "actions/newFolder.svg",
       "playFirst.svg": "actions/play_first.svg",
       "playBack.svg": "actions/play_back.svg",
