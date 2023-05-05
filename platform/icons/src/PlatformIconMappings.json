@@ -202,18 +202,18 @@
     },
     "general": {
       "inspections": {
-        "inspectionsError.svg": "icons/general/inspectionsError.svg",
-        "inspectionsErrorEmpty.svg": "icons/general/inspectionsErrorEmpty.svg",
-        "inspectionsEye.svg": "icons/general/inspectionsEye.svg",
-        "inspectionsMixed.svg": "icons/general/inspectionsMixed.svg",
-        "inspectionsOK.svg": "icons/general/inspectionsOK.svg",
-        "inspectionsOKEmpty.svg": "icons/general/inspectionsOKEmpty.svg",
-        "inspectionsPause.svg": "icons/general/inspectionsPause.svg",
-        "inspectionsPowerSaveMode.svg": "icons/general/inspectionsPowerSaveMode.svg",
-        "inspectionsTrafficOff.svg": "icons/general/inspectionsTrafficOff.svg",
-        "inspectionsTypos.svg": "icons/general/inspectionsTypos.svg",
-        "inspectionsWarning.svg": "icons/general/inspectionsWarning.svg",
-        "inspectionsWarningEmpty.svg": "icons/general/inspectionsWarningEmpty.svg"
+        "inspectionsError.svg": "general/inspectionsError.svg",
+        "inspectionsErrorEmpty.svg": "general/inspectionsErrorEmpty.svg",
+        "inspectionsEye.svg": "general/inspectionsEye.svg",
+        "inspectionsMixed.svg": "general/inspectionsMixed.svg",
+        "inspectionsOK.svg": "general/inspectionsOK.svg",
+        "inspectionsOKEmpty.svg": "general/inspectionsOKEmpty.svg",
+        "inspectionsPause.svg": "general/inspectionsPause.svg",
+        "inspectionsPowerSaveMode.svg": "general/inspectionsPowerSaveMode.svg",
+        "inspectionsTrafficOff.svg": "general/inspectionsTrafficOff.svg",
+        "inspectionsTypos.svg": "general/inspectionsTypos.svg",
+        "inspectionsWarning.svg": "general/inspectionsWarning.svg",
+        "inspectionsWarningEmpty.svg": "general/inspectionsWarningEmpty.svg"
       },
       "add.svg": [
         "general/add.svg",
