@@ -93,12 +93,7 @@ class GitRefManager(project: Project, private val repositoryManager: RepositoryM
     val result = ArrayList<RefGroup>()
     if (groupedRefs.isEmpty) return result
 
-    var head: VcsRef? = null
-    val (key, value) = groupedRefs.entrySet().first()
-    if (key == HEAD) {
-      head = value.first()
-      groupedRefs.remove(HEAD, head)
-    }
+    val headRefs = groupedRefs.remove(HEAD)
 
     val repository = getRepository(references)
     if (repository != null) {
@@ -111,16 +106,16 @@ class GitRefManager(project: Project, private val repositoryManager: RepositoryM
 
     buildGroups(groupedRefs, compact, showTagNames, result)
 
-    if (head != null) {
+    if (!headRefs.isNullOrEmpty()) {
       if (repository != null && !repository.isOnBranch) {
-        result.add(0, SimpleRefGroup("!", mutableListOf(head)))
+        result.add(0, SimpleRefGroup("!", headRefs.toMutableList()))
       }
       else {
         if (!result.isEmpty()) {
-          result.first().refs.add(0, head)
+          result.first().refs.addAll(0, headRefs.toMutableList())
         }
         else {
-          result.add(0, SimpleRefGroup("", mutableListOf(head)))
+          result.add(0, SimpleRefGroup("", headRefs.toMutableList()))
         }
       }
     }
