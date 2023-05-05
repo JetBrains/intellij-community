@@ -159,7 +159,7 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
     private data class TargetData(
         val openInEditor: Boolean,
         val newName: String,
-        val targetDirWrapper: AutocreatingPsiDirectoryWrapper,
+        val targetDirWrapper: AutoCreatingPsiDirectoryWrapper,
         val targetSourceRoot: VirtualFile?
     )
 
@@ -189,7 +189,7 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
 
         val openInEditor: Boolean
         val newName: String?
-        val targetDirWrapper: AutocreatingPsiDirectoryWrapper?
+        val targetDirWrapper: AutoCreatingPsiDirectoryWrapper?
         val targetSourceRoot: VirtualFile?
 
         val singleNamedSourceElement = sourceData.singleElementToCopy as? KtNamedDeclaration
