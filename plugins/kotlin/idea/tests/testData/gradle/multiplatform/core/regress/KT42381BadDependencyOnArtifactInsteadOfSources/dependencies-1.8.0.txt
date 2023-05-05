@@ -16,6 +16,6 @@ project.p1.jvmTest
 
 
 Test configuration:
-- showing only source modules matching .*p1\.jvm.*
+- showing only modules matching .*p1\.jvm.*
 - hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
 - dependencies order is not checked
