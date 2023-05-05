@@ -146,7 +146,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
     ApiPageUtil.createGQLPagesFlow {
       api.loadMergeRequestDiscussions(project, mr.id, it)
     }.map { discussions ->
-      discussions.filter { it.notes.isNotEmpty() }
+      discussions.nodes.filter { it.notes.isNotEmpty() }
     }.foldToList()
 
   private suspend fun loadDraftNotes(): List<GitLabMergeRequestDraftNoteRestDTO> =

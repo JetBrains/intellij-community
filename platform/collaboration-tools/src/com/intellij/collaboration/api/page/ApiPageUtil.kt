@@ -11,12 +11,12 @@ import java.net.URI
 import java.net.http.HttpResponse
 
 object ApiPageUtil {
-  fun <T> createGQLPagesFlow(loader: suspend (GraphQLRequestPagination) -> GraphQLPagedResponseDataDTO<T>?): Flow<List<T>> =
+  fun <T> createGQLPagesFlow(loader: suspend (GraphQLRequestPagination) -> GraphQLPagedResponseDataDTO<T>?): Flow<GraphQLPagedResponseDataDTO<T>> =
     flow {
       var pagination: GraphQLRequestPagination? = GraphQLRequestPagination.DEFAULT
       while (pagination != null) {
         val response: GraphQLPagedResponseDataDTO<T> = loader(pagination) ?: break
-        emit(response.nodes)
+        emit(response)
         pagination = response.pageInfo.let {
           val endCursor = it.endCursor
           if (it.hasNextPage && endCursor != null) {

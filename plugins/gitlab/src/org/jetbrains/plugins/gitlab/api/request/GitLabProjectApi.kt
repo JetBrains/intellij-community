@@ -6,6 +6,7 @@ import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQueries
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
@@ -19,7 +20,7 @@ suspend fun GitLabApi.loadAllProjectLabels(project: GitLabProjectCoordinates): L
     )
     val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.getProjectLabels, parameters)
     loadGQLResponse(request, LabelConnection::class.java, "project", "labels").body()
-  }.foldToList()
+  }.map { it.nodes }.foldToList()
 
 suspend fun GitLabApi.getAllProjectMembers(project: GitLabProjectCoordinates): List<GitLabMemberDTO> =
   ApiPageUtil.createGQLPagesFlow { page ->
@@ -28,7 +29,7 @@ suspend fun GitLabApi.getAllProjectMembers(project: GitLabProjectCoordinates): L
     )
     val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.getProjectMembers, parameters)
     loadGQLResponse(request, ProjectMembersConnection::class.java, "project", "projectMembers").body()
-  }.foldToList()
+  }.map { it.nodes }.foldToList()
 
 private class LabelConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabLabelDTO>)
   : GraphQLConnectionDTO<GitLabLabelDTO>(pageInfo, nodes)
