@@ -151,61 +151,63 @@ final class UnindexedFilesFinder {
       ((FileTypeManagerImpl)ex).freezeFileTypeTemporarilyWithProvidedValueIn(file, fileType, () -> {
         boolean isDirectory = file.isDirectory();
         FileIndexingState fileTypeIndexState = null;
-        boolean needContentIndexing = !isDirectory && !myFileBasedIndex.isTooLarge(file);
-        if (needContentIndexing) {
+        boolean shouldCheckContentIndexes = !isDirectory && !myFileBasedIndex.isTooLarge(file);
+        if (shouldCheckContentIndexes) {
           if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, indexedFile)) == FileIndexingState.OUT_DATED) {
             if (myFileBasedIndex.doTraceIndexUpdates()) {
               LOG.info("Scheduling full indexing of " + indexedFile.getFileName() + " because file type index is outdated");
             }
             myFileBasedIndex.dropNontrivialIndexedStates(inputId);
             fileStatusBuilder.shouldIndex = true;
+            shouldCheckContentIndexes = false;
           }
-          else {
-            List<ID<?, ?>> affectedContentIndexCandidates = new ArrayList<>();
-            for (ID<?, ?> candidate : myFileBasedIndex.getAffectedIndexCandidates(indexedFile)) {
-              if (myFileBasedIndex.needsFileContentLoading(candidate)) affectedContentIndexCandidates.add(candidate);
+        }
+
+        List<ID<?, ?>> affectedContentIndexCandidates = new ArrayList<>();
+        if (shouldCheckContentIndexes) {
+          for (ID<?, ?> candidate : myFileBasedIndex.getAffectedIndexCandidates(indexedFile)) {
+            if (myFileBasedIndex.needsFileContentLoading(candidate)) affectedContentIndexCandidates.add(candidate);
+          }
+        }
+
+        for (ID<?, ?> indexId : affectedContentIndexCandidates) {
+          if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) continue;
+          try {
+            FileIndexingState fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
+            if (fileIndexingState == FileIndexingState.UP_TO_DATE && myShouldProcessUpToDateFiles) {
+              fileIndexingState = processUpToDateFileByInfrastructureExtensions(indexedFile, inputId, indexId, fileStatusBuilder);
             }
+            if (fileIndexingState.updateRequired()) {
+              if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
+                FileBasedIndexImpl.LOG.info(
+                  "Scheduling indexing of " + indexedFile.getFileName() + " by request of index; " + indexId +
+                  (fileStatusBuilder.indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : "") +
+                  ((myFileBasedIndex.acceptsInput(indexId, indexedFile)) ? " accepted;" : " unaccepted;") +
+                  ("indexing state = " + myFileBasedIndex.getIndexingState(indexedFile, indexId)));
+              }
 
-            for (ID<?, ?> indexId : affectedContentIndexCandidates) {
-              if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) continue;
-              try {
-                FileIndexingState fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
-                if (fileIndexingState == FileIndexingState.UP_TO_DATE && myShouldProcessUpToDateFiles) {
-                  fileIndexingState = processUpToDateFileByInfrastructureExtensions(indexedFile, inputId, indexId, fileStatusBuilder);
-                }
-                if (fileIndexingState.updateRequired()) {
-                  if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
-                    FileBasedIndexImpl.LOG.info(
-                      "Scheduling indexing of " + indexedFile.getFileName() + " by request of index; " + indexId +
-                      (fileStatusBuilder.indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : "") +
-                      ((myFileBasedIndex.acceptsInput(indexId, indexedFile)) ? " accepted;" : " unaccepted;") +
-                      ("indexing state = " + myFileBasedIndex.getIndexingState(indexedFile, indexId)));
-                  }
-
-                  if (myFileBasedIndex.acceptsInput(indexId, indexedFile)) {
-                    if (!tryIndexWithoutContent(indexedFile, inputId, indexId, fileStatusBuilder)) {
-                      // NOTE! Do not break the loop here. We must process ALL IDs and pass them to the FileIndexingStatusProcessor
-                      // so that it can invalidate all "indexing states" (by means of clearing IndexingStamp)
-                      // for all indexes that became invalid. See IDEA-252846 for more details.
-                      fileStatusBuilder.shouldIndex = true;
-                    }
-                  }
-                  else {
-                    boolean removed = removeIndexedValue(indexedFile, inputId, indexId, fileStatusBuilder);
-                    LOG.assertTrue(removed, "Failed to remove value from content index");
-                  }
+              if (myFileBasedIndex.acceptsInput(indexId, indexedFile)) {
+                if (!tryIndexWithoutContent(indexedFile, inputId, indexId, fileStatusBuilder)) {
+                  // NOTE! Do not break the loop here. We must process ALL IDs and pass them to the FileIndexingStatusProcessor
+                  // so that it can invalidate all "indexing states" (by means of clearing IndexingStamp)
+                  // for all indexes that became invalid. See IDEA-252846 for more details.
+                  fileStatusBuilder.shouldIndex = true;
                 }
               }
-              catch (RuntimeException e) {
-                final Throwable cause = e.getCause();
-                if (cause instanceof IOException || cause instanceof StorageException) {
-                  LOG.info(e);
-                  myFileBasedIndex.requestRebuild(indexId);
-                }
-                else {
-                  throw e;
-                }
+              else {
+                boolean removed = removeIndexedValue(indexedFile, inputId, indexId, fileStatusBuilder);
+                LOG.assertTrue(removed, "Failed to remove value from content index");
               }
+            }
+          }
+          catch (RuntimeException e) {
+            final Throwable cause = e.getCause();
+            if (cause instanceof IOException || cause instanceof StorageException) {
+              LOG.info(e);
+              myFileBasedIndex.requestRebuild(indexId);
+            }
+            else {
+              throw e;
             }
           }
         }
