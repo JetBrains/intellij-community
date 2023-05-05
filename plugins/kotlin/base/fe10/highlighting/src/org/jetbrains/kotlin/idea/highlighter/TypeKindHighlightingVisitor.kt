@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.impl.AbstractTypeAliasDescriptor
 import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors.*
 import org.jetbrains.kotlin.psi.*
@@ -64,7 +65,12 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
     private fun computeHighlightingRangeForUsage(expression: KtSimpleNameExpression, referenceTarget: DeclarationDescriptor): TextRange {
         val expressionRange = expression.textRange
 
-        if (referenceTarget !is ClassDescriptor || referenceTarget.kind != ClassKind.ANNOTATION_CLASS) return expressionRange
+        val target = when(referenceTarget) {
+            is ClassDescriptor -> referenceTarget
+            is AbstractTypeAliasDescriptor -> referenceTarget.classDescriptor
+            else -> null
+        }
+        if (target?.kind != ClassKind.ANNOTATION_CLASS) return expressionRange
 
         // include '@' symbol if the reference is the first segment of KtAnnotationEntry
         // if "Deprecated" is highlighted then '@' should be highlighted too in "@Deprecated"
