@@ -1,12 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.testFramework
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.testFramework.nastradamus
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.nastradamus.NastradamusClient
-import com.intellij.nastradamus.model.BuildInfo
-import com.intellij.nastradamus.model.ChangeEntity
-import com.intellij.nastradamus.model.SortRequestEntity
-import com.intellij.nastradamus.model.TestCaseEntity
+import com.intellij.nastradamus.model.*
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.tool.Cache
 import com.intellij.tool.withErrorThreshold
@@ -128,7 +125,9 @@ class NastradamusClientTest {
                                   aggregatorBuildId = "239754106",
                                   branchName = "nikita.kudrin/nastradamus",
                                   os = "Linux",
-                                  buildType = tcClient.buildTypeId),
+                                  buildType = tcClient.buildTypeId,
+                                  status = "SUCCESS",
+                                  buildStatusMessage = "Tests passed: 15, ignored: 1"),
                         buildInfo)
   }
 
@@ -141,7 +140,10 @@ class NastradamusClientTest {
                                   aggregatorBuildId = tcClient.buildId,
                                   branchName = "nikita.kudrin/nastradamus",
                                   os = "Linux",
-                                  buildType = tcClient.buildTypeId),
+                                  buildType = tcClient.buildTypeId,
+                                  status = "UNKNOWN",
+                                  buildStatusMessage =
+                                  "Canceled (Error while applying patch; cannot find commit 6f53c88397af6fd5cbc32f07159213eff07c1430 in the ssh://git@git.jetbrains.team/intellij.git repository, possible reason: refs/heads/nikita.kudrin/nastradamus branch was updated and the commit sel..."),
                         buildInfo)
   }
 
@@ -154,7 +156,9 @@ class NastradamusClientTest {
                                   aggregatorBuildId = tcClient.buildId,
                                   branchName = "master",
                                   os = "Linux",
-                                  buildType = tcClient.buildTypeId),
+                                  buildType = tcClient.buildTypeId,
+                                  status = "SUCCESS",
+                                  buildStatusMessage = "Tests passed: 117"),
                         buildInfo)
   }
 
@@ -169,7 +173,8 @@ class NastradamusClientTest {
                             aggregatorBuildId = "23232323",
                             branchName = "refs/head/strange_branch",
                             os = "linux",
-                            buildType = "ijplatform_master_WorkspaceModelSmokeSmokeTestsCompositeBuild_66"),
+                            buildType = "ijplatform_master_WorkspaceModelSmokeSmokeTestsCompositeBuild_66",
+                            status = "RUNNING"),
       changes = listOf(ChangeEntity(filePath = "file/path/file.xx",
                                     relativeFile = "relative/path",
                                     beforeRevision = "00230203",
@@ -243,9 +248,9 @@ class NastradamusClientTest {
     Assert.assertEquals("Fallback function should be executed in case of threshold limit", "fallback", result)
   }
 
-  @Test
-  fun sendTestRunResultToNostradamus() {
-    tcMockServer.enqueue(getOkResponse("teamcity/TestOccurences.json"))
+
+  private fun sendTestResultTestTemplate(testOccurencesJsonFileName: String): TestResultRequestEntity {
+    tcMockServer.enqueue(getOkResponse("teamcity/$testOccurencesJsonFileName"))
     tcMockServer.enqueue(getOkResponse("teamcity/EmptyTestOccurences.json"))
     tcMockServer.enqueue(getOkResponse("teamcity/Build_Info_Triggered_By_Aggregator.json"))
     setFakeResponsesForTeamCityChanges()
@@ -263,14 +268,71 @@ class NastradamusClientTest {
     Assert.assertEquals("Requested path should be equal", "/result/?was_nastradamus_data_used=true", request.path)
 
     Assert.assertTrue("""
-      Converted test entities must have 2 muted tests.
-      ${testResultRequestEntity.testRunResults}
-      """.trimIndent(), testResultRequestEntity.testRunResults.count { it.isMuted } == 2)
-
-    Assert.assertTrue("""
       Bucket id and total bucket number should not be 0.
       ${testResultRequestEntity.testRunResults}
       """.trimIndent(),
                       testResultRequestEntity.testRunResults.all { it.bucketId != 0 && it.bucketsNumber != 0 })
+
+    return testResultRequestEntity
+  }
+
+  @Test
+  fun sendTestRunResultToNostradamus_CommunityTests() {
+    val testResultRequestEntity = sendTestResultTestTemplate("TestOccurences_Build_296805903.json")
+
+    Assert.assertTrue("""
+      Converted test entities must have 5 classes.
+      ${testResultRequestEntity.testRunResults}
+      """.trimIndent(), testResultRequestEntity.testRunResults.size == 5)
+
+    val productModulesClassResult = testResultRequestEntity.testRunResults
+      .single { it.fullName == "com.intellij.platform.runtime.repository.serialization.ProductModulesLoaderTest" }
+
+    Assert.assertTrue("""
+      ProductModulesLoaderTest class must have 1 test and be with correct duration and bucket attributes.
+      $productModulesClassResult
+      """.trimIndent(),
+                      productModulesClassResult.testResults.size == 1 &&
+                      productModulesClassResult.bucketId == 4
+                      && productModulesClassResult.bucketsNumber == 8
+                      && productModulesClassResult.durationMs == 446L
+    )
+
+    val xxHash3TestClassResult = testResultRequestEntity.testRunResults
+      .single { it.fullName == "org.jetbrains.xxh3.XxHash3Test" }
+
+    Assert.assertTrue("""
+      XxHash3Test class must have 184 tests and be with correct duration and bucket attributes.
+      $xxHash3TestClassResult
+      """.trimIndent(),
+                      xxHash3TestClassResult.testResults.size == 184 &&
+                      xxHash3TestClassResult.bucketId == 4
+                      && xxHash3TestClassResult.bucketsNumber == 8
+                      && xxHash3TestClassResult.durationMs == 158L
+    )
+  }
+
+  @Test
+  fun sendTestRunResultToNostradamus_ParametrizedTests() {
+    val testResultRequestEntity = sendTestResultTestTemplate("TestOccurences_Build_300204446.json")
+
+    Assert.assertTrue("""
+      Converted test entities must have 8 classes.
+      ${testResultRequestEntity.testRunResults}
+      """.trimIndent(), testResultRequestEntity.testRunResults.size == 8)
+
+    val stringExtensionClassResult = testResultRequestEntity.testRunResults
+      .single { it.fullName == "com.intellij.workspaceModel.integrationTests.tests.plugin.StringExtensionTest" }
+
+    Assert.assertTrue("""
+      StringExtensionTest class must have 4 test and be with correct duration and bucket attributes.
+      $stringExtensionClassResult
+      """.trimIndent(),
+                      stringExtensionClassResult.testResults.size == 4 &&
+                      stringExtensionClassResult.bucketId == 4
+                      && stringExtensionClassResult.bucketsNumber == 8
+                      && stringExtensionClassResult.durationMs == 131L
+    )
+
   }
 }
