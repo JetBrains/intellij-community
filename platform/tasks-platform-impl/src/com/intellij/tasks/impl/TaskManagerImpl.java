@@ -82,11 +82,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       LocalTask result = super.put(key, task);
       if (size() > myConfig.taskHistoryLength) {
         ArrayList<Map.Entry<String, LocalTask>> list = new ArrayList<>(entrySet());
-        list.sort((o1, o2) -> {
-          int compare = Boolean.compare(o1 instanceof LocalTaskImpl && !((LocalTaskImpl)o1).isClosed(),
-                                        o2 instanceof LocalTaskImpl && !((LocalTaskImpl)o2).isClosed());
-          return compare == 0 ? TASK_UPDATE_COMPARATOR.compare(o2.getValue(), o1.getValue()) : compare;
-        });
+        list.sort((o1, o2) -> TASK_UPDATE_COMPARATOR.compare(o2.getValue(), o1.getValue()));
         for (Map.Entry<String, LocalTask> oldest : list) {
           LocalTask value = oldest.getValue();
           if (!value.isDefault() && value.isClosed()) {
