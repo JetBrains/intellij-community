@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.face
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/features/misc")
@@ -122,6 +123,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     }
 
     @Test
+    @PluginTargetVersions(pluginVersion = "1.9.0-dev+") // resolution works differently in 1.8.0 and highlighting errors is not equal
     fun testMismatchedAttributesDependencySource() {
         // NB: Variant-mismatch error is printed verbatim in stderr
         doTest {

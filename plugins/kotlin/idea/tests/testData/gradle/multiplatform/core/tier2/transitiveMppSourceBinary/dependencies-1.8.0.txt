@@ -11,10 +11,10 @@ project.consumer.commonTest
     org.jetbrains.kotlin.mpp.tests:transitive:commonMain:1.0 (TEST)
 
 project.consumer.iosArm64Main
-    org.jetbrains.kotlin.mpp.tests:transitive-iosarm64:1.0 (COMPILE)
+    org.jetbrains.kotlin.mpp.tests:transitive-iosarm64:klib:1.0 (COMPILE)
 
 project.consumer.iosArm64Test
-    org.jetbrains.kotlin.mpp.tests:transitive-iosarm64:1.0 (TEST)
+    org.jetbrains.kotlin.mpp.tests:transitive-iosarm64:klib:1.0 (TEST)
 
 project.consumer.iosMain
     org.jetbrains.kotlin.mpp.tests:transitive:commonMain:1.0 (COMPILE)
@@ -25,10 +25,10 @@ project.consumer.iosTest
     org.jetbrains.kotlin.mpp.tests:transitive:iosMain:1.0 (TEST)
 
 project.consumer.iosX64Main
-    org.jetbrains.kotlin.mpp.tests:transitive-iosx64:1.0 (COMPILE)
+    org.jetbrains.kotlin.mpp.tests:transitive-iosx64:klib:1.0 (COMPILE)
 
 project.consumer.iosX64Test
-    org.jetbrains.kotlin.mpp.tests:transitive-iosx64:1.0 (TEST)
+    org.jetbrains.kotlin.mpp.tests:transitive-iosx64:klib:1.0 (TEST)
 
 project.consumer.main
     org.jetbrains.kotlin.mpp.tests:transitive-jvm:1.0 (COMPILE)
