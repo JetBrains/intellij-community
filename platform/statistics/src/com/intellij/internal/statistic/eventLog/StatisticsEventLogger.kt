@@ -44,7 +44,8 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              val version: Int,
                                              val sendFrequencyMs: Long,
                                              private val maxFileSizeInBytes: Int,
-                                             val sendLogsOnIdeClose: Boolean = false) {
+                                             val sendLogsOnIdeClose: Boolean = false,
+                                             val isCharsEscapingRequired: Boolean = true) {
 
   @Deprecated(message = "Use primary constructor instead")
   constructor(recorderId: String,

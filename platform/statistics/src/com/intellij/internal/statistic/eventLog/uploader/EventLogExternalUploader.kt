@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.uploader
 
 import com.google.gson.Gson
@@ -165,6 +165,8 @@ object EventLogExternalUploader {
 
     val filesToSend = config.getFilesToSendProvider().getFilesToSend().map { it.file }
     addArgument(args, LOGS_OPTION + recorderIdLowerCase, filesToSend.joinToString(separator = File.pathSeparator))
+
+    addArgument(args, ESCAPING_OPTION + recorderIdLowerCase, config.isEscapingEnabled().toString())
   }
 
   private fun addArgument(args: ArrayList<String>, name: String, value: String) {
