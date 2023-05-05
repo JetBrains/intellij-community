@@ -78,10 +78,10 @@ open class FileBasedStorage(file: Path,
     }
   }
 
-  override fun createSaveSession(states: StateMap) = FileSaveSession(states, this)
+  override fun createSaveSession(states: StateMap) = FileSaveSessionProducer(states, this)
 
-  protected open class FileSaveSession(storageData: StateMap, storage: FileBasedStorage) :
-    XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {
+  protected open class FileSaveSessionProducer(storageData: StateMap, storage: FileBasedStorage) :
+    XmlElementStorage.XmlElementStorageSaveSessionProducer<FileBasedStorage>(storageData, storage) {
 
     final override fun isSaveAllowed(): Boolean {
       if (!super.isSaveAllowed()) {

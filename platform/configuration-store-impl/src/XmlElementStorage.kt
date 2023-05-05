@@ -113,7 +113,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     }
   }
 
-  abstract class XmlElementStorageSaveSession<T : XmlElementStorage>(private val originalStates: StateMap, protected val storage: T) : SaveSessionBase() {
+  abstract class XmlElementStorageSaveSessionProducer<T : XmlElementStorage>(private val originalStates: StateMap, protected val storage: T) : SaveSessionProducerBase() {
     private var copiedStates: MutableMap<String, Any>? = null
 
     private var newLiveStates: MutableMap<String, Element>? = HashMap()

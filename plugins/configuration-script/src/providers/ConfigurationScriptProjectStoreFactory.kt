@@ -73,7 +73,7 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
                                              effectiveComponentName: String,
                                              sessionProducer: SaveSessionProducer) {
     val configurationSchemaKey = info.configurationSchemaKey
-    if (state == null || configurationSchemaKey == null || info.affectedPropertyNames.isEmpty() || sessionProducer !is SaveSessionBase) {
+    if (state == null || configurationSchemaKey == null || info.affectedPropertyNames.isEmpty() || sessionProducer !is SaveSessionProducerBase) {
       super.setStateToSaveSessionProducer(state, info, effectiveComponentName, sessionProducer)
     }
     else {

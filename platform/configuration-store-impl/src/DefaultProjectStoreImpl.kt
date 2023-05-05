@@ -34,7 +34,7 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
     }
   }
 
-  override fun createSaveSession(states: StateMap) = object : FileBasedStorage.FileSaveSession(states, this) {
+  override fun createSaveSession(states: StateMap) = object : FileBasedStorage.FileSaveSessionProducer(states, this) {
     override fun saveLocally(dataWriter: DataWriter?) {
       super.saveLocally(when (dataWriter) {
         null -> null
