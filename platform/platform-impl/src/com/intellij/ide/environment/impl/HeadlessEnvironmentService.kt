@@ -15,7 +15,17 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
     getModelFromFile()
   }
 
-  override suspend fun getEnvironmentValue(key: EnvironmentKey, defaultValue: String?): String {
+  override suspend fun getEnvironmentValue(key: EnvironmentKey): String? {
+    return getEnvironmentValueOrNull(key)
+           ?: throw MissingEnvironmentKeyException(key)
+  }
+
+  override suspend fun getEnvironmentValue(key: EnvironmentKey, defaultValue: String): String {
+    return getEnvironmentValueOrNull(key)
+           ?: defaultValue
+  }
+
+  private suspend fun getEnvironmentValueOrNull(key: EnvironmentKey): String? {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       LOG.warn("Access to environment parameters in the IDE with UI must be delegated to the user")
     }
@@ -31,12 +41,7 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
     if (valueFromConfigurationFile != null) {
       return valueFromConfigurationFile
     }
-
-    if (defaultValue != null) {
-      return defaultValue
-    }
-
-    throw MissingEnvironmentKeyException(key)
+    return null
   }
 
   class MissingEnvironmentKeyException(val key: EnvironmentKey) : CancellationException(

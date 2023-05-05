@@ -29,9 +29,9 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
     get() = Path.of(project.basePath!! + "/environmentKeys.json")
 
   private suspend fun getExistingKey(key: EnvironmentKey): String {
-    val value1 = service<EnvironmentService>().getEnvironmentValue(key, null)
+    val value1 = service<EnvironmentService>().getEnvironmentValue(key)
     val value2 = service<EnvironmentService>().getEnvironmentValue(key, undefined)
-    TestCase.assertEquals(value1!!, value2!!)
+    TestCase.assertEquals(value1!!, value2)
     return value1
   }
 
@@ -155,7 +155,7 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
 ]""") {
     try {
       TestCase.assertEquals(undefined, service<EnvironmentService>().getEnvironmentValue(dummyKey, undefined))
-      service<EnvironmentService>().getEnvironmentValue(dummyKey, null)
+      service<EnvironmentService>().getEnvironmentValue(dummyKey)
       fail("should throw")
     }
     catch (e: HeadlessEnvironmentService.MissingEnvironmentKeyException) {

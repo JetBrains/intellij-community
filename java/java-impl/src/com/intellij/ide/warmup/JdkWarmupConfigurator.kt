@@ -17,13 +17,13 @@ class JdkWarmupConfigurator : WarmupConfigurator {
   override val configuratorPresentableName: String = "warmupJdkConfigurator"
 
   override suspend fun prepareEnvironment(projectPath: Path) {
-    val configuredJdk = service<EnvironmentService>().getEnvironmentValue(JvmEnvironmentKeyProvider.JDK_KEY, null)
+    val configuredJdk = service<EnvironmentService>().getEnvironmentValue(JvmEnvironmentKeyProvider.JDK_KEY)
     if (configuredJdk == null) {
       println("Environment does not provide configured JDK")
       return
     }
     val configuredJdkPath = Path.of(configuredJdk)
-    val jdkName = service<EnvironmentService>().getEnvironmentValue(JvmEnvironmentKeyProvider.JDK_NAME, "warmup_jdk")!!
+    val jdkName = service<EnvironmentService>().getEnvironmentValue(JvmEnvironmentKeyProvider.JDK_NAME, "warmup_jdk")
     val jdk = JavaSdk.getInstance().createJdk(jdkName, configuredJdkPath.toString())
     writeAction {
       ProjectJdkTable.getInstance().addJdk(jdk)
