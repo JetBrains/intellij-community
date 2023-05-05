@@ -164,6 +164,7 @@ internal class LoadedGitLabMergeRequest(
     stateEventsLoader.checkForUpdates()
     labelEventsLoader.checkForUpdates()
     milestoneEventsLoader.checkForUpdates()
+    discussionsContainer.requestReload()
   }
 
   override suspend fun merge(commitMessage: String) {

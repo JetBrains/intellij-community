@@ -60,6 +60,7 @@ class DelegatingGitLabNoteEditingViewModel(parentCs: CoroutineScope,
         _state.value = GitLabNoteEditingViewModel.SubmissionState.Done
       }
       catch (ce: CancellationException) {
+        _state.value = GitLabNoteEditingViewModel.SubmissionState.Done
         throw ce
       }
       catch (e: Exception) {

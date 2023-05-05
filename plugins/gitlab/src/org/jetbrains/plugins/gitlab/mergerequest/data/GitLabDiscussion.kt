@@ -54,6 +54,8 @@ class LoadedGitLabDiscussion(
     require(discussionData.notes.isNotEmpty()) { "Discussion with empty notes" }
   }
 
+  private val dataState = MutableStateFlow(discussionData)
+
   override val id: String = discussionData.id
   private val apiId = discussionData.id
   override val createdAt: Date = discussionData.createdAt
@@ -63,29 +65,31 @@ class LoadedGitLabDiscussion(
   private val operationsGuard = Mutex()
 
   private val noteEvents = MutableSharedFlow<GitLabNoteEvent<GitLabNoteDTO>>()
-  private val loadedNotes = channelFlow {
-    val notesData = discussionData.notes.toMutableList()
+  private val loadedNotes = dataState.transformLatest {discussionData ->
+    coroutineScope {
+      val notesData = discussionData.notes.toMutableList()
 
-    launch(start = CoroutineStart.UNDISPATCHED) {
-      noteEvents.collectLatest { event ->
-        when (event) {
-          is GitLabNoteEvent.Added -> notesData.add(event.note)
-          is GitLabNoteEvent.Deleted -> notesData.removeIf { it.id == event.noteId }
-          is GitLabNoteEvent.Changed -> {
-            notesData.clear()
-            notesData.addAll(event.notes)
+      launch(start = CoroutineStart.UNDISPATCHED) {
+        noteEvents.collectLatest { event ->
+          when (event) {
+            is GitLabNoteEvent.Added -> notesData.add(event.note)
+            is GitLabNoteEvent.Deleted -> notesData.removeIf { it.id == event.noteId }
+            is GitLabNoteEvent.Changed -> {
+              notesData.clear()
+              notesData.addAll(event.notes)
+            }
           }
-        }
 
-        if (notesData.isEmpty()) {
-          eventSink(GitLabDiscussionEvent.Deleted(discussionData.id))
-          return@collectLatest
-        }
+          if (notesData.isEmpty()) {
+            eventSink(GitLabDiscussionEvent.Deleted(discussionData.id))
+            return@collectLatest
+          }
 
-        send(Collections.unmodifiableList(notesData))
+          emit(Collections.unmodifiableList(notesData))
+        }
       }
+      emit(Collections.unmodifiableList(notesData))
     }
-    send(Collections.unmodifiableList(notesData))
   }.modelFlow(cs, LOG)
 
   override val notes: Flow<List<GitLabMergeRequestNote>> =
@@ -107,7 +111,7 @@ class LoadedGitLabDiscussion(
   override val canResolve: Boolean = discussionData.notes.first().userPermissions.resolveNote
 
   override val resolved: Flow<Boolean> =
-    notes.flatMapLatest { it.first().resolved }.distinctUntilChanged().modelFlow(cs, LOG)
+    loadedNotes.mapLatest { it.first().resolved }.distinctUntilChanged().modelFlow(cs, LOG)
 
   override suspend fun changeResolvedState() {
     withContext(cs.coroutineContext) {
@@ -131,6 +135,10 @@ class LoadedGitLabDiscussion(
         }
       }
     }
+  }
+
+  fun update(data: GitLabDiscussionDTO) {
+    dataState.value = data
   }
 
   suspend fun destroy() {

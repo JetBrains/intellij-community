@@ -8,6 +8,7 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
@@ -35,6 +36,7 @@ interface GitLabMergeRequestDiscussionsContainer {
 
 private val LOG = logger<GitLabMergeRequestDiscussionsContainer>()
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GitLabMergeRequestDiscussionsContainerImpl(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
@@ -46,26 +48,32 @@ class GitLabMergeRequestDiscussionsContainerImpl(
 
   override val canAddNotes: Boolean = mr.userPermissions.value.createNote
 
+  private val reloadRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply {
+    tryEmit(Unit)
+  }
+
   private val discussionEvents = MutableSharedFlow<GitLabDiscussionEvent>()
   private val nonEmptyDiscussionsData: Flow<List<GitLabDiscussionDTO>> =
-    channelFlow {
-      val discussions = loadNonEmptyDiscussions().toMutableList()
-      launch(start = CoroutineStart.UNDISPATCHED) {
-        discussionEvents.collectLatest { e ->
-          when (e) {
-            is GitLabDiscussionEvent.Deleted -> {
-              discussions.removeIf { it.id == e.discussionId }
-              LOG.debug("Discussion removed: ${e.discussionId}")
+    reloadRequests.transformLatest {
+      coroutineScope {
+        val discussions = loadNonEmptyDiscussions().toMutableList()
+        launch(start = CoroutineStart.UNDISPATCHED) {
+          discussionEvents.collectLatest { e ->
+            when (e) {
+              is GitLabDiscussionEvent.Deleted -> {
+                discussions.removeIf { it.id == e.discussionId }
+                LOG.debug("Discussion removed: ${e.discussionId}")
+              }
+              is GitLabDiscussionEvent.Added -> {
+                discussions.add(e.discussion)
+                LOG.debug("New discussion added: ${e.discussion}")
+              }
             }
-            is GitLabDiscussionEvent.Added -> {
-              discussions.add(e.discussion)
-              LOG.debug("New discussion added: ${e.discussion}")
-            }
+            emit(discussions)
           }
-          send(discussions)
         }
+        emit(discussions)
       }
-      send(discussions)
     }.modelFlow(cs, LOG)
 
   override val discussions: Flow<List<GitLabMergeRequestDiscussion>> =
@@ -74,7 +82,8 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       .mapCaching(
         GitLabDiscussionDTO::id,
         { cs, disc -> LoadedGitLabDiscussion(cs, api, project, { discussionEvents.emit(it) }, mr, disc, getDiscussionDraftNotes(disc.id)) },
-        LoadedGitLabDiscussion::destroy
+        LoadedGitLabDiscussion::destroy,
+        LoadedGitLabDiscussion::update
       )
       .modelFlow(cs, LOG)
 
@@ -91,25 +100,27 @@ class GitLabMergeRequestDiscussionsContainerImpl(
 
   private val draftNotesEvents = MutableSharedFlow<GitLabNoteEvent<GitLabMergeRequestDraftNoteRestDTO>>()
 
-  private val draftNotesData = channelFlow {
-    // we shouldn't get another user's draft notes
-    val currentUser = api.getCurrentUser(project.serverPath) ?: error("Unable to load current user")
-    val draftNotes = loadDraftNotes().toMutableList()
-    launch(start = CoroutineStart.UNDISPATCHED) {
-      draftNotesEvents.collectLatest { e ->
-        when (e) {
-          is GitLabNoteEvent.Added -> draftNotes.add(e.note)
-          is GitLabNoteEvent.Deleted -> draftNotes.removeIf { it.id.toString() == e.noteId }
-          is GitLabNoteEvent.Changed -> {
-            draftNotes.clear()
-            draftNotes.addAll(e.notes)
+  private val draftNotesData = reloadRequests.transformLatest {
+    coroutineScope {
+      // we shouldn't get another user's draft notes
+      val currentUser = api.getCurrentUser(project.serverPath) ?: error("Unable to load current user")
+      val draftNotes = loadDraftNotes().toMutableList()
+      launch(start = CoroutineStart.UNDISPATCHED) {
+        draftNotesEvents.collectLatest { e ->
+          when (e) {
+            is GitLabNoteEvent.Added -> draftNotes.add(e.note)
+            is GitLabNoteEvent.Deleted -> draftNotes.removeIf { it.id.toString() == e.noteId }
+            is GitLabNoteEvent.Changed -> {
+              draftNotes.clear()
+              draftNotes.addAll(e.notes)
+            }
           }
+          emit(draftNotes.map { DraftNoteWithAuthor(it, currentUser) })
         }
-        send(draftNotes.map { DraftNoteWithAuthor(it, currentUser) })
       }
+      emit(draftNotes.map { DraftNoteWithAuthor(it, currentUser) })
     }
-    send(draftNotes.map { DraftNoteWithAuthor(it, currentUser) })
-  }
+  }.modelFlow(cs, LOG)
 
   override val standaloneDraftNotes: Flow<Collection<GitLabMergeRequestDraftNote>> =
     draftNotesData.mapFiltered {
@@ -168,4 +179,10 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   }
 
   private fun <T> Flow<List<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }
+
+  fun requestReload() {
+    cs.launch {
+      reloadRequests.emit(Unit)
+    }
+  }
 }
