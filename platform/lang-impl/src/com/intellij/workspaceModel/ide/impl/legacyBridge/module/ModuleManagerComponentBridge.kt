@@ -39,7 +39,7 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Path
 
-class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerBridgeImpl(project, ModuleRootListenerBridgeImpl) {
+internal class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerBridgeImpl(project, ModuleRootListenerBridgeImpl) {
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   internal class ModuleManagerInitProjectActivity : InitProjectActivity {
@@ -164,7 +164,12 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
   override fun createModule(symbolicId: ModuleId, name: String, virtualFileUrl: VirtualFileUrl?, entityStorage: VersionedEntityStorage,
                             diff: MutableEntityStorage?): ModuleBridge {
-    return ModuleBridgeImpl(symbolicId, name, project, virtualFileUrl, entityStorage, diff)
+    return ModuleBridgeImpl(moduleEntityId = symbolicId,
+                            name = name,
+                            project = project,
+                            virtualFileUrl = virtualFileUrl,
+                            entityStorage = entityStorage,
+                            diff = diff)
   }
 }
 
