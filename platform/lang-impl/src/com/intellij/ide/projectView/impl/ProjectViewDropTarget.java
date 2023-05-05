@@ -7,6 +7,8 @@ import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -23,6 +25,7 @@ import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -288,15 +291,17 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     @Override
     public void doDropFiles(List<? extends File> files, @NotNull TreePath target) {
-      PsiFileSystemItem[] sourceFileArray = getPsiFiles(files);
-
-      DropTargetNode node = getLastUserObject(DropTargetNode.class, target);
-      if (node != null) {
-        node.dropExternalFiles(sourceFileArray, DataManager.getInstance().getDataContext(myTree));
-      }
-      else {
-        doDrop(getPsiElement(target), sourceFileArray, true);
-      }
+      ReadAction.nonBlocking(() -> getPsiFiles(files))
+        .finishOnUiThread(ModalityState.defaultModalityState(), sourceFileArray -> {
+          DropTargetNode node = getLastUserObject(DropTargetNode.class, target);
+          if (node != null) {
+            node.dropExternalFiles(sourceFileArray, DataManager.getInstance().getDataContext(myTree));
+          }
+          else {
+            doDrop(getPsiElement(target), sourceFileArray, true);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
   }
 
@@ -358,8 +363,9 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     @Override
     public void doDropFiles(List<? extends File> files, @NotNull TreePath target) {
-      PsiFileSystemItem[] sourceFileArray = getPsiFiles(files);
-      doDrop(target, sourceFileArray);
+      ReadAction.nonBlocking(() -> getPsiFiles(files))
+        .finishOnUiThread(ModalityState.defaultModalityState(), sourceFileArray -> doDrop(target, sourceFileArray))
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
   }
 }
