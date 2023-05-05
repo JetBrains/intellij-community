@@ -123,21 +123,6 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     }
   }
 
-  private fun disposeLogBlocking(recreate: Boolean) {
-    if (ApplicationManager.getApplication().isDispatchThread) {
-      runBlockingModal(owner = ModalTaskOwner.project(project),
-                       title = VcsLogBundle.message("vcs.log.closing.process"),
-                       cancellation = TaskCancellation.nonCancellable()) {
-        disposeLog(recreate = recreate)
-      }
-    }
-    else {
-      runBlockingMaybeCancellable {
-        disposeLog(recreate = recreate)
-      }
-    }
-  }
-
   @RequiresEdt
   fun openLogTab(filters: VcsLogFilterCollection): MainVcsLogUi? {
     return openLogTab(filters = filters, location = VcsLogTabLocation.TOOL_WINDOW)
@@ -252,27 +237,34 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   }
 
   private inner class MyDynamicPluginUnloader : DynamicPluginListener {
-    private val affectedPlugins: MutableSet<PluginId> = HashSet()
+    private val affectedPlugins = HashSet<PluginId>()
+
     override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
       if (hasLogExtensions(pluginDescriptor)) {
-        disposeLogBlocking(recreate = true)
+        coroutineScope.launch {
+          disposeLog(recreate = true)
+        }
       }
     }
 
     override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
       if (hasLogExtensions(pluginDescriptor)) {
         affectedPlugins.add(pluginDescriptor.pluginId)
-        LOG.debug("Disposing Vcs Log before unloading ${pluginDescriptor.pluginId}")
-        disposeLogBlocking(recreate = false)
+        LOG.debug { "Disposing Vcs Log before unloading ${pluginDescriptor.pluginId}" }
+        coroutineScope.launch {
+          disposeLog(recreate = false)
+        }
       }
     }
 
     override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
       if (affectedPlugins.remove(pluginDescriptor.pluginId)) {
-        LOG.debug("Recreating Vcs Log after unloading " + pluginDescriptor.pluginId)
+        LOG.debug { "Recreating Vcs Log after unloading ${pluginDescriptor.pluginId}" }
         // createLog calls between beforePluginUnload and pluginUnloaded are technically not prohibited
-        //  so, just in case, recreating log here
-        disposeLogBlocking(recreate = true)
+        // so, just in case, recreating log here
+        coroutineScope.launch {
+          disposeLog(recreate = true)
+        }
       }
     }
 
