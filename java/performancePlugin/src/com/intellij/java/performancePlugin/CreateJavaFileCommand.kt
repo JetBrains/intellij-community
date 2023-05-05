@@ -10,6 +10,10 @@ import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.impl.file.PsiJavaDirectoryFactory
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 
+/**
+ * Command to add Java file to project
+ * Example: %createJavaFile fileName,dstDir,fileType - class, enum, annotation, record, interface
+ */
 class CreateJavaFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {
@@ -29,10 +33,13 @@ class CreateJavaFileCommand(text: String, line: Int) : PerformanceCommandCorouti
 
     val directory = PsiJavaDirectoryFactory
       .getInstance(context.project)
-      .createDirectory(context.project.guessProjectDir()!!.findFileOrDirectory(filePath)!!)
+      .createDirectory(
+        (context.project.guessProjectDir() ?: throw RuntimeException("'guessProjectDir' dir returned 'null'"))
+          .findFileOrDirectory(filePath) ?: throw RuntimeException("Can't find file $filePath")
+      )
 
-    val templateName = POSSIBLE_FILE_TYPES.getOrElse(fileType.lowercase()) { return@getOrElse null }
-    if (templateName == null)  throw RuntimeException("File type must be one of ${POSSIBLE_FILE_TYPES.keys}")
+    val templateName = POSSIBLE_FILE_TYPES[fileType.lowercase()]
+    if (templateName == null) throw RuntimeException("File type must be one of '${POSSIBLE_FILE_TYPES.keys}'")
 
     ApplicationManager.getApplication().invokeAndWait {
       ApplicationManager.getApplication().getService(JavaDirectoryService::class.java)
