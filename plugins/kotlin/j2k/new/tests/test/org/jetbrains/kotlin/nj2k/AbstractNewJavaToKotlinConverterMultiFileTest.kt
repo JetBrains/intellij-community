@@ -95,5 +95,5 @@ abstract class AbstractNewJavaToKotlinConverterMultiFileTest : AbstractJavaToKot
         }
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor()
 }
