@@ -88,7 +88,7 @@ object JBUIScale {
       return Pair("Dialog", 12)
     }
 
-    // with JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
+    // with JB Linux JDK, the label font comes properly scaled based on Xft.dpi settings.
     var font: Font
     if (SystemInfoRt.isMac) {
       // see AquaFonts.getControlTextFont() - lucida13Pt is a hardcoded
@@ -104,7 +104,7 @@ object JBUIScale {
     val log = thisLogger()
     val isScaleVerbose = SCALE_VERBOSE
     if (isScaleVerbose) {
-      log.info(String.format("Label font: %s, %d", font.fontName, font.size))
+      log.info("Label font: ${font.fontName}, ${font.size}")
     }
 
     if (SystemInfoRt.isLinux) {
@@ -402,14 +402,14 @@ object JBUIScale {
   }
 
   /**
-   * Get scale for an arbitrary affine transform.
+   * Get a scale for an arbitrary affine transform.
    * This should not be necessary for [GraphicsConfiguration.getDefaultTransform], as it is expected to be a translation/uniform scale only.
    *
    * See javadoc [AffineTransform.getScaleX], it will return an arbitrary number (inc. negative ones)
    * after [AffineTransform.rotate] or `AffineTransform.scale(-1, 1)` transforms.
    */
   private fun getTransformScaleX(transform: AffineTransform): Float {
-    val p = Point2D.Double(1.0, 0.0);
+    val p = Point2D.Double(1.0, 0.0)
     transform.deltaTransform(p, p)
     return p.distance(0.0, 0.0).toFloat()
   }
