@@ -193,7 +193,6 @@ public class TaskManagerTest extends TaskManagerTestCase {
     repository.setUsername("me");
     String password = "foo";
     repository.setEncodedPassword(PasswordUtil.encodePassword(password));
-    repository.setRepositoryType(new TestRepositoryType());
     repository.initializeRepository();
     assertEquals(password, repository.getPassword());
     assertNull(repository.getEncodedPassword());
