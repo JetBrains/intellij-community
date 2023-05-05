@@ -62,14 +62,11 @@ final class PersistentFSConnector {
     }
   }
 
-  public static void disconnect(final @NotNull PersistentFSConnection connection) {
+  public static void disconnect(@NotNull PersistentFSConnection connection) throws IOException {
     ourOpenCloseLock.lock();
     try {
       connection.doForce();
       connection.closeFiles();
-    }
-    catch (IOException e) {
-      connection.handleError(e);
     }
     finally {
       ourOpenCloseLock.unlock();

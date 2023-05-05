@@ -27,7 +27,10 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingContentStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -197,39 +200,6 @@ public final class PersistentFSConnection {
     }
   }
 
-  void createBrokenMarkerFile(@Nullable String message,
-                              @Nullable Throwable errorCause) {
-    final VFSCorruptedException corruptedException = new VFSCorruptedException(
-      message == null ? "(No specific reason of corruption was given)" : message,
-      errorCause
-    );
-    if (errorCause == null) {
-      //Without 'errorCause' it is not an error, but, likely, an explicit 'invalidateCache' call:
-      // no need to print stacktrace then, also no need for a WARN
-      LOG.info("VFS is corrupted; Creating VFS corruption marker: " + message);
-    }
-    else {
-      LOG.warn("VFS is corrupted; Creating VFS corruption marker", corruptedException);
-    }
-
-    try {
-      final Path brokenMarker = myPersistentFSPaths.getCorruptionMarkerFile();
-      final ByteArrayOutputStream out = new ByteArrayOutputStream();
-      try (PrintStream stream = new PrintStream(out, false, UTF_8)) {
-        stream.println("VFS files are corrupted and must be rebuilt from the scratch on next startup");
-        corruptedException.printStackTrace(stream);
-      }
-      Files.write(
-        brokenMarker,
-        out.toByteArray(),
-        StandardOpenOption.WRITE, StandardOpenOption.CREATE
-      );
-    }
-    catch (IOException ex) {// No luck:
-      LOG.info("Can't create VFS corruption marker", ex);
-    }
-  }
-
   @TestOnly
   int getPersistentModCount() {
     return myRecords.getGlobalModCount();
@@ -333,11 +303,10 @@ public final class PersistentFSConnection {
     return myEnumeratedAttributes.enumerate(attId);
   }
 
-  @Contract("_->fail")
-  void handleError(@NotNull Throwable e) throws RuntimeException, Error {
+  void markAsCorruptedAndScheduleRebuild(@NotNull Throwable cause) throws RuntimeException, Error {
     try {
       if (myCorrupted.compareAndSet(false, true)) {
-        createBrokenMarkerFile(e.getMessage(), e);
+        scheduleVFSRebuild(cause.getMessage(), cause);
         if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
           showCorruptionNotification();
         }
@@ -347,9 +316,41 @@ public final class PersistentFSConnection {
     catch (IOException ioException) {
       LOG.error(ioException);
     }
-
-    ExceptionUtil.rethrow(e);
   }
+
+  void scheduleVFSRebuild(@Nullable String message,
+                          @Nullable Throwable errorCause) {
+    final VFSCorruptedException corruptedException = new VFSCorruptedException(
+      message == null ? "(No specific reason of corruption was given)" : message,
+      errorCause
+    );
+    if (errorCause == null) {
+      //Without 'errorCause' it is not an error, but, likely, an explicit 'invalidateCache' call:
+      // no need to print stacktrace then, also no need for a WARN
+      LOG.info("VFS is corrupted; Creating VFS corruption marker: " + message);
+    }
+    else {
+      LOG.warn("VFS is corrupted; Creating VFS corruption marker", corruptedException);
+    }
+
+    try {
+      final Path brokenMarker = myPersistentFSPaths.getCorruptionMarkerFile();
+      final ByteArrayOutputStream out = new ByteArrayOutputStream();
+      try (PrintStream stream = new PrintStream(out, false, UTF_8)) {
+        stream.println("VFS files are corrupted and must be rebuilt from the scratch on next startup");
+        corruptedException.printStackTrace(stream);
+      }
+      Files.write(
+        brokenMarker,
+        out.toByteArray(),
+        StandardOpenOption.WRITE, StandardOpenOption.CREATE
+      );
+    }
+    catch (IOException ex) {// No luck:
+      LOG.info("Can't create VFS corruption marker", ex);
+    }
+  }
+
 
   static class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
     boolean myAttrPageRequested;
@@ -400,8 +401,8 @@ public final class PersistentFSConnection {
             doForce();
           }
           catch (IOException e) {
-            handleError(e);
-            throw new RuntimeException(e);
+            markAsCorruptedAndScheduleRebuild(e);
+            ExceptionUtil.rethrow(e);
           }
         }
       }

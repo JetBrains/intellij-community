@@ -162,7 +162,7 @@ public class VFSRebuildingTest {
     );
     final Path corruptionMarkerFile = connection.getPersistentFSPaths().getCorruptionMarkerFile();
     try {
-      connection.createBrokenMarkerFile(
+      connection.scheduleVFSRebuild(
         corruptionReason,
         new Exception(corruptionCauseMessage)
       );
@@ -216,7 +216,7 @@ public class VFSRebuildingTest {
         PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(kindAfter);
         final FSRecordsImpl reopenedRecords = FSRecordsImpl.connect(
           cachesDir,
-          new VfsLog(cachesDir.resolve("vfslog"), /*readOnly*/true)
+          new VfsLog(cachesDir.resolve("vfslog"), /*readOnly*/true), FSRecordsImpl.ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD
         );
         final long reopenedVfsCreationTimestamp = reopenedRecords.getCreationTimestamp();
 

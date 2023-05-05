@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferRead
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,7 +71,7 @@ import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_
  * be in FSRecords?
  */
 @ApiStatus.Internal
-final class FSRecordsImpl {
+public final class FSRecordsImpl {
   private static final Logger LOG = Logger.getInstance(FSRecordsImpl.class);
 
   private static final boolean USE_CONTENT_HASHES = SystemProperties.getBooleanProperty("idea.share.contents", true);
@@ -87,12 +88,23 @@ final class FSRecordsImpl {
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
 
+  /**
+   * Default VFS error handler: marks VFS as corrupted, schedules rebuild on next app startup, and rethrows
+   * the error passed in
+   */
+  public static final ErrorHandler ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD = (records, error) -> {
+    records.connection.markAsCorruptedAndScheduleRebuild(error);
+    ExceptionUtil.rethrow(error);
+  };
+
 
   private final @NotNull PersistentFSConnection connection;
   private final @NotNull PersistentFSContentAccessor contentAccessor;
   private final @NotNull PersistentFSAttributeAccessor attributeAccessor;
   private final @NotNull PersistentFSTreeAccessor treeAccessor;
   private final @NotNull PersistentFSRecordAccessor recordAccessor;
+
+  private final @NotNull ErrorHandler errorHandler;
 
   /**
    * Right now invertedNameIndex looks like a property of PersistentFSConnection -- but this is only because now it
@@ -131,29 +143,42 @@ final class FSRecordsImpl {
   private static int calculateVersion() {
     //bumped main version (59 -> 60) because of VfsDependentEnumerator removal, and filenames change
     final int mainVFSFormatVersion = 60;
-    return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()),  /* acceptable range is [0..255] */ 8,
-           nextMask(USE_CONTENT_HASHES,
-           nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
-           nextMask(false, // feel free to re-use
-           nextMask(INLINE_ATTRIBUTES,
-           nextMask(SystemProperties.getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
-           nextMask(false, // feel free to re-use
-           nextMask(USE_SMALL_ATTR_TABLE,
-           nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
-           nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
-           nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
-           nextMask(USE_FAST_NAMES_IMPLEMENTATION,
-           nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION,
-           0)))))))))))));
+    return nextMask(mainVFSFormatVersion +
+                    (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()),  /* acceptable range is [0..255] */ 8,
+                    nextMask(USE_CONTENT_HASHES,
+                             nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
+                                      nextMask(false, // feel free to re-use
+                                               nextMask(INLINE_ATTRIBUTES,
+                                                        nextMask(SystemProperties.getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER,
+                                                                                                     false),
+                                                                 nextMask(false, // feel free to re-use
+                                                                          nextMask(USE_SMALL_ATTR_TABLE,
+                                                                                   nextMask(
+                                                                                     PersistentHashMapValueStorage.COMPRESSION_ENABLED,
+                                                                                     nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+                                                                                              nextMask(
+                                                                                                ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
+                                                                                                nextMask(USE_FAST_NAMES_IMPLEMENTATION,
+                                                                                                         nextMask(
+                                                                                                           USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION,
+                                                                                                           0)))))))))))));
   }
+
 
   /**
    * Factory
    *
+   * @param errorHandler
    * @param storagesDirectoryPath directory there to put all FS-records files ('caches' directory)
    */
   static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
-                               @NotNull VfsLog vfsLog) throws UncheckedIOException {
+                               @NotNull VfsLog vfsLog) {
+    return connect(storagesDirectoryPath, vfsLog, ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD);
+  }
+
+  static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
+                               @NotNull VfsLog vfsLog,
+                               @NotNull ErrorHandler errorHandler) throws UncheckedIOException {
     if (IOUtil.isSharedCachesEnabled()) {
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
     }
@@ -179,7 +204,8 @@ final class FSRecordsImpl {
           connection,
           contentAccessor, attributeAccessor, treeAccessor, recordAccessor,
           invertedNameIndex,
-          currentVersion
+          currentVersion,
+          errorHandler
         );
       }
       catch (IOException e) {
@@ -200,12 +226,14 @@ final class FSRecordsImpl {
                         @NotNull PersistentFSTreeAccessor treeAccessor,
                         @NotNull PersistentFSRecordAccessor recordAccessor,
                         @NotNull InvertedNameIndex invertedNameIndex,
-                        int currentVersion) {
+                        int currentVersion,
+                        @NotNull ErrorHandler errorHandler) {
     this.connection = connection;
     this.contentAccessor = contentAccessor;
     this.attributeAccessor = attributeAccessor;
     this.treeAccessor = treeAccessor;
     this.recordAccessor = recordAccessor;
+    this.errorHandler = errorHandler;
     this.invertedNameIndex = invertedNameIndex;
 
     this.currentVersion = currentVersion;
@@ -215,7 +243,13 @@ final class FSRecordsImpl {
 
   synchronized void dispose() {
     if (!disposed) {
-      PersistentFSConnector.disconnect(connection);
+      try {
+        PersistentFSConnector.disconnect(connection);
+      }
+      catch (IOException e) {
+        handleError(e);
+      }
+
       invertedNameIndex.clear();
       disposed = true;
       disposedStackTrace = new Exception("FSRecordsImpl dispose stacktrace");
@@ -332,7 +366,7 @@ final class FSRecordsImpl {
   private void markAsDeletedRecursively(int fileId) throws IOException {
     IntList ids = new IntArrayList();
     ids.add(fileId);
-    for (int i=0; i<ids.size();i++) {
+    for (int i = 0; i < ids.size(); i++) {
       int id = ids.getInt(i);
       ids.addElements(ids.size(), listIds(id));
     }
@@ -1029,11 +1063,12 @@ final class FSRecordsImpl {
    * If cause argument is not null -- this scenario is considered an 'error', and warnings are
    * logged, if cause is null -- the scenario is considered not an 'error', but a regular
    * request -- e.g. no errors logged.
+   * TODO rename to scheduleRebuild()?
    */
   void invalidateCaches(final @Nullable String diagnosticMessage,
                         final @Nullable Throwable cause) {
     checkNotDisposed();
-    connection.createBrokenMarkerFile(diagnosticMessage, cause);
+    connection.scheduleVFSRebuild(diagnosticMessage, cause);
   }
 
   /**
@@ -1046,9 +1081,9 @@ final class FSRecordsImpl {
    *   throw handleError(e);
    * }
    * </pre>
-   * i.e. in a 'throw' statement -- to make clear, it will throw an exception. Method returns
-   * RuntimeException specifically for that purpose: to be used in a 'throw' statement, so the
-   * javac understands it is as a method exit point.
+   * i.e. in a 'throw' statement -- to make clear, it will throw an exception. Method declared to
+   * return RuntimeException specifically for that purpose: to be used in a 'throw' statement, so
+   * the javac understands it is as a method exit point.
    */
   @Contract("_->fail")
   RuntimeException handleError(Throwable e) throws RuntimeException, Error {
@@ -1064,11 +1099,11 @@ final class FSRecordsImpl {
     if (e instanceof ProcessCanceledException) {
       throw (ProcessCanceledException)e;
     }
-    
-    connection.handleError(e);
 
-    //connection.handleError() _must_ throw some exception:
-    throw new AssertionError("PersistentFSConnection doesn't processed the exception", e);
+    errorHandler.handleError(this, e);
+
+    //errorHandler.handleError() _must_ throw some exception:
+    throw new AssertionError("Bug: should be unreachable, since ErrorHandle must throw some exception", e);
   }
 
   //========== diagnostic, sanity checks: ========================================
@@ -1094,12 +1129,25 @@ final class FSRecordsImpl {
     //    open to be called from VfsData.
     int parentId = getParent(fileId);
     String description = "fileId=" + fileId +
-                               "; nameId=" + nameId + "(" + FileNameCache.getVFileName(nameId) + ")" +
-                               "; parentId=" + parentId;
+                         "; nameId=" + nameId + "(" + FileNameCache.getVFileName(nameId) + ")" +
+                         "; parentId=" + parentId;
     if (parentId > 0) {
-      description+= "; parent.name=" + getName(parentId)
-             + "; parent.children=" + list(parentId);
+      description += "; parent.name=" + getName(parentId)
+                     + "; parent.children=" + list(parentId);
     }
     return description;
+  }
+
+
+  public interface ErrorHandler {
+
+    /**
+     * Called when some of FSRecords method encounters an exception, it doesn't know how to process by itself.
+     * The method should throw an exception: either rethrow original exception, or wrap it into something more
+     * appropriate -- but could also have side effects: e.g. schedule VFS rebuild is the most obvious,
+     * 'traditional' way of handling errors.
+     */
+    void handleError(@NotNull FSRecordsImpl records,
+                     @NotNull Throwable error) throws Error, RuntimeException;
   }
 }

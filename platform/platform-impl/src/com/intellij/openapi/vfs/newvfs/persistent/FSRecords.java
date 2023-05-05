@@ -88,7 +88,12 @@ public final class FSRecords {
   //========== lifecycle: =====================================================
 
   static synchronized void connect(@NotNull VfsLog vfsLog) throws UncheckedIOException {
-    impl = FSRecordsImpl.connect(Path.of(getCachesDir()), vfsLog);
+    connect(vfsLog, FSRecordsImpl.ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD);
+  }
+
+  static synchronized void connect(@NotNull VfsLog vfsLog,
+                                   @NotNull FSRecordsImpl.ErrorHandler errorHandler) throws UncheckedIOException {
+    impl = FSRecordsImpl.connect(Path.of(getCachesDir()), vfsLog, errorHandler);
   }
 
   static synchronized void dispose() {
@@ -538,8 +543,8 @@ public final class FSRecords {
 
   /**
    * With method create 'VFS corruption marker', which forces VFS to rebuild on next startup.
-   * But contrary to the {@link #invalidateCaches(String, Throwable)} version, this method
-   * is not considered a scenario as 'an error', but as a regular request -- e.g. no errors logged.
+   * Contrary to the {@link #invalidateCaches(String, Throwable)} version, this method is not
+   * considered a scenario as 'an error', but as a regular request -- e.g. no errors logged.
    */
   public static void invalidateCaches(@NotNull String diagnosticMessage) {
     implOrFail().invalidateCaches(diagnosticMessage, null);
