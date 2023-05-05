@@ -1,8 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
@@ -10,11 +14,20 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.util.Alarm
+import com.intellij.util.TimeoutUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
+import java.awt.Component
 import java.awt.Cursor
 import java.awt.Dimension
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.util.concurrent.CompletableFuture
 import javax.swing.JScrollPane
 import kotlin.math.max
 
@@ -60,4 +73,49 @@ object TerminalUiUtils {
   private fun ensureTermMinimumSize(size: TermSize): TermSize {
     return TermSize(max(TerminalModel.MIN_WIDTH, size.columns), max(TerminalModel.MIN_HEIGHT, size.rows))
   }
+
+  @RequiresEdt(generateAssertion = false)
+  fun awaitComponentLayout(component: Component, parentDisposable: Disposable): CompletableFuture<Unit> {
+    val size = component.size
+    if (size.width > 0 || size.height > 0) {
+      return CompletableFuture.completedFuture(Unit)
+    }
+    if (!UIUtil.isShowing(component, false)) {
+      return CompletableFuture.failedFuture(IllegalStateException("component should be showing"))
+    }
+    val result = CompletableFuture<Unit>()
+
+    val startNano = System.nanoTime()
+    val resizeListener: ComponentAdapter = object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        if (LOG.isDebugEnabled) {
+          LOG.info("Terminal component layout took " + TimeoutUtil.getDurationMillis(startNano) + "ms")
+        }
+        result.complete(Unit)
+      }
+    }
+    component.addComponentListener(resizeListener)
+
+    val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, parentDisposable)
+    alarm.addRequest({
+                       result.completeExceptionally(IllegalStateException("Terminal component layout is timed out (>${TIMEOUT}ms)"))
+                     }, TIMEOUT, ModalityState.stateForComponent(component))
+
+    Disposer.register(alarm) {
+      if (!result.isDone) {
+        ApplicationManager.getApplication().invokeLater({
+                                                          result.completeExceptionally(IllegalStateException("parent disposed"))
+                                                        }, ModalityState.stateForComponent(component))
+      }
+    }
+    result.whenComplete { _, _ ->
+      Disposer.dispose(alarm)
+      component.removeComponentListener(resizeListener)
+    }
+
+    return result
+  }
+
+  private val LOG = logger<TerminalUiUtils>()
+  private const val TIMEOUT = 2000
 }

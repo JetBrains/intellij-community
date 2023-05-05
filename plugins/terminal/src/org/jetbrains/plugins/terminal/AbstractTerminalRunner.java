@@ -12,14 +12,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.ui.TerminalWidget;
-import com.intellij.util.Alarm;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
@@ -28,12 +28,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.exp.TerminalUiUtils;
 import org.jetbrains.plugins.terminal.exp.TerminalWidgetImpl;
 
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -141,47 +139,11 @@ public abstract class AbstractTerminalRunner<T extends Process> {
                                               @NotNull ShellStartupOptions startupOptions,
                                               boolean deferSessionStartUntilUiShown) {
     if (deferSessionStartUntilUiShown) {
-      doWhenFirstShownAndLaidOut(terminalWidget, () -> openSessionInDirectory(terminalWidget, startupOptions));
+      UiNotifyConnector.doWhenFirstShown(terminalWidget.getComponent(), () -> openSessionInDirectory(terminalWidget, startupOptions));
     }
     else {
       openSessionInDirectory(terminalWidget, startupOptions);
     }
-  }
-
-  private static void doWhenFirstShownAndLaidOut(@NotNull TerminalWidget terminalWidget, @NotNull Runnable action) {
-    JComponent component = terminalWidget.getComponent();
-    UiNotifyConnector.doWhenFirstShown(component, () -> {
-      Dimension size = component.getSize();
-      if (size.width != 0 || size.height != 0) {
-        LOG.debug("Terminal component layout is already done");
-        action.run();
-        return;
-      }
-      long startNano = System.nanoTime();
-      CompletableFuture<Void> future = new CompletableFuture<>();
-      ComponentAdapter resizeListener = new ComponentAdapter() {
-        @Override
-        public void componentResized(ComponentEvent e) {
-          if (LOG.isDebugEnabled()) {
-            LOG.info("Terminal component layout took " + TimeoutUtil.getDurationMillis(startNano) + "ms");
-          }
-          future.complete(null);
-        }
-      };
-      component.addComponentListener(resizeListener);
-
-      Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, terminalWidget);
-      alarm.addRequest(() -> {
-        LOG.debug("Terminal component layout is timed out (>1000ms), starting terminal with default size");
-        future.complete(null);
-      }, 1000, ModalityState.stateForComponent(component));
-
-      future.thenAccept(result -> {
-        Disposer.dispose(alarm);
-        component.removeComponentListener(resizeListener);
-        action.run();
-      });
-    });
   }
 
   public @Nullable String getCurrentWorkingDir(@Nullable TerminalTabState state) {
@@ -230,33 +192,55 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return dir != null ? dir.getPath() : null;
   }
 
+  @RequiresEdt(generateAssertion = false)
   private void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @NotNull ShellStartupOptions startupOptions) {
     ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());
-    TermSize termSize = terminalWidget.getTermSize();
-
+    CheckedDisposable widgetDisposable = Disposer.newCheckedDisposable(terminalWidget);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      if (myProject.isDisposed()) return;
-      try {
-        ShellStartupOptions baseOptions = startupOptions.builder().initialTermSize(termSize).widget(terminalWidget).build();
-        ShellStartupOptions configuredOptions = configureStartupOptions(baseOptions);
-        T process = createProcess(configuredOptions);
-        TtyConnector connector = createTtyConnector(process);
-
-        ApplicationManager.getApplication().invokeLater(() -> {
-          try {
-            terminalWidget.connectToTty(connector);
-            if (terminalWidget instanceof TerminalWidgetImpl terminalWidgetImpl) {
-              terminalWidgetImpl.setStartupOptions(configuredOptions);
+      if (myProject.isDisposed() || widgetDisposable.isDisposed()) return;
+      ShellStartupOptions baseOptions = startupOptions.builder().widget(terminalWidget).build();
+      ShellStartupOptions configuredOptions = configureStartupOptions(baseOptions);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (widgetDisposable.isDisposed()) return;
+        CompletableFuture<TermSize> initialTermSizeFuture = awaitTermSize(terminalWidget, configuredOptions);
+        initialTermSizeFuture.whenComplete((initialTermSize, initialTermSizeError) -> {
+          if (myProject.isDisposed() || widgetDisposable.isDisposed()) return;
+          if (initialTermSize == null) {
+            LOG.warn("Cannot get terminal size from component, defaulting to 80x24", initialTermSizeError);
+            initialTermSize = new TermSize(80, 24);
+          }
+          TermSize resultInitialTermSize = initialTermSize;
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            if (myProject.isDisposed() || widgetDisposable.isDisposed()) return;
+            try {
+              T process = createProcess(configuredOptions.builder().initialTermSize(resultInitialTermSize).build());
+              TtyConnector connector = createTtyConnector(process);
+              ApplicationManager.getApplication().invokeLater(() -> {
+                if (widgetDisposable.isDisposed()) return;
+                try {
+                  terminalWidget.connectToTty(connector, resultInitialTermSize);
+                }
+                catch (Exception e) {
+                  printError(terminalWidget, "Cannot create terminal session for " + terminalWidget.getTerminalTitle().buildTitle(), e);
+                }
+              }, modalityState, myProject.getDisposed());
             }
-          }
-          catch (Exception e) {
-            printError(terminalWidget, "Cannot create terminal session for " + terminalWidget.getTerminalTitle().buildTitle(), e);
-          }
-        }, modalityState, myProject.getDisposed());
-      }
-      catch (Exception e) {
-        printError(terminalWidget, "Cannot open " + terminalWidget.getTerminalTitle().buildTitle(), e);
-      }
+            catch (Exception e) {
+              printError(terminalWidget, "Cannot open " + terminalWidget.getTerminalTitle().buildTitle(), e);
+            }
+          });
+        });
+      }, modalityState, myProject.getDisposed());
+    });
+  }
+
+  private static @NotNull CompletableFuture<TermSize> awaitTermSize(@NotNull TerminalWidget terminalWidget,
+                                                                    @NotNull ShellStartupOptions configuredOptions) {
+    if (terminalWidget instanceof TerminalWidgetImpl terminalWidgetImpl) {
+      return terminalWidgetImpl.initialize(configuredOptions);
+    }
+    return TerminalUiUtils.INSTANCE.awaitComponentLayout(terminalWidget.getComponent(), terminalWidget).thenApply(v -> {
+      return terminalWidget.getTermSize();
     });
   }
 

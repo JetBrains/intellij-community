@@ -10,17 +10,20 @@ import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
+import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import java.awt.Color
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 class TerminalWidgetImpl(private val project: Project,
                          private val terminalSettings: JBTerminalSystemSettingsProviderBase,
-                         private val parent: Disposable) : TerminalWidget {
+                         parent: Disposable) : TerminalWidget {
   private val wrapper: Wrapper = Wrapper()
 
   override val terminalTitle: TerminalTitle = TerminalTitle()
@@ -30,8 +33,7 @@ class TerminalWidgetImpl(private val project: Project,
 
   override val ttyConnectorAccessor: TtyConnectorAccessor = TtyConnectorAccessor()
 
-
-  private val session: TerminalSession = TerminalSession(project, terminalSettings)
+  private val session: TerminalSession = TerminalSession(terminalSettings)
   private var controller: TerminalContentController = TerminalPlaceholder()
 
   init {
@@ -41,12 +43,14 @@ class TerminalWidgetImpl(private val project: Project,
     Disposer.register(this, controller)
   }
 
-  override fun connectToTty(ttyConnector: TtyConnector) {
+  override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
+    session.controller.resize(initialTermSize, RequestOrigin.User, CompletableFuture.completedFuture(Unit))
     ttyConnectorAccessor.ttyConnector = ttyConnector
     session.start(ttyConnector)
   }
 
-  fun setStartupOptions(options: ShellStartupOptions) {
+  @RequiresEdt(generateAssertion = false)
+  fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
     Disposer.dispose(controller)
     controller = if (options.isBlockShellIntegrationEnabled) {
       TerminalBlocksController(project, session, terminalSettings)
@@ -54,11 +58,12 @@ class TerminalWidgetImpl(private val project: Project,
     else PlainTerminalController(project, session, terminalSettings)
     Disposer.register(this, controller)
 
-    wrapper.setContent(controller.component)
-    wrapper.revalidate()
-    wrapper.repaint()
+    val component = controller.component
+    wrapper.setContent(component)
 
-    IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
+    return TerminalUiUtils.awaitComponentLayout(component, controller).thenApply {
+      controller.getTerminalSize()
+    }
   }
 
   override fun writePlainMessage(message: String) {
@@ -74,7 +79,7 @@ class TerminalWidgetImpl(private val project: Project,
   }
 
   override fun requestFocus() {
-    controller.component.requestFocus()
+    IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
   }
 
   override fun addNotification(notificationComponent: JComponent, disposable: Disposable) {

@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.ConcurrencyUtil
@@ -21,15 +20,14 @@ import java.util.concurrent.ExecutorService
 
 private var sessionIndex = 1
 
-class TerminalSession(private val project: Project,
-                      private val settings: JBTerminalSystemSettingsProviderBase) : Disposable {
+class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposable {
   val model: TerminalModel
   lateinit var terminalStarter: TerminalStarter
 
   private val terminalExecutor: ExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Terminal-${sessionIndex++}")
 
   private val textBuffer: TerminalTextBuffer
-  private val controller: TerminalController
+  val controller: TerminalController
   private val commandManager: ShellCommandManager
   private val typeAheadManager: TerminalTypeAheadManager
 
