@@ -209,7 +209,7 @@ fn gradle_command_wrapper(gradle_task: &str) -> Result<()> {
         .arg(gradle_task)
         .current_dir("./resources/TestProject")
         .output()
-        .context(format!("Failed to execute 'gradlew :{gradle_task}'"))?;
+        .with_context(|| format!("Failed to execute 'gradlew :{gradle_task}'"))?;
 
     let exit_status = output.status;
     if !exit_status.success() {
@@ -371,13 +371,13 @@ fn layout_launcher_impl(
     for target_rel_path in create_files {
         let target = &target_dir.join(target_rel_path);
         fs::create_dir_all(target.parent_or_err()?)?;
-        File::create(target).context(format!("Failed to create file {target:?}"))?;
+        File::create(target).with_context(|| format!("Failed to create file {target:?}"))?;
     }
 
     for (source, target_rel_path) in copy_files {
         let target = &target_dir.join(target_rel_path);
         fs::create_dir_all(target.parent_or_err()?)?;
-        fs::copy(source, target).context(format!("Failed to copy from {source:?} to {target:?}"))?;
+        fs::copy(source, target).with_context(|| format!("Failed to copy from {source:?} to {target:?}"))?;
     }
 
     if include_jbr {
@@ -390,7 +390,7 @@ fn layout_launcher_impl(
 #[cfg(target_family = "unix")]
 fn symlink(original: &Path, link: &Path) -> Result<()> {
     std::os::unix::fs::symlink(original, link)
-        .context(format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
+        .with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
 
     Ok(())
 }
@@ -398,7 +398,7 @@ fn symlink(original: &Path, link: &Path) -> Result<()> {
 #[cfg(target_os = "windows")]
 fn symlink(original: &Path, link: &Path) -> Result<()> {
     std::os::windows::fs::symlink_dir(original, link)
-        .context(format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
+        .with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
 
     Ok(())
 }

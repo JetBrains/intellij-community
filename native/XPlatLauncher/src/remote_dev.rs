@@ -378,10 +378,9 @@ impl RemoteDevLaunchConfiguration {
         let filename = format!("pid.{pid}.temp.remote-dev.properties");
         let path = self.system_dir.join(filename);
 
-        match path.parent() {
-            None => {}
-            Some(x) => fs::create_dir_all(x)
-                .context("Failed to create to parent folder for IDE properties file at path {x:?}")?
+        if let Some(dir) = path.parent() {
+            fs::create_dir_all(dir)
+                .with_context(|| format!("Failed to create to parent folder for IDE properties file at path {dir:?}"))?
         }
 
         let file = File::create(&path)?;

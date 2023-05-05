@@ -56,7 +56,7 @@ pub fn is_control_group_matches_docker(cgroup_parent_path: Option<PathBuf>) -> R
 
     // Read cgroup file content
     let cgroup_content = fs::read_to_string(&cgroup_path)
-        .context(format!("Unable to read file '{}'", cgroup_path.display()))?;
+        .with_context(|| format!("Unable to read file '{}'", cgroup_path.display()))?;
 
     // Check file contains any groups with 'docker' or 'lxc' suffix that define a container environment.
     let mut contains_docker_anchors = false;
