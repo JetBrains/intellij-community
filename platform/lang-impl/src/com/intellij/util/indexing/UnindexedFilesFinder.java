@@ -50,6 +50,7 @@ final class UnindexedFilesFinder {
     private final List<Computable<Boolean>> appliersAndRemovers;
     final boolean applyIndexValuesSeparately;
     boolean indexInfrastructureExtensionInvalidated = false;
+    boolean mayMarkFileIndexed = true;
 
     UnindexedFileStatusBuilder(boolean applyIndexValuesSeparately) {
       this.applyIndexValuesSeparately = applyIndexValuesSeparately;
@@ -170,11 +171,10 @@ final class UnindexedFilesFinder {
           }
         }
 
-        boolean mayMarkFileIndexed = true;
         for (ID<?, ?> indexId : affectedContentIndexCandidates) {
           if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) continue;
           if (!RebuildStatus.isOk(indexId)) {
-            mayMarkFileIndexed = false;
+            fileStatusBuilder.mayMarkFileIndexed = false;
             continue;
           }
 
@@ -223,7 +223,7 @@ final class UnindexedFilesFinder {
           for (ID<?, ?> indexId : myFileBasedIndex.getContentLessIndexes(isDirectory)) {
             if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) continue;
             if (!RebuildStatus.isOk(indexId)) {
-              mayMarkFileIndexed = false;
+              fileStatusBuilder.mayMarkFileIndexed = false;
               continue;
             }
             if (FileTypeIndex.NAME.equals(indexId) && fileTypeIndexState != null && !fileTypeIndexState.updateRequired()) {
@@ -245,11 +245,10 @@ final class UnindexedFilesFinder {
         }
 
         if (fileStatusBuilder.appliersAndRemovers.isEmpty()) {
-          finishGettingStatus(file, indexedFile, inputId, fileStatusBuilder, mayMarkFileIndexed);
+          finishGettingStatus(file, indexedFile, inputId, fileStatusBuilder);
           finalization.set(EmptyRunnable.getInstance());
         }
         else {
-          boolean finalMayMarkFileIndexed = mayMarkFileIndexed;
           finalization.set(() -> {
             long applyingStart = System.nanoTime();
             try {
@@ -260,7 +259,7 @@ final class UnindexedFilesFinder {
             finally {
               fileStatusBuilder.timeUpdatingContentLessIndexes += (System.nanoTime() - applyingStart);
             }
-            finishGettingStatus(file, indexedFile, inputId, fileStatusBuilder, finalMayMarkFileIndexed);
+            finishGettingStatus(file, indexedFile, inputId, fileStatusBuilder);
           });
         }
       });
@@ -345,15 +344,14 @@ final class UnindexedFilesFinder {
   private void finishGettingStatus(@NotNull VirtualFile file,
                                    IndexedFileImpl indexedFile,
                                    int inputId,
-                                   UnindexedFileStatusBuilder fileStatusBuilder,
-                                   boolean mayMarkFileIndexed) {
+                                   UnindexedFileStatusBuilder fileStatusBuilder) {
     if (myForceReindexingTrigger != null && myForceReindexingTrigger.fun(indexedFile)) {
       myFileBasedIndex.dropNontrivialIndexedStates(inputId);
       fileStatusBuilder.shouldIndex = true;
     }
 
     IndexingStamp.flushCache(inputId);
-    if (!fileStatusBuilder.shouldIndex && mayMarkFileIndexed) {
+    if (!fileStatusBuilder.shouldIndex && fileStatusBuilder.mayMarkFileIndexed) {
       IndexingFlag.setFileIndexed(file);
     }
   }
