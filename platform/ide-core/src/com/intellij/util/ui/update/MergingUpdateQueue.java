@@ -24,9 +24,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Use this class to postpone task execution and optionally merge identical tasks. This is needed e.g., to reflect in UI status of some
+ * Use this class to postpone task execution and optionally merge identical tasks. This is needed, e.g., to reflect in UI status of some
  * background activity: it doesn't make sense and would be inefficient to update UI 1000 times per second, so it's better to postpone 'update UI'
- * task execution for e.g., 500ms and if new updates are added during this period they can be simply ignored.
+ * task execution for e.g., 500ms and if new updates are added during this period, they can be simply ignored.
  * <p>
  * Create instance of this class and use {@link #queue(Update)} method to add new tasks.
  */
@@ -51,7 +51,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private JComponent myModalityStateComponent;
   private final boolean myExecuteInDispatchThread;
   private boolean myPassThrough;
-  private boolean myDisposed;
+  private volatile boolean myDisposed;
   private boolean myRestartOnAdd;
 
   private boolean myTrackUiActivity;
@@ -256,15 +256,12 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   /**
-   * executes all scheduled requests in the current thread.
+   * Executes all scheduled requests in the current thread.
    * Please note that requests that started execution before this method call are not waited for completion.
    */
   public void flush() {
-    synchronized (myScheduledUpdates) {
-      if (myScheduledUpdates.isEmpty()) {
-        //finishActivity();
-        return;
-      }
+    if (isEmpty()) {
+      return;
     }
     if (myFlushing) {
       return;
@@ -273,16 +270,16 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       return;
     }
 
-    myFlushing = true;
     if (myExecuteInDispatchThread) {
-      EdtInvocationManager.invokeAndWaitIfNeeded(() -> doExecute());
+      EdtInvocationManager.invokeAndWaitIfNeeded(() -> doFlush());
     }
     else {
-      doExecute();
+      doFlush();
     }
   }
 
-  private void doExecute() {
+  private void doFlush() {
+    myFlushing = true;
     try {
       List<Update> all;
       synchronized (myScheduledUpdates) {
@@ -449,9 +446,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   @Override
   public String toString() {
-    synchronized (myScheduledUpdates) {
-      return myName + " active=" + myActive + " scheduled=" + getAllScheduledUpdates().size();
-    }
+    return myName + " active=" + myActive + " scheduled=" + getAllScheduledUpdates().size();
   }
 
   @Nullable
@@ -473,9 +468,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public boolean isEmpty() {
-    synchronized (myScheduledUpdates) {
-      return myScheduledUpdates.isEmpty();
-    }
+    return myScheduledUpdates.isEmpty();
   }
 
   public void sendFlush() {
@@ -527,7 +520,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       if (toWait < 0) {
         throw new TimeoutException();
       }
-      restart(0);
+      restart(0); // to not wait for myMergingTimeSpan ms in tests
       myWaiterForMerge.waitForAllExecuted(toWait, TimeUnit.NANOSECONDS);
     }
   }
