@@ -14,6 +14,7 @@ project.consumer.commonTest
 project.consumer.jvmAndAndroidMain
     org.jetbrains.kotlin.mpp.tests:expectedEverywhere-jvm:1.0 (COMPILE)
     org.jetbrains.kotlin.mpp.tests:expectedInJvmAndAndroid-jvm:1.0 (COMPILE)
+    org.jetbrains.kotlin.mpp.tests:expectedInJvmOnly:1.0 (COMPILE)
 
 project.consumer.jvmMain
     org.jetbrains.kotlin.mpp.tests:expectedEverywhere-jvm:1.0 (COMPILE)
@@ -26,10 +27,10 @@ project.consumer.jvmTest
     org.jetbrains.kotlin.mpp.tests:expectedInJvmOnly:1.0 (TEST)
 
 project.consumer.linuxX64Main
-    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-linuxx64:1.0 (COMPILE)
+    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-linuxx64:klib:1.0 (COMPILE)
 
 project.consumer.linuxX64Test
-    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-linuxx64:1.0 (TEST)
+    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-linuxx64:klib:1.0 (TEST)
 
 project.consumer.main
     org.jetbrains.kotlin.mpp.tests:expectedEverywhere-android-debug:1.0@aar (COMPILE)

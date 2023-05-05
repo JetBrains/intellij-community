@@ -47,7 +47,6 @@ project.iosArm64Test
     apiLevel = 1.8
     mppVersion = M3
     dependsOnModuleNames = project:appleTest, project:commonTest, project:jvmAndNativeTest, project:nativeTest
-    additionalVisibleModuleNames = project:appleMain, project:commonMain, project:iosArm64Main, project:jvmAndNativeMain, project:nativeMain
     targetPlatform = Native (ios_arm64)
 
 project.iosX64Main
@@ -64,7 +63,6 @@ project.iosX64Test
     apiLevel = 1.8
     mppVersion = M3
     dependsOnModuleNames = project:appleTest, project:commonTest, project:jvmAndNativeTest, project:nativeTest
-    additionalVisibleModuleNames = project:appleMain, project:commonMain, project:iosX64Main, project:jvmAndNativeMain, project:nativeMain
     targetPlatform = Native (ios_x64)
 
 project.jsMain
@@ -82,7 +80,6 @@ project.jsTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonTest
-    additionalVisibleModuleNames = project:commonMain, project:jsMain
     targetPlatform = JS
     compilerSettings = -main call
 
@@ -117,7 +114,6 @@ project.jvmTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonTest, project:jvmAndNativeTest
-    additionalVisibleModuleNames = project:commonMain, project:jvmAndNativeMain, project:jvmMain
     targetPlatform = JVM (1.8)
 
 project.linuxX64Main
@@ -134,7 +130,6 @@ project.linuxX64Test
     apiLevel = 1.8
     mppVersion = M3
     dependsOnModuleNames = project:commonTest, project:jvmAndNativeTest, project:nativeTest
-    additionalVisibleModuleNames = project:commonMain, project:jvmAndNativeMain, project:linuxX64Main, project:nativeMain
     targetPlatform = Native (linux_x64)
 
 project.macosX64Main
@@ -151,7 +146,6 @@ project.macosX64Test
     apiLevel = 1.8
     mppVersion = M3
     dependsOnModuleNames = project:appleTest, project:commonTest, project:jvmAndNativeTest, project:nativeTest
-    additionalVisibleModuleNames = project:appleMain, project:commonMain, project:jvmAndNativeMain, project:macosX64Main, project:nativeMain
     targetPlatform = Native (macos_x64)
 
 project.nativeMain
