@@ -91,7 +91,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
   override fun isRepositoryExists(): Boolean {
     val repo = _repository
     if (repo == null) {
-      return Files.exists(dir) && FileRepositoryBuilder().setWorkTree(dir.toFile()).setUseSystemConfig(false).setup().objectDirectory.exists()
+      return Files.exists(dir) && FileRepositoryBuilder().setWorkTree(dir.toFile()).setUseSystemConfig(false).setUseUserConfig(false).setup().objectDirectory.exists()
     }
     else {
       return repo.objectDatabase.exists()
@@ -144,7 +144,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     }
   }
 
-  override fun getAheadCommitsCount() = repository.getAheadCommitsCount()
+  override fun getAheadCommitsCount() = repository.getAheadCommitCount()
 
   override suspend fun push() {
     LOG.debug("Push")
