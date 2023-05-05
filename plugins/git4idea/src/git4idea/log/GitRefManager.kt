@@ -101,7 +101,13 @@ class GitRefManager(project: Project, private val repositoryManager: RepositoryM
       groupedRefs.remove(REMOTE_BRANCH, refGroup.refs[1])
     }
 
-    val refGroups = buildGroups(trackedRefs, groupedRefs, compact, showTagNames)
+    val currentBranch = repository?.currentBranchName?.let { branchName ->
+      val branch = groupedRefs[LOCAL_BRANCH].firstOrNull { it.name == branchName } ?: return@let null
+      groupedRefs[LOCAL_BRANCH].remove(branch)
+      SimpleRefGroup(branchName, mutableListOf(branch))
+    }
+
+    val refGroups = buildGroups(listOfNotNull(currentBranch) + trackedRefs, groupedRefs, compact, showTagNames)
     if (headRefs.isNullOrEmpty()) return refGroups
 
     val result = ArrayList<RefGroup>()
