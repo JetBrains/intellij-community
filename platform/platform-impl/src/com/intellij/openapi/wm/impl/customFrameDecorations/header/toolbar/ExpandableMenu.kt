@@ -18,10 +18,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.Alarm
 import com.intellij.util.IJSwingUtilities
 import java.awt.*
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import javax.swing.*
 
 private const val ALPHA = (255 * 0.6).toInt()
@@ -35,6 +32,7 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
   private val alarm = Alarm()
   private val rootPane: JRootPane?
     get() = SwingUtilities.getRootPane(headerContent)
+  private val hoverListeners = mutableMapOf<JMenu, MouseListener>()
 
   init {
     MenuSelectionManager.defaultManager().addChangeListener {
@@ -111,10 +109,33 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
     val subElements = menu.popupMenu.subElements
     if (action == null || subElements.isEmpty()) {
       MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu)
+      installHoverListeners()
     }
     else {
       MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu, menu.popupMenu, subElements[0])
     }
+  }
+
+  private fun installHoverListeners() {
+    uninstallHoverListeners()
+    for (i in 0..ideMenu.menuCount - 1) {
+      val menu = ideMenu.getMenu(i)
+      val listener = object : MouseAdapter() {
+        override fun mouseEntered(e: MouseEvent?) {
+          MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu, menu.popupMenu)
+          uninstallHoverListeners()
+        }
+      }
+      menu.addMouseListener(listener)
+      hoverListeners[menu] = listener
+    }
+  }
+
+  private fun uninstallHoverListeners() {
+    for (entry in hoverListeners.entries) {
+      entry.key.removeMouseListener(entry.value)
+    }
+    hoverListeners.clear()
   }
 
   fun updateColor() {
@@ -145,6 +166,7 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
     if (isShowing()) {
       rootPane?.layeredPane?.remove(expandedMenuBar)
       expandedMenuBar = null
+      uninstallHoverListeners()
 
       rootPane?.repaint()
     }
