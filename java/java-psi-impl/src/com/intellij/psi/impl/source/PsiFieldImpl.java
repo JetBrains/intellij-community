@@ -267,7 +267,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
-  private static class OurConstValueComputer implements JavaResolveCache.ConstValueComputer {
+  private static final class OurConstValueComputer implements JavaResolveCache.ConstValueComputer {
     private static final OurConstValueComputer INSTANCE = new OurConstValueComputer();
 
     @Override

@@ -80,9 +80,9 @@ object Utils {
 
   fun invalidConfigMessage(project: Project, configValue: String?, configKey: String, filePath: String?) {
     val message = if (configValue != null) {
-      BundleBase.messageOrDefault(EditorConfigBundle.resourceBundle, "invalid.config.value",
+      BundleBase.messageOrDefault(EditorConfigBundle.bundle.resourceBundle, "invalid.config.value",
                                   null,
-                                  configValue, configKey.ifEmpty { "?" }, filePath)!!
+                                  configValue, configKey.ifEmpty { "?" }, filePath)
     }
     else {
       EditorConfigBundle.message("read.failure")

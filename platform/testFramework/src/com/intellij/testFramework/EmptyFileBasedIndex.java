@@ -181,13 +181,12 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     return true;
   }
 
-  @NotNull
   @Override
-  public <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(ID<K, V> indexId) {
+  public @NotNull <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(ID<K, V> indexId) {
     return EmptyIndex.getInstance();
   }
 
-  private static class EmptyIndex<Key, Value> implements UpdatableIndex<Key, Value, FileContent, Void>, MeasurableIndexStore {
+  private static final class EmptyIndex<Key, Value> implements UpdatableIndex<Key, Value, FileContent, Void>, MeasurableIndexStore {
     @SuppressWarnings("rawtypes")
     private static final EmptyIndex INSTANCE = new EmptyIndex();
     private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();

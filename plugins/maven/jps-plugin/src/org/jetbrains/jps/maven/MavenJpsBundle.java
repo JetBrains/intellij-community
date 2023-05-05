@@ -9,13 +9,11 @@ import org.jetbrains.jps.api.JpsDynamicBundle;
 
 import java.util.function.Supplier;
 
-public final class MavenJpsBundle extends JpsDynamicBundle {
-
+public final class MavenJpsBundle {
   private static final @NonNls String BUNDLE = "messages.MavenJpsBundle";
-  private static final MavenJpsBundle INSTANCE = new MavenJpsBundle();
+  private static final JpsDynamicBundle INSTANCE = new JpsDynamicBundle(MavenJpsBundle.class, BUNDLE);
 
   private MavenJpsBundle() {
-    super(BUNDLE);
   }
 
   public static @Nls @NotNull String message(@PropertyKey(resourceBundle = BUNDLE) @NotNull String key, Object @NotNull ... params) {

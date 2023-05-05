@@ -10,13 +10,12 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class ActionsBundle extends DynamicBundle {
+public final class ActionsBundle {
   @NonNls public static final String IDEA_ACTIONS_BUNDLE = "messages.ActionsBundle";
 
-  private static final ActionsBundle ourInstance = new ActionsBundle();
+  private static final DynamicBundle ourInstance = new DynamicBundle(ActionsBundle.class, IDEA_ACTIONS_BUNDLE);
 
   private ActionsBundle() {
-    super(IDEA_ACTIONS_BUNDLE);
   }
 
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {

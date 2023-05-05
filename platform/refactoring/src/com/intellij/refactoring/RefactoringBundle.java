@@ -8,30 +8,27 @@ import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
-public final class RefactoringBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.RefactoringBundle";
-  private static final RefactoringBundle INSTANCE = new RefactoringBundle();
+public final class RefactoringBundle {
+  private static final @NonNls String BUNDLE = "messages.RefactoringBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(RefactoringBundle.class, BUNDLE);
 
-  private RefactoringBundle() { super(BUNDLE); }
+  private RefactoringBundle() {}
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     if (INSTANCE.containsKey(key)) {
       return INSTANCE.getMessage(key, params);
     }
     return IdeDeprecatedMessagesBundle.message(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     if (INSTANCE.containsKey(key)) {
       return INSTANCE.getLazyMessage(key, params);
     }
     return IdeDeprecatedMessagesBundle.messagePointer(key, params);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
     if (INSTANCE.containsKey(key)) {
       return INSTANCE.getMessage(key);
     }
@@ -70,7 +67,7 @@ public final class RefactoringBundle extends DynamicBundle {
     return message("visibility.escalate");
   }
 
-  public static @NlsContexts.DialogMessage String getCannotRefactorMessage(@NlsContexts.DialogMessage @Nullable final String message) {
+  public static @NlsContexts.DialogMessage String getCannotRefactorMessage(final @NlsContexts.DialogMessage @Nullable String message) {
     return message("cannot.perform.refactoring") + (message == null ? "" : "\n" + message);
   }
 }

@@ -15,8 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-class LightEditDirectoryIndex extends DirectoryIndex {
-
+final class LightEditDirectoryIndex extends DirectoryIndex {
   @SuppressWarnings("removal")
   @Override
   public @NotNull DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
@@ -28,32 +27,28 @@ class LightEditDirectoryIndex extends DirectoryIndex {
     return LightEditDirectoryInfo.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+  public @NotNull Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return EmptyQuery.getEmptyQuery();
   }
 
-  @Nullable
   @Override
-  public String getPackageName(@NotNull VirtualFile dir) {
+  public @Nullable String getPackageName(@NotNull VirtualFile dir) {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
+  public @NotNull List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Set<String> getDependentUnloadedModules(@NotNull Module module) {
+  public @NotNull Set<String> getDependentUnloadedModules(@NotNull Module module) {
     return Collections.emptySet();
   }
 
   @SuppressWarnings("removal")
-  private static class LightEditDirectoryInfo extends DirectoryInfo {
+  private static final class LightEditDirectoryInfo extends DirectoryInfo {
     private static final LightEditDirectoryInfo INSTANCE = new LightEditDirectoryInfo();
     @Override
     public VirtualFile getContentRoot() {

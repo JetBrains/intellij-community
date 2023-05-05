@@ -19,7 +19,6 @@ import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.*;
@@ -29,18 +28,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * A data structure to store key hashes to virtual file id mappings.
  */
-class KeyHashLog<Key> implements Closeable {
+final class KeyHashLog<Key> implements Closeable {
   private static final Logger LOG = Logger.getInstance(KeyHashLog.class);
   private static final boolean ENABLE_CACHED_HASH_IDS = SystemProperties.getBooleanProperty("idea.index.cashed.hashids", true);
 
-  @NotNull
-  private final KeyDescriptor<Key> myKeyDescriptor;
-  @NotNull
-  private final Path myBaseStorageFile;
-  @NotNull
-  private final AppendableObjectStorage<int[]> myKeyHashToVirtualFileMapping;
-  @NotNull
-  private final ConcurrentIntObjectMap<Boolean> myInvalidatedSessionIds = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final @NotNull KeyDescriptor<Key> myKeyDescriptor;
+  private final @NotNull Path myBaseStorageFile;
+  private final @NotNull AppendableObjectStorage<int[]> myKeyHashToVirtualFileMapping;
+  private final @NotNull ConcurrentIntObjectMap<Boolean> myInvalidatedSessionIds = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   private volatile int myLastScannedId;
 
@@ -58,8 +53,7 @@ class KeyHashLog<Key> implements Closeable {
       openMapping(getDataFile(), 4096);
   }
 
-  @NotNull
-  private static AppendableStorageBackedByResizableMappedFile<int[]> openMapping(@NotNull Path dataFile, int size) throws IOException {
+  private static @NotNull AppendableStorageBackedByResizableMappedFile<int[]> openMapping(@NotNull Path dataFile, int size) throws IOException {
     return new AppendableStorageBackedByResizableMappedFile<>(dataFile,
                                                               size,
                                                               null,
@@ -76,8 +70,7 @@ class KeyHashLog<Key> implements Closeable {
     appendKeyHashToVirtualFileMappingToLog(key, -inputId);
   }
 
-  @Nullable
-  IntSet getSuitableKeyHashes(@NotNull IdFilter filter, @NotNull Project project) throws StorageException {
+  @NotNull IntSet getSuitableKeyHashes(@NotNull IdFilter filter, @NotNull Project project) throws StorageException {
     IdFilter.FilterScopeType filteringScopeType = filter.getFilteringScopeType();
     if (filteringScopeType == IdFilter.FilterScopeType.OTHER) {
       filteringScopeType = IdFilter.FilterScopeType.PROJECT_AND_LIBRARIES;
@@ -275,8 +268,7 @@ class KeyHashLog<Key> implements Closeable {
   }
 
 
-  @NotNull
-  private static IntSet loadProjectHashes(@NotNull Path fileWithCaches) throws IOException {
+  private static @NotNull IntSet loadProjectHashes(@NotNull Path fileWithCaches) throws IOException {
     try (DataInputStream inputStream = new DataInputStream(new BufferedInputStream(Files.newInputStream(fileWithCaches)))) {
       int capacity = DataInputOutputUtil.readINT(inputStream);
       IntSet hashMaskSet = new IntOpenHashSet(capacity);
@@ -327,8 +319,7 @@ class KeyHashLog<Key> implements Closeable {
     return sessionDirectory;
   }
 
-  @NotNull
-  private Path getSavedProjectFileValueIds(int id, @NotNull IdFilter.FilterScopeType scopeType, @NotNull Project project) {
+  private @NotNull Path getSavedProjectFileValueIds(int id, @NotNull IdFilter.FilterScopeType scopeType, @NotNull Project project) {
     return getSessionDir().resolve(getDataFile().getFileName().toString() + "." + project.hashCode() + "." + id + "." + scopeType.getId());
   }
 
@@ -379,14 +370,12 @@ class KeyHashLog<Key> implements Closeable {
     return Files.exists(getCompactionMarker());
   }
 
-  @NotNull
-  private Path getCompactionMarker() {
+  private @NotNull Path getCompactionMarker() {
     Path dataFile = getDataFile();
     return dataFile.resolveSibling(dataFile.getFileName().toString() + ".require.compaction");
   }
 
-  @NotNull
-  private Path getDataFile() {
+  private @NotNull Path getDataFile() {
     return myBaseStorageFile.resolveSibling(myBaseStorageFile.getFileName() + ".project");
   }
 

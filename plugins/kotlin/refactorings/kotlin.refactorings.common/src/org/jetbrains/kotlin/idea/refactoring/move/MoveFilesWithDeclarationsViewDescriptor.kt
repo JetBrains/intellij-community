@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.move
 
+import com.intellij.DynamicBundle
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
@@ -25,7 +26,7 @@ class MoveFilesWithDeclarationsViewDescriptor(
         )
     } else {
         RefactoringBundle.message("move.files.elements.header", newParent.virtualFile.presentableUrl)
-    }.replaceFirstChar { if (it.isLowerCase()) it.titlecase(RefactoringBundle.getLocale()) else it.toString() }
+    }.replaceFirstChar { if (it.isLowerCase()) it.titlecase(DynamicBundle.getLocale()) else it.toString() }
 
     @Nls
     private val codeReferencesText = if (elements.size == 1) KotlinBundle.message(
