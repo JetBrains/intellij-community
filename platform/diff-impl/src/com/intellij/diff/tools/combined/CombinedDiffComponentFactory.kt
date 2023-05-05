@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.UiNotifyConnector
 import java.awt.Dimension
-import kotlin.math.min
 
 private val LOG = logger<CombinedDiffComponentFactory>()
 
@@ -115,16 +114,11 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
   }
 
   private fun buildLoadingBlocks() {
-    val childCount = model.requests.size
-    val visibleBlockCount = min(combinedViewer.scrollPane.visibleRect.height / CombinedDiffLoadingBlock.HEIGHT.get(), childCount)
-    val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
-
-    val allRequests = model.requests
-      .map { CombinedDiffModel.RequestData(it.key, it.value) }
-
-    allRequests.forEachIndexed { index, childRequest ->
-      combinedViewer.addBlock(buildLoadingBlockContent(childRequest.blockId), index > 0 || visibleBlockCount > 0)
+    for (blockId in model.requests.keys) {
+      combinedViewer.addBlock(buildLoadingBlockContent(blockId))
     }
+
+    val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
 
     UiNotifyConnector.doWhenFirstShown(
       getMainComponent(),

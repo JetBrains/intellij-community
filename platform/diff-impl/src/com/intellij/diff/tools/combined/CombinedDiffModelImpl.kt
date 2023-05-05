@@ -70,12 +70,6 @@ open class CombinedDiffModelImpl(protected val project: Project,
     modelListeners.multicaster.onModelReset()
   }
 
-  override fun addBlock(blockId: CombinedBlockId, diffRequestProducer: DiffRequestProducer, position: CombinedDiffModel.InsertPosition) {
-  }
-
-  override fun removeBlock(blockId: CombinedBlockId) {
-  }
-
   override fun getCurrentRequest(): DiffRequest? {
     return context.getUserData(COMBINED_DIFF_VIEWER_KEY)?.getCurrentBlockId()?.let(loadedRequests::get)
   }
@@ -142,7 +136,7 @@ open class CombinedDiffModelImpl(protected val project: Project,
       pendingUpdatesCount.decrementAndGet()
     }
 
-    override fun canEat(update: Update?): Boolean = update is LoadContentRequest && priority >= update.priority
+    override fun canEat(update: Update): Boolean = update is LoadContentRequest && priority >= update.priority
 
     override fun setRejected() {
       super.setRejected()

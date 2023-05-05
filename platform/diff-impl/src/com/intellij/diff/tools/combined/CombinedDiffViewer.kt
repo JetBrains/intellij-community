@@ -151,9 +151,9 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     }
   }
 
-  internal fun addBlock(content: CombinedDiffBlockContent, needBorder: Boolean) {
+  internal fun addBlock(content: CombinedDiffBlockContent) {
     val blockId = content.blockId
-    val diffBlock = createDiffBlock(content, needBorder)
+    val diffBlock = createDiffBlock(content)
     val viewer = content.viewer
 
     blocksPanel.add(diffBlock.component, blocksPanel.componentCount - 1)
@@ -163,7 +163,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     viewer.init()
   }
 
-  private fun createDiffBlock(content: CombinedDiffBlockContent, needBorder: Boolean): CombinedDiffBlock<*> {
+  private fun createDiffBlock(content: CombinedDiffBlockContent): CombinedDiffBlock<*> {
     val viewer = content.viewer
     if (!viewer.isEditorBased) {
       focusListener.register(viewer.component, this)
@@ -171,7 +171,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
 
     val diffBlockFactory = CombinedDiffBlockFactory.findApplicable<CombinedBlockId>(content)!!
 
-    val diffBlock = diffBlockFactory.createBlock(project, content, needBorder)
+    val diffBlock = diffBlockFactory.createBlock(project, content)
     val blockId = diffBlock.id
     Disposer.register(diffBlock, Disposable {
       diffBlocks.remove(blockId)

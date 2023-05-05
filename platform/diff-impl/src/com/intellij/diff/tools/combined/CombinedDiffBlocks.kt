@@ -59,14 +59,13 @@ interface CombinedDiffBlockFactory<ID : CombinedBlockId> {
   }
 
   fun isApplicable(content: CombinedDiffBlockContent): Boolean
-  fun createBlock(project: Project, content: CombinedDiffBlockContent, withBorder: Boolean): CombinedDiffBlock<ID>
+  fun createBlock(project: Project, content: CombinedDiffBlockContent): CombinedDiffBlock<ID>
 }
 
 class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory<CombinedPathBlockId> {
   override fun isApplicable(content: CombinedDiffBlockContent) = true //default factory
   override fun createBlock(project: Project,
-                           content: CombinedDiffBlockContent,
-                           withBorder: Boolean): CombinedDiffBlock<CombinedPathBlockId> =
+                           content: CombinedDiffBlockContent): CombinedDiffBlock<CombinedPathBlockId> =
     with(content.blockId as CombinedPathBlockId) {
       CombinedSimpleDiffBlock(project, this, content.viewer.component, content.viewer is CombinedDiffLoadingBlock)
     }

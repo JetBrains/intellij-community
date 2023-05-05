@@ -24,9 +24,6 @@ interface CombinedDiffModel {
    */
   fun setBlocks(requests: Map<CombinedBlockId, DiffRequestProducer>)
 
-  fun addBlock(blockId: CombinedBlockId, diffRequestProducer: DiffRequestProducer, position: InsertPosition)
-  fun removeBlock(blockId: CombinedBlockId)
-
   fun getCurrentRequest(): DiffRequest?
 
   fun getLoadedRequests(): List<DiffRequest>
@@ -35,9 +32,6 @@ interface CombinedDiffModel {
   fun unloadRequestContents(blockIds: Collection<CombinedBlockId>)
 
   fun addListener(listener: CombinedDiffModelListener, disposable: Disposable)
-
-  data class RequestData(val blockId: CombinedBlockId, val producer: DiffRequestProducer)
-  data class InsertPosition(val blockId: CombinedBlockId, val above: Boolean)
 }
 
 interface CombinedDiffModelListener : EventListener {
