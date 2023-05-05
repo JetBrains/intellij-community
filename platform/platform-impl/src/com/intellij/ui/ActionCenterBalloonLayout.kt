@@ -198,7 +198,8 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
       val bounds = Rectangle(super.getSize(balloon))
       val info = collapsedData[balloon]
       if (info != null) {
-        info.balloon.setBounds(Rectangle(startX - bounds.width, y - info.fullHeight, bounds.width, info.fullHeight))
+        val offset = if (verticalOffset != shadowVerticalOffset) 0 else shadowVerticalOffset
+        info.balloon.setBounds(Rectangle(startX - bounds.width, y - info.fullHeight + offset, bounds.width, info.fullHeight))
         y -= info.height
       }
 
