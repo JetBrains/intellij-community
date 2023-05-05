@@ -19,6 +19,7 @@ import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleContextCache
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -54,7 +55,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   private var windowListener: WindowAdapter
   private val componentListener: ComponentListener
-  private val iconProvider = ScaleContext.Cache(::getFrameIcon)
+  private val iconProvider = ScaleContextCache(::getFrameIcon)
 
   protected var myActive = false
 

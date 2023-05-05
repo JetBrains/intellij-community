@@ -31,6 +31,7 @@ import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleContextCache
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.ImageUtil
@@ -44,7 +45,6 @@ import java.awt.geom.Point2D
 import java.awt.image.BufferedImage
 import java.lang.ref.SoftReference
 import java.util.concurrent.Future
-import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.LayoutFocusTraversalPolicy
@@ -723,20 +723,21 @@ private class ImageRef(image: BufferedImage) : SoftReference<BufferedImage?>(ima
   }
 }
 
-private class ImageCache(imageProvider: Function<ScaleContext, ImageRef>) : ScaleContext.Cache<ImageRef?>(imageProvider) {
-  fun get(ctx: ScaleContext): BufferedImage {
-    val ref = getOrProvide(ctx)
-    val image = ref?.get()
-    if (image != null) {
-      return image
+private class ImageCache(imageProvider: (ScaleContext) -> ImageRef) : ScaleContextCache<ImageRef>(imageProvider) {
+  fun get(scaleContext: ScaleContext): BufferedImage {
+    val ref = getOrProvide(scaleContext)
+    ref?.get()?.let {
+      return it
     }
-    clear() // clear to recalculate the image
-    return get(ctx) // first recalculated image will be non-null
+    // clear to recalculate the image
+    clear()
+    // the first recalculated image will be non-null
+    return get(scaleContext)
   }
 }
 
 private class FrameLayeredPane(splitter: JComponent, frame: JFrame) : JBLayeredPane() {
-  private val imageProvider: Function<ScaleContext, ImageRef> = Function {
+  private val imageProvider: (ScaleContext) -> ImageRef = {
     val width = max(max(1, width), frame.width)
     val height = max(max(1, height), frame.height)
     ImageRef(ImageUtil.createImage(graphicsConfiguration, width, height, BufferedImage.TYPE_INT_RGB))

@@ -7,7 +7,7 @@ import com.intellij.openapi.util.ScalableIcon
 import com.intellij.ui.icons.CopyableIcon
 import com.intellij.ui.paint.withTxAndClipAligned
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.scale.UserScaleContext
+import com.intellij.ui.scale.ScaleContextCache
 import com.intellij.util.IconUtil
 import com.intellij.util.childScope
 import com.intellij.util.ui.StartupUiUtil
@@ -37,7 +37,7 @@ class AsyncImageIcon private constructor(
   defaultIcon: Icon,
   private val scale: Float = 1.0f,
   // allows keeping cache after scale and copy functions
-  cache: UserScaleContext.Cache<ImageRequest, ScaleContext>?,
+  cache: ScaleContextCache<ImageRequest>?,
   private val imageLoader: suspend (ScaleContext, Int, Int) -> Image?
 ) : Icon, ScalableIcon, CopyableIcon {
 
@@ -56,7 +56,7 @@ class AsyncImageIcon private constructor(
 
   // Icon can be located on different monitors (with different ScaleContext),
   // so it is better to cache image for each
-  private val imageRequestsCache = cache ?: ScaleContext.Cache(::requestImage)
+  private val imageRequestsCache = cache ?: ScaleContextCache(::requestImage)
 
   private fun requestImage(scaleCtx: ScaleContext): ImageRequest {
     val request = ImageRequest()

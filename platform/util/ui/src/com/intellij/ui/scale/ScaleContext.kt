@@ -7,6 +7,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.GraphicsConfiguration
 import java.lang.ref.WeakReference
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 
 /**
@@ -229,5 +230,36 @@ class ScaleContext : UserScaleContext {
 
   override fun toString(): String = "$usrScale, $sysScale, $objScale, $pixScale"
 
-  open class Cache<D>(dataProvider: Function<in ScaleContext, out D>) : UserScaleContext.Cache<D, ScaleContext>(dataProvider)
+  @Deprecated("Use ScaleContextCache")
+  open class Cache<T>(dataProvider: Function<in ScaleContext, out T>) : ScaleContextCache<T>(dataProvider::apply)
+}
+
+/**
+ * A cache for the last usage of a data object matching a scale context.
+ *
+ * @param dataProvider provides a data object matching the passed scale context
+ **/
+open class ScaleContextCache<T>(private val dataProvider: (ScaleContext) -> T) {
+  private val data = AtomicReference<Pair<Double, T>?>(null)
+
+  /**
+   * Returns the data object from the cache if it matches the `ctx`,
+   * otherwise provides the new data via the provider and caches it.
+   */
+  fun getOrProvide(scaleContext: ScaleContext): T? {
+    var data = data.get()
+    val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE)
+    if (data == null || scale.compareTo(data.first) != 0) {
+      data = scale to dataProvider(scaleContext)
+      this.data.set(data)
+    }
+    return data.second
+  }
+
+  /**
+   * Clears the cache.
+   */
+  fun clear() {
+    data.set(null)
+  }
 }

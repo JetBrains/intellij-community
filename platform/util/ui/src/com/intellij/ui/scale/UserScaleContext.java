@@ -1,15 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.scale;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
 import static com.intellij.ui.scale.ScaleType.*;
 
@@ -286,43 +283,5 @@ public class UserScaleContext {
   @Override
   public String toString() {
     return usrScale + ", " + objScale + ", " + pixScale;
-  }
-
-  /**
-   * A cache for the last usage of a data object matching a scale context.
-   *
-   * @param <D> the data type
-   * @param <S> the context type
-   */
-  public static class Cache<D, S extends UserScaleContext> {
-    private final Function<? super S, ? extends D> myDataProvider;
-    private final AtomicReference<Pair<Double, D>> myData = new AtomicReference<>(null);
-
-    /**
-     * @param dataProvider provides a data object matching the passed scale context
-     */
-    public Cache(@NotNull Function<? super S, ? extends D> dataProvider) {
-      myDataProvider = dataProvider;
-    }
-
-    /**
-     * Returns the data object from the cache if it matches the {@code ctx},
-     * otherwise provides the new data via the provider and caches it.
-     */
-    public @Nullable D getOrProvide(@NotNull S ctx) {
-      Pair<Double, D> data = myData.get();
-      double scale = ctx.getScale(DerivedScaleType.PIX_SCALE);
-      if (data == null || Double.compare(scale, data.first) != 0) {
-        myData.set(data = Pair.create(scale, myDataProvider.apply(ctx)));
-      }
-      return data.second;
-    }
-
-    /**
-     * Clears the cache.
-     */
-    public void clear() {
-      myData.set(null);
-    }
   }
 }
