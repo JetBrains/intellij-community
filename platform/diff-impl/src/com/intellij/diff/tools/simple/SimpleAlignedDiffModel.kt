@@ -141,7 +141,7 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
   }
 
   private fun realignChanges() {
-    if (viewer.editors.any { (it.foldingModel as FoldingModelImpl).isInBatchFoldingOperation }) return
+    if (viewer.editors.any { it.isDisposed || (it.foldingModel as FoldingModelImpl).isInBatchFoldingOperation }) return
 
     RecursionManager.doPreventingRecursion(this, true) {
       clear()
