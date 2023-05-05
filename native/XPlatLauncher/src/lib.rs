@@ -116,7 +116,6 @@ pub struct ProductInfo {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ProductInfoLaunchField {
-    pub os: String,
     pub vmOptionsFilePath: String,
     pub bootClassPathJarNames: Vec<String>,
     pub additionalJvmArguments: Vec<String>

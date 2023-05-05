@@ -14,19 +14,12 @@ const IDE_HOME_LOOKUP_DEPTH: usize = 5;
 
 pub struct DefaultLaunchConfiguration {
     pub product_info: ProductInfo,
-    launch_data_idx: usize,
     pub ide_home: PathBuf,
     pub vm_options_path: PathBuf,
     pub user_config_dir: PathBuf,
     pub args: Vec<String>,
     pub launcher_base_name: String,
     pub env_var_base_name: String
-}
-
-impl DefaultLaunchConfiguration {
-    fn launch_data(&self) -> &ProductInfoLaunchField {
-        &self.product_info.launch[self.launch_data_idx]
-    }
 }
 
 impl LaunchConfiguration for DefaultLaunchConfiguration {
@@ -42,7 +35,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
         // appending product-specific VM options (non-overridable, so should come last)
         debug!("Appending product-specific VM options");
-        vm_options.extend_from_slice(&self.launch_data().additionalJvmArguments);
+        vm_options.extend_from_slice(&self.product_info.launch[0].additionalJvmArguments);
 
         for vm_option in vm_options.iter_mut() {
             *vm_option = self.expand_vars(&vm_option)?;
@@ -58,7 +51,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
     fn get_class_path(&self) -> Result<Vec<String>> {
         let lib_path = self.ide_home.join("lib").to_string_checked()?;
-        let class_path = self.launch_data().bootClassPathJarNames.iter()
+        let class_path = self.product_info.launch[0].bootClassPathJarNames.iter()
             .map(|item| lib_path.to_string() + std::path::MAIN_SEPARATOR_STR + item)
             .collect();
         Ok(class_path)
@@ -83,8 +76,7 @@ impl DefaultLaunchConfiguration {
         debug!("OS config dir: {config_home:?}");
 
         let product_info = read_product_info(&product_info_file)?;
-        let launch_data_idx = Self::get_launch_data_idx(&product_info)?;
-        let vm_options_rel_path = &product_info.launch[launch_data_idx].vmOptionsFilePath;
+        let vm_options_rel_path = &product_info.launch[0].vmOptionsFilePath;
         let vm_options_path = product_info_file.parent().unwrap().join(vm_options_rel_path);
         let user_config_dir = config_home.join(&product_info.productVendor).join(&product_info.dataDirectoryName);
         let launcher_base_name = Self::get_launcher_base_name(vm_options_rel_path);
@@ -92,7 +84,6 @@ impl DefaultLaunchConfiguration {
 
         let config = DefaultLaunchConfiguration {
             product_info,
-            launch_data_idx,
             ide_home,
             vm_options_path,
             user_config_dir,
@@ -102,18 +93,6 @@ impl DefaultLaunchConfiguration {
         };
 
         Ok(config)
-    }
-
-    /// Locates the OS-specific launch information block, when there are more than one.
-    fn get_launch_data_idx(product_info: &ProductInfo) -> Result<usize> {
-        match product_info.launch.len() {
-            0 => bail!("Product descriptor is corrupted: 'launch' field is missing"),
-            1 => Ok(0),
-            _ => match product_info.launch.iter().enumerate().find(|(_, rec)| rec.os.to_lowercase() == env::consts::OS) {
-                Some((idx, _)) => Ok(idx),
-                None => bail!("Product descriptor is corrupted: no 'launch' field for '{}'", env::consts::OS)
-            },
-        }
     }
 
     /// Extracts a base name (i.e. a name without the extension and architecture suffix)
@@ -347,10 +326,15 @@ fn is_gc_vm_option(s: &str) -> bool {
 
 fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
     let file = File::open(product_info_path)?;
-    let reader = BufReader::new(file);
-    let product_info: ProductInfo = serde_json::from_reader(reader)?;
+
+    let product_info: ProductInfo = serde_json::from_reader(BufReader::new(file))?;
     debug!("{:?}", serde_json::to_string(&product_info));
-    return Ok(product_info);
+
+    if product_info.launch.len() != 1 {
+        bail!("Malformed product descriptor (expecting 1 'launch' record, got {})", product_info.launch.len())
+    }
+
+    Ok(product_info)
 }
 
 fn find_ide_home(current_exe: &Path) -> Result<(PathBuf, PathBuf)> {
