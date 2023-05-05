@@ -70,6 +70,18 @@ mod tests {
     }
 
     #[test]
+    fn path_macro_expansion_test() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+
+        let dump = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+
+        let vm_option = dump.vmOptions.iter().find(|s| s.starts_with("-Dpath.macro.test="))
+            .expect(&format!("'-Dpath.macro.test=' is not in {:?}", dump.vmOptions));
+        let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
+        assert_eq!(test.dist_root.canonicalize().unwrap(), path.canonicalize().unwrap());
+    }
+
+    #[test]
     fn missing_standard_vm_options_failure_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
 
