@@ -247,7 +247,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   private void doScheduleUpdate(int id, final Computable<? extends Runnable> update) {
     myUpdateQueue.queue(new Update(this, id) {
       @Override
-      public boolean canEat(Update update1) {
+      public boolean canEat(@NotNull Update update1) {
         return getPriority() >= update1.getPriority();
       }
 

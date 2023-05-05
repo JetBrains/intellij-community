@@ -183,7 +183,7 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
     final MyUpdate food = new MyUpdate("food");
     MyUpdate hungry = new MyUpdate("hungry") {
       @Override
-      public boolean canEat(Update update) {
+      public boolean canEat(@NotNull Update update) {
         return update == food;
       }
     };

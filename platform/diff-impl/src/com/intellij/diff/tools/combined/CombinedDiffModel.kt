@@ -211,7 +211,7 @@ open class CombinedDiffModelImpl(protected val project: Project,
       pendingUpdatesCount.decrementAndGet()
     }
 
-    override fun canEat(update: Update?): Boolean = update is LoadContentRequest && priority >= update.priority
+    override fun canEat(update: Update): Boolean = update is LoadContentRequest && priority >= update.priority
 
     override fun setRejected() {
       super.setRejected()

@@ -192,7 +192,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     override fun stateChanged(e: ChangeEvent) {
       visibleBlocksUpdateQueue.queue(object : Update(e) {
         override fun run() = notifyVisibleBlocksChanged()
-        override fun canEat(update: Update?): Boolean = true
+        override fun canEat(update: Update): Boolean = true
       })
     }
   }

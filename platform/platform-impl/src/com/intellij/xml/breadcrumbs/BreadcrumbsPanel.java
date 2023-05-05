@@ -80,7 +80,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     }
 
     @Override
-    public boolean canEat(final Update update) {
+    public boolean canEat(final @NotNull Update update) {
       return true;
     }
   };
