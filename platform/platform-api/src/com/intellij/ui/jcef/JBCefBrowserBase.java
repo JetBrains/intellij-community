@@ -626,7 +626,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         ctx.setScale(OBJ_SCALE.of(1.2 * headerFontSize / (float)ERROR_PAGE_ICON.getIconHeight()));
         // Reset sys scale to prevent raster downscaling on passing the image to jcef.
         // Overriding is used to prevent scale change during further intermediate context transformations.
-        ctx.overrideScale(SYS_SCALE.of(1.0));
+        ctx.overrideScale(SYS_SCALE.of(1));
 
         html = html.replace("${base64Image}", ObjectUtils.notNull(BASE64_ERROR_PAGE_ICON.get().getOrProvide(ctx), ""));
         return html;

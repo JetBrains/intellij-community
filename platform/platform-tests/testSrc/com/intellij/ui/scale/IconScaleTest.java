@@ -16,6 +16,7 @@ import com.intellij.ui.scale.paint.ImageComparator;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -37,11 +38,10 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests that {@link com.intellij.openapi.util.ScalableIcon#scale(float)} works correctly for custom JB icons.
- * 0.75 is an impractical system scale factor, however, it's used to stress-test the scale subsystem
+ * 0.75 is an impractical system scale factor, however, it's used to stress-test iconContext.apply(usrSize2D, DEV_SCALE)the scale subsystem
  *
  * @author tav
  */
-
 public class IconScaleTest extends BareTestFixtureTestCase {
   private static final int ICON_BASE_SIZE = 16;
   private static final float ICON_OBJ_SCALE = 1.75f;
@@ -132,18 +132,17 @@ public class IconScaleTest extends BareTestFixtureTestCase {
       usrSize = (int)Math.round(usrSize2D);
       devSize = (int)Math.round(iconContext.apply(usrSize2D, DEV_SCALE));
 
-      assertIcon(iconB, iconContext, usrSize, devSize, "Test (B) override scale");
+      assertIcon(iconB, null, usrSize, devSize, "Test (B) override scale");
     }
 
     /*
      * (C) scale icon
      */
-    Function<ScaleContext, Pair<Integer /*scaled user size*/, Integer /*scaled dev size*/>> calcScales =
-      (ctx) -> {
-        double scaledUsrSize2D = ctx.apply(ICON_BASE_SIZE, EFF_USR_SCALE);
-        int scaledUsrSize = (int)Math.round(scaledUsrSize2D);
-        int scaledDevSize = (int)Math.round(iconContext.apply(scaledUsrSize2D, DEV_SCALE));
-        return Pair.create(scaledUsrSize, scaledDevSize);
+    Function<ScaleContext, Pair<Integer /*scaled user size*/, Integer /*scaled dev size*/>> calcScales = (ctx) -> {
+      double scaledUsrSize2D = ctx.apply(ICON_BASE_SIZE, EFF_USR_SCALE);
+      int scaledUsrSize = (int)Math.round(scaledUsrSize2D);
+      int scaledDevSize = (int)Math.round(iconContext.apply(scaledUsrSize2D, DEV_SCALE));
+      return new Pair<>(scaledUsrSize, scaledDevSize);
     };
 
     Icon iconC = IconUtil.scale(icon, null, ICON_OBJ_SCALE);
@@ -188,15 +187,15 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     scaleInContext.accept(1.5f);
   }
 
-  private static void assertIcon(@NotNull Icon icon, @NotNull ScaleContext ctx, int usrSize, int devSize, @NotNull String testDescription) {
+  private static void assertIcon(@NotNull Icon icon, @Nullable ScaleContext ctx, int usrSize, int devSize, @NotNull String testDescription) {
     assertThat(icon.getIconWidth()).describedAs(testDescription + ": unexpected icon user width").isEqualTo(usrSize);
     assertThat(icon.getIconHeight()).describedAs(testDescription + ": unexpected icon user height").isEqualTo(usrSize);
 
-    assertThat(ImageUtil.getRealWidth(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real width")
-      .isEqualTo(devSize);
-    assertThat(ImageUtil.getRealHeight(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real height")
-      .isEqualTo(devSize);
+    Image image = IconLoader.toImage(icon, ctx);
+    assertThat(ImageUtil.getRealWidth(image)).describedAs(testDescription + ": unexpected icon real width").isEqualTo(devSize);
+    assertThat(ImageUtil.getRealHeight(image)).describedAs(testDescription + ": unexpected icon real height").isEqualTo(devSize);
   }
+
 
   private static Path getIconPath() {
     return Path.of(PlatformTestUtil.getPlatformTestDataPath() + "ui/abstractClass.svg");

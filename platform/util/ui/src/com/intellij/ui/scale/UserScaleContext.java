@@ -15,7 +15,7 @@ import static com.intellij.ui.scale.ScaleType.*;
 
 /**
  * Represents a snapshot of the user space scale factors: {@link ScaleType#USR_SCALE} and {@link ScaleType#OBJ_SCALE}).
- * The context can be associated with a UI object (see {@link ScaleContextAware}) to define its HiDPI behaviour.
+ * The context can be associated with a UI object (see {@link ScaleContextAware}) to define its HiDPI behavior.
  * Unlike {@link ScaleContext}, UserScaleContext is device scale independent and is thus used for vector-based painting.
  *
  * @see ScaleContextAware
@@ -24,7 +24,7 @@ import static com.intellij.ui.scale.ScaleType.*;
  */
 public class UserScaleContext {
   protected Scale usrScale = USR_SCALE.of(JBUIScale.scale(1f));
-  protected Scale objScale = OBJ_SCALE.of(1d);
+  protected Scale objScale = OBJ_SCALE.of(1);
   protected double pixScale = usrScale.getValue();
 
   private List<UpdateListener> listeners;
@@ -164,7 +164,7 @@ public class UserScaleContext {
   protected @NotNull Scale getScaleObject(@NotNull ScaleType type) {
     return switch (type) {
       case USR_SCALE -> usrScale;
-      case SYS_SCALE -> SYS_SCALE.of(1d);
+      case SYS_SCALE -> SYS_SCALE.of(1);
       case OBJ_SCALE -> objScale;
     };
   }

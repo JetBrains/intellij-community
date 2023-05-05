@@ -29,20 +29,12 @@ fun isIconTooLargeForCache(icon: Icon): Boolean {
   return (4L * icon.iconWidth * icon.iconHeight) > CACHED_IMAGE_MAX_SIZE
 }
 
-private fun key(context: ScaleContext): Long {
-  return (context.getScale(DerivedScaleType.EFF_USR_SCALE).toFloat().toBits().toLong()  shl 32) or
-    (context.getScale(ScaleType.SYS_SCALE).toFloat().toBits().toLong() and 0xffffffffL)
-}
-
 internal class ScaledIconCache {
   private val cache = Long2ObjectLinkedOpenHashMap<SoftReference<Icon>>(SCALED_ICONS_CACHE_LIMIT)
 
-  /**
-   * Retrieves the orig icon scaled by the provided scale.
-   */
   @Synchronized
-  fun getOrScaleIcon(scale: Float, host: CachedImageIcon, scaleContext: ScaleContext): Icon? {
-    val cacheKey = key(scaleContext)
+  fun getOrScaleIcon(host: CachedImageIcon, scaleContext: ScaleContext): Icon? {
+    val cacheKey = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toBits()
     // don't worry that empty ref in the map, we compute and put a new icon by the same key, so no need to remove invalid entry
     cache.getAndMoveToFirst(cacheKey)?.get()?.let {
       return it
@@ -58,7 +50,7 @@ internal class ScaledIconCache {
       return EMPTY_ICON
     }
 
-    val icon = ScaledResultIcon(image = image, original = host, scale = scale)
+    val icon = ScaledResultIcon(image = image, original = host, objectScale = scaleContext.getScale(ScaleType.OBJ_SCALE).toFloat())
     if ((4L * width * height) <= CACHED_IMAGE_MAX_SIZE) {
       cache.putAndMoveToFirst(cacheKey, SoftReference(icon))
       if (cache.size > SCALED_ICONS_CACHE_LIMIT) {
@@ -68,7 +60,6 @@ internal class ScaledIconCache {
     return icon
   }
 
-  @Synchronized
   fun clear() {
     cache.clear()
   }
@@ -83,7 +74,7 @@ fun getRealImage(icon: Icon): Image {
 
 internal class ScaledResultIcon(@JvmField internal val image: Image,
                                 private val original: CachedImageIcon,
-                                private val scale: Float) : Icon, ReplaceableIcon {
+                                private val objectScale: Float) : Icon, ReplaceableIcon {
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     drawImage(g = g, image = image, x = x, y = y, sourceBounds = null, op = null, observer = c)
   }
@@ -95,7 +86,7 @@ internal class ScaledResultIcon(@JvmField internal val image: Image,
   override fun replaceBy(replacer: IconReplacer): Icon {
     val originalReplaced = replacer.replaceIcon(original)
     if (originalReplaced is ScalableIcon) {
-      return originalReplaced.scale(scale)
+      return originalReplaced.scale(objectScale)
     }
     else {
       logger<ScaledResultIcon>().error("The result after replacing cannot be scaled: $originalReplaced")

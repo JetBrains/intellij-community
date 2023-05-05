@@ -126,8 +126,8 @@ open class JBHiDPIScaledImage : BufferedImage {
    */
   fun scale(targetUserWidth: Int, targetUserHeight: Int): JBHiDPIScaledImage {
     val img = delegate ?: this
-    val w = getUserWidth(null)
-    val h = getUserHeight(null)
+    val w = getUserWidth()
+    val h = getUserHeight()
     if (w <= 0 || h <= 0 || w == targetUserWidth && h == targetUserHeight) return this
     val targetWidth = (targetUserWidth * scale).roundToInt()
     val targetHeight = (targetUserHeight * scale).roundToInt()
@@ -186,21 +186,19 @@ open class JBHiDPIScaledImage : BufferedImage {
   /**
    * Returns the width in user coordinate space.
    *
-   * @param observer the image observer
    * @return the width
    */
-  fun getUserWidth(observer: ImageObserver?): Int {
-    return if (delegate == null) (super.getWidth(observer) / scale).roundToInt() else userWidth.roundToInt()
+  fun getUserWidth(): Int {
+    return if (delegate == null) (super.getWidth(null) / scale).roundToInt() else userWidth.roundToInt()
   }
 
   /**
    * Returns the height in user coordinate space.
    *
-   * @param observer the image observer
    * @return the height
    */
-  fun getUserHeight(observer: ImageObserver?): Int {
-    return if (delegate == null) (super.getHeight(observer) / scale).roundToInt() else userHeight.roundToInt()
+  fun getUserHeight(): Int {
+    return if (delegate == null) (super.getHeight(null) / scale).roundToInt() else userHeight.roundToInt()
   }
 
   /**

@@ -40,6 +40,9 @@ object JBUIScale {
     DEBUG_USER_SCALE_FACTOR.value ?: computeUserScaleFactor(if (JreHiDpiUtil.isJreHiDPIEnabled()) 1f else systemScaleFactor.value)
   }
 
+  internal val userScale: Float
+    get() = userScaleFactor.value
+
   @Internal
   fun preload(uiDefaults: Supplier<UIDefaults?>) {
     if (!systemScaleFactor.isInitialized()) {
