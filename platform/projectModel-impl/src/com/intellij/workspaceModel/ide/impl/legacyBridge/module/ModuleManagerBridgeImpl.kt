@@ -9,6 +9,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.*
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl
@@ -36,6 +37,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -60,47 +62,8 @@ private val createModuleInstanceTimeMs: AtomicLong = AtomicLong()
 private val buildModuleGraphTimeMs: AtomicLong = AtomicLong()
 private val getModulesTimeMs: AtomicLong = AtomicLong()
 
-private fun setupOpenTelemetryReporting(meter: Meter): Unit {
-  val loadAllModulesTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.load.all.modules.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-  val newModuleTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.newModule.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-  val newNonPersistentModuleTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.new.nonPersistent.module.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-  val loadModuleTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.load.module.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-  val setUnloadedModulesTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.set.unloadedModules.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-  val createModuleInstanceTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.create.module.instance.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-  val buildModuleGraphTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.build.module.graph.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-  val getModulesTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.get.modules.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-  meter.batchCallback(
-    {
-      loadAllModulesTimeGauge.record(loadAllModulesTimeMs.get())
-      newModuleTimeGauge.record(newModuleTimeMs.get())
-      newNonPersistentModuleTimeGauge.record(newNonPersistentModuleTimeMs.get())
-      loadModuleTimeGauge.record(loadModuleTimeMs.get())
-      setUnloadedModulesTimeGauge.record(setUnloadedModulesTimeMs.get())
-      createModuleInstanceTimeGauge.record(createModuleInstanceTimeMs.get())
-      buildModuleGraphTimeGauge.record(buildModuleGraphTimeMs.get())
-      getModulesTimeGauge.record(getModulesTimeMs.get())
-    },
-    loadAllModulesTimeGauge, newModuleTimeGauge, newNonPersistentModuleTimeGauge, loadModuleTimeGauge,
-    setUnloadedModulesTimeGauge, createModuleInstanceTimeGauge, buildModuleGraphTimeGauge, getModulesTimeGauge
-  )
-}
-
+private val LOG = logger<ModuleManagerBridgeImpl>()
+private const val MODULE_BRIDGE_MAPPING_ID = "intellij.modules.bridge"
 
 @Suppress("OVERRIDE_DEPRECATION")
 @ApiStatus.Internal
@@ -113,8 +76,8 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     if (!project.isDefault) {
       val busConnection = project.messageBus.connect(this)
       busConnection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-        override fun projectClosed(eventProject: Project) {
-          if (project == eventProject) {
+        override fun projectClosed(project: Project) {
+          if (this@ModuleManagerBridgeImpl.project == project) {
             for (module in modules()) {
               module.projectClosed()
             }
@@ -125,7 +88,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       busConnection.subscribe(WorkspaceModelTopics.CHANGED, LoadedModulesListUpdater())
       busConnection.subscribe(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED, object : WorkspaceModelChangeListener {
         override fun changed(event: VersionedStorageChange) {
-          event.getChanges(ModuleEntity::class.java).forEach { change ->
+          for (change in event.getChanges(ModuleEntity::class.java)) {
             change.oldEntity?.name?.let { unloadedModules.remove(it) }
             change.newEntity?.let {
               unloadedModules[it.name] = UnloadedModuleDescriptionBridge.createDescription(it)
@@ -158,7 +121,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     return entityStore.cachedValue(if (includeTests) dependencyGraphWithTestsValue else dependencyGraphWithoutTestsValue)
   }
 
-  val entityStore = WorkspaceModel.getInstance(project).entityStorage
+  val entityStore: VersionedEntityStorage = WorkspaceModel.getInstance(project).entityStorage
 
   suspend fun loadModules(loadedEntities: List<ModuleEntity>,
                           unloadedEntities: List<ModuleEntity>,
@@ -175,7 +138,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
 
       val result = loadedEntities.map { moduleEntity ->
         async {
-          try {
+          runCatching {
             val module = createModuleInstanceWithoutCreatingComponents(moduleEntity = moduleEntity,
                                                                        versionedStorage = entityStore,
                                                                        diff = targetBuilder,
@@ -185,14 +148,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
                                                                        corePlugin = corePlugin)
             module.callCreateComponentsNonBlocking()
             moduleEntity to module
-          }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (e: Throwable) {
-            LOG.error(e)
-            null
-          }
+          }.getOrLogException(LOG)
         }
       }
 
@@ -412,6 +368,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
 
   override fun setUnloadedModulesSync(unloadedModuleNames: List<String>) {
     if (!ApplicationManager.getApplication().isDispatchThread) {
+      @Suppress("RAW_RUN_BLOCKING")
       return runBlocking(CoreProgressManager.getCurrentThreadProgressModality().asContextElement()) {
         setUnloadedModules(unloadedModuleNames)
       }
@@ -419,6 +376,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(Runnable {
       val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
+      @Suppress("RAW_RUN_BLOCKING")
       runBlocking(modalityState.asContextElement()) {
         setUnloadedModules(unloadedModuleNames)
       }
@@ -522,9 +480,6 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
   }
 
   companion object {
-    private val LOG = logger<ModuleManagerBridgeImpl>()
-    private const val MODULE_BRIDGE_MAPPING_ID = "intellij.modules.bridge"
-
     @JvmStatic
     fun getInstance(project: Project): ModuleManagerBridgeImpl {
       return ModuleManager.getInstance(project) as ModuleManagerBridgeImpl
@@ -630,42 +585,81 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       return entitySource.directory
     }
 
-    private fun buildModuleGraph(storage: EntityStorage, includeTests: Boolean): Graph<Module> {
-      val start = System.currentTimeMillis()
-      val moduleGraph = GraphGenerator.generate(CachingSemiGraph.cache(object : InboundSemiGraph<Module> {
-        override fun getNodes(): Collection<Module> {
-          return modules(storage).toList()
-        }
-
-        override fun getIn(m: Module): Iterator<Module> {
-          val moduleMap = storage.moduleMap
-          val entity = moduleMap.getFirstEntity(m as ModuleBridge) as ModuleEntity?
-          return (entity?.dependencies?.asSequence() ?: emptySequence())
-            .filterIsInstance<ModuleDependencyItem.Exportable.ModuleDependency>()
-            .filter { includeTests || it.scope != ModuleDependencyItem.DependencyScope.TEST }
-            .mapNotNull {
-              it.module.resolve(storage)
-            }
-            .mapNotNull { moduleMap.getDataByEntity(it) }
-            .iterator()
-        }
-      }))
-
-      buildModuleGraphTimeMs.addAndGet(System.currentTimeMillis() - start)
-      return moduleGraph
-    }
-
-    private fun modules(storage: EntityStorage): Sequence<ModuleBridge> {
-      val start = System.currentTimeMillis()
-      val moduleMap = storage.moduleMap
-      val modules = storage.entities(ModuleEntity::class.java).mapNotNull { moduleMap.getDataByEntity(it) }
-
-      getModulesTimeMs.addAndGet(System.currentTimeMillis() - start)
-      return modules
-    }
-
     init {
       setupOpenTelemetryReporting(jpsMetrics.meter)
     }
   }
+}
+
+private fun buildModuleGraph(storage: EntityStorage, includeTests: Boolean): Graph<Module> {
+  val start = System.currentTimeMillis()
+  val moduleGraph = GraphGenerator.generate(CachingSemiGraph.cache(object : InboundSemiGraph<Module> {
+    override fun getNodes(): Collection<Module> = modules(storage).toList()
+
+    override fun getIn(m: Module): Iterator<Module> {
+      val moduleMap = storage.moduleMap
+      val entity = moduleMap.getFirstEntity(m as ModuleBridge) as ModuleEntity?
+      return (entity?.dependencies?.asSequence() ?: emptySequence())
+        .filterIsInstance<ModuleDependencyItem.Exportable.ModuleDependency>()
+        .filter { includeTests || it.scope != ModuleDependencyItem.DependencyScope.TEST }
+        .mapNotNull {
+          it.module.resolve(storage)
+        }
+        .mapNotNull { moduleMap.getDataByEntity(it) }
+        .iterator()
+    }
+  }))
+
+  buildModuleGraphTimeMs.addAndGet(System.currentTimeMillis() - start)
+  return moduleGraph
+}
+
+private fun modules(storage: EntityStorage): Sequence<ModuleBridge> {
+  val start = System.currentTimeMillis()
+  val moduleMap = storage.moduleMap
+  val modules = storage.entities(ModuleEntity::class.java).mapNotNull { moduleMap.getDataByEntity(it) }
+
+  getModulesTimeMs.addAndGet(System.currentTimeMillis() - start)
+  return modules
+}
+
+private fun setupOpenTelemetryReporting(meter: Meter) {
+  val loadAllModulesTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.load.all.modules.ms")
+    .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+  val newModuleTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.newModule.ms")
+    .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+  val newNonPersistentModuleTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.new.nonPersistent.module.ms")
+    .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+  val loadModuleTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.load.module.ms")
+    .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+  val setUnloadedModulesTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.set.unloadedModules.ms")
+    .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+  val createModuleInstanceTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.create.module.instance.ms")
+    .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+  val buildModuleGraphTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.build.module.graph.ms")
+    .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+  val getModulesTimeGauge = meter.gaugeBuilder("workspaceModel.moduleManagerBridge.get.modules.ms")
+    .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+  meter.batchCallback(
+    {
+      loadAllModulesTimeGauge.record(loadAllModulesTimeMs.get())
+      newModuleTimeGauge.record(newModuleTimeMs.get())
+      newNonPersistentModuleTimeGauge.record(newNonPersistentModuleTimeMs.get())
+      loadModuleTimeGauge.record(loadModuleTimeMs.get())
+      setUnloadedModulesTimeGauge.record(setUnloadedModulesTimeMs.get())
+      createModuleInstanceTimeGauge.record(createModuleInstanceTimeMs.get())
+      buildModuleGraphTimeGauge.record(buildModuleGraphTimeMs.get())
+      getModulesTimeGauge.record(getModulesTimeMs.get())
+    },
+    loadAllModulesTimeGauge, newModuleTimeGauge, newNonPersistentModuleTimeGauge, loadModuleTimeGauge,
+    setUnloadedModulesTimeGauge, createModuleInstanceTimeGauge, buildModuleGraphTimeGauge, getModulesTimeGauge
+  )
 }

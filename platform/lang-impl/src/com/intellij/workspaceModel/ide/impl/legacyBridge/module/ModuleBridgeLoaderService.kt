@@ -127,9 +127,13 @@ private suspend fun loadModules(project: Project,
     moduleManager.unloadNewlyAddedModulesIfPossible(targetBuilder, targetUnloadedEntitiesBuilder)
   }
   val entities = (targetBuilder ?: moduleManager.entityStore.current).entities(ModuleEntity::class.java).toList()
-  val unloadedEntities = (targetUnloadedEntitiesBuilder ?: WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities).entities(
-    ModuleEntity::class.java).toList()
-  moduleManager.loadModules(entities, unloadedEntities, targetBuilder, loadedFromCache)
+  val unloadedEntities = (targetUnloadedEntitiesBuilder ?: WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities)
+    .entities(ModuleEntity::class.java)
+    .toList()
+  moduleManager.loadModules(loadedEntities = entities,
+                            unloadedEntities = unloadedEntities,
+                            targetBuilder = targetBuilder,
+                            initializeFacets = loadedFromCache)
   childActivity?.setDescription("modules count: ${moduleManager.modules.size}")
   childActivity?.end()
 
