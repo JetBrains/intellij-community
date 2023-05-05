@@ -39,6 +39,45 @@ public final class InternetAttachSourceProvider extends AbstractAttachSourceProv
   private static final Logger LOG = Logger.getInstance(InternetAttachSourceProvider.class);
   private static final Pattern ARTIFACT_IDENTIFIER = Pattern.compile("[A-Za-z0-9.\\-_]+");
 
+  private record MavenCoords(String artifactId, String version) {
+  }
+
+  private static MavenCoords parsePath(VirtualFile jar) {
+    String jarName = jar.getNameWithoutExtension();
+
+    var parent1 = jar.getParent();
+    if (parent1 == null) return null;
+
+    var parent2 = parent1.getParent();
+    if (parent2 == null) return null;
+
+    var artifactId= parent2.getName();
+    var version = parent1.getName();
+
+    String jarPathName = artifactId + "-" + version;
+    if (!jarPathName.equals(jarName)) return null;
+
+    return new MavenCoords(artifactId, version);
+  }
+
+  private static MavenCoords parseName(VirtualFile jar) {
+    String jarName = jar.getNameWithoutExtension();
+    int index = jarName.lastIndexOf('-');
+    if (index == -1) return null;
+
+    String version = jarName.substring(index + 1);
+    String artifactId = jarName.substring(0, index);
+
+    return new MavenCoords(artifactId, version);
+  }
+
+  private static MavenCoords parse(VirtualFile jar) {
+    var result = parsePath(jar);
+    if (null != result) return result;
+
+    return parseName(jar);
+  }
+
   @Override
   public @NotNull Collection<? extends AttachSourcesAction> getActions(@NotNull List<? extends LibraryOrderEntry> orderEntries,
                                                                        @NotNull PsiFile psiFile) {
@@ -49,8 +88,11 @@ public final class InternetAttachSourceProvider extends AbstractAttachSourceProv
     int index = jarName.lastIndexOf('-');
     if (index == -1) return List.of();
 
-    final String version = jarName.substring(index + 1);
-    final String artifactId = jarName.substring(0, index);
+    MavenCoords mavenCoords = parse(jar);
+    if (null == mavenCoords) return List.of();
+
+    String artifactId = mavenCoords.artifactId();
+    String version = mavenCoords.version();
 
     if (!ARTIFACT_IDENTIFIER.matcher(version).matches() || !ARTIFACT_IDENTIFIER.matcher(artifactId).matches()) {
       return List.of();
