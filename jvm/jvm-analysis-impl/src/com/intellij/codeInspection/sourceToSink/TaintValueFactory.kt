@@ -181,7 +181,7 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
     if (target is PsiClass) return null
     var taintValue = tryFromCustom(target)
     if (taintValue != null) return taintValue
-    if (myTaintedAnnotations.isEmpty() && myUnTaintedAnnotations.isEmpty()) return null
+    if (myTaintedAnnotations.isEmpty() && myUnTaintedAnnotations.isEmpty()) return TaintValue.UNKNOWN
     if (target is PsiModifierListOwner) {
       taintValue = fromModifierListOwner(target)
       if (taintValue === TaintValue.UNKNOWN) taintValue = of(target)
