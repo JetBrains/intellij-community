@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent
 import com.intellij.util.FileContentUtilCore
 import com.intellij.util.ui.JBSwingUtilities
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import javax.swing.JComponent
@@ -107,6 +108,13 @@ open class TextEditorComponent(
 
   final override fun add(comp: Component, constraints: Any) {
     throw IllegalCallerException()
+  }
+
+  @Suppress("FunctionName", "unused")
+  @Experimental
+  @Internal
+  fun __add(component: Component, constraints: Any) {
+    super.add(component, constraints)
   }
 
   internal fun addLoadingDecoratorUi(component: JComponent) {
