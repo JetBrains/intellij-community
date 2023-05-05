@@ -952,6 +952,25 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     prepareToShow();
     installWindowHook(this);
 
+    Object[] roundedCornerParams = null;
+    if (WindowRoundedCornersManager.isAvailable()) {
+      PopupCornerType cornerType = getUserData(PopupCornerType.class);
+      if (cornerType == null) {
+        cornerType = PopupCornerType.RoundedWindow;
+      }
+      if (cornerType != PopupCornerType.None) {
+        if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
+          roundedCornerParams = new Object[]{cornerType,
+            SystemInfoRt.isWindows ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor};
+          // must set the border before calculating size below
+          myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
+        }
+        else {
+          roundedCornerParams = new Object[] { cornerType };
+        }
+      }
+    }
+
     Dimension sizeToSet = getStoredSize();
     if (myForcedSize != null) {
       sizeToSet = myForcedSize;
@@ -1168,21 +1187,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     window.setAutoRequestFocus(myRequestFocus);
 
-    if (WindowRoundedCornersManager.isAvailable()) {
-      PopupCornerType cornerType = getUserData(PopupCornerType.class);
-      if (cornerType == null) {
-        cornerType = PopupCornerType.RoundedWindow;
-      }
-      if (cornerType != PopupCornerType.None) {
-        if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
-          WindowRoundedCornersManager.setRoundedCorners(window, new Object[]{cornerType,
-            SystemInfoRt.isWindows ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor});
-          myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
-        }
-        else {
-          WindowRoundedCornersManager.setRoundedCorners(window, cornerType);
-        }
-      }
+    if (roundedCornerParams != null) {
+      WindowRoundedCornersManager.setRoundedCorners(window, roundedCornerParams);
     }
 
     myWindow = window;
