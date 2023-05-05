@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.tail
 import com.intellij.vcs.log.RefGroup
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.VcsRefType
@@ -36,7 +37,10 @@ class SimpleRefGroup @JvmOverloads constructor(private val name: @Nls String,
                                     groupedRefs.values().toMutableList()))
         }
         else {
-          result.first().refs.addAll(groupedRefs.values())
+          val firstGroup = result.first()
+          firstGroup.refs.addAll(result.tail().flatMap { it.refs })
+          firstGroup.refs.addAll(groupedRefs.values())
+          result.retainAll(listOf(firstGroup))
         }
       }
       else {
