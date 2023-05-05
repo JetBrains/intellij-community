@@ -16,15 +16,14 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Point
+import java.awt.*
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 
 internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
-                                      private val side: ToolWindowAnchor,
+                                      val side: ToolWindowAnchor,
                                       vararg moveTo: ToolWindowAnchor) :
   ActionButton(createAction(toolWindowToolbar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR,
                { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
@@ -52,6 +51,21 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
     }
 
     return group
+  }
+
+  private var myDragState = false
+
+  fun setDragState(state: Boolean) {
+    myDragState = state
+    resetMouseState()
+    revalidate()
+    repaint()
+  }
+
+  override fun paint(g: Graphics?) {
+    if (!myDragState) {
+      super.paint(g)
+    }
   }
 
   override fun update() {
@@ -82,6 +96,23 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
   override fun updateUI() {
     super.updateUI()
     myPresentation.icon = scaleIcon()
+  }
+
+  fun paintDraggingButton(g: Graphics) {
+    val areaSize = size.also {
+      JBInsets.removeFrom(it, insets)
+      JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
+    }
+
+    val rect = Rectangle(areaSize)
+    buttonLook.paintLookBackground(g, rect, JBUI.CurrentTheme.ActionButton.pressedBackground())
+    icon.let {
+      val x = (areaSize.width - it.iconWidth) / 2
+      val y = (areaSize.height - it.iconHeight) / 2
+      buttonLook.paintIcon(g, this, it, x, y)
+    }
+
+    buttonLook.paintLookBorder(g, rect, JBUI.CurrentTheme.ActionButton.pressedBorder())
   }
 }
 

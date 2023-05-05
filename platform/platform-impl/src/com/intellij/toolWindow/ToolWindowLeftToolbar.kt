@@ -9,7 +9,7 @@ import javax.swing.border.Border
 internal class ToolWindowLeftToolbar(paneId: String, isPrimary: Boolean) : ToolWindowToolbar(isPrimary) {
   override val topStripe = StripeV2(this, paneId, ToolWindowAnchor.LEFT)
   override val bottomStripe = StripeV2(this, paneId, ToolWindowAnchor.BOTTOM)
-  override val moreButton: MoreSquareStripeButton = MoreSquareStripeButton(this, ToolWindowAnchor.LEFT, ToolWindowAnchor.RIGHT)
+  override val moreButton = MoreSquareStripeButton(this, ToolWindowAnchor.LEFT, ToolWindowAnchor.RIGHT)
 
   init {
     init()
