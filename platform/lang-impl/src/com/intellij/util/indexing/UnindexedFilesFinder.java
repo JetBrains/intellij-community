@@ -26,7 +26,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -164,15 +167,12 @@ final class UnindexedFilesFinder {
           }
         }
 
-        List<ID<?, ?>> affectedContentIndexCandidates = new ArrayList<>();
         if (shouldCheckContentIndexes) {
-          for (ID<?, ?> candidate : myFileBasedIndex.getAffectedIndexCandidates(indexedFile)) {
-            if (myFileBasedIndex.needsFileContentLoading(candidate)) affectedContentIndexCandidates.add(candidate);
+          for (ID<?, ?> indexId : myFileBasedIndex.getAffectedIndexCandidates(indexedFile)) {
+            if (myFileBasedIndex.needsFileContentLoading(indexId)) {
+              checkFileStatusAgainstSigleIndex(indexId, fileStatusBuilder, indexedFile, inputId);
+            }
           }
-        }
-
-        for (ID<?, ?> indexId : affectedContentIndexCandidates) {
-          checkFileStatusAgainstSigleIndex(indexId, fileStatusBuilder, indexedFile, inputId);
         }
 
         long nowTime = System.nanoTime();
