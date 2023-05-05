@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
@@ -14,7 +14,7 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.NonUrgentExecutor;
@@ -260,7 +260,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       return;
     }
 
-    if (Registry.is("freeze.reporter.enabled")) {
+    if (RegistryManager.getInstance().is("freeze.reporter.enabled")) {
       PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstance();
 
       if ((int)(durationMs / 1000) > FREEZE_THRESHOLD && !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
