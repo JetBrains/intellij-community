@@ -109,6 +109,28 @@ public class MavenModuleResourceConfiguration {
     result = 31 * result + (overwrite ? 1 : 0);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "MavenModuleResourceConfiguration{" +
+           "id=" + id +
+           ", parentId=" + parentId +
+           ", directory='" + directory + '\'' +
+           ", manifest='" + manifest + '\'' +
+           ", classpath='" + classpath + '\'' +
+           ", delimitersPattern='" + delimitersPattern + '\'' +
+           ", modelMap=" + modelMap +
+           ", properties=" + properties +
+           ", filteringExclusions=" + filteringExclusions +
+           ", escapeString='" + escapeString + '\'' +
+           ", escapeWindowsPaths=" + escapeWindowsPaths +
+           ", overwrite=" + overwrite +
+           ", outputDirectory='" + outputDirectory + '\'' +
+           ", testOutputDirectory='" + testOutputDirectory + '\'' +
+           ", resources=" + resources +
+           ", testResources=" + testResources +
+           '}';
+  }
 }
 
 
