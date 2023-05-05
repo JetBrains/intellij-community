@@ -40,5 +40,5 @@ interface EnvironmentService {
    * }
    * ```
    */
-  suspend fun getValue(key: EnvironmentKey, defaultValue: String?): String?
+  suspend fun getEnvironmentValue(key: EnvironmentKey, defaultValue: String?): String?
 }

@@ -29,8 +29,8 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
     get() = Path.of(project.basePath!! + "/environmentKeys.json")
 
   private suspend fun getExistingKey(key: EnvironmentKey): String {
-    val value1 = service<EnvironmentService>().getValue(key, null)
-    val value2 = service<EnvironmentService>().getValue(key, undefined)
+    val value1 = service<EnvironmentService>().getEnvironmentValue(key, null)
+    val value2 = service<EnvironmentService>().getEnvironmentValue(key, undefined)
     TestCase.assertEquals(value1!!, value2!!)
     return value1
   }
@@ -154,8 +154,8 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
   }
 ]""") {
     try {
-      TestCase.assertEquals(undefined, service<EnvironmentService>().getValue(dummyKey, undefined))
-      service<EnvironmentService>().getValue(dummyKey, null)
+      TestCase.assertEquals(undefined, service<EnvironmentService>().getEnvironmentValue(dummyKey, undefined))
+      service<EnvironmentService>().getEnvironmentValue(dummyKey, null)
       fail("should throw")
     }
     catch (e: HeadlessEnvironmentService.MissingEnvironmentKeyException) {
@@ -174,7 +174,7 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
   }
 ]""") {
     try {
-      service<EnvironmentService>().getValue(notRegisteredDummyKey, undefined)
+      service<EnvironmentService>().getEnvironmentValue(notRegisteredDummyKey, undefined)
       // the warning in log is intentional
       fail("should throw")
     }

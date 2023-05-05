@@ -62,7 +62,9 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
   override fun configureProject(project: Project, context: ConfiguratorContext) {
     val basePath = project.basePath ?: return
     val service = service<EnvironmentService>()
-    val projectSelectionKey = runBlockingCancellable { service.getValue(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR, "Gradle") }
+    val projectSelectionKey = runBlockingCancellable {
+      service.getEnvironmentValue(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR, "Gradle")
+    }
     if (projectSelectionKey != "Gradle") {
       // something else was selected to open the project
       return

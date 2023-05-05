@@ -15,7 +15,7 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
     getModelFromFile()
   }
 
-  override suspend fun getValue(key: EnvironmentKey, defaultValue: String?): String {
+  override suspend fun getEnvironmentValue(key: EnvironmentKey, defaultValue: String?): String {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       LOG.warn("Access to environment parameters in the IDE with UI must be delegated to the user")
     }
