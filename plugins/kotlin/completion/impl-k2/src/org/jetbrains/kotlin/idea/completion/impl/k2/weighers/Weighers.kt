@@ -175,6 +175,7 @@ internal object Weighers {
         if (symbol !is KtCallableSymbol) return
 
         with(PreferContextualCallablesWeigher) { addWeight(lookupElement, symbol, context.contextualSymbolsCache) }
+        with(PreferFewerParametersWeigher) { addWeight(lookupElement, symbol) }
     }
 
     context(KtAnalysisSession)
@@ -212,7 +213,11 @@ internal object Weighers {
                 K2SoftDeprecationWeigher.Weigher,
                 VariableOrParameterNameWithTypeWeigher.Weigher
             )
-            .weighAfter(PlatformWeighersIds.PROXIMITY, ByNameAlphabeticalWeigher.Weigher)
+            .weighAfter(
+                PlatformWeighersIds.PROXIMITY,
+                ByNameAlphabeticalWeigher.Weigher,
+                PreferFewerParametersWeigher.Weigher,
+            )
             .weighBefore(getBeforeIdForContextualCallablesWeigher(positionContext), PreferContextualCallablesWeigher.Weigher)
 
     private fun getBeforeIdForContextualCallablesWeigher(positionContext: FirRawPositionCompletionContext): String =
