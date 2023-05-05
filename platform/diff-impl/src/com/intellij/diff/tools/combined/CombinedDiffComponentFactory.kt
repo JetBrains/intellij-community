@@ -116,7 +116,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
   private fun buildLoadingBlocks() {
     val childCount = model.requests.size
-    val visibleBlockCount = min(combinedViewer.scrollPane.visibleRect.height / CombinedLazyDiffViewer.HEIGHT.get(), childCount)
+    val visibleBlockCount = min(combinedViewer.scrollPane.visibleRect.height / CombinedDiffLoadingBlock.HEIGHT.get(), childCount)
     val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
 
     val allRequests = model.requests
@@ -163,7 +163,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     }
 
     private fun buildLoadingBlockContent(blockId: CombinedBlockId, size: Dimension? = null): CombinedDiffBlockContent {
-      return CombinedDiffBlockContent(CombinedLazyDiffViewer(size), blockId)
+      return CombinedDiffBlockContent(CombinedDiffLoadingBlock(size), blockId)
     }
 
     private fun findSubstitutor(tool: FrameDiffTool, context: DiffContext, request: DiffRequest): FrameDiffTool {

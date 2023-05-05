@@ -68,7 +68,7 @@ class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory<CombinedPathBloc
                            content: CombinedDiffBlockContent,
                            withBorder: Boolean): CombinedDiffBlock<CombinedPathBlockId> =
     with(content.blockId as CombinedPathBlockId) {
-      CombinedSimpleDiffBlock(project, this, content.viewer.component, content.viewer is CombinedLazyDiffViewer)
+      CombinedSimpleDiffBlock(project, this, content.viewer.component, content.viewer is CombinedDiffLoadingBlock)
     }
 }
 
@@ -186,7 +186,7 @@ private class CombinedSimpleDiffBlock(project: Project,
   override fun updateBlockContent(newContent: CombinedDiffBlockContent) {
     val viewer = newContent.viewer
     body.setContent(viewer.component)
-    header.setContent(if (viewer is CombinedLazyDiffViewer) pathOnlyHeader else headerWithToolbar)
+    header.setContent(if (viewer is CombinedDiffLoadingBlock) pathOnlyHeader else headerWithToolbar)
   }
 
   override val component = this

@@ -11,7 +11,7 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
 
-internal class CombinedLazyDiffViewer(size: Dimension? = null) : DiffViewer {
+internal class CombinedDiffLoadingBlock(size: Dimension? = null) : DiffViewer {
 
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
     .apply {
@@ -36,6 +36,6 @@ internal class CombinedLazyDiffViewer(size: Dimension? = null) : DiffViewer {
   }
 
   companion object {
-    val HEIGHT = JBValue.UIInteger("CombinedLazyDiffViewer.height", 50)
+    val HEIGHT = JBValue.UIInteger("CombinedLazyDiffViewer.height", 150)
   }
 }
