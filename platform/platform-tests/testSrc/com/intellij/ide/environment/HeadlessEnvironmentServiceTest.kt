@@ -18,12 +18,14 @@ import com.intellij.testFramework.replaceService
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import junit.framework.TestCase
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.io.path.deleteIfExists
 
 class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
-  private val configurationFilePath : Path
+  private val configurationFilePath: Path
     get() = Path.of(project.basePath!! + "/environmentKeys.json")
 
   private suspend fun getExistingKey(key: EnvironmentKey): String {
@@ -62,8 +64,7 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
       EnvironmentKeyStubGenerator().performGeneration(listOf("--file=$configurationFilePath"))
 
       val contents = configurationFilePath.readText()
-      assertEquals(
-"""[
+      assertEquals("""[
   {
     "description": [
       "My dummy test key",
@@ -82,7 +83,8 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
 ]""", contents)
 
       checkGeneratedFileSanity()
-    } finally {
+    }
+    finally {
       configurationFilePath.deleteIfExists()
     }
   }
@@ -92,8 +94,7 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
       EnvironmentKeyStubGenerator().performGeneration(listOf("--file=$configurationFilePath", "--no-descriptions"))
 
       val contents = configurationFilePath.readText()
-      assertEquals(
-"""[
+      assertEquals("""[
   {
     "key": "my.dummy.test.key",
     "value": ""
@@ -105,7 +106,8 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
 ]""", contents)
 
       checkGeneratedFileSanity()
-    } finally {
+    }
+    finally {
       configurationFilePath.deleteIfExists()
     }
   }
@@ -119,7 +121,8 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
     EnvironmentUtil.setPathTemporarily(configurationFilePath, testRootDisposable)
     try {
       action()
-    } finally {
+    }
+    finally {
       configurationFilePath.deleteIfExists()
     }
   }
@@ -154,7 +157,8 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
       TestCase.assertEquals(undefined, service<EnvironmentService>().getValue(dummyKey, undefined))
       service<EnvironmentService>().getValue(dummyKey, null)
       fail("should throw")
-    } catch (e : HeadlessEnvironmentService.MissingEnvironmentKeyException) {
+    }
+    catch (e: HeadlessEnvironmentService.MissingEnvironmentKeyException) {
       // ignored, we expect this outcome
     }
   }
@@ -173,7 +177,8 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
       service<EnvironmentService>().getValue(notRegisteredDummyKey, undefined)
       // the warning in log is intentional
       fail("should throw")
-    } catch (e : AssertionError) {
+    }
+    catch (e: AssertionError) {
       // ignored, we expect this outcome
     }
   }

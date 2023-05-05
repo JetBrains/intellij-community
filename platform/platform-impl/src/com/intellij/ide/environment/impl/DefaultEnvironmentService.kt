@@ -13,5 +13,4 @@ class DefaultEnvironmentService : BaseEnvironmentService() {
     checkKeyRegistered(key)
     return defaultValue
   }
-
 }

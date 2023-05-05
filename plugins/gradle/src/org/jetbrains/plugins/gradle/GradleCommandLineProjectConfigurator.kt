@@ -4,10 +4,10 @@ package org.jetbrains.plugins.gradle
 import com.intellij.ide.CommandLineInspectionProgressReporter
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
-import com.intellij.ide.warmup.WarmupStatus
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.ide.environment.EnvironmentService
 import com.intellij.ide.impl.ProjectOpenKeyProvider
+import com.intellij.ide.warmup.WarmupStatus
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -231,7 +231,7 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
       }
     }
 
-    private fun processMessage(gradleText: String) : String? {
+    private fun processMessage(gradleText: String): String? {
       if (WarmupStatus.currentStatus(ApplicationManager.getApplication()) != WarmupStatus.InProgress) {
         return gradleText
       }

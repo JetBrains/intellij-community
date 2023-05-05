@@ -36,6 +36,6 @@ class CheckKeysStartupActivity : ProjectActivity {
   }
 
   companion object {
-    private const val UNDEFINED : String = "!!!___***undefined***___!!!"
+    private const val UNDEFINED: String = "!!!___***undefined***___!!!"
   }
 }

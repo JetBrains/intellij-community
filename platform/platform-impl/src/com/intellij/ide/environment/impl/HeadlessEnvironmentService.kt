@@ -11,7 +11,7 @@ import java.io.IOException
 
 class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService() {
 
-  private val configurationFileModel : Deferred<Map<String, String>> = scope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+  private val configurationFileModel: Deferred<Map<String, String>> = scope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
     getModelFromFile()
   }
 
@@ -56,11 +56,14 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
     val pathToFile = EnvironmentUtil.getPathToConfigurationFile() ?: return emptyMap()
 
     val objectMapper = ObjectMapper()
-    val deserializedType: CollectionType = objectMapper.typeFactory.constructCollectionType(ArrayList::class.java, EnvironmentKeyEntry::class.java)
+    val deserializedType: CollectionType = objectMapper.typeFactory.constructCollectionType(
+      ArrayList::class.java, EnvironmentKeyEntry::class.java
+    )
 
-    val list : List<EnvironmentKeyEntry> = try {
+    val list: List<EnvironmentKeyEntry> = try {
       objectMapper.readValue(pathToFile.toFile(), deserializedType)
-    } catch (e : IOException) {
+    }
+    catch (e: IOException) {
       LOG.warn(e)
       return emptyMap()
     }
