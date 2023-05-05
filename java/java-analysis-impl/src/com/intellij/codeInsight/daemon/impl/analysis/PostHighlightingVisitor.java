@@ -74,24 +74,18 @@ class PostHighlightingVisitor {
     myFile = file;
     myDocument = document;
     myRefCountHolder = refCountHolder;
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+    InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
     myDeadCodeInspection = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, myFile);
     if (!ApplicationManager.getApplication().isUnitTestMode() && myDeadCodeInspection == null) {
-      String s;
-      if (profile instanceof InspectionProfileImpl) {
-        ToolsImpl tools = ((InspectionProfileImpl)profile).getToolsOrNull(UnusedDeclarationInspectionBase.SHORT_NAME, myProject);
-        String toolsState = "";
-        if (tools != null) {
-          Element x = new Element("x");
-          tools.writeExternal(x);
-          toolsState = JDOMUtil.write(x);
-        }
-        s = "tools=" + tools + "; state:"+toolsState;
+      ToolsImpl tools = profile.getToolsOrNull(UnusedDeclarationInspectionBase.SHORT_NAME, myProject);
+      String toolsState = "";
+      if (tools != null) {
+        Element x = new Element("x");
+        tools.writeExternal(x);
+        toolsState = JDOMUtil.write(x);
       }
-      else {
-        s = "profile=" + profile + " (" + profile.getClass() + ")";
-      }
+      String s = "tools=" + tools + "; state:"+toolsState;
       LOG.error("can't find " + myDeadCodeKey + " in profile `" + profile.getDisplayName() + "`. enabled=" + profile.isToolEnabled(myDeadCodeKey) + "; " + s);
     }
     myUnusedSymbolInspection = myDeadCodeInspection == null ? null : myDeadCodeInspection.getSharedLocalInspectionTool();
