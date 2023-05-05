@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.core.CoreBundle;
@@ -35,7 +35,7 @@ import javax.swing.*;
  * }.setCancelText("Stop loading").queue();
  * </pre>
  *
- * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgressIndicator
+ * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
  * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
  * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
  * @see ProgressManager#run(Task)
@@ -194,7 +194,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   /**
-   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgressIndicator
+   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
    */
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
     private final @NotNull PerformInBackgroundOption myBackgroundOption;
@@ -267,7 +267,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   /**
-   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgressIndicator
+   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
    * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
    * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
    */
