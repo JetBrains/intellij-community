@@ -6,7 +6,6 @@ package com.intellij.ide.plugins
 import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.util.SystemProperties
 import com.intellij.util.xml.dom.XmlInterner
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
@@ -57,7 +56,6 @@ class DescriptorListLoadingContext(
 
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
 
-
   internal fun reportCannotLoad(file: Path, e: Throwable?) {
     PluginManagerCore.getLogger().warn("Cannot load $file", e)
     globalErrors.add(Supplier {
@@ -107,9 +105,10 @@ class DescriptorListLoadingContext(
               "Current plugin: $descriptor.")
     return true
   }
-  
-  val debugData: PluginDescriptorsDebugData? = 
-    if (SystemProperties.getBooleanProperty("intellij.platform.plugins.record.debug.data.for.descriptors", false)) {
+
+  @JvmField
+  internal val debugData: PluginDescriptorsDebugData? =
+    if (System.getProperty("intellij.platform.plugins.record.debug.data.for.descriptors").toBoolean()) {
       PluginDescriptorsDebugData()
     }
     else {

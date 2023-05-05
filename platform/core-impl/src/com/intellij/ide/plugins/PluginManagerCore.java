@@ -760,8 +760,8 @@ public final class PluginManagerCore {
     }
   }
 
-  @ApiStatus.Internal
-  public static PluginDescriptorsDebugData ourPluginDescriptorsDebugData;
+  @SuppressWarnings("StaticNonFinalField") @ApiStatus.Internal
+  public static PluginDescriptorsDebugData pluginDescriptorDebugData;
   
   static @NotNull PluginManagerState initializePlugins(@NotNull DescriptorListLoadingContext context,
                                                        @NotNull PluginLoadingResult loadingResult,
@@ -857,7 +857,7 @@ public final class PluginManagerCore {
 
     PluginSet pluginSet = pluginSetBuilder.createPluginSet(loadingResult.getIncompleteIdMap().values());
     new ClassLoaderConfigurator(pluginSet, coreLoader).configure();
-    ourPluginDescriptorsDebugData = context.getDebugData();
+    pluginDescriptorDebugData = context.debugData;
     return new PluginManagerState(pluginSet,
                                   pluginsToDisable.keySet(),
                                   pluginsToEnable.keySet());

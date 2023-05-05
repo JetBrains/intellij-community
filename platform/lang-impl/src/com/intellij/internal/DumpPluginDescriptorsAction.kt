@@ -25,7 +25,7 @@ import kotlinx.coroutines.withContext
 import kotlin.io.path.bufferedWriter
 import kotlin.io.path.relativeTo
 
-class DumpPluginDescriptorsAction : DumbAwareAction() {
+private class DumpPluginDescriptorsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     service<PluginDescriptionDumper>().dump(e.project)
   }
@@ -132,7 +132,7 @@ class DumpPluginDescriptorsAction : DumbAwareAction() {
         writeString("unknown")
         return
       }
-      val debugData = PluginManagerCore.ourPluginDescriptorsDebugData
+      val debugData = PluginManagerCore.pluginDescriptorDebugData
       if (debugData == null) {
         writeString("not recorded")
         return
