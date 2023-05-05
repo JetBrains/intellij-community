@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImp
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/features/attributesDisambiguate")
@@ -21,6 +22,7 @@ class KotlinMppTargetDisambiguateAttributesTests : AbstractKotlinMppGradleImport
     }
 
     @Test
+    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+") // targetHierarchy used
     fun testJvmSimilarTargets() {
         doTest()
     }
@@ -36,11 +38,13 @@ class KotlinMppTargetDisambiguateAttributesTests : AbstractKotlinMppGradleImport
     }
 
     @Test
+    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+") // targetHierarchy used
     fun testJsSimilarTargets() {
         doTest()
     }
 
     @Test
+    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+") // targetHierarchy used
     fun testIosSimilarTargets() {
         doTest()
     }
