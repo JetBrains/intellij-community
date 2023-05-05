@@ -30,7 +30,8 @@ class NotebookBelowCellDelimiterPanel() : JPanel(GridLayout(1, 1)) {
   }
 
   fun initialize(editor: EditorImpl, @Nls executionTimeDetails: String?, hasProgressBar: Boolean) {
-    val customHeight = if (executionTimeDetails != null) editor.notebookAppearance.EXECUTION_TIME_HEIGHT else editor.notebookAppearance.SPACER_HEIGHT
+    val notebookAppearance = editor.notebookAppearance
+    val customHeight = if (executionTimeDetails != null) notebookAppearance.EXECUTION_TIME_HEIGHT else notebookAppearance.SPACER_HEIGHT
     preferredSize = Dimension(preferredSize.width, customHeight)
     background = editor.colorsScheme.defaultBackground
 
@@ -40,14 +41,15 @@ class NotebookBelowCellDelimiterPanel() : JPanel(GridLayout(1, 1)) {
       val labelSize = minOf(JBFont.small().size, editor.fontSize - 2).toFloat()
       label.font = JBFont.label().deriveFont(max(1f, labelSize))
       label.foreground = UIUtil.getLabelInfoForeground()
+      background = notebookAppearance.getCodeCellBackground(editor.colorsScheme)
       add(label, BorderLayout.WEST)
     } else if (hasProgressBar) {
-      val notebookAppearance = editor.notebookAppearance
       background = notebookAppearance.getCodeCellBackground(editor.colorsScheme)
       border = BorderFactory.createEmptyBorder(notebookAppearance.SPACER_HEIGHT - notebookAppearance.PROGRESS_STATUS_HEIGHT, 0, 0, 7)
       add(progress.apply {
         setUI(steadyUI)
       })
+      setProgressVisibility(false)
     }
   }
 
