@@ -1153,7 +1153,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation,
                                                                @NotNull PsiAnnotation.TargetType target) {
-    return new AddAnnotationTargetFix(annotation, target);
+    return new AddAnnotationTargetFix(annotation, target).asIntention();
   }
 
   @Override
