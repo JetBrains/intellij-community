@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
@@ -11,6 +10,18 @@ use log::debug;
 use crate::*;
 
 const IDE_HOME_LOOKUP_DEPTH: usize = 5;
+
+#[cfg(not(target_os = "macos"))]
+const PRODUCT_INFO_REL_PATH: &str = "product-info.json";
+#[cfg(target_os = "macos")]
+const PRODUCT_INFO_REL_PATH: &str = "Resources/product-info.json";
+
+#[cfg(target_os = "windows")]
+const PATH_MACRO: &str = "%IDE_HOME%";
+#[cfg(target_os = "macos")]
+const PATH_MACRO: &str = "$APP_PACKAGE/Contents";
+#[cfg(target_os = "linux")]
+const PATH_MACRO: &str = "$IDE_HOME";
 
 pub struct DefaultLaunchConfiguration {
     pub product_info: ProductInfo,
@@ -38,7 +49,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
         vm_options.extend_from_slice(&self.product_info.launch[0].additionalJvmArguments);
 
         for vm_option in vm_options.iter_mut() {
-            *vm_option = self.expand_vars(&vm_option)?;
+            *vm_option = self.expand_path_macro(&vm_option)?;
         }
 
         Ok(vm_options)
@@ -58,11 +69,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
     }
 
     fn prepare_for_launch(&self) -> Result<PathBuf> {
-        let java_executable = self.locate_runtime()?;
-        let java_home = java_executable
-            .parent_or_err()?
-            .parent_or_err()?;
-
+        let java_home = self.locate_runtime()?;
         return strip_nt_prefix(java_home);
     }
 }
@@ -178,7 +185,7 @@ impl DefaultLaunchConfiguration {
     }
 
     fn get_runtime_from_user_config(&self) -> Result<PathBuf> {
-        let config_ext = if env::consts::OS == "windows" { "64.exe.jdk" } else { ".jdk" };
+        let config_ext = if cfg!(target_os = "windows") { "64.exe.jdk" } else { ".jdk" };
         let config_name = self.launcher_base_name.to_owned() + config_ext;
         let config_path = self.user_config_dir.join(config_name);
         debug!("Reading {config_path:?}");
@@ -196,14 +203,15 @@ impl DefaultLaunchConfiguration {
     }
 
     fn check_runtime_dir(runtime_home: &Path) -> Result<PathBuf> {
-        let java_executable = get_bin_java_path(&runtime_home);
+        let adjusted_home = if cfg!(target_os = "macos") { runtime_home.join("Contents/Home") } else { runtime_home.to_path_buf() };
+        let java_executable = adjusted_home.join(if cfg!(target_os = "windows") { "bin\\java.exe" } else { "bin/java" });
         if !java_executable.exists() {
             bail!("Java executable not found at {java_executable:?}");
         }
         if !is_executable(&java_executable)? {
             bail!("Not an executable file: {java_executable:?}");
         }
-        Ok(java_executable)
+        Ok(adjusted_home)
     }
 
     /// Reads VM options from both distribution and user-specific files and puts them into the given vector.
@@ -260,7 +268,7 @@ impl DefaultLaunchConfiguration {
     /// Looks for user-editable config files near the installation (Toolbox-style)
     /// or under the OS standard configuration directory.
     fn get_user_vm_options_file(&self) -> Result<PathBuf> {
-        let real_ide_home = if env::consts::OS == "macos" { self.ide_home.parent().unwrap() } else { &self.ide_home };
+        let real_ide_home = if cfg!(target_os = "macos") { self.ide_home.parent().unwrap() } else { &self.ide_home };
         let tb_file_base = real_ide_home.file_name().unwrap().to_str().unwrap();
         let tb_file_path = real_ide_home.parent().unwrap().join(tb_file_base.to_string() + ".vmoptions");
         debug!("Checking {:?}", tb_file_path);
@@ -278,31 +286,10 @@ impl DefaultLaunchConfiguration {
         bail!("User-editable config files not found");
     }
 
-    fn expand_vars(&self, value: &str) -> Result<String> {
-        let (from, to) = match env::consts::OS {
-            "macos"   => ("$APP_PACKAGE/Contents", self.ide_home.to_string_lossy()),
-            "windows" => ("%IDE_HOME%", self.ide_home.to_string_lossy()),
-            "linux"   => return Ok(value.to_string()),
-            unsupported_os => bail!("Unsupported OS: {unsupported_os}"),
-        };
-
-        Ok(value.replace(from, &to))
+    fn expand_path_macro(&self, value: &str) -> Result<String> {
+        let ide_home_path = self.ide_home.to_string_checked()?;
+        Ok(value.replace(PATH_MACRO, &ide_home_path))
     }
-}
-
-#[cfg(target_os = "linux")]
-fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home.join("bin/java")
-}
-
-#[cfg(target_os = "windows")]
-fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home.join("bin\\java.exe")
-}
-
-#[cfg(target_os = "macos")]
-fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home.join("Contents/Home/bin/java")
 }
 
 fn read_vm_options(path: &Path) -> Result<Vec<String>> {
@@ -338,13 +325,12 @@ fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
 }
 
 fn find_ide_home(current_exe: &Path) -> Result<(PathBuf, PathBuf)> {
-    let product_info_rel_path = if env::consts::OS == "macos" { "Resources/product-info.json" } else { "product-info.json" };
-    debug!("Looking for: '{product_info_rel_path}'");
+    debug!("Looking for: '{PRODUCT_INFO_REL_PATH}'");
 
     let mut candidate = current_exe.parent_or_err()?;
     for _ in 0..IDE_HOME_LOOKUP_DEPTH {
         debug!("Probing for IDE home: {:?}", candidate);
-        let product_info_path = candidate.join(product_info_rel_path);
+        let product_info_path = candidate.join(PRODUCT_INFO_REL_PATH);
         if product_info_path.is_file() {
             return Ok((candidate, product_info_path))
         }
