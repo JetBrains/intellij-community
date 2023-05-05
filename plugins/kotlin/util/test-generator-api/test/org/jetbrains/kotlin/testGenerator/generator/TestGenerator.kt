@@ -120,8 +120,7 @@ object TestGenerator {
     }
 
     private fun Code.appendCopyrightComment() {
-        val year = GregorianCalendar()[Calendar.YEAR]
-        appendLine("// Copyright 2000-$year JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.")
+        appendLine("// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.")
     }
 
     private fun Code.appendGeneratedComment() {
