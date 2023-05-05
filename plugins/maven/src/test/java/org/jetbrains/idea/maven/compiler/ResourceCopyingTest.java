@@ -250,7 +250,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
                       <resources>
                         <resource>
                           <directory>res</directory>
-                          <targetPath>${build.directory}/anotherDir</targetPath>
+                          <targetPath>${project.build.directory}/anotherDir</targetPath>
                         </resource>
                       </resources>
                     </build>
