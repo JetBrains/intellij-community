@@ -509,7 +509,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ForceStepOver = load("expui/run/forceStepOver.svg", -1300469741, 2);
     /** 16x16 */ public static final @NotNull Icon KillProcess = load("expui/run/killProcess.svg", -661978304, 2);
     /** 16x16 */ public static final @NotNull Icon MuteBreakpoints = load("expui/run/muteBreakpoints.svg", 329835156, 2);
-    /** 16x16 */ public static final @NotNull Icon Pause = load("expui/run/pause.svg", -435575173, 2);
+    /** 16x16 */ public static final @NotNull Icon Pause = load("expui/run/pause.svg", -1020250486, 2);
     /** 17x16 */ public static final @NotNull Icon Profile = load("expui/run/profile.svg", 1642362785, 2);
     /** 17x16 */ public static final @NotNull Icon Rerun = load("expui/run/rerun.svg", -845686263, 10);
     /** 16x16 */ public static final @NotNull Icon Restart = load("expui/run/restart.svg", 1372553357, 2);
