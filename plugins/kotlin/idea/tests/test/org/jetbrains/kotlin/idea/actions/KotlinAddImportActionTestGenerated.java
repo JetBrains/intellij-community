@@ -163,6 +163,11 @@ public class KotlinAddImportActionTestGenerated extends AbstractKotlinAddImportA
         runTest("testData/idea/actions/kotlinAddImportAction/SingleMethodAvailable.kt");
     }
 
+    @TestMetadata("TypeAlias.kt")
+    public void testTypeAlias() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/TypeAlias.kt");
+    }
+
     @TestMetadata("Varargs.kt")
     public void testVarargs() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/Varargs.kt");

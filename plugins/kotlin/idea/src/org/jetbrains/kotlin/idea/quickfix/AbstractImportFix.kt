@@ -28,6 +28,7 @@ import com.intellij.util.Processors
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.impl.AbstractTypeAliasDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -975,7 +976,11 @@ private fun KotlinIndicesHelper.getClassesByName(expressionForPlatform: KtExpres
     }
 
 private fun CallTypeAndReceiver<*, *>.toFilter() = { descriptor: DeclarationDescriptor ->
-    callType.descriptorKindFilter.accepts(descriptor)
+    val kindFilter = callType.descriptorKindFilter
+    kindFilter.accepts(descriptor) || ((descriptor as? AbstractTypeAliasDescriptor)?.let {
+        val containingDeclaration = descriptor.containingDeclaration
+        kindFilter.accepts(containingDeclaration)
+    } ?: false)
 }
 
 object AbstractImportFixInfo {
