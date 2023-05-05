@@ -485,7 +485,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
             }
           }
         }
-      };
+      }
       BytecodeVisitor bytecodeVisitor = new BytecodeVisitor();
       MethodBytecodeUtil.visit(location.method(), bytecodeVisitor, true);
 
