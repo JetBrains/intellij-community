@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.actions.createKotlinFileFromTemplate
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.getPackage
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
@@ -31,6 +30,7 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
+import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.core.quoteSegmentsIfNeeded
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.introduce.insertDeclaration
@@ -141,8 +141,8 @@ class ExtractSuperRefactoring(
             val elementsToMove = getElementsToMove(memberInfos, originalClass, isExtractInterface).keys
 
             val moveTarget = if (targetParent is PsiDirectory) {
-              val targetPackage = targetParent.getPackage() ?: return conflicts
-              KotlinMoveTarget.DeferredFile(FqName(targetPackage.qualifiedName), targetParent.virtualFile)
+                val targetPackage = targetParent.getPackage() ?: return conflicts
+                KotlinMoveTarget.DeferredFile(FqName(targetPackage.qualifiedName), targetParent.virtualFile)
             } else {
                 KotlinMoveTarget.ExistingElement(targetParent as KtElement)
             }

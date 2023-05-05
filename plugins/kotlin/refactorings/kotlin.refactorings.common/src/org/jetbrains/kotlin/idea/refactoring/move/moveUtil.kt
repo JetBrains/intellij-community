@@ -23,7 +23,6 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.getPackage
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -54,7 +53,7 @@ fun KtElement.getInternalReferencesToUpdateOnPackageNameChange(containerChangeIn
 
 fun getTargetPackageFqName(targetContainer: PsiElement): FqName? {
     if (targetContainer is PsiDirectory) {
-        val targetPackage = targetContainer.getPackage()
+        val targetPackage = JavaDirectoryService.getInstance()?.getPackage(targetContainer)
         return if (targetPackage != null) FqName(targetPackage.qualifiedName) else null
     }
     return if (targetContainer is KtFile) targetContainer.packageFqName else null
