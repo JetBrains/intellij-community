@@ -143,7 +143,7 @@ internal class LoadedGitLabMergeRequest(
   override val isLoading: Flow<Boolean> = _isLoading.asSharedFlow()
 
   init {
-    cs.launch(cs.coroutineContext + Dispatchers.IO) {
+    cs.launch(Dispatchers.IO) {
       mergeRequestRefreshRequest.collectLatest {
         try {
           _isLoading.value = true
