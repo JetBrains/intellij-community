@@ -26,8 +26,8 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
   init {
     myTaintedAnnotations.addAll(myConfiguration.taintedAnnotations.filterNotNull())
     myUnTaintedAnnotations.addAll(myConfiguration.unTaintedAnnotations.filterNotNull())
-    customFactories.add(fromField(myConfiguration))
     customFactories.add(fromMethod(myConfiguration))
+    customFactories.add(fromField(myConfiguration))
   }
 
 
@@ -46,10 +46,10 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
 
   private fun fromModifierListOwner(modifierListOwner: PsiModifierListOwner): TaintValue {
     val annotationContext = AnnotationContext.fromModifierListOwner(modifierListOwner)
-    return of(annotationContext)
+    return fromAnnotationContext(annotationContext)
   }
 
-  fun of(context: AnnotationContext): TaintValue {
+  fun fromAnnotationContext(context: AnnotationContext): TaintValue {
     val type = context.type
     var info = fromAnnotationOwner(type)
     if (info !== TaintValue.UNKNOWN) return info
@@ -76,7 +76,7 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
     }
     if (info.kind != RestrictionInfoKind.KNOWN) {
       info = context.secondaryItems().asSequence()
-               .flatMap { listOf(fromAnnotation(it), fromAnnotationOwner(it.modifierList)) }
+               .flatMap { listOf(fromElement(it), fromAnnotationOwner(it.modifierList)) }
                .filter { it != null && it !== TaintValue.UNKNOWN }
                .firstOrNull() ?: info
     }
@@ -175,12 +175,13 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
     return if ((whenAttribute.evaluate() as? Pair<*, *>)?.second.toString() == "ALWAYS") TaintValue.UNTAINTED else null
   }
 
-  fun fromAnnotation(target: PsiElement?): TaintValue? {
+  fun fromElement(target: PsiElement?): TaintValue? {
     if (target == null) return null
     val type = PsiUtil.getTypeByPsiElement(target) ?: return null
     if (target is PsiClass) return null
     var taintValue = tryFromCustom(target)
     if (taintValue != null) return taintValue
+    if (myTaintedAnnotations.isEmpty() && myUnTaintedAnnotations.isEmpty()) return null
     if (target is PsiModifierListOwner) {
       taintValue = fromModifierListOwner(target)
       if (taintValue === TaintValue.UNKNOWN) taintValue = of(target)
@@ -214,7 +215,7 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
 
   companion object {
 
-    private fun fromMethod(context: UntaintedConfiguration): (PsiElement) -> TaintValue? {
+    private fun fromField(context: UntaintedConfiguration): (PsiElement) -> TaintValue? {
       return {
         var result: TaintValue? = null
         if (it is PsiField) {
@@ -238,7 +239,7 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
       }
     }
 
-    private fun fromField(context: UntaintedConfiguration): (PsiElement) -> TaintValue? {
+    private fun fromMethod(context: UntaintedConfiguration): (PsiElement) -> TaintValue? {
       val methodNames: List<String?> = context.methodNames
       val methodClass: List<String?> = context.methodClass
       val matcher = MethodMatcher()

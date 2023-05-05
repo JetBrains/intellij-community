@@ -34,7 +34,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   private final boolean supportRefactoring;
 
-  PropagateFix(@NotNull PsiElement sourcePsi,
+  public PropagateFix(@NotNull PsiElement sourcePsi,
                @NotNull TaintValueFactory taintValueFactory,
                boolean supportRefactoring) {
     super(sourcePsi);
@@ -129,7 +129,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     if (taintNode.myTaintValue == TaintValue.TAINTED) return false;
     PsiElement psiElement = taintNode.getPsiElement();
     if (psiElement == null) return true;
-    return myTaintValueFactory.fromAnnotation(psiElement) != TaintValue.UNTAINTED;
+    return myTaintValueFactory.fromElement(psiElement) != TaintValue.UNTAINTED;
   }
 
   private static @Nullable Set<@NotNull PsiElement> getPsiElements(@NotNull Collection<TaintNode> toAnnotate) {

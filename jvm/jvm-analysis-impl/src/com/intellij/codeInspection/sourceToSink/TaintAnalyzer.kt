@@ -122,7 +122,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         return previousValue
       }
     }
-    var taintValue: TaintValue = myTaintValueFactory.fromAnnotation(sourceTarget) ?: return TaintValue.UNTAINTED
+    var taintValue: TaintValue = myTaintValueFactory.fromElement(sourceTarget) ?: return TaintValue.UNTAINTED
     if (taintValue !== TaintValue.UNKNOWN) return taintValue
     val value = checkAndPrepareVisited(resolvedUElement)
     if (value != null) return value

@@ -37,7 +37,7 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
   val myUntaintedFieldNames: MutableList<String?> = mutableListOf()
 
   @JvmField
-  var processMethodAsQualifierAndArguments = true
+  var processMethodAsQualifierAndArguments: Boolean = true
 
   @JvmField
   val skipClasses: MutableList<String?> = mutableListOf(
@@ -60,8 +60,7 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
       myUntaintedMethodMatcher.getTable(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.methods"))
         .prefix("myUntaintedMethodMatcher"),
       OptPane.stringList("skipClasses",
-                         JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.safe.class"),
-                         JavaClassValidator()),
+                         JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.safe.class")),
       OptPane.table(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.fields"),
                     OptPane.column("myUntaintedFieldClasses",
                                    InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
@@ -155,7 +154,7 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
       val expressionType: PsiType? = expression.getExpressionType()
       if (expressionType == null || !expressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return
       val annotationContext = AnnotationContext.fromExpression(expression)
-      val contextValue: TaintValue = factory.of(annotationContext)
+      val contextValue: TaintValue = factory.fromAnnotationContext(annotationContext)
       if (contextValue !== TaintValue.UNTAINTED) return
       val taintAnalyzer = TaintAnalyzer(factory)
       var taintValue = try {
