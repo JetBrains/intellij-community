@@ -1,4 +1,5 @@
-package org.checkerframework.checker.tainting.qual
+import org.checkerframework.checker.tainting.qual.Untainted
+import org.checkerframework.checker.tainting.qual.Tainted
 
 class Simple {
   fun simple() {

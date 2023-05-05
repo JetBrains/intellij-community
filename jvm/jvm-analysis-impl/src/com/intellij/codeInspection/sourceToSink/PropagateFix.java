@@ -34,9 +34,9 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   private final boolean supportRefactoring;
 
-   PropagateFix(@NotNull PsiElement sourcePsi,
-                      @NotNull TaintValueFactory taintValueFactory,
-                      boolean supportRefactoring) {
+  PropagateFix(@NotNull PsiElement sourcePsi,
+               @NotNull TaintValueFactory taintValueFactory,
+               boolean supportRefactoring) {
     super(sourcePsi);
     myTaintValueFactory = taintValueFactory;
     this.supportRefactoring = supportRefactoring;
@@ -68,7 +68,13 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     PsiElement reportedElement = uExpression.getSourcePsi();
     if (reportedElement == null) return;
     TaintAnalyzer analyzer = new TaintAnalyzer(myTaintValueFactory);
-    if (analyzer.analyzeExpression(uExpression, false) != TaintValue.UNKNOWN) return;
+    try {
+      TaintValue value = analyzer.analyzeExpression(uExpression, false);
+      if (value != TaintValue.UNKNOWN) return;
+    }
+    catch (DeepTaintAnalyzerException e) {
+      return;
+    }
     PsiElement target = ((UResolvable)uExpression).resolve();
     TaintNode root = new TaintNode(null, target, reportedElement, myTaintValueFactory, true);
     if (ApplicationManager.getApplication().isUnitTestMode()) {

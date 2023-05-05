@@ -75,7 +75,7 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor {
     val scope = GlobalSearchScope.allScope(holder.project)
-    val firstAnnotation: String = untaintedAnnotations.firstOrNull() {
+    val firstAnnotation: String = untaintedAnnotations.firstOrNull {
       it != null && JavaPsiFacade.getInstance(holder.project).findClass(it, scope) != null
     } ?: return PsiElementVisitor.EMPTY_VISITOR
 
@@ -94,7 +94,9 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
                                                    UReturnExpression::class.java,
                                                    UBinaryExpression::class.java,
                                                    ULocalVariable::class.java,
-                                                   UField::class.java),
+                                                   UField::class.java,
+                                                   UDeclarationsExpression::class.java,
+                                                   UParameter::class.java),
                                            directOnly = true)
 
 
@@ -113,6 +115,22 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
     override fun visitReturnExpression(node: UReturnExpression): Boolean {
       processExpression(node.returnExpression)
       return super.visitReturnExpression(node)
+    }
+
+    override fun visitDeclarationsExpression(node: UDeclarationsExpression): Boolean {
+      node.declarations.forEach {
+        when (it) {
+          is UParameter -> processExpression(it.uastInitializer)
+          is ULocalVariable -> processExpression(it.uastInitializer)
+          is UField -> processExpression(it.uastInitializer)
+        }
+      }
+      return super.visitDeclarationsExpression(node)
+    }
+
+    override fun visitParameter(node: UParameter): Boolean {
+      processExpression(node.uastInitializer)
+      return super.visitParameter(node)
     }
 
     override fun visitLocalVariable(node: ULocalVariable): Boolean {
@@ -140,7 +158,14 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
       val contextValue: TaintValue = factory.of(annotationContext)
       if (contextValue !== TaintValue.UNTAINTED) return
       val taintAnalyzer = TaintAnalyzer(factory)
-      var taintValue = taintAnalyzer.analyzeExpression(expression, false)
+      var taintValue = try {
+        taintAnalyzer.analyzeExpression(expression, false)
+      }
+      catch (e: DeepTaintAnalyzerException) {
+        val errorMessage: String = JvmAnalysisBundle.message("jvm.inspections.source.to.sink.flow.too.complex")
+        holder.registerUProblem(expression, errorMessage, *arrayOf(), highlightType = ProblemHighlightType.WEAK_WARNING)
+        return
+      }
       taintValue = taintValue.join(contextValue)
       if (taintValue === TaintValue.UNTAINTED) return
       val errorMessage = JvmAnalysisBundle.message(taintValue.getErrorMessage(annotationContext))

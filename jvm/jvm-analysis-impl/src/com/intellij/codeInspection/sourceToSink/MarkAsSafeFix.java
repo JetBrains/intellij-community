@@ -16,10 +16,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.ObjectUtils;
@@ -28,9 +25,7 @@ import com.intellij.util.containers.MultiMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -78,13 +73,21 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
   @Nullable
   private List<PsiElement> getElementsToMark(@NotNull UExpression uExpression) {
     TaintAnalyzer taintAnalyzer = new TaintAnalyzer(myTaintValueFactory);
-    TaintValue taintValue = taintAnalyzer.analyzeExpression(uExpression, false);
-    if (taintValue != TaintValue.UNKNOWN) return null;
-    return ContainerUtil.map(taintAnalyzer.getNonMarkedElements(), e -> e.myNonMarked);
+    try {
+      TaintValue taintValue = taintAnalyzer.analyzeExpression(uExpression, false);
+      if (taintValue != TaintValue.UNKNOWN) return null;
+    }
+    catch (DeepTaintAnalyzerException e) {
+      return null;
+    }
+    List<PsiElement> elements = new ArrayList<>(ContainerUtil.map(taintAnalyzer.getNonMarkedElements(), e -> e.myNonMarked));
+    ContainerUtil.removeDuplicates(elements);
+    return elements;
   }
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    //noinspection unchecked
     UExpression uExpression =
       (UExpression)UastContextKt.getUastParentOfTypes(previewDescriptor.getStartElement(), new Class[]{UExpression.class});
 
@@ -334,6 +337,12 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
         }
         return true;
       }
+    }
+    UElement sourceUElement = UastContextKt.toUElement(element);
+    if (element instanceof PsiMethod &&
+        sourceUElement != null &&
+        UastContextKt.toUElement(sourceUElement.getSourcePsi()) instanceof UField uField) {
+      element = uField.getJavaPsi();
     }
     JvmModifiersOwner jvmModifiersOwner = ObjectUtils.tryCast(element, JvmModifiersOwner.class);
     if (jvmModifiersOwner == null) return false;

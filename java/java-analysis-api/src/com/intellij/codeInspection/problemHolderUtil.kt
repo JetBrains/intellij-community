@@ -2,10 +2,7 @@
 package com.intellij.codeInspection
 
 import com.intellij.codeInspection.util.InspectionMessage
-import org.jetbrains.uast.UAnchorOwner
-import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.*
 
 @JvmOverloads
 fun ProblemsHolder.registerUProblem(
@@ -48,5 +45,16 @@ fun ProblemsHolder.registerUProblem(
   highlightType: ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 ) {
   val anchor = element.referenceNameElement?.sourcePsi ?: return
+  registerProblem(anchor, descriptionTemplate, highlightType, *fixes)
+}
+
+@JvmOverloads
+fun ProblemsHolder.registerUProblem(
+  element: UExpression,
+  descriptionTemplate: @InspectionMessage String,
+  vararg fixes: LocalQuickFix,
+  highlightType: ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
+  val anchor = element.sourcePsi ?: return
+  if (anchor.textLength == 0) return
   registerProblem(anchor, descriptionTemplate, highlightType, *fixes)
 }

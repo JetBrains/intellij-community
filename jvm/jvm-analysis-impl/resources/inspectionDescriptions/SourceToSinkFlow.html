@@ -1,8 +1,8 @@
 <html><body>
 Reports cases when non-safe string is passed to a method with parameter marked with <code>@Untainted</code> annotations, returned from annotated methods
-or assigned to annotated fields, parameters or local variables.
+or assigned to annotated fields, parameters or local variables. Kotlin `set` and `get` methods for fields are not supported as entry points.
 <p>
-  Safe object is:
+Safe object is:
 <ul>
   <li>a string literal, interface instance or enum object</li>
   <li>a result of a call of a method that is marked as <code>@Untainted</code></li>

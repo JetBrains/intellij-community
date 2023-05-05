@@ -109,7 +109,7 @@ internal class LoggingStringPartEvaluator {
         val visitor = object : AbstractUastVisitor() {
           val used: MutableSet<ULocalVariable> = mutableSetOf()
           override fun visitBinaryExpression(node: UBinaryExpression): Boolean {
-            if (node.operator == UastBinaryOperator.ASSIGN) {
+            if (node.operator is UastBinaryOperator.AssignOperator) {
               val leftOperand = node.leftOperand
               if (leftOperand is USimpleNameReferenceExpression) {
                 val resolveToUElement = leftOperand.resolveToUElement()

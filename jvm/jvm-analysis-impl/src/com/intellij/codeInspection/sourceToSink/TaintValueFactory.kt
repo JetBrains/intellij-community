@@ -5,13 +5,15 @@ import com.intellij.codeInsight.AnnotationTargetUtil
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInspection.restriction.AnnotationContext
-import com.intellij.codeInspection.restriction.RestrictionInfo
+import com.intellij.codeInspection.restriction.RestrictionInfo.RestrictionInfoKind
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtil
 import com.siyeh.ig.psiutils.MethodMatcher
+import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.ULocalVariable
+import org.jetbrains.uast.UVariable
 import org.jetbrains.uast.toUElement
 import kotlin.streams.asSequence
 
@@ -72,18 +74,24 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
         }
       }
     }
-    if (info.kind != RestrictionInfo.RestrictionInfoKind.KNOWN) {
+    if (info.kind != RestrictionInfoKind.KNOWN) {
       info = context.secondaryItems().asSequence()
-               .map { fromAnnotationOwner(it.modifierList) }
-               .filter { it !== TaintValue.UNKNOWN }
+               .flatMap { listOf(fromAnnotation(it), fromAnnotationOwner(it.modifierList)) }
+               .filter { it != null && it !== TaintValue.UNKNOWN }
                .firstOrNull() ?: info
     }
-    if (info === TaintValue.UNKNOWN) {
+    if (info == TaintValue.UNKNOWN) {
       val obj: Any = if (owner is PsiParameter) owner.declarationScope else owner
       val member = (obj as? PsiMember)
       if (member != null) {
         info = of(member)
       }
+    }
+    val toUElement = owner.toUElement()
+    if (info == TaintValue.UNKNOWN && toUElement is UVariable) {
+      return toUElement.uAnnotations
+               .mapNotNull { fromUAnnotation(it) }
+               .firstOrNull { it != TaintValue.UNKNOWN } ?: info
     }
     return info
   }
@@ -126,7 +134,20 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
     if (myTaintedAnnotations.contains(annotationQualifiedName)) {
       return TaintValue.TAINTED
     }
-    return if (myUnTaintedAnnotations.contains(annotationQualifiedName)) {
+    return if (myUnTaintedAnnotations.contains(annotationQualifiedName) && annotationQualifiedName != JAVAX_ANNOTATION_UNTAINTED) {
+      TaintValue.UNTAINTED
+    }
+    else null
+  }
+
+  private fun fromUAnnotation(annotation: UAnnotation): TaintValue? {
+    val annotationQualifiedName = annotation.qualifiedName
+    val fromJsr = processUJsr(annotationQualifiedName, annotation)
+    if (fromJsr != null) return fromJsr
+    if (myTaintedAnnotations.contains(annotationQualifiedName)) {
+      return TaintValue.TAINTED
+    }
+    return if (myUnTaintedAnnotations.contains(annotationQualifiedName) && annotationQualifiedName != JAVAX_ANNOTATION_UNTAINTED) {
       TaintValue.UNTAINTED
     }
     else null
@@ -138,8 +159,20 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
         !myUnTaintedAnnotations.contains(JAVAX_ANNOTATION_UNTAINTED)) {
       return null
     }
-    val whenAttribute = annotation.findAttributeValue("when") ?: return null
-    return if (whenAttribute.textMatches("ALWAYS")) TaintValue.UNTAINTED else null
+    val whenAttribute = annotation.findAttributeValue("when") ?: return TaintValue.UNTAINTED
+    return if (whenAttribute.textMatches("ALWAYS") || whenAttribute.textMatches(
+        "javax.annotation.meta.When.ALWAYS")) TaintValue.UNTAINTED
+    else null
+  }
+
+  private fun processUJsr(qualifiedName: String?, annotation: UAnnotation): TaintValue? {
+    if (qualifiedName == null ||
+        qualifiedName != JAVAX_ANNOTATION_UNTAINTED ||
+        !myUnTaintedAnnotations.contains(JAVAX_ANNOTATION_UNTAINTED)) {
+      return null
+    }
+    val whenAttribute = annotation.findAttributeValue("when") ?: return TaintValue.UNTAINTED
+    return if ((whenAttribute.evaluate() as? Pair<*, *>)?.second.toString() == "ALWAYS") TaintValue.UNTAINTED else null
   }
 
   fun fromAnnotation(target: PsiElement?): TaintValue? {

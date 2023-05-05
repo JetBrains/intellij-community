@@ -98,7 +98,13 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
     TaintAnalyzer taintAnalyzer = new TaintAnalyzer(myTaintValueFactory);
     UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(elementRef, UCallExpression.class, UReferenceExpression.class);
     if(uExpression == null) return Collections.emptyList();
-    TaintValue taintValue = taintAnalyzer.analyzeExpression(uExpression, true);
+    TaintValue taintValue;
+    try {
+      taintValue = taintAnalyzer.analyzeExpression(uExpression, true);
+    }
+    catch (DeepTaintAnalyzerException e) {
+      return Collections.emptyList();
+    }
     myTaintValue = taintValue;
     if (taintValue == TaintValue.UNTAINTED) return Collections.emptyList();
     if (taintValue == TaintValue.TAINTED) {

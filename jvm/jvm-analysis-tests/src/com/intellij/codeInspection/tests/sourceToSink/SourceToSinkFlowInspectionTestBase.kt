@@ -7,6 +7,6 @@ abstract class SourceToSinkFlowInspectionTestBase : TaintedTestBase() {
   override val inspection: SourceToSinkFlowInspection =  SourceToSinkFlowInspection()
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
-    return JAVA_8
+    return JAVA_19
   }
 }
