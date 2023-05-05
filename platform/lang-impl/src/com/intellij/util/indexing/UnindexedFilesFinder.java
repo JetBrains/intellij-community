@@ -182,11 +182,16 @@ final class UnindexedFilesFinder {
                         ("indexing state = " + myFileBasedIndex.getIndexingState(indexedFile, indexId)));
                     }
 
-                    if (!tryIndexWithoutContent(indexedFile, inputId, indexId, fileStatusBuilder)) {
-                      fileStatusBuilder.shouldIndex = true;
-                      // NOTE! Do not break the loop here. We must process ALL IDs and pass them to the FileIndexingStatusProcessor
-                      // so that it can invalidate all "indexing states" (by means of clearing IndexingStamp)
-                      // for all indexes that became invalid. See IDEA-252846 for more details.
+                    if (myFileBasedIndex.acceptsInput(indexId, indexedFile)) {
+                      if (!tryIndexWithoutContent(indexedFile, inputId, indexId, fileStatusBuilder)) {
+                        // NOTE! Do not break the loop here. We must process ALL IDs and pass them to the FileIndexingStatusProcessor
+                        // so that it can invalidate all "indexing states" (by means of clearing IndexingStamp)
+                        // for all indexes that became invalid. See IDEA-252846 for more details.
+                        fileStatusBuilder.shouldIndex = true;
+                      }
+                    } else {
+                      boolean removed = removeIndexedValue(indexedFile, inputId, indexId, fileStatusBuilder);
+                      LOG.assertTrue(removed, "Failed to remove value from content index");
                     }
                   }
                 }
