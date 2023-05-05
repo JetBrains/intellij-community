@@ -408,27 +408,34 @@ interface DataWriterFilter {
 
 interface DataWriter {
   // LineSeparator cannot be used because custom (with an indent) line separator can be used
-  fun write(output: OutputStream, lineSeparator: String = LineSeparator.LF.separatorString, filter: DataWriterFilter? = null)
+  fun write(output: OutputStream, lineSeparator: LineSeparator = LineSeparator.LF, filter: DataWriterFilter? = null)
 
   fun hasData(filter: DataWriterFilter): Boolean
 }
 
-internal fun DataWriter?.writeTo(file: Path, requestor: Any?, lineSeparator: String = LineSeparator.LF.separatorString) {
+internal fun DataWriter?.writeTo(file: Path,
+                                 requestor: Any?,
+                                 lineSeparator: LineSeparator = LineSeparator.LF,
+                                 useXmlProlog: Boolean = false) {
   if (this == null) {
     file.delete()
   }
   else {
     val safe = SafeWriteRequestor.shouldUseSafeWrite(requestor)
     (if (safe) file.safeOutputStream() else file.outputStream()).use {
+      if (useXmlProlog) {
+        it.write(XML_PROLOG)
+        it.write(lineSeparator.separatorBytes)
+      }
       write(it, lineSeparator)
     }
   }
 }
 
 internal abstract class StringDataWriter : DataWriter {
-  final override fun write(output: OutputStream, lineSeparator: String, filter: DataWriterFilter?) {
+  final override fun write(output: OutputStream, lineSeparator: LineSeparator, filter: DataWriterFilter?) {
     output.bufferedWriter().use {
-      write(it, lineSeparator, filter)
+      write(it, lineSeparator.separatorString, filter)
     }
   }
 
@@ -437,7 +444,7 @@ internal abstract class StringDataWriter : DataWriter {
 
 internal fun DataWriter.toBufferExposingByteArray(lineSeparator: LineSeparator = LineSeparator.LF): BufferExposingByteArrayOutputStream {
   val out = BufferExposingByteArrayOutputStream(1024)
-  out.use { write(out, lineSeparator.separatorString) }
+  out.use { write(out, lineSeparator) }
   return out
 }
 
@@ -446,9 +453,9 @@ internal fun createDataWriterForElement(element: Element, storageFilePathForDebu
   return object: DataWriter {
     override fun hasData(filter: DataWriterFilter) = filter.hasData(element)
 
-    override fun write(output: OutputStream, lineSeparator: String, filter: DataWriterFilter?) {
+    override fun write(output: OutputStream, lineSeparator: LineSeparator, filter: DataWriterFilter?) {
       output.bufferedWriter().use {
-        JbXmlOutputter(lineSeparator, elementFilter = filter?.toElementFilter(), storageFilePathForDebugPurposes = storageFilePathForDebugPurposes).output(element, it)
+        JbXmlOutputter(lineSeparator.separatorString, elementFilter = filter?.toElementFilter(), storageFilePathForDebugPurposes = storageFilePathForDebugPurposes).output(element, it)
       }
     }
   }
