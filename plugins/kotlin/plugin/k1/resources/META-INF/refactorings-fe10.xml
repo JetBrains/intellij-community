@@ -62,9 +62,6 @@
             order="first" />
 
     <refactoring.moveClassHandler
-            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinClassHandler"
-            order="first"/>
-    <refactoring.moveClassHandler
             implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinAliasClassHandler"
             order="first"/>
 

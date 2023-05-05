@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories
+package org.jetbrains.kotlin.idea.refactoring.move.java
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDirectory
@@ -23,10 +23,7 @@ class MoveKotlinClassHandler : MoveClassHandler {
         }
     }
 
-    override fun prepareMove(aClass: PsiClass) {
-    }
+    override fun prepareMove(aClass: PsiClass) {}
 
-    override fun finishMoveClass(aClass: PsiClass) {
-    }
-
+    override fun finishMoveClass(aClass: PsiClass) {}
 }

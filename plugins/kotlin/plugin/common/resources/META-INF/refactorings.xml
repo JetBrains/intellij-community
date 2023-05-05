@@ -41,6 +41,9 @@
     <refactoring.moveInnerClassUsagesHandler
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.move.java.MoveJavaInnerClassKotlinUsagesHandler"/>
+    <refactoring.moveClassHandler
+            order="first"
+            implementation="org.jetbrains.kotlin.idea.refactoring.move.java.MoveKotlinClassHandler"/>
 
   </extensions>
 
