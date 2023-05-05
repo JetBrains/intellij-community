@@ -65,11 +65,12 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParametersProvider.provide(parameters)
 
         if (shouldSuppressCompletion(parameters.ijParameters, result.prefixMatcher)) return
-        val resultSet = createResultSet(parameters, result)
+        val positionContext = FirPositionCompletionContextDetector.detect(parameters.ijParameters.position)
+        val resultSet = createResultSet(parameters, positionContext, result)
 
         val basicContext = FirBasicCompletionContext.createFromParameters(parameters, resultSet) ?: return
 
-        val positionContext = FirPositionCompletionContextDetector.detect(basicContext)
+
 
         FirPositionCompletionContextDetector.analyzeInContext(basicContext, positionContext) {
             recordOriginalFile(basicContext)
@@ -97,19 +98,26 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         fakeFile.recordOriginalKtFile(originalFile)
     }
 
-    private fun createResultSet(parameters: KotlinFirCompletionParameters, result: CompletionResultSet): CompletionResultSet {
+    private fun createResultSet(
+        parameters: KotlinFirCompletionParameters,
+        positionContext: FirRawPositionCompletionContext,
+        result: CompletionResultSet
+    ): CompletionResultSet {
         val prefix = CompletionUtil.findIdentifierPrefix(
             parameters.ijParameters.position.containingFile,
             parameters.ijParameters.offset,
             kotlinIdentifierPartPattern(),
             kotlinIdentifierStartPattern()
         )
-        return result.withRelevanceSorter(createSorter(parameters.ijParameters, result)).withPrefixMatcher(prefix)
+        return result.withRelevanceSorter(createSorter(parameters.ijParameters, positionContext, result)).withPrefixMatcher(prefix)
     }
 
-    private fun createSorter(parameters: CompletionParameters, result: CompletionResultSet): CompletionSorter =
-        CompletionSorter.defaultSorter(parameters, result.prefixMatcher)
-            .let(Weighers::addWeighersToCompletionSorter)
+    private fun createSorter(
+        parameters: CompletionParameters,
+        positionContext: FirRawPositionCompletionContext,
+        result: CompletionResultSet
+    ): CompletionSorter = CompletionSorter.defaultSorter(parameters, result.prefixMatcher)
+            .let { Weighers.addWeighersToCompletionSorter(it, positionContext) }
 
     private val AFTER_NUMBER_LITERAL = PsiJavaPatterns.psiElement().afterLeafSkipping(
         PsiJavaPatterns.psiElement().withText(""),

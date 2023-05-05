@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 class B {
     open fun foo1(): String = ""
     open fun foo2(): String = ""

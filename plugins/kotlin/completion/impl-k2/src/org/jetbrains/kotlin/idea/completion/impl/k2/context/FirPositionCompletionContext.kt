@@ -199,8 +199,7 @@ internal class FirUnknownPositionContext(
 ) : FirRawPositionCompletionContext()
 
 internal object FirPositionCompletionContextDetector {
-    fun detect(basicContext: FirBasicCompletionContext): FirRawPositionCompletionContext {
-        val position = basicContext.parameters.position
+    fun detect(position: PsiElement): FirRawPositionCompletionContext {
         return detectForPositionWithSimpleNameReference(position)
             ?: detectForPositionWithKDocReference(position)
             ?: detectForPositionWithoutReference(position)

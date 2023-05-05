@@ -138,13 +138,13 @@ internal object Completions {
             val receiver = positionContext.superExpression
 
             // Implicit receivers do not match for this position completion context.
-            WeighingContext.createWeighingContext(receiver, expectedType, implicitReceivers = emptyList(), basicContext.fakeKtFile)
+            WeighingContext.createWeighingContext(receiver, expectedType, implicitReceivers = emptyList(), positionContext.position)
         }
 
         is FirExpressionNameReferencePositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
         is FirInfixCallPositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
 
-        else -> WeighingContext.createEmptyWeighingContext(basicContext.fakeKtFile)
+        else -> WeighingContext.createEmptyWeighingContext(positionContext.position)
     }
 
     private fun KtAnalysisSession.createWeighingContextForNameReference(
@@ -155,7 +155,7 @@ internal object Completions {
         val receiver = positionContext.explicitReceiver
         val implicitReceivers = basicContext.originalKtFile.getScopeContextForPosition(positionContext.nameExpression).implicitReceivers
 
-        return WeighingContext.createWeighingContext(receiver, expectedType, implicitReceivers, basicContext.fakeKtFile)
+        return WeighingContext.createWeighingContext(receiver, expectedType, implicitReceivers, positionContext.position)
     }
 }
 
