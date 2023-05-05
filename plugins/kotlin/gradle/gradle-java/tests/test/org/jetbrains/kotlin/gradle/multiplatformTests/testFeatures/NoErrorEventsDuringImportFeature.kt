@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeatureWithSetUpTearDown
+import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.findMostSpecificExistingFileOrNewDefault
 import org.jetbrains.kotlin.idea.codeInsight.gradle.ImportStatusCollector
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import java.io.File
 
 /**
  * Records all error-events received during import and compares them with the expected
@@ -31,11 +31,14 @@ internal object NoErrorEventsDuringImportFeature : TestFeatureWithSetUpTearDown<
     }
 
     override fun KotlinMppTestsContext.afterImport() {
-        checkImportErrors(testDataDirectory)
-    }
-
-    fun checkImportErrors(testDataDirectory: File) {
-        val expectedFailure = File(testDataDirectory, "importErrors.txt")
+        val expectedFailure = findMostSpecificExistingFileOrNewDefault(
+            "importErrors",
+            testDataDirectory,
+            kgpVersion,
+            gradleVersion.version,
+            agpVersion,
+            testConfiguration
+        )
         val buildErrors = importStatusCollector!!.buildErrors
         when {
             !expectedFailure.exists() && buildErrors.isEmpty() -> return
