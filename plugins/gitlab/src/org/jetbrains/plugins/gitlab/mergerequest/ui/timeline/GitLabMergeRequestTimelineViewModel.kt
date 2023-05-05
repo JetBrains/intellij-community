@@ -17,7 +17,6 @@ import org.jetbrains.plugins.gitlab.ui.comment.DelegatingGitLabNoteEditingViewMo
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.forNewNote
 import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
-import java.util.concurrent.ConcurrentLinkedQueue
 
 interface GitLabMergeRequestTimelineViewModel {
   val currentUser: GitLabUserDTO
@@ -108,28 +107,13 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   /**
    * Load all simple events and discussions and subscribe to user discussions changes
    */
-  private fun CoroutineScope.createItemsFlow(mr: GitLabMergeRequest): Flow<List<GitLabMergeRequestTimelineItem>> {
-    val simpleEvents = flow {
-      val vms = ConcurrentLinkedQueue<GitLabMergeRequestTimelineItem>()
-      launch {
-        mr.getStateEvents()
-          .map { GitLabMergeRequestTimelineItem.StateEvent(it) }
-          .also { vms.addAll(it) }
+  private fun createItemsFlow(mr: GitLabMergeRequest): Flow<List<GitLabMergeRequestTimelineItem>> {
+    val simpleEvents: Flow<List<GitLabMergeRequestTimelineItem.Immutable>> =
+      combine(mr.stateEvents, mr.labelEvents, mr.milestoneEvents) { state, labels, miles ->
+        state.map(GitLabMergeRequestTimelineItem::StateEvent) +
+        labels.map(GitLabMergeRequestTimelineItem::LabelEvent) +
+        miles.map(GitLabMergeRequestTimelineItem::MilestoneEvent)
       }
-
-      launch {
-        mr.getLabelEvents()
-          .map { GitLabMergeRequestTimelineItem.LabelEvent(it) }
-          .also { vms.addAll(it) }
-      }
-
-      launch {
-        mr.getMilestoneEvents()
-          .map { GitLabMergeRequestTimelineItem.MilestoneEvent(it) }
-          .also { vms.addAll(it) }
-      }
-      emit(vms)
-    }.flowOn(Dispatchers.IO)
 
     return combine(simpleEvents, mr.systemNotes, mr.discussions, mr.standaloneDraftNotes) { events, systemNotes, discussions, draftNotes ->
       (events +

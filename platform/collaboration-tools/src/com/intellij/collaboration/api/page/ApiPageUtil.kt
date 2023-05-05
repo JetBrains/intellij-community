@@ -29,13 +29,13 @@ object ApiPageUtil {
       }
     }
 
-  fun <T> createPagesFlowByLinkHeader(initialURI: URI, request: suspend (URI) -> HttpResponse<T>): Flow<T> =
+  fun <T> createPagesFlowByLinkHeader(initialURI: URI, request: suspend (URI) -> HttpResponse<T>): Flow<HttpResponse<T>> =
     flow {
       var loadPage: (suspend () -> HttpResponse<T>)? = { request(initialURI) }
       while (loadPage != null) {
         val response: HttpResponse<T> = loadPage()
         val linkHeader = response.headers().firstValue(LinkHttpHeaderValue.HEADER_NAME).orElse(null)?.let(LinkHttpHeaderValue::parse)
-        emit(response.body())
+        emit(response)
         loadPage = linkHeader?.nextLink?.let {
           { request(URI(it)) }
         }

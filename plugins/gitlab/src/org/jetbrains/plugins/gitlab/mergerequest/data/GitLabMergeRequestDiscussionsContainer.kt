@@ -141,7 +141,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   private suspend fun loadDraftNotes(): List<GitLabMergeRequestDraftNoteRestDTO> =
     ApiPageUtil.createPagesFlowByLinkHeader(getMergeRequestDraftNotesUri(project, mr.id)) {
       api.loadMergeRequestDraftNotes(it)
-    }.foldToList()
+    }.map { it.body() }.foldToList()
 
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
