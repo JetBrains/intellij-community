@@ -499,6 +499,60 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
                int j;
              }""",
            "@noinspection", "@version");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.any.boxing")),
+                                                     """
+                                                       class X {
+                                                         Number n = 1;
+                                                       }
+                                                       """,
+                                                     "1");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.any.unboxing")),
+           """
+             class X {
+               int n = Integer.valueOf(1);
+             }
+             """,
+           "Integer.valueOf(1)");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.boxing.in.method.calls")),
+           """
+             class X {
+               void x(Number n) {
+               }
+               void y() {
+                 x(1);
+               }
+             }
+             """,
+           "x(1)");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.unboxing.in.method.calls")),
+           """
+             class X {
+               void x(int n) {
+               }
+               void y(Integer i) {
+                 x(i);
+               }
+             }
+             """,
+           "x(i)");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.unboxing.in.declarations")),
+           """
+             /** @noinspection ALL*/
+             class X {
+               private int x = Integer.valueOf(1);
+               private Integer y = 1;
+             }
+             """,
+           "private int x = Integer.valueOf(1);");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.boxing.in.declarations")),
+           """
+             /** @noinspection ALL*/
+             class X {
+               private int x = Integer.valueOf(1);
+               private Integer y = 1;
+             }
+             """,
+           "private Integer y = 1;");
     //assertTrue((templates.length - configurationMap.size()) + " of " + templates.length +
     //           " existing templates tested. Untested templates: " + configurationMap.keySet(), configurationMap.isEmpty());
   }
