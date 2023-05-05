@@ -459,9 +459,9 @@ internal class MutableEntityStorageImpl(
    * The proper fix for the case above is to create two events: modify A and create B. However, at the moment this will cause more
    *   roots changed events and at least will break some tests.
    */
-  override fun collectChanges(original: EntityStorage): Map<Class<*>, List<EntityChange<*>>> {
+  override fun collectChanges(original: EntityStorage): Map<Class<*>, Set<EntityChange<*>>> {
     val start = System.currentTimeMillis()
-    val res = HashMap<Class<*>, MutableList<EntityChange<*>>>()
+    val res = HashMap<Class<*>, MutableSet<EntityChange<*>>>()
 
     try {
       lockWrite()
@@ -489,7 +489,7 @@ internal class MutableEntityStorageImpl(
           else -> null
         }
         if (event != null) {
-          res.getOrPut(entityClass) { ArrayList() }.add(event)
+          res.getOrPut(entityClass) { HashSet() }.add(event)
         }
       }
     }

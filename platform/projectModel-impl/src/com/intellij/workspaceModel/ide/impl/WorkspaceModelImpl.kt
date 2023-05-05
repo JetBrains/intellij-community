@@ -144,7 +144,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
         startPreUpdateHandlers(before, builder)
       }
 
-      val changes: Map<Class<*>, List<EntityChange<*>>>
+      val changes: Map<Class<*>, Set<EntityChange<*>>>
       collectChangesTimeMillis = measureTimeMillis {
         changes = builder.collectChanges(before)
       }
@@ -313,7 +313,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
   final override fun dispose() = Unit
 
-  private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
+  private fun initializeBridges(change: Map<Class<*>, Set<EntityChange<*>>>, builder: MutableEntityStorage) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
 

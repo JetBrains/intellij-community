@@ -181,7 +181,7 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
    */
   @Synchronized
   fun replace(newStorage: EntityStorageSnapshot,
-              changes: Map<Class<*>, List<EntityChange<*>>>,
+              changes: Map<Class<*>, Set<EntityChange<*>>>,
               beforeChanged: (VersionedStorageChange) -> Unit,
               afterChanged: (VersionedStorageChange) -> Unit): VersionedStorageChange? {
     val oldCopy = currentPointer
@@ -197,11 +197,12 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
 private class VersionedStorageChangeImpl(entityStorage: VersionedEntityStorage,
                                          override val storageBefore: EntityStorageSnapshot,
                                          override val storageAfter: EntityStorageSnapshot,
-                                         private val changes: Map<Class<*>, List<EntityChange<*>>>) : VersionedStorageChange(
+                                         private val changes: Map<Class<*>, Set<EntityChange<*>>>) : VersionedStorageChange(
   entityStorage) {
   @Suppress("UNCHECKED_CAST")
-  override fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>> =
-    (changes[entityClass] as? List<EntityChange<T>>) ?: emptyList()
+  override fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): Set<EntityChange<T>> {
+    return (changes[entityClass] as? Set<EntityChange<T>>) ?: emptySet()
+  }
 
   override fun getAllChanges(): Sequence<EntityChange<*>> = changes.values.asSequence().flatten()
 }

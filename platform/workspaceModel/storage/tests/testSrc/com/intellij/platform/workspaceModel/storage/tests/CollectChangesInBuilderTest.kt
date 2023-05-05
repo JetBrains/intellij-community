@@ -7,6 +7,7 @@ import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.toBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -42,7 +43,7 @@ class CollectChangesInBuilderTest {
     builder.addEntity(SecondSampleEntity(2, SampleEntitySource("test")))
     builder.removeEntity(initialStorage.singleSampleEntity())
     builder.removeEntity(initialStorage.entities(SecondSampleEntity::class.java).single())
-    val changes = assertChangelogSize(4).getValue(SampleEntity::class.java) as List<EntityChange<SampleEntity>>
+    val changes = assertChangelogSize(4).getValue(SampleEntity::class.java) as Set<EntityChange<SampleEntity>>
     val change1 = changes.single { it is EntityChange.Added }
     val change2 = changes.single { it is EntityChange.Removed }
     assertEquals("added", (change1 as EntityChange.Added).entity.stringProperty)
@@ -224,17 +225,43 @@ class CollectChangesInBuilderTest {
     assertChangelogSize(1)
   }
 
+  @Test
+  fun `collectChanges for identical entities doesnt squash changes`() {
+    builder addEntity ParentEntity("data", MySource)
+    builder addEntity ParentEntity("data", MySource)
+
+    assertChangelogSize(2)
+
+    val snapshot = builder.toSnapshot()
+    val anotherBuilder = snapshot.toBuilder()
+    anotherBuilder.entities(ParentEntity::class.java).forEach {
+      anotherBuilder.modifyEntity(it) {
+        this.parentData = "data2"
+      }
+    }
+
+    assertChangelogSize(2, anotherBuilder, snapshot)
+
+    val snapshotBeforeRemove = anotherBuilder.toSnapshot()
+    val builderForRemove = snapshotBeforeRemove.toBuilder()
+    builderForRemove.entities(ParentEntity::class.java).toList().forEach {
+      builderForRemove.removeEntity(it)
+    }
+
+    assertChangelogSize(2, builderForRemove, snapshotBeforeRemove)
+  }
+
   private fun assertChangelogSize(size: Int,
                                   myBuilder: MutableEntityStorage = builder,
-                                  original: EntityStorageSnapshot = initialStorage): Map<Class<*>, List<EntityChange<*>>> {
+                                  original: EntityStorageSnapshot = initialStorage): Map<Class<*>, Set<EntityChange<*>>> {
     val changes = myBuilder.collectChanges(original)
     assertEquals(size, changes.values.flatten().size)
     return changes
   }
 
-  private fun collectSampleEntityChanges(): List<EntityChange<SampleEntity>> {
+  private fun collectSampleEntityChanges(): Set<EntityChange<SampleEntity>> {
     val changes = builder.collectChanges(initialStorage)
-    if (changes.isEmpty()) return emptyList()
-    return changes.entries.single().value as List<EntityChange<SampleEntity>>
+    if (changes.isEmpty()) return emptySet()
+    return changes.entries.single().value as Set<EntityChange<SampleEntity>>
   }
 }

@@ -40,7 +40,7 @@ class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
     log.info("Update orphanage. ${changes[ModuleEntity::class.java]?.size ?: 0} modules added")
   }
 
-  private fun checkIfParentsAlreadyExist(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
+  private fun checkIfParentsAlreadyExist(changes: Map<Class<*>, Set<EntityChange<*>>>, builder: MutableEntityStorage) {
     val orphanModules = changes[ModuleEntity::class.java]
                           ?.filterIsInstance<EntityChange.Added<ModuleEntity>>()
                           ?.map { it.entity } ?: return

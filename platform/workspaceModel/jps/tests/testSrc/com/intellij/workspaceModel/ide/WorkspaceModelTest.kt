@@ -7,14 +7,19 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.ParentEntity
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.modifyEntity
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import junit.framework.Assert.*
 import org.junit.Assert
 import org.junit.ClassRule
@@ -206,5 +211,50 @@ class WorkspaceModelTest {
         }
       }
     }
+  }
+
+  @Test
+  fun `identical entities are not squashed in events`() {
+    val result = HashSet<EntityChange<*>>()
+    projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        result.clear()
+        result.addAll(event.getAllChanges())
+      }
+    })
+
+    val model = WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl
+    model.userWarningLoggingLevel = true
+
+    runWriteActionAndWait {
+      model.updateProjectModel {
+        it addEntity ParentEntity("data", MySource)
+        it addEntity ParentEntity("data", MySource)
+      }
+    }
+
+    assertEquals(2, result.size)
+
+    runWriteActionAndWait {
+      model.updateProjectModel { builder ->
+        builder.entities(ParentEntity::class.java).toList().forEach {
+          builder.modifyEntity(it) {
+            this.parentData = "data2"
+          }
+        }
+      }
+    }
+
+    assertEquals(2, result.size)
+
+    runWriteActionAndWait {
+      model.updateProjectModel { builder ->
+        builder.entities(ParentEntity::class.java).toList().forEach {
+          builder.removeEntity(it)
+        }
+      }
+    }
+
+    assertEquals(2, result.size)
   }
 }

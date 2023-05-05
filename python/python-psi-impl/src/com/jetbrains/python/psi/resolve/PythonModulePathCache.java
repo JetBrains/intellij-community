@@ -19,7 +19,7 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Set;
 
 
 public final class PythonModulePathCache extends PythonPathCache implements Disposable {
@@ -62,7 +62,7 @@ public final class PythonModulePathCache extends PythonPathCache implements Disp
       if (!myModule.isDisposed()) {
         updateCacheForSdk(myModule);
       }
-      List<EntityChange<ModuleEntity>> changes = event.getChanges(ModuleEntity.class);
+      Set<EntityChange<ModuleEntity>> changes = event.getChanges(ModuleEntity.class);
       for (EntityChange<ModuleEntity> change : changes) {
         ModuleEntity entity = null;
         if (change instanceof EntityChange.Replaced) {

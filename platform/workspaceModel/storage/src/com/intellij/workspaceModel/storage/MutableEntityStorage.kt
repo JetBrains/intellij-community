@@ -31,7 +31,7 @@ interface MutableEntityStorage : EntityStorage {
    * Return changes in entities recorded in this instance. [original] parameter is used to get the old instances of modified
    *   and removed entities.
    */
-  fun collectChanges(original: EntityStorage): Map<Class<*>, List<EntityChange<*>>>
+  fun collectChanges(original: EntityStorage): Map<Class<*>, Set<EntityChange<*>>>
   fun addDiff(diff: MutableEntityStorage)
 
   /**

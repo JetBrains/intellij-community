@@ -101,7 +101,7 @@ class GlobalWorkspaceModel : Disposable {
       updateTimeMillis = measureTimeMillis {
         updater(builder)
       }
-      val changes: Map<Class<*>, List<EntityChange<*>>>
+      val changes: Map<Class<*>, Set<EntityChange<*>>>
       collectChangesTimeMillis = measureTimeMillis {
         changes = builder.collectChanges(before)
       }
@@ -137,7 +137,7 @@ class GlobalWorkspaceModel : Disposable {
   override fun dispose() = Unit
 
   @RequiresWriteLock
-  private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
+  private fun initializeBridges(change: Map<Class<*>, Set<EntityChange<*>>>, builder: MutableEntityStorage) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     logErrorOnEventHandling {
       GlobalLibraryTableBridge.getInstance().initializeLibraryBridges(change, builder)

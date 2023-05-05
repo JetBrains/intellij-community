@@ -222,7 +222,7 @@ class ArtifactModifiableModelBridge(
     (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).disposePointers(artifacts)
 
     val current = WorkspaceModel.getInstance(project).currentSnapshot
-    val changes = diff.collectChanges(current)[ArtifactEntity::class.java] ?: emptyList()
+    val changes = diff.collectChanges(current)[ArtifactEntity::class.java] ?: emptySet()
 
     val added = mutableListOf<ArtifactBridge>()
     val changed = mutableListOf<ArtifactBridge>()

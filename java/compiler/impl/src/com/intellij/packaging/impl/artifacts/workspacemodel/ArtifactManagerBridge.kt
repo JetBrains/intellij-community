@@ -158,7 +158,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     updateCustomElements(artifactModel.diff)
 
     val current = project.workspaceModel.currentSnapshot
-    val changes = artifactModel.diff.collectChanges(current)[ArtifactEntity::class.java] ?: emptyList()
+    val changes = artifactModel.diff.collectChanges(current)[ArtifactEntity::class.java] ?: emptySet()
 
     val removed = mutableSetOf<ArtifactBridge>()
     val added = mutableListOf<ArtifactBridge>()

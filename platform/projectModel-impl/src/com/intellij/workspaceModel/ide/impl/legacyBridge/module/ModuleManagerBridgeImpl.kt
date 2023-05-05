@@ -463,7 +463,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     diff: MutableEntityStorage?,
   ): ModuleBridge
 
-  abstract fun initializeBridges(event: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage)
+  abstract fun initializeBridges(event: Map<Class<*>, Set<EntityChange<*>>>, builder: MutableEntityStorage)
 
   private inner class LoadedModulesListUpdater : WorkspaceModelChangeListener {
     override fun changed(event: VersionedStorageChange) {
@@ -522,7 +522,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       DFSTBuilder(buildModuleGraph(storage, true)).comparator()
     }
 
-    fun List<EntityChange<LibraryEntity>>.filterModuleLibraryChanges(): List<EntityChange<LibraryEntity>> = filter { it.isModuleLibrary() }
+    fun Collection<EntityChange<LibraryEntity>>.filterModuleLibraryChanges(): List<EntityChange<LibraryEntity>> = filter { it.isModuleLibrary() }
 
     private fun EntityChange<LibraryEntity>.isModuleLibrary(): Boolean {
       return when (this) {

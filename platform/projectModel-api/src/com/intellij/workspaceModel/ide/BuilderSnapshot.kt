@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 class StorageReplacement internal constructor(
   val version: Long,
   val builder: MutableEntityStorage,
-  val changes: Map<Class<*>, List<EntityChange<*>>>
+  val changes: Map<Class<*>, Set<EntityChange<*>>>
 )
 
 class BuilderSnapshot(val version: Long, private val storage: EntityStorageSnapshot) {
