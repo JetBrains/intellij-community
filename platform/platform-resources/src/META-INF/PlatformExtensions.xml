@@ -339,8 +339,6 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.encoding.EncodingManager"
                         serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingManagerImpl"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.PluginManagerUISettings"/>
-    <applicationService serviceImplementation="com.intellij.ide.actions.IdeScaleTransformer"/>
-    <projectService serviceImplementation="com.intellij.ide.actions.ui.ideScaleIndicator.IdeScaleIndicatorManager"/>
     <postStartupActivity implementation="com.intellij.ide.actions.IdeScalePostStartupActivity"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"

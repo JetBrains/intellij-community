@@ -197,7 +197,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     get() {
       val result = when {
         useInterFont() -> defaultInterFont
-        UISettings.getInstance().overrideLafFonts || UISettingsUtils.instance.currentIdeScale != 1f -> storedLafFont
+        UISettings.getInstance().overrideLafFonts || UISettingsUtils.getInstance().currentIdeScale != 1f -> storedLafFont
         else -> null
       }
       return result ?: JBFont.label()
@@ -674,7 +674,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   override fun applyDensity() {
-    val settingsUtils = UISettingsUtils.instance
+    val settingsUtils = UISettingsUtils.getInstance()
     val ideScale = settingsUtils.currentIdeScale
 
     settingsUtils.setCurrentIdeScale(1f) // need to temporarily reset this to correctly apply new size values

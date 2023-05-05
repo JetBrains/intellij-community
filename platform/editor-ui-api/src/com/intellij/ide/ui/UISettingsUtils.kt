@@ -4,14 +4,16 @@ package com.intellij.ide.ui
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.util.ui.JBFont
 
-
 class UISettingsUtils(private val settings: UISettings) {
-  val currentIdeScale get() = if (settings.presentationMode) settings.presentationModeIdeScale else settings.ideScale
+  val currentIdeScale: Float
+    get() = if (settings.presentationMode) settings.presentationModeIdeScale else settings.ideScale
 
   fun setCurrentIdeScale(scale: Float) {
-    if (scale.percentValue == currentIdeScale.percentValue) return
-    if (settings.presentationMode) settings.presentationModeIdeScale = scale
-    else settings.ideScale = scale
+    when {
+      scale.percentValue == currentIdeScale.percentValue -> return
+      settings.presentationMode -> settings.presentationModeIdeScale = scale
+      else -> settings.ideScale = scale
+    }
   }
 
   var presentationModeFontSize: Float
@@ -28,17 +30,18 @@ class UISettingsUtils(private val settings: UISettings) {
 
   fun scaleFontSize(fontSize: Float): Float = scaleFontSize(fontSize, currentIdeScale)
 
-  val currentDefaultScale get() = defaultScale(UISettings.getInstance().presentationMode)
+  val currentDefaultScale: Float
+    get() = defaultScale(UISettings.getInstance().presentationMode)
 
   companion object {
     @JvmStatic
-    val instance: UISettingsUtils get() = UISettingsUtils(UISettings.getInstance())
+    fun getInstance(): UISettingsUtils = UISettingsUtils(UISettings.getInstance())
+
     @JvmStatic
-    fun with(settings: UISettings) = UISettingsUtils(settings)
+    fun with(settings: UISettings): UISettingsUtils = UISettingsUtils(settings)
 
     private val globalSchemeEditorFontSize: Float get() = EditorColorsManager.getInstance().globalScheme.editorFontSize2D
 
-    @JvmStatic
     internal fun presentationModeIdeScaleFromFontSize(fontSize: Float): Float =
       (fontSize / globalSchemeEditorFontSize).let {
         if (it.percentValue == 100) 1f
@@ -55,5 +58,8 @@ class UISettingsUtils(private val settings: UISettings) {
   }
 }
 
-val Float.percentValue get() = (this * 100 + 0.5).toInt()
-val Float.percentStringValue get() = "$percentValue%"
+val Float.percentValue: Int
+  get() = (this * 100 + 0.5).toInt()
+
+val Float.percentStringValue: String
+  get() = "$percentValue%"

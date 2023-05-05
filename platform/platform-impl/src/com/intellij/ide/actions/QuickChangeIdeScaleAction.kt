@@ -24,7 +24,7 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
   private val switchAlarm = Alarm()
 
   override fun fillActions(project: Project?, group: DefaultActionGroup, dataContext: DataContext) {
-    val initialScale = UISettingsUtils.instance.currentIdeScale
+    val initialScale = UISettingsUtils.getInstance().currentIdeScale
 
     val options = IdeScaleTransformer.Settings.currentScaleOptions.toMutableList()
     if (options.firstOrNull { it.percentValue == initialScale.percentValue } == null) {
@@ -44,7 +44,7 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
   }
 
   override fun showPopup(e: AnActionEvent?, popup: ListPopup) {
-    val initialScale = UISettingsUtils.instance.currentIdeScale
+    val initialScale = UISettingsUtils.getInstance().currentIdeScale
     switchAlarm.cancelAllRequests()
 
     popup.addListSelectionListener { event: ListSelectionEvent ->
@@ -77,7 +77,7 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
   }
 
   override fun preselectAction(): Condition<in AnAction?> {
-    return Condition { a: AnAction? -> a is ChangeScaleAction && a.scale.percentValue == UISettingsUtils.instance.currentIdeScale.percentValue }
+    return Condition { a: AnAction? -> a is ChangeScaleAction && a.scale.percentValue == UISettingsUtils.getInstance().currentIdeScale.percentValue }
   }
 
   private class ChangeScaleAction(val scale: Float) : DumbAwareAction(scale.percentStringValue) {
@@ -90,10 +90,10 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
 
   companion object {
     private fun applyUserScale(scale: Float, shouldLog: Boolean) {
-      if (UISettingsUtils.instance.currentIdeScale.percentValue == scale.percentValue) return
+      if (UISettingsUtils.getInstance().currentIdeScale.percentValue == scale.percentValue) return
       if (shouldLog) logIdeZoomChanged(scale)
 
-      UISettingsUtils.instance.setCurrentIdeScale(scale)
+      UISettingsUtils.getInstance().setCurrentIdeScale(scale)
       UISettings.getInstance().fireUISettingsChanged()
     }
 
@@ -103,7 +103,7 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
 
 private fun logIdeZoomChanged(value: Float) {
   IdeZoomChanged.log(
-    IdeZoomEventFields.zoomMode.with(if (value.percentValue > UISettingsUtils.instance.currentIdeScale.percentValue) IdeZoomEventFields.ZoomMode.ZOOM_IN
+    IdeZoomEventFields.zoomMode.with(if (value.percentValue > UISettingsUtils.getInstance().currentIdeScale.percentValue) IdeZoomEventFields.ZoomMode.ZOOM_IN
                                      else IdeZoomEventFields.ZoomMode.ZOOM_OUT),
     IdeZoomEventFields.place.with(IdeZoomEventFields.Place.SWITCHER),
     IdeZoomEventFields.zoomScalePercent.with(value.percentValue),
@@ -114,7 +114,7 @@ private fun logIdeZoomChanged(value: Float) {
 private fun logSwitcherClosed(applied: Boolean) {
   IdeZoomSwitcherClosed.log(
     IdeZoomEventFields.applied.with(applied),
-    IdeZoomEventFields.finalZoomScalePercent.with(UISettingsUtils.instance.currentIdeScale.percentValue),
+    IdeZoomEventFields.finalZoomScalePercent.with(UISettingsUtils.getInstance().currentIdeScale.percentValue),
     IdeZoomEventFields.presentationMode.with(UISettings.getInstance().presentationMode)
   )
 }
