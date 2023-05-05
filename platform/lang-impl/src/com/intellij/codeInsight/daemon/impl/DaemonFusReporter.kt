@@ -23,12 +23,17 @@ import kotlin.math.log10
 import kotlin.math.pow
 
 class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
+  @Volatile
   private var daemonStartTime: Long = -1L
+  @Volatile
   private var dirtyRange: TextRange? = null
   private var initialEntireFileHighlightingActivity: Activity? = null
   private var initialEntireFileHighlightingCompleted: Boolean = false
+  @Volatile
+  private var canceled: Boolean = false
 
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
+    canceled = false
     daemonStartTime = System.currentTimeMillis()
     val editor = fileEditors.filterIsInstance<TextEditor>().firstOrNull()?.editor
     dirtyRange = if (editor == null) {
@@ -41,6 +46,10 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
     if (!initialEntireFileHighlightingCompleted) {
       initialEntireFileHighlightingActivity = StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_HIGHLIGHTED)
     }
+  }
+
+  override fun daemonCancelEventOccurred(reason: String) {
+    canceled = true
   }
 
   override fun daemonFinished(fileEditors: Collection<FileEditor>) {
@@ -83,7 +92,8 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
       DaemonFusCollector.WARNINGS with warningCount,
       DaemonFusCollector.LINES with lines,
       EventFields.FileType with fileType,
-      DaemonFusCollector.ENTIRE_FILE_HIGHLIGHTED with wasEntireFileHighlighted
+      DaemonFusCollector.ENTIRE_FILE_HIGHLIGHTED with wasEntireFileHighlighted,
+      DaemonFusCollector.CANCELED with canceled
     )
   }
 
@@ -105,9 +115,19 @@ class DaemonFusCollector : CounterUsagesCollector() {
     val ERRORS: IntEventField = EventFields.Int("errors")
     val WARNINGS: IntEventField = EventFields.Int("warnings")
     val LINES: IntEventField = EventFields.Int("lines")
+    /**
+     * `true` if the daemon was started with the entire file range,
+     * `false` when the daemon was started with sub-range of the file, for example, after the change inside a code block
+     */
     val ENTIRE_FILE_HIGHLIGHTED: BooleanEventField = EventFields.Boolean("entireFileHighlighted")
+    /**
+     * `true` if the daemon was finished because of some cancellation event (e.g., user tried to type something into the editor).
+     * Usually it means the highlighting results are incomplete.
+     */
+    val CANCELED: BooleanEventField = EventFields.Boolean("canceled")
+
     val FINISHED: VarargEventId = GROUP.registerVarargEvent("finished",
-                                                  EventFields.DurationMs, ERRORS, WARNINGS, LINES, EventFields.FileType, ENTIRE_FILE_HIGHLIGHTED)
+         EventFields.DurationMs, ERRORS, WARNINGS, LINES, EventFields.FileType, ENTIRE_FILE_HIGHLIGHTED, CANCELED)
   }
 
   override fun getGroup(): EventLogGroup {

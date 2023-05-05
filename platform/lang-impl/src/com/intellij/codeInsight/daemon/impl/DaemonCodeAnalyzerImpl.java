@@ -722,8 +722,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       }
     }
     if (canceled) {
-      ApplicationManager.getApplication().invokeLater(() -> myDaemonListenerPublisher.daemonCancelEventOccurred(reason),
-                                                      __->myDisposed || myProject.isDisposed() || myProject.getMessageBus().isDisposed());
+      myDaemonListenerPublisher.daemonCancelEventOccurred(reason);
     }
     daemonCancelEventCount.incrementAndGet();
   }

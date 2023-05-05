@@ -73,6 +73,11 @@ public abstract class DaemonCodeAnalyzer {
       daemonFinished();
     }
 
+    /**
+     * Fired when the daemon is canceled because of user tries to type something into the document or other reasons.
+     * Please don't do anything remotely expensive in your listener implementation because it's called in the background thread under the read action,
+     * and could slow down the highlighting process if it wasn't fast enough.
+     */
     default void daemonCancelEventOccurred(@NotNull String reason) {
     }
 

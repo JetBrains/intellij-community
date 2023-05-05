@@ -6,6 +6,7 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
@@ -405,7 +406,8 @@ final class PassExecutorService implements Disposable {
             log(myUpdateProgress, myPass, "Canceled ");
 
             if (!myUpdateProgress.isCanceled()) {
-              myUpdateProgress.cancel(e); //in case when some smart asses throw PCE just for fun
+              //in case some smart asses throw PCE just for fun
+              ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopProcess(true, "PCE was thrown by visitor");
             }
           }
           catch (RuntimeException | Error e) {
