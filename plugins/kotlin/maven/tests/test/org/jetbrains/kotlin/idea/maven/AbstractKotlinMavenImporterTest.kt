@@ -1531,7 +1531,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             importProject(
                 """
-            <groupId>test</groupId>0
+            <groupId>test</groupId>
             <artifactId>project</artifactId>
             <version>1.0.0</version>
 
@@ -3497,7 +3497,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                             <plugin>
                                 <groupId>org.jetbrains.kotlin</groupId>
                                 <artifactId>kotlin-maven-plugin</artifactId>
-                                ${version?.let { "<version>$it</version>" }}
+                                ${version?.let { "<version>$it</version>" } ?: ""}
 
                                 <executions>
                                     <execution>
