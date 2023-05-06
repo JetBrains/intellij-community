@@ -1130,17 +1130,9 @@ open class FileEditorManagerImpl(
   private fun openFileUsingClient(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     val clientManager = clientFileEditorManager ?: return EMPTY
     val result = clientManager.openFile(file = file, forceCreate = false)
-    val allEditors = result.map { it.fileEditor }
-    val allProviders = result.map { it.provider }
-    return object : FileEditorComposite {
-      override val isPreview: Boolean
-        get() = options.usePreviewTab
-
-      override val allEditors: List<FileEditor>
-        get() = allEditors
-      override val allProviders: List<FileEditorProvider>
-        get() = allProviders
-    }
+    return FileEditorComposite.createFileEditorComposite(allEditors = result.map { it.fileEditor },
+                                                         allProviders = result.map { it.provider },
+                                                         isPreview = options.usePreviewTab)
   }
 
   private fun doOpenInEdtImpl(
