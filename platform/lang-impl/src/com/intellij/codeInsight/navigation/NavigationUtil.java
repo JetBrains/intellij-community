@@ -224,11 +224,9 @@ public final class NavigationUtil {
 
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     boolean wasAlreadyOpen = fileEditorManager.isFileOpen(vFile);
+    FileEditorOpenOptions openOptions = new FileEditorOpenOptions().withRequestFocus(requestFocus).withReuseOpen(searchForOpen);
     if (!wasAlreadyOpen) {
-      fileEditorManager.openFile(
-        vFile, null,
-        new FileEditorOpenOptions().withRequestFocus(requestFocus).withReuseOpen(searchForOpen)
-      );
+      fileEditorManager.openFile(vFile, null, openOptions);
     }
 
     if (range == null) {
@@ -242,7 +240,7 @@ public final class NavigationUtil {
         if (range.containsOffset(offset)) {
           if (wasAlreadyOpen) {
             // select the file
-            fileEditorManager.openFile(vFile, requestFocus, searchForOpen);
+            fileEditorManager.openFile(vFile, null, openOptions);
           }
           return true;
         }

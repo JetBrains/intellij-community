@@ -834,7 +834,16 @@ open class FileEditorManagerImpl(
     if (windowToOpenIn == null) {
       windowToOpenIn = getOrCreateCurrentWindow(file)
     }
-    return openFileImpl2(window = windowToOpenIn, file = file, options = options)
+
+    // see todo in openEditorImpl
+    if (window == null && ClientId.isCurrentlyUnderLocalId) {
+      return runBlockingModal(project, EditorBundle.message("editor.open.file.progress", file.name)) {
+        openFileAsync(window = windowToOpenIn, file = getOriginalFile(file), entry = null, options = options)
+      }
+    }
+    else {
+      return openFileImpl2(window = windowToOpenIn, file = file, options = options)
+    }
   }
 
   override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
