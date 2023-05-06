@@ -241,6 +241,7 @@
 
     <module name="kotlin.searching.k2"/>
     <module name="kotlin.refactorings.k2"/>
+    <module name="kotlin.refactorings.move.k2"/>
     <module name="kotlin.refactorings.rename.k2"/>
 
     <module name="kotlin.navigation"/>

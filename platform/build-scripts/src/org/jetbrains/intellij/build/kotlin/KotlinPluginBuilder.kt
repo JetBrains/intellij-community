@@ -186,6 +186,7 @@ object KotlinPluginBuilder {
     "kotlin.navigation",
     "kotlin.refactorings.common",
     "kotlin.refactorings.k2",
+    "kotlin.refactorings.move.k2",
     "kotlin.refactorings.rename.k2",
     "kotlin.performanceExtendedPlugin",
     "kotlin.bundled-compiler-plugins-support",
