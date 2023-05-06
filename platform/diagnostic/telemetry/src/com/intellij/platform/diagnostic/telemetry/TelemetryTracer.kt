@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
-import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -65,7 +64,7 @@ interface TelemetryTracer {
 
   companion object {
     private lateinit var instance: TelemetryTracer
-    private val lock = Mutex()
+    private val lock = Any()
 
     private fun <T> getImplementationService(serviceClass: Class<T>): T {
       val implementations: List<T> = ServiceLoader.load(serviceClass, serviceClass.classLoader).toList()
@@ -84,20 +83,30 @@ interface TelemetryTracer {
     fun getInstance(): TelemetryTracer {
       if (Companion::instance.isInitialized) return instance
 
-      try {
-        lock.tryLock()
+      synchronized(lock) {
+        if (Companion::instance.isInitialized) return instance
+
         LOG.info("Initializing TelemetryTracer ...")
 
         // GlobalOpenTelemetry.set(sdk) can be invoked only once
-        instance = getImplementationService(TelemetryTracer::class.java).apply {
-          LOG.info("Loaded telemetry tracer service ${this::class.qualifiedName}")
-          sdk = init().buildAndRegisterGlobal()
+        try {
+          instance = getImplementationService(TelemetryTracer::class.java).apply {
+            LOG.info("Loaded telemetry tracer service ${this::class.qualifiedName}")
+            sdk = init().buildAndRegisterGlobal()
+          }
+          return instance
         }
+        catch (e: Throwable) {
+          LOG.warn("Something unexpected happened during loading TelemetryTracer", e)
+          LOG.warn("Falling back to loading default implementation of TelemetryTracer ${TelemetryTracerDefault::class.qualifiedName}")
 
-        return instance
-      }
-      finally {
-        lock.unlock()
+          instance = TelemetryTracerDefault().apply {
+            LOG.info("Loaded telemetry tracer service ${this::class.qualifiedName}")
+            sdk = init().buildAndRegisterGlobal()
+          }
+
+          return instance
+        }
       }
     }
 
