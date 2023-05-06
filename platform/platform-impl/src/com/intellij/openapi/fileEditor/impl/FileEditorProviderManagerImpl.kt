@@ -4,7 +4,7 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
@@ -16,15 +16,15 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.SlowOperations.GENERIC
-import com.intellij.util.SlowOperations.allowSlowOperations
+import com.intellij.util.SlowOperations
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.TestOnly
 
 @State(name = "FileEditorProviderManager",
        storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)])
 class FileEditorProviderManagerImpl : FileEditorProviderManager,
-                                      SerializablePersistentStateComponent<FileEditorProviderManagerImpl.FileEditorProviderManagerState>(FileEditorProviderManagerState()) {
+                                      SerializablePersistentStateComponent<FileEditorProviderManagerImpl.FileEditorProviderManagerState>(
+                                        FileEditorProviderManagerState()) {
   companion object {
     fun getInstanceImpl(): FileEditorProviderManagerImpl = FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl
 
@@ -38,15 +38,11 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
 
   private inline fun doGetProviders(providerChecker: (FileEditorProvider) -> Boolean): List<FileEditorProvider> {
     // collect all possible editors
-    val sharedProviders = ArrayList<FileEditorProvider>()
+    val sharedProviders = mutableListOf<FileEditorProvider>()
     var hideDefaultEditor = false
     var hasHighPriorityEditors = false
     for (provider in FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList) {
-      val result = allowSlowOperations(GENERIC).use {
-        providerChecker(provider)
-      }
-
-      if (result) {
+      if (providerChecker(provider)) {
         sharedProviders.add(provider)
         hideDefaultEditor = hideDefaultEditor or (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR)
         hasHighPriorityEditors = hasHighPriorityEditors or (provider.policy == FileEditorPolicy.HIDE_OTHER_EDITORS)
@@ -71,7 +67,7 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
   }
 
   private fun checkProvider(project: Project, file: VirtualFile, provider: FileEditorProvider): Boolean {
-    if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
+    if (!DumbService.isDumbAware(provider) && DumbService.isDumb(project)) {
       return false
     }
     if (!provider.accept(project, file)) {
@@ -90,8 +86,11 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
 
   override fun getProviderList(project: Project, file: VirtualFile): List<FileEditorProvider> {
     return doGetProviders { provider ->
-      ReadAction.compute<Boolean, RuntimeException> {
-        checkProvider(project, file, provider)
+      @Suppress("DEPRECATION")
+      SlowOperations.allowSlowOperations(SlowOperations.GENERIC).use {
+        ApplicationManager.getApplication().runReadAction<Boolean, RuntimeException> {
+          checkProvider(project, file, provider)
+        }
       }
     }
   }
@@ -115,7 +114,8 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
     }
 
     updateState {
-      FileEditorProviderManagerState(it.selectedProviders + (computeKey(providers) to composite.selectedWithProvider!!.provider.editorTypeId))
+      FileEditorProviderManagerState(
+        it.selectedProviders + (computeKey(providers) to composite.selectedWithProvider!!.provider.editorTypeId))
     }
   }
 
