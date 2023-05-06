@@ -45,6 +45,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.Assume.assumeTrue;
+
 public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -321,6 +323,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testAddingManagedFileAndChangingAggregation() {
+    assumeTrue(isWorkspaceImport());
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>parent</artifactId>
@@ -1318,7 +1321,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testWhenDeleteModuleThenChangeModuleDependencyToLibraryDependency() {
-    if (!isWorkspaceImport()) return;
+    assumeTrue(isWorkspaceImport());
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1366,7 +1369,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testWhenDeleteModuleInProjectStructureThenChangeModuleDependencyToLibraryDependency() throws ConfigurationException {
-    if (!isWorkspaceImport()) return;
+    assumeTrue(isWorkspaceImport());
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1458,7 +1461,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testDoNotIgnoreProjectWhenSeparateMainAndTestModulesDeletedDuringImport() {
-    Assume.assumeTrue(isWorkspaceImport());
+    assumeTrue(isWorkspaceImport());
 
     importProject("""
                     <groupId>test</groupId>
