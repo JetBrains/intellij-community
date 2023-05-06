@@ -3637,25 +3637,25 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             assertModules(compoundModule, mainModule, testModule)
             assertImporterStatePresent()
 
-            val mainKotlinFolder = "$projectPath/src/main/kotlin"
+            val mainKotlinFolder = "src/main/kotlin"
             val mainContentRoots = arrayOf(
                 mainKotlinFolder,
-                "$projectPath/src/main/java",
-                "$projectPath/src/main/resources",
+                "src/main/java",
+                *defaultResources(),
             )
 
-            val testKotlinFolder = "$projectPath/src/test/kotlin"
+            val testKotlinFolder = "src/test/kotlin"
             val testContentRoots = arrayOf(
                 testKotlinFolder,
-                "$projectPath/src/test/java",
-                "$projectPath/src/test/resources",
+                "src/test/java",
+                *defaultTestResources(),
             )
 
-            assertContentRoots(mainModule, *mainContentRoots)
-            assertContentRootSources(mainModule, mainKotlinFolder, "")
+            assertRelativeContentRoots(mainModule, *mainContentRoots)
+            assertContentRootSources(mainModule, "$projectPath/$mainKotlinFolder", "")
 
-            assertContentRoots(testModule, *testContentRoots)
-            assertContentRootTestSources(testModule, testKotlinFolder, "")
+            assertRelativeContentRoots(testModule, *testContentRoots)
+            assertContentRootTestSources(testModule, "$projectPath/$testKotlinFolder", "")
         }
     }
 }
