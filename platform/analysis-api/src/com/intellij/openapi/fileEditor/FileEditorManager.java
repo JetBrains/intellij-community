@@ -230,15 +230,12 @@ public abstract class FileEditorManager {
   public void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
   }
 
-  /**
-   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
-   *
-   * @return opened file editors
-   */
+  @RequiresEdt
   public final @NotNull List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     return openFileEditor(descriptor, focusEditor);
   }
 
+  @RequiresEdt
   public abstract @NotNull List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor);
 
   /**
