@@ -1558,7 +1558,18 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       return resolveArtifactsTransitively(artifacts, remoteRepositories);
     }
     catch (Throwable e) {
-      throw wrapToSerializableRuntimeException(e);
+      MavenServerGlobals.getLogger().error(e);
+      Artifact transferArtifact = getProblemTransferArtifact(e);
+      String message = getRootMessage(e);
+      MavenProjectProblem problem;
+      if (transferArtifact != null) {
+        MavenArtifact mavenArtifact = Maven40ModelConverter.convertArtifact(transferArtifact, getLocalRepositoryFile());
+        problem = MavenProjectProblem.createRepositoryProblem("", message, true, mavenArtifact);
+      }
+      else {
+        problem = MavenProjectProblem.createStructureProblem("", message);
+      }
+      return new MavenArtifactResolveResult(Collections.emptyList(), problem);
     }
   }
 
