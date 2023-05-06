@@ -154,7 +154,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testClearParentAndSubFoldersOfNewlyImportedFolders() {
-    createProjectSubDirs("src/main/java", "src/main/resources");
+    createStdProjectFolders();
 
     importProject("""
                     <groupId>test</groupId>
@@ -631,9 +631,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testPluginSourcesWithIntermoduleDependency() {
-    createProjectSubDirs("m1/src/main/java",
-                         "m1/src/main/resources",
-                         "m1/src/foo");
+    createStdProjectFolders("m1");
+    createProjectSubDirs("m1/src/foo");
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -1532,12 +1531,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
         </build>
         """));
 
-    createProjectSubDirs("m1/src/main/java",
-                         "m1/src/main/resources",
-                         "m1/src/test/java",
-                         "m1/src/test/resources",
-
-                         "m1/sources/resources",
+    createStdProjectFolders("m1");
+    createProjectSubDirs("m1/sources/resources",
                          "m1/tests");
 
     importProject("""
