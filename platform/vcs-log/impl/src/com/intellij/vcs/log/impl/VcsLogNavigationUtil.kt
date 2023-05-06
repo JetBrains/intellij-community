@@ -321,11 +321,14 @@ object VcsLogNavigationUtil {
 
   private fun getBranchRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, referenceName: String): Int {
     val matchingRefs = visiblePack.refs.branches.filter { ref -> ref.name == referenceName }
-    if (matchingRefs.isEmpty()) {
-      return VcsLogUiEx.COMMIT_NOT_FOUND
+    if (matchingRefs.isEmpty()) return VcsLogUiEx.COMMIT_NOT_FOUND
+
+    val sortedRefs = matchingRefs.sortedWith(VcsGoToRefComparator(visiblePack.logProviders))
+    for (ref in sortedRefs) {
+      val branchRow = getCommitRow(vcsLogData.storage, visiblePack, ref.commitHash, ref.root)
+      if (branchRow >= 0) return branchRow
     }
-    val ref = matchingRefs.minWith(VcsGoToRefComparator(visiblePack.logProviders))
-    return getCommitRow(vcsLogData.storage, visiblePack, ref.commitHash, ref.root)
+    return VcsLogUiEx.COMMIT_DOES_NOT_MATCH
   }
 
   private fun getCommitRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, partialHash: String): Int {
