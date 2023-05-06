@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 class FileNavigatorImpl : FileNavigator {
@@ -102,9 +103,10 @@ private fun navigateInProjectView(project: Project, file: VirtualFile, requestFo
   return false
 }
 
+@RequiresEdt
 private fun navigateInAnyFileEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Boolean {
   val fileEditorManager = FileEditorManager.getInstance(descriptor.project)
-  val editors = fileEditorManager.openEditor(descriptor, focusEditor)
+  val editors = fileEditorManager.openFileEditor(descriptor, focusEditor)
   for (editor in editors) {
     if (editor is TextEditor) {
       val e = editor.editor

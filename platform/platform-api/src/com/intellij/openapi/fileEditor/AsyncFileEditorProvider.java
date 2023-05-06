@@ -24,11 +24,8 @@ public interface AsyncFileEditorProvider extends FileEditorProvider {
    * This method is intended to be called from background thread. It should perform all time-consuming tasks required to build an editor,
    * and return a builder instance that will be called in EDT to create UI for the editor.
    * <p>
-   * Currently, this method is called from a background thread only when editors are reopened on IDE startup. In other cases, it's still
-   * invoked on EDT, so executing time-consuming tasks in it will block the UI.
    */
-  @NotNull
-  Builder createEditorAsync(@NotNull Project project, @NotNull VirtualFile file);
+  @NotNull Builder createEditorAsync(@NotNull Project project, @NotNull VirtualFile file);
 
   abstract class Builder {
     public abstract FileEditor build();

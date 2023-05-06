@@ -4,6 +4,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
+import com.intellij.openapi.fileEditor.impl.waitForFullyLoaded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -73,7 +74,8 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
       ProjectUtil.focusProjectWindow(project)
     }
 
-    FileEditorManagerEx.getInstanceEx(project).openFile(file = file, options = FileEditorOpenOptions(requestFocus = true)).allEditors
+    FileEditorManagerEx.getInstanceEx(project).openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
+      .waitForFullyLoaded()
 
     job.onError {
       spanRef.get()?.setAttribute("timeout", "true")
