@@ -5,13 +5,15 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-public class PsiAwareTextEditorProvider extends TextEditorProvider {
+public class PsiAwareTextEditorProvider extends TextEditorProvider implements AsyncFileEditorProvider {
   private static final @NonNls String FOLDING_ELEMENT = "folding";
 
   @Override
@@ -32,6 +34,24 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307300, EA-680898")) {
       return new PsiAwareTextEditorImpl(project, file, this);
     }
+  }
+
+  @Override
+  public AsyncFileEditorProvider.@NotNull Builder createEditorAsync(@NotNull Project project, @NotNull VirtualFile file) {
+    Document document = ApplicationManager.getApplication().<Document, RuntimeException>runReadAction(() -> {
+      return ProjectLocator.computeWithPreferredProject(file, project, () -> {
+        return FileDocumentManager.getInstance().getDocument(file);
+      });
+    });
+    LOG.assertTrue(document != null);
+    EditorFactoryImpl factory = ((EditorFactoryImpl)EditorFactory.getInstance());
+    return new AsyncFileEditorProvider.Builder() {
+      @Override
+      public FileEditor build() {
+        EditorImpl editor = factory.createMainEditor(document, project, file);
+        return new PsiAwareTextEditorImpl(project, file, PsiAwareTextEditorProvider.this, editor);
+      }
+    };
   }
 
   @Override

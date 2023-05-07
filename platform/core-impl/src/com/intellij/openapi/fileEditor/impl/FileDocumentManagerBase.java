@@ -44,38 +44,42 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   public @Nullable Document getDocument(@NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     DocumentEx document = (DocumentEx)getCachedDocument(file);
-    if (document == null) {
-      if (!file.isValid() || file.isDirectory() || isBinaryWithoutDecompiler(file)) return null;
+    if (document != null) {
+      return document;
+    }
 
-      boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
-      if (file.getFileType().isBinary() && tooLarge) return null;
+    if (!file.isValid() || file.isDirectory() || isBinaryWithoutDecompiler(file)) {
+      return null;
+    }
 
-      CharSequence text = loadText(file, tooLarge);
-      synchronized (lock) {
-        document = (DocumentEx)getCachedDocument(file);
-        if (document != null) return document;  // double-checking
+    boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
+    if (file.getFileType().isBinary() && tooLarge) return null;
 
-        document = (DocumentEx)createDocument(text, file);
-        document.setModificationStamp(file.getModificationStamp());
-        setDocumentTooLarge(document, tooLarge);
-        FileType fileType = file.getFileType();
-        document.setReadOnly(tooLarge || !file.isWritable() || fileType.isBinary());
+    CharSequence text = loadText(file, tooLarge);
+    synchronized (lock) {
+      document = (DocumentEx)getCachedDocument(file);
+      if (document != null) return document;  // double-checking
 
-        if (isTrackable(file)) {
-          document.addDocumentListener(getDocumentListener());
-        }
+      document = (DocumentEx)createDocument(text, file);
+      document.setModificationStamp(file.getModificationStamp());
+      setDocumentTooLarge(document, tooLarge);
+      FileType fileType = file.getFileType();
+      document.setReadOnly(tooLarge || !file.isWritable() || fileType.isBinary());
 
-        if (file instanceof LightVirtualFile) {
-          registerDocument(document, file);
-        }
-        else {
-          document.putUserData(FILE_KEY, file);
-          cacheDocument(file, document);
-        }
+      if (isTrackable(file)) {
+        document.addDocumentListener(getDocumentListener());
       }
 
-      fileContentLoaded(file, document);
+      if (file instanceof LightVirtualFile) {
+        registerDocument(document, file);
+      }
+      else {
+        document.putUserData(FILE_KEY, file);
+        cacheDocument(file, document);
+      }
     }
+
+    fileContentLoaded(file, document);
 
     return document;
   }
