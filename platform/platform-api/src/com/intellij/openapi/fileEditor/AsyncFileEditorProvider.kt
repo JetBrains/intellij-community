@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.fileEditor;
+package com.intellij.openapi.fileEditor
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 
-public interface AsyncFileEditorProvider extends FileEditorProvider {
+interface AsyncFileEditorProvider : FileEditorProvider {
   /**
    * This method is intended to be called from background thread. It should perform all time-consuming tasks required to build an editor,
    * and return a builder instance that will be called in EDT to create UI for the editor.
-   * <p>
    */
-  @NotNull Builder createEditorAsync(@NotNull Project project, @NotNull VirtualFile file);
+  fun createEditorAsync(project: Project, file: VirtualFile): Builder
 
   abstract class Builder {
-    public abstract FileEditor build();
+    abstract fun build(): FileEditor?
   }
 }
