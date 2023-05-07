@@ -89,7 +89,6 @@
 + -org-jetbrains-plugins-clangConfig-
 + -com-intellij-database-
 + -com-intellij-persistence-
-+ -com-intellij-play-
 + -com-jetbrains-performancePlugin-
 + -com-intellij-phing-
 + -org-intellij-plugins-markdown-

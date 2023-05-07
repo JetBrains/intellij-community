@@ -2127,18 +2127,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "jH",
-    "name": "intellij.play",
-    "n": "i.play",
-    "package": "com.intellij.play",
-    "sourceModule": "intellij.play",
-    "descriptor": "plugins/frameworks/play/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.play",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "3J",
     "name": "intellij.properties",
     "n": "i.properties",
