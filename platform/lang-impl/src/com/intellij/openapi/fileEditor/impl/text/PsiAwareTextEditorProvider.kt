@@ -5,14 +5,12 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
@@ -30,11 +28,10 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
   }
 
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
+    val fileDocumentManager = FileDocumentManager.getInstance()
     val document = readAction {
-      ProjectLocator.computeWithPreferredProject<Document?, RuntimeException>(file, project) {
-        FileDocumentManager.getInstance().getDocument(file)
-      }
-    }!!
+      fileDocumentManager.getDocument(file, project)!!
+    }
 
     val factory = EditorFactory.getInstance() as EditorFactoryImpl
     return object : AsyncFileEditorProvider.Builder() {
@@ -46,10 +43,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
   }
 
   override fun createEditorAsync(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
-    val document = ProjectLocator.computeWithPreferredProject<Document?, RuntimeException>(file, project) {
-      FileDocumentManager.getInstance().getDocument(file)
-    }!!
-
+    val document = FileDocumentManager.getInstance().getDocument(file, project)!!
     val factory = EditorFactory.getInstance() as EditorFactoryImpl
     return object : AsyncFileEditorProvider.Builder() {
       override fun build(): FileEditor {

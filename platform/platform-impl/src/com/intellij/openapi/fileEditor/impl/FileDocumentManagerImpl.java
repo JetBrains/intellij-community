@@ -212,8 +212,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @Override
-  @NotNull
-  protected Document createDocument(@NotNull CharSequence text, @NotNull VirtualFile file) {
+  protected @NotNull DocumentEx createDocument(@NotNull CharSequence text, @NotNull VirtualFile file) {
     boolean acceptSlashR = file instanceof LightVirtualFile && StringUtil.indexOf(text, '\r') >= 0;
     boolean freeThreaded = Boolean.TRUE.equals(file.getUserData(AbstractFileViewProvider.FREE_THREADED));
     DocumentImpl document = (DocumentImpl)((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(text, acceptSlashR, freeThreaded);
@@ -379,8 +378,16 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   private boolean maySaveDocument(@NotNull VirtualFile file, @NotNull Document document, boolean isExplicit) {
-    return !myConflictResolver.hasConflict(file) &&
-           FileDocumentSynchronizationVetoer.EP_NAME.getExtensionList().stream().allMatch(vetoer -> vetoer.maySaveDocument(document, isExplicit));
+    if (myConflictResolver.hasConflict(file)) {
+      return false;
+    }
+
+    for (FileDocumentSynchronizationVetoer vetoer : FileDocumentSynchronizationVetoer.EP_NAME.getExtensionList()) {
+      if (!vetoer.maySaveDocument(document, isExplicit)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void doSaveDocumentInWriteAction(@NotNull Document document, @NotNull VirtualFile file) throws IOException {
@@ -465,8 +472,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     return fs instanceof NewVirtualFileSystem && file.getTimeStamp() != ((NewVirtualFileSystem)fs).getTimeStamp(file);
   }
 
-  @NotNull
-  public static String getLineSeparator(@NotNull Document document, @NotNull VirtualFile file) {
+  public static @NotNull String getLineSeparator(@NotNull Document document, @NotNull VirtualFile file) {
     String lineSeparator = file.getDetectedLineSeparator();
     if (lineSeparator == null) {
       lineSeparator = document.getUserData(LINE_SEPARATOR_KEY);
@@ -476,8 +482,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @Override
-  @NotNull
-  public String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
+  public @NotNull String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
     String lineSeparator = file == null ? null : file.getDetectedLineSeparator();
     if (lineSeparator == null) {
       CodeStyleSettings settings =
@@ -492,9 +497,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     return requestWritingStatus(document, project).hasWriteAccess();
   }
 
-  @NotNull
   @Override
-  public WriteAccessStatus requestWritingStatus(@NotNull Document document, @Nullable Project project) {
+  public @NotNull WriteAccessStatus requestWritingStatus(@NotNull Document document, @Nullable Project project) {
     VirtualFile file = getInstance().getFile(document);
     if (project != null && file != null && file.isValid()) {
       if (file.getFileType().isBinary()) return WriteAccessStatus.NON_WRITABLE;
@@ -802,8 +806,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     return true;
   }
 
-  @NotNull
-  private static List<FileDocumentManagerListener> getListeners() {
+  private static @NotNull List<FileDocumentManagerListener> getListeners() {
     return FileDocumentManagerListener.EP_NAME.getExtensionList();
   }
 

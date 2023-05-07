@@ -3,12 +3,13 @@
 
 package com.intellij.openapi.project
 
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CachedSingletonsRegistry
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
 // called very often by StubUpdatingIndex
 private val instance = CachedSingletonsRegistry.lazy {
@@ -28,20 +29,18 @@ abstract class ProjectLocator {
      * [.guessProjectForFile] for the `file` will return `preferredProject`
      */
     @JvmStatic
-    fun <T, E : Throwable?> computeWithPreferredProject(file: VirtualFile,
-                                                        preferredProject: Project,
-                                                        runnable: ThrowableComputable<T, E>): T {
+    @Internal
+    fun withPreferredProject(file: VirtualFile, preferredProject: Project): AccessToken {
       val local = preferredProjects.get()
       val prev = local.put(file, preferredProject)
-      try {
-        return runnable.compute()
-      }
-      finally {
-        if (prev == null) {
-          local.remove(file)
-        }
-        else {
-          local.put(file, prev)
+      return object : AccessToken() {
+        override fun finish() {
+          if (prev == null) {
+            local.remove(file)
+          }
+          else {
+            local.put(file, prev)
+          }
         }
       }
     }

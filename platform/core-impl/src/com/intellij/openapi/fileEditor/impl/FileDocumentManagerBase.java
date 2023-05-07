@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -17,6 +16,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +41,8 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @Override
-  public @Nullable Document getDocument(@NotNull VirtualFile file) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  @RequiresReadLock
+  public final @Nullable Document getDocument(@NotNull VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document != null) {
       return document;
@@ -53,14 +53,19 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     }
 
     boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
-    if (file.getFileType().isBinary() && tooLarge) return null;
+    if (file.getFileType().isBinary() && tooLarge) {
+      return null;
+    }
 
     CharSequence text = loadText(file, tooLarge);
     synchronized (lock) {
       document = (DocumentEx)getCachedDocument(file);
-      if (document != null) return document;  // double-checking
+      // double-checking
+      if (document != null) {
+        return document;
+      }
 
-      document = (DocumentEx)createDocument(text, file);
+      document = createDocument(text, file);
       document.setModificationStamp(file.getModificationStamp());
       setDocumentTooLarge(document, tooLarge);
       FileType fileType = file.getFileType();
@@ -99,7 +104,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
   }
 
-  protected abstract @NotNull Document createDocument(@NotNull CharSequence text, @NotNull VirtualFile file);
+  protected abstract @NotNull DocumentEx createDocument(@NotNull CharSequence text, @NotNull VirtualFile file);
 
   @Override
   public @Nullable Document getCachedDocument(@NotNull VirtualFile file) {

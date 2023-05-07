@@ -25,7 +25,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -165,11 +164,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
 
     FileViewProvider viewProvider = file.getViewProvider();
-    if (!viewProvider.isEventSystemEnabled()) return null;
+    if (!viewProvider.isEventSystemEnabled()) {
+      return null;
+    }
 
     VirtualFile virtualFile = viewProvider.getVirtualFile();
-    document = ProjectLocator.computeWithPreferredProject(virtualFile, myProject, () ->
-      FileDocumentManager.getInstance().getDocument(virtualFile));
+    document = FileDocumentManager.getInstance().getDocument(virtualFile, myProject);
     if (document != null) {
       if (document.getTextLength() != file.getTextLength()) {
         String message = "Document/PSI mismatch: " + file + " of " + file.getClass() +

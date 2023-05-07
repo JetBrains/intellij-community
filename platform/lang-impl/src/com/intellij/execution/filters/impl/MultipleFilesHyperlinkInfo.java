@@ -31,7 +31,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
@@ -48,7 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApiStatus.Internal
-public class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperlinkInfo {
+public final class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperlinkInfo {
   private final List<? extends VirtualFile> myVirtualFiles;
   private final int myLineNumber;
   private final Project myProject;
@@ -112,8 +111,7 @@ public class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements Fil
   }
 
   private void open(@NotNull VirtualFile file, Editor originalEditor) {
-    Document document = ProjectLocator.computeWithPreferredProject(file, myProject, () ->
-      FileDocumentManager.getInstance().getDocument(file));
+    Document document = FileDocumentManager.getInstance().getDocument(file, myProject);
     int offset = 0;
     if (document != null && myLineNumber >= 0 && myLineNumber < document.getLineCount()) {
       offset = document.getLineStartOffset(myLineNumber);
