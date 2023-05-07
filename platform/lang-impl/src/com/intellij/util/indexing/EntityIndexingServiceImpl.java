@@ -39,10 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
@@ -102,7 +99,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
         builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, entities, entityStorage));
       }
       else if (change instanceof BuildableRootsChangeRescanningInfo) {
-        builders.addAll(getBuildersOnBuildableChangeInfo((BuildableRootsChangeRescanningInfo)change));
+        builders.addAll(getBuildersOnBuildableChangeInfo((BuildableRootsChangeRescanningInfo)change, project, entityStorage));
       }
       else {
         LOG.warn("Unexpected change " + change.getClass() + " " + change + ", full reindex requested");
@@ -347,8 +344,9 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   }
 
   private static Collection<? extends IndexableIteratorBuilder> getBuildersOnWorkspaceEntitiesRootsChange(@NotNull Project project,
-                                                                                                          @NotNull List<? extends WorkspaceEntity> entities,
+                                                                                                          @NotNull Collection<? extends WorkspaceEntity> entities,
                                                                                                           @NotNull EntityStorage entityStorage) {
+    if (entities.isEmpty()) return Collections.emptyList();
     List<IndexableIteratorBuilder> builders = new SmartList<>();
 
     WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder();
@@ -360,7 +358,9 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   }
 
   @NotNull
-  private static Collection<? extends IndexableIteratorBuilder> getBuildersOnBuildableChangeInfo(@NotNull BuildableRootsChangeRescanningInfo buildableInfo) {
+  private static Collection<? extends IndexableIteratorBuilder> getBuildersOnBuildableChangeInfo(@NotNull BuildableRootsChangeRescanningInfo buildableInfo,
+                                                                                                 @NotNull Project project,
+                                                                                                 @NotNull EntityStorage entityStorage) {
     BuildableRootsChangeRescanningInfoImpl info = (BuildableRootsChangeRescanningInfoImpl)buildableInfo;
     List<IndexableIteratorBuilder> builders = new SmartList<>();
     IndexableIteratorBuilders instance = IndexableIteratorBuilders.INSTANCE;
@@ -376,6 +376,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     for (LibraryId library : info.getLibraries()) {
       builders.addAll(instance.forLibraryEntity(library, true));
     }
+    builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, info.getWorkspaceEntities(), entityStorage));
     return builders;
   }
 
