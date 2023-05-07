@@ -29,7 +29,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
     val fileDocumentManager = FileDocumentManager.getInstance()
-    val document = readAction {
+    val document = fileDocumentManager.getCachedDocument(file) ?: readAction {
       fileDocumentManager.getDocument(file, project)!!
     }
 

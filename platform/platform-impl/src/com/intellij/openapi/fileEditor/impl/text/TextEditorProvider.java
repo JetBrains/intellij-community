@@ -67,7 +67,6 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
 
   @Override
   public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-    LOG.assertTrue(accept(project, file));
     return new TextEditorImpl(project, file, this);
   }
 
