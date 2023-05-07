@@ -478,9 +478,9 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
   /**
    * Reclaims the page: flushes page content if needed, and release page buffer.
-   * Page must be in state=TOMBSTONE (throws AssertionError otherwise)
+   * Page must be in state=PRE_TOMBSTONE (throws AssertionError otherwise)
    */
-  private void unmapPageAndReclaimBuffer(final @NotNull PageImpl pageToReclaim) {
+  void unmapPageAndReclaimBuffer(final @NotNull PageImpl pageToReclaim) {
     final ByteBuffer pageBuffer = entombPageAndGetPageBuffer(pageToReclaim);
 
     reclaimPageBuffer(pageBuffer);
@@ -490,7 +490,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
    * Release buffer to the pool if it is a direct buffer, or just release it, if it is a heap buffer.
    * Adjust statistical counters accordingly.
    */
-  protected void reclaimPageBuffer(final @NotNull ByteBuffer pageBuffer) {
+  void reclaimPageBuffer(final @NotNull ByteBuffer pageBuffer) {
     if (pageBuffer.isDirect()) {
       DirectByteBufferAllocator.ALLOCATOR.release(pageBuffer);
       totalNativeBytesCached.addAndGet(-pageBuffer.capacity());
@@ -723,7 +723,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
             //TODO RC: .tryFlush() prevents housekeeper thread from stalling on the page lock -- but the
             //         thread could still wait on actual flush IO. Ideally all IO should be offloaded from
             //         the housekeeper thread to an IO pool.
-            if(page.tryFlush()){
+            if (page.tryFlush()) {
               actuallyFlushed++; //not strictly true, since actual flush could be short-circuit, but...
             }
             //MAYBE RC: else -> remove page from candidates for reclamation, since it is IN USE now?

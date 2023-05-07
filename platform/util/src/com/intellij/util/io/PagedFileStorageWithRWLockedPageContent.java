@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.ByteOrder.BIG_ENDIAN;
 
 public class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
@@ -36,6 +37,8 @@ public class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
   private static final StorageLockContext DEFAULT_LOCK_CONTEXT = new StorageLockContext(false);
 
   public static final ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
+
+  private static final int MAX_ATTEMPTS_TO_ACQUIRE_PAGE = getIntProperty("vfs.lock-free-impl.max-attempts-to-acquire-page", 100_000);
 
 
   private final @NotNull StorageLockContext storageLockContext;
@@ -317,7 +320,7 @@ public class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
     final FilePageCacheStatistics statistics = pageCache.getStatistics();
     final long startedAtNs = statistics.startTimestampNs();
 
-    while (true) {
+    for (int attempt = 0; ; attempt++) {
       if (isClosed()) {
         throw new ClosedStorageException("Storage is already closed: " + file);
       }
@@ -342,13 +345,26 @@ public class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
         statistics.pageRequested(page.pageSize(), startedAtNs);
         return page;
       }
-      catch (IOException ignore) {
-        LOG.trace("Page " + page + " likely released -> request it again");
-        //RC: Worst case: page is in the middle of unmapping (~ABOUT_TO_UNMAP), we can't interrupt
-        //    this process, we could only wait until page will be finally unmapped, and request it
-        //    again afterwards -- so it will be mapped back, anew.
-        //MAYBE RC: we could try to assist page reclamation here: i.e. check it is ABOUT_TO_RECLAIM,
-        //          .flush() if dirty?..
+      catch (IOException e) {
+        LOG.trace("Page " + page + " likely released -> request it again (" + e.getMessage() + ")");
+
+        //Worst case: page is in the middle of unmapping (~ABOUT_TO_UNMAP). We can't interrupt
+        //this process: page unmapping must be finalized, and then on subsequent request page
+        //will be mapped back, anew.
+
+        //Try to assist page reclamation. This is not only an optimization, but prevents a pathological
+        // scenario there housekeeper thread skips its turns because there are enough pages ready to
+        // reclaim, but because of that the particular page remains in ABOUT_TO_UNMAP, stalling everybody
+        // who needs it.
+        if (page.isAboutToUnmap() && page.usageCount() == 0) {
+          final boolean succeed = page.tryMoveTowardsPreTombstone(/*entombYoung: */false);
+          if (succeed) {
+            pageCache.unmapPageAndReclaimBuffer(page);
+          }
+        }
+        if (attempt > MAX_ATTEMPTS_TO_ACQUIRE_PAGE) {
+          throw new AssertionError(page + " can't be acquired in " + attempt + " attempts: either we're very unlucky, or it is a bug");
+        }
       }
     }
   }

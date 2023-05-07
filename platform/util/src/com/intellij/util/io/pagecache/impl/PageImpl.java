@@ -285,6 +285,10 @@ public abstract class PageImpl implements Page, PageUnsafe {
     return unpackState(statePacked) == expectedState;
   }
 
+  protected int state(){
+    return unpackState(this.statePacked);
+  }
+
   public int usageCount() {
     return unpackUsageCount(this.statePacked);
   }

@@ -116,7 +116,7 @@ public class RWLockProtectedPageImpl extends PageImpl {
     //    means what other thread could see page.isDirty()=false, but at the same time
     //    storage.isDirty() = true, since page flush is not yet propagated to storage. Even worse:
     //    another thread could call page.flush() and still see storage.isDirty()=true -- because
-    //    .flush() is short-circuit on early .isDirty() check.
+    //    .flush() short-circuits on early .isDirty() check.
     //
     //    This is a trade-off: 'more concurrent' data structures have 'less consistent' state --
     //    basically, state becomes more distributed. But such a tradeoff seems unjustified here:
@@ -128,18 +128,21 @@ public class RWLockProtectedPageImpl extends PageImpl {
     //    This still creates an 'inconsistency' though: another thread could see storage.isDirty()
     //    = false, while some page.isDirty()=true -- but I tend to think there are fewer possibilities
     //    for confusion here. Let's see how it goes.
-
-    flushWithAdditionalLock();
+    flushWithReadLock();
   }
 
   @Override
   public boolean tryFlush() throws IOException {
+    if (!isDirty()) {
+      return true;
+    }
+
     final ReentrantReadWriteLock.ReadLock readLock = contentProtectingLock.readLock();
     if (!readLock.tryLock()) {
       return false;
     }
     try {
-      flush();
+      flushImpl();
       return true;
     }
     finally {
@@ -147,43 +150,73 @@ public class RWLockProtectedPageImpl extends PageImpl {
     }
   }
 
-  private void flushWithAdditionalLock() throws IOException {
-    if (isDirty()) {
-      //RC: flush is logically a read-op, hence only readLock is needed. But we also need to update
-      //    a modified region, which is write-op. By holding readLock we already ensure nobody
-      //    _modifies_ page concurrently with us. The only possible contender is another .flush()
-      //    call -- hence we use 'this' lock to avoid concurrent flushes.
+  private void flushWithReadLock() throws IOException {
+    if (!isDirty()) {
+      return;
+    }
+
+    //We need to ensure nobody _modifies_ page content while we're flushing it. The most natural way to
+    // do it is by acquiring readLock -- but we could avoid lock acquisition if page state > ABOUT_TO_UNMAP,
+    // because no one but housekeeper thread could legally use (and even see) the page in those states.
+
+    if (state() > PageImpl.STATE_ABOUT_TO_UNMAP) {
+      //This branch is not merely an optimization, but deadlock/livelock-prevention: page lock is not
+      // exclusively owned by page, it could be a _shared_ lock, used by many pages -- hence, it is
+      // possible for this lock to be write-locked even if the page is in > ABOUT_TO_UNMAP state. That
+      // would be impossible for lock exclusively owned by the page: if the page is not available for
+      // anyone outside FPCache, then no one outside FPC could acquire the page lock either -- but if
+      // page lock is shared, then it becomes possible.
+      // Hence, consider the scenario; there page_1 and page_2 shares the same lock:
+      // - Thread 1: writeLock page_1, tries to get another page_2 from the storage. page_2 happens to be
+      //             in the PRE_TOMBSTONE state, and must be fully released _before_ it could be re-allocated
+      //             and returned.
+      // - FPC housekeeper: tries to release page_2, finds out it is dirty, tries to flush it, get locked
+      //             on the (shared) pageLock (which is held by Thread 1)
+      // This branch prevents the deadlock in such a cases by bypassing page lock entirely
+
+      flushImpl();
+    }
+    else {
       lockPageForRead();
       try {
-        //'this' lock is mostly uncontended: other than here, it guards .regionModified() --
-        // which is invoked only under pageLock.writeLock, so 'this' never contended there.
-        // Here it _could_ be contended, but only against concurrent .flush() invocations,
-        // which are possible, but rare. This is why I use lock instead of update modifiedRegion
-        // with CAS: uncontended lock is cheap and simpler to use, and I need some lock to prevent
-        // concurrent .flush() anyway.
-        synchronized (this) {
-          final long modifiedRegion = modifiedRegionPacked;
-          if (modifiedRegion == EMPTY_MODIFIED_REGION) {
-            //competing flush: somebody else already did the job
-            return;
-          }
-          final int minOffsetModified = unpackMinOffsetModified(modifiedRegion);
-          final int maxOffsetModifiedExclusive = unpackMaxOffsetModifiedExclusive(modifiedRegion);
-
-          //we won the CAS competition: execute the flush
-          final ByteBuffer sliceToSave = data.duplicate()
-            .order(data.order());
-          sliceToSave.position(minOffsetModified)
-            .limit(maxOffsetModifiedExclusive);
-
-          storageHandle.flushBytes(sliceToSave, offsetInFile() + minOffsetModified);
-          storageHandle.pageBecomeClean();
-          modifiedRegionPacked = EMPTY_MODIFIED_REGION;
-        }
+        flushImpl();
       }
       finally {
         unlockPageForRead();
       }
+    }
+  }
+
+  private void flushImpl() throws IOException {
+    //flush is logically a read-op, hence only readLock is needed. But we also need to update
+    // a modified region, which is write-op. By holding readLock (above) we already ensured
+    // nobody _modifies_ page concurrently with us. The only possible contender is another .flush()
+    // call -- hence we use 'this' lock to avoid concurrent flushes.
+
+    //'this' lock is mostly uncontended: other than here, it guards .regionModified() --
+    // which is invoked only under pageLock.writeLock, so 'this' never contended there.
+    // Here it _could_ be contended, but only against concurrent .flush() invocations,
+    // which are possible, but rare. This is why I use lock instead of update modifiedRegion
+    // with CAS: uncontended lock is cheap and simpler to use, and I need some lock to prevent
+    // concurrent .flush() anyway.
+    synchronized (this) {
+      final long modifiedRegion = modifiedRegionPacked;
+      if (modifiedRegion == EMPTY_MODIFIED_REGION) {
+        //competing flush: somebody else already did the job
+        return;
+      }
+      final int minOffsetModified = unpackMinOffsetModified(modifiedRegion);
+      final int maxOffsetModifiedExclusive = unpackMaxOffsetModifiedExclusive(modifiedRegion);
+
+      //we won the CAS competition: execute the flush
+      final ByteBuffer sliceToSave = data.duplicate()
+        .order(data.order());
+      sliceToSave.position(minOffsetModified)
+        .limit(maxOffsetModifiedExclusive);
+
+      storageHandle.flushBytes(sliceToSave, offsetInFile() + minOffsetModified);
+      storageHandle.pageBecomeClean();
+      modifiedRegionPacked = EMPTY_MODIFIED_REGION;
     }
   }
 
