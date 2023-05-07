@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.EventDispatcher
-import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.*
 import com.intellij.util.messages.Topic.BroadcastDirection
@@ -23,6 +22,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.lang.invoke.MethodHandle
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
+import java.lang.reflect.Proxy
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -127,8 +127,15 @@ open class MessageBusImpl : MessageBus {
     @Suppress("UNCHECKED_CAST")
     return publisherCache.computeIfAbsent(topic) { topic1 ->
       val aClass = topic1.listenerClass
-      ReflectionUtil.proxy(aClass.classLoader, aClass, createPublisher(topic = topic1, direction = topic1.broadcastDirection))
+      val publisher = createPublisher(topic = topic1, direction = topic1.broadcastDirection)
+      Proxy.newProxyInstance(aClass.classLoader, arrayOf(aClass), publisher)
     } as L
+  }
+
+  override fun <L : Any> syncAndPreloadPublisher(topic: Topic<L>): L {
+    val publisher = syncPublisher(topic)
+    (Proxy.getInvocationHandler(publisher) as MessagePublisher<*>).preload()
+    return publisher
   }
 
   internal open fun <L> createPublisher(topic: Topic<L>, direction: BroadcastDirection): MessagePublisher<L> {
@@ -429,7 +436,6 @@ private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevError: Thro
   }
 }
 
-@Internal
 internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
                                         @JvmField protected val bus: MessageBusImpl) : InvocationHandler {
   final override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
@@ -464,6 +470,9 @@ internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
 
     executeOrAddToQueue(topic, method, args, handlers, queue, null, bus)?.let(::throwError)
     return true
+  }
+
+  open fun preload() {
   }
 }
 
@@ -502,6 +511,12 @@ internal fun executeOrAddToQueue(topic: Topic<*>,
 
 @Internal
 internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl) : MessagePublisher<L>(topic, bus), InvocationHandler {
+  override fun preload() {
+    // expected the only parent (project -> app)
+    getOrComputeHandlers(bus)
+    bus.parentBus?.let(::getOrComputeHandlers)
+  }
+
   // args not-null
   override fun publish(method: Method, args: Array<Any?>?, queue: MessageQueue?): Boolean {
     var error: Throwable? = null
@@ -509,15 +524,7 @@ internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl)
     var hasHandlers = false
     while (true) {
       // computeIfAbsent cannot be used here: https://youtrack.jetbrains.com/issue/IDEA-250464
-      var handlers = parentBus.subscriberCache.get(topic)
-      if (handlers == null) {
-        handlers = parentBus.computeSubscribers(topic)
-        val existing = parentBus.subscriberCache.putIfAbsent(topic, handlers)
-        if (existing != null) {
-          handlers = existing
-        }
-      }
-
+      val handlers = getOrComputeHandlers(parentBus)
       if (handlers.isNotEmpty()) {
         hasHandlers = true
         error = executeOrAddToQueue(topic = topic,
@@ -533,6 +540,18 @@ internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl)
 
     error?.let(::throwError)
     return hasHandlers
+  }
+
+  private fun getOrComputeHandlers(parentBus: MessageBusImpl): Array<Any?> {
+    var handlers = parentBus.subscriberCache.get(topic)
+    if (handlers == null) {
+      handlers = parentBus.computeSubscribers(topic)
+      val existing = parentBus.subscriberCache.putIfAbsent(topic, handlers)
+      if (existing != null) {
+        return existing
+      }
+    }
+    return handlers
   }
 }
 

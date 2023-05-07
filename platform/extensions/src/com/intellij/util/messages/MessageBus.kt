@@ -3,7 +3,8 @@ package com.intellij.util.messages
 
 import com.intellij.openapi.Disposable
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Core of IntelliJ Platform messaging infrastructure. Basic functions:
@@ -30,7 +31,7 @@ interface MessageBus : Disposable {
   /**
    * Create a new connection that is disconnected on message bus dispose, or on explicit [SimpleMessageBusConnection.disconnect].
    */
-  @ApiStatus.Experimental
+  @Internal
   fun simpleConnect(): SimpleMessageBusConnection
 
   /**
@@ -95,6 +96,10 @@ interface MessageBus : Disposable {
    * @return publisher for a target topic
    */
   fun <L : Any> syncPublisher(topic: Topic<L>): L
+
+  @Internal
+  @Experimental
+  fun <L : Any> syncAndPreloadPublisher(topic: Topic<L>): L
 
   /**
    * Disposes current bus, i.e., drops all queued but not delivered messages (if any) and disallows further [connections](.connect).

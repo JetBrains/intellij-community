@@ -107,7 +107,6 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
-import java.lang.Runnable
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
@@ -1006,7 +1005,7 @@ open class FileEditorManagerImpl(
     }
 
     val file = getOriginalFile(_file)
-    val existingComposite: FileEditorComposite? = if (EDT.isCurrentThreadEdt()) {
+    val existingComposite = if (EDT.isCurrentThreadEdt()) {
       window.getComposite(file)
     }
     else {
@@ -1041,15 +1040,24 @@ open class FileEditorManagerImpl(
       return runBulkTabChange(window.owner) {
         (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
         LOG.assertTrue(file.isValid, "Invalid file: $file")
-        val (result, opened) = doOpenInEdtImpl(
-          existingComposite = window.getComposite(file),
+        val result = doOpenInEdtImpl(
+          existingComposite = existingComposite,
           window = window,
           file = file,
           entry = entry,
           options = effectiveOptions,
           newProviders = newProviders)
-        if (opened != null) {
-          ApplicationManager.getApplication().invokeLater(Runnable { opened() }, project.disposed)
+        if (existingComposite == null && result is EditorComposite) {
+          val messageBus = project.messageBus
+          val editorsWithProviders = result.allEditorsWithProviders
+          messageBus.syncPublisher(FileOpenedSyncListener.TOPIC).fileOpenedSync(this, file, editorsWithProviders)
+          @Suppress("DEPRECATION")
+          messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpenedSync(this, file, editorsWithProviders)
+          coroutineScope.launch(Dispatchers.EDT) {
+            if (isFileOpen(file)) {
+              project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(this@FileEditorManagerImpl, file)
+            }
+          }
         }
         result
       }
@@ -1090,7 +1098,8 @@ open class FileEditorManagerImpl(
       }
 
       val effectiveOptions = getEffectiveOptions(options, entry)
-      openFileInEdt(window = window,
+      openFileInEdt(existingComposite = existingComposite,
+                    window = window,
                     file = file,
                     entry = entry,
                     options = effectiveOptions,
@@ -1115,11 +1124,11 @@ open class FileEditorManagerImpl(
     options: FileEditorOpenOptions,
     newProviders: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>?,
     isReopeningOnStartup: Boolean = false,
-  ): kotlin.Pair<FileEditorComposite, (() -> Unit)?> {
+  ): FileEditorComposite {
     var composite = existingComposite
     val newEditor = composite == null
     if (newEditor) {
-      composite = createComposite(file = file, providers = newProviders!!) ?: return FileEditorComposite.EMPTY to null
+      composite = createComposite(file = file, providers = newProviders!!) ?: return FileEditorComposite.EMPTY
       runActivity("beforeFileOpened event executing") {
         project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file)
       }
@@ -1186,19 +1195,7 @@ open class FileEditorManagerImpl(
         IdeFocusManager.getGlobalInstance().toFront(splitters)
       }
     }
-
-    if (newEditor) {
-      val messageBus = project.messageBus
-      messageBus.syncPublisher(FileOpenedSyncListener.TOPIC).fileOpenedSync(this, file, editorsWithProviders)
-      @Suppress("DEPRECATION")
-      messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpenedSync(this, file, editorsWithProviders)
-      return composite to {
-        if (isFileOpen(file)) {
-          project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(this@FileEditorManagerImpl, file)
-        }
-      }
-    }
-    return composite to null
+    return composite
   }
 
   protected open fun createComposite(file: VirtualFile,
@@ -2065,8 +2062,11 @@ open class FileEditorManagerImpl(
     coroutineScope {
       val builders = createBuilders(providers = newProviders, file = file, project = project)
       val window = windowDeferred.await()
+      val existingComposite = withContext(Dispatchers.EDT) { window.getComposite(file) }
+      // ok, now we can await for builders (probably it is already computed as we waited for a window and composite)
       val providerWithBuilderList = newProviders.mapIndexed { index, provider -> provider to builders.get(index)?.await() }
-      openFileInEdt(window = window,
+      openFileInEdt(existingComposite = existingComposite,
+                    window = window,
                     file = file,
                     entry = entry,
                     options = options,
@@ -2076,6 +2076,7 @@ open class FileEditorManagerImpl(
   }
 
   private suspend fun openFileInEdt(
+    existingComposite: EditorComposite?,
     window: EditorWindow,
     file: VirtualFile,
     entry: HistoryEntry?,
@@ -2083,27 +2084,53 @@ open class FileEditorManagerImpl(
     isReopeningOnStartup: Boolean,
     providerWithBuilderList: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>,
   ): FileEditorComposite {
-    val (result, opened) = subtask("file opening in EDT", Dispatchers.EDT) {
-      val splitters = window.owner
-      splitters.insideChange++
-      try {
-        doOpenInEdtImpl(existingComposite = window.getComposite(file),
-                        window = window,
-                        file = file,
-                        entry = entry,
-                        options = options,
-                        newProviders = providerWithBuilderList,
-                        isReopeningOnStartup = isReopeningOnStartup)
+    val isNewEditor = existingComposite == null
+    val (result, fireFileOpened) = coroutineScope {
+      val deferredPublishers: Deferred<kotlin.Pair<FileOpenedSyncListener, FileEditorManagerListener>>? = if (isNewEditor) {
+        async(CoroutineName("FileOpenedSyncListener computing")) {
+          val messageBus = project.messageBus
+          messageBus.syncAndPreloadPublisher(FileOpenedSyncListener.TOPIC) to
+            messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+        }
       }
-      finally {
-        splitters.insideChange--
+      else {
+        null
+      }
+
+      subtask("file opening in EDT", Dispatchers.EDT) {
+        val splitters = window.owner
+        splitters.insideChange++
+        try {
+          val result = doOpenInEdtImpl(existingComposite = existingComposite,
+                                       window = window,
+                                       file = file,
+                                       entry = entry,
+                                       options = options,
+                                       newProviders = providerWithBuilderList,
+                                       isReopeningOnStartup = isReopeningOnStartup)
+          if (isNewEditor && result is EditorComposite) {
+            val editorsWithProviders = result.allEditorsWithProviders
+            val (goodPublisher, deprecatedPublisher) = deferredPublishers!!.await()
+            goodPublisher.fileOpenedSync(this@FileEditorManagerImpl, file, editorsWithProviders)
+            @Suppress("DEPRECATION")
+            deprecatedPublisher.fileOpenedSync(this@FileEditorManagerImpl, file, editorsWithProviders)
+            return@subtask result to true
+          }
+          result to false
+        }
+        finally {
+          splitters.insideChange--
+        }
       }
     }
 
-    if (opened != null) {
-      // must be executed with a current modality — that's why doOpenInEdtImpl cannot use coroutineScope.launch
+    if (fireFileOpened) {
+      val publisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+      // must be executed with a current modality — that's why coroutineScope.launch should be not used
       withContext(Dispatchers.EDT) {
-        opened()
+        if (isFileOpen(file)) {
+          publisher.fileOpened(this@FileEditorManagerImpl, file)
+        }
       }
     }
     return result
