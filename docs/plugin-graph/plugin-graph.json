@@ -3520,18 +3520,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "xm",
-    "name": "intellij.struts2",
-    "n": "i.struts2",
-    "package": "com.intellij.struts2",
-    "sourceModule": "intellij.struts2",
-    "descriptor": "contrib/struts2/plugin/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.struts2",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "cnC",
     "n": "com.intellij.swagger"
   }

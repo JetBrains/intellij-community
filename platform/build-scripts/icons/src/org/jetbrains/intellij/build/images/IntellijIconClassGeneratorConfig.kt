@@ -20,17 +20,6 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       // force generating "Groovy" inner class to preserve backward compatiblity
       "intellij.groovy.psi" -> IntellijIconClassGeneratorModuleConfig(className = "JetgroovyIcons", iconDirectory = "icons")
       "intellij.clouds.docker" -> IntellijIconClassGeneratorModuleConfig(className = "DockerIcons", packageName = "com.intellij.docker")
-      "intellij.struts2.ognl" -> IntellijIconClassGeneratorModuleConfig(
-        className = "OgnlIcons",
-        packageName = "com.intellij.lang.ognl",
-        iconDirectory = "icons",
-      )
-
-      "intellij.struts2.dom" -> IntellijIconClassGeneratorModuleConfig(
-        className = "Struts2Icons",
-        packageName = "com.intellij.struts2",
-        iconDirectory = "icons",
-      )
       "intellij.css" -> IntellijIconClassGeneratorModuleConfig(
         className = "CssIcons",
         packageName = "com.intellij.lang.css",

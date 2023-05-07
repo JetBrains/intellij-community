@@ -141,7 +141,6 @@
 + -com-intellij-spring-mvc-
 + -com-intellij-spring-boot-
 + -com-intellij-spring-webflow-
-+ -com-intellij-struts2-
 + -com-intellij-spring-websocket-
 + -com-intellij-jboss-core-
 + -com-intellij-drools-
