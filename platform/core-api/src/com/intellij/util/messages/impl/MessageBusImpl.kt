@@ -127,7 +127,7 @@ open class MessageBusImpl : MessageBus {
     @Suppress("UNCHECKED_CAST")
     return publisherCache.computeIfAbsent(topic) { topic1 ->
       val aClass = topic1.listenerClass
-      ReflectionUtil.proxy(aClass.classLoader, aClass, createPublisher(topic1, topic1.broadcastDirection))
+      ReflectionUtil.proxy(aClass.classLoader, aClass, createPublisher(topic = topic1, direction = topic1.broadcastDirection))
     } as L
   }
 
@@ -571,7 +571,7 @@ private fun clearSubscriberCacheOnConnectionTerminated(topicAndHandlerPairs: Arr
 private fun removeDisposedHandlers(topicAndHandlerPairs: Array<Any>, index: Int, topic: Topic<*>, bus: MessageBusImpl) {
   val cachedHandlers = bus.subscriberCache.remove(topic) ?: return
   val handler = topicAndHandlerPairs[index + 1]
-  // during immediate delivery, execution of one handler can lead to dispose of some connection
+  // during immediate delivery, execution of one handler can lead to dispose of some connection,
   // and as a result, other handlers may become obsolete
   if (topic.isImmediateDelivery) {
     var i = 0
