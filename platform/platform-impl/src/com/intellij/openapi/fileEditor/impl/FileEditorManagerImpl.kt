@@ -51,7 +51,6 @@ import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.progress.runBlockingModal
@@ -1083,13 +1082,7 @@ open class FileEditorManagerImpl(
 
       // A file is not opened yet. In this case, we have to create editors and select the created EditorComposite.
       newProviders = FileEditorProviderManager.getInstance().getProvidersAsync(project, file)
-      builders = newProviders.map { provider ->
-        LOG.runCatching {
-          readAction {
-            if (provider is AsyncFileEditorProvider) provider.createEditorAsync(project, file) else null
-          }
-        }.getOrLogException(LOG)
-      }
+      builders = createBuilders(providers = newProviders, file = file, project = project)
     }
     else {
       newProviders = null
@@ -1222,26 +1215,23 @@ open class FileEditorManagerImpl(
                                      builders: List<AsyncFileEditorProvider.Builder?>): EditorComposite? {
     val editorsWithProviders = ArrayList<FileEditorWithProvider>(providers.size)
     for (i in providers.indices) {
-      try {
+      runCatching {
         val provider = providers[i]
-        val builder = if (builders.isEmpty()) null else builders[i]
-        val editor = if (builder == null) provider.createEditor(project, file) else builder.build()
+        val builder = if (builders.isEmpty()) null else builders.getOrNull(i)
+        val editor = builder?.build() ?: provider.createEditor(project, file)
         if (!editor.isValid) {
           val pluginDescriptor = PluginManager.getPluginByClass(provider.javaClass)
           LOG.error(PluginException("Invalid editor created by provider ${provider.javaClass.name}", pluginDescriptor?.pluginId))
-          continue
+          return@runCatching null
         }
         editorsWithProviders.add(FileEditorWithProvider(editor, provider))
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
+      }.getOrLogException(LOG)
     }
-    if (editorsWithProviders.isEmpty()) return null
-    return createComposite(file, editorsWithProviders)
+
+    if (editorsWithProviders.isEmpty()) {
+      return null
+    }
+    return createComposite(file = file, editorsWithProviders = editorsWithProviders)
   }
 
   protected fun createComposite(file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>): EditorComposite? {
@@ -2083,11 +2073,7 @@ open class FileEditorManagerImpl(
     }
 
     // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
-    val builders = newProviders.map { provider ->
-      runCatching {
-        if (provider is AsyncFileEditorProvider) provider.createEditorAsync(project, file) else null
-      }.getOrLogException(LOG)
-    }
+    val builders = createBuilders(providers = newProviders, file = file, project = project)
 
     val window = windowDeferred.await()
     val opened: (() -> Unit)? = subtask("file opening in EDT", Dispatchers.EDT) {
@@ -2202,4 +2188,14 @@ private fun getEffectiveOptions(options: FileEditorOpenOptions, entry: HistoryEn
     return options.copy(usePreviewTab = false)
   }
   return options
+}
+
+private suspend fun createBuilders(providers: List<FileEditorProvider>,
+                                   file: VirtualFile,
+                                   project: Project): List<AsyncFileEditorProvider.Builder?> {
+  return providers.map { provider ->
+    runCatching {
+      if (provider is AsyncFileEditorProvider) provider.createEditorBuilder(project, file) else null
+    }.getOrLogException(LOG)
+  }
 }
