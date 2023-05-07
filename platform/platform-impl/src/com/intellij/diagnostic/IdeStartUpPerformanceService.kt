@@ -5,8 +5,9 @@ import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceRepo
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CoroutineScope
 
-private class IdeStartUpPerformanceService : StartUpPerformanceReporter() {
+private class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : StartUpPerformanceReporter(coroutineScope) {
   override fun addActivityListener(project: Project) {
     if (perfFilePath == null) {
       super.addActivityListener(project)

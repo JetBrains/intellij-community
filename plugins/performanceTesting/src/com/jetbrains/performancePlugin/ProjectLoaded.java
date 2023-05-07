@@ -359,7 +359,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
   private void runScriptWhenInitializedAndIndexed(Project project) {
     DumbService.getInstance(project).smartInvokeLater(Context.current().wrap(() -> {
       myAlarm.addRequest(Context.current().wrap(() -> {
-        if (DumbService.isDumb(project) || CoreProgressManager.getCurrentIndicators().size() != 0 ||
+        if (DumbService.isDumb(project) || !CoreProgressManager.getCurrentIndicators().isEmpty() ||
             !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished()) {
           runScriptWhenInitializedAndIndexed(project);
         }

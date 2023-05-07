@@ -22,8 +22,8 @@ import java.util.concurrent.TimeUnit
 internal abstract class IdeaFormatWriter(private val activities: Map<String, MutableList<ActivityImpl>>,
                                          private val threadNameManager: ThreadNameManager,
                                          private val version: String) {
-  private val logPrefix = "=== Start: StartUp Measurement ===\n"
-  protected val stringWriter = ExposingCharArrayWriter()
+  private val logPrefix: String = "=== Start: StartUp Measurement ===\n"
+  protected val stringWriter: ExposingCharArrayWriter = ExposingCharArrayWriter()
 
   fun write(timeOffset: Long,
             serviceActivities: Map<String, MutableList<ActivityImpl>>,
@@ -136,7 +136,7 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
           if (ownDuration != -1L) {
             writer.writeNumberField("od", timeUnit.convert(ownDuration, TimeUnit.NANOSECONDS))
           }
-          // Do not write end to reduce size of report. `end` can be computed using `start + duration`
+          // Do not write an end to reduce the size of the report. `end` can be computed using `start + duration`
           writer.writeStringField("t", threadNameManager.getThreadName(item))
           if (item.pluginId != null) {
             writer.writeStringField("p", item.pluginId)
@@ -155,16 +155,6 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
   }
 
   protected open fun beforeActivityWrite(item: ActivityImpl, ownOrTotalDuration: Long, fieldName: String) {
-  }
-
-  protected open fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, writer: JsonGenerator) {
-    writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMillis(duration))
-    writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(item.start - offset))
-    writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(item.end - offset))
-    writer.writeStringField("thread", threadNameManager.getThreadName(item))
-    if (item.pluginId != null) {
-      writer.writeStringField("p", item.pluginId)
-    }
   }
 }
 

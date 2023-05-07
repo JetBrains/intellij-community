@@ -13,6 +13,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -23,7 +24,10 @@ import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -31,7 +35,7 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
-open class StartUpPerformanceReporter : StartUpPerformanceService {
+open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope) : StartUpPerformanceService {
   private var pluginCostMap: Map<String, Object2LongMap<String>>? = null
 
   private var lastReport: ByteBuffer? = null
@@ -39,11 +43,12 @@ open class StartUpPerformanceReporter : StartUpPerformanceService {
 
   companion object {
     @JvmStatic
-    protected val perfFilePath = System.getProperty("idea.log.perf.stats.file")?.takeIf(String::isNotEmpty)
+    protected val perfFilePath: String? = System.getProperty("idea.log.perf.stats.file")?.takeIf(String::isNotEmpty)
 
-    internal val LOG = logger<StartUpMeasurer>()
+    internal val LOG: Logger
+      get() = logger<StartUpMeasurer>()
 
-    internal const val VERSION = "38"
+    internal const val VERSION: String = "38"
 
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
@@ -69,21 +74,15 @@ open class StartUpPerformanceReporter : StartUpPerformanceService {
       @Volatile
       private var projectOpenedActivitiesPassed = false
 
-      // not all activities are performed always, so, we wait only activities that were started
       @Volatile
-      private var editorRestoringTillHighlighted = true
+      private var editorRestoringTillHighlighted = false
 
       override fun accept(activity: ActivityImpl) {
         if (activity.category != null && activity.category != ActivityCategory.DEFAULT) {
           return
         }
 
-        if (activity.end == 0L) {
-          if (activity.name == Activities.EDITOR_RESTORING_TILL_PAINT) {
-            editorRestoringTillHighlighted = false
-          }
-        }
-        else {
+        if (activity.end != 0L) {
           when (activity.name) {
             Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES -> {
               projectOpenedActivitiesPassed = true
@@ -126,17 +125,20 @@ open class StartUpPerformanceReporter : StartUpPerformanceService {
   }
 
   override fun reportStatistics(project: Project) {
-    project.coroutineScope.launch {
-      keepAndLogStats(project.name)
-    }
+    keepAndLogStats(project.name)
   }
 
-  @Synchronized
+  private val reportMutex = Mutex()
+
   private fun keepAndLogStats(projectName: String) {
-    val params = logAndClearStats(projectName, perfFilePath)
-    pluginCostMap = params.pluginCostMap
-    lastReport = params.lastReport
-    lastMetrics = params.lastMetrics
+    coroutineScope.launch {
+      reportMutex.withLock {
+        val params = logAndClearStats(projectName, perfFilePath)
+        pluginCostMap = params.pluginCostMap
+        lastReport = params.lastReport
+        lastMetrics = params.lastMetrics
+      }
+    }
   }
 }
 
@@ -152,7 +154,7 @@ private fun logAndClearStats(projectName: String, perfFilePath: String?): StartU
   var end = -1L
 
   StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false)) { item ->
-    // process it now to ensure that thread will have a first name (because report writer can process events in any order)
+    // process it now to ensure that thread will have a first name (because a report writer can process events in any order)
     threadNameManager.getThreadName(item)
 
     if (item.end == -1L) {
@@ -179,7 +181,7 @@ private fun logAndClearStats(projectName: String, perfFilePath: String?): StartU
     }
   }
 
-  val pluginCostMap: MutableMap<String, Object2LongMap<String>> = computePluginCostMap()
+  val pluginCostMap = computePluginCostMap()
 
   val w = IdeIdeaFormatWriter(activities, pluginCostMap, threadNameManager)
   val defaultActivities = activities.get(ActivityCategory.DEFAULT.jsonName)

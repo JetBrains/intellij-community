@@ -3,6 +3,7 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -191,7 +192,7 @@ public class TextRange implements Segment, Serializable {
     return Math.max(myStartOffset, startOffset) < Math.min(myEndOffset, endOffset);
   }
 
-  public TextRange intersection(@NotNull TextRange range) {
+  public @Nullable TextRange intersection(@NotNull TextRange range) {
     if (equals(range)) {
       return this;
     }

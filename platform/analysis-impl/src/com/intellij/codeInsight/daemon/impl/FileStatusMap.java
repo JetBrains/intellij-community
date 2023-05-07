@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -44,13 +45,17 @@ public final class FileStatusMap implements Disposable {
     markAllFilesDirty("FileStatusMap dispose");
   }
 
-  @Nullable("null means the file is clean")
-  public static TextRange getDirtyTextRange(@NotNull Editor editor, int passId) {
+  public static @Nullable("null means the file is clean") TextRange getDirtyTextRange(@NotNull Editor editor, int passId) {
     Document document = editor.getDocument();
 
-    FileStatusMap me = DaemonCodeAnalyzerEx.getInstanceEx(editor.getProject()).getFileStatusMap();
-    TextRange dirtyScope = me.getFileDirtyScope(document, passId);
-    if (dirtyScope == null) return null;
+    Project project = Objects.requireNonNull(editor.getProject());
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    FileStatusMap fileStatusMap = DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap();
+    TextRange dirtyScope = fileStatusMap.getFileDirtyScope(document, psiFile, passId);
+    if (dirtyScope == null) {
+      return null;
+    }
+
     TextRange documentRange = TextRange.from(0, document.getTextLength());
     return documentRange.intersection(dirtyScope);
   }
@@ -115,8 +120,7 @@ public final class FileStatusMap implements Disposable {
       });
     }
 
-    @NotNull
-    private static RangeMarker combineScopes(@Nullable RangeMarker old, @NotNull TextRange scope, int textLength, @NotNull Document document) {
+    private static @NotNull RangeMarker combineScopes(@Nullable RangeMarker old, @NotNull TextRange scope, int textLength, @NotNull Document document) {
       if (scope.equalsToRange(0, textLength)) return WHOLE_FILE_DIRTY_MARKER;
       if (old == null) {
         return document.createRangeMarker(scope);
@@ -211,17 +215,15 @@ public final class FileStatusMap implements Disposable {
   /**
    * @deprecated use {@link #getFileDirtyScope(Document, PsiFile, int)}
    */
-  @Deprecated
-  @Nullable
-  public TextRange getFileDirtyScope(@NotNull Document document, int passId) {
+  @Deprecated(forRemoval = true)
+  public @Nullable TextRange getFileDirtyScope(@NotNull Document document, int passId) {
     return getFileDirtyScope(document, PsiDocumentManager.getInstance(myProject).getPsiFile(document), passId);
   }
 
   /**
    * @return null for up-to-date file, whole file for untouched or entirely dirty file, range(usually code block) for dirty region (optimization)
    */
-  @Nullable
-  public TextRange getFileDirtyScope(@NotNull Document document, @Nullable PsiFile file, int passId) {
+  public @Nullable TextRange getFileDirtyScope(@NotNull Document document, @Nullable PsiFile file, int passId) {
     RangeMarker marker;
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
@@ -316,9 +318,8 @@ public final class FileStatusMap implements Disposable {
 
   private static final RangeMarker WHOLE_FILE_DIRTY_MARKER =
     new RangeMarker() {
-      @NotNull
       @Override
-      public Document getDocument() {
+      public @NotNull Document getDocument() {
         throw new UnsupportedOperationException();
       }
 
