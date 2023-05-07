@@ -178,7 +178,6 @@
       "scratches.svg": "scope/scratches.svg",
       "scss.svg": "org/jetbrains/plugins/sass/sass.svg",
       "shell.svg": [
-        "icons/shFile.svg",
         "nodes/console.svg",
         "debugger/console.svg"
       ],
