@@ -241,6 +241,11 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
         ActionManager.getInstance().tryToExecute(gotoTaskAction, ActionCommand.getInputEvent(GotoTaskAction.ID),
                                                  contextComponent, ActionPlaces.UNKNOWN, false);
       }
+
+      @Override
+      public ShortcutSet getShortcut() {
+        return gotoTaskAction.getShortcutSet();
+      }
     });
 
     final TaskManager manager = TaskManager.getManager(project);
