@@ -863,7 +863,7 @@ open class FileEditorManagerImpl(
       val result = (clientFileEditorManager ?: return FileEditorComposite.EMPTY).openFileAsync(file = file, forceCreate = false)
       return FileEditorComposite.createFileEditorComposite(allEditors = result.map { it.fileEditor },
                                                            allProviders = result.map { it.provider },
-                                                            isPreview = options.usePreviewTab)
+                                                           isPreview = options.usePreviewTab)
     }
 
     return openFileAsync(window = windowToOpenIn, file = getOriginalFile(file), entry = null, options = options)
@@ -1013,24 +1013,26 @@ open class FileEditorManagerImpl(
       runBlockingCancellable { withContext(Dispatchers.EDT) { window.getComposite(file) } }
     }
 
-    val newProviders: List<FileEditorProvider>?
-    val builders: List<AsyncFileEditorProvider.Builder?>?
+    val newProviders: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>
     if (existingComposite == null) {
       if (!canOpenFile(file)) {
         return FileEditorComposite.EMPTY
       }
 
       // A file is not opened yet. In this case, we have to create editors and select the created EditorComposite.
-      newProviders = FileEditorProviderManager.getInstance().getProviderList(project, file)
-      builders = newProviders.map { provider ->
-        ApplicationManager.getApplication().runReadAction<AsyncFileEditorProvider.Builder?, RuntimeException> {
-          if (provider is AsyncFileEditorProvider) provider.createEditorAsync(project, file) else null
+      newProviders = FileEditorProviderManager.getInstance().getProviderList(project, file).map { provider ->
+        provider to if (provider is AsyncFileEditorProvider) {
+          ApplicationManager.getApplication().runReadAction<AsyncFileEditorProvider.Builder?, RuntimeException> {
+            provider.createEditorAsync(project, file)
+          }
+        }
+        else {
+          null
         }
       }
     }
     else {
-      newProviders = null
-      builders = null
+      newProviders = emptyList()
     }
 
     val effectiveOptions = getEffectiveOptions(options, entry)
@@ -1045,8 +1047,7 @@ open class FileEditorManagerImpl(
           file = file,
           entry = entry,
           options = effectiveOptions,
-          newProviders = newProviders,
-          builders = builders ?: emptyList())
+          newProviders = newProviders)
         if (opened != null) {
           ApplicationManager.getApplication().invokeLater(Runnable { opened() }, project.disposed)
         }
@@ -1072,39 +1073,30 @@ open class FileEditorManagerImpl(
                                     entry: HistoryEntry?,
                                     options: FileEditorOpenOptions): FileEditorComposite {
     val existingComposite = withContext(Dispatchers.EDT) { window.getComposite(file) }
+    return coroutineScope {
+      val providers: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>
+      if (existingComposite == null) {
+        if (!canOpenFile(file)) {
+          return@coroutineScope FileEditorComposite.EMPTY
+        }
 
-    val newProviders: List<FileEditorProvider>?
-    val builders: List<AsyncFileEditorProvider.Builder?>?
-    if (existingComposite == null) {
-      if (!canOpenFile(file)) {
-        return FileEditorComposite.EMPTY
+        // A file is not opened yet. In this case, we have to create editors and select the created EditorComposite.
+        val p = FileEditorProviderManager.getInstance().getProvidersAsync(project, file)
+        val builders = createBuilders(providers = p, file = file, project = project)
+        providers = p.mapIndexed { index, provider -> provider to builders.get(index)?.await() }
+      }
+      else {
+        providers = emptyList()
       }
 
-      // A file is not opened yet. In this case, we have to create editors and select the created EditorComposite.
-      newProviders = FileEditorProviderManager.getInstance().getProvidersAsync(project, file)
-      builders = createBuilders(providers = newProviders, file = file, project = project)
+      val effectiveOptions = getEffectiveOptions(options, entry)
+      openFileInEdt(window = window,
+                    file = file,
+                    entry = entry,
+                    options = effectiveOptions,
+                    isReopeningOnStartup = false,
+                    providerWithBuilderList = providers)
     }
-    else {
-      newProviders = null
-      builders = null
-    }
-
-    val effectiveOptions = getEffectiveOptions(options, entry)
-    val (result, opened) = withContext(Dispatchers.EDT) {
-      doOpenInEdtImpl(existingComposite = existingComposite,
-                      window = window,
-                      file = file,
-                      entry = entry,
-                      options = effectiveOptions,
-                      newProviders = newProviders,
-                      builders = builders ?: emptyList())
-    }
-    if (opened != null) {
-      withContext(Dispatchers.EDT) {
-        opened()
-      }
-    }
-    return result
   }
 
   private fun openFileUsingClient(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
@@ -1121,14 +1113,13 @@ open class FileEditorManagerImpl(
     file: VirtualFile,
     entry: HistoryEntry?,
     options: FileEditorOpenOptions,
-    newProviders: List<FileEditorProvider>?,
-    builders: List<AsyncFileEditorProvider.Builder?>,
+    newProviders: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>?,
     isReopeningOnStartup: Boolean = false,
   ): kotlin.Pair<FileEditorComposite, (() -> Unit)?> {
     var composite = existingComposite
     val newEditor = composite == null
     if (newEditor) {
-      composite = createComposite(file = file, providers = newProviders!!, builders = builders) ?: return FileEditorComposite.EMPTY to null
+      composite = createComposite(file = file, providers = newProviders!!) ?: return FileEditorComposite.EMPTY to null
       runActivity("beforeFileOpened event executing") {
         project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file)
       }
@@ -1211,13 +1202,10 @@ open class FileEditorManagerImpl(
   }
 
   protected open fun createComposite(file: VirtualFile,
-                                     providers: List<FileEditorProvider>,
-                                     builders: List<AsyncFileEditorProvider.Builder?>): EditorComposite? {
+                                     providers: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>): EditorComposite? {
     val editorsWithProviders = ArrayList<FileEditorWithProvider>(providers.size)
-    for (i in providers.indices) {
+    for ((provider, builder) in providers) {
       runCatching {
-        val provider = providers[i]
-        val builder = if (builders.isEmpty()) null else builders.getOrNull(i)
         val editor = builder?.build() ?: provider.createEditor(project, file)
         if (!editor.isValid) {
           val pluginDescriptor = PluginManager.getPluginByClass(provider.javaClass)
@@ -1231,10 +1219,11 @@ open class FileEditorManagerImpl(
     if (editorsWithProviders.isEmpty()) {
       return null
     }
-    return createComposite(file = file, editorsWithProviders = editorsWithProviders)
+    return createCompositeByEditorWithProviderList(file = file, editorsWithProviders = editorsWithProviders)
   }
 
-  protected fun createComposite(file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>): EditorComposite? {
+  protected fun createCompositeByEditorWithProviderList(file: VirtualFile,
+                                                        editorsWithProviders: List<FileEditorWithProvider>): EditorComposite? {
     for (editorWithProvider in editorsWithProviders) {
       val editor = editorWithProvider.fileEditor
       editor.addPropertyChangeListener(editorPropertyChangeListener)
@@ -1266,7 +1255,7 @@ open class FileEditorManagerImpl(
       state = entry.getState(provider)
     }
     if (state == null && newEditor) {
-      // We have to try to get state from the history only in case f the editor is not opened.
+      // We have to try to get state from the history only in case of the editor is not opened.
       // Otherwise, history entry might have a state out of sync with the current editor state.
       state = EditorHistoryManager.getInstance(project).getState(file, provider)
     }
@@ -1303,7 +1292,7 @@ open class FileEditorManagerImpl(
     }
 
     val providers = FileEditorProviderManager.getInstance().getProviderList(project, file)
-    val newComposite = createComposite(file = file, providers = providers, builders = emptyList()) ?: return null
+    val newComposite = createComposite(file = file, providers = providers.map { it to null }) ?: return null
     val editorHistoryManager = EditorHistoryManager.getInstance(project)
     for (editorWithProvider in newComposite.allEditorsWithProviders) {
       val editor = editorWithProvider.fileEditor
@@ -2068,35 +2057,47 @@ open class FileEditorManagerImpl(
                                          entry: HistoryEntry,
                                          options: FileEditorOpenOptions,
                                          newProviders: List<FileEditorProvider>) {
-    if (!canOpenFile(file, newProviders)) {
+    if (!canOpenFile(file = file, providers = newProviders)) {
       return
     }
 
     // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
-    val builders = createBuilders(providers = newProviders, file = file, project = project)
+    coroutineScope {
+      val builders = createBuilders(providers = newProviders, file = file, project = project)
+      val window = windowDeferred.await()
+      val providerWithBuilderList = newProviders.mapIndexed { index, provider -> provider to builders.get(index)?.await() }
+      openFileInEdt(window = window,
+                    file = file,
+                    entry = entry,
+                    options = options,
+                    isReopeningOnStartup = true,
+                    providerWithBuilderList = providerWithBuilderList)
+    }
+  }
 
-    val window = windowDeferred.await()
-    val opened: (() -> Unit)? = subtask("file opening in EDT", Dispatchers.EDT) {
-      if (!file.isValid) {
-        return@subtask null
-      }
-
+  private suspend fun openFileInEdt(
+    window: EditorWindow,
+    file: VirtualFile,
+    entry: HistoryEntry?,
+    options: FileEditorOpenOptions,
+    isReopeningOnStartup: Boolean,
+    providerWithBuilderList: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>,
+  ): FileEditorComposite {
+    val (result, opened) = subtask("file opening in EDT", Dispatchers.EDT) {
       val splitters = window.owner
       splitters.insideChange++
-      val (_, opened) = try {
+      try {
         doOpenInEdtImpl(existingComposite = window.getComposite(file),
                         window = window,
                         file = file,
                         entry = entry,
                         options = options,
-                        newProviders = newProviders,
-                        builders = builders,
-                        isReopeningOnStartup = true)
+                        newProviders = providerWithBuilderList,
+                        isReopeningOnStartup = isReopeningOnStartup)
       }
       finally {
         splitters.insideChange--
       }
-      opened
     }
 
     if (opened != null) {
@@ -2105,6 +2106,7 @@ open class FileEditorManagerImpl(
         opened()
       }
     }
+    return result
   }
 
   @Internal
@@ -2190,12 +2192,17 @@ private fun getEffectiveOptions(options: FileEditorOpenOptions, entry: HistoryEn
   return options
 }
 
-private suspend fun createBuilders(providers: List<FileEditorProvider>,
-                                   file: VirtualFile,
-                                   project: Project): List<AsyncFileEditorProvider.Builder?> {
+private fun CoroutineScope.createBuilders(providers: List<FileEditorProvider>,
+                                          file: VirtualFile,
+                                          project: Project): List<Deferred<AsyncFileEditorProvider.Builder?>?> {
   return providers.map { provider ->
-    runCatching {
-      if (provider is AsyncFileEditorProvider) provider.createEditorBuilder(project, file) else null
-    }.getOrLogException(LOG)
+    if (provider !is AsyncFileEditorProvider) {
+      return@map null
+    }
+    async {
+      runCatching {
+        provider.createEditorBuilder(project = project, file = file)
+      }.getOrLogException(LOG)
+    }
   }
 }

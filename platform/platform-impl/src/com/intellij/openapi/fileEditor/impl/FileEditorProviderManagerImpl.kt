@@ -7,6 +7,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
 import com.intellij.openapi.fileEditor.FileEditorPolicy
@@ -28,7 +29,8 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
   companion object {
     fun getInstanceImpl(): FileEditorProviderManagerImpl = FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl
 
-    private val LOG = logger<FileEditorProviderManagerImpl>()
+    private val LOG: Logger
+      get() = logger<FileEditorProviderManagerImpl>()
 
     private fun computeKey(providers: List<FileEditorProvider>) = providers.joinToString(separator = ",") { it.editorTypeId }
   }

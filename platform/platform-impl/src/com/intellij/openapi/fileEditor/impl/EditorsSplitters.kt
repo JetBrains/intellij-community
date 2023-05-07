@@ -761,7 +761,7 @@ open class EditorsSplitters internal constructor(
 
       if (cause.cause == FocusEvent.Cause.ACTIVATION) {
         // Window activation mistakenly puts focus to editor as 'last focused component in this window'
-        // even if you activate the window by clicking some other place (e.g. Project View)
+        // even if you activate the window by clicking some other place (e.g., Project View)
         SwingUtilities.invokeLater {
           if (component!!.isFocusOwner) {
             lastFocusGainedTime = System.currentTimeMillis()
@@ -962,7 +962,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
           }
           else {
             ClientSessionsManager.getProjectSession(fileEditorManager.project, clientId)
-              ?.serviceOrNull<ClientFileEditorManager>()?.openFile(file = file, forceCreate = false)
+              ?.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, forceCreate = false)
           }
 
           // This is just to make sure document reference is kept on stack till this point
