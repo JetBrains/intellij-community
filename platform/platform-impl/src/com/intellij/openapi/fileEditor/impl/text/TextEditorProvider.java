@@ -199,7 +199,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
     editor.putUserData(TEXT_EDITOR_KEY, textEditor);
   }
 
-  protected @NotNull TextEditorState getStateImpl(final Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level) {
+  protected @NotNull TextEditorState getStateImpl(@Nullable Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level) {
     TextEditorState state = new TextEditorState();
     CaretModel caretModel = editor.getCaretModel();
     List<CaretState> caretsAndSelections = caretModel.getCaretsAndSelections();
