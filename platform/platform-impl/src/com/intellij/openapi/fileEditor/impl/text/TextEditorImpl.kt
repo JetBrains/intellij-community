@@ -6,7 +6,6 @@ import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -168,27 +167,19 @@ open class TextEditorImpl @JvmOverloads constructor(@JvmField val project: Proje
   }
 
   override fun getStructureViewBuilder(): StructureViewBuilder? {
-    val document: Document = component.editor.document
-    val file = FileDocumentManager.getInstance().getFile(document)
-    return if (file == null || !file.isValid) {
-      null
-    }
-    else StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.fileType, file, project)
+    val file = FileDocumentManager.getInstance().getFile(component.editor.document)?.takeIf { it.isValid } ?: return null
+    return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.fileType, file, project)
   }
 
   override fun canNavigateTo(navigatable: Navigatable): Boolean {
-    return navigatable is OpenFileDescriptor &&
-           (navigatable.line >= 0 || navigatable.offset >= 0)
+    return navigatable is OpenFileDescriptor && (navigatable.line >= 0 || navigatable.offset >= 0)
   }
 
   override fun navigateTo(navigatable: Navigatable) {
     (navigatable as OpenFileDescriptor).navigateIn(editor)
   }
 
-  override fun toString(): @NonNls String {
-    return "Editor: " + component.file
-  }
-
+  override fun toString(): @NonNls String = "Editor: ${component.file}"
 }
 
 private class TransientEditorState {
