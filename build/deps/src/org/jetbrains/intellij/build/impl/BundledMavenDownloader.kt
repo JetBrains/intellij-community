@@ -16,7 +16,7 @@ import java.security.MessageDigest
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readBytes
 
-private val mavenCommonLibs: List<String> = listOf(
+private val maven3Libs: List<String> = listOf(
   "org.apache.maven.archetype:archetype-common:2.2",
   "org.apache.maven.archetype:archetype-catalog:2.2",
   "org.apache.maven.archetype:archetype-descriptor:2.2",
@@ -24,6 +24,10 @@ private val mavenCommonLibs: List<String> = listOf(
   "org.sonatype.nexus:nexus-indexer:3.0.4",
   "org.sonatype.nexus:nexus-indexer-artifact:1.0.1",
   "org.apache.lucene:lucene-core:2.4.1",
+)
+
+private val maven4Libs: List<String> = listOf(
+  "org.apache.maven.archetype:archetype-common:3.2.1",
 )
 
 object BundledMavenDownloader {
@@ -34,7 +38,7 @@ object BundledMavenDownloader {
     val communityRoot = BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory
     runBlocking(Dispatchers.Default) {
       val distRoot = downloadMavenDistribution(communityRoot)
-      val commonLibs = downloadMavenCommonLibs(communityRoot)
+      val commonLibs = downloadMaven3Libs(communityRoot)
       println("Maven distribution extracted at $distRoot")
       println("Maven common libs at $commonLibs")
     }
@@ -47,18 +51,20 @@ object BundledMavenDownloader {
     return BigInteger(1, digest).toString(32)
   }
 
-  fun downloadMavenCommonLibsSync(communityRoot: BuildDependenciesCommunityRoot): Path {
-    return runBlocking(Dispatchers.Default) {
-      downloadMavenCommonLibs(communityRoot)
+  fun downloadMaven3LibsSync(communityRoot: BuildDependenciesCommunityRoot): Path =
+    runBlocking(Dispatchers.Default) {
+      downloadMaven3Libs(communityRoot)
     }
-  }
+
+  suspend fun downloadMaven3Libs(communityRoot: BuildDependenciesCommunityRoot): Path =
+    downloadMavenLibs(communityRoot, "plugins/maven/maven3-server-common/lib", maven3Libs)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  suspend fun downloadMavenCommonLibs(communityRoot: BuildDependenciesCommunityRoot): Path {
-    val root = communityRoot.communityRoot.resolve("plugins/maven/maven3-server-common/lib")
+  private suspend fun downloadMavenLibs(communityRoot: BuildDependenciesCommunityRoot, path: String, libs: List<String>): Path {
+    val root = communityRoot.communityRoot.resolve(path)
     Files.createDirectories(root)
     val targetToSourceFiles = coroutineScope {
-      mavenCommonLibs.map { coordinates ->
+      libs.map { coordinates ->
         async {
           val split = coordinates.split(':')
           check(split.size == 3) {

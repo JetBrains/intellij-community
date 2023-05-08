@@ -99,7 +99,7 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
 
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
     BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
-    BundledMavenDownloader.INSTANCE.downloadMavenCommonLibsSync(communityRoot);
+    BundledMavenDownloader.INSTANCE.downloadMaven3LibsSync(communityRoot);
 
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "intellij.maven.server"));
