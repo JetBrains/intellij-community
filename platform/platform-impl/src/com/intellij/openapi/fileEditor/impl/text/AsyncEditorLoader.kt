@@ -20,9 +20,10 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 @Service(Service.Level.PROJECT)
-internal class AsyncEditorLoaderService(private val coroutineScope: CoroutineScope) {
+internal class AsyncEditorLoaderService(private val project: Project, private val coroutineScope: CoroutineScope) {
   fun start(textEditor: TextEditorImpl, editorComponent: TextEditorComponent, provider: TextEditorProvider): AsyncEditorLoader {
-    val loader = AsyncEditorLoader(textEditor = textEditor,
+    val loader = AsyncEditorLoader(project = project,
+                                   textEditor = textEditor,
                                    editorComponent = editorComponent,
                                    provider = provider,
                                    coroutineScope = coroutineScope.childScope(supervisor = false))
@@ -32,15 +33,13 @@ internal class AsyncEditorLoaderService(private val coroutineScope: CoroutineSco
   }
 }
 
-class AsyncEditorLoader internal constructor(private val textEditor: TextEditorImpl,
+class AsyncEditorLoader internal constructor(private val project: Project,
+                                             private val textEditor: TextEditorImpl,
                                              private val editorComponent: TextEditorComponent,
                                              private val provider: TextEditorProvider,
                                              private val coroutineScope: CoroutineScope) {
   private val editor: Editor
     get() = textEditor.editor
-
-  private val project: Project
-    get() = textEditor.project
 
   private val delayedActions = ArrayDeque<Runnable>()
 

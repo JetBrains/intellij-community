@@ -33,7 +33,8 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
 
   constructor(project: Project, file: VirtualFile, provider: TextEditorProvider) : super(project = project,
                                                                                          file = file,
-                                                                                         provider = provider)
+                                                                                         provider = provider,
+                                                                                         editor = createTextEditor(project, file))
 
   constructor(project: Project,
               file: VirtualFile,

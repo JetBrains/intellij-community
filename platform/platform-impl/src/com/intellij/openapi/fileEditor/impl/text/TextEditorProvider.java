@@ -66,7 +66,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
 
   @Override
   public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-    return new TextEditorImpl(project, file, this);
+    return new TextEditorImpl(project, file, this, TextEditorImpl.Companion.createTextEditor(project, file));
   }
 
   @Override

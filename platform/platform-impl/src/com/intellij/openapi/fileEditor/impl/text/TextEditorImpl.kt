@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
@@ -30,10 +31,10 @@ import javax.swing.JComponent
 
 private val TRANSIENT_EDITOR_STATE_KEY = Key.create<TransientEditorState>("transientState")
 
-open class TextEditorImpl @JvmOverloads constructor(@JvmField val project: Project,
-                                                    @JvmField val file: VirtualFile,
-                                                    provider: TextEditorProvider,
-                                                    editor: EditorImpl = createEditor(project, file)) : UserDataHolderBase(), TextEditor {
+open class TextEditorImpl(@JvmField protected val project: Project,
+                          @JvmField protected val file: VirtualFile,
+                          provider: TextEditorProvider,
+                          editor: EditorImpl) : UserDataHolderBase(), TextEditor {
   @Suppress("LeakingThis")
   private val changeSupport = PropertyChangeSupport(this)
   private val component: TextEditorComponent
@@ -57,7 +58,9 @@ open class TextEditorImpl @JvmOverloads constructor(@JvmField val project: Proje
     asyncLoader = project.getService(AsyncEditorLoaderService::class.java).start(this, component, provider)
   }
 
+  // don't pollute global scope
   companion object {
+    @ApiStatus.Internal
     fun getDocumentLanguage(editor: Editor): Language? {
       val project = editor.project!!
       if (project.isDisposed) {
@@ -67,6 +70,13 @@ open class TextEditorImpl @JvmOverloads constructor(@JvmField val project: Proje
       else {
         return PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.language
       }
+    }
+
+    @ApiStatus.Internal
+    fun createTextEditor(project: Project, file: VirtualFile): EditorImpl {
+      val document = FileDocumentManager.getInstance().getDocument(file, project)
+      val factory = EditorFactory.getInstance() as EditorFactoryImpl
+      return factory.createMainEditor(document!!, project, file)
     }
   }
 
@@ -173,10 +183,4 @@ private class TransientEditorState {
       return state
     }
   }
-}
-
-private fun createEditor(project: Project, file: VirtualFile): EditorImpl {
-  val document = FileDocumentManager.getInstance().getDocument(file, project)
-  val factory = EditorFactory.getInstance() as EditorFactoryImpl
-  return factory.createMainEditor(document!!, project, file)
 }
