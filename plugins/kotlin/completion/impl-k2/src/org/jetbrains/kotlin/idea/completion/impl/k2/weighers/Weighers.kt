@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.completion.context.FirSuperReceiverNameReferenc
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWeigher
+import org.jetbrains.kotlin.idea.completion.isPositionSuitableForNull
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -41,6 +42,7 @@ internal class WeighingContext private constructor(
     override val token: KtLifetimeToken,
     val languageVersionSettings: LanguageVersionSettings,
     val explicitReceiver: KtElement?,
+    private val positionInFakeCompletionFile: PsiElement,
     private val myExpectedType: KtType?,
     private val myImplicitReceivers: List<KtImplicitReceiver>,
     val contextualSymbolsCache: ContextualSymbolsCache,
@@ -80,11 +82,14 @@ internal class WeighingContext private constructor(
             myImplicitReceivers
         }
 
+    val isPositionSuitableForNull: Boolean = isPositionSuitableForNull(positionInFakeCompletionFile)
+
     fun withoutExpectedType(): WeighingContext = withValidityAssertion {
         WeighingContext(
             token,
             languageVersionSettings,
             explicitReceiver,
+            positionInFakeCompletionFile,
             myExpectedType = null,
             myImplicitReceivers,
             contextualSymbolsCache,
@@ -107,6 +112,7 @@ internal class WeighingContext private constructor(
                 token,
                 languageVersionSettings,
                 receiver,
+                positionInFakeCompletionFile,
                 expectedType,
                 implicitReceivers,
                 positionInFakeCompletionFile.getContextualSymbolsCache(),
@@ -158,6 +164,7 @@ internal object Weighers {
         substitutor: KtSubstitutor = KtSubstitutor.Empty(token)
     ) {
         with(ExpectedTypeWeigher) { addWeight(context, lookupElement, symbolWithOrigin?.symbol) }
+        with(KindWeigher) { addWeight(lookupElement, symbolWithOrigin?.symbol, context) }
 
         if (symbolWithOrigin == null) return
         val symbol = symbolWithOrigin.symbol
@@ -167,7 +174,6 @@ internal object Weighers {
         with(DeprecatedWeigher) { addWeight(lookupElement, symbol) }
         with(PreferGetSetMethodsToPropertyWeigher) { addWeight(lookupElement, symbol) }
         with(NotImportedWeigher) { addWeight(context, lookupElement, symbol, availableWithoutImport) }
-        with(KindWeigher) { addWeight(lookupElement, symbol) }
         with(ClassifierWeigher) { addWeight(lookupElement, symbol, symbolWithOrigin.origin) }
         with(VariableOrFunctionWeigher) { addWeight(lookupElement, symbol) }
         with(K2SoftDeprecationWeigher) { addWeight(lookupElement, symbol, context.languageVersionSettings) }
