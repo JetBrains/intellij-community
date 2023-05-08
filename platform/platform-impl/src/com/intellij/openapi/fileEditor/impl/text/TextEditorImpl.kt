@@ -27,7 +27,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
@@ -35,14 +35,24 @@ import javax.swing.JComponent
 
 private val TRANSIENT_EDITOR_STATE_KEY = Key.create<TransientEditorState>("transientState")
 
-open class TextEditorImpl(@JvmField protected val project: Project,
-                          @JvmField protected val file: VirtualFile,
-                          provider: TextEditorProvider,
-                          editor: EditorImpl) : UserDataHolderBase(), TextEditor {
+open class TextEditorImpl @Internal constructor(@JvmField protected val project: Project,
+                                                @JvmField protected val file: VirtualFile,
+                                                editor: EditorImpl,
+                                                private val asyncLoader: AsyncEditorLoader) : UserDataHolderBase(), TextEditor {
   @Suppress("LeakingThis")
   private val changeSupport = PropertyChangeSupport(this)
   private val component: TextEditorComponent
-  private val asyncLoader: AsyncEditorLoader
+
+  constructor(project: Project,
+              file: VirtualFile,
+              provider: TextEditorProvider,
+              editor: EditorImpl) : this(project = project,
+                                         file = file,
+                                         editor = editor,
+                                         asyncLoader = createAsyncEditorLoader(provider, project)) {
+    @Suppress("LeakingThis")
+    asyncLoader.start(this)
+  }
 
   init {
     @Suppress("LeakingThis")
@@ -59,18 +69,17 @@ open class TextEditorImpl(@JvmField protected val project: Project,
 
     @Suppress("LeakingThis")
     Disposer.register(this, component)
-
-    val service = project.service<AsyncEditorLoaderService>()
-    asyncLoader = AsyncEditorLoader(project = project,
-                                    provider = provider,
-                                    coroutineScope = service.coroutineScope.childScope(supervisor = false))
-    @Suppress("LeakingThis")
-    asyncLoader.start(this)
   }
 
   // don't pollute global scope
   companion object {
-    @ApiStatus.Internal
+    fun createAsyncEditorLoader(provider: TextEditorProvider, project: Project): AsyncEditorLoader {
+      return AsyncEditorLoader(project = project,
+                               provider = provider,
+                               coroutineScope = project.service<AsyncEditorLoaderService>().coroutineScope.childScope(supervisor = false))
+    }
+
+    @Internal
     fun getDocumentLanguage(editor: Editor): Language? {
       val project = editor.project!!
       if (project.isDisposed) {
@@ -82,7 +91,7 @@ open class TextEditorImpl(@JvmField protected val project: Project,
       }
     }
 
-    @ApiStatus.Internal
+    @Internal
     fun createTextEditor(project: Project, file: VirtualFile): EditorImpl {
       val document = FileDocumentManager.getInstance().getDocument(file, project)
       val factory = EditorFactory.getInstance() as EditorFactoryImpl

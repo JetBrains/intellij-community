@@ -41,6 +41,11 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
               provider: TextEditorProvider,
               editor: EditorImpl) : super(project = project, file = file, provider = provider, editor = editor)
 
+  internal constructor(project: Project,
+                       file: VirtualFile,
+                       asyncLoader: AsyncEditorLoader,
+                       editor: EditorImpl) : super(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
+
   override fun loadEditorInBackground(): Runnable {
     val baseResult = super.loadEditorInBackground()
     val psiFile = PsiManager.getInstance(project).findFile(file)

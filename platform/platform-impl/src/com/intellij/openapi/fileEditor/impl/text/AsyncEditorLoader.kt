@@ -13,6 +13,7 @@ import com.intellij.ui.EditorNotifications
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -49,8 +50,9 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     }
   }
 
+  @Internal
   @RequiresEdt
-  internal fun start(textEditor: TextEditorImpl) {
+  fun start(textEditor: TextEditorImpl) {
     val editor = textEditor.editor
     editor.putUserData(ASYNC_LOADER, this)
 
