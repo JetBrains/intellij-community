@@ -41,6 +41,20 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_os = "windows")]
+    fn classpath_test_on_ns_prefixed_path() {
+        let test_orig = prepare_test_env(LauncherLocation::Standard); // to prevent directories from disappearing
+        let test_unc = test_orig.to_ns_prefix();
+        let dump = run_launcher_ext(&test_unc, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let classpath = &dump.systemProperties["java.class.path"];
+
+        assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
+
+        let os_specific_jar = format!("boot-{}.jar", env::consts::OS);
+        assert!(classpath.contains(&os_specific_jar), "{} is not present in classpath: {}", os_specific_jar, classpath);
+    }
+
+    #[test]
     fn standard_vm_options_loading_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
         let vm_options_name = if cfg!(target_os = "windows") { "xplat64.exe.vmoptions" }

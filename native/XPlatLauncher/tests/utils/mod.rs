@@ -14,7 +14,7 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 use tempfile::{Builder, TempDir};
 
-use xplat_launcher::{DEBUG_MODE_ENV_VAR, get_config_home, is_executable, PathExt};
+use xplat_launcher::{DEBUG_MODE_ENV_VAR, get_config_home, is_executable, PathExt, strip_nt_prefix};
 
 static INIT: Once = Once::new();
 static mut SHARED: Option<TestEnvironmentShared> = None;
@@ -78,13 +78,23 @@ impl<'a> TestEnvironment<'a> {
 
     #[cfg(target_os = "windows")]
     pub fn to_unc(&self) -> Self {
-        let unc_temp_dir = Self::convert_to_unc(self.test_root_dir.path().parent().unwrap());
+        self.map_path(Self::convert_to_unc)
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn to_ns_prefix(&self) -> Self {
+        self.map_path(Self::ns_prefix)
+    }
+
+    #[cfg(target_os = "windows")]
+    fn map_path(&self, mapping: fn(&Path) -> PathBuf) -> Self {
+        let new_temp_dir = mapping(self.test_root_dir.path().parent().unwrap());
         TestEnvironment {
-            dist_root: Self::convert_to_unc(&self.dist_root),
-            project_dir: Self::convert_to_unc(&self.project_dir),
-            launcher_path: Self::convert_to_unc(&self.launcher_path),
+            dist_root: mapping(&self.dist_root),
+            project_dir: mapping(&self.project_dir),
+            launcher_path: mapping(&self.launcher_path),
             shared_env: self.shared_env,
-            test_root_dir: Builder::new().prefix("xplat_launcher_test_").tempdir_in(unc_temp_dir).unwrap(),
+            test_root_dir: Builder::new().prefix("xplat_launcher_test_").tempdir_in(new_temp_dir).unwrap(),
             to_delete: Vec::new()
         }
     }
@@ -95,6 +105,13 @@ impl<'a> TestEnvironment<'a> {
         assert!(path.has_root(), "Invalid path: {:?}", path);
         let path_str = path.to_str().unwrap();
         PathBuf::from(String::from("\\\\127.0.0.1\\") + &path_str[0..1] + "$" + &path_str[2..])
+    }
+
+    // "C:\some\path" -> "\\?\C:\some\path"
+    #[cfg(target_os = "windows")]
+    fn ns_prefix(path: &Path) -> PathBuf {
+        assert!(path.has_root(), "Invalid path: {:?}", path);
+        PathBuf::from(String::from("\\\\?\\") + path.to_str().unwrap())
     }
 }
 
@@ -525,7 +542,7 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
     let stderr_file_path = test_env.test_root_dir.path().join("err.txt");
     let project_dir = test_env.project_dir.to_str().unwrap();
     let dump_file_path = test_env.test_root_dir.path().join("output.json");
-    let dump_file_path_str = dump_file_path.to_string_lossy();
+    let dump_file_path_str = strip_nt_prefix(dump_file_path.clone())?.to_string_checked()?;
 
     let mut full_args = Vec::<&str>::new();
     if run_spec.dump {
