@@ -23,12 +23,32 @@ import com.intellij.util.PlatformUtils
 /**
  * @author Konstantin Bulenkov
  */
-class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
-  var newValue: Boolean = isNewUI()
+private class ExperimentalUIImpl : ExperimentalUI() {
+  private var newValue: Boolean = isNewUI()
 
   init {
     val app = ApplicationManager.getApplication()
-    app.messageBus.connect().subscribe(AppLifecycleListener.TOPIC, this)
+    app.messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+      override fun appStarted() {
+        if (isNewUI()) {
+          val propertyComponent = PropertiesComponent.getInstance()
+          propertyComponent.setValue(NEW_UI_USED_PROPERTY, true)
+        }
+      }
+
+      override fun appClosing() {
+        if (newValue != isNewUI()) {
+          Registry.get("ide.experimental.ui").setValue(newValue)
+          if (newValue) {
+            onExpUIEnabled(false)
+          }
+          else {
+            onExpUIDisabled(false)
+          }
+        }
+      }
+    })
+
     if (ConfigImportHelper.isNewUser() && isNewUIEnabledByDefault() && !isNewUI()) {
       app.invokeLater {
         newValue = true
@@ -55,8 +75,12 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
     newValue = newUI
 
     if (newValue != isNewUI() && suggestRestart) {
-      val action = if (ApplicationManager.getApplication().isRestartCapable) IdeBundle.message("ide.restart.action")
-      else IdeBundle.message("ide.shutdown.action")
+      val action = if (ApplicationManager.getApplication().isRestartCapable) {
+        IdeBundle.message("ide.restart.action")
+      }
+      else {
+        IdeBundle.message("ide.shutdown.action")
+      }
       if (PlatformUtils.isJetBrainsClient()) {
         Registry.get("ide.experimental.ui").setValue(newValue)
       }
@@ -72,25 +96,6 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
         if (result == Messages.YES) {
           ApplicationManagerEx.getApplicationEx().restart(true);
         }
-      }
-    }
-  }
-
-  override fun appStarted() {
-    if (isNewUI()) {
-      val propertyComponent = PropertiesComponent.getInstance()
-      propertyComponent.setValue(NEW_UI_USED_PROPERTY, true)
-    }
-  }
-
-  override fun appClosing() {
-    if (newValue != isNewUI()) {
-      Registry.get("ide.experimental.ui").setValue(newValue)
-      if (newValue) {
-        onExpUIEnabled(false)
-      }
-      else {
-        onExpUIDisabled(false)
       }
     }
   }
@@ -123,7 +128,9 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
   }
 
   override fun onExpUIDisabled(suggestRestart: Boolean) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) return
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      return
+    }
 
     newValue = false
     NewUIInfoService.getInstance().updateDisableNewUIDate()
@@ -144,12 +151,10 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
       }
     }
   }
+}
 
-  companion object {
-    private fun setRegistryKeyIfNecessary(key: String, value: Boolean) {
-      if (Registry.`is`(key) != value) {
-        Registry.get(key).setValue(value)
-      }
-    }
+private fun setRegistryKeyIfNecessary(key: String, value: Boolean) {
+  if (Registry.`is`(key) != value) {
+    Registry.get(key).setValue(value)
   }
 }
