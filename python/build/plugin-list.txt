@@ -24,6 +24,7 @@ intellij.textmate
 intellij.toml
 intellij.vcs.git
 intellij.vcs.github
+intellij.vcs.gitlab
 intellij.vcs.hg
 intellij.vcs.svn
 intellij.yaml
