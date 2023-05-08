@@ -17,11 +17,11 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.orNull
 import com.intellij.util.lang.UrlClassLoader
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
@@ -49,7 +49,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentMap
 
 @OptIn(ExperimentalCompilerApi::class)
-internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : KtCompilerPluginsProvider(), Disposable {
+internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs: CoroutineScope) : KtCompilerPluginsProvider(), Disposable {
     private val pluginsCacheCachedValue: SynchronizedClearableLazy<PluginsCache?> = SynchronizedClearableLazy { createNewCache() }
     private val pluginsCache: PluginsCache?
         get() = pluginsCacheCachedValue.value
@@ -61,19 +61,17 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
         get() = onlyBundledPluginsEnabledRegistryValue.asBoolean()
 
     init {
-        val messageBusConnection = project.messageBus.connect(this)
-        messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED,
-                                       object : WorkspaceModelChangeListener {
-                override fun changed(event: VersionedStorageChange) {
-                    val hasChanges = event.getChanges(FacetEntity::class.java).any { change ->
-                        change.facetTypes.any { it == KotlinFacetType.ID }
-                    }
-                    if (hasChanges) {
-                        pluginsCacheCachedValue.drop()
-                    }
+        cs.launch {
+            WorkspaceModel.getInstance(project).changesEventFlow.collect { event ->
+                val hasChanges = event.getChanges(FacetEntity::class.java).any { change ->
+                    change.facetTypes.any { it == KotlinFacetType.ID }
+                }
+                if (hasChanges) {
+                    pluginsCacheCachedValue.drop()
                 }
             }
-        )
+        }
+        val messageBusConnection = project.messageBus.connect(this)
         messageBusConnection.subscribe(KotlinCompilerSettingsListener.TOPIC,
             object : KotlinCompilerSettingsListener {
                 override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
