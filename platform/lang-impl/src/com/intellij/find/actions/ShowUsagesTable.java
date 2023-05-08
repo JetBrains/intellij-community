@@ -187,10 +187,13 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
     };
   }
 
-  public boolean isSeparatorNode(@Nullable Usage node) {
-    return node == USAGES_OUTSIDE_SCOPE_SEPARATOR
-           ||node == MORE_USAGES_SEPARATOR
-           ||node == USAGES_FILTERED_OUT_SEPARATOR;
+  public boolean isFullLineNode(UsageNode node) {
+    if (node instanceof ShowUsagesAction.StringNode) return true;
+
+    Usage usage = node.getUsage();
+    return usage == USAGES_OUTSIDE_SCOPE_SEPARATOR
+           || usage == MORE_USAGES_SEPARATOR
+           || usage == USAGES_FILTERED_OUT_SEPARATOR;
   }
 
   @Nullable
