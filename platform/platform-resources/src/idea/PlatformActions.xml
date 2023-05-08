@@ -1602,5 +1602,8 @@
     <group id="FindInFiles.Results.ContextMenu" searchable="false">
       <reference id="CopyReferencePopupGroup"/>
     </group>
+
+    <group id="TopStripeActionGroup" class="com.intellij.toolWindow.StripeActionGroup"/>
+    <action id="TopStripeEnableAction" class="com.intellij.toolWindow.EnableStripeGroup"/>
   </actions>
 </idea-plugin>
