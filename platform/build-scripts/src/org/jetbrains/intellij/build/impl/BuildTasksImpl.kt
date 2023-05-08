@@ -125,6 +125,7 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
     context.paths.distAllDir = targetDirectory
     context.options.targetOs = persistentListOf(currentOs)
     context.options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
+    BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
     buildDistribution(state = compileModulesForDistribution(context), context = context, isUpdateFromSources = true)

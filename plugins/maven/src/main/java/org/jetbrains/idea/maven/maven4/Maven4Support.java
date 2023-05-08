@@ -92,18 +92,19 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(PathUtil.getJarPathForClass(MavenServer.class)));
 
-    //addDir(classpath, new File(root, "maven4-server-lib"), f -> true);
+    addDir(classpath, new File(root, "maven4-server-lib"), f -> true);
 
     classpath.add(new File(root, "maven40-server.jar"));
   }
 
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
     BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
-    BundledMavenDownloader.INSTANCE.downloadMaven3LibsSync(communityRoot);
+    BundledMavenDownloader.INSTANCE.downloadMaven4LibsSync(communityRoot);
 
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "intellij.maven.server"));
     File parentFile = MavenUtil.getMavenPluginParentFile();
+    addDir(classpath, new File(parentFile, "maven40-server-impl/lib"), f -> true);
 
     classpath.add(new File(root, "intellij.maven.server.m40"));
   }

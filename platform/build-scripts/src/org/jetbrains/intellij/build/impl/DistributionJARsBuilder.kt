@@ -1206,6 +1206,7 @@ suspend fun buildSearchableOptions(ideClassPath: Set<String>,
     // bundled maven is also downloaded during traverseUI execution in an external process,
     // making it fragile to call more than one traverseUI at the same time (in the reproducibility test, for example),
     // so it's pre-downloaded with proper synchronization
+    BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
     // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.

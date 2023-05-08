@@ -38,9 +38,11 @@ object BundledMavenDownloader {
     val communityRoot = BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory
     runBlocking(Dispatchers.Default) {
       val distRoot = downloadMavenDistribution(communityRoot)
-      val commonLibs = downloadMaven3Libs(communityRoot)
+      val maven3DownloadedLibs = downloadMaven3Libs(communityRoot)
+      val maven4DownloadedLibs = downloadMaven4Libs(communityRoot)
       println("Maven distribution extracted at $distRoot")
-      println("Maven common libs at $commonLibs")
+      println("Maven 3 libs at $maven3DownloadedLibs")
+      println("Maven 4 libs at $maven4DownloadedLibs")
     }
   }
 
@@ -50,6 +52,14 @@ object BundledMavenDownloader {
     val digest = md5.digest()
     return BigInteger(1, digest).toString(32)
   }
+
+  fun downloadMaven4LibsSync(communityRoot: BuildDependenciesCommunityRoot): Path =
+    runBlocking(Dispatchers.Default) {
+      downloadMaven4Libs(communityRoot)
+    }
+
+  suspend fun downloadMaven4Libs(communityRoot: BuildDependenciesCommunityRoot): Path =
+    downloadMavenLibs(communityRoot, "plugins/maven/maven40-server-impl/lib", maven4Libs)
 
   fun downloadMaven3LibsSync(communityRoot: BuildDependenciesCommunityRoot): Path =
     runBlocking(Dispatchers.Default) {
