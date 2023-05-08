@@ -67,6 +67,8 @@ private class DumpPluginDescriptorsAction : DumbAwareAction() {
       @Suppress("TestOnlyProblems")
       val parentClassLoaders = pluginClassLoaders.filterIsInstance<PluginClassLoader>()
                                   .flatMapTo(HashSet()) { classLoader -> classLoader._getParents().mapNotNull { it.pluginClassLoader } }
+      val coreClassLoader = ClassLoaderConfigurator::class.java.classLoader
+      parentClassLoaders.add(coreClassLoader)
       parentClassLoaders.add(ClassLoader.getSystemClassLoader())
       parentClassLoaders.add(ClassLoader.getPlatformClassLoader())
       val nonPluginClassLoaders = parentClassLoaders.filterNot { it is PluginClassLoader }.withIndex().associateBy({ it.value }, { it.index })
@@ -76,8 +78,9 @@ private class DumpPluginDescriptorsAction : DumbAwareAction() {
             val moduleSuffix = (classLoader.pluginDescriptor as? IdeaPluginDescriptorImpl)?.moduleName?.let { ":$it" } ?: ""
             "PluginClassLoader[${classLoader.pluginId.idString}$moduleSuffix]"
           }
-          ClassLoader.getSystemClassLoader() -> "SystemClassLoader"
-          ClassLoader.getPlatformClassLoader() -> "PlatformClassLoader"
+          ClassLoader.getSystemClassLoader() -> "java.SystemClassLoader"
+          ClassLoader.getPlatformClassLoader() -> "java.PlatformClassLoader"
+          coreClassLoader -> "ij.CoreClassLoader"
           else -> "${classLoader.javaClass.simpleName}[${nonPluginClassLoaders[classLoader]}]"
         }
       }
