@@ -21,9 +21,9 @@ import java.util.Set;
 public record ModUpdatePsiFile(@NotNull PsiFile file, @NotNull String oldText, @NotNull String newText) implements ModCommand {
   @Override
   public @NotNull ModStatus execute(@NotNull Project project) {
+    if (!file.textMatches(oldText)) return ModStatus.ABORT;
+    Document document = file.getViewProvider().getDocument();
     return IntentionPreviewUtils.writeAndCompute(() -> {
-      if (!file.textMatches(oldText)) return ModStatus.ABORT;
-      Document document = file.getViewProvider().getDocument();
       document.replaceString(0, document.getTextLength(), newText);
       PsiDocumentManager.getInstance(project).commitDocument(document);
       return ModStatus.SUCCESS;
