@@ -423,6 +423,12 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     }
     var laf: LookAndFeelInfo? = null
     if (lafClassName != null) {
+      if (lafClassName == DarculaLaf::class.java.name) {
+        val darcula = lafList.firstOrNull { it.name == "Darcula" && it.className == DarculaLaf::class.java.name }
+        if (darcula != null) {
+          return darcula
+        }
+      }
       laf = findLaf(lafClassName)
     }
 
