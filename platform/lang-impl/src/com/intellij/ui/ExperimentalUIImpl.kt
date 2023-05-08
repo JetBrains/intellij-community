@@ -15,15 +15,18 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.PlatformUtils
 
 /**
  * @author Konstantin Bulenkov
  */
 private class ExperimentalUIImpl : ExperimentalUI() {
-  @JvmField var newValue: Boolean = isNewUI()
+  @JvmField
+  var newValue: Boolean = isNewUI()
 
   init {
     if (ConfigImportHelper.isNewUser() && isNewUIEnabledByDefault() && !isNewUI()) {
@@ -138,7 +141,9 @@ private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
     val experimentalUi = (ExperimentalUI.getInstance() as? ExperimentalUIImpl) ?: return
     val newValue = experimentalUi.newValue
     if (newValue != ExperimentalUI.isNewUI()) {
-      Registry.get("ide.experimental.ui").setValue(newValue)
+      // if RegistryManager not yet created on appClosing, it means that something fatal is occurred, do not try to use it
+      val registryManager = ApplicationManager.getApplication().serviceIfCreated<RegistryManager>() ?: return
+      registryManager.get("ide.experimental.ui").setValue(newValue)
       if (newValue) {
         experimentalUi.onExpUIEnabled(suggestRestart = false)
       }
