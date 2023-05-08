@@ -47,10 +47,6 @@ internal open class SquareStripeButton(action: SquareAnActionButton, val toolWin
     MouseDragHelper.setComponentDraggable(this, true)
   }
 
-  override fun setLook(look: ActionButtonLook?) {
-    if (look is SquareStripeButtonLook) super.setLook(look)
-  }
-
   override fun updateUI() {
     super.updateUI()
 
@@ -102,15 +98,15 @@ internal open class SquareStripeButton(action: SquareAnActionButton, val toolWin
   }
 
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
-}
 
-private fun getAlignment(anchor: ToolWindowAnchor, splitMode: Boolean): HelpTooltip.Alignment {
-  return when (anchor) {
-    ToolWindowAnchor.RIGHT -> HelpTooltip.Alignment.LEFT
-    ToolWindowAnchor.TOP -> HelpTooltip.Alignment.LEFT
-    ToolWindowAnchor.LEFT -> HelpTooltip.Alignment.RIGHT
-    ToolWindowAnchor.BOTTOM -> if (splitMode) HelpTooltip.Alignment.LEFT else HelpTooltip.Alignment.RIGHT
-    else -> HelpTooltip.Alignment.RIGHT
+  protected open fun getAlignment(anchor: ToolWindowAnchor, splitMode: Boolean): HelpTooltip.Alignment {
+    return when (anchor) {
+      ToolWindowAnchor.RIGHT -> HelpTooltip.Alignment.LEFT
+      ToolWindowAnchor.TOP -> HelpTooltip.Alignment.LEFT
+      ToolWindowAnchor.LEFT -> HelpTooltip.Alignment.RIGHT
+      ToolWindowAnchor.BOTTOM -> if (splitMode) HelpTooltip.Alignment.LEFT else HelpTooltip.Alignment.RIGHT
+      else -> HelpTooltip.Alignment.RIGHT
+    }
   }
 }
 

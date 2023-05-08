@@ -7,6 +7,7 @@ import com.intellij.ide.actions.ToolWindowsGroup
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -23,13 +24,11 @@ import java.awt.event.MouseEvent
 import javax.swing.Icon
 
 internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
-                                      val side: ToolWindowAnchor,
+                                      override val side: ToolWindowAnchor,
                                       vararg moveTo: ToolWindowAnchor) :
-  ActionButton(createAction(toolWindowToolbar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR,
-               { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
+  MoreSquareStripeButtonBase(createAction(toolWindowToolbar)) {
 
   init {
-    setLook(SquareStripeButtonLook(this))
     addMouseListener(object : PopupHandler() {
       override fun invokePopup(component: Component, x: Int, y: Int) {
         val popupMenu = ActionManager.getInstance()
@@ -68,35 +67,12 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
     }
   }
 
-  override fun update() {
-    super.update()
-    val project = dataContext.getData(CommonDataKeys.PROJECT)
-    if (project == null) {
-      return
-    }
-
-    val available = ToolWindowsGroup.getToolWindowActions(project, true).isNotEmpty() && ToolWindowManagerEx.getInstanceEx(
+  override fun isAvailable(project: Project): Boolean {
+    return super.isAvailable(project) && ToolWindowManagerEx.getInstanceEx(
       project).getMoreButtonSide() == side
-
-    myPresentation.isEnabledAndVisible = available
-    isEnabled = available
-    isVisible = available
-  }
-
-  override fun updateToolTipText() {
-    HelpTooltip()
-      .setTitle(UIBundle.message("tool.window.new.stripe.more.title"))
-      .setLocation(if (side === ToolWindowAnchor.LEFT) HelpTooltip.Alignment.RIGHT else HelpTooltip.Alignment.LEFT)
-      .setInitialDelay(0).setHideDelay(0)
-      .installOn(this)
   }
 
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
-
-  override fun updateUI() {
-    super.updateUI()
-    myPresentation.icon = scaleIcon()
-  }
 
   fun paintDraggingButton(g: Graphics) {
     val areaSize = size.also {
@@ -137,10 +113,55 @@ private fun createAction(toolWindowToolbar: ToolWindowToolbar): DumbAwareAction 
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(null, DefaultActionGroup(actions), e.dataContext, null, true)
       popup.setMinimumSize(Dimension(300, -1))
 
+
       val moreSquareStripeButton = toolWindowToolbar.moreButton
       popup.show(RelativePoint(toolWindowToolbar, Point(toolWindowToolbar.width, moreSquareStripeButton.y)))
     }
 
     override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  }
+}
+
+internal abstract class MoreSquareStripeButtonBase(action: AnAction)
+  : ActionButton(action, createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR,
+                 { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
+
+  init {
+    setLook(SquareStripeButtonLook(this))
+  }
+
+  override fun update() {
+    super.update()
+    val project = dataContext.getData(CommonDataKeys.PROJECT)
+    if (project == null) {
+      return
+    }
+
+    val available = isAvailable(project)
+
+    myPresentation.isEnabledAndVisible = available
+    isEnabled = available
+    isVisible = available
+  }
+
+  protected open fun isAvailable(project: Project) = ToolWindowsGroup.getToolWindowActions(project, true).isNotEmpty()
+
+  abstract val side: ToolWindowAnchor
+
+  override fun updateToolTipText() {
+    HelpTooltip()
+      .setTitle(UIBundle.message("tool.window.new.stripe.more.title"))
+      .setLocation(when(side) {
+        ToolWindowAnchor.LEFT -> HelpTooltip.Alignment.RIGHT
+        ToolWindowAnchor.TOP -> HelpTooltip.Alignment.BOTTOM
+        else -> HelpTooltip.Alignment.LEFT
+      })
+      .setInitialDelay(0).setHideDelay(0)
+      .installOn(this)
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    myPresentation.icon = scaleIcon()
   }
 }
