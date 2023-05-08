@@ -43,7 +43,9 @@ extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: *con
             let mut buffer = [0; 4096];
             let len = unsafe { vsnprintf(buffer.as_mut_ptr(), buffer.len(), format, args) };
             let c_str = unsafe { CStr::from_ptr(buffer.as_ptr()) };
-            messages.push(c_str.to_string_lossy().to_string());
+            let message = c_str.to_string_lossy().to_string();
+            debug!("[JVM] vfprintf_hook: {:?}", message);
+            messages.push(message);
             len
         }
     }
