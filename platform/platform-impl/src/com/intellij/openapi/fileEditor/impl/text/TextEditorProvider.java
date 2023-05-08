@@ -14,7 +14,6 @@ import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -73,7 +72,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
   @Override
   public @NotNull FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
     TextEditorState state = new TextEditorState();
-    if (JDOMUtil.isEmpty(element)) {
+    if (element.isEmpty()) {
       return state;
     }
 
@@ -129,7 +128,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
       writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE);
       writeIfNot0(e, SELECTION_END_COLUMN_ATTR, caretState.SELECTION_END_COLUMN);
 
-      if (!JDOMUtil.isEmpty(e)) {
+      if (!e.isEmpty()) {
         element.addContent(e);
       }
     }
@@ -221,7 +220,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
       state.CARETS[i] = s;
     }
 
-    // Saving scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since
+    // Saving a scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since
     // scrolling proportion restored slightly differs from what have been saved.
     state.RELATIVE_CARET_POSITION = level == FileEditorStateLevel.UNDO ? Integer.MAX_VALUE : EditorUtil.calcRelativeCaretPosition(editor);
 

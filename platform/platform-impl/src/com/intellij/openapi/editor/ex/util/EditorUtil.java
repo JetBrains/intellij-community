@@ -63,7 +63,7 @@ public final class EditorUtil {
 
   /**
    * @return true if the editor is in fact an ordinary file editor;
-   * false if the editor is part of EditorTextField, CommitMessage and etc.
+   * false if the editor is part of EditorTextField, CommitMessage etc.
    */
   public static boolean isRealFileEditor(@Nullable Editor editor) {
     return editor != null && TextEditorProvider.getInstance().getTextEditor(editor) instanceof TextEditorImpl;
@@ -90,7 +90,7 @@ public final class EditorUtil {
       return 0;
     }
 
-    // Filter all lines that are not shown because of collapsed folding region.
+    // Filter all lines that are not shown because of a collapsed folding region.
     VisualPosition visStart = new VisualPosition(line, 0);
     LogicalPosition logStart = editor.visualToLogicalPosition(visStart);
     int lastLogLine = logStart.line;
@@ -119,7 +119,7 @@ public final class EditorUtil {
         VisualPosition visual = editor.offsetToVisualPosition(softWrap.getStart() - 1);
         int result = visual.column;
         int x = editor.visualPositionToXY(visual).x;
-        // We need to add width of the next symbol because current result column points to the last symbol before the soft wrap.
+        // We need to add the width of the next symbol because the current result column points to the last symbol before the soft wrap.
         return  result + textWidthInColumns(editor, text, softWrap.getStart() - 1, softWrap.getStart(), x);
       }
 
@@ -140,7 +140,7 @@ public final class EditorUtil {
         int result = visual.column;
         int x = editor.visualPositionToXY(visual).x;
 
-        // We need to add symbol width because current column points to the last symbol before the next soft wrap;
+        /* We need to add symbol width because current column points to the last symbol before the next soft wrap; */
         result += textWidthInColumns(editor, text, nextSoftWrap.getStart() - 1, nextSoftWrap.getStart(), x);
 
         int lineFeedIndex = StringUtil.indexOf(nextSoftWrap.getText(), '\n');
@@ -228,7 +228,7 @@ public final class EditorUtil {
 
   public static void fillVirtualSpaceUntil(final @NotNull Editor editor, int columnNumber, int lineNumber) {
     final int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
-    final String filler = EditorModificationUtil.calcStringToFillVirtualSpace(editor);
+    final String filler = EditorModificationUtilEx.calcStringToFillVirtualSpace(editor);
     if (!filler.isEmpty()) {
       WriteAction.run(() -> {
         editor.getDocument().insertString(offset, filler);
