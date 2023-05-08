@@ -93,7 +93,7 @@ object IteratorUtils {
         }
       }
       // didn't find matching start
-      return ReadResult.Invalid(PartialVFileEventException(initState, TraverseDirection.RETREAT))
+      return ReadResult.Invalid(PartialVFileEventException(initState, TraverseDirection.REWIND))
     }
 
     override fun hasNext(): Boolean = logIterator.hasNext()
@@ -139,7 +139,7 @@ object IteratorUtils {
         }
       }
       // didn't find matching END
-      return ReadResult.Invalid(PartialVFileEventException(initState, TraverseDirection.ADVANCE))
+      return ReadResult.Invalid(PartialVFileEventException(initState, TraverseDirection.PLAY))
     }
   }
 
@@ -148,15 +148,15 @@ object IteratorUtils {
    * invokes [body] on read results.
    */
   fun ReadResult.VFileEventRange.forEachContainedOperation(
-    direction: TraverseDirection = TraverseDirection.ADVANCE,
+    direction: TraverseDirection = TraverseDirection.PLAY,
     body: (OperationReadResult) -> Unit,
   ) {
     val start = begin().skipNext()
     val end = end().skipPrevious()
     while (start != end) {
       when (direction) {
-        TraverseDirection.ADVANCE -> body(start.next())
-        TraverseDirection.RETREAT -> body(end.previous())
+        TraverseDirection.PLAY -> body(start.next())
+        TraverseDirection.REWIND -> body(end.previous())
       }
     }
   }
@@ -200,4 +200,22 @@ object IteratorUtils {
     val snapshot = copy()
     return { snapshot.copy() }
   }
+
+  fun OperationLogStorage.Iterator.move(direction: TraverseDirection) =
+    when (direction) {
+      TraverseDirection.REWIND -> previous()
+      TraverseDirection.PLAY -> next()
+    }
+
+  fun OperationLogStorage.Iterator.moveFiltered(direction: TraverseDirection, toReadMask: VfsOperationTagsMask) =
+    when (direction) {
+      TraverseDirection.REWIND -> previousFiltered(toReadMask)
+      TraverseDirection.PLAY -> nextFiltered(toReadMask)
+    }
+
+  fun OperationLogStorage.Iterator.movableIn(direction: TraverseDirection) =
+    when (direction) {
+      TraverseDirection.REWIND -> hasPrevious()
+      TraverseDirection.PLAY -> hasNext()
+    }
 }

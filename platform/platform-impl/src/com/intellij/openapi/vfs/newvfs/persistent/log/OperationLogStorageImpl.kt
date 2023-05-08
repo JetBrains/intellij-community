@@ -210,7 +210,7 @@ class OperationLogStorageImpl(
     // [tag, previous operation, tag]  [tag, next operation, tag]
     //                      position --^
 
-    fun getPosition(): Long = position
+    override fun getPosition(): Long = position
 
     override fun hasNext(): Boolean {
       return position < size() && !invalidationFlag

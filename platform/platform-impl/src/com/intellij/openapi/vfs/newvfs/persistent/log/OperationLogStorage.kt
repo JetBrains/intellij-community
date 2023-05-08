@@ -109,6 +109,8 @@ interface OperationLogStorage {
    * will return false afterward in such case.
    */
   interface Iterator : BiDiIterator<OperationReadResult> {
+    fun getPosition(): Long
+
     /**
      * Creates a complete copy of the iterator.
      */
@@ -127,15 +129,9 @@ interface OperationLogStorage {
 
   enum class TraverseDirection {
     /** absolute position decreases */
-    RETREAT,
+    REWIND,
 
     /** absolute position increases */
-    ADVANCE
+    PLAY
   }
-
-  fun Iterator.move(direction: TraverseDirection) =
-    when (direction) {
-      TraverseDirection.RETREAT -> previous()
-      TraverseDirection.ADVANCE -> next()
-    }
 }

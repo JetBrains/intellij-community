@@ -2,6 +2,9 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine
 
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.mapCases
 
 interface VfsSnapshot {
   val point: () -> OperationLogStorage.Iterator
@@ -38,28 +41,27 @@ interface VfsSnapshot {
         }
 
       inline fun <R> observe(onNotAvailable: (cause: Throwable) -> R, onReady: (value: T) -> R): R =
-        when (val s = observeState()) {
-          is State.Ready<T> -> onReady(s.value)
-          is State.NotAvailable -> onNotAvailable(s.cause)
-        }
+        observeState().mapCases(onNotAvailable, onReady)
 
       fun get(): T = observe(onNotAvailable = { throw IllegalStateException("property expected to be Ready") }) { it }
       fun getOrNull(): T? = observe(onNotAvailable = { null }) { it }
 
-      fun <R> fmap(f: (T) -> R): Property<R> = DependentPropertyFmap(this, f)
-      fun <R> bind(f: (T) -> State.DefinedState<R>): Property<R> = DependentPropertyBind(this, f)
+      companion object {
+        fun <T, R> Property<T>.fmap(f: (T) -> R): Property<R> = DependentPropertyFmap(this, f)
+        fun <T, R> Property<T>.bind(f: (T) -> State.DefinedState<R>): Property<R> = DependentPropertyBind(this, f)
 
-      private class DependentPropertyFmap<T, R>(private val original: Property<T>,
-                                                private val transformValue: (T) -> R) : Property<R>() {
-        override fun compute(): State.DefinedState<R> {
-          return original.observeState().fmap(transformValue)
+        private class DependentPropertyFmap<T, R>(private val original: Property<T>,
+                                                  private val transformValue: (T) -> R) : Property<R>() {
+          override fun compute(): State.DefinedState<R> {
+            return original.observeState().fmap(transformValue)
+          }
         }
-      }
 
-      private class DependentPropertyBind<T, R>(private val original: Property<T>,
-                                                private val transformValue: (T) -> State.DefinedState<R>) : Property<R>() {
-        override fun compute(): State.DefinedState<R> {
-          return original.observeState().bind(transformValue)
+        private class DependentPropertyBind<T, R>(private val original: Property<T>,
+                                                  private val transformValue: (T) -> State.DefinedState<R>) : Property<R>() {
+          override fun compute(): State.DefinedState<R> {
+            return original.observeState().bind(transformValue)
+          }
         }
       }
 
@@ -74,29 +76,46 @@ interface VfsSnapshot {
           val cause: Throwable = UnspecifiedNotAvailableCause
         ) : DefinedState<T>
         class Ready<T>(val value: T) : DefinedState<T>
-      }
 
-      @Suppress("UNCHECKED_CAST")
-      fun <T, R> State.DefinedState<T>.fmap(f: (T) -> R): State.DefinedState<R> = when (this) {
-        is State.NotAvailable -> this as State.NotAvailable<R>
-        is State.Ready<T> -> State.Ready(f(value))
-      }
+        companion object {
+          fun <T> notAvailable(cause: Throwable = UnspecifiedNotAvailableCause) = NotAvailable<T>(cause)
+          fun <T> ready(value: T) = Ready(value)
 
-      @Suppress("UNCHECKED_CAST")
-      fun <T, R> State.DefinedState<T>.bind(f: (T) -> State.DefinedState<R>): State.DefinedState<R> = when (this) {
-        is State.NotAvailable -> this as State.NotAvailable<R>
-        is State.Ready<T> -> f(value)
-      }
 
-      abstract class GenericNotAvailableException(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
-      object UnspecifiedNotAvailableCause : GenericNotAvailableException("property value is not available")
-       /* TODO
-      abstract class GenericNotAvailableCause(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
-      abstract class GenericRecoveryFailureCause(message: String? = null, cause: Throwable? = null) : GenericNotAvailableCause(message, cause)
-      abstract class GenericNotEnoughInformationCause(message: String? = null, cause: Throwable? = null) : GenericNotAvailableCause(message, cause)
-      open class NotEnoughInformationCause(message: String = "not enough information to recover the property",
-                                           cause: Throwable? = null) : GenericNotEnoughInformationCause(message, cause)
-      */
+          inline fun <T, R> DefinedState<T>.mapCases(onNotAvailable: (cause: Throwable) -> R, onReady: (value: T) -> R) = when (this) {
+            is Ready<T> -> onReady(value)
+            is NotAvailable -> onNotAvailable(cause)
+          }
+
+          @Suppress("UNCHECKED_CAST")
+          fun <T, R> DefinedState<T>.fmap(f: (T) -> R): DefinedState<R> = when (this) {
+            is NotAvailable -> this as NotAvailable<R>
+            is Ready<T> -> Ready(f(value))
+          }
+
+          @Suppress("UNCHECKED_CAST")
+          fun <T, R> DefinedState<T>.bind(f: (T) -> DefinedState<R>): DefinedState<R> = when (this) {
+            is NotAvailable -> this as NotAvailable<R>
+            is Ready<T> -> f(value)
+          }
+
+          inline fun <T> DefinedState<T>?.orIfNotAvailable(other: () -> DefinedState<T>): DefinedState<T> = when (this) {
+            is Ready -> this
+            is NotAvailable -> other()
+            null -> other()
+          }
+
+          abstract class GenericNotAvailableException(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
+          object UnspecifiedNotAvailableCause : GenericNotAvailableException("property value is not available") // TODO delete and fix usages
+          /* TODO
+          abstract class GenericNotAvailableCause(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
+          abstract class GenericRecoveryFailureCause(message: String? = null, cause: Throwable? = null) : GenericNotAvailableCause(message, cause)
+          abstract class GenericNotEnoughInformationCause(message: String? = null, cause: Throwable? = null) : GenericNotAvailableCause(message, cause)
+          open class NotEnoughInformationCause(message: String = "not enough information to recover the property",
+                                              cause: Throwable? = null) : GenericNotEnoughInformationCause(message, cause)
+          */
+        }
+      }
     }
   }
 }

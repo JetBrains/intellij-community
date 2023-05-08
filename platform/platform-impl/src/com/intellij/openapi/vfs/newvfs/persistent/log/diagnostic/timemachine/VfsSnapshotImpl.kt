@@ -3,8 +3,11 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine
 
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsChronicle.LookupResult.Companion.toState
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.bind
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.fmap
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import java.lang.ref.SoftReference
 import java.util.concurrent.ConcurrentHashMap
@@ -50,7 +53,6 @@ class CacheAwareVfsSnapshot(
       }
     }
 
-
   private val fileCache: ConcurrentMap<Int, VirtualFileSnapshot> = ConcurrentHashMap()
 
   override fun getFileById(fileId: Int): VirtualFileSnapshot = fileCache.computeIfAbsent(fileId) {
@@ -61,17 +63,13 @@ class CacheAwareVfsSnapshot(
 
   inner class CacheAwareVirtualFileSnapshot(override val fileId: Int) : VirtualFileSnapshot {
     override val nameId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::nameId) { stopIter, iter ->
-      val id = VfsChronicle.figureOutNameId(iter, fileId) { iter != stopIter }
-      if (id == null) State.NotAvailable()
-      else State.Ready(id)
+      VfsChronicle.lookupNameId(iter, fileId, condition = { iter != stopIter }).toState() // TODO might throw on Invalid, gotta catch
     }
 
     override val name: Property<String> = nameId.bind { id2name(it)?.let { name -> State.Ready(name) } ?: State.NotAvailable() }
 
     override val parentId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::parentId) { stopIter, iter ->
-      val id = VfsChronicle.figureOutParentId(iter, fileId) { iter != stopIter }
-      if (id == null) State.NotAvailable()
-      else State.Ready(id)
+      VfsChronicle.lookupParentId(iter, fileId, condition = { iter != stopIter }).toState() // TODO might throw on Invalid, gotta catch
     }
 
     override val parent: Property<VirtualFileSnapshot?> = parentId.fmap { id ->
