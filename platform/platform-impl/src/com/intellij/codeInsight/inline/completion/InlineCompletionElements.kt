@@ -10,13 +10,13 @@ import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-data class InlineCompletionRequest(val file: PsiFile, val event: DocumentEvent, val editor: Editor) {
-  val document: Document
-    get() = event.document
-  val startOffset: Int
-    get() = event.offset
-  val endOffset: Int
-    get() = event.offset + event.newLength
+data class InlineCompletionRequest(
+  val file: PsiFile,
+  val editor: Editor,
+  val document: Document,
+  val startOffset: Int,
+  val endOffset: Int,
+) {
 
   companion object {
     fun fromDocumentEvent(event: DocumentEvent, editor: Editor): InlineCompletionRequest? {
@@ -24,7 +24,7 @@ data class InlineCompletionRequest(val file: PsiFile, val event: DocumentEvent, 
       val project = editor.project ?: return null
       val file = ReadAction.compute<PsiFile, Throwable> { PsiManager.getInstance(project).findFile(virtualFile) }
 
-      return InlineCompletionRequest(file, event, editor)
+      return InlineCompletionRequest(file, editor, event.document, event.offset, event.offset + event.newLength)
     }
   }
 }
