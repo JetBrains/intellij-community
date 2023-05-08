@@ -14,7 +14,7 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 use tempfile::{Builder, TempDir};
 
-use xplat_launcher::{DEBUG_MODE_ENV_VAR, get_config_home, is_executable, PathExt, strip_nt_prefix};
+use xplat_launcher::{DEBUG_MODE_ENV_VAR, get_config_home, PathExt};
 
 static INIT: Once = Once::new();
 static mut SHARED: Option<TestEnvironmentShared> = None;
@@ -217,7 +217,7 @@ fn gradle_command_wrapper(gradle_task: &str) -> Result<()> {
 
     let wrapper_name = if cfg!(target_os = "windows") { "gradlew.bat" } else { "gradlew" };
     let wrapper_path = PathBuf::from("./resources/TestProject").join(wrapper_name).canonicalize()?;
-    if !is_executable(&wrapper_path).unwrap() {
+    if !wrapper_path.is_executable()? {
         bail!("Not an executable file: {:?}", wrapper_path);
     }
 
@@ -542,7 +542,7 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
     let stderr_file_path = test_env.test_root_dir.path().join("err.txt");
     let project_dir = test_env.project_dir.to_str().unwrap();
     let dump_file_path = test_env.test_root_dir.path().join("output.json");
-    let dump_file_path_str = strip_nt_prefix(dump_file_path.clone())?.to_string_checked()?;
+    let dump_file_path_str = dump_file_path.strip_ns_prefix()?.to_string_checked()?;
 
     let mut full_args = Vec::<&str>::new();
     if run_spec.dump {

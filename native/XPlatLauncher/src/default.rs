@@ -75,7 +75,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
     }
 
     fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
-        let jre_home = strip_nt_prefix(self.locate_runtime()?)?;
+        let jre_home = self.locate_runtime()?.strip_ns_prefix()?;
         return Ok((jre_home, &self.product_info.launch[0].mainClass));
     }
 }
@@ -214,7 +214,7 @@ impl DefaultLaunchConfiguration {
         if !java_executable.exists() {
             bail!("Java executable not found at {java_executable:?}");
         }
-        if !is_executable(&java_executable)? {
+        if !java_executable.is_executable()? {
             bail!("Not an executable file: {java_executable:?}");
         }
         Ok(adjusted_home)

@@ -82,7 +82,7 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     debug!("Mode: {}", if remote_dev { "remote-dev" } else { "standard" });
 
     debug!("** Preparing launch configuration");
-    let configuration = get_configuration(remote_dev, &strip_nt_prefix(exe_path)?).context("Cannot detect a launch configuration")?;
+    let configuration = get_configuration(remote_dev, &exe_path.strip_ns_prefix()?).context("Cannot detect a launch configuration")?;
 
     debug!("** Locating runtime");
     let (jre_home, main_class) = configuration.prepare_for_launch().context("Cannot find a runtime")?;
@@ -283,36 +283,11 @@ pub fn get_path_from_user_config(config_raw: &str, expecting_dir: Option<bool>) 
     Ok(path)
 }
 
-#[cfg(target_family = "unix")]
-pub fn is_executable(path: &Path) -> Result<bool> {
-    let metadata = path.metadata()?;
-    Ok(metadata.is_file() && (metadata.permissions().mode() & 0o111 != 0))
-}
-
-#[cfg(target_os = "windows")]
-pub fn is_executable(_path: &Path) -> Result<bool> {
-    Ok(true)
-}
-
-#[cfg(target_family = "unix")]
-pub fn strip_nt_prefix(path: PathBuf) -> Result<PathBuf> {
-    Ok(path)
-}
-
-#[cfg(target_os = "windows")]
-pub fn strip_nt_prefix(path: PathBuf) -> Result<PathBuf> {
-    let path_str = path.to_string_checked()?;
-    Ok(if path_str.starts_with("\\\\?\\") {
-        // Windows namespace prefixes are misunderstood both by JVM and classloaders
-        PathBuf::from(&path_str[4..])
-    } else {
-        path
-    })
-}
-
 pub trait PathExt {
     fn parent_or_err(&self) -> Result<PathBuf>;
     fn to_string_checked(&self) -> Result<String>;
+    fn is_executable(&self) -> Result<bool>;
+    fn strip_ns_prefix(&self) -> Result<PathBuf>;
 }
 
 impl PathExt for Path {
@@ -326,5 +301,32 @@ impl PathExt for Path {
         self.to_str()
             .map(|s| s.to_string())
             .ok_or_else(|| anyhow!("Inconvertible path: {:?}", self))
+    }
+
+    #[cfg(target_os = "windows")]
+    fn is_executable(&self) -> Result<bool> {
+        Ok(true)
+    }
+
+    #[cfg(target_family = "unix")]
+    fn is_executable(&self) -> Result<bool> {
+        let metadata = self.metadata()?;
+        Ok(metadata.is_file() && (metadata.permissions().mode() & 0o111 != 0))
+    }
+
+    #[cfg(target_os = "windows")]
+    fn strip_ns_prefix(&self) -> Result<PathBuf> {
+        let path_str = self.to_string_checked()?;
+        Ok(if path_str.starts_with("\\\\?\\") {
+            // Windows namespace prefixes are misunderstood both by JVM and classloaders
+            PathBuf::from(&path_str[4..])
+        } else {
+            self.to_path_buf()
+        })
+    }
+
+    #[cfg(target_family = "unix")]
+    fn strip_ns_prefix(&self) -> Result<PathBuf> {
+        Ok(self.to_path_buf())
     }
 }
