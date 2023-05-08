@@ -108,6 +108,10 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
     return new RuntimeModuleDescriptorImpl(moduleId, myBasePath, rawDescriptor.getResourcePaths(), Collections.emptyList()).getResourceRootPaths();
   }
 
+  @Override
+  public String toString() {
+    return "RuntimeModuleRepository{basePath=" + myBasePath + '}';
+  }
 
   private static final class SuccessfulResolveResult implements ResolveResult {
     private final RuntimeModuleDescriptor myResolved;

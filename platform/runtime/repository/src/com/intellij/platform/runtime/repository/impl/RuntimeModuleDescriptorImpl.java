@@ -124,4 +124,9 @@ class RuntimeModuleDescriptorImpl implements RuntimeModuleDescriptor {
     }
     return root;
   }
+
+  @Override
+  public String toString() {
+    return "RuntimeModuleDescriptor{id=" + myId + '}';
+  }
 }

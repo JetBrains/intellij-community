@@ -36,4 +36,9 @@ public final class IncludedRuntimeModuleImpl implements IncludedRuntimeModule {
   public @NotNull Set<RuntimeModuleScope> getScopes() {
     return myScopes;
   }
+
+  @Override
+  public String toString() {
+    return "IncludedRuntimeModule{moduleId=" + myModuleDescriptor.getModuleId().getStringId() + '}';
+  }
 }

@@ -33,6 +33,6 @@ public final class ProductModulesImpl implements ProductModules {
 
   @Override
   public String toString() {
-    return "ProductModules[" + myDebugName + "]";
+    return "ProductModules{debugName=" + myDebugName + '}';
   }
 }
