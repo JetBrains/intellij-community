@@ -35,9 +35,7 @@ public class Maven40ServerImpl extends MavenServerBase {
   @Override
   public MavenServerIndexer createIndexer(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @NotNull
