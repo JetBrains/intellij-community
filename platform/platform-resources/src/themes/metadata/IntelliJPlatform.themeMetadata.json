@@ -1023,6 +1023,9 @@
       "key": "Plugins.ScreenshotPagination.CurrentImage.fillColor"
     },
     {
+      "key": "Plugins.suggestedLabelBackground"
+    },
+    {
       "key": "ProgressIcon.color",
       "description": "Color of the spinning icon",
       "since": "2022.1"

@@ -109,7 +109,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private LinkPanel myBugtrackerUrl;
   private LinkPanel myDocumentationUrl;
   private LinkPanel mySourceCodeUrl;
-  private JEditorPane mySuggestedFeatures;
+  private SuggestedComponent mySuggestedFeatures;
   private JBScrollPane myBottomScrollPane;
   private final List<JBScrollPane> myScrollPanes = new ArrayList<>();
   private JEditorPane myDescriptionComponent;
@@ -247,11 +247,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     topPanel.add(myNameAndButtons);
     topPanel.add(mySuggestedIdeBanner, VerticalLayout.FILL_HORIZONTAL);
 
-    mySuggestedFeatures = new JEditorPane();
-    UIUtil.convertToLabel(mySuggestedFeatures);
-    PluginManagerConfigurable.setTinyFont(mySuggestedFeatures);
-    mySuggestedFeatures.setCaret(EmptyCaret.INSTANCE);
-
+    mySuggestedFeatures = new SuggestedComponent();
     topPanel.add(mySuggestedFeatures, VerticalLayout.FILL_HORIZONTAL);
 
     myNameAndButtons.add(myVersion1 = new JBLabel().setCopyable(true));
@@ -1074,14 +1070,11 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     }
 
     if (mySuggestedFeatures != null) {
-      mySuggestedFeatures.setVisible(false);
+      String feature = null;
       if (myMarketplace && myPlugin instanceof PluginNode node) {
-        String feature = ContainerUtil.getFirstItem(node.getSuggestedFeatures());
-        if (feature != null) {
-          mySuggestedFeatures.setText(feature); //NON-NLS
-          mySuggestedFeatures.setVisible(true);
-        }
+        feature = ContainerUtil.getFirstItem(node.getSuggestedFeatures());
       }
+      mySuggestedFeatures.setSuggestedText(feature);
     }
 
     for (JBScrollPane scrollPane : myScrollPanes) {
