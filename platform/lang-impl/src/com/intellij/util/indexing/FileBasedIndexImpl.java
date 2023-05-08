@@ -1444,6 +1444,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         Set<ID<?, ?>> currentIndexedStates = getAppliedIndexes(inputId);
         List<ID<?, ?>> requiredIndexes = getRequiredIndexes(indexedFile);
         for (ID<?, ?> indexId : requiredIndexes) {
+          currentIndexedStates.remove(indexId);
           if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) continue;
           ProgressManager.checkCanceled();
 
@@ -1463,7 +1464,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             update = RebuildStatus.isOk(indexId);
             if (!update) {
               setIndexedStatus.set(Boolean.FALSE);
-              currentIndexedStates.remove(indexId);
             }
           }
           else {
@@ -1492,22 +1492,19 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             else {
               appliers.add(singleIndexValueApplier);
             }
-            currentIndexedStates.remove(indexId);
           }
         }
 
-        boolean shouldClearAllIndexedStates = fc == null;
         for (ID<?, ?> indexId : currentIndexedStates) {
           ProgressManager.checkCanceled();
-          if (shouldClearAllIndexedStates || getIndexingState(fc, indexId) != FileIndexingState.NOT_INDEXED) {
-            ProgressManager.checkCanceled();
-            SingleIndexValueRemover remover = createSingleIndexRemover(indexId, file, fc, inputId, writeIndexSeparately);
-            if (remover == null) {
-              setIndexedStatus.set(Boolean.FALSE);
-            }
-            else {
-              removers.add(remover);
-            }
+          LOG.assertTrue(fc == null || getIndexingState(fc, indexId) != FileIndexingState.NOT_INDEXED,
+                         "getAppliedIndexes returned index ID that in fact was not applied. IndexId=" + indexId);
+          SingleIndexValueRemover remover = createSingleIndexRemover(indexId, file, fc, inputId, writeIndexSeparately);
+          if (remover == null) {
+            setIndexedStatus.set(Boolean.FALSE);
+          }
+          else {
+            removers.add(remover);
           }
         }
 
