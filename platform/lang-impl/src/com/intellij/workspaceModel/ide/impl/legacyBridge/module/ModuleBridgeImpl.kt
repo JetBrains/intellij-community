@@ -40,10 +40,6 @@ import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
-private val moduleBridgeBeforeChangedTimeMs: AtomicLong = AtomicLong()
-private val facetsInitializationTimeMs: AtomicLong = AtomicLong()
-private val updateOptionTimeMs: AtomicLong = AtomicLong()
-
 @Suppress("OVERRIDE_DEPRECATION")
 internal class ModuleBridgeImpl(
   override var moduleEntityId: ModuleId,
@@ -212,6 +208,10 @@ internal class ModuleBridgeImpl(
   }
 
   companion object {
+    private val moduleBridgeBeforeChangedTimeMs: AtomicLong = AtomicLong()
+    private val facetsInitializationTimeMs: AtomicLong = AtomicLong()
+    private val updateOptionTimeMs: AtomicLong = AtomicLong()
+
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val moduleBridgeBeforeChangedTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.before.changed.ms")
         .ofLongs().setDescription("Total time spent in method").buildObserver()

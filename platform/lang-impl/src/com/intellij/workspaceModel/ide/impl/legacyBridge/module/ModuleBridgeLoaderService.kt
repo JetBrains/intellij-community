@@ -34,8 +34,6 @@ import java.util.concurrent.atomic.AtomicLong
 
 private val LOG = logger<ModuleBridgeLoaderService>()
 
-private val moduleLoadingTimeMs: AtomicLong = AtomicLong()
-
 
 private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedListener {
   override suspend fun execute(project: Project) {
@@ -99,6 +97,8 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
   }
 
   companion object {
+    private val moduleLoadingTimeMs: AtomicLong = AtomicLong()
+
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val modulesLoadingTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridgeLoader.loading.modules.ms")
         .ofLongs().setDescription("Total time spent in method").buildObserver()
