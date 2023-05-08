@@ -14,7 +14,7 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.NonUrgentExecutor;
@@ -260,7 +260,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       return;
     }
 
-    if (RegistryManager.getInstance().is("freeze.reporter.enabled")) {
+    if (Registry.is("freeze.reporter.enabled", false)) {
       PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstance();
 
       if ((int)(durationMs / 1000) > FREEZE_THRESHOLD && !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
