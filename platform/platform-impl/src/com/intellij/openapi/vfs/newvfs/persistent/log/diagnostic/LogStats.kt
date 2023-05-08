@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic
 
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.ReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEachContainedOperation
@@ -10,14 +11,13 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Operat
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.FSRecordsOracle
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshotUtils.fullPath
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsTimeMachine
-import com.intellij.util.io.PersistentStringEnumerator
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.io.path.div
 import kotlin.math.sqrt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -157,14 +157,17 @@ private fun single(log: VfsLog) {
 }
 
 
-
 @OptIn(ExperimentalTime::class)
-private fun vFileEventIterCheck(log: VfsLog, names: PersistentStringEnumerator) {
+private fun vFileEventIterCheck(log: VfsLog,
+                                id2name: (Int) -> String?,
+                                fsRecordsOracle: FSRecordsOracle? = null) {
   var singleOp = 0
   var vfileEvents = 0
   var vfileEventContentOps = 0
 
-  val vfsTimeMachine = VfsTimeMachine(log.query { operationLogStorage.begin() }, id2name = names::valueOf)
+  val vfsTimeMachine = VfsTimeMachine(log.query { operationLogStorage.begin() },
+                                      id2name = id2name,
+                                      oracle = fsRecordsOracle?.let { it::getSnapshot })
 
   val time = measureTime {
     log.query {
@@ -226,8 +229,15 @@ fun main(args: Array<String>) {
 
   val logPath = Path.of(args[0])
   val log = VfsLog(logPath, true)
-  val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)
+  val fsRecords = FSRecordsImpl.connect(logPath.parent, log)
+  //val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)::valueOf
+  val names = { id: Int -> fsRecords.getNameByNameId(id)?.toString() }
+  val oracle = FSRecordsOracle(fsRecords, log)
+
+  vFileEventIterCheck(log, names, oracle)
+
+  fsRecords.dispose()
+
   //single(log)
   //benchmark(log, 100)
-  vFileEventIterCheck(log, names)
 }
