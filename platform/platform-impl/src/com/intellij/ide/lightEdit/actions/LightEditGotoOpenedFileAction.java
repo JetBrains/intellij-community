@@ -4,12 +4,14 @@ package com.intellij.ide.lightEdit.actions;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.actions.FileChooserAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +61,16 @@ final class LightEditGotoOpenedFileAction extends FileChooserAction implements L
 
   private static @Nullable Path getSelectedNioPath(@Nullable Project project) {
     VirtualFile file = getSelectedFile(project);
-    return file != null ? file.toNioPath() : null;
+    if (file instanceof LightVirtualFile) return null;
+    if (file != null) {
+      try {
+        return file.toNioPath();
+      }
+      catch (UnsupportedOperationException e) {
+        Logger.getInstance(LightEditGotoOpenedFileAction.class).info("Failed to find selected nio path", e);
+      }
+    }
+    return null;
   }
 
   private static @Nullable VirtualFile getSelectedFile(@NotNull FileSystemTree fileSystemTree, @Nullable Project project) {
