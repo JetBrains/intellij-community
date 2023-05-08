@@ -34,6 +34,7 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.util.Collections;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MavenProjectsProcessor {
   private static final Logger LOG = Logger.getInstance(MavenProjectsProcessor.class);
@@ -43,7 +44,6 @@ public class MavenProjectsProcessor {
   private final MavenEmbeddersManager myEmbeddersManager;
 
   private final ConcurrentLinkedQueue<MavenProjectsProcessorTask> myQueue = new ConcurrentLinkedQueue<>();
-  private boolean isProcessing;
 
   private volatile boolean isStopped;
 
@@ -58,18 +58,11 @@ public class MavenProjectsProcessor {
   }
 
   public void scheduleTask(MavenProjectsProcessorTask task) {
-    boolean startProcessingInThisThread = false;
-    if (!isProcessing && !MavenUtil.isNoBackgroundMode()) {
-      isProcessing = true;
-      startProcessingInThisThread = true;
-    }
-    else {
-      if (myQueue.contains(task)) return;
-      myQueue.add(task);
-    }
+    if (myQueue.contains(task)) return;
+    myQueue.add(task);
 
-    if (startProcessingInThisThread) {
-      startProcessing(task);
+    if (!MavenUtil.isNoBackgroundMode()) {
+      startProcessing();
     }
   }
 
@@ -81,22 +74,16 @@ public class MavenProjectsProcessor {
     if (isStopped) return;
 
     if (MavenUtil.isNoBackgroundMode()) {
-      while (true) {
-        MavenProjectsProcessorTask task;
-        task = myQueue.poll();
-        if (task == null) {
-          return;
-        }
-        startProcessing(task);
-      }
+      startProcessing();
     }
+    else {
+      final Semaphore semaphore = new Semaphore();
+      semaphore.down();
+      scheduleTask(new MavenProjectsProcessorWaitForCompletionTask(semaphore));
 
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    scheduleTask(new MavenProjectsProcessorWaitForCompletionTask(semaphore));
-
-    while (true) {
-      if (isStopped || semaphore.waitFor(1000)) return;
+      while (true) {
+        if (isStopped || semaphore.waitFor(1000)) return;
+      }
     }
   }
 
@@ -105,28 +92,32 @@ public class MavenProjectsProcessor {
     myQueue.clear();
   }
 
-  private void startProcessing(final MavenProjectsProcessorTask task) {
-    MavenUtil.runInBackground(myProject, myTitle, myCancellable, new MavenTask() {
-      @Override
-      public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-        Condition<MavenProgressIndicator> condition = mavenProgressIndicator -> isStopped;
-        indicator.addCancelCondition(condition);
-        try {
-          doProcessPendingTasks(indicator, task);
+  private final AtomicBoolean isProcessing = new AtomicBoolean(false);
+  private void startProcessing() {
+    if (isProcessing.compareAndSet(false, true)) {
+      MavenUtil.runInBackground(myProject, myTitle, myCancellable, new MavenTask() {
+        @Override
+        public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+          Condition<MavenProgressIndicator> condition = mavenProgressIndicator -> isStopped;
+          indicator.addCancelCondition(condition);
+          try {
+            doProcessPendingTasks(indicator);
+          }
+          finally {
+            isProcessing.set(false);
+            indicator.removeCancelCondition(condition);
+          }
         }
-        finally {
-          indicator.removeCancelCondition(condition);
-        }
-      }
-    });
+      });
+    }
   }
 
-  private void doProcessPendingTasks(MavenProgressIndicator indicator,
-                                     MavenProjectsProcessorTask task)
+  private void doProcessPendingTasks(MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
+    MavenProjectsProcessorTask task;
     int counter = 0;
     try {
-      while (true) {
+      while ((task = myQueue.poll()) != null) {
         indicator.checkCanceled();
         counter++;
 
@@ -135,12 +126,6 @@ public class MavenProjectsProcessor {
         indicator.setFraction(counter / (double)(counter + remained));
 
         processTask(indicator, task);
-
-        task = myQueue.poll();
-        if (task == null) {
-          isProcessing = false;
-          return;
-        }
       }
     }
     catch (MavenProcessCanceledException e) {
@@ -150,8 +135,6 @@ public class MavenProjectsProcessor {
           ((MavenProjectsProcessorWaitForCompletionTask)removedTask).mySemaphore.up();
         }
       }
-      isProcessing = false;
-
       throw e;
     }
   }
@@ -209,8 +192,7 @@ public class MavenProjectsProcessor {
     MavenProjectsProcessorWaitForCompletionTask(Semaphore semaphore) { mySemaphore = semaphore; }
 
     @Override
-    public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
-      throws MavenProcessCanceledException {
+    public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator) {
       mySemaphore.up();
     }
   }
