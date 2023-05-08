@@ -27,7 +27,11 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.IntentionsCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandActionWrapper;
+import com.intellij.modcommand.ModStatus;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -52,6 +56,7 @@ import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -255,9 +260,23 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
       if (pair == null) return false;
-      CommandProcessor.getInstance().executeCommand(project, () ->
-        invokeIntention(action, pair.second, pair.first), commandName, null);
-      checkPsiTextConsistency(hostFile);
+      ModCommandAction commandAction = ModCommandActionWrapper.unwrap(action);
+      if (commandAction != null) {
+        ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(pair.second, pair.first);
+        ReadAction.nonBlocking(() -> commandAction.perform(context))
+          .finishOnUiThread(ModalityState.defaultModalityState(), mc -> {
+            IntentionsCollector.record(project, action, pair.first.getLanguage());
+            CommandProcessor.getInstance().executeCommand(project, () -> {
+              if (mc.prepare() != ModStatus.SUCCESS) return;
+              mc.execute(project);
+            }, commandName, null);
+          })
+          .submit(AppExecutorUtil.getAppExecutorService());
+      } else {
+        CommandProcessor.getInstance().executeCommand(project, () ->
+          invokeIntention(action, pair.second, pair.first), commandName, null);
+        checkPsiTextConsistency(hostFile);
+      }
     }
     return true;
   }

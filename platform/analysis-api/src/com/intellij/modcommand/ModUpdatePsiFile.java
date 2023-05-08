@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -23,7 +23,7 @@ public record ModUpdatePsiFile(@NotNull PsiFile file, @NotNull String oldText, @
   public @NotNull ModStatus execute(@NotNull Project project) {
     if (!file.textMatches(oldText)) return ModStatus.ABORT;
     Document document = file.getViewProvider().getDocument();
-    return IntentionPreviewUtils.writeAndCompute(() -> {
+    return WriteAction.compute(() -> {
       document.replaceString(0, document.getTextLength(), newText);
       PsiDocumentManager.getInstance(project).commitDocument(document);
       return ModStatus.SUCCESS;

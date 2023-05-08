@@ -14,6 +14,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Intention action replacement that operates on {@link ModCommand}.
@@ -96,7 +97,10 @@ public interface ModCommandAction {
      * @param file file the action is invoked on
      * @return ActionContext
      */
-    public static @NotNull ModCommandAction.ActionContext from(@NotNull Editor editor, @NotNull PsiFile file) {
+    public static @NotNull ModCommandAction.ActionContext from(@Nullable Editor editor, @NotNull PsiFile file) {
+      if (editor == null) {
+        return new ActionContext(file.getProject(), file, 0, TextRange.from(0, 0));
+      }
       SelectionModel model = editor.getSelectionModel();
       return new ActionContext(file.getProject(), file, editor.getCaretModel().getOffset(),
                                                 TextRange.create(model.getSelectionStart(), model.getSelectionEnd()));
