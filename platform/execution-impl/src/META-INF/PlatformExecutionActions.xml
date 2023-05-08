@@ -77,6 +77,11 @@
 
     <actionConfigurationCustomizer implementation="com.intellij.execution.runToolbar.MyActionConfigurationCustomizer"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint interface="com.intellij.execution.DisplayDescriptorChooser"
+                    dynamic="true"
+                    qualifiedName="com.intellij.execution.displayDescriptorChooser" />
+  </extensionPoints>
   <projectListeners>
     <listener class="com.intellij.execution.runToolbar.RunToolbarComponentService$MyExecutionListener"
               topic="com.intellij.execution.ExecutionListener"/>

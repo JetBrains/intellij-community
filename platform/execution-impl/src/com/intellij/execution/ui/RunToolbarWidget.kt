@@ -310,8 +310,9 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    val manger = ExecutionManagerImpl.getInstance(e.project ?: return)
-    val running = manger.getRunningDescriptors { true }
+    val project = e.project ?: return
+    val manager = ExecutionManagerImpl.getInstance(project)
+    val running = getStoppableDescriptors(project).map { it.first }
     val activeProcesses = running.size
     e.presentation.putClientProperty(ACTIVE_PROCESSES, activeProcesses)
     e.presentation.isEnabled = activeProcesses > 0
@@ -320,7 +321,7 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
     e.presentation.icon = toStrokeIcon(AllIcons.Actions.Suspend, JBUI.CurrentTheme.RunWidget.FOREGROUND)
     if (activeProcesses == 1) {
       val first = running.first()
-      getConfigurations(manger, first)
+      getConfigurations(manager, first)
         ?.shortenName()
         ?.let {
           e.presentation.putClientProperty(SINGLE_RUNNING_NAME, it)
@@ -367,8 +368,8 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
 }
 
 private fun stopAll(e: AnActionEvent) {
-  ExecutionManagerImpl.getInstance(e.project ?: return)
-    .getRunningDescriptors { true }
+  val project = e.project ?: return
+  getStoppableDescriptors(project).map { it.first }
     .forEach { descr ->
       ExecutionManagerImpl.stopProcess(descr)
     }
@@ -376,17 +377,16 @@ private fun stopAll(e: AnActionEvent) {
 
 fun createStopPopup(context: DataContext, project: Project): JBPopup {
   val group = DefaultActionGroup()
-  val manager = ExecutionManagerImpl.getInstance(project)
-  val running = manager.getRunningDescriptors { true }.asReversed()
-  running.forEach { descr ->
-    val name = getConfigurations(manager, descr)?.shortenName() ?: descr.displayName
+  val descriptorsByEnv = getStoppableDescriptors(project)
+  descriptorsByEnv.forEach { (descr, settings) ->
+    val name = settings?.shortenName() ?: descr.displayName
     group.add(DumbAwareAction.create(ExecutionBundle.message("stop.item.new.ui.popup", name)) {
       ExecutionManagerImpl.stopProcess(descr)
     })
   }
   group.addSeparator()
   val textColor = ColorUtil.toHex(JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND)
-  val message = ExecutionBundle.message("stop.all.new.ui.popup", """<a style="color:#$textColor;">${running.size}</a>""")
+  val message = ExecutionBundle.message("stop.all.new.ui.popup", """<a style="color:#$textColor;">${descriptorsByEnv.size}</a>""")
   group.add(DumbAwareAction.create("""<html>$message</html>""") {
     stopAll(it)
   }.also {

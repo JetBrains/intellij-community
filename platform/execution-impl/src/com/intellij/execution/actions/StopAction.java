@@ -35,6 +35,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.execution.StoppableRunDescriptorsKt.getStoppableDescriptors;
+
 public class StopAction extends DumbAwareAction {
 
   private WeakReference<JBPopup> myActivePopupRef = null;
@@ -271,7 +273,7 @@ public class StopAction extends DumbAwareAction {
   @ApiStatus.Internal
   public static @NotNull List<RunContentDescriptor> getActiveStoppableDescriptors(@Nullable Project project) {
     List<RunContentDescriptor> runningProcesses = project != null ?
-                                                  ExecutionManagerImpl.getInstance(project).getRunningDescriptors(d -> true) :
+                                                  getStoppableDescriptors(project).stream().map(kotlin.Pair::getFirst).toList() :
                                                   Collections.emptyList();
     if (runningProcesses.isEmpty()) {
       return Collections.emptyList();
