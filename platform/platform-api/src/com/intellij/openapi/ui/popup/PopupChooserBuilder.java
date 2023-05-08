@@ -193,7 +193,13 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return this;
   }
 
+  /** @deprecated use {@link #setItemChosenCallback(Runnable)} instead */
+  @Deprecated
   public PopupChooserBuilder<T> setItemChoosenCallback(@NotNull Runnable runnable) {
+    return setItemChosenCallback(runnable);
+  }
+
+  public PopupChooserBuilder<T> setItemChosenCallback(@NotNull Runnable runnable) {
     myItemChosenRunnable = runnable;
     return this;
   }

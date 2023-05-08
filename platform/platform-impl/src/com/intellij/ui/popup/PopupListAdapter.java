@@ -53,7 +53,7 @@ final class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAda
   public void setItemChosenCallback(Consumer<? super T> callback) {
     myBuilder.setItemChoosenCallback(() -> {
       T selectedValue = myList.getSelectedValue();
-      if (selectedValue != null) {
+      if (selectedValue != null || !myList.isSelectionEmpty()) {
         callback.consume(selectedValue);
       }
     });
