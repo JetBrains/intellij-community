@@ -10,10 +10,10 @@ import com.intellij.vcs.log.ui.actions.ResumeIndexingAction.Companion.isSchedule
 /**
  * Check if any of [VcsLogModifiableIndex.getIndexingRoots] need to be indexed.
  */
-fun needIndexing(index: VcsLogModifiableIndex): Boolean {
-  val rootsForIndexing = index.indexingRoots
+fun VcsLogModifiableIndex.needIndexing(): Boolean {
+  val rootsForIndexing = indexingRoots
   if (rootsForIndexing.isEmpty()) return false
-  val scheduledForIndexing = rootsForIndexing.filter { it.isScheduledForIndexing(index) }
+  val scheduledForIndexing = rootsForIndexing.filter { it.isScheduledForIndexing(this) }
   val bigRepositories = rootsForIndexing.filter { it.isBig() }
 
   return bigRepositories.isNotEmpty() || scheduledForIndexing.isNotEmpty()
@@ -22,9 +22,8 @@ fun needIndexing(index: VcsLogModifiableIndex): Boolean {
 /**
  * Check if VCS log indexing was paused in any of [VcsLogModifiableIndex.getIndexingRoots].
  */
-fun isIndexingPaused(index: VcsLogModifiableIndex): Boolean {
-  val rootsForIndexing = index.indexingRoots
-  val scheduledForIndexing = rootsForIndexing.filter { it.isScheduledForIndexing(index) }
+fun VcsLogModifiableIndex.isIndexingPaused(): Boolean {
+  val scheduledForIndexing = indexingRoots.filter { it.isScheduledForIndexing(this) }
 
   return scheduledForIndexing.isEmpty()
 }
@@ -33,8 +32,8 @@ fun isIndexingPaused(index: VcsLogModifiableIndex): Boolean {
  * Resume Log indexing if paused or pause indexing if indexing is in progress.
  */
 @RequiresEdt
-internal fun toggleIndexing(rootsForIndexing: Set<VirtualFile>, index: VcsLogIndex) {
-  if (rootsForIndexing.any { it.isScheduledForIndexing(index) }) {
+internal fun VcsLogIndex.toggleIndexing(rootsForIndexing: Set<VirtualFile>) {
+  if (rootsForIndexing.any { it.isScheduledForIndexing(this) }) {
     rootsForIndexing.filter { !it.isBig() }.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
   }
   else {
@@ -42,6 +41,6 @@ internal fun toggleIndexing(rootsForIndexing: Set<VirtualFile>, index: VcsLogInd
     for (root in rootsForIndexing.filter { it.isBig() }) {
       resumed = resumed or VcsLogBigRepositoriesList.getInstance().removeRepository(root)
     }
-    if (resumed) (index as? VcsLogModifiableIndex)?.scheduleIndex(false)
+    if (resumed) (this as? VcsLogModifiableIndex)?.scheduleIndex(false)
   }
 }

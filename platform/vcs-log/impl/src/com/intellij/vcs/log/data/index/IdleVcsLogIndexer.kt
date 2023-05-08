@@ -55,7 +55,7 @@ internal class IdleVcsLogIndexer(private val project: Project,
       else {
         withContext(Dispatchers.Default) {
           while (!isRunning.get()) {
-            if (needIndexing(index)) {
+            if (index.needIndexing()) {
               withContext(Dispatchers.EDT) {
                 doInit()
                 cancel()
@@ -80,15 +80,15 @@ internal class IdleVcsLogIndexer(private val project: Project,
     if (isRunning.compareAndSet(false, true)) {
 
       startIndexJob = launch("Start VCS log indexing on IDE idle", idleDelayValue.asInteger().minutes) {
-        if (isIndexingPaused(index)) {
+        if (index.isIndexingPaused()) {
           VcsLogUsageTriggerCollector.idleIndexerTriggered(project)
-          toggleIndexing(index.indexingRoots, index)
+          index.toggleIndexing(index.indexingRoots)
         }
       }
 
       stopIndexJob = launch("Stop VCS log indexing on IDE active", 100.milliseconds) {
-        if (!isIndexingPaused(index)) {
-          toggleIndexing(index.indexingRoots, index)
+        if (!index.isIndexingPaused()) {
+          index.toggleIndexing(index.indexingRoots)
         }
       }
     }

@@ -63,7 +63,7 @@ class ResumeIndexingAction : DumbAwareAction() {
     val rootsForIndexing = VcsLogPersistentIndex.getRootsForIndexing(data.logProviders)
     if (rootsForIndexing.isEmpty()) return
 
-    toggleIndexing(rootsForIndexing, data.index)
+    data.index.toggleIndexing(rootsForIndexing)
   }
 
   companion object {
