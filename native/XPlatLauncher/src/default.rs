@@ -43,8 +43,9 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
         // error file locations go first (users should be able to override them)
         let user_home_path = get_user_home()?.to_string_checked()?;
-        vm_options.push(format!("-XX:ErrorFile={}/java_error_in_${}_%p.log", user_home_path, self.launcher_base_name));
-        vm_options.push(format!("-XX:HeapDumpPath={}/java_error_in_${}_%p.hprof", user_home_path, self.launcher_base_name));
+        let slash = std::path::MAIN_SEPARATOR;
+        vm_options.push(format!("-XX:ErrorFile={user_home_path}{slash}java_error_in_{}_%p.log", self.launcher_base_name));
+        vm_options.push(format!("-XX:HeapDumpPath={user_home_path}{slash}java_error_in_{}_%p.hprof", self.launcher_base_name));
 
         // collecting JVM options from user and distribution files
         self.collect_vm_options_from_files(&mut vm_options)?;
