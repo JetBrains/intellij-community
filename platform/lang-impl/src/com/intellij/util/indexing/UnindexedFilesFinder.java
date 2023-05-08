@@ -26,10 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -168,7 +165,10 @@ final class UnindexedFilesFinder {
         }
 
         boolean fileTypeIndexAlreadyUpToData = fileTypeIndexState != null && !fileTypeIndexState.updateRequired();
-        for (ID<?, ?> indexId : myFileBasedIndex.getAffectedIndexCandidates(indexedFile)) {
+        Set<ID<?, ?>> appliedIndexes = myFileBasedIndex.getAppliedIndexes(inputId);
+        for (ID<?, ?> indexId : myFileBasedIndex.getRequiredIndexes(indexedFile)) {
+          appliedIndexes.remove(indexId);
+
           boolean needsFileContentLoading = myFileBasedIndex.needsFileContentLoading(indexId);
           // this is the same: (shouldCheckContentIndexes && needsFileContentLoading) || !needsFileContentLoading
           boolean shouldCheckAgainstSingleIndex = !needsFileContentLoading || shouldCheckContentIndexes;
@@ -183,6 +183,12 @@ final class UnindexedFilesFinder {
               if (contentlessStartTime >= 0) fileStatusBuilder.timeUpdatingContentLessIndexes += (System.nanoTime() - contentlessStartTime);
             }
           }
+        }
+
+        // remove unneeded data from indexes
+        for (ID<?, ?> indexId : appliedIndexes) {
+          boolean removed = removeIndexedValue(indexedFile, inputId, indexId, fileStatusBuilder);
+          LOG.assertTrue(removed, "Failed to remove value from index");
         }
 
         if (fileStatusBuilder.appliersAndRemovers.isEmpty()) {
@@ -230,24 +236,17 @@ final class UnindexedFilesFinder {
           FileBasedIndexImpl.LOG.info(
             "Scheduling indexing of " + indexedFile.getFileName() + " by request of index; " + indexId +
             (fileStatusBuilder.indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : "") +
-            ((myFileBasedIndex.acceptsInput(indexId, indexedFile)) ? " accepted;" : " unaccepted;") +
             ("indexing state = " + myFileBasedIndex.getIndexingState(indexedFile, indexId)));
         }
 
-        if (myFileBasedIndex.acceptsInput(indexId, indexedFile)) {
-          if (!tryIndexWithoutContent(indexedFile, inputId, indexId, fileStatusBuilder)) {
-            // NOTE! Do not break the loop here. We must process ALL IDs and pass them to the FileIndexingStatusProcessor
-            // so that it can invalidate all "indexing states" (by means of clearing IndexingStamp)
-            // for all indexes that became invalid. See IDEA-252846 for more details.
-            fileStatusBuilder.shouldIndex = true;
-          }
-          else {
-            LOG.assertTrue(!myFileBasedIndex.needsFileContentLoading(indexId), "Failed to apply contentless indexer");
-          }
+        if (!tryIndexWithoutContent(indexedFile, inputId, indexId, fileStatusBuilder)) {
+          // NOTE! Do not break the loop here. We must process ALL IDs and pass them to the FileIndexingStatusProcessor
+          // so that it can invalidate all "indexing states" (by means of clearing IndexingStamp)
+          // for all indexes that became invalid. See IDEA-252846 for more details.
+          fileStatusBuilder.shouldIndex = true;
         }
         else {
-          boolean removed = removeIndexedValue(indexedFile, inputId, indexId, fileStatusBuilder);
-          LOG.assertTrue(removed, "Failed to remove value from index");
+          LOG.assertTrue(!myFileBasedIndex.needsFileContentLoading(indexId), "Failed to apply contentless indexer");
         }
       }
     }

@@ -4,7 +4,6 @@ package com.intellij.util.indexing;
 import com.google.common.collect.Iterators;
 import com.intellij.AppTopics;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.model.ModelBranch;
@@ -41,6 +40,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -1024,8 +1024,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     final CharSequence contentText = content.getText();
     FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(vFile, () -> {
       IndexedFileImpl indexedFile = new IndexedFileImpl(vFile, project);
-      if (getAffectedIndexCandidates(indexedFile).contains(requestedIndexId) &&
-          acceptsInput(requestedIndexId, indexedFile)) {
+      if (getRequiredIndexes(indexedFile).contains(requestedIndexId)) {
         int inputId = getFileId(vFile);
 
         if (!isTooLarge(vFile, (long)contentText.length())) {
@@ -1442,10 +1441,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         ProgressManager.checkCanceled();
         FileContentImpl fc = null;
 
-        Set<ID<?, ?>> currentIndexedStates = new HashSet<>(IndexingStamp.getNontrivialFileIndexedStates(inputId));
-        List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(indexedFile);
-        for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
-          ID<?, ?> indexId = affectedIndexCandidates.get(i);
+        Set<ID<?, ?>> currentIndexedStates = getAppliedIndexes(inputId);
+        List<ID<?, ?>> requiredIndexes = getRequiredIndexes(indexedFile);
+        for (ID<?, ?> indexId : requiredIndexes) {
           if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) continue;
           ProgressManager.checkCanceled();
 
@@ -1460,7 +1458,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
 
           boolean update;
-          boolean acceptedAndRequired = acceptsInput(indexId, fc) && getIndexingState(fc, indexId).updateRequired();
+          boolean acceptedAndRequired = getIndexingState(fc, indexId).updateRequired();
           if (acceptedAndRequired) {
             update = RebuildStatus.isOk(indexId);
             if (!update) {
@@ -1477,11 +1475,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             if (acceptedAndRequired) {
               reason = "index is required to rebuild, and indexing does not update such";
             }
-            else if (acceptsInput(indexId, fc)) {
-              reason = "update is not required";
-            }
             else {
-              reason = "file is not accepted by index";
+              reason = "update is not required";
             }
 
             LOG.info("index " + indexId + " should not be updated for " + fc.getFileName() + " because " + reason);
@@ -1528,6 +1523,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
+  Set<ID<?, ?>> getAppliedIndexes(int inputId) {
+    return new HashSet<>(IndexingStamp.getNontrivialFileIndexedStates(inputId));
+  }
+
+  @NotNull
   List<ID<?, ?>> getAffectedIndexCandidates(@NotNull IndexedFile indexedFile) {
     if (indexedFile.getFile().isDirectory()) {
       return isProjectOrWorkspaceFile(indexedFile.getFile(), null)
@@ -1541,6 +1541,18 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (isProjectOrWorkspaceFile(indexedFile.getFile(), fileType)) return Collections.emptyList();
 
     return getState().getFileTypesForIndex(fileType);
+  }
+
+  @NotNull
+  List<ID<?, ?>> getRequiredIndexes(@NotNull IndexedFile indexedFile) {
+    List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(indexedFile);
+    List<ID<?, ?>> acceptedCandidates = new ArrayList<>(affectedIndexCandidates.size());
+    for (ID<?, ?> candidate : affectedIndexCandidates) {
+      if (acceptsInput(candidate, indexedFile)) {
+        acceptedCandidates.add(candidate);
+      }
+    }
+    return acceptedCandidates;
   }
 
   private static void cleanFileContent(FileContentImpl fc, PsiFile psiFile) {
@@ -1911,13 +1923,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         ourFileToBeIndexed.set(file);
         try {
           FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
-            List<ID<?, ?>> candidates = getAffectedIndexCandidates(indexedFile);
+            List<ID<?, ?>> candidates = getRequiredIndexes(indexedFile);
 
             boolean scheduleForUpdate = false;
 
             for (int i = 0, size = candidates.size(); i < size; ++i) {
               final ID<?, ?> indexId = candidates.get(i);
-              if (needsFileContentLoading(indexId) && acceptsInput(indexId, indexedFile)) {
+              if (needsFileContentLoading(indexId)) {
                 getIndex(indexId).invalidateIndexedStateForFile(fileId);
                 scheduleForUpdate = true;
               }
@@ -2001,7 +2013,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myIndexableSets.add(Pair.create(set, project));
   }
 
-  boolean acceptsInput(@NotNull ID<?, ?> indexId, @NotNull IndexedFile indexedFile) {
+  private boolean acceptsInput(@NotNull ID<?, ?> indexId, @NotNull IndexedFile indexedFile) {
     InputFilter filter = getInputFilter(indexId);
     return acceptsInput(filter, indexedFile);
   }
