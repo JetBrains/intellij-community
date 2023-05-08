@@ -5,7 +5,9 @@ import com.intellij.application.options.editor.CodeFoldingConfigurable;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.EditorInfo;
 import com.intellij.codeInsight.daemon.*;
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.hint.EditorHintListener;
@@ -3185,7 +3187,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       iDidIt();
     }
   }
-  public void testAnnotatorMustReceiveCorrectVisibleRangeThroughItsAnnotationSession() {
+  public void testAnnotatorMustReceiveCorrectVisibleRangeViaItsAnnotationSession() {
     String text = "blah blah\n".repeat(1000) +
                   "<caret>" + wordToAnnotate +
                   "\n" +
@@ -3218,7 +3220,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  public void testLocalInspectionMustReceiveCorrectVisibleRangeThroughItsHighlightingSession() {
+  public void testLocalInspectionMustReceiveCorrectVisibleRangeViaItsHighlightingSession() {
     registerInspection(new MyVisibleRangeInspection());
 
     String text = "blah blah\n".repeat(1000) +
@@ -3247,7 +3249,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertNull(expectedVisibleRange); // check the inspection was run
   }
 
-  public void testHighlightingPassesAreInstantiatedOffEDTToImproveResponsiveness() throws Throwable {
+  public void testHighlightingPassesAreInstantiatedOutsideEDTToImproveResponsiveness() throws Throwable {
     AtomicReference<Throwable> violation = new AtomicReference<>();
     AtomicBoolean applied = new AtomicBoolean();
     class MyCheckingConstructorTraceFac implements TextEditorHighlightingPassFactory {
@@ -3605,5 +3607,21 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertTrue("HighlightInfo is missing. All available infos are: "+infos, ContainerUtil.exists(infos, info -> info.getDescription().equals("MY3: CMT")));
     }
   }
+
+  public void testHighlightersMustDisappearWhenTheHighlightingIsSwitchedOff() {
+    @Language("JAVA")
+    String text = """
+      class X {
+        blah blah
+        )(@*$)(*%@$)
+      }""";
+    configureByText(JavaFileType.INSTANCE, text);
+    assertNotEmpty(highlightErrors());
+    HighlightingSettingsPerFile.getInstance(getProject()).setHighlightingSettingForRoot(getFile(), FileHighlightingSetting.SKIP_HIGHLIGHTING);
+
+    assertEmpty(highlightErrors());
+  }
+
+
 }
 
