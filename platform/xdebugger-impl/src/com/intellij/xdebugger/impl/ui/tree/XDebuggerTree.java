@@ -188,6 +188,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
         int key = e.getKeyCode();
         if (key == KeyEvent.VK_ENTER || key == KeyEvent.VK_SPACE || key == KeyEvent.VK_RIGHT) {
           expandIfEllipsis(dummyMouseClickEvent());
+          expandIfExpandableLink(dummyMouseClickEvent());
         }
       }
     });
@@ -284,7 +285,19 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
         }
       }
     }
+
     return false;
+  }
+
+  private void expandIfExpandableLink(@NotNull MouseEvent e) {
+    WatchNodeImpl[] watchNodes = getSelectedNodes(WatchNodeImpl.class, null);
+    if (watchNodes.length == 1) {
+      WatchNodeImpl watchNode = watchNodes[0];
+      XDebuggerTreeNodeHyperlink link = watchNode.getLink();
+      if (link != null && link.getIsClickedOnEnter()) {
+        link.onClick(e);
+      }
+    }
   }
 
   public void addTreeListener(@NotNull XDebuggerTreeListener listener) {

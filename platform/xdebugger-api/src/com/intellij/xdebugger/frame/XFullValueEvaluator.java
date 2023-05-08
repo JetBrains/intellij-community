@@ -17,9 +17,8 @@ import java.awt.*;
  * @see ImmediateFullValueEvaluator
  */
 public abstract class XFullValueEvaluator {
-  private final @Nls String myLinkText;
-  private final @Nullable @Nls String myLinkTooltipText;
-  private final @Nullable Icon myLinkIcon;
+  private final @NotNull @Nls String myLinkText;
+  private final @Nullable LinkAttributes myLinkAttributes;
   private boolean myShowValuePopup = true;
   
   private boolean myIsEnabled = true;
@@ -36,13 +35,12 @@ public abstract class XFullValueEvaluator {
    * @param linkText text of the link what will be appended to a variables tree node text
    */
   protected XFullValueEvaluator(@NotNull @Nls String linkText) {
-    this(linkText, null, null);
+    this(linkText, null);
   }
  
-  protected XFullValueEvaluator(@NotNull @Nls String linkText, @Nullable @Nls String tooltipText, @Nullable @Nls Icon linkIcon) {
+  protected XFullValueEvaluator(@NotNull @Nls String linkText, @Nullable LinkAttributes linkAttributes) {
     myLinkText = linkText;
-    myLinkTooltipText = tooltipText;
-    myLinkIcon = linkIcon;
+    myLinkAttributes = linkAttributes;
   }
 
   public boolean isShowValuePopup() {
@@ -69,21 +67,41 @@ public abstract class XFullValueEvaluator {
    */
   public abstract void startEvaluation(@NotNull XFullValueEvaluationCallback callback);
 
+  public @Nullable LinkAttributes getLinkAttributes() {
+    return myLinkAttributes;
+  }
+  
   public @Nls @NotNull String getLinkText() {
     return myLinkText;
   }
 
-  public @Nls @Nullable String getLinkTooltipText() {
-    return myLinkTooltipText;
-  }
-
-  public @Nullable Icon getLinkIcon() {
-    return myLinkIcon;
-  }
-  
   public interface XFullValueEvaluationCallback extends Obsolescent, XValueCallback {
     void evaluated(@NotNull String fullValue);
 
     void evaluated(@NotNull String fullValue, @Nullable Font font);
+  }
+  
+  public static class LinkAttributes { 
+    private final @Nullable @Nls String myLinkTooltipText;
+    private final @Nullable Icon myLinkIcon;
+    private final boolean myIsClickedOnEnter;
+
+    public LinkAttributes(@Nullable @Nls String tooltipText, @Nullable Icon icon, boolean isClickedOnEnter) {
+      myLinkTooltipText = tooltipText;
+      myLinkIcon = icon;
+      myIsClickedOnEnter = isClickedOnEnter;
+    }
+
+    public @Nullable @Nls String getLinkTooltipText() {
+      return myLinkTooltipText;
+    }
+
+    public @Nullable Icon getLinkIcon() {
+      return myLinkIcon;
+    }
+
+    public boolean isClickedOnEnter() {
+      return myIsClickedOnEnter;
+    }
   }
 }
