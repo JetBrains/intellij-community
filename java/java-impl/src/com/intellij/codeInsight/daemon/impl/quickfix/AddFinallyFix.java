@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.PsiUpdateContext;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -16,20 +17,18 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class AddFinallyFix extends PsiBasedModCommandAction<PsiTryStatement> {
+public class AddFinallyFix extends PsiUpdateModCommandAction<PsiTryStatement> {
   public AddFinallyFix(PsiTryStatement statement) {
     super(statement);
   }
 
   @Override
-  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiTryStatement element) {
-    return ModCommands.psiUpdate(element, (tryStatement, updater) -> {
-      PsiStatement replacement =
-        JavaPsiFacade.getElementFactory(context.project())
-          .createStatementFromText(tryStatement.getText() + "finally {\n\n}", tryStatement);
-      PsiTryStatement result = (PsiTryStatement)tryStatement.replace(replacement);
-      moveCaretToFinallyBlock(updater, Objects.requireNonNull(result.getFinallyBlock()));
-    });
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiTryStatement tryStatement, @NotNull PsiUpdateContext updater) {
+    PsiStatement replacement =
+      JavaPsiFacade.getElementFactory(context.project())
+        .createStatementFromText(tryStatement.getText() + "finally {\n\n}", tryStatement);
+    PsiTryStatement result = (PsiTryStatement)tryStatement.replace(replacement);
+    moveCaretToFinallyBlock(updater, Objects.requireNonNull(result.getFinallyBlock()));
   }
 
   private static void moveCaretToFinallyBlock(@NotNull PsiUpdateContext updater, @NotNull PsiCodeBlock block) {

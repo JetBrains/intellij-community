@@ -1038,7 +1038,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddEmptyRecordHeaderFix(@NotNull PsiClass psiClass) {
-    return new AddEmptyRecordHeaderFix(psiClass);
+    return new AddEmptyRecordHeaderFix(psiClass).asIntention();
   }
 
   @Override
