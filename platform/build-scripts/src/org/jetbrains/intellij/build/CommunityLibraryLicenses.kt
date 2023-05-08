@@ -463,6 +463,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "JCodings", libraryName = "joni", transitiveDependency = true, version = "1.0.55",
                    url = "https://github.com/jruby/jcodings")
       .mit("https://github.com/jruby/jcodings/blob/master/LICENSE.txt"),
+    LibraryLicense(name = "JDOM (JetBrains's fork)", version = "2", attachedTo = "intellij.platform.util.jdom",
+                   url = "http://jdom.org/",
+                   licenseUrl = "https://github.com/JetBrains/intellij-deps-jdom/blob/master/LICENSE.txt"),
     LibraryLicense(libraryName = "jediterm-core", license = "LGPL 3",
                    url = "https://github.com/JetBrains/jediterm",
                    licenseUrl = "https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt"),
