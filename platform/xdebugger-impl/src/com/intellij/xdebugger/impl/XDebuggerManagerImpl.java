@@ -422,7 +422,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       if (editor.getProject() != myProject || editor.getEditorKind() != EditorKind.MAIN_EDITOR) return;
       EditorGutter editorGutter = editor.getGutter();
       if (editorGutter instanceof EditorGutterComponentEx gutter) {
-        if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA) {
+        if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA && EditorUtil.isBreakPointsOnLineNumbers()) {
           int line = EditorUtil.yToLogicalLineNoCustomRenderers(editor, e.getMouseEvent().getY());
           Document document = editor.getDocument();
           if (DocumentUtil.isValidLine(line, document)) {
