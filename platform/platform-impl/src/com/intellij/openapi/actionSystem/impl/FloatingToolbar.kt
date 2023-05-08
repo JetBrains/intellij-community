@@ -1,14 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.ui.floating
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
@@ -17,12 +16,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.psi.util.elementType
-import com.intellij.psi.util.parents
 import com.intellij.ui.LightweightHint
-import com.intellij.util.ui.UIUtil
-import org.intellij.plugins.markdown.lang.MarkdownElementTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Point
@@ -79,7 +73,8 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
 
   private fun createActionToolbar(targetComponent: JComponent, onUpdated: (ActionToolbar) -> Unit) {
     val group = CustomActionsSchema.getInstance().getCorrectedAction(actionGroupId) as? ActionGroup ?: return
-    val toolbar = createImmediatelyUpdatedToolbar(group, EDITOR_FLOATING_TOOLBAR, targetComponent, horizontal = true, onUpdated)
+    val place = ActionPlaces.EDITOR_FLOATING_TOOLBAR
+    val toolbar = ToolbarUtils.createImmediatelyUpdatedToolbar(group, place, targetComponent, horizontal = true, onUpdated)
     buttonSize = toolbar.maxButtonHeight
   }
 
@@ -116,16 +111,14 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
   }
 
   protected open fun hasIgnoredParent(element: PsiElement): Boolean {
-    if (element.containingFile !is MarkdownFile) {
-      return true
-    }
-    return element.parents(withSelf = true).any { it.elementType in elementsToIgnore }
+    return false
   }
 
   private fun getHintPosition(hint: LightweightHint): Point {
     val hintPos = HintManagerImpl.getInstanceImpl().getHintPosition(hint, editor, HintManager.DEFAULT)
     // because of `hint.setForceShowAsPopup(true)`, HintManager.ABOVE does not place the hint above
     // the hint remains on the line, so we need to move it up ourselves
+    val verticalGap = 2
     val dy = -(hint.component.preferredSize.height + verticalGap)
     val dx = buttonSize * -2
     hintPos.translate(dx, dy)
@@ -179,45 +172,6 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
       if (hoverSelected) {
         showIfHidden()
       }
-    }
-  }
-
-  companion object {
-    internal const val EDITOR_FLOATING_TOOLBAR = "MarkdownEditorFloatingToolbar"
-
-    private const val verticalGap = 2
-
-    private val elementsToIgnore = listOf(
-      MarkdownElementTypes.CODE_FENCE,
-      MarkdownElementTypes.CODE_BLOCK,
-      MarkdownElementTypes.CODE_SPAN,
-      MarkdownElementTypes.HTML_BLOCK,
-      MarkdownElementTypes.LINK_DESTINATION
-    )
-
-    internal fun createImmediatelyUpdatedToolbar(
-      group: ActionGroup,
-      place: String,
-      targetComponent: JComponent,
-      horizontal: Boolean = true,
-      onUpdated: (ActionToolbar) -> Unit
-    ): ActionToolbar {
-      val toolbar = object : ActionToolbarImpl(place, group, horizontal) {
-        override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
-          val firstTime = forced && !hasVisibleActions()
-          super.actionsUpdated(forced, newVisibleActions)
-          if (firstTime) {
-            UIUtil.markAsShowing(this, false)
-            onUpdated.invoke(this)
-          }
-        }
-      }
-      toolbar.targetComponent = targetComponent
-      toolbar.putClientProperty(ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
-      toolbar.setReservePlaceAutoPopupIcon(false)
-      UIUtil.markAsShowing(toolbar, true)
-      toolbar.updateActionsImmediately(true)
-      return toolbar
     }
   }
 }
