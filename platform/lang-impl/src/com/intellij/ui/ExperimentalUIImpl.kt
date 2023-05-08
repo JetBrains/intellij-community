@@ -23,33 +23,11 @@ import com.intellij.util.PlatformUtils
  * @author Konstantin Bulenkov
  */
 private class ExperimentalUIImpl : ExperimentalUI() {
-  private var newValue: Boolean = isNewUI()
+  @JvmField var newValue: Boolean = isNewUI()
 
   init {
-    val app = ApplicationManager.getApplication()
-    app.messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
-      override fun appStarted() {
-        if (isNewUI()) {
-          val propertyComponent = PropertiesComponent.getInstance()
-          propertyComponent.setValue(NEW_UI_USED_PROPERTY, true)
-        }
-      }
-
-      override fun appClosing() {
-        if (newValue != isNewUI()) {
-          Registry.get("ide.experimental.ui").setValue(newValue)
-          if (newValue) {
-            onExpUIEnabled(false)
-          }
-          else {
-            onExpUIDisabled(false)
-          }
-        }
-      }
-    })
-
     if (ConfigImportHelper.isNewUser() && isNewUIEnabledByDefault() && !isNewUI()) {
-      app.invokeLater {
+      ApplicationManager.getApplication().invokeLater {
         newValue = true
         onExpUIEnabled(false)
       }
@@ -146,5 +124,27 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 private fun setRegistryKeyIfNecessary(key: String, value: Boolean) {
   if (Registry.`is`(key) != value) {
     Registry.get(key).setValue(value)
+  }
+}
+
+private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
+  override fun appStarted() {
+    if (ExperimentalUI.isNewUI()) {
+      PropertiesComponent.getInstance().setValue(ExperimentalUI.NEW_UI_USED_PROPERTY, true)
+    }
+  }
+
+  override fun appClosing() {
+    val experimentalUi = (ExperimentalUI.getInstance() as? ExperimentalUIImpl) ?: return
+    val newValue = experimentalUi.newValue
+    if (newValue != ExperimentalUI.isNewUI()) {
+      Registry.get("ide.experimental.ui").setValue(newValue)
+      if (newValue) {
+        experimentalUi.onExpUIEnabled(suggestRestart = false)
+      }
+      else {
+        experimentalUi.onExpUIDisabled(suggestRestart = false)
+      }
+    }
   }
 }
