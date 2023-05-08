@@ -182,7 +182,7 @@ public final class IndexVersion {
         }
       }
       catch (IOException e) {
-        LOG.infoWithDebug("No version for index '" + indexName + "' (" + e + ")", e);
+        LOG.debug("No version for index '" + indexName + "' (" + e + ")", e);
       }
       version = NON_EXISTING_INDEX_VERSION;
       ourIndexIdToCreationStamp.put(indexName, version);
