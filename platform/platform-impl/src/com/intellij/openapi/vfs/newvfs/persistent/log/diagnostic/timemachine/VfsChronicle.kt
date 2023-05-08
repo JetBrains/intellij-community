@@ -91,7 +91,7 @@ object VfsChronicle {
 
   class LookupResultImpl<T> : LookupResult<T> {
     override var found: Boolean = false
-    var value_: T? = null
+    private var value_: T? = null
 
     @Suppress("UNCHECKED_CAST")
     override val value: T
