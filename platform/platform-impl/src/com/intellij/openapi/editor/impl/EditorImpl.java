@@ -5,6 +5,7 @@ import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
+import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
@@ -142,6 +143,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final Key<Boolean> DISABLE_CARET_POSITION_KEEPING = Key.create("editor.disable.caret.position.keeping");
   public static final Key<Boolean> DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION =
     Key.create("editor.disable.caret.shift.on.whitespace.insertion");
+  public static final Key<Boolean> DISABLE_REMOVE_ON_DROP = Key.create("editor.disable.remove.on.drop");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
@@ -4928,6 +4930,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           editor.getCaretModel().moveToOffset(range.getStartOffset());
           editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
         }
+
+        if (DnDManager.getInstance() instanceof DnDManagerImpl manager) {
+          manager.setLastDropHandler(editor.getContentComponent());
+        }
       }
       catch (Exception exception) {
         LOG.error(exception);
@@ -4993,7 +4999,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       final Component last = DnDManager.getInstance().getLastDropHandler();
 
-      if (last != null && !(last instanceof EditorComponentImpl) && !(last instanceof EditorGutterComponentImpl)) return;
+      if (last != null) {
+        if (!(last instanceof EditorComponentImpl) && !(last instanceof EditorGutterComponentImpl)) {
+          return;
+        }
+        if (last != source && Boolean.TRUE.equals(DISABLE_REMOVE_ON_DROP.get(getEditor((JComponent)last)))) {
+          return;
+        }
+      }
 
       final EditorImpl editor = getEditor(source);
       if (action == MOVE && !editor.isViewer() && editor.myDraggedRange != null) {
