@@ -1499,7 +1499,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         boolean shouldClearAllIndexedStates = fc == null;
         for (ID<?, ?> indexId : currentIndexedStates) {
           ProgressManager.checkCanceled();
-          if (shouldClearAllIndexedStates || shouldIndexFile(fc, indexId).updateRequired()) {
+          if (shouldClearAllIndexedStates || getIndexingState(fc, indexId) != FileIndexingState.NOT_INDEXED) {
             ProgressManager.checkCanceled();
             SingleIndexValueRemover remover = createSingleIndexRemover(indexId, file, fc, inputId, writeIndexSeparately);
             if (remover == null) {
@@ -1978,15 +1978,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (!myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty()) {
       myUpToDateIndicesForUnsavedOrTransactedDocuments.clear();
     }
-  }
-
-  FileIndexingState shouldIndexFile(@NotNull IndexedFile file, @NotNull ID<?, ?> indexId) {
-    if (!acceptsInput(indexId, file)) {
-      return getIndexingState(file, indexId) == FileIndexingState.NOT_INDEXED
-             ? FileIndexingState.UP_TO_DATE
-             : FileIndexingState.OUT_DATED;
-    }
-    return getIndexingState(file, indexId);
   }
 
   @NotNull

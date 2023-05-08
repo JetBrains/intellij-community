@@ -227,7 +227,7 @@ final class UnindexedFilesFinder {
     }
 
     try {
-      FileIndexingState fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
+      FileIndexingState fileIndexingState = myFileBasedIndex.getIndexingState(indexedFile, indexId);
       if (fileIndexingState == FileIndexingState.UP_TO_DATE && myShouldProcessUpToDateFiles) {
         fileIndexingState = processUpToDateFileByInfrastructureExtensions(indexedFile, inputId, indexId, fileStatusBuilder);
       }
@@ -278,7 +278,7 @@ final class UnindexedFilesFinder {
         }
       }
       if (fileStatusBuilder.indexInfrastructureExtensionInvalidated) {
-        ret = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
+        ret = myFileBasedIndex.getIndexingState(indexedFile, indexId);
       }
       return ret;
     }
