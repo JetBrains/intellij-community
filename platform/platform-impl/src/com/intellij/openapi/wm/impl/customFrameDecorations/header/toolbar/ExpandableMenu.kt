@@ -15,7 +15,6 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.Alarm
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -24,24 +23,30 @@ import java.awt.event.*
 import javax.swing.*
 
 private const val ALPHA = (255 * 0.6).toInt()
-private const val MENU_HIDE_DELAY = 300
 
 internal class ExpandableMenu(private val headerContent: JComponent) {
 
   val ideMenu = IdeMenuBar.createMenuBar()
   private var expandedMenuBar: JPanel? = null
   private val shadowComponent = ShadowComponent()
-  private val alarm = Alarm()
   private val rootPane: JRootPane?
     get() = SwingUtilities.getRootPane(headerContent)
   private val hoverListeners = mutableMapOf<JMenu, MouseListener>()
+  private var hideMenu = false
 
   init {
     MenuSelectionManager.defaultManager().addChangeListener {
-      alarm.cancelAllRequests()
       if (MenuSelectionManager.defaultManager().selectedPath.isNullOrEmpty()) {
-        // Right after resetting selectedPath another menu can be shown, so don't hide main menu immediately
-        alarm.addRequest({ hideExpandedMenuBar() }, MENU_HIDE_DELAY)
+        // After resetting selectedPath another menu can be shown right after that, so don't hide main menu immediately
+        hideMenu = true
+        ApplicationManager.getApplication().invokeLater {
+          if (hideMenu) {
+            hideMenu = false
+            hideExpandedMenuBar()
+          }
+        }
+      } else {
+        hideMenu = false
       }
     }
 
