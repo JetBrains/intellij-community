@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,6 +64,10 @@ public enum LanguageLevel {
   PYTHON310(310),
   PYTHON311(311),
   PYTHON312(312);
+
+  public static final Comparator<LanguageLevel> VERSION_COMPARATOR = (first, second) -> {
+    return first == second ? 0 : first.isOlderThan(second) ? -1 : 1;
+  };
 
   /**
    * This value is mostly bound to the compatibility of our debugger and helpers.

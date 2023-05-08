@@ -278,17 +278,12 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   }
 
   private static @NotNull LanguageLevel guessLanguageLevel(@NotNull Collection<? extends @NotNull Sdk> pythonModuleSdks) {
-    LanguageLevel maxLevel = null;
-    for (Sdk sdk : new LinkedHashSet<Sdk>(pythonModuleSdks)) {
-      final LanguageLevel level = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
-      if (maxLevel == null || maxLevel.isOlderThan(level)) {
-        maxLevel = level;
-      }
-    }
-    if (maxLevel != null) {
-      return maxLevel;
-    }
-    return LanguageLevel.getDefault();
+    PythonRuntimeService pythonRuntimeService = PythonRuntimeService.getInstance();
+    return pythonModuleSdks.stream()
+      .distinct()
+      .map(sdk -> pythonRuntimeService.getLanguageLevelForSdk(sdk))
+      .max(LanguageLevel.VERSION_COMPARATOR)
+      .orElse(LanguageLevel.getDefault());
   }
 
   /**
