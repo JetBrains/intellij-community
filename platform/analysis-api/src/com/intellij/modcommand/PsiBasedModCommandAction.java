@@ -33,14 +33,11 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   public final @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
     E element = myPointer.getElement();
     if (element == null) return IntentionPreviewInfo.EMPTY;
-    if (IntentionPreviewUtils.getOriginalFile(context.file()) == element.getContainingFile()) {
-      element = PsiTreeUtil.findSameElementInCopy(element, context.file());
-    }
     return generatePreview(context, element);
   }
 
   protected @NotNull IntentionPreviewInfo generatePreview(ActionContext context, E element) {
-    ModCommand command = ModCommand.retrieve(() -> perform(context, element));
+    ModCommand command = perform(context, element);
     return IntentionPreviewUtils.getModCommandPreview(command, context.file());
   }
 
