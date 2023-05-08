@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
@@ -74,12 +73,10 @@ public enum LanguageLevel {
    * You're free to gradually drop support of versions not mentioned here if they present too much hassle to maintain.
    */
   public static final List<LanguageLevel> SUPPORTED_LEVELS =
-    List.copyOf(
-      Stream
-        .of(values())
-        .filter(v -> v.isAtLeast(PYTHON36) || v == PYTHON27)
-        .collect(Collectors.toList())
-    );
+    Stream
+      .of(values())
+      .filter(v -> v.isAtLeast(PYTHON36) || v == PYTHON27)
+      .toList();
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
   private static final LanguageLevel DEFAULT3 = PYTHON310;
