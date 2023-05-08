@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
@@ -268,11 +269,15 @@ public class StopAction extends DumbAwareAction {
     }
   }
 
+  private static List<RunContentDescriptor> getAllRunContentDescriptors(@NotNull Project project) {
+    return Registry.is("execution.old.stoppable.process.calculation", true)
+           ? ExecutionManagerImpl.getAllDescriptors(project)
+           : ExecutionManagerImpl.getInstance(project).getRunningDescriptors(d -> true);
+  }
+
   @ApiStatus.Internal
   public static @NotNull List<RunContentDescriptor> getActiveStoppableDescriptors(@Nullable Project project) {
-    List<RunContentDescriptor> runningProcesses = project != null ?
-                                                  ExecutionManagerImpl.getInstance(project).getRunningDescriptors(d -> true) :
-                                                  Collections.emptyList();
+    List<RunContentDescriptor> runningProcesses = project != null ? getAllRunContentDescriptors(project) : Collections.emptyList();
     if (runningProcesses.isEmpty()) {
       return Collections.emptyList();
     }
