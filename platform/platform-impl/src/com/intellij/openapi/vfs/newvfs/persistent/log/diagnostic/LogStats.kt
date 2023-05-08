@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.FSRecordsOracle
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshotUtils.fullPath
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsTimeMachine
+import com.intellij.util.ExceptionUtil
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -229,7 +230,9 @@ fun main(args: Array<String>) {
 
   val logPath = Path.of(args[0])
   val log = VfsLog(logPath, true)
-  val fsRecords = FSRecordsImpl.connect(logPath.parent, log)
+  val fsRecords = FSRecordsImpl.connect(logPath.parent,
+                                        log,
+                                        FSRecordsImpl.ErrorHandler { records, error -> ExceptionUtil.rethrow(error) })
   //val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)::valueOf
   val names = { id: Int -> fsRecords.getNameByNameId(id)?.toString() }
   val oracle = FSRecordsOracle(fsRecords, log)
