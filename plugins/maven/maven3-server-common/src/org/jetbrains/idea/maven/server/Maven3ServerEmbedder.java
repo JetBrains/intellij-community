@@ -419,20 +419,20 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
 
   @Nullable
   @Override
-  public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull final String groupId, @NotNull final String artifactId,
-                                                              @NotNull final String version,
+  public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
+                                                              @NotNull String version,
                                                               @NotNull List<MavenRemoteRepository> repositories,
-                                                              @Nullable final String url, MavenToken token) throws RemoteException {
+                                                              @Nullable String url, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
-      final MavenExecutionRequest request = createRequest(null, null, null, null);
+      MavenExecutionRequest request = createRequest(null, null, null, null);
       List<ArtifactRepository> artifactRepositories = map2ArtifactRepositories(repositories);
       for (ArtifactRepository repository : artifactRepositories) {
         request.addRemoteRepository(repository);
       }
 
-      final Map<String, String> result = new HashMap<>();
-      final AtomicBoolean unknownArchetypeError = new AtomicBoolean(false);
+      Map<String, String> result = new HashMap<>();
+      AtomicBoolean unknownArchetypeError = new AtomicBoolean(false);
       executeWithMavenSession(request, () -> {
         MavenArtifactRepository artifactRepository = null;
         if (url != null) {

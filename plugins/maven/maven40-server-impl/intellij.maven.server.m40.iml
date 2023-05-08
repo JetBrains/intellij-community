@@ -65,5 +65,53 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="org.apache.maven.archetype:archetype-common:3.2.1" type="repository">
+        <properties maven-id="org.apache.maven.archetype:archetype-common:3.2.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-common/3.2.1/archetype-common-3.2.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-catalog/3.2.1/archetype-catalog-3.2.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-descriptor/3.2.1/archetype-descriptor-3.2.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-all/2.4.16/groovy-all-2.4.16.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/ivy/ivy/2.5.0/ivy-2.5.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-component-annotations/2.0.0/plexus-component-annotations-2.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6/jdom2-2.0.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-invoker/3.0.1/maven-invoker-3.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-shared-utils/3.2.1/maven-shared-utils-3.2.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-aether-provider/3.0/maven-aether-provider-3.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3.0/maven-model-builder-3.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.14/plexus-interpolation-1.14.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.0/maven-model-3.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3.0/maven-repository-metadata-3.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-api/1.7/aether-api-1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-util/1.7/aether-util-1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-impl/1.7/aether-impl-1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-spi/1.7/aether-spi-1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-artifact-transfer/0.13.1/maven-artifact-transfer-0.13.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-core/3.0/maven-core-3.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings/3.0/maven-settings-3.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings-builder/3.0/maven-settings-builder-3.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-plugin-api/3.0/maven-plugin-api-3.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-inject-plexus/1.4.2/sisu-inject-plexus-1.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-inject-bean/1.4.2/sisu-inject-bean-1.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-guice/2.1.7/sisu-guice-2.1.7-noaop.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-classworlds/2.2.3/plexus-classworlds-2.2.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/plexus/plexus-sec-dispatcher/1.3/plexus-sec-dispatcher-1.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/plexus/plexus-cipher/1.4/plexus-cipher-1.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.0/maven-artifact-3.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-common-artifact-filters/3.1.0/maven-common-artifact-filters-3.1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.5/slf4j-api-1.7.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.3.0/plexus-utils-3.3.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.6/commons-io-2.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-collections/commons-collections/3.2.2/commons-collections-3.2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-velocity/1.2/plexus-velocity-1.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/velocity/velocity/1.7/velocity-1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-lang/commons-lang/2.4/commons-lang-2.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/70.1/icu4j-70.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

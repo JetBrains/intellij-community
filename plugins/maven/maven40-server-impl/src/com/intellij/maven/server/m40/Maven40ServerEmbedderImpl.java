@@ -15,11 +15,21 @@ import org.apache.maven.api.Node;
 import org.apache.maven.api.Session;
 import org.apache.maven.api.services.ArtifactResolver;
 import org.apache.maven.api.services.ArtifactResolverResult;
+import org.apache.maven.archetype.catalog.Archetype;
+import org.apache.maven.archetype.catalog.ArchetypeCatalog;
+import org.apache.maven.archetype.common.ArchetypeArtifactManager;
+import org.apache.maven.archetype.exception.UnknownArchetype;
+import org.apache.maven.archetype.metadata.ArchetypeDescriptor;
+import org.apache.maven.archetype.metadata.RequiredProperty;
+import org.apache.maven.archetype.source.ArchetypeDataSource;
+import org.apache.maven.archetype.source.ArchetypeDataSourceException;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.MavenArtifactRepository;
+import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.cli.internal.extension.model.CoreExtension;
 import org.apache.maven.execution.*;
@@ -77,10 +87,12 @@ import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.intellij.maven.server.m40.utils.Maven40ModelConverter.convertRemoteRepositories;
+import static org.apache.maven.archetype.source.CatalogArchetypeDataSource.ARCHETYPE_CATALOG_PROPERTY;
 
 public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   @NotNull private final DefaultPlexusContainer myContainer;
@@ -1632,9 +1644,102 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
 
+  @Override
+  public Collection<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    try {
+      ArchetypeDataSource source = getComponent(ArchetypeDataSource.class, "catalog");
+      Properties properties = new Properties();
+      properties.put(ARCHETYPE_CATALOG_PROPERTY, path);
+      ProjectBuildingRequest request = new DefaultProjectBuildingRequest();
+      request.setUserProperties(properties);
+      ArchetypeCatalog archetypeCatalog = source.getArchetypeCatalog(request);
+      return getArchetypes(archetypeCatalog);
+    }
+    catch (Exception e) {
+      MavenServerGlobals.getLogger().warn(e);
+    }
+    return Collections.emptyList();
+  }
 
+  @Override
+  public Collection<MavenArchetype> getRemoteArchetypes(MavenToken token, @NotNull String url) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    try {
+      ArchetypeDataSource source = getComponent(ArchetypeDataSource.class, "remote-catalog");
+      MavenRemoteRepository repository = new MavenRemoteRepository("central", null, url, null, null, null);
+      List<MavenRemoteRepository> repositories = Collections.singletonList(repository);
+      ProjectBuildingRequest request = new DefaultProjectBuildingRequest();
+      List<ArtifactRepository> remoteRepositories = convertRepositories(repositories);
+      request.setRemoteRepositories(remoteRepositories);
+      ArchetypeCatalog archetypeCatalog = source.getArchetypeCatalog(request);
+      return getArchetypes(archetypeCatalog);
+    }
+    catch (ArchetypeDataSourceException e) {
+      MavenServerGlobals.getLogger().warn(e);
+    }
+    return Collections.emptyList();
+  }
 
+  @Nullable
+  @Override
+  public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
+                                                              @NotNull String version,
+                                                              @NotNull List<MavenRemoteRepository> repositories,
+                                                              @Nullable String url, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    try {
+      MavenExecutionRequest request = createRequest(null, null, null, null);
+      List<ArtifactRepository> artifactRepositories = map2ArtifactRepositories(repositories);
+      for (ArtifactRepository repository : artifactRepositories) {
+        request.addRemoteRepository(repository);
+      }
 
+      Map<String, String> result = new HashMap<>();
+      AtomicBoolean unknownArchetypeError = new AtomicBoolean(false);
+      executeWithMavenSession(request, () -> {
+        MavenArtifactRepository artifactRepository = null;
+        if (url != null) {
+          artifactRepository = new MavenArtifactRepository();
+          artifactRepository.setId("archetype");
+          artifactRepository.setUrl(url);
+          artifactRepository.setLayout(new DefaultRepositoryLayout());
+        }
+
+        List<ArtifactRepository> remoteRepositories = request.getRemoteRepositories();
+
+        ArchetypeArtifactManager archetypeArtifactManager = getComponent(ArchetypeArtifactManager.class);
+        ArchetypeDescriptor descriptor = null;
+        try {
+          ProjectBuildingRequest projectBuildingRequest = new DefaultProjectBuildingRequest();
+          descriptor = archetypeArtifactManager.getFileSetArchetypeDescriptor(
+            groupId, artifactId, version, artifactRepository,
+            myLocalRepository, remoteRepositories, projectBuildingRequest);
+        }
+        catch (UnknownArchetype e) {
+          unknownArchetypeError.set(true);
+        }
+        if (descriptor != null && descriptor.getRequiredProperties() != null) {
+          for (RequiredProperty property : descriptor.getRequiredProperties()) {
+            result.put(property.getKey(), property.getDefaultValue() != null ? property.getDefaultValue() : "");
+          }
+        }
+      });
+      return unknownArchetypeError.get() ? null : result;
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  @NotNull
+  private static ArrayList<MavenArchetype> getArchetypes(ArchetypeCatalog archetypeCatalog) {
+    ArrayList<MavenArchetype> result = new ArrayList<>(archetypeCatalog.getArchetypes().size());
+    for (Archetype each : archetypeCatalog.getArchetypes()) {
+      result.add(Maven40ModelConverter.convertArchetype(each));
+    }
+    return result;
+  }
 
 
   @NotNull
@@ -1686,36 +1791,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
     }
-  }
-
-  @Override
-  public Collection<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-    return null;
-  }
-
-  @Override
-  public Collection<MavenArchetype> getRemoteArchetypes(MavenToken token, @NotNull String url) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId,
-                                                              @NotNull String artifactId,
-                                                              @NotNull String version,
-                                                              @NotNull List<MavenRemoteRepository> repositories,
-                                                              @Nullable String url,
-                                                              MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-    return null;
   }
 
 }

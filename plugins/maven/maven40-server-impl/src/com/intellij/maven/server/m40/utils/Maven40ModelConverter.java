@@ -2,6 +2,7 @@
 package com.intellij.maven.server.m40.utils;
 
 import com.intellij.util.ReflectionUtilRt;
+import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -506,6 +507,14 @@ public class Maven40ModelConverter {
 
                              artifact.isResolved(),
                              false /*artifact instanceof CustomMaven3Artifact && ((CustomMaven3Artifact)artifact).isStub()*/);
+  }
+
+  public static MavenArchetype convertArchetype(Archetype archetype) {
+    return new MavenArchetype(archetype.getGroupId(),
+                              archetype.getArtifactId(),
+                              archetype.getVersion(),
+                              archetype.getRepository(),
+                              archetype.getDescription());
   }
 }
 
