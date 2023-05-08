@@ -167,25 +167,22 @@ final class UnindexedFilesFinder {
           }
         }
 
-        if (shouldCheckContentIndexes) {
-          for (ID<?, ?> indexId : myFileBasedIndex.getAffectedIndexCandidates(indexedFile)) {
-            if (myFileBasedIndex.needsFileContentLoading(indexId)) {
+        boolean fileTypeIndexAlreadyUpToData = fileTypeIndexState != null && !fileTypeIndexState.updateRequired();
+        for (ID<?, ?> indexId : myFileBasedIndex.getAffectedIndexCandidates(indexedFile)) {
+          boolean needsFileContentLoading = myFileBasedIndex.needsFileContentLoading(indexId);
+          // this is the same: (shouldCheckContentIndexes && needsFileContentLoading) || !needsFileContentLoading
+          boolean shouldCheckAgainstSingleIndex = !needsFileContentLoading || shouldCheckContentIndexes;
+
+          // if FileTypeIndex already checked, no need to check it twice
+          if (shouldCheckAgainstSingleIndex && !(FileTypeIndex.NAME.equals(indexId) && fileTypeIndexAlreadyUpToData)) {
+            long contentlessStartTime = needsFileContentLoading ? -1 : System.nanoTime(); // measure contentless indexes only
+            try {
               checkFileStatusAgainstSigleIndex(indexId, fileStatusBuilder, indexedFile, inputId);
             }
-          }
-        }
-
-        long nowTime = System.nanoTime();
-        try {
-          for (ID<?, ?> indexId : myFileBasedIndex.getContentLessIndexes(isDirectory)) {
-            if (FileTypeIndex.NAME.equals(indexId) && fileTypeIndexState != null && !fileTypeIndexState.updateRequired()) {
-              continue;
+            finally {
+              if (contentlessStartTime >= 0) fileStatusBuilder.timeUpdatingContentLessIndexes += (System.nanoTime() - contentlessStartTime);
             }
-            checkFileStatusAgainstSigleIndex(indexId, fileStatusBuilder, indexedFile, inputId);
           }
-        }
-        finally {
-          fileStatusBuilder.timeUpdatingContentLessIndexes += (System.nanoTime() - nowTime);
         }
 
         if (fileStatusBuilder.appliersAndRemovers.isEmpty()) {
