@@ -18,14 +18,11 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.IOUtil;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.SingleTaskController;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.data.VcsLogStorageImpl;
 import com.intellij.vcs.log.impl.HeavyAwareListener;
 import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
@@ -54,7 +51,6 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
 import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
 
 public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
@@ -287,35 +283,18 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
                                                        @NotNull Disposable disposableParent) {
     Map<VirtualFile, VcsLogIndexer> indexers = getAvailableIndexers(providers);
     LinkedHashSet<VirtualFile> roots = new LinkedHashSet<>(indexers.keySet());
-    VcsLogStorageBackend backend = createIndexStorageBackend(project, storage, roots, calcLogId(project, providers), errorHandler,
-                                                             disposableParent);
+
+    VcsLogStorageBackend backend;
+    String logId = calcLogId(project, providers);
+    if (storage instanceof VcsLogStorageBackend) {
+      backend = (VcsLogStorageBackend)storage;
+    }
+    else {
+      backend = PhmVcsLogStorageBackend.create(project, storage, roots, logId, errorHandler, disposableParent);
+    }
     if (backend == null) return null;
+
     return new VcsLogPersistentIndex(project, providers, indexers, roots, storage, backend, progress, errorHandler, disposableParent);
-  }
-
-  private static @Nullable VcsLogStorageBackend createIndexStorageBackend(@NotNull Project project,
-                                                                          @NotNull VcsLogStorage storage,
-                                                                          @NotNull Set<VirtualFile> roots,
-                                                                          @NotNull String logId,
-                                                                          @NotNull VcsLogErrorHandler errorHandler,
-                                                                          @NotNull Disposable parent) {
-    if (storage instanceof VcsLogStorageBackend) return (VcsLogStorageBackend)storage;
-
-    StorageId.Directory storageId = new StorageId.Directory(project.getName(), INDEX, logId, VcsLogStorageImpl.VERSION + VERSION);
-    VcsUserRegistry userRegistry = project.getService(VcsUserRegistry.class);
-    try {
-      return IOUtil.openCleanOrResetBroken(
-        () -> new PhmVcsLogStorageBackend(storageId, storage, roots, userRegistry, errorHandler, parent),
-        () -> {
-          if (!storageId.cleanupAllStorageFiles()) {
-            LOG.error("Could not clean up storage files in " + storageId.getStoragePath());
-          }
-        });
-    }
-    catch (IOException e) {
-      errorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
-    }
-    return null;
   }
 
   private final class MyHeavyAwareListener extends HeavyAwareListener {

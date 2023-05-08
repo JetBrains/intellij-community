@@ -5,6 +5,7 @@ package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,6 +15,7 @@ import com.intellij.util.io.*
 import com.intellij.util.io.storage.AbstractStorage
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogStorage
+import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.LightFilePath
 import com.intellij.vcs.log.history.EdgeData
@@ -25,6 +27,7 @@ import com.intellij.vcs.log.util.StorageId
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import org.jetbrains.annotations.NonNls
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.IOException
@@ -316,6 +319,27 @@ internal class PhmVcsLogStorageBackend(
 
   companion object {
     private val LOG = Logger.getInstance(PhmVcsLogStorageBackend::class.java)
+
+    @NonNls
+    private const val INDEX = "index"
+
+    @JvmStatic
+    fun create(project: Project, storage: VcsLogStorage, roots: Set<VirtualFile>, logId: String,
+               errorHandler: VcsLogErrorHandler, parent: Disposable): PhmVcsLogStorageBackend? {
+      val storageId = StorageId.Directory(project.name, INDEX, logId, VcsLogStorageImpl.VERSION + VcsLogPersistentIndex.VERSION)
+      val userRegistry = project.getService(VcsUserRegistry::class.java)
+      try {
+        return IOUtil.openCleanOrResetBroken({ PhmVcsLogStorageBackend(storageId, storage, roots, userRegistry, errorHandler, parent) }) {
+          if (!storageId.cleanupAllStorageFiles()) {
+            LOG.error("Could not clean up storage files in " + storageId.storagePath)
+          }
+        }
+      }
+      catch (e: IOException) {
+        errorHandler.handleError(VcsLogErrorHandler.Source.Index, e)
+      }
+      return null
+    }
   }
 }
 
