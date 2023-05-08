@@ -18,13 +18,8 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 class AsyncEditorLoader internal constructor(private val project: Project,
-                                             private val textEditor: TextEditorImpl,
-                                             private val editorComponent: TextEditorComponent,
                                              private val provider: TextEditorProvider,
                                              private val coroutineScope: CoroutineScope) {
-  private val editor: Editor
-    get() = textEditor.editor
-
   private val delayedActions = ArrayDeque<Runnable>()
 
   companion object {
@@ -55,12 +50,13 @@ class AsyncEditorLoader internal constructor(private val project: Project,
   }
 
   @RequiresEdt
-  internal fun start() {
+  internal fun start(textEditor: TextEditorImpl) {
+    val editor = textEditor.editor
     editor.putUserData(ASYNC_LOADER, this)
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
       val continuation = runBlockingModal(project, "") {
-        loadEditor()
+        loadEditor(textEditor)
       }
       editor.putUserData(ASYNC_LOADER, null)
       continuation.run()
@@ -70,12 +66,13 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     }
     else {
       val continuationDeferred = coroutineScope.async {
-        loadEditor()
+        loadEditor(textEditor)
       }
 
       // do not show half-ready editor (not highlighted)
-      editorComponent.editor.component.isVisible = false
+      editor.component.isVisible = false
 
+      val editorComponent = textEditor.component
       val modality = ModalityState.current().asContextElement()
       val indicatorJob = editorComponent.loadingDecorator.startLoading(scope = coroutineScope + modality,
                                                                        addUi = editorComponent::addLoadingDecoratorUi)
@@ -83,13 +80,13 @@ class AsyncEditorLoader internal constructor(private val project: Project,
       coroutineScope.launch(modality) {
         val continuation = continuationDeferred.await()
         editorComponent.loadingDecorator.stopLoading(scope = this, indicatorJob = indicatorJob)
-        loaded(continuation)
+        loaded(continuation = continuation, editor = editor)
         EditorNotifications.getInstance(project).updateNotifications(textEditor.file)
       }
     }
   }
 
-  private suspend fun loaded(continuation: Runnable) {
+  private suspend fun loaded(continuation: Runnable, editor: Editor) {
     withContext(Dispatchers.EDT) {
       editor.putUserData(ASYNC_LOADER, null)
 
@@ -101,7 +98,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
 
       // should be before executing delayed actions - editor state restoration maybe a delayed action, and it uses `doWhenFirstShown`,
       // for performance reasons better to avoid
-      editorComponent.editor.component.isVisible = true
+      editor.component.isVisible = true
 
       editor.scrollingModel.disableAnimation()
       while (true) {
@@ -112,18 +109,18 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     }
   }
 
-  private suspend fun loadEditor(): Runnable {
+  private suspend fun loadEditor(textEditor: TextEditorImpl): Runnable {
     return constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) { textEditor.loadEditorInBackground() }
   }
 
   @RequiresReadLock
-  fun getEditorState(level: FileEditorStateLevel): TextEditorState {
+  fun getEditorState(level: FileEditorStateLevel, editor: Editor): TextEditorState {
     ApplicationManager.getApplication().assertReadAccessAllowed()
     return provider.getStateImpl(project, editor, level)
   }
 
   @RequiresEdt
-  fun setEditorState(state: TextEditorState, exactState: Boolean) {
+  fun setEditorState(state: TextEditorState, exactState: Boolean, editor: Editor) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     provider.setStateImpl(project, editor, state, exactState)
   }

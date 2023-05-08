@@ -61,13 +61,11 @@ open class TextEditorImpl(@JvmField protected val project: Project,
     Disposer.register(this, component)
 
     val service = project.service<AsyncEditorLoaderService>()
-    @Suppress("LeakingThis")
     asyncLoader = AsyncEditorLoader(project = project,
-                                    textEditor = this,
-                                    editorComponent = component,
                                     provider = provider,
                                     coroutineScope = service.coroutineScope.childScope(supervisor = false))
-    asyncLoader.start()
+    @Suppress("LeakingThis")
+    asyncLoader.start(this)
   }
 
   // don't pollute global scope
@@ -121,7 +119,7 @@ open class TextEditorImpl(@JvmField protected val project: Project,
 
   override fun getFile(): VirtualFile = file
 
-  override fun getComponent(): JComponent = component
+  override fun getComponent(): TextEditorComponent = component
 
   override fun getPreferredFocusedComponent(): JComponent = component.editor.contentComponent
 
@@ -129,7 +127,7 @@ open class TextEditorImpl(@JvmField protected val project: Project,
 
   override fun getName(): String = IdeBundle.message("tab.title.text")
 
-  override fun getState(level: FileEditorStateLevel): FileEditorState = asyncLoader.getEditorState(level)
+  override fun getState(level: FileEditorStateLevel): FileEditorState = asyncLoader.getEditorState(level, editor)
 
   override fun setState(state: FileEditorState) {
     setState(state = state, exactState = false)
@@ -137,7 +135,7 @@ open class TextEditorImpl(@JvmField protected val project: Project,
 
   override fun setState(state: FileEditorState, exactState: Boolean) {
     if (state is TextEditorState) {
-      asyncLoader.setEditorState(state = state, exactState = exactState)
+      asyncLoader.setEditorState(state = state, exactState = exactState, editor)
     }
   }
 
