@@ -60,6 +60,10 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     Assume.assumeTrue("Version " + version + " skipped", VersionComparatorUtil.compare(myMavenVersion, version) != 0);
   }
 
+  protected void assumeVersion(String version) {
+    Assume.assumeTrue("Version " + version + " skipped", VersionComparatorUtil.compare(myMavenVersion, version) == 0);
+  }
+
   @Before
   public void before() throws Exception {
     if ("bundled".equals(myMavenVersion)) {

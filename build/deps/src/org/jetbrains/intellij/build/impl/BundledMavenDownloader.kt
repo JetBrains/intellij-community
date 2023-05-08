@@ -27,7 +27,12 @@ private val maven3Libs: List<String> = listOf(
 )
 
 private val maven4Libs: List<String> = listOf(
-  "org.apache.maven.archetype:archetype-common:3.2.1",
+  // let's not bundle archetype plugin version 3 with maven version 4
+/*  "org.apache.maven.archetype:archetype-common:3.2.1",
+  "org.apache.maven.archetype:archetype-catalog:3.2.1",
+  "org.apache.maven.archetype:archetype-descriptor:3.2.1",
+  "org.apache.maven.shared:maven-artifact-transfer:0.13.1",
+  "org.jdom:jdom2:2.0.6.1",*/
 )
 
 object BundledMavenDownloader {
