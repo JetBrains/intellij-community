@@ -9,6 +9,7 @@ import com.intellij.ui.tabs.impl.TabLayout;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 
 
 public class ScrollableSingleRowLayout extends SingleRowLayout {
@@ -64,6 +65,18 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   @Override
   public void scrollSelectionInView() {
     myScrollSelectionInViewPending = true;
+  }
+
+  @Override
+  public int getScrollUnitIncrement() {
+    if (myLastSingRowLayout != null) {
+      final List<TabInfo> visibleInfos = myLastSingRowLayout.myVisibleInfos;
+      if (visibleInfos.size() > 0) {
+        final TabInfo info = visibleInfos.get(0);
+        return getStrategy().getScrollUnitIncrement(myTabs.myInfo2Label.get(info));
+      }
+    }
+    return 0;
   }
 
   private void doScrollSelectionInView(SingleRowPassInfo passInfo) {
