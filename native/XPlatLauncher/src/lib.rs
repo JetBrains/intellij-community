@@ -303,7 +303,7 @@ pub fn strip_nt_prefix(path: PathBuf) -> Result<PathBuf> {
 pub fn strip_nt_prefix(path: PathBuf) -> Result<PathBuf> {
     let path_str = path.to_string_checked()?;
     Ok(if path_str.starts_with("\\\\?\\") {
-        // NT object directory paths are misunderstood both by JVM and classloaders
+        // Windows namespace prefixes are misunderstood both by JVM and classloaders
         PathBuf::from(&path_str[4..])
     } else {
         path
