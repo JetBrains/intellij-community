@@ -178,9 +178,8 @@ fn init_test_environment_once() -> Result<TestEnvironmentShared> {
 
     let project_root = env::current_dir().expect("Failed to get project root");
 
-    let build_target = if cfg!(debug_assertions) { "debug" } else { "release" };
     let bin_name = if cfg!(target_os = "windows") { "xplat-launcher.exe" } else { "xplat-launcher" };
-    let launcher_path = project_root.join("target").join(build_target).join(bin_name);
+    let launcher_path = env::current_exe()?.parent_or_err()?.parent_or_err()?.join(bin_name);
     if !launcher_path.exists() {
         bail!("Didn't find source launcher to layout, expected path: {:?}", launcher_path);
     }
