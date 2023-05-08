@@ -4,14 +4,16 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -25,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.childScope
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -51,7 +52,9 @@ open class TextEditorImpl @Internal constructor(@JvmField protected val project:
                                          editor = editor,
                                          asyncLoader = createAsyncEditorLoader(provider, project)) {
     @Suppress("LeakingThis")
-    asyncLoader.start(this)
+    asyncLoader.start(textEditor = this, highlighterSupplier = {
+      createHighlighter(editor.document, file, project)
+    })
   }
 
   init {
@@ -97,19 +100,24 @@ open class TextEditorImpl @Internal constructor(@JvmField protected val project:
       val factory = EditorFactory.getInstance() as EditorFactoryImpl
       return factory.createMainEditor(document!!, project, file)
     }
+
+    @Internal
+    suspend fun createHighlighter(document: Document, file: VirtualFile, project: Project): EditorHighlighter {
+      val scheme = EditorColorsManager.getInstance().globalScheme
+      val editorHighlighterFactory = EditorHighlighterFactory.getInstance()
+      val highlighter = readAction { editorHighlighterFactory.createEditorHighlighter(file, scheme, project) }
+      highlighter.setText(document.immutableCharSequence)
+      return highlighter
+    }
   }
 
   /**
    * @return a continuation to be called in EDT
    */
-  @RequiresBackgroundThread
-  open fun loadEditorInBackground(): Runnable {
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
-    val scheme = EditorColorsManager.getInstance().globalScheme
-    val highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file, scheme, project)
-    val editor = component.editor
-    highlighter.setText(editor.document.immutableCharSequence)
+  open suspend fun loadEditorInBackground(highlighterSupplier: suspend () -> EditorHighlighter): Runnable {
+    val highlighter = highlighterSupplier()
     return Runnable {
+      val editor = component.editor
       editor.settings.setLanguageSupplier { getDocumentLanguage(editor) }
       editor.highlighter = highlighter
     }

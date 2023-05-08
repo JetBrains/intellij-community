@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +41,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return the PSI file, or {@code null} if {@code file} is a directory, an invalid virtual file,
    * or the current project is a dummy or default project.
    */
-  @Nullable
-  public abstract PsiFile findFile(@NotNull VirtualFile file);
+  @RequiresReadLock
+  public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file);
 
   @Nullable
   public abstract FileViewProvider findViewProvider(@NotNull VirtualFile file);

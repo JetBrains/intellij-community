@@ -36,11 +36,12 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
     val factory = EditorFactory.getInstance() as EditorFactoryImpl
     val asyncLoader = createAsyncEditorLoader(provider = this, project = project)
+    val highlighter = asyncLoader.createHighlighterAsync(document, file)
     return object : AsyncFileEditorProvider.Builder() {
       override fun build(): FileEditor {
         val editor = factory.createMainEditor(document, project, file)
         val textEditor = PsiAwareTextEditorImpl(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
-        asyncLoader.start(textEditor)
+        asyncLoader.start(textEditor = textEditor, highlighterSupplier = { highlighter.await() })
         return textEditor
       }
     }

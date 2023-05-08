@@ -27,6 +27,7 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
@@ -349,6 +350,7 @@ public final class FileManagerImpl implements FileManager {
 
   @Override
   @Nullable
+  @RequiresReadLock
   public PsiFile findFile(@NotNull VirtualFile vFile) {
     if (vFile.isDirectory()) return null;
 

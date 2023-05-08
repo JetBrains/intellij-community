@@ -16,13 +16,16 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.actionSystem.CompositeDataProvider
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import java.util.concurrent.CancellationException
 
@@ -46,53 +49,53 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
                        asyncLoader: AsyncEditorLoader,
                        editor: EditorImpl) : super(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
 
-  override fun loadEditorInBackground(): Runnable {
-    val baseResult = super.loadEditorInBackground()
-    val psiFile = PsiManager.getInstance(project).findFile(file)
-    val editor = editor
-    val document = editor.document
-    // loadEditorInBackground is executed in read action with `withDocumentsCommitted` constraint,
-    // no need to check that document is committed
-    val foldingState = if (project.isDefault) {
-      null
-    }
-    else {
-      catchingExceptions {
-        CodeFoldingManager.getInstance(project).buildInitialFoldings(document)
+  override suspend fun loadEditorInBackground(highlighterSupplier: suspend () -> EditorHighlighter): Runnable {
+    val baseResult = super.loadEditorInBackground(highlighterSupplier)
+    return readAction {
+      val psiFile = PsiManager.getInstance(project).findFile(file)
+      val editor = editor
+      val document = editor.document
+      val foldingState = if (project.isDefault || !PsiDocumentManager.getInstance(project).isCommitted(document)) {
+        null
       }
-    }
-    val focusZones = catchingExceptions { FocusModePassFactory.calcFocusZones(psiFile) }
-    val items = if (psiFile != null && DocRenderManager.isDocRenderingEnabled(getEditor())) {
-      catchingExceptions { DocRenderPassFactory.calculateItemsToRender(editor, psiFile) }
-    }
-    else {
-      null
-    }
-
-    val buffer = if (psiFile == null) null else catchingExceptions { collectPlaceholders(file = psiFile, editor = editor) }
-    val placeholders = catchingExceptions {
-      CodeVisionInitializer.getInstance(project).getCodeVisionHost().collectPlaceholders(editor, psiFile)
-    }
-    return Runnable {
-      baseResult.run()
-      foldingState?.setToEditor(editor)
-      if (focusZones != null) {
-        FocusModePassFactory.setToEditor(focusZones, editor)
-        if (editor is EditorImpl) {
-          editor.applyFocusMode()
+      else {
+        catchingExceptions {
+          CodeFoldingManager.getInstance(project).buildInitialFoldings(document)
         }
       }
-      if (items != null) {
-        DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
+      val focusZones = catchingExceptions { FocusModePassFactory.calcFocusZones(psiFile) }
+      val items = if (psiFile != null && DocRenderManager.isDocRenderingEnabled(getEditor())) {
+        catchingExceptions { DocRenderPassFactory.calculateItemsToRender(editor, psiFile) }
       }
-      if (buffer != null) {
-        applyPlaceholders(file = psiFile!!, editor = editor, hints = buffer)
+      else {
+        null
       }
-      if (!placeholders.isNullOrEmpty()) {
-        applyPlaceholders(editor, placeholders)
+
+      val buffer = if (psiFile == null) null else catchingExceptions { collectPlaceholders(file = psiFile, editor = editor) }
+      val placeholders = catchingExceptions {
+        CodeVisionInitializer.getInstance(project).getCodeVisionHost().collectPlaceholders(editor, psiFile)
       }
-      if (psiFile != null && psiFile.isValid) {
-        DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
+      Runnable {
+        baseResult.run()
+        foldingState?.setToEditor(editor)
+        if (focusZones != null) {
+          FocusModePassFactory.setToEditor(focusZones, editor)
+          if (editor is EditorImpl) {
+            editor.applyFocusMode()
+          }
+        }
+        if (items != null) {
+          DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
+        }
+        if (buffer != null) {
+          applyPlaceholders(file = psiFile!!, editor = editor, hints = buffer)
+        }
+        if (!placeholders.isNullOrEmpty()) {
+          applyPlaceholders(editor, placeholders)
+        }
+        if (psiFile != null && psiFile.isValid) {
+          DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
+        }
       }
     }
   }
