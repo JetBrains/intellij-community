@@ -36,8 +36,8 @@ import kotlin.time.Duration.Companion.milliseconds
 open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
                          scope: CoroutineScope,
                          protected val helper: EditorBasedWidgetHelper = EditorBasedWidgetHelper(dataContext.project)) : TextWidgetPresentation {
-  private val updateTextRequests = MutableSharedFlow<Editor?>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  private val charCountRequests = MutableSharedFlow<CodePointCountTask>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val updateTextRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val charCountRequests = MutableSharedFlow<CodePointCountTask>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   companion object {
     @JvmField
@@ -89,7 +89,7 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun text(): Flow<@NlsContexts.Label String?> {
-    return merge(updateTextRequests, dataContext.currentFileEditor.map { (it as? TextEditor)?.editor })
+    return combine(updateTextRequests, dataContext.currentFileEditor) { _, fileEditor -> (fileEditor as? TextEditor)?.editor }
       .debounce(100.milliseconds)
       .mapLatest { editor ->
         if (editor == null || DISABLE_FOR_EDITOR.isIn(editor)) null else readAction { getPositionText(editor) }
@@ -136,7 +136,7 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
   private fun updatePosition(editor: Editor) {
     val ourEditor = (dataContext.currentFileEditor.value as? TextEditor)?.editor
     if (editor === ourEditor) {
-      check(updateTextRequests.tryEmit(editor))
+      check(updateTextRequests.tryEmit(Unit))
     }
   }
 
