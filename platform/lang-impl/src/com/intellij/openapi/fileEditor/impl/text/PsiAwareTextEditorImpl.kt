@@ -2,13 +2,12 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
-import com.intellij.codeInsight.codeVision.CodeVisionInitializer.Companion.getInstance
+import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.documentation.render.DocRenderManager
 import com.intellij.codeInsight.documentation.render.DocRenderPassFactory
 import com.intellij.codeInsight.folding.CodeFoldingManager
-import com.intellij.codeInsight.hints.HintsBuffer
 import com.intellij.codeInsight.hints.InlayHintsPassFactory.Companion.applyPlaceholders
 import com.intellij.codeInsight.hints.InlayHintsPassFactory.Companion.collectPlaceholders
 import com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory.Companion.applyPlaceholders
@@ -25,38 +24,49 @@ import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isE
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import java.util.function.Supplier
+import java.util.concurrent.CancellationException
 
 private val LOG = logger<PsiAwareTextEditorImpl>()
 
 open class PsiAwareTextEditorImpl : TextEditorImpl {
   private var backgroundHighlighter: TextEditorBackgroundHighlighter? = null
 
-  constructor(project: Project, file: VirtualFile, provider: TextEditorProvider) : super(project, file, provider)
+  constructor(project: Project, file: VirtualFile, provider: TextEditorProvider) : super(project = project,
+                                                                                         file = file,
+                                                                                         provider = provider)
 
   constructor(project: Project,
               file: VirtualFile,
               provider: TextEditorProvider,
-              editor: EditorImpl) : super(project = project, myFile = file, provider = provider, editor = editor)
+              editor: EditorImpl) : super(project = project, file = file, provider = provider, editor = editor)
 
   override fun loadEditorInBackground(): Runnable {
     val baseResult = super.loadEditorInBackground()
-    val psiFile = PsiManager.getInstance(project).findFile(myFile)
+    val psiFile = PsiManager.getInstance(project).findFile(file)
     val editor = editor
     val document = editor.document
     // loadEditorInBackground is executed in read action with `withDocumentsCommitted` constraint,
     // no need to check that document is committed
-    val foldingState = if (project.isDefault) null
-    else catchingExceptions<CodeFoldingState?> {
-      CodeFoldingManager.getInstance(project).buildInitialFoldings(document)
+    val foldingState = if (project.isDefault) {
+      null
+    }
+    else {
+      catchingExceptions {
+        CodeFoldingManager.getInstance(project).buildInitialFoldings(document)
+      }
     }
     val focusZones = catchingExceptions { FocusModePassFactory.calcFocusZones(psiFile) }
-    val items = if (psiFile != null && DocRenderManager.isDocRenderingEnabled(getEditor())) catchingExceptions(
-      Supplier { DocRenderPassFactory.calculateItemsToRender(editor, psiFile) })
-    else null
-    val buffer = if (psiFile == null) null else catchingExceptions<HintsBuffer?> { collectPlaceholders(psiFile, editor) }
-    val placeholders = catchingExceptions(
-      Supplier { getInstance(project).getCodeVisionHost().collectPlaceholders(editor, psiFile) })
+    val items = if (psiFile != null && DocRenderManager.isDocRenderingEnabled(getEditor())) {
+      catchingExceptions { DocRenderPassFactory.calculateItemsToRender(editor, psiFile) }
+    }
+    else {
+      null
+    }
+
+    val buffer = if (psiFile == null) null else catchingExceptions { collectPlaceholders(file = psiFile, editor = editor) }
+    val placeholders = catchingExceptions {
+      CodeVisionInitializer.getInstance(project).getCodeVisionHost().collectPlaceholders(editor, psiFile)
+    }
     return Runnable {
       baseResult.run()
       foldingState?.setToEditor(editor)
@@ -70,9 +80,9 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
         DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
       }
       if (buffer != null) {
-        applyPlaceholders(psiFile!!, editor, buffer)
+        applyPlaceholders(file = psiFile!!, editor = editor, hints = buffer)
       }
-      if (placeholders != null && !placeholders.isEmpty()) {
+      if (!placeholders.isNullOrEmpty()) {
         applyPlaceholders(editor, placeholders)
       }
       if (psiFile != null && psiFile.isValid) {
@@ -82,47 +92,55 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
   }
 
   override fun createEditorComponent(project: Project, file: VirtualFile, editor: EditorImpl): TextEditorComponent {
-    return PsiAwareTextEditorComponent(project, file, this, editor)
+    return PsiAwareTextEditorComponent(project = project, file = file, textEditor = this, editor = editor)
   }
 
   override fun getBackgroundHighlighter(): BackgroundEditorHighlighter? {
     if (!isEditorLoaded(editor)) {
       return null
     }
+
     if (backgroundHighlighter == null) {
       backgroundHighlighter = TextEditorBackgroundHighlighter(project, editor)
     }
     return backgroundHighlighter
   }
-
-  private class PsiAwareTextEditorComponent(private val project: Project,
-                                            file: VirtualFile,
-                                            textEditor: TextEditorImpl,
-                                            editor: EditorImpl) : TextEditorComponent(project, file, textEditor, editor) {
-    override fun dispose() {
-      super.dispose()
-      project.serviceIfCreated<CodeFoldingManager>()?.releaseFoldings(editor)
-    }
-
-    override fun createBackgroundDataProvider(): DataProvider? {
-      val superProvider = super.createBackgroundDataProvider() ?: return null
-      return CompositeDataProvider.compose({ dataId: String? ->
-                                             if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.`is`(dataId)) {
-                                               val lookup = LookupManager.getInstance(project).activeLookup as LookupImpl?
-                                               if (lookup != null && lookup.isVisible) {
-                                                 return@compose lookup.bounds
-                                               }
-                                             }
-                                             null
-                                           }, superProvider)
-    }
-  }
-
 }
 
-private fun <T> catchingExceptions(computable: Supplier<T?>): T? {
+private class PsiAwareTextEditorComponent(private val project: Project,
+                                          file: VirtualFile,
+                                          textEditor: TextEditorImpl,
+                                          editor: EditorImpl) : TextEditorComponent(project = project,
+                                                                                    file = file,
+                                                                                    textEditor = textEditor,
+                                                                                    editorImpl = editor) {
+  override fun dispose() {
+    super.dispose()
+    project.serviceIfCreated<CodeFoldingManager>()?.releaseFoldings(editor)
+  }
+
+  override fun createBackgroundDataProvider(): DataProvider? {
+    val superProvider = super.createBackgroundDataProvider() ?: return null
+    return CompositeDataProvider.compose(
+      { dataId ->
+        if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.`is`(dataId)) {
+          (LookupManager.getInstance(project).activeLookup as LookupImpl?)?.takeIf { it.isVisible }?.bounds
+        }
+        else {
+          null
+        }
+      },
+      superProvider,
+    )
+  }
+}
+
+private inline fun <T : Any> catchingExceptions(computable: () -> T?): T? {
   try {
-    return computable.get()
+    return computable()
+  }
+  catch (e: CancellationException) {
+    throw e
   }
   catch (e: Throwable) {
     if (e is ControlFlowException) {

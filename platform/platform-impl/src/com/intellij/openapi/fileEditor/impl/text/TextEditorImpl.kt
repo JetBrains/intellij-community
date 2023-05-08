@@ -22,6 +22,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
@@ -30,56 +31,54 @@ import javax.swing.JComponent
 private val TRANSIENT_EDITOR_STATE_KEY = Key.create<TransientEditorState>("transientState")
 
 open class TextEditorImpl @JvmOverloads constructor(@JvmField val project: Project,
-                                                    @JvmField protected val myFile: VirtualFile,
+                                                    @JvmField val file: VirtualFile,
                                                     provider: TextEditorProvider,
-                                                    editor: EditorImpl = createEditor(project, myFile)) : UserDataHolderBase(), TextEditor {
+                                                    editor: EditorImpl = createEditor(project, file)) : UserDataHolderBase(), TextEditor {
+  @Suppress("LeakingThis")
   private val changeSupport = PropertyChangeSupport(this)
   private val component: TextEditorComponent
-  private val myAsyncLoader: AsyncEditorLoader
-
-  internal val file: VirtualFile
-    get() = myFile
+  private val asyncLoader: AsyncEditorLoader
 
   init {
-    component = createEditorComponent(project, myFile, editor)
+    @Suppress("LeakingThis")
+    component = createEditorComponent(project, file, editor)
     for (customizer in TextEditorCustomizer.EP.extensionList) {
       @Suppress("LeakingThis")
       customizer.customize(this)
     }
-    val state = myFile.getUserData(TRANSIENT_EDITOR_STATE_KEY)
+    val state = file.getUserData(TRANSIENT_EDITOR_STATE_KEY)
     if (state != null) {
-      state.applyTo(activeEditor)
-      myFile.putUserData(TRANSIENT_EDITOR_STATE_KEY, null)
+      state.applyTo(component.editor)
+      file.putUserData(TRANSIENT_EDITOR_STATE_KEY, null)
     }
+    @Suppress("LeakingThis")
     Disposer.register(this, component)
-    myAsyncLoader = project.getService(AsyncEditorLoaderService::class.java).start(this, component, provider)
+    @Suppress("LeakingThis")
+    asyncLoader = project.getService(AsyncEditorLoaderService::class.java).start(this, component, provider)
   }
 
   companion object {
     fun getDocumentLanguage(editor: Editor): Language? {
       val project = editor.project!!
-      if (!project.isDisposed) {
-        val documentManager = PsiDocumentManager.getInstance(project)
-        val file = documentManager.getPsiFile(editor.document)
-        if (file != null) {
-          return file.language
-        }
+      if (project.isDisposed) {
+        logger<TextEditorImpl>().warn("Attempting to get a language for document on a disposed project: ${project.name}")
+        return null
       }
       else {
-        logger<TextEditorImpl>().warn("Attempting to get a language for document on a disposed project: " + project.name)
+        return PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.language
       }
-      return null
     }
   }
 
   /**
    * @return a continuation to be called in EDT
    */
+  @RequiresBackgroundThread
   open fun loadEditorInBackground(): Runnable {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val scheme = EditorColorsManager.getInstance().globalScheme
-    val highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, scheme, project)
-    val editor = activeEditor
+    val highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file, scheme, project)
+    val editor = component.editor
     highlighter.setText(editor.document.immutableCharSequence)
     return Runnable {
       editor.settings.setLanguageSupplier { getDocumentLanguage(editor) }
@@ -92,59 +91,37 @@ open class TextEditorImpl @JvmOverloads constructor(@JvmField val project: Proje
   }
 
   override fun dispose() {
-    myAsyncLoader.dispose()
-    if (myFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) == true) {
-      myFile.putUserData(TRANSIENT_EDITOR_STATE_KEY, TransientEditorState.forEditor(editor))
+    asyncLoader.dispose()
+    if (file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) == true) {
+      file.putUserData(TRANSIENT_EDITOR_STATE_KEY, TransientEditorState.forEditor(editor))
     }
   }
 
-  override fun getFile(): VirtualFile {
-    return myFile
-  }
+  override fun getFile(): VirtualFile = file
 
-  override fun getComponent(): JComponent {
-    return component
-  }
+  override fun getComponent(): JComponent = component
 
-  override fun getPreferredFocusedComponent(): JComponent {
-    return activeEditor.contentComponent
-  }
+  override fun getPreferredFocusedComponent(): JComponent = component.editor.contentComponent
 
-  override fun getEditor(): EditorEx {
-    return activeEditor
-  }
+  override fun getEditor(): EditorEx = component.editor
 
-  /**
-   * @see TextEditorComponent.editor
-   */
-  private val activeEditor: EditorEx
-    get() = component.editor
+  override fun getName(): String = IdeBundle.message("tab.title.text")
 
-  override fun getName(): String {
-    return IdeBundle.message("tab.title.text")
-  }
-
-  override fun getState(level: FileEditorStateLevel): FileEditorState {
-    return myAsyncLoader.getEditorState(level)
-  }
+  override fun getState(level: FileEditorStateLevel): FileEditorState = asyncLoader.getEditorState(level)
 
   override fun setState(state: FileEditorState) {
-    setState(state, false)
+    setState(state = state, exactState = false)
   }
 
   override fun setState(state: FileEditorState, exactState: Boolean) {
     if (state is TextEditorState) {
-      myAsyncLoader.setEditorState(state, exactState)
+      asyncLoader.setEditorState(state = state, exactState = exactState)
     }
   }
 
-  override fun isModified(): Boolean {
-    return component.isModified
-  }
+  override fun isModified(): Boolean = component.isModified
 
-  override fun isValid(): Boolean {
-    return component.isEditorValid
-  }
+  override fun isValid(): Boolean = component.isEditorValid
 
   fun updateModifiedProperty() {
     component.updateModifiedProperty()
