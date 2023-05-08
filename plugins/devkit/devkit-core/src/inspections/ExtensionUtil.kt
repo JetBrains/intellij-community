@@ -149,6 +149,14 @@ object ExtensionUtil {
 
     Pair(
       listOf("com.intellij.rd.extListener"),
-      listOf("handler"))
+      listOf("listener")),
+
+    Pair(
+      listOf("com.intellij.rd.solutionExtListener"),
+      listOf("listener")),
+
+    Pair(
+      listOf("com.intellij.rd.rootExtListener"),
+      listOf("listener"))
   )
 }
