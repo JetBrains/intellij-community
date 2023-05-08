@@ -15,7 +15,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 object WorkspaceFileSetRecognizer {
 
   fun getModuleForContent(fileSet: WorkspaceFileSet): Module? {
-    if (fileSet.kind != WorkspaceFileKind.CONTENT) return null
+    if (fileSet.kind != WorkspaceFileKind.CONTENT && fileSet.kind != WorkspaceFileKind.TEST_CONTENT) return null
     return fileSet.asSafely<WorkspaceFileSetWithCustomData<*>>()?.data.asSafely<ModuleRelatedRootData>()?.module
   }
 
