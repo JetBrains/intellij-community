@@ -8,7 +8,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.JobProvider
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.inModalContext
-import com.intellij.openapi.application.impl.onEdtInNonAnyModality
+import com.intellij.openapi.application.isModalAwareContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.*
@@ -95,9 +95,15 @@ class PlatformTaskSupport : TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
-  ): T = onEdtInNonAnyModality {
-    val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-    runBlockingModalInternal(cs = this, descriptor, action)
+  ): T {
+    check(isModalAwareContext()) {
+      "Trying to enter modality from modal-unaware modality state (ModalityState.any). " +
+      "This may lead to deadlocks, and indicates a problem with scoping."
+    }
+    return withContext(Dispatchers.EDT) {
+      val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
+      runBlockingModalInternal(cs = this, descriptor, action)
+    }
   }
 
   override fun <T> runBlockingModalInternal(

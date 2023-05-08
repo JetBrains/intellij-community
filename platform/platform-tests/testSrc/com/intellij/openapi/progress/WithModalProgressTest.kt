@@ -10,7 +10,6 @@ import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.ModalCoroutineTest
 import com.intellij.openapi.application.impl.processApplicationQueue
-import com.intellij.openapi.application.impl.withDifferentInitialModalities
 import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
@@ -28,20 +27,35 @@ class WithModalProgressTest : ModalCoroutineTest() {
   fun `coroutine context`(): Unit = timeoutRunBlocking {
     val testElement = TestElement("xx")
     withContext(testElement) {
-      withDifferentInitialModalities {
-        withModalProgress {
-          assertSame(testElement, coroutineContext[TestElementKey])
-        }
+      withModalProgress {
+        assertSame(testElement, coroutineContext[TestElementKey])
       }
     }
   }
 
   @Test
   fun `modal context`(): Unit = timeoutRunBlocking {
-    withDifferentInitialModalities {
+    withContext(Dispatchers.EDT) {
+      assertFalse(LaterInvocator.isInModalContext())
+    }
+    withModalProgress {
       withContext(Dispatchers.EDT) {
-        assertFalse(LaterInvocator.isInModalContext())
+        assertTrue(LaterInvocator.isInModalContext())
+        val contextModality = coroutineContext.contextModality()
+        assertNotEquals(ModalityState.any(), contextModality)
+        assertNotEquals(ModalityState.NON_MODAL, contextModality)
+        assertSame(ModalityState.current(), contextModality)
       }
+    }
+    withContext(Dispatchers.EDT) {
+      assertFalse(LaterInvocator.isInModalContext())
+    }
+  }
+
+  @Test
+  fun `modal context edt`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      assertFalse(LaterInvocator.isInModalContext())
       withModalProgress {
         withContext(Dispatchers.EDT) {
           assertTrue(LaterInvocator.isInModalContext())
@@ -51,89 +65,75 @@ class WithModalProgressTest : ModalCoroutineTest() {
           assertSame(ModalityState.current(), contextModality)
         }
       }
-      withContext(Dispatchers.EDT) {
-        assertFalse(LaterInvocator.isInModalContext())
-      }
-    }
-  }
-
-  @Test
-  fun `modal context edt`(): Unit = timeoutRunBlocking {
-    withDifferentInitialModalities {
-      withContext(Dispatchers.EDT) {
-        assertFalse(LaterInvocator.isInModalContext())
-        withModalProgress {
-          withContext(Dispatchers.EDT) {
-            assertTrue(LaterInvocator.isInModalContext())
-            val contextModality = coroutineContext.contextModality()
-            assertNotEquals(ModalityState.any(), contextModality)
-            assertNotEquals(ModalityState.NON_MODAL, contextModality)
-            assertSame(ModalityState.current(), contextModality)
-          }
-        }
-        assertFalse(LaterInvocator.isInModalContext())
-      }
+      assertFalse(LaterInvocator.isInModalContext())
     }
   }
 
   @Test
   fun dispatcher(): Unit = timeoutRunBlocking {
-    withDifferentInitialModalities {
+    withModalProgress {
+      assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
+    }
+    withContext(Dispatchers.EDT) {
       withModalProgress {
         assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
       }
-      withContext(Dispatchers.EDT) {
+    }
+  }
+
+  @Test
+  fun `any modality`(): Unit = timeoutRunBlocking {
+    suspend fun assertIllegalStateException() {
+      assertThrows<IllegalStateException> {
         withModalProgress {
-          assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
+          fail()
         }
       }
+    }
+    withContext(ModalityState.any().asContextElement()) {
+      assertIllegalStateException()
+    }
+    withContext(ModalityState.any().asContextElement() + Dispatchers.EDT) {
+      assertIllegalStateException()
     }
   }
 
   @Test
   fun `normal completion`(): Unit = timeoutRunBlocking {
-    withDifferentInitialModalities {
-      val result = withModalProgress {
-        42
-      }
-      assertEquals(42, result)
+    val result = withModalProgress {
+      42
     }
+    assertEquals(42, result)
   }
 
   @Test
   fun rethrow(): Unit = timeoutRunBlocking {
-    withDifferentInitialModalities {
-      val t: Throwable = object : Throwable() {}
-      val thrown = assertThrows<Throwable> {
-        withModalProgress {
-          throw t // fail the scope
-        }
+    val t: Throwable = object : Throwable() {}
+    val thrown = assertThrows<Throwable> {
+      withModalProgress {
+        throw t // fail the scope
       }
-      assertSame(t, thrown)
     }
+    assertSame(t, thrown)
   }
 
   @Test
   fun nested(): Unit = timeoutRunBlocking {
-    withDifferentInitialModalities {
-      val result = withModalProgress {
-        withModalProgress {
-          42
-        }
+    val result = withModalProgress {
+      withModalProgress {
+        42
       }
-      assertEquals(42, result)
     }
+    assertEquals(42, result)
   }
 
   @Test
   fun `modal delays non-modal`(): Unit = timeoutRunBlocking {
-    withDifferentInitialModalities {
-      val modalCoroutine = launchModalCoroutineAndWait(this)
-      val nonModalCoroutine = launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {}
-      processApplicationQueue()
-      assertFalse(nonModalCoroutine.isCompleted)
-      modalCoroutine.cancel()
-    }
+    val modalCoroutine = launchModalCoroutineAndWait(this)
+    val nonModalCoroutine = launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {}
+    processApplicationQueue()
+    assertFalse(nonModalCoroutine.isCompleted)
+    modalCoroutine.cancel()
   }
 
   @Test
@@ -147,20 +147,17 @@ class WithModalProgressTest : ModalCoroutineTest() {
 
   @Test
   fun `modal delays modal`(): Unit = timeoutRunBlocking {
-    withDifferentInitialModalities {
-      val modalCoroutine = launchModalCoroutineAndWait(this)
-      val modalCoroutine2 = modalCoroutine {}
-      processApplicationQueue()
-      assertFalse(modalCoroutine2.isCompleted)
-      modalCoroutine.cancel()
-    }
+    val modalCoroutine = launchModalCoroutineAndWait(this)
+    val modalCoroutine2 = modalCoroutine {}
+    processApplicationQueue()
+    assertFalse(modalCoroutine2.isCompleted)
+    modalCoroutine.cancel()
   }
 
   @Test
   fun `any edt coroutine is resumed while modal is running`(): Unit = timeoutRunBlocking {
+    val modalCoroutine = modalCoroutine { awaitCancellation() }
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val modalCoroutine = modalCoroutine { awaitCancellation() }
-      yield()
       assertFalse(modalCoroutine.isCompleted)
       modalCoroutine.cancel()
     }
@@ -181,27 +178,25 @@ class WithModalProgressTest : ModalCoroutineTest() {
 
   @Test
   fun `cancelled edt coroutine is able to complete`(): Unit = timeoutRunBlocking {
-    withDifferentInitialModalities {
-      val modalEntered = Semaphore(1, 1)
-      val modalCoroutine = modalCoroutine {
-        withContext(Dispatchers.EDT) {
-          try {
-            modalEntered.release()
-            awaitCancellation()
-          }
-          finally {
-            withContext(NonCancellable) {
-              // this continuation unblocks getNextEvent()
-              yield()
-              // this continuation ensures that yield() after getNextEvent() didn't throw CE
-            }
+    val modalEntered = Semaphore(1, 1)
+    val modalCoroutine = modalCoroutine {
+      withContext(Dispatchers.EDT) {
+        try {
+          modalEntered.release()
+          awaitCancellation()
+        }
+        finally {
+          withContext(NonCancellable) {
+            // this continuation unblocks getNextEvent()
+            yield()
+            // this continuation ensures that yield() after getNextEvent() didn't throw CE
           }
         }
       }
-      modalEntered.acquire()
-      processApplicationQueue()
-      modalCoroutine.cancel()
     }
+    modalEntered.acquire()
+    processApplicationQueue()
+    modalCoroutine.cancel()
   }
 }
 
