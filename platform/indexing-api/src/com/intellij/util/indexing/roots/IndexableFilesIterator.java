@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
@@ -54,9 +54,9 @@ public interface IndexableFilesIterator {
    * like complex workspace change.
    * <p>
    * Consider implementing suitable interface from indexableSetOriginsApi.kt. Those interfaces are used to distinguish sources of files.
-   * Especially use {@link com.intellij.util.indexing.roots.kind.ModuleRootOrigin} when files to be indexed
+   * Especially use {@link com.intellij.util.indexing.roots.kind.ContentOrigin} when files to be indexed
    * belong to the project content. By default, instances of {@link com.intellij.openapi.roots.impl.FilePropertyPusher} are applied on files
-   * from {@link com.intellij.util.indexing.roots.kind.ModuleRootOrigin} only.
+   * from {@link com.intellij.util.indexing.roots.kind.ModuleContentOrigin} only.
    */
   @NotNull
   IndexableSetOrigin getOrigin();

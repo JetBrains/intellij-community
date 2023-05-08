@@ -15,7 +15,7 @@ import com.intellij.util.indexing.diagnostic.ScanningStatistics;
 import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
-import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
+import com.intellij.util.indexing.roots.kind.ModuleContentOrigin;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,10 +52,10 @@ final class SingleProviderIterator implements ContentIterator {
     this.perProviderSink = perProviderSink;
 
     IndexableSetOrigin origin = provider.getOrigin();
-    if (origin instanceof ModuleRootOrigin && !((ModuleRootOrigin)origin).getModule().isDisposed()) {
+    if (origin instanceof ModuleContentOrigin && !((ModuleContentOrigin)origin).getModule().isDisposed()) {
       pushers = FilePropertyPusher.EP_NAME.getExtensionList();
       pusherExs = null;
-      moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, ((ModuleRootOrigin)origin).getModule()));
+      moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, ((ModuleContentOrigin)origin).getModule()));
     }
     else {
       pushers = null;
