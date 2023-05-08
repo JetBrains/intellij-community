@@ -40,7 +40,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(target_os = "windows")]
 use {
     windows::core::{GUID, PWSTR},
-    windows::Win32::Foundation::HANDLE,
+    windows::Win32::Foundation,
     windows::Win32::UI::Shell
 };
 
@@ -179,7 +179,7 @@ pub fn get_logs_home() -> Result<Option<PathBuf>> {
 #[cfg(target_os = "windows")]
 fn get_known_folder_path(rfid: &GUID, rfid_debug_name: &str) -> Result<PathBuf> {
     debug!("Calling SHGetKnownFolderPath({})", rfid_debug_name);
-    let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, HANDLE(0)) }?;
+    let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, Foundation::HANDLE(0)) }?;
     let result_str = unsafe { result.to_string() }?;
     debug!("  result: {}", result_str);
     Ok(PathBuf::from(result_str))
@@ -230,9 +230,27 @@ fn get_xdg_dir(env_var_name: &str, fallback: &str) -> Result<PathBuf> {
 
 #[cfg(target_family = "windows")]
 fn get_user_home() -> Result<PathBuf> {
-    env::var("USERPROFILE")  //todo fallback to `GetUserProfileDirectory`
+    env::var("USERPROFILE")
+        .or_else(|_| win_user_profile_dir())
         .map(|s| PathBuf::from(s))
         .context("Cannot detect a user home directory")
+}
+
+#[cfg(target_family = "windows")]
+fn win_user_profile_dir() -> Result<String> {
+    let token = Foundation::HANDLE(-4);  // as defined in `GetCurrentProcessToken()`; Windows 8+/Server 2012+
+    let mut buf: [u16; Foundation::MAX_PATH as usize] = unsafe { std::mem::zeroed() };
+    let mut size = buf.len() as u32;
+    debug!("Calling GetUserProfileDirectoryW({:?})", token);
+    let result: Foundation::BOOL = unsafe {
+        Shell::GetUserProfileDirectoryW(token, PWSTR::from_raw(buf.as_mut_ptr()), std::ptr::addr_of_mut!(size))
+    };
+    debug!("  result: {:?}, size: {}", result, size);
+    if result == Foundation::TRUE {
+        Ok(String::from_utf16(&buf[0..(size - 1) as usize])?)
+    } else {
+        bail!("GetUserProfileDirectoryW(): {:?}", unsafe { Foundation::GetLastError() })
+    }
 }
 
 #[cfg(target_family = "unix")]
