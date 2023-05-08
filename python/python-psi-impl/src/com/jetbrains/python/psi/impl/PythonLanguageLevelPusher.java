@@ -72,12 +72,11 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   @Override
   public void initExtra(@NotNull Project project) {
     final Map<Module, Sdk> moduleSdks = getPythonModuleSdks(project);
-    final Set<Sdk> distinctSdks = new LinkedHashSet<>(moduleSdks.values());
 
     myModuleSdks.putAll(moduleSdks);
     resetProjectLanguageLevel(project);
     updateSdkLanguageLevels(project, moduleSdks);
-    guessLanguageLevelWithCaching(project, () -> distinctSdks);
+    guessLanguageLevelWithCaching(project, moduleSdks::values);
   }
 
   @Override
@@ -280,7 +279,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
 
   private static @NotNull LanguageLevel guessLanguageLevel(@NotNull Collection<? extends @NotNull Sdk> pythonModuleSdks) {
     LanguageLevel maxLevel = null;
-    for (Sdk sdk : pythonModuleSdks) {
+    for (Sdk sdk : new LinkedHashSet<Sdk>(pythonModuleSdks)) {
       final LanguageLevel level = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
       if (maxLevel == null || maxLevel.isOlderThan(level)) {
         maxLevel = level;
