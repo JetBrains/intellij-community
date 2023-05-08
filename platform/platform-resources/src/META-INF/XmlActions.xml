@@ -28,10 +28,6 @@
       <add-to-group group-id="EditMenu" anchor="last"/>
     </action>
 
-    <action id="AcceptGrayTextAction" class="com.intellij.codeInsight.grayText.InsertGrayTextAction">
-      <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
-    </action>
-
     <!-- id should be "OpenInDefaultBrowser", but existing name preserved to keep compatibility - if user configured shortcut for action, it should not be lost -->
     <action id="OpenInBrowser" class="com.intellij.ide.browsers.actions.OpenFileInDefaultBrowserAction"
             icon="AllIcons.Nodes.PpWeb">

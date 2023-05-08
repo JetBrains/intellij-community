@@ -350,7 +350,7 @@
               class="com.intellij.lang.documentation.ide.actions.DocumentationForwardAction"/>
       <action id="Documentation.EditSource" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSource"
               class="com.intellij.lang.documentation.ide.actions.DocumentationEditSourceAction"/>
-      
+
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
     <action id="Documentation.ViewExternal" icon="AllIcons.General.Web" use-shortcut-of="ExternalJavaDoc"
@@ -1713,5 +1713,9 @@
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
     <action internal="true" id="ShowUsageFeatures" class ="com.intellij.usages.similarity.internal.ShowUsageFeaturesInternalAction"/>
+
+    <action id="InsertGrayTextAction" class="com.intellij.codeInsight.grayText.InsertGrayTextAction">
+      <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
+    </action>
   </actions>
 </idea-plugin>
