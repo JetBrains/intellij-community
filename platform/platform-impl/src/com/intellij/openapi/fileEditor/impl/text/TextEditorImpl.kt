@@ -42,7 +42,7 @@ open class TextEditorImpl(@JvmField protected val project: Project,
 
   init {
     @Suppress("LeakingThis")
-    component = createEditorComponent(project, file, editor)
+    component = createEditorComponent(project = project, file = file, editor = editor)
     for (customizer in TextEditorCustomizer.EP.extensionList) {
       @Suppress("LeakingThis")
       customizer.customize(this)
