@@ -4,6 +4,7 @@ package com.intellij.application.options;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.application.options.codeStyle.excludedFiles.ExcludedGlobPatternsPanel;
 import com.intellij.application.options.codeStyle.excludedFiles.ExcludedScopesPanel;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -212,7 +213,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     settings.setFormatterOnPattern(compilePattern(settings, myFormatterOnTagField, settings.FORMATTER_ON_TAG));
 
     settings.AUTODETECT_INDENTS = myAutodetectIndentsBox.isSelected();
-    settings.ENABLE_SECOND_REFORMAT = myEnableSecondReformat.isSelected();
+    CodeInsightSettings.getInstance().ENABLE_SECOND_REFORMAT = myEnableSecondReformat.isSelected();
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.apply(settings);
@@ -297,7 +298,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     }
 
     return settings.AUTODETECT_INDENTS != myAutodetectIndentsBox.isSelected() ||
-           settings.ENABLE_SECOND_REFORMAT != myEnableSecondReformat.isSelected();
+           CodeInsightSettings.getInstance().ENABLE_SECOND_REFORMAT != myEnableSecondReformat.isSelected();
   }
 
   @Override
@@ -338,7 +339,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     setFormatterTagControlsEnabled(settings.FORMATTER_TAGS_ENABLED);
 
     myAutodetectIndentsBox.setSelected(settings.AUTODETECT_INDENTS);
-    myEnableSecondReformat.setSelected(settings.ENABLE_SECOND_REFORMAT);
+    myEnableSecondReformat.setSelected(CodeInsightSettings.getInstance().ENABLE_SECOND_REFORMAT);
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.reset(settings);
