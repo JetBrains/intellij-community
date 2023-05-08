@@ -16,23 +16,77 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import kotlinx.coroutines.*
+import com.intellij.openapi.util.registry.Registry
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * Gray text will be shown only if at least one [GrayTextProvider] is enabled and returns at least one proposal
+ */
 @ApiStatus.Experimental
-abstract class GrayTextEditorListener(private val scope: CoroutineScope) : EditorFactoryListener {
-  open fun initDocumentListener(editor: EditorImpl) = GrayTextDocumentListener(editor, scope)
-
+class GrayTextEditorListener(private val scope: CoroutineScope) : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor
     if (editor.project == null || editor !is EditorImpl || editor.editorKind != EditorKind.MAIN_EDITOR) return
 
-    initDocumentListener(editor).listenForChanges()
+    GrayTextDocumentListener(editor, scope).listenForChanges()
+  }
+}
+
+@Suppress("MemberVisibilityCanBePrivate")
+@OptIn(FlowPreview::class)
+@ApiStatus.Experimental
+class GrayTextDocumentListener(private val editor: EditorImpl, private val scope: CoroutineScope) : DocumentListener, Disposable {
+  private val handler = GrayTextHandler(scope)
+  private var flow = MutableSharedFlow<GrayTextEvent>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  fun isEnabled(event: DocumentEvent): Boolean {
+    return event.newFragment != CompletionUtil.DUMMY_IDENTIFIER && event.newLength >= 1
+  }
+
+  private fun documentChangedDebounced(grayTextEvent: GrayTextEvent) {
+    val (event, providers) = grayTextEvent
+    if (event.document.isInBulkUpdate) return
+
+    // As PoC gray text does not support multiple providers
+    // TODO: handle multiple providers
+    handler.invoke(event, editor, providers.first())
+  }
+
+  fun listenForChanges() {
+    Disposer.register(editor.disposable, this)
+    editor.document.addDocumentListener(this, this)
+    editor.putUserData(KEY, this)
+
     overrideCaretMove(editor)
+
+    scope.launch(CoroutineName("gray.text.call")) {
+      flow.debounce(minDelay)
+        .collect(::documentChangedDebounced)
+    }
+  }
+
+  override fun documentChanged(event: DocumentEvent) {
+    if (GrayTextHandler.isMuted.get() || !isEnabled(event)) {
+      return
+    }
+
+    val providers = GrayTextProvider.extensions().filter { it.isEnabled(event) }
+                      .takeIf { it.isNotEmpty() } ?: return
+    val grayTextEvent = GrayTextEvent(event, providers)
+
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      documentChangedDebounced(grayTextEvent)
+    }
+    else {
+      flow.tryEmit(grayTextEvent)
+    }
   }
 
   private fun overrideCaretMove(editor: EditorImpl) {
@@ -49,62 +103,16 @@ abstract class GrayTextEditorListener(private val scope: CoroutineScope) : Edito
       ActionUtil.performActionDumbAwareWithCallbacks(toAct, it)
     }.registerCustomShortcutSet(moveCaretAction.shortcutSet, editor.component)
   }
-}
-
-@Suppress("MemberVisibilityCanBePrivate")
-@OptIn(FlowPreview::class)
-@ApiStatus.Experimental
-open class GrayTextDocumentListener(
-  val editor: EditorImpl,
-  private val scope: CoroutineScope,
-) : DocumentListener, Disposable {
-  private val handler = GrayTextHandler(scope)
-  private var flow = MutableSharedFlow<DocumentEvent>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-  open val minimalDelayMillis = 300.milliseconds
-
-  open fun isEnabled(event: DocumentEvent): Boolean {
-    return event.newFragment != CompletionUtil.DUMMY_IDENTIFIER && event.newLength >= 1
-  }
-
-  open fun initProvider(event: DocumentEvent): GrayTextProvider = GrayTextProvider.DUMMY
-
-  open fun documentChangedDebounced(event: DocumentEvent) {
-    if (event.document.isInBulkUpdate) return
-
-    val provider = initProvider(event)
-    handler.invoke(event, editor, provider)
-  }
-
-  fun listenForChanges() {
-    Disposer.register(editor.disposable, this)
-    editor.document.addDocumentListener(this, this)
-    editor.putUserData(KEY, this)
-
-    scope.launch(CoroutineName("full-line GrayText call")) {
-      flow.debounce(minimalDelayMillis)
-        .collect(::documentChangedDebounced)
-    }
-  }
-
-  override fun documentChanged(event: DocumentEvent) {
-    if (GrayTextHandler.isMuted.get() || !isEnabled(event)) {
-      return
-    }
-
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      documentChangedDebounced(event)
-    }
-    else {
-      flow.tryEmit(event)
-    }
-  }
 
   override fun dispose() {
     editor.putUserData(KEY, null)
   }
 
+  private data class GrayTextEvent(val event: DocumentEvent, val providers: List<GrayTextProvider>)
+
   companion object {
-    private val KEY = Key.create<GrayTextDocumentListener>("completion.gray.text.listener")
+    private val KEY = Key.create<GrayTextDocumentListener>("gray.text.listener")
+
+    val minDelay = Registry.get("gray.text.trigger.delay").asInteger().toLong()
   }
 }

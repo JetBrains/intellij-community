@@ -8,10 +8,16 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 class InlineState private constructor(
   var suggestionIndex: Int = 0,
+  var lastStartOffset: Int = 0,
+  var lastModificationStamp: Long = 0,
   var suggestions: List<GrayTextElement> = emptyList(),
 ) {
   fun init() {
     suggestionIndex = 0
+  }
+
+  fun rest() {
+    lastModificationStamp = 0
   }
 
   companion object {

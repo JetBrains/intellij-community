@@ -12,9 +12,11 @@ class EditorInlineGrayText(private val editor: Editor) : GrayText {
   private var suffixInlay: Inlay<*>? = null
   private var blockInlay: Inlay<*>? = null
 
-  override val offset = suffixInlay?.offset
+  override val offset: Int?
+    get() = suffixInlay?.offset
 
-  override val isEmpty = suffixInlay == null && blockInlay == null
+  override val isEmpty: Boolean
+    get() = suffixInlay == null && blockInlay == null
 
   override fun getBounds(): Rectangle? {
     val bounds = blockInlay?.bounds?.let { Rectangle(it) }

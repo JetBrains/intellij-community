@@ -1533,6 +1533,13 @@
       </description>
     </experimentalFeature>
 
+    <editorActionHandler
+      id="grayText.completion.escape" action="EditorEscape"
+      implementationClass="com.intellij.codeInsight.grayText.EscapeGrayTextHandler"
+      order="before hide-hints"/>
+    <editorFactoryListener implementation="com.intellij.codeInsight.grayText.GrayTextEditorListener"/>
+    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.grayText.EscapeGrayTextHandler"
+                         id="inline.completion.escape" order="before hide-hints"/>>
 
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ChameleonSyntaxHighlightingPass$Factory"/>

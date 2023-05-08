@@ -69,5 +69,10 @@
     <extensionPoint name="listSplitJoinContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.lists.ListSplitJoinContext"/>
     </extensionPoint>
+
+    <extensionPoint
+      name="grayText.provider"
+      interface="com.intellij.codeInsight.grayText.GrayTextProvider"
+      dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

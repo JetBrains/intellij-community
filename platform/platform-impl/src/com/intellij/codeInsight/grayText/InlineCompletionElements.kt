@@ -10,15 +10,6 @@ import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface GrayTextProvider {
-  suspend fun getProposals(request: GrayTextRequest): List<GrayTextElement>
-
-  object DUMMY : GrayTextProvider {
-    override suspend fun getProposals(request: GrayTextRequest): List<GrayTextElement> = emptyList()
-  }
-}
-
-@ApiStatus.Experimental
 data class GrayTextRequest(val file: PsiFile, val event: DocumentEvent, val editor: Editor) {
   val document: Document
     get() = event.document

@@ -6,7 +6,6 @@ import com.intellij.codeInsight.grayText.GrayTextContext.Companion.initOrGetGray
 import com.intellij.codeInsight.grayText.InlineState.Companion.getGrayTextState
 import com.intellij.codeInsight.grayText.InlineState.Companion.initOrGetGrayTextState
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.project.Project
@@ -19,28 +18,31 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Experimental
-class GrayTextHandler constructor(private val scope: CoroutineScope) : CodeInsightActionHandler {
+class GrayTextHandler(private val scope: CoroutineScope) : CodeInsightActionHandler {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val inlineState = editor.getGrayTextState() ?: return
 
     showInlineSuggestion(editor, inlineState, editor.caretModel.offset)
   }
 
-  fun invoke(event: DocumentEvent, editor: Editor, provider: GrayTextProvider,) {
+  fun invoke(event: DocumentEvent, editor: Editor, provider: GrayTextProvider) {
     val request = GrayTextRequest.fromDocumentEvent(event, editor) ?: return
     invoke(request, provider)
   }
 
   fun invoke(request: GrayTextRequest, provider: GrayTextProvider) {
     scope.launch {
+      val modificationStamp = request.document.modificationStamp
       val result = provider.getProposals(request)
 
       val editor = request.editor
       val offset = request.endOffset
 
       val inlineState = editor.initOrGetGrayTextState()
+      if (modificationStamp == request.document.modificationStamp) {
+        inlineState.suggestions = result
+      }
 
-      inlineState.suggestions = result
       withContext(Dispatchers.EDT) {
         showInlineSuggestion(editor, inlineState, offset)
       }
@@ -62,11 +64,13 @@ class GrayTextHandler constructor(private val scope: CoroutineScope) : CodeInsig
     }
 
     editor.initOrGetGrayTextContext().update(suggestions, suggestionIndex, startOffset)
+
+    inlineContext.suggestionIndex = suggestionIndex
+    inlineContext.lastStartOffset = startOffset
+    inlineContext.lastModificationStamp = editor.document.modificationStamp
   }
 
   companion object {
-    private val LOG = thisLogger()
-
     val isMuted = AtomicBoolean(false)
     fun mute() = isMuted.set(true)
     fun unmute() = isMuted.set(false)
