@@ -27,10 +27,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.jar.Attributes;
 
@@ -122,11 +119,35 @@ public final class JavaLibraryUtil {
     return getProjectLibraries(project).contains(mavenCoords);
   }
 
+  public static boolean hasAnyLibraryJar(@Nullable Project project, @NotNull Collection<String> mavenCoords) {
+    if (project == null || project.isDisposed()) return false;
+    if (project.isDefault()) return false; // EA-396106
+
+    Libraries libraries = getProjectLibraries(project);
+    for (String coord : mavenCoords) {
+      if (libraries.contains(coord)) return true;
+    }
+
+    return false;
+  }
+
   public static boolean hasLibraryJar(@Nullable Module module, @NotNull String mavenCoords) {
     if (module == null || module.isDisposed()) return false;
     if (module.getProject().isDefault()) return false; // EA-396106
 
     return getModuleLibraries(module).contains(mavenCoords);
+  }
+
+  public static boolean hasAnyLibraryJar(@Nullable Module module, @NotNull Collection<String> mavenCoords) {
+    if (module == null || module.isDisposed()) return false;
+    if (module.getProject().isDefault()) return false; // EA-396106
+
+    Libraries libraries = getModuleLibraries(module);
+    for (String coord : mavenCoords) {
+      if (libraries.contains(coord)) return true;
+    }
+
+    return false;
   }
 
   public static @Nullable String getLibraryVersion(@NotNull Module module, @NotNull String mavenCoords) {
