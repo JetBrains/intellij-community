@@ -28,38 +28,35 @@ import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.JComponent
 
-open class TextEditorImpl @JvmOverloads constructor(@JvmField protected val myProject: Project,
+private val TRANSIENT_EDITOR_STATE_KEY = Key.create<TransientEditorState>("transientState")
+
+open class TextEditorImpl @JvmOverloads constructor(@JvmField val project: Project,
                                                     @JvmField protected val myFile: VirtualFile,
                                                     provider: TextEditorProvider,
-                                                    editor: EditorImpl = createEditor(
-                                                      myProject, myFile)) : UserDataHolderBase(), TextEditor {
-  private val myChangeSupport: PropertyChangeSupport
-  private val myComponent: TextEditorComponent
+                                                    editor: EditorImpl = createEditor(project, myFile)) : UserDataHolderBase(), TextEditor {
+  private val changeSupport = PropertyChangeSupport(this)
+  private val component: TextEditorComponent
   private val myAsyncLoader: AsyncEditorLoader
 
-  internal val project: Project
-    get() = myProject
   internal val file: VirtualFile
     get() = myFile
 
   init {
-    myChangeSupport = PropertyChangeSupport(this)
-    myComponent = createEditorComponent(myProject, myFile, editor)
-    applyTextEditorCustomizers()
+    component = createEditorComponent(project, myFile, editor)
+    for (customizer in TextEditorCustomizer.EP.extensionList) {
+      @Suppress("LeakingThis")
+      customizer.customize(this)
+    }
     val state = myFile.getUserData(TRANSIENT_EDITOR_STATE_KEY)
     if (state != null) {
       state.applyTo(activeEditor)
       myFile.putUserData(TRANSIENT_EDITOR_STATE_KEY, null)
     }
-    Disposer.register(this, myComponent)
-    myAsyncLoader = myProject.getService(AsyncEditorLoaderService::class.java).start(this, myComponent, provider)
+    Disposer.register(this, component)
+    myAsyncLoader = project.getService(AsyncEditorLoaderService::class.java).start(this, component, provider)
   }
 
   companion object {
-    private val LOG = logger<TextEditorImpl>()
-    private val TRANSIENT_EDITOR_STATE_KEY = Key.create<TransientEditorState>("transientState")
-
-    @JvmStatic
     fun getDocumentLanguage(editor: Editor): Language? {
       val project = editor.project!!
       if (!project.isDisposed) {
@@ -70,15 +67,9 @@ open class TextEditorImpl @JvmOverloads constructor(@JvmField protected val myPr
         }
       }
       else {
-        LOG.warn("Attempting to get a language for document on a disposed project: " + project.name)
+        logger<TextEditorImpl>().warn("Attempting to get a language for document on a disposed project: " + project.name)
       }
       return null
-    }
-
-    private fun createEditor(project: Project, file: VirtualFile): EditorImpl {
-      val document = FileDocumentManager.getInstance().getDocument(file, project)
-      val factory = EditorFactory.getInstance() as EditorFactoryImpl
-      return factory.createMainEditor(document!!, project, file)
     }
   }
 
@@ -88,7 +79,7 @@ open class TextEditorImpl @JvmOverloads constructor(@JvmField protected val myPr
   open fun loadEditorInBackground(): Runnable {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val scheme = EditorColorsManager.getInstance().globalScheme
-    val highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, scheme, myProject)
+    val highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, scheme, project)
     val editor = activeEditor
     highlighter.setText(editor.document.immutableCharSequence)
     return Runnable {
@@ -113,7 +104,7 @@ open class TextEditorImpl @JvmOverloads constructor(@JvmField protected val myPr
   }
 
   override fun getComponent(): JComponent {
-    return myComponent
+    return component
   }
 
   override fun getPreferredFocusedComponent(): JComponent {
@@ -128,7 +119,7 @@ open class TextEditorImpl @JvmOverloads constructor(@JvmField protected val myPr
    * @see TextEditorComponent.editor
    */
   private val activeEditor: EditorEx
-    get() = myComponent.editor
+    get() = component.editor
 
   override fun getName(): String {
     return IdeBundle.message("tab.title.text")
@@ -149,27 +140,27 @@ open class TextEditorImpl @JvmOverloads constructor(@JvmField protected val myPr
   }
 
   override fun isModified(): Boolean {
-    return myComponent.isModified
+    return component.isModified
   }
 
   override fun isValid(): Boolean {
-    return myComponent.isEditorValid
+    return component.isEditorValid
   }
 
   fun updateModifiedProperty() {
-    myComponent.updateModifiedProperty()
+    component.updateModifiedProperty()
   }
 
   fun firePropertyChange(propertyName: String, oldValue: Any?, newValue: Any?) {
-    myChangeSupport.firePropertyChange(propertyName, oldValue, newValue)
+    changeSupport.firePropertyChange(propertyName, oldValue, newValue)
   }
 
   override fun addPropertyChangeListener(listener: PropertyChangeListener) {
-    myChangeSupport.addPropertyChangeListener(listener)
+    changeSupport.addPropertyChangeListener(listener)
   }
 
   override fun removePropertyChangeListener(listener: PropertyChangeListener) {
-    myChangeSupport.removePropertyChangeListener(listener)
+    changeSupport.removePropertyChangeListener(listener)
   }
 
   override fun getCurrentLocation(): FileEditorLocation? {
@@ -177,12 +168,12 @@ open class TextEditorImpl @JvmOverloads constructor(@JvmField protected val myPr
   }
 
   override fun getStructureViewBuilder(): StructureViewBuilder? {
-    val document: Document = myComponent.editor.document
+    val document: Document = component.editor.document
     val file = FileDocumentManager.getInstance().getFile(document)
     return if (file == null || !file.isValid) {
       null
     }
-    else StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.fileType, file, myProject)
+    else StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.fileType, file, project)
   }
 
   override fun canNavigateTo(navigatable: Navigatable): Boolean {
@@ -195,28 +186,29 @@ open class TextEditorImpl @JvmOverloads constructor(@JvmField protected val myPr
   }
 
   override fun toString(): @NonNls String {
-    return "Editor: " + myComponent.file
+    return "Editor: " + component.file
   }
 
-  private fun applyTextEditorCustomizers() {
-    for (customizer in TextEditorCustomizer.EP.extensionList) {
-      customizer.customize(this)
-    }
+}
+
+private class TransientEditorState {
+  private var softWrapsEnabled = false
+
+  fun applyTo(editor: Editor) {
+    editor.settings.isUseSoftWraps = softWrapsEnabled
   }
 
-  private class TransientEditorState {
-    private var softWrapsEnabled = false
-
-    fun applyTo(editor: Editor) {
-      editor.settings.isUseSoftWraps = softWrapsEnabled
-    }
-
-    companion object {
-      fun forEditor(editor: Editor): TransientEditorState {
-        val state = TransientEditorState()
-        state.softWrapsEnabled = editor.settings.isUseSoftWraps
-        return state
-      }
+  companion object {
+    fun forEditor(editor: Editor): TransientEditorState {
+      val state = TransientEditorState()
+      state.softWrapsEnabled = editor.settings.isUseSoftWraps
+      return state
     }
   }
+}
+
+private fun createEditor(project: Project, file: VirtualFile): EditorImpl {
+  val document = FileDocumentManager.getInstance().getDocument(file, project)
+  val factory = EditorFactory.getInstance() as EditorFactoryImpl
+  return factory.createMainEditor(document!!, project, file)
 }

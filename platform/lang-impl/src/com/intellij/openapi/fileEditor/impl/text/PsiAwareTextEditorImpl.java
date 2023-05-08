@@ -51,14 +51,14 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
   public @NotNull Runnable loadEditorInBackground() {
     Runnable baseResult = super.loadEditorInBackground();
 
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(myFile);
     EditorEx editor = getEditor();
     Document document = editor.getDocument();
     // loadEditorInBackground is executed in read action with `withDocumentsCommitted` constraint,
     // no need to check that document is committed
-    CodeFoldingState foldingState = myProject.isDefault()
+    CodeFoldingState foldingState = project.isDefault()
                                     ? null
-                                    : catchingExceptions(() -> CodeFoldingManager.getInstance(myProject).buildInitialFoldings(document));
+                                    : catchingExceptions(() -> CodeFoldingManager.getInstance(project).buildInitialFoldings(document));
 
     List<? extends Segment> focusZones = catchingExceptions(() -> FocusModePassFactory.calcFocusZones(psiFile));
 
@@ -70,7 +70,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
                          ? null
                          : catchingExceptions(() -> InlayHintsPassFactory.Companion.collectPlaceholders(psiFile, editor));
     var placeholders = catchingExceptions(() -> {
-      return CodeVisionInitializer.Companion.getInstance(myProject).getCodeVisionHost().collectPlaceholders(editor, psiFile);
+      return CodeVisionInitializer.Companion.getInstance(project).getCodeVisionHost().collectPlaceholders(editor, psiFile);
     });
 
     return () -> {
@@ -88,7 +88,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
       }
 
       if (items != null) {
-        DocRenderPassFactory.applyItemsToRender(editor, myProject, items, true);
+        DocRenderPassFactory.applyItemsToRender(editor, project, items, true);
       }
 
       if (buffer != null) {
@@ -100,7 +100,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
       }
 
       if (psiFile != null && psiFile.isValid()) {
-        DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
+        DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
       }
     };
   }
@@ -130,7 +130,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     }
 
     if (myBackgroundHighlighter == null) {
-      myBackgroundHighlighter = new TextEditorBackgroundHighlighter(myProject, getEditor());
+      myBackgroundHighlighter = new TextEditorBackgroundHighlighter(project, getEditor());
     }
     return myBackgroundHighlighter;
   }
