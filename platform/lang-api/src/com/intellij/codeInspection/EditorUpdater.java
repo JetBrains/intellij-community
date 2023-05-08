@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
@@ -11,6 +12,7 @@ import java.util.function.BiConsumer;
  * 
  * @see ModCommands#psiUpdate(PsiElement, BiConsumer) 
  */
+@ApiStatus.Experimental
 public interface EditorUpdater {
   /**
    * Selects given element

@@ -26,9 +26,9 @@ public class ReplaceWithQualifierFix extends PsiUpdateModCommandAction<PsiMethod
   }
 
   @Override
-  public @NotNull String getName() {
-    return myRole == null ? QuickFixBundle.message("replace.with.qualifier.text") :
-           QuickFixBundle.message("replace.with.qualifier.text.role", myRole);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethodCallExpression element) {
+    return Presentation.of(myRole == null ? QuickFixBundle.message("replace.with.qualifier.text") :
+                           QuickFixBundle.message("replace.with.qualifier.text.role", myRole));
   }
 
   @Override

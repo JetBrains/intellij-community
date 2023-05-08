@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionBean;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ex.ToolLanguageUtil;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Editor;
@@ -26,6 +25,7 @@ import java.util.Set;
 public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, PossiblyDumbAware,
                                                      Comparable<IntentionAction> {
   private final IntentionActionBean extension;
+  private IntentionAction instance;
   private String fullFamilyName;
 
   private volatile Set<String> applicableToLanguages;  // lazy initialized
@@ -108,7 +108,12 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
 
   @Override
   public @NotNull IntentionAction getDelegate() {
-    return extension.getInstance();
+    if (instance == null) {
+      BaseIntentionAction base = extension.getInstance();
+      instance = base instanceof IntentionAction action ? action :
+                 ((ModCommandAction)base).asIntention();
+    }
+    return instance;
   }
 
   @Override

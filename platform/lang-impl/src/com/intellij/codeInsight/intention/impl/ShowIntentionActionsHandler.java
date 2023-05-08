@@ -28,7 +28,6 @@ import com.intellij.internal.statistic.IntentionsCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandActionWrapper;
 import com.intellij.modcommand.ModStatus;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -260,9 +259,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
       if (pair == null) return false;
-      ModCommandAction commandAction = ModCommandActionWrapper.unwrap(action);
+      ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(pair.second, pair.first);
+      ModCommandAction commandAction = ModCommandAction.unwrap(action);
       if (commandAction != null) {
-        ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(pair.second, pair.first);
         ReadAction.nonBlocking(() -> commandAction.perform(context))
           .finishOnUiThread(ModalityState.defaultModalityState(), mc -> {
             IntentionsCollector.record(project, action, pair.first.getLanguage());

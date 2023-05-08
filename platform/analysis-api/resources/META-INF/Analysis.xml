@@ -41,7 +41,7 @@
     </extensionPoint>
 
     <extensionPoint name="intentionAction" beanClass="com.intellij.codeInsight.intention.IntentionActionBean" dynamic="true">
-      <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
+      <with tag="className" implements="com.intellij.codeInsight.intention.BaseIntentionAction"/>
     </extensionPoint>
 
     <extensionPoint name="liveTemplateContext" beanClass="com.intellij.codeInsight.template.LiveTemplateContextBean" dynamic="true">

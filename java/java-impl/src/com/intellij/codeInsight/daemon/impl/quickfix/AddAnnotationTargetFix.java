@@ -21,14 +21,9 @@ public class AddAnnotationTargetFix extends PsiBasedModCommandAction<PsiAnnotati
   }
 
   @Override
-  public @NotNull String getName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("make.annotation.applicable.to.0.fix",
                                   StringUtil.toLowerCase(myTarget.toString()).replace('_', ' ') + 's');
-  }
-
-  @Override
-  public @NotNull String getFamilyName() {
-    return getName();
   }
 
   @Override

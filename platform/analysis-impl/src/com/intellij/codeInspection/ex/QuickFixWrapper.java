@@ -14,13 +14,13 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandActionWrapper;
 import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -57,8 +57,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.myFix;
     }
-    if (action instanceof ModCommandActionWrapper wrapper &&
-        wrapper.action() instanceof ModCommandQuickFixAction qfAction) {
+    if (ModCommandAction.unwrap(action) instanceof ModCommandQuickFixAction qfAction) {
       return qfAction.myFix;
     }
     return null;
@@ -72,8 +71,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.getFile();
     }
-    if (action instanceof ModCommandActionWrapper wrapper &&
-        wrapper.action() instanceof ModCommandQuickFixAction qfAction) {
+    if (ModCommandAction.unwrap(action) instanceof ModCommandQuickFixAction qfAction) {
       PsiElement element = qfAction.myDescriptor.getPsiElement();
       return element == null ? null : element.getContainingFile();
     }
@@ -206,22 +204,22 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     }
 
     @Override
-    public boolean isAvailable(@NotNull ActionContext context) {
+    public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
       PsiElement psiElement = myDescriptor.getPsiElement();
-      if (psiElement == null || !psiElement.isValid()) return false;
+      if (psiElement == null || !psiElement.isValid()) return null;
       PsiFile containingFile = psiElement.getContainingFile();
-      return containingFile == context.file() || containingFile == null ||
-             containingFile.getViewProvider().getVirtualFile().equals(context.file().getViewProvider().getVirtualFile());
+      if (!(containingFile == context.file() || containingFile == null ||
+             containingFile.getViewProvider().getVirtualFile().equals(context.file().getViewProvider().getVirtualFile()))) {
+        return null;
+      }
+      return Presentation.of(myFix.getName())
+        .withPriority(myFix instanceof PriorityAction ? ((PriorityAction)myFix).getPriority() : Priority.NORMAL)
+        .withIcon(myFix instanceof Iconable ? ((Iconable)myFix).getIcon(0) : null);
     }
 
     @Override
     public @NotNull ModCommand perform(@NotNull ActionContext context) {
       return myFix.perform(context.project(), myDescriptor);
-    }
-
-    @Override
-    public @NotNull Priority getPriority() {
-      return myFix instanceof PriorityAction ? ((PriorityAction)myFix).getPriority() : Priority.NORMAL;
     }
 
     @Override
