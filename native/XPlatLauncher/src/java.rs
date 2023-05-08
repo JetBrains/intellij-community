@@ -190,17 +190,17 @@ fn load_libjvm(_jre_home: &Path, libjvm_path: &Path) -> Result<libloading::Libra
 fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArgs, Vec<jni::sys::JavaVMOption>)> {
     let mut jni_options = Vec::with_capacity(vm_options.len() + 1);
 
+    jni_options.push(jni::sys::JavaVMOption {
+        optionString: CString::new(HOOK_NAME)?.into_raw(),
+        extraInfo: unsafe { mem::transmute::<extern "C" fn(*const c_void, *const c_char, *const c_void) -> jint, *mut c_void>(vfprintf_hook) },
+    });
+
     for opt in vm_options {
         jni_options.push(jni::sys::JavaVMOption {
             optionString: CString::new(opt.as_str())?.into_raw(),
             extraInfo: std::ptr::null_mut(),
         });
     }
-
-    jni_options.push(jni::sys::JavaVMOption {
-        optionString: CString::new(HOOK_NAME)?.into_raw(),
-        extraInfo: unsafe { mem::transmute::<extern "C" fn(*const c_void, *const c_char, *const c_void) -> jint, *mut c_void>(vfprintf_hook) },
-    });
 
     let jvm_init_args = jni::sys::JavaVMInitArgs {
         version: jni::sys::JNI_VERSION_1_8,
