@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
 import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
@@ -64,9 +65,11 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
 
     context(KtAnalysisSession)
     private fun addDiagnostic(diagnostic: KtDiagnosticWithPsi<*>, holder: HighlightInfoHolder) {
-        val fixes = KotlinQuickFixService.getInstance().getQuickFixesFor(diagnostic)
+        val isWarning = diagnostic.severity == Severity.WARNING
         val factoryName = diagnostic.factoryName
-        val problemGroup = if (diagnostic.severity == Severity.WARNING && factoryName != null) {
+        val fixes = KotlinQuickFixService.getInstance().getQuickFixesFor(diagnostic).takeIf { it.isNotEmpty() }
+            ?: if (isWarning && factoryName != null) listOf(CompilerWarningIntentionAction(factoryName)) else emptyList()
+        val problemGroup = if (isWarning && factoryName != null) {
             KotlinSuppressableWarningProblemGroup(factoryName)
         } else null
         diagnostic.textRanges.forEach { range ->

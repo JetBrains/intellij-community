@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.highlighter
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.inspections.suppress
 
 import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
@@ -10,11 +10,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ExperimentalUI
-import org.jetbrains.kotlin.idea.base.fe10.highlighting.KotlinBaseFe10HighlightingBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinBaseCodeInsightBundle
 import javax.swing.Icon
 
 class CompilerWarningIntentionAction(private val name: @IntentionFamilyName String): AbstractEmptyIntentionAction(), LowPriorityAction, Iconable {
-    override fun getText(): String = KotlinBaseFe10HighlightingBundle.message("kotlin.compiler.warning.0.options", name)
+    override fun getText(): String = KotlinBaseCodeInsightBundle.message("kotlin.compiler.warning.0.options", name)
 
     override fun getFamilyName(): String = name
 
