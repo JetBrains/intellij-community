@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible
 
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
-import com.intellij.vcs.log.data.util.VcsScope
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*

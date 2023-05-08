@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log;
 
-import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,7 +12,12 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.CollectConsumer;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.*;
@@ -50,11 +53,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
 import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
 import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
 import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.computeWithSpanThrows;
 import static com.intellij.vcs.log.VcsLogFilterCollection.*;
-import static com.intellij.vcs.log.data.util.VcsScopeKt.VcsScope;
 import static git4idea.history.GitCommitRequirements.DiffRenameLimit;
 
 public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {

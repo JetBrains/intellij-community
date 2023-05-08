@@ -2,15 +2,15 @@
 package com.intellij.vcs.log.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
-import com.intellij.vcs.log.data.util.VcsScope
-import com.intellij.platform.diagnostic.telemetry.impl.computeWithSpan
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.impl.computeWithSpan
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.*

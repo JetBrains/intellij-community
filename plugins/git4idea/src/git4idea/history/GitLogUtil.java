@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.SmartList;
@@ -30,8 +30,8 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
 import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.runWithSpanThrows;
-import static com.intellij.vcs.log.data.util.VcsScopeKt.VcsScope;
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
 @ApiStatus.Internal
