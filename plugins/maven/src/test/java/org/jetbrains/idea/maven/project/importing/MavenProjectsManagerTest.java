@@ -98,7 +98,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     WriteCommandAction.writeCommandAction(myProject).run(() -> myProjectPom.delete(this));
 
     configConfirmationForYesAnswer();
-    scheduleProjectImportAndWait();
+    importProject();
 
     assertEquals(0, getProjectsTree().getRootProjects().size());
 

@@ -1372,6 +1372,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
 
   public List<Module> importProjects(final IdeModifiableModelsProvider modelsProvider) {
+    myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC)
+      .importStarted();
     final Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges;
     final boolean importModuleGroupsRequired;
     synchronized (myImportingDataLock) {
@@ -1432,10 +1434,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
     MavenProjectImporter projectImporter = importer.get();
     List<Module> createdModules = projectImporter == null ? Collections.emptyList() : projectImporter.createdModules();
-    if (!projectsToImportWithChanges.isEmpty()) {
-      myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC)
-        .importFinished(projectsToImportWithChanges.keySet(), createdModules);
-    }
+    myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC)
+      .importFinished(projectsToImportWithChanges.keySet(), createdModules);
     return createdModules;
   }
 
@@ -1496,11 +1496,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void fireImportAndResolveScheduled(MavenImportSpec spec) {
-
-    myProject.getMessageBus()
-      .syncPublisher(MavenImportListener.TOPIC)
-      .importStarted(spec);
-
     for (Listener each : myManagerListeners) {
       each.importAndResolveScheduled();
     }

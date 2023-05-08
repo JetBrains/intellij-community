@@ -15,8 +15,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
@@ -136,7 +134,7 @@ class MavenImportingManager(val project: Project) {
     val initialImportContext = MavenImportFlow().prepareNewImport(project, importPaths, generalSettings, importingSettings,
                                                                   enabledProfiles,
                                                                   disabledProfiles)
-    project.messageBus.syncPublisher(MavenImportListener.TOPIC).importStarted(spec)
+    project.messageBus.syncPublisher(MavenImportListener.TOPIC).importStarted()
 
     setProjectSettings(initialImportContext)
 
