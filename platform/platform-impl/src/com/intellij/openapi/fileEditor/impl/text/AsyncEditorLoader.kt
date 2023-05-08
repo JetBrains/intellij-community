@@ -40,7 +40,7 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
     get() = textEditor.editor
 
   private val project: Project
-    get() = textEditor.myProject
+    get() = textEditor.project
 
   private val delayedActions = ArrayDeque<Runnable>()
 
@@ -101,7 +101,7 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
         val continuation = continuationDeferred.await()
         editorComponent.loadingDecorator.stopLoading(scope = this, indicatorJob = indicatorJob)
         loaded(continuation)
-        EditorNotifications.getInstance(project).updateNotifications(textEditor.myFile)
+        EditorNotifications.getInstance(project).updateNotifications(textEditor.file)
       }
     }
   }

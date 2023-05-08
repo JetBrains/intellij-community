@@ -435,7 +435,7 @@ public final class EditorUtil {
    * Allows to answer what width in pixels is required to draw fragment of the given char array from {@code [start; end)} interval
    * at the given editor.
    * <p/>
-   * Tabulation symbols is processed specially, i.e. it's ta
+   * Tabulation symbols are processed specially, i.e. it's ta
    * <p/>
    * <b>Note:</b> it's assumed that target text fragment remains to the single line, i.e. line feed symbols within it are not
    * treated specially.

@@ -48,7 +48,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
   }
 
   @Override
-  protected @NotNull Runnable loadEditorInBackground() {
+  public @NotNull Runnable loadEditorInBackground() {
     Runnable baseResult = super.loadEditorInBackground();
 
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
