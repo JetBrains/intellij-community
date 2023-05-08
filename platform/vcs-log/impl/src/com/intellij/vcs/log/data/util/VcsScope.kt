@@ -4,4 +4,4 @@ package com.intellij.vcs.log.data.util
 import com.intellij.platform.diagnostic.telemetry.Scope
 
 @JvmField
-val VCS = Scope("vcs")
+val VcsScope = Scope("vcs")

@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
-import static com.intellij.vcs.log.data.util.VcsScopeKt.VCS;
+import static com.intellij.vcs.log.data.util.VcsScopeKt.VcsScope;
 import static git4idea.GitBranchesUsageCollector.*;
 import static git4idea.GitNotificationIdsHolder.CHECKOUT_ROLLBACK_ERROR;
 import static git4idea.GitNotificationIdsHolder.CHECKOUT_SUCCESS;
@@ -89,7 +89,7 @@ class GitCheckoutOperation extends GitBranchOperation {
 
   @Override
   protected void execute() {
-    runWithSpan(TelemetryTracer.Companion.getInstance().getTracer(VCS), "checkout", (span) -> {
+    runWithSpan(TelemetryTracer.Companion.getInstance().getTracer(VcsScope), "checkout", (span) -> {
       StructuredIdeActivity checkoutActivity = CHECKOUT_ACTIVITY.started(myProject, () -> List.of(
         IS_BRANCH_PROTECTED.with(isBranchProtected()),
         IS_NEW_BRANCH.with(myNewBranch != null)

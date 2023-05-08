@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.visible
 
 import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
-import com.intellij.vcs.log.data.util.VCS
+import com.intellij.vcs.log.data.util.VcsScope
 import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
@@ -49,7 +49,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val hashFilter = allFilters.get(VcsLogFilterCollection.HASH_FILTER)
     val filters = allFilters.without(VcsLogFilterCollection.HASH_FILTER)
 
-    TelemetryTracer.getInstance().getTracer(VCS).spanBuilder("filter").useWithScope {
+    TelemetryTracer.getInstance().getTracer(VcsScope).spanBuilder("filter").useWithScope {
       if (hashFilter != null && !hashFilter.hashes.isEmpty()) { // hashes should be shown, no matter if they match other filters or not
         val hashFilterResult = applyHashFilter(dataPack, hashFilter, sortType, commitCount)
         if (hashFilterResult != null) {

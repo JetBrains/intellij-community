@@ -2,7 +2,7 @@
 package git4idea.branch
 
 import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
-import com.intellij.vcs.log.data.util.VCS
+import com.intellij.vcs.log.data.util.VcsScope
 import com.intellij.platform.diagnostic.telemetry.impl.computeWithSpan
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -358,7 +358,7 @@ class DeepComparator(private val project: Project,
   }
 
   private inline fun <R> recordSpan(root: VirtualFile, @NonNls actionName: String, block: () -> R): R {
-    return computeWithSpan(TelemetryTracer.getInstance().getTracer(VCS), actionName) { span ->
+    return computeWithSpan(TelemetryTracer.getInstance().getTracer(VcsScope), actionName) { span ->
       span.setAttribute("rootName", root.name)
       block()
     }

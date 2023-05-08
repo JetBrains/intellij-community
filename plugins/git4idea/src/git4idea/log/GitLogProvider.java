@@ -54,7 +54,7 @@ import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWit
 import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
 import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.computeWithSpanThrows;
 import static com.intellij.vcs.log.VcsLogFilterCollection.*;
-import static com.intellij.vcs.log.data.util.VcsScopeKt.VCS;
+import static com.intellij.vcs.log.data.util.VcsScopeKt.VcsScope;
 import static git4idea.history.GitCommitRequirements.DiffRenameLimit;
 
 public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
@@ -80,7 +80,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
-  @NotNull private final IJTracer myTracer = TelemetryTracer.Companion.getInstance().getTracer(VCS);
+  @NotNull private final IJTracer myTracer = TelemetryTracer.Companion.getInstance().getTracer(VcsScope);
 
   public GitLogProvider(@NotNull Project project) {
     myProject = project;

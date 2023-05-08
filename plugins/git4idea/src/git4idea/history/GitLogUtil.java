@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.runWithSpanThrows;
-import static com.intellij.vcs.log.data.util.VcsScopeKt.VCS;
+import static com.intellij.vcs.log.data.util.VcsScopeKt.VcsScope;
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
 @ApiStatus.Internal
@@ -182,7 +182,7 @@ public final class GitLogUtil {
       handler.addParameters("--decorate=full");
       handler.endOptions();
 
-      runWithSpanThrows(TelemetryTracer.Companion.getInstance().getTracer(VCS), "loading commit metadata", span -> {
+      runWithSpanThrows(TelemetryTracer.Companion.getInstance().getTracer(VcsScope), "loading commit metadata", span -> {
         span.setAttribute("rootName", root.getName());
 
         GitLogOutputSplitter<GitLogRecord> handlerListener = new GitLogOutputSplitter<>(handler, parser, recordConsumer);

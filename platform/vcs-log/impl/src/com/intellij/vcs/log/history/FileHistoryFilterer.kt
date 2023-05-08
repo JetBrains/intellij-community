@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
-import com.intellij.vcs.log.data.util.VCS
+import com.intellij.vcs.log.data.util.VcsScope
 import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
@@ -132,7 +132,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                filters: VcsLogFilterCollection,
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
       val start = System.currentTimeMillis()
-      TelemetryTracer.getInstance().getTracer(VCS).spanBuilder("computing history").useWithScope { scope ->
+      TelemetryTracer.getInstance().getTracer(VcsScope).spanBuilder("computing history").useWithScope { scope ->
         val isInitial = commitCount == CommitCountStage.INITIAL
 
         val indexDataGetter = index.dataGetter
@@ -293,7 +293,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
     private fun collectRenamesFromProvider(fileHistory: FileHistory): MultiMap<UnorderedPair<Int>, Rename> {
       if (fileHistory.unmatchedAdditionsDeletions.isEmpty()) return MultiMap.empty()
 
-      TelemetryTracer.getInstance().getTracer(VCS).spanBuilder("collecting renames").useWithScope {
+      TelemetryTracer.getInstance().getTracer(VcsScope).spanBuilder("collecting renames").useWithScope {
         val handler = logProviders[root]?.fileHistoryHandler ?: return MultiMap.empty()
 
         val renames = fileHistory.unmatchedAdditionsDeletions.mapNotNull { ad ->
