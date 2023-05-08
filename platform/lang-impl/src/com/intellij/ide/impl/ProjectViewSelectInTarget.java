@@ -80,7 +80,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     ActionCallback result = new ActionCallback();
     Runnable runnable = () -> {
       projectView.changeViewCB(id, subviewId).doWhenProcessed(() -> {
-        project.getService(SelectInProjectViewImpl.class).ensureSelected(id, virtualFile, toSelectSupplier, requestFocus, result);
+        project.getService(SelectInProjectViewImpl.class).ensureSelected(id, virtualFile, toSelectSupplier, requestFocus, true, result);
       });
     };
 

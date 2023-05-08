@@ -881,6 +881,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         null,
         () -> ContainerUtil.getFirstItem(newPane.getElementsFromNode(selectedUserObject)),
         true,
+        false,
         null
       );
     }
@@ -1214,7 +1215,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return target.target();
   }
 
-  private ProjectViewSelectInTarget getProjectViewSelectInTarget(AbstractProjectViewPane pane) {
+  ProjectViewSelectInTarget getProjectViewSelectInTarget(@NotNull AbstractProjectViewPane pane) {
     SelectInTarget target = getSelectInTarget(pane.getId());
     return target instanceof ProjectViewSelectInTarget
            ? (ProjectViewSelectInTarget)target

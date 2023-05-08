@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.FileEditorProvider
+import com.intellij.ide.FileSelectInContext
 import com.intellij.ide.SmartSelectInContext
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.application.EDT
@@ -95,7 +96,8 @@ class SelectInProjectViewImpl(
     virtualFile: VirtualFile?,
     elementSupplier: Supplier<Any?>,
     requestFocus: Boolean,
-    result: ActionCallback?
+    allowSubIdChange: Boolean,
+    result: ActionCallback?,
   ) {
     coroutineScope.launch(CoroutineName("ProjectView.ensureSelected(pane=$paneId,virtualFile=$virtualFile,focus=$requestFocus))")) {
       val projectView = project.serviceOrNull<ProjectView>() as ProjectViewImpl?
@@ -103,8 +105,21 @@ class SelectInProjectViewImpl(
         result?.setRejected()
         return@launch
       }
+      val pane = if (requestFocus) null else projectView.getProjectViewPaneById(paneId)
+      val target = if (pane == null) null else projectView.getProjectViewSelectInTarget(pane)
+      if (!allowSubIdChange) {
+        val isSelectableInCurrentSubId =
+          pane != null &&
+          target != null &&
+          virtualFile != null &&
+          readAction {
+            target.isSubIdSelectable(pane.subId, FileSelectInContext(project, virtualFile, null))
+          }
+        if (!isSelectableInCurrentSubId) {
+          return@launch
+        }
+      }
       val visibleAndSelectedUserObject = withContext(Dispatchers.EDT) {
-        val pane = if (requestFocus) null else projectView.getProjectViewPaneById(paneId)
         pane?.visibleAndSelectedUserObject
       }
       data class SelectionContext(
