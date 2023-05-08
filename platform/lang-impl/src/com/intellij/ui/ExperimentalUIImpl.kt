@@ -89,8 +89,9 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     newValue = true
     NewUIInfoService.getInstance().updateEnableNewUIDate()
 
-    setRegistryKeyIfNecessary("ide.experimental.ui", true)
-    setRegistryKeyIfNecessary("debugger.new.tool.window.layout", true)
+    val registryManager = RegistryManager.getInstance()
+    setRegistryKeyIfNecessary(key = "ide.experimental.ui", value = true, registryManager = registryManager)
+    setRegistryKeyIfNecessary(key = "debugger.new.tool.window.layout", value = true, registryManager = registryManager)
     UISettings.getInstance().hideToolStripes = false
     val name = if (JBColor.isBright()) "Light" else "Dark"
     val lafManager = LafManager.getInstance()
@@ -116,8 +117,9 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     newValue = false
     NewUIInfoService.getInstance().updateDisableNewUIDate()
 
-    setRegistryKeyIfNecessary("ide.experimental.ui", false)
-    setRegistryKeyIfNecessary("debugger.new.tool.window.layout", false)
+    val registryManager = RegistryManager.getInstance()
+    setRegistryKeyIfNecessary(key = "ide.experimental.ui", value = false, registryManager = registryManager)
+    setRegistryKeyIfNecessary(key = "debugger.new.tool.window.layout", value = false, registryManager = registryManager)
     val lafManager = LafManager.getInstance() as LafManagerImpl
     val currentLafName = lafManager.currentLookAndFeel?.name
     if (currentLafName == "Dark" || currentLafName == "Light") {
@@ -134,9 +136,10 @@ private class ExperimentalUIImpl : ExperimentalUI() {
   }
 }
 
-private fun setRegistryKeyIfNecessary(key: String, value: Boolean) {
-  if (Registry.`is`(key) != value) {
-    Registry.get(key).setValue(value)
+private fun setRegistryKeyIfNecessary(key: String, value: Boolean, registryManager: RegistryManager) {
+  val registryValue = registryManager.get(key)
+  if (registryValue.isBoolean != value) {
+    registryValue.setValue(value)
   }
 }
 
