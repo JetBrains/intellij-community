@@ -2,9 +2,8 @@
 @file:JvmName("VcsLogIndexUtils")
 package com.intellij.vcs.log.data.index
 
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.log.ui.actions.ResumeIndexingAction.Companion.isBig
-import com.intellij.vcs.log.ui.actions.ResumeIndexingAction.Companion.isScheduledForIndexing
 
 /**
  * Check if any of [VcsLogModifiableIndex.getIndexingRoots] need to be indexed.
@@ -12,7 +11,7 @@ import com.intellij.vcs.log.ui.actions.ResumeIndexingAction.Companion.isSchedule
 fun VcsLogModifiableIndex.needIndexing(): Boolean {
   val rootsForIndexing = indexingRoots
   if (rootsForIndexing.isEmpty()) return false
-  val scheduledForIndexing = rootsForIndexing.filter { it.isScheduledForIndexing(this) }
+  val scheduledForIndexing = rootsForIndexing.filter { isScheduledForIndexing(it) }
   val bigRepositories = rootsForIndexing.filter { it.isBig() }
 
   return bigRepositories.isNotEmpty() || scheduledForIndexing.isNotEmpty()
@@ -22,7 +21,7 @@ fun VcsLogModifiableIndex.needIndexing(): Boolean {
  * Check if VCS log indexing was paused in any of [VcsLogModifiableIndex.getIndexingRoots].
  */
 fun VcsLogModifiableIndex.isIndexingPaused(): Boolean {
-  val scheduledForIndexing = indexingRoots.filter { it.isScheduledForIndexing(this) }
+  val scheduledForIndexing = indexingRoots.filter { isScheduledForIndexing(it) }
 
   return scheduledForIndexing.isEmpty()
 }
@@ -32,7 +31,7 @@ fun VcsLogModifiableIndex.isIndexingPaused(): Boolean {
  */
 @RequiresEdt
 internal fun VcsLogModifiableIndex.toggleIndexing() {
-  if (indexingRoots.any { it.isScheduledForIndexing(this) }) {
+  if (indexingRoots.any { isScheduledForIndexing(it) }) {
     indexingRoots.filter { !it.isBig() }.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
   }
   else {
@@ -43,3 +42,6 @@ internal fun VcsLogModifiableIndex.toggleIndexing() {
     if (resumed) scheduleIndex(false)
   }
 }
+
+internal fun VirtualFile.isBig(): Boolean = VcsLogBigRepositoriesList.getInstance().isBig(this)
+internal fun VcsLogIndex.isScheduledForIndexing(root: VirtualFile): Boolean = isIndexingEnabled(root) && !isIndexed(root)

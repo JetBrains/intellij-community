@@ -7,9 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
-import com.intellij.vcs.log.data.index.VcsLogIndex
-import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
+import com.intellij.vcs.log.data.index.*
 import com.intellij.vcs.log.data.index.toggleIndexing
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
@@ -32,7 +30,7 @@ class ResumeIndexingAction : DumbAwareAction() {
       return
     }
 
-    val scheduledForIndexing = rootsForIndexing.filter { it.isScheduledForIndexing(data.index) }
+    val scheduledForIndexing = rootsForIndexing.filter { data.index.isScheduledForIndexing(it) }
     val bigRepositories = rootsForIndexing.filter { it.isBig() }
     e.presentation.isEnabledAndVisible = (bigRepositories.isNotEmpty() || scheduledForIndexing.isNotEmpty())
 
@@ -67,10 +65,5 @@ class ResumeIndexingAction : DumbAwareAction() {
     index.toggleIndexing()
   }
 
-  companion object {
-    internal fun VirtualFile.isBig(): Boolean = VcsLogBigRepositoriesList.getInstance().isBig(this)
-    internal fun VirtualFile.isScheduledForIndexing(index: VcsLogIndex): Boolean = index.isIndexingEnabled(this) &&
-                                                                                  !index.isIndexed(this)
-  }
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
