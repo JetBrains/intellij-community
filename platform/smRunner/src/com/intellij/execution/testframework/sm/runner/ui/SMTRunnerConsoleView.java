@@ -12,6 +12,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,5 +124,6 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView implements 
   public void hideOriginalActions() {
     if (!ExperimentalUI.isNewUI()) return;
     myResultsViewer.hideToolbar();
+    myResultsViewer.setBorder(JBUI.Borders.empty());
   }
 }
