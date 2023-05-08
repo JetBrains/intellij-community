@@ -72,6 +72,9 @@ internal class InnerComponent(private val editor: EditorImpl) : JPanel() {
     if (oldComponentHeights != newComponentHeights) {
       editor.notebookCellEditorScrollingPositionKeeper?.adjustScrollingPosition()
     }
+    if (GraphicsUtil.isRemoteEnvironment()) {
+      (parent as SurroundingComponent).fireResize()
+    }
   }
 
   private inline fun foldSize(crossinline handler: Component.() -> Dimension): Dimension {
