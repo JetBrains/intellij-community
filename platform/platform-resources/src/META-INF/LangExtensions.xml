@@ -1534,11 +1534,11 @@
     </experimentalFeature>
 
     <editorActionHandler
-      id="grayText.completion.escape" action="EditorEscape"
-      implementationClass="com.intellij.codeInsight.grayText.EscapeGrayTextHandler"
+      id="inline.completion.escape" action="EditorEscape"
+      implementationClass="com.intellij.codeInsight.inline.completion.EscapeInlineCompletionHandler"
       order="before hide-hints"/>
-    <editorFactoryListener implementation="com.intellij.codeInsight.grayText.GrayTextEditorListener"/>
-    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.grayText.EscapeGrayTextHandler"
+    <editorFactoryListener implementation="com.intellij.codeInsight.inline.completion.InlineCompletionEditorListener"/>
+    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.inline.completion.EscapeInlineCompletionHandler"
                          id="inline.completion.escape" order="before hide-hints"/>>
 
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory"/>

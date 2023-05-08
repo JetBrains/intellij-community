@@ -71,8 +71,8 @@
     </extensionPoint>
 
     <extensionPoint
-      name="grayText.provider"
-      interface="com.intellij.codeInsight.grayText.GrayTextProvider"
+      name="inline.completion.provider"
+      interface="com.intellij.codeInsight.inline.completion.InlineCompletionProvider"
       dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

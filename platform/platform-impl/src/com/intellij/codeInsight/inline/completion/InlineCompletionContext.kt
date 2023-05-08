@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.grayText
+package com.intellij.codeInsight.inline.completion
 
-import com.intellij.codeInsight.grayText.InlineState.Companion.resetGrayTextState
+import com.intellij.codeInsight.inline.completion.InlineState.Companion.resetInlineCompletionState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
@@ -12,18 +12,18 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Experimental
-class GrayTextContext private constructor(val editor: Editor) : Disposable {
-  private val keyListener = GrayTextKeyListener(editor)
+class InlineCompletionContext private constructor(val editor: Editor) : Disposable {
+  private val keyListener = InlineCompletionKeyListener(editor)
   private val isSelecting = AtomicBoolean(false)
-  private val inlay = GrayText.forEditor(editor)
+  private val inlay = InlineCompletion.forEditor(editor)
 
-  private var completions = emptyList<GrayTextElement>()
+  private var completions = emptyList<InlineCompletionElement>()
   private var selectedIndex = -1
 
   init {
-    editor.caretModel.addCaretListener(GrayTextCaretListener())
+    editor.caretModel.addCaretListener(InlineCompletionCaretListener())
     if (editor is EditorEx) {
-      editor.addFocusListener(GrayTextFocusListener())
+      editor.addFocusListener(InlineCompletionFocusListener())
     }
   }
 
@@ -33,7 +33,7 @@ class GrayTextContext private constructor(val editor: Editor) : Disposable {
   val startOffset: Int?
     get() = inlay.offset
 
-  fun update(proposals: List<GrayTextElement>, selectedIndex: Int, offset: Int) {
+  fun update(proposals: List<InlineCompletionElement>, selectedIndex: Int, offset: Int) {
     this.completions = proposals
     this.selectedIndex = selectedIndex
     val proposal = proposals[selectedIndex]
@@ -60,12 +60,12 @@ class GrayTextContext private constructor(val editor: Editor) : Disposable {
     }
 
     editor.contentComponent.removeKeyListener(keyListener)
-    editor.resetGrayTextState()
+    editor.resetInlineCompletionState()
   }
 
   fun insert() {
     isSelecting.set(true)
-    GrayTextHandler.mute()
+    InlineCompletionHandler.mute()
     val offset = inlay.offset ?: return
     if (selectedIndex < 0) return
 
@@ -74,23 +74,24 @@ class GrayTextContext private constructor(val editor: Editor) : Disposable {
     editor.caretModel.moveToOffset(offset + currentCompletion.text.length)
 
     isSelecting.set(false)
-    GrayTextHandler.unmute()
-    editor.removeGrayTextContext()
+    InlineCompletionHandler.unmute()
+    editor.removeInlineCompletionContext()
     Disposer.dispose(this)
   }
 
   companion object {
-    private val GRAY_TEXT_CONTEXT = Key.create<GrayTextContext>("gray.text.completion.context")
+    private val INLINE_COMPLETION_CONTEXT = Key.create<InlineCompletionContext>("inline.completion.completion.context")
 
-    fun Editor.initOrGetGrayTextContext(): GrayTextContext = getUserData(GRAY_TEXT_CONTEXT) ?: GrayTextContext(this).also {
-      putUserData(GRAY_TEXT_CONTEXT, it)
+    fun Editor.initOrGetInlineCompletionContext(): InlineCompletionContext {
+      return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(this).also {
+        putUserData(INLINE_COMPLETION_CONTEXT, it)
+      }
     }
-
-    fun Editor.getGrayTextContextOrNull(): GrayTextContext? = getUserData(GRAY_TEXT_CONTEXT)
-    fun Editor.removeGrayTextContext() = putUserData(GRAY_TEXT_CONTEXT, null)
-    fun Editor.resetGrayTextContext() = getGrayTextContextOrNull()?.let {
+    fun Editor.getInlineCompletionContextOrNull(): InlineCompletionContext? = getUserData(INLINE_COMPLETION_CONTEXT)
+    fun Editor.removeInlineCompletionContext() = putUserData(INLINE_COMPLETION_CONTEXT, null)
+    fun Editor.resetInlineCompletionContext() = getInlineCompletionContextOrNull()?.let {
       if (it.isCurrentlyDisplayingInlays) {
-        removeGrayTextContext()
+        removeInlineCompletionContext()
         Disposer.dispose(it)
       }
     }

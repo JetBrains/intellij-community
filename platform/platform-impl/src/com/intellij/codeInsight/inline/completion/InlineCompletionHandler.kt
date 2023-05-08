@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.grayText
+package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.CodeInsightActionHandler
-import com.intellij.codeInsight.grayText.GrayTextContext.Companion.initOrGetGrayTextContext
-import com.intellij.codeInsight.grayText.InlineState.Companion.getGrayTextState
-import com.intellij.codeInsight.grayText.InlineState.Companion.initOrGetGrayTextState
+import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContext
+import com.intellij.codeInsight.inline.completion.InlineState.Companion.getInlineCompletionState
+import com.intellij.codeInsight.inline.completion.InlineState.Companion.initOrGetInlineCompletionState
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -18,19 +18,19 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Experimental
-class GrayTextHandler(private val scope: CoroutineScope) : CodeInsightActionHandler {
+class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightActionHandler {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    val inlineState = editor.getGrayTextState() ?: return
+    val inlineState = editor.getInlineCompletionState() ?: return
 
     showInlineSuggestion(editor, inlineState, editor.caretModel.offset)
   }
 
-  fun invoke(event: DocumentEvent, editor: Editor, provider: GrayTextProvider) {
-    val request = GrayTextRequest.fromDocumentEvent(event, editor) ?: return
+  fun invoke(event: DocumentEvent, editor: Editor, provider: InlineCompletionProvider) {
+    val request = InlineCompletionRequest.fromDocumentEvent(event, editor) ?: return
     invoke(request, provider)
   }
 
-  fun invoke(request: GrayTextRequest, provider: GrayTextProvider) {
+  fun invoke(request: InlineCompletionRequest, provider: InlineCompletionProvider) {
     scope.launch {
       val modificationStamp = request.document.modificationStamp
       val result = provider.getProposals(request)
@@ -38,7 +38,7 @@ class GrayTextHandler(private val scope: CoroutineScope) : CodeInsightActionHand
       val editor = request.editor
       val offset = request.endOffset
 
-      val inlineState = editor.initOrGetGrayTextState()
+      val inlineState = editor.initOrGetInlineCompletionState()
       if (modificationStamp == request.document.modificationStamp) {
         inlineState.suggestions = result
       }
@@ -63,7 +63,7 @@ class GrayTextHandler(private val scope: CoroutineScope) : CodeInsightActionHand
       return
     }
 
-    editor.initOrGetGrayTextContext().update(suggestions, suggestionIndex, startOffset)
+    editor.initOrGetInlineCompletionContext().update(suggestions, suggestionIndex, startOffset)
 
     inlineContext.suggestionIndex = suggestionIndex
     inlineContext.lastStartOffset = startOffset

@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.grayText
+package com.intellij.codeInsight.inline.completion
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Document
@@ -10,7 +10,7 @@ import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-data class GrayTextRequest(val file: PsiFile, val event: DocumentEvent, val editor: Editor) {
+data class InlineCompletionRequest(val file: PsiFile, val event: DocumentEvent, val editor: Editor) {
   val document: Document
     get() = event.document
   val startOffset: Int
@@ -19,15 +19,15 @@ data class GrayTextRequest(val file: PsiFile, val event: DocumentEvent, val edit
     get() = event.offset + event.newLength
 
   companion object {
-    fun fromDocumentEvent(event: DocumentEvent, editor: Editor): GrayTextRequest? {
+    fun fromDocumentEvent(event: DocumentEvent, editor: Editor): InlineCompletionRequest? {
       val virtualFile = editor.virtualFile ?: return null
       val project = editor.project ?: return null
       val file = ReadAction.compute<PsiFile, Throwable> { PsiManager.getInstance(project).findFile(virtualFile) }
 
-      return GrayTextRequest(file, event, editor)
+      return InlineCompletionRequest(file, event, editor)
     }
   }
 }
 
 @ApiStatus.Experimental
-data class GrayTextElement(val text: String)
+data class InlineCompletionElement(val text: String)

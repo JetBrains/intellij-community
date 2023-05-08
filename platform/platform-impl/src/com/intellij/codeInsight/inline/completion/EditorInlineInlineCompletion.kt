@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.grayText
+package com.intellij.codeInsight.inline.completion
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
 @ApiStatus.Experimental
-class EditorInlineGrayText(private val editor: Editor) : GrayText {
+class EditorInlineInlineCompletion(private val editor: Editor) : InlineCompletion {
   private var suffixInlay: Inlay<*>? = null
   private var blockInlay: Inlay<*>? = null
 
@@ -24,7 +24,7 @@ class EditorInlineGrayText(private val editor: Editor) : GrayText {
     return bounds
   }
 
-  override fun render(proposal: GrayTextElement, offset: Int) {
+  override fun render(proposal: InlineCompletionElement, offset: Int) {
     if (proposal.text.isEmpty()) return
     val lines = proposal.text.lines()
     renderSuffix(editor, lines.first(), offset)

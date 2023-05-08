@@ -1714,7 +1714,7 @@
     </group>
     <action internal="true" id="ShowUsageFeatures" class ="com.intellij.usages.similarity.internal.ShowUsageFeaturesInternalAction"/>
 
-    <action id="InsertGrayTextAction" class="com.intellij.codeInsight.grayText.InsertGrayTextAction">
+    <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
       <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
     </action>
   </actions>

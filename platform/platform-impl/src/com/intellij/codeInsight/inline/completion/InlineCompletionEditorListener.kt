@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.grayText
+package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.completion.CompletionUtil
-import com.intellij.codeInsight.grayText.GrayTextContext.Companion.getGrayTextContextOrNull
+import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.getInlineCompletionContextOrNull
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -27,34 +27,34 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Gray text will be shown only if at least one [GrayTextProvider] is enabled and returns at least one proposal
+ * Inline completion will be shown only if at least one [InlineCompletionProvider] is enabled and returns at least one proposal
  */
 @ApiStatus.Experimental
-class GrayTextEditorListener(private val scope: CoroutineScope) : EditorFactoryListener {
+class InlineCompletionEditorListener(private val scope: CoroutineScope) : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor
     if (editor.project == null || editor !is EditorImpl || editor.editorKind != EditorKind.MAIN_EDITOR) return
 
-    GrayTextDocumentListener(editor, scope).listenForChanges()
+    InlineCompletionDocumentListener(editor, scope).listenForChanges()
   }
 }
 
 @Suppress("MemberVisibilityCanBePrivate")
 @OptIn(FlowPreview::class)
 @ApiStatus.Experimental
-class GrayTextDocumentListener(private val editor: EditorImpl, private val scope: CoroutineScope) : DocumentListener, Disposable {
-  private val handler = GrayTextHandler(scope)
-  private var flow = MutableSharedFlow<GrayTextEvent>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+class InlineCompletionDocumentListener(private val editor: EditorImpl, private val scope: CoroutineScope) : DocumentListener, Disposable {
+  private val handler = InlineCompletionHandler(scope)
+  private var flow = MutableSharedFlow<InlineCompletionEvent>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   fun isEnabled(event: DocumentEvent): Boolean {
     return event.newFragment != CompletionUtil.DUMMY_IDENTIFIER && event.newLength >= 1
   }
 
-  private fun documentChangedDebounced(grayTextEvent: GrayTextEvent) {
-    val (event, providers) = grayTextEvent
+  private fun documentChangedDebounced(inlineCompletionEvent: InlineCompletionEvent) {
+    val (event, providers) = inlineCompletionEvent
     if (event.document.isInBulkUpdate) return
 
-    // As PoC gray text does not support multiple providers
+    // As PoC inline completion does not support multiple providers
     // TODO: handle multiple providers
     handler.invoke(event, editor, providers.first())
   }
@@ -66,26 +66,26 @@ class GrayTextDocumentListener(private val editor: EditorImpl, private val scope
 
     overrideCaretMove(editor)
 
-    scope.launch(CoroutineName("gray.text.call")) {
+    scope.launch(CoroutineName("inline.completion.call")) {
       flow.debounce(minDelay)
         .collect(::documentChangedDebounced)
     }
   }
 
   override fun documentChanged(event: DocumentEvent) {
-    if (GrayTextHandler.isMuted.get() || !isEnabled(event)) {
+    if (InlineCompletionHandler.isMuted.get() || !isEnabled(event)) {
       return
     }
 
-    val providers = GrayTextProvider.extensions().filter { it.isEnabled(event) }
+    val providers = InlineCompletionProvider.extensions().filter { it.isEnabled(event) }
                       .takeIf { it.isNotEmpty() } ?: return
-    val grayTextEvent = GrayTextEvent(event, providers)
+    val inlineCompletionEvent = InlineCompletionEvent(event, providers)
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      documentChangedDebounced(grayTextEvent)
+      documentChangedDebounced(inlineCompletionEvent)
     }
     else {
-      flow.tryEmit(grayTextEvent)
+      flow.tryEmit(inlineCompletionEvent)
     }
   }
 
@@ -93,8 +93,8 @@ class GrayTextDocumentListener(private val editor: EditorImpl, private val scope
     val moveCaretAction = ActionUtil.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) ?: return
 
     DumbAwareAction.create {
-      val toAct = if (editor.getGrayTextContextOrNull()?.isCurrentlyDisplayingInlays == true) {
-        InsertGrayTextAction()
+      val toAct = if (editor.getInlineCompletionContextOrNull()?.isCurrentlyDisplayingInlays == true) {
+        InsertInlineCompletionAction()
       }
       else {
         moveCaretAction
@@ -108,11 +108,11 @@ class GrayTextDocumentListener(private val editor: EditorImpl, private val scope
     editor.putUserData(KEY, null)
   }
 
-  private data class GrayTextEvent(val event: DocumentEvent, val providers: List<GrayTextProvider>)
+  private data class InlineCompletionEvent(val event: DocumentEvent, val providers: List<InlineCompletionProvider>)
 
   companion object {
-    private val KEY = Key.create<GrayTextDocumentListener>("gray.text.listener")
+    private val KEY = Key.create<InlineCompletionDocumentListener>("inline.completion.listener")
 
-    val minDelay = Registry.get("gray.text.trigger.delay").asInteger().toLong()
+    val minDelay = Registry.get("inline.completion.trigger.delay").asInteger().toLong()
   }
 }
