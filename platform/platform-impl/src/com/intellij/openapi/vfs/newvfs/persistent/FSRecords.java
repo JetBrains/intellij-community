@@ -126,6 +126,16 @@ public final class FSRecords {
     return implOrFail().getCreationTimestamp();
   }
 
+  /** Intermediate failures met during VFS initialization (if any) */
+  public static List<Throwable> initializationFailures(){
+    return implOrFail().initializationFailures();
+  }
+
+  /** Were VFS storages created anew this run, or we read already filled */
+  public static boolean wasCreateANew(){
+    return implOrFail().wasCreatedANew();
+  }
+
   //========== modifications counters: ========================================
 
   static int getLocalModCount() {

@@ -812,7 +812,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.cache.CacheRecoveryUsageCollector"/>.
     <statistics.counterUsagesCollector groupId="new.project.wizard" version="3"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.WindowsDefenderStatisticsCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vfs.newvfs.VfsUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.DumbModeStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.IndexOperationFUS$IndexOperationFusCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.util.indexing.diagnostic.IndexOperationFUS$IndexOperationAggregatesCollector"/>
@@ -1460,6 +1460,9 @@
     <diagnostic.freezeProfiler implementation="com.intellij.diagnostic.opentelemetry.OTelMetricsFreezeProfiler"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.opentelemetry.JVMStatsToOTelReporter"/>
+
+    <backgroundPostStartupActivity implementation="com.intellij.openapi.vfs.newvfs.monitoring.VFSInitializationConditionsToFusReporter"/>
+
     <registryKey key="llm.empty.intention.generation"
                  defaultValue="false"
                  description="Provides AI generated code for inspections without quick-fixes"/>

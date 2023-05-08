@@ -103,6 +103,9 @@ public final class FSRecordsImpl {
 
   private final @NotNull ErrorHandler errorHandler;
 
+  /** Additional information about how VFS was initialized */
+  private final @NotNull PersistentFSConnector.InitializationResult initializationResult;
+
   /**
    * Right now invertedNameIndex looks like a property of PersistentFSConnection -- but this is only because now it
    * operates with fileId/nameId. Future index impls may work with name hashes instead of nameId -- say, because hash
@@ -113,6 +116,7 @@ public final class FSRecordsImpl {
   private final AtomicLong invertedNameIndexModCount = new AtomicLong();
 
 
+  /** VFS implementation version */
   private final int currentVersion;
 
 
@@ -176,13 +180,14 @@ public final class FSRecordsImpl {
     try {
       int currentVersion = calculateVersion();
       InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
-      PersistentFSConnection connection = PersistentFSConnector.connect(
+      final PersistentFSConnector.InitializationResult initializationResult = PersistentFSConnector.connect(
         storagesDirectoryPath,
         currentVersion,
         USE_CONTENT_HASHES,
         invertedNameIndex,
         vfsLog.getConnectionInterceptors()
       );
+      PersistentFSConnection connection = initializationResult.connection;
       PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(USE_CONTENT_HASHES, connection);
       PersistentFSAttributeAccessor attributeAccessor = new PersistentFSAttributeAccessor(connection);
       PersistentFSTreeAccessor treeAccessor = new PersistentFSTreeAccessor(attributeAccessor, connection);
@@ -196,7 +201,8 @@ public final class FSRecordsImpl {
           contentAccessor, attributeAccessor, treeAccessor, recordAccessor,
           invertedNameIndex,
           currentVersion,
-          errorHandler
+          errorHandler,
+          initializationResult
         );
       }
       catch (IOException e) {
@@ -218,7 +224,8 @@ public final class FSRecordsImpl {
                         @NotNull PersistentFSRecordAccessor recordAccessor,
                         @NotNull InvertedNameIndex invertedNameIndex,
                         int currentVersion,
-                        @NotNull ErrorHandler errorHandler) {
+                        @NotNull ErrorHandler errorHandler,
+                        @NotNull PersistentFSConnector.InitializationResult initializationResult) {
     this.connection = connection;
     this.contentAccessor = contentAccessor;
     this.attributeAccessor = attributeAccessor;
@@ -228,6 +235,7 @@ public final class FSRecordsImpl {
     this.invertedNameIndex = invertedNameIndex;
 
     this.currentVersion = currentVersion;
+    this.initializationResult = initializationResult;
   }
 
   //========== lifecycle: ========================================
@@ -277,6 +285,15 @@ public final class FSRecordsImpl {
       throw handleError(e);
     }
   }
+
+  List<Throwable> initializationFailures() {
+    return Collections.unmodifiableList(initializationResult.attemptsFailures);
+  }
+
+  boolean wasCreatedANew() {
+    return initializationResult.storagesCreatedAnew;
+  }
+
 
   //========== modifications counters: ========================================
 

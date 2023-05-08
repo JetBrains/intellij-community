@@ -153,13 +153,14 @@ public class VFSRebuildingTest {
     final String corruptionReason = "VFS corrupted because I said so";
     final String corruptionCauseMessage = "Something happens here";
 
-    PersistentFSConnection connection = PersistentFSConnector.connect(
+    final PersistentFSConnector.InitializationResult initializationResult = PersistentFSConnector.connect(
       cachesDir,
       /*version: */ 1,
       true,
       new InvertedNameIndex(),
       Collections.emptyList()
     );
+    PersistentFSConnection connection = initializationResult.connection;
     final Path corruptionMarkerFile = connection.getPersistentFSPaths().getCorruptionMarkerFile();
     try {
       connection.scheduleVFSRebuild(
