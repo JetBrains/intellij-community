@@ -160,7 +160,6 @@ public final class FSRecordsImpl {
   /**
    * Factory
    *
-   * @param errorHandler
    * @param storagesDirectoryPath directory there to put all FS-records files ('caches' directory)
    */
   static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
