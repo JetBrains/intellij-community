@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Traver
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTagsMask
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 
@@ -27,11 +28,13 @@ object VfsChronicle {
                           crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }) =
     traverseOperationsLogForLookup(
       iterator, direction, condition,
-      VfsOperationTagsMask(VfsOperationTag.REC_SET_NAME_ID, VfsOperationTag.REC_FILL_RECORD),
+      VfsOperationTagsMask(REC_ALLOC, REC_SET_NAME_ID, REC_FILL_RECORD, REC_CLEAN_RECORD),
       onValid = { operation, detect ->
         when (operation) {
+          is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
           is RecordsOperation.SetNameId -> if (operation.fileId == fileId) detect(operation.nameId)
           is RecordsOperation.FillRecord -> if (operation.fileId == fileId) detect(operation.nameId)
+          is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0)
           else -> throw IllegalStateException("filtered read is broken")
         }
       })
@@ -42,11 +45,13 @@ object VfsChronicle {
                             crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }) =
     traverseOperationsLogForLookup(
       iterator, direction, condition,
-      VfsOperationTagsMask(VfsOperationTag.REC_SET_PARENT, VfsOperationTag.REC_FILL_RECORD),
+      VfsOperationTagsMask(REC_ALLOC, REC_SET_PARENT, REC_FILL_RECORD, REC_CLEAN_RECORD),
       onValid = { operation, detect ->
         when (operation) {
+          is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
           is RecordsOperation.SetParent -> if (operation.fileId == fileId) detect(operation.parentId)
           is RecordsOperation.FillRecord -> if (operation.fileId == fileId) detect(operation.parentId)
+          is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0)
           else -> throw IllegalStateException("filtered read is broken")
         }
       })
