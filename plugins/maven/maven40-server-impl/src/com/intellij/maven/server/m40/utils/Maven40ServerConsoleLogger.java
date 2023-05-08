@@ -4,6 +4,7 @@ package com.intellij.maven.server.m40.utils;
 import org.codehaus.plexus.logging.Logger;
 import org.jetbrains.idea.maven.server.MavenRemoteObject;
 import org.jetbrains.idea.maven.server.MavenServerConsole;
+import org.jetbrains.idea.maven.server.RuntimeRemoteException;
 
 import java.rmi.RemoteException;
 
@@ -25,7 +26,7 @@ public class Maven40ServerConsoleLogger extends MavenRemoteObject implements Log
         myWrappee.printMessage(level, message, wrapException(throwable));
       }
       catch (RemoteException e) {
-        //todo throw new RuntimeRemoteException(e); ???
+        throw new RuntimeRemoteException(e);
       }
     }
   }
