@@ -25,21 +25,23 @@ internal class NodeChooseTypeAction : DumbAwareAction() {
     val manager = event.bookmarksManager ?: return
     val bookmark = event.bookmarkNodes?.singleOrNull()?.value as? Bookmark ?: return
     val type = manager.getType(bookmark) ?: return
-    val chooser = BookmarkTypeChooser(type, manager.assignedTypes, bookmark.firstGroupWithDescription?.getDescription(bookmark)) { chosenType, description ->
-      manager.setType(bookmark, chosenType)
-      if (description != "") {
-        manager.getGroups(bookmark).firstOrNull()?.setDescription(bookmark, description)
-      }
-    }
+    val chooser = BookmarkTypeChooser(type, manager.assignedTypes, bookmark.firstGroupWithDescription?.getDescription(bookmark))
     val title = when (type) {
       BookmarkType.DEFAULT -> BookmarkBundle.message("mnemonic.chooser.mnemonic.assign.popup.title")
       else -> BookmarkBundle.message("mnemonic.chooser.mnemonic.change.popup.title")
     }
-    JBPopupFactory.getInstance().createComponentPopupBuilder(chooser.content, chooser.firstButton)
+    val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(chooser.content, chooser.firstButton)
       .setFocusable(true).setRequestFocus(true)
       .setMovable(false).setResizable(false)
       .setTitle(title).createPopup()
-      .showInBestPositionFor(event.dataContext)
+    chooser.onChosen = { chosenType, description ->
+      manager.setType(bookmark, chosenType)
+      if (description != "") {
+        manager.getGroups(bookmark).firstOrNull()?.setDescription(bookmark, description)
+      }
+      popup.closeOk(null)
+    }
+    popup.showInBestPositionFor(event.dataContext)
   }
 
   init {
