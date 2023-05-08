@@ -1305,17 +1305,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void unscheduleAllTasks(List<MavenProject> projects) {
     for (MavenProject each : projects) {
-      MavenProjectsProcessorEmptyTask dummyTask = new MavenProjectsProcessorEmptyTask(each);
-
       synchronized (myImportingDataLock) {
         myProjectsToImport.remove(each);
         myProjectsToResolve.remove(each);
       }
-
-      myResolvingProcessor.removeTask(dummyTask);
-      myPluginsResolvingProcessor.removeTask(dummyTask);
-      myFoldersResolvingProcessor.removeTask(dummyTask);
-      myPostProcessor.removeTask(dummyTask);
     }
   }
 

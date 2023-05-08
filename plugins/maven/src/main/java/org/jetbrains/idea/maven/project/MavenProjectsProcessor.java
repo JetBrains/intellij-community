@@ -66,10 +66,6 @@ public class MavenProjectsProcessor {
     }
   }
 
-  public void removeTask(MavenProjectsProcessorTask task) {
-    myQueue.remove(task);
-  }
-
   public void waitForCompletion() {
     if (isStopped) return;
 
