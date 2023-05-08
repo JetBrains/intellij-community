@@ -62,6 +62,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
@@ -703,7 +704,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private Font getFontForLineNumbers() {
     Font editorFont = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
     float editorFontSize = editorFont.getSize2D();
-    return editorFont.deriveFont(Math.max(1f, editorFontSize - 1f));
+    float delta = (float) RegistryManager.getInstance().get("editor.gutter.line-number.font.size.delta").asDouble();
+    return editorFont.deriveFont(Math.max(1f, editorFontSize + delta));
   }
 
   private int calcLineNumbersAreaWidth(@NotNull String maxLineNumberText) {
