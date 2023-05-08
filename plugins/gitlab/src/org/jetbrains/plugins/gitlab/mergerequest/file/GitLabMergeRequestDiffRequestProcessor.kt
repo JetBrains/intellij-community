@@ -2,8 +2,6 @@
 
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
-import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.codereview.action.ImmutableToolbarLabelAction
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
 import com.intellij.collaboration.ui.icon.IconsProvider
@@ -16,7 +14,6 @@ import com.intellij.diff.requests.LoadingDiffRequest
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.ListSelection
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -150,11 +147,6 @@ private fun CoroutineScope.createData(
   if (location != null) {
     requestDataKeys[DiffUserDataKeys.SCROLL_TO_LINE] = Pair(location.first, location.second)
   }
-
-  requestDataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] = listOf(
-    ImmutableToolbarLabelAction(CollaborationToolsBundle.message("review.diff.toolbar.label")),
-    ActionManager.getInstance().getAction("GitLab.Merge.Request.Diff.Discussions.View.Options")
-  )
 
   return requestDataKeys
 }

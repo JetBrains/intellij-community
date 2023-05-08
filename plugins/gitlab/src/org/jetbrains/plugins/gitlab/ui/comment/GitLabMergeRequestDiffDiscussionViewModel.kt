@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.ui.comment
 import com.intellij.collaboration.async.mapCaching
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.viewer.DiffMapped
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
@@ -43,8 +44,7 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
   diffData: GitTextFilePatchWithHistory,
   currentUser: GitLabUserDTO,
   discussion: GitLabMergeRequestDiscussion,
-  isDiscussionsVisible: Flow<Boolean>,
-  isResolvedDiscussionsVisible: Flow<Boolean>
+  discussionsViewOption: Flow<DiscussionsViewOption>
 ) : GitLabMergeRequestDiffDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -91,14 +91,12 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
     mapToLocation(diffData, it)
   }
 
-  override val isVisible: Flow<Boolean> = combine(
-    resolveVm?.resolved ?: flowOf(false),
-    isDiscussionsVisible,
-    isResolvedDiscussionsVisible
-  ) { isResolved, isVisible, isResolvedVisible ->
-    if (!isVisible) return@combine false
-    if (isResolvedVisible) true
-    else !isResolved
+  override val isVisible: Flow<Boolean> = combine(resolveVm?.resolved ?: flowOf(false), discussionsViewOption) { isResolved, viewOption ->
+    return@combine when (viewOption) {
+      DiscussionsViewOption.ALL -> true
+      DiscussionsViewOption.UNRESOLVED_ONLY -> !isResolved
+      DiscussionsViewOption.DONT_SHOW -> false
+    }
   }
 
   private fun GitLabMergeRequestDiscussion.firstNote(): Flow<GitLabMergeRequestNote?> =
@@ -117,8 +115,7 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
 class GitLabMergeRequestDiffDraftDiscussionViewModel(
   parentCs: CoroutineScope,
   diffData: GitTextFilePatchWithHistory,
-  note: GitLabMergeRequestDraftNote,
-  isDiscussionsVisible: Flow<Boolean>,
+  note: GitLabMergeRequestDraftNote
 ) : GitLabMergeRequestDiffDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -134,7 +131,7 @@ class GitLabMergeRequestDiffDraftDiscussionViewModel(
     mapToLocation(diffData, it)
   }
 
-  override val isVisible: Flow<Boolean> = isDiscussionsVisible
+  override val isVisible: Flow<Boolean> = flowOf(true)
 
   override val resolveVm: GitLabDiscussionResolveViewModel? = null
   override val replyVm: GitLabDiscussionReplyViewModel? = null

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 import com.intellij.collaboration.async.mapCaching
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
@@ -31,14 +32,12 @@ interface GitLabMergeRequestDiffChangeViewModel {
   val draftDiscussions: DiscussionsFlow
   val newDiscussions: NewDiscussionsFlow
 
-  val isDiscussionsVisible: StateFlow<Boolean>
-  val isResolvedDiscussionsVisible: StateFlow<Boolean>
+  val discussionsViewOption: StateFlow<DiscussionsViewOption>
 
   fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean)
   fun cancelNewDiscussion(location: DiffLineLocation)
 
-  fun setDiscussionsVisible(state: Boolean)
-  fun setResolvedDiscussionsVisible(state: Boolean)
+  fun setDiscussionsViewOption(viewOption: DiscussionsViewOption)
 }
 
 private val LOG = logger<GitLabMergeRequestDiffChangeViewModel>()
@@ -55,16 +54,14 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
   override val discussions: DiscussionsFlow = mergeRequest.discussions
     .mapCaching(
       GitLabDiscussion::id,
-      { cs, disc ->
-        GitLabMergeRequestDiffDiscussionViewModelImpl(cs, diffData, currentUser, disc, isDiscussionsVisible, isResolvedDiscussionsVisible)
-      },
+      { cs, disc -> GitLabMergeRequestDiffDiscussionViewModelImpl(cs, diffData, currentUser, disc, discussionsViewOption) },
       GitLabMergeRequestDiffDiscussionViewModelImpl::destroy
     ).modelFlow(cs, LOG)
 
   override val draftDiscussions: DiscussionsFlow = mergeRequest.standaloneDraftNotes
     .mapCaching(
       GitLabNote::id,
-      { cs, note -> GitLabMergeRequestDiffDraftDiscussionViewModel(cs, diffData, note, isDiscussionsVisible) },
+      { cs, note -> GitLabMergeRequestDiffDraftDiscussionViewModel(cs, diffData, note) },
       GitLabMergeRequestDiffDraftDiscussionViewModel::destroy
     ).modelFlow(cs, LOG)
 
@@ -72,11 +69,8 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
   private val _newDiscussions = MutableStateFlow<Map<DiffLineLocation, NewGitLabNoteViewModel>>(emptyMap())
   override val newDiscussions: NewDiscussionsFlow = _newDiscussions.asStateFlow()
 
-  private val _isDiscussionsVisibleState: MutableStateFlow<Boolean> = MutableStateFlow(true)
-  override val isDiscussionsVisible: StateFlow<Boolean> = _isDiscussionsVisibleState.asStateFlow()
-
-  private val _isResolvedDiscussionsVisibleState: MutableStateFlow<Boolean> = MutableStateFlow(true)
-  override val isResolvedDiscussionsVisible: StateFlow<Boolean> = _isResolvedDiscussionsVisibleState.asStateFlow()
+  private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
+  override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()
 
   override fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean) {
     _newDiscussions.updateAndGet {
@@ -138,12 +132,8 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
     }
   }
 
-  override fun setDiscussionsVisible(state: Boolean) {
-    _isDiscussionsVisibleState.value = state
-  }
-
-  override fun setResolvedDiscussionsVisible(state: Boolean) {
-    _isResolvedDiscussionsVisibleState.value = state
+  override fun setDiscussionsViewOption(viewOption: DiscussionsViewOption) {
+    _discussionsViewOption.value = viewOption
   }
 
   suspend fun destroy() {

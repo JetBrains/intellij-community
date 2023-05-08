@@ -93,7 +93,7 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
                                           val editVm: NewGitLabNoteViewModel) : DiffMapped {
     val id: String = "NEW"
     override val location: Flow<DiffLineLocation> = flowOf(newLocation)
-    override val isVisible: Flow<Boolean> = changeVm.isDiscussionsVisible
+    override val isVisible: Flow<Boolean> = flowOf(true)
 
     fun cancel() {
       changeVm.cancelNewDiscussion(newLocation)

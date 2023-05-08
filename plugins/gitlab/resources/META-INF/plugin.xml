@@ -59,10 +59,6 @@
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
     <action id="GitLab.Merge.Request.Open.In.Browser"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabOpenMergeRequestInBrowserAction"/>
-    <action id="GitLab.Merge.Request.Diff.Show.Discussions"
-            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestDiffReviewDiscussionsToggleAction"/>
-    <action id="GitLab.Merge.Request.Diff.Show.Discussions.Resolved"
-            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestDiffReviewResolvedDiscussionsToggleAction"/>
 
     <group id="GitLab.Merge.Request.List.Actions">
       <reference id="GitLab.Merge.Request.Show"/>
@@ -89,10 +85,12 @@
     </group>
 
     <group id="GitLab.Merge.Request.Diff.Discussions.View.Options"
+           class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestDiffReviewDiscussionsToggleAction"
            icon="AllIcons.Actions.Show"
            popup="true">
-      <reference id="GitLab.Merge.Request.Diff.Show.Discussions"/>
-      <reference id="GitLab.Merge.Request.Diff.Show.Discussions.Resolved"/>
+      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"
+                    relative-to-action="Vcs.Diff.ToggleDiffAligningMode"
+                    anchor="before"/>
     </group>
   </actions>
 </idea-plugin>
