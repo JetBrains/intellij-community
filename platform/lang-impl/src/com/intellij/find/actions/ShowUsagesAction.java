@@ -981,7 +981,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       });
     }
     else {
-      builder.setAutoselectOnMouseMove(true).setItemChoosenCallback(itemChoseCallback).setCloseOnEnter(true);
+      builder.setAutoselectOnMouseMove(true).setItemChosenCallback(itemChoseCallback).setCloseOnEnter(true);
     }
 
     AbstractPopup popup = (AbstractPopup)builder.createPopup();

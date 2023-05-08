@@ -47,7 +47,7 @@ public final class Utils {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(callback)
+      .setItemChosenCallback(callback)
       .createPopup();
 
     if (ad != null) {

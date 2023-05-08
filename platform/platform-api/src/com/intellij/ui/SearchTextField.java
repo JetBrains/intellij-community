@@ -416,7 +416,7 @@ public class SearchTextField extends JPanel {
       myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setMovable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(chooseRunnable)
+        .setItemChosenCallback(chooseRunnable)
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         .createPopup();
       AlignedPopup.showUnderneathWithoutAlignment(myPopup, getPopupLocationComponent());
