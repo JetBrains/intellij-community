@@ -52,8 +52,8 @@ class GrayTextKeyListener(private val editor: Editor) : KeyAdapter() {
 }
 
 @ApiStatus.Experimental
-class AcceptGrayTextAction : EditorAction(AcceptGrayTextHandler()), HintManagerImpl.ActionToIgnore {
-  class AcceptGrayTextHandler : EditorWriteActionHandler() {
+class InsertGrayTextAction : EditorAction(InsertGrayTextHandler()), HintManagerImpl.ActionToIgnore {
+  class InsertGrayTextHandler : EditorWriteActionHandler() {
     override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
       editor.getGrayTextContextOrNull()?.insert()
     }
@@ -65,10 +65,10 @@ class AcceptGrayTextAction : EditorAction(AcceptGrayTextHandler()), HintManagerI
 }
 
 @ApiStatus.Experimental
-class EscapeGrayTextHandler : EditorActionHandler() {
+class EscapeGrayTextHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
   public override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
-    if (isEnabled(editor, caret, dataContext)) {
-      execute(editor, caret, dataContext)
+    if (originalHandler.isEnabled(editor, caret, dataContext)) {
+      originalHandler.execute(editor, caret, dataContext)
     }
 
     editor.removeGrayTextContext()
@@ -76,6 +76,7 @@ class EscapeGrayTextHandler : EditorActionHandler() {
   }
 
   public override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
-    return editor.getGrayTextContextOrNull() != null
+    val isEnabled = editor.getGrayTextContextOrNull() != null
+    return if (isEnabled) isEnabled else originalHandler.isEnabled(editor, caret, dataContext)
   }
 }

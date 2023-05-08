@@ -28,7 +28,7 @@
       <add-to-group group-id="EditMenu" anchor="last"/>
     </action>
 
-    <action id="AcceptGrayTextAction" class="com.intellij.codeInsight.grayText.AcceptGrayTextAction">
+    <action id="AcceptGrayTextAction" class="com.intellij.codeInsight.grayText.InsertGrayTextAction">
       <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
     </action>
 

@@ -94,7 +94,7 @@ class GrayTextDocumentListener(private val editor: EditorImpl, private val scope
 
     DumbAwareAction.create {
       val toAct = if (editor.getGrayTextContextOrNull()?.isCurrentlyDisplayingInlays == true) {
-        AcceptGrayTextAction()
+        InsertGrayTextAction()
       }
       else {
         moveCaretAction
