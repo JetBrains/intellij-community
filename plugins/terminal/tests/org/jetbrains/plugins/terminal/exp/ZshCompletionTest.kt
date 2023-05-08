@@ -47,6 +47,9 @@ class ZshCompletionTest : BasePlatformTestCase() {
   }
 
   override fun tearDown() {
+    if (!this::session.isInitialized) {
+      return // no zsh installed
+    }
     try {
       val model: TerminalModel = session.model
       LOG.info("Final terminal state:\n${model.withContentLock { model.getAllText() }}")
