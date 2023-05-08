@@ -1503,7 +1503,7 @@
               topic="com.intellij.ide.trustedProjects.TrustedProjectsListener" activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.ide.impl.TrustStateListener$Bridge"
               topic="com.intellij.ide.trustedProjects.TrustedProjectsListener" activeInHeadlessMode="false" activeInTestMode="false"/>
-    <listener class="com.intellij.openapi.util.registry.EarlyAccessRegistryManager$MyListener"
+    <listener class="com.intellij.openapi.util.registry.EarlyAccessRegistryManagerListener" activeInTestMode="false"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings$ToolbarRegistryListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>

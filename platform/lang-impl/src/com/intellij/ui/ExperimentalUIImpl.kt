@@ -12,7 +12,6 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
@@ -27,17 +26,6 @@ import com.intellij.util.PlatformUtils
 private class ExperimentalUIImpl : ExperimentalUI() {
   @JvmField
   var newValue: Boolean = isNewUI()
-
-  init {
-    if (ConfigImportHelper.isNewUser() && isNewUIEnabledByDefault() && !isNewUI()) {
-      ApplicationManager.getApplication().invokeLater {
-        newValue = true
-        onExpUIEnabled(false)
-      }
-    }
-  }
-
-  private fun isNewUIEnabledByDefault() = true
 
   override fun getIconMappings(): Map<ClassLoader, Map<String, String>> = service<IconMapLoader>().loadIconMapping()
 

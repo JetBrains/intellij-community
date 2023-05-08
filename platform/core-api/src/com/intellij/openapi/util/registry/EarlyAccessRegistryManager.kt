@@ -20,6 +20,46 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
+private val LOG: Logger
+  get() = logger<EarlyAccessRegistryManager>()
+
+private val configFile: Path by lazy {
+  PathManager.getConfigDir().resolve(EarlyAccessRegistryManager.fileName)
+}
+
+private val lazyMap = SynchronizedClearableLazy {
+  val result = ConcurrentHashMap<String, String>()
+  val lines = try {
+    Files.lines(configFile)
+  }
+  catch (ignore: NoSuchFileException) {
+    return@SynchronizedClearableLazy result
+  }
+
+  lines.use { lineStream ->
+    val iterator = lineStream.iterator()
+    while (iterator.hasNext()) {
+      val key = iterator.next()
+      if (!iterator.hasNext()) {
+        break
+      }
+      result.put(key, iterator.next())
+    }
+  }
+  result
+}
+
+private val map: ConcurrentHashMap<String, String>?
+  get() {
+    if (lazyMap.isInitialized()) {
+      val map = lazyMap.value
+      return if (map.isEmpty()) null else map
+    }
+    else {
+      return null
+    }
+  }
+
 /**
  * Provides a configuration of internal settings which might be used before application has been loaded unless [Registry].
  *
@@ -27,51 +67,10 @@ import java.util.concurrent.ConcurrentHashMap
  */
 @ApiStatus.Internal
 object EarlyAccessRegistryManager {
-  const val fileName = "early-access-registry.txt"
-  private val configFile: Path by lazy {
-    PathManager.getConfigDir().resolve(fileName)
-  }
-
-  private val lazyMap = SynchronizedClearableLazy {
-    val result = ConcurrentHashMap<String, String>()
-    val lines = try {
-      Files.lines(configFile)
-    }
-    catch (ignore: NoSuchFileException) {
-      return@SynchronizedClearableLazy result
-    }
-
-    lines.use { lineStream ->
-      val iterator = lineStream.iterator()
-      while (iterator.hasNext()) {
-        val key = iterator.next()
-        if (!iterator.hasNext()) {
-          break
-        }
-        result.put(key, iterator.next())
-      }
-    }
-    result
-  }
-
-  private val map: ConcurrentHashMap<String, String>?
-    get() {
-      if (lazyMap.isInitialized()) {
-        val map = lazyMap.value
-        return if (map.isEmpty()) null else map
-      }
-      else {
-        return null
-      }
-    }
-
-  private val LOG: Logger
-    get() = logger<EarlyAccessRegistryManager>()
+  const val fileName: String = "early-access-registry.txt"
 
   fun getBoolean(key: String): Boolean {
-    val stringValue = getString(key)
-    if (stringValue == null) return false
-    return java.lang.Boolean.parseBoolean(stringValue)
+    return getString(key).toBoolean()
   }
 
   fun getString(key: String): String? {
@@ -88,14 +87,30 @@ object EarlyAccessRegistryManager {
     // see com.intellij.ide.plugins.PluginDescriptorLoader.loadForCoreEnv
     val registryManager = ApplicationManager.getApplication().serviceOrNull<RegistryManager>() ?: return getOrFromSystemProperty(map, key)
     // use RegistryManager to make sure that Registry is fully loaded
-    val value = registryManager.get(key).asString()
-    // ensure that even if for some reason key was not early accessed, it is stored for early access on next start-up
-    map.putIfAbsent(key, value)
-    return value.nullize()
+    val registryValue = registryManager.get(key)
+    val value = try {
+      registryValue.asString()
+    }
+    catch (ignore: MissingResourceException) {
+      null
+    }
+    // ensure that even if key was not early accessed for some reason, it is stored for early access on next start-up
+    val existingValue = if (value == null) map.get(key) else map.putIfAbsent(key, value)
+    if (existingValue == null) {
+      return value?.takeIf { it.isNotEmpty() }
+    }
+    else {
+      // local early-access-registry.txt has precedence over registry - update registry value and return from early access store
+      registryValue.setValueSilently(existingValue)
+      return existingValue
+    }
   }
 
-  private fun getOrFromSystemProperty(map: ConcurrentHashMap<String, String>, key: String): String? {
-    return map.get(key) ?: System.getProperty(key)
+  fun setAndFlush(data: Map<String, String>) {
+    check(!LoadingState.COMPONENTS_REGISTERED.isOccurred)
+    val map = lazyMap.value
+    map.putAll(data)
+    saveConfigFile(map, configFile) { map.get(it) }
   }
 
   fun syncAndFlush() {
@@ -105,23 +120,13 @@ object EarlyAccessRegistryManager {
     val map = map ?: return
     val registryManager = ApplicationManager.getApplication().serviceIfCreated<RegistryManager>() ?: return
     try {
-      val lines = mutableListOf<String>()
-      for (key in map.keys.sorted()) {
+      saveConfigFile(map, configFile) {
         try {
-          val value = registryManager.get(key).asString()
-          lines.add(key)
-          lines.add(value)
+          registryManager.stringValue(it)
         }
         catch (ignore: MissingResourceException) {
+          null
         }
-      }
-
-      if (lines.isEmpty()) {
-        Files.deleteIfExists(configFile)
-      }
-      else {
-        Files.createDirectories(configFile.parent)
-        Files.write(configFile, lines, StandardCharsets.UTF_8)
       }
     }
     catch (e: Throwable) {
@@ -133,17 +138,39 @@ object EarlyAccessRegistryManager {
     check(!LoadingState.COMPONENTS_REGISTERED.isOccurred)
     lazyMap.drop()
   }
+}
 
-  @Suppress("unused") // registered in an `*.xml` file
-  private class MyListener : RegistryValueListener {
-    override fun afterValueChanged(value: RegistryValue) {
-      val map = map ?: return
+private class EarlyAccessRegistryManagerListener : RegistryValueListener {
+  override fun afterValueChanged(value: RegistryValue) {
+    val map = map ?: return
 
-      // store only if presented - do not store alien keys
-      val key = value.key
-      if (map.containsKey(key)) {
-        map.put(key, value.asString())
-      }
+    // store only if presented - do not store alien keys
+    val key = value.key
+    if (map.containsKey(key)) {
+      map.put(key, value.asString())
     }
+  }
+}
+
+private fun getOrFromSystemProperty(map: ConcurrentHashMap<String, String>, key: String): String? {
+  return map.get(key) ?: System.getProperty(key)
+}
+
+private inline fun saveConfigFile(map: ConcurrentHashMap<String, String>,
+                                  @Suppress("SameParameterValue") configFile: Path,
+                                  provider: (String) -> String?) {
+  val lines = mutableListOf<String>()
+  for (key in map.keys.sorted()) {
+    val value = provider(key) ?: continue
+    lines.add(key)
+    lines.add(value)
+  }
+
+  if (lines.isEmpty()) {
+    Files.deleteIfExists(configFile)
+  }
+  else {
+    Files.createDirectories(configFile.parent)
+    Files.write(configFile, lines, StandardCharsets.UTF_8)
   }
 }
