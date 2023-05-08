@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.codeInspection.unused;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -63,7 +63,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
 
   @Override
   public @NotNull OptionController getOptionController() {
-    return super.getOptionController().onValueSet("fineNameMask", value -> {
+    return super.getOptionController().onValueSet("fileNameMask", value -> {
       if ("".equals(value)) fileNameMask = ".*";
     });
   }
