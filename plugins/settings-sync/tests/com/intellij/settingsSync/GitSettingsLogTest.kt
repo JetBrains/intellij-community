@@ -373,6 +373,13 @@ internal class GitSettingsLogTest {
     val editorXml = (configDir / "options" / "editor.xml").createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
+    (settingsSyncStorage / ".git" / "config").writeText("""
+[user]
+        name = Gawr Gura
+        email = just-email@non-existing.addr
+""".trimIndent())
+
+
     val jbaEmail = "some-jba-email@jba-mail.com"
     val jbaName = "JBA Name"
 
@@ -384,9 +391,13 @@ internal class GitSettingsLogTest {
         fileState("options/ide.general.xml", "General Ide")
       }, "Local changes"
     )
-    val personIdent = getRepository().headCommit().authorIdent
-    assertEquals(personIdent.emailAddress, jbaEmail)
-    assertEquals(personIdent.name, jbaName)
+    val headCommit = getRepository().headCommit()
+    val author = headCommit.authorIdent
+    val committer = headCommit.committerIdent
+    assertEquals(jbaEmail, author.emailAddress)
+    assertEquals(jbaEmail, committer.emailAddress)
+    assertEquals(jbaName, author.name)
+    assertEquals(jbaName, committer.name)
   }
 
   private fun initializeGitSettingsLog(vararg filesToCopyInitially: Path): GitSettingsLog {

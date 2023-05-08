@@ -27,7 +27,6 @@ import org.eclipse.jgit.revwalk.filter.RevFilter
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.treewalk.TreeWalk
-import org.jetbrains.annotations.VisibleForTesting
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.Instant
@@ -212,7 +211,9 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
         .setGpgConfig(mockGpgConfig)
 
       userDataProvider()?.let {
-        commitData.author = PersonIdent(it.loginName, it.email)
+        val personIdent = PersonIdent(it.loginName, it.email)
+        commitData.author = personIdent
+        commitData.committer = personIdent
       }
       val commit = commitData.call()
 
