@@ -177,7 +177,7 @@ final class UnindexedFilesFinder {
           if (shouldCheckAgainstSingleIndex && !(FileTypeIndex.NAME.equals(indexId) && fileTypeIndexAlreadyUpToData)) {
             long contentlessStartTime = needsFileContentLoading ? -1 : System.nanoTime(); // measure contentless indexes only
             try {
-              checkFileStatusAgainstSingleIndex(indexId, fileStatusBuilder, indexedFile, inputId);
+              applyOrScheduleRequiredIndex(indexId, fileStatusBuilder, indexedFile, inputId);
             }
             finally {
               if (contentlessStartTime >= 0) fileStatusBuilder.timeUpdatingContentLessIndexes += (System.nanoTime() - contentlessStartTime);
@@ -216,10 +216,10 @@ final class UnindexedFilesFinder {
     });
   }
 
-  private void checkFileStatusAgainstSingleIndex(ID<?, ?> indexId,
-                                                 UnindexedFileStatusBuilder fileStatusBuilder,
-                                                 IndexedFileImpl indexedFile,
-                                                 int inputId) {
+  private void applyOrScheduleRequiredIndex(ID<?, ?> indexId,
+                                            UnindexedFileStatusBuilder fileStatusBuilder,
+                                            IndexedFileImpl indexedFile,
+                                            int inputId) {
     if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) return;
     if (!RebuildStatus.isOk(indexId)) {
       fileStatusBuilder.mayMarkFileIndexed = false;
