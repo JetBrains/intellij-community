@@ -93,22 +93,3 @@ class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout
 
   val project get() = editor.project ?: ProjectManager.getInstance().defaultProject
 }
-
-class HidingMouseListener(
-  private val mainComponent: JComponent,
-  private vararg val componentsToHide: Component
-) : MouseAdapter() {
-  override fun mouseEntered(e: MouseEvent) {
-    for (c in componentsToHide) {
-      c.isVisible = true
-    }
-  }
-
-  override fun mouseExited(e: MouseEvent) {
-    if (e.point !in mainComponent.bounds) {
-      for (c in componentsToHide) {
-        c.isVisible = false
-      }
-    }
-  }
-}

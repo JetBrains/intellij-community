@@ -6,11 +6,12 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.notebooks.ui.SteadyUIPanel
 import java.awt.*
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.border.AbstractBorder
@@ -23,7 +24,7 @@ class JupyterCellBorderButton(
   private val sausageUi = SausageButtonUI(editor)
 
   fun initialize() {
-    isVisible = PlatformUtils.isGateway()
+    isVisible = false
     setUI(sausageUi)
     defineButtonAppearance(editor, this, action)
     addActionListener {
@@ -146,3 +147,21 @@ private class SausageButtonUI(val editor: Editor) : BasicButtonUI() {
   }
 }
 
+class HidingMouseListener(
+  private val mainComponent: JComponent,
+  private vararg val componentsToHide: Component
+) : MouseAdapter() {
+  override fun mouseEntered(e: MouseEvent) {
+    for (c in componentsToHide) {
+      c.isVisible = true
+    }
+  }
+
+  override fun mouseExited(e: MouseEvent) {
+    if (e.point !in mainComponent.bounds) {
+      for (c in componentsToHide) {
+        c.isVisible = false
+      }
+    }
+  }
+}
