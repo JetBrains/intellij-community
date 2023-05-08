@@ -271,8 +271,10 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
     }
 
+    final AbstractVcs singleVcs = vcsManager.getSingleVCS();
     presentation.setVisible(true);
-    presentation.setEnabled(!vcsManager.isBackgroundVcsOperationRunning());
+    presentation.setEnabled(!vcsManager.isBackgroundVcsOperationRunning() &&
+                            (singleVcs == null || !singleVcs.isUpdateActionDisabled()));
   }
 
   private static boolean supportingVcsesAreEmpty(final ProjectLevelVcsManager vcsManager, final ActionInfo actionInfo) {

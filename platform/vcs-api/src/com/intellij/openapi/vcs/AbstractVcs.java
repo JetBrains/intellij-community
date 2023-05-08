@@ -161,6 +161,26 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
+   * Allows to disable 'Commit' action
+   * Takes effect for project that have configured mappings for this VCS only
+   *
+   * @return true if 'Commit' action should be disabled.
+   */
+  public boolean isCommitActionDisabled() {
+    return false;
+  }
+
+  /**
+   * Allows to disable 'Update' action
+   * Takes effect for project that have configured mappings for this VCS only
+   *
+   * @return true if 'Update' action should be disabled.
+   */
+  public boolean isUpdateActionDisabled() {
+    return false;
+  }
+
+  /**
    * Allows to hide 'Shelf' toolwindow tab.
    * Takes effect for projects that have configured mappings for this VCS only.
    *
