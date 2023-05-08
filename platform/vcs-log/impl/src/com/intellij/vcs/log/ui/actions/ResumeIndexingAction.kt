@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogIndex
-import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.data.index.toggleIndexing
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
@@ -20,11 +20,13 @@ class ResumeIndexingAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val data = e.getData(VcsLogInternalDataKeys.LOG_DATA)
     val project = e.project
-    if (data == null || project == null || !VcsLogSharedSettings.isIndexSwitchedOn(project)) {
+    val index = data?.index as? VcsLogModifiableIndex
+    if (data == null || project == null || !VcsLogSharedSettings.isIndexSwitchedOn(project) || index == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    val rootsForIndexing = VcsLogPersistentIndex.getRootsForIndexing(data.logProviders)
+
+    val rootsForIndexing = index.indexingRoots
     if (rootsForIndexing.isEmpty()) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -59,11 +61,10 @@ class ResumeIndexingAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this)
 
-    val data = e.getRequiredData(VcsLogInternalDataKeys.LOG_DATA)
-    val rootsForIndexing = VcsLogPersistentIndex.getRootsForIndexing(data.logProviders)
-    if (rootsForIndexing.isEmpty()) return
+    val index = e.getRequiredData(VcsLogInternalDataKeys.LOG_DATA).index as? VcsLogModifiableIndex ?: return
+    if (index.indexingRoots.isEmpty()) return
 
-    data.index.toggleIndexing(rootsForIndexing)
+    index.toggleIndexing()
   }
 
   companion object {

@@ -2,7 +2,6 @@
 @file:JvmName("VcsLogIndexUtils")
 package com.intellij.vcs.log.data.index
 
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.ui.actions.ResumeIndexingAction.Companion.isBig
 import com.intellij.vcs.log.ui.actions.ResumeIndexingAction.Companion.isScheduledForIndexing
@@ -32,15 +31,15 @@ fun VcsLogModifiableIndex.isIndexingPaused(): Boolean {
  * Resume Log indexing if paused or pause indexing if indexing is in progress.
  */
 @RequiresEdt
-internal fun VcsLogIndex.toggleIndexing(rootsForIndexing: Set<VirtualFile>) {
-  if (rootsForIndexing.any { it.isScheduledForIndexing(this) }) {
-    rootsForIndexing.filter { !it.isBig() }.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
+internal fun VcsLogModifiableIndex.toggleIndexing() {
+  if (indexingRoots.any { it.isScheduledForIndexing(this) }) {
+    indexingRoots.filter { !it.isBig() }.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
   }
   else {
     var resumed = false
-    for (root in rootsForIndexing.filter { it.isBig() }) {
+    for (root in indexingRoots.filter { it.isBig() }) {
       resumed = resumed or VcsLogBigRepositoriesList.getInstance().removeRepository(root)
     }
-    if (resumed) (this as? VcsLogModifiableIndex)?.scheduleIndex(false)
+    if (resumed) scheduleIndex(false)
   }
 }
