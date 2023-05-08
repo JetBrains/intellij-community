@@ -443,8 +443,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
       for (FileEditor editor : fileEditorManager.getAllEditors(file)) {
-        if (editor instanceof TextEditorImpl) {
-          ((TextEditorImpl)editor).updateModifiedProperty();
+        if (editor instanceof FileEditorWithUpdatableModified) {
+          ((FileEditorWithUpdatableModified)editor).updateModifiedProperty();
         }
       }
     }

@@ -39,7 +39,9 @@ private val TRANSIENT_EDITOR_STATE_KEY = Key.create<TransientEditorState>("trans
 open class TextEditorImpl @Internal constructor(@JvmField protected val project: Project,
                                                 @JvmField protected val file: VirtualFile,
                                                 editor: EditorImpl,
-                                                private val asyncLoader: AsyncEditorLoader) : UserDataHolderBase(), TextEditor {
+                                                private val asyncLoader: AsyncEditorLoader) : UserDataHolderBase(),
+                                                                                              TextEditor,
+                                                                                              FileEditorWithUpdatableModified {
   @Suppress("LeakingThis")
   private val changeSupport = PropertyChangeSupport(this)
   private val component: TextEditorComponent
@@ -160,7 +162,7 @@ open class TextEditorImpl @Internal constructor(@JvmField protected val project:
 
   override fun isValid(): Boolean = component.isEditorValid
 
-  fun updateModifiedProperty() {
+  override fun updateModifiedProperty() {
     component.updateModifiedProperty()
   }
 
