@@ -2,36 +2,20 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.ui.EditorNotifications
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.*
 import java.util.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
-
-@Service(Service.Level.PROJECT)
-internal class AsyncEditorLoaderService(private val project: Project, private val coroutineScope: CoroutineScope) {
-  fun start(textEditor: TextEditorImpl, editorComponent: TextEditorComponent, provider: TextEditorProvider): AsyncEditorLoader {
-    val loader = AsyncEditorLoader(project = project,
-                                   textEditor = textEditor,
-                                   editorComponent = editorComponent,
-                                   provider = provider,
-                                   coroutineScope = coroutineScope.childScope(supervisor = false))
-
-    loader.start()
-    return loader
-  }
-}
 
 class AsyncEditorLoader internal constructor(private val project: Project,
                                              private val textEditor: TextEditorImpl,
@@ -109,9 +93,9 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     withContext(Dispatchers.EDT) {
       editor.putUserData(ASYNC_LOADER, null)
 
-      LOG.runAndLogException {
+      runCatching {
         continuation.run()
-      }
+      }.getOrLogException(LOG)
 
       ensureActive()
 

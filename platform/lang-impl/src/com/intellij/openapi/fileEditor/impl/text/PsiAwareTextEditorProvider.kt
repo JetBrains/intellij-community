@@ -37,7 +37,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     return object : AsyncFileEditorProvider.Builder() {
       override fun build(): FileEditor {
         val editor = factory.createMainEditor(document, project, file)
-        return PsiAwareTextEditorImpl(project, file, this@PsiAwareTextEditorProvider, editor)
+        return PsiAwareTextEditorImpl(project = project, file = file, provider = this@PsiAwareTextEditorProvider, editor = editor)
       }
     }
   }
@@ -48,7 +48,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     return object : AsyncFileEditorProvider.Builder() {
       override fun build(): FileEditor {
         val editor = factory.createMainEditor(document, project, file)
-        return PsiAwareTextEditorImpl(project, file, this@PsiAwareTextEditorProvider, editor)
+        return PsiAwareTextEditorImpl(project = project, file = file, provider = this@PsiAwareTextEditorProvider, editor = editor)
       }
     }
   }

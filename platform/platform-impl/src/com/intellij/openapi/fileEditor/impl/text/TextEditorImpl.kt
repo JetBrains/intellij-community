@@ -5,6 +5,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -22,7 +24,9 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
@@ -52,10 +56,18 @@ open class TextEditorImpl(@JvmField protected val project: Project,
       state.applyTo(component.editor)
       file.putUserData(TRANSIENT_EDITOR_STATE_KEY, null)
     }
+
     @Suppress("LeakingThis")
     Disposer.register(this, component)
+
+    val service = project.service<AsyncEditorLoaderService>()
     @Suppress("LeakingThis")
-    asyncLoader = project.getService(AsyncEditorLoaderService::class.java).start(this, component, provider)
+    asyncLoader = AsyncEditorLoader(project = project,
+                                    textEditor = this,
+                                    editorComponent = component,
+                                    provider = provider,
+                                    coroutineScope = service.coroutineScope.childScope(supervisor = false))
+    asyncLoader.start()
   }
 
   // don't pollute global scope
@@ -184,3 +196,6 @@ private class TransientEditorState {
     }
   }
 }
+
+@Service(Service.Level.PROJECT)
+private class AsyncEditorLoaderService(@JvmField val coroutineScope: CoroutineScope)
