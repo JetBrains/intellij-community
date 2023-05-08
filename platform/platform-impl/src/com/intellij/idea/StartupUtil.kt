@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
@@ -31,14 +32,11 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.ui.AppUIUtil
-import com.intellij.ui.IconManager
-import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.*
 import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.*
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.lang.ZipFilePool
@@ -285,13 +283,23 @@ ${dumpCoroutines(stripDump = false)}
 
     if (!isHeadless && configImportNeededDeferred.await()) {
       initLafJob.join()
+      val log = logDeferred.await()
       importConfig(
         args = args,
-        log = logDeferred.await(),
+        log = log,
         appStarter = appStarterDeferred.await(),
         euaDocumentDeferred = euaDocumentDeferred,
       )
       PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred)
+
+      if (ConfigImportHelper.isNewUser()) {
+        runCatching {
+          EarlyAccessRegistryManager.setAndFlush(hashMapOf(
+            "ide.experimental.ui" to "true",
+            "debugger.new.tool.window.layout" to "true",
+          ))
+        }.getOrLogException(log)
+      }
     }
     else {
       // must be scheduled before starting app

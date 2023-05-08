@@ -271,6 +271,20 @@ public class RegistryValue {
     myChangedSinceStart = true;
   }
 
+  @ApiStatus.Internal
+  public void setValueSilently(String value) {
+    resetCache();
+
+    myRegistry.getUserProperties().put(myKey, value);
+    LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'');
+
+    if (!isChangedFromDefault() && !isRestartRequired()) {
+      myRegistry.getUserProperties().remove(myKey);
+    }
+
+    myChangedSinceStart = true;
+  }
+
   public void setValue(boolean value, @NotNull Disposable parentDisposable) {
     final boolean prev = asBoolean();
     setValue(value);
