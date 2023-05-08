@@ -35,7 +35,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Objects;
 
-public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
+public class TextEditorImpl extends UserDataHolderBase implements TextEditor, FileEditorWithUpdatableModified {
   private static final Logger LOG = Logger.getInstance(TextEditorImpl.class);
 
   private static final Key<TransientEditorState> TRANSIENT_EDITOR_STATE_KEY = Key.create("transientState");
@@ -169,6 +169,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     return myComponent.isEditorValid();
   }
 
+  @Override
   public void updateModifiedProperty() {
     myComponent.updateModifiedProperty();
   }

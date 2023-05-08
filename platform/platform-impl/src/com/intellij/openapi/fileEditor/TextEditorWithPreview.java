@@ -56,7 +56,7 @@ import static com.intellij.openapi.actionSystem.ActionPlaces.TEXT_EDITOR_WITH_PR
  *
  * @author Konstantin Bulenkov
  */
-public class TextEditorWithPreview extends UserDataHolderBase implements TextEditor {
+public class TextEditorWithPreview extends UserDataHolderBase implements TextEditor, FileEditorWithUpdatableModified {
   protected final TextEditor myEditor;
   protected final FileEditor myPreview;
   private final @NotNull MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
@@ -316,6 +316,17 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
   public Layout getLayout() {
     return myLayout;
+  }
+
+  @Override
+  public void updateModifiedProperty() {
+    if (myEditor instanceof FileEditorWithUpdatableModified) {
+      ((FileEditorWithUpdatableModified)myEditor).updateModifiedProperty();
+    }
+
+    if (myPreview instanceof FileEditorWithUpdatableModified) {
+      ((FileEditorWithUpdatableModified)myPreview).updateModifiedProperty();
+    }
   }
 
   public static class MyFileEditorState implements FileEditorState {
