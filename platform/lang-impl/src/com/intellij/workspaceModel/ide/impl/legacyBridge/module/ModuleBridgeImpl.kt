@@ -44,24 +44,6 @@ private val moduleBridgeBeforeChangedTimeMs: AtomicLong = AtomicLong()
 private val facetsInitializationTimeMs: AtomicLong = AtomicLong()
 private val updateOptionTimeMs: AtomicLong = AtomicLong()
 
-private fun setupOpenTelemetryReporting(meter: Meter) {
-  val moduleBridgeBeforeChangedTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.before.changed.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
-  val facetsInitializationTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.facet.initialization.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
-  val updateOptionTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.update.option.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-  meter.batchCallback(
-    {
-      moduleBridgeBeforeChangedTimeGauge.record(moduleBridgeBeforeChangedTimeMs.get())
-      facetsInitializationTimeGauge.record(facetsInitializationTimeMs.get())
-      updateOptionTimeGauge.record(updateOptionTimeMs.get())
-    },
-    moduleBridgeBeforeChangedTimeGauge, facetsInitializationTimeGauge, updateOptionTimeGauge
-  )
-}
-
 @Suppress("OVERRIDE_DEPRECATION")
 internal class ModuleBridgeImpl(
   override var moduleEntityId: ModuleId,
@@ -230,6 +212,24 @@ internal class ModuleBridgeImpl(
   }
 
   companion object {
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val moduleBridgeBeforeChangedTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.before.changed.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val facetsInitializationTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.facet.initialization.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val updateOptionTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.update.option.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      meter.batchCallback(
+        {
+          moduleBridgeBeforeChangedTimeGauge.record(moduleBridgeBeforeChangedTimeMs.get())
+          facetsInitializationTimeGauge.record(facetsInitializationTimeMs.get())
+          updateOptionTimeGauge.record(updateOptionTimeMs.get())
+        },
+        moduleBridgeBeforeChangedTimeGauge, facetsInitializationTimeGauge, updateOptionTimeGauge
+      )
+    }
+
     init {
       setupOpenTelemetryReporting(jpsMetrics.meter)
     }
