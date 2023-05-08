@@ -10,7 +10,6 @@ interface VfsSnapshot {
   val point: () -> OperationLogStorage.Iterator
 
   fun getFileById(fileId: Int): VirtualFileSnapshot
-  fun getFileByIdIfExists(fileId: Int): VirtualFileSnapshot?
 
   interface VirtualFileSnapshot {
     val fileId: Int

@@ -40,8 +40,6 @@ class FSRecordsOracle(
       return OracledVirtualFileSnapshot(fileId)
     }
 
-    override fun getFileByIdIfExists(fileId: Int) = getFileById(fileId)
-
     inner class OracledVirtualFileSnapshot(override val fileId: Int) : VfsSnapshot.VirtualFileSnapshot {
       override val nameId: Property<Int> = OracledProp(
         queryLog = {

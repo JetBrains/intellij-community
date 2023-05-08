@@ -20,8 +20,6 @@ class NotAvailableVfsSnapshot(point: OperationLogStorage.Iterator) : VfsSnapshot
     return NotAvailableVirtualFileSnapshot(fileId)
   }
 
-  override fun getFileByIdIfExists(fileId: Int) = getFileById(fileId)
-
   class NotAvailableVirtualFileSnapshot(override val fileId: Int) : VirtualFileSnapshot {
     override val nameId = NotAvailableProp<Int>()
     override val name = NotAvailableProp<String>()
@@ -58,8 +56,6 @@ class CacheAwareVfsSnapshot(
   override fun getFileById(fileId: Int): VirtualFileSnapshot = fileCache.computeIfAbsent(fileId) {
     CacheAwareVirtualFileSnapshot(fileId)
   }
-
-  override fun getFileByIdIfExists(fileId: Int): VirtualFileSnapshot? = fileCache.get(fileId)
 
   inner class CacheAwareVirtualFileSnapshot(override val fileId: Int) : VirtualFileSnapshot {
     override val nameId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::nameId) { stopIter, iter ->
