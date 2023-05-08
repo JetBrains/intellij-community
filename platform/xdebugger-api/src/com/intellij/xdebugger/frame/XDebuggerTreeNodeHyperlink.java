@@ -26,32 +26,15 @@ public abstract class XDebuggerTreeNodeHyperlink {
 
   @Nullable
   private final Icon linkIcon;
-  
-  private final boolean isClickedOnEnter;
 
   protected XDebuggerTreeNodeHyperlink(@NotNull @Nls String linkText) {
-    this(linkText, null, null, false);
-  }
-  
-  protected XDebuggerTreeNodeHyperlink(@NotNull @Nls String linkText, @Nullable XFullValueEvaluator.LinkAttributes linkAttributes) {
-    this(
-      linkText,
-      linkAttributes != null ? linkAttributes.getLinkTooltipText() : null,
-      linkAttributes != null ? linkAttributes.getLinkIcon() : null,
-      linkAttributes != null && linkAttributes.isClickedOnEnter()
-    );
+    this(linkText, null, null);
   }
 
-  private XDebuggerTreeNodeHyperlink(
-    @NotNull @Nls String linkText,
-    @Nullable @Nls String toolTipText,
-    @Nullable Icon icon,
-    boolean isExpandedOnEnter
-  ) {
+  protected XDebuggerTreeNodeHyperlink(@NotNull @Nls String linkText, @Nullable @Nls String toolTipText, @Nullable Icon icon) {
     this.linkText = linkText;
     this.linkTooltip = toolTipText;
     this.linkIcon = icon;
-    this.isClickedOnEnter = isExpandedOnEnter;
   }
 
   @NotNull
@@ -71,10 +54,6 @@ public abstract class XDebuggerTreeNodeHyperlink {
     return linkIcon;
   }
 
-  public boolean getIsClickedOnEnter() {
-    return isClickedOnEnter;
-  } 
-  
   @NotNull
   public SimpleTextAttributes getTextAttributes() {
     return TEXT_ATTRIBUTES;

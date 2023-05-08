@@ -223,7 +223,11 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   @Override
   public XDebuggerTreeNodeHyperlink getLink() {
     if (myFullValueEvaluator != null && myFullValueEvaluator.isEnabled()) {
-      return new XDebuggerTreeNodeHyperlink(myFullValueEvaluator.getLinkText(), myFullValueEvaluator.getLinkAttributes()) {
+      return new XDebuggerTreeNodeHyperlink(
+        myFullValueEvaluator.getLinkText(),
+        myFullValueEvaluator.getLinkTooltipText(),
+        myFullValueEvaluator.getLinkIcon()
+      ) {
         @Override
         public boolean alwaysOnScreen() {
           return true;
