@@ -154,7 +154,7 @@ private class SquareAnActionButton(private val window: ToolWindowImpl) : ToggleA
   override fun isSelected(e: AnActionEvent): Boolean {
     e.presentation.icon = window.icon ?: AllIcons.Toolbar.Unknown
     scaleIcon(e.presentation)
-    e.presentation.isVisible = window.isShowStripeButton
+    e.presentation.isVisible = window.isShowStripeButton && window.isAvailable
     return window.isVisible
   }
 
