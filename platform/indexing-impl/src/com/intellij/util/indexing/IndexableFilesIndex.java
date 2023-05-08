@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,9 @@ public interface IndexableFilesIndex {
 
   @RequiresBackgroundThread
   boolean shouldBeIndexed(@NotNull VirtualFile file);
+
+  @NotNull
+  Collection<? extends IndexableSetOrigin> getOrigins(@NotNull Collection<VirtualFile> files);
 
   @RequiresBackgroundThread
   @NotNull

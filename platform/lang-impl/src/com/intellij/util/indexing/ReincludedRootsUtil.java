@@ -14,10 +14,12 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.IndexingContributorCustomization;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder;
 import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
+import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
@@ -47,15 +49,26 @@ public final class ReincludedRootsUtil {
   }
 
   @NotNull
-  public static List<IndexableIteratorBuilder> createBuildersForReincludedFiles(@NotNull Project project,
+  public static Collection<IndexableIteratorBuilder> createBuildersForReincludedFiles(@NotNull Project project,
                                                                                 @NotNull Collection<VirtualFile> reincludedRoots) {
     if (reincludedRoots.isEmpty()) return Collections.emptyList();
-    Classifier classifier = classifyFiles(project, reincludedRoots);
+    return classifyFiles(project, reincludedRoots).createAllBuilders(project);
+  }
 
-    ArrayList<IndexableIteratorBuilder> result = new ArrayList<>(classifier.createBuildersFromWorkspaceFiles());
-    result.addAll(classifier.createBuildersFromFilesFromIndexableSetContributors(project));
-    result.addAll(classifier.createBuildersFromFilesFromAdditionalLibraryRootsProviders(project));
-    return result;
+  @NotNull
+  public static Collection<IndexableSetOrigin> createOriginsForFiles(@NotNull Project project,
+                                                                     @NotNull Collection<VirtualFile> files) {
+    if (files.isEmpty()) return Collections.emptyList();
+    Classifier classifier = classifyFiles(project, files);
+
+    Collection<IndexableIteratorBuilder> builders = classifier.createAllBuilders(project);
+    if (builders.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<IndexableFilesIterator> mergedIterators =
+      IndexableIteratorBuilders.INSTANCE.instantiateBuilders(builders, project, ((CustomizableRootsBuilder)classifier).entityStorage);
+    return ContainerUtil.map(mergedIterators, iterator -> iterator.getOrigin());
   }
 
   public interface Classifier {
@@ -71,6 +84,9 @@ public final class ReincludedRootsUtil {
     Collection<IndexableIteratorBuilder> createBuildersFromFilesFromAdditionalLibraryRootsProviders(@NotNull Project project);
 
     Collection<IndexableIteratorBuilder> createBuildersFromFilesFromIndexableSetContributors(@NotNull Project project);
+
+    @NotNull
+    Collection<IndexableIteratorBuilder> createAllBuilders(@NotNull Project project);
   }
 
   @NotNull
@@ -153,26 +169,26 @@ public final class ReincludedRootsUtil {
       }
     }
 
-    public void addModuleRoot(Module module, EntityReference<?> entityReference, VirtualFile file) {
+    private void addModuleRoot(Module module, EntityReference<?> entityReference, VirtualFile file) {
       filesFromModulesContent.add(new ModuleRootData<>(entityReference, ((ModuleBridge)module).getModuleEntityId(), file));
       references.add(entityReference);
     }
 
-    public void addContentRoot(EntityReference<?> entityReference, VirtualFile file) {
+    private void addContentRoot(EntityReference<?> entityReference, VirtualFile file) {
       filesFromContent.add(new ContentRootData<>(entityReference, file));
       references.add(entityReference);
     }
 
-    public void addExternalRoots(EntityReference<?> entityReference, Collection<VirtualFile> roots, Collection<VirtualFile> sourceRoots) {
+    private void addExternalRoots(EntityReference<?> entityReference, Collection<VirtualFile> roots, Collection<VirtualFile> sourceRoots) {
       filesFromExternal.add(new ExternalRootData<>(entityReference, roots, sourceRoots));
       references.add(entityReference);
     }
 
-    public void addSdkFile(Sdk sdk, VirtualFile file) {
+    private void addSdkFile(Sdk sdk, VirtualFile file) {
       filesFromSdks.putValue(sdk, file);
     }
 
-    void addLibraryFile(LibraryId id, VirtualFile file, boolean isSource) {
+    private void addLibraryFile(LibraryId id, VirtualFile file, boolean isSource) {
       if (isSource) {
         sourceFilesFromLibraries.putValue(id, file);
       }
@@ -181,11 +197,11 @@ public final class ReincludedRootsUtil {
       }
     }
 
-    record ModuleRootData<E extends WorkspaceEntity>(@NotNull EntityReference<E> entityReference,
-                                                     @NotNull ModuleId moduleId,
-                                                     @NotNull VirtualFile file) {
-      public @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityReference<?>, WorkspaceEntity> referenceMap,
-                                                                          Map<Class<WorkspaceEntity>, CustomizingIndexingContributor<?, ?>> contributorMap) {
+    private record ModuleRootData<E extends WorkspaceEntity>(@NotNull EntityReference<E> entityReference,
+                                                             @NotNull ModuleId moduleId,
+                                                             @NotNull VirtualFile file) {
+      private @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityReference<?>, WorkspaceEntity> referenceMap,
+                                                                           Map<Class<WorkspaceEntity>, CustomizingIndexingContributor<?, ?>> contributorMap) {
         IndexingContributorCustomization<E, ?> customization = findCustomization(entityReference, referenceMap, contributorMap);
         if (customization == null) {
           return IndexableIteratorBuilders.INSTANCE.forModuleRootsFileBased(moduleId, Collections.singletonList(file));
@@ -195,7 +211,7 @@ public final class ReincludedRootsUtil {
       }
     }
 
-    record ContentRootData<E extends WorkspaceEntity>(@NotNull EntityReference<E> entityReference, @NotNull VirtualFile file) {
+    private record ContentRootData<E extends WorkspaceEntity>(@NotNull EntityReference<E> entityReference, @NotNull VirtualFile file) {
       public @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityReference<?>, WorkspaceEntity> referenceMap,
                                                                           Map<Class<WorkspaceEntity>, CustomizingIndexingContributor<?, ?>> contributorMap) {
         IndexingContributorCustomization<E, ?> customization = findCustomization(entityReference, referenceMap, contributorMap);
@@ -203,8 +219,9 @@ public final class ReincludedRootsUtil {
       }
     }
 
-    record ExternalRootData<E extends WorkspaceEntity>(@NotNull EntityReference<E> entityReference, @NotNull Collection<VirtualFile> roots,
-                                                       @NotNull Collection<VirtualFile> sourceRoots) {
+    private record ExternalRootData<E extends WorkspaceEntity>(@NotNull EntityReference<E> entityReference,
+                                                               @NotNull Collection<VirtualFile> roots,
+                                                               @NotNull Collection<VirtualFile> sourceRoots) {
       public @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityReference<?>, WorkspaceEntity> referenceMap,
                                                                           Map<Class<WorkspaceEntity>, CustomizingIndexingContributor<?, ?>> contributorMap) {
         IndexingContributorCustomization<E, ?> customization = findCustomization(entityReference, referenceMap, contributorMap);
@@ -304,6 +321,14 @@ public final class ReincludedRootsUtil {
       if (!rootsFromLibs.isEmpty()) {
         LOG.error("Failed fo find any SyntheticLibrary roots for " + StringUtil.join(rootsFromLibs, "\n"));
       }
+      return result;
+    }
+
+    @Override
+    public @NotNull Collection<IndexableIteratorBuilder> createAllBuilders(@NotNull Project project) {
+      List<IndexableIteratorBuilder> result = new ArrayList<>(createBuildersFromWorkspaceFiles());
+      result.addAll(createBuildersFromFilesFromIndexableSetContributors(project));
+      result.addAll(createBuildersFromFilesFromAdditionalLibraryRootsProviders(project));
       return result;
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.navigation.ItemPresentation
@@ -48,6 +48,6 @@ internal class SyntheticLibraryIndexableFilesIteratorImpl(private val name: Stri
   }
 
   companion object {
-    private fun getName(syntheticLibrary: SyntheticLibrary) = (syntheticLibrary as? ItemPresentation)?.presentableText
+    internal fun getName(syntheticLibrary: SyntheticLibrary) = (syntheticLibrary as? ItemPresentation)?.presentableText
   }
 }

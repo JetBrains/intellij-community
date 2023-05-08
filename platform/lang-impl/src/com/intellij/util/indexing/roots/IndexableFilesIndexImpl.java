@@ -19,6 +19,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import com.intellij.util.indexing.IndexableFilesIndex;
 import com.intellij.util.indexing.IndexableSetContributor;
+import com.intellij.util.indexing.ReincludedRootsUtil;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
@@ -65,6 +66,11 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
   public boolean shouldBeIndexed(@NotNull VirtualFile file) {
     if (WorkspaceFileIndex.getInstance(project).isInWorkspace(file)) return true;
     return filesFromIndexableSetContributors.isInSet(file);
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableSetOrigin> getOrigins(@NotNull Collection<VirtualFile> files) {
+    return ReincludedRootsUtil.createOriginsForFiles(project, files);
   }
 
   @Override

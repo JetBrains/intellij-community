@@ -5,10 +5,12 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.IndexableFilesIndex
+import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -52,6 +54,7 @@ object IndexableEntityProviderMethods {
       if (module == null) {
         return emptyList()
       }
+      @Suppress("DEPRECATION")
       return ModuleIndexableFilesIteratorImpl.getModuleIterators(module)
     }
   }
@@ -100,4 +103,13 @@ object IndexableEntityProviderMethods {
     if (roots.isEmpty()) return emptyList()
     return listOf(ModuleAwareContentEntityIteratorImpl(module, reference, roots))
   }
+
+  fun createForIndexableSetContributor(contributor: IndexableSetContributor,
+                                       isProjectAware: Boolean,
+                                       roots: Collection<VirtualFile>): Collection<IndexableFilesIterator> =
+    listOf(IndexableSetContributorFilesIterator(contributor, roots, isProjectAware))
+
+  fun createForSyntheticLibrary(library: SyntheticLibrary,
+                                roots: Collection<VirtualFile>): Collection<IndexableFilesIterator> =
+    listOf(SyntheticLibraryIndexableFilesIteratorImpl(SyntheticLibraryIndexableFilesIteratorImpl.getName(library), library, roots))
 }
