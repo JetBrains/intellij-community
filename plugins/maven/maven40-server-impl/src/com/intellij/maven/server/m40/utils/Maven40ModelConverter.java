@@ -21,28 +21,20 @@ import java.util.*;
 
 public class Maven40ModelConverter {
   @NotNull
-  public static MavenModel convertModel(Model model, File localRepository) {
+  public static MavenModel convertModel(Model model) {
     if(model.getBuild() == null) {
       model.setBuild(new Build());
     }
     Build build = model.getBuild();
     return convertModel(model,
                         asSourcesList(build.getSourceDirectory()),
-                        asSourcesList(build.getTestSourceDirectory()),
-                        Collections.emptyList(),
-                        //Collections.emptyList(),
-                        Collections.emptyList(),
-                        localRepository);
+                        asSourcesList(build.getTestSourceDirectory()));
   }
 
   @NotNull
   public static MavenModel convertModel(Model model,
                                         List<String> sources,
-                                        List<String> testSources,
-                                        Collection<? extends Artifact> dependencies,
-                                        //Collection<? extends DependencyNode> dependencyTree,
-                                        Collection<? extends Artifact> extensions,
-                                        File localRepository) {
+                                        List<String> testSources) {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
 
@@ -56,11 +48,6 @@ public class Maven40ModelConverter {
     result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
     result.setPlugins(convertPlugins(model));
 
-    Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<>();
-    result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
-    result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
-    //result.setDependencyTree(convertDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
-
     result.setRemoteRepositories(convertRepositories(model.getRepositories()));
     result.setProfiles(convertProfiles(model.getProfiles()));
     result.setModules(model.getModules());
@@ -70,14 +57,14 @@ public class Maven40ModelConverter {
   }
 
   public static List<MavenPlugin> convertPlugins(Model mavenModel) {
-    List<MavenPlugin> result = new ArrayList<MavenPlugin>();
+    List<MavenPlugin> result = new ArrayList<>();
     Build build = mavenModel.getBuild();
 
     if (build != null) {
       List<Plugin> plugins = build.getPlugins();
       if (plugins != null) {
         for (Plugin each : plugins) {
-          result.add(convertPlugin(false, each));
+          result.add(convertPlugin(each));
         }
       }
     }
@@ -85,7 +72,7 @@ public class Maven40ModelConverter {
     return result;
   }
 
-  private static MavenPlugin convertPlugin(boolean isDefault, Plugin plugin) {
+  private static MavenPlugin convertPlugin(Plugin plugin) {
     List<MavenPlugin.Execution> executions = new ArrayList<>(plugin.getExecutions().size());
     for (PluginExecution each : plugin.getExecutions()) {
       executions.add(convertExecution(each));
@@ -99,7 +86,7 @@ public class Maven40ModelConverter {
     return new MavenPlugin(plugin.getGroupId(),
                            plugin.getArtifactId(),
                            plugin.getVersion(),
-                           isDefault,
+                           false,
                            "true".equals(plugin.getExtensions()),
                            convertConfiguration(plugin.getConfiguration()),
                            executions, deps);
@@ -470,13 +457,13 @@ public class Maven40ModelConverter {
   public static List<MavenArtifact> convertArtifacts(Collection<? extends Artifact> artifacts,
                                                      Map<Artifact, MavenArtifact> nativeToConvertedMap,
                                                      File localRepository) {
-    if (artifacts == null) return new ArrayList<MavenArtifact>();
+    if (artifacts == null) return new ArrayList<>();
 
-    Set<MavenArtifact> result = new LinkedHashSet<MavenArtifact>(artifacts.size());
+    Set<MavenArtifact> result = new LinkedHashSet<>(artifacts.size());
     for (Artifact each : artifacts) {
       result.add(convertArtifact(each, nativeToConvertedMap, localRepository));
     }
-    return new ArrayList<MavenArtifact>(result);
+    return new ArrayList<>(result);
   }
 
   public static MavenArtifact convertArtifact(Artifact artifact, Map<Artifact, MavenArtifact> nativeToConvertedMap, File localRepository) {

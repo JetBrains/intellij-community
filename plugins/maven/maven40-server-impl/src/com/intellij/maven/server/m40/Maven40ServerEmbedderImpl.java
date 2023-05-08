@@ -1387,7 +1387,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       if (reader != null) {
         try {
           Model model = reader.read(file, inputOptions);
-          return Maven40ModelConverter.convertModel(model, null);
+          return Maven40ModelConverter.convertModel(model);
         }
         catch (Exception e) {
           MavenServerGlobals.getLogger().warn(e);

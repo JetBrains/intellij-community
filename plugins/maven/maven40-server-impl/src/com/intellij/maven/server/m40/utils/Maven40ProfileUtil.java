@@ -107,9 +107,9 @@ public final class Maven40ProfileUtil {
       new DefaultProfileInjector().injectProfile(nativeModel, each, null, null);
     }
 
-    return new ProfileApplicationResult(Maven40ModelConverter.convertModel(nativeModel, null),
-                                        new MavenExplicitProfiles(collectProfilesIds(activatedProfiles),
-                                                                  collectProfilesIds(deactivatedProfiles))
+    return new ProfileApplicationResult(
+      Maven40ModelConverter.convertModel(nativeModel),
+      new MavenExplicitProfiles(collectProfilesIds(activatedProfiles), collectProfilesIds(deactivatedProfiles))
     );
   }
 
@@ -172,7 +172,7 @@ public final class Maven40ProfileUtil {
     Model result = doInterpolate(interpolator, nativeModel, basedir);
     MyDefaultPathTranslator myPathTranslator = new MyDefaultPathTranslator(pathTranslator);
     myPathTranslator.alignToBaseDirectory(result, basedir);
-    return Maven40ModelConverter.convertModel(result, null);
+    return Maven40ModelConverter.convertModel(result);
   }
 
   private static Model doInterpolate(StringVisitorModelInterpolator interpolator, @NotNull Model result, File basedir) {

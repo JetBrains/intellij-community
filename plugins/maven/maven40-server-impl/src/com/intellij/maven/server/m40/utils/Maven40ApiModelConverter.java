@@ -4,7 +4,6 @@ package com.intellij.maven.server.m40.utils;
 import com.intellij.util.ReflectionUtilRt;
 import org.apache.maven.api.Artifact;
 import org.apache.maven.api.model.*;
-import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jdom.Element;
@@ -19,44 +18,32 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.*;
 
-public class Maven40ApiModelConverter {
+public final class Maven40ApiModelConverter {
   @NotNull
-  public static MavenModel convertModel(Model model, File localRepository) {
+  public static MavenModel convertModel(Model model) {
     Build build = model.getBuild();
-    return convertModel(model,
-                        asSourcesList(build.getSourceDirectory()),
-                        asSourcesList(build.getTestSourceDirectory()),
-                        Collections.emptyList(),
-                        //Collections.emptyList(),
-                        Collections.emptyList(),
-                        localRepository);
+    return convertModel(
+      model,
+      asSourcesList(build.getSourceDirectory()),
+      asSourcesList(build.getTestSourceDirectory()));
   }
 
   @NotNull
   public static MavenModel convertModel(Model model,
                                         List<String> sources,
-                                        List<String> testSources,
-                                        Collection<? extends Artifact> dependencies,
-                                        //Collection<? extends DependencyNode> dependencyTree,
-                                        Collection<? extends Artifact> extensions,
-                                        File localRepository) {
+                                        List<String> testSources) {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
 
     Parent parent = model.getParent();
     if (parent != null) {
-      result.setParent(new MavenParent(new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion()),
-                                       parent.getRelativePath()));
+      result.setParent(new MavenParent(
+        new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion()), parent.getRelativePath()));
     }
     result.setPackaging(model.getPackaging());
     result.setName(model.getName());
     result.setProperties(model.getProperties());
     result.setPlugins(convertPlugins(model));
-
-    Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<>();
-    result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
-    result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
-    //result.setDependencyTree(convertDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
 
     result.setRemoteRepositories(convertRepositories(model.getRepositories()));
     result.setProfiles(convertProfiles(model.getProfiles()));
@@ -67,7 +54,7 @@ public class Maven40ApiModelConverter {
   }
 
   public static List<MavenPlugin> convertPlugins(Model mavenModel) {
-    List<MavenPlugin> result = new ArrayList<MavenPlugin>();
+    List<MavenPlugin> result = new ArrayList<>();
     Build build = mavenModel.getBuild();
 
     if (build != null) {
@@ -154,10 +141,6 @@ public class Maven40ApiModelConverter {
     result.setFilters(build.getFilters() == null ? Collections.emptyList() : build.getFilters());
   }
 
-  public static MavenId createMavenId(Artifact artifact) {
-    return new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion().asString());
-  }
-
   public static List<MavenResource> convertResources(List<Resource> resources) {
     if (resources == null) return new ArrayList<MavenResource>();
 
@@ -194,22 +177,6 @@ public class Maven40ApiModelConverter {
     }
     return result;
   }
-
-  public static List<MavenRemoteRepository> convertRemoteRepositories(List<? extends ArtifactRepository> repositories) {
-    if (repositories == null) return new ArrayList<MavenRemoteRepository>();
-
-    List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(repositories.size());
-    for (ArtifactRepository each : repositories) {
-      result.add(new MavenRemoteRepository(each.getId(),
-                                           each.getId(),
-                                           each.getUrl(),
-                                           each.getLayout() != null ? each.getLayout().getId() : "default",
-                                           convertPolicy(each.getReleases()),
-                                           convertPolicy(each.getSnapshots())));
-    }
-    return result;
-  }
-
 
   private static MavenRemoteRepository.Policy convertPolicy(RepositoryPolicy policy) {
     return policy != null
@@ -267,20 +234,6 @@ public class Maven40ApiModelConverter {
     return property == null ? null : new MavenProfileActivationProperty(property.getName(), property.getValue());
   }
 
-  public static Map<String, String> convertToMap(Object object) {
-    try {
-      Map<String, String> result = new HashMap<String, String>();
-      doConvert(object, "", result);
-      return result;
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   private static boolean isNativeToString(String toStringResult, Object o) {
     String className = o.getClass().getName();
     return (toStringResult.startsWith(className) && toStringResult.startsWith("@", className.length()));
@@ -320,28 +273,6 @@ public class Maven40ApiModelConverter {
            || Collection.class.isAssignableFrom(clazz)
            || Map.class.isAssignableFrom(clazz)
            || Xpp3Dom.class.isAssignableFrom(clazz);
-  }
-
-  private static List<MavenArtifact> convertArtifacts(Collection<? extends Artifact> artifacts,
-                                                     Map<Artifact, MavenArtifact> nativeToConvertedMap,
-                                                     File localRepository) {
-    if (artifacts == null) return new ArrayList<>();
-
-    Set<MavenArtifact> result = new LinkedHashSet<>(artifacts.size());
-    for (Artifact each : artifacts) {
-      result.add(convertArtifact(each, nativeToConvertedMap, localRepository));
-    }
-    return new ArrayList<>(result);
-  }
-
-  private static MavenArtifact convertArtifact(Artifact artifact, Map<Artifact, MavenArtifact> nativeToConvertedMap, File localRepository) {
-    MavenArtifact result = nativeToConvertedMap.get(artifact);
-    if (result == null) {
-      // TODO: artifact path
-      result = convertArtifactAndPath(artifact, null, localRepository);
-      nativeToConvertedMap.put(artifact, result);
-    }
-    return result;
   }
 
   public static MavenArtifact convertArtifactAndPath(Artifact artifact, Path artifactPath, File localRepository) {

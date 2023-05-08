@@ -31,6 +31,6 @@ public final class Maven40ModelInheritanceAssembler {
       public void add(ModelProblemCollectorRequest request) {
       }
     });
-    return Maven40ApiModelConverter.convertModel(result, null);
+    return Maven40ApiModelConverter.convertModel(result);
   }
 }
