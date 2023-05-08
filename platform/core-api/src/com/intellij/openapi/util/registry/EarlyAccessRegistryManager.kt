@@ -96,7 +96,7 @@ object EarlyAccessRegistryManager {
     }
     // ensure that even if key was not early accessed for some reason, it is stored for early access on next start-up
     val existingValue = if (value == null) map.get(key) else map.putIfAbsent(key, value)
-    if (existingValue == null) {
+    if (existingValue == null || existingValue == value) {
       return value?.takeIf { it.isNotEmpty() }
     }
     else {
