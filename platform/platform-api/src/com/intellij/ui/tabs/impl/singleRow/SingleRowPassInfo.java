@@ -72,7 +72,7 @@ public final class SingleRowPassInfo extends LayoutPassInfo {
         return layoutSize.height;
       }
       return !moreRect.isEmpty() ? moreRect.y - tabs.getActionsInsets().top
-             : !entryPointRect.isEmpty() ? entryPointRect.y - - tabs.getActionsInsets().top
+             : !entryPointRect.isEmpty() ? entryPointRect.y - tabs.getActionsInsets().top
              : layoutSize.height;
     }
   }
