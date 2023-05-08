@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButto
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
+import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
@@ -29,6 +30,8 @@ import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
 import java.util.*
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.Border
 import kotlin.math.ceil
@@ -238,6 +241,20 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   open fun addMenuItems(menu: JPopupMenu) {
     val closeMenuItem = menu.add(myCloseAction)
     closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
+  }
+
+  override fun getAccessibleContext(): AccessibleContext {
+    if (accessibleContext == null) {
+      accessibleContext = AccessibleCustomHeader()
+      accessibleContext.accessibleName = UIBundle.message("frame.header.accessible.group.name")
+    }
+    return accessibleContext
+  }
+
+  private inner class AccessibleCustomHeader: AccessibleJPanel() {
+    override fun getAccessibleRole(): AccessibleRole {
+      return AccessibleRole.GROUP_BOX
+    }
   }
 
   inner class CustomFrameTopBorder(val isTopNeeded: () -> Boolean = { true }, val isBottomNeeded: () -> Boolean = { false }) : Border {

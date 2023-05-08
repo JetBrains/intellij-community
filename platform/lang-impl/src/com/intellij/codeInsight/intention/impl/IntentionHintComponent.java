@@ -54,6 +54,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -447,6 +448,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       myIconLabel = new JLabel(myInactiveIcon);
       myIconLabel.setOpaque(false);
       myIconLabel.addMouseListener(new LightBulbMouseListener(project, file));
+      AccessibleContextUtil.setName(myIconLabel, UIBundle.message("light.bulb.panel.accessible.name"));
 
       if (Registry.is("debugger.inlayRunToCursor") && !topLevelActions.isEmpty()) {
         DefaultActionGroup actions = new DefaultActionGroup(List.copyOf(topLevelActions));

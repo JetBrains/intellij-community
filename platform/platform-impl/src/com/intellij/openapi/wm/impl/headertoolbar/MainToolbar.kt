@@ -24,7 +24,9 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.Header
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
@@ -32,6 +34,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import java.awt.*
 import java.beans.PropertyChangeListener
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -130,6 +134,19 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     component.border = JBUI.Borders.empty()
     component.isOpaque = false
     return component
+  }
+
+  override fun getAccessibleContext(): AccessibleContext {
+    if (accessibleContext == null) accessibleContext = AccessibleMainToolbar()
+    accessibleContext.accessibleName =
+      if (ExperimentalUI.isNewUI() && UISettings.getInstance().separateMainMenu)
+        UIBundle.message("main.toolbar.accessible.group.name")
+      else null
+    return accessibleContext
+  }
+
+  private inner class AccessibleMainToolbar : AccessibleJPanel() {
+    override fun getAccessibleRole(): AccessibleRole = AccessibleRole.GROUP_BOX
   }
 }
 

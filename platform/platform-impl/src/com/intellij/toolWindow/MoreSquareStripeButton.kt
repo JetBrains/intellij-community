@@ -19,6 +19,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import java.awt.*
 import java.awt.event.MouseEvent
 import javax.swing.Icon
@@ -29,6 +30,7 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
   MoreSquareStripeButtonBase(createAction(toolWindowToolbar)) {
 
   init {
+    AccessibleContextUtil.setName(this, UIBundle.message("more.button.accessible.name"))
     addMouseListener(object : PopupHandler() {
       override fun invokePopup(component: Component, x: Int, y: Int) {
         val popupMenu = ActionManager.getInstance()

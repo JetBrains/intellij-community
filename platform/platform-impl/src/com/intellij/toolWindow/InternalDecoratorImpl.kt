@@ -44,6 +44,7 @@ import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.Border
 
@@ -734,6 +735,10 @@ class InternalDecoratorImpl internal constructor(
                ((toolWindow.title?.takeIf(String::isNotEmpty) ?: toolWindow.stripeTitle).takeIf(String::isNotEmpty) ?: toolWindow.id)
                + " " + IdeBundle.message("internal.decorator.accessible.postfix")
                 )
+    }
+
+    override fun getAccessibleRole(): AccessibleRole {
+      return AccessibleRole.GROUP_BOX
     }
   }
 }

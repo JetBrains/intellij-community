@@ -657,6 +657,7 @@ open class IdeStatusBarImpl internal constructor(
   override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {
       accessibleContext = AccessibleIdeStatusBarImpl()
+      accessibleContext.accessibleName = UIBundle.message("status.bar.accessible.group.name")
     }
     return accessibleContext
   }
@@ -691,7 +692,7 @@ open class IdeStatusBarImpl internal constructor(
   }
 
   protected inner class AccessibleIdeStatusBarImpl : AccessibleJComponent() {
-    override fun getAccessibleRole(): AccessibleRole = AccessibleRole.PANEL
+    override fun getAccessibleRole(): AccessibleRole = AccessibleRole.GROUP_BOX
   }
 }
 

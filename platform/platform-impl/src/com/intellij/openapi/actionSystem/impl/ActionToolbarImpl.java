@@ -50,6 +50,8 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.CancellablePromise;
 import sun.swing.SwingUtilities2;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -1873,6 +1875,30 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     public Insets getBorderInsets() {
       return myOrientation == SwingConstants.VERTICAL ?
              JBUI.insets(myDirectionalGap, myOrthogonalGap) : JBUI.insets(myOrthogonalGap, myDirectionalGap);
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) accessibleContext = new AccessibleActionToolbar();
+
+    // We don't need additional grouping for ActionToolbar in the new frame header or if it's empty
+    if (!myVisibleActions.isEmpty() &&
+        !(ExperimentalUI.isNewUI() && getPlace().equals(ActionPlaces.MAIN_TOOLBAR))
+        && !getPlace().equals(ActionPlaces.NEW_UI_RUN_TOOLBAR)) {
+      accessibleContext.setAccessibleName(UIBundle.message("action.toolbar.accessible.group.name"));
+    }
+    else {
+      accessibleContext.setAccessibleName(null);
+    }
+
+    return accessibleContext;
+  }
+
+  private class AccessibleActionToolbar extends AccessibleJPanel {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.GROUP_BOX;
     }
   }
 }
