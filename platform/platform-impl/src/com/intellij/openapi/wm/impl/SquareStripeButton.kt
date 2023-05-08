@@ -28,8 +28,9 @@ import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
-internal class SquareStripeButton (val toolWindow: ToolWindowImpl) :
-  ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
+internal open class SquareStripeButton(action: SquareAnActionButton, val toolWindow: ToolWindowImpl) :
+  ActionButton(action, createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
+  constructor(toolWindow: ToolWindowImpl) : this(SquareAnActionButton(toolWindow), toolWindow)
   companion object {
     fun createMoveGroup() = ToolWindowMoveAction.Group()
   }
@@ -67,7 +68,7 @@ internal class SquareStripeButton (val toolWindow: ToolWindowImpl) :
 
   fun isHovered() = myRollover
 
-  fun isFocused() = toolWindow.isActive
+  open fun isFocused() = toolWindow.isActive
 
   fun resetDrop() = resetMouseState()
 
@@ -145,12 +146,8 @@ private class HideAction(private val toolWindow: ToolWindowImpl)
   }
 }
 
-private class SquareAnActionButton(private val window: ToolWindowImpl) : ToggleActionButton(window.stripeTitle, null), DumbAware, CustomComponentAction {
+internal open class SquareAnActionButton(protected val window: ToolWindowImpl) : ToggleActionButton(window.stripeTitle, null), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return SquareStripeButton(window)
-  }
-
   override fun isSelected(e: AnActionEvent): Boolean {
     e.presentation.icon = window.icon ?: AllIcons.Toolbar.Unknown
     scaleIcon(e.presentation)

@@ -1,13 +1,23 @@
 package com.intellij.toolWindow
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.impl.SquareAnActionButton
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.UIUtil
+import javax.swing.JComponent
 
 class StripeActionGroup: ActionGroup(), DumbAware {
   private val myFactory: Map<ToolWindowImpl, AnAction> = ConcurrentFactoryMap.create(::createAction) {
@@ -32,5 +42,55 @@ class StripeActionGroup: ActionGroup(), DumbAware {
       }
     }
 
-  private fun createAction(tw: ToolWindowImpl) = SquareStripeButton(tw).action
+  private fun createAction(tw: ToolWindowImpl) = MyButtonAction(tw)
+
+  private class MyButtonAction(tw: ToolWindowImpl): SquareAnActionButton(tw), CustomComponentAction {
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+      return object : SquareStripeButton(this@MyButtonAction, window) {
+        override fun isFocused(): Boolean = false
+        override fun addNotify() {
+          super.addNotify()
+          window.project.service<ButtonsRepaintService>().trackButton(this)
+        }
+
+        override fun removeNotify() {
+          super.removeNotify()
+          window.project.service<ButtonsRepaintService>().unTrackButton(this)
+        }
+      }
+    }
+  }
+
+
+  @Service(Service.Level.PROJECT)
+  private class ButtonsRepaintService(project: Project): Disposable {
+    private val buttons = ContainerUtil.createWeakSet<SquareStripeButton>()
+    init {
+      project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+        override fun stateChanged(toolWindowManager: ToolWindowManager) {
+          UIUtil.invokeAndWaitIfNeeded(this@ButtonsRepaintService::repaintButtons)
+        }
+      })
+    }
+
+    @RequiresEdt
+    fun trackButton(btn: SquareStripeButton) {
+      buttons.add(btn)
+    }
+
+    @RequiresEdt
+    fun unTrackButton(btn: SquareStripeButton) {
+      buttons.remove(btn)
+    }
+
+    @RequiresEdt
+    fun repaintButtons() {
+      for (button in buttons.toList()) {
+        button.repaint()
+      }
+    }
+
+    override fun dispose() {
+    }
+  }
 }
