@@ -203,7 +203,7 @@
         <keyboard-shortcut first-keystroke="control E"/>
     </action>
     <action id="EditorLineStart">
-        <keyboard-shortcut first-keystroke="END"/>
+        <keyboard-shortcut first-keystroke="HOME"/>
         <keyboard-shortcut first-keystroke="meta left" />
         <keyboard-shortcut first-keystroke="control A"/>
     </action>
