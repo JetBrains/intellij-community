@@ -14,9 +14,9 @@ class KotlinCompilationErrorFrequencyStatsCollector : CounterUsagesCollector() {
     companion object {
         private const val CODE_IS_TOTALLY_BROKEN_NUMBER_OF_COMPILATION_ERRORS_IN_FILE_LOWER_BOUND = 21
 
-        private val group = EventLogGroup("kotlin.compilation.error", 1)
+        private val group = EventLogGroup("kotlin.compilation.error", 2)
 
-        private val compilationErrorIdField = EventFields.StringValidatedByCustomRule("error.id", KotlinCompilationErrorIdValidationRule::class.java)
+        private val compilationErrorIdField = EventFields.StringValidatedByCustomRule("error_id", KotlinCompilationErrorIdValidationRule::class.java)
 
         private val event = group.registerEvent("error.happened", compilationErrorIdField)
 
