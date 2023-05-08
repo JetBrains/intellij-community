@@ -11,7 +11,7 @@ import java.util.function.BiConsumer;
  * 
  * @see ModCommands#psiUpdate(PsiElement, BiConsumer) 
  */
-public interface PsiUpdateContext {
+public interface EditorUpdater {
   /**
    * Selects given element
    * 

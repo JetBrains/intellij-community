@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.PsiUpdateContext;
+import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -19,7 +19,7 @@ public class ReplaceWithQualifierFix extends PsiUpdateModCommandAction<PsiMethod
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull PsiUpdateContext updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull EditorUpdater updater) {
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     if (qualifier == null) return;
     new CommentTracker().replace(call, qualifier);

@@ -16,5 +16,5 @@ public abstract class PsiUpdateModCommandAction<E extends PsiElement> extends Ps
     return ModCommands.psiUpdate(element, (e, upd) -> invoke(context, e, upd));
   }
 
-  protected abstract void invoke(@NotNull ActionContext context, @NotNull E element, @NotNull PsiUpdateContext updater);
+  protected abstract void invoke(@NotNull ActionContext context, @NotNull E element, @NotNull EditorUpdater updater);
 }

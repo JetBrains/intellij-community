@@ -77,7 +77,7 @@ public final class ModCommands {
    * @return a command that will perform the corresponding update to the original element
    */
   public static <E extends PsiElement> @NotNull ModCommand psiUpdate(@NotNull E orig,
-                                                                     @NotNull BiConsumer<@NotNull E, @NotNull PsiUpdateContext> updater) {
+                                                                     @NotNull BiConsumer<@NotNull E, @NotNull EditorUpdater> updater) {
     PsiFile origFile = orig.getContainingFile();
     Project project = origFile.getProject();
     ModCommandAction.ActionContext actionContext = createContext(project, origFile);
@@ -107,7 +107,7 @@ public final class ModCommands {
       positionDocument = document;
     }
     String oldText = targetFile.getText();
-    var context = new PsiUpdateContextImpl(actionContext, positionDocument, manager, document, injected, targetFile, copyFile);
+    var context = new EditorUpdaterImpl(actionContext, positionDocument, manager, document, injected, targetFile, copyFile);
     aspect.postponeFormattingInside(
       () -> aspect.forcePostprocessFormatInside(copyFile, () -> updater.accept(copy, context)));
     manager.commitDocument(document);
@@ -182,7 +182,7 @@ public final class ModCommands {
     return new ModCommandAction.ActionContext(project, copyFile, offset, TextRange.create(start, end));
   }
 
-  private static class PsiUpdateContextImpl implements PsiUpdateContext {
+  private static class EditorUpdaterImpl implements EditorUpdater {
     private final @NotNull Document myPositionDocument;
     private final @NotNull PsiDocumentManager myManager;
     private final @NotNull Document myDocument;
@@ -192,13 +192,13 @@ public final class ModCommands {
     @NotNull RangeMarker mySelectionRange;
     @NotNull RangeMarker myCaretRange;
 
-    private PsiUpdateContextImpl(@NotNull ModCommandAction.ActionContext actionContext,
-                                 @NotNull Document positionDocument,
-                                 @NotNull PsiDocumentManager manager,
-                                 @NotNull Document document,
-                                 boolean injected,
-                                 @NotNull PsiFile targetFile,
-                                 @NotNull PsiFile copyFile) {
+    private EditorUpdaterImpl(@NotNull ModCommandAction.ActionContext actionContext,
+                              @NotNull Document positionDocument,
+                              @NotNull PsiDocumentManager manager,
+                              @NotNull Document document,
+                              boolean injected,
+                              @NotNull PsiFile targetFile,
+                              @NotNull PsiFile copyFile) {
       myPositionDocument = positionDocument;
       myManager = manager;
       myDocument = document;
