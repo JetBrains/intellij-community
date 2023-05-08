@@ -350,7 +350,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   @NotNull
   private synchronized Pair<List<LookupElement>, Integer> doArrangeItems(@NotNull LookupElementListPresenter lookup,
                                                                          boolean onExplicitAction) {
-    return computeWithSpan(TelemetryTracer.Companion.getInstance().getTracer(CodeCompletion), "arrangeItems", span -> {
+    return computeWithSpan(TelemetryTracer.getInstance().getTracer(CodeCompletion), "arrangeItems", span -> {
       List<LookupElement> items = getMatchingItems();
       Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(groupItemsBySorter(items));
 

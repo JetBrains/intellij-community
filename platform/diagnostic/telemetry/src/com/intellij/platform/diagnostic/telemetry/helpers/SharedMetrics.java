@@ -24,7 +24,7 @@ public abstract class SharedMetrics {
 
   public SharedMetrics(Scope scope) {
     rootScopeName = scope;
-    this.tracer = TelemetryTracer.Companion.getInstance().getTracer(scope, false);
+    this.tracer = TelemetryTracer.getInstance().getTracer(scope, false);
   }
 
   private final ConcurrentHashMap<String, Span> spans = new ConcurrentHashMap<>();

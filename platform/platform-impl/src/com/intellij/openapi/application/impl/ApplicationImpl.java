@@ -608,7 +608,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private void doExit(int flags, boolean restart, String @NotNull [] beforeRestart, int exitCode) {
-    IJTracer tracer = TelemetryTracer.Companion.getInstance().getTracer(new com.intellij.platform.diagnostic.telemetry.Scope("exitApp", null));
+    IJTracer tracer = TelemetryTracer.getInstance().getTracer(new com.intellij.platform.diagnostic.telemetry.Scope("exitApp", null));
     Span exitSpan = tracer.spanBuilder("application.exit").startSpan();
     boolean force = BitUtil.isSet(flags, FORCE_EXIT);
     try (Scope scope = exitSpan.makeCurrent()) {

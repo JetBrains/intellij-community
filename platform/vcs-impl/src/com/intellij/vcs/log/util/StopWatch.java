@@ -31,7 +31,7 @@ public final class StopWatch {
   @NotNull private final Map<VirtualFile, Long> myDurationPerRoot;
 
   private StopWatch(@NotNull String operation) {
-    mySpan = TelemetryTracer.Companion.getInstance().getTracer(StopWatchScope).spanBuilder(operation).startSpan();
+    mySpan = TelemetryTracer.getInstance().getTracer(StopWatchScope).spanBuilder(operation).startSpan();
     myOperation = operation;
     myStartTime = System.currentTimeMillis();
     myDurationPerRoot = new HashMap<>();

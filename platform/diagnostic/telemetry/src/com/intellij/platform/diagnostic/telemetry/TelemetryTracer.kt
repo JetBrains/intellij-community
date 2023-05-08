@@ -80,6 +80,7 @@ interface TelemetryTracer {
       return implementations.single()
     }
 
+    @JvmStatic
     fun getInstance(): TelemetryTracer {
       if (Companion::instance.isInitialized) return instance
 

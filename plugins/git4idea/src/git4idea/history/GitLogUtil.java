@@ -182,7 +182,7 @@ public final class GitLogUtil {
       handler.addParameters("--decorate=full");
       handler.endOptions();
 
-      runWithSpanThrows(TelemetryTracer.Companion.getInstance().getTracer(VcsScope), "loading commit metadata", span -> {
+      runWithSpanThrows(TelemetryTracer.getInstance().getTracer(VcsScope), "loading commit metadata", span -> {
         span.setAttribute("rootName", root.getName());
 
         GitLogOutputSplitter<GitLogRecord> handlerListener = new GitLogOutputSplitter<>(handler, parser, recordConsumer);

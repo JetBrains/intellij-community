@@ -107,7 +107,7 @@ public class ChangesViewManager implements ChangesViewEx,
                                            PersistentStateComponent<ChangesViewManager.State>,
                                            Disposable {
 
-  private static final Tracer TRACER = TelemetryTracer.Companion.getInstance().getTracer(VcsScopeKt.VcsScope);
+  private static final Tracer TRACER = TelemetryTracer.getInstance().getTracer(VcsScopeKt.VcsScope);
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final Project myProject;

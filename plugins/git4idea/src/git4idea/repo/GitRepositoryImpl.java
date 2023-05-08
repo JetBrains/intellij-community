@@ -248,7 +248,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
 
   @NotNull
   private GitRepoInfo readRepoInfo() {
-    return computeWithSpan(TelemetryTracer.Companion.getInstance().getTracer(VcsScopeKt.VcsScope), "reading Git repo info", span -> {
+    return computeWithSpan(TelemetryTracer.getInstance().getTracer(VcsScopeKt.VcsScope), "reading Git repo info", span -> {
       span.setAttribute("repository", getShortRepositoryName(this));
 
       File configFile = myRepositoryFiles.getConfigFile();

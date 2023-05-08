@@ -11,7 +11,7 @@ final class HighlightingPassTracer {
   private HighlightingPassTracer() {
   }
 
-  static IJTracer HIGHLIGHTING_PASS_TRACER = TelemetryTracer.Companion.getInstance().getTracer(HighlightingPasses);
+  static IJTracer HIGHLIGHTING_PASS_TRACER = TelemetryTracer.getInstance().getTracer(HighlightingPasses);
   static AttributeKey<String> FILE_ATTR_SPAN_KEY = AttributeKey.stringKey("file");
   static AttributeKey<String> CANCELLED_ATTR_SPAN_KEY = AttributeKey.stringKey("cancelled");
 }

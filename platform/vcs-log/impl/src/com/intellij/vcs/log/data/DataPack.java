@@ -52,7 +52,7 @@ public class DataPack extends DataPackBase {
                                                                             VcsLogStorageImpl.createHashGetter(storage));
       Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), storage);
 
-      permanentGraph = computeWithSpan(TelemetryTracer.Companion.getInstance().getTracer(VcsScopeKt.VcsScope), "building graph", (span) -> {
+      permanentGraph = computeWithSpan(TelemetryTracer.getInstance().getTracer(VcsScopeKt.VcsScope), "building graph", (span) -> {
         return PermanentGraphImpl.newInstance(commits, new GraphColorManagerImpl(refsModel), headCommitdComparator, branches);
       });
     }

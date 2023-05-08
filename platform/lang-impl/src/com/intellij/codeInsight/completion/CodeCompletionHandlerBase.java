@@ -87,7 +87,7 @@ public class CodeCompletionHandlerBase {
   final boolean autopopup;
   private static int ourAutoInsertItemTimeout = Registry.intValue("ide.completion.auto.insert.item.timeout", 2000);
 
-  private final Tracer completionTracer = TelemetryTracer.Companion.getInstance().getTracer(CodeCompletion);
+  private final Tracer completionTracer = TelemetryTracer.getInstance().getTracer(CodeCompletion);
 
   public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType) {
     return createHandler(completionType, true, false, true);

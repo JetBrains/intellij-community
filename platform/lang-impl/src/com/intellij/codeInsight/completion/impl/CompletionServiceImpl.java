@@ -41,7 +41,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   private static final Logger LOG = Logger.getInstance(CompletionServiceImpl.class);
 
   private static final CompletionPhaseHolder DEFAULT_PHASE_HOLDER = new CompletionPhaseHolder(CompletionPhase.NoCompletion, null);
-  private final IJTracer myCompletionTracer = TelemetryTracer.Companion.getInstance().getTracer(CodeCompletion);
+  private final IJTracer myCompletionTracer = TelemetryTracer.getInstance().getTracer(CodeCompletion);
 
   private static class ClientCompletionService implements Disposable {
     @Nullable

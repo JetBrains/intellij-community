@@ -83,7 +83,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
-  @NotNull private final IJTracer myTracer = TelemetryTracer.Companion.getInstance().getTracer(VcsScope);
+  @NotNull private final IJTracer myTracer = TelemetryTracer.getInstance().getTracer(VcsScope);
 
   public GitLogProvider(@NotNull Project project) {
     myProject = project;

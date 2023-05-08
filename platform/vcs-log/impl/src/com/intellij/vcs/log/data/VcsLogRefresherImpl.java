@@ -54,7 +54,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
   private volatile @NotNull DataPack myDataPack = DataPack.EMPTY;
 
-  private final @NotNull Tracer myTracer = TelemetryTracer.Companion.getInstance().getTracer(VcsScope);
+  private final @NotNull Tracer myTracer = TelemetryTracer.getInstance().getTracer(VcsScope);
 
   public VcsLogRefresherImpl(@NotNull Project project,
                              @NotNull VcsLogStorage storage,
@@ -147,7 +147,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   }
 
   private static @NotNull <T extends GraphCommit<Integer>> List<T> multiRepoJoin(@NotNull Collection<? extends List<T>> commits) {
-    Span span = TelemetryTracer.Companion.getInstance().getTracer(VcsScope).spanBuilder("multi-repo join").startSpan();
+    Span span = TelemetryTracer.getInstance().getTracer(VcsScope).spanBuilder("multi-repo join").startSpan();
     List<T> joined = new VcsLogMultiRepoJoiner<Integer, T>().join(commits);
     span.end();
     return joined;
