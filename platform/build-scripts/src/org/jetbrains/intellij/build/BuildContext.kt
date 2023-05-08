@@ -112,6 +112,10 @@ interface BuildContext : CompilationContext {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 
+  val jetBrainsClientModuleFilter: JetBrainsClientModuleFilter
+  
+  val isEmbeddedJetBrainsClientEnabled: Boolean
+  
   fun shouldBuildDistributions(): Boolean
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean

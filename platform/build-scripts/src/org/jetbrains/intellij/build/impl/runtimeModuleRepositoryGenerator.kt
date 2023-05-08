@@ -59,7 +59,7 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
         continue
       }
       val pathInDist = context.paths.distAllDir.relativize(entry.path).pathString
-      val realPathInDist = if (pathInDist != "lib/$PRODUCT_JAR") pathInDist else "lib/$APP_JAR"
+      val realPathInDist = if (pathInDist != "lib/$PRODUCT_JAR" || context.isEmbeddedJetBrainsClientEnabled) pathInDist else "lib/$APP_JAR"
       resourcePathMapping.putValue(moduleId.stringId, "../$realPathInDist")
     }
   }

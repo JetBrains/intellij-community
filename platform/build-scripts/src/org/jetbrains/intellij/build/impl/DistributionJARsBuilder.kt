@@ -4,10 +4,10 @@
 package org.jetbrains.intellij.build.impl
 
 import com.fasterxml.jackson.jr.ob.JSON
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
+import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_CLIENT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.RUNTIME_MODULE_REPOSITORY_JAR
 import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
@@ -106,9 +107,16 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
         val distAllDir = context.paths.distAllDir
         val libDir = distAllDir.resolve("lib")
         val appFile = libDir.resolve(APP_JAR)
-        mergeProductJar(appFile, libDir)
+        if (!context.isEmbeddedJetBrainsClientEnabled) {
+          /* in order to support running JetBrains Client from the IDE's distribution, we should not merge scrambled product.jar and
+          product-client.jar to app.jar */
+          mergeProductJar(appFile, libDir)
+        }
         if (!context.isStepSkipped(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
           reorderJar("lib/$APP_JAR", appFile)
+          if (context.isEmbeddedJetBrainsClientEnabled) {
+            reorderJar("lib/$APP_CLIENT_JAR", libDir.resolve(APP_CLIENT_JAR))
+          }
         }
         context.bootClassPathJarNames =
           if (context.useModularLoader) persistentListOf(PLATFORM_LOADER_JAR, RUNTIME_MODULE_REPOSITORY_JAR)
