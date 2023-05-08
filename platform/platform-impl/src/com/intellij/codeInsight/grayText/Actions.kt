@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.grayText
 
 import com.intellij.codeInsight.grayText.GrayTextContext.Companion.getGrayTextContextOrNull
-import com.intellij.codeInsight.grayText.GrayTextContext.Companion.removeGrayTextContext
 import com.intellij.codeInsight.grayText.GrayTextContext.Companion.resetGrayTextContext
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.openapi.actionSystem.DataContext
@@ -14,7 +13,6 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.FocusChangeListener
-import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -67,16 +65,18 @@ class InsertGrayTextAction : EditorAction(InsertGrayTextHandler()), HintManagerI
 @ApiStatus.Experimental
 class EscapeGrayTextHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
   public override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
+    editor.resetGrayTextContext()
+
     if (originalHandler.isEnabled(editor, caret, dataContext)) {
       originalHandler.execute(editor, caret, dataContext)
     }
-
-    editor.removeGrayTextContext()
-    editor.getGrayTextContextOrNull()?.let(Disposer::dispose)
   }
 
   public override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
-    val isEnabled = editor.getGrayTextContextOrNull() != null
-    return if (isEnabled) isEnabled else originalHandler.isEnabled(editor, caret, dataContext)
+    if (editor.getGrayTextContextOrNull() != null) {
+      return true
+    }
+
+    return originalHandler.isEnabled(editor, caret, dataContext)
   }
 }
