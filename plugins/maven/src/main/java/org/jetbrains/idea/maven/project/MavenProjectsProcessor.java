@@ -33,8 +33,7 @@ import org.jetbrains.idea.maven.execution.BTWMavenConsole;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MavenProjectsProcessor {
   private static final Logger LOG = Logger.getInstance(MavenProjectsProcessor.class);
@@ -43,7 +42,7 @@ public class MavenProjectsProcessor {
   private final boolean myCancellable;
   private final MavenEmbeddersManager myEmbeddersManager;
 
-  private final Queue<MavenProjectsProcessorTask> myQueue = new LinkedList<>();
+  private final ConcurrentLinkedQueue<MavenProjectsProcessorTask> myQueue = new ConcurrentLinkedQueue<>();
   private boolean isProcessing;
 
   private volatile boolean isStopped;
@@ -145,30 +144,7 @@ public class MavenProjectsProcessor {
         }
         indicator.setFraction(counter / (double)(counter + remained));
 
-        MavenProjectsProcessorTask finalTask = task;
-        StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(myProject, MavenUtil.SYSTEM_ID, () ->
-          Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(finalTask.getClass()))
-        );
-        long startTime = System.currentTimeMillis();
-        try {
-          final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
-          task.perform(myProject, myEmbeddersManager,
-                       getMavenConsole(mavenGeneralSettings),
-                       indicator);
-        }
-        catch (MavenProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          logImportErrorIfNotControlFlow(e);
-        }
-        finally {
-          activity.finished();
-          long duration = System.currentTimeMillis() - startTime;
-          if (duration > 10) {
-            LOG.info("[maven import] " + StringUtil.getShortName(task.getClass()) + " took " + duration + "ms");
-          }
-        }
+        processTask(indicator, task);
 
         synchronized (myQueue) {
           task = myQueue.poll();
@@ -191,6 +167,32 @@ public class MavenProjectsProcessor {
         isProcessing = false;
       }
       throw e;
+    }
+  }
+
+  private void processTask(MavenProgressIndicator indicator, MavenProjectsProcessorTask task) throws MavenProcessCanceledException {
+    StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(myProject, MavenUtil.SYSTEM_ID, () ->
+      Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(task.getClass()))
+    );
+    long startTime = System.currentTimeMillis();
+    try {
+      final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
+      task.perform(myProject, myEmbeddersManager,
+                   getMavenConsole(mavenGeneralSettings),
+                   indicator);
+    }
+    catch (MavenProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      logImportErrorIfNotControlFlow(e);
+    }
+    finally {
+      activity.finished();
+      long duration = System.currentTimeMillis() - startTime;
+      if (duration > 10) {
+        LOG.info("[maven import] " + StringUtil.getShortName(task.getClass()) + " took " + duration + "ms");
+      }
     }
   }
 
