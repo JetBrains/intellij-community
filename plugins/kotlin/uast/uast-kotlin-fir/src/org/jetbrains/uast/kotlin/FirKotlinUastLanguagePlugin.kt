@@ -56,7 +56,7 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
             val virtualFile = containingFile.virtualFile
             if (virtualFile != null) {
                 val fileIndex = ProjectRootManager.getInstance(containingFile.project).fileIndex
-                if (fileIndex.isInSource(virtualFile) || fileIndex.isInLibrary(virtualFile)) {
+                if (fileIndex.isInSourceContent(virtualFile) || fileIndex.isInLibrary(virtualFile)) {
                     return true
                 }
             }
