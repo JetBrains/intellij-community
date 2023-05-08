@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -27,4 +28,8 @@ object GHPRActionKeys {
   @JvmStatic
   val PULL_REQUESTS_CONTENT_CONTROLLER = DataKey.create<GHPRToolWindowRepositoryContentController>(
     "org.jetbrains.plugins.github.pullrequest.content.controller")
+
+  @JvmStatic
+  val COMBINED_DIFF_PREVIEW_MODEL = DataKey.create<CombinedDiffPreviewModel>(
+    "org.jetbrains.plugins.github.pullrequest.combined.diff.preview.model")
 }

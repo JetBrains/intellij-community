@@ -9,8 +9,6 @@ import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
-import com.intellij.icons.AllIcons
-import com.intellij.ide.actions.NonEmptyActionGroup
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diff.impl.GenericDataProvider
@@ -29,9 +27,7 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImpl
-import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewResolvedThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsReloadAction
-import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -96,17 +92,8 @@ open class GHPRDiffRequestChainProducer(
         putData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER, dataProvider)
         putData(GHPRDiffReviewSupport.DATA_KEY, reviewSupport)
       }
-      val viewOptionsGroup = NonEmptyActionGroup().apply {
-        isPopup = true
-        templatePresentation.text = CollaborationToolsBundle.message("review.diff.toolbar.view.options")
-        templatePresentation.icon = AllIcons.Actions.Show
-        add(GHPRDiffReviewThreadsToggleAction())
-        add(GHPRDiffReviewResolvedThreadsToggleAction())
-      }
-
       requestDataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] = listOf(
         ImmutableToolbarLabelAction(CollaborationToolsBundle.message("review.diff.toolbar.label")),
-        viewOptionsGroup,
         GHPRDiffReviewThreadsReloadAction(),
         ActionManager.getInstance().getAction("Github.PullRequest.Review.Submit"))
     }

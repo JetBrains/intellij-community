@@ -198,5 +198,22 @@
     <action id="Github.Copy.Link.To.GitHub" class="org.jetbrains.plugins.github.GithubCopyPathProvider" icon="AllIcons.Vcs.Vendors.Github">
       <add-to-group group-id="Copy.Paste.Special" relative-to-action="CopyReference" anchor="after"/>
     </action>
+
+    <group id="Github.PullRequest.Diff.Thread.View.Options"
+           class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsToggleAction"
+           icon="AllIcons.Actions.Show"
+           popup="true">
+      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"
+                    relative-to-action="Vcs.Diff.ToggleDiffAligningMode"
+                    anchor="before"/>
+    </group>
+    <group id="Github.PullRequest.Combined.Diff.Thread.View.Options"
+           class="org.jetbrains.plugins.github.pullrequest.comment.action.combined.GHPRCombinedDiffReviewThreadsToggleAction"
+           icon="AllIcons.Actions.Show"
+           popup="true">
+      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"
+                    relative-to-action="Vcs.ShowDiffChangedLines"
+                    anchor="before"/>
+    </group>
   </actions>
 </idea-plugin>
