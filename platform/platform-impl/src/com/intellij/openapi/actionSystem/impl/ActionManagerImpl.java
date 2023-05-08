@@ -458,6 +458,11 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   }
 
   @Override
+  public @NotNull ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons) {
+    return createActionToolbarImpl(place, group, horizontal, decorateButtons, false);
+  }
+
+  @Override
   public @NotNull ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons, boolean customizable) {
     return createActionToolbarImpl(place, group, horizontal, decorateButtons, customizable);
   }
