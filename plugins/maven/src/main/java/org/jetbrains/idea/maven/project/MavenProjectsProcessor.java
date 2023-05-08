@@ -59,15 +59,13 @@ public class MavenProjectsProcessor {
 
   public void scheduleTask(MavenProjectsProcessorTask task) {
     boolean startProcessingInThisThread = false;
-    synchronized (myQueue) {
-      if (!isProcessing && !MavenUtil.isNoBackgroundMode()) {
-        isProcessing = true;
-        startProcessingInThisThread = true;
-      }
-      else {
-        if (myQueue.contains(task)) return;
-        myQueue.add(task);
-      }
+    if (!isProcessing && !MavenUtil.isNoBackgroundMode()) {
+      isProcessing = true;
+      startProcessingInThisThread = true;
+    }
+    else {
+      if (myQueue.contains(task)) return;
+      myQueue.add(task);
     }
 
     if (startProcessingInThisThread) {
@@ -76,9 +74,7 @@ public class MavenProjectsProcessor {
   }
 
   public void removeTask(MavenProjectsProcessorTask task) {
-    synchronized (myQueue) {
-      myQueue.remove(task);
-    }
+    myQueue.remove(task);
   }
 
   public void waitForCompletion() {
@@ -87,11 +83,9 @@ public class MavenProjectsProcessor {
     if (MavenUtil.isNoBackgroundMode()) {
       while (true) {
         MavenProjectsProcessorTask task;
-        synchronized (myQueue) {
-          task = myQueue.poll();
-          if (task == null) {
-            return;
-          }
+        task = myQueue.poll();
+        if (task == null) {
+          return;
         }
         startProcessing(task);
       }
@@ -108,9 +102,7 @@ public class MavenProjectsProcessor {
 
   public void stop() {
     isStopped = true;
-    synchronized (myQueue) {
-      myQueue.clear();
-    }
+    myQueue.clear();
   }
 
   private void startProcessing(final MavenProjectsProcessorTask task) {
@@ -139,33 +131,27 @@ public class MavenProjectsProcessor {
         counter++;
 
         int remained;
-        synchronized (myQueue) {
-          remained = myQueue.size();
-        }
+        remained = myQueue.size();
         indicator.setFraction(counter / (double)(counter + remained));
 
         processTask(indicator, task);
 
-        synchronized (myQueue) {
-          task = myQueue.poll();
-          if (task == null) {
-            isProcessing = false;
-            return;
-          }
+        task = myQueue.poll();
+        if (task == null) {
+          isProcessing = false;
+          return;
         }
       }
     }
     catch (MavenProcessCanceledException e) {
-      synchronized (myQueue) {
-
-        while (!myQueue.isEmpty()) {
-          MavenProjectsProcessorTask removedTask = myQueue.remove();
-          if (removedTask instanceof MavenProjectsProcessorWaitForCompletionTask) {
-            ((MavenProjectsProcessorWaitForCompletionTask)removedTask).mySemaphore.up();
-          }
+      MavenProjectsProcessorTask removedTask;
+      while ((removedTask = myQueue.poll()) != null) {
+        if (removedTask instanceof MavenProjectsProcessorWaitForCompletionTask) {
+          ((MavenProjectsProcessorWaitForCompletionTask)removedTask).mySemaphore.up();
         }
-        isProcessing = false;
       }
+      isProcessing = false;
+
       throw e;
     }
   }
