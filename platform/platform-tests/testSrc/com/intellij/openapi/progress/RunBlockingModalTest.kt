@@ -21,7 +21,7 @@ import java.lang.Runnable
 import kotlin.coroutines.ContinuationInterceptor
 
 /**
- * @see WithModalProgressIndicatorTest
+ * @see WithModalProgressTest
  */
 class RunBlockingModalTest : ModalCoroutineTest() {
 

@@ -21,7 +21,7 @@ import org.junit.platform.suite.api.Suite
   IndicatorThreadContextTest::class,
   RunBlockingCancellableTest::class,
   RunBlockingModalTest::class,
-  WithModalProgressIndicatorTest::class,
+  WithModalProgressTest::class,
   CoroutineToIndicatorTest::class,
 
   // rw

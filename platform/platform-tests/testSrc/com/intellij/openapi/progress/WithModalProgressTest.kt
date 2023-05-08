@@ -22,14 +22,14 @@ import kotlin.coroutines.ContinuationInterceptor
 /**
  * @see RunBlockingModalTest
  */
-class WithModalProgressIndicatorTest : ModalCoroutineTest() {
+class WithModalProgressTest : ModalCoroutineTest() {
 
   @Test
   fun `coroutine context`(): Unit = timeoutRunBlocking {
     val testElement = TestElement("xx")
     withContext(testElement) {
       withDifferentInitialModalities {
-        withModalProgressIndicator {
+        withModalProgress {
           assertSame(testElement, coroutineContext[TestElementKey])
         }
       }
@@ -42,7 +42,7 @@ class WithModalProgressIndicatorTest : ModalCoroutineTest() {
       withContext(Dispatchers.EDT) {
         assertFalse(LaterInvocator.isInModalContext())
       }
-      withModalProgressIndicator {
+      withModalProgress {
         withContext(Dispatchers.EDT) {
           assertTrue(LaterInvocator.isInModalContext())
           val contextModality = coroutineContext.contextModality()
@@ -62,7 +62,7 @@ class WithModalProgressIndicatorTest : ModalCoroutineTest() {
     withDifferentInitialModalities {
       withContext(Dispatchers.EDT) {
         assertFalse(LaterInvocator.isInModalContext())
-        withModalProgressIndicator {
+        withModalProgress {
           withContext(Dispatchers.EDT) {
             assertTrue(LaterInvocator.isInModalContext())
             val contextModality = coroutineContext.contextModality()
@@ -79,11 +79,11 @@ class WithModalProgressIndicatorTest : ModalCoroutineTest() {
   @Test
   fun dispatcher(): Unit = timeoutRunBlocking {
     withDifferentInitialModalities {
-      withModalProgressIndicator {
+      withModalProgress {
         assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
       }
       withContext(Dispatchers.EDT) {
-        withModalProgressIndicator {
+        withModalProgress {
           assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
         }
       }
@@ -93,7 +93,7 @@ class WithModalProgressIndicatorTest : ModalCoroutineTest() {
   @Test
   fun `normal completion`(): Unit = timeoutRunBlocking {
     withDifferentInitialModalities {
-      val result = withModalProgressIndicator {
+      val result = withModalProgress {
         42
       }
       assertEquals(42, result)
@@ -105,7 +105,7 @@ class WithModalProgressIndicatorTest : ModalCoroutineTest() {
     withDifferentInitialModalities {
       val t: Throwable = object : Throwable() {}
       val thrown = assertThrows<Throwable> {
-        withModalProgressIndicator {
+        withModalProgress {
           throw t // fail the scope
         }
       }
@@ -116,8 +116,8 @@ class WithModalProgressIndicatorTest : ModalCoroutineTest() {
   @Test
   fun nested(): Unit = timeoutRunBlocking {
     withDifferentInitialModalities {
-      val result = withModalProgressIndicator {
-        withModalProgressIndicator {
+      val result = withModalProgress {
+        withModalProgress {
           42
         }
       }
@@ -170,7 +170,7 @@ class WithModalProgressIndicatorTest : ModalCoroutineTest() {
   fun `non-modal edt coroutine is not resumed while modal is running`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
       val modalCoroutine = launch {
-        withModalProgressIndicator {
+        withModalProgress {
           yield()
         }
       }
@@ -205,8 +205,8 @@ class WithModalProgressIndicatorTest : ModalCoroutineTest() {
   }
 }
 
-private suspend fun <T> withModalProgressIndicator(action: suspend CoroutineScope.() -> T): T {
-  return withModalProgressIndicator(ModalTaskOwner.guess(), "", action = action)
+private suspend fun <T> withModalProgress(action: suspend CoroutineScope.() -> T): T {
+  return withModalProgress(ModalTaskOwner.guess(), "", TaskCancellation.cancellable(), action)
 }
 
 private suspend fun launchModalCoroutineAndWait(cs: CoroutineScope): Job {
@@ -222,6 +222,6 @@ private suspend fun launchModalCoroutineAndWait(cs: CoroutineScope): Job {
 
 private fun CoroutineScope.modalCoroutine(action: suspend CoroutineScope.() -> Unit): Job {
   return launch(Dispatchers.Default) {
-    withModalProgressIndicator(action)
+    withModalProgress(action)
   }
 }
