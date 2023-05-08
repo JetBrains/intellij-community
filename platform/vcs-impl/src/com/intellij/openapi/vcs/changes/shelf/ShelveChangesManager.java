@@ -107,7 +107,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private ScheduledFuture<?> myCleaningFuture;
   private final ReadWriteLock SHELVED_FILES_LOCK = new ReentrantReadWriteLock(true);
   @Nullable private Set<VirtualFile> myShelvingFiles;
-  private final Tracer myTracer = TelemetryTracer.Companion.getInstance().getTracer(VFS);
+  private final Tracer myTracer = TelemetryTracer.Companion.getInstance().getTracer(VcsScopeKt.VcsScope);
 
   public static ShelveChangesManager getInstance(@NotNull Project project) {
     return project.getService(ShelveChangesManager.class);
