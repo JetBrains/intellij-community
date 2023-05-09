@@ -9,7 +9,6 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -23,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl {
+public final class LightEditFileEditorManagerImpl extends LightEditFileEditorManagerBase {
   LightEditFileEditorManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     super(project, coroutineScope);
   }

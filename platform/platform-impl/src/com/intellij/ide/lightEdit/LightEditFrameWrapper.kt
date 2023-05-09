@@ -3,12 +3,14 @@ package com.intellij.ide.lightEdit
 
 import com.intellij.diagnostic.IdeMessagePanel
 import com.intellij.ide.lightEdit.menuBar.LightEditMainMenuHelper
+import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
 import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -46,9 +48,11 @@ internal class LightEditFrameWrapper(
     fun allocate(project: Project, frameInfo: FrameInfo?, closeHandler: BooleanSupplier): LightEditFrameWrapper {
       return runBlockingModalWithRawProgressReporter(project, "") {
         withContext(Dispatchers.EDT) {
-          allocateLightEditFrame(project) { frame ->
+          val wrapper = allocateLightEditFrame(project) { frame ->
             LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrame(frameInfo).create(), closeHandler = closeHandler)
           } as LightEditFrameWrapper
+          (FileEditorManager.getInstance(project) as LightEditFileEditorManagerImpl).internalInit()
+          wrapper
         }
       }
     }
