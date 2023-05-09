@@ -1005,17 +1005,18 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
       val firstComponent = process(state = state.firstSplitter!!, context = null)
       val secondComponent = process(state = state.secondSplitter!!, context = null)
       return withContext(Dispatchers.EDT) {
-        val panel = JPanel(BorderLayout())
-        panel.isFocusable = false
-        panel.isOpaque = false
         val splitter = createSplitter(orientation = state.isVertical,
                                       proportion = state.proportion,
                                       minProp = 0.1f,
                                       maxProp = 0.9f)
         splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, true)
-        panel.add(splitter, BorderLayout.CENTER)
         splitter.firstComponent = firstComponent
         splitter.secondComponent = secondComponent
+
+        val panel = JPanel(BorderLayout())
+        panel.isFocusable = false
+        panel.isOpaque = false
+        panel.add(splitter, BorderLayout.CENTER)
         panel
       }
     }
