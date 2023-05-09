@@ -5,6 +5,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.list.SelectablePanel;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableCellRenderer;
@@ -121,9 +123,6 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
         }
       }
     };
-    SelectablePanel panel = new SelectablePanel();
-    panel.setLayout(layout);
-    panel.setFont(null);
 
     UsagePresentation presentation = usage.getPresentation();
     UsageNodePresentation cachedPresentation = presentation.getCachedPresentation();
@@ -132,6 +131,21 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
     // greying the current usage the "find usages" was originated from
     boolean isOriginUsage = myOriginUsageCheck.test(usage);
+
+    SelectablePanel panel = new SelectablePanel() {
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        AccessibleContext acc = super.getAccessibleContext();
+        if (column == CURRENT_ASTERISK_COL) {
+          acc.setAccessibleName(getAccessibleNameForRow(list, row, isOriginUsage));
+        }
+        return acc;
+      }
+    };
+
+    panel.setLayout(layout);
+    panel.setFont(null);
+
     if (isOriginUsage && !ExperimentalUI.isNewUI()) {
       rowBackground = slightlyDifferentColor(rowBackground);
       rowSelectionBackground = slightlyDifferentColor(rowSelectionBackground);
@@ -145,15 +159,8 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
     switch (column) {
       case CURRENT_ASTERISK_COL -> {
-        if (!ExperimentalUI.isNewUI()) {
-          if (isOriginUsage) {
-            panel.add(new JLabel(isSelected ? AllIcons.General.ModifiedSelected : AllIcons.General.Modified));
-            panel.getAccessibleContext()
-              .setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.CURRENT_ASTERISK_COL"));
-          }
-          else {
-            panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.OTHER_ASTERISK_COL"));
-          }
+        if (!ExperimentalUI.isNewUI() && isOriginUsage) {
+          panel.add(new JLabel(isSelected ? AllIcons.General.ModifiedSelected : AllIcons.General.Modified));
         }
       }
       case FILE_GROUP_COL -> appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
@@ -216,6 +223,32 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     }
 
     return panel;
+  }
+
+  private static @NotNull @NlsSafe String getAccessibleNameForRow(JTable table, int row, boolean isOriginUsage) {
+    AccessibleTable accessibleTable = table.getAccessibleContext().getAccessibleTable();
+    if (accessibleTable == null) return "";
+    int columnCount = accessibleTable.getAccessibleColumnCount();
+    StringBuilder str = new StringBuilder();
+
+    if (!ExperimentalUI.isNewUI()) {
+      if (isOriginUsage) str.append(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.CURRENT_ASTERISK_COL"));
+      else str.append(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.OTHER_ASTERISK_COL"));
+      str.append(", ");
+    }
+
+    for (int i = 1; i < columnCount; i++) {
+      Accessible accessibleItem = accessibleTable.getAccessibleAt(row, i);
+      if (accessibleItem == null) continue;
+      AccessibleContext accessibleItemContext = accessibleItem.getAccessibleContext();
+      if (accessibleItemContext == null) continue;
+      String name = accessibleItemContext.getAccessibleName();
+      if (name != null) {
+        str.append(name);
+        str.append(", ");
+      }
+    }
+    return str.toString();
   }
 
   private static Color slightlyDifferentColor(Color back) {
