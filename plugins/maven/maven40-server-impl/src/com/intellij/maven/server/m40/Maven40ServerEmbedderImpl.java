@@ -1436,11 +1436,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         repositorySystemSession, new ArtifactRequest(RepositoryUtils.toArtifact(artifact), repositories, null));
 
       return RepositoryUtils.toArtifact(artifactResult.getArtifact());
-/*      ArtifactResolver artifactResolver = getArtifactResolver();
-      RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
-      ArtifactRequest artifactRequest = new ArtifactRequest(RepositoryUtils.toArtifact(artifact), RepositoryUtils.toRepos(remoteRepositories), "");
-      ArtifactResult artifactResult = artifactResolver.resolveArtifact(repositorySession, artifactRequest);
-      return RepositoryUtils.toArtifact(artifactResult.getArtifact());*/
     }
     catch (Exception e) {
       MavenServerGlobals.getLogger().info(e);
