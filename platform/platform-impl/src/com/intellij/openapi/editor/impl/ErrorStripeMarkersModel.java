@@ -3,13 +3,13 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +22,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
  * A mirror of highlighters which should be rendered on the error stripe.
  */
 final class ErrorStripeMarkersModel {
-  private static final Logger LOG = Logger.getInstance(ErrorStripeMarkersModel.class);
-
   @NotNull
   private final EditorImpl myEditor;
   private final ErrorStripeRangeMarkerTree myTree;
@@ -174,7 +172,6 @@ final class ErrorStripeMarkersModel {
   }
 
   private void createErrorStripeMarker(@NotNull RangeHighlighterEx h) {
-    //ApplicationManager.getApplication().assertIsDispatchThread();
     ErrorStripeMarkerImpl marker = new ErrorStripeMarkerImpl(myEditor.getDocument(), h);
     treeFor(h).addInterval(marker, h.getStartOffset(), h.getEndOffset(), h.isGreedyToLeft(), h.isGreedyToRight(),
                            (h instanceof RangeMarkerImpl) && ((RangeMarkerImpl)h).isStickingToRight(), h.getLayer());
@@ -186,7 +183,6 @@ final class ErrorStripeMarkersModel {
   }
 
   private void removeErrorStripeMarker(@NotNull ErrorStripeMarkerImpl errorStripeMarker) {
-    //ApplicationManager.getApplication().assertIsDispatchThread();
     RangeHighlighterEx highlighter = errorStripeMarker.getHighlighter();
     treeFor(highlighter).removeInterval(errorStripeMarker);
     EdtInvocationManager.invokeLaterIfNeeded(() -> {
@@ -197,9 +193,8 @@ final class ErrorStripeMarkersModel {
   }
 
   private ErrorStripeMarkerImpl findErrorStripeMarker(@NotNull RangeHighlighterEx highlighter, boolean lookEverywhere) {
-    //ApplicationManager.getApplication().assertIsDispatchThread();
-    MarkupIterator<ErrorStripeMarkerImpl> iterator = treeFor(highlighter).overlappingIterator(
-      new ProperTextRange(lookEverywhere ? 0 : highlighter.getStartOffset(), lookEverywhere ? myEditor.getDocument().getTextLength() : highlighter.getEndOffset()));
+    TextRange range = lookEverywhere ? new ProperTextRange(0, myEditor.getDocument().getTextLength()) : highlighter.getTextRange();
+    MarkupIterator<ErrorStripeMarkerImpl> iterator = treeFor(highlighter).overlappingIterator(range);
     try {
       return ContainerUtil.find(iterator, marker -> marker.getHighlighter() == highlighter);
     }
@@ -278,7 +273,6 @@ final class ErrorStripeMarkersModel {
           return;
         }
         else {
-          //LOG.error("Dangling highlighter found: " + highlighter + " (" + next + ")");
           myToRemove.add(next);
         }
       }
