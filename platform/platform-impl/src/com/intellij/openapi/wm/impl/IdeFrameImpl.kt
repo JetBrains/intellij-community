@@ -39,7 +39,10 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   }
 
   init {
-    addComponentListener(EventLogger(this))
+    val log = Logger.getInstance("ide.frame.events")
+    if (log.isDebugEnabled) {
+      addComponentListener(EventLogger(frame = this, log = log))
+    }
   }
 
   var frameHelper: FrameHelper? = null
@@ -157,11 +160,11 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   }
 }
 
-private class EventLogger(private val frame: IdeFrameImpl) : ComponentAdapter() {
+private class EventLogger(private val frame: IdeFrameImpl, private val log: Logger) : ComponentAdapter() {
   companion object {
-    private val LOG: Logger = Logger.getInstance("ide.frame.events")
-
-    private fun Rectangle.toDebugString() = "${width}x${height} @ ($x,$y)"
+    private fun toDebugString(rectangle: Rectangle): String {
+      return "${rectangle.width}x${rectangle.height} @ (${rectangle.x},${rectangle.y})"
+    }
   }
 
   override fun componentResized(e: ComponentEvent) {
@@ -173,22 +176,17 @@ private class EventLogger(private val frame: IdeFrameImpl) : ComponentAdapter() 
   }
 
   private fun logBounds(action: String) {
-    if (!LOG.isDebugEnabled) {
-      // avoid unnecessary string formatting
-      return
-    }
-
     val windowBounds = frame.bounds
     val gc = frame.graphicsConfiguration ?: return
     val mode = gc.device?.displayMode ?: return
     val scale = JBUIScale.sysScale(gc)
     val screenBounds = gc.bounds
-    LOG.debug(
+    log.debug(
       "IDE frame '${frame.frameHelper?.project?.name}' $action; " +
-      "frame bounds: ${windowBounds.toDebugString()}; " +
+      "frame bounds: ${toDebugString(windowBounds)}; " +
       "resolution: ${mode.width}x${mode.height}; " +
       "scale: $scale; " +
-      "screen bounds: ${screenBounds.toDebugString()}"
+      "screen bounds: ${toDebugString(screenBounds)}"
     )
   }
 }
