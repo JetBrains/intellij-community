@@ -276,15 +276,15 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @NotNull
   private Collection<Maven40ExecutionResult> doResolveProject(@NotNull LongRunningTask task,
-                                                              @NotNull final Collection<File> files,
-                                                              @NotNull final List<String> activeProfiles,
-                                                              @NotNull final List<String> inactiveProfiles) throws RemoteException {
-    final File file = !files.isEmpty() ? files.iterator().next() : null;
-    final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
+                                                              @NotNull Collection<File> files,
+                                                              @NotNull List<String> activeProfiles,
+                                                              @NotNull List<String> inactiveProfiles) throws RemoteException {
+    File file = !files.isEmpty() ? files.iterator().next() : null;
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
-    final Collection<Maven40ExecutionResult> executionResults = new ArrayList<>();
+    Collection<Maven40ExecutionResult> executionResults = new ArrayList<>();
     Map<ProjectBuildingResult, List<Exception>> buildingResultsToResolveDependencies = new HashMap<>();
 
     executeWithMavenSession(request, () -> {
@@ -394,11 +394,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     MavenModel model = new MavenModel();
     try {
-      final DependencyResolutionResult dependencyResolutionResult = result.getDependencyResolutionResult();
-      final DependencyNode dependencyGraph =
+      DependencyResolutionResult dependencyResolutionResult = result.getDependencyResolutionResult();
+      DependencyNode dependencyGraph =
         dependencyResolutionResult != null ? dependencyResolutionResult.getDependencyGraph() : null;
 
-      final List<DependencyNode> dependencyNodes =
+      List<DependencyNode> dependencyNodes =
         dependencyGraph != null ? dependencyGraph.getChildren() : Collections.emptyList();
       model = Maven40AetherModelConverter.convertModelWithAetherDependencyTree(
         mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
@@ -562,7 +562,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @NotNull
   private Set<Artifact> resolveArtifacts(DependencyResolutionResult dependencyResolutionResult, boolean addUnresolvedNodes) {
-    final Map<Dependency, Artifact> winnerDependencyMap = new IdentityHashMap<>();
+    Map<Dependency, Artifact> winnerDependencyMap = new IdentityHashMap<>();
     Set<Artifact> artifacts = new LinkedHashSet<>();
     Set<Dependency> addedDependencies = Collections.newSetFromMap(new IdentityHashMap<>());
     resolveConflicts(dependencyResolutionResult, winnerDependencyMap);
@@ -572,7 +572,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
 
     for (Dependency dependency : dependencyResolutionResult.getDependencies()) {
-      final Artifact artifact = dependency == null ? null : winnerDependencyMap.get(dependency);
+      Artifact artifact = dependency == null ? null : winnerDependencyMap.get(dependency);
       if (artifact != null) {
         addedDependencies.add(dependency);
         artifacts.add(artifact);
@@ -592,7 +592,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         if (dependency == null || !addedDependencies.add(dependency)) {
           continue;
         }
-        final Artifact artifact = winnerDependencyMap.get(dependency);
+        Artifact artifact = winnerDependencyMap.get(dependency);
         if (artifact != null) {
           addedDependencies.add(dependency);
           //todo: properly resolve order
@@ -619,12 +619,12 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   private static void resolveConflicts(DependencyResolutionResult dependencyResolutionResult,
-                                       final Map<Dependency, Artifact> winnerDependencyMap) {
+                                       Map<Dependency, Artifact> winnerDependencyMap) {
     dependencyResolutionResult.getDependencyGraph().accept(new TreeDependencyVisitor(new DependencyVisitor() {
       @Override
       public boolean visitEnter(DependencyNode node) {
-        final Object winner = node.getData().get(ConflictResolver.NODE_DATA_WINNER);
-        final Dependency dependency = node.getDependency();
+        Object winner = node.getData().get(ConflictResolver.NODE_DATA_WINNER);
+        Dependency dependency = node.getDependency();
         if (dependency != null && winner == null) {
           Artifact winnerArtifact = Maven40AetherModelConverter.toArtifact(dependency);
           winnerDependencyMap.put(dependency, winnerArtifact);
@@ -984,7 +984,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @NotNull
   private List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Collection<File> files) {
-    final ProjectBuilder builder = getComponent(ProjectBuilder.class);
+    ProjectBuilder builder = getComponent(ProjectBuilder.class);
 
     ModelInterpolator modelInterpolator = getComponent(ModelInterpolator.class);
 
@@ -998,7 +998,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     List<ProjectBuildingResult> buildingResults = new ArrayList<>();
 
-    final ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
+    ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
     projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
     projectBuildingRequest.setResolveDependencies(false);
 
@@ -1518,8 +1518,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   @NotNull
   @Override
   public MavenArtifactResolveResult resolveArtifactsTransitively(
-    @NotNull final List<MavenArtifactInfo> artifacts,
-    @NotNull final List<MavenRemoteRepository> remoteRepositories,
+    @NotNull List<MavenArtifactInfo> artifacts,
+    @NotNull List<MavenRemoteRepository> remoteRepositories,
     MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
@@ -1542,8 +1542,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   private MavenArtifactResolveResult resolveArtifactsTransitively(
-    @NotNull final List<MavenArtifactInfo> artifacts,
-    @NotNull final List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
+    @NotNull List<MavenArtifactInfo> artifacts,
+    @NotNull List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
     DefaultSessionFactory sessionFactory = getComponent(DefaultSessionFactory.class);
     MavenExecutionRequest request = createRequest(null, null, null, null);
     request.setRemoteRepositories(convertRepositories(remoteRepositories));
