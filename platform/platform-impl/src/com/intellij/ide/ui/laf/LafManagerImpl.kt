@@ -288,7 +288,11 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
         }
       }
       else {
-        val laf = findLaf(currentLaf.className)
+        val laf = if (currentLaf.className == DarculaLaf::class.java.name) {
+          lafList.firstOrNull { it.name == "Darcula" && it.className == DarculaLaf::class.java.name } ?: findLaf(currentLaf.className)
+        } else {
+          findLaf(currentLaf.className)
+        }
         if (laf != null) {
           val needUninstall = StartupUiUtil.isUnderDarcula
           // setup default LAF or one specified by readExternal
