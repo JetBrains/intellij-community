@@ -777,9 +777,11 @@
 
     "RunWidget" : {
       "foreground": "Grey12",
+      "iconColor": "Grey12",
       "disabledForeground": "#FFFFFF66",
       "background": "#3369D6",
       "runningBackground": "#599E5E",
+      "runningIconColor": "Grey12",
       "hoverBackground": "#00000019",
       "pressedBackground": "#00000028",
       "separatorColor": "#FFFFFF40"

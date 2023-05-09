@@ -981,7 +981,7 @@
     },
     "RunWidget" : {
       "foreground": "black",
-      "runModeIconColor": "#5fad65",
+      "runIconColor": "#5fad65",
       "disabledForeground": "#FFFFFF66",
       "background": "#3369d6",
       "runningBackground": "#599e5e",

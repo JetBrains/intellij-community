@@ -31,7 +31,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
 
   protected val demoWithParametersName: String get() = "$demoConfigurationName with parameters"
 
-  private val runIcon: Icon by lazy { toStrokeIcon(AllIcons.Actions.Execute, JBUI.CurrentTheme.RunWidget.RUN_MODE_ICON) }
+  private val runIcon: Icon by lazy { toStrokeIcon(AllIcons.Actions.Execute, JBUI.CurrentTheme.RunWidget.RUN_ICON_COLOR) }
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {

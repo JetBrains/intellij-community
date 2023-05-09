@@ -183,7 +183,7 @@ private class PreparedIcon(private val width: Int, private val height: Int, priv
 
 private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () -> Boolean) : IdeaActionButtonLook() {
   override fun getStateBackground(component: JComponent, state: Int): Color? {
-    val isStopButton = (component as? ActionButton)?.action is StopAction
+    val isStopButton = isStopButton(component)
     if (!isContrastRunWidget && !isStopButton) {
       if (!buttonIsRunning(component)) {
         return getHeaderBackgroundColor(component, state)
@@ -276,13 +276,14 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     }
 
     if (resultIcon !is PreparedIcon) {
-      val resultColor = if (!isContrastRunWidget &&
-                            (actionButton as? ActionButton)?.action is ExecutorRegistryImpl.ExecutorAction &&
-                            !buttonIsRunning(actionButton)) {
-        JBUI.CurrentTheme.RunWidget.RUN_MODE_ICON
+      val executionAction = (actionButton as? ActionButton)?.action is ExecutorRegistryImpl.ExecutorAction
+      val iconWithBackground = executionAction && buttonIsRunning(actionButton) || isStopButton(actionButton)
+      val resultColor = if (!isContrastRunWidget && iconWithBackground) {
+        JBUI.CurrentTheme.RunWidget.RUNNING_ICON_COLOR
       }
       else {
-        JBUI.CurrentTheme.RunWidget.FOREGROUND
+        if (executionAction) JBUI.CurrentTheme.RunWidget.RUN_ICON_COLOR
+        else JBUI.CurrentTheme.RunWidget.ICON_COLOR
       }
       resultIcon = toStrokeIcon(resultIcon, resultColor)
     }
@@ -485,3 +486,6 @@ else
 private fun buttonIsRunning(component: Any): Boolean =
   (component as? ActionButton)?.presentation?.getClientProperty(ExecutorRegistryImpl.EXECUTOR_ACTION_STATUS) ==
     ExecutorRegistryImpl.ExecutorActionStatus.RUNNING
+
+private fun isStopButton(component: Any): Boolean =
+  (component as? ActionButton)?.action is StopAction

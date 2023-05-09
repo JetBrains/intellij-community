@@ -1949,8 +1949,13 @@
     },
     {
       "key": "RunWidget.foreground",
-      "description": "Foreground for run widget components and stroke icons on the contrast background",
+      "description": "Foreground for run widget components",
       "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.iconColor",
+      "description": "Color for non-debug/stop icons like More Actions or spinning icon",
+      "since": "2023.2"
     },
     {
       "key": "RunWidget.disabledForeground",
@@ -1970,6 +1975,11 @@
       "since": "2022.3"
     },
     {
+      "key": "RunWidget.runningIconColor",
+      "description": "Color for icons like stop/re-run in the running state",
+      "since": "2023.2"
+    },
+    {
       "key": "RunWidget.hoverBackground",
       "description": "Background for hover state in run widget. Will be applied over RunWidget.background or RunWidget.runningBackground.",
       "since": "2022.3"
@@ -1986,8 +1996,8 @@
       "deprecated": true
     },
     {
-      "key": "RunWidget.runModeIconColor",
-      "description": "The non-running state color for stroke icons in the non-contrast run widget",
+      "key": "RunWidget.runIconColor",
+      "description": "Color for icons like debug/run in the non-running state",
       "since": "2023.1"
     },
     {
