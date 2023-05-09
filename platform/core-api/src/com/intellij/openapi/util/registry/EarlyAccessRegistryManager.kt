@@ -67,6 +67,7 @@ private val map: ConcurrentHashMap<String, String>?
  */
 @ApiStatus.Internal
 object EarlyAccessRegistryManager {
+  @Suppress("ConstPropertyName")
   const val fileName: String = "early-access-registry.txt"
 
   fun getBoolean(key: String): Boolean {
@@ -87,24 +88,23 @@ object EarlyAccessRegistryManager {
     // see com.intellij.ide.plugins.PluginDescriptorLoader.loadForCoreEnv
     val registryManager = ApplicationManager.getApplication().serviceOrNull<RegistryManager>() ?: return getOrFromSystemProperty(map, key)
     // use RegistryManager to make sure that Registry is fully loaded
-    val registryValue = registryManager.get(key)
     val value = try {
-      registryValue.asString()
+      registryManager.stringValue(key)
     }
     catch (ignore: MissingResourceException) {
       null
     }
+
+    if (value == null) {
+      return null
+    }
+
     // ensure that even if key was not early accessed for some reason, it is stored for early access on next start-up
-    val existingValue = if (value == null) map.get(key) else map.putIfAbsent(key, value)
-    if (existingValue == null || existingValue == value) {
-      return value?.takeIf { it.isNotEmpty() }
-    }
-    else {
-      // local early-access-registry.txt has precedence over registry - update registry value and return from early access store
-      registryValue.setValueSilently(existingValue)
-      return existingValue
-    }
+    map.putIfAbsent(key, value)
+    return value.takeIf { it.isNotEmpty() }
   }
+
+  fun getOrLoadMap(): Map<String, String> = lazyMap.value
 
   fun setAndFlush(data: Map<String, String>) {
     check(!LoadingState.COMPONENTS_REGISTERED.isOccurred)
