@@ -303,8 +303,6 @@ private suspend fun initFrame(rawProjectDeferred: CompletableDeferred<Project>,
 
 private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>) {
   val fileEditorManager = project.serviceAsync<FileEditorManager>().await() as? FileEditorManagerImpl ?: return
-  val (editorComponent, editorState) = withContext(Dispatchers.EDT) { fileEditorManager.init() }
-
   coroutineScope {
     // only after FileEditorManager.init - DaemonCodeAnalyzer uses FileEditorManager
     launch {
@@ -312,6 +310,7 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
       project.serviceAsync<DaemonCodeAnalyzer>().join()
     }
 
+    val (editorComponent, editorState) = fileEditorManager.init()
     if (editorState == null) {
       val frameHelper = deferredProjectFrameHelper.await()
       withContext(Dispatchers.EDT) {

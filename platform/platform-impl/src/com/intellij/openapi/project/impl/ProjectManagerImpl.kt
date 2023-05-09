@@ -1194,7 +1194,7 @@ private suspend fun initProject(file: Path,
         null
       }
       else {
-        (project.serviceAsync<FileEditorManager>().await() as? FileEditorManagerImpl)?.initialized
+        (project.serviceAsync<FileEditorManager>().await() as? FileEditorManagerImpl)?.initJob
       }
 
       if (preloadServices) {

@@ -137,10 +137,8 @@ open class FileEditorManagerImpl(
   lateinit var mainSplitters: EditorsSplitters
     private set
 
-  private val isInitialized = CompletableDeferred<Boolean>()
-
-  internal val initialized: Job
-    get() = isInitialized
+  @JvmField
+  internal val initJob: Job
 
   private val dockable = lazy {
     DockableEditorTabbedContainer(splitters = mainSplitters, disposeWhenEmpty = false, coroutineScope = coroutineScope)
@@ -260,58 +258,59 @@ open class FileEditorManagerImpl(
     closeFilesOnFileEditorRemoval()
 
     if (ApplicationManager.getApplication().isUnitTestMode || forceUseUiInHeadlessMode()) {
-      isInitialized.complete(true)
+      initJob = CompletableDeferred(value = Unit)
       mainSplitters = EditorsSplitters(manager = this, coroutineScope = coroutineScope)
       check(splitterFlow.tryEmit(mainSplitters))
     }
+    else {
+      initJob = coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        val component = EditorsSplitters(manager = this@FileEditorManagerImpl, coroutineScope = coroutineScope)
+        component.isFocusable = false
+        // prepare for toolwindow manager
+        mainSplitters = component
+        check(splitterFlow.tryEmit(component))
+
+        // connect after we set mainSplitters
+        if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+          coroutineScope.launch {
+            postInit()
+          }
+        }
+      }
+    }
+  }
+
+  private fun postInit() {
+    val connection = project.messageBus.connect(coroutineScope)
+    connection.subscribe(FileStatusListener.TOPIC, MyFileStatusListener())
+    connection.subscribe(FileTypeManager.TOPIC, MyFileTypeListener())
+    if (!LightEdit.owns(project)) {
+      connection.subscribe(ProjectTopics.PROJECT_ROOTS, MyRootListener())
+      connection.subscribe(AdditionalLibraryRootsListener.TOPIC, MyRootListener())
+    }
+
+    // updates tabs names
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
+
+    // Extends/cuts number of opened tabs. Also updates the location of tabs.
+    connection.subscribe(UISettingsListener.TOPIC, MyUISettingsListener())
+
+    connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosing(project: Project) {
+        if (this@FileEditorManagerImpl.project === project) {
+          // Dispose created editors. We do not use closeEditor method because it fires events and changes history.
+          closeAllFiles(repaint = false)
+        }
+      }
+    })
+
+    processFileUpdateRequests()
   }
 
   @RequiresEdt
-  internal fun init(): kotlin.Pair<EditorsSplitters, EditorSplitterState?> {
-    if (isInitialized.isCompleted) {
-      LOG.error("already initialized")
-    }
-
-    val component = EditorsSplitters(manager = this, coroutineScope = coroutineScope)
-    component.isFocusable = false
-    // prepare for toolwindow manager
-    mainSplitters = component
-    check(splitterFlow.tryEmit(component))
-
-    // set after we set mainSplitters
-    if (!isInitialized.complete(true)) {
-      LOG.error("already initialized")
-    }
-
-    // connect after we set mainSplitters
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-      val connection = project.messageBus.connect(coroutineScope)
-      connection.subscribe(FileStatusListener.TOPIC, MyFileStatusListener())
-      connection.subscribe(FileTypeManager.TOPIC, MyFileTypeListener())
-      if (!LightEdit.owns(project)) {
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, MyRootListener())
-        connection.subscribe(AdditionalLibraryRootsListener.TOPIC, MyRootListener())
-      }
-
-      // updates tabs names
-      connection.subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
-
-      // Extends/cuts number of opened tabs. Also updates the location of tabs.
-      connection.subscribe(UISettingsListener.TOPIC, MyUISettingsListener())
-
-      connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-        override fun projectClosing(project: Project) {
-          if (this@FileEditorManagerImpl.project === project) {
-            // Dispose created editors. We do not use closeEditor method because it fires events and changes history.
-            closeAllFiles(repaint = false)
-          }
-        }
-      })
-
-      processFileUpdateRequests()
-    }
-
-    return component to state.getAndSet(null)
+  internal suspend fun init(): kotlin.Pair<EditorsSplitters, EditorSplitterState?> {
+    initJob.join()
+    return mainSplitters to state.getAndSet(null)
   }
 
   companion object {
@@ -596,7 +595,7 @@ open class FileEditorManagerImpl(
    * should be opened in the myEditor, otherwise the method throws an assertion.
    */
   override fun updateFileColor(file: VirtualFile) {
-    if (!isInitialized.isCompleted) {
+    if (!initJob.isCompleted) {
       return
     }
 
@@ -705,7 +704,7 @@ open class FileEditorManagerImpl(
       if (!ClientId.isCurrentlyUnderLocalId) {
         return clientFileEditorManager?.getSelectedFile()
       }
-      if (!isInitialized.isCompleted) {
+      if (!initJob.isCompleted) {
         return null
       }
       return getActiveSplitterSync().currentFile
@@ -716,7 +715,7 @@ open class FileEditorManagerImpl(
 
   override var currentWindow: EditorWindow?
     get() {
-      if (!ClientId.isCurrentlyUnderLocalId || !isInitialized.isCompleted) {
+      if (!ClientId.isCurrentlyUnderLocalId || !initJob.isCompleted) {
         return null
       }
       if (!ApplicationManager.getApplication().isDispatchThread) {
@@ -732,7 +731,7 @@ open class FileEditorManagerImpl(
     }
 
   /**
-   * This method runs pre-close checks (e.g. confirmation dialogs) before closing the window
+   * This method runs pre-close checks (e.g., confirmation dialogs) before closing the window
    * @return true if the window was closed; false otherwise
    */
   @RequiresEdt
@@ -881,7 +880,8 @@ open class FileEditorManagerImpl(
     }
 
     if (!ClientId.isCurrentlyUnderLocalId) {
-      val result = (clientFileEditorManager ?: return FileEditorComposite.EMPTY).openFileAsync(file = file, forceCreate = false, requestFocus = options.requestFocus)
+      val result = (clientFileEditorManager ?: return FileEditorComposite.EMPTY).openFileAsync(file = file, forceCreate = false,
+                                                                                               requestFocus = options.requestFocus)
       return FileEditorComposite.createFileEditorComposite(allEditors = result.map { it.fileEditor },
                                                            allProviders = result.map { it.provider },
                                                            isPreview = options.usePreviewTab)
@@ -1452,7 +1452,7 @@ open class FileEditorManagerImpl(
   override fun getSelectedTextEditor(): Editor? = getSelectedTextEditor(isLockFree = false)
 
   fun getSelectedTextEditor(isLockFree: Boolean): Editor? {
-    if (!isInitialized.isCompleted) {
+    if (!initJob.isCompleted) {
       return null
     }
 
@@ -1508,7 +1508,7 @@ open class FileEditorManagerImpl(
   override fun hasOpenFiles(): Boolean = !openedComposites.isEmpty()
 
   override fun getSelectedFiles(): Array<VirtualFile> {
-    if (!isInitialized.isCompleted) {
+    if (!initJob.isCompleted) {
       return VirtualFile.EMPTY_ARRAY
     }
     if (!ClientId.isCurrentlyUnderLocalId) {
@@ -1527,7 +1527,7 @@ open class FileEditorManagerImpl(
   }
 
   override fun getSelectedEditors(): Array<FileEditor> {
-    if (!isInitialized.isCompleted) {
+    if (!initJob.isCompleted) {
       return FileEditor.EMPTY_ARRAY
     }
 
@@ -1546,7 +1546,7 @@ open class FileEditorManagerImpl(
 
   @get:RequiresEdt
   override val activeSplittersComposites: List<EditorComposite>
-    get() = if (isInitialized.isCompleted) getActiveSplitterSync().getAllComposites() else emptyList()
+    get() = if (initJob.isCompleted) getActiveSplitterSync().getAllComposites() else emptyList()
 
   fun getLastFocusedSplitters(): EditorsSplitters? {
     if (ApplicationManager.getApplication().isDispatchThread) {
@@ -1565,7 +1565,7 @@ open class FileEditorManagerImpl(
     if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.getSelectedEditor()
     }
-    if (!isInitialized.isCompleted) {
+    if (!initJob.isCompleted) {
       return null
     }
 
@@ -1621,7 +1621,7 @@ open class FileEditorManagerImpl(
   }
 
   override fun getAllEditors(): Array<FileEditor> {
-    if (!isInitialized.isCompleted) {
+    if (!initJob.isCompleted) {
       return FileEditor.EMPTY_ARRAY
     }
 
@@ -1669,7 +1669,7 @@ open class FileEditorManagerImpl(
   }
 
   override fun getState(): Element? {
-    if (!isInitialized.isCompleted) {
+    if (!initJob.isCompleted) {
       return null
     }
 
