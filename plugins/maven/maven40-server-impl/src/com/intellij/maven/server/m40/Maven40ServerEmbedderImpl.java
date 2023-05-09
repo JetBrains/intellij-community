@@ -257,8 +257,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   private Collection<MavenServerExecutionResult> resolveProject(@NotNull LongRunningTask task,
                                                                 @NotNull Collection<File> files,
                                                                 @NotNull Collection<String> activeProfiles,
-                                                                @NotNull Collection<String> inactiveProfiles)
-    throws RemoteException {
+                                                                @NotNull Collection<String> inactiveProfiles) {
     try {
       Collection<Maven40ExecutionResult> results = doResolveProject(
         task,
@@ -278,7 +277,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   private Collection<Maven40ExecutionResult> doResolveProject(@NotNull LongRunningTask task,
                                                               @NotNull Collection<File> files,
                                                               @NotNull List<String> activeProfiles,
-                                                              @NotNull List<String> inactiveProfiles) throws RemoteException {
+                                                              @NotNull List<String> inactiveProfiles) {
     File file = !files.isEmpty() ? files.iterator().next() : null;
     MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
 
@@ -739,7 +738,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   private static Settings buildSettings(SettingsBuilder builder,
                                         MavenServerSettings settings,
                                         Properties systemProperties,
-                                        Properties userProperties) throws RemoteException {
+                                        Properties userProperties) {
     SettingsBuildingRequest settingsRequest = new DefaultSettingsBuildingRequest();
     if (settings.getGlobalSettingsPath() != null) {
       settingsRequest.setGlobalSettingsFile(new File(settings.getGlobalSettingsPath()));
@@ -774,8 +773,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   public MavenExecutionRequest createRequest(@Nullable File file,
                                              @Nullable List<String> activeProfiles,
                                              @Nullable List<String> inactiveProfiles,
-                                             @Nullable String goal)
-    throws RemoteException {
+                                             @Nullable String goal) {
 
     MavenExecutionRequest result = new DefaultMavenExecutionRequest();
 
@@ -1256,8 +1254,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   private List<MavenGoalExecutionResult> executeGoal(@NotNull LongRunningTask task,
                                                      @NotNull Collection<MavenGoalExecutionRequest> requests,
-                                                     @NotNull String goal)
-    throws RemoteException {
+                                                     @NotNull String goal) {
     try {
       List<MavenGoalExecutionResult> results = new ArrayList<>();
       for (MavenGoalExecutionRequest request : requests) {
@@ -1273,7 +1270,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-  private MavenGoalExecutionResult doExecute(@NotNull MavenGoalExecutionRequest request, @NotNull String goal) throws RemoteException {
+  private MavenGoalExecutionResult doExecute(@NotNull MavenGoalExecutionRequest request, @NotNull String goal) {
     File file = request.file();
     MavenExplicitProfiles profiles = request.profiles();
     List<String> activeProfiles = new ArrayList<>(profiles.getEnabledProfiles());
@@ -1288,8 +1285,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @NotNull
-  private MavenGoalExecutionResult createEmbedderExecutionResult(@NotNull File file, Maven40ExecutionResult result)
-    throws RemoteException {
+  private MavenGoalExecutionResult createEmbedderExecutionResult(@NotNull File file, Maven40ExecutionResult result) {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
 
     collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
@@ -1407,12 +1403,12 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-  private MavenArtifact doResolveArtifact(MavenArtifactInfo info, List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
+  private MavenArtifact doResolveArtifact(MavenArtifactInfo info, List<MavenRemoteRepository> remoteRepositories) {
     Artifact resolved = doResolveArtifact(createArtifact(info), convertRepositories(remoteRepositories));
     return Maven40ModelConverter.convertArtifact(resolved, getLocalRepositoryFile());
   }
 
-  private Artifact doResolveArtifact(Artifact artifact, List<ArtifactRepository> remoteRepositories) throws RemoteException {
+  private Artifact doResolveArtifact(Artifact artifact, List<ArtifactRepository> remoteRepositories) {
     try {
       MavenExecutionRequest request =
         createRequest(null, null, null, null);
@@ -1449,7 +1445,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @NotNull
-  private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
+  private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) {
     List<ArtifactRepository> result = map2ArtifactRepositories(repositories);
     if (getComponent(LegacySupport.class).getRepositorySession() == null) {
       myRepositorySystem.injectMirror(result, myMavenSettings.getMirrors());
@@ -1459,7 +1455,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return result;
   }
 
-  private List<ArtifactRepository> map2ArtifactRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
+  private List<ArtifactRepository> map2ArtifactRepositories(List<MavenRemoteRepository> repositories) {
     List<ArtifactRepository> result = new ArrayList<>();
     for (MavenRemoteRepository each : repositories) {
       try {
@@ -1534,7 +1530,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   private MavenArtifactResolveResult resolveArtifactsTransitively(
     @NotNull List<MavenArtifactInfo> artifacts,
-    @NotNull List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
+    @NotNull List<MavenRemoteRepository> remoteRepositories) {
     DefaultSessionFactory sessionFactory = getComponent(DefaultSessionFactory.class);
     MavenExecutionRequest request = createRequest(null, null, null, null);
     request.setRemoteRepositories(convertRepositories(remoteRepositories));
