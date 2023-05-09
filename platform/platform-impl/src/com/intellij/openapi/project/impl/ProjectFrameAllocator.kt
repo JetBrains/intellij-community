@@ -339,7 +339,6 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
 
         frameHelper.rootPane.getToolWindowPane().setDocumentComponent(editorComponent)
         // validate and focus container only when it is added to the frame
-        editorComponent.validate()
         focusSelectedEditor(editorComponent)
       }
     }
