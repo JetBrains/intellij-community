@@ -46,6 +46,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -1751,12 +1752,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    void scrollFromSource(boolean requestFocus) {
-      scrollFromSource(null, requestFocus);
+    void scrollFromSource(boolean invokedManually) {
+      scrollFromSource(null, invokedManually);
     }
 
-    void scrollFromSource(@Nullable FileEditor fileEditor, boolean requestFocus) {
-      myProject.getService(SelectInProjectViewImpl.class).selectInCurrentTarget(fileEditor, requestFocus);
+    private void scrollFromSource(@Nullable FileEditor fileEditor, boolean invokedManually) {
+      myProject.getService(SelectInProjectViewImpl.class).selectInCurrentTarget(fileEditor, invokedManually);
     }
 
     private boolean isCurrentProjectViewPaneFocused() {
@@ -1806,7 +1807,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   boolean isSelectOpenedFileEnabled() {
-    return !isAutoscrollFromSourceEnabled(myCurrentViewId);
+    return !isAutoscrollFromSourceEnabled(myCurrentViewId) || AdvancedSettings.getBoolean("project.view.do.not.autoscroll.to.libraries");
   }
 
   void selectOpenedFile() {

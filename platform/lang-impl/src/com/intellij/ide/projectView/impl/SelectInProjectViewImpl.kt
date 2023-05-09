@@ -16,35 +16,42 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtilCore
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
 @Service
-@ApiStatus.Internal
-class SelectInProjectViewImpl(
+internal class SelectInProjectViewImpl(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) {
 
-  fun selectInCurrentTarget(fileEditor: FileEditor?, requestFocus: Boolean) {
-    coroutineScope.launch(CoroutineName("ProjectView.selectInCurrentTarget(requestFocus=$requestFocus,fileEditor=$fileEditor")) {
+  fun selectInCurrentTarget(fileEditor: FileEditor?, invokedManually: Boolean) {
+    coroutineScope.launch(CoroutineName("ProjectView.selectInCurrentTarget(invokedManually=$invokedManually,fileEditor=$fileEditor")) {
       val editorsToCheck = if (fileEditor == null) allEditors() else listOf(fileEditor)
-      selectInCurrentTarget(requestFocus, editorsToCheck)
+      selectInCurrentTarget(invokedManually, editorsToCheck)
     }
   }
 
-  private suspend fun selectInCurrentTarget(requestFocus: Boolean, editorsToCheck: List<FileEditor>) {
+  private suspend fun selectInCurrentTarget(invokedManually: Boolean, editorsToCheck: List<FileEditor>) {
     for (fileEditor in editorsToCheck) {
+      if (
+        !invokedManually &&
+        AdvancedSettings.getBoolean("project.view.do.not.autoscroll.to.libraries") &&
+        readAction { fileEditor.file?.let { file ->ProjectFileIndex.getInstance(project).isInLibrary(file) } == true }
+      ) {
+        continue
+      }
       val psiFilePointer = getPsiFilePointer(fileEditor)
       if (psiFilePointer != null) {
         withContext(Dispatchers.EDT) {
-          createSelectInContext(psiFilePointer, fileEditor).selectInCurrentTarget(requestFocus)
+          createSelectInContext(psiFilePointer, fileEditor).selectInCurrentTarget(requestFocus = invokedManually)
         }
         break
       }
