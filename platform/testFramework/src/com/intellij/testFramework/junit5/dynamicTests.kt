@@ -2,10 +2,13 @@
 @file:JvmName("DynamicTests")
 package com.intellij.testFramework.junit5
 
+import org.junit.AssumptionViolatedException
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.function.Executable
 import org.opentest4j.AssertionFailedError
+import org.opentest4j.IncompleteExecutionException
+import org.opentest4j.TestAbortedException
 
 /**
  * Describes a test failure. [name] will be used as a test name for a separate test failure when [asDynamicTests] is called.
@@ -43,11 +46,20 @@ fun List<NamedFailure>.asDynamicTests(testNameForSuccess: String, testNameForMan
   else {
     //this may indicate a problem in the testing code, so it's better to report one failed test with all the errors inside
     return listOf(DynamicTest.dynamicTest(testNameForManyFailures) {
-      assertAll(map {
-        {
-          throw it.error
+      if (all { it.error is AssumptionViolatedException || it.error is IncompleteExecutionException }) {
+        val aborted = TestAbortedException("$testNameForManyFailures:\n${joinToString("\n") { it.error.toString() }}")
+        forEach { 
+          aborted.addSuppressed(it.error)
         }
-      })
+        throw aborted
+      }
+      else {
+        assertAll(map {
+          {
+            throw it.error
+          }
+        })
+      }
     })
   }
 }
