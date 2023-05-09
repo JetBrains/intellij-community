@@ -407,7 +407,10 @@ public class DefaultTreeUI extends BasicTreeUI {
   protected boolean isToggleEvent(MouseEvent event) {
     if (!super.isToggleEvent(event)) return false;
     JTree tree = getTree();
-    return tree != null && isExpandPreferable(tree, tree.getSelectionPath());
+    return tree != null
+           // BasicTreeUI uses clickCount % toggleClickCount == 0, which works terrible for single-click, so we double-check here:
+           && tree.getToggleClickCount() == event.getClickCount()
+           && isExpandPreferable(tree, tree.getSelectionPath());
   }
 
   @Override

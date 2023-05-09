@@ -172,6 +172,28 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   };
 
+  private final Option myOpenDirectoriesWithSingleClick = new Option() {
+    @Override
+    public boolean isSelected() {
+      return myCurrentState.getOpenDirectoriesWithSingleClick();
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+      if (myProject.isDisposed()) return;
+      myCurrentState.setOpenDirectoriesWithSingleClick(selected);
+      getDefaultState().setOpenDirectoriesWithSingleClick(selected);
+      getGlobalOptions().setOpenDirectoriesWithSingleClick(selected);
+      var pane = getCurrentProjectViewPane();
+      if (pane != null) {
+        var tree = pane.getTree();
+        if (tree != null) {
+          tree.setToggleClickCount(selected ? 1 : 2);
+        }
+      }
+    }
+  };
+
   private final Option myOpenInPreviewTab = new Option() {
     @Override
     public boolean isSelected() {
@@ -873,6 +895,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (newPane.myTree != null) {
       myAutoScrollToSourceHandler.install(newPane.myTree);
       myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
+      newPane.myTree.setToggleClickCount(myOpenDirectoriesWithSingleClick.isSelected() ? 1 : 2);
     }
 
     newPane.restoreExpandedPaths();
@@ -1904,6 +1927,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     static final class AutoscrollToSource extends Action {
       AutoscrollToSource() {
         super(view -> view.myAutoscrollToSource);
+      }
+    }
+
+    static final class OpenDirectoriesWithSingleClick extends Action {
+      OpenDirectoriesWithSingleClick() {
+        super(view -> view.myOpenDirectoriesWithSingleClick);
       }
     }
 

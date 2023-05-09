@@ -912,6 +912,8 @@
       <action id="ProjectView.AutoscrollToSource"
               class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollToSource"
               icon="AllIcons.General.AutoscrollToSource"/>
+      <action id="ProjectView.OpenDirectoriesWithSingleClick"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$OpenDirectoriesWithSingleClick"/>
       <action id="ProjectView.AutoscrollFromSource"
               class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollFromSource"
               icon="AllIcons.General.AutoscrollFromSource"/>
