@@ -48,6 +48,7 @@ task("downloadJbr") {
 
   doLast {
     val tmp = project.buildDir.toPath().resolve("tmp")
+    Files.createDirectories(tmp)
 
     val file = Files.createTempFile(tmp, "jbr_", ".tgz")
     val uri = URI("https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-${jbrSdkVersion}-${os}-${arch}-b${jbrSdkBuildNumber}.tar.gz")
