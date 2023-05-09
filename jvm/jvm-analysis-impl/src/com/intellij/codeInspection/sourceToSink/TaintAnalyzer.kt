@@ -387,7 +387,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     }
     var taintValue = TaintValue.UNTAINTED // by default
     val uMethod = (uParameter.uastParent as? UMethod) ?: return TaintValue.UNKNOWN
-    val psiMethod = (uMethod.sourcePsi as? PsiMethod)
+    val methodJavaPsi = uMethod.javaPsi
 
     //from method invocation
     var fromInvocation = false
@@ -399,7 +399,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       }
     }
 
-    if (psiMethod != null && psiMethod.hasModifier(JvmModifier.PRIVATE) && !fromInvocation) {
+    if (methodJavaPsi.hasModifier(JvmModifier.PRIVATE) && !fromInvocation) {
       if (analyzeContext.parameterOfPrivateMethodIsUntainted) {
         taintValue = taintValue.join(TaintValue.UNTAINTED)
       }
@@ -426,9 +426,9 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       nonMarkedElements.addAll(findAssignments(psiParameter))
     }
 
-    if (psiMethod != null && analyzeContext.collectReferences && taintValue != TaintValue.TAINTED) {
+    if (analyzeContext.collectReferences && taintValue != TaintValue.TAINTED) {
       val paramIdx = uMethod.uastParameters.indexOf(uParameter)
-      nonMarkedElements.addAll(findNonMarkedArgs(psiMethod, paramIdx))
+      nonMarkedElements.addAll(findNonMarkedArgs(methodJavaPsi, paramIdx))
     }
     myNonMarkedElements.addAll(nonMarkedElements.filterNotNull())
     return taintValue
