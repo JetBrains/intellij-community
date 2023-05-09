@@ -25,7 +25,13 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon GroupByTestProduction = load("expui/actions/groupByTestProduction.svg", 174137220, 2);
     /** 16x16 */ public static final @NotNull Icon InSelection = load("expui/actions/inSelection.svg", -1349439138, 2);
     /** 16x16 */ public static final @NotNull Icon Install = load("expui/actions/install.svg", 1958136834, 2);
+    /** 16x16 */ public static final @NotNull Icon MoveToBottomLeft = load("expui/actions/moveToBottomLeft.svg", 1325006873, 2);
+    /** 16x16 */ public static final @NotNull Icon MoveToBottomRight = load("expui/actions/moveToBottomRight.svg", 2111677428, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToButton = load("expui/actions/moveToButton.svg", 2042731822, 2);
+    /** 16x16 */ public static final @NotNull Icon MoveToLeftBottom = load("expui/actions/moveToLeftBottom.svg", -563417399, 2);
+    /** 16x16 */ public static final @NotNull Icon MoveToLeftTop = load("expui/actions/moveToLeftTop.svg", 258309763, 2);
+    /** 16x16 */ public static final @NotNull Icon MoveToRightBottom = load("expui/actions/moveToRightBottom.svg", -1025284462, 2);
+    /** 16x16 */ public static final @NotNull Icon MoveToRightTop = load("expui/actions/moveToRightTop.svg", -430261620, 2);
     /** 16x16 */ public static final @NotNull Icon NewFolder = load("expui/actions/newFolder.svg", 842314391, 2);
     /** 16x16 */ public static final @NotNull Icon PlayBack = load("expui/actions/playBack.svg", -1376414727, 2);
     /** 16x16 */ public static final @NotNull Icon PlayFirst = load("expui/actions/playFirst.svg", 1193006199, 2);
