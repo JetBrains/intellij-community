@@ -41,15 +41,15 @@ class FSRecordsOracle(
     }
 
     inner class OracledVirtualFileSnapshot(override val fileId: Int) : VfsSnapshot.VirtualFileSnapshot {
+      // TODO VfsChronicle.lookup* can throw on Invalid, needs to be processed correctly (propagate error as NotAvailable?)
       override val nameId: Property<Int> = OracledProp(
         queryLog = {
           VfsChronicle.lookupNameId(point(), fileId, direction = TraverseDirection.PLAY).toState() // TODO can throw on Invalid
         },
         queryFsRecords = { fsRecords.getNameIdByFileId(fileId) }
       )
-      override val name: Property<String> = nameId.fmap {
-        fsRecords.getNameByNameId(it).toString()
-      }
+      override val name: Property<String> = nameId.fmap { fsRecords.getNameByNameId(it).toString() }
+
       override val parentId: Property<Int> = OracledProp(
         queryLog = {
           VfsChronicle.lookupParentId(point(), fileId, direction = TraverseDirection.PLAY).toState() // TODO can throw on Invalid
@@ -60,13 +60,44 @@ class FSRecordsOracle(
         if (it == 0) null else OracledVirtualFileSnapshot(it)
       }
 
+      override val length: Property<Long> = OracledProp(
+        queryLog = {
+          VfsChronicle.lookupLength(point(), fileId, direction = TraverseDirection.PLAY).toState()
+        },
+        queryFsRecords = { fsRecords.getLength(fileId) }
+      )
+      override val timestamp: Property<Long> = OracledProp(
+        queryLog = {
+          VfsChronicle.lookupTimestamp(point(), fileId, direction = TraverseDirection.PLAY).toState()
+        },
+        queryFsRecords = { fsRecords.getTimestamp(fileId) }
+      )
+      override val flags: Property<Int> = OracledProp(
+        queryLog = {
+          VfsChronicle.lookupFlags(point(), fileId, direction = TraverseDirection.PLAY).toState()
+        },
+        queryFsRecords = { fsRecords.getFlags(fileId) }
+      )
+      override val contentRecordId: Property<Int> = OracledProp(
+        queryLog = {
+          VfsChronicle.lookupContentRecordId(point(), fileId, direction = TraverseDirection.PLAY).toState()
+        },
+        queryFsRecords = { fsRecords.getContentRecordId(fileId) }
+      )
+      override val attributesRecordId: Property<Int> = OracledProp(
+        queryLog = {
+          VfsChronicle.lookupAttributeRecordId(point(), fileId, direction = TraverseDirection.PLAY).toState()
+        },
+        queryFsRecords = { fsRecords.getAttributeRecordId(fileId) }
+      )
+
       private inner class OracledProp<T>(
         val queryLog: () -> State.DefinedState<T>,
         val queryFsRecords: () -> T,
       ) : Property<T>() {
         override fun compute(): State.DefinedState<T> {
           if (!distanceEvaluator.isWorthLookingUpFrom(point())) return State.notAvailable()
-          /* tricky: we must return the value at point(), so if queryLog() returns Ready, then the property was changed in
+          /* tricky: we must return the value at point(), so if queryLog() returns Ready, then the property has been changed in
              between (point(), end()) of log, so value at point() may not be the same as it is in FSRecords */
           return queryLog().mapCases(onNotAvailable = { State.ready(queryFsRecords()) }) { State.notAvailable() }
         }

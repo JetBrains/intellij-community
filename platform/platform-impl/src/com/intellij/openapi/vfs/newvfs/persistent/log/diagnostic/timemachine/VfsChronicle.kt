@@ -25,7 +25,7 @@ object VfsChronicle {
   inline fun lookupNameId(iterator: OperationLogStorage.Iterator,
                           fileId: Int,
                           direction: TraverseDirection = TraverseDirection.REWIND,
-                          crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }) =
+                          crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
     traverseOperationsLogForLookup(
       iterator, direction, condition,
       VfsOperationTagsMask(REC_ALLOC, REC_SET_NAME_ID, REC_FILL_RECORD, REC_CLEAN_RECORD),
@@ -42,7 +42,7 @@ object VfsChronicle {
   inline fun lookupParentId(iterator: OperationLogStorage.Iterator,
                             fileId: Int,
                             direction: TraverseDirection = TraverseDirection.REWIND,
-                            crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }) =
+                            crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
     traverseOperationsLogForLookup(
       iterator, direction, condition,
       VfsOperationTagsMask(REC_ALLOC, REC_SET_PARENT, REC_FILL_RECORD, REC_CLEAN_RECORD),
@@ -51,6 +51,90 @@ object VfsChronicle {
           is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
           is RecordsOperation.SetParent -> if (operation.fileId == fileId) detect(operation.parentId)
           is RecordsOperation.FillRecord -> if (operation.fileId == fileId) detect(operation.parentId)
+          is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0)
+          else -> throw IllegalStateException("filtered read is broken")
+        }
+      })
+
+  inline fun lookupLength(iterator: OperationLogStorage.Iterator,
+                          fileId: Int,
+                          direction: TraverseDirection = TraverseDirection.REWIND,
+                          crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Long> =
+    traverseOperationsLogForLookup(
+      iterator, direction, condition,
+      VfsOperationTagsMask(REC_ALLOC, REC_SET_LENGTH, REC_FILL_RECORD, REC_CLEAN_RECORD),
+      onValid = { operation, detect ->
+        when (operation) {
+          is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0L)
+          is RecordsOperation.SetLength -> if (operation.fileId == fileId) detect(operation.length)
+          is RecordsOperation.FillRecord -> if (operation.fileId == fileId) detect(operation.length)
+          is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0L)
+          else -> throw IllegalStateException("filtered read is broken")
+        }
+      })
+
+  inline fun lookupTimestamp(iterator: OperationLogStorage.Iterator,
+                             fileId: Int,
+                             direction: TraverseDirection = TraverseDirection.REWIND,
+                             crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Long> =
+    traverseOperationsLogForLookup(
+      iterator, direction, condition,
+      VfsOperationTagsMask(REC_ALLOC, REC_SET_TIMESTAMP, REC_FILL_RECORD, REC_CLEAN_RECORD),
+      onValid = { operation, detect ->
+        when (operation) {
+          is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0L)
+          is RecordsOperation.SetTimestamp -> if (operation.fileId == fileId) detect(operation.timestamp)
+          is RecordsOperation.FillRecord -> if (operation.fileId == fileId) detect(operation.timestamp)
+          is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0L)
+          else -> throw IllegalStateException("filtered read is broken")
+        }
+      })
+
+  inline fun lookupFlags(iterator: OperationLogStorage.Iterator,
+                         fileId: Int,
+                         direction: TraverseDirection = TraverseDirection.REWIND,
+                         crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
+    traverseOperationsLogForLookup(
+      iterator, direction, condition,
+      VfsOperationTagsMask(REC_ALLOC, REC_SET_FLAGS, REC_FILL_RECORD, REC_CLEAN_RECORD),
+      onValid = { operation, detect ->
+        when (operation) {
+          is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
+          is RecordsOperation.SetFlags -> if (operation.fileId == fileId) detect(operation.flags)
+          is RecordsOperation.FillRecord -> if (operation.fileId == fileId) detect(operation.flags)
+          is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0)
+          else -> throw IllegalStateException("filtered read is broken")
+        }
+      })
+
+  inline fun lookupContentRecordId(iterator: OperationLogStorage.Iterator,
+                                   fileId: Int,
+                                   direction: TraverseDirection = TraverseDirection.REWIND,
+                                   crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
+    traverseOperationsLogForLookup(
+      iterator, direction, condition,
+      VfsOperationTagsMask(REC_ALLOC, REC_SET_CONTENT_RECORD_ID, REC_CLEAN_RECORD),
+      onValid = { operation, detect ->
+        when (operation) {
+          is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
+          is RecordsOperation.SetContentRecordId -> if (operation.fileId == fileId) detect(operation.recordId)
+          is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0)
+          else -> throw IllegalStateException("filtered read is broken")
+        }
+      })
+
+  inline fun lookupAttributeRecordId(iterator: OperationLogStorage.Iterator,
+                         fileId: Int,
+                         direction: TraverseDirection = TraverseDirection.REWIND,
+                         crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
+    traverseOperationsLogForLookup(
+      iterator, direction, condition,
+      VfsOperationTagsMask(REC_ALLOC, REC_SET_ATTR_REC_ID, REC_FILL_RECORD, REC_CLEAN_RECORD),
+      onValid = { operation, detect ->
+        when (operation) {
+          is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
+          is RecordsOperation.SetAttributeRecordId -> if (operation.fileId == fileId) detect(operation.recordId)
+          is RecordsOperation.FillRecord -> if (operation.fileId == fileId && operation.overwriteAttrRef) detect(0)
           is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0)
           else -> throw IllegalStateException("filtered read is broken")
         }
@@ -85,7 +169,9 @@ object VfsChronicle {
     val value: T
 
     companion object {
-      inline fun <T, R> LookupResult<T>.mapCases(onNotFound: () -> R, onFound: (value: T) -> R): R = if (found) onFound(value) else onNotFound()
+      inline fun <T, R> LookupResult<T>.mapCases(onNotFound: () -> R, onFound: (value: T) -> R): R = if (found) onFound(value)
+      else onNotFound()
+
       fun <T> LookupResult<T>.getOrNull(): T? = mapCases({ null }) { it }
 
       inline fun <T> LookupResult<T>.toState(

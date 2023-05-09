@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.FSRecordsOracle
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshotUtils.fullPath
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsTimeMachine
 import com.intellij.util.ExceptionUtil
 import kotlinx.coroutines.runBlocking
@@ -58,6 +58,7 @@ private fun calcStats(log: VfsLog): Stats {
       log.query {
         stats.operationsStorageSize = operationLogStorage.size()
         stats.payloadStorageSize = payloadStorage.size()
+        //val attrCount: MutableMap<String, Int> = mutableMapOf<String, Int>()
 
         operationLogStorage.readAll {
           when (it) {
@@ -73,6 +74,9 @@ private fun calcStats(log: VfsLog): Stats {
                 is VfsOperation.AttributesOperation.WriteAttribute -> {
                   val attributeId = stringEnumerator.valueOf(it.operation.attributeIdEnumerated)
                   if (attributeId == null) stats.nullEnumeratedString.incrementAndGet()
+                  //else {
+                  //  attrCount[attributeId] = attrCount.getOrDefault(attributeId, 0) + 1
+                  //}
                   val data = payloadStorage.readAt(it.operation.attrDataPayloadRef)
                   if (data == null) {
                     stats.nullPayloads.incrementAndGet()
@@ -102,6 +106,8 @@ private fun calcStats(log: VfsLog): Stats {
           }
           true
         }
+
+        //println(attrCount.toList().sortedByDescending { it.second })
       }
     }
   }
@@ -170,6 +176,9 @@ private fun vFileEventIterCheck(log: VfsLog,
                                       id2name = id2name,
                                       oracle = fsRecordsOracle?.let { it::getSnapshot })
 
+  fun VfsSnapshot.VirtualFileSnapshot.represent(): String =
+    "file: name=$name parent=$parentId id=$fileId ts=$timestamp len=$length flags=$flags contentId=$contentRecordId attrId=$attributesRecordId"
+
   val time = measureTime {
     log.query {
       val iter = IteratorUtils.VFileEventBasedIterator(operationLogStorage.begin())
@@ -191,7 +200,7 @@ private fun vFileEventIterCheck(log: VfsLog,
                 val startOp =
                   (rec.begin().next() as OperationReadResult.Valid).operation as VfsOperation.VFileEventOperation.EventStart.Move
                 val file = snapshot.getFileById(startOp.fileId)
-                println("PATH: ${file.fullPath()}")
+                println(file.represent())
                 val oldParent = snapshot.getFileById(startOp.oldParentId)
                 val newParent = snapshot.getFileById(startOp.newParentId)
                 println("MOVE FROM PARENT ${oldParent.name} to ${newParent.name}")
@@ -200,7 +209,7 @@ private fun vFileEventIterCheck(log: VfsLog,
                 val startOp =
                   (rec.begin().next() as OperationReadResult.Valid).operation as VfsOperation.VFileEventOperation.EventStart.ContentChange
                 val file = snapshot.getFileById(startOp.fileId)
-                println("PATH: ${file.fullPath()}")
+                println(file.represent())
               }
               else -> {}
             }
@@ -230,6 +239,11 @@ fun main(args: Array<String>) {
 
   val logPath = Path.of(args[0])
   val log = VfsLog(logPath, true)
+
+  //single(log)
+  //benchmark(log, 30)
+  //return
+
   val fsRecords = FSRecordsImpl.connect(logPath.parent,
                                         log,
                                         FSRecordsImpl.ErrorHandler { records, error -> ExceptionUtil.rethrow(error) })
@@ -240,7 +254,4 @@ fun main(args: Array<String>) {
   vFileEventIterCheck(log, names, oracle)
 
   fsRecords.dispose()
-
-  //single(log)
-  //benchmark(log, 100)
 }

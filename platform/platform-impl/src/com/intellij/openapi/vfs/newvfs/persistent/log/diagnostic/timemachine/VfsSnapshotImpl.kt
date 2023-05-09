@@ -21,10 +21,15 @@ class NotAvailableVfsSnapshot(point: OperationLogStorage.Iterator) : VfsSnapshot
   }
 
   class NotAvailableVirtualFileSnapshot(override val fileId: Int) : VirtualFileSnapshot {
-    override val nameId = NotAvailableProp<Int>()
-    override val name = NotAvailableProp<String>()
-    override val parentId = NotAvailableProp<Int>()
-    override val parent = NotAvailableProp<VirtualFileSnapshot?>()
+    override val nameId: Property<Int> = NotAvailableProp()
+    override val parentId: Property<Int> = NotAvailableProp()
+    override val length: Property<Long> = NotAvailableProp()
+    override val timestamp: Property<Long> = NotAvailableProp()
+    override val flags: Property<Int> = NotAvailableProp()
+    override val contentRecordId: Property<Int> = NotAvailableProp()
+    override val attributesRecordId: Property<Int> = NotAvailableProp()
+    override val name: Property<String> = NotAvailableProp()
+    override val parent: Property<VirtualFileSnapshot?> = NotAvailableProp()
 
     class NotAvailableProp<T> : Property<T>() {
       override fun compute(): State.DefinedState<T> = State.NotAvailable()
@@ -58,18 +63,34 @@ class CacheAwareVfsSnapshot(
   }
 
   inner class CacheAwareVirtualFileSnapshot(override val fileId: Int) : VirtualFileSnapshot {
-    override val nameId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::nameId) { stopIter, iter ->
-      VfsChronicle.lookupNameId(iter, fileId, condition = { iter != stopIter }).toState() // TODO might throw on Invalid, gotta catch
-    }
+    // TODO VfsChronicle.lookup* might throw on Invalid, gotta catch
 
+    override val nameId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::nameId) { stopIter, iter ->
+      VfsChronicle.lookupNameId(iter, fileId, condition = { iter != stopIter }).toState()
+    }
     override val name: Property<String> = nameId.bind { id2name(it)?.let { name -> State.Ready(name) } ?: State.NotAvailable() }
 
     override val parentId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::parentId) { stopIter, iter ->
-      VfsChronicle.lookupParentId(iter, fileId, condition = { iter != stopIter }).toState() // TODO might throw on Invalid, gotta catch
+      VfsChronicle.lookupParentId(iter, fileId, condition = { iter != stopIter }).toState()
     }
-
     override val parent: Property<VirtualFileSnapshot?> = parentId.fmap { id ->
       if (id == 0) null else getFileById(id)
+    }
+
+    override val length: Property<Long> = CacheAwareProp(VirtualFileSnapshot::length) { stopIter, iter ->
+      VfsChronicle.lookupLength(iter, fileId, condition = { iter != stopIter }).toState()
+    }
+    override val timestamp: Property<Long> = CacheAwareProp(VirtualFileSnapshot::timestamp) { stopIter, iter ->
+      VfsChronicle.lookupTimestamp(iter, fileId, condition = { iter != stopIter }).toState()
+    }
+    override val flags: Property<Int> = CacheAwareProp(VirtualFileSnapshot::flags) { stopIter, iter ->
+      VfsChronicle.lookupFlags(iter, fileId, condition = { iter != stopIter }).toState()
+    }
+    override val contentRecordId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::contentRecordId) { stopIter, iter ->
+      VfsChronicle.lookupContentRecordId(iter, fileId, condition = { iter != stopIter }).toState()
+    }
+    override val attributesRecordId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::attributesRecordId) { stopIter, iter ->
+      VfsChronicle.lookupAttributeRecordId(iter, fileId, condition = { iter != stopIter }).toState()
     }
 
     private inner class CacheAwareProp<T>(

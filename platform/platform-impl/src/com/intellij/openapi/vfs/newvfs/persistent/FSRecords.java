@@ -520,7 +520,7 @@ public final class FSRecords {
   }
 
   static int getContentId(int fileId) {
-    return implOrFail().getContentId(fileId);
+    return implOrFail().getContentRecordId(fileId);
   }
 
   @TestOnly

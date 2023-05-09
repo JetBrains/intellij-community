@@ -171,7 +171,7 @@ public final class FSRecordsImpl {
     return connect(storagesDirectoryPath, vfsLog, ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD);
   }
 
-  static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
+  public static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
                                @NotNull VfsLog vfsLog,
                                @NotNull ErrorHandler errorHandler) throws UncheckedIOException {
     if (IOUtil.isSharedCachesEnabled()) {
@@ -240,7 +240,7 @@ public final class FSRecordsImpl {
 
   //========== lifecycle: ========================================
 
-  synchronized void dispose() {
+  public synchronized void dispose() {
     if (!disposed) {
       try {
         PersistentFSConnector.disconnect(connection);
@@ -680,7 +680,7 @@ public final class FSRecordsImpl {
 
   //========== file record fields accessors: ========================================
 
-  @PersistentFS.Attributes int getFlags(int fileId) {
+  public @PersistentFS.Attributes int getFlags(int fileId) {
     try {
       checkNotDisposed();
       return connection.getRecords().getFlags(fileId);
@@ -710,7 +710,7 @@ public final class FSRecordsImpl {
   }
 
 
-  int getParent(int fileId) {
+  public int getParent(int fileId) {
     try {
       checkNotDisposed();
       int parentId = connection.getRecords().getParent(fileId);
@@ -774,7 +774,17 @@ public final class FSRecordsImpl {
     }
   }
 
-  CharSequence getNameByNameId(int nameId) {
+  public int getNameIdByFileId(int fileId) {
+    try {
+      checkNotDisposed();
+      return connection.getRecords().getNameId(fileId);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
+  }
+
+  public CharSequence getNameByNameId(int nameId) {
     assert nameId >= NULL_NAME_ID : "nameId(=" + nameId + ") must be positive";
     try {
       checkNotDisposed();
@@ -814,7 +824,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  long getLength(int fileId) {
+  public long getLength(int fileId) {
     try {
       checkNotDisposed();
       return connection.getRecords().getLength(fileId);
@@ -837,7 +847,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  long getTimestamp(int fileId) {
+  public long getTimestamp(int fileId) {
     try {
       checkNotDisposed();
       return connection.getRecords().getTimestamp(fileId);
@@ -860,9 +870,18 @@ public final class FSRecordsImpl {
     }
   }
 
-  int getContentId(int fileId) {
+  public int getContentRecordId(int fileId) {
     try {
       return connection.getRecords().getContentRecordId(fileId);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
+  }
+
+  public int getAttributeRecordId(int fileId) {
+    try {
+      return connection.getRecords().getAttributeRecordId(fileId);
     }
     catch (IOException e) {
       throw handleError(e);

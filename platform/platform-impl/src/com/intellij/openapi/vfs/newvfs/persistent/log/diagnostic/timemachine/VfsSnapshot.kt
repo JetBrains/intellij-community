@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine
 
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.mapCases
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState
 
 interface VfsSnapshot {
   val point: () -> OperationLogStorage.Iterator
@@ -15,27 +17,35 @@ interface VfsSnapshot {
     val fileId: Int
 
     val nameId: Property<Int>
-    val name: Property<String>
     val parentId: Property<Int>
+    val length: Property<Long>
+    val timestamp: Property<Long>
+    val flags: Property<@PersistentFS.Attributes Int>
+    val contentRecordId: Property<Int>
+    val attributesRecordId: Property<Int>
+
+    val name: Property<String>
     val parent: Property<VirtualFileSnapshot?>
 
     abstract class Property<T> {
       var state: State = State.UnknownYet
         protected set
 
-      protected abstract fun compute(): State.DefinedState<T>
+      protected abstract fun compute(): DefinedState<T>
+
+      override fun toString(): String = observeState().toString()
 
       @Suppress("UNCHECKED_CAST")
-      fun observeState(): State.DefinedState<T> =
+      fun observeState(): DefinedState<T> =
         when (val s = state) {
-          is State.DefinedState<*> -> s as State.DefinedState<T>
+          is DefinedState<*> -> s as DefinedState<T>
           is State.UnknownYet -> synchronized(this) {
             if (state is State.UnknownYet) {
               val result = compute()
               state = result
               return result
             }
-            return state as State.DefinedState<T>
+            return state as DefinedState<T>
           }
         }
 
@@ -47,18 +57,18 @@ interface VfsSnapshot {
 
       companion object {
         fun <T, R> Property<T>.fmap(f: (T) -> R): Property<R> = DependentPropertyFmap(this, f)
-        fun <T, R> Property<T>.bind(f: (T) -> State.DefinedState<R>): Property<R> = DependentPropertyBind(this, f)
+        fun <T, R> Property<T>.bind(f: (T) -> DefinedState<R>): Property<R> = DependentPropertyBind(this, f)
 
         private class DependentPropertyFmap<T, R>(private val original: Property<T>,
                                                   private val transformValue: (T) -> R) : Property<R>() {
-          override fun compute(): State.DefinedState<R> {
+          override fun compute(): DefinedState<R> {
             return original.observeState().fmap(transformValue)
           }
         }
 
         private class DependentPropertyBind<T, R>(private val original: Property<T>,
-                                                  private val transformValue: (T) -> State.DefinedState<R>) : Property<R>() {
-          override fun compute(): State.DefinedState<R> {
+                                                  private val transformValue: (T) -> DefinedState<R>) : Property<R>() {
+          override fun compute(): DefinedState<R> {
             return original.observeState().bind(transformValue)
           }
         }
@@ -73,8 +83,12 @@ interface VfsSnapshot {
           //       is a lack of information or some other exception (e.g. IOException) that should treated differently.
           //       Such logic needs to be carefully adjusted along the computation paths if the need for it arises
           val cause: Throwable = UnspecifiedNotAvailableCause
-        ) : DefinedState<T>
-        class Ready<T>(val value: T) : DefinedState<T>
+        ) : DefinedState<T> {
+          override fun toString(): String = "N/A (cause=$cause)"
+        }
+        class Ready<T>(val value: T) : DefinedState<T> {
+          override fun toString(): String = value.toString()
+        }
 
         companion object {
           fun <T> notAvailable(cause: Throwable = UnspecifiedNotAvailableCause) = NotAvailable<T>(cause)
