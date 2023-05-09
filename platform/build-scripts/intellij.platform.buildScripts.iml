@@ -203,7 +203,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="jetbrains.intellij.plugins.structure" type="repository">
         <properties maven-id="org.jetbrains.intellij.plugins:structure-intellij:3.247">
           <verification>

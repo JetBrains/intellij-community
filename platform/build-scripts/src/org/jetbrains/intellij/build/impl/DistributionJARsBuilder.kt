@@ -12,9 +12,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -365,10 +363,8 @@ suspend fun buildNonBundledPlugins(pluginsToPublish: Set<PluginLayout>,
         generatePluginRepositoryMetaFile(list.filter { it.pluginZip.startsWith(autoUploadingDir) }, autoUploadingDir, context)
       }
       pluginSpecs.forEach {
-        if (it.pluginZip.startsWith(autoUploadingDir)) {
-          launch {
-            validatePlugin(it.pluginZip, context)
-          }
+        launch {
+          validatePlugin(it.pluginZip, context)
         }
       }
       mappings
@@ -382,22 +378,16 @@ private suspend fun validatePlugin(path: Path, context: BuildContext) {
       it.addEvent("path doesn't exist, skipped")
       return@executeStep
     }
-
-    var id: String? = null
-    val problems = when (val result = IdePluginManager.createManager().createPlugin(path)) {
-      is PluginCreationSuccess -> {
-        id = result.plugin.pluginId
-        result.unacceptableWarnings
-      }
-      is PluginCreationFail -> {
-        result.errorsAndWarnings
-      }
-    }
+    val pluginManager = IdePluginManager.createManager()
+    val id = (pluginManager.createPlugin(path, validateDescriptor = false)
+      as? PluginCreationSuccess)
+      ?.plugin?.pluginId
+    val result = pluginManager.createPlugin(path, validateDescriptor = true)
+    val problems = context.productProperties.validatePlugin(result, context)
     if (problems.isNotEmpty()) {
       reportBuildProblem(problems.joinToString(
         prefix = "${id ?: path}: ",
         separator = ". ",
-        transform = PluginProblem::message
       ), identity = "${id ?: path}")
     }
   }

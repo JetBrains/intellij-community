@@ -126,11 +126,8 @@ val TEST_FRAMEWORK_WITH_JAVA_RT: (PlatformLayout, BuildContext) -> Unit = { layo
 /**
  * Base class for all editions of IntelliJ IDEA
  */
-abstract class BaseIdeaProperties : ProductProperties() {
+abstract class BaseIdeaProperties : JetBrainsProductProperties() {
   init {
-    @Suppress("LeakingThis")
-    configureJetBrainsProduct(this)
-
     productLayout.addPlatformSpec { layout, _ ->
       layout.withModule("intellij.java.ide.resources")
 
