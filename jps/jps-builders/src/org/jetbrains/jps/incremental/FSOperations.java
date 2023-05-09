@@ -326,6 +326,9 @@ public final class FSOperations {
     Files.walkFileTree(fromFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult visitFileFailed(Path file, IOException e) throws IOException {
+        if (e instanceof NoSuchFileException) {
+          return FileVisitResult.TERMINATE;
+        }
         if (e instanceof FileSystemLoopException) {
           LOG.info(e);
           // in some cases (e.g. Google Drive File Stream) loop detection for directories works incorrectly
