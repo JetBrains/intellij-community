@@ -10,15 +10,13 @@ import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
-import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
 public class Maven40ServerImpl extends MavenServerBase {
   @Override
-  public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) throws RemoteException {
+  public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) {
     MavenServerUtil.checkToken(token);
-
     try {
       Maven40ServerEmbedderImpl result = new Maven40ServerEmbedderImpl(settings);
       UnicastRemoteObject.exportObject(result, 0);
@@ -33,14 +31,14 @@ public class Maven40ServerImpl extends MavenServerBase {
   }
 
   @Override
-  public MavenServerIndexer createIndexer(MavenToken token) throws RemoteException {
+  public MavenServerIndexer createIndexer(MavenToken token) {
     MavenServerUtil.checkToken(token);
     throw new UnsupportedOperationException();
   }
 
   @NotNull
   @Override
-  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) throws RemoteException {
+  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
       return Maven40ProfileUtil.interpolateAndAlignModel(model, basedir);
