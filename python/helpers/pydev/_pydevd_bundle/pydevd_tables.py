@@ -46,7 +46,7 @@ def exec_table_command(init_command, command_type, start_index, end_index, f_glo
         res.append(table_provider.get_column_types(table))
 
     elif command_type == TableCommandType.SLICE:
-        res.append(table_provider.get_data(table, MAX_COLS, start_index, end_index))
+        res.append(table_provider.get_data(table, MAX_COLS, MAX_COLWIDTH, start_index, end_index))
 
     return True, ''.join(res)
 

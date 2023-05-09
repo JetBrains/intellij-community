@@ -27,8 +27,8 @@ def get_column_types(table):
 
 
 # used by pydevd, isDisplaySupported equals false
-def get_data(table, max_cols, start_index=None, end_index=None):
-    # type: (pl.DataFrame, int, int, int) -> str
+def get_data(table, max_cols, max_colwidth, start_index=None, end_index=None):
+    # type: (pl.DataFrame, int, int, int, int) -> str
     return table[start_index:end_index]._repr_html_()
 
 
