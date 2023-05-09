@@ -115,14 +115,14 @@ public final class LightEditModeNotificationWidget implements CustomStatusBarWid
     HtmlChunk.Element link = HtmlChunk.link("", ApplicationBundle.message("light.edit.status.bar.notification.tooltip.link.text"));
     link = link.child(HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow"));
     @NlsSafe String pTag = "<p>";
-    String tooltipText = ApplicationBundle.message("light.edit.status.bar.notification.tooltip") + pTag + link.toString();
+    String tooltipText = ApplicationBundle.message("light.edit.status.bar.notification.tooltip") + pTag + link;
     tooltipText = tooltipText.replace(pTag, HtmlChunk.tag("p").style("padding: " + JBUI.scale(3) + "px 0 0 0").toString());
     return tooltipText;
   }
 
   private void showPopupMenu(@NotNull JComponent actionLink) {
     if (!myPopupState.isRecentlyHidden()) {
-      DataManager.registerDataProvider(actionLink, dataId -> {
+      addDataProvider(actionLink, dataId -> {
         if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
           return LightEditService.getInstance().getSelectedFile();
         }
@@ -135,6 +135,16 @@ public final class LightEditModeNotificationWidget implements CustomStatusBarWid
       myPopupState.prepareToShow(menu);
       JBPopupMenu.showAbove(actionLink, menu);
     }
+  }
+
+  private static void addDataProvider(@NotNull JComponent component, @NotNull DataProvider dataProvider) {
+    DataProvider prev = DataManager.getDataProvider(component);
+    DataProvider result = dataProvider;
+    if (prev != null) {
+      DataManager.removeDataProvider(component);
+      result = CompositeDataProvider.compose(prev, dataProvider);
+    }
+    DataManager.registerDataProvider(component, result);
   }
 
   private static @NotNull ActionGroup createAccessFullIdeActionGroup() {
