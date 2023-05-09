@@ -7,7 +7,8 @@ import com.intellij.grazie.GrazieTestBase
 class MarkdownSupportTest : GrazieTestBase() {
   override val additionalEnabledRules: Set<String> = setOf(
     "LanguageTool.EN.UPPERCASE_SENTENCE_START",
-    "LanguageTool.EN.COMMA_COMPOUND_SENTENCE"
+    "LanguageTool.EN.COMMA_COMPOUND_SENTENCE",
+    "LanguageTool.EN.EN_QUOTES"
   )
 
   fun `test grammar check in file`() {

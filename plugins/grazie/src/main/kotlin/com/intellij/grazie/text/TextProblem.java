@@ -108,6 +108,7 @@ public abstract class TextProblem {
   /**
    * Whether this problem should be suppressed when the surrounding text looks like code.
    * Inline code tends to produce irrelevant grammar warnings, so this method returns true by default.
+   * @see CodeProblemFilter
    */
   public boolean shouldSuppressInCodeLikeFragments() {
     return true;
