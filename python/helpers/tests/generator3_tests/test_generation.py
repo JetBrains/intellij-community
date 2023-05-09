@@ -343,6 +343,10 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
                           if 'generator3._vendor.' in m['message']]
         self.assertFalse(submodule_logs)
 
+    # PY-60592
+    def test_ignoring_extra_submodules_not_under_binary_own_qname(self):
+        self.check_generator_output('pkg.mod', 'pkg/mod.py')
+
 
 class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
     default_generator_extra_args = ['--name-pattern', 'mod?']

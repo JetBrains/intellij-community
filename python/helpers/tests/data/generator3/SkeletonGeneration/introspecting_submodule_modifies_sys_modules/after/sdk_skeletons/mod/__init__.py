@@ -1,6 +1,6 @@
 # encoding: utf-8
-# module extra does not know its name
-# from mod.py
+# module mod
+# from introspecting_submodule_modifies_sys_modules/mod.py
 # by generator 1000.0
 # no doc
 # no imports
