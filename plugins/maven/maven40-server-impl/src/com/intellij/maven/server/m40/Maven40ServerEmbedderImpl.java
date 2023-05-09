@@ -307,8 +307,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
         fillSessionCache(mavenSession, repositorySession, buildingResults);
 
-        boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
-
         for (ProjectBuildingResult buildingResult : buildingResults) {
           MavenProject project = buildingResult.getProject();
 
@@ -337,7 +335,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
             runInParallel,
             buildingResultsToResolveDependencies.entrySet(), entry -> {
               if (task.isCanceled()) return new Maven40ExecutionResult(Collections.emptyList());
-              Maven40ExecutionResult result = resolveBuildingResult(repositorySession, addUnresolved, entry.getKey(), entry.getValue());
+              Maven40ExecutionResult result = resolveBuildingResult(repositorySession, entry.getKey(), entry.getValue());
               task.incrementFinishedRequests();
               return result;
             }
@@ -359,7 +357,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @NotNull
   private Maven40ExecutionResult resolveBuildingResult(RepositorySystemSession repositorySession,
-                                                       boolean addUnresolved,
                                                        ProjectBuildingResult buildingResult,
                                                        List<Exception> exceptions) {
     MavenProject project = buildingResult.getProject();
@@ -371,7 +368,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       }
 
       DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
-      Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
+      Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult);
       project.setArtifacts(artifacts);
 
       return new Maven40ExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems);
@@ -561,7 +558,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @NotNull
-  private Set<Artifact> resolveArtifacts(DependencyResolutionResult dependencyResolutionResult, boolean addUnresolvedNodes) {
+  private Set<Artifact> resolveArtifacts(DependencyResolutionResult dependencyResolutionResult) {
     Map<Dependency, Artifact> winnerDependencyMap = new IdentityHashMap<>();
     Set<Artifact> artifacts = new LinkedHashSet<>();
     Set<Dependency> addedDependencies = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -582,23 +579,21 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     //if any syntax error presents in pom.xml we may not get dependencies via getDependencies, but they are in dependencyGraph.
     // we need to BFS this graph and add dependencies
-    if (addUnresolvedNodes) {
-      Queue<DependencyNode> queue =
-        new ArrayDeque<>(dependencyResolutionResult.getDependencyGraph().getChildren());
-      while (!queue.isEmpty()) {
-        DependencyNode node = queue.poll();
-        queue.addAll(node.getChildren());
-        Dependency dependency = node.getDependency();
-        if (dependency == null || !addedDependencies.add(dependency)) {
-          continue;
-        }
-        Artifact artifact = winnerDependencyMap.get(dependency);
-        if (artifact != null) {
-          addedDependencies.add(dependency);
-          //todo: properly resolve order
-          artifacts.add(artifact);
-          resolveAsModule(artifact);
-        }
+    Queue<DependencyNode> queue =
+      new ArrayDeque<>(dependencyResolutionResult.getDependencyGraph().getChildren());
+    while (!queue.isEmpty()) {
+      DependencyNode node = queue.poll();
+      queue.addAll(node.getChildren());
+      Dependency dependency = node.getDependency();
+      if (dependency == null || !addedDependencies.add(dependency)) {
+        continue;
+      }
+      Artifact artifact = winnerDependencyMap.get(dependency);
+      if (artifact != null) {
+        addedDependencies.add(dependency);
+        //todo: properly resolve order
+        artifacts.add(artifact);
+        resolveAsModule(artifact);
       }
     }
 
