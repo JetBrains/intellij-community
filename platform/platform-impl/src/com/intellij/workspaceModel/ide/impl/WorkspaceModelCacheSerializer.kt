@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
@@ -54,7 +55,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
       }
       .getOrNull()
 
-    loadCacheFromFileTimeMs.addAndGet(System.currentTimeMillis() - start)
+    loadCacheFromFileTimeMs.addElapsedTimeMs(start)
     return cache
   }
 
@@ -83,7 +84,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
     finally {
       Files.deleteIfExists(tmpFile)
     }
-    saveCacheToFileTimeMs.addAndGet(System.currentTimeMillis() - start)
+    saveCacheToFileTimeMs.addElapsedTimeMs(start)
   }
 
   private fun cachePreProcess(storage: EntityStorage): EntityStorageSnapshot {

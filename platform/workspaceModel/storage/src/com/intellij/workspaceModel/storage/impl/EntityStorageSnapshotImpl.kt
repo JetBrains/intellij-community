@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
-import com.intellij.platform.diagnostic.telemetry.JPS
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.platform.diagnostic.telemetry.JPS
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -29,8 +30,6 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.reflect.KClass
-import kotlin.reflect.KProperty1
 
 internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: EntityId) : EntityReference<E>() {
   override fun resolve(storage: EntityStorage): E? {
@@ -149,7 +148,7 @@ internal class MutableEntityStorageImpl(
     @Suppress("UNCHECKED_CAST")
     val entities = entitiesByType[entityClass.toClassId()]?.all()?.map { it.wrapAsModifiable(this) } as? Sequence<E> ?: emptySequence()
 
-    getEntitiesTimeMs.addAndGet(System.currentTimeMillis() - start)
+    getEntitiesTimeMs.addElapsedTimeMs(start)
     return entities
   }
 
@@ -163,7 +162,7 @@ internal class MutableEntityStorageImpl(
       .filter { it.clazz == classId }
       .map { entityDataByIdOrDie(it).wrapAsModifiable(this) as R }
 
-    getReferrersTimeMs.addAndGet(System.currentTimeMillis() - start)
+    getReferrersTimeMs.addElapsedTimeMs(start)
     return referrers
   }
 
@@ -174,7 +173,7 @@ internal class MutableEntityStorageImpl(
     val entityIds = indexes.symbolicIdIndex.getIdsByEntry(id) ?: return null
     val entityData: WorkspaceEntityData<WorkspaceEntity> = entityDataById(entityIds) as? WorkspaceEntityData<WorkspaceEntity> ?: return null
     val asModifiable = entityData.wrapAsModifiable(this) as E?
-    resolveTimeMs.addAndGet(System.currentTimeMillis() - start)
+    resolveTimeMs.addElapsedTimeMs(start)
     return asModifiable
   }
 
@@ -195,7 +194,7 @@ internal class MutableEntityStorageImpl(
         }
         .groupBy { (it as WorkspaceEntityBase).getEntityInterface() }
     }
-    getEntitiesBySourceTimeMs.addAndGet(System.currentTimeMillis() - start)
+    getEntitiesBySourceTimeMs.addElapsedTimeMs(start)
     return groupedBySource
   }
 
@@ -219,7 +218,7 @@ internal class MutableEntityStorageImpl(
       unlockWrite()
     }
 
-    addEntityTimeMs.addAndGet(System.currentTimeMillis() - start)
+    addEntityTimeMs.addElapsedTimeMs(start)
     return entity
   }
 
@@ -245,7 +244,7 @@ internal class MutableEntityStorageImpl(
     finally {
       unlockWrite()
     }
-    putEntityTimeMs.addAndGet(System.currentTimeMillis() - start)
+    putEntityTimeMs.addElapsedTimeMs(start)
   }
 
   private fun <T : WorkspaceEntity> assertUniqueSymbolicId(pEntityData: WorkspaceEntityData<T>) {
@@ -352,7 +351,7 @@ internal class MutableEntityStorageImpl(
       unlockWrite()
     }
 
-    modifyEntityTimeMs.addAndGet(System.currentTimeMillis() - start)
+    modifyEntityTimeMs.addElapsedTimeMs(start)
     return updatedEntity
   }
 
@@ -384,7 +383,7 @@ internal class MutableEntityStorageImpl(
       unlockWrite()
     }
 
-    removeEntityTimeMs.addAndGet(System.currentTimeMillis() - start)
+    removeEntityTimeMs.addElapsedTimeMs(start)
     return result
   }
 
@@ -407,7 +406,7 @@ internal class MutableEntityStorageImpl(
       unlockWrite()
     }
 
-    replaceBySourceTimeMs.addAndGet(System.currentTimeMillis() - start)
+    replaceBySourceTimeMs.addElapsedTimeMs(start)
   }
 
   /**
@@ -497,7 +496,7 @@ internal class MutableEntityStorageImpl(
       unlockWrite()
     }
 
-    collectChangesTimeMs.addAndGet(System.currentTimeMillis() - start)
+    collectChangesTimeMs.addElapsedTimeMs(start)
     return res
   }
 
@@ -560,7 +559,7 @@ internal class MutableEntityStorageImpl(
     }
 
     val isEqual = collapsibleChanges == changeLog.changeLog.keys
-    hasSameEntitiesTimeMs.addAndGet(System.currentTimeMillis() - start)
+    hasSameEntitiesTimeMs.addElapsedTimeMs(start)
     return isEqual
   }
 
@@ -591,7 +590,7 @@ internal class MutableEntityStorageImpl(
     val newRefs = refs.toImmutable()
     val newIndexes = indexes.toImmutable()
     val snapshot = EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes)
-    toSnapshotTimeMs.addAndGet(System.currentTimeMillis() - start)
+    toSnapshotTimeMs.addElapsedTimeMs(start)
     return snapshot
   }
 
@@ -610,7 +609,7 @@ internal class MutableEntityStorageImpl(
     finally {
       unlockWrite()
     }
-    addDiffTimeMs.addAndGet(System.currentTimeMillis() - start)
+    addDiffTimeMs.addElapsedTimeMs(start)
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -627,7 +626,7 @@ internal class MutableEntityStorageImpl(
       unlockWrite()
     }
 
-    getMutableExternalMappingTimeMs.addAndGet(System.currentTimeMillis() - start)
+    getMutableExternalMappingTimeMs.addElapsedTimeMs(start)
     return mapping
   }
 
@@ -642,7 +641,7 @@ internal class MutableEntityStorageImpl(
     finally {
       unlockWrite()
     }
-    getMutableVFUrlIndexTimeMs.addAndGet(System.currentTimeMillis() - start)
+    getMutableVFUrlIndexTimeMs.addElapsedTimeMs(start)
     return virtualFileIndex
   }
 

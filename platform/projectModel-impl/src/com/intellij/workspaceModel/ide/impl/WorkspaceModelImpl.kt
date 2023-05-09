@@ -14,6 +14,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
 import com.intellij.platform.projectModel.impl.diagnostic.JpsMetrics
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
@@ -113,7 +115,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     entityStorage = VersionedEntityStorageImpl(projectEntities.toSnapshot())
     unloadedEntitiesStorage = VersionedEntityStorageImpl(unloadedEntities)
     entityTracer.subscribe(project, cs)
-    loadingTotalTimeMs.addAndGet(System.currentTimeMillis() - start)
+    loadingTotalTimeMs.addElapsedTimeMs(start)
   }
 
   override val currentSnapshotOfUnloadedEntities: EntityStorageSnapshot
@@ -267,7 +269,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
         return
       }
     }
-    checkRecursiveUpdateTimeMs.addAndGet(System.currentTimeMillis() - start)
+    checkRecursiveUpdateTimeMs.addElapsedTimeMs(start)
   }
 
   override fun updateUnloadedEntities(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
@@ -297,12 +299,11 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
     if (entityStorage.version != replacement.version) return false
 
-    replaceProjectModelTimeMs.addAndGet(
-      measureTimeMillis {
-        val builder = replacement.builder
-        this.initializeBridges(replacement.changes, builder)
-        entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
-      })
+    replaceProjectModelTimeMs.addMeasuredTimeMs {
+      val builder = replacement.builder
+      this.initializeBridges(replacement.changes, builder)
+      entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
+    }
 
     return true
   }
@@ -313,20 +314,19 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
 
-    initializeBridgesTimeMs.addAndGet(
-      measureTimeMillis {
-        logErrorOnEventHandling {
-          if (!GlobalLibraryTableBridge.isEnabled()) return@logErrorOnEventHandling
-          // To handle changes made directly in project level workspace model
-          (GlobalLibraryTableBridge.getInstance() as GlobalLibraryTableBridgeImpl).initializeLibraryBridges(change, builder)
-        }
-        logErrorOnEventHandling {
-          (project.serviceOrNull<ProjectLibraryTable>() as? ProjectLibraryTableBridgeImpl)?.initializeLibraryBridges(change, builder)
-        }
-        logErrorOnEventHandling {
-          (project.serviceOrNull<ModuleManager>() as? ModuleManagerBridgeImpl)?.initializeBridges(change, builder)
-        }
-      })
+    initializeBridgesTimeMs.addMeasuredTimeMs {
+      logErrorOnEventHandling {
+        if (!GlobalLibraryTableBridge.isEnabled()) return@logErrorOnEventHandling
+        // To handle changes made directly in project level workspace model
+        (GlobalLibraryTableBridge.getInstance() as GlobalLibraryTableBridgeImpl).initializeLibraryBridges(change, builder)
+      }
+      logErrorOnEventHandling {
+        (project.serviceOrNull<ProjectLibraryTable>() as? ProjectLibraryTableBridgeImpl)?.initializeLibraryBridges(change, builder)
+      }
+      logErrorOnEventHandling {
+        (project.serviceOrNull<ModuleManager>() as? ModuleManagerBridgeImpl)?.initializeBridges(change, builder)
+      }
+    }
   }
 
   /**

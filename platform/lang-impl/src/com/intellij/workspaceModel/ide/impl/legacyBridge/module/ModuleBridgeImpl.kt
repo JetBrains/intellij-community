@@ -15,6 +15,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.TestModuleProperties
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
@@ -38,7 +40,6 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.system.measureTimeMillis
 
 @Suppress("OVERRIDE_DEPRECATION")
 internal class ModuleBridgeImpl(
@@ -71,7 +72,7 @@ internal class ModuleBridgeImpl(
             }
           }
 
-          moduleBridgeBeforeChangedTimeMs.addAndGet(System.currentTimeMillis() - start)
+          moduleBridgeBeforeChangedTimeMs.addElapsedTimeMs(start)
         }
       })
     }
@@ -129,10 +130,9 @@ internal class ModuleBridgeImpl(
   }
 
   override fun initFacets() {
-    facetsInitializationTimeMs.addAndGet(
-      measureTimeMillis {
-        FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
-      })
+    facetsInitializationTimeMs.addMeasuredTimeMs {
+      FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
+    }
   }
 
   override fun registerComponents(corePlugin: IdeaPluginDescriptor?,
@@ -203,7 +203,7 @@ internal class ModuleBridgeImpl(
       }
     }
 
-    updateOptionTimeMs.addAndGet(System.currentTimeMillis() - start)
+    updateOptionTimeMs.addElapsedTimeMs(start)
     return
   }
 

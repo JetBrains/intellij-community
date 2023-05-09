@@ -10,6 +10,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
 import com.intellij.platform.workspaceModel.jps.JpsGlobalFileEntitySource
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.*
@@ -180,16 +182,15 @@ class GlobalWorkspaceModel : Disposable {
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
 
-    applyStateToProjectTimeMs.addAndGet(System.currentTimeMillis() - start)
+    applyStateToProjectTimeMs.addElapsedTimeMs(start)
   }
 
   fun applyStateToProjectBuilder(project: Project, targetBuilder: MutableEntityStorage) {
-    applyStateToProjectBuilderTimeMs.addAndGet(
-      measureTimeMillis {
-        LOG.info("Sync global entities with mutable entity storage")
-        targetBuilder.replaceBySource(globalEntitiesFilter,
-                                      copyEntitiesToEmptyStorage(entityStorage.current, VirtualFileUrlManager.getInstance(project)))
-      })
+    applyStateToProjectBuilderTimeMs.addMeasuredTimeMs {
+      LOG.info("Sync global entities with mutable entity storage")
+      targetBuilder.replaceBySource(globalEntitiesFilter,
+                                    copyEntitiesToEmptyStorage(entityStorage.current, VirtualFileUrlManager.getInstance(project)))
+    }
   }
 
   @RequiresWriteLock
@@ -204,7 +205,7 @@ class GlobalWorkspaceModel : Disposable {
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
     filteredProject = null
-    syncEntitiesWithProjectTimeMs.addAndGet(System.currentTimeMillis() - start)
+    syncEntitiesWithProjectTimeMs.addElapsedTimeMs(start)
   }
 
   private fun copyEntitiesToEmptyStorage(storage: EntityStorage, vfuManager: VirtualFileUrlManager): MutableEntityStorage {
@@ -232,7 +233,8 @@ class GlobalWorkspaceModel : Disposable {
   private fun logErrorOnEventHandling(action: () -> Unit) {
     try {
       action.invoke()
-    } catch (e: Throwable) {
+    }
+    catch (e: Throwable) {
       val message = "Exception at Workspace Model event handling"
       LOG.error(message, e)
     }

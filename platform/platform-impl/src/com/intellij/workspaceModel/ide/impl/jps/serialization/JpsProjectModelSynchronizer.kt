@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspaceModel.jps.*
 import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.project.stateStore
@@ -187,7 +188,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       }
     }
 
-    reloadProjectEntitiesTimeMs.addAndGet(System.currentTimeMillis() - start)
+    reloadProjectEntitiesTimeMs.addElapsedTimeMs(start)
   }
 
   private inline fun <T> loadAndReportErrors(action: (ErrorReporter) -> T): T {
@@ -318,7 +319,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       null
     }
 
-    jpsLoadProjectToEmptyStorageTimeMs.addAndGet(System.currentTimeMillis() - start)
+    jpsLoadProjectToEmptyStorageTimeMs.addElapsedTimeMs(start)
     return loadedProjectEntities
   }
 
@@ -365,7 +366,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     activity?.end()
     activity = null
 
-    applyLoadedStorageTimeMs.addAndGet(System.currentTimeMillis() - start)
+    applyLoadedStorageTimeMs.addElapsedTimeMs(start)
   }
 
   suspend fun loadProject(project: Project) {
@@ -428,7 +429,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     LOG.debugValues("Saving affected entities", affectedSources)
     data.saveEntities(storage, unloadedEntitiesStorage, affectedSources, writer)
 
-    saveChangedProjectEntitiesTimeMs.addAndGet(System.currentTimeMillis() - start)
+    saveChangedProjectEntitiesTimeMs.addElapsedTimeMs(start)
   }
 
   fun convertToDirectoryBasedFormat() {
