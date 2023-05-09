@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Supplier;
 
 /**
  * Supports asynchronous fetching full text of a value. If full text is already computed use {@link ImmediateFullValueEvaluator}
@@ -18,10 +19,11 @@ import java.awt.*;
  */
 public abstract class XFullValueEvaluator {
   private final @Nls String myLinkText;
-  private final @Nullable @Nls String myLinkTooltipText;
-  private final @Nullable Icon myLinkIcon;
+
+  private final @Nullable LinkAttributes myLinkAttributes;
+
   private boolean myShowValuePopup = true;
-  
+
   private boolean myIsEnabled = true;
 
   protected XFullValueEvaluator() {
@@ -36,18 +38,16 @@ public abstract class XFullValueEvaluator {
    * @param linkText text of the link what will be appended to a variables tree node text
    */
   protected XFullValueEvaluator(@NotNull @Nls String linkText) {
-    this(linkText, null, null);
-  }
- 
-  protected XFullValueEvaluator(@NotNull @Nls String linkText, @Nullable @Nls String tooltipText, @Nullable @Nls Icon linkIcon) {
-    myLinkText = linkText;
-    myLinkTooltipText = tooltipText;
-    myLinkIcon = linkIcon;
+    this(linkText, null);
   }
 
-  public boolean isShowValuePopup() {
-    return myShowValuePopup;
+  protected XFullValueEvaluator(@NotNull @Nls String linkText, @Nullable LinkAttributes linkAttributes) {
+    myLinkText = linkText;
+    myLinkAttributes = linkAttributes;
   }
+
+  public boolean isShowValuePopup() { return myShowValuePopup; }
+
   public boolean isEnabled() { return myIsEnabled; }
 
   @NotNull
@@ -73,17 +73,37 @@ public abstract class XFullValueEvaluator {
     return myLinkText;
   }
 
-  public @Nls @Nullable String getLinkTooltipText() {
-    return myLinkTooltipText;
-  }
+  public @Nullable LinkAttributes getLinkAttributes() { return myLinkAttributes; }
 
-  public @Nullable Icon getLinkIcon() {
-    return myLinkIcon;
-  }
-  
   public interface XFullValueEvaluationCallback extends Obsolescent, XValueCallback {
     void evaluated(@NotNull String fullValue);
 
     void evaluated(@NotNull String fullValue, @Nullable Font font);
+  }
+
+  public static class LinkAttributes {
+    private final @Nullable @Nls String myLinkTooltipText;
+
+    private final @Nullable Supplier<String> myShortcutSupplier;
+
+    private final @Nullable Icon myLinkIcon;
+
+    public LinkAttributes(@Nullable @Nls String text, @Nullable Supplier<String> supplier, @Nullable Icon icon) {
+      myLinkTooltipText = text;
+      myShortcutSupplier = supplier;
+      myLinkIcon = icon;
+    }
+
+    public @Nullable Icon getLinkIcon() {
+      return myLinkIcon;
+    }
+
+    public @Nls @Nullable String getLinkTooltipText() {
+      return myLinkTooltipText;
+    }
+
+    public @Nullable Supplier<String> getShortcutSupplier() {
+      return myShortcutSupplier;
+    }
   }
 }

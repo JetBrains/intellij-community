@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
+import com.intellij.ide.HelpTooltipManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ui.tree.TreeUtil.getNodeRowX;
 
@@ -27,6 +29,8 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private int myLinkOffset;
   private int myLinkWidth;
   private Object myIconTag;
+
+  private Supplier<String> myLinkShortcutSupplier = null;
 
   private final MyLongTextHyperlink myLongTextLink = new MyLongTextHyperlink();
 
@@ -86,6 +90,15 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   @Override
   public String getToolTipText(MouseEvent event) {
+    // shortcut should not be shown when there is no link
+    if (!myHaveLink && myLinkShortcutSupplier != null) {
+      Supplier<String> supplier = ClientProperty.get(myTree, HelpTooltipManager.SHORTCUT_PROPERTY);
+      if (supplier == myLinkShortcutSupplier) {
+        ClientProperty.remove(myTree, HelpTooltipManager.SHORTCUT_PROPERTY);
+        myLinkShortcutSupplier = null;
+      }
+    }
+
     String toolTip = myLink.getToolTipText();
     if (isInLinkArea(event.getX()) && toolTip != null) {
       return toolTip;
@@ -96,12 +109,14 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   private boolean isInLinkArea(int x) {
     int linkXCoordinate = x - myLinkOffset;
-    if (linkXCoordinate < 0)
+    if (linkXCoordinate < 0) {
       return false;
+    }
 
     int index = myLink.findFragmentAt(linkXCoordinate);
-    if (index == SimpleColoredComponent.FRAGMENT_ICON)
+    if (index == SimpleColoredComponent.FRAGMENT_ICON) {
       return true;
+    }
 
     return index >= 0 && myLink.getFragmentTag(index) != null;
   }
@@ -135,6 +150,12 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       String tooltipText = tagValue.getLinkTooltip();
       if (tooltipText != null) {
         myLink.setToolTipText(tooltipText);
+
+        Supplier<String> shortcutSupplier = tagValue.getShortcutSupplier();
+        if (shortcutSupplier != null) {
+          myLinkShortcutSupplier = shortcutSupplier;
+          ClientProperty.put(myTree, HelpTooltipManager.SHORTCUT_PROPERTY, myLinkShortcutSupplier);
+        }
       }
     }
     else {
@@ -148,7 +169,8 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       Graphics2D textGraphics = (Graphics2D)g.create(0, 0, myLinkOffset, getHeight());
       try {
         super.doPaint(textGraphics);
-      } finally {
+      }
+      finally {
         textGraphics.dispose();
       }
       g.translate(myLinkOffset, 0);
@@ -203,7 +225,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
                                       boolean expanded,
                                       boolean leaf,
                                       int row,
-                                      boolean hasFocus) {}
+                                      boolean hasFocus) { }
 
     @Override
     protected void doPaint(Graphics2D g) {
