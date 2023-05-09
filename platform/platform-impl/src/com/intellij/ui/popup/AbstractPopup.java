@@ -952,7 +952,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     prepareToShow();
     installWindowHook(this);
 
-    Object[] roundedCornerParams = null;
+    Object roundedCornerParams = null;
     if (WindowRoundedCornersManager.isAvailable()) {
       PopupCornerType cornerType = getUserData(PopupCornerType.class);
       if (cornerType == null) {
@@ -966,7 +966,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
           myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
         }
         else {
-          roundedCornerParams = new Object[] { cornerType };
+          roundedCornerParams = cornerType;
         }
       }
     }
