@@ -21,11 +21,11 @@ class DaemonCodeAnalyzerStatusService(project: Project) : Disposable {
     init {
         val messageBusConnection = project.messageBus.connect(this)
         messageBusConnection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
-            override fun daemonStarting(fileEditors: MutableCollection<out FileEditor>) {
+            override fun daemonStarting(fileEditors: Collection<FileEditor>) {
                 daemonRunning = true
             }
 
-            override fun daemonFinished(fileEditors: MutableCollection<out FileEditor>) {
+            override fun daemonFinished(fileEditors: Collection<FileEditor>) {
                 daemonRunning = false
             }
 

@@ -56,7 +56,7 @@ public abstract class DaemonCodeAnalyzer {
      * Fired when the background code analysis is being scheduled for the specified set of files.
      * @param fileEditors The list of files that will be analyzed during the current execution of the daemon.
      */
-    default void daemonStarting(@NotNull Collection<? extends FileEditor> fileEditors) {
+    default void daemonStarting(@NotNull Collection<? extends @NotNull FileEditor> fileEditors) {
     }
 
     /**
@@ -69,7 +69,7 @@ public abstract class DaemonCodeAnalyzer {
      * Fired when the background code analysis is done.
      * @param fileEditors The list of files analyzed during the current execution of the daemon.
      */
-    default void daemonFinished(@NotNull Collection<? extends FileEditor> fileEditors) {
+    default void daemonFinished(@NotNull Collection<? extends @NotNull FileEditor> fileEditors) {
       daemonFinished();
     }
 

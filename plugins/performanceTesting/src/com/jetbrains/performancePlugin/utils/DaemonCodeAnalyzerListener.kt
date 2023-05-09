@@ -29,18 +29,13 @@ internal object DaemonCodeAnalyzerListener {
              expectedOpenedFile: String? = null): DaemonCodeAnalyzerResult {
     val result = DaemonCodeAnalyzerResult(connection, spanRef, scopeRef, timeoutInSeconds)
     connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
-      override fun daemonFinished() {
+      override fun daemonFinished(fileEditors: Collection<FileEditor>) {
         if (expectedOpenedFile == null) {
           result.release()
         }
-        super.daemonFinished()
-      }
-
-      override fun daemonFinished(fileEditors: MutableCollection<out FileEditor>) {
         if (expectedOpenedFile != null && fileEditors.any { fileEditor -> fileEditor.file.name == expectedOpenedFile }) {
           result.release()
         }
-        super.daemonFinished(fileEditors)
       }
     })
     return result

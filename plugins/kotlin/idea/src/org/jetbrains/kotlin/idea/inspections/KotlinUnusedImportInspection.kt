@@ -158,7 +158,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
             .subscribe<DaemonCodeAnalyzer.DaemonListener>(
                 DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
                 object : DaemonCodeAnalyzer.DaemonListener {
-                    override fun daemonFinished(incomingFileEditors: Collection<FileEditor?>) {
+                    override fun daemonFinished(incomingFileEditors: Collection<FileEditor>) {
                         Disposer.dispose(daemonDisposable)
                         if ((DaemonCodeAnalyzer.getInstance(myProject) as DaemonCodeAnalyzerEx).isErrorAnalyzingFinished(file)) {
                             // later because should invoke when highlighting is finished (OptimizeImportsFix relies on that)
