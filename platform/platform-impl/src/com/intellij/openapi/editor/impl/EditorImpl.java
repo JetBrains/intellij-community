@@ -98,7 +98,10 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.dnd.*;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.*;
 import java.awt.font.TextHitInfo;
 import java.awt.geom.Point2D;
@@ -4915,7 +4918,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             LOG.error("No suitable paste handler found");
           }
           else {
-            handler.execute(editor, editor.getDataContext(), () -> t);
+            try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+              handler.execute(editor, editor.getDataContext(), () -> t);
+            }
           }
         }
         else {
