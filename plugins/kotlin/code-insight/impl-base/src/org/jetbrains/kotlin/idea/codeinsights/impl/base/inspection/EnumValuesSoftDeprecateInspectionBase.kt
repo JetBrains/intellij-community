@@ -83,7 +83,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : AbstractKotlinInspection(
         val parent = qualifiedOrSimpleCall.parent
         // Special handling for most popular use cases where `entries` can be used without cast to Array
         when {
-            parent is KtBlockExpression -> return ReplaceFixType.WITHOUT_CAST
+            parent is KtBlockExpression && parent.parent is KtNamedFunction -> return ReplaceFixType.WITHOUT_CAST
 
             // values()[index]
             parent is KtArrayAccessExpression && parent.parent !is KtBinaryExpression -> return ReplaceFixType.WITHOUT_CAST
