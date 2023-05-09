@@ -34,16 +34,18 @@ def get_column_types(table):
 
 # used by pydevd
 # noinspection PyUnresolvedReferences
-def get_data(table, max_cols, start_index=None, end_index=None):
-    # type: (Union[pd.DataFrame, pd.Series, np.ndarray], int, int, int) -> str
+def get_data(table, max_cols, max_colwidth, start_index=None, end_index=None):
+    # type: (Union[pd.DataFrame, pd.Series, np.ndarray], int, int, int, int) -> str
     _jb_max_cols = pd.get_option('display.max_columns')
     _jb_max_colwidth = pd.get_option('display.max_colwidth')
 
     if start_index is not None and end_index is not None:
         table = __get_data_slice(table, start_index, end_index)
 
-    pd.set_option('display.max_colwidth', max_cols)
+    pd.set_option('display.max_columns', max_cols)
+    pd.set_option('display.max_colwidth', max_colwidth)
     data = repr(__convert_to_df(table).to_html(notebook=True, max_cols=max_cols))
+    pd.set_option('display.max_columns', _jb_max_cols)
     pd.set_option('display.max_colwidth', _jb_max_colwidth)
 
     return data
