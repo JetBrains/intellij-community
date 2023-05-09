@@ -1,6 +1,5 @@
-// "Suppress 'REDUNDANT_NULLABLE' for fun foo" "true"
+// "Suppress 'DIVISION_BY_ZERO' for fun foo" "true"
 
-public
-fun foo(): String?<caret>? = null
+public fun foo()
+= 2 / <caret>0
 
-// IGNORE_FIR

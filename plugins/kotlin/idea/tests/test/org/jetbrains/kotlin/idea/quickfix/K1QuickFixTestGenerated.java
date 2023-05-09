@@ -13862,19 +13862,9 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/suppress/annotationPosition/topLevelFunctionSuppressNoArgsPreviousLine.kt");
             }
 
-            @TestMetadata("topLevelFunctionSuppressNoArgsPreviousLineBare.kt")
-            public void testTopLevelFunctionSuppressNoArgsPreviousLineBare() throws Exception {
-                runTest("testData/quickfix/suppress/annotationPosition/topLevelFunctionSuppressNoArgsPreviousLineBare.kt");
-            }
-
             @TestMetadata("topLevelFunctionSuppressNoArgsTheSameLine.kt")
             public void testTopLevelFunctionSuppressNoArgsTheSameLine() throws Exception {
                 runTest("testData/quickfix/suppress/annotationPosition/topLevelFunctionSuppressNoArgsTheSameLine.kt");
-            }
-
-            @TestMetadata("topLevelFunctionSuppressNoArgsTheSameLineBare.kt")
-            public void testTopLevelFunctionSuppressNoArgsTheSameLineBare() throws Exception {
-                runTest("testData/quickfix/suppress/annotationPosition/topLevelFunctionSuppressNoArgsTheSameLineBare.kt");
             }
 
             @TestMetadata("topLevelFunctionSuppressOnFile.kt")
@@ -13901,11 +13891,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             public void testTopLevelFunctionUnrelatedAnnotation() throws Exception {
                 runTest("testData/quickfix/suppress/annotationPosition/topLevelFunctionUnrelatedAnnotation.kt");
             }
-
-            @TestMetadata("topLevelFunctionUnrelatedAnnotationBare.kt")
-            public void testTopLevelFunctionUnrelatedAnnotationBare() throws Exception {
-                runTest("testData/quickfix/suppress/annotationPosition/topLevelFunctionUnrelatedAnnotationBare.kt");
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -13913,6 +13898,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         public static class Availability extends AbstractK1QuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inlineKeyword.kt")
+            public void testInlineKeyword() throws Exception {
+                runTest("testData/quickfix/suppress/availability/inlineKeyword.kt");
             }
 
             @TestMetadata("localFunSuppressForLocal.kt")
@@ -13960,6 +13950,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/suppress/availability/memberSuppressForMember.kt");
             }
 
+            @TestMetadata("parameterSuppressForDestructuredLambdaFun.kt")
+            public void testParameterSuppressForDestructuredLambdaFun() throws Exception {
+                runTest("testData/quickfix/suppress/availability/parameterSuppressForDestructuredLambdaFun.kt");
+            }
+
             @TestMetadata("parameterSuppressForDestructuredLambdaParameter.kt")
             public void testParameterSuppressForDestructuredLambdaParameter() throws Exception {
                 runTest("testData/quickfix/suppress/availability/parameterSuppressForDestructuredLambdaParameter.kt");
@@ -13973,6 +13968,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("topLevelFunctionAlreadySuppressed.kt")
             public void testTopLevelFunctionAlreadySuppressed() throws Exception {
                 runTest("testData/quickfix/suppress/availability/topLevelFunctionAlreadySuppressed.kt");
+            }
+
+            @TestMetadata("upperBound.kt")
+            public void testUpperBound() throws Exception {
+                runTest("testData/quickfix/suppress/availability/upperBound.kt");
             }
         }
 
@@ -14357,6 +14357,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/suppress/inspections/constantConditionIf.kt");
             }
 
+            @TestMetadata("redundantUnitReturn.kt")
+            public void testRedundantUnitReturn() throws Exception {
+                runTest("testData/quickfix/suppress/inspections/redundantUnitReturn.kt");
+            }
+
             @TestMetadata("unusedImports.kt")
             public void testUnusedImports() throws Exception {
                 runTest("testData/quickfix/suppress/inspections/unusedImports.kt");
@@ -14368,6 +14373,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         public static class Redundant extends AbstractK1QuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("RedundantUnitReturn.kt")
+            public void testRedundantUnitReturn() throws Exception {
+                runTest("testData/quickfix/suppress/redundant/RedundantUnitReturn.kt");
             }
 
             @TestMetadata("RemoveAnnotation.kt")

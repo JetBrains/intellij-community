@@ -1,4 +1,4 @@
-// "Suppress 'UNUSED_DESTRUCTURED_PARAMETER_ENTRY' for parameter <anonymous>" "false"
+// "Suppress 'UNUSED_DESTRUCTURED_PARAMETER_ENTRY' for fun test" "true"
 // ACTION: Convert to single-line lambda
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Flip ',' (may change semantics)
@@ -19,4 +19,3 @@ fun test() {
 }
 
 // IGNORE_FIR
-// IGNORE_FE10

@@ -1,5 +1,3 @@
-// "Suppress 'REDUNDANT_NULLABLE' for val foo" "true"
+// "Suppress 'DIVISION_BY_ZERO' for val foo" "true"
 
-val foo: String?<caret>? = null
-
-// IGNORE_FIR
+val foo = 2 / <caret>0

@@ -1,5 +1,3 @@
-// "Suppress 'REDUNDANT_NULLABLE' for var foo" "true"
+// "Suppress 'DIVISION_BY_ZERO' for var foo" "true"
 
-var foo: String?<caret>? = null
-
-// IGNORE_FIR
+var foo = 2 / <caret>0

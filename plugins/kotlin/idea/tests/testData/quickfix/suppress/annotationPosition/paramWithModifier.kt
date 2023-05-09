@@ -1,5 +1,3 @@
-// "Suppress 'REDUNDANT_NULLABLE' for parameter p" "true"
+// "Suppress 'DIVISION_BY_ZERO' for parameter p" "true"
 
-fun foo(vararg p: String?<caret>?) = null
-
-// IGNORE_FIR
+fun foo(p: Int = 2 / <caret>0) = null

@@ -1,9 +1,7 @@
-// "Suppress 'REDUNDANT_NULLABLE' for class D" "true"
+// "Suppress 'DIVISION_BY_ZERO' for class D" "true"
 
 class C {
     class D {
-        fun foo(): String?<caret>? = null
+        fun foo() = 2 / <caret>0
     }
 }
-
-// IGNORE_FIR

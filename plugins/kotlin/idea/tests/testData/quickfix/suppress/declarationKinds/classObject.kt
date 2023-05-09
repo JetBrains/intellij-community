@@ -1,9 +1,7 @@
-// "Suppress 'REDUNDANT_NULLABLE' for companion object Companion of C" "true"
+// "Suppress 'DIVISION_BY_ZERO' for companion object Companion of C" "true"
 
 class C {
     companion object {
-        var foo: String?<caret>? = null
+        var foo = 2 / <caret>0
     }
 }
-
-// IGNORE_FIR
