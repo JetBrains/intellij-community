@@ -10,7 +10,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
@@ -106,34 +107,37 @@ public final class ModCommands {
       targetFile = copyFile;
       positionDocument = document;
     }
-    String oldText = targetFile.getText();
-    var context = new EditorUpdaterImpl(actionContext, positionDocument, manager, document, injected, targetFile, copyFile);
-    aspect.postponeFormattingInside(
-      () -> aspect.forcePostprocessFormatInside(copyFile, () -> updater.accept(copy, context)));
-    manager.commitDocument(document);
-    manager.doPostponedOperationsAndUnblockDocument(document);
-    String newText = targetFile.getText();
-    ModCommand command = oldText.equals(newText) ? new ModNothing() : new ModUpdatePsiFile(origFile, oldText, newText);
-    VirtualFile origVirtualFile = origFile.getOriginalFile().getVirtualFile();
-    if (origVirtualFile != null) {
-      int start = -1, end = -1, caret = -1;
-      if (context.mySelectionRange.getEndOffset() <= newText.length()) {
-        start = context.mySelectionRange.getStartOffset();
-        end = context.mySelectionRange.getEndOffset();
+    EditorUpdaterImpl context = new EditorUpdaterImpl(actionContext, positionDocument, manager, document, injected, targetFile, copyFile);
+    try {
+      String oldText = targetFile.getText();
+      aspect.postponeFormattingInside(
+        () -> aspect.forcePostprocessFormatInside(copyFile, () -> updater.accept(copy, context)));
+      manager.commitDocument(document);
+      manager.doPostponedOperationsAndUnblockDocument(document);
+      String newText = targetFile.getText();
+      ModCommand command = oldText.equals(newText) ? new ModNothing() : new ModUpdatePsiFile(origFile, oldText, newText);
+      VirtualFile origVirtualFile = origFile.getOriginalFile().getVirtualFile();
+      if (origVirtualFile != null) {
+        int start = -1, end = -1, caret = -1;
+        if (context.mySelectionEnd <= newText.length()) {
+          start = context.mySelectionStart;
+          end = context.mySelectionEnd;
+        }
+        if (context.myCaretOffset <= newText.length()) {
+          caret = context.myCaretOffset;
+        }
+        if (start != -1 || end != -1 || caret != -1) {
+          command = command.andThen(new ModNavigate(origVirtualFile, start, end, caret));
+        }
       }
-      if (context.myCaretRange.getStartOffset() <= newText.length()) {
-        caret = context.myCaretRange.getStartOffset();
-      }
-      if (start != -1 || end != -1 || caret != -1) {
-        command = command.andThen(new ModNavigate(origVirtualFile, start, end, caret));
-      }
+      return command;
     }
-    context.mySelectionRange.dispose();
-    context.myCaretRange.dispose();
-    if (disposable != null) {
-      Disposer.dispose(disposable);
+    finally {
+      if (disposable != null) {
+        Disposer.dispose(disposable);
+      }
+      positionDocument.removeDocumentListener(context);
     }
-    return command;
   }
 
   private static @NotNull PsiFile getInjectedFileCopy(@NotNull PsiLanguageInjectionHost host,
@@ -182,15 +186,14 @@ public final class ModCommands {
     return new ModCommandAction.ActionContext(project, copyFile, offset, TextRange.create(start, end));
   }
 
-  private static class EditorUpdaterImpl implements EditorUpdater {
+  private static class EditorUpdaterImpl implements EditorUpdater, DocumentListener {
     private final @NotNull Document myPositionDocument;
     private final @NotNull PsiDocumentManager myManager;
     private final @NotNull Document myDocument;
     private final boolean myInjected;
     private final @NotNull PsiFile myTargetFile;
     private final @NotNull PsiFile myCopyFile;
-    @NotNull RangeMarker mySelectionRange;
-    @NotNull RangeMarker myCaretRange;
+    private int myCaretOffset, mySelectionStart, mySelectionEnd;
 
     private EditorUpdaterImpl(@NotNull ModCommandAction.ActionContext actionContext,
                               @NotNull Document positionDocument,
@@ -205,22 +208,23 @@ public final class ModCommands {
       myInjected = injected;
       myTargetFile = targetFile;
       myCopyFile = copyFile;
-      mySelectionRange = myPositionDocument.createRangeMarker(actionContext.selection().getStartOffset(),
-                                                              actionContext.selection().getEndOffset(), true);
-      myCaretRange = myPositionDocument.createRangeMarker(actionContext.offset(), actionContext.offset(), true);
+      myCaretOffset = actionContext.offset();
+      mySelectionStart = actionContext.selection().getStartOffset();
+      mySelectionEnd = actionContext.selection().getEndOffset();
+      myPositionDocument.addDocumentListener(this);
     }
 
     @Override
     public void select(@NotNull PsiElement element) {
       validate(element);
       myManager.doPostponedOperationsAndUnblockDocument(myDocument);
-      mySelectionRange.dispose();
-      myCaretRange.dispose();
       if (myInjected) {
         element = PsiTreeUtil.findSameElementInCopy(element, myTargetFile);
       }
-      mySelectionRange = myPositionDocument.createRangeMarker(element.getTextRange());
-      myCaretRange = myPositionDocument.createRangeMarker(element.getTextRange().getStartOffset(), element.getTextRange().getStartOffset());
+      TextRange range = element.getTextRange();
+      mySelectionStart = range.getStartOffset();
+      mySelectionEnd = range.getEndOffset();
+      myCaretOffset = range.getStartOffset();
     }
 
     @Override
@@ -235,15 +239,14 @@ public final class ModCommands {
     }
 
     private void moveToOffset(int offset) {
-      myCaretRange.dispose();
-      myCaretRange = myPositionDocument.createRangeMarker(offset, offset);
+      myCaretOffset = offset;
     }
 
     @Override
     public void moveToPrevious(char ch) {
       myManager.doPostponedOperationsAndUnblockDocument(myDocument);
       String text = myPositionDocument.getText();
-      int idx = text.lastIndexOf(ch, myCaretRange.getStartOffset());
+      int idx = text.lastIndexOf(ch, myCaretOffset);
       if (idx == -1) return;
       moveToOffset(idx);
     }
@@ -251,6 +254,29 @@ public final class ModCommands {
     private void validate(@NotNull PsiElement element) {
       if (!element.isValid()) throw new IllegalArgumentException();
       if (!PsiTreeUtil.isAncestor(myCopyFile, element, false)) throw new IllegalArgumentException();
+    }
+
+    @Override
+    public void documentChanged(@NotNull DocumentEvent event) {
+      myCaretOffset = updateOffset(event, myCaretOffset);
+      mySelectionStart = updateOffset(event, mySelectionStart);
+      mySelectionEnd = updateOffset(event, mySelectionEnd);
+    }
+
+    private static int updateOffset(DocumentEvent event, int pos) {
+      int moveOffset = event.getMoveOffset();
+      int offset = event.getOffset();
+      int oldLength = event.getOldLength();
+      int newLength = event.getNewLength();
+      if (moveOffset != offset) {
+        if (pos >= offset && pos <= offset + oldLength) return pos - offset + moveOffset;
+        if (pos >= moveOffset && pos < offset) return pos + oldLength;
+        if (pos > offset + oldLength && pos < moveOffset) return pos - oldLength;
+        return pos;
+      }
+      if (pos <= offset) return pos;
+      if (pos >= offset + oldLength) return pos + newLength - oldLength;
+      return offset + newLength;
     }
   }
 }

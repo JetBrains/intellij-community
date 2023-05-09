@@ -149,7 +149,6 @@ public class MergeFilterChainAction extends PsiUpdateModCommandAction<PsiIdentif
         targetBody.add(comment);
       }
     }
-    updater.moveTo(targetBody);
     callToEliminate.replace(qualifierExpression);
   }
 
