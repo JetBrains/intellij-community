@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -19,6 +20,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import kotlinx.coroutines.launch
 import kotlin.math.log10
 import kotlin.math.pow
 
@@ -46,7 +48,7 @@ private class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyz
     }
 
     if (!initialEntireFileHighlightingCompleted) {
-      initialEntireFileHighlightingActivity = StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_HIGHLIGHTED)
+      initialEntireFileHighlightingActivity = StartUpMeasurer.startActivity("initial entire file highlighting")
     }
   }
 
@@ -83,6 +85,10 @@ private class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyz
       initialEntireFileHighlightingCompleted = true
       initialEntireFileHighlightingActivity?.end()
       StartUpMeasurer.addInstantEvent("editor highlighting completed")
+      @Suppress("DEPRECATION")
+      project.coroutineScope.launch {
+        StartUpPerformanceService.getInstance().editorRestoringTillHighlighted()
+      }
     }
 
     DaemonFusCollector.FINISHED.log(

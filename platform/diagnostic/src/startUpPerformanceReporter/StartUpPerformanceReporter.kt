@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.diagnostic.startUpPerformanceReporter
@@ -33,7 +33,6 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
 
 open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope) : StartUpPerformanceService {
   private var pluginCostMap: Map<String, Object2LongMap<String>>? = null
@@ -66,50 +65,6 @@ open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope
     fun logStats(projectName: String) {
       logAndClearStats(projectName, perfFilePath)
     }
-
-    private class ActivityListener(
-      private val projectName: String,
-      private val manager: StartUpPerformanceReporter,
-    ) : Consumer<ActivityImpl> {
-      @Volatile
-      private var projectOpenedActivitiesPassed = false
-
-      @Volatile
-      private var editorRestoringTillHighlighted = false
-
-      override fun accept(activity: ActivityImpl) {
-        if (activity.category != null && activity.category != ActivityCategory.DEFAULT) {
-          return
-        }
-
-        if (activity.end != 0L) {
-          when (activity.name) {
-            Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES -> {
-              projectOpenedActivitiesPassed = true
-              if (editorRestoringTillHighlighted) {
-                completed()
-              }
-            }
-            Activities.EDITOR_RESTORING_TILL_HIGHLIGHTED -> {
-              editorRestoringTillHighlighted = true
-              if (projectOpenedActivitiesPassed) {
-                completed()
-              }
-            }
-          }
-        }
-      }
-
-      private fun completed() {
-        ActivityImpl.listener = null
-
-        StartUpMeasurer.stopPluginCostMeasurement()
-        // don't report statistic from here if we want to measure project import duration
-        if (!java.lang.Boolean.getBoolean("idea.collect.project.import.performance")) {
-          manager.keepAndLogStats(projectName)
-        }
-      }
-    }
   }
 
   override fun getMetrics() = lastMetrics
@@ -118,19 +73,13 @@ open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope
 
   override fun getLastReport() = lastReport
 
-  override fun addActivityListener(project: Project) {
-    if (ActivityImpl.listener == null) {
-      ActivityImpl.listener = ActivityListener(project.name, this)
-    }
-  }
-
   override fun reportStatistics(project: Project) {
     keepAndLogStats(project.name)
   }
 
   private val reportMutex = Mutex()
 
-  private fun keepAndLogStats(projectName: String) {
+  protected fun keepAndLogStats(projectName: String) {
     coroutineScope.launch {
       reportMutex.withLock {
         val params = logAndClearStats(projectName, perfFilePath)
@@ -302,7 +251,4 @@ private class HeadlessStartUpPerformanceService : StartUpPerformanceService {
   override fun getMetrics(): Object2IntMap<String>? = null
 
   override fun getLastReport(): ByteBuffer? = null
-
-  override fun addActivityListener(project: Project) {
-  }
 }

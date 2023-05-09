@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -308,7 +307,6 @@ private fun CoroutineScope.reopenEditorsAndInitFrame(rawProjectDeferred: Complet
 private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>) {
   val fileEditorManager = project.serviceAsync<FileEditorManager>().await() as? FileEditorManagerImpl ?: return
 
-  service<StartUpPerformanceService>().addActivityListener(project)
   val (editorComponent, editorState) = withContext(Dispatchers.EDT) { fileEditorManager.init() }
 
   coroutineScope {
