@@ -110,7 +110,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @NotNull protected final MavenEmbedderSettings myEmbedderSettings;
 
-  public Maven40ServerEmbedderImpl(MavenEmbedderSettings settings) throws RemoteException {
+  public Maven40ServerEmbedderImpl(MavenEmbedderSettings settings) {
     myEmbedderSettings = settings;
 
     String multiModuleProjectDirectory = settings.getMultiModuleProjectDirectory();
@@ -245,8 +245,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   public Collection<MavenServerExecutionResult> resolveProjects(@NotNull String longRunningTaskId,
                                                                 @NotNull Collection<File> files,
                                                                 @NotNull Collection<String> activeProfiles,
-                                                                @NotNull Collection<String> inactiveProfiles, MavenToken token)
-    throws RemoteException {
+                                                                @NotNull Collection<String> inactiveProfiles, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try (LongRunningTask task = new LongRunningTask(longRunningTaskId, files.size())) {
       return resolveProject(task, files, activeProfiles, inactiveProfiles);
@@ -1114,8 +1113,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @Override
   public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
-                                                       MavenToken token)
-    throws RemoteException {
+                                                       MavenToken token) {
     MavenServerUtil.checkToken(token);
 
     MavenExecutionRequest request = createRequest(null, null, null, null);
@@ -1228,7 +1226,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   public String evaluateEffectivePom(@NotNull File file,
                                      @NotNull List<String> activeProfiles,
                                      @NotNull List<String> inactiveProfiles,
-                                     MavenToken token) throws RemoteException {
+                                     MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
       return Maven40EffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
@@ -1244,8 +1242,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   public List<MavenGoalExecutionResult> executeGoal(@NotNull String longRunningTaskId,
                                                     @NotNull Collection<MavenGoalExecutionRequest> requests,
                                                     @NotNull String goal,
-                                                    MavenToken token)
-    throws RemoteException {
+                                                    MavenToken token) {
     MavenServerUtil.checkToken(token);
     try (LongRunningTask task = new LongRunningTask(longRunningTaskId, requests.size())) {
       return executeGoal(task, requests, goal);
@@ -1315,7 +1312,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @Override
   @Nullable
-  public MavenModel readModel(File file, MavenToken token) throws RemoteException {
+  public MavenModel readModel(File file, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
       Map<String, Object> inputOptions = new HashMap<String, Object>();
@@ -1377,8 +1374,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   @Override
   public List<MavenArtifact> resolveArtifacts(@NotNull String longRunningTaskId,
                                               @NotNull Collection<MavenArtifactResolutionRequest> requests,
-                                              MavenToken token)
-    throws RemoteException {
+                                              MavenToken token) {
     MavenServerUtil.checkToken(token);
     try (LongRunningTask task = new LongRunningTask(longRunningTaskId, requests.size())) {
       return doResolveArtifacts(task, requests);
@@ -1489,8 +1485,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @Override
-  public Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories, MavenToken token)
-    throws RemoteException {
+  public Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
       return new HashSet<>(
@@ -1507,7 +1502,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   public MavenArtifactResolveResult resolveArtifactsTransitively(
     @NotNull List<MavenArtifactInfo> artifacts,
     @NotNull List<MavenRemoteRepository> remoteRepositories,
-    MavenToken token) throws RemoteException {
+    MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
       return resolveArtifactsTransitively(artifacts, remoteRepositories);
@@ -1588,13 +1583,13 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
 
   @Override
-  public Collection<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) throws RemoteException {
+  public Collection<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) {
     MavenServerUtil.checkToken(token);
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Collection<MavenArchetype> getRemoteArchetypes(MavenToken token, @NotNull String url) throws RemoteException {
+  public Collection<MavenArchetype> getRemoteArchetypes(MavenToken token, @NotNull String url) {
     MavenServerUtil.checkToken(token);
     throw new UnsupportedOperationException();
   }
@@ -1604,7 +1599,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
                                                               @NotNull String version,
                                                               @NotNull List<MavenRemoteRepository> repositories,
-                                                              @Nullable String url, MavenToken token) throws RemoteException {
+                                                              @Nullable String url, MavenToken token) {
     MavenServerUtil.checkToken(token);
     throw new UnsupportedOperationException();
   }
@@ -1614,8 +1609,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   @Override
   public MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
                                                                            boolean alwaysUpdateSnapshots,
-                                                                           @Nullable Properties userProperties, MavenToken token)
-    throws RemoteException {
+                                                                           @Nullable Properties userProperties, MavenToken token) {
     MavenServerUtil.checkToken(token);
 
     try {
