@@ -38,13 +38,4 @@ public final class ReflectionUtil {
     }
     return result;
   }
-
-  public static Object unpackPresentProvider(Object object) {
-    if (dynamicCheckInstanceOf(object, "org.gradle.api.provider.Provider")) {
-      if (reflectiveCall(object, "isPresent", Boolean.class)) {
-        return reflectiveCall(object, "get", Object.class);
-      }
-    }
-    return object;
-  }
 }
