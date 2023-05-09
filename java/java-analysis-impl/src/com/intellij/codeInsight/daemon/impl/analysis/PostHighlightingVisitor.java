@@ -14,7 +14,6 @@ import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
-import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
@@ -22,13 +21,11 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,7 +41,6 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -55,12 +51,11 @@ import java.util.Set;
 import java.util.function.Function;
 
 class PostHighlightingVisitor {
-  private static final Logger LOG = Logger.getInstance(PostHighlightingVisitor.class);
   private final RefCountHolder myRefCountHolder;
   @NotNull private final Project myProject;
   private final PsiFile myFile;
   @NotNull private final Document myDocument;
-  private IntentionAction myOptimizeImportsFix; // when not null, there are redundant/missorted imports in the file
+  private IntentionAction myOptimizeImportsFix; // when not null, there are redundant/mis-sorted imports in the file
   private int myCurrentEntryIndex = -1;
   private final UnusedSymbolLocalInspectionBase myUnusedSymbolInspection;
   private final HighlightDisplayKey myDeadCodeKey;
@@ -77,17 +72,6 @@ class PostHighlightingVisitor {
     InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
     myDeadCodeInspection = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, myFile);
-    if (!ApplicationManager.getApplication().isUnitTestMode() && myDeadCodeInspection == null) {
-      ToolsImpl tools = profile.getToolsOrNull(UnusedDeclarationInspectionBase.SHORT_NAME, myProject);
-      String toolsState = "";
-      if (tools != null) {
-        Element x = new Element("x");
-        tools.writeExternal(x);
-        toolsState = JDOMUtil.write(x);
-      }
-      String s = "tools=" + tools + "; state:"+toolsState;
-      LOG.error("can't find " + myDeadCodeKey + " in profile `" + profile.getDisplayName() + "`. enabled=" + profile.isToolEnabled(myDeadCodeKey) + "; " + s);
-    }
     myUnusedSymbolInspection = myDeadCodeInspection == null ? null : myDeadCodeInspection.getSharedLocalInspectionTool();
     myDeadCodeInfoType = myDeadCodeKey == null ? HighlightInfoType.UNUSED_SYMBOL
                          : new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(myDeadCodeKey, myFile).getSeverity(),
@@ -160,7 +144,7 @@ class PostHighlightingVisitor {
   }
 
   private boolean isToolEnabled(HighlightDisplayKey displayKey) {
-    if (!(myFile instanceof PsiJavaFile)) {
+    if (!(myFile instanceof PsiJavaFile) || myUnusedSymbolInspection == null) {
       return false;
     }
     InspectionProfile profile = getCurrentProfile();
@@ -557,7 +541,7 @@ class PostHighlightingVisitor {
 
     boolean isRedundant = myRefCountHolder.isRedundant(importStatement);
     if (!isRedundant && !(importStatement instanceof PsiImportStaticStatement)) {
-      //check import from same package
+      // check import from the same package
       String packageName = ((PsiClassOwner)importStatement.getContainingFile()).getPackageName();
       PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
       PsiElement resolved = reference == null ? null : reference.resolve();
