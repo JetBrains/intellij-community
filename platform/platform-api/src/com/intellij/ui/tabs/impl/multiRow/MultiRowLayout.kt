@@ -101,8 +101,15 @@ abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
   protected fun splitToPinnedUnpinned(infosToSplit: List<TabInfo>): Pair<List<TabInfo>, List<TabInfo>> {
     val infos = infosToSplit.toList()
     val lastPinnedInd = infos.indexOfLast { it.isPinned }
-    val pinned = if (lastPinnedInd != -1) infos.subList(0, lastPinnedInd + 1) else emptyList()
-    val unpinned = if (lastPinnedInd != -1) infos.subList(lastPinnedInd + 1, infos.size) else infos
+    if (lastPinnedInd == -1) {
+      return emptyList<TabInfo>() to infos
+    }
+    val pinnedRowEndInd = if (infos.getOrNull(lastPinnedInd + 1)?.let { tabs.isDropTarget(it) } == true) {
+      lastPinnedInd + 1  // if next is dnd placeholder, put it to the pinned row
+    }
+    else lastPinnedInd
+    val pinned = infos.subList(0, pinnedRowEndInd + 1)
+    val unpinned = infos.subList(pinnedRowEndInd + 1, infos.size)
     return pinned to unpinned
   }
 
