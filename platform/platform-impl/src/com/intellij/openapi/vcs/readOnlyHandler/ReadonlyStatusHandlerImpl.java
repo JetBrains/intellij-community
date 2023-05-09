@@ -94,7 +94,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     // Otherwise data manager stuff will fire up an assertion saying that event count has been changed (due to modal dialog show-up)
     // The hack itself is safe since we guarantee that focus will return to the same component had it before modal dialog have been shown.
     final int savedEventCount = IdeEventQueue.getInstance().getEventCount();
-    if (myState.SHOW_DIALOG) {
+    if (myState.SHOW_DIALOG && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       List<PresentableFileInfo> presentableFileInfos = ActionUtil.underModalProgress(
         myProject,
         FileTypesBundle.message("progress.title.resolving.filetype"),
