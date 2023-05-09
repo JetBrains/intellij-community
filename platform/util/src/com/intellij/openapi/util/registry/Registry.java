@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
@@ -188,24 +188,21 @@ public final class Registry  {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Map<String, String> loadState(@Nullable Element state, @Nullable Map<String, String> earlyAccess) {
+  public static @NotNull Map<String, String> loadState(@Nullable Element state, @Nullable Map<String, String> earlyAccess) {
     Registry registry = ourInstance;
-
-    if (state == null) {
-      registry.isLoaded = true;
-      return null;
-    }
 
     Map<String, String> userProperties = registry.myUserProperties;
     userProperties.clear();
-    for (Element eachEntry : state.getChildren("entry")) {
-      String key = eachEntry.getAttributeValue("key");
-      String value = eachEntry.getAttributeValue("value");
-      if (key != null && value != null) {
-        RegistryValue registryValue = registry.doGet(key);
-        if (registryValue.isChangedFromDefault(value, registry)) {
-          userProperties.put(key, value);
-          registryValue.resetCache();
+    if (state != null) {
+      for (Element eachEntry : state.getChildren("entry")) {
+        String key = eachEntry.getAttributeValue("key");
+        String value = eachEntry.getAttributeValue("value");
+        if (key != null && value != null) {
+          RegistryValue registryValue = registry.doGet(key);
+          if (registryValue.isChangedFromDefault(value, registry)) {
+            userProperties.put(key, value);
+            registryValue.resetCache();
+          }
         }
       }
     }
