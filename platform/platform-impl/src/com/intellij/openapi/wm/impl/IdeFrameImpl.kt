@@ -36,12 +36,10 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
     @JvmStatic
     val activeFrame: Window?
       get() = getFrames().firstOrNull { it.isActive }
-
-    private val LOG: Logger = Logger.getInstance("ide.frame.events")
   }
 
   init {
-    addComponentListener(EventLogger())
+    addComponentListener(EventLogger(this))
   }
 
   var frameHelper: FrameHelper? = null
@@ -50,6 +48,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   var reusedFullScreenState = false
 
   var normalBounds: Rectangle? = null
+
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   var togglingFullScreenInProgress: Boolean = false
 
@@ -156,35 +155,41 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   override fun notifyProjectActivation() {
     getFrameHelper(this)?.notifyProjectActivation()
   }
+}
 
-  private inner class EventLogger : ComponentAdapter() {
-    override fun componentResized(e: ComponentEvent) {
-      logBounds("resized")
-    }
+private class EventLogger(private val frame: IdeFrameImpl) : ComponentAdapter() {
+  companion object {
+    private val LOG: Logger = Logger.getInstance("ide.frame.events")
 
-    override fun componentMoved(e: ComponentEvent) {
-      logBounds("moved")
-    }
-
-    private fun logBounds(action: String) {
-      if (!LOG.isDebugEnabled) {
-        return // avoid unnecessary string formatting
-      }
-      val windowBounds = bounds
-      val gc = graphicsConfiguration ?: return
-      val mode = gc.device?.displayMode ?: return
-      val scale = JBUIScale.sysScale(gc)
-      val screenBounds = gc.bounds
-      LOG.debug(
-        "IDE frame '${frameHelper?.project?.name}' $action; " +
-        "frame bounds: ${windowBounds.toDebugString()}; " +
-        "resolution: ${mode.width}x${mode.height}; " +
-        "scale: $scale; " +
-        "screen bounds: ${screenBounds.toDebugString()}"
-      )
-    }
+    private fun Rectangle.toDebugString() = "${width}x${height} @ ($x,$y)"
   }
 
-  private fun Rectangle.toDebugString() =  "${width}x${height} @ ($x,$y)"
+  override fun componentResized(e: ComponentEvent) {
+    logBounds("resized")
+  }
 
+  override fun componentMoved(e: ComponentEvent) {
+    logBounds("moved")
+  }
+
+  private fun logBounds(action: String) {
+    if (!LOG.isDebugEnabled) {
+      // avoid unnecessary string formatting
+      return
+    }
+
+    val windowBounds = frame.bounds
+    val gc = frame.graphicsConfiguration ?: return
+    val mode = gc.device?.displayMode ?: return
+    val scale = JBUIScale.sysScale(gc)
+    val screenBounds = gc.bounds
+    LOG.debug(
+      "IDE frame '${frame.frameHelper?.project?.name}' $action; " +
+      "frame bounds: ${windowBounds.toDebugString()}; " +
+      "resolution: ${mode.width}x${mode.height}; " +
+      "scale: $scale; " +
+      "screen bounds: ${screenBounds.toDebugString()}"
+    )
+  }
 }
+
