@@ -36,7 +36,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"SPACE",                    "Console.TableResult.ColumnVisibility", "QuickPreview", "SplitChooser.SplitCenter", "CollapsiblePanel-toggle"},
       {"SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
       {"TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
-                                   "EditorTab", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow", "AcceptInlineCompletionAction"},
+                                   "EditorTab", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow", "InsertInlineCompletionAction"},
       {"alt DOWN",                 "MethodDown", "ShowContent", "ShowSearchHistory", "JupyterNotebookMoveCellDownCommandModeAction"},
       {"alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "JupyterNotebookRunCellInsertBelowCommandModeAction"},
       {"alt F6",                   "CommanderSyncViews", "EditPropertyValue"},
@@ -215,7 +215,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     Map.entry("Emacs", new String[][]{
       {"ESCAPE",                   SECOND_STROKE, "CloseGotItTooltip", "FocusEditor", "Terminal.SwitchFocusToEditor"},
       {"TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
-                                   "EmacsStyleIndent", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow"},
+                                   "EmacsStyleIndent", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow", "InsertInlineCompletionAction"},
       {"alt MINUS",                SECOND_STROKE, "RInsertAssignmentAction"},
       {"alt SLASH",                "CodeCompletion", "HippieCompletion"},
       {"control B",                "EditorLeft", "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"},

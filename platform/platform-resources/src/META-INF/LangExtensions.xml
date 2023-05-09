@@ -1538,8 +1538,6 @@
       implementationClass="com.intellij.codeInsight.inline.completion.EscapeInlineCompletionHandler"
       order="before hide-hints"/>
     <editorFactoryListener implementation="com.intellij.codeInsight.inline.completion.InlineCompletionEditorListener"/>
-    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.inline.completion.EscapeInlineCompletionHandler"
-                         id="inline.completion.escape" order="before hide-hints"/>>
 
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ChameleonSyntaxHighlightingPass$Factory"/>

@@ -17,13 +17,10 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -45,6 +42,7 @@ class InlineCompletionEditorListener(private val scope: CoroutineScope) : Editor
 class InlineCompletionDocumentListener(private val editor: EditorImpl, private val scope: CoroutineScope) : DocumentListener, Disposable {
   private val handler = InlineCompletionHandler(scope)
   private var flow = MutableSharedFlow<InlineCompletionEvent>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private var jobCall: Job? = null
 
   fun isEnabled(event: DocumentEvent): Boolean {
     return event.newFragment != CompletionUtil.DUMMY_IDENTIFIER && event.newLength >= 1
@@ -66,7 +64,7 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl, private v
 
     overrideCaretMove(editor)
 
-    scope.launch(CoroutineName("inline.completion.call")) {
+    jobCall = scope.launch(CoroutineName("inline.completion.call")) {
       flow.debounce(minDelay)
         .collect(::documentChangedDebounced)
     }
@@ -106,6 +104,7 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl, private v
 
   override fun dispose() {
     editor.putUserData(KEY, null)
+    jobCall?.cancel()
   }
 
   private data class InlineCompletionEvent(val event: DocumentEvent, val providers: List<InlineCompletionProvider>)
