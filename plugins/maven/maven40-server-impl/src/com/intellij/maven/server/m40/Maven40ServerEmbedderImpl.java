@@ -267,7 +267,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         new ArrayList<>(inactiveProfiles)
       );
 
-      return ContainerUtilRt.map2List(results, result -> createExecutionResult(result.getPomFile(), result));
+      return ContainerUtilRt.map2List(results, result -> createExecutionResult(result));
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -379,7 +379,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @NotNull
-  private MavenServerExecutionResult createExecutionResult(@Nullable File file, Maven40ExecutionResult result) {
+  private MavenServerExecutionResult createExecutionResult(Maven40ExecutionResult result) {
+    File file = result.getPomFile();
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
     collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
 
