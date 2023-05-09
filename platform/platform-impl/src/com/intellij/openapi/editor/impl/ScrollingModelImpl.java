@@ -35,7 +35,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ScrollingModelImpl implements ScrollingModelEx {
+public final class ScrollingModelImpl implements ScrollingModelEx {
   private static final Logger LOG = Logger.getInstance(ScrollingModelImpl.class);
 
   @NotNull private final ScrollingModel.Supplier mySupplier;
@@ -98,14 +98,14 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   @NotNull
   @Override
-  public final Rectangle getVisibleArea() {
+  public Rectangle getVisibleArea() {
     assertIsDispatchThread();
     return mySupplier.getScrollPane().getViewport().getViewRect();
   }
 
   @NotNull
   @Override
-  public final Rectangle getVisibleAreaOnScrollingFinished() {
+  public Rectangle getVisibleAreaOnScrollingFinished() {
     assertIsDispatchThread();
     if (EditorCoreUtil.isTrueSmoothScrollingEnabled()) {
       Rectangle viewRect = mySupplier.getScrollPane().getViewport().getViewRect();
@@ -118,7 +118,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   @Override
-  public final void scrollToCaret(@NotNull ScrollType scrollType) {
+  public void scrollToCaret(@NotNull ScrollType scrollType) {
     if (LOG.isTraceEnabled()) {
       LOG.trace(new Throwable());
     }
@@ -145,7 +145,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   @Override
-  public final void scrollTo(@NotNull LogicalPosition pos, @NotNull ScrollType scrollType) {
+  public void scrollTo(@NotNull LogicalPosition pos, @NotNull ScrollType scrollType) {
     assertIsDispatchThread();
     Editor editor = mySupplier.getEditor();
     AsyncEditorLoader.performWhenLoaded(editor, () -> {
@@ -161,7 +161,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   @Override
-  public final void runActionOnScrollingFinished(@NotNull Runnable action) {
+  public void runActionOnScrollingFinished(@NotNull Runnable action) {
     assertIsDispatchThread();
 
     if (myCurrentAnimationRequest != null) {
@@ -172,283 +172,44 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     action.run();
   }
 
-  public final boolean isAnimationEnabled() {
+  public boolean isAnimationEnabled() {
     return !myAnimationDisabled;
   }
 
   @Override
-  public final void disableAnimation() {
+  public void disableAnimation() {
     myAnimationDisabled = true;
   }
 
   @Override
-  public final void enableAnimation() {
+  public void enableAnimation() {
     myAnimationDisabled = false;
   }
 
-  protected @NotNull Point calcOffsetsToScroll(@NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect) {
-    Editor editor = mySupplier.getEditor();
-    if (editor.getSettings().isRefrainFromScrolling() && viewRect.contains(targetLocation)) {
-      if (scrollType == ScrollType.CENTER ||
-          scrollType == ScrollType.CENTER_DOWN ||
-          scrollType == ScrollType.CENTER_UP) {
-        scrollType = ScrollType.RELATIVE;
-      }
-    }
-
-    int hOffset = getHorizontalOffset(editor, targetLocation, scrollType, viewRect);
-    int vOffset = getVerticalOffset(editor, targetLocation, scrollType, viewRect);
-    return new Point(hOffset, vOffset);
-  }
-
-  protected int getHorizontalOffset(@NotNull Editor editor, @NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect) {
-    int horizontalOffset = viewRect.x;
-    int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
-
-    int editorWidth = viewRect.width;
-
-    JScrollPane scrollPane = mySupplier.getScrollPane();
-    int scrollWidth = scrollPane.getHorizontalScrollBar().getMaximum() - getExtent(scrollPane.getHorizontalScrollBar());
-    int textWidth = scrollWidth + editorWidth;
-
-    int scrollOffset = editor.getSettings().getHorizontalScrollOffset();
-    int scrollJump = editor.getSettings().getHorizontalScrollJump();
-
-    // when we calculate bounds, we assume that characters have the same width (spaceWidth),
-    // it's not the most accurate way to handle side scroll offset, but definitely the fastest
-    //
-    // text between these two following bounds should be visible in view rectangle after scrolling
-    // (that's the meaning of the scroll offset setting)
-    // if it is not possible e.g. view rectangle is too small to contain the whole range,
-    // then scrolling will center the targetLocation
-    int leftBound = targetLocation.x - scrollOffset * spaceWidth;
-    int rightBound = targetLocation.x + scrollOffset * spaceWidth;
-
-    if (rightBound - leftBound > editorWidth) { // if editor width is not enough to satisfy offsets from both sides, we center target location
-      horizontalOffset = targetLocation.x - editorWidth / 2;
-    } else if (leftBound < viewRect.x) {
-      if (scrollType == ScrollType.MAKE_VISIBLE && rightBound < editorWidth) {
-        // here we try to scroll to 0, if it is possible (that's the point of MAKE_VISIBLE)
-        horizontalOffset = 0;
-      } else {
-        // this is done to ensure safety in cases where scrolling excessively may obscure the target location
-        // (due to a large scroll jump or a narrow editor width).
-        int leftmostPossibleLocation = getLeftmostLocation(targetLocation, editorWidth, scrollOffset, spaceWidth);
-        int leftAfterScrollJump = Math.max(leftmostPossibleLocation, viewRect.x - scrollJump * spaceWidth);
-        horizontalOffset = Math.min(leftBound, leftAfterScrollJump);
-      }
-    } else if (rightBound > viewRect.x + editorWidth) {
-      int rightmostPossibleLocation = getRightmostLocation(targetLocation, textWidth, editorWidth, scrollOffset, spaceWidth);
-      // this is done to ensure safety in cases where scrolling excessively may obscure the target location
-      // (due to a large scroll jump or a narrow editor width).
-      int rightAfterScrollJump = Math.min(rightmostPossibleLocation, viewRect.x + editorWidth + scrollJump * spaceWidth);
-      horizontalOffset = Math.max(rightBound, rightAfterScrollJump) - editorWidth;
-    }
-
-    horizontalOffset = Math.max(0, horizontalOffset);
-    horizontalOffset = Math.min(scrollWidth, horizontalOffset);
-    return horizontalOffset;
-  }
-
-  /**
-   * Gets the upmost possible y-coordinate that can be container by viewRect to satisfy two following conditions:
-   * 1. The targetLocation must be still visible in the viewRect
-   * 2. There must be enough space to the bottom of targetLocation to contain offsetBottomBound
-   */
-  private static int getTopmostLocation(@NotNull Point targetLocation, int editorHeight, int offsetBottomBound) {
-    int topmostLocation = targetLocation.y - editorHeight;
-    if (topmostLocation < 0) {
-      return 0;
-    }
-    return topmostLocation + (offsetBottomBound - targetLocation.y);
-  }
-
-  /**
-   * Gets the bottommost possible y-coordinate that can be container by viewRect to satisfy two following conditions:
-   * 1. The targetLocation must be still visible in the viewRect
-   * 2. There must be enough space to the top of targetLocation to contain offsetTopBound
-   */
-  private static int getBottommostLocation(@NotNull Point targetLocation, int textHeight, int editorHeight, int offsetTopBound) {
-    int bottommostLocation = targetLocation.y + editorHeight;
-    if (bottommostLocation > textHeight) {
-      return textHeight;
-    }
-    return bottommostLocation - (targetLocation.y - offsetTopBound);
-  }
-
-  /**
-   * Gets the leftmost possible x-coordinate that can be container by viewRect to satisfy two following conditions:
-   * 1. The targetLocation must be still visible in the viewRect
-   * 2. There must be enough space to the right of targetLocation to satisfy the scroll offset
-   */
-  private static int getLeftmostLocation(@NotNull Point targetLocation, int editorWidth, int scrollOffset, int spaceWidth) {
-    int leftmostLocation = targetLocation.x - editorWidth;
-    if (leftmostLocation < 0) {
-      return 0;
-    }
-    return leftmostLocation + scrollOffset * spaceWidth;
-  }
-
-  /**
-   * Gets the rightmost possible x-coordinate that can be container by viewRect to satisfy two following conditions:
-   * 1. The targetLocation must be still visible in the viewRect
-   * 2. There must be enough space to the left of targetLocation to satisfy the scroll offset
-   */
-  private static int getRightmostLocation(@NotNull Point targetLocation, int textWidth, int editorWidth, int scrollOffset, int spaceWidth) {
-    int rightmostLocation = targetLocation.x + editorWidth;
-    if (rightmostLocation > textWidth) {
-      return textWidth;
-    }
-    return rightmostLocation - scrollOffset * spaceWidth;
-  }
-
-  protected int getVerticalOffset(@NotNull Editor editor, @NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect) {
-    int editorHeight = viewRect.height;
-    int lineHeight = editor.getLineHeight();
-
-    JScrollPane scrollPane = mySupplier.getScrollPane();
-    int scrollHeight = scrollPane.getVerticalScrollBar().getMaximum() - getExtent(scrollPane.getVerticalScrollBar());
-    int textHeight = scrollHeight + editorHeight;
-
-    int scrollOffset = editor.getSettings().getVerticalScrollOffset();
-    int scrollJump = editor.getSettings().getVerticalScrollJump();
-    // the two following lines should be both visible in view rectangle after scrolling (that's the meaning of the scroll offset setting)
-    //  If it is not possible, e.g. view rectangle is too small to contain both lines, then scrolling will go to the `centerPosition`
-    int offsetTopBound = addVerticalOffsetToPosition(editor, -scrollOffset, targetLocation);
-    int offsetBottomBound = addVerticalOffsetToPosition(editor, scrollOffset, targetLocation) + lineHeight;
-
-    // the position that we consider to be the "central" one
-    // for some historical reasons, before scroll offset support, center was actually at the 1/3 of the view rectangle
-    int centerPosition;
-    int oneThirdPosition = targetLocation.y - editorHeight / 3;
-    if (oneThirdPosition < offsetTopBound) { // if editor has enough height to show top bound, let the center be in its historical (expected for users) position
-      centerPosition = oneThirdPosition;
-    } else { // the real centered position for ones who use big offsets or don't have enough height
-      centerPosition = targetLocation.y - Math.max(0, viewRect.height - lineHeight) / 2;
-    }
-
-    int verticalOffset = viewRect.y;
-    if (scrollType == ScrollType.CENTER) {
-      verticalOffset = centerPosition;
-    } else if (scrollType == ScrollType.CENTER_UP) {
-      if (viewRect.y > offsetTopBound || viewRect.y + viewRect.height < offsetBottomBound || viewRect.y > centerPosition) {
-        verticalOffset = centerPosition;
-      }
-    } else if (scrollType == ScrollType.CENTER_DOWN) {
-      if (viewRect.y > offsetTopBound || viewRect.y + viewRect.height < offsetBottomBound || viewRect.y < centerPosition) {
-        verticalOffset = centerPosition;
-      }
-    } else if (scrollType == ScrollType.RELATIVE) {
-      if (offsetBottomBound - offsetTopBound > editorHeight) {
-        verticalOffset = centerPosition;
-      } else if (viewRect.y + viewRect.height < offsetBottomBound) {
-        // this is done to ensure safety in cases where scrolling excessively may obscure the target location
-        // (due to a large scroll jump or a small editor height).
-        int bottomAfterScrollJump = Math.min(
-          getBottommostLocation(targetLocation, textHeight, editorHeight, offsetTopBound),
-          addVerticalOffsetToPosition(editor, scrollJump, new Point(viewRect.x, viewRect.y + viewRect.height))
-        );
-        verticalOffset = Math.max(offsetBottomBound - viewRect.height, bottomAfterScrollJump - viewRect.height);
-      } else if (viewRect.y > offsetTopBound) {
-        // this is done to ensure safety in cases where scrolling excessively may obscure the target location
-        // (due to a large scroll jump or a small editor height).
-        int topAfterScrollJump = Math.max(
-          getTopmostLocation(targetLocation, editorHeight, offsetBottomBound),
-          addVerticalOffsetToPosition(editor, -scrollJump, new Point(viewRect.x, viewRect.y))
-        );
-        verticalOffset = Math.min(offsetTopBound, topAfterScrollJump);
-      }
-    } else if (scrollType == ScrollType.MAKE_VISIBLE) {
-      if (viewRect.y > offsetTopBound || viewRect.y + viewRect.height < offsetBottomBound) {
-        verticalOffset = centerPosition;
-      }
-    }
-
-    verticalOffset = Math.max(0, verticalOffset);
-    verticalOffset = Math.min(scrollHeight, verticalOffset);
-
-    return verticalOffset;
-  }
-
-
-  /**
-   * @param editor target editor
-   * @param scrollOffset scroll offset value. Should be positive for bottom scroll bound and negative for top scroll bound
-   * @param point target point that we are scrolling to
-   * @return y-coordinate of the line obtained by adding scroll offset to the given point
-   */
-  private static int addVerticalOffsetToPosition(@NotNull Editor editor, int scrollOffset, @NotNull Point point) {
-    boolean isUseSoftWraps = editor.getSettings().isUseSoftWraps();
-    if (scrollOffset > 0) {
-      // if we are calculating the bottom scroll bound, add scroll offset to the end of logical line containing the given point,
-      // because we want to see some following lines and not just wrapped visual lines of the same logical line
-      VisualPosition pointLogicalLineEnd = getLogicalLineEnd(editor, point, isUseSoftWraps);
-      VisualPosition bottomLine = new VisualPosition(pointLogicalLineEnd.line + scrollOffset, 0);
-      return editor.visualPositionToXY(bottomLine).y;
-    }
-    else if (scrollOffset < 0) {
-      // we count offset from logical line start to see previous lines (not the same line content if soft wrap is enabled)
-      VisualPosition pointLineStart = getLogicalLineStart(editor, point, isUseSoftWraps);
-      VisualPosition topLine = new VisualPosition(Math.max(0, pointLineStart.line + scrollOffset), 0);
-      // If soft wraps are enabled, last visual lines of one logical line may be not so helpful. That's why we scroll to logical line start
-      topLine = getLogicalLineStart(editor, topLine, isUseSoftWraps);
-      return editor.visualLineToY(topLine.line);
-    } else {
-      return point.y;
-    }
-  }
-
-  private static @NotNull VisualPosition getLogicalLineEnd(@NotNull Editor editor, @NotNull Point point, boolean isUseSoftWraps) {
-    if (isUseSoftWraps) {
-      LogicalPosition logicalPosition = editor.xyToLogicalPosition(point);
-      int lineCount = editor.getDocument().getLineCount();
-      if (logicalPosition.line < lineCount) {
-        int endOffset = editor.getDocument().getLineEndOffset(logicalPosition.line);
-        return editor.offsetToVisualPosition(endOffset);
-      }
-    }
-    return editor.xyToVisualPosition(point);
-  }
-
-  private static @NotNull VisualPosition getLogicalLineStart(@NotNull Editor editor, @NotNull Point point, boolean isUseSoftWraps) {
-    if (isUseSoftWraps) {
-      LogicalPosition logicalPosition = editor.xyToLogicalPosition(point);
-      return editor.logicalToVisualPosition(new LogicalPosition(logicalPosition.line, 0));
-    } else {
-      VisualPosition visualPosition = editor.xyToVisualPosition(point);
-      return new VisualPosition(visualPosition.line, 0);
-    }
-  }
-
-  private static @NotNull VisualPosition getLogicalLineStart(@NotNull Editor editor, @NotNull VisualPosition visualPosition, boolean isUseSoftWraps) {
-    if (isUseSoftWraps) {
-      LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
-      return editor.logicalToVisualPosition(new LogicalPosition(logicalPosition.line, 0));
-    } else {
-      return visualPosition;
-    }
+  private @NotNull Point calcOffsetsToScroll(@NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect) {
+    return ApplicationManager.getApplication().getService(ScrollPositionCalculator.class).calcOffsetsToScroll(mySupplier.getEditor(), targetLocation, scrollType, viewRect, mySupplier.getScrollPane());
   }
 
   @Nullable
-  public final JScrollBar getVerticalScrollBar() {
+  public JScrollBar getVerticalScrollBar() {
     assertIsDispatchThread();
     JScrollPane scrollPane = mySupplier.getScrollPane();
     return scrollPane.getVerticalScrollBar();
   }
 
   @Nullable
-  public final JScrollBar getHorizontalScrollBar() {
+  public JScrollBar getHorizontalScrollBar() {
     assertIsDispatchThread();
     return mySupplier.getScrollPane().getHorizontalScrollBar();
   }
 
   @Override
-  public final int getVerticalScrollOffset() {
+  public int getVerticalScrollOffset() {
     return getOffset(getVerticalScrollBar());
   }
 
   @Override
-  public final int getHorizontalScrollOffset() {
+  public int getHorizontalScrollOffset() {
     return getOffset(getHorizontalScrollBar());
   }
 
@@ -457,12 +218,8 @@ public class ScrollingModelImpl implements ScrollingModelEx {
            scrollBar instanceof Interpolable ? ((Interpolable)scrollBar).getTargetValue() : scrollBar.getValue();
   }
 
-  private static int getExtent(JScrollBar scrollBar) {
-    return scrollBar == null ? 0 : scrollBar.getModel().getExtent();
-  }
-
   @Override
-  public final void scrollVertically(int scrollOffset) {
+  public void scrollVertically(int scrollOffset) {
     scroll(getHorizontalScrollOffset(), scrollOffset);
   }
 
@@ -475,7 +232,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   @Override
-  public final void scrollHorizontally(int scrollOffset) {
+  public void scrollHorizontally(int scrollOffset) {
     scroll(scrollOffset, getVerticalScrollOffset());
   }
 
@@ -487,7 +244,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   @Override
-  public final void scroll(int hOffset, int vOffset) {
+  public void scroll(int hOffset, int vOffset) {
     if (myAccumulateViewportChanges) {
       myAccumulatedXOffset = hOffset;
       myAccumulatedYOffset = vOffset;
@@ -539,17 +296,17 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   @Override
-  public final void addVisibleAreaListener(@NotNull VisibleAreaListener listener) {
+  public void addVisibleAreaListener(@NotNull VisibleAreaListener listener) {
     myVisibleAreaListeners.add(listener);
   }
 
   @Override
-  public final void removeVisibleAreaListener(@NotNull VisibleAreaListener listener) {
+  public void removeVisibleAreaListener(@NotNull VisibleAreaListener listener) {
     boolean success = myVisibleAreaListeners.remove(listener);
     LOG.assertTrue(success);
   }
 
-  public final void finishAnimation() {
+  public void finishAnimation() {
     cancelAnimatedScrolling(true);
   }
 
@@ -568,21 +325,21 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     mySupplier.getScrollPane().getViewport().removeChangeListener(myViewportChangeListener);
   }
 
-  public final void beforeModalityStateChanged() {
+  public void beforeModalityStateChanged() {
     cancelAnimatedScrolling(true);
   }
 
-  public final boolean isScrollingNow() {
+  public boolean isScrollingNow() {
     return myCurrentAnimationRequest != null;
   }
 
   @Override
-  public final void accumulateViewportChanges() {
+  public void accumulateViewportChanges() {
     myAccumulateViewportChanges = true;
   }
 
   @Override
-  public final void flushViewportChanges() {
+  public void flushViewportChanges() {
     myAccumulateViewportChanges = false;
     if (myAccumulatedXOffset >= 0 && myAccumulatedYOffset >= 0) {
       scroll(myAccumulatedXOffset, myAccumulatedYOffset);
@@ -595,12 +352,12 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     cancelAnimatedScrolling(true);
   }
 
-  public final void addScrollRequestListener(ScrollRequestListener scrollRequestListener, Disposable parentDisposable) {
+  public void addScrollRequestListener(ScrollRequestListener scrollRequestListener, Disposable parentDisposable) {
     myScrollRequestListeners.add(scrollRequestListener);
     Disposer.register(parentDisposable, () -> myScrollRequestListeners.remove(scrollRequestListener));
   }
 
-  private final class AnimatedScrollingRunnable {
+  private class AnimatedScrollingRunnable {
 
     private final int myStartHOffset;
     private final int myStartVOffset;

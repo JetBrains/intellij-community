@@ -327,6 +327,9 @@
 
     <editorTabTitleProvider implementation="com.intellij.diff.editor.DiffEditorTabTitleProvider"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.editor.ScrollPositionCalculator"
+                        serviceImplementation="com.intellij.openapi.editor.impl.ScrollPositionCalculatorImpl"/>
+
     <applicationService serviceInterface="com.intellij.ui.SystemNotifications"
                         serviceImplementation="com.intellij.ui.SystemNotificationsImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapGroupFactory"
