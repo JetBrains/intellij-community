@@ -14,6 +14,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
@@ -245,7 +246,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             .onChanged {
               context.setOption(component.bindId, it.text)
             }
-            .comment(component.description?.toString(), 40)
+            .description(component.description)
         }
 
         is OptNumber -> {
@@ -332,7 +333,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                 if (it.propertyName == "enabled") setEnabledRecursively(this, isEnabled)
               }
             }
-            .comment(component.description?.toString(), 50)
+            .description(component.description)
         }
 
         is OptTable -> {
@@ -362,7 +363,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                    .resizeY(true)
                    .createPanel()
                })
-            .comment(component.description()?.toString(), 40)
+            .description(component.description())
             .align(Align.FILL)
         }
 
@@ -506,5 +507,12 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       }
     result.columns(10)
     return result
+  }
+
+  private fun Cell<JComponent>.description(description: HtmlChunk?): Cell<JComponent> {
+    description?.let {
+      comment(it.toString(), 40)
+    }
+    return this
   }
 }
