@@ -146,7 +146,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   override fun suggestChildFrameBounds(): Rectangle = frameHelper!!.helper.suggestChildFrameBounds()
 
   override fun setFrameTitle(title: String) {
-    frameHelper?.helper?.setFrameTitle(title)
+    this.title = title
   }
 
   override fun getComponent(): JComponent = getRootPane()
