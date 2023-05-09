@@ -86,8 +86,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   @NotNull private final DefaultPlexusContainer myContainer;
   @NotNull private final Settings myMavenSettings;
 
-  // TODO: get rid of
-  private final ArtifactRepository myLocalRepository;
   private final Maven40ServerConsoleLogger myConsoleWrapper;
 
   private final Properties mySystemProperties;
@@ -230,8 +228,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     myMavenSettings = buildSettings(settingsBuilder, serverSettings, mySystemProperties,
                                     ReflectionUtilRt.getField(cliRequestClass, cliRequest, Properties.class, "userProperties"));
-
-    myLocalRepository = createLocalRepository();
 
     myRepositorySystem = getComponent(RepositorySystem.class);
 
@@ -432,7 +428,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   private File getLocalRepositoryFile() {
-    return new File(myLocalRepository.getBasedir());
+    return new File(myEmbedderSettings.getSettings().getLocalRepositoryPath());
   }
 
   private void collectProblems(@Nullable File file,
@@ -741,22 +737,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
     catch (Throwable e) {
       return null;
-    }
-  }
-
-  private ArtifactRepository createLocalRepository() {
-    try {
-      final ArtifactRepository localRepository =
-        getComponent(RepositorySystem.class).createLocalRepository(new File(myMavenSettings.getLocalRepository()));
-      final String customRepoId = System.getProperty("maven3.localRepository.id", "localIntelliJ");
-      if (customRepoId != null) {
-        // see details at https://youtrack.jetbrains.com/issue/IDEA-121292
-        localRepository.setId(customRepoId);
-      }
-      return localRepository;
-    }
-    catch (InvalidRepositoryException e) {
-      throw new RuntimeException(e);
     }
   }
 
