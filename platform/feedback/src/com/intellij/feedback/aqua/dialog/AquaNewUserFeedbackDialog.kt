@@ -66,9 +66,9 @@ class AquaNewUserFeedbackDialog(
     DescriptionBlock(AquaFeedbackBundle.message("new.user.dialog.description")),
     CheckBoxGroupBlock(AquaFeedbackBundle.message("new.user.dialog.primary.tasks.group.label"),
                        dailyTasks, dailyTasksLabels, otherDailyTask),
-    SegmentedButtonBlock(projectTeamSize,
-                         AquaFeedbackBundle.message("new.user.dialog.team.size.label"),
-                         projectTeamSizeOptionLabels, { it }, null, null, null),
+    ComboBoxBlock(projectTeamSize, AquaFeedbackBundle.message("new.user.dialog.team.size.label"),
+                  projectTeamSizeOptionLabels,
+                  AquaFeedbackBundle.message("new.user.dialog.team.size.bottom.label.left"), myColumnSize = 15),
     CheckBoxGroupBlock(AquaFeedbackBundle.message("new.user.dialog.primary.testing.targets.group.label"),
                        primaryTestingTargets, primaryTestingTargetLabels, otherPrimaryTestingTarget),
     EmailBlock(textFieldEmailProperty, myProject) { showFeedbackSystemInfoDialog(myProject, systemInfoData.value) }

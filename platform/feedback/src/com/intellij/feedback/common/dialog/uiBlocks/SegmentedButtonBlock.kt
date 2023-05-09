@@ -20,64 +20,62 @@ class SegmentedButtonBlock<T>(myProperty: ObservableMutableProperty<T>,
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
-      panel {
-        if (mainLabel != null) {
-          row {
-            label(mainLabel)
-              .customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
-          }.bottomGap(BottomGap.SMALL)
-        }
+      if (mainLabel != null) {
         row {
-          segmentedButton(items, renderer)
-            .apply {
-              maxButtonsCount(items.size)
-            }.customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
-            .whenItemSelected { myProperty.set(it) }
-            .align(Align.FILL)
-            .validation {
-              addApplyRule(CommonFeedbackBundle.message("dialog.feedback.segmentedButton.error")) { it.selectedItem == null }
-            }
-        }.apply {
-          if (leftBottomLabel == null && midBottomLabel == null && rightBottomLabel == null) {
-            this.bottomGap(BottomGap.MEDIUM)
-            return@panel
-          }
-        }
-
-        row {
-          if (leftBottomLabel != null) {
-            label(leftBottomLabel)
-              .applyToComponent {
-                font = ComponentPanelBuilder.getCommentFont(font)
-                foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-              }
-              .widthGroup("Group")
-              .apply {
-                if (midBottomLabel == null) {
-                  resizableColumn()
-                }
-              }
-          }
-          if (midBottomLabel != null) {
-            label(midBottomLabel)
-              .applyToComponent {
-                font = ComponentPanelBuilder.getCommentFont(font)
-                foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-              }
-              .align(AlignX.CENTER)
-              .resizableColumn()
-          }
-          if (rightBottomLabel != null) {
-            label(rightBottomLabel)
-              .applyToComponent {
-                font = ComponentPanelBuilder.getCommentFont(font)
-                foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-                horizontalAlignment = SwingConstants.RIGHT
-              }
-              .widthGroup("Group")
-          }
-        }.bottomGap(BottomGap.MEDIUM)
+          label(mainLabel)
+            .customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+        }.bottomGap(BottomGap.SMALL)
       }
+      row {
+        segmentedButton(items, renderer)
+          .apply {
+            maxButtonsCount(items.size)
+          }.customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+          .whenItemSelected { myProperty.set(it) }
+          .align(Align.FILL)
+          .validation {
+            addApplyRule(CommonFeedbackBundle.message("dialog.feedback.segmentedButton.required")) { it.selectedItem == null }
+          }
+      }.apply {
+        if (leftBottomLabel == null && midBottomLabel == null && rightBottomLabel == null) {
+          this.bottomGap(BottomGap.MEDIUM)
+          return
+        }
+      }
+
+      row {
+        if (leftBottomLabel != null) {
+          label(leftBottomLabel)
+            .applyToComponent {
+              font = ComponentPanelBuilder.getCommentFont(font)
+              foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+            }
+            .widthGroup("Group")
+            .apply {
+              if (midBottomLabel == null) {
+                resizableColumn()
+              }
+            }
+        }
+        if (midBottomLabel != null) {
+          label(midBottomLabel)
+            .applyToComponent {
+              font = ComponentPanelBuilder.getCommentFont(font)
+              foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+            }
+            .align(AlignX.CENTER)
+            .resizableColumn()
+        }
+        if (rightBottomLabel != null) {
+          label(rightBottomLabel)
+            .applyToComponent {
+              font = ComponentPanelBuilder.getCommentFont(font)
+              foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+              horizontalAlignment = SwingConstants.RIGHT
+            }
+            .widthGroup("Group")
+        }
+      }.bottomGap(BottomGap.MEDIUM)
     }
   }
 }
