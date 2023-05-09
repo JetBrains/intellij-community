@@ -87,7 +87,7 @@ object RuntimeChooserCustom {
     }.queue()
   }
 
-  fun importDetectedItem(homePath: String, model: RuntimeChooserModel) {
+  fun importDetectedItem(homePath: String, model: RuntimeChooserModel, hideLogs: Boolean = false) {
     object : Task.Backgroundable(null, LangBundle.message("progress.title.choose.ide.runtime.scanning.jdk"), true) {
       override fun run(indicator: ProgressIndicator) {
         RuntimeChooserJreValidator.testNewJdkUnderProgress(
@@ -102,7 +102,9 @@ object RuntimeChooserCustom {
             }
 
             override fun onError(message: String) { }
-          })
+          },
+          hideLogs,
+        )
       }
     }.queue()
   }

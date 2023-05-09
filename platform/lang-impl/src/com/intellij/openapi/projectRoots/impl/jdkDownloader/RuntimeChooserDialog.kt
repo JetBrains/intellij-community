@@ -66,7 +66,7 @@ class RuntimeChooserDialog(
       }.getOrNull()
 
       if (!newPath.isNullOrBlank() && knownPaths.add(newPath)) {
-        RuntimeChooserCustom.importDetectedItem(newPath.trim(), model)
+        RuntimeChooserCustom.importDetectedItem(newPath.trim(), model, true)
       }
     }
 
