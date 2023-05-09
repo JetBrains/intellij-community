@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,10 +24,7 @@ import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cache.loader.JpsOutputLoaderManager;
-import org.jetbrains.jps.incremental.MessageHandler;
-import org.jetbrains.jps.incremental.RebuildRequestedException;
-import org.jetbrains.jps.incremental.TargetTypeRegistry;
-import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
@@ -46,9 +43,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
-/**
-* @author Eugene Zhuravlev
-*/
 final class BuildSession implements Runnable, CanceledStatus {
   private static final Logger LOG = Logger.getInstance(BuildSession.class);
   private static final Boolean REPORT_BUILD_STATISTICS = Boolean.valueOf(System.getProperty(GlobalOptions.REPORT_BUILD_STATISTICS, "false"));
@@ -466,15 +460,12 @@ final class BuildSession implements Runnable, CanceledStatus {
       LOG.debug("applyFSEvent ordinal=" + event.getOrdinal());
     }
 
+    final BuildRootIndex buildRootIndex = pd.getBuildRootIndex();
     final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
-    boolean cacheCleared = false;
     for (String deleted : event.getDeletedPathsList()) {
       final File file = new File(deleted);
-      Collection<BuildRootDescriptor> descriptor = pd.getBuildRootIndex().findAllParentDescriptors(file, null, null);
+      Collection<BuildRootDescriptor> descriptor = buildRootIndex.findAllParentDescriptors(file, null, null);
       if (!descriptor.isEmpty()) {
-        if (!cacheCleared) {
-          cacheCleared = true;
-        }
         if (LOG.isDebugEnabled()) {
           LOG.debug("Applying deleted path from fs event: " + file.getPath());
         }
@@ -490,25 +481,24 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     for (String changed : event.getChangedPathsList()) {
       final File file = new File(changed);
-      Collection<BuildRootDescriptor> descriptors = pd.getBuildRootIndex().findAllParentDescriptors(file, null, null);
+      Collection<BuildRootDescriptor> descriptors = buildRootIndex.findAllParentDescriptors(file, null, null);
       if (!descriptors.isEmpty()) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Applying dirty path from fs event: " + changed);
         }
         for (BuildRootDescriptor descriptor : descriptors) {
           if (!descriptor.isGenerated()) { // ignore generates sources as they are processed at the time of generation
-            StampsStorage.Stamp stamp = stampsStorage.getPreviousStamp(file, descriptor.getTarget());
-            if (stampsStorage.isDirtyStamp(stamp, file)) {
-              if (!cacheCleared) {
-                cacheCleared = true;
+            FSOperations.traverseRecursively(buildRootIndex, descriptor, file, (f, attrs) -> {
+              StampsStorage.Stamp stamp = stampsStorage.getPreviousStamp(f, descriptor.getTarget());
+              if (attrs != null? stampsStorage.isDirtyStamp(stamp, f, attrs) : stampsStorage.isDirtyStamp(stamp, f)) {
+                pd.fsState.markDirty(null, f, descriptor, stampsStorage, saveEventStamp);
               }
-              pd.fsState.markDirty(null, file, descriptor, stampsStorage, saveEventStamp);
-            }
-            else {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug(descriptor.getTarget() + ": Path considered up-to-date: " + changed + "; stamp= " + stamp);
+              else {
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug(descriptor.getTarget() + ": Path considered up-to-date: " + f.getPath() + "; stamp= " + stamp);
+                }
               }
-            }
+            });
           }
         }
       }
