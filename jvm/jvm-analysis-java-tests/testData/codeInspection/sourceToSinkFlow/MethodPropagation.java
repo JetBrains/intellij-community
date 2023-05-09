@@ -10,7 +10,7 @@ public class MethodPropagation {
   private String recursive(String dirty, @Untainted String clean) {
     if (clean == "") {
       String a = recursive(dirty, clean);
-      sink(<warning descr="Unknown string is used as safe parameter">a</warning>); //warn
+      sink(<weak_warning descr="Too complex to check that the string is safe in a safe context">a</weak_warning>); //warn
       return recursive(dirty, clean);
     }
     return recursive(clean, clean);

@@ -40,7 +40,7 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
   var processOuterMethodAsQualifierAndArguments: Boolean = true
 
   @JvmField
-  var parameterOfPrivateMethodIsUntainted: Boolean = true
+  var parameterOfPrivateMethodIsUntainted: Boolean = false
 
   @JvmField
   var warnIfComplex: Boolean = false

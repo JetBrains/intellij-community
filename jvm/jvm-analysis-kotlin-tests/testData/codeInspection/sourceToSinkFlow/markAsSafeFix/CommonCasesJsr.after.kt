@@ -4,13 +4,13 @@ internal class CommonCases {
   public val sField: String? = null
 
   @Untainted
-  private fun test(@Untainted s: String):  String {
+  fun test(@Untainted s: String):  String {
     val s1 = s + getS(s) + sField + "1".extFunc() + "1".extFunc2(s) + comObject2
     return <caret>s1
   }
 
   @Untainted
-  private fun getS(s: String): String {
+  fun getS(s: String): String {
     return s
   }
 
