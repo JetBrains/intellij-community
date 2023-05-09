@@ -14,12 +14,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.IndexingContributorCustomization;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder;
 import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
-import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
@@ -55,22 +53,6 @@ public final class ReincludedRootsUtil {
     return classifyFiles(project, reincludedRoots).createAllBuilders(project);
   }
 
-  @NotNull
-  public static Collection<IndexableSetOrigin> createOriginsForFiles(@NotNull Project project,
-                                                                     @NotNull Collection<VirtualFile> files) {
-    if (files.isEmpty()) return Collections.emptyList();
-    Classifier classifier = classifyFiles(project, files);
-
-    Collection<IndexableIteratorBuilder> builders = classifier.createAllBuilders(project);
-    if (builders.isEmpty()) {
-      return Collections.emptyList();
-    }
-
-    List<IndexableFilesIterator> mergedIterators =
-      IndexableIteratorBuilders.INSTANCE.instantiateBuilders(builders, project, ((CustomizableRootsBuilder)classifier).entityStorage);
-    return ContainerUtil.map(mergedIterators, iterator -> iterator.getOrigin());
-  }
-
   public interface Classifier {
     @NotNull
     Collection<VirtualFile> getFilesFromAdditionalLibraryRootsProviders();
@@ -80,8 +62,6 @@ public final class ReincludedRootsUtil {
      */
     @NotNull
     Collection<IndexableIteratorBuilder> createBuildersFromWorkspaceFiles();
-
-    Collection<IndexableIteratorBuilder> createBuildersFromFilesFromAdditionalLibraryRootsProviders(@NotNull Project project);
 
     Collection<IndexableIteratorBuilder> createBuildersFromFilesFromIndexableSetContributors(@NotNull Project project);
 
@@ -297,8 +277,7 @@ public final class ReincludedRootsUtil {
     }
 
     @NotNull
-    @Override
-    public Collection<IndexableIteratorBuilder> createBuildersFromFilesFromAdditionalLibraryRootsProviders(@NotNull Project project) {
+    private Collection<IndexableIteratorBuilder> createBuildersFromFilesFromAdditionalLibraryRootsProviders(@NotNull Project project) {
       if (filesFromAdditionalLibraryRootsProviders.isEmpty()) return Collections.emptyList();
       List<IndexableIteratorBuilder> result = new ArrayList<>();
       List<VirtualFile> rootsFromLibs = new ArrayList<>(filesFromAdditionalLibraryRootsProviders);

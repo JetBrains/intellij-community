@@ -16,10 +16,11 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
+import com.intellij.util.indexing.EntityIndexingServiceEx;
 import com.intellij.util.indexing.IndexableFilesIndex;
 import com.intellij.util.indexing.IndexableSetContributor;
-import com.intellij.util.indexing.ReincludedRootsUtil;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
@@ -70,7 +71,14 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
 
   @Override
   public @NotNull Collection<? extends IndexableSetOrigin> getOrigins(@NotNull Collection<VirtualFile> files) {
-    return ReincludedRootsUtil.createOriginsForFiles(project, files);
+    if (files.isEmpty()) return Collections.emptyList();
+    OriginClassifier classifier = OriginClassifier.classify(project, files);
+    Collection<IndexableFilesIterator> iterators =
+      EntityIndexingServiceEx.getInstanceEx().createIteratorsForOrigins(project, classifier.entityStorage, classifier.entityReferences,
+                                                                        classifier.sdks, classifier.libraryIds,
+                                                                        classifier.filesFromAdditionalLibraryRootsProviders,
+                                                                        classifier.filesFromIndexableSetContributors);
+    return ContainerUtil.map(iterators, iterator -> iterator.getOrigin());
   }
 
   @Override
