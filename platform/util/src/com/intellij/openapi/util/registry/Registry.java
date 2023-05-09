@@ -188,7 +188,7 @@ public final class Registry  {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Map<String, String> loadState(@Nullable Element state) {
+  public static @Nullable Map<String, String> loadState(@Nullable Element state, @Nullable Map<String, String> earlyAccess) {
     Registry registry = ourInstance;
 
     if (state == null) {
@@ -196,20 +196,26 @@ public final class Registry  {
       return null;
     }
 
-    registry.myUserProperties.clear();
+    Map<String, String> userProperties = registry.myUserProperties;
+    userProperties.clear();
     for (Element eachEntry : state.getChildren("entry")) {
       String key = eachEntry.getAttributeValue("key");
       String value = eachEntry.getAttributeValue("value");
       if (key != null && value != null) {
         RegistryValue registryValue = registry.doGet(key);
         if (registryValue.isChangedFromDefault(value, registry)) {
-          registry.myUserProperties.put(key, value);
+          userProperties.put(key, value);
           registryValue.resetCache();
         }
       }
     }
+
+    if (earlyAccess != null) {
+      // yes, earlyAccess overrides user properties
+      userProperties.putAll(earlyAccess);
+    }
     registry.isLoaded = true;
-    return registry.myUserProperties;
+    return userProperties;
   }
 
   @ApiStatus.Internal

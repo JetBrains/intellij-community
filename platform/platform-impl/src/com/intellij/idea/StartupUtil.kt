@@ -292,7 +292,7 @@ ${dumpCoroutines(stripDump = false)}
       )
       PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred)
 
-      if (ConfigImportHelper.isNewUser()) {
+      if (ConfigImportHelper.isNewUser() && !PlatformUtils.isRider() && System.getProperty("ide.experimental.ui") == null) {
         runCatching {
           EarlyAccessRegistryManager.setAndFlush(hashMapOf(
             "ide.experimental.ui" to "true",

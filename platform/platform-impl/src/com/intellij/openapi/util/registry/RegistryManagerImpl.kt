@@ -73,7 +73,7 @@ internal class RegistryManagerImpl : PersistentStateComponent<Element>, Registry
   }
 
   override fun loadState(state: Element) {
-    log(Registry.loadState(state) ?: return)
+    log(Registry.loadState(/* state = */ state, /* earlyAccess = */ EarlyAccessRegistryManager.getOrLoadMap()) ?: return)
   }
 
   private fun log(userProperties: Map<String, String>) {

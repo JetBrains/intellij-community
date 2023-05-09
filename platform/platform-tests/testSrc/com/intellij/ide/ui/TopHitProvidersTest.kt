@@ -50,7 +50,7 @@ class TopHitProvidersTest {
         // we can't reliably restore the original state for non-boolean options
         if (option is NotABooleanOptionDescription ||
             // makes sense only on Windows
-            option.option == "UI: Show main menu in a separate toolbar" || option.option == "ide.experimental.ui") {
+            option.option == "UI: Show main menu in a separate toolbar") {
           continue
         }
 
