@@ -390,16 +390,22 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator, directoryFilter);
   }
 
+  /**
+   * @see #writeDirectoryMappings(Element)
+   */
   @Override
   public @NotNull Element getState() {
     Element element = new Element("state");
     ProjectLevelVcsManagerSerialization.writeExternalUtil(element, myOptionsAndConfirmations);
-    if (myHaveLegacyVcsConfiguration) {
+    if (myHaveLegacyVcsConfiguration && !myProject.isDefault()) {
       element.setAttribute(SETTINGS_EDITED_MANUALLY, "true");
     }
     return element;
   }
 
+  /**
+   * @see #readDirectoryMappings(Element)
+   */
   @Override
   public void loadState(@NotNull Element state) {
     ProjectLevelVcsManagerSerialization.readExternalUtil(state, myOptionsAndConfirmations);
