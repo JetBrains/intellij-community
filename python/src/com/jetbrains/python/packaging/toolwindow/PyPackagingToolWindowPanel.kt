@@ -58,7 +58,7 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.ListSelectionListener
 
 class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolWindow) : SimpleToolWindowPanel(false, true), Disposable  {
-  private val packagingScope = CoroutineScope(Dispatchers.IO)
+  internal val packagingScope = CoroutineScope(Dispatchers.IO)
   private var selectedPackage: DisplayablePackage? = null
   private var selectedPackageDetails: PythonPackageDetails? = null
 
