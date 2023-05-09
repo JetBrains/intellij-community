@@ -24,7 +24,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -41,8 +40,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
-  private static final Logger LOG = Logger.getInstance(XDebuggerExpressionComboBox.class);
-
   private final JComponent myComponent;
   private final ComboBox<XExpression> myComboBox;
   private final CollectionComboBoxModel<XExpression> myModel = new CollectionComboBoxModel<>();
@@ -249,18 +246,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     @Override
     public void setItem(Object anObject) {
       if (anObject != null) { // do not reset the editor on null
-        // TODO @kate.botsman Hack for remote dev and code with me, will be removed soon
-        if (anObject instanceof String) {
-          XExpression expression = XDebuggerUtil.getInstance()
-            .createExpression((String)anObject, myExpression.getLanguage(), null, myExpression.getMode());
-          setExpression(expression);
-        }
-        else if (anObject instanceof XExpression) {
-          setExpression((XExpression)anObject);
-        }
-        else {
-          LOG.error("Unexpected item: " + anObject);
-        }
+        setExpression((XExpression)anObject);
       }
     }
 
