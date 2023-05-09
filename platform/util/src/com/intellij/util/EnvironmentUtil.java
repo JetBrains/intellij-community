@@ -555,6 +555,7 @@ public final class EnvironmentUtil {
           }
         }
         envs.put(key, value);
+        lookup.put(key, value);
       }
     }
   }
