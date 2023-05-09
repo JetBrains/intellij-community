@@ -133,48 +133,59 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     checkRecursiveUpdate()
 
+    val updateTimeMillis: Long
+    val preHandlersTimeMillis: Long
+    val collectChangesTimeMillis: Long
+    val initializingTimeMillis: Long
+    val toSnapshotTimeMillis: Long
+
     val generalTime = measureTimeMillis {
       val before = entityStorage.current
       val builder = MutableEntityStorage.from(before)
-      updateTimePreciseMs.addAndGet(measureTimeMillis {
+      updateTimeMillis = measureTimeMillis {
         updater(builder)
-      })
-      preHandlersTimeMs.addAndGet(measureTimeMillis {
+      }
+      preHandlersTimeMillis = measureTimeMillis {
         startPreUpdateHandlers(before, builder)
-      })
+      }
 
       val changes: Map<Class<*>, Set<EntityChange<*>>>
-      collectChangesTimeMs.addAndGet(measureTimeMillis {
+      collectChangesTimeMillis = measureTimeMillis {
         changes = builder.collectChanges(before)
-      })
-      initializingTimeMs.addAndGet(measureTimeMillis {
+      }
+      initializingTimeMillis = measureTimeMillis {
         this.initializeBridges(changes, builder)
-      })
+      }
 
       val newStorage: EntityStorageSnapshot
-      toSnapshotTimeMs.addAndGet(measureTimeMillis {
+      toSnapshotTimeMillis = measureTimeMillis {
         newStorage = builder.toSnapshot()
-      })
+      }
       if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
         before.assertConsistency()
         newStorage.assertConsistency()
       }
       entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged)
     }.apply {
+      updateTimePreciseMs.addAndGet(updateTimeMillis)
+      preHandlersTimeMs.addAndGet(preHandlersTimeMillis)
+      collectChangesTimeMs.addAndGet(collectChangesTimeMillis)
+      initializingTimeMs.addAndGet(initializingTimeMillis)
+      toSnapshotTimeMs.addAndGet(toSnapshotTimeMillis)
       totalUpdatesTimeMs.addAndGet(this)
       updatesCounter.incrementAndGet()
     }
     log.info("Project model updated to version ${entityStorage.pointer.version} in $generalTime ms: $description")
     if (generalTime > 1000) {
       log.info(
-        "Project model update details: Updater code: ${updateTimePreciseMs.get()} ms, Pre handlers: ${preHandlersTimeMs.get()} ms, Collect changes: ${collectChangesTimeMs.get()} ms")
-      log.info("Bridge initialization: ${initializingTimeMs.get()} ms, To snapshot: ${toSnapshotTimeMs.get()} ms")
+        "Project model update details: Updater code: $updateTimeMillis ms, Pre handlers: $preHandlersTimeMillis ms, Collect changes: $collectChangesTimeMillis ms")
+      log.info("Bridge initialization: $initializingTimeMillis ms, To snapshot: $toSnapshotTimeMillis ms")
     }
     else {
       log.debug {
-        "Project model update details: Updater code: ${updateTimePreciseMs.get()} ms, Pre handlers: ${preHandlersTimeMs.get()} ms, Collect changes: ${collectChangesTimeMs.get()} ms"
+        "Project model update details: Updater code: $updateTimeMillis ms, Pre handlers: $preHandlersTimeMillis ms, Collect changes: $collectChangesTimeMillis ms"
       }
-      log.debug { "Bridge initialization: ${initializingTimeMs.get()} ms, To snapshot: ${toSnapshotTimeMs.get()} ms" }
+      log.debug { "Bridge initialization: $initializingTimeMillis ms, To snapshot: $toSnapshotTimeMillis ms" }
     }
   }
 
@@ -201,37 +212,41 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     checkRecursiveUpdate()
 
     val newStorage: EntityStorageSnapshot
+    val updateTimeMillis: Long
+    val toSnapshotTimeMillis: Long
 
     val generalTime = measureTimeMillis {
       val before = entityStorage.current
       val builder = MutableEntityStorage.from(entityStorage.current)
-      updateTimePreciseMs.addAndGet(measureTimeMillis {
+      updateTimeMillis = measureTimeMillis {
         updater(builder)
-      })
+      }
 
       // We don't send changes to the WorkspaceModelChangeListener during the silent update.
       // But the concept of silent update is getting deprecated, and the list of changes will be sent to the new async listeners
       val changes = builder.collectChanges(before)
 
-      toSnapshotTimeMs.addAndGet(measureTimeMillis {
+      toSnapshotTimeMillis = measureTimeMillis {
         newStorage = builder.toSnapshot()
-      })
+      }
       if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
         before.assertConsistency()
         newStorage.assertConsistency()
       }
       entityStorage.replace(newStorage, changes, {}, {})
     }.apply {
+      updateTimePreciseMs.addAndGet(updateTimeMillis)
+      toSnapshotTimeMs.addAndGet(toSnapshotTimeMillis)
       totalUpdatesTimeMs.addAndGet(this)
       updatesCounter.incrementAndGet()
     }
 
     log.info("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description")
     if (generalTime > 1000) {
-      log.info("Project model update details: Updater code: ${updateTimePreciseMs.get()} ms, To snapshot: ${toSnapshotTimeMs.get()} m")
+      log.info("Project model update details: Updater code: $updateTimeMillis ms, To snapshot: $toSnapshotTimeMillis m")
     }
     else {
-      log.debug { "Project model update details: Updater code: ${updateTimePreciseMs.get()} ms, To snapshot: ${toSnapshotTimeMs.get()} m" }
+      log.debug { "Project model update details: Updater code: $updateTimeMillis ms, To snapshot: $toSnapshotTimeMillis m" }
     }
   }
 
