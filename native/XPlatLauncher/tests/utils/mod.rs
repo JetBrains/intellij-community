@@ -184,67 +184,21 @@ fn init_test_environment_once() -> Result<TestEnvironmentShared> {
         bail!("Didn't find source launcher to layout, expected path: {:?}", launcher_path);
     }
 
-    gradle_command_wrapper("fatJar")?;
+    let gradle_build_dir = Path::new("./resources/TestProject/build").canonicalize()?.strip_ns_prefix()?;
+    let jbr_root = gradle_build_dir.join("jbr");
+    if !jbr_root.is_dir() {
+        bail!("Missing: {:?}; please run `gradlew :downloadJbr` first", jbr_root);
+    }
 
-    let jbr_root = get_jbr_sdk_from_project_root(&project_root)?;
-
-    let app_jar_path = Path::new("./resources/TestProject/build/libs/app.jar").canonicalize()?;
+    let app_jar_path = gradle_build_dir.join("libs").join("app.jar");
+    if !app_jar_path.is_file() {
+        bail!("Missing: {:?}; please run `gradlew :fatJar` first", app_jar_path);
+    }
 
     let product_info_path = project_root.join(format!("resources/product_info_{}.json", env::consts::OS));
     let vm_options_path = project_root.join("resources/xplat.vmoptions");
 
     Ok(TestEnvironmentShared { launcher_path, jbr_root, app_jar_path, product_info_path, vm_options_path })
-}
-
-fn get_jbr_sdk_from_project_root(project_root: &Path) -> Result<PathBuf> {
-    let gradle_jvm = project_root.join("resources").join("TestProject").join("gradle-jvm");
-
-    // TODO: remove after wrapper with https://github.com/mfilippov/gradle-jvm-wrapper/pull/31
-    let java_dir_prefix = if cfg!(target_os = "windows") { "jdk" } else { "jbrsdk" };
-
-    // jbrsdk-17.0.3-osx-x64-b469.37-f87880
-    let sdk_gradle_parent = get_child_dir(&gradle_jvm, java_dir_prefix)?;
-
-    // jbrsdk-17.0.3-x64-b469
-    let sdk_root = get_child_dir(&sdk_gradle_parent, java_dir_prefix)?;
-
-    Ok(sdk_root)
-}
-
-fn gradle_command_wrapper(gradle_task: &str) -> Result<()> {
-    debug!("current_dir={:?}", env::current_dir());
-
-    let wrapper_name = if cfg!(target_os = "windows") { "gradlew.bat" } else { "gradlew" };
-    let wrapper_path = PathBuf::from("./resources/TestProject").join(wrapper_name).canonicalize()?;
-    if !wrapper_path.is_executable()? {
-        bail!("Not an executable file: {:?}", wrapper_path);
-    }
-
-    debug!("Running '{} :{}'", wrapper_path.display(), gradle_task);
-    let output = Command::new(wrapper_path)
-        .arg(gradle_task)
-        .current_dir("./resources/TestProject")
-        .output()
-        .with_context(|| format!("Failed to execute 'gradlew :{gradle_task}'"))?;
-
-    let exit_status = output.status;
-    if !exit_status.success() {
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        bail!("Command didn't succeed: exit code: {exit_status}\nstdout: <<<{stdout}>>>,\nstderr: <<<{stderr}>>>")
-    }
-
-    Ok(())
-}
-
-fn get_child_dir(parent: &Path, prefix: &str) -> Result<PathBuf> {
-    let entry = fs::read_dir(parent)?
-        .map(|r| r.unwrap())
-        .find(|e| e.file_name().to_string_lossy().starts_with(prefix));
-    match entry {
-        Some(e) => Ok(e.path()),
-        None => bail!("'{}*' not found in {:?}", prefix, parent)
-    }
 }
 
 #[cfg(target_os = "linux")]
