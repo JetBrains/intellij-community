@@ -112,7 +112,11 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-      return object : MoreSquareStripeButtonBase(this) {
+      return object : AbstractMoreSquareStripeButton(this) {
+        init {
+          setLook(SquareStripeButtonLook(this))
+        }
+
         override fun setLook(look: ActionButtonLook?) {
           if (look is SquareStripeButtonLook) super.setLook(look)
         }

@@ -176,12 +176,10 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
           dragImageDialog = DragImageDialog(dragSourcePane, this, dragImage, null)
           dragImageDialog!!.isVisible = true
         }
-        initialOffset.location = relativePoint.getPoint(clickedComponent).also {
-          it.x -= clickedComponent.insets.left + SquareStripeButtonLook.ICON_PADDING.left
-          it.y -= clickedComponent.insets.top + SquareStripeButtonLook.ICON_PADDING.top
-        }
+        setInitialOffsetFromStripeButton(relativePoint, clickedComponent)
         relocate(event)
         addDropTargetHighlighter(dragSourcePane)
+        dropTargetHighlightComponent.isVisible = true
         clickedComponent.setDragState(true)
       }
       return
@@ -206,12 +204,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     val dragImage = dragImageComponent?.let(::createStripeButtonDragImage) ?: dragOutImage
 
     if (clickedComponent is StripeButton || clickedComponent is SquareStripeButton) {
-      initialOffset.location = relativePoint.getPoint(clickedComponent).also {
-        if (clickedComponent is SquareStripeButton) {
-          it.x -= clickedComponent.insets.left + SquareStripeButtonLook.ICON_PADDING.left
-          it.y -= clickedComponent.insets.top + SquareStripeButtonLook.ICON_PADDING.top
-        }
-      }
+      setInitialOffsetFromStripeButton(relativePoint, clickedComponent)
     }
     else if (dragImage != null) {
       initialOffset.location = Point(dragImage.getWidth(dragSourcePane) / 4, dragImage.getHeight(dragSourcePane) / 4)
@@ -228,6 +221,15 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     dragSourcePane.buttonManager.startDrag()
   }
 
+  private fun setInitialOffsetFromStripeButton(relativePoint: RelativePoint, clickedComponent: Component) {
+    initialOffset.location = relativePoint.getPoint(clickedComponent).also {
+      if (clickedComponent is AbstractSquareStripeButton) {
+        it.x -= clickedComponent.insets.left + SquareStripeButtonLook.ICON_PADDING.left
+        it.y -= clickedComponent.insets.top + SquareStripeButtonLook.ICON_PADDING.top
+      }
+    }
+  }
+
   private fun overlayStripesIfHidden(toolWindow: ToolWindowImpl, show: Boolean) {
     if (UISettings.getInstance().hideToolStripes) {
       for (pane in toolWindow.toolWindowManager.getToolWindowPanes()) {
@@ -236,28 +238,10 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     }
   }
 
-  private fun relocate(event: MouseEvent) {
-    if (dragMoreButton != null) {
-      val bounds = myDragComponent.rootPane.bounds
-      if (event.x > bounds.width / 2) {
-        bounds.x = 2 * bounds.width / 3
-        dragMoreButtonNewSide = RIGHT
-      }
-      else {
-        dragMoreButtonNewSide = LEFT
-      }
-      bounds.width = bounds.width / 3
-      dropTargetHighlightComponent.bounds = bounds
-      dragImageDialog?.location = event.locationOnScreen.also {
-        it.translate(-initialOffset.x, -initialOffset.y)
-      }
-      return
-    }
+  private fun relocateImageDialog(event: MouseEvent) {
+    val dialog = dragImageDialog ?: return
 
     val eventDevicePoint = DevicePoint(event)
-    val dialog = dragImageDialog ?: return
-    val toolWindow = getToolWindow() ?: return
-
     val originalDialogSize = dialog.size
 
     // Initial offset is relative to the original component and therefore in screen coordinates. The dialog size is a pixel size, and is the
@@ -294,6 +278,29 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     if (dialog.bounds != newDialogScreenBounds) {
       dialog.size = originalDialogSize
     }
+  }
+
+  private fun relocate(event: MouseEvent) {
+    if (dragMoreButton != null) {
+      val bounds = Rectangle(Point(), UIUtil.getWindow(myDragComponent)!!.size)
+      if (event.x > bounds.width / 2) {
+        bounds.x = 1 + 2 * bounds.width / 3
+        dragMoreButtonNewSide = RIGHT
+      }
+      else {
+        dragMoreButtonNewSide = LEFT
+      }
+      bounds.width = bounds.width / 3
+      dropTargetHighlightComponent.bounds = bounds
+      relocateImageDialog(event)
+      return
+    }
+
+    val eventDevicePoint = DevicePoint(event)
+    val dialog = dragImageDialog ?: return
+    val toolWindow = getToolWindow() ?: return
+
+    relocateImageDialog(event)
 
     val preferredStripe = getSourceStripe(toolWindow.anchor, toolWindow.isSplitMode)
     val targetStripe = getTargetStripeByDropLocation(eventDevicePoint, preferredStripe)
@@ -442,6 +449,11 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
   override fun processDragOutCancel() = stopDrag()
   override fun processDragCancel() = stopDrag()
+
+  override fun mouseReleased(e: MouseEvent?) {
+    super.mouseReleased(e)
+    toolWindowRef = null
+  }
 
   override fun stop() {
     super.stop()
@@ -635,11 +647,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
           it.width -= delta
           it.height -= delta
         }
-        is SquareStripeButton -> component.size.also {
-          JBInsets.removeFrom(it, component.insets)
-          JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
-        }
-        is MoreSquareStripeButton -> component.size.also {
+        is AbstractSquareStripeButton -> component.size.also {
           JBInsets.removeFrom(it, component.insets)
           JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
         }
@@ -663,8 +671,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
         when (component) {
           is StripeButton -> component.paint(it)
-          is SquareStripeButton -> component.paintDraggingButton(it)
-          is MoreSquareStripeButton -> component.paintDraggingButton(it)
+          is AbstractSquareStripeButton -> component.paintDraggingButton(it)
         }
 
         it.dispose()

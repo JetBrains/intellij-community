@@ -5,39 +5,32 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ToolWindowsGroup
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
-import com.intellij.openapi.wm.impl.SquareStripeButtonLook
-import com.intellij.ui.PopupHandler
+import com.intellij.openapi.wm.impl.AbstractSquareStripeButton
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
-import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
-import java.awt.*
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Point
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 
 internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
                                       override val side: ToolWindowAnchor,
                                       vararg moveTo: ToolWindowAnchor) :
-  MoreSquareStripeButtonBase(createAction(toolWindowToolbar)) {
+  AbstractMoreSquareStripeButton(createAction(toolWindowToolbar)) {
 
   init {
     AccessibleContextUtil.setName(this, UIBundle.message("more.button.accessible.name"))
-    addMouseListener(object : PopupHandler() {
-      override fun invokePopup(component: Component, x: Int, y: Int) {
-        val popupMenu = ActionManager.getInstance()
-          .createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, createPopupGroup(moveTo))
-        popupMenu.component.show(component, x, y)
-      }
-    })
+    doInit { createPopupGroup(moveTo) }
   }
 
   private fun createPopupGroup(moveTo: Array<out ToolWindowAnchor>): DefaultActionGroup {
@@ -75,23 +68,6 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
   }
 
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
-
-  fun paintDraggingButton(g: Graphics) {
-    val areaSize = size.also {
-      JBInsets.removeFrom(it, insets)
-      JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
-    }
-
-    val rect = Rectangle(areaSize)
-    buttonLook.paintLookBackground(g, rect, JBUI.CurrentTheme.ActionButton.pressedBackground())
-    icon.let {
-      val x = (areaSize.width - it.iconWidth) / 2
-      val y = (areaSize.height - it.iconHeight) / 2
-      buttonLook.paintIcon(g, this, it, x, y)
-    }
-
-    buttonLook.paintLookBorder(g, rect, JBUI.CurrentTheme.ActionButton.pressedBorder())
-  }
 }
 
 private fun createPresentation(): Presentation {
@@ -124,14 +100,7 @@ private fun createAction(toolWindowToolbar: ToolWindowToolbar): DumbAwareAction 
   }
 }
 
-internal abstract class MoreSquareStripeButtonBase(action: AnAction)
-  : ActionButton(action, createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR,
-                 { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
-
-  init {
-    setLook(SquareStripeButtonLook(this))
-  }
-
+internal abstract class AbstractMoreSquareStripeButton(action: AnAction) : AbstractSquareStripeButton(action, createPresentation()) {
   override fun update() {
     super.update()
     val project = dataContext.getData(CommonDataKeys.PROJECT)

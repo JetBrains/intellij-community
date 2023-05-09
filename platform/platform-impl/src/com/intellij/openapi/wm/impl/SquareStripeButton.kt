@@ -6,12 +6,9 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.ScalableIcon
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
 import com.intellij.toolWindow.ToolWindowEventSource
@@ -26,24 +23,47 @@ import java.awt.Component
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
-import javax.swing.JComponent
+
+internal abstract class AbstractSquareStripeButton(action: AnAction, presentation: Presentation) :
+  ActionButton(action, presentation, ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
+
+  protected fun doInit(popupBuilder: () -> ActionGroup) {
+    setLook(SquareStripeButtonLook(this))
+    addMouseListener(object : PopupHandler() {
+      override fun invokePopup(component: Component, x: Int, y: Int) {
+        val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, popupBuilder.invoke())
+        popupMenu.component.show(component, x, y)
+      }
+    })
+  }
+
+  fun paintDraggingButton(g: Graphics) {
+    val areaSize = size.also {
+      JBInsets.removeFrom(it, insets)
+      JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
+    }
+
+    val rect = Rectangle(areaSize)
+    buttonLook.paintLookBackground(g, rect, JBUI.CurrentTheme.ActionButton.pressedBackground())
+    icon.let {
+      val x = (areaSize.width - it.iconWidth) / 2
+      val y = (areaSize.height - it.iconHeight) / 2
+      buttonLook.paintIcon(g, this, it, x, y)
+    }
+
+    buttonLook.paintLookBorder(g, rect, JBUI.CurrentTheme.ActionButton.pressedBorder())
+  }
+}
 
 internal open class SquareStripeButton(action: SquareAnActionButton, val toolWindow: ToolWindowImpl) :
-  ActionButton(action, createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
+  AbstractSquareStripeButton(action, createPresentation(toolWindow)) {
   constructor(toolWindow: ToolWindowImpl) : this(SquareAnActionButton(toolWindow), toolWindow)
   companion object {
     fun createMoveGroup() = ToolWindowMoveAction.Group()
   }
 
   init {
-    setLook(SquareStripeButtonLook(this))
-    addMouseListener(object : PopupHandler() {
-      override fun invokePopup(component: Component, x: Int, y: Int) {
-        val popupMenu = ActionManager.getInstance()
-          .createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, createPopupGroup(toolWindow))
-        popupMenu.component.show(component, x, y)
-      }
-    })
+    doInit { createPopupGroup(toolWindow) }
     MouseDragHelper.setComponentDraggable(this, true)
   }
 
@@ -67,23 +87,6 @@ internal open class SquareStripeButton(action: SquareAnActionButton, val toolWin
   open fun isFocused() = toolWindow.isActive
 
   fun resetDrop() = resetMouseState()
-
-  fun paintDraggingButton(g: Graphics) {
-    val areaSize = size.also {
-      JBInsets.removeFrom(it, insets)
-      JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
-    }
-
-    val rect = Rectangle(areaSize)
-    buttonLook.paintLookBackground(g, rect, JBUI.CurrentTheme.ActionButton.pressedBackground())
-    icon.let {
-      val x = (areaSize.width - it.iconWidth) / 2
-      val y = (areaSize.height - it.iconHeight) / 2
-      buttonLook.paintIcon(g, this, it, x, y)
-    }
-
-    buttonLook.paintLookBorder(g, rect, JBUI.CurrentTheme.ActionButton.pressedBorder())
-  }
 
   override fun updateToolTipText() {
     @Suppress("DialogTitleCapitalization")
