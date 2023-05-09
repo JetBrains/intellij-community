@@ -525,8 +525,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         state.registerIndex(name,
                             index,
-                            composeInputFilter(inputFilter,
-                                               (file, project) -> !GlobalIndexFilter.isExcludedFromIndexViaFilters(file, name, project)),
+                            inputFilter,
                             version + GlobalIndexFilter.getFiltersVersion(name),
                             addedTypes);
         break;
@@ -1312,6 +1311,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return index;
   }
 
+  /** returns original input filter associated with the index (check global index filters manually) */
   private InputFilter getInputFilter(@NotNull ID<?, ?> indexId) {
     if (!myRegisteredIndexes.isInitialized()) {
       // 1. early vfs event that needs invalidation
@@ -2005,7 +2005,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private boolean acceptsInput(@NotNull ID<?, ?> indexId, @NotNull IndexedFile indexedFile) {
     InputFilter filter = getInputFilter(indexId);
-    return acceptsInput(filter, indexedFile);
+    if (!acceptsInput(filter, indexedFile)) return false;
+
+    LOG.assertTrue(indexedFile.getProject() != null, "Should not index files from unknown project");
+    return !GlobalIndexFilter.isExcludedFromIndexViaFilters(indexedFile.getFile(), indexId, indexedFile.getProject());
   }
 
   public void removeIndexableSet(@NotNull IndexableFileSet set) {
