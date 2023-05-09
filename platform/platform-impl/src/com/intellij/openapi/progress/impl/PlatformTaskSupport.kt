@@ -114,7 +114,12 @@ class PlatformTaskSupport : TaskSupport {
   ): T = prepareThreadContext { ctx ->
     val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
     val scope = CoroutineScope(ctx)
-    runBlockingModalInternal(cs = scope, descriptor, action)
+    try {
+      runBlockingModalInternal(cs = scope, descriptor, action)
+    }
+    catch (ce: CancellationException) {
+      throw CeProcessCanceledException(ce)
+    }
   }
 
   private fun <T> runBlockingModalInternal(

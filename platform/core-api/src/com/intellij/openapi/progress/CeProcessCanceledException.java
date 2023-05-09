@@ -14,7 +14,7 @@ import java.util.concurrent.CancellationException;
 @Internal
 public final class CeProcessCanceledException extends ProcessCanceledException {
 
-  CeProcessCanceledException(@NotNull CancellationException e) {
+  public CeProcessCanceledException(@NotNull CancellationException e) {
     super(e);
   }
 
