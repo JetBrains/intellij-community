@@ -113,8 +113,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   @NotNull protected final MavenEmbedderSettings myEmbedderSettings;
 
   public Maven40ServerEmbedderImpl(MavenEmbedderSettings settings) throws RemoteException {
-    // TODO: implement
-    //super(settings);
     myEmbedderSettings = settings;
 
     String multiModuleProjectDirectory = settings.getMultiModuleProjectDirectory();
@@ -149,19 +147,13 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       }
     };
 
-    SettingsBuilder settingsBuilder = null;
+    SettingsBuilder settingsBuilder = new DefaultSettingsBuilderFactory().newInstance();
     Class<?> cliRequestClass;
     try {
-      cliRequestClass = MavenCli.class.getClassLoader().loadClass("org.apache.maven.cli.MavenCli$CliRequest");
+      cliRequestClass = MavenCli.class.getClassLoader().loadClass("org.apache.maven.cli.CliRequest");
     }
     catch (ClassNotFoundException e) {
-      try {
-        cliRequestClass = MavenCli.class.getClassLoader().loadClass("org.apache.maven.cli.CliRequest");
-        settingsBuilder = new DefaultSettingsBuilderFactory().newInstance();
-      }
-      catch (ClassNotFoundException e1) {
-        throw new RuntimeException("unable to find maven CliRequest class");
-      }
+      throw new RuntimeException("unable to find maven CliRequest class");
     }
 
     Object cliRequest;
@@ -234,10 +226,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     if (serverSettings.getProjectJdk() != null) {
       mySystemProperties.setProperty("java.home", serverSettings.getProjectJdk());
-    }
-
-    if (settingsBuilder == null) {
-      settingsBuilder = ReflectionUtilRt.getField(MavenCli.class, cli, SettingsBuilder.class, "settingsBuilder");
     }
 
     myMavenSettings = buildSettings(settingsBuilder, serverSettings, mySystemProperties,
