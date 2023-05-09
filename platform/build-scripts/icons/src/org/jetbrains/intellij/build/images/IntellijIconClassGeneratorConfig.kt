@@ -104,6 +104,8 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       "intellij.swagger.core" -> IntellijIconClassGeneratorModuleConfig(className = "SwaggerCoreIcons",
                                                                         packageName = "com.intellij.swagger.core")
       "intellij.ml.llm" -> IntellijIconClassGeneratorModuleConfig(className = "MLLlmIcons", packageName = "com.intellij.ml.llm")
+      "intellij.ml.llm.core" -> IntellijIconClassGeneratorModuleConfig(className = "MLLlmCoreIcons", packageName = "com.intellij.ml.llm.core")
+
 
       else -> super.getConfigForModule(moduleName)
     }
