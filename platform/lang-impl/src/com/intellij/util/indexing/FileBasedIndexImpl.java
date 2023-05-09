@@ -118,8 +118,6 @@ import static java.util.concurrent.TimeUnit.*;
 public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
   private static final ThreadLocal<IndexWritingFile> ourWritingIndexFile = new ThreadLocal<>();
-  private static final ThreadLocal<VirtualFile> ourFileToBeIndexed = new ThreadLocal<>();
-
   private static final boolean FORBID_LOOKUP_IN_NON_CANCELLABLE_SECTIONS =
     SystemProperties.getBooleanProperty("forbid.index.lookup.in.non.cancellable.section", false);
 
@@ -1738,7 +1736,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public static void markFileIndexed(@Nullable VirtualFile file,
                                      @Nullable FileContent fc) {
     // TODO restore original assertion
-    if (fc != null && (ourIndexedFile.get() != null || ourFileToBeIndexed.get() != null)) {
+    if (fc != null && ourIndexedFile.get() != null) {
       throw new AssertionError("Reentrant indexing");
     }
     ourIndexedFile.set(file);
@@ -1896,60 +1894,49 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     // it doesn't matter content hanged or not: indices might depend on file name too
     removeTransientFileDataFromIndices(nontrivialFileIndexedStates, fileId, file);
 
-    // handle 'content-less' indices separately
-    boolean fileIsDirectory = file.isDirectory();
+    boolean isRegularFile = !file.isDirectory();
     IndexedFileImpl indexedFile = new IndexedFileImpl(file, findProjectForFileId(fileId));
 
-    FileContent fileContent = null;
-    for (ID<?, ?> indexId : contentChange ? Collections.singleton(FileTypeIndex.NAME) : getContentLessIndexes(fileIsDirectory)) {
-      if (acceptsInput(indexId, indexedFile)) {
-        if (fileContent == null) {
-          fileContent = new IndexedFileWrapper(indexedFile);
-        }
-        updateSingleIndex(indexId, file, fileId, fileContent);
-      }
-    }
-
+    // Apply index contentless indexes in-place
     // For 'normal indices' schedule the file for update and reset stamps for all affected indices (there
     // can be client that used indices between before and after events, in such case indices are up to date due to force update
     // with old content)
-    if (!fileIsDirectory) {
-      if (!file.isValid() || isTooLarge(file)) {
-        // large file might be scheduled for update in before event when its size was not large
-        getChangedFilesCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
-      }
-      else {
-        ourFileToBeIndexed.set(file);
-        try {
-          FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
-            List<ID<?, ?>> candidates = getRequiredIndexes(indexedFile);
-
-            boolean scheduleForUpdate = false;
-
-            for (int i = 0, size = candidates.size(); i < size; ++i) {
-              final ID<?, ?> indexId = candidates.get(i);
-              if (needsFileContentLoading(indexId)) {
-                getIndex(indexId).invalidateIndexedStateForFile(fileId);
-                scheduleForUpdate = true;
-              }
-            }
-
-            if (scheduleForUpdate) {
-              IndexingStamp.flushCache(fileId);
-              getChangedFilesCollector().scheduleForUpdate(file);
-            }
-            else {
-              IndexingFlag.setFileIndexed(file);
-            }
-          });
-        }
-        finally {
-          ourFileToBeIndexed.remove();
-        }
-      }
+    if (!file.isValid() || (isRegularFile && isTooLarge(file))) {
+      // large file might be scheduled for update in before event when its size was not large
+      getChangedFilesCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
     }
     else {
-      IndexingFlag.setFileIndexed(file);
+      FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
+        List<ID<?, ?>> candidates = getRequiredIndexes(indexedFile);
+        // TODO-ank: delete not needed indexed data now? (will be deleted during indexing)
+
+        boolean scheduleForUpdate = false;
+        FileContent fileContent = null;
+
+        for (int i = 0, size = candidates.size(); i < size; ++i) {
+          final ID<?, ?> indexId = candidates.get(i);
+          if (needsFileContentLoading(indexId)) {
+            getIndex(indexId).invalidateIndexedStateForFile(fileId);
+            scheduleForUpdate = true;
+          }
+          else if (!contentChange || indexId == FileTypeIndex.NAME){
+            // TODO-ank: quite a strange condition. Mostly to preserve old behavior
+            //  and please the test com.intellij.util.indexing.RequestedToRebuildIndexTest
+            if (fileContent == null) {
+              fileContent = new IndexedFileWrapper(indexedFile);
+            }
+            updateSingleIndex(indexId, file, fileId, fileContent);
+          }
+        }
+
+        if (scheduleForUpdate) {
+          IndexingStamp.flushCache(fileId);
+          getChangedFilesCollector().scheduleForUpdate(file);
+        }
+        else {
+          IndexingFlag.setFileIndexed(file);
+        }
+      });
     }
   }
 
