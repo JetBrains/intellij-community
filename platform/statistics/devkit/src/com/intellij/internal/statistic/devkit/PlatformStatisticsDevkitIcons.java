@@ -14,6 +14,6 @@ public final class PlatformStatisticsDevkitIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PlatformStatisticsDevkitIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon StatisticsEventLog = load("icons/statisticsEventLog.svg", 1543933194, 2);
-  /** 20x20 */ public static final @NotNull Icon StatisticsEventLog_20x20 = load("icons/statisticsEventLog@20x20.svg", -550501190, 2);
+  /** 16x16 */ public static final @NotNull Icon StatisticsEventLog = load("icons/statisticsEventLog.svg", 842692644, 2);
+  /** 20x20 */ public static final @NotNull Icon StatisticsEventLog_20x20 = load("icons/statisticsEventLog@20x20.svg", -1423254505, 2);
 }
