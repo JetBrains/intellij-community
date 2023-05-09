@@ -12,7 +12,11 @@ import kotlin.math.max
 import kotlin.math.min
 
 class ScrollPositionCalculatorImpl : ScrollPositionCalculator {
-  override fun getHorizontalOffset(editor: Editor, targetLocation: Point, scrollType: ScrollType, viewRect: Rectangle, scrollPane: JScrollPane): Int {
+  override fun getHorizontalOffset(editor: Editor,
+                                   targetLocation: Point,
+                                   scrollType: ScrollType,
+                                   viewRect: Rectangle,
+                                   scrollPane: JScrollPane): Int {
     var horizontalOffset = viewRect.x
     val spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, editor)
     val editorWidth = viewRect.width
@@ -110,7 +114,11 @@ class ScrollPositionCalculatorImpl : ScrollPositionCalculator {
     else rightmostLocation - scrollOffset * spaceWidth
   }
 
-  override fun getVerticalOffset(editor: Editor, targetLocation: Point, scrollType: ScrollType, viewRect: Rectangle, scrollPane: JScrollPane): Int {
+  override fun getVerticalOffset(editor: Editor,
+                                 targetLocation: Point,
+                                 scrollType: ScrollType,
+                                 viewRect: Rectangle,
+                                 scrollPane: JScrollPane): Int {
     val editorHeight = viewRect.height
     val lineHeight = editor.lineHeight
     val scrollHeight = scrollPane.verticalScrollBar.maximum - scrollPane.verticalScrollBar.getExtent()
