@@ -11,9 +11,9 @@ class Limit {
 
   public static void test(@Untainted String clear, String dirty) {
     sink(<warning descr="Unknown string is used as safe parameter">dirty</warning>); //warn
-    sink(<warning descr="Unknown string is used as safe parameter">next(next(next(next(next(next(next(next(next(next(next(next(next(next(next(dirty)))))))))))))))</warning>); //warn complex
-    sink(<warning descr="Unknown string is used as safe parameter">next(next(next(next(next(next(next(dirty)))))))</warning>); //warn
-    sink(next(next(next(next(next(next(next(clear))))))));
+    sink(<weak_warning descr="Too complex to check that the string is safe in a safe context">next(next(next(next(next(next(next(next(next(next(next(next(next(next(next(dirty)))))))))))))))</weak_warning>); //warn complex
+    sink(<warning descr="Unknown string is used as safe parameter">next(next(next(next(next(dirty)))))</warning>); //warn
+    sink(next(next(next(next(next(clear))))));
     sink(<weak_warning descr="Too complex to check that the string is safe in a safe context">next(next(next(next(next(next(next(clear))))))) +
          next(next(next(next(next(next(next(clear))))))) +
          next(next(next(next(next(next(next(clear))))))) +

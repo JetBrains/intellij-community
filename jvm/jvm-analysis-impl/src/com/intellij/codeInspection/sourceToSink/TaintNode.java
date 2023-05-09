@@ -20,9 +20,7 @@ import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UReferenceExpression;
 import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
@@ -48,6 +46,7 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
   private final TaintValueFactory myTaintValueFactory;
 
   private final boolean myNext;
+
   TaintNode(@Nullable TaintNode parent,
             @Nullable PsiElement psiElement,
             @Nullable PsiElement ref,
@@ -96,11 +95,11 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
     if (myTaintValueFactory == null) return List.of();
     if (!myNext) return List.of();
     TaintAnalyzer taintAnalyzer = new TaintAnalyzer(myTaintValueFactory);
-    UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(elementRef, UCallExpression.class, UReferenceExpression.class);
-    if(uExpression == null) return Collections.emptyList();
+    UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(elementRef, UExpression.class);
+    if (uExpression == null) return Collections.emptyList();
     TaintValue taintValue;
     try {
-      taintValue = taintAnalyzer.analyzeExpression(uExpression, true);
+      taintValue = taintAnalyzer.analyzeExpression(uExpression, true, TaintValue.TAINTED);
     }
     catch (DeepTaintAnalyzerException e) {
       return Collections.emptyList();
@@ -116,7 +115,8 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
     List<TaintNode> children = new ArrayList<>();
     for (NonMarkedElement nonMarkedElement : taintAnalyzer.getNonMarkedElements()) {
       if (parents.contains(nonMarkedElement.myNonMarked)) continue;
-      TaintNode child = new TaintNode(this, nonMarkedElement.myNonMarked, nonMarkedElement.myRef, myTaintValueFactory, nonMarkedElement.myNext);
+      TaintNode child =
+        new TaintNode(this, nonMarkedElement.myNonMarked, nonMarkedElement.myRef, myTaintValueFactory, nonMarkedElement.myNext);
       children.add(child);
     }
     return children;
@@ -200,7 +200,7 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
     TaintNode parent = ObjectUtils.tryCast(getParentDescriptor(), TaintNode.class);
     while (parent != null) {
       PsiElement parentPsiElement = parent.getPsiElement();
-      if (parentPsiElement == null) return parents;
+      if (parentPsiElement == null || parent.getParentDescriptor() == null) return parents;
       parents.add(parentPsiElement);
       parent = ObjectUtils.tryCast(parent.getParentDescriptor(), TaintNode.class);
     }

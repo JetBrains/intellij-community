@@ -76,6 +76,21 @@ class JavaSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() 
     myFixture.testHighlighting("DifferentExpression.java")
   }
 
+  fun `test field with block initializers`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("BlockInitializerFields.java")
+  }
+
+  fun `test spoiled parameters`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("SpoiledParameters.java")
+  }
+
+  fun `test drop locality`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("DropLocality.java")
+  }
+
   fun testLimits() {
     prepareCheckFramework()
     myFixture.addClass("""

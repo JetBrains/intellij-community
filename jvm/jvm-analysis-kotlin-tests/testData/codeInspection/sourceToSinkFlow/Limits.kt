@@ -9,12 +9,12 @@ object Limit {
   val fromAnotherFile6 = Limit2().fromAnotherFile6
   fun test(clear: @Untainted String?, dirty: String) {
     sink(<warning descr="Unknown string is used as safe parameter">dirty</warning>) //warn
-    sink(<warning descr="Unknown string is used as safe parameter">next(next(next(next(next(next(next(next(next(next(next(next(next(next(next(dirty)))))))))))))))</warning>) //warn
-    sink(<warning descr="Unknown string is used as safe parameter">next(next(next(next(next(next(next(dirty)))))))</warning>) //warn
-    val nextVariable = next(next(next(next(next(next(next(clear)))))))
+    sink(<weak_warning descr="Too complex to check that the string is safe in a safe context">next(next(next(next(next(next(next(next(next(next(next(next(next(next(next(dirty)))))))))))))))</weak_warning>) //warn
+    sink(<warning descr="Unknown string is used as safe parameter">next(next(next(next(next(dirty)))))</warning>) //warn
+    val nextVariable = next(next(next(next(clear))))
     sink(nextVariable)
     sink(nextVariable + nextVariable + nextVariable + nextVariable + nextVariable + nextVariable)
-    sink(<warning descr="Unknown string is used as safe parameter">nextVariable + next(next(next(next(next(next(next(dirty)))))))</warning>) //warn
+    sink(<warning descr="Unknown string is used as safe parameter">nextVariable + next(next(next(next(dirty))))</warning>) //warn
     sink(<warning descr="Unknown string is used as safe parameter">"${dirty} test dirty"</warning>) //warn
     sink("$clear test clear")
     sink(fromAnotherFile)

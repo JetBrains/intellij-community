@@ -118,4 +118,19 @@ class KotlinSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase(
     prepareCheckFramework()
     myFixture.testHighlighting("DifferentExpressions.kt")
   }
+
+  fun testKotlinConstructorArguments() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("KotlinConstructorArguments.kt")
+  }
+
+  fun testKotlinParameters() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("KotlinParameters.kt")
+  }
+
+  fun testDropLocality() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("DropLocality.kt")
+  }
 }

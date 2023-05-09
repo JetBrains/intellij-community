@@ -2,21 +2,27 @@
 package com.intellij.codeInspection.sourceToSink
 
 data class UntaintedConfiguration(val taintedAnnotations: List<String?>,
-                                           val unTaintedAnnotations: List<String?>,
-                                           val firstAnnotation: String?,
-                                           val methodClass: List<String?>,
-                                           val methodNames: List<String?>,
-                                           val fieldClass: List<String?>,
-                                           val fieldNames: List<String?>,
-                                           val processMethodAsQualifierAndArguments: Boolean,
-                                           val skipClasses: List<String?>) {
+                                  val unTaintedAnnotations: List<String?>,
+                                  val firstAnnotation: String?,
+                                  val methodClass: List<String?>,
+                                  val methodNames: List<String?>,
+                                  val fieldClass: List<String?>,
+                                  val fieldNames: List<String?>,
+                                  val processOuterMethodAsQualifierAndArguments: Boolean,
+                                  val processInnerMethodAsQualifierAndArguments: Boolean,
+                                  val skipClasses: List<String?>,
+                                  val parameterOfPrivateMethodIsUntainted: Boolean) {
   fun copy(): UntaintedConfiguration {
-    return UntaintedConfiguration(ArrayList(taintedAnnotations), ArrayList(
-      unTaintedAnnotations),
-                                  firstAnnotation,
-                                  ArrayList(methodClass), ArrayList(methodNames),
-                                  ArrayList(fieldClass), ArrayList(fieldNames),
-                                  processMethodAsQualifierAndArguments,
-                                  ArrayList(skipClasses))
+    return UntaintedConfiguration(taintedAnnotations = ArrayList(taintedAnnotations),
+                                  unTaintedAnnotations = ArrayList(unTaintedAnnotations),
+                                  firstAnnotation = firstAnnotation,
+                                  methodClass = ArrayList(methodClass),
+                                  methodNames = ArrayList(methodNames),
+                                  fieldClass = ArrayList(fieldClass),
+                                  fieldNames = ArrayList(fieldNames),
+                                  processOuterMethodAsQualifierAndArguments = processOuterMethodAsQualifierAndArguments,
+                                  processInnerMethodAsQualifierAndArguments = processInnerMethodAsQualifierAndArguments,
+                                  skipClasses = ArrayList(skipClasses),
+                                  parameterOfPrivateMethodIsUntainted = parameterOfPrivateMethodIsUntainted)
   }
 }

@@ -10,7 +10,7 @@ open class MethodPropagation {
   private fun recursive(dirty: String?, clean: @Untainted String?): String {
     if (clean === "") {
       val a = recursive(dirty, clean)
-      sink(<warning descr="Unknown string is used as safe parameter">a</warning>) //warn
+      sink(<weak_warning descr="Too complex to check that the string is safe in a safe context">a</weak_warning>) //warn
       return recursive(dirty, clean)
     }
     return recursive(clean, clean)
@@ -26,17 +26,17 @@ open class MethodPropagation {
     sink(<warning descr="Unknown string is used as safe parameter">staticNext(dirty)</warning>) //warn
     sink(staticNext(clean))
     sink(next(next(clean)))
-    sink(next(next(next(next(next(next(next(next(clean)))))))))
-    sink(<warning descr="Unknown string is used as safe parameter">next(next(next(next(next(next(next(next(dirty))))))))</warning>) //warn
-    sink(alwaysClean(next(next(next(next(next(next(next(clean)))))))))
-    sink(alwaysClean(next(next(next(next(next(next(next(dirty)))))))))
-    sink(next(next(next(next(next(next(next(alwaysClean(clean)))))))))
-    sink(next(next(next(next(next(next(next(alwaysClean(dirty)))))))))
+    sink(next(next(next(next(next(clean))))))
+    sink(<warning descr="Unknown string is used as safe parameter">next(next(next(next(dirty))))</warning>) //warn
+    sink(alwaysClean(next(next(next(next(clean))))))
+    sink(alwaysClean(next(next(next(next(dirty))))))
+    sink(next(next(next(next(alwaysClean(clean))))))
+    sink(next(next(next(next(alwaysClean(dirty))))))
     sink(next(alwaysClean(clean)))
     sink(next(alwaysClean(dirty)))
-    val alwaysClean = alwaysClean(next(next(next(next(next(next(next(clean))))))))
+    val alwaysClean = alwaysClean(next(next(next(clean))))
     sink(alwaysClean)
-    val alwaysClean2 = alwaysClean(next(next(next(next(next(next(next(dirty))))))))
+    val alwaysClean2 = alwaysClean(next(next(next(dirty))))
     sink(alwaysClean2)
   }
 

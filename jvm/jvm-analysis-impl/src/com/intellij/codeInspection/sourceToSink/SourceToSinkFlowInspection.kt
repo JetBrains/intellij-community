@@ -37,7 +37,13 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
   val myUntaintedFieldNames: MutableList<String?> = mutableListOf()
 
   @JvmField
-  var processMethodAsQualifierAndArguments: Boolean = true
+  var processOuterMethodAsQualifierAndArguments: Boolean = true
+
+  @JvmField
+  var parameterOfPrivateMethodIsUntainted: Boolean = true
+
+  @JvmField
+  var warnIfComplex: Boolean = false
 
   @JvmField
   val skipClasses: MutableList<String?> = mutableListOf(
@@ -55,7 +61,7 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
                          JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.annotations"),
                          JavaClassValidator().annotationsOnly()
       ),
-      OptPane.checkbox("processMethodAsQualifierAndArguments",
+      OptPane.checkbox("processOuterMethodAsQualifierAndArguments",
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.process.as.qualifier.arguments")),
       myUntaintedMethodMatcher.getTable(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.methods"))
         .prefix("myUntaintedMethodMatcher"),
@@ -67,7 +73,12 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
                                    JavaClassValidator()),
                     OptPane.column("myUntaintedFieldNames",
                                    JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.fields.name"))
-      ))
+      ),
+      OptPane.checkbox("parameterOfPrivateMethodIsUntainted",
+                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.private.methods")),
+      OptPane.checkbox("warnIfComplex",
+                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.warn.if.complex"))
+    )
   }
 
   override fun buildVisitor(holder: ProblemsHolder,
@@ -78,17 +89,19 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
       it != null && JavaPsiFacade.getInstance(holder.project).findClass(it, scope) != null
     } ?: return PsiElementVisitor.EMPTY_VISITOR
 
-    val configuration = UntaintedConfiguration(taintedAnnotations,
-                                               untaintedAnnotations,
-                                               firstAnnotation,
-                                               myUntaintedMethodMatcher.classNames,
-                                               myUntaintedMethodMatcher.methodNamePatterns,
-                                               myUntaintedFieldClasses,
-                                               myUntaintedFieldNames,
-                                               processMethodAsQualifierAndArguments,
-                                               skipClasses)
+    val configuration = UntaintedConfiguration(taintedAnnotations = taintedAnnotations,
+                                               unTaintedAnnotations = untaintedAnnotations,
+                                               firstAnnotation = firstAnnotation,
+                                               methodClass = myUntaintedMethodMatcher.classNames,
+                                               methodNames = myUntaintedMethodMatcher.methodNamePatterns,
+                                               fieldClass = myUntaintedFieldClasses,
+                                               fieldNames = myUntaintedFieldNames,
+                                               processOuterMethodAsQualifierAndArguments = processOuterMethodAsQualifierAndArguments,
+                                               processInnerMethodAsQualifierAndArguments = false,
+                                               skipClasses = skipClasses,
+                                               parameterOfPrivateMethodIsUntainted = parameterOfPrivateMethodIsUntainted).copy()
 
-    return UastHintedVisitorAdapter.create(holder.file.language, SourceToSinkFlowVisitor(holder, TaintValueFactory(configuration)),
+    return UastHintedVisitorAdapter.create(holder.file.language, SourceToSinkFlowVisitor(holder, TaintValueFactory(configuration), warnIfComplex),
                                            arrayOf(UCallExpression::class.java,
                                                    UReturnExpression::class.java,
                                                    UBinaryExpression::class.java,
@@ -103,7 +116,8 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
 
   private class SourceToSinkFlowVisitor(
     private val holder: ProblemsHolder,
-    private val factory: TaintValueFactory
+    private val factory: TaintValueFactory,
+    private val warnIfComplex: Boolean
   ) : AbstractUastNonRecursiveVisitor() {
 
     override fun visitCallExpression(node: UCallExpression): Boolean {
@@ -161,8 +175,10 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
         taintAnalyzer.analyzeExpression(expression, false)
       }
       catch (e: DeepTaintAnalyzerException) {
-        val errorMessage: String = JvmAnalysisBundle.message("jvm.inspections.source.to.sink.flow.too.complex")
-        holder.registerUProblem(expression, errorMessage, *arrayOf(), highlightType = ProblemHighlightType.WEAK_WARNING)
+        if (warnIfComplex) {
+          val errorMessage: String = JvmAnalysisBundle.message("jvm.inspections.source.to.sink.flow.too.complex")
+          holder.registerUProblem(expression, errorMessage, *arrayOf(), highlightType = ProblemHighlightType.WEAK_WARNING)
+        }
         return
       }
       taintValue = taintValue.join(contextValue)

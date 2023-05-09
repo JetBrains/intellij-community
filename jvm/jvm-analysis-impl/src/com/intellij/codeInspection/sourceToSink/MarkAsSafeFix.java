@@ -74,7 +74,7 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
   private List<PsiElement> getElementsToMark(@NotNull UExpression uExpression) {
     TaintAnalyzer taintAnalyzer = new TaintAnalyzer(myTaintValueFactory);
     try {
-      TaintValue taintValue = taintAnalyzer.analyzeExpression(uExpression, false);
+      TaintValue taintValue = taintAnalyzer.analyzeExpression(uExpression, false, TaintValue.TAINTED);
       if (taintValue != TaintValue.UNKNOWN) return null;
     }
     catch (DeepTaintAnalyzerException e) {
@@ -82,6 +82,13 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     }
     List<PsiElement> elements = new ArrayList<>(ContainerUtil.map(taintAnalyzer.getNonMarkedElements(), e -> e.myNonMarked));
     ContainerUtil.removeDuplicates(elements);
+    ContainerUtil.sort(elements, Comparator.comparing(element -> {
+      //methods are always last
+      if (element instanceof PsiMethod) {
+        return 1;
+      }
+      return 0;
+    }));
     return elements;
   }
 
@@ -326,6 +333,16 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
         actions = JvmElementActionFactories.createChangeTypeActions(jvmField, changeTypeRequest);
       }
       else if (listOwner instanceof JvmMethod jvmMethod) {
+        if (UastContextKt.toUElement(listOwner) instanceof UMethod uMethod &&
+            uMethod.getSourcePsi() != null &&
+            UastContextKt.toUElement(uMethod.getSourcePsi()) instanceof UMethod rereadUMethod &&
+            rereadUMethod.getReturnType() != null) {
+          //kotlin can change return type already, let's reread
+          PsiAnnotation[] annotations = rereadUMethod.getReturnType().getAnnotations();
+          if (ContainerUtil.exists(annotations, fromType -> fromType.hasQualifiedName(annotation))) {
+            return true;
+          }
+        }
         JvmType type = jvmMethod.getReturnType();
         if (type == null) return false;
         ChangeTypeRequest changeTypeRequest = createTypeRequest(type, annotation);

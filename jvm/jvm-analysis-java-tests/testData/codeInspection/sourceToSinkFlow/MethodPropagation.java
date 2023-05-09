@@ -31,20 +31,20 @@ public class MethodPropagation {
     sink(staticNext(clean));
 
     sink(next(next(clean)));
-    sink(next(next(next(next(next(next(next(next(clean)))))))));
-    sink(<warning descr="Unknown string is used as safe parameter">next(next(next(next(next(next(next(next(dirty))))))))</warning>); //warn
+    sink(next(next(next(next(next(clean))))));
+    sink(<warning descr="Unknown string is used as safe parameter">next(next(next(next(next(dirty)))))</warning>); //warn
 
-    sink(alwaysClean(next(next(next(next(next(next(next(clean)))))))));
-    sink(alwaysClean(next(next(next(next(next(next(next(dirty)))))))));
+    sink(alwaysClean(next(next(next(next(clean))))));
+    sink(alwaysClean(next(next(next(next(dirty))))));
 
-    sink(next(next(next(next(next(next(next(alwaysClean(clean)))))))));
-    sink(next(next(next(next(next(next(next(alwaysClean(dirty)))))))));
+    sink(next(next(next(next(alwaysClean(clean))))));
+    sink(next(next(next(next(alwaysClean(dirty))))));
     sink(next(alwaysClean(clean)));
     sink(next((alwaysClean(dirty))));
 
-    String alwaysClean = alwaysClean(next(next(next(next(next(next(next(clean))))))));
+    String alwaysClean = alwaysClean(next(next(next(clean))));
     sink(alwaysClean);
-    String alwaysClean2 = alwaysClean(next(next(next(next(next(next(next(dirty))))))));
+    String alwaysClean2 = alwaysClean(next(next(next(dirty))));
     sink(alwaysClean2);
   }
 

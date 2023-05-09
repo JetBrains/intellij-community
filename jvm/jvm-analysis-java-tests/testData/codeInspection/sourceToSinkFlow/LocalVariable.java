@@ -38,6 +38,7 @@ class LocalCheck {
   }
 
   private void update(List<String> list) {
+    list.add("1");
   }
 
   public void sink(@Untainted String clean) {

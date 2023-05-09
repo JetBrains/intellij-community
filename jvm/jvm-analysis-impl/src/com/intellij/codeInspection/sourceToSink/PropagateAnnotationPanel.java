@@ -75,19 +75,19 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
   private final Tree myTree;
   @NotNull
   private final Project myProject;
-  private final TaintNode myRoot;
+  private final List<TaintNode> myRoots;
   private final PropagateTreeListener myTreeSelectionListener;
   private final @NotNull Consumer<? super Collection<@NotNull TaintNode>> myCallback;
   private Content myContent;
   private final boolean mySupportRefactoring;
 
   PropagateAnnotationPanel(@NotNull Project project,
-                           @NotNull TaintNode root,
+                           @NotNull List<TaintNode> roots,
                            @NotNull Consumer<? super Collection<@NotNull TaintNode>> callback,
                            boolean supportRefactoring) {
     super(new BorderLayout());
-    myTree = PropagateTree.create(this, root);
-    myRoot = root;
+    myTree = PropagateTree.create(this, roots);
+    myRoots = roots;
     myProject = project;
     myCallback = callback;
     mySupportRefactoring = supportRefactoring;
@@ -105,13 +105,13 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
     JPanel panel = new JPanel(new BorderLayout());
     JComponent callSitesViewer = createCallSitesViewer(usageEditor, memberEditor);
     panel.add(callSitesViewer);
-    myTreeSelectionListener.updateEditorTexts(root);
+    myTreeSelectionListener.updateEditorTexts(roots.get(0));
     JPanel toolbar = createToolbar();
     panel.add(toolbar, BorderLayout.NORTH);
     splitter.setSecondComponent(panel);
 
     add(splitter, BorderLayout.CENTER);
-    addTreeActions(myTree, root);
+    addTreeActions(myTree, roots);
   }
 
   public void setContent(@NotNull Content content) {
@@ -132,8 +132,10 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
           ContentManager contentManager = toolWindow.getContentManager();
           contentManager.removeContent(myContent, true);
           myContent.release();
-          Set<TaintNode> toAnnotate = getSelectedElements(myRoot, new HashSet<>());
-          if (toAnnotate != null) myCallback.accept(toAnnotate);
+          for (TaintNode root : myRoots) {
+            Set<TaintNode> toAnnotate = getSelectedElements(root, new HashSet<>());
+            if (toAnnotate != null) myCallback.accept(toAnnotate);
+          }
         }
       });
       panel.add(annotateButton, BorderLayout.WEST);
@@ -190,10 +192,12 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
     return memberComponent;
   }
 
-  private void addTreeActions(@NotNull Tree tree, @NotNull TaintNode root) {
+  private void addTreeActions(@NotNull Tree tree, @NotNull List<TaintNode> roots) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    if (root.myTaintValue != TaintValue.TAINTED && mySupportRefactoring) {
-      actionGroup.addAll(createIncludeExcludeActions(tree));
+    for (TaintNode root : roots) {
+      if (root.myTaintValue != TaintValue.TAINTED && mySupportRefactoring) {
+        actionGroup.addAll(createIncludeExcludeActions(tree));
+      }
     }
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     PopupHandler.installPopupMenu(tree, actionGroup, "PropagateAnnotationPanelPopup");
@@ -284,6 +288,7 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
       myMemberEditor.show(null, null);
 
       PsiElement usage = taintNode.getRef();
+      if (usage == null) return;
       usage = MarkAsSafeFix.getSourcePsi(usage);
       if (usage == null) return;
       PsiElement parentPsi = getParentPsi(usage);
@@ -433,15 +438,15 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
       if (!CommonDataKeys.PSI_ELEMENT.is(dataId)) return null;
       TaintNode[] selectedNodes = getSelectedNodes(TaintNode.class, null);
       if (selectedNodes.length != 1) return null;
-      return selectedNodes[0].getPsiElement();
+      return selectedNodes[0].getRef();
     }
 
     @Contract("_, _ -> new")
-    private static @NotNull PropagateTree create(@NotNull Disposable parent, @NotNull TaintNode root) {
+    private static @NotNull PropagateTree create(@NotNull Disposable parent, @NotNull List<TaintNode> roots) {
       TaintNode rootWrapper = new TaintNode(null, null, null, null, true) {
         @Override
         public List<TaintNode> calcChildren() {
-          return Collections.singletonList(root);
+          return roots;
         }
       };
       BaseTreeModel<TaintNode> propagateTreeModel = new PropagateTreeModel(rootWrapper);

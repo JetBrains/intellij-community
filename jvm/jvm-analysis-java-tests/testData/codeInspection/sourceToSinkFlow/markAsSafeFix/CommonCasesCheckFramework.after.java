@@ -4,7 +4,7 @@ class CommonCases {
   public @Untainted String sField;
 
   @Untainted
-  private String test(@Untainted String s) {
+  public String test(@Untainted String s) {
     String s1 = s + getS(s) + sField;
     return s1;
   }
