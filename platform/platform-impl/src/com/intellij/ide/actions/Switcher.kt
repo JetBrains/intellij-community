@@ -203,9 +203,7 @@ object Switcher : BaseSwitcherAction(null) {
         cbShowOnlyEditedFiles.isSelected = onlyEdited
         cbShowOnlyEditedFiles.addItemListener(ItemListener { event: ItemEvent -> updateFilesByCheckBox(event) })
         header.add(HorizontalLayout.RIGHT, cbShowOnlyEditedFiles)
-        val moveListener = WindowMoveListener(header)
-        header.addMouseListener(moveListener)
-        header.addMouseMotionListener(moveListener)
+        WindowMoveListener(header).installTo(header)
         val shortcuts = KeymapUtil.getActiveKeymapShortcuts("SwitcherRecentEditedChangedToggleCheckBox")
         if (shortcuts.shortcuts.size > 0) {
           val label = JLabel(KeymapUtil.getShortcutsText(shortcuts.shortcuts))

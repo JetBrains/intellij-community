@@ -1104,32 +1104,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       final IdeGlassPaneImpl glass = new IdeGlassPaneImpl(root);
       root.setGlassPane(glass);
 
-      WindowResizeListener resizeListener = new WindowResizeListener(
+      WindowResizeListenerEx resizeListener = new WindowResizeListenerEx(
+        glass,
         myComponent,
         myMovable ? JBUI.insets(4) : JBUI.insets(0, 0, 4, 4),
-        null) {
-        private Cursor myCursor;
-
-        @Override
-        protected void setCursor(@NotNull Component content, Cursor cursor) {
-          if (myCursor != cursor || myCursor != Cursor.getDefaultCursor()) {
-            glass.setCursor(cursor, this);
-            myCursor = cursor;
-
-            if (content instanceof JComponent) {
-              IdeGlassPaneImpl.savePreProcessedCursor((JComponent)content, content.getCursor());
-            }
-            super.setCursor(content, cursor);
-          }
-        }
-
-        @Override
-        protected void notifyResized() {
-          myResizeListeners.forEach(Runnable::run);
-        }
-      };
-      glass.addMousePreprocessor(resizeListener, this);
-      glass.addMouseMotionPreprocessor(resizeListener, this);
+        null);
+      resizeListener.install(this);
+      resizeListener.addResizeListeners(() -> {
+        myResizeListeners.forEach(Runnable::run);
+      });
       myResizeListener = resizeListener;
     }
 
@@ -1765,8 +1748,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
           }
         }
       };
-      myCaption.addMouseListener(moveListener);
-      myCaption.addMouseMotionListener(moveListener);
+      moveListener.installTo(myCaption);
       final MyContentPanel saved = myContent;
       Disposer.register(this, () -> {
         ListenerUtil.removeMouseListener(saved, moveListener);

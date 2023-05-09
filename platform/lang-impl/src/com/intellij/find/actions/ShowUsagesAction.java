@@ -995,9 +995,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     if (parent != null) {
       parent.remove(captionPanel);
       parent.add(headerPanel);
-      WindowMoveListener windowListener = new WindowMoveListener(headerPanel);
-      headerPanel.addMouseListener(windowListener);
-      headerPanel.addMouseMotionListener(windowListener);
+      new WindowMoveListener(headerPanel).installTo(headerPanel);
     }
 
     if (ExperimentalUI.isNewUI()) {
