@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -20,7 +19,6 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UElementKt;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UParameter;
 
@@ -50,11 +48,9 @@ public class SerializableCtorInspection extends DevKitUastInspectionBase {
     ProblemsHolder holder = createProblemsHolder(aClass, manager, isOnTheFly);
     for (UMethod constructor : getConstructors(aClass)) {
       if (!isAnnotatedWithPropertyMapping(constructor)) {
-        PsiElement constructorAnchor = UElementKt.getSourcePsiElement(constructor.getUastAnchor());
-        if (constructorAnchor != null) {
-          holder.registerProblem(constructorAnchor, DevKitBundle.message("inspection.serializable.constructor.message"),
-                                 createFixes(aClass, holder, constructor));
-        }
+        ProblemHolderUtilKt.registerUProblem(holder, constructor,
+                                             DevKitBundle.message("inspection.serializable.constructor.message"),
+                                             createFixes(aClass, holder, constructor));
       }
     }
     return holder.getResultsArray();

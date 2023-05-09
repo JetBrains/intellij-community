@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.lang.ParserDefinition
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.TokenType
@@ -67,8 +68,7 @@ internal class TokenSetInParserDefinitionInspection : DevKitUastInspectionBase(U
   }
 
   private fun reportField(field: UField, problemsHolder: ProblemsHolder) {
-    val anchorPsi = field.getAnchorPsi() ?: return
-    problemsHolder.registerProblem(anchorPsi, DevKitBundle.message("inspection.token.set.in.parser.definition"))
+    problemsHolder.registerUProblem(field, DevKitBundle.message("inspection.token.set.in.parser.definition"))
   }
 
   private fun UDeclaration.containsFieldAssignmentWithIllegalReferences(field: UField): Boolean {

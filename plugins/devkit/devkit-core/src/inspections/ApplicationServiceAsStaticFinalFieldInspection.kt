@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.lang.jvm.annotation.JvmAnnotationArrayValue
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue
 import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
@@ -43,8 +44,7 @@ class ApplicationServiceAsStaticFinalFieldInspection : DevKitUastInspectionBase(
           val classFqn = fieldTypeClass.qualifiedName ?: return true
 
           if (isLightApplicationService(fieldTypeClass) || isRegisteredApplicationService(holder.project, classFqn)) {
-            val anchor = node.sourcePsi ?: return true
-            holder.registerProblem(anchor, DevKitBundle.message("inspections.application.service.as.static.final.field.message"))
+            holder.registerUProblem(node, DevKitBundle.message("inspections.application.service.as.static.final.field.message"))
           }
           return true
         }

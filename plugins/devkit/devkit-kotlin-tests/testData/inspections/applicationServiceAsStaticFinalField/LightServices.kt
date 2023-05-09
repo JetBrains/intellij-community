@@ -2,13 +2,13 @@ import serviceDeclarations.*
 
 // -------- top-level declarations ---------
 
-<warning descr="Application service must not be assigned to a static final field">val myAppService1 = LightServiceAppAndProjectLevelAnnotation.getInstance()</warning>
+val <warning descr="Application service must not be assigned to a static final field">myAppService1</warning> = LightServiceAppAndProjectLevelAnnotation.getInstance()
 
-<warning descr="Application service must not be assigned to a static final field">val myAppService2 = LightServiceAppLevelAnnotation.getInstance()</warning>
+val <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = LightServiceAppLevelAnnotation.getInstance()
 
-<warning descr="Application service must not be assigned to a static final field">val myAppService3 = LightServiceDefaultAnnotation.getInstance()</warning>
+val <warning descr="Application service must not be assigned to a static final field">myAppService3</warning> = LightServiceDefaultAnnotation.getInstance()
 
-<warning descr="Application service must not be assigned to a static final field">val myAppService4 = LightServiceEmptyAnnotation.getInstance()</warning>
+val <warning descr="Application service must not be assigned to a static final field">myAppService4</warning> = LightServiceEmptyAnnotation.getInstance()
 
 // non final
 var myAppService5 = LightServiceAppAndProjectLevelAnnotation.getInstance()
@@ -25,13 +25,13 @@ class MyClass(val appService: LightServiceAppLevelAnnotation) {
   val myAppService5 = LightServiceAppAndProjectLevelAnnotation.getInstance()
 
   companion object {
-    <warning descr="Application service must not be assigned to a static final field">val myAppService1 = LightServiceAppAndProjectLevelAnnotation.getInstance()</warning>
+    val <warning descr="Application service must not be assigned to a static final field">myAppService1</warning> = LightServiceAppAndProjectLevelAnnotation.getInstance()
 
-    <warning descr="Application service must not be assigned to a static final field">val myAppService2 = LightServiceAppLevelAnnotation.getInstance()</warning>
+    val <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = LightServiceAppLevelAnnotation.getInstance()
 
-    <warning descr="Application service must not be assigned to a static final field">val myAppService3 = LightServiceDefaultAnnotation.getInstance()</warning>
+    val <warning descr="Application service must not be assigned to a static final field">myAppService3</warning> = LightServiceDefaultAnnotation.getInstance()
 
-    <warning descr="Application service must not be assigned to a static final field">val myAppService4 = LightServiceEmptyAnnotation.getInstance()</warning>
+    val <warning descr="Application service must not be assigned to a static final field">myAppService4</warning> = LightServiceEmptyAnnotation.getInstance()
 
     // non final
     var myAppService5 = LightServiceAppAndProjectLevelAnnotation.getInstance()
@@ -45,13 +45,13 @@ class MyClass(val appService: LightServiceAppLevelAnnotation) {
 // -------- object declarations ---------
 
 object MyObject {
-  <warning descr="Application service must not be assigned to a static final field">val myAppService1 = LightServiceAppAndProjectLevelAnnotation.getInstance()</warning>
+  val <warning descr="Application service must not be assigned to a static final field">myAppService1</warning> = LightServiceAppAndProjectLevelAnnotation.getInstance()
 
-  <warning descr="Application service must not be assigned to a static final field">val myAppService2 = LightServiceAppLevelAnnotation.getInstance()</warning>
+  val <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = LightServiceAppLevelAnnotation.getInstance()
 
-  <warning descr="Application service must not be assigned to a static final field">val myAppService3 = LightServiceDefaultAnnotation.getInstance()</warning>
+  val <warning descr="Application service must not be assigned to a static final field">myAppService3</warning> = LightServiceDefaultAnnotation.getInstance()
 
-  <warning descr="Application service must not be assigned to a static final field">val myAppService4 = LightServiceEmptyAnnotation.getInstance()</warning>
+  val <warning descr="Application service must not be assigned to a static final field">myAppService4</warning> = LightServiceEmptyAnnotation.getInstance()
 
   // non final
   var myAppService5 = LightServiceAppAndProjectLevelAnnotation.getInstance()

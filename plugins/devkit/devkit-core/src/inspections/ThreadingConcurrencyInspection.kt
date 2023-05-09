@@ -212,13 +212,7 @@ internal class ThreadingConcurrencyInspection(
                                 quickFixes: Array<LocalQuickFix> = LocalQuickFix.EMPTY_ARRAY,
                                 @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) messageKey: String,
                                 vararg params: Any) {
-      val uElement = when (uCallExpression.kind) {
-        UastCallKind.CONSTRUCTOR_CALL -> uCallExpression.classReference
-        else -> uCallExpression.methodIdentifier
-      }
-      val sourcePsi = uElement?.sourcePsi ?: return
-
-      problemsHolder.registerProblem(sourcePsi, DevKitBundle.message(messageKey, *params), *quickFixes)
+      problemsHolder.registerUProblem(uCallExpression, DevKitBundle.message(messageKey, *params), *quickFixes)
     }
   }
 

@@ -1,10 +1,10 @@
 import serviceDeclarations.RegisteredApplicationService
 import serviceDeclarations.RegisteredProjectService
 
-<warning descr="Application service must not be assigned to a static final field">// -------- top-level declarations ---------
-val myAppService1 = RegisteredApplicationService.getInstance()</warning>
+// -------- top-level declarations ---------
+val <warning descr="Application service must not be assigned to a static final field">myAppService1</warning> = RegisteredApplicationService.getInstance()
 
-<warning descr="Application service must not be assigned to a static final field">val myAppService2 = RegisteredApplicationService.getInstance()</warning>
+val <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = RegisteredApplicationService.getInstance()
 
 // non-final
 var myAppService3 = RegisteredApplicationService.getInstance()
@@ -20,9 +20,9 @@ class MyClass(val appService: RegisteredApplicationService) {
   val myAppService = RegisteredApplicationService.getInstance()
 
   companion object {
-    <warning descr="Application service must not be assigned to a static final field">val myAppService1 = RegisteredApplicationService.getInstance()</warning>
+    val <warning descr="Application service must not be assigned to a static final field">myAppService1</warning> = RegisteredApplicationService.getInstance()
 
-    <warning descr="Application service must not be assigned to a static final field">val myAppService2 = RegisteredApplicationService.getInstance()</warning>
+    val <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = RegisteredApplicationService.getInstance()
 
     // non-final
     var myAppService3 = RegisteredApplicationService.getInstance()
@@ -36,9 +36,9 @@ class MyClass(val appService: RegisteredApplicationService) {
 // -------- object declarations ---------
 
 object MyObject {
-  <warning descr="Application service must not be assigned to a static final field">val myAppService1 = RegisteredApplicationService.getInstance()</warning>
+  val <warning descr="Application service must not be assigned to a static final field">myAppService1</warning> = RegisteredApplicationService.getInstance()
 
-  <warning descr="Application service must not be assigned to a static final field">val myAppService2 = RegisteredApplicationService.getInstance()</warning>
+  val <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = RegisteredApplicationService.getInstance()
 
   // non-final
   var myAppService3 = RegisteredApplicationService.getInstance()

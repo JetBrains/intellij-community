@@ -32,7 +32,6 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
 
       override fun visitCallExpression(node: UCallExpression): Boolean {
         val retrievingExpression = node.uastParent as? UQualifiedReferenceExpression ?: return true
-        val anchor = retrievingExpression.sourcePsi ?: return true
         val serviceType = node.returnType as? PsiClassType ?: return true
         if (!COMPONENT_MANAGER_GET_SERVICE.uCallMatches(node)) return true
         val howServiceRetrieved = howServiceRetrieved(node) ?: return true
@@ -43,7 +42,7 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
         }
         else {
           val message = getMessage(howServiceRetrieved)
-          holder.registerProblem(anchor, message)
+          holder.registerUProblem(node, message)
         }
         return true
       }

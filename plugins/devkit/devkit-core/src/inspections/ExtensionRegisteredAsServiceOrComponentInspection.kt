@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.components.Service
 import com.intellij.psi.PsiClass
@@ -85,9 +86,8 @@ class ExtensionRegisteredAsServiceOrComponentInspection : DevKitUastInspectionBa
                               @InspectionMessage message: String,
                               manager: InspectionManager,
                               isOnTheFly: Boolean): Array<ProblemDescriptor?> {
-    val classPsiAnchor = uClass.uastAnchor?.sourcePsi!!
     val holder = createProblemsHolder(uClass, manager, isOnTheFly)
-    holder.registerProblem(classPsiAnchor, message)
+    holder.registerUProblem(uClass, message)
     return holder.resultsArray
   }
 }
