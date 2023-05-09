@@ -146,10 +146,9 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
     if (frame != null) {
       val loadingState = MutableLoadingState(loadingScope = loadingScope,
                                              finishScopeProvider = finishScopeProvider,
-                                             selfie = withContext(Dispatchers.IO) {
-                                               readProjectSelfie(projectWorkspaceId = options.projectWorkspaceId,
-                                                                 device = frame.graphicsConfiguration.device)
-                                             })
+                                             selfie = readProjectSelfie(projectWorkspaceId = options.projectWorkspaceId,
+                                                                        device = frame.graphicsConfiguration.device)
+      )
       val frameHelper = withContext(Dispatchers.EDT) {
         ProjectFrameHelper(frame = frame, loadingState = loadingState)
       }
@@ -184,10 +183,9 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
     val frameProducer = createNewProjectFrame(frameInfo = frameInfo)
     val loadingState = MutableLoadingState(loadingScope = loadingScope,
                                            finishScopeProvider = finishScopeProvider,
-                                           selfie = withContext(Dispatchers.IO) {
-                                             readProjectSelfie(projectWorkspaceId = options.projectWorkspaceId,
-                                                               device = frameProducer.deviceOrDefault)
-                                           })
+                                           selfie = readProjectSelfie(projectWorkspaceId = options.projectWorkspaceId,
+                                                                      device = frameProducer.deviceOrDefault)
+    )
     val frameHelper = withContext(Dispatchers.EDT) {
       val frameHelper = ProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
       // must be after preInit (frame decorator is required to set a full-screen mode)
@@ -489,10 +487,12 @@ internal fun createNewProjectFrame(frameInfo: FrameInfo?): ProjectFrameProducer 
   }
 }
 
-private fun readProjectSelfie(projectWorkspaceId: String?, device: GraphicsDevice): Image? {
+private suspend fun readProjectSelfie(projectWorkspaceId: String?, device: GraphicsDevice): Image? {
   if (projectWorkspaceId != null && ProjectSelfieUtil.isEnabled) {
     try {
-      return ProjectSelfieUtil.readProjectSelfie(projectWorkspaceId, device)
+      return withContext(Dispatchers.IO) {
+        ProjectSelfieUtil.readProjectSelfie(projectWorkspaceId, device)
+      }
     }
     catch (e: Throwable) {
       if (e.cause !is EOFException) {
