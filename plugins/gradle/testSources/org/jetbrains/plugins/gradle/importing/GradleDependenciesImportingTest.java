@@ -895,6 +895,26 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project.impl.main", "project.api.mySourceSet", DependencyScope.COMPILE);
   }
 
+  @Test
+  @TargetVersions("7.0+")
+  public void testProjectJarTaskWithUnresolvableProvider() throws Exception {
+    createProjectSubFile("settings.gradle", settingsScript(it -> {
+      it.setProjectName("project");
+    }));
+    createProjectSubFile("build.gradle", script(it -> {
+      it.withJavaPlugin();
+      it.addPostfix("""
+                      tasks.create('customJar', Jar) {
+                        // unresolvable provider
+                        from jar.archiveFile.map { it }
+                      }
+                      """);
+    }));
+    importProject();
+
+    assertModules("project", "project.main", "project.test");
+  }
+
   /**
    * At the moment, IDEA does not support depending on an artifact containing output of multiple source sets.
    * There is only one source set to choose as the module dependency.
