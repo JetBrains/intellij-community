@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -117,7 +117,7 @@ public abstract class IdeFrameDecorator {
         Component toFocus = frame.getMostRecentFocusOwner();
         Rectangle defaultBounds = device.getDefaultConfiguration().getBounds();
         try {
-          frame.setTogglingFullScreenInProgress(true);
+          frame.togglingFullScreenInProgress = true;
           rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
           frame.dispose();
           frame.setUndecorated(state);
@@ -148,7 +148,7 @@ public abstract class IdeFrameDecorator {
           }
         }
         EventQueue.invokeLater(() -> {
-          frame.setTogglingFullScreenInProgress(false);
+          frame.togglingFullScreenInProgress = false;
         });
         promise.complete(state);
       });

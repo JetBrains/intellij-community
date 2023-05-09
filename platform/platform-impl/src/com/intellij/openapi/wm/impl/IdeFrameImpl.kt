@@ -53,7 +53,8 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   var normalBounds: Rectangle? = null
 
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
-  var togglingFullScreenInProgress: Boolean = false
+  @JvmField
+  internal var togglingFullScreenInProgress: Boolean = false
 
   override fun getData(dataId: String): Any? = frameHelper?.getData(dataId)
 

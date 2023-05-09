@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.apple.eawt.Application;
@@ -96,7 +96,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       myDispatcher.addListener(new FSAdapter() {
         @Override
         public void windowEnteringFullScreen(FullScreenEvent event) {
-          frame.setTogglingFullScreenInProgress(true);
+          frame.togglingFullScreenInProgress = true;
           JRootPane rootPane = frame.getRootPane();
           if (rootPane != null && rootPane.getBorder() != null) {
             rootPane.setBorder(null);
@@ -106,7 +106,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
         @Override
         public void windowEnteredFullScreen(FullScreenEvent event) {
-          frame.setTogglingFullScreenInProgress(false);
+          frame.togglingFullScreenInProgress = false;
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = frame.getRootPane();
           if (rootPane != null) {
@@ -119,12 +119,12 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
         @Override
         public void windowExitingFullScreen(FullScreenEvent e) {
-          frame.setTogglingFullScreenInProgress(true);
+          frame.togglingFullScreenInProgress = true;
         }
 
         @Override
         public void windowExitedFullScreen(FullScreenEvent event) {
-          frame.setTogglingFullScreenInProgress(false);
+          frame.togglingFullScreenInProgress = false;
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = frame.getRootPane();
           if (!ExperimentalUI.isNewUI() || !MainToolbarKt.isToolbarInHeader(UISettings.getShadowInstance())) {
