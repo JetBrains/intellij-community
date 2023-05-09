@@ -108,7 +108,7 @@ private fun Int.roundToOneSignificantDigit(): Int {
 private class DaemonFusCollector : CounterUsagesCollector() {
   companion object {
     @JvmField
-    val GROUP: EventLogGroup = EventLogGroup("daemon", 3)
+    val GROUP: EventLogGroup = EventLogGroup("daemon", 4)
     @JvmField
     val ERRORS: IntEventField = EventFields.Int("errors")
     @JvmField
