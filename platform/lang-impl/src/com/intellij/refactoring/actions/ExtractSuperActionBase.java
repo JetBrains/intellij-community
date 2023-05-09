@@ -35,7 +35,8 @@ public abstract class ExtractSuperActionBase extends BasePlatformRefactoringActi
   }
 
   public static void removeFirstWordInMainMenu(AnAction action, @NotNull AnActionEvent e) {
-    if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
+    String place = e.getPlace();
+    if (place.equals(ActionPlaces.MAIN_MENU) || place.contains(ActionPlaces.EDITOR_FLOATING_TOOLBAR)) {
       String templateText = action.getTemplatePresentation().getText();
       if (templateText.startsWith("Extract") || templateText.startsWith("Introduce")) {
         e.getPresentation().setText(templateText.substring(templateText.indexOf(' ') + 1));

@@ -9,9 +9,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.EditorMouseEvent
-import com.intellij.openapi.editor.event.EditorMouseListener
-import com.intellij.openapi.editor.event.EditorMouseMotionListener
+import com.intellij.openapi.editor.event.*
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiEditorUtil
@@ -31,10 +29,13 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
   private val mouseListener = MouseListener()
   private val keyboardListener = KeyboardListener()
   private val mouseMotionListener = MouseMotionListener()
+  private val selectionListener = EditorSelectionListener()
+  private val documentListener = DocumentChangeListener()
 
   private var hint: LightweightHint? = null
   private var buttonSize: Int by Delegates.notNull()
   private var lastSelection: String? = null
+  private var isJustClosed = false
 
   init {
     registerListeners()
@@ -47,14 +48,17 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
   }
 
   fun showIfHidden() {
-    if (hint != null || !canBeShownAtCurrentSelection()) {
+    if (hint != null || !canBeShownAtCurrentSelection() || (!shouldReviveAfterClose() && isJustClosed)) {
       return
     }
     createActionToolbar(editor.contentComponent) { toolbar ->
       val hint = hint ?: return@createActionToolbar
       hint.component.add(toolbar.component, BorderLayout.CENTER)
       showOrUpdateLocation(hint)
-      hint.addHintListener { this@FloatingToolbar.hint = null }
+      hint.addHintListener {
+        this@FloatingToolbar.hint = null
+        isJustClosed = true
+      }
     }
     hint = LightweightHint(JPanel(BorderLayout())).apply {
       setForceShowAsPopup(true)
@@ -93,12 +97,16 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
     editor.addEditorMouseListener(mouseListener)
     editor.addEditorMouseMotionListener(mouseMotionListener)
     editor.contentComponent.addKeyListener(keyboardListener)
+    editor.selectionModel.addSelectionListener(selectionListener)
+    editor.document.addDocumentListener(documentListener)
   }
 
   private fun unregisterListeners() {
     editor.removeEditorMouseListener(mouseListener)
     editor.removeEditorMouseMotionListener(mouseMotionListener)
     editor.contentComponent.removeKeyListener(keyboardListener)
+    editor.selectionModel.removeSelectionListener(selectionListener)
+    editor.document.removeDocumentListener(documentListener)
   }
 
   private fun canBeShownAtCurrentSelection(): Boolean {
@@ -114,7 +122,11 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
     return false
   }
 
-  private fun getHintPosition(hint: LightweightHint): Point {
+  protected open fun shouldReviveAfterClose(): Boolean = true
+
+  protected open fun shouldSurviveDocumentChange(): Boolean = true
+
+  protected open fun getHintPosition(hint: LightweightHint): Point {
     val hintPos = HintManagerImpl.getInstanceImpl().getHintPosition(hint, editor, HintManager.DEFAULT)
     // because of `hint.setForceShowAsPopup(true)`, HintManager.ABOVE does not place the hint above
     // the hint remains on the line, so we need to move it up ourselves
@@ -171,6 +183,20 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
       }
       if (hoverSelected) {
         showIfHidden()
+      }
+    }
+  }
+
+  private inner class EditorSelectionListener : SelectionListener {
+    override fun selectionChanged(e: SelectionEvent) {
+      isJustClosed = false
+    }
+  }
+
+  private inner class DocumentChangeListener : BulkAwareDocumentListener {
+    override fun documentChanged(event: DocumentEvent) {
+      if (!shouldSurviveDocumentChange()) {
+        hideIfShown()
       }
     }
   }

@@ -484,6 +484,17 @@
     </group>
 
     <!-- Code -->
+    <group id="Floating.CodeToolbar" popup="false">
+      <group id="Floating.CodeToolbar.Extract" popup="true" class="com.intellij.ui.codeFloatingToolbar.DropdownActionGroup"/>
+      <group id="Floating.CodeToolbar.Surround" popup="true" class="com.intellij.ui.codeFloatingToolbar.DropdownActionGroup">
+        <action id="Floating.CodeToolbar.SurroundWithTryCatch" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
+        <action id="Floating.CodeToolbar.SurroundWithTryCatchFinally" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
+        <action id="Floating.CodeToolbar.SurroundWithIf" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
+      </group>
+      <group id="Floating.CodeToolbar.Configure" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup">
+        <action id="Floating.CodeToolbar.Disable" class="com.intellij.ui.codeFloatingToolbar.DisableCodeFloatingToolbarAction" />
+      </group>
+    </group>
     <group id="CodeMenu" popup="true">
       <reference ref="OverrideMethods"/>
       <reference ref="ImplementMethods"/>
@@ -580,12 +591,16 @@
       <separator/>
 
       <group id="CommentGroup">
-        <action id="CommentByLineComment" class="com.intellij.codeInsight.generation.actions.CommentByLineCommentAction"/>
+        <action id="CommentByLineComment" class="com.intellij.codeInsight.generation.actions.CommentByLineCommentAction"
+                icon="AllIcons.Actions.InlayRenameInComments">
+          <add-to-group group-id="Floating.CodeToolbar" anchor="after" relative-to-action="Floating.CodeToolbar.Surround" />
+        </action>
         <action id="CommentByBlockComment" class="com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction"/>
       </group>
 
       <group id="CodeFormatGroup">
         <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction">
+          <add-to-group group-id="Floating.CodeToolbar" anchor="after" relative-to-action="CommentByLineComment" />
           <synonym key="action.ReformatCode.synonym1"/>
         </action>
         <action id="ShowReformatFileDialog" class="com.intellij.codeInsight.actions.ShowReformatFileDialog"/>
@@ -628,14 +643,22 @@
       <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
       <separator/>
       <group id="IntroduceActionsGroup" popup="true" class="com.intellij.ide.actions.PopupInMainMenuActionGroup">
-        <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
-        <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
+        <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction">
+          <add-to-group group-id="Floating.CodeToolbar.Extract" />
+        </action>
+        <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction">
+          <add-to-group group-id="Floating.CodeToolbar.Extract" />
+        </action>
         <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
-        <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction"/>
+        <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction">
+          <add-to-group group-id="Floating.CodeToolbar.Extract" />
+        </action>
         <separator/>
         <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction"/>
         <separator/>
-        <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
+        <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction">
+          <add-to-group group-id="Floating.CodeToolbar.Extract" anchor="first" />
+        </action>
         <separator/>
         <action id="ExtractClass" class="com.intellij.refactoring.actions.ExtractClassAction"/>
         <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
