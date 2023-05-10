@@ -37,23 +37,6 @@ public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implemen
     return true;
   }
 
-  public interface LongRunningTask extends AutoCloseable {
-    void incrementFinishedRequests();
-
-    int getFinishedRequests();
-
-    int getTotalRequests();
-
-    void updateTotalRequests(int newValue);
-
-    void cancel();
-
-    boolean isCanceled();
-
-    @Override
-    void close();
-  }
-
   @NotNull
   protected LongRunningTask newLongRunningTask(@NotNull String id, int totalRequests) {
     return new LongRunningTaskImpl(id, totalRequests);
