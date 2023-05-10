@@ -9,8 +9,11 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.FSRecordsOracle.LogDistanceEvaluator
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsChronicle.LookupResult.Companion.toState
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.bind
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.mapCases
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState
 
 /**
  * Symbolises an external knowledge about the state of VFS at a specified point in time
@@ -60,6 +63,18 @@ class FSRecordsOracle(
         if (it == 0) null else OracledVirtualFileSnapshot(it)
       }
 
+      override fun getContent(): DefinedState<ByteArray?> = contentRecordId.bind {
+        if (it == 0) return@bind State.ready<ByteArray?>(null)
+        val payloadReader = vfsLog.query { payloadStorage::readAt }
+        val lookup = VfsChronicle.lookupContentOperation(point(), it, payloadReader, TraverseDirection.PLAY)
+        if (lookup.found) {
+          // some operation took place in between (point(), end()) so FSRecords may not contain value as at point()
+          return@bind VfsChronicle.restoreContent(point(), it, payloadReader)
+        }
+        // content at point() is the same as in FSRecords
+        return@bind fsRecords.readContentById(it).readAllBytes().let(State::ready)
+      }.observeState()
+
       override val length: Property<Long> = OracledProp(
         queryLog = {
           VfsChronicle.lookupLength(point(), fileId, direction = TraverseDirection.PLAY).toState()
@@ -92,10 +107,10 @@ class FSRecordsOracle(
       )
 
       private inner class OracledProp<T>(
-        val queryLog: () -> State.DefinedState<T>,
+        val queryLog: () -> DefinedState<T>,
         val queryFsRecords: () -> T,
       ) : Property<T>() {
-        override fun compute(): State.DefinedState<T> {
+        override fun compute(): DefinedState<T> {
           if (!distanceEvaluator.isWorthLookingUpFrom(point())) return State.notAvailable()
           /* tricky: we must return the value at point(), so if queryLog() returns Ready, then the property has been changed in
              between (point(), end()) of log, so value at point() may not be the same as it is in FSRecords */

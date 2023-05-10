@@ -27,6 +27,8 @@ interface VfsSnapshot {
     val name: Property<String>
     val parent: Property<VirtualFileSnapshot?>
 
+    fun getContent(): DefinedState<ByteArray?>
+
     abstract class Property<T> {
       var state: State = State.UnknownYet
         protected set
@@ -52,7 +54,7 @@ interface VfsSnapshot {
       inline fun <R> observe(onNotAvailable: (cause: Throwable) -> R, onReady: (value: T) -> R): R =
         observeState().mapCases(onNotAvailable, onReady)
 
-      fun get(): T = observe(onNotAvailable = { throw IllegalStateException("property expected to be Ready") }) { it }
+      fun get(): T = observe(onNotAvailable = { throw IllegalStateException("property expected to be Ready", it.cause) }) { it }
       fun getOrNull(): T? = observe(onNotAvailable = { null }) { it }
 
       companion object {
@@ -77,21 +79,25 @@ interface VfsSnapshot {
       sealed interface State {
         object UnknownYet : State
 
-        sealed interface DefinedState<T> : State
+        sealed interface DefinedState<out T> : State
+
+        /**
+         * Use [NotEnoughInformationCause] to designate a situation when there is not enough data to succeed the recovery
+         * (though the process went normal). Use [VfsRecoveryException] if an exception occurs during the recovery process and it is
+         * considered not normal.
+         */
         class NotAvailable<T>(
-          // TODO: it's better to ensure a correct cause is always specified. It might be desired to know whether the cause
-          //       is a lack of information or some other exception (e.g. IOException) that should treated differently.
-          //       Such logic needs to be carefully adjusted along the computation paths if the need for it arises
-          val cause: Throwable = UnspecifiedNotAvailableCause
+          val cause: NotEnoughInformationCause
         ) : DefinedState<T> {
           override fun toString(): String = "N/A (cause=$cause)"
         }
+
         class Ready<T>(val value: T) : DefinedState<T> {
           override fun toString(): String = value.toString()
         }
 
         companion object {
-          fun <T> notAvailable(cause: Throwable = UnspecifiedNotAvailableCause) = NotAvailable<T>(cause)
+          fun <T> notAvailable(cause: NotEnoughInformationCause = UnspecifiedNotAvailableException) = NotAvailable<T>(cause)
           fun <T> ready(value: T) = Ready(value)
 
 
@@ -118,15 +124,10 @@ interface VfsSnapshot {
             null -> other()
           }
 
-          abstract class GenericNotAvailableException(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
-          object UnspecifiedNotAvailableCause : GenericNotAvailableException("property value is not available") // TODO delete and fix usages
-          /* TODO
-          abstract class GenericNotAvailableCause(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
-          abstract class GenericRecoveryFailureCause(message: String? = null, cause: Throwable? = null) : GenericNotAvailableCause(message, cause)
-          abstract class GenericNotEnoughInformationCause(message: String? = null, cause: Throwable? = null) : GenericNotAvailableCause(message, cause)
-          open class NotEnoughInformationCause(message: String = "not enough information to recover the property",
-                                              cause: Throwable? = null) : GenericNotEnoughInformationCause(message, cause)
-          */
+          sealed class GenericNotAvailableException(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
+          open class NotEnoughInformationCause(message: String, cause: NotEnoughInformationCause? = null) : GenericNotAvailableException(message, cause)
+          object UnspecifiedNotAvailableException : NotEnoughInformationCause("property value is not available") // TODO delete and fix usages
+          open class VfsRecoveryException(message: String? = null, cause: Throwable? = null) : GenericNotAvailableException(message, cause)
         }
       }
     }

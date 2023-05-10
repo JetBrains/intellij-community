@@ -2,12 +2,14 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine
 
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
+import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef
 import java.lang.ref.SoftReference
 
 class VfsTimeMachine(
   zeroIterator: OperationLogStorage.Iterator,
   private val oracle: VfsStateOracle? = null,
-  private val id2name: (Int) -> String?
+  private val id2name: (Int) -> String?,
+  private val payloadReader: (PayloadRef) -> ByteArray?
 ) {
   private val cache = sortedMapOf<Long, SoftReference<VfsSnapshot>>()
   private val zeroLayer = NotAvailableVfsSnapshot(zeroIterator) // hard-reference so it won't be GCed from cache
@@ -18,7 +20,7 @@ class VfsTimeMachine(
 
   fun getSnapshot(point: OperationLogStorage.Iterator): VfsSnapshot = synchronized(this) {
     cache[point.getPosition()]?.get()?.let { return it }
-    val snapshot = CacheAwareVfsSnapshot(point, id2name, ::closestPrecedingCachedSnapshot, oracle)
+    val snapshot = CacheAwareVfsSnapshot(point, id2name, payloadReader, ::closestPrecedingCachedSnapshot, oracle)
     cache[point.getPosition()] = SoftReference(snapshot)
     return snapshot
   }

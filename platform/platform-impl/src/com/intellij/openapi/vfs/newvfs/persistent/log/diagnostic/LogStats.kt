@@ -13,9 +13,11 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.FSRecordsOracle
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsTimeMachine
 import com.intellij.util.ExceptionUtil
 import kotlinx.coroutines.runBlocking
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -164,6 +166,8 @@ private fun single(log: VfsLog) {
 }
 
 
+private typealias Diff = Pair<List<String>, List<String>>
+
 @OptIn(ExperimentalTime::class)
 private fun vFileEventIterCheck(log: VfsLog,
                                 id2name: (Int) -> String?,
@@ -174,10 +178,28 @@ private fun vFileEventIterCheck(log: VfsLog,
 
   val vfsTimeMachine = VfsTimeMachine(log.query { operationLogStorage.begin() },
                                       id2name = id2name,
+                                      payloadReader = log.query { payloadStorage::readAt },
                                       oracle = fsRecordsOracle?.let { it::getSnapshot })
 
   fun VfsSnapshot.VirtualFileSnapshot.represent(): String =
     "file: name=$name parent=$parentId id=$fileId ts=$timestamp len=$length flags=$flags contentId=$contentRecordId attrId=$attributesRecordId"
+
+  fun buildDiff(textBefore: String, textAfter: String): Diff {
+    val linesBefore = textBefore.strip().split("\n").toMutableList()
+    val linesAfter = textAfter.strip().split("\n").toMutableList()
+    while (linesBefore.isNotEmpty() && linesAfter.isNotEmpty() && linesBefore[0] == linesAfter[0]) {
+      linesBefore.removeAt(0)
+      linesAfter.removeAt(0)
+    }
+    while (linesBefore.isNotEmpty() && linesAfter.isNotEmpty() && linesBefore.last() == linesAfter.last()) {
+      linesBefore.removeAt(linesBefore.size - 1)
+      linesAfter.removeAt(linesAfter.size - 1)
+    }
+    return linesBefore to linesAfter
+  }
+
+  fun Diff.represent() = if (first.isEmpty() && second.isEmpty()) "No diff" else
+    "Diff:\n" + first.joinToString("\n") { "- $it" } + "\n" + second.joinToString("\n") { "+ $it" }
 
   val time = measureTime {
     log.query {
@@ -191,7 +213,8 @@ private fun vFileEventIterCheck(log: VfsLog,
             rec.iterator().next() // read it
           }
           is ReadResult.VFileEventRange -> {
-            val snapshot = vfsTimeMachine.getSnapshot(rec.begin())
+            val snapshotBefore = vfsTimeMachine.getSnapshot(rec.begin())
+            val snapshotAfter = vfsTimeMachine.getSnapshot(rec.end())
             vfileEvents++
             println()
             println(rec.startTag)
@@ -199,17 +222,31 @@ private fun vFileEventIterCheck(log: VfsLog,
               VfsOperationTag.VFILE_EVENT_MOVE -> {
                 val startOp =
                   (rec.begin().next() as OperationReadResult.Valid).operation as VfsOperation.VFileEventOperation.EventStart.Move
-                val file = snapshot.getFileById(startOp.fileId)
+                val file = snapshotBefore.getFileById(startOp.fileId)
                 println(file.represent())
-                val oldParent = snapshot.getFileById(startOp.oldParentId)
-                val newParent = snapshot.getFileById(startOp.newParentId)
+                val oldParent = snapshotBefore.getFileById(startOp.oldParentId)
+                val newParent = snapshotBefore.getFileById(startOp.newParentId)
                 println("MOVE FROM PARENT ${oldParent.name} to ${newParent.name}")
               }
               VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE -> {
                 val startOp =
                   (rec.begin().next() as OperationReadResult.Valid).operation as VfsOperation.VFileEventOperation.EventStart.ContentChange
-                val file = snapshot.getFileById(startOp.fileId)
-                println(file.represent())
+                val fileBefore = snapshotBefore.getFileById(startOp.fileId)
+                val fileAfter = snapshotAfter.getFileById(startOp.fileId)
+                println(fileBefore.represent())
+                val contentBefore = fileBefore.getContent()
+                val contentAfter = fileAfter.getContent()
+                if (contentBefore is State.Ready && contentAfter is State.Ready) {
+                  val bytesBefore = contentBefore.value ?: ByteArray(0)
+                  val bytesAfter = contentAfter.value ?: ByteArray(0)
+                  println(buildDiff(bytesBefore.toString(StandardCharsets.UTF_8), bytesAfter.toString(StandardCharsets.UTF_8)).represent())
+                }
+                else {
+                  println("content before:")
+                  println(contentBefore)
+                  println("content after:")
+                  println(contentAfter)
+                }
               }
               else -> {}
             }

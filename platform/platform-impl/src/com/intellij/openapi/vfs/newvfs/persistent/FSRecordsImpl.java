@@ -1008,7 +1008,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  @NotNull DataInputStream readContentById(int contentId) {
+  public @NotNull DataInputStream readContentById(int contentId) {
     try {
       return contentAccessor.readContentDirectly(contentId);
     }

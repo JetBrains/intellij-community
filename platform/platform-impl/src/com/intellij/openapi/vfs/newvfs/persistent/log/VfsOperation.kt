@@ -270,6 +270,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
   }
 
   sealed class AttributesOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {
+    // TODO: maybe attribute version should also saved
     class WriteAttribute(val fileId: Int, val attributeIdEnumerated: Int, val attrDataPayloadRef: PayloadRef, result: OperationResult<Unit>)
       : AttributesOperation<Unit>(VfsOperationTag.ATTR_WRITE_ATTR, result) {
       internal companion object : Serializer<WriteAttribute> {
