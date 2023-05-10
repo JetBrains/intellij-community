@@ -664,32 +664,6 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     return this.getToolTipText();
   }
 
-  /** Redispatch an IDE {@link CaretEvent} to a Swing {@link javax.swing.event.CaretListener} */
-  private void fireJTextComponentCaretChange(final CaretEvent event) {
-    javax.swing.event.CaretEvent swingEvent = new javax.swing.event.CaretEvent(this) {
-      @Override
-      public int getDot() {
-        Caret caret = event.getCaret();
-        if (caret != null) {
-          return caret.getOffset();
-        }
-        return 0;
-      }
-
-      @Override
-      public int getMark() {
-        Caret caret = event.getCaret();
-        if (caret != null) {
-          return caret.getLeadSelectionOffset();
-        }
-        return 0;
-      }
-    };
-    for (javax.swing.event.CaretListener listener : getCaretListeners()) {
-      listener.caretUpdate(swingEvent);
-    }
-  }
-
   /** Redispatch an IDE {@link DocumentEvent} to a Swing {@link javax.swing.event.DocumentListener} */
   private void fireJTextComponentDocumentChange(final DocumentEvent event) {
     //noinspection deprecation
@@ -1229,14 +1203,6 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         ApplicationManager.getApplication().assertIsDispatchThread();
         firePropertyChange(ACCESSIBLE_CARET_PROPERTY,
                            Integer.valueOf(myCaretPos), Integer.valueOf(dot));
-
-        if (SystemInfo.isMac) {
-          // For MacOSX we also need to fire a caret event to anyone listening
-          // to our Document, since *that* rather than the accessible property
-          // change is the only way to trigger a speech update
-          //fireJTextComponentCaretChange(dot, mark);
-          fireJTextComponentCaretChange(e);
-        }
 
         myCaretPos = dot;
       }
