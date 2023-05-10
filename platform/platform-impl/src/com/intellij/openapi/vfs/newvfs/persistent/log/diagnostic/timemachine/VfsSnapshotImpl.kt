@@ -31,7 +31,7 @@ class NotAvailableVfsSnapshot(point: OperationLogStorage.Iterator) : VfsSnapshot
     override val attributesRecordId: Property<Int> = NotAvailableProp()
     override val name: Property<String> = NotAvailableProp()
     override val parent: Property<VirtualFileSnapshot?> = NotAvailableProp()
-    override fun getContent(): State.DefinedState<ByteArray?> = State.notAvailable()
+    override fun getContent(): State.DefinedState<ByteArray> = State.notAvailable()
 
     class NotAvailableProp<T> : Property<T>() {
       override fun compute(): State.DefinedState<T> = State.notAvailable()
@@ -94,9 +94,8 @@ class CacheAwareVfsSnapshot(
       VfsChronicle.lookupAttributeRecordId(iter, fileId, condition = { iter != stopIter }).toState()
     }
 
-    override fun getContent(): State.DefinedState<ByteArray?> =
+    override fun getContent(): State.DefinedState<ByteArray> =
       contentRecordId.bind {
-        if (it == 0) return@bind State.ready<ByteArray?>(null)
         VfsChronicle.restoreContent(point(), it, payloadReader)
       }.observeState()
 

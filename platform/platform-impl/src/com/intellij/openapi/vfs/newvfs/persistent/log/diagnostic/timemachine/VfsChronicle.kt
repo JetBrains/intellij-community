@@ -211,6 +211,7 @@ object VfsChronicle {
                      contentRecordId: Int,
                      payloadReader: (PayloadRef) -> ByteArray?,
                      condition: (OperationLogStorage.Iterator) -> Boolean = { true }): State.DefinedState<ByteArray> {
+    if (contentRecordId == 0) return State.NotAvailable(NotEnoughInformationCause("VFS didn't cache file's content"))
     // TODO: payloadReader should provide diagnostic message on data n/a
     val restoreStack = mutableListOf<ContentOperation.Modify>()
     while (iterator.hasPrevious() && condition(iterator)) {

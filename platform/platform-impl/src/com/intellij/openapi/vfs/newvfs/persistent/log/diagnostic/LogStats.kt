@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.FSRecordsOracle
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsTimeMachine
 import com.intellij.util.ExceptionUtil
 import kotlinx.coroutines.runBlocking
@@ -234,12 +235,12 @@ private fun vFileEventIterCheck(log: VfsLog,
                 val fileBefore = snapshotBefore.getFileById(startOp.fileId)
                 val fileAfter = snapshotAfter.getFileById(startOp.fileId)
                 println(fileBefore.represent())
-                val contentBefore = fileBefore.getContent()
-                val contentAfter = fileAfter.getContent()
+                val contentBefore = fileBefore.getContent().fmap { it.toString(StandardCharsets.UTF_8) }
+                val contentAfter = fileAfter.getContent().fmap { it.toString(StandardCharsets.UTF_8) }
                 if (contentBefore is State.Ready && contentAfter is State.Ready) {
-                  val bytesBefore = contentBefore.value ?: ByteArray(0)
-                  val bytesAfter = contentAfter.value ?: ByteArray(0)
-                  println(buildDiff(bytesBefore.toString(StandardCharsets.UTF_8), bytesAfter.toString(StandardCharsets.UTF_8)).represent())
+                  val textBefore = contentBefore.value
+                  val textAfter = contentAfter.value
+                  println(buildDiff(textBefore, textAfter).represent())
                 }
                 else {
                   println("content before:")

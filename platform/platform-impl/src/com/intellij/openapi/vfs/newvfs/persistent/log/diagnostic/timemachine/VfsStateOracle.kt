@@ -63,8 +63,7 @@ class FSRecordsOracle(
         if (it == 0) null else OracledVirtualFileSnapshot(it)
       }
 
-      override fun getContent(): DefinedState<ByteArray?> = contentRecordId.bind {
-        if (it == 0) return@bind State.ready<ByteArray?>(null)
+      override fun getContent(): DefinedState<ByteArray> = contentRecordId.bind {
         val payloadReader = vfsLog.query { payloadStorage::readAt }
         val lookup = VfsChronicle.lookupContentOperation(point(), it, payloadReader, TraverseDirection.PLAY)
         if (lookup.found) {

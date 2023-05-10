@@ -27,7 +27,7 @@ interface VfsSnapshot {
     val name: Property<String>
     val parent: Property<VirtualFileSnapshot?>
 
-    fun getContent(): DefinedState<ByteArray?>
+    fun getContent(): DefinedState<ByteArray>
 
     abstract class Property<T> {
       var state: State = State.UnknownYet
