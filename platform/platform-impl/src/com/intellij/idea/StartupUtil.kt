@@ -205,6 +205,7 @@ ${dumpCoroutines(stripDump = false)}
 
   // async - handle error separately
   val telemetryInitJob = async {
+    lockSystemDirsJob.join()
     appInfoDeferred.join()
     runActivity("opentelemetry configuration") {
       TelemetryTracer.getInstance()
