@@ -2,18 +2,14 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
@@ -24,7 +20,6 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityWithSymbolicId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporterKt;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
@@ -32,7 +27,10 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
@@ -498,45 +496,4 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     });
   }
 
-  @Test
-  public void testUserPropertiesCanBeCustomizedByMavenImporters() {
-    Disposable disposable = Disposer.newDisposable();
-    try {
-      ExtensionTestUtil.maskExtensions(MavenImporter.EXTENSION_POINT_NAME,
-                                       Collections.<MavenImporter>singletonList(new NameSettingMavenImporter("name-from-properties")),
-                                       disposable);
-      importProject("""
-                      <groupId>test</groupId>
-                      <artifactId>project</artifactId>
-                      <version>1</version>
-                      <name>${myName}</name>
-                      """);
-    }
-    finally {
-      Disposer.dispose(disposable);
-    }
-
-    MavenProject project = myProjectsManager.findProject(new MavenId("test", "project", "1"));
-    assertNotNull(project);
-    assertEquals("name-from-properties", project.getName());
-  }
-
-  private static class NameSettingMavenImporter extends MavenImporter {
-    private final String myName;
-
-    NameSettingMavenImporter(String name) {
-      super("gid", "id");
-      myName = name;
-    }
-
-    @Override
-    public void customizeUserProperties(Project project, MavenProject mavenProject, Properties properties) {
-      properties.setProperty("myName", myName);
-    }
-
-    @Override
-    public boolean isApplicable(MavenProject mavenProject) {
-      return true;
-    }
-  }
 }

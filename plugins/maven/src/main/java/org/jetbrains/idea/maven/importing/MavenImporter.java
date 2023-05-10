@@ -200,8 +200,4 @@ public abstract class MavenImporter {
     return MavenJDOMUtil.findChildValueByPath(getGoalConfig(p, goal), path);
   }
 
-  /**
-   * Override this method if you'd like control over properties used by Maven, e.g. for pom interpolation.
-   */
-  public void customizeUserProperties(Project project, MavenProject mavenProject, Properties properties) { }
 }

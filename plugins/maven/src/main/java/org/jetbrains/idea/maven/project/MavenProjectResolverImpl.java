@@ -51,9 +51,6 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
         Properties userProperties = new Properties();
         for (MavenProject mavenProject : mavenProjectsInBaseDir) {
           mavenProject.setConfigFileError(null);
-          for (MavenImporter mavenImporter : MavenImporter.getSuitableImporters(mavenProject)) {
-            mavenImporter.customizeUserProperties(myProject, mavenProject, userProperties);
-          }
         }
         embedder.customizeForResolve(console, process, updateSnapshots, tree.getWorkspaceMap(), userProperties);
         var projectsWithUnresolvedPluginsChunk = doResolve(mavenProjectsInBaseDir, tree, generalSettings, embedder, process);
