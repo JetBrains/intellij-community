@@ -249,6 +249,7 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
 internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {
   return IdeFrameDecorator.isCustomDecorationAvailable() &&
          (SystemInfoRt.isMac || (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle))
+         || IdeRootPane.hideNativeLinuxTitle && !settings.separateMainMenu
 }
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))

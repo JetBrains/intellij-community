@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
@@ -151,6 +152,9 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
 
   fun updateColor() {
     val color = headerContent.background
+    if (IdeRootPane.hideNativeLinuxTitle) {
+      setMenuColor(ideMenu, color)
+    }
     expandedMenuBar?.background = color
     @Suppress("UseJBColor")
     shadowComponent.background = Color(color.red, color.green, color.blue, ALPHA)

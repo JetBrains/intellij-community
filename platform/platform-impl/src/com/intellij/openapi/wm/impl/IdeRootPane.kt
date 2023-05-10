@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarCentralWidgetProvider
@@ -150,6 +151,15 @@ open class IdeRootPane internal constructor(frame: JFrame,
         )
         layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
       }
+      else if (hideNativeLinuxTitle) {
+        frame.isUndecorated = true
+        val customFrameTitlePane = ToolbarFrameHeader(frame = frame)
+        helper = DecoratedHelper(
+          customFrameTitlePane = customFrameTitlePane,
+          selectedEditorFilePath = null
+        )
+        layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
+      }
       else {
         helper = UndecoratedHelper
       }
@@ -163,6 +173,12 @@ open class IdeRootPane internal constructor(frame: JFrame,
     val glassPane = IdeGlassPaneImpl(rootPane = this, loadingState = loadingState)
     setGlassPane(glassPane)
     glassPaneInitialized = true
+
+    if (hideNativeLinuxTitle) {
+      WindowResizeListenerEx(glassPane, frame, JBUI.insets(4), null)
+        .install(parentDisposable)
+    }
+
     if (frame is IdeFrameImpl) {
       putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, true)
     }
@@ -196,7 +212,9 @@ open class IdeRootPane internal constructor(frame: JFrame,
      * Returns true if menu should be placed in toolbar instead of menu bar
      */
     internal val isMenuButtonInToolbar: Boolean
-      get() = SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && !UISettings.shadowInstance.separateMainMenu
+      get() = SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && !UISettings.shadowInstance.separateMainMenu && !hideNativeLinuxTitle
+
+    internal val hideNativeLinuxTitle = SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && Registry.`is`("ide.linux.hide.native.title")
 
     internal fun customizeRawFrame(frame: IdeFrameImpl) {
       // some rootPane is required
@@ -400,7 +418,8 @@ open class IdeRootPane internal constructor(frame: JFrame,
                   || (!IdeFrameDecorator.isCustomDecorationActive()
                       && !globalMenuVisible
                       && uiSettings.showMainMenu
-                      && (!isMenuButtonInToolbar || shouldMinimize && isNewToolbar))
+                      && (!isMenuButtonInToolbar || shouldMinimize && isNewToolbar)
+                      && !hideNativeLinuxTitle)
 
     if (menuBar != null && visible != menuBar.isVisible) {
       menuBar.isVisible = visible

@@ -9,6 +9,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.AdjustableSizeCardLayout
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
@@ -16,6 +17,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCusto
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
+import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.gridLayout.GridLayout
@@ -31,9 +33,9 @@ import java.awt.*
 import java.awt.GridBagConstraints.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import javax.swing.Box
 import javax.swing.JComponent
 import javax.swing.JFrame
+import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.math.roundToInt
 
@@ -56,6 +58,10 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     isOpaque = false
   }
   private val customizer get() = ProjectWindowCustomizerService.getInstance()
+
+  init {
+    updateMenuBar()
+  }
 
   private fun createToolbarPlaceholder(): JPanel {
     val panel = JPanel(CardLayout())
@@ -196,6 +202,14 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     super.updateUI()
     if (parent != null) {
       updateToolbarFromMode()
+      updateMenuBar()
+    }
+  }
+
+  private fun updateMenuBar() {
+    if (IdeRootPane.hideNativeLinuxTitle) {
+      myMenuBar.border = null
+      setMenuColor(myMenuBar, myHeaderContent.background)
     }
   }
 
@@ -241,6 +255,7 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     super.updateActive()
 
     expandableMenu.updateColor()
+    updateMenuBar()
   }
 
   private fun getElementRect(comp: Component, rectProcessor: ((Rectangle) -> Unit)? = null): RelativeRectangle {
@@ -253,7 +268,7 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     val menuPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
       add(menuBarContainer, gb.next().fillCellVertically().weighty(1.0))
-      add(Box.createHorizontalGlue(), gb.next().weightx(1.0).fillCell())
+      add(createDraggableWindowArea(), gb.next().weightx(1.0).fillCell())
     }
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
@@ -275,5 +290,23 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     mode = if (isToolbarInHeader(settings)) ShowMode.TOOLBAR else ShowMode.MENU
     val layout = myHeaderContent.layout as CardLayout
     layout.show(myHeaderContent, mode.name)
+  }
+
+  private fun createDraggableWindowArea(): JComponent {
+    val result = JLabel()
+    if (IdeRootPane.hideNativeLinuxTitle) {
+      val windowMoveListener = WindowMoveListener(this)
+      windowMoveListener.installTo(result)
+      windowMoveListener.installTo(this)
+    }
+    return result
+  }
+}
+
+internal fun setMenuColor(menu: IdeMenuBar, color: Color?) {
+  if (IdeRootPane.hideNativeLinuxTitle) {
+    for (i in 0..menu.menuCount - 1) {
+      menu.getMenu(i).background = color
+    }
   }
 }
