@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton {
-  private static final DirectoryChooser.ItemWrapper NULL_WRAPPER = new DirectoryChooser.ItemWrapper(null, null);
+  private static final DirectoryChooser.ItemWrapper NULL_WRAPPER = DirectoryChooser.ItemWrapper.NULL;
 
   private PsiDirectory myInitialTargetDirectory;
   private List<VirtualFile> mySourceRoots;
@@ -228,7 +228,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     myAlarm.addRequest(() -> setComboboxModelInternal(initialTargetDirectorySourceRoot, oldSelection, forceIncludeAll), 300, ModalityState.stateForComponent(this));
   }
 
-  private static final DirectoryChooser.ItemWrapper NO_UPDATE_REQUIRED = new DirectoryChooser.ItemWrapper(null, null);
+  private static final DirectoryChooser.ItemWrapper NO_UPDATE_REQUIRED = DirectoryChooser.ItemWrapper.NULL;
   private void setComboboxModelInternal(final VirtualFile initialTargetDirectorySourceRoot,
                                         final VirtualFile oldSelection,
                                         final boolean forceIncludeAll) {
