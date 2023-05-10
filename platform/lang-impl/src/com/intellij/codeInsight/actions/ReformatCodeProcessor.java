@@ -123,7 +123,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   {
     PsiFile fileToProcess = ReadAction.compute(() -> ensureValid(file));
     if (fileToProcess == null) return new FutureTask<>(() -> false);
-    boolean doNotKeepLineBreaks = confirmSecondReformat(file);
+    boolean doNotKeepLineBreaks = ReadAction.compute(() -> confirmSecondReformat(file));
     return new FutureTask<>(() -> {
       Ref<Boolean> result = new Ref<>();
       CodeStyle.doWithTemporarySettings(myProject, CodeStyle.getSettings(fileToProcess), (settings) -> {
