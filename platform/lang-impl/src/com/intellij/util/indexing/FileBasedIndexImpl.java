@@ -1535,7 +1535,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (fileType instanceof SubstitutedFileType) {
       fileType = ((SubstitutedFileType)fileType).getFileType();
     }
-    if (isProjectOrWorkspaceFile(indexedFile.getFile(), fileType)) return Collections.emptyList();
+    if (isProjectOrWorkspaceFile(indexedFile.getFile(), fileType)) {
+      return new ArrayList<>(myRegisteredIndexes.getNotRequiringContentIndices());
+    }
 
     return getState().getFileTypesForIndex(fileType);
   }
