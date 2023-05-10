@@ -301,7 +301,6 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
   protected boolean shouldPaintFadeout() {
     return !Registry.is("ui.no.bangs.and.whistles", false)
-           && myTabs.getEffectiveLayout$intellij_platform_ide().isScrollable()
            && myTabs.isSingleRow() && !isHovered() && !isSelected();
   }
 
@@ -321,14 +320,15 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       }
 
       Rectangle contentRect = myLabelPlaceholder.getBounds();
-      // Fadeout for right side before pin/close button (needed only in side placements)
+      // Fadeout for right side before pin/close button (needed only in side placements and in squeezing layout)
       if (contentRect.width < myLabelPlaceholder.getPreferredSize().width + myTabs.getTabHGap()) {
         Rectangle rightRect =
           new Rectangle(contentRect.x + contentRect.width - width, borderThickness, width, myRect.height - 2 * borderThickness);
         paintGradientRect(g2d, rightRect, transparent, tabBg);
       }
       // Fadeout for right side
-      else if (myRect.width < getPreferredSize().width + myTabs.getTabHGap()) {
+      else if (myTabs.getEffectiveLayout$intellij_platform_ide().isScrollable() &&
+               myRect.width < getPreferredSize().width + myTabs.getTabHGap()) {
         Rectangle rightRect = new Rectangle(myRect.width - width, borderThickness, width, myRect.height - 2 * borderThickness);
         paintGradientRect(g2d, rightRect, transparent, tabBg);
       }
