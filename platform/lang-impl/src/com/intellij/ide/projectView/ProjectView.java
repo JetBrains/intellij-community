@@ -144,7 +144,15 @@ public abstract class ProjectView {
   public abstract void setManualOrder(@NotNull String paneId, boolean enabled);
 
   public abstract boolean isSortByType(String paneId);
+
   public abstract void setSortByType(@NotNull String paneId, final boolean sortByType);
+
+  public boolean isSortByTime(String paneId) {
+    return false;
+  }
+
+  public void setSortByTime(@NotNull String paneId, final boolean sortByTime) {
+  }
 
   public abstract AbstractProjectViewPane getCurrentProjectViewPane();
 

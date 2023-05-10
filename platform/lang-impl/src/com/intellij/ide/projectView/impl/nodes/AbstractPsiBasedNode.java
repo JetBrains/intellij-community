@@ -49,6 +49,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
+import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getFileAttributes;
 import static com.intellij.ide.util.treeView.NodeRenderer.getSimpleTextAttributes;
 
 /**
@@ -58,6 +59,7 @@ import static com.intellij.ide.util.treeView.NodeRenderer.getSimpleTextAttribute
  */
 public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value> implements ValidateableNode, StatePreservingNavigatable {
   private static final Logger LOG = Logger.getInstance(AbstractPsiBasedNode.class.getName());
+  private volatile long timestamp;
 
   protected AbstractPsiBasedNode(final Project project,
                                  @NotNull Value value,
@@ -140,6 +142,11 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   }
 
   @Override
+  public @Nullable Comparable<?> getTimeSortKey() {
+    return timestamp == 0 ? null : timestamp;
+  }
+
+  @Override
   protected void appendInplaceComments(@NotNull InplaceCommentAppender appender) {
     if (UISettings.getInstance().getShowInplaceComments()) {
       ProjectViewInplaceCommentProducerImplKt.appendInplaceComments(this, appender);
@@ -204,7 +211,17 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       updateImpl(data);
       data.setIcon(patchIcon(myProject, data.getIcon(true), getVirtualFile()));
       CompoundProjectViewNodeDecorator.get(myProject).decorate(this, data);
+      updateTimestamp();
     });
+  }
+
+  private void updateTimestamp() {
+    if (getSettings() instanceof ProjectViewSettings projectViewSettings && !projectViewSettings.isSortByTime()) {
+      timestamp = 0; // skip for performance reasons
+      return;
+    }
+    var attributes = getFileAttributes(getVirtualFile());
+    timestamp = attributes == null ? 0 : attributes.lastModifiedTime().toMillis();
   }
 
   @Iconable.IconFlags

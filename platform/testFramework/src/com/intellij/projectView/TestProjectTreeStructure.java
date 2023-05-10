@@ -20,6 +20,7 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
   protected boolean myHideEmptyMiddlePackages;
   protected boolean myFlattenPackages;
   private boolean myFlattenModules;
+  private boolean mySortByTime;
   protected boolean myShowLibraryContents = true;
 
   public TestProjectTreeStructure(@NotNull Project project, Disposable parentDisposable) {
@@ -78,6 +79,15 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
 
   public void setFlattenModules(boolean flattenModules) {
     myFlattenModules = flattenModules;
+  }
+
+  @Override
+  public boolean isSortByTime() {
+    return mySortByTime;
+  }
+
+  public void setSortByTime(boolean sortByTime) {
+    mySortByTime = sortByTime;
   }
 
   public void setHideEmptyMiddlePackages(boolean hideEmptyMiddlePackages) {

@@ -1024,6 +1024,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return true;
   }
 
+  @ApiStatus.Internal
+  public boolean supportsSortByTime() {
+    return true;
+  }
+
   @NotNull
    private static Color getFileForegroundColor(@NotNull Project project, @NotNull VirtualFile file) {
     FileEditorManager manager = FileEditorManager.getInstance(project);

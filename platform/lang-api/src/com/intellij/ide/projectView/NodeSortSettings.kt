@@ -8,4 +8,5 @@ data class NodeSortSettings(
   val isManualOrder: Boolean,
   val isFoldersAlwaysOnTop: Boolean,
   val isSortByType: Boolean,
+  val isSortByTime: Boolean,
 )

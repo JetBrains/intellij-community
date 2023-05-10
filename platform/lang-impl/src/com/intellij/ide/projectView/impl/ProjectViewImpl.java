@@ -516,6 +516,28 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   };
 
+  private final Option mySortByTime = new Option() {
+    @Override
+    public boolean isEnabled(@NotNull AbstractProjectViewPane pane) {
+      return pane.supportsSortByTime();
+    }
+
+    @Override
+    public boolean isSelected() {
+      return myCurrentState.getSortByTime();
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+      if (myProject.isDisposed()) return;
+      boolean updated = selected != isSelected();
+      myCurrentState.setSortByTime(selected);
+      getDefaultState().setSortByTime(selected);
+      getGlobalOptions().setSortByTime(selected);
+      if (updated) updatePanes(true);
+    }
+  };
+
   private String myCurrentViewId;
   private String myCurrentViewSubId;
   // - options
@@ -1825,8 +1847,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
+  public boolean isSortByTime(String paneId) {
+    return mySortByTime.isSelected() && mySortByTime.isEnabled(paneId);
+  }
+
+  @Override
   public void setSortByType(@NotNull String paneId, final boolean sortByType) {
     if (mySortByType.isEnabled(paneId)) mySortByType.setSelected(sortByType);
+  }
+
+  @Override
+  public void setSortByTime(@NotNull String paneId, boolean sortByTime) {
+    if (mySortByTime.isEnabled(paneId)) mySortByTime.setSelected(sortByTime);
   }
 
   boolean isSelectOpenedFileEnabled() {
@@ -2017,6 +2049,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     static final class SortByType extends Action {
       SortByType() {
         super(view -> view.mySortByType);
+      }
+    }
+
+    static final class SortByTime extends Action {
+      SortByTime() {
+        super(view -> view.mySortByTime);
       }
     }
   }

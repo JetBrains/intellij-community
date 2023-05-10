@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.projectView.NodeSortSettings;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.NodeSortSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -49,7 +49,7 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
 
     if (descriptor1 instanceof ProjectViewNode<?> node1 && descriptor2 instanceof ProjectViewNode<?> node2) {
 
-      NodeSortSettings settings = new NodeSortSettings(isManualOrder(), isFoldersAlwaysOnTop(), isSortByType());
+      NodeSortSettings settings = new NodeSortSettings(isManualOrder(), isFoldersAlwaysOnTop(), isSortByType(), isSortByTime());
       int sortResult = node1.getSortOrder(settings).compareTo(node2.getSortOrder(settings));
       if (sortResult != 0) return sortResult;
 
@@ -74,15 +74,21 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
         }
       }
 
-      if (settings.isSortByType()) {
-        final Comparable typeSortKey1 = node1.getTypeSortKey();
-        final Comparable typeSortKey2 = node2.getTypeSortKey();
+      if (settings.isSortByTime()) {
+        final Comparable<?> timeSortKey1 = node1.getTimeSortKey();
+        final Comparable<?> timeSortKey2 = node2.getTimeSortKey();
+        int result = compare(timeSortKey1, timeSortKey2);
+        if (result != 0) return result;
+      }
+      else if (settings.isSortByType()) {
+        final Comparable<?> typeSortKey1 = node1.getTypeSortKey();
+        final Comparable<?> typeSortKey2 = node2.getTypeSortKey();
         int result = compare(typeSortKey1, typeSortKey2);
         if (result != 0) return result;
       }
       else {
-        final Comparable typeSortKey1 = node1.getSortKey();
-        final Comparable typeSortKey2 = node2.getSortKey();
+        final Comparable<?> typeSortKey1 = node1.getSortKey();
+        final Comparable<?> typeSortKey2 = node2.getSortKey();
         if (typeSortKey1 != null && typeSortKey2 != null) {
           int result = compare(typeSortKey1, typeSortKey2);
           if (result != 0) return result;
@@ -114,6 +120,13 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
       return myForceSortByType;
     }
     return ProjectView.getInstance(project).isSortByType(myPaneId);
+  }
+
+  protected boolean isSortByTime() {
+    if (project == null) {
+      return false;
+    }
+    return ProjectView.getInstance(project).isSortByTime(myPaneId);
   }
 
   protected boolean isAbbreviateQualifiedNames() {

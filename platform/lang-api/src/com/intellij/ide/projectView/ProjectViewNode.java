@@ -255,6 +255,11 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     return null;
   }
 
+  @Nullable
+  public Comparable<?> getTimeSortKey() {
+    return null;
+  }
+
   public boolean shouldDrillDownOnEmptyElement() {
     return false;
   }

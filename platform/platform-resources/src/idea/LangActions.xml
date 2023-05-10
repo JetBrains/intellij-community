@@ -927,6 +927,8 @@
         <action id="ProjectView.SortByType"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByType"
                 icon="AllIcons.ObjectBrowser.SortByType"/>
+        <action id="ProjectView.SortByTime"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByTime"/>
         <action id="ProjectView.FoldersAlwaysOnTop"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FoldersAlwaysOnTop"/>
       </group>

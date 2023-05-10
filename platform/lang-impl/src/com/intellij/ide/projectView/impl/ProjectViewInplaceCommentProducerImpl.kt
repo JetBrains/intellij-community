@@ -13,8 +13,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.text.JBDateFormat
-import java.nio.file.Files
-import java.nio.file.attribute.BasicFileAttributes
 
 internal fun appendInplaceComments(node: ProjectViewNode<*>, appender: InplaceCommentAppender) {
   val parentNode = node.parent
@@ -26,14 +24,7 @@ internal fun appendInplaceComments(node: ProjectViewNode<*>, appender: InplaceCo
 
 // To be used in Rider once it migrates from legacy logic, don't change the signature and/or visibility.
 fun appendInplaceComments(appender: InplaceCommentAppender, project: Project?, file: VirtualFile?) {
-  val ioFile = if (file == null || file.isDirectory || !file.isInLocalFileSystem) null else file.toNioPath()
-  val fileAttributes = try {
-    if (ioFile == null) null else Files.readAttributes(ioFile, BasicFileAttributes::class.java)
-  }
-  catch (ignored: Exception) {
-    null
-  }
-
+  val fileAttributes = getFileAttributes(file)
   if (fileAttributes != null) {
     appender.append("  ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
     val attributes = SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES

@@ -38,6 +38,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
   var showURL = ProjectViewSettings.Immutable.DEFAULT.isShowURL
   var showVisibilityIcons = ProjectViewSettings.Immutable.DEFAULT.isShowVisibilityIcons
   var sortByType = false
+  var sortByTime = false
   var useFileNestingRules = ProjectViewSettings.Immutable.DEFAULT.isUseFileNestingRules
 
   override fun noStateLoaded() {
@@ -62,6 +63,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
     showURL = Registry.`is`("project.tree.structure.show.url")
     showVisibilityIcons = ProjectViewSharedSettings.instance.showVisibilityIcons
     sortByType = ProjectViewSharedSettings.instance.sortByType
+    sortByTime = ProjectViewSharedSettings.instance.sortByTime
   }
 
   override fun loadState(state: ProjectViewState) {

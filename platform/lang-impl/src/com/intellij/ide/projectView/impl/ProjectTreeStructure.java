@@ -70,4 +70,9 @@ public abstract class ProjectTreeStructure extends AbstractProjectTreeStructure 
     return ProjectView.getInstance(myProject).isShowVisibilityIcons(myId);
   }
 
+  @Override
+  public boolean isSortByTime() {
+    return ProjectView.getInstance(myProject).isSortByTime(myId);
+  }
+
 }
