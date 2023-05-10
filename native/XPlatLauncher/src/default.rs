@@ -82,7 +82,8 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
 impl DefaultLaunchConfiguration {
     pub fn new(exe_path: &Path, args: Vec<String>) -> Result<Self> {
-        let (ide_home, product_info_file) = find_ide_home(exe_path)?;
+        let (ide_home, product_info_file) = find_ide_home(exe_path)
+            .with_context(|| format!("Cannot find a directory with a product descriptor near '{}'", exe_path.display()))?;
         debug!("IDE home dir: {ide_home:?}");
 
         let config_home = get_config_home()?;
@@ -333,15 +334,15 @@ fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
 fn find_ide_home(current_exe: &Path) -> Result<(PathBuf, PathBuf)> {
     debug!("Looking for: '{PRODUCT_INFO_REL_PATH}'");
 
-    let mut candidate = current_exe.parent_or_err()?;
+    let mut candidate = current_exe.to_path_buf();
     for _ in 0..IDE_HOME_LOOKUP_DEPTH {
+        candidate = candidate.parent_or_err()?;
         debug!("Probing for IDE home: {:?}", candidate);
         let product_info_path = candidate.join(PRODUCT_INFO_REL_PATH);
         if product_info_path.is_file() {
             return Ok((candidate, product_info_path))
         }
-        candidate = candidate.parent_or_err()?;
     }
 
-    bail!("Cannot find a directory with a product descriptor")
+    bail!("Max lookup depth ({IDE_HOME_LOOKUP_DEPTH}) reached")
 }
