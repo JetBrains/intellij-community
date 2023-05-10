@@ -319,6 +319,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     ApplicationManager.getApplication().assertIsDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
+    myMultiCaster.beforeAnyDocumentSaving(document, explicit);
     if (!myUnsavedDocuments.contains(document)) return;
 
     try {

@@ -34,6 +34,13 @@ public interface FileDocumentManagerListener extends EventListener {
   }
 
   /**
+   * Fired before processing FileDocumentManager.saveDocument(document).
+   * Fired even document is unchanged.
+   */
+  default void beforeAnyDocumentSaving(@NotNull Document document, boolean explicit) {
+  }
+
+  /**
    * NOTE: Vetoing facility is deprecated in this listener implement {@link FileDocumentSynchronizationVetoer} instead.
    */
   default void beforeDocumentSaving(@NotNull Document document) {
