@@ -166,7 +166,18 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   // LookAndFeel type is not specified to avoid class loading
-  val initLafJob = initUi(initAwtToolkitAndEventQueueJob, preloadLafClassesJob)
+  val initLafJob = launch {
+    initAwtToolkitAndEventQueueJob.join()
+    // SwingDispatcher must be used after Toolkit init
+    withContext(RawSwingDispatcher) {
+      initUi(preloadLafClassesJob)
+    }
+    if (isImplicitReadOnEDTDisabled && !isAutomaticIWLOnDirtyUIDisabled) {
+      runActivity("Write Intent Lock UI class transformer loading") {
+        WriteIntentLockInstrumenter.instrument()
+      }
+    }
+  }
 
   // system dirs checking must happen after locking system dirs
   val checkSystemDirJob = checkSystemDirs(lockSystemDirsJob)
@@ -474,60 +485,49 @@ private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Th
   }
 }
 
-private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job, preloadLafClassesJob: Job): Job = launch {
-  initAwtToolkitAndEventQueueJob.join()
-
-  // SwingDispatcher must be used after Toolkit init
-  withContext(RawSwingDispatcher) {
-    val isHeadless = AppMode.isHeadless()
-    if (!isHeadless) {
-      val env = runActivity("GraphicsEnvironment init") {
-        GraphicsEnvironment.getLocalGraphicsEnvironment()
-      }
-      runActivity("graphics environment checking") {
-        if (env.isHeadlessInstance) {
+private suspend fun initUi(preloadLafClassesJob: Job) {
+  val isHeadless = AppMode.isHeadless()
+  if (!isHeadless) {
+    val env = runActivity("GraphicsEnvironment init") {
+      GraphicsEnvironment.getLocalGraphicsEnvironment()
+    }
+    runActivity("graphics environment checking") {
+      if (env.isHeadlessInstance) {
           StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
-          exitProcess(AppExitCodes.NO_GRAPHICS)
-        }
-      }
-    }
-
-    preloadLafClassesJob.join()
-
-    // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
-
-    val baseLaF = runActivity("base LaF creation") { DarculaLaf.createBaseLaF() }
-    runActivity("base LaF initialization") {
-      // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
-      baseLaF.initialize()
-      DarculaLaf.setPreInitializedBaseLaf(baseLaF)
-    }
-
-    // to compute the system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
-    // and to compute system font data we need to know `Label.font` UI default (that's why we compute base LaF first)
-    if (!isHeadless) {
-      JBUIScale.preload {
-        runActivity("base LaF defaults getting") { baseLaF.defaults }
-      }
-    }
-
-    val uiDefaults = runActivity("app-specific laf state initialization") { UIManager.getDefaults() }
-
-    runActivity("html style patching") {
-      // create a separate copy for each case
-      val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
-      uiDefaults["javax.swing.JLabel.userStyleSheet"] = globalStyleSheet
-      uiDefaults["HTMLEditorKit.jbStyleSheet"] = globalStyleSheet
-
-      runActivity("global styleSheet updating") {
-        GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
+        exitProcess(AppExitCodes.NO_GRAPHICS)
       }
     }
   }
 
-  if (isImplicitReadOnEDTDisabled && !isAutomaticIWLOnDirtyUIDisabled) {
-    runActivity("Write Intent Lock UI class transformer loading") {
-      WriteIntentLockInstrumenter.instrument()
+  preloadLafClassesJob.join()
+
+  // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
+
+  val baseLaF = runActivity("base LaF creation") { DarculaLaf.createBaseLaF() }
+  runActivity("base LaF initialization") {
+    // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
+    baseLaF.initialize()
+    DarculaLaf.setPreInitializedBaseLaf(baseLaF)
+  }
+
+  // to compute the system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
+  // and to compute system font data we need to know `Label.font` UI default (that's why we compute base LaF first)
+  if (!isHeadless) {
+    JBUIScale.preload {
+      runActivity("base LaF defaults getting") { baseLaF.defaults }
+    }
+  }
+
+  val uiDefaults = runActivity("app-specific laf state initialization") { UIManager.getDefaults() }
+
+  runActivity("html style patching") {
+    // create a separate copy for each case
+    val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
+    uiDefaults["javax.swing.JLabel.userStyleSheet"] = globalStyleSheet
+    uiDefaults["HTMLEditorKit.jbStyleSheet"] = globalStyleSheet
+
+    runActivity("global styleSheet updating") {
+      GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
     }
   }
 }
