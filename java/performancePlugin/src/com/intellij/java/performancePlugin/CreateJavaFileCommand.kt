@@ -5,9 +5,9 @@ import com.intellij.core.JavaPsiBundle.message
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.vfs.findFileOrDirectory
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.impl.file.PsiJavaDirectoryFactory
+import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 
 /**
@@ -29,22 +29,24 @@ class CreateJavaFileCommand(text: String, line: Int) : PerformanceCommandCorouti
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val (fileName, filePath, fileType) = extractCommandArgument(PREFIX).split(",")
+    val (fileName, filePath, fileType) = extractCommandArgument(PREFIX).replace("\\s","").split(",")
 
     val directory = PsiJavaDirectoryFactory
       .getInstance(context.project)
       .createDirectory(
         (context.project.guessProjectDir() ?: throw RuntimeException("'guessProjectDir' dir returned 'null'"))
-          .findFileOrDirectory(filePath) ?: throw RuntimeException("Can't find file $filePath")
+          .findFileByRelativePath(filePath) ?: throw RuntimeException("Can't find file $filePath")
       )
 
     val templateName = POSSIBLE_FILE_TYPES[fileType.lowercase()]
     if (templateName == null) throw RuntimeException("File type must be one of '${POSSIBLE_FILE_TYPES.keys}'")
-
+    
+    val span = PerformanceTestSpan.TRACER.spanBuilder(NAME).startSpan()
     ApplicationManager.getApplication().invokeAndWait {
       ApplicationManager.getApplication().getService(JavaDirectoryService::class.java)
         .createClass(directory, fileName, templateName, true)
     }
+    span.end()
   }
 
   override fun getName(): String {

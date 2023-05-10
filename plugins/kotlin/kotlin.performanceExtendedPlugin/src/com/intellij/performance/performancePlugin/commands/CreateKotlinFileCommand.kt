@@ -34,7 +34,7 @@ class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCorou
     }
 
     override suspend fun doExecute(context: PlaybackContext) {
-        val (fileName, filePath, fileType) = extractCommandArgument(PREFIX).split(",")
+        val (fileName, filePath, fileType) = extractCommandArgument(PREFIX).replace("\\s","").split(",")
         val directory = PsiDirectoryImpl(
             PsiManagerImpl(context.project),
             (context.project.guessProjectDir() ?: throw RuntimeException("'guessProjectDir' dir returned 'null'"))
@@ -45,9 +45,11 @@ class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCorou
         if (templateName == null) throw RuntimeException("File type must be one of '${POSSIBLE_FILE_TYPES.keys}'")
         val template = FileTemplateManager.getInstance(directory.project).getInternalTemplate(templateName)
 
+        val span = startSpan(NAME)
         ApplicationManager.getApplication().invokeAndWait {
             CreateFileFromTemplateAction.createFileFromTemplate(fileName, template, directory, null, true)
         }
+        span.end()
     }
 
     override fun getName(): String {
