@@ -741,6 +741,7 @@ private fun checkProductProperties(context: BuildContextImpl) {
   checkPaths2(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
   checkPaths2(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
   checkModules(properties.additionalModulesToCompile, "productProperties.additionalModulesToCompile", context)
+  checkModule(properties.embeddedJetBrainsClientMainModule, "productProperties.embeddedJetBrainsClientMainModule", context)
   checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests", context)
 
   context.windowsDistributionCustomizer?.let { winCustomizer ->
@@ -869,6 +870,12 @@ private fun checkModules(modules: Collection<String>?, fieldName: String, contex
     check(unknownModules.isEmpty()) {
       "The following modules from $fieldName aren\'t found in the project: $unknownModules"
     }
+  }
+}
+
+private fun checkModule(moduleName: String?, fieldName: String, context: CompilationContext) {
+  if (moduleName != null && context.findModule(moduleName) == null) {
+    context.messages.error("Module '$moduleName' from $fieldName isn't found in the project")
   }
 }
 
@@ -1214,6 +1221,9 @@ fun collectModulesToCompile(context: BuildContext, result: MutableCollection<Str
   result.addAll(productLayout.productApiModules)
   result.addAll(productLayout.productImplementationModules)
   result.addAll(getToolModules())
+  if (context.isEmbeddedJetBrainsClientEnabled) {
+    result.add(context.productProperties.embeddedJetBrainsClientMainModule!!)
+  }
   result.addAll(context.productProperties.additionalModulesToCompile)
   result.add("intellij.idea.community.build.tasks")
   result.add("intellij.platform.images.build")
