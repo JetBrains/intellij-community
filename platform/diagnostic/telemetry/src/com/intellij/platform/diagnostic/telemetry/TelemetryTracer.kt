@@ -98,8 +98,8 @@ interface TelemetryTracer {
           return instance
         }
         catch (e: Throwable) {
-          LOG.warn("Something unexpected happened during loading TelemetryTracer", e)
-          LOG.warn("Falling back to loading default implementation of TelemetryTracer ${TelemetryTracerDefault::class.qualifiedName}")
+          LOG.info("Something unexpected happened during loading TelemetryTracer", e)
+          LOG.info("Falling back to loading default implementation of TelemetryTracer ${TelemetryTracerDefault::class.qualifiedName}")
 
           instance = TelemetryTracerDefault().apply {
             LOG.info("Loaded telemetry tracer service ${this::class.qualifiedName}")
