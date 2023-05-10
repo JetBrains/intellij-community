@@ -45,6 +45,7 @@ import java.util.*;
 import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.codeInspection.reference.RefParameter.VALUE_IS_NOT_CONST;
 import static com.intellij.codeInspection.reference.RefParameter.VALUE_UNDEFINED;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance(SameParameterValueInspection.class);
@@ -297,7 +298,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     }
 
     public static void inlineSameParameterValue(PsiMethod method, PsiParameter parameter, PsiExpression defToInline) {
-      final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+      final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
       Collection<PsiMethod> methods = new ArrayList<>();
       methods.add(method);
       Project project = method.getProject();
@@ -317,7 +318,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
         for (PsiReference reference : refsToInline) {
           PsiElement referenceElement = reference.getElement();
           if (referenceElement instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)referenceElement)) {
-            conflicts.putValue(referenceElement, "Parameter has write usages. Inline is not supported");
+            conflicts.putValue(referenceElement, JavaBundle.message("dialog.message.parameter.has.write.usages.inline.not.supported"));
             break;
           }
         }
