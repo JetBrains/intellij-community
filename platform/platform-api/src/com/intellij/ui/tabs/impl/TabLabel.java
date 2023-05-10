@@ -308,7 +308,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   protected void paintFadeout(final Graphics g) {
     Graphics2D g2d = (Graphics2D)g.create();
     try {
-      Color tabBg = myTabs.getTabPainter().getBackgroundColor();
+      Color tabBg = getEffectiveBackground();
       Color transparent = ColorUtil.withAlpha(tabBg, 0);
       int borderThickness = myTabs.getBorderThickness();
       int width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200));
@@ -684,6 +684,11 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
   private void paintBackground(Graphics g) {
     myTabs.tabPainterAdapter.paintBackground(this, g, myTabs);
+  }
+
+  protected @NotNull Color getEffectiveBackground() {
+    return myTabs.getTabPainter().getEffectiveBackground(getInfo().getTabColor(), isSelected(),
+                                                         myTabs.isActiveTabs(getInfo()), isHovered());
   }
 
   @Override

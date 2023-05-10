@@ -27,6 +27,10 @@ interface JBTabPainter {
 
   fun getBackgroundColor(): Color
 
+  fun getEffectiveBackground(tabColor: Color?, selected: Boolean, active: Boolean, hovered: Boolean): Color {
+    return tabColor ?: getBackgroundColor()
+  }
+
   fun paintBorderLine(g: Graphics2D, thickness: Int, from: Point, to: Point)
 
   fun fillBackground(g: Graphics2D, rect: Rectangle)
