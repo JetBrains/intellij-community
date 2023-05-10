@@ -160,19 +160,16 @@ internal class LightEditFrameWrapper(
   override fun getTitleInfoProviders(): List<TitleInfoProvider> = emptyList()
 
   override fun dispose() {
-    Disposer.dispose(editPanel!!)
-  }
-
-  fun closeAndDispose(lightEditServiceImpl: LightEditServiceImpl) {
     val frameInfo = getInstance(project).getActualFrameInfoInDeviceSpace(
       frameHelper = this,
       frame = frame,
       windowManager = (WindowManager.getInstance() as WindowManagerImpl)
     )
-
+    val lightEditServiceImpl = LightEditService.getInstance() as LightEditServiceImpl
     lightEditServiceImpl.setFrameInfo(frameInfo)
-    frame.isVisible = false
-    Disposer.dispose(this)
+    lightEditServiceImpl.frameDisposed()
+    Disposer.dispose(editPanel!!)
+    super.dispose()
   }
 
   private inner class LightEditRootPane(frame: JFrame,
