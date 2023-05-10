@@ -392,8 +392,10 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
               final int nameId = buffer.getInt(offsetInBuffer + NAME_OFFSET);
               final int flags = buffer.getInt(offsetInBuffer + FLAGS_OFFSET);
               final int parentId = buffer.getInt(offsetInBuffer + PARENT_OFFSET);
+              final int attributeRecordId = buffer.getInt(offsetInBuffer + ATTR_REF_OFFSET);
+              final int contentId = buffer.getInt(offsetInBuffer + CONTENT_OFFSET);
 
-              operator.process(recordId, nameId, flags, parentId, /*corrupted: */ false);
+              operator.process(recordId, nameId, flags, parentId, attributeRecordId, contentId, /*corrupted: */ false);
 
               recordId++;
               positionInFile += RECORD_SIZE;

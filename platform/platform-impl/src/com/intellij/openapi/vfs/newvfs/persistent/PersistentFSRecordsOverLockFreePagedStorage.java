@@ -610,6 +610,8 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
         getNameId(recordId),
         getFlags(recordId),
         getParent(recordId),
+        getAttributeRecordId(recordId),
+        getContentRecordId(recordId),
         /* corrupted = */ false
       );
     }

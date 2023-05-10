@@ -1,17 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.testFramework.TemporaryDirectory;
 import com.intellij.util.io.PageCacheUtils;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -240,6 +243,70 @@ public class VFSRebuildingTest {
     }
   }
 
+
+  @Test
+  @Ignore("Currently it is not true (but it should be): removing of 'attributes_enums.dat' is still unrecognized")
+  public void VFS_isRebuild_IfAnyStorageFileRemoved() throws Exception {
+    //skip IN_MEMORY impl, since it is not really persistent
+    //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_VFS_ENABLED (will fail)
+    final List<RecordsStorageKind> allKinds = PageCacheUtils.LOCK_FREE_VFS_ENABLED ?
+                                              List.of(REGULAR, OVER_LOCK_FREE_FILE_CACHE, OVER_MMAPPED_FILE) :
+                                              List.of(REGULAR, OVER_MMAPPED_FILE);
+
+    List<String> filesNotLeadingToVFSRebuild = new ArrayList<>();
+    for (RecordsStorageKind storageKind : allKinds) {
+      int vfsFilesCount = 1;
+      for (int i = 0; i < vfsFilesCount; i++) {
+        final Path cachesDir = temporaryDirectory.createDir();
+        final Path vfsLogDir = cachesDir.resolve("vfslog");
+        PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(storageKind);
+
+        final FSRecordsImpl records = FSRecordsImpl.connect(
+          cachesDir,
+          new VfsLog(vfsLogDir, /*readOnly*/true)
+        );
+        final long firstVfsCreationTimestamp = records.getCreationTimestamp();
+
+        final int id = records.createRecord();
+        records.setName(id, "test", PersistentFSRecordsStorage.NULL_ID);
+        try (var stream = records.writeContent(id, false)) {
+          stream.writeUTF("test");
+        }
+
+        records.dispose();
+        Thread.sleep(500);//ensure system clock is moving
+
+        final Path[] vfsFiles = Files.list(cachesDir)
+          .filter(path -> Files.isRegularFile(path))
+          //ResizableMappedFile is able to recover .len file
+          .filter(path -> !path.getFileName().toString().endsWith(".len"))
+          .sorted()
+          .toArray(Path[]::new);
+        vfsFilesCount = vfsFiles.length;
+        final Path fileToDelete = vfsFiles[i];
+
+        FileUtil.delete(fileToDelete);
+
+        //reopen:
+        PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(storageKind);
+        final FSRecordsImpl reopenedRecords = FSRecordsImpl.connect(
+          cachesDir,
+          new VfsLog(vfsLogDir, /*readOnly*/true)
+        );
+        final long reopenedVfsCreationTimestamp = reopenedRecords.getCreationTimestamp();
+        if (reopenedVfsCreationTimestamp == firstVfsCreationTimestamp) {
+          filesNotLeadingToVFSRebuild.add(fileToDelete.getFileName().toString());
+        }
+      }
+
+      //Files currently ignored by
+      //  attributes_enums.dat
+      assertTrue(
+        "VFS[" + storageKind + "] is not rebuild even though " + filesNotLeadingToVFSRebuild + " were deleted",
+        filesNotLeadingToVFSRebuild.isEmpty()
+      );
+    }
+  }
 
 
   //==== infrastructure:

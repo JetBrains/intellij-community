@@ -128,6 +128,6 @@ public interface PersistentFSRecordsStorage {
 
   @FunctionalInterface
   interface FsRecordProcessor {
-    void process(int fileId, int nameId, int flags, int parentId, boolean corrupted);
+    void process(int fileId, int nameId, int flags, int parentId, int attributeRecordId, int contentId, boolean corrupted);
   }
 }

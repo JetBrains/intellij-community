@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlo
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.hash.ContentHashEnumerator;
@@ -20,12 +21,15 @@ import com.intellij.util.io.storage.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -41,6 +45,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 final class PersistentFSConnector {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnector.class);
+
+  /**
+   * Run self-checks on a limited number of files during VFS init.
+   * Self-check all the files could significantly slow down VFS initialization, but even a small number of checks
+   * could catch VFS corruption, if any.
+   */
+  private static final int FILES_TO_SELF_CHECK_ON_INIT = SystemProperties.getIntProperty("vfs.files-to-self-check-on-init", 1024);
 
   private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
 
@@ -100,7 +111,7 @@ final class PersistentFSConnector {
           attemptsFailures
         );
       }
-      catch (IOException e) {
+      catch (Exception e) {
         LOG.info("Init VFS attempt #" + attempt + " failed: " + e.getMessage());
 
         attemptsFailures.add(e);
@@ -166,11 +177,11 @@ final class PersistentFSConnector {
         contentHashesEnumerator = null;
       }
 
-      //TODO RC: I'd like to have completely new Enumerator here:
-      //         1. Without legacy issues with null vs 'null' strings
-      //         2. With explicit 'id' stored in a file (instead of implicit id=row num)
-      //         3. With CopyOnWrite concurrent strategy (hence very cheap .enumerate() for already enumerated values)
-      //         ...next time we bump FSRecords version
+      //MAYBE RC: I'd like to have completely new Enumerator here:
+      //          1. Without legacy issues with null vs 'null' strings
+      //          2. With explicit 'id' stored in a file (instead of implicit id=row num)
+      //          3. With CopyOnWrite concurrent strategy (hence very cheap .enumerate() for already enumerated values)
+      //          ...next time we bump FSRecords version
       final SimpleStringPersistentEnumerator attributesEnumerator = new SimpleStringPersistentEnumerator(enumeratedAttributesFile);
 
 
@@ -200,7 +211,10 @@ final class PersistentFSConnector {
       }
 
       final IntList freeRecords = new IntArrayList();
-      loadFreeRecordsAndNameIndex(recordsStorage, freeRecords, invertedNameIndexToFill);
+      selfCheckAndLoadFreeRecordsAndNameIndex(
+        recordsStorage, namesStorage, contentHashesEnumerator, attributesStorage, attributesEnumerator,
+        freeRecords, invertedNameIndexToFill
+      );
       final PersistentFSConnection connection = new PersistentFSConnection(
         persistentFSPaths,
         recordsStorage,
@@ -306,7 +320,7 @@ final class PersistentFSConnector {
         setCurrentVersion(recordsStorage, attributesStorage, contentsStorage, currentImplVersion);
         return;
       }
-      
+
       //if commonVersion > 0 => current VFS data has a consistent version, but != implVersion
       //                     => IMPL_VERSION_MISMATCH
       //if commonVersion = -1 => VFS data has an inconsistent versions
@@ -388,19 +402,83 @@ final class PersistentFSConnector {
     }
   }
 
-  private static void loadFreeRecordsAndNameIndex(@NotNull PersistentFSRecordsStorage records,
-                                                  @NotNull /*OutParam*/ IntList freeFileIds,
-                                                  @NotNull /*OutParam*/ InvertedNameIndex invertedNameIndexToFill) throws IOException {
+  private static void selfCheckAndLoadFreeRecordsAndNameIndex(@NotNull PersistentFSRecordsStorage records,
+                                                              @NotNull ScannableDataEnumeratorEx<String> namesEnumerator,
+                                                              @Nullable ContentHashEnumerator contentHashesEnumerator,
+                                                              @NotNull AbstractAttributesStorage attributesStorage,
+                                                              @NotNull SimpleStringPersistentEnumerator attributesEnumerator,
+                                                              @NotNull /*OutParam*/ IntList freeFileIds,
+                                                              @NotNull /*OutParam*/ InvertedNameIndex invertedNameIndexToFill)
+    throws IOException {
     final long startedAtNs = System.nanoTime();
-    records.processAllRecords((fileId, nameId, flags, parentId, corrupted) -> {
-      if (hasDeletedFlag(flags)) {
-        freeFileIds.add(fileId);
-      }
-      else if (nameId != InvertedNameIndex.NULL_NAME_ID) {
-        invertedNameIndexToFill.updateDataInner(fileId, nameId);
-      }
-    });
-    LOG.info(TimeoutUtil.getDurationMillis(startedAtNs) + " ms to load free records and inverted name index");
+    try {
+      records.processAllRecords((fileId, nameId, flags, parentId, attributeRecordId, contentId, corrupted) -> {
+        if (hasDeletedFlag(flags)) {
+          freeFileIds.add(fileId);
+          return;
+        }
+
+        if (nameId != InvertedNameIndex.NULL_NAME_ID) {
+          invertedNameIndexToFill.updateDataInner(fileId, nameId);
+        }
+
+        if (fileId <= FILES_TO_SELF_CHECK_ON_INIT) {
+          //Try to resolve few nameId/contentId against apt enumerators -- which is quite likely fails
+          //if enumerators' files are corrupted anyhow, hence serves as a self-check heuristic:
+
+          if (nameId != DataEnumeratorEx.NULL_ID) {
+            try {
+              final String name = namesEnumerator.valueOf(nameId);
+              if (name == null) {
+                throw new IllegalStateException("file[#" + fileId + "].nameId(=" + nameId + ") is not present in namesEnumerator");
+              }
+              final int reCheckNameId = namesEnumerator.tryEnumerate(name);
+              if (reCheckNameId != nameId) {
+                throw new IllegalStateException(
+                  "namesEnumerator is corrupted: file[#" + fileId + "]" +
+                  ".nameId(=" + nameId + ") -> [" + name + "] -> tryEnumerate() -> " + reCheckNameId
+                );
+              }
+            }
+            catch (IOException e) {
+              throw new UncheckedIOException("file[#" + fileId + "].nameId(=" + nameId + ") failed resolution in namesEnumerator", e);
+            }
+          }
+
+          if (contentHashesEnumerator != null
+              && contentId != DataEnumeratorEx.NULL_ID) {
+            try {
+              final byte[] contentHash = contentHashesEnumerator.valueOf(contentId);
+              if (contentHash == null) {
+                throw new IllegalStateException(
+                  "file[#" + fileId + "].contentId(=" + contentId + ") is not present in contentHashesEnumerator"
+                );
+              }
+              final int reCheckContentId = contentHashesEnumerator.tryEnumerate(contentHash);
+              if (reCheckContentId != contentId) {
+                throw new IllegalStateException(
+                  "contentHashesEnumerator is corrupted: file[#" + fileId + "]" +
+                  ".contentId(=" + contentId + ") -> [" + Arrays.toString(contentHash) + "] -> tryEnumerate() -> " + reCheckContentId
+                );
+              }
+            }
+            catch (IOException e) {
+              throw new UncheckedIOException(
+                "file[#" + fileId + "].contentId(=" + contentId + ") failed resolution in contentHashesEnumerator", e);
+            }
+          }
+        }
+      });
+    }
+    catch (Throwable t) {
+      throw new VFSNeedsRebuildException(
+        DATA_INCONSISTENT,
+        "VFS self-check: failed",
+        t
+      );
+    }
+
+    LOG.info(TimeoutUtil.getDurationMillis(startedAtNs) + " ms to self-checks, load free records and inverted name index");
   }
 
   /** @return common version of all 3 storages, or -1, if their versions are differ (i.e. inconsistent) */

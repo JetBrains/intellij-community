@@ -71,6 +71,11 @@ public class ResizeableMappedFile implements Forceable, Closeable {
     ensureParentDirectoryExists();
     myInitialSize = initialSize;
     myLastWrittenLogicalSize = myLogicalSize = readLength();
+    if (myLastWrittenLogicalSize > 0 && !Files.exists(file)) {
+      //probably, the main file was removed
+      myLastWrittenLogicalSize = myLogicalSize = 0;
+      writeLength(0);
+    }
   }
 
   public boolean isNativeBytesOrder() {
