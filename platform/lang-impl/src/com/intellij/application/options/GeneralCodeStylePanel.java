@@ -4,7 +4,6 @@ package com.intellij.application.options;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.application.options.codeStyle.excludedFiles.ExcludedGlobPatternsPanel;
 import com.intellij.application.options.codeStyle.excludedFiles.ExcludedScopesPanel;
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -84,7 +83,6 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private ExcludedScopesPanel       myExcludedScopesPanel;
   private JPanel myGeneralTab;
   private JPanel myFormatterTab;
-  private JBCheckBox myEnableSecondReformat;
   private final JScrollPane         myScrollPane;
   private static int ourSelectedTabIndex = -1;
 
@@ -126,7 +124,6 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myGeneralTab.setBorder(JBUI.Borders.empty(15, 15, 0, 0));
     myFormatterTab.setBorder(JBUI.Borders.empty(15, 15, 0, 0));
     myMarkerOptionsPanel.setBorder(JBUI.Borders.emptyTop(10));
-    myEnableSecondReformat.setBorder(JBUI.Borders.emptyTop(10));
     if (ourSelectedTabIndex >= 0) {
       myTabbedPane.setSelectedIndex(ourSelectedTabIndex);
     }
@@ -213,7 +210,6 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     settings.setFormatterOnPattern(compilePattern(settings, myFormatterOnTagField, settings.FORMATTER_ON_TAG));
 
     settings.AUTODETECT_INDENTS = myAutodetectIndentsBox.isSelected();
-    CodeInsightSettings.getInstance().ENABLE_SECOND_REFORMAT = myEnableSecondReformat.isSelected();
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.apply(settings);
@@ -297,8 +293,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       if (option.isModified(settings)) return true;
     }
 
-    return settings.AUTODETECT_INDENTS != myAutodetectIndentsBox.isSelected() ||
-           CodeInsightSettings.getInstance().ENABLE_SECOND_REFORMAT != myEnableSecondReformat.isSelected();
+    return settings.AUTODETECT_INDENTS != myAutodetectIndentsBox.isSelected();
   }
 
   @Override
@@ -339,7 +334,6 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     setFormatterTagControlsEnabled(settings.FORMATTER_TAGS_ENABLED);
 
     myAutodetectIndentsBox.setSelected(settings.AUTODETECT_INDENTS);
-    myEnableSecondReformat.setSelected(CodeInsightSettings.getInstance().ENABLE_SECOND_REFORMAT);
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.reset(settings);
