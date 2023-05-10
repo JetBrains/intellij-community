@@ -130,6 +130,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
 
   private volatile RegisteredIndexes myRegisteredIndexes;
+  private volatile RequiredIndexesEvaluator myRequiredIndexesEvaluator;
   private volatile @Nullable String myShutdownReason;
 
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
@@ -170,6 +171,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     LOG.assertTrue(myTransactionMap.isEmpty());
 
     myRegisteredIndexes = null;
+    myRequiredIndexesEvaluator = null;
   }
 
   public FileBasedIndexImpl() {
@@ -432,6 +434,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       LOG.assertTrue(myRegisteredIndexes == null);
       myStorageBufferingHandler.resetState();
       myRegisteredIndexes = new RegisteredIndexes(myFileDocumentManager, this);
+      myRequiredIndexesEvaluator = new RequiredIndexesEvaluator(myRegisteredIndexes);
       myShutdownReason = null;
     }
   }
@@ -1309,17 +1312,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return index;
   }
 
-  /** returns original input filter associated with the index (check global index filters manually) */
-  private InputFilter getInputFilter(@NotNull ID<?, ?> indexId) {
-    if (!myRegisteredIndexes.isInitialized()) {
-      // 1. early vfs event that needs invalidation
-      // 2. pushers that do synchronous indexing for contentless indices
-      waitUntilIndicesAreInitialized();
-    }
-
-    return getState().getInputFilter(indexId);
-  }
-
   @NotNull
   Collection<VirtualFile> getFilesToUpdate(final Project project) {
     return ContainerUtil.filter(getChangedFilesCollector().getAllFilesToUpdate(), filesToBeIndexedForProjectCondition(project)::test);
@@ -1523,33 +1515,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
-  List<ID<?, ?>> getAffectedIndexCandidates(@NotNull IndexedFile indexedFile) {
-    if (indexedFile.getFile().isDirectory()) {
-      return isProjectOrWorkspaceFile(indexedFile.getFile(), null)
-             ? Collections.emptyList()
-             : myRegisteredIndexes.getIndicesForDirectories();
-    }
-    FileType fileType = indexedFile.getFileType();
-    if (fileType instanceof SubstitutedFileType) {
-      fileType = ((SubstitutedFileType)fileType).getFileType();
-    }
-    if (isProjectOrWorkspaceFile(indexedFile.getFile(), fileType)) {
-      return new ArrayList<>(myRegisteredIndexes.getNotRequiringContentIndices());
-    }
-
-    return getState().getFileTypesForIndex(fileType);
-  }
-
-  @NotNull
   List<ID<?, ?>> getRequiredIndexes(@NotNull IndexedFile indexedFile) {
-    List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(indexedFile);
-    List<ID<?, ?>> acceptedCandidates = new ArrayList<>(affectedIndexCandidates.size());
-    for (ID<?, ?> candidate : affectedIndexCandidates) {
-      if (acceptsInput(candidate, indexedFile)) {
-        acceptedCandidates.add(candidate);
-      }
+    if (!myRegisteredIndexes.isInitialized()) {
+      // 1. early vfs event that needs invalidation
+      // 2. pushers that do synchronous indexing for contentless indices
+      waitUntilIndicesAreInitialized();
     }
-    return acceptedCandidates;
+    return myRequiredIndexesEvaluator.getRequiredIndexes(indexedFile);
   }
 
   private static void cleanFileContent(FileContentImpl fc, PsiFile psiFile) {
@@ -1988,14 +1960,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   public void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
     myIndexableSets.add(Pair.create(set, project));
-  }
-
-  private boolean acceptsInput(@NotNull ID<?, ?> indexId, @NotNull IndexedFile indexedFile) {
-    InputFilter filter = getInputFilter(indexId);
-    if (!acceptsInput(filter, indexedFile)) return false;
-
-    LOG.assertTrue(indexedFile.getProject() != null, "Should not index files from unknown project");
-    return !GlobalIndexFilter.isExcludedFromIndexViaFilters(indexedFile.getFile(), indexId, indexedFile.getProject());
   }
 
   public void removeIndexableSet(@NotNull IndexableFileSet set) {
