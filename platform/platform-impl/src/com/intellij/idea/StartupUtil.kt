@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment")
+
 package com.intellij.idea
 
 import com.intellij.BundleBase
@@ -115,7 +116,8 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   val isHeadless = AppMode.isHeadless()
 
-  val configImportNeededDeferred = if (isHeadless) CompletableDeferred(false) else async {
+  val configImportNeededDeferred = if (isHeadless) CompletableDeferred(false)
+  else async {
     val configPath = PathManager.getConfigDir()
     !Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
   }
@@ -135,7 +137,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   val initAwtToolkitAndEventQueueJob = launch {
     // this should happen before UI initialization - if we're not going to show the UI (in case another IDE instance is already running),
     // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
-    initAwtToolkit(lockSystemDirsJob, busyThread).join()
+    initAwtToolkit(lockSystemDirsJob, busyThread)
 
     withContext(RawSwingDispatcher) {
       patchSystem(isHeadless)
@@ -413,7 +415,10 @@ private fun runPreAppClass(log: Logger, args: List<String>) {
   }
 }
 
-private suspend fun importConfig(args: List<String>, log: Logger, appStarter: AppStarter, euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
+private suspend fun importConfig(args: List<String>,
+                                 log: Logger,
+                                 appStarter: AppStarter,
+                                 euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
   var activity = StartUpMeasurer.startActivity("screen reader checking")
   try {
     withContext(RawSwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
@@ -440,9 +445,8 @@ private suspend fun importConfig(args: List<String>, log: Logger, appStarter: Ap
   activity.end()
 }
 
-// return type (LookAndFeel) is not specified to avoid class loading
-private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Thread): Job {
-  return launch {
+private suspend fun initAwtToolkit(lockSystemDirsJob: Job, busyThread: Thread) {
+  coroutineScope {
     launch {
       lockSystemDirsJob.join()
 
@@ -460,11 +464,11 @@ private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Th
 
       runActivity("awt auto shutdown configuring") {
         /*
-    Make EDT to always persist while the main thread is alive. Otherwise, it's possible to have EDT being
-    terminated by [AWTAutoShutdown], which will break a `ReadMostlyRWLock` instance.
-    [AWTAutoShutdown.notifyThreadBusy(Thread)] will put the main thread into the thread map,
-    and thus will effectively disable auto shutdown behavior for this application.
-    */
+        Make EDT to always persist while the main thread is alive. Otherwise, it's possible to have EDT being
+        terminated by [AWTAutoShutdown], which will break a `ReadMostlyRWLock` instance.
+        [AWTAutoShutdown.notifyThreadBusy(Thread)] will put the main thread into the thread map,
+        and thus will effectively disable auto shutdown behavior for this application.
+        */
         AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
       }
     }
@@ -523,8 +527,8 @@ private suspend fun initUi(preloadLafClassesJob: Job) {
   runActivity("html style patching") {
     // create a separate copy for each case
     val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
-    uiDefaults["javax.swing.JLabel.userStyleSheet"] = globalStyleSheet
-    uiDefaults["HTMLEditorKit.jbStyleSheet"] = globalStyleSheet
+    uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
+    uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
 
     runActivity("global styleSheet updating") {
       GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
@@ -759,7 +763,8 @@ private fun checkDirectory(directory: Path,
       try {
         Files.deleteIfExists(tempFile)
       }
-      catch (ignored: Exception) { }
+      catch (ignored: Exception) {
+      }
     }
   }
 }
@@ -781,8 +786,12 @@ private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job, args:
         val currentDir = Path.of(System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR) ?: "").toAbsolutePath()
         when (val result = directoryLock.lockOrActivate(currentDir, args)) {
           null -> ShutDownTracker.getInstance().registerShutdownTask {
-            try { directoryLock.dispose() }
-            catch (t: Throwable) { Logger.getInstance(DirectoryLock::class.java).error(t) }
+            try {
+              directoryLock.dispose()
+            }
+            catch (t: Throwable) {
+              Logger.getInstance(DirectoryLock::class.java).error(t)
+            }
           }
           else -> {
             result.message?.let { println(it) }
@@ -836,7 +845,8 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
   val buildDate = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.buildDate.time)
   log.info("IDE: ${ApplicationNamesInfo.getInstance().fullProductName} (build #${appInfo.build.asString()}, ${buildDate})")
   log.info("OS: ${SystemInfoRt.OS_NAME} (${SystemInfoRt.OS_VERSION})")
-  log.info("JRE: ${System.getProperty("java.runtime.version", "-")}, ${System.getProperty("os.arch")} (${System.getProperty("java.vendor", "-")})")
+  log.info(
+    "JRE: ${System.getProperty("java.runtime.version", "-")}, ${System.getProperty("os.arch")} (${System.getProperty("java.vendor", "-")})")
   log.info("JVM: ${System.getProperty("java.vm.version", "-")} (${System.getProperty("java.vm.name", "-")})")
   log.info("PID: ${ProcessHandle.current().pid()}")
   if (SystemInfoRt.isXWindow) {
@@ -879,8 +889,10 @@ private fun logPath(path: String): String {
     val real = configured.toRealPath()
     return if (configured == real) path else "$path -> $real"
   }
-  catch (ignored: IOException) { }
-  catch (ignored: InvalidPathException) { }
+  catch (ignored: IOException) {
+  }
+  catch (ignored: InvalidPathException) {
+  }
   return "$path -> ?"
 }
 
