@@ -247,6 +247,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
           return CodeStyleConstraints.MAX_RIGHT_MARGIN.toString()
         }
       }
+      // Left for backwards compatibility
       else if (EditorConfigValueUtil.EMPTY_LIST_VALUE == optionValue &&
                CodeStylePropertiesUtil.isAccessorAllowingEmptyList(accessor)) {
         return ""

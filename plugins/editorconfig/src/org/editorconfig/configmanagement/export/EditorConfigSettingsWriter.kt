@@ -13,7 +13,6 @@ import org.editorconfig.configmanagement.ConfigEncodingManager
 import org.editorconfig.configmanagement.StandardEditorConfigProperties
 import org.editorconfig.configmanagement.extended.EditorConfigIntellijNameUtil
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind
-import org.editorconfig.configmanagement.extended.EditorConfigValueUtil
 import org.editorconfig.configmanagement.extended.IntellijPropertyKindMap
 import java.io.IOException
 import java.io.OutputStream
@@ -146,8 +145,8 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
         val name = getEditorConfigName(mapper, property)
         if (name != null && isNameAllowed(name)) {
           val value = getEditorConfigValue(accessor)
-          if (isValueAllowed(value) && !(mapper is LanguageCodeStylePropertyMapper && matchesGeneral(name, value!!))) {
-            add(KeyValuePair(name, value!!))
+          if (value != null && !(mapper is LanguageCodeStylePropertyMapper && matchesGeneral(name, value))) {
+            add(KeyValuePair(name, value))
           }
         }
       }
@@ -181,10 +180,7 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
 
     private fun getEditorConfigValue(accessor: CodeStylePropertyAccessor<*>): String? {
       val value = accessor.asString
-      return if (value.isNullOrEmpty() && CodeStylePropertiesUtil.isAccessorAllowingEmptyList(accessor))
-        EditorConfigValueUtil.EMPTY_LIST_VALUE
-      else
-        value
+      return if (value.isNullOrEmpty()) "" else value
     }
 
     private fun getPropertyKind(ecName: String): EditorConfigPropertyKind {
@@ -192,8 +188,6 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
       return IntellijPropertyKindMap.getPropertyKind(ijName)
     }
 
-    private fun isValueAllowed(value: String?): Boolean =
-      value != null && !value.trim { it <= ' ' }.isEmpty()
 
     private fun getEditorConfigName(mapper: AbstractCodeStylePropertyMapper, propertyName: String): String? {
       val editorConfigNames = EditorConfigIntellijNameUtil.toEditorConfigNames(mapper, propertyName)
