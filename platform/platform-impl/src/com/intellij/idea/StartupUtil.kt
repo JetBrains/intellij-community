@@ -944,12 +944,15 @@ interface AppStarter {
   fun importFinished(newConfigDir: Path) {}
 }
 
-class Java11ShimImpl : Java11Shim() {
-  override fun <K : Any, V : Any> copyOf(map: Map<out K, V>): Map<K, V> = java.util.Map.copyOf(map)
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+class Java11ShimImpl : Java11Shim {
+  override fun <K, V> copyOf(map: Map<K, V>): Map<K, V> = java.util.Map.copyOf(map)
 
-  override fun <E : Any> copyOf(collection: Set<E>): Set<E> = java.util.Set.copyOf(collection)
+  override fun <E> copyOf(collection: Set<E>): Set<E> = java.util.Set.copyOf(collection)
 
-  override fun <E : Any> copyOfCollection(collection: Collection<E>): List<E> = java.util.List.copyOf(collection)
+  override fun <E> copyOfCollection(collection: Collection<E>): List<E> = java.util.List.copyOf(collection)
+
+  override fun <E> setOf(collection: Array<E>): Set<E> = java.util.Set.of(*collection)
 }
 
 //<editor-fold desc="Deprecated stuff.">

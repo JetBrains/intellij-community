@@ -1069,9 +1069,9 @@ public final class PluginManagerCore {
     Activity activity = StartUpMeasurer.startActivity("plugin initialization");
     PluginManagerState initResult = initializePlugins(context, loadingResult, coreLoader, !isUnitTestMode, activity);
 
-    ourPluginsToDisable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToDisable);
-    ourPluginsToEnable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToEnable);
-    shadowedBundledPlugins = Java11Shim.INSTANCE.copyOf(loadingResult.shadowedBundledIds);
+    ourPluginsToDisable = Java11Shim.Companion.getINSTANCE().copyOf(initResult.pluginIdsToDisable);
+    ourPluginsToEnable = Java11Shim.Companion.getINSTANCE().copyOf(initResult.pluginIdsToEnable);
+    shadowedBundledPlugins = Java11Shim.Companion.getINSTANCE().copyOf(loadingResult.shadowedBundledIds);
 
     activity.end();
     activity.setDescription("plugin count: " + initResult.pluginSet.enabledPlugins.size());
