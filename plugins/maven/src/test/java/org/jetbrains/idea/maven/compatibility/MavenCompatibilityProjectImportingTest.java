@@ -390,19 +390,20 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
 
   @Test
   public void testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "      <configuration>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <configuration>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                    </build>""");
     assertModules("project");
     var expectedVersion = VersionComparatorUtil.compare(myMavenVersion, "3.9.0") >= 0 ? LanguageLevel.JDK_1_7 : LanguageLevel.JDK_1_5;
     assertEquals(expectedVersion, LanguageLevelUtil.getCustomLanguageLevel(getModule("project")));
