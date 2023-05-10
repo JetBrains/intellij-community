@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -54,8 +56,16 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
     if (myPointer != null) {
       return myPointer.getElement();
     }
-    PsiElement element = context.file().findElementAt(context.offset());
-    return PsiTreeUtil.getNonStrictParentOfType(element, Objects.requireNonNull(myClass));
+    int offset = context.offset();
+    PsiFile file = context.file();
+    if (!BaseIntentionAction.canModify(file)) return null;
+    PsiElement element = file.findElementAt(offset);
+    E target = PsiTreeUtil.getNonStrictParentOfType(element, Objects.requireNonNull(myClass));
+    if (target == null && offset > 0) {
+      element = file.findElementAt(offset - 1);
+      target = PsiTreeUtil.getNonStrictParentOfType(element, Objects.requireNonNull(myClass));
+    }
+    return target;
   }
 
   @Override
