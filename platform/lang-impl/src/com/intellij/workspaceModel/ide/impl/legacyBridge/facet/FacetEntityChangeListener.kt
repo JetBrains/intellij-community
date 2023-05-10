@@ -29,7 +29,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
   private val publisher
     get() = FacetEventsPublisher.getInstance(project)
 
-  fun initializeFacetBridge(changes: Map<Class<*>, Set<EntityChange<*>>>, builder: MutableEntityStorage) {
+  fun initializeFacetBridge(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
 
       val facetType = facetBridgeContributor.rootEntityType

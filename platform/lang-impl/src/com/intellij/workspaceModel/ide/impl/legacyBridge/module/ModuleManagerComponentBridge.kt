@@ -82,9 +82,9 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun initializeBridges(event: Map<Class<*>, Set<EntityChange<*>>>, builder: MutableEntityStorage) {
+  override fun initializeBridges(event: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     // Initialize modules
-    val moduleChanges = (event[ModuleEntity::class.java] as? Set<EntityChange<ModuleEntity>>) ?: emptySet()
+    val moduleChanges = (event[ModuleEntity::class.java] as? List<EntityChange<ModuleEntity>>) ?: emptyList()
     for (moduleChange in moduleChanges) {
       initializeModuleBridge(moduleChange, builder)
     }
@@ -93,7 +93,7 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
     FacetEntityChangeListener.getInstance(project).initializeFacetBridge(event, builder)
 
     // Initialize module libraries
-    val moduleLibraryChanges = ((event[LibraryEntity::class.java] as? Set<EntityChange<LibraryEntity>>) ?: emptySet())
+    val moduleLibraryChanges = ((event[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList())
       .filterModuleLibraryChanges()
     for (change in moduleLibraryChanges) {
       initializeModuleLibraryBridge(change, builder)

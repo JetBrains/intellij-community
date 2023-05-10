@@ -30,13 +30,13 @@ import java.util.concurrent.atomic.AtomicLong
 class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   private val dispatcher = EventDispatcher.create(LibraryTable.Listener::class.java)
 
-  override fun initializeLibraryBridges(changes: Map<Class<*>, Set<EntityChange<*>>>, builder: MutableEntityStorage) {
+  override fun initializeLibraryBridges(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     val start = System.currentTimeMillis()
 
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage
 
     @Suppress("UNCHECKED_CAST")
-    val libraryChanges = (changes[LibraryEntity::class.java] as? Set<EntityChange<LibraryEntity>>) ?: emptySet()
+    val libraryChanges = (changes[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList()
     val addChanges = libraryChanges.filterGlobalLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
 
     for (addChange in addChanges) {
@@ -255,7 +255,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   override fun removeListener(listener: LibraryTable.Listener) = dispatcher.removeListener(listener)
 
   companion object {
-    private fun Collection<EntityChange<LibraryEntity>>.filterGlobalLibraryChanges(): List<EntityChange<LibraryEntity>> {
+    private fun List<EntityChange<LibraryEntity>>.filterGlobalLibraryChanges(): List<EntityChange<LibraryEntity>> {
       return filter {
         when (it) {
           is EntityChange.Added -> it.entity.tableId is LibraryTableId.GlobalLibraryTableId

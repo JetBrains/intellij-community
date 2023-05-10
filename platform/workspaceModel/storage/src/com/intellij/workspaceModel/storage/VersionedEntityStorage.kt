@@ -53,7 +53,7 @@ abstract class VersionedStorageChange(versionedStorage: VersionedEntityStorage) 
    *
    * There is no order in this set of changes. You can sort them using [orderToRemoveReplaceAdd] function or manually, if needed.
    */
-  abstract fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): Set<EntityChange<T>>
+  abstract fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>>
 
   abstract fun getAllChanges(): Sequence<EntityChange<*>>
 }

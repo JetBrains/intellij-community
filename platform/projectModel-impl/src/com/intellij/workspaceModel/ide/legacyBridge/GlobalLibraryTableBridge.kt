@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface GlobalLibraryTableBridge : LibraryTable {
   fun initializeLibraryBridgesAfterLoading(mutableStorage: MutableEntityStorage, initialEntityStorage: VersionedEntityStorage): () -> Unit
-  fun initializeLibraryBridges(changes: Map<Class<*>, Set<EntityChange<*>>>, builder: MutableEntityStorage)
+  fun initializeLibraryBridges(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage)
   fun handleBeforeChangeEvents(event: VersionedStorageChange)
   fun handleChangedEvents(event: VersionedStorageChange)
   companion object {

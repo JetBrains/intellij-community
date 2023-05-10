@@ -33,7 +33,7 @@ class EntityWithCollectionTest {
     val baz = "baz"
     val collectionEntity = CollectionFieldEntity(setOf(3, 4, 3), listOf(foo, bar), MySource)
 
-    var events: Set<EntityChange<CollectionFieldEntity>> = emptySet()
+    var events: List<EntityChange<CollectionFieldEntity>> = emptyList()
     projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun beforeChanged(event: VersionedStorageChange) {
         events = event.getChanges(CollectionFieldEntity::class.java)
@@ -49,8 +49,8 @@ class EntityWithCollectionTest {
     }
 
     assertThat(events).hasSize(1)
-    assertThat(events.first()).isInstanceOf(EntityChange.Added::class.java)
-    events = emptySet()
+    assertThat(events[0]).isInstanceOf(EntityChange.Added::class.java)
+    events = emptyList()
 
     runWriteActionAndWait {
       model.updateProjectModel {
@@ -60,11 +60,11 @@ class EntityWithCollectionTest {
       }
     }
     assertThat(events).hasSize(1)
-    var replaceEvent = events.first()
+    var replaceEvent = events[0]
     assertThat(replaceEvent).isInstanceOf(EntityChange.Replaced::class.java)
     assertThat(replaceEvent.oldEntity!!.names).containsExactly(foo, bar)
     assertThat(replaceEvent.newEntity!!.names).containsExactly(foo, bar, baz)
-    events = emptySet()
+    events = emptyList()
 
     runWriteActionAndWait {
       model.updateProjectModel {
@@ -74,7 +74,7 @@ class EntityWithCollectionTest {
       }
     }
     assertThat(events).hasSize(1)
-    replaceEvent = events.first()
+    replaceEvent = events[0]
     assertThat(replaceEvent).isInstanceOf(EntityChange.Replaced::class.java)
     assertThat(replaceEvent.oldEntity!!.names).containsExactly(foo, bar, baz)
     assertThat(replaceEvent.newEntity!!.names).containsExactly(baz)

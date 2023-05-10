@@ -100,9 +100,9 @@ class ProjectLibraryTableBridgeImpl(
     })
   }
 
-  internal fun initializeLibraryBridges(changes: Map<Class<*>, Set<EntityChange<*>>>, builder: MutableEntityStorage) {
+  internal fun initializeLibraryBridges(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     @Suppress("UNCHECKED_CAST")
-    val libraryChanges = (changes[LibraryEntity::class.java] as? Set<EntityChange<LibraryEntity>>) ?: emptySet()
+    val libraryChanges = (changes[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList()
     val addChanges = libraryChanges.filterProjectLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
 
     for (addChange in addChanges) {
@@ -230,7 +230,7 @@ class ProjectLibraryTableBridgeImpl(
   }
 
   companion object {
-    private fun Collection<EntityChange<LibraryEntity>>.filterProjectLibraryChanges() =
+    private fun List<EntityChange<LibraryEntity>>.filterProjectLibraryChanges() =
       filter {
         when (it) {
           is EntityChange.Added -> it.entity.tableId is LibraryTableId.ProjectLibraryTableId
