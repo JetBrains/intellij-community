@@ -49,7 +49,7 @@ class IndexDiagnosticDumper : Disposable {
     @JvmStatic
     fun getInstance(): IndexDiagnosticDumper = service()
 
-    private const val fileNamePrefix = "diagnostic-"
+    private const val FILE_NAME_PREFIX = "diagnostic-"
 
     @JvmStatic
     val projectIndexingHistoryListenerEpName =
@@ -58,7 +58,8 @@ class IndexDiagnosticDumper : Disposable {
     @JvmStatic
     private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean
       get() =
-        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters", false)
+        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters",
+                                            ApplicationManagerEx.isInIntegrationTest())
 
     @JvmStatic
     private val indexingDiagnosticsLimitOfFiles: Int
@@ -389,8 +390,8 @@ class IndexDiagnosticDumper : Disposable {
     var diagnosticHtml: Path
     var nowTime = LocalDateTime.now()
     while (true) {
-      diagnosticJson = IndexDiagnosticDumperUtils.getDumpFilePath(fileNamePrefix, nowTime, "json", indexDiagnosticDirectory)
-      diagnosticHtml = IndexDiagnosticDumperUtils.getDumpFilePath(fileNamePrefix, nowTime, "html", indexDiagnosticDirectory)
+      diagnosticJson = IndexDiagnosticDumperUtils.getDumpFilePath(FILE_NAME_PREFIX, nowTime, "json", indexDiagnosticDirectory)
+      diagnosticHtml = IndexDiagnosticDumperUtils.getDumpFilePath(FILE_NAME_PREFIX, nowTime, "html", indexDiagnosticDirectory)
       if (!diagnosticJson.exists() && !diagnosticHtml.exists()) {
         break
       }
@@ -469,7 +470,7 @@ class IndexDiagnosticDumper : Disposable {
   private fun parseExistingDiagnostics(indexDiagnosticDirectory: Path): List<ExistingDiagnostic> =
     Files.list(indexDiagnosticDirectory).use { files ->
       files.asSequence()
-        .filter { file -> file.fileName.toString().startsWith(fileNamePrefix) && file.extension == "json" }
+        .filter { file -> file.fileName.toString().startsWith(FILE_NAME_PREFIX) && file.extension == "json" }
         .mapNotNull { jsonFile ->
           val times = fastReadIndexingHistoryTimes(jsonFile) ?: return@mapNotNull null
           val appInfo = fastReadAppInfo(jsonFile) ?: return@mapNotNull null
@@ -488,7 +489,7 @@ class IndexDiagnosticDumper : Disposable {
   private fun parseExistingIndexingActivityDiagnostics(indexDiagnosticDirectory: Path): List<ExistingIndexingActivityDiagnostic> =
     Files.list(indexDiagnosticDirectory).use { files ->
       files.asSequence()
-        .filter { file -> file.fileName.toString().startsWith(fileNamePrefix) && file.extension == "json" }
+        .filter { file -> file.fileName.toString().startsWith(FILE_NAME_PREFIX) && file.extension == "json" }
         .mapNotNull { jsonFile ->
           val appInfo = fastReadAppInfo(jsonFile) ?: return@mapNotNull null
           val runtimeInfo = fastReadRuntimeInfo(jsonFile) ?: return@mapNotNull null
