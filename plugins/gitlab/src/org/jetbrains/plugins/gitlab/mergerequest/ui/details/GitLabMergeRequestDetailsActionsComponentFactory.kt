@@ -45,32 +45,32 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     val moreActionsGroup = DefaultActionGroup(GitLabBundle.message("merge.request.details.action.review.more.text"), true)
 
     return Wrapper().apply {
-      bindContentIn(scope, reviewFlowVm.role.map { role ->
+      bindContentIn(scope, reviewFlowVm.role) { role ->
         val mainPanel = when (role) {
           ReviewRole.AUTHOR -> CodeReviewDetailsActionsComponentFactory.createActionsForAuthor(
-            scope, reviewFlowVm.reviewState, reviewFlowVm.reviewers, reviewActions, moreActionsGroup
+            this, reviewFlowVm.reviewState, reviewFlowVm.reviewers, reviewActions, moreActionsGroup
           )
-          ReviewRole.REVIEWER -> createActionsForReviewer(scope, reviewFlowVm, reviewActions, moreActionsGroup)
+          ReviewRole.REVIEWER -> createActionsForReviewer(reviewFlowVm, reviewActions, moreActionsGroup)
           ReviewRole.GUEST -> CodeReviewDetailsActionsComponentFactory.createActionsForGuest(reviewActions, moreActionsGroup)
         }
 
-        return@map CodeReviewDetailsActionsComponentFactory.createActionsComponent(
-          scope, reviewFlowVm.reviewRequestState,
+        CodeReviewDetailsActionsComponentFactory.createActionsComponent(
+          this, reviewFlowVm.reviewRequestState,
           openedStatePanel = mainPanel,
           CodeReviewDetailsActionsComponentFactory.createActionsForMergedReview(),
           CodeReviewDetailsActionsComponentFactory.createActionsForClosedReview(reviewActions.reopenReviewAction),
           CodeReviewDetailsActionsComponentFactory.createActionsForDraftReview(reviewActions.postReviewAction)
         )
-      })
+      }
     }
   }
 
-  private fun createActionsForReviewer(
-    scope: CoroutineScope,
+  private fun CoroutineScope.createActionsForReviewer(
     reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
     reviewActions: CodeReviewDetailsActionsComponentFactory.CodeReviewActions,
     moreActionsGroup: DefaultActionGroup
   ): JComponent {
+    val scope = this
     val approveButton = object : InstallButton(true) {
       override fun setTextAndSize() {}
     }.apply {
@@ -83,7 +83,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     }
 
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
-    scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    launch(start = CoroutineStart.UNDISPATCHED) {
       reviewFlowVm.reviewState.collect { reviewState ->
         moreActionsGroup.removeAll()
         when (reviewState) {
