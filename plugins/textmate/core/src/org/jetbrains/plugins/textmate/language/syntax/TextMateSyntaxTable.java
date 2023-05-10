@@ -5,6 +5,7 @@ import com.intellij.util.containers.Interner;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,8 +13,8 @@ import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <p/>
@@ -27,8 +28,8 @@ import java.util.Map;
  */
 public class TextMateSyntaxTable {
   private static final LoggerRt LOG = LoggerRt.getInstance(TextMateSyntaxTable.class);
-  private final Map<CharSequence, SyntaxNodeDescriptor> rulesMap = new HashMap<>();
-  private Object2IntMap<String> ruleIds;
+  private final Map<CharSequence, SyntaxNodeDescriptor> rulesMap = new ConcurrentHashMap<>();
+  private Object2IntMap<String> ruleIds; // guarded by this
 
   public synchronized void compact() {
     ruleIds = null;
@@ -41,7 +42,7 @@ public class TextMateSyntaxTable {
    * @return language scope root name
    */
   @NotNull
-  public synchronized CharSequence loadSyntax(Plist plist, @NotNull Interner<CharSequence> interner) {
+  public CharSequence loadSyntax(Plist plist, @NotNull Interner<CharSequence> interner) {
     return loadRealNode(plist, null, interner).getScopeName();
   }
 
@@ -54,7 +55,7 @@ public class TextMateSyntaxTable {
    * method returns {@link SyntaxNodeDescriptor#EMPTY_NODE}.
    */
   @NotNull
-  public synchronized SyntaxNodeDescriptor getSyntax(CharSequence scopeName) {
+  public SyntaxNodeDescriptor getSyntax(CharSequence scopeName) {
     SyntaxNodeDescriptor syntaxNodeDescriptor = rulesMap.get(scopeName);
     if (syntaxNodeDescriptor == null) {
       LOG.info("Can't find syntax node for scope: '" + scopeName + "'");
@@ -63,7 +64,7 @@ public class TextMateSyntaxTable {
     return syntaxNodeDescriptor;
   }
 
-  public synchronized void clear() {
+  public void clear() {
     rulesMap.clear();
   }
 
@@ -171,7 +172,7 @@ public class TextMateSyntaxTable {
     }
   }
 
-  private int getRuleId(@NotNull String ruleName) {
+  private synchronized int getRuleId(@NotNull String ruleName) {
     if (ruleIds == null) {
       ruleIds = new Object2IntOpenHashMap<>();
     }
