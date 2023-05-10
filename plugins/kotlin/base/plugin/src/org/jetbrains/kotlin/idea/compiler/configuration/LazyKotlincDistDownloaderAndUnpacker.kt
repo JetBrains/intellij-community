@@ -58,6 +58,14 @@ internal class LazyKotlincDistDownloaderAndUnpacker(version: String) : LazyFileO
 private class LazyDistDirLayoutProducer(version: String, private val unpackedDistDestination: File) :
     AbstractLazyFileOutputProducer<List<File>, Unit>("${LazyDistDirLayoutProducer::class.java.name}-$version") {
 
+    companion object {
+        /**
+         * Bump when you change the algorithm of how LazyDistDirLayoutProducer works.
+         * It helps to make sure that we rebuild dist when the algorithm changes.
+         */
+        private const val ALGORITHM_VERSION = 1
+    }
+
     private val kotlinVersion = IdeKotlinVersion.parse(version).getOrThrow()
 
     override fun produceOutput(input: List<File>, computationContext: Unit): List<File> { // inputs are jarsInMavenRepo
@@ -73,6 +81,7 @@ private class LazyDistDirLayoutProducer(version: String, private val unpackedDis
     }
 
     override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: List<File>, buffer: ByteArray) {
+        messageDigest.update(ALGORITHM_VERSION.toBigInteger().toByteArray())
         messageDigest.update(input, buffer)
     }
 
