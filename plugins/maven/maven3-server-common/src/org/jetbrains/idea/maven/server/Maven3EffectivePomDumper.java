@@ -46,7 +46,7 @@ public final class Maven3EffectivePomDumper {
     final StringWriter w = new StringWriter();
 
     try {
-      final MavenExecutionRequest request = embedder.createRequest(file, activeProfiles, inactiveProfiles, null);
+      MavenExecutionRequest request = embedder.createRequest(file, activeProfiles, inactiveProfiles);
 
       embedder.executeWithMavenSession(request, () -> {
         try {

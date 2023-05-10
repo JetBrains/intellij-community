@@ -279,7 +279,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                               @NotNull List<String> activeProfiles,
                                                               @NotNull List<String> inactiveProfiles) {
     File file = !files.isEmpty() ? files.iterator().next() : null;
-    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles);
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
@@ -737,15 +737,12 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   public MavenExecutionRequest createRequest(@Nullable File file,
                                              @Nullable List<String> activeProfiles,
-                                             @Nullable List<String> inactiveProfiles,
-                                             @Nullable String goal) {
+                                             @Nullable List<String> inactiveProfiles) {
 
     MavenExecutionRequest result = new DefaultMavenExecutionRequest();
 
     try {
       getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(result, myMavenSettings);
-
-      result.setGoals(goal == null ? Collections.emptyList() : Collections.singletonList(goal));
 
       result.setPom(file);
 
@@ -1079,7 +1076,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                        MavenToken token) {
     MavenServerUtil.checkToken(token);
 
-    MavenExecutionRequest request = createRequest(null, null, null, null);
+    MavenExecutionRequest request = createRequest(null, null, null);
     request.setTransferListener(new Maven40TransferListenerAdapter(myCurrentIndicator));
 
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
@@ -1235,7 +1232,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenExplicitProfiles profiles = request.profiles();
     List<String> activeProfiles = new ArrayList<>(profiles.getEnabledProfiles());
     List<String> inactiveProfiles = new ArrayList<>(profiles.getDisabledProfiles());
-    MavenExecutionRequest mavenExecutionRequest = createRequest(file, activeProfiles, inactiveProfiles, goal);
+    MavenExecutionRequest mavenExecutionRequest = createRequest(file, activeProfiles, inactiveProfiles);
+    mavenExecutionRequest.setGoals(Collections.singletonList(goal));
 
     Maven maven = getComponent(Maven.class);
     MavenExecutionResult executionResult = maven.execute(mavenExecutionRequest);
@@ -1278,7 +1276,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   public MavenModel readModel(File file, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      Map<String, Object> inputOptions = new HashMap<String, Object>();
+      Map<String, Object> inputOptions = new HashMap<>();
       inputOptions.put(ModelProcessor.SOURCE, new FileModelSource(file));
 
       ModelReader reader = null;
@@ -1370,7 +1368,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   private Artifact doResolveArtifact(Artifact artifact, List<ArtifactRepository> remoteRepositories) {
     try {
       MavenExecutionRequest request =
-        createRequest(null, null, null, null);
+        createRequest(null, null, null);
       for (ArtifactRepository artifactRepository : remoteRepositories) {
         request.addRemoteRepository(artifactRepository);
       }
@@ -1490,7 +1488,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     @NotNull List<MavenArtifactInfo> artifacts,
     @NotNull List<MavenRemoteRepository> remoteRepositories) {
     DefaultSessionFactory sessionFactory = getComponent(DefaultSessionFactory.class);
-    MavenExecutionRequest request = createRequest(null, null, null, null);
+    MavenExecutionRequest request = createRequest(null, null, null);
     request.setRemoteRepositories(convertRepositories(remoteRepositories));
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     MavenSession mavenSession = createMavenSession(request, maven);

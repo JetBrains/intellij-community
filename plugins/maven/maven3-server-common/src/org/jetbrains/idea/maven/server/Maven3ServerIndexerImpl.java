@@ -128,7 +128,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
         else {
           final Maven3ServerEmbedder embedder = createEmbedder(new MavenServerSettings());
 
-          MavenExecutionRequest r = embedder.createRequest(null, null, null, null);
+          MavenExecutionRequest r = embedder.createRequest(null, null, null);
 
           final IndexUpdateRequest request = new IndexUpdateRequest(index);
 

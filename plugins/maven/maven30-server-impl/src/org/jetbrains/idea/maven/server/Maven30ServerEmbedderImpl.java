@@ -586,7 +586,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                                                              @NotNull List<String> inactiveProfiles,
                                                              final List<ResolutionListener> listeners) throws RemoteException {
     File file = files.size() == 1 ? files.iterator().next() : null;
-    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles);
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
@@ -781,16 +781,13 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   @Override
   public MavenExecutionRequest createRequest(@Nullable File file,
                                              @Nullable List<String> activeProfiles,
-                                             @Nullable List<String> inactiveProfiles,
-                                             @Nullable String goal)
+                                             @Nullable List<String> inactiveProfiles)
     throws RemoteException {
 
     MavenExecutionRequest result = new DefaultMavenExecutionRequest();
 
     try {
       getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(result, myMavenSettings);
-
-      result.setGoals(goal == null ? Collections.emptyList() : Collections.singletonList(goal));
 
       result.setPom(file);
 
@@ -999,8 +996,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
         mavenPlugin.setDependencies(pluginFromProject.getDependencies());
       }
 
-      final MavenExecutionRequest request =
-        createRequest(null, null, null, null);
+      MavenExecutionRequest request = createRequest(null, null, null);
 
       DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
       RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
@@ -1136,16 +1132,17 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                                           @NotNull final List<String> activeProfiles,
                                           @NotNull final List<String> inactiveProfiles,
                                           @NotNull final String goal) throws RemoteException {
-    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, goal);
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles);
+    request.setGoals(Collections.singletonList(goal));
 
-    org.apache.maven.execution.MavenExecutionResult executionResult = safeExecute(request, getComponent(Maven.class));
+    MavenExecutionResult executionResult = safeExecute(request, getComponent(Maven.class));
 
     return new Maven3ExecutionResult(executionResult.getProject(), filterExceptions(executionResult.getExceptions()));
   }
 
-  private org.apache.maven.execution.MavenExecutionResult safeExecute(MavenExecutionRequest request, Maven maven) throws RemoteException {
+  private MavenExecutionResult safeExecute(MavenExecutionRequest request, Maven maven) throws RemoteException {
     MavenLeakDetector detector = new MavenLeakDetector().mark();
-    org.apache.maven.execution.MavenExecutionResult result = maven.execute(request);
+    MavenExecutionResult result = maven.execute(request);
     detector.check();
     return result;
   }

@@ -534,7 +534,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
                                                              @NotNull final List<String> inactiveProfiles,
                                                              final List<ResolutionListener> listeners) throws RemoteException {
     final File file = !files.isEmpty() ? files.iterator().next() : null;
-    final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
+    final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles);
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
@@ -885,16 +885,13 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @Override
   public MavenExecutionRequest createRequest(@Nullable File file,
                                              @Nullable List<String> activeProfiles,
-                                             @Nullable List<String> inactiveProfiles,
-                                             @Nullable String goal)
+                                             @Nullable List<String> inactiveProfiles)
     throws RemoteException {
 
     MavenExecutionRequest result = new DefaultMavenExecutionRequest();
 
     try {
       getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(result, myMavenSettings);
-
-      result.setGoals(goal == null ? Collections.emptyList() : Collections.singletonList(goal));
 
       result.setPom(file);
 
@@ -1189,7 +1186,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     MavenServerUtil.checkToken(token);
     try {
       try {
-        final MavenExecutionRequest request = createRequest(null, null, null, null);
+        MavenExecutionRequest request = createRequest(null, null, null);
 
         final Ref<List<MavenArtifact>> mavenArtifacts = Ref.create();
         executeWithMavenSession(request, () -> {
@@ -1258,7 +1255,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     throws RemoteException {
     MavenServerUtil.checkToken(token);
 
-    MavenExecutionRequest request = createRequest(null, null, null, null);
+    MavenExecutionRequest request = createRequest(null, null, null);
     request.setTransferListener(new Maven3TransferListenerAdapter(myCurrentIndicator));
 
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
@@ -1464,8 +1461,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       return artifact;
     }
     else {
-      MavenExecutionRequest request =
-        createRequest(null, null, null, null);
+      MavenExecutionRequest request = createRequest(null, null, null);
       for (ArtifactRepository artifactRepository : repos) {
         request.addRemoteRepository(artifactRepository);
       }
@@ -1546,7 +1542,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     MavenExplicitProfiles profiles = request.profiles();
     List<String> activeProfiles = new ArrayList<>(profiles.getEnabledProfiles());
     List<String> inactiveProfiles = new ArrayList<>(profiles.getDisabledProfiles());
-    MavenExecutionRequest mavenExecutionRequest = createRequest(file, activeProfiles, inactiveProfiles, goal);
+    MavenExecutionRequest mavenExecutionRequest = createRequest(file, activeProfiles, inactiveProfiles);
+    mavenExecutionRequest.setGoals(Collections.singletonList(goal));
 
     MavenExecutionResult executionResult = safeExecute(mavenExecutionRequest, getComponent(Maven.class));
 

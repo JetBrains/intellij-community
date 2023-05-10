@@ -364,8 +364,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
 
   public abstract MavenExecutionRequest createRequest(File file,
                                                       List<String> activeProfiles,
-                                                      List<String> inactiveProfiles,
-                                                      String goal)
+                                                      List<String> inactiveProfiles)
     throws RemoteException;
 
   protected static void warn(String message, Throwable e) {
@@ -425,7 +424,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
                                                               @Nullable String url, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
-      MavenExecutionRequest request = createRequest(null, null, null, null);
+      MavenExecutionRequest request = createRequest(null, null, null);
       List<ArtifactRepository> artifactRepositories = map2ArtifactRepositories(repositories);
       for (ArtifactRepository repository : artifactRepositories) {
         request.addRemoteRepository(repository);
