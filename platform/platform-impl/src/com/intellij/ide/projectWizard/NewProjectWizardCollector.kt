@@ -32,7 +32,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 15)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 16)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = EventFields.Int("screen")
@@ -81,6 +81,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val sdkChangedEvent = GROUP.registerVarargEvent("build.system.sdk.changed", sessionIdField, screenNumField, languageField, buildSystemField, buildSystemSdkField)
     private val sdkFinishedEvent = GROUP.registerVarargEvent("build.system.sdk.finished", sessionIdField, screenNumField, languageField, buildSystemField, buildSystemSdkField)
     private val parentChangedEvent = GROUP.registerVarargEvent("build.system.parent.changed", sessionIdField, screenNumField, languageField, buildSystemField, buildSystemParentField)
+    private val parentFinishedEvent = GROUP.registerVarargEvent("build.system.parent.finished", sessionIdField, screenNumField, languageField, buildSystemField, buildSystemParentField)
 
     private val moduleNameChangedEvent = GROUP.registerVarargEvent("build.system.module.name.changed", sessionIdField, screenNumField, languageField, buildSystemField)
     private val contentRootChangedEvent = GROUP.registerVarargEvent("build.system.content.root.changed", sessionIdField, screenNumField, languageField, buildSystemField)
@@ -150,6 +151,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     fun NewProjectWizardStep.logSdkChanged(sdk: Sdk?) = sdkChangedEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemSdkField, sdk?.featureVersion ?: -1))
     fun NewProjectWizardStep.logSdkFinished(sdk: Sdk?) = sdkFinishedEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(screenNumField, context.screen), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemSdkField, sdk?.featureVersion ?: -1))
     fun NewProjectWizardStep.logParentChanged(isNone: Boolean) = parentChangedEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(screenNumField, context.screen), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemParentField, isNone))
+    fun NewProjectWizardStep.logParentFinished(isNone: Boolean) = parentFinishedEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(screenNumField, context.screen), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemParentField, isNone))
     // @formatter:on
 
     @Suppress("DeprecatedCallableAddReplaceWith")
