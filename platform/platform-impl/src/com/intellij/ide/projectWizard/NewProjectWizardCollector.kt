@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged as logAddSampleCodeChangedImpl
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.GROOVY
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.NULL
@@ -14,7 +13,10 @@ import com.intellij.ide.wizard.LanguageNewProjectWizardData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.IntEventField
+import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
@@ -24,31 +26,32 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.lang.JavaVersion
 import java.lang.Integer.min
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged as logAddSampleCodeChangedImpl
 
 class NewProjectWizardCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 14)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 15)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = EventFields.Int("screen")
     private val typedCharsField = IntEventField("typed_chars")
     private val hitsField = IntEventField("hits")
     private val generatorTypeField = GeneratorEventField("generator")
-    private val languageField = BoundedStringEventField.lowercase("language", *NewProjectWizardConstants.Language.ALL)
+    private val languageField = EventFields.String("language", NewProjectWizardConstants.Language.ALL)
     private val gitField = EventFields.Boolean("git")
     private val isSucceededField = EventFields.Boolean("project_created")
     private val inputMaskField = EventFields.Long("input_mask")
     private val addSampleCodeField = EventFields.Boolean("add_sample_code")
     private val addSampleOnboardingTipsField = EventFields.Boolean("add_sample_onboarding_tips")
-    private val buildSystemField = BoundedStringEventField.lowercase("build_system", *NewProjectWizardConstants.BuildSystem.ALL)
-    private val buildSystemDslField = BoundedStringEventField.lowercase("build_system_dsl", *NewProjectWizardConstants.Language.ALL_DSL)
+    private val buildSystemField = EventFields.String("build_system", NewProjectWizardConstants.BuildSystem.ALL)
+    private val buildSystemDslField = EventFields.String("build_system_dsl", NewProjectWizardConstants.Language.ALL_DSL)
     private val buildSystemSdkField = EventFields.Int("build_system_sdk_version")
     private val buildSystemParentField = EventFields.Boolean("build_system_parent")
     private val groovyVersionField = EventFields.Version
-    private val groovySourceTypeField = BoundedStringEventField.lowercase("groovy_sdk_type", "maven", "local", NULL)
-    private val pluginField = BoundedStringEventField.lowercase("plugin_selected", *NewProjectWizardConstants.Language.ALL)
+    private val groovySourceTypeField = EventFields.String("groovy_sdk_type", listOf("maven", "local", NULL))
+    private val pluginField = EventFields.String("plugin_selected", NewProjectWizardConstants.Language.ALL)
 
     // @formatter:off
     private val open = GROUP.registerVarargEvent("wizard.dialog.open", sessionIdField, screenNumField)
@@ -181,36 +184,6 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     fun NewProjectWizardStep.logGroovyLibraryChanged(groovyLibrarySource: String?, groovyLibraryVersion: String?) = groovyLibraryChanged.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, groovySourceTypeField with (groovyLibrarySource ?: NULL), groovyVersionField with groovyLibraryVersion)
     fun NewProjectWizardStep.logGroovyLibraryFinished(groovyLibrarySource: String?, groovyLibraryVersion: String?) = groovyLibraryFinished.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, groovySourceTypeField with (groovyLibrarySource ?: NULL), groovyVersionField with groovyLibraryVersion)
     // @formatter:on
-  }
-
-  private class BoundedStringEventField private constructor(
-    name: String,
-    allowedValues: List<String>,
-    private val transform: (String) -> String
-  ) : StringEventField(name) {
-
-    private val myAllowedValues = (allowedValues + OTHER).map(transform)
-
-    override fun addData(fuData: FeatureUsageData, value: String?) {
-      var boundedValue = value?.let(transform) ?: return
-      if (boundedValue !in myAllowedValues) {
-        boundedValue = OTHER
-      }
-      super.addData(fuData, boundedValue)
-    }
-
-    override val validationRule = EventFields.String(name, myAllowedValues).validationRule
-
-    companion object {
-      fun lowercase(name: String, vararg allowedValues: String): BoundedStringEventField {
-        return BoundedStringEventField(name, allowedValues.toList(), String::lowercase)
-      }
-
-      @Suppress("unused")
-      fun enum(name: String, vararg allowedValues: String): BoundedStringEventField {
-        return BoundedStringEventField(name, allowedValues.toList()) { it }
-      }
-    }
   }
 
   private class GeneratorEventField(override val name: String) : PrimitiveEventField<ModuleBuilder?>() {

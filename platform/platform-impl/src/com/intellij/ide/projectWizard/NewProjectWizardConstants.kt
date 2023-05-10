@@ -14,8 +14,8 @@ object NewProjectWizardConstants {
     const val GO = "Go"
     const val SCALA = "Scala"
 
-    val ALL = arrayOf(JAVA, KOTLIN, GROOVY, JAVASCRIPT, HTML, PYTHON, PHP, RUBY, GO, SCALA)
-    val ALL_DSL = arrayOf(KOTLIN, GROOVY)
+    val ALL = listOf(JAVA, KOTLIN, GROOVY, JAVASCRIPT, HTML, PYTHON, PHP, RUBY, GO, SCALA)
+    val ALL_DSL = listOf(KOTLIN, GROOVY)
   }
 
   object BuildSystem {
@@ -24,7 +24,7 @@ object NewProjectWizardConstants {
     const val MAVEN = "Maven"
     private const val SBT = "SBT"
 
-    val ALL = arrayOf(INTELLIJ, GRADLE, MAVEN, SBT)
+    val ALL = listOf(INTELLIJ, GRADLE, MAVEN, SBT)
   }
 
   object Generators {
