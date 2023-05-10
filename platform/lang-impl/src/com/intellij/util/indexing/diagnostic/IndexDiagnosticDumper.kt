@@ -58,8 +58,7 @@ class IndexDiagnosticDumper : Disposable {
     @JvmStatic
     private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean
       get() =
-        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters",
-                                            ApplicationManagerEx.isInIntegrationTest())
+        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters", false)
 
     @JvmStatic
     private val indexingDiagnosticsLimitOfFiles: Int
@@ -129,7 +128,8 @@ class IndexDiagnosticDumper : Disposable {
 
     @JvmStatic
     private val shouldDumpOldDiagnostics: Boolean
-      get() = SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.old.version.of.diagnostics", false)
+      get() = SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.old.version.of.diagnostics",
+                                                  ApplicationManagerEx.isInIntegrationTest())
 
     private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
