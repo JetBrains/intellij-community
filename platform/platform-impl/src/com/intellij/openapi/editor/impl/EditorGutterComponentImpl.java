@@ -40,6 +40,8 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -59,10 +61,11 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ex.lineNumber.HybridLineNumberConverter;
+import com.intellij.openapi.ui.ex.lineNumber.RelativeLineNumberConverter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
@@ -175,7 +178,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private boolean myGapAfterAnnotations;
   private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<>();
   private String myLastGutterToolTip;
-  @NotNull private LineNumberConverter myLineNumberConverter = LineNumberConverter.DEFAULT;
+  @Nullable private LineNumberConverter myLineNumberConverter;
   @Nullable private LineNumberConverter myAdditionalLineNumberConverter;
   private boolean myShowDefaultGutterPopup = true;
   private boolean myCanCloseAnnotations = true;
@@ -228,6 +231,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
     setRenderingHints();
     HOVER_STATE_LISTENER.addTo(this);
+    myEditor.getCaretModel().addCaretListener(new LineNumbersRepainter());
   }
 
   @NotNull
@@ -673,7 +677,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void paintLineNumbers(Graphics2D g, int startVisualLine, int endVisualLine) {
     if (isLineNumbersShown()) {
       int offset = getLineNumberAreaOffset() + myLineNumberAreaWidth;
-      doPaintLineNumbers(g, startVisualLine, endVisualLine, offset, myLineNumberConverter);
+      doPaintLineNumbers(g, startVisualLine, endVisualLine, offset, getPrimaryLineNumberConverter());
       if (myAdditionalLineNumberConverter != null) {
         doPaintLineNumbers(g, startVisualLine, endVisualLine, offset + getAreaWidthWithGap(myAdditionalLineNumberAreaWidth),
                            myAdditionalLineNumberConverter);
@@ -1699,6 +1703,23 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return myEditor.getSettings().isLineNumbersShown();
   }
 
+  @NotNull LineNumberConverter getPrimaryLineNumberConverter() {
+    if (myLineNumberConverter != null) return myLineNumberConverter;
+
+    EditorSettingsExternalizable.LineNumerationType numeration = EditorSettingsExternalizable.getInstance().getLineNumeration();
+    switch (numeration) {
+      case RELATIVE -> {
+        return RelativeLineNumberConverter.INSTANCE;
+      }
+      case HYBRID -> {
+        return HybridLineNumberConverter.INSTANCE;
+      }
+      default -> {
+        return LineNumberConverter.DEFAULT;
+      }
+    }
+  }
+
   @Override
   public boolean isAnnotationsShown() {
     return !myTextAnnotationGutters.isEmpty();
@@ -1749,7 +1770,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void calcLineNumberAreaWidth() {
     if (!isLineNumbersShown()) return;
 
-    String maxLineNumber = myLineNumberConverter.getMaxLineNumberString(myEditor);
+    String maxLineNumber = getPrimaryLineNumberConverter().getMaxLineNumberString(myEditor);
     myLineNumberAreaWidth = Math.max(getInitialLineNumberWidth(), maxLineNumber == null ? 0 : calcLineNumbersAreaWidth(maxLineNumber));
 
     myAdditionalLineNumberAreaWidth = 0;
@@ -2820,5 +2841,14 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
 
     return null;
+  }
+
+  private class LineNumbersRepainter implements CaretListener {
+    @Override
+    public void caretPositionChanged(@NotNull CaretEvent event) {
+      if (getPrimaryLineNumberConverter().shouldRepaintOnCaretMovement()) {
+        repaint();
+      }
+    }
   }
 }
