@@ -18,6 +18,7 @@ public final class ExpUiIcons {
   public static final class Actions {
     /** 16x16 */ public static final @NotNull Icon BuildAutoReloadChanges = load("expui/actions/buildAutoReloadChanges.svg", -644997710, 2);
     /** 16x16 */ public static final @NotNull Icon Deploy = load("expui/actions/deploy.svg", 546491470, 2);
+    /** 16x16 */ public static final @NotNull Icon DiffWithClipboard = load("expui/actions/diffWithClipboard.svg", -1377488790, 2);
     /** 16x16 */ public static final @NotNull Icon Filterdups = load("expui/actions/filterdups.svg", -525342060, 2);
     /** 16x16 */ public static final @NotNull Icon Generated = load("expui/actions/generated.svg", 284359763, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByMethod = load("expui/actions/groupByMethod.svg", 788449648, 2);
@@ -42,6 +43,8 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ShowImportStatements = load("expui/actions/showImportStatements.svg", -570183774, 2);
     /** 16x16 */ public static final @NotNull Icon ShowReadAccess = load("expui/actions/showReadAccess.svg", 1924555825, 2);
     /** 16x16 */ public static final @NotNull Icon ShowWriteAccess = load("expui/actions/showWriteAccess.svg", 2028830857, 2);
+    /** 16x16 */ public static final @NotNull Icon SwapPanels = load("expui/actions/swapPanels.svg", 1032694068, 2);
+    /** 16x16 */ public static final @NotNull Icon SynchronizeScrolling = load("expui/actions/synchronizeScrolling.svg", 625358122, 2);
     /** 16x16 */ public static final @NotNull Icon ToggleVisibility = load("expui/actions/toggleVisibility.svg", -117213077, 2);
     /** 16x16 */ public static final @NotNull Icon Undeploy = load("expui/actions/undeploy.svg", 1857903381, 2);
   }

@@ -3,6 +3,7 @@
     "actions": {
       "buildAutoReloadChanges.svg": "actions/buildAutoReloadChanges.svg",
       "deploy.svg": "nodes/deploy.svg",
+      "diffWithClipboard.svg": "actions/diffWithClipboard.svg",
       "filterdups.svg": "toolbar/filterdups.svg",
       "generated.svg": "actions/generatedFolder.svg",
       "groupByMethod.svg": "actions/groupByMethod.svg",
@@ -24,8 +25,10 @@
       "playLast.svg": "actions/play_last.svg",
       "profileCPU.svg": "actions/profileCPU.svg",
       "projectDirectory.svg": "actions/projectDirectory.svg",
-      "showWriteAccess.svg": "actions/showWriteAccess.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
+      "showWriteAccess.svg": "actions/showWriteAccess.svg",
+      "swapPanels.svg": "actions/swapPanels.svg",
+      "synchronizeScrolling.svg": "actions/synchronizeScrolling.svg",
       "showImportStatements.svg": "actions/showImportStatements.svg",
       "toggleVisibility.svg": "actions/toggleVisibility.svg",
       "undeploy.svg": "nodes/undeploy.svg"
