@@ -48,10 +48,7 @@ import org.apache.maven.project.path.PathTranslator;
 import org.apache.maven.project.validation.ModelValidationResult;
 import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.settings.Settings;
-import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
 import org.apache.maven.settings.building.SettingsBuilder;
-import org.apache.maven.settings.building.SettingsBuildingException;
-import org.apache.maven.settings.building.SettingsBuildingRequest;
 import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.apache.maven.shared.dependency.tree.DependencyTreeResolutionListener;
 import org.codehaus.plexus.DefaultPlexusContainer;
@@ -68,6 +65,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
+import org.jetbrains.idea.maven.server.util.Maven3SettingsBuilder;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.graph.Dependency;
 import org.sonatype.aether.repository.LocalRepositoryManager;
@@ -205,9 +203,12 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       mySystemProperties.setProperty("java.home", settings.getProjectJdk());
     }
 
-    myMavenSettings =
-      buildSettings(ReflectionUtilRt.getField(MavenCli.class, cli, SettingsBuilder.class, "settingsBuilder"), settings, mySystemProperties,
-                    ReflectionUtilRt.getField(cliRequestClass, cliRequest, Properties.class, "userProperties"));
+    myMavenSettings = Maven3SettingsBuilder.buildSettings(
+      ReflectionUtilRt.getField(MavenCli.class, cli, SettingsBuilder.class, "settingsBuilder"),
+      settings,
+      mySystemProperties,
+      ReflectionUtilRt.getField(cliRequestClass, cliRequest, Properties.class, "userProperties")
+    );
 
     myLocalRepository = createLocalRepository();
 
@@ -218,42 +219,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   @NotNull
   protected PlexusContainer getContainer() {
     return myContainer;
-  }
-
-  private static Settings buildSettings(SettingsBuilder builder,
-                                        MavenServerSettings settings,
-                                        Properties systemProperties,
-                                        Properties userProperties) throws RemoteException {
-    SettingsBuildingRequest settingsRequest = new DefaultSettingsBuildingRequest();
-    if (settings.getGlobalSettingsPath() != null) {
-      settingsRequest.setGlobalSettingsFile(new File(settings.getGlobalSettingsPath()));
-    }
-    if (settings.getUserSettingsPath() != null) {
-      settingsRequest.setUserSettingsFile(new File(settings.getUserSettingsPath()));
-    }
-
-    settingsRequest.setSystemProperties(systemProperties);
-    settingsRequest.setUserProperties(userProperties);
-
-    Settings result = new Settings();
-    try {
-      result = builder.build(settingsRequest).getEffectiveSettings();
-    }
-    catch (SettingsBuildingException e) {
-      MavenServerGlobals.getLogger().info(e);
-    }
-
-    result.setOffline(settings.isOffline());
-
-    if (settings.getLocalRepositoryPath() != null) {
-      result.setLocalRepository(settings.getLocalRepositoryPath());
-    }
-
-    if (result.getLocalRepository() == null) {
-      result.setLocalRepository(new File(System.getProperty("user.home"), ".m2/repository").getPath());
-    }
-
-    return result;
   }
 
   private static Maven3ExecutionResult handleException(Throwable e) {
