@@ -116,8 +116,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   private MavenWorkspaceMap myWorkspaceMap;
 
-  private Date myBuildStartTime;
-
   private boolean myAlwaysUpdateSnapshots;
 
   @Nullable private Properties myUserProperties;
@@ -417,7 +415,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       myWorkspaceMap = workspaceMap;
       myUserProperties = userProperties;
       myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
-      myBuildStartTime = new Date();
       myCurrentIndicator = new MavenServerProgressIndicatorWrapper();
 
       myConsoleWrapper.setWrappee(myCurrentIndicator);
@@ -953,7 +950,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       result.setCacheNotFound(true);
       result.setCacheTransferError(true);
 
-      result.setStartTime(myBuildStartTime);
+      result.setStartTime(new Date());
 
       File mavenMultiModuleProjectDirectory = getMultimoduleProjectDir(file);
       result.setBaseDirectory(mavenMultiModuleProjectDirectory);

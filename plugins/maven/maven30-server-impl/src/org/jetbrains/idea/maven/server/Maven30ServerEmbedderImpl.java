@@ -112,8 +112,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   private MavenWorkspaceMap myWorkspaceMap;
 
-  private Date myBuildStartTime;
-
   private boolean myAlwaysUpdateSnapshots;
 
   @Nullable private Properties myUserProperties;
@@ -492,8 +490,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
       myWorkspaceMap = workspaceMap;
 
-      myBuildStartTime = new Date();
-
       myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
 
       myCurrentIndicator = new MavenServerProgressIndicatorWrapper();
@@ -858,7 +854,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       result.setCacheNotFound(true);
       result.setCacheTransferError(true);
 
-      result.setStartTime(myBuildStartTime);
+      result.setStartTime(new Date());
 
       return result;
     }

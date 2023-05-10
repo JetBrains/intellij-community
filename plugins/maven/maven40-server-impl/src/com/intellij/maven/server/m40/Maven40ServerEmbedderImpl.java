@@ -94,8 +94,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   private MavenWorkspaceMap myWorkspaceMap;
 
-  private Date myBuildStartTime;
-
   private boolean myAlwaysUpdateSnapshots;
 
   @Nullable private Properties myUserProperties;
@@ -802,7 +800,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       result.setCacheNotFound(true);
       result.setCacheTransferError(true);
 
-      result.setStartTime(myBuildStartTime);
+      result.setStartTime(new Date());
 
       File mavenMultiModuleProjectDirectory = getMultimoduleProjectDir(file);
       result.setBaseDirectory(mavenMultiModuleProjectDirectory);
@@ -1619,7 +1617,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       myWorkspaceMap = workspaceMap;
       myUserProperties = userProperties;
       myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
-      myBuildStartTime = new Date();
       myCurrentIndicator = new MavenServerProgressIndicatorWrapper();
 
       myConsoleWrapper.setWrappee(myCurrentIndicator);
