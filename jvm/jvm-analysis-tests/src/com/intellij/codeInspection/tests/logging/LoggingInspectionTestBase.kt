@@ -109,5 +109,20 @@ abstract class LoggingInspectionTestBase : JvmInspectionTestBase() {
           T invoke();
       }
     """.trimIndent())
+    myFixture.addClass("""
+      package akka.event;
+      public interface LoggingAdapter {
+          void info(final String template, final Object arg1, final Object arg2);
+          void log(final int level, final String template, final Object arg1, final Object arg2, final Object arg3);
+          void log(final int level, final String template, final Object arg1, final Object arg2);
+          void log(final int level, final String template, final Object arg1);
+          void error(final Throwable cause, final String template, final Object arg1);
+          void error(final Throwable cause, final String template, final Object arg1, final Object arg2);
+          void error(final Throwable cause, final String template, final Object arg1, final Object arg2, final Object arg3);
+          void error(final String template, final Object arg1);
+          void error(final String template, final Object arg1, final Object arg2);
+          void error(final String template, final Object arg1, final Object arg2, final Object arg3);
+      }
+    """.trimIndent())
   }
 }
