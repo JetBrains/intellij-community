@@ -66,6 +66,10 @@ kotlin {
     registerListDependenciesTask(commonMain)
     registerListDependenciesTask(nativeMain)
     registerListDependenciesTask(nativeMainParent)
+
+    sourceSets.all {
+        languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
+    }
 }
 
 

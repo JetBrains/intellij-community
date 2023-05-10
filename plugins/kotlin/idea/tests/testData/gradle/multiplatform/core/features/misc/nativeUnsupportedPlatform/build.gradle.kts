@@ -31,4 +31,8 @@ kotlin {
 
     supportedMain.dependsOn(commonMain)
     unsupportedMain?.dependsOn(commonMain)
+
+    sourceSets.all {
+        languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
+    }
 }
