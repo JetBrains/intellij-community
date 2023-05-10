@@ -19,6 +19,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -108,6 +109,12 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     if (InjectedLanguageManager.getInstance(module.getProject()).isInjectedFragment(holder.getFile())
         || holder.getFile().getUserData(FileContextUtil.INJECTED_IN_ELEMENT) != null) {
       // Properties inside injected fragments cannot be normally referenced
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+
+    VirtualFile virtualFile = holder.getFile().getVirtualFile();
+    if (virtualFile == null ||
+        !ProjectFileIndex.getInstance(module.getProject()).isInSource(virtualFile)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 
