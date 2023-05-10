@@ -118,7 +118,7 @@ public final class Maven3XProfileUtil {
     return Maven3ModelConverter.convertModel(result, null);
   }
 
-  static Collection<String> collectActivatedProfiles(MavenProject mavenProject) {
+  public static Collection<String> collectActivatedProfiles(MavenProject mavenProject) {
     // for some reason project's active profiles do not contain parent's profiles - only local and settings'.
     // parent's profiles do not contain settings' profiles.
 
