@@ -573,7 +573,8 @@
     },
     "profiler": {
       "collapseNode.svg": "profiler/collapseNode.svg",
-      "expandNode.svg": "profiler/expandNode.svg"
+      "expandNode.svg": "profiler/expandNode.svg",
+      "rec.svg": "profiler/rec.svg"
     },
     "progress": {
       "pause.svg": [

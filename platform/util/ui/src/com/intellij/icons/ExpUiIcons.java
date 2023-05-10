@@ -507,6 +507,7 @@ public final class ExpUiIcons {
   public static final class Profiler {
     /** 9x9 */ public static final @NotNull Icon CollapseNode = load("expui/profiler/collapseNode.svg", -1803036502, 2);
     /** 9x9 */ public static final @NotNull Icon ExpandNode = load("expui/profiler/expandNode.svg", 908886651, 2);
+    /** 16x16 */ public static final @NotNull Icon Rec = load("expui/profiler/rec.svg", 291281404, 2);
   }
 
   public static final class Progress {
