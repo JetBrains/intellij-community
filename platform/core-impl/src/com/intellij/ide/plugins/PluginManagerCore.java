@@ -22,6 +22,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.util.Java11Shim;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.lang.ZipFilePool;
 import kotlinx.coroutines.CoroutineScope;
@@ -32,9 +33,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
+import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
 import java.util.*;
@@ -45,8 +44,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.intellij.util.containers.ContainerUtil.getOnlyItem;
 
 /**
  * See <a href="https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md">Plugin Model</a> documentation.
@@ -80,12 +77,12 @@ public final class PluginManagerCore {
 
   private static volatile boolean IGNORE_COMPATIBILITY = Boolean.getBoolean("idea.ignore.plugin.compatibility");
 
+  @SuppressWarnings("SpellCheckingInspection")
   private static final boolean QODANA_PLUGINS_THIRD_PARTY_ACCEPT = Boolean.getBoolean("idea.qodana.thirdpartyplugins.accept");
 
   private static final String THIRD_PARTY_PLUGINS_FILE = "alien_plugins.txt";
   private static volatile @Nullable Boolean thirdPartyPluginsNoteAccepted = null;
 
-  private static Reference<Map<PluginId, Set<String>>> brokenPluginVersions;
   private static volatile @Nullable PluginSet pluginSet;
   private static Map<PluginId, PluginLoadingError> pluginLoadingErrors;
 
@@ -130,8 +127,8 @@ public final class PluginManagerCore {
   }
 
   /**
-   * Returns descriptors of plugins which are successfully loaded into IDE. The result is sorted in a way that if each plugin comes after
-   * the plugins it depends on.
+   * Returns descriptors of plugins which are successfully loaded into the IDE.
+   * The result is sorted in a way that if each plugin comes after the plugins it depends on.
    */
   public static @NotNull List<? extends IdeaPluginDescriptor> getLoadedPlugins() {
     return getPluginSet().enabledPlugins;
@@ -165,104 +162,6 @@ public final class PluginManagerCore {
 
   public static boolean isDisabled(@NotNull PluginId pluginId) {
     return PluginEnabler.HEADLESS.isDisabled(pluginId);
-  }
-
-  @ApiStatus.Internal
-  public static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor) {
-    PluginId pluginId = descriptor.getPluginId();
-    Set<String> set = getBrokenPluginVersions().get(pluginId);
-    return set != null && set.contains(descriptor.getVersion());
-  }
-
-  @ApiStatus.Internal
-  public static void updateBrokenPlugins(Map<PluginId, Set<String>> brokenPlugins) {
-    brokenPluginVersions = new SoftReference<>(brokenPlugins);
-    Path updatedBrokenPluginFile = getUpdatedBrokenPluginFile();
-    try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(updatedBrokenPluginFile), 32_000))) {
-      out.write(2);
-      out.writeUTF(getBuildNumber().asString());
-      out.writeInt(brokenPlugins.size());
-      for (Map.Entry<PluginId, Set<String>> entry : brokenPlugins.entrySet()) {
-        out.writeUTF(entry.getKey().getIdString());
-        out.writeShort(entry.getValue().size());
-        for (String s : entry.getValue()) {
-          out.writeUTF(s);
-        }
-      }
-    }
-    catch (NoSuchFileException ignore) { }
-    catch (IOException e) {
-      getLogger().error("Failed to read " + updatedBrokenPluginFile, e);
-    }
-  }
-
-  static @NotNull Map<@NotNull PluginId, @NotNull Set<String>> getBrokenPluginVersions() {
-    if (PluginEnabler.HEADLESS.isIgnoredDisabledPlugins()) {
-      return Collections.emptyMap();
-    }
-
-    Map<PluginId, Set<String>> result = brokenPluginVersions == null ? null : brokenPluginVersions.get();
-    if (result == null) {
-      result = readBrokenPluginFile();
-      brokenPluginVersions = new SoftReference<>(result);
-    }
-    return result;
-  }
-
-  private static @NotNull Map<PluginId, Set<String>> readBrokenPluginFile() {
-    Map<PluginId, Set<String>> result = null;
-    Path updatedBrokenPluginFile = getUpdatedBrokenPluginFile();
-    if (Files.exists(updatedBrokenPluginFile)) {
-      result = tryReadBrokenPluginsFile(updatedBrokenPluginFile);
-      if (result != null) {
-        getLogger().info("Using cached broken plugins file");
-      }
-    }
-    if (result == null) {
-      result = tryReadBrokenPluginsFile(Paths.get(PathManager.getBinPath() + "/brokenPlugins.db"));
-      if (result != null) {
-        getLogger().info("Using broken plugins file from IDE distribution");
-      }
-    }
-    if (result != null) {
-      return result;
-    }
-    return Collections.emptyMap();
-  }
-
-  @Nullable
-  private static Map<PluginId, Set<String>> tryReadBrokenPluginsFile(Path brokenPluginsStorage) {
-    try (DataInputStream stream = new DataInputStream(new BufferedInputStream(Files.newInputStream(brokenPluginsStorage), 32_000))) {
-      int version = stream.readUnsignedByte();
-      if (version != 2) {
-        getLogger().info("Unsupported version of " + brokenPluginsStorage + "(fileVersion=" + version + ", supportedVersion=2)");
-        return null;
-      }
-      String buildNumber = stream.readUTF();
-      if (!buildNumber.equals(getBuildNumber().toString())) {
-        getLogger().info("Ignoring cached broken plugins file from an earlier IDE build (" + buildNumber + ")");
-        return null;
-      }
-
-      int count = stream.readInt();
-      Map<PluginId, Set<String>> result = new HashMap<>(count);
-      for (int i = 0; i < count; i++) {
-        PluginId pluginId = PluginId.getId(stream.readUTF());
-        String[] versions = new String[stream.readUnsignedShort()];
-        for (int j = 0; j < versions.length; j++) {
-          versions[j] = stream.readUTF();
-        }
-        //noinspection SSBasedInspection
-        result.put(pluginId, versions.length == 1 ? Collections.singleton(versions[0]) : new HashSet<>(Arrays.asList(versions)));
-      }
-      return result;
-    }
-    catch (NoSuchFileException ignore) {
-    }
-    catch (IOException e) {
-      getLogger().error("Failed to read " + brokenPluginsStorage, e);
-    }
-    return null;
   }
 
   @ApiStatus.Internal
@@ -406,10 +305,6 @@ public final class PluginManagerCore {
     return VENDOR_JETBRAINS.equals(vendorItem) || VENDOR_JETBRAINS_SRO.equals(vendorItem);
   }
 
-  private static Path getUpdatedBrokenPluginFile() {
-    return Paths.get(PathManager.getConfigPath()).resolve("updatedBrokenPlugins.db");
-  }
-
   public static synchronized void invalidatePlugins() {
     pluginSet = null;
 
@@ -441,7 +336,7 @@ public final class PluginManagerCore {
       .map(Supplier::get)
       .collect(Collectors.toList());
 
-    // log includes all messages, not only those which need to be reported to the user
+    // a log includes all messages, not only those which need to be reported to the user
     List<PluginLoadingError> loadingErrors = pluginLoadingErrors.entrySet()
       .stream()
       .sorted(Map.Entry.comparingByKey())
@@ -484,14 +379,14 @@ public final class PluginManagerCore {
     }
 
     List<Supplier<? extends HtmlChunk>> actions = new ArrayList<>();
-    String pluginNameToDisable = getOnlyItem(pluginNamesToDisable);
+    String pluginNameToDisable = ContainerUtil.getOnlyItem(pluginNamesToDisable);
     String disableMessage = pluginNameToDisable != null ?
                             CoreBundle.message("link.text.disable.plugin", pluginNameToDisable) :
                             CoreBundle.message("link.text.disable.not.loaded.plugins");
     actions.add(() -> HtmlChunk.link(DISABLE, disableMessage));
 
     if (!pluginNamesToEnable.isEmpty()) {
-      String pluginNameToEnable = getOnlyItem(pluginNamesToEnable);
+      String pluginNameToEnable = ContainerUtil.getOnlyItem(pluginNamesToEnable);
       String enableMessage = pluginNameToEnable != null ?
                              CoreBundle.message("link.text.enable.plugin", pluginNameToEnable) :
                              CoreBundle.message("link.text.enable.all.necessary.plugins");
@@ -537,7 +432,8 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  public static synchronized void scheduleDescriptorLoading(@NotNull CoroutineScope coroutineScope, @Nullable Deferred<ZipFilePool> zipFilePoolDeferred) {
+  public static synchronized void scheduleDescriptorLoading(@NotNull CoroutineScope coroutineScope,
+                                                            @Nullable Deferred<ZipFilePool> zipFilePoolDeferred) {
     if (initFuture == null) {
       initFuture = PluginDescriptorLoader.scheduleLoading(coroutineScope, zipFilePoolDeferred);
     }

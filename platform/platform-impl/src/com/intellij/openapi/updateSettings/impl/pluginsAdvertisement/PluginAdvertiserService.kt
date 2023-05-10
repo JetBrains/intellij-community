@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
@@ -14,7 +14,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -214,7 +213,7 @@ open class PluginAdvertiserServiceImpl(
       true,
     ).asSequence()
       .filter { pluginIds.contains(it.pluginId) }
-      .filterNot { PluginManagerCore.isBrokenPlugin(it) }
+      .filterNot { isBrokenPlugin(it) }
       .filter { pluginManagerFilters.allowInstallingPlugin(it) }
       .toList())
 
@@ -271,7 +270,7 @@ open class PluginAdvertiserServiceImpl(
     ).asSequence()
       .filter { pluginIds.contains(it.pluginId) }
       .filterNot { PluginManagerCore.isDisabled(it.pluginId) }
-      .filterNot { PluginManagerCore.isBrokenPlugin(it) }
+      .filterNot { isBrokenPlugin(it) }
       .filter { loadedPlugin ->
         when (val installedPlugin = PluginManagerCore.getPluginSet().findInstalledPlugin(loadedPlugin.pluginId)) {
           null -> true

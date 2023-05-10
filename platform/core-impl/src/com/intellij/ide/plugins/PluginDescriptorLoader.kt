@@ -771,7 +771,7 @@ fun loadDescriptorsFromOtherIde(
 ): PluginLoadingResult {
   return DescriptorListLoadingContext(
     disabledPlugins = emptySet(),
-    brokenPluginVersions = brokenPluginVersions ?: PluginManagerCore.getBrokenPluginVersions(),
+    brokenPluginVersions = brokenPluginVersions ?: getBrokenPluginVersions(),
     productBuildNumber = { productBuildNumber ?: PluginManagerCore.getBuildNumber() },
     isMissingIncludeIgnored = true,
     isMissingSubDescriptorIgnored = true,

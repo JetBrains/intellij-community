@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -39,6 +39,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 import static com.intellij.openapi.application.PathManager.getPluginsPath;
 
 public final class PluginDownloader {
@@ -313,7 +314,7 @@ public final class PluginDownloader {
                                                              @Nullable BuildNumber newBuildNumber) {
     int state = VersionComparatorUtil.compare(newPluginVersion, existingPlugin.getVersion());
     if (state < 0 &&
-        (PluginManagerCore.isBrokenPlugin(existingPlugin) || PluginManagerCore.isIncompatible(existingPlugin, newBuildNumber))) {
+        (isBrokenPlugin(existingPlugin) || PluginManagerCore.isIncompatible(existingPlugin, newBuildNumber))) {
       state = 1;
     }
     return state;

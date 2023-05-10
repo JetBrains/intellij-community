@@ -1046,7 +1046,7 @@ public final class ConfigImportHelper {
   private static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor,
                                         @Nullable Map<PluginId, Set<String>> brokenPluginVersions) {
     if (brokenPluginVersions == null) {
-      return PluginManagerCore.isBrokenPlugin(descriptor);
+      return BrokenPluginFileKt.isBrokenPlugin(descriptor);
     }
     Set<String> versions = brokenPluginVersions.get(descriptor.getPluginId());
     return versions != null && versions.contains(descriptor.getVersion());
