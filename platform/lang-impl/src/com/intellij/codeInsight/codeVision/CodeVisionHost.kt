@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupDefaultSettingModel
@@ -17,10 +17,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
@@ -34,7 +31,6 @@ import com.intellij.openapi.fileEditor.impl.BaseRemoteFileEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
@@ -49,7 +45,6 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.jetbrains.rd.util.error
@@ -61,8 +56,10 @@ import com.jetbrains.rd.util.reactive.whenTrue
 import com.jetbrains.rd.util.trace
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
+import kotlin.time.Duration.Companion.milliseconds
 
 open class CodeVisionHost(val project: Project) {
   companion object {
@@ -179,17 +176,15 @@ open class CodeVisionHost(val project: Project) {
 
   }
 
-
-  @RequiresReadLock
-  fun collectPlaceholders(editor: Editor,
-                          psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
-    return ProgressIndicatorUtils.withTimeout(100) {
-      collectPlaceholdersInner(editor, psiFile)
+  suspend fun collectPlaceholders(editor: Editor, psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
+    return withTimeoutOrNull(100.milliseconds) {
+      readAction {
+        collectPlaceholdersInner(editor, psiFile)
+      }
     } ?: emptyList()
   }
 
-  private fun collectPlaceholdersInner(editor: Editor,
-                    psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
+  private fun collectPlaceholdersInner(editor: Editor, psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
     if (!lifeSettingModel.isEnabledWithRegistry.value) return emptyList()
     val project = editor.project ?: return emptyList()
     if (psiFile != null && psiFile.virtualFile != null) {

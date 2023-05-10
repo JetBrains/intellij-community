@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.*;
@@ -58,10 +58,12 @@ final class FocusModePassFactory implements TextEditorHighlightingPassFactory, T
     return CachedValuesManager.getCachedValue(file, () -> {
       FileViewProvider provider = file.getViewProvider();
 
-      List<Segment> segments = EP_NAME.allForLanguageOrAny(provider.getBaseLanguage()).stream()
-        .map(p -> calcFocusZones(p, file))
-        .map(l -> ContainerUtil.append(l, file.getTextRange()))
-        .findFirst().orElse(null);
+      List<Segment> segments = null;
+      for (FocusModeProvider p : EP_NAME.allForLanguageOrAny(provider.getBaseLanguage())) {
+        List<? extends Segment> l = calcFocusZones(p, file);
+        segments = ContainerUtil.append(l, file.getTextRange());
+        break;
+      }
       return CachedValueProvider.Result.create(segments, file);
     });
   }
