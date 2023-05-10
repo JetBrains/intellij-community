@@ -124,7 +124,6 @@ public final class BackgroundUpdateHighlightersUtil {
     }
   }
 
-
   // set highlights inside startOffset,endOffset but outside priorityRange
   static void setHighlightersOutsideRange(@NotNull Document document,
                                           @NotNull List<? extends HighlightInfo> infos,
@@ -132,7 +131,8 @@ public final class BackgroundUpdateHighlightersUtil {
                                           @NotNull TextRange priorityRange,
                                           int group,
                                           @NotNull HighlightingSession session) {
-    //ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile psiFile = session.getPsiFile();
     Project project = session.getProject();
     List<HighlightInfo> filteredInfos = UpdateHighlightersUtil.HighlightInfoPostFilters.applyPostFilter(project, infos);
@@ -162,8 +162,8 @@ public final class BackgroundUpdateHighlightersUtil {
         boolean toRemove = infoSet.contains(info) ||
                            !priorityRange.containsRange(hiStart, hiEnd) &&
                            (hiEnd != document.getTextLength() || priorityRange.getEndOffset() != document.getTextLength());
-        if (toRemove && infosToRemove.recycleHighlighter(highlighter)) {
-          //info.setHighlighter(null);
+        if (toRemove) {
+          infosToRemove.recycleHighlighter(highlighter);
         }
       }
       return true;
@@ -312,11 +312,10 @@ public final class BackgroundUpdateHighlightersUtil {
       finalHighlighter.setGutterIconRenderer((GutterIconRenderer)renderer);
 
       range2markerCache.put(finalInfoRange, finalHighlighter);
-      //info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
+      info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
     RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
-    //System.out.println("   "+(highlighter == null ? "created":"picked ")+" "+info+"; "+Thread.currentThread());
     if (highlighter == null) {
       highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                                   HighlighterTargetArea.EXACT_RANGE, false, changeAttributes);
