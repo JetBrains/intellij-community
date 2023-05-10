@@ -351,6 +351,7 @@ class ZshCompletionTest : BasePlatformTestCase() {
     val ttyConnector = runner.createTtyConnector(process)
 
     val session = TerminalSession(runner.settingsProvider)
+    session.shellIntegration = configuredOptions.shellIntegration
     val model: TerminalModel = session.model
 
     val future = CompletableFuture<Boolean>()

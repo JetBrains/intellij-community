@@ -15,6 +15,7 @@ import com.jediterm.terminal.model.JediTermDebouncerImpl
 import com.jediterm.terminal.model.JediTermTypeAheadModel
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
+import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.awt.event.KeyEvent
 import java.util.concurrent.ExecutorService
 
@@ -30,6 +31,8 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposab
   val controller: TerminalController
   private val commandManager: ShellCommandManager
   private val typeAheadManager: TerminalTypeAheadManager
+  @Volatile
+  var shellIntegration: ShellIntegration? = null
 
   init {
     val styleState = StyleState()

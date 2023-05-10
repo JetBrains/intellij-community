@@ -37,6 +37,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.exp.TerminalWidgetImpl;
+import org.jetbrains.plugins.terminal.util.ShellIntegration;
+import org.jetbrains.plugins.terminal.util.ShellType;
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
 import java.io.File;
@@ -419,7 +421,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
     List<String> arguments = new ArrayList<>(shellCommand.subList(1, shellCommand.size()));
     Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(options.getEnvVariables());
-    boolean blockShellIntegrationEnabled = false;
+    ShellType shellType = null;
+    boolean withCommandBlocks = false;
 
     List<String> resultCommand = new ArrayList<>();
     resultCommand.add(shellExe);
@@ -433,6 +436,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         boolean loginShell = arguments.removeAll(LOGIN_CLI_OPTIONS);
         setLoginShellEnv(envs, loginShell);
         setCommandHistoryFile(options, envs);
+        shellType = ShellType.BASH;
+        withCommandBlocks = true;
       }
       else if (shellName.equals(ZSH_NAME)) {
         String zdotdir = envs.get(ZDOTDIR);
@@ -440,12 +445,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
           envs.put("_INTELLIJ_ORIGINAL_ZDOTDIR", zdotdir);
         }
         envs.put(ZDOTDIR, PathUtil.getParentPath(rcFilePath));
-        blockShellIntegrationEnabled = true;
+        shellType = ShellType.ZSH;
+        withCommandBlocks = true;
       }
       else if (shellName.equals(FISH_NAME)) {
         // `--init-command=COMMANDS` is available since Fish 2.7.0 (released November 23, 2017)
         // Multiple `--init-command=COMMANDS` are supported.
         resultCommand.add("--init-command=source " + CommandLineUtil.posixQuote(rcFilePath));
+        shellType = ShellType.FISH;
       }
     }
 
@@ -453,7 +460,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return options.builder()
       .shellCommand(resultCommand)
       .envVariables(envs)
-      .blockShellIntegrationEnabled(blockShellIntegrationEnabled)
+      .shellIntegration(shellType != null ? new ShellIntegration(shellType, withCommandBlocks) : null)
       .build();
   }
 

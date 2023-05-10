@@ -51,8 +51,9 @@ class TerminalWidgetImpl(private val project: Project,
 
   @RequiresEdt(generateAssertion = false)
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
+    session.shellIntegration = options.shellIntegration
     Disposer.dispose(controller)
-    controller = if (options.isBlockShellIntegrationEnabled) {
+    controller = if (options.shellIntegration?.withCommandBlocks == true) {
       TerminalBlocksController(project, session, terminalSettings)
     }
     else PlainTerminalController(project, session, terminalSettings)

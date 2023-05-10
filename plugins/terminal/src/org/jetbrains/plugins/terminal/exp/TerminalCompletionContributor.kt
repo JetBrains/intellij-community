@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Alarm
+import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CompletableFuture
 
 class TerminalCompletionContributor : CompletionContributor() {
@@ -21,6 +22,9 @@ class TerminalCompletionContributor : CompletionContributor() {
     val session = parameters.editor.getUserData(TerminalSession.KEY)
     val completionManager = parameters.editor.getUserData(TerminalCompletionManager.KEY)
     if (session == null || completionManager == null || parameters.completionType != CompletionType.BASIC) {
+      return
+    }
+    if (session.shellIntegration?.shellType != ShellType.ZSH) {
       return
     }
 
