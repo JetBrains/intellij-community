@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "RAW_RUN_BLOCKING", "LiftReturnOrAssignment")
 @file:JvmName("PluginDescriptorLoader")
 @file:Internal
@@ -38,7 +38,6 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.zip.ZipFile
 import javax.xml.stream.XMLStreamException
-import kotlin.io.path.name
 
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
@@ -149,7 +148,11 @@ fun loadDescriptorFromJar(file: Path,
                                    readInto = null,
                                    locationSource = file.toString())
 
-    val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginPath ?: file, isBundled = isBundled, id = null, moduleName = null,
+    val descriptor = IdeaPluginDescriptorImpl(raw = raw,
+                                              path = pluginPath ?: file,
+                                              isBundled = isBundled,
+                                              id = null,
+                                              moduleName = null,
                                               useCoreClassLoader = useCoreClassLoader)
     parentContext.debugData?.recordDescriptorPath(descriptor, raw, relativePath)
     descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = parentContext, isSub = false, dataLoader = dataLoader)
@@ -714,7 +717,7 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
       .extract(outputDir)
     try {
       //org.jetbrains.intellij.build.io.ZipArchiveOutputStream may add __index__ entry to the plugin zip, we need to ignore it here
-      val rootDir = NioFiles.list(outputDir).firstOrNull { it.name != "__index__" }
+      val rootDir = NioFiles.list(outputDir).firstOrNull { it.fileName.toString() != "__index__" }
       if (rootDir != null) {
         return runBlocking {
           loadDescriptorFromFileOrDir(file = rootDir,
