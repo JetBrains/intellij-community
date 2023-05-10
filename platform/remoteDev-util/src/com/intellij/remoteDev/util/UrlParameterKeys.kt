@@ -8,6 +8,7 @@ class UrlParameterKeys {
     const val projectPath = "projectPath"
     const val downloadLocation = "downloadLocation"
     const val idePath = "idePath"
+    const val heapSize = "heapSize"
     const val host = "host"
     const val user = "user"
     const val port = "port"
