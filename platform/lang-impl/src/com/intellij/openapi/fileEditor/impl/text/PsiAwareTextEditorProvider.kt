@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
@@ -25,7 +25,9 @@ private const val FOLDING_ELEMENT: @NonNls String = "folding"
 
 open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorProvider {
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    SlowOperations.knownIssue("IDEA-307300, EA-680898").use { return PsiAwareTextEditorImpl(project, file, this) }
+    SlowOperations.knownIssue("IDEA-307300, EA-680898").use {
+      return PsiAwareTextEditorImpl(project = project, file = file, provider = this)
+    }
   }
 
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {

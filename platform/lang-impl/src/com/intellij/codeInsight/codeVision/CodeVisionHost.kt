@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.impl.BaseRemoteFileEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
@@ -45,6 +46,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.jetbrains.rd.util.error
@@ -56,10 +58,8 @@ import com.jetbrains.rd.util.reactive.whenTrue
 import com.jetbrains.rd.util.trace
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
-import kotlin.time.Duration.Companion.milliseconds
 
 open class CodeVisionHost(val project: Project) {
   companion object {
@@ -176,11 +176,11 @@ open class CodeVisionHost(val project: Project) {
 
   }
 
-  suspend fun collectPlaceholders(editor: Editor, psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
-    return withTimeoutOrNull(100.milliseconds) {
-      readAction {
-        collectPlaceholdersInner(editor, psiFile)
-      }
+  @RequiresReadLock
+  fun collectPlaceholders(editor: Editor,
+                          psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
+    return ProgressIndicatorUtils.withTimeout(100) {
+      collectPlaceholdersInner(editor, psiFile)
     } ?: emptyList()
   }
 
