@@ -37,39 +37,67 @@ public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implemen
     return true;
   }
 
-  protected class LongRunningTask implements AutoCloseable {
+  public interface LongRunningTask extends AutoCloseable {
+    void incrementFinishedRequests();
+
+    int getFinishedRequests();
+
+    int getTotalRequests();
+
+    void updateTotalRequests(int newValue);
+
+    void cancel();
+
+    boolean isCanceled();
+
+    @Override
+    void close();
+  }
+
+  @NotNull
+  protected LongRunningTask newLongRunningTask(@NotNull String id, int totalRequests) {
+    return new LongRunningTaskImpl(id, totalRequests);
+  }
+
+  protected class LongRunningTaskImpl implements LongRunningTask {
     @NotNull private final String myId;
     private final AtomicInteger myFinishedRequests = new AtomicInteger(0);
     private final AtomicInteger myTotalRequests;
     private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
-    public LongRunningTask(@NotNull String id, int totalRequests) {
+    public LongRunningTaskImpl(@NotNull String id, int totalRequests) {
       myId = id;
       myTotalRequests = new AtomicInteger(totalRequests);
 
       myLongRunningTasks.put(myId, this);
     }
 
+    @Override
     public void incrementFinishedRequests() {
       myFinishedRequests.incrementAndGet();
     }
 
-    private int getFinishedRequests() {
+    @Override
+    public int getFinishedRequests() {
       return myFinishedRequests.get();
     }
 
-    private int getTotalRequests() {
+    @Override
+    public int getTotalRequests() {
       return myTotalRequests.get();
     }
 
+    @Override
     public void updateTotalRequests(int newValue) {
       myTotalRequests.set(newValue);
     }
 
-    private void cancel() {
+    @Override
+    public void cancel() {
       isCanceled.set(true);
     }
 
+    @Override
     public boolean isCanceled() {
       return isCanceled.get();
     }

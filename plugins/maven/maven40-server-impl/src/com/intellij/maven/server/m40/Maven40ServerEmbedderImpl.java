@@ -248,7 +248,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                                 @NotNull Collection<String> activeProfiles,
                                                                 @NotNull Collection<String> inactiveProfiles, MavenToken token) {
     MavenServerUtil.checkToken(token);
-    try (LongRunningTask task = new LongRunningTask(longRunningTaskId, files.size())) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, files.size())) {
       return resolveProjects(task, files, activeProfiles, inactiveProfiles);
     }
   }
@@ -1204,7 +1204,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                     @NotNull String goal,
                                                     MavenToken token) {
     MavenServerUtil.checkToken(token);
-    try (LongRunningTask task = new LongRunningTask(longRunningTaskId, requests.size())) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size())) {
       return executeGoal(task, requests, goal);
     }
   }
@@ -1337,7 +1337,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                               @NotNull Collection<MavenArtifactResolutionRequest> requests,
                                               MavenToken token) {
     MavenServerUtil.checkToken(token);
-    try (LongRunningTask task = new LongRunningTask(longRunningTaskId, requests.size())) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size())) {
       return doResolveArtifacts(task, requests);
     }
   }

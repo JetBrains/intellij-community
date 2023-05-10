@@ -549,7 +549,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                                                                 @NotNull Collection<String> inactiveProfiles, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
-    try (LongRunningTask task = new LongRunningTask(longRunningTaskId, files.size())) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, files.size())) {
       return resolveProjects(task, files, activeProfiles, inactiveProfiles);
     }
   }
@@ -1032,7 +1032,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   public List<MavenArtifact> resolveArtifacts(@NotNull String longRunningTaskId, @NotNull Collection<MavenArtifactResolutionRequest> requests, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
-    try (LongRunningTask task = new LongRunningTask(longRunningTaskId, requests.size())) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size())) {
       return resolve(task, requests);
     }
   }
@@ -1106,7 +1106,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                                                     MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
-    try (LongRunningTask task = new LongRunningTask(longRunningTaskId, requests.size())) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size())) {
       return executeGoal(task, requests, goal);
     }
   }
