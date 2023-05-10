@@ -122,19 +122,30 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        VirtualFile root = CommonMoveClassesOrPackagesUtil
-          .chooseSourceRoot(new PackageWrapper(PsiManager.getInstance(project), getTargetPackage()), mySourceRoots, initialTargetDirectory);
-        if (root == null) return;
-        final ComboBoxModel model = getComboBox().getModel();
-        for (int i = 0; i < model.getSize(); i++) {
-          DirectoryChooser.ItemWrapper item = (DirectoryChooser.ItemWrapper)model.getElementAt(i);
-          if (item != NULL_WRAPPER && Comparing.equal(fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()), root)) {
-            getComboBox().setSelectedItem(item);
-            getComboBox().repaint();
-            return;
+        final ComboBoxModel<DirectoryChooser.ItemWrapper> model = getComboBox().getModel();
+        record NonBlockingResult(@NotNull VirtualFile root, @Nullable DirectoryChooser.ItemWrapper item) { }
+        ReadAction.nonBlocking(() -> {
+          VirtualFile root = CommonMoveClassesOrPackagesUtil.chooseSourceRoot(
+            new PackageWrapper(PsiManager.getInstance(project), getTargetPackage()),
+            mySourceRoots,
+            initialTargetDirectory
+          );
+          if (root == null) return null;
+          for (int i = 0; i < model.getSize(); i++) {
+            DirectoryChooser.ItemWrapper item = model.getElementAt(i);
+            if (item != NULL_WRAPPER && Comparing.equal(fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()), root)) {
+              return new NonBlockingResult(root, item);
+            }
           }
-        }
-        setComboboxModel(root, root, true);
+          return new NonBlockingResult(root, null);
+        }).finishOnUiThread(ModalityState.current(), result -> {
+          if (result == null) return;
+          if (result.item != null) {
+            getComboBox().setSelectedItem(result.item);
+            getComboBox().repaint();
+          }
+          setComboboxModel(result.root, result.root, true);
+        }).submit(AppExecutorUtil.getAppExecutorService());
       }
     });
 
