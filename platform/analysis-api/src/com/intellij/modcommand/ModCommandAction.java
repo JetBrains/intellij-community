@@ -1,13 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.intention.BaseIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
@@ -18,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Intention action replacement that operates on {@link ModCommand}.
@@ -52,7 +55,7 @@ public interface ModCommandAction extends BaseIntentionAction {
    */
   @Contract(pure = true)
   default @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
-    ModCommand command = ModCommand.retrieve(() -> perform(context));
+    ModCommand command = perform(context);
     return IntentionPreviewUtils.getModCommandPreview(command, context.file());
   }
 
@@ -61,7 +64,7 @@ public interface ModCommandAction extends BaseIntentionAction {
    */
   @Contract(pure = true)
   default @NotNull IntentionAction asIntention() {
-    return new ModCommandActionWrapper(this);
+    return ApplicationManager.getApplication().getService(ModCommandService.class).wrap(this);
   }
 
   /**
@@ -70,10 +73,7 @@ public interface ModCommandAction extends BaseIntentionAction {
    */
   @Contract(pure = true)
   static @Nullable ModCommandAction unwrap(@NotNull IntentionAction action) {
-    while (action instanceof IntentionActionDelegate delegate) {
-      action = delegate.getDelegate();
-    }
-    return action instanceof ModCommandActionWrapper wrapper ? wrapper.action() : null;
+    return ApplicationManager.getApplication().getService(ModCommandService.class).unwrap(action);
   }
 
   /**
@@ -100,6 +100,11 @@ public interface ModCommandAction extends BaseIntentionAction {
     }
   }
 
+  record FixAllOption(
+    @NotNull @IntentionName String name,
+    @NotNull Predicate<@NotNull ModCommandAction> belongsToMyFamily
+  ) {}
+
   /**
    * Action presentation
    * 
@@ -107,13 +112,38 @@ public interface ModCommandAction extends BaseIntentionAction {
    * @param priority priority to sort the action among other actions
    * @param icon icon to be displayed next to the name
    */
-  record Presentation(@NotNull @IntentionName String name, @NotNull PriorityAction.Priority priority, @Nullable Icon icon) {
+  record Presentation(
+    @NotNull @IntentionName String name,
+    @NotNull PriorityAction.Priority priority,
+    @Nullable Icon icon,
+    @Nullable FixAllOption fixAllOption
+  ) {
+    /**
+     * @param priority wanted priority of the action
+     * @return new presentation with updated priority
+     */
     public @NotNull Presentation withPriority(@NotNull PriorityAction.Priority priority) {
-      return new Presentation(name, priority, icon);
+      return new Presentation(name, priority, icon, fixAllOption);
     }
 
+    /**
+     * @param icon wanted icon of the action (null for default or absent icon)
+     * @return new presentation with updated icon
+     */
     public @NotNull Presentation withIcon(@Nullable Icon icon) {
-      return new Presentation(name, priority, icon);
+      return new Presentation(name, priority, icon, fixAllOption);
+    }
+
+    /**
+     * @param thisAction the action the presentation is created for
+     * @return a presentation for an action that has a standard "Fix all" option 
+     * to fix all the issues like this in the file.
+     */
+    public @NotNull Presentation withFixAllOption(@NotNull ModCommandAction thisAction) {
+      FixAllOption fixAllOption = new FixAllOption(
+        AnalysisBundle.message("intention.name.apply.all.fixes.in.file", thisAction.getFamilyName()),
+        action -> action.getClass().equals(thisAction.getClass()));
+      return new Presentation(name, priority, icon, fixAllOption);
     }
 
     /**
@@ -121,7 +151,7 @@ public interface ModCommandAction extends BaseIntentionAction {
      * @return simple presentation with NORMAL priority and no icon
      */
     public static @NotNull Presentation of(@NotNull @IntentionName String name) {
-      return new Presentation(name, PriorityAction.Priority.NORMAL, null);
+      return new Presentation(name, PriorityAction.Priority.NORMAL, null, null);
     }
   }
 }

@@ -1128,7 +1128,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createInsertReturnFix(@NotNull PsiExpression expression) {
-    return new ConvertExpressionToReturnFix(expression);
+    return new ConvertExpressionToReturnFix(expression).asIntention();
   }
 
   @Override

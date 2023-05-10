@@ -1,10 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.modcommand;
+package com.intellij.platform.analysis.impl.modcommand;
 
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModStatus;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -15,12 +19,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.Objects;
 
 /**
  * A bridge from {@link ModCommandAction} to {@link IntentionAction} interface.
  */
-/*package*/ final class ModCommandActionWrapper implements IntentionAction, PriorityAction, Iconable {
+/*package*/ final class ModCommandActionWrapper implements IntentionAction, PriorityAction, Iconable, IntentionActionWithFixAllOption {
   private final @NotNull ModCommandAction myAction;
   private @Nullable ModCommandAction.Presentation myPresentation;
 
@@ -60,7 +65,7 @@ import java.util.Objects;
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    ModCommand command = ModCommand.retrieve(() -> myAction.perform(ModCommandAction.ActionContext.from(editor, file)));
+    ModCommand command = myAction.perform(ModCommandAction.ActionContext.from(editor, file));
     if (command.prepare() != ModStatus.SUCCESS) return;
     command.execute(project);
   }
@@ -86,6 +91,25 @@ import java.util.Objects;
   }
 
   public @NotNull ModCommandAction action() { return myAction; }
+
+  @Override
+  public @NotNull List<IntentionAction> getOptions() {
+    return myPresentation != null && myPresentation.fixAllOption() != null ?
+           IntentionActionWithFixAllOption.super.getOptions() : List.of();
+  }
+
+  @Override
+  public boolean belongsToMyFamily(@NotNull IntentionActionWithFixAllOption action) {
+    ModCommandAction unwrapped = ModCommandAction.unwrap(action);
+    if (unwrapped == null || myPresentation == null || myPresentation.fixAllOption() == null) return false;
+    return myPresentation.fixAllOption().belongsToMyFamily().test(unwrapped);
+  }
+
+  @Override
+  public @NotNull String getFixAllText() {
+    return myPresentation != null && myPresentation.fixAllOption() != null ?
+           myPresentation.fixAllOption().name() : "";
+  }
 
   @Override
   public boolean equals(Object obj) {
