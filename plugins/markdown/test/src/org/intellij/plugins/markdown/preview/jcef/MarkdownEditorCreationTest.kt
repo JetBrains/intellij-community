@@ -1,6 +1,5 @@
 package org.intellij.plugins.markdown.preview.jcef
 
-import com.intellij.idea.Bombed
 import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -17,10 +16,10 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
-import java.util.*
 import javax.swing.JComponent
 
 @SkipInHeadlessEnvironment
@@ -67,7 +66,7 @@ class MarkdownEditorCreationTest {
     manager.closeFile(file)
   }
 
-  @Bombed(year = 2023, month = Calendar.JULY, day = 1, user = "Ivan.Posti")
+  @Disabled("It is not clear what should be a fallback if the preview provider failed.")
   @Test
   @TestFor(issues = ["IDEA-318146"])
   @RunMethodInEdt
