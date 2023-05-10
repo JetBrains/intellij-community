@@ -116,13 +116,21 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   val isHeadless = AppMode.isHeadless()
 
-  val configImportNeededDeferred = if (isHeadless) CompletableDeferred(false)
+  val configImportNeededDeferred = if (isHeadless) {
+    CompletableDeferred(false)
+  }
   else async {
     val configPath = PathManager.getConfigDir()
     !Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
   }
 
-  val lockSystemDirsJob = lockSystemDirs(configImportNeededDeferred, args)
+  val lockSystemDirsJob = launch {
+    // the "import-needed" check must be performed strictly before IDE directories are locked
+    configImportNeededDeferred.join()
+    subtask("system dirs locking") {
+      lockSystemDirs(args)
+    }
+  }
 
   val consoleLoggerJob = configureJavaUtilLogging()
 
@@ -768,51 +776,45 @@ private fun checkDirectory(directory: Path,
   }
 }
 
-private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job, args: List<String>): Job {
-  return launch(Dispatchers.IO) {
-    // the "import-needed" check must be performed strictly before IDE directories are locked
-    configImportNeededDeferred.join()
+private suspend fun lockSystemDirs(args: List<String>) {
+  val directoryLock = DirectoryLock(PathManager.getConfigDir(), PathManager.getSystemDir()) { processorArgs ->
+    @Suppress("RAW_RUN_BLOCKING")
+    runBlocking {
+      commandProcessor.get()(processorArgs).await()
+    }
+  }
 
-    runActivity("system dirs locking") {
-      val directoryLock = DirectoryLock(PathManager.getConfigDir(), PathManager.getSystemDir()) { args ->
-        @Suppress("RAW_RUN_BLOCKING")
-        runBlocking {
-          commandProcessor.get()(args).await()
+  try {
+    val currentDir = Path.of(System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR) ?: "").toAbsolutePath().normalize()
+    val result = withContext(Dispatchers.IO) { directoryLock.lockOrActivate(currentDir, args) }
+    if (result == null) {
+      ShutDownTracker.getInstance().registerShutdownTask {
+        try {
+          directoryLock.dispose()
+        }
+        catch (e: Throwable) {
+          Logger.getInstance(DirectoryLock::class.java).error(e)
         }
       }
-
-      try {
-        val currentDir = Path.of(System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR) ?: "").toAbsolutePath()
-        when (val result = directoryLock.lockOrActivate(currentDir, args)) {
-          null -> ShutDownTracker.getInstance().registerShutdownTask {
-            try {
-              directoryLock.dispose()
-            }
-            catch (t: Throwable) {
-              Logger.getInstance(DirectoryLock::class.java).error(t)
-            }
-          }
-          else -> {
-            result.message?.let { println(it) }
-            exitProcess(result.exitCode)
-          }
-        }
-      }
-      catch (e: CannotActivateException) {
-        if (args.isEmpty()) {
+    }
+    else {
+      result.message?.let { println(it) }
+      exitProcess(result.exitCode)
+    }
+  }
+  catch (e: CannotActivateException) {
+    if (args.isEmpty()) {
           StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), e.message, true)
-        }
-        else {
+    }
+    else {
           println(e.message)
-        }
-        exitProcess(AppExitCodes.INSTANCE_CHECK_FAILED)
-      }
+    }
+    exitProcess(AppExitCodes.INSTANCE_CHECK_FAILED)
+  }
       catch (t: Throwable) {
         StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), t)
         exitProcess(AppExitCodes.STARTUP_EXCEPTION)
       }
-    }
-  }
 }
 
 private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob: Job): Deferred<Logger> {
