@@ -27,10 +27,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -408,9 +405,10 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
    *    E.g. the test {@link com.intellij.openapi.editor.impl.EditorComponentCaretListenerTest#testCaretNotificationsCausedByUndo testCaretNotificationsCausedByUndo}
    *    won't get a notification after undoing the pasting
    */
-  private class EditorSwingCaretUpdatesCourier implements CaretListener, CaretActionListener, DocumentListener {
+  private class EditorSwingCaretUpdatesCourier implements CaretListener, CaretActionListener, BulkAwareDocumentListener.Simple {
     /** true if {@link #beforeAllCaretsAction} has been called, but {@link #afterAllCaretsAction} - has still not */
     private boolean isInsideCaretsAction = false;
+    private boolean isInsideBulkDocumentUpdate = false;
     private @NotNull WeakReference<Caret> myLastKnownPrimaryCaret;
     private int myPrimaryCaretLastKnownDot;
     private int myPrimaryCaretLastKnownMark;
@@ -456,6 +454,10 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     public void afterAllCaretsAction() {
       isInsideCaretsAction = false;
 
+      if (isInsideBulkUpdate()) {
+        return;
+      }
+
       final var currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
       primaryCaretPositionPossiblyChanged(currentPrimaryCaret);
     }
@@ -466,7 +468,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @Override
     @RequiresEdt
     public void caretPositionChanged(@NotNull CaretEvent event) {
-      if (isInsideCaretsAction) {
+      if (isInsideBulkUpdate()) {
         return;
       }
 
@@ -486,7 +488,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     public void caretAdded(@NotNull CaretEvent event) {
       // Adding a caret may cause a change of the primary caret instance
 
-      if (isInsideCaretsAction) {
+      if (isInsideBulkUpdate()) {
         return;
       }
 
@@ -506,7 +508,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     public void caretRemoved(@NotNull CaretEvent event) {
       // Removing a caret may cause a switching of the primary caret
 
-      if (isInsideCaretsAction) {
+      if (isInsideBulkUpdate()) {
         return;
       }
 
@@ -521,23 +523,34 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
 
 
-    // ---- DocumentListener ----
-    // TODO: replace by com.intellij.openapi.editor.event.BulkAwareDocumentListener.Simple
+    // ---- BulkAwareDocumentListener ----
 
     @Override
     @RequiresEdt
-    public void documentChanged(@NotNull DocumentEvent event) {
-      if (isInsideCaretsAction) {
+    public void beforeDocumentChange(@NotNull DocumentEvent event) {
+      isInsideBulkDocumentUpdate = true;
+    }
+
+    @Override
+    @RequiresEdt
+    public void afterDocumentChange(@NotNull Document document) {
+      isInsideBulkDocumentUpdate = false;
+
+      if (isInsideBulkUpdate()) {
         return;
       }
 
       final Caret currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
-
       primaryCaretPositionPossiblyChanged(currentPrimaryCaret);
     }
 
 
     // ---- implementation details ----
+
+    @RequiresEdt
+    private boolean isInsideBulkUpdate() {
+      return isInsideCaretsAction || isInsideBulkDocumentUpdate;
+    }
 
     @RequiresEdt // if you're going to remove this requirement, don't forget to make access to the fields thread-safe
     private void primaryCaretPositionPossiblyChanged(final @NotNull Caret currentPrimaryCaret) {
