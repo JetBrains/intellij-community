@@ -118,21 +118,34 @@ private class LazyDistDirLayoutProducer(version: String, private val unpackedDis
                 return nameWithoutExtension.removePrefix("kotlin-maven-").removeSuffix("-$version") + "-compiler-plugin.jar"
             }
         } else {
+            // These plugins are still present in dist pom for backward compatibility with older Kotlin Plugin releases
+            val compatMavenPlugins = listOf(
+                "kotlin-maven-allopen",
+                "kotlin-maven-lombok",
+                "kotlin-maven-noarg",
+                "kotlin-maven-sam-with-receiver",
+            )
+            if (compatMavenPlugins.any { nameWithoutExtension.startsWith(it) }) return null
+
+            // Keeping for compatibility until we will switch plugin to use new serialization compiler plugin jar
+            if (nameWithoutExtension.startsWith("kotlin-maven-serialization")) {
+                return "kotlinx-serialization-compiler-plugin.jar"
+            }
+
+            // 'kotlin-serialization-compiler-plugin' is not in the list by design
+            // as we want to migrate dist to have all compiler plugins with 'kotlin-' prefix
             val compilerPluginNames = listOf(
                 "kotlin-sam-with-receiver-compiler-plugin",
                 "kotlin-allopen-compiler-plugin",
                 "kotlin-lombok-compiler-plugin",
                 "kotlin-noarg-compiler-plugin",
-                "kotlin-assignment-compiler-plugin"
+                "kotlin-assignment-compiler-plugin",
             )
 
             if (compilerPluginNames.any { nameWithoutExtension.startsWith(it) }) {
                 return nameWithoutExtension.removePrefix("kotlin-").removeSuffix("-$version") + ".jar"
             }
 
-            if (nameWithoutExtension.startsWith("kotlinx-serialization-compiler-plugin")) {
-                return nameWithoutExtension.removeSuffix("-$version") + ".jar"
-            }
         }
 
         if (nameWithoutExtension.startsWith("kotlin-android-extensions-runtime")) {
