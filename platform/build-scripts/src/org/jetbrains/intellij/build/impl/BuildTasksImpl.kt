@@ -741,6 +741,7 @@ private fun checkProductProperties(context: BuildContextImpl) {
   checkPaths2(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
   checkPaths2(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
   checkModules(properties.additionalModulesToCompile, "productProperties.additionalModulesToCompile", context)
+  checkModule(properties.applicationInfoModule, "productProperties.applicationInfoModule", context)
   checkModule(properties.embeddedJetBrainsClientMainModule, "productProperties.embeddedJetBrainsClientMainModule", context)
   checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests", context)
 
