@@ -66,6 +66,16 @@ public final class IndexVersion {
     return new IndexVersion(modificationCount, indexVersion, vfsCreationStamp);
   }
 
+  @Override
+  public String toString() {
+    return "IndexVersion{" +
+           "myModificationCount=" + myModificationCount +
+           ", myIndexVersion=" + myIndexVersion +
+           ", myCommonIndicesVersion=" + myCommonIndicesVersion +
+           ", myVfsCreationStamp=" + myVfsCreationStamp +
+           '}';
+  }
+
   private static long calcNextVersion(long modificationCount) {
     return Math.max(
       System.currentTimeMillis(),
@@ -177,6 +187,7 @@ public final class IndexVersion {
         Path versionFile = IndexInfrastructure.getVersionFile(indexName);
         try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(versionFile)))) {
           version = new IndexVersion(in);
+          LOG.debug("Version for index '", indexName, "' from file ", versionFile, ": ", version);
           ourIndexIdToCreationStamp.put(indexName, version);
           return version;
         }
