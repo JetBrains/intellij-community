@@ -102,6 +102,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
                                                        @NotNull Throwable error,
                                                        @NotNull ProjectSystemId externalSystemId,
                                                        @NotNull Project project,
+                                                       @NotNull String externalProjectPath,
                                                        @NotNull DataContext dataContext) {
     if (isInternalError(error, externalSystemId)) {
       return null;
@@ -141,6 +142,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
       if (!externalSystemId.equals(targetExternalSystemId) && !targetExternalSystemId.equals(ProjectSystemId.IDE)) {
         continue;
       }
+      extension.customize(notificationData, project, externalProjectPath, error);
       extension.customize(notificationData, project, error);
     }
     return notificationData;

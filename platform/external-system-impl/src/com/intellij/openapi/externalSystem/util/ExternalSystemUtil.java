@@ -416,7 +416,7 @@ public final class ExternalSystemUtil {
             var externalSystemName = externalSystemId.getReadableName();
             var title = ExternalSystemBundle.message("notification.project.refresh.fail.title", externalSystemName, projectName);
             var dataContext = BuildConsoleUtils.getDataContext(id, syncViewManager);
-            var eventResult = createFailureResult(title, e, externalSystemId, project, dataContext);
+            var eventResult = createFailureResult(title, e, externalSystemId, project, externalProjectPath, dataContext);
             return new FinishBuildEventImpl(id, null, eventTime, eventMessage, eventResult);
           });
           processHandler.notifyProcessTerminated(1);
@@ -585,7 +585,7 @@ public final class ExternalSystemUtil {
         var systemName = externalSystemId.getReadableName();
         var projectName = resolveProjectTask.getProjectName();
         var title = ExternalSystemBundle.message("notification.project.refresh.fail.title", systemName, projectName);
-        var eventResult = createFailureResult(title, t, externalSystemId, project, DataContext.EMPTY_CONTEXT);
+        var eventResult = createFailureResult(title, t, externalSystemId, project, externalProjectPath, DataContext.EMPTY_CONTEXT);
         return new FinishBuildEventImpl(taskId, null, eventTime, eventMessage, eventResult);
       });
     }
@@ -699,9 +699,10 @@ public final class ExternalSystemUtil {
                                                                @NotNull Throwable exception,
                                                                @NotNull ProjectSystemId externalSystemId,
                                                                @NotNull Project project,
+                                                               @NotNull String externalProjectPath,
                                                                @NotNull DataContext dataContext) {
     var notificationManager = ExternalSystemNotificationManager.getInstance(project);
-    var notificationData = notificationManager.createNotification(title, exception, externalSystemId, project, dataContext);
+    var notificationData = notificationManager.createNotification(title, exception, externalSystemId, project, externalProjectPath, dataContext);
     if (notificationData == null) {
       return new FailureResultImpl();
     }

@@ -36,6 +36,7 @@ public class ExternalSystemNotificationExtensionImpl implements ExternalSystemNo
   @Override
   public void customize(@NotNull NotificationData notification,
                         @NotNull Project project,
+                        @NotNull String externalProjectPath,
                         @Nullable Throwable error) {
     if (error == null) return;
     Throwable unwrapped = RemoteUtil.unwrap(error);

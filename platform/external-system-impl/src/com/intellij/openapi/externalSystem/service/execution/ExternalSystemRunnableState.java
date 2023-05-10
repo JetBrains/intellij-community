@@ -326,7 +326,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
           DataContext dataContext = BuildConsoleUtils.getDataContext(id, progressListener);
           FailureResult failureResult = ExternalSystemUtil.createFailureResult(
-            executionName + " " + BuildBundle.message("build.status.failed"), e, id.getProjectSystemId(), myProject, dataContext);
+            executionName + " " + BuildBundle.message("build.status.failed"), e, id.getProjectSystemId(), myProject,
+            mySettings.getExternalProjectPath(), dataContext);
           eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
                                                                BuildBundle.message("build.status.failed"), failureResult));
           processHandler.notifyProcessTerminated(1);
