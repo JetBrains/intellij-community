@@ -327,7 +327,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon UP = load("expui/general/up.svg", -206570839, 2);
     /** 16x16 */ public static final @NotNull Icon Upload = load("expui/general/upload.svg", -1337420437, 2);
     /** 16x16 */ public static final @NotNull Icon User = load("expui/general/user.svg", -2119542954, 2);
-    /** 16x16 */ public static final @NotNull Icon Vcs = load("expui/general/vcs.svg", -1588068053, 2);
+    /** 16x16 */ public static final @NotNull Icon Vcs = load("expui/general/vcs.svg", -1757085440, 2);
     /** 28x28 */ public static final @NotNull Icon WarningDialog = load("expui/general/warningDialog.svg", -1302877749, 2);
     /** 20x20 */ public static final @NotNull Icon WindowsMenu_20x20 = load("expui/general/windowsMenu@20x20.svg", -1866593102, 2);
   }
