@@ -61,7 +61,7 @@ public final class MavenArtifactDownloader {
       var mavenProjectsForBaseDir = entry.getValue();
       var embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir);
       try {
-        embedder.customizeForResolve(console, myProgress, false, null, null);
+        embedder.customizeForResolve(console, myProgress, false, null);
         var chunk = download(mavenProjectsForBaseDir, embedder, downloadSources, downloadDocs);
 
         for (MavenProject each : mavenProjectsForBaseDir) {

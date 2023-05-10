@@ -21,7 +21,10 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
@@ -48,11 +51,10 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
       var mavenProjectsInBaseDir = entry.getValue();
       MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir);
       try {
-        Properties userProperties = new Properties();
         for (MavenProject mavenProject : mavenProjectsInBaseDir) {
           mavenProject.setConfigFileError(null);
         }
-        embedder.customizeForResolve(console, process, updateSnapshots, tree.getWorkspaceMap(), userProperties);
+        embedder.customizeForResolve(console, process, updateSnapshots, tree.getWorkspaceMap());
         var projectsWithUnresolvedPluginsChunk = doResolve(mavenProjectsInBaseDir, tree, generalSettings, embedder, process);
         projectsWithUnresolvedPlugins.put(baseDir, projectsWithUnresolvedPluginsChunk);
       }

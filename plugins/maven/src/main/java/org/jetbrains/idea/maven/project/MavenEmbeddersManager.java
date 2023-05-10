@@ -136,7 +136,7 @@ public class MavenEmbeddersManager {
                       @NotNull MavenProgressIndicator process,
                       @NotNull MavenEmbeddersManager.EmbedderTask task) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = getEmbedder(embedderKind, baseDir);
-    embedder.customizeForResolve(console, process, false, tree.getWorkspaceMap(), null);
+    embedder.customizeForResolve(console, process, false, tree.getWorkspaceMap());
     try {
       task.run(embedder);
     }

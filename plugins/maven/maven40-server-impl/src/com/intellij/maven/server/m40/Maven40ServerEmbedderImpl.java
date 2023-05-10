@@ -96,8 +96,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   private boolean myAlwaysUpdateSnapshots;
 
-  @Nullable private Properties myUserProperties;
-
   @NotNull private final RepositorySystem myRepositorySystem;
 
   @NotNull private final Maven40ImporterSpy myImporterSpy;
@@ -785,9 +783,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
       result.setSystemProperties(mySystemProperties);
       Properties userProperties = new Properties();
-      if (myUserProperties != null) {
-        userProperties.putAll(myUserProperties);
-      }
       if (file != null) {
         userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigProperties(file.getParentFile()));
       }
@@ -1606,8 +1601,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   @NotNull
   @Override
   public MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
-                                                                           boolean alwaysUpdateSnapshots,
-                                                                           @Nullable Properties userProperties, MavenToken token) {
+                                                                           boolean alwaysUpdateSnapshots, MavenToken token) {
     MavenServerUtil.checkToken(token);
 
     try {
@@ -1615,7 +1609,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       //customizeComponents(workspaceMap);
 
       myWorkspaceMap = workspaceMap;
-      myUserProperties = userProperties;
       myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
       myCurrentIndicator = new MavenServerProgressIndicatorWrapper();
 

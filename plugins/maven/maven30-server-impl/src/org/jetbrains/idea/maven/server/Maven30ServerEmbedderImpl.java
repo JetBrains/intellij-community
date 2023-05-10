@@ -114,8 +114,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   private boolean myAlwaysUpdateSnapshots;
 
-  @Nullable private Properties myUserProperties;
-
   @NotNull private final RepositorySystem myRepositorySystem;
 
   public Maven30ServerEmbedderImpl(MavenServerSettings settings) throws RemoteException {
@@ -475,7 +473,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   @Override
   public MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
                                                                            boolean alwaysUpdateSnapshots,
-                                                                           @Nullable Properties userProperties,
                                                                            MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
@@ -502,7 +499,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
         throw new RuntimeException(e);
       }
 
-      myUserProperties = userProperties;
       return myCurrentIndicator;
     }
     catch (Exception e) {
@@ -837,9 +833,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
       result.setSystemProperties(mySystemProperties);
       Properties userProperties = new Properties();
-      if (myUserProperties != null) {
-        userProperties.putAll(myUserProperties);
-      }
       if (file != null) {
         userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigProperties(file.getParentFile()));
       }

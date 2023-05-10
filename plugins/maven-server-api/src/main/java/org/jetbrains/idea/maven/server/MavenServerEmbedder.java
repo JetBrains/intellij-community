@@ -23,7 +23,10 @@ import org.jetbrains.idea.maven.server.security.MavenToken;
 import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public interface MavenServerEmbedder extends Remote {
   String MAVEN_EMBEDDER_VERSION = "idea.maven.embedder.version";
@@ -34,7 +37,6 @@ public interface MavenServerEmbedder extends Remote {
   MavenServerPullProgressIndicator customizeAndGetProgressIndicator(
     @Nullable MavenWorkspaceMap workspaceMap,
     boolean alwaysUpdateSnapshots,
-    @Nullable Properties userProperties,
     MavenToken token) throws RemoteException;
 
   @NotNull

@@ -47,14 +47,13 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   public void customizeForResolve(MavenConsole console,
                                   MavenProgressIndicator indicator,
                                   boolean forceUpdateSnapshots,
-                                  @Nullable MavenWorkspaceMap workspaceMap,
-                                  @Nullable Properties userProperties) {
+                                  @Nullable MavenWorkspaceMap workspaceMap) {
     boolean alwaysUpdateSnapshots =
       forceUpdateSnapshots
       ? forceUpdateSnapshots
       : MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().isAlwaysUpdateSnapshots();
     MavenWorkspaceMap serverWorkspaceMap = convertWorkspaceMap(workspaceMap);
-    setCustomization(console, indicator, serverWorkspaceMap, alwaysUpdateSnapshots, userProperties);
+    setCustomization(console, indicator, serverWorkspaceMap, alwaysUpdateSnapshots);
     perform(() -> {
       doCustomize();
       return null;
@@ -72,7 +71,6 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     MavenServerPullProgressIndicator pullProgressIndicator =
       getOrCreateWrappee().customizeAndGetProgressIndicator(myCustomization.workspaceMap,
                                                             myCustomization.alwaysUpdateSnapshot,
-                                                            myCustomization.userProperties,
                                                             ourToken);
     if (pullProgressIndicator == null) return;
     startPullingProgress(pullProgressIndicator, myCustomization.console, myCustomization.indicator);
@@ -312,14 +310,12 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   private synchronized void setCustomization(MavenConsole console,
                                              MavenProgressIndicator indicator,
                                              MavenWorkspaceMap workspaceMap,
-                                             boolean alwaysUpdateSnapshot,
-                                             @Nullable Properties userProperties) {
+                                             boolean alwaysUpdateSnapshot) {
     stopPulling();
     myCustomization = new Customization(console,
                                         indicator,
                                         workspaceMap,
-                                        alwaysUpdateSnapshot,
-                                        userProperties);
+                                        alwaysUpdateSnapshot);
   }
 
   private synchronized void stopPulling() {
@@ -343,18 +339,15 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
 
     private final MavenWorkspaceMap workspaceMap;
     private final boolean alwaysUpdateSnapshot;
-    private final Properties userProperties;
 
     private Customization(MavenConsole console,
                           MavenProgressIndicator indicator,
                           MavenWorkspaceMap workspaceMap,
-                          boolean alwaysUpdateSnapshot,
-                          @Nullable Properties userProperties) {
+                          boolean alwaysUpdateSnapshot) {
       this.console = console;
       this.indicator = indicator;
       this.workspaceMap = workspaceMap;
       this.alwaysUpdateSnapshot = alwaysUpdateSnapshot;
-      this.userProperties = userProperties;
     }
   }
 
