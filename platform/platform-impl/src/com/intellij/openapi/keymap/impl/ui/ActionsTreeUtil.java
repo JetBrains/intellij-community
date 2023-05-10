@@ -188,7 +188,7 @@ public final class ActionsTreeUtil {
   }
 
   @NlsActions.ActionText
-  private static String getName(AnAction action) {
+  public static String getName(AnAction action) {
     final String name = action.getTemplateText();
     if (name != null && !name.isEmpty()) {
       return name;
