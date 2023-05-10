@@ -686,6 +686,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/staticMembers/ImportFromCompanionObject.kt");
             }
 
+            @TestMetadata("importFromObject.kt")
+            public void testImportFromObject() throws Exception {
+                runTest("../completion/testData/handlers/basic/staticMembers/importFromObject.kt");
+            }
+
             @TestMetadata("ImportJavaStaticMethod.kt")
             public void testImportJavaStaticMethod() throws Exception {
                 runTest("../completion/testData/handlers/basic/staticMembers/ImportJavaStaticMethod.kt");
@@ -777,6 +782,24 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("ValInObject.kt")
             public void testValInObject() throws Exception {
                 runTest("../completion/testData/handlers/basic/stringTemplate/ValInObject.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/testData/handlers/basic/topLevelDeclarations")
+        public static class TopLevelDeclarations extends AbstractHighLevelBasicCompletionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("TopLevelWithSameSignature.kt")
+            public void testTopLevelWithSameSignature() throws Exception {
+                runTest("../completion/testData/handlers/basic/topLevelDeclarations/TopLevelWithSameSignature.kt");
+            }
+
+            @TestMetadata("TopLevelWithSameSignature2.kt")
+            public void testTopLevelWithSameSignature2() throws Exception {
+                runTest("../completion/testData/handlers/basic/topLevelDeclarations/TopLevelWithSameSignature2.kt");
             }
         }
 
@@ -1098,6 +1121,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/FirstTypeArgument.kt");
             }
 
+            @TestMetadata("FunctionVariableCall.kt")
+            public void testFunctionVariableCall() throws Exception {
+                runTest("../completion/testData/handlers/basic/FunctionVariableCall.kt");
+            }
+
             @TestMetadata("GenericFunctionWithTab.kt")
             public void testGenericFunctionWithTab() throws Exception {
                 runTest("../completion/testData/handlers/basic/GenericFunctionWithTab.kt");
@@ -1111,6 +1139,16 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("GetOperator.kt")
             public void testGetOperator() throws Exception {
                 runTest("../completion/testData/handlers/basic/GetOperator.kt");
+            }
+
+            @TestMetadata("InsertImportedWithObjectName.kt")
+            public void testInsertImportedWithObjectName() throws Exception {
+                runTest("../completion/testData/handlers/basic/InsertImportedWithObjectName.kt");
+            }
+
+            @TestMetadata("InsertImportedWithPackageName.kt")
+            public void testInsertImportedWithPackageName() throws Exception {
+                runTest("../completion/testData/handlers/basic/InsertImportedWithPackageName.kt");
             }
 
             @TestMetadata("InterfaceNameBeforeRunBug.kt")
@@ -1228,6 +1266,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/NoTailFromSmart.kt");
             }
 
+            @TestMetadata("NonExtensionMember.kt")
+            public void testNonExtensionMember() throws Exception {
+                runTest("../completion/testData/handlers/basic/NonExtensionMember.kt");
+            }
+
             @TestMetadata("PreferClassToConstructor.kt")
             public void testPreferClassToConstructor() throws Exception {
                 runTest("../completion/testData/handlers/basic/PreferClassToConstructor.kt");
@@ -1332,25 +1375,33 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             public void testTypeParameter() throws Exception {
                 runTest("../completion/testData/handlers/basic/TypeParameter.kt");
             }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/testData/handlers/basic/unstableSmartCast")
+        public static class UnstableSmartCast extends AbstractHighLevelBasicCompletionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
             @TestMetadata("UnstableSmartCast.kt")
             public void testUnstableSmartCast() throws Exception {
-                runTest("../completion/testData/handlers/basic/UnstableSmartCast.kt");
+                runTest("../completion/testData/handlers/basic/unstableSmartCast/UnstableSmartCast.kt");
             }
 
             @TestMetadata("UnstableSmartCast_notDenotable.kt")
             public void testUnstableSmartCast_notDenotable() throws Exception {
-                runTest("../completion/testData/handlers/basic/UnstableSmartCast_notDenotable.kt");
+                runTest("../completion/testData/handlers/basic/unstableSmartCast/UnstableSmartCast_notDenotable.kt");
             }
 
             @TestMetadata("UnstableSmartCast_typeAlias.kt")
             public void testUnstableSmartCast_typeAlias() throws Exception {
-                runTest("../completion/testData/handlers/basic/UnstableSmartCast_typeAlias.kt");
+                runTest("../completion/testData/handlers/basic/unstableSmartCast/UnstableSmartCast_typeAlias.kt");
             }
 
             @TestMetadata("UnstableSmartCast_typeParams.kt")
             public void testUnstableSmartCast_typeParams() throws Exception {
-                runTest("../completion/testData/handlers/basic/UnstableSmartCast_typeParams.kt");
+                runTest("../completion/testData/handlers/basic/unstableSmartCast/UnstableSmartCast_typeParams.kt");
             }
         }
 

@@ -618,6 +618,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             public void testSmartCast() throws Exception {
                 runTest("../testData/basic/common/extensionFunctionTypeValues/SmartCast.kt");
             }
+
+            @TestMetadata("TypeAliasParameter.kt")
+            public void testTypeAliasParameter() throws Exception {
+                runTest("../testData/basic/common/extensionFunctionTypeValues/TypeAliasParameter.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -758,6 +763,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("ExtensionOnNestedClassObject.kt")
             public void testExtensionOnNestedClassObject() throws Exception {
                 runTest("../testData/basic/common/extensions/ExtensionOnNestedClassObject.kt");
+            }
+
+            @TestMetadata("ExtensionWithStubType.kt")
+            public void testExtensionWithStubType() throws Exception {
+                runTest("../testData/basic/common/extensions/ExtensionWithStubType.kt");
+            }
+
+            @TestMetadata("ExtensionWithUninferredType.kt")
+            public void testExtensionWithUninferredType() throws Exception {
+                runTest("../testData/basic/common/extensions/ExtensionWithUninferredType.kt");
             }
 
             @TestMetadata("Extensions.kt")
@@ -1393,6 +1408,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/namedArguments/ParamsFromSingleUnapplicableOverload.kt");
             }
 
+            @TestMetadata("TypeAliasParameter.kt")
+            public void testTypeAliasParameter() throws Exception {
+                runTest("../testData/basic/common/namedArguments/TypeAliasParameter.kt");
+            }
+
             @TestMetadata("WithParameterExpression.kt")
             public void testWithParameterExpression() throws Exception {
                 runTest("../testData/basic/common/namedArguments/WithParameterExpression.kt");
@@ -1997,6 +2017,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/shadowing/InInitializer7.kt");
             }
 
+            @TestMetadata("InInitializerProperty.kt")
+            public void testInInitializerProperty() throws Exception {
+                runTest("../testData/basic/common/shadowing/InInitializerProperty.kt");
+            }
+
             @TestMetadata("Locals1.kt")
             public void testLocals1() throws Exception {
                 runTest("../testData/basic/common/shadowing/Locals1.kt");
@@ -2027,6 +2052,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/shadowing/PreferCloserReceiverGeneric.kt");
             }
 
+            @TestMetadata("PreferExtensionFunctionToFunctionalVariable.kt")
+            public void testPreferExtensionFunctionToFunctionalVariable() throws Exception {
+                runTest("../testData/basic/common/shadowing/PreferExtensionFunctionToFunctionalVariable.kt");
+            }
+
+            @TestMetadata("PreferExtensionsForCloserReceiver.kt")
+            public void testPreferExtensionsForCloserReceiver() throws Exception {
+                runTest("../testData/basic/common/shadowing/PreferExtensionsForCloserReceiver.kt");
+            }
+
             @TestMetadata("PreferMemberExtension.kt")
             public void testPreferMemberExtension() throws Exception {
                 runTest("../testData/basic/common/shadowing/PreferMemberExtension.kt");
@@ -2052,6 +2087,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionGeneric.kt");
             }
 
+            @TestMetadata("PreferMoreSpecificExtensionGeneric2.kt")
+            public void testPreferMoreSpecificExtensionGeneric2() throws Exception {
+                runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionGeneric2.kt");
+            }
+
             @TestMetadata("PreferMoreSpecificExtensionGenericWithMultipleParam.kt")
             public void testPreferMoreSpecificExtensionGenericWithMultipleParam() throws Exception {
                 runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionGenericWithMultipleParam.kt");
@@ -2060,6 +2100,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("PreferMoreSpecificExtensionGenericWithParam.kt")
             public void testPreferMoreSpecificExtensionGenericWithParam() throws Exception {
                 runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionGenericWithParam.kt");
+            }
+
+            @TestMetadata("PreferMoreSpecificExtensionLocalClass.kt")
+            public void testPreferMoreSpecificExtensionLocalClass() throws Exception {
+                runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionLocalClass.kt");
+            }
+
+            @TestMetadata("VarargValueParameter.kt")
+            public void testVarargValueParameter() throws Exception {
+                runTest("../testData/basic/common/shadowing/VarargValueParameter.kt");
             }
         }
 
@@ -2262,6 +2312,24 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("SuperMethod.kt")
             public void testSuperMethod() throws Exception {
                 runTest("../testData/basic/common/super/SuperMethod.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/basic/common/typeAliasTypes")
+        public static class TypeAliasTypes extends AbstractJSBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("TypeAliasParameter.kt")
+            public void testTypeAliasParameter() throws Exception {
+                runTest("../testData/basic/common/typeAliasTypes/TypeAliasParameter.kt");
+            }
+
+            @TestMetadata("TypeAliasThis.kt")
+            public void testTypeAliasThis() throws Exception {
+                runTest("../testData/basic/common/typeAliasTypes/TypeAliasThis.kt");
             }
         }
 

@@ -3,11 +3,13 @@ package org.jetbrains.kotlin.idea.fir.extensions
 
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.kotlin.allopen.AllOpenComponentRegistrar
+import org.jetbrains.kotlin.assignment.plugin.AssignmentComponentRegistrar
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.Companion.COMPILER_PLUGIN_REGISTRAR_FILE
 import org.jetbrains.kotlin.lombok.LombokComponentRegistrar
 import org.jetbrains.kotlin.noarg.NoArgComponentRegistrar
+import org.jetbrains.kotlin.parcelize.ParcelizeComponentRegistrar
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverComponentRegistrar
 import org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationComponentRegistrar
 import java.nio.file.FileSystems
@@ -50,12 +52,20 @@ enum class KotlinK2BundledCompilerPlugins(
         SamWithReceiverComponentRegistrar::class,
     ),
 
+    ASSIGNMENT_COMPILER_PLUGIN(
+        AssignmentComponentRegistrar::class,
+    ),
+
     KOTLINX_SERIALIZATION_COMPILER_PLUGIN(
         SerializationComponentRegistrar::class,
     ),
 
     LOMBOK_COMPILER_PLUGIN(
         LombokComponentRegistrar::class,
+    ),
+
+    PARCELIZE_COMPILER_PLUGIN(
+        ParcelizeComponentRegistrar::class
     );
 
     private val registrarClassName: String =

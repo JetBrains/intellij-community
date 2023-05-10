@@ -1173,7 +1173,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractJvmWithLibBasicCompletionTest> {
-            model("basic/withLib", isRecursive = false)
+            model("basic/withLib", isRecursive = false, pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractBasicCompletionHandlerTest> {

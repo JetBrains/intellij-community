@@ -41,6 +41,12 @@
             qualifiedName="org.jetbrains.kotlin.scriptTemplatesProvider"
             interface="org.jetbrains.kotlin.script.ScriptTemplatesProvider"
             area="IDEA_PROJECT"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.ideScriptConfigurationControlFacade"
+            interface="kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

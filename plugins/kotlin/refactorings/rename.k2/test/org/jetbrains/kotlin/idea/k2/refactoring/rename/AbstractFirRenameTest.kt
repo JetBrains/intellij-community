@@ -7,8 +7,12 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.refactoring.rename.AbstractRenameTest
 import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractFirRenameTest : AbstractRenameTest() {
@@ -21,6 +25,17 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
     private val onlyRunEnabledTests: Boolean = true
 
     override fun isFirPlugin(): Boolean = true
+
+    override fun tearDown() {
+        runAll(
+            { project.invalidateCaches() },
+            { super.tearDown() }
+        )
+    }
+
+    override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    }
 
     override fun doTest(path: String) {
         val renameObject = loadTestConfiguration(dataFile())

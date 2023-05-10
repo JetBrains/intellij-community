@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
@@ -86,7 +87,8 @@ import java.util.*
 /**
  * Check possibility and perform fix for unresolved references.
  */
-internal abstract class ImportFixBase<T : KtExpression> protected constructor(
+@IntellijInternalApi
+abstract class ImportFixBase<T : KtExpression> protected constructor(
     expression: T,
     private val expressionToAnalyzePointer: SmartPsiElementPointer<KtExpression>?,
     factory: Factory
@@ -377,7 +379,8 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     abstract class FactoryWithUnresolvedReferenceQuickFix: Factory(), UnresolvedReferenceQuickFixFactory
 }
 
-internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, factory: Factory) : ImportFixBase<T>(expression, factory) {
+@IntellijInternalApi
+abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, factory: Factory) : ImportFixBase<T>(expression, factory) {
     override fun fillCandidates(
         name: String,
         callTypeAndReceiver: CallTypeAndReceiver<*, *>,
@@ -463,7 +466,8 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
 }
 
 // This is required to be abstract to reduce bunch file size
-internal abstract class AbstractImportFix(expression: KtSimpleNameExpression, factory: Factory) :
+@IntellijInternalApi
+abstract class AbstractImportFix(expression: KtSimpleNameExpression, factory: Factory) :
     OrdinaryImportFixBase<KtSimpleNameExpression>(expression, factory) {
 
     override fun getCallTypeAndReceiver() = element?.let { CallTypeAndReceiver.detect(it) }

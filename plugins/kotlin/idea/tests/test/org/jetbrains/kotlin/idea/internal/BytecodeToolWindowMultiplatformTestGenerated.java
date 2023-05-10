@@ -50,6 +50,16 @@ public abstract class BytecodeToolWindowMultiplatformTestGenerated extends Abstr
             runTest("testData/internal/toolWindowMultiplatform/function/");
         }
 
+        @TestMetadata("functionFromOtherFile")
+        public void testFunctionFromOtherFile() throws Exception {
+            runTest("testData/internal/toolWindowMultiplatform/functionFromOtherFile/");
+        }
+
+        @TestMetadata("functionWithOrphanedExpect")
+        public void testFunctionWithOrphanedExpect() throws Exception {
+            runTest("testData/internal/toolWindowMultiplatform/functionWithOrphanedExpect/");
+        }
+
         @TestMetadata("generic")
         public void testGeneric() throws Exception {
             runTest("testData/internal/toolWindowMultiplatform/generic/");
@@ -106,6 +116,16 @@ public abstract class BytecodeToolWindowMultiplatformTestGenerated extends Abstr
         @TestMetadata("function")
         public void testFunction() throws Exception {
             runTest("testData/internal/toolWindowMultiplatform/function/");
+        }
+
+        @TestMetadata("functionFromOtherFile")
+        public void testFunctionFromOtherFile() throws Exception {
+            runTest("testData/internal/toolWindowMultiplatform/functionFromOtherFile/");
+        }
+
+        @TestMetadata("functionWithOrphanedExpect")
+        public void testFunctionWithOrphanedExpect() throws Exception {
+            runTest("testData/internal/toolWindowMultiplatform/functionWithOrphanedExpect/");
         }
 
         @TestMetadata("generic")
@@ -166,6 +186,16 @@ public abstract class BytecodeToolWindowMultiplatformTestGenerated extends Abstr
             runTest("testData/internal/toolWindowMultiplatform/function/");
         }
 
+        @TestMetadata("functionFromOtherFile")
+        public void testFunctionFromOtherFile() throws Exception {
+            runTest("testData/internal/toolWindowMultiplatform/functionFromOtherFile/");
+        }
+
+        @TestMetadata("functionWithOrphanedExpect")
+        public void testFunctionWithOrphanedExpect() throws Exception {
+            runTest("testData/internal/toolWindowMultiplatform/functionWithOrphanedExpect/");
+        }
+
         @TestMetadata("generic")
         public void testGeneric() throws Exception {
             runTest("testData/internal/toolWindowMultiplatform/generic/");
@@ -222,6 +252,16 @@ public abstract class BytecodeToolWindowMultiplatformTestGenerated extends Abstr
         @TestMetadata("function")
         public void testFunction() throws Exception {
             runTest("testData/internal/toolWindowMultiplatform/function/");
+        }
+
+        @TestMetadata("functionFromOtherFile")
+        public void testFunctionFromOtherFile() throws Exception {
+            runTest("testData/internal/toolWindowMultiplatform/functionFromOtherFile/");
+        }
+
+        @TestMetadata("functionWithOrphanedExpect")
+        public void testFunctionWithOrphanedExpect() throws Exception {
+            runTest("testData/internal/toolWindowMultiplatform/functionWithOrphanedExpect/");
         }
 
         @TestMetadata("generic")

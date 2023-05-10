@@ -11,7 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
@@ -34,24 +34,23 @@ import org.jetbrains.kotlin.renderer.render
 internal class FunctionLookupElementFactory {
     fun KtAnalysisSession.createLookup(
         name: Name,
-        symbol: KtFunctionLikeSymbol,
+        signature: KtFunctionLikeSignature<*>,
         options: CallableInsertionOptions,
-        substitutor: KtSubstitutor,
         expectedType: KtType? = null,
     ): LookupElementBuilder {
-        val insertEmptyLambda = insertLambdaBraces(symbol)
+        val insertEmptyLambda = insertLambdaBraces(signature)
         val lookupObject = FunctionCallLookupObject(
           name,
           options,
-          renderFunctionParameters(symbol, substitutor),
-          inputValueArgumentsAreRequired = symbol.valueParameters.isNotEmpty(),
-          inputTypeArgumentsAreRequired = !functionCanBeCalledWithoutExplicitTypeArguments(symbol, expectedType),
+          renderFunctionParameters(signature),
+          inputValueArgumentsAreRequired = signature.valueParameters.isNotEmpty(),
+          inputTypeArgumentsAreRequired = !functionCanBeCalledWithoutExplicitTypeArguments(signature.symbol, expectedType),
           insertEmptyLambda,
         )
 
         val builder = LookupElementBuilder.create(lookupObject, name.asString())
-            .withTailText(getTailText(symbol, substitutor))
-            .let { withSymbolInfo(symbol, it, substitutor) }
+            .withTailText(getTailText(signature))
+            .let { withCallableSignatureInfo(signature, it) }
             .also { it.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit) }
         return updateLookupElementBuilder(options, builder)
     }
