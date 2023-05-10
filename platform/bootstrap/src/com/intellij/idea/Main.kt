@@ -4,7 +4,6 @@
 
 package com.intellij.idea
 
-import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.rootTask
@@ -17,6 +16,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.platform.impl.toolkit.IdeFontManager
+import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
 import com.intellij.platform.impl.toolkit.IdeToolkit
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
@@ -51,14 +51,14 @@ fun main(rawArgs: Array<String>) {
       StartUpMeasurer.addTimings(startupTimings, "bootstrap")
       val appInitPreparationActivity = StartUpMeasurer.startActivity("app initialization preparation")
 
-      launch(CoroutineName("ForkJoin CommonPool configuration") + Dispatchers.Default) {
-        IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
-      }
-
       // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
       val appStarterDeferred = async(CoroutineName("main class loading") + Dispatchers.Default) {
         val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
         MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
+      }
+
+      launch(CoroutineName("ForkJoin CommonPool configuration") + Dispatchers.Default) {
+        IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
       }
 
       initRemoteDevIfNeeded(args)
