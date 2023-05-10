@@ -66,7 +66,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFrom
 import com.intellij.platform.attachToProjectAsync
 import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
 import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
-import com.intellij.platform.projectModel.impl.diagnostic.JpsMetrics
+import com.intellij.platform.jps.model.diagnostic.JpsMetrics
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IdeUICustomization

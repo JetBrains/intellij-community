@@ -16,7 +16,7 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
-import com.intellij.platform.projectModel.impl.diagnostic.JpsMetrics
+import com.intellij.platform.jps.model.diagnostic.JpsMetrics
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex

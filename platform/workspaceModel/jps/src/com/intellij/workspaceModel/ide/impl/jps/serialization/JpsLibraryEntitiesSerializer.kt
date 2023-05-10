@@ -5,10 +5,12 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.jps.model.diagnostic.JpsMetrics
 import com.intellij.platform.workspaceModel.jps.*
-import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -16,12 +18,14 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import io.opentelemetry.api.metrics.Meter
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
+import java.util.concurrent.atomic.AtomicLong
 
 internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<LibraryEntity> {
   override val componentName: String
@@ -65,12 +69,13 @@ private const val LIBRARY_TABLE_COMPONENT_NAME = "libraryTable"
 
 internal class JpsGlobalLibrariesFileSerializer(entitySource: JpsGlobalFileEntitySource)
   : JpsLibraryEntitiesSerializer(entitySource.file, entitySource,
-                                 LibraryTableId.GlobalLibraryTableId("application" /* equal to LibraryTablesRegistrar.APPLICATION_LEVEL */)),
+                                 LibraryTableId.GlobalLibraryTableId(
+                                   "application" /* equal to LibraryTablesRegistrar.APPLICATION_LEVEL */)),
     JpsFileEntityTypeSerializer<LibraryEntity> {
   override val isExternalStorage: Boolean
     get() = false
   override val entityFilter: (LibraryEntity) -> Boolean
-    get() = { it.tableId is LibraryTableId.GlobalLibraryTableId}
+    get() = { it.tableId is LibraryTableId.GlobalLibraryTableId }
 
   override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
     writer.saveComponent(fileUrl, LIBRARY_TABLE_COMPONENT_NAME, null)
@@ -93,7 +98,8 @@ internal class JpsLibrariesFileSerializer(entitySource: JpsProjectFileEntitySour
 internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsProjectFileEntitySource.ExactFile,
                                                   private val internalLibrariesDirUrl: VirtualFileUrl,
                                                   private val fileInDirectorySourceNames: FileInDirectorySourceNames)
-  : JpsLibraryEntitiesSerializer(externalFile.file, externalFile, LibraryTableId.ProjectLibraryTableId), JpsFileEntityTypeSerializer<LibraryEntity> {
+  : JpsLibraryEntitiesSerializer(externalFile.file, externalFile,
+                                 LibraryTableId.ProjectLibraryTableId), JpsFileEntityTypeSerializer<LibraryEntity> {
   override val isExternalStorage: Boolean
     get() = true
   override val entityFilter: (LibraryEntity) -> Boolean
@@ -104,9 +110,10 @@ internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsP
     val libraryName = libraryTag.getAttributeValueStrict(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
     val existingInternalSource = fileInDirectorySourceNames.findSource(mainEntityClass, libraryName)
     val internalEntitySource = if (existingInternalSource != null && existingInternalSource.directory == internalLibrariesDirUrl) {
-      logger<JpsLibrariesExternalFileSerializer>().debug{ "Reuse existing source for library: ${existingInternalSource.fileNameId}=$libraryName" }
+      logger<JpsLibrariesExternalFileSerializer>().debug { "Reuse existing source for library: ${existingInternalSource.fileNameId}=$libraryName" }
       existingInternalSource
-    } else {
+    }
+    else {
       JpsProjectFileEntitySource.FileInDirectory(internalLibrariesDirUrl, externalFile.projectLocation)
     }
     return JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
@@ -117,7 +124,8 @@ internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsP
   }
 }
 
-internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl, override val internalEntitySource: JpsFileEntitySource,
+internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
+                                                 override val internalEntitySource: JpsFileEntitySource,
                                                  protected val libraryTableId: LibraryTableId) : JpsFileEntitiesSerializer<LibraryEntity> {
   open val isExternalStorage: Boolean
     get() = false
@@ -128,9 +136,11 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
   override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
                             virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
+    val start = System.currentTimeMillis()
+
     val libraryTableTag = runCatchingXmlIssues { reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) }
-      .onFailure { return LoadingResult(emptyMap(), null) }
-      .getOrThrow() ?: return LoadingResult(emptyMap(), null)
+                            .onFailure { return LoadingResult(emptyMap(), null) }
+                            .getOrThrow() ?: return LoadingResult(emptyMap(), null)
     val libs = runCatchingXmlIssues { libraryTableTag.getChildren(LIBRARY_TAG) }
       .onFailure { return LoadingResult(emptyMap(), null) }
       .getOrThrow()
@@ -141,10 +151,14 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
           loadLibrary(name, libraryTag, libraryTableId, source, virtualFileManager)
         }
       }
-    return LoadingResult(
+
+    val loadingResult: LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> = LoadingResult(
       mapOf(LibraryEntity::class.java to libs.mapNotNull { it.getOrNull() }),
       libs.firstOrNull { it.isFailure }?.exceptionOrNull(),
     )
+
+    loadEntitiesTimeMs.addElapsedTimeMs(start)
+    return loadingResult
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -176,6 +190,7 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
                             entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                             storage: EntityStorage,
                             writer: JpsFileContentWriter) {
+    val start = System.currentTimeMillis()
     if (mainEntities.isEmpty()) return
 
     val componentTag = JDomSerializationUtil.createComponentElement(LIBRARY_TABLE_COMPONENT_NAME)
@@ -184,9 +199,35 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
       componentTag.addContent(saveLibrary(it, externalSystemId, isExternalStorage))
     }
     writer.saveComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME, componentTag)
+    saveEntitiesTimeMs.addElapsedTimeMs(start)
   }
 
   override fun toString(): String = "${javaClass.simpleName.substringAfterLast('.')}($fileUrl)"
+
+  companion object {
+    private val loadEntitiesTimeMs: AtomicLong = AtomicLong()
+    private val saveEntitiesTimeMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val loadEntitiesTimeGauge = meter.gaugeBuilder("jps.library.entities.serializer.load.entities.ms")
+        .ofLongs().buildObserver()
+
+      val saveEntitiesTimeGauge = meter.gaugeBuilder("jps.library.entities.serializer.save.entities.ms")
+        .ofLongs().buildObserver()
+
+      meter.batchCallback(
+        {
+          loadEntitiesTimeGauge.record(loadEntitiesTimeMs.get())
+          saveEntitiesTimeGauge.record(saveEntitiesTimeMs.get())
+        },
+        loadEntitiesTimeGauge, saveEntitiesTimeGauge
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(JpsMetrics.getInstance().meter)
+    }
+  }
 }
 
 private const val DEFAULT_JAR_DIRECTORY_TYPE = "CLASSES"
@@ -274,16 +315,17 @@ internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?, isEx
     rootsMap.putIfAbsent(it, ArrayList())
   }
   val jarDirectoriesTags = ArrayList<Element>()
-  rootsMap.entries.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) {it.key.name}).forEach { (rootType, roots) ->
+  rootsMap.entries.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.key.name }).forEach { (rootType, roots) ->
     val rootTypeTag = Element(rootType.name)
     roots.forEach {
       rootTypeTag.addContent(Element(ROOT_TAG).setAttribute(JpsModuleRootModelSerializer.URL_ATTRIBUTE, it.url.url))
     }
-    roots.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) {it.url.url}).forEach {
+    roots.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.url.url }).forEach {
       if (it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF) {
         val jarDirectoryTag = Element(JAR_DIRECTORY_TAG)
         jarDirectoryTag.setAttribute(JpsModuleRootModelSerializer.URL_ATTRIBUTE, it.url.url)
-        jarDirectoryTag.setAttribute(RECURSIVE_ATTRIBUTE, (it.inclusionOptions == LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY).toString())
+        jarDirectoryTag.setAttribute(RECURSIVE_ATTRIBUTE,
+                                     (it.inclusionOptions == LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY).toString())
         if (rootType.name != DEFAULT_JAR_DIRECTORY_TYPE) {
           jarDirectoryTag.setAttribute(TYPE_ATTRIBUTE, rootType.name)
         }
