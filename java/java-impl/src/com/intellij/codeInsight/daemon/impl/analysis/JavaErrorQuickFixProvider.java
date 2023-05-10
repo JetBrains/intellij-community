@@ -30,7 +30,7 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
       HighlightFixUtil.registerFixesForExpressionStatement((PsiStatement)parent, registrar);
     }
     if (parent instanceof PsiTryStatement && description.equals(JavaPsiBundle.message("expected.catch.or.finally"))) {
-      registrar.add(new AddExceptionToCatchFix(false));
+      registrar.add(new AddExceptionToCatchFix(false).asIntention());
       registrar.add(new AddFinallyFix((PsiTryStatement)parent).asIntention());
     }
     if (parent instanceof PsiSwitchLabeledRuleStatement && description.equals(JavaPsiBundle.message("expected.switch.rule"))) {
