@@ -8,6 +8,7 @@ import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
 import com.intellij.grazie.utils.*
 import com.intellij.openapi.application.ex.ApplicationUtil
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -195,7 +196,7 @@ open class LanguageToolChecker : TextChecker() {
     private fun isGitCherryPickedFrom(match: RuleMatch, text: TextContent): Boolean {
       return match.rule.id == "EN_COMPOUNDS" && match.fromPos > 0 && text.startsWith("(cherry picked from", match.fromPos - 1) &&
              (text.domain == TextContent.TextDomain.LITERALS ||
-              text.domain == TextContent.TextDomain.PLAIN_TEXT && CommitMessage.isCommitMessage(text.containingFile))
+              text.domain == TextContent.TextDomain.PLAIN_TEXT && runReadAction { CommitMessage.isCommitMessage(text.containingFile) })
     }
 
     private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
