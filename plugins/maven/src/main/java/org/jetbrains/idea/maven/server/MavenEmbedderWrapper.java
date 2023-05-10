@@ -134,16 +134,9 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                               Transformer.ID :
                               RemotePathTransformerFactory.createForProject(myProject);
     List<File> ioFiles = ContainerUtil.map(files, file -> new File(transformer.toRemotePath(file.getPath())));
+    var request = new ProjectResolutionRequest(ioFiles, explicitProfiles.getEnabledProfiles(), explicitProfiles.getDisabledProfiles());
 
-    var results = runLongRunningTask(
-      (embedder, longRunningTaskId) ->
-        embedder.resolveProjects(
-          longRunningTaskId,
-          ioFiles,
-          explicitProfiles.getEnabledProfiles(),
-          explicitProfiles.getDisabledProfiles(),
-          ourToken),
-      progressIndicator);
+    var results = runLongRunningTask((embedder, taskId) -> embedder.resolveProjects(taskId, request, ourToken), progressIndicator);
 
     if (transformer != Transformer.ID) {
       for (MavenServerExecutionResult result : results) {

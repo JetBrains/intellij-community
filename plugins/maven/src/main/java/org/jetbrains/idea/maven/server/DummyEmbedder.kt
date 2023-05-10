@@ -96,9 +96,7 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
 
 class UntrustedDummyEmbedder(myProject: Project) : DummyEmbedder(myProject) {
   override fun resolveProjects(longRunningTaskId: String,
-                               files: Collection<File>,
-                               activeProfiles: Collection<String>,
-                               inactiveProfiles: Collection<String>,
+                               request: ProjectResolutionRequest,
                                token: MavenToken?): Collection<MavenServerExecutionResult> {
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
       object : BuildIssue {
@@ -122,9 +120,7 @@ class MisconfiguredPlexusDummyEmbedder(myProject: Project,
                                        private val myMavenVersion: String?,
                                        private val myUnresolvedId: MavenId?) : DummyEmbedder(myProject) {
   override fun resolveProjects(longRunningTaskId: String,
-                               files: Collection<File>,
-                               activeProfiles: Collection<String>,
-                               inactiveProfiles: Collection<String>,
+                               request: ProjectResolutionRequest,
                                token: MavenToken?): Collection<MavenServerExecutionResult> {
 
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(

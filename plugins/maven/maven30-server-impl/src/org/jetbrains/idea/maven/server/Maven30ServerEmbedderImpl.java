@@ -544,11 +544,12 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   @NotNull
   @Override
   public Collection<MavenServerExecutionResult> resolveProjects(@NotNull String longRunningTaskId,
-                                                                @NotNull Collection<File> files,
-                                                                @NotNull Collection<String> activeProfiles,
-                                                                @NotNull Collection<String> inactiveProfiles, MavenToken token)
+                                                                @NotNull ProjectResolutionRequest request, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
+    List<File> files = request.getPomFiles();
+    List<String> activeProfiles = request.getActiveProfiles();
+    List<String> inactiveProfiles = request.getInactiveProfiles();
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, files.size())) {
       return resolveProjects(task, files, activeProfiles, inactiveProfiles);
     }
