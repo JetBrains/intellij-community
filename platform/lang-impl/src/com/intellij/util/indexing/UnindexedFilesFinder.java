@@ -189,8 +189,7 @@ final class UnindexedFilesFinder {
         for (ID<?, ?> indexId : appliedIndexes) {
           LOG.assertTrue(myFileBasedIndex.getIndexingState(indexedFile, indexId) != FileIndexingState.NOT_INDEXED,
                          "getAppliedIndexes returned index ID that in fact was not applied. IndexId=" + indexId);
-          boolean removed = removeIndexedValue(indexedFile, inputId, indexId, fileStatusBuilder);
-          LOG.assertTrue(removed, "Failed to remove value from index");
+          removeIndexedValue(indexedFile, inputId, indexId, fileStatusBuilder);
         }
 
         if (fileStatusBuilder.appliersAndRemovers.isEmpty()) {
@@ -247,9 +246,6 @@ final class UnindexedFilesFinder {
           // for all indexes that became invalid. See IDEA-252846 for more details.
           fileStatusBuilder.shouldIndex = true;
         }
-        else {
-          LOG.assertTrue(!myFileBasedIndex.needsFileContentLoading(indexId), "Failed to apply contentless indexer");
-        }
       }
     }
     catch (RuntimeException e) {
@@ -298,7 +294,12 @@ final class UnindexedFilesFinder {
       myFileBasedIndex.createSingleIndexRemover(indexId, indexedFile.getFile(), new IndexedFileWrapper(indexedFile), inputId,
                                                 fileStatusBuilder.applyIndexValuesSeparately);
     if (remover != null) {
-      return fileStatusBuilder.addOrRunApplierOrRemover(remover::remove);
+      boolean removed = fileStatusBuilder.addOrRunApplierOrRemover(remover::remove);
+      if (!removed) {
+        LOG.error("Failed to remove value from index " + indexId + " for file " + indexedFile.getFile() + ", " +
+                  "applyIndexValuesSeparately=" + fileStatusBuilder.applyIndexValuesSeparately);
+      }
+      return removed;
     }
     else {
       return true;
@@ -331,7 +332,12 @@ final class UnindexedFilesFinder {
         myFileBasedIndex.createSingleIndexValueApplier(indexId, indexedFile.getFile(), inputId, new IndexedFileWrapper(indexedFile),
                                                        fileStatusBuilder.applyIndexValuesSeparately);
       if (applier != null) {
-        return fileStatusBuilder.addOrRunApplierOrRemover(applier::apply);
+        boolean updated = fileStatusBuilder.addOrRunApplierOrRemover(applier::apply);
+        if (!updated) {
+          LOG.error("Failed to apply contentless indexer " + indexId + " to file " + indexedFile.getFile() + ", " +
+                    "applyIndexValuesSeparately=" + fileStatusBuilder.applyIndexValuesSeparately);
+        }
+        return updated;
       }
       else {
         return true;
