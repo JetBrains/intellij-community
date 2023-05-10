@@ -265,6 +265,31 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     return visitor.unescapedOffset;
   }
 
+  @Override
+  public int mapUnescapedOffsetToInjected(@NotNull PsiFile injectedFile, int offset) {
+    if (offset < 0) return offset;
+    var visitor = new PsiRecursiveElementWalkingVisitor() {
+      int unescapedOffset = 0;
+      int escapedOffset = 0;
+
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        String leafText = InjectedLanguageUtilBase.getUnescapedLeafText(element, false);
+        if (leafText != null) {
+          unescapedOffset += leafText.length();
+          escapedOffset += element.getTextLength();
+          if (unescapedOffset >= offset) {
+            escapedOffset -= unescapedOffset - offset;
+            stopWalking();
+          }
+        }
+        super.visitElement(element);
+      }
+    };
+    injectedFile.accept(visitor);
+    return visitor.escapedOffset;
+  }
+
   /**
    *  intersection may spread over several injected fragments
    *  @param rangeToEdit range in encoded(raw) PSI

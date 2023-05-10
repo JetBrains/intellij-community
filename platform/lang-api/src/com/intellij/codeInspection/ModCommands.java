@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -92,22 +93,25 @@ public final class ModCommands {
     PsiFile targetFile;
     Document positionDocument;
     boolean injected = injectionManager.isInjectedFragment(origFile);
+    PsiLanguageInjectionHost hostCopy;
     if (injected) {
       PsiLanguageInjectionHost host = Objects.requireNonNull(injectionManager.getInjectionHost(origFile));
       PsiFile hostFile = host.getContainingFile();
       PsiFile hostFileCopy = (PsiFile)hostFile.copy();
       PsiFile injectedFileCopy = getInjectedFileCopy(host, hostFileCopy, orig.getLanguage());
+      hostCopy = injectionManager.getInjectionHost(injectedFileCopy);
       disposable = ApplicationManager.getApplication().getService(InjectionEditService.class)
         .synchronizeWithFragment(injectedFileCopy, document);
       targetFile = hostFileCopy;
       origFile = hostFile;
       positionDocument = hostFileCopy.getViewProvider().getDocument();
     } else {
+      hostCopy = null;
       disposable = null;
       targetFile = copyFile;
       positionDocument = document;
     }
-    EditorUpdaterImpl context = new EditorUpdaterImpl(actionContext, positionDocument, manager, document, injected, targetFile, copyFile);
+    EditorUpdaterImpl context = new EditorUpdaterImpl(actionContext, positionDocument, manager, document, hostCopy, copyFile);
     try {
       String oldText = targetFile.getText();
       aspect.postponeFormattingInside(
@@ -190,8 +194,7 @@ public final class ModCommands {
     private final @NotNull Document myPositionDocument;
     private final @NotNull PsiDocumentManager myManager;
     private final @NotNull Document myDocument;
-    private final boolean myInjected;
-    private final @NotNull PsiFile myTargetFile;
+    private final @Nullable PsiLanguageInjectionHost myHost;
     private final @NotNull PsiFile myCopyFile;
     private int myCaretOffset, mySelectionStart, mySelectionEnd;
 
@@ -199,14 +202,12 @@ public final class ModCommands {
                               @NotNull Document positionDocument,
                               @NotNull PsiDocumentManager manager,
                               @NotNull Document document,
-                              boolean injected,
-                              @NotNull PsiFile targetFile,
+                              @Nullable PsiLanguageInjectionHost host,
                               @NotNull PsiFile copyFile) {
       myPositionDocument = positionDocument;
       myManager = manager;
       myDocument = document;
-      myInjected = injected;
-      myTargetFile = targetFile;
+      myHost = host;
       myCopyFile = copyFile;
       myCaretOffset = actionContext.offset();
       mySelectionStart = actionContext.selection().getStartOffset();
@@ -218,28 +219,51 @@ public final class ModCommands {
     public void select(@NotNull PsiElement element) {
       validate(element);
       myManager.doPostponedOperationsAndUnblockDocument(myDocument);
-      if (myInjected) {
-        element = PsiTreeUtil.findSameElementInCopy(element, myTargetFile);
-      }
       TextRange range = element.getTextRange();
+      select(range);
+    }
+
+    @Override
+    public void select(@NotNull TextRange range) {
+      if (myHost != null) {
+        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myCopyFile.getProject());
+        PsiFile file = findInjectedFile(instance, myHost);
+        int start = instance.mapUnescapedOffsetToInjected(file, range.getStartOffset());
+        int end = instance.mapUnescapedOffsetToInjected(file, range.getEndOffset());
+        range = instance.injectedToHost(file, TextRange.create(start, end));
+      }
       mySelectionStart = range.getStartOffset();
       mySelectionEnd = range.getEndOffset();
       myCaretOffset = range.getStartOffset();
     }
-
+    
     @Override
     public void moveTo(@NotNull PsiElement element) {
       validate(element);
       myManager.doPostponedOperationsAndUnblockDocument(myDocument);
-      if (myInjected) {
-        element = PsiTreeUtil.findSameElementInCopy(element, myTargetFile);
-      }
       int offset = element.getTextRange().getStartOffset();
-      moveToOffset(offset);
+      if (myHost != null) {
+        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myCopyFile.getProject());
+        PsiFile file = findInjectedFile(instance, myHost);
+        offset = instance.mapUnescapedOffsetToInjected(file, offset);
+        offset = instance.injectedToHost(file, offset);
+      }
+      myCaretOffset = offset;
     }
 
-    private void moveToOffset(int offset) {
-      myCaretOffset = offset;
+    private PsiFile findInjectedFile(InjectedLanguageManager instance, PsiLanguageInjectionHost host) {
+      var visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+        PsiFile myFile = null;
+        
+        @Override
+        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<? extends PsiLanguageInjectionHost.Shred> places) {
+          if (injectedPsi.getLanguage() == myCopyFile.getLanguage()) {
+            myFile = injectedPsi;
+          }
+        }
+      };
+      instance.enumerate(host, visitor);
+      return Objects.requireNonNull(visitor.myFile);
     }
 
     @Override
@@ -248,7 +272,7 @@ public final class ModCommands {
       String text = myPositionDocument.getText();
       int idx = text.lastIndexOf(ch, myCaretOffset);
       if (idx == -1) return;
-      moveToOffset(idx);
+      myCaretOffset = idx;
     }
 
     private void validate(@NotNull PsiElement element) {

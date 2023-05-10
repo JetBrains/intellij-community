@@ -64,6 +64,11 @@ public abstract class InjectedLanguageManager {
     throw new UnsupportedOperationException();
   }
 
+  @Contract(pure = true)
+  public int mapUnescapedOffsetToInjected(@NotNull PsiFile injectedFile, int offset) {
+    throw new UnsupportedOperationException();
+  }
+
   @NotNull
   public abstract List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit);
 
