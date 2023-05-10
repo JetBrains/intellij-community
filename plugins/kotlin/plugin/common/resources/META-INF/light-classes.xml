@@ -1,6 +1,8 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.load.java.structure.impl.source.JavaElementSourceFactory"
+                    serviceImplementation="org.jetbrains.kotlin.analysis.api.impl.base.java.source.JavaElementSourceWithSmartPointerFactory"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.asJava.classes.LightClassInheritanceHelper"
             serviceImplementation="org.jetbrains.kotlin.idea.caches.lightClasses.IdeLightClassInheritanceHelper"
