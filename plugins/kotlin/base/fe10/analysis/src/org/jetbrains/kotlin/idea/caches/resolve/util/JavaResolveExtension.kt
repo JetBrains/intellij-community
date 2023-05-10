@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.load.java.sources.JavaSourceElement
 import org.jetbrains.kotlin.load.java.structure.*
 import org.jetbrains.kotlin.load.java.structure.impl.*
+import org.jetbrains.kotlin.load.java.structure.impl.source.JavaElementSourceFactory
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -31,9 +32,12 @@ private fun PsiMethod.getJavaMethodDescriptor(resolutionFacade: ResolutionFacade
     val method = originalElement as? PsiMethod ?: return null
     if (method.containingClass == null || !Name.isValidIdentifier(method.name)) return null
     val resolver = method.getJavaDescriptorResolver(resolutionFacade)
+    val sourceFactory = JavaElementSourceFactory.getInstance(project)
+    val psiJavaSource = sourceFactory.createPsiSource(method)
+
     return when {
-        method.isConstructor -> resolver?.resolveConstructor(JavaConstructorImpl(method))
-        else -> resolver?.resolveMethod(JavaMethodImpl(method))
+        method.isConstructor -> resolver?.resolveConstructor(JavaConstructorImpl(psiJavaSource))
+        else -> resolver?.resolveMethod(JavaMethodImpl(psiJavaSource))
     }
 }
 
@@ -41,12 +45,17 @@ fun PsiClass.getJavaClassDescriptor() = javaResolutionFacade()?.let { getJavaCla
 
 fun PsiClass.getJavaClassDescriptor(resolutionFacade: ResolutionFacade): ClassDescriptor? {
     val psiClass = originalElement as? PsiClass ?: return null
-    return psiClass.getJavaDescriptorResolver(resolutionFacade)?.resolveClass(JavaClassImpl(psiClass))
+    val sourceFactory = JavaElementSourceFactory.getInstance(resolutionFacade.project)
+    val psiJavaSource = sourceFactory.createPsiSource(psiClass)
+
+    return psiClass.getJavaDescriptorResolver(resolutionFacade)?.resolveClass(JavaClassImpl(psiJavaSource))
 }
 
 private fun PsiField.getJavaFieldDescriptor(resolutionFacade: ResolutionFacade): PropertyDescriptor? {
     val field = originalElement as? PsiField ?: return null
-    return field.getJavaDescriptorResolver(resolutionFacade)?.resolveField(JavaFieldImpl(field))
+    val sourceFactory = JavaElementSourceFactory.getInstance(resolutionFacade.project)
+    val psiJavaSource = sourceFactory.createPsiSource(field)
+    return field.getJavaDescriptorResolver(resolutionFacade)?.resolveField(JavaFieldImpl(psiJavaSource))
 }
 
 fun PsiMember.getJavaMemberDescriptor(resolutionFacade: ResolutionFacade): DeclarationDescriptor? {
