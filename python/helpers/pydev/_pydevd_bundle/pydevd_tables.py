@@ -62,8 +62,9 @@ def __get_table_provider(output):
                                'pandas.core.series.Series',
                                'numpy.ndarray']:
         import _pydevd_bundle.tables.pydevd_pandas as table_provider
-    if type_qualified_name in ['polars.internals.dataframe.frame.DataFrame',
-                               'polars.internals.series.series.Series']:
+    elif type_qualified_name.startswith('polars') and (
+            type_qualified_name.endswith('DataFrame')
+            or type_qualified_name.endswith('Series')):
         import _pydevd_bundle.tables.pydevd_polars as table_provider
 
     return table_provider
