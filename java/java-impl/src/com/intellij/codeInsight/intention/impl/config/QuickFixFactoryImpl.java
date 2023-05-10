@@ -260,7 +260,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createChangeToAppendFix(@NotNull IElementType sign,
                                                  @NotNull PsiType type,
                                                  @NotNull PsiAssignmentExpression assignment) {
-    return new ChangeToAppendFix(sign, type, assignment);
+    return new ChangeToAppendFix(sign, type, assignment).asIntention();
   }
 
   @NotNull

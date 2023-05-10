@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.RecursionManager;
@@ -242,8 +243,11 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     if (target == null && ref != null &&
         JavaPsiFacade.getInstance(context.getProject()).getResolveHelper().resolveReferencedVariable(variable.getName(), ref) == null) {
       BringVariableIntoScopeFix fix = BringVariableIntoScopeFix.fromReference(ref);
-      if (fix != null && fix.isAvailable(context.getProject(), context.getEditor(), context.getFile())) {
-        fix.invoke(context.getProject(), context.getEditor(), context.getFile());
+      if (fix != null) {
+        ModCommandAction.ActionContext actionContext = ModCommandAction.ActionContext.from(context.getEditor(), context.getFile());
+        if (fix.getPresentation(actionContext) != null) {
+          fix.perform(actionContext).execute(context.getProject());
+        }
       }
     }
 
