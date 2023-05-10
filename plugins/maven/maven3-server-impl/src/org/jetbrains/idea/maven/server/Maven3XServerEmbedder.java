@@ -529,16 +529,16 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   private Collection<Maven3ExecutionResult> doResolveProject(@NotNull LongRunningTask task,
-                                                             @NotNull final Collection<File> files,
-                                                             @NotNull final List<String> activeProfiles,
-                                                             @NotNull final List<String> inactiveProfiles,
-                                                             final List<ResolutionListener> listeners) throws RemoteException {
-    final File file = !files.isEmpty() ? files.iterator().next() : null;
-    final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles);
+                                                             @NotNull Collection<File> files,
+                                                             @NotNull List<String> activeProfiles,
+                                                             @NotNull List<String> inactiveProfiles,
+                                                             List<ResolutionListener> listeners) throws RemoteException {
+    File file = !files.isEmpty() ? files.iterator().next() : null;
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles);
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
-    final Collection<Maven3ExecutionResult> executionResults = new ArrayList<>();
+    Collection<Maven3ExecutionResult> executionResults = new ArrayList<>();
     Map<ProjectBuildingResult, List<Exception>> buildingResultsToResolveDependencies = new HashMap<>();
 
     executeWithMavenSession(request, () -> {
@@ -916,7 +916,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       File mavenMultiModuleProjectDirectory = getMultimoduleProjectDir(file);
       result.setBaseDirectory(mavenMultiModuleProjectDirectory);
 
-      final Method setMultiModuleProjectDirectoryMethod = getSetMultiModuleProjectDirectoryMethod(result);
+      Method setMultiModuleProjectDirectoryMethod = getSetMultiModuleProjectDirectoryMethod(result);
       if (setMultiModuleProjectDirectoryMethod != null) {
         try {
           result.setMultiModuleProjectDirectory(mavenMultiModuleProjectDirectory);
@@ -940,7 +940,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       return explicitActiveProfiles != null ? explicitActiveProfiles : Collections.emptyList();
     }
 
-    Set<String> result = new HashSet<String>(defaultActiveProfiles);
+    Set<String> result = new HashSet<>(defaultActiveProfiles);
     if (explicitInactiveProfiles != null && !explicitInactiveProfiles.isEmpty()) {
       result.removeAll(explicitInactiveProfiles);
     }
@@ -949,7 +949,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       result.addAll(explicitActiveProfiles);
     }
 
-    return new ArrayList<String>(result);
+    return new ArrayList<>(result);
   }
 
   @NotNull
@@ -995,17 +995,17 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     try {
       if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
         //noinspection unchecked
-        final List<DependencyNode> dependencyNodes = rootNode == null ? Collections.emptyList() : rootNode.getChildren();
+        List<DependencyNode> dependencyNodes = rootNode == null ? Collections.emptyList() : rootNode.getChildren();
         model = Maven3ModelConverter.convertModel(
           mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
           mavenProject.getArtifacts(), dependencyNodes, mavenProject.getExtensionArtifacts(), getLocalRepositoryFile());
       }
       else {
-        final DependencyResolutionResult dependencyResolutionResult = result.getDependencyResolutionResult();
-        final org.eclipse.aether.graph.DependencyNode dependencyGraph =
+        DependencyResolutionResult dependencyResolutionResult = result.getDependencyResolutionResult();
+        org.eclipse.aether.graph.DependencyNode dependencyGraph =
           dependencyResolutionResult != null ? dependencyResolutionResult.getDependencyGraph() : null;
 
-        final List<org.eclipse.aether.graph.DependencyNode> dependencyNodes =
+        List<org.eclipse.aether.graph.DependencyNode> dependencyNodes =
           dependencyGraph != null ? dependencyGraph.getChildren() : Collections.emptyList();
         model = Maven3AetherModelConverter.convertModelWithAetherDependencyTree(
           mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
