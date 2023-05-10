@@ -51,7 +51,9 @@ def exec_table_command(init_command, command_type, start_index, end_index, f_glo
     return True, ''.join(res)
 
 
-def __get_table_provider(output: str):
+# noinspection PyUnresolvedReferences
+def __get_table_provider(output):
+    # type: (str) -> Any
     output_type = type(output)
 
     table_provider = None

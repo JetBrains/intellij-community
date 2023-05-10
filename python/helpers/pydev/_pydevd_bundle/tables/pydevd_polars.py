@@ -1,5 +1,4 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-import io
 import polars as pl
 
 
@@ -20,10 +19,10 @@ def get_head(table, max_cols):
 
 def get_column_types(table):
     # type: (pl.DataFrame) -> str
-    with io.StringIO() as output:
-        print(table.dtype, file=output) if type(table).__name__ == 'Series' \
-            else print(*[str(t) for t in table.dtypes], file=output)
-        return output.getvalue()
+    if type(table).__name__ == 'Series':
+        return str(table.dtype)
+    else:
+        return ' '.join([str(t) for t in table.dtypes])
 
 
 # used by pydevd, isDisplaySupported equals false
