@@ -29,8 +29,7 @@ IF "%JRE%" == "" (
 )
 
 IF "%JRE%" == "" (
-  IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" IF EXIST "%IDE_HOME%\jbr" SET "JRE=%IDE_HOME%\jbr"
-  IF "%PROCESSOR_ARCHITECTURE%" == "ARM64" IF EXIST "%IDE_HOME%\jbr" SET "JRE=%IDE_HOME%\jbr"
+  IF EXIST "%IDE_HOME%\jbr" SET "JRE=%IDE_HOME%\jbr"
 )
 
 IF "%JRE%" == "" (
