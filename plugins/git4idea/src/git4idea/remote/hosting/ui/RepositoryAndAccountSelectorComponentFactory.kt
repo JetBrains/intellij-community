@@ -12,10 +12,7 @@ import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
 import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
-import com.intellij.collaboration.ui.util.bindDisabledIn
-import com.intellij.collaboration.ui.util.bindTextIn
-import com.intellij.collaboration.ui.util.bindVisibilityIn
-import com.intellij.collaboration.ui.util.getName
+import com.intellij.collaboration.ui.util.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -107,7 +104,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
             val errorAction = errorPresenter.getErrorAction(error)
             actionLinkListener.action = errorAction
             if (errorAction != null) {
-              append(HtmlChunk.link(ActionLinkListener.ERROR_ACTION_HREF, errorAction.getName()))
+              append(HtmlChunk.link(ActionLinkListener.ERROR_ACTION_HREF, errorAction.name.orEmpty()))
             }
           }.toString()
         })

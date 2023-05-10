@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.ui.component
 
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.setHtmlBody
-import com.intellij.collaboration.ui.util.getName
+import com.intellij.collaboration.ui.util.name
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -75,7 +75,7 @@ object GHHtmlErrorPanel {
         val errorAction = model.errorAction
         if (errorAction != null) {
           errorTextBuilder.br()
-            .appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.getName()))
+            .appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.name.orEmpty()))
         }
         pane.setHtmlBody(errorTextBuilder.toString())
       }
