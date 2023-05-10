@@ -188,7 +188,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
             }
 
             environment.runnerAndConfigurationSettings?.let {
-              descriptor.isActivateToolWindowWhenAdded = it.isActivateToolWindowBeforeRun
+              descriptor.isActivateToolWindowWhenAdded = it.isActivateToolWindowBeforeRun || it.isFocusToolWindowBeforeRun
+              descriptor.isAutoFocusContent= it.isFocusToolWindowBeforeRun
             }
           }
           environment.callback?.let {

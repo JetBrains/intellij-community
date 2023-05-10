@@ -828,8 +828,9 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       if (onAdd) {
         RunConfigurationNode node = createNode(content);
         if (node != null) {
-          var shouldActivate = node.getConfigurationSettings().isActivateToolWindowBeforeRun();
-          ServiceViewManager.getInstance(myProject).select(node, RunDashboardServiceViewContributor.class, shouldActivate, false);
+          RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
+          ServiceViewManager.getInstance(myProject).select(node, RunDashboardServiceViewContributor.class,
+                                                           settings.isActivateToolWindowBeforeRun(), settings.isFocusToolWindowBeforeRun());
         }
       }
     }

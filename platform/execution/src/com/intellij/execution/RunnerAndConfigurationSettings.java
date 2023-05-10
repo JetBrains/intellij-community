@@ -234,6 +234,20 @@ public interface RunnerAndConfigurationSettings {
   boolean isActivateToolWindowBeforeRun();
 
   /**
+   * Sets the "Before launch: Focus tool window" flag (for activation tool window Run/Debug etc.)
+   *
+   * @param value if true, the tool window will be focused before launching this configuration.
+   */
+  void setFocusToolWindowBeforeRun(boolean value);
+
+  /**
+   * Returns the "Before launch: Focus tool window" flag
+   *
+   * @return if true (it's default value), the tool window will be focused before launching this configuration.
+   */
+  boolean isFocusToolWindowBeforeRun();
+
+  /**
    * @deprecated Use {@link RunConfiguration#isAllowRunningInParallel()}
    */
   @Deprecated(forRemoval = true)
