@@ -40,7 +40,7 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
                 KotlinTopLevelExtensionsByReceiverTypeIndex.receiverTypeNameFromKey(it) in receiverTypeNames &&
                         nameFilter(Name.identifier(KotlinTopLevelExtensionsByReceiverTypeIndex.callableNameFromKey(it)))
             },
-            valueFilter = CancelableCollectFilterProcessor.ALWAYS_TRUE
+            valueFilter = { !it.isKotlinBuiltins() }
         )
 
     fun getPossibleTypeAliasExpansionNames(originalTypeName: String): Set<String> {

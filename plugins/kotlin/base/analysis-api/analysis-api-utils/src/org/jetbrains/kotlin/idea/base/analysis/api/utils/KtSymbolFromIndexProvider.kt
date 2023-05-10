@@ -165,5 +165,7 @@ private val KotlinBuiltins = setOf("kotlin/ArrayIntrinsicsKt", "kotlin/internal/
 fun KtCallableDeclaration.isKotlinBuiltins(): Boolean {
     if (this !is KtNamedFunction) return false
     val file = containingKtFile
-    return file.packageFqName.asString().replace(".", "/") + "/" + file.virtualFile.nameWithoutExtension in KotlinBuiltins
+    val virtualFile = file.virtualFile
+    if (virtualFile.extension == "kotlin_metadata") return true
+    return file.packageFqName.asString().replace(".", "/") + "/" + virtualFile.nameWithoutExtension in KotlinBuiltins
 }
