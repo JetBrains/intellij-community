@@ -207,6 +207,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     if (usedForWriting) return false;
     PsiParameter javaParameter = ObjectUtils.tryCast(parameter.getSourcePsi(), PsiParameter.class);
     if (javaParameter == null) return null;
+    if (javaParameter.isVarArgs()) return false;
     return !(value instanceof PsiField) || PsiUtil.isMemberAccessibleAt((PsiMember)value, javaParameter);
   }
 
