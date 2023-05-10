@@ -130,12 +130,12 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   @NotNull
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<VirtualFile> files,
                                                                @NotNull MavenExplicitProfiles explicitProfiles,
-                                                               @NotNull MavenProgressIndicator progressIndicator)
+                                                               @Nullable MavenProgressIndicator progressIndicator)
     throws MavenProcessCanceledException {
     Transformer transformer = files.isEmpty() ?
                               Transformer.ID :
                               RemotePathTransformerFactory.createForProject(myProject);
-    final List<File> ioFiles = ContainerUtil.map(files, file -> new File(transformer.toRemotePath(file.getPath())));
+    List<File> ioFiles = ContainerUtil.map(files, file -> new File(transformer.toRemotePath(file.getPath())));
 
     var results = runLongRunningTask(
       (embedder, longRunningTaskId) ->
@@ -158,16 +158,16 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   @Nullable
-  public String evaluateEffectivePom(@NotNull final VirtualFile file,
-                                     @NotNull final Collection<String> activeProfiles,
-                                     @NotNull final Collection<String> inactiveProfiles) throws MavenProcessCanceledException {
+  public String evaluateEffectivePom(@NotNull VirtualFile file,
+                                     @NotNull Collection<String> activeProfiles,
+                                     @NotNull Collection<String> inactiveProfiles) throws MavenProcessCanceledException {
     return evaluateEffectivePom(new File(file.getPath()), activeProfiles, inactiveProfiles);
   }
 
   @Nullable
-  public String evaluateEffectivePom(@NotNull final File file,
-                                     @NotNull final Collection<String> activeProfiles,
-                                     @NotNull final Collection<String> inactiveProfiles) throws MavenProcessCanceledException {
+  public String evaluateEffectivePom(@NotNull File file,
+                                     @NotNull Collection<String> activeProfiles,
+                                     @NotNull Collection<String> inactiveProfiles) throws MavenProcessCanceledException {
     return performCancelable(() -> getOrCreateWrappee()
       .evaluateEffectivePom(file, new ArrayList<>(activeProfiles), new ArrayList<>(inactiveProfiles), ourToken));
   }

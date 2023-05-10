@@ -522,6 +522,7 @@ public final class MavenProjectReader {
     throws MavenProcessCanceledException {
     return resolveProject(generalSettings, embedder, files, explicitProfiles, locator, null);
   }
+
   public Collection<MavenProjectReaderResult> resolveProject(MavenGeneralSettings generalSettings,
                                                              MavenEmbedderWrapper embedder,
                                                              Collection<VirtualFile> files,
