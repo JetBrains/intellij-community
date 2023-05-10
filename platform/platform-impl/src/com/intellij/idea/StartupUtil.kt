@@ -791,14 +791,17 @@ private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job, args:
         }
       }
       catch (e: CannotActivateException) {
-        val message = BootstrapBundle.message("bootstrap.error.cannot.activate.message", e.javaClass.simpleName, e.message)
         if (args.isEmpty()) {
-          StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.cannot.activate.title"), message, true)
+          StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), e.message, true)
         }
         else {
-          println(message)
+          println(e.message)
         }
         exitProcess(AppExitCodes.INSTANCE_CHECK_FAILED)
+      }
+      catch (t: Throwable) {
+        StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), t)
+        exitProcess(AppExitCodes.STARTUP_EXCEPTION)
       }
     }
   }
