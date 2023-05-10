@@ -91,10 +91,11 @@
       "cwmUsers.svg": "users.svg"
     },
     "debugger": {
-      "watch.svg": "debugger/watch.svg",
       "dbPrimitive.svg": "debugger/db_primitive.svg",
       "frame.svg": "debugger/frame.svg",
-      "value.svg": "debugger/value.svg"
+      "threads.svg": "debugger/threads.svg",
+      "value.svg": "debugger/value.svg",
+      "watch.svg": "debugger/watch.svg"
     },
     "diff": {
       "applyNotConflicts.svg": "diff/applyNotConflicts.svg",
@@ -184,6 +185,7 @@
       "properties.svg": "fileTypes/properties.svg",
       "protobuf.svg": "protoFile.png",
       "react.svg": "org/jetbrains/kotlin/idea/icons/wizard/react.svg",
+      "regexp.svg": "fileTypes/regexp.svg",
       "scala.svg": "org/jetbrains/plugins/scala/images/scala16.png",
       "scratch.svg": "actions/scratch.svg",
       "scratches.svg": "scope/scratches.svg",

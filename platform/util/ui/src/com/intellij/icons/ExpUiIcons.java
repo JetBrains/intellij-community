@@ -121,6 +121,7 @@ public final class ExpUiIcons {
   public static final class Debugger {
     /** 16x16 */ public static final @NotNull Icon DbPrimitive = load("expui/debugger/dbPrimitive.svg", -205753943, 2);
     /** 16x16 */ public static final @NotNull Icon Frame = load("expui/debugger/frame.svg", -425499240, 2);
+    /** 16x16 */ public static final @NotNull Icon Threads = load("expui/debugger/threads.svg", 429606584, 2);
     /** 16x16 */ public static final @NotNull Icon Value = load("expui/debugger/value.svg", 1020592915, 2);
     /** 16x16 */ public static final @NotNull Icon Watch = load("expui/debugger/watch.svg", -1528144025, 2);
   }
@@ -209,6 +210,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Properties = load("expui/fileTypes/properties.svg", 1599798989, 2);
     /** 16x16 */ public static final @NotNull Icon Protobuf = load("expui/fileTypes/protobuf.svg", -1238043383, 0);
     /** 16x16 */ public static final @NotNull Icon React = load("expui/fileTypes/react.svg", 2030919111, 2);
+    /** 16x16 */ public static final @NotNull Icon Regexp = load("expui/fileTypes/regexp.svg", 1912176488, 2);
     /** 16x16 */ public static final @NotNull Icon Sbt = load("expui/fileTypes/sbt.svg", 554912296, 2);
     /** 16x16 */ public static final @NotNull Icon Scala = load("expui/fileTypes/scala.svg", -905171609, 2);
     /** 16x16 */ public static final @NotNull Icon Scratch = load("expui/fileTypes/scratch.svg", -529729899, 2);
