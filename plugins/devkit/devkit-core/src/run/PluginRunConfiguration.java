@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -161,8 +161,10 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         vm.defineProperty(PathManager.PROPERTY_CONFIG_PATH, canonicalSandbox + File.separator + "config");
         vm.defineProperty(PathManager.PROPERTY_SYSTEM_PATH, canonicalSandbox + File.separator + "system");
         vm.defineProperty(PathManager.PROPERTY_PLUGINS_PATH, canonicalSandbox + File.separator + "plugins");
-        vm.defineProperty("idea.classpath.index.enabled", "false");
 
+        if (!vm.hasProperty("idea.classpath.index.enabled")) {
+          vm.defineProperty("idea.classpath.index.enabled", "false");
+        }
         if (!vm.hasProperty("jdk.module.illegalAccess.silent")) {
           vm.defineProperty("jdk.module.illegalAccess.silent", "true");
         }
