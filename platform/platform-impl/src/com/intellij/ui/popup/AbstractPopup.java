@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.ModalityHelper;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
@@ -510,17 +511,19 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   private static Window getTargetWindow(Component component) {
+    Window res = null;
     while (component != null) {
       if (component instanceof FloatingDecorator fd) {
         return fd;
       }
       Component parent = component.getParent();
-      if (parent == null && component instanceof Window w) {
-        return w;
+      if (component instanceof Window w) {
+        if (ModalityHelper.isModalBlocked(w)) break;
+        res = w;
       }
       component = parent;
     }
-    return null;
+    return res;
   }
 
   @Override
