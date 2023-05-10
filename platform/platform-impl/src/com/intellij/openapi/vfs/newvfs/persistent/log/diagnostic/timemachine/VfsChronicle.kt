@@ -259,8 +259,8 @@ object VfsChronicle {
     val value: T
 
     companion object {
-      inline fun <T, R> LookupResult<T>.mapCases(onNotFound: () -> R, onFound: (value: T) -> R): R = if (found) onFound(value)
-      else onNotFound()
+      inline fun <T, R> LookupResult<T>.mapCases(onNotFound: () -> R, onFound: (value: T) -> R): R =
+        if (found) onFound(value) else onNotFound()
 
       fun <T> LookupResult<T>.getOrNull(): T? = mapCases({ null }) { it }
 

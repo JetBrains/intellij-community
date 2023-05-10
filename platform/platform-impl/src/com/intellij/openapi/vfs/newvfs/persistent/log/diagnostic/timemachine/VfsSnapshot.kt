@@ -83,7 +83,7 @@ interface VfsSnapshot {
 
         /**
          * Use [NotEnoughInformationCause] to designate a situation when there is not enough data to succeed the recovery
-         * (though the process went normal). Use [VfsRecoveryException] if an exception occurs during the recovery process and it is
+         * (though the process went normal). Throw [VfsRecoveryException] if an exception occurs during the recovery process and it is
          * considered not normal.
          */
         class NotAvailable<T>(
