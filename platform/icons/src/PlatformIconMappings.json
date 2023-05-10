@@ -334,6 +334,7 @@
       "right.svg": "actions/forward.svg",
       "runAnything.svg": "actions/run_anything.svg",
       "search.svg": "actions/find.svg",
+      "separatorHorizontal.svg": "general/separatorH.svg",
       "settings.svg": [
         "general/gearPlain.svg",
         "general/settings.svg"

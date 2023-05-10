@@ -313,6 +313,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ScrollDown = load("expui/general/scrollDown.svg", -2051028392, 2);
     /** 16x16 */ public static final @NotNull Icon Search = load("expui/general/search.svg", 253832439, 2);
     /** 20x20 */ public static final @NotNull Icon Search_20x20 = load("expui/general/search@20x20.svg", 677725643, 2);
+    /** 16x16 */ public static final @NotNull Icon SeparatorHorizontal = load("expui/general/separatorHorizontal.svg", -1075959730, 2);
     /** 16x16 */ public static final @NotNull Icon Settings = load("expui/general/settings.svg", -572608346, 2);
     /** 20x20 */ public static final @NotNull Icon Settings_20x20 = load("expui/general/settings@20x20.svg", -1050164769, 2);
     /** 16x16 */ public static final @NotNull Icon Show = load("expui/general/show.svg", -95335537, 2);
