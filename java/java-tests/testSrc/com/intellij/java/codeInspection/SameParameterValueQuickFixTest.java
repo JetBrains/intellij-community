@@ -15,19 +15,21 @@ import java.util.List;
  */
 public final class SameParameterValueQuickFixTest extends LightJavaCodeInsightFixtureTestCase {
 
-  public void testSimple() {
-    doTest();
-  }
+  public void testSimple() { doTest(); }
+  public void testCastedValue() { doTest(); }
+  public void testStringThatNeedsEscaping() { doTest(false); }
+  public void testLongValue() { doTest(); }
 
   private void doTest() {
-    doNamedTest(getTestName(false));
+    doTest(true);
   }
 
-  private void doNamedTest(String name) {
+  private void doTest(boolean testHighlighting) {
+    String name = getTestName(false);
     LocalInspectionTool inspection = new SameParameterValueInspection().getSharedLocalInspectionTool();
     myFixture.enableInspections(inspection);
     myFixture.configureByFile(name + ".java");
-    myFixture.testHighlighting(true, false, false);
+    if (testHighlighting) myFixture.testHighlighting(true, false, false);
     final @NotNull List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Inline value");
     assertEquals("intention not found", 1, intentions.size());
     myFixture.checkPreviewAndLaunchAction(intentions.get(0));

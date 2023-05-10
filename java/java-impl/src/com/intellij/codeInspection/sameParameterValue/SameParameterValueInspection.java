@@ -175,37 +175,31 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                                                              boolean suggestFix) {
     final String name = parameter.getName();
     if (name == null || name.isEmpty()) return null;
-    String shortName;
-    String stringPresentation;
+    String presentableText;
+    String canonicalText;
     if (value instanceof PsiType) {
-      stringPresentation = ((PsiType)value).getCanonicalText() + ".class";
-      shortName = ((PsiType)value).getPresentableText() + ".class";
+      canonicalText = ((PsiType)value).getCanonicalText() + ".class";
+      presentableText = ((PsiType)value).getPresentableText() + ".class";
     }
     else {
       if (value instanceof PsiField) {
-        stringPresentation = PsiFormatUtil.formatVariable((PsiVariable)value,
-                                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME,
-                                                          PsiSubstitutor.EMPTY);
-        shortName = PsiFormatUtil.formatVariable((PsiVariable)value,
-                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS,
-                                                 PsiSubstitutor.EMPTY);
-      }
-      else if (value instanceof Character) {
-        stringPresentation = shortName = "'" + value + "'";
+        canonicalText = PsiFormatUtil.formatVariable((PsiVariable)value,
+                                                     PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME,
+                                                     PsiSubstitutor.EMPTY);
+        presentableText = PsiFormatUtil.formatVariable((PsiVariable)value,
+                                                       PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS,
+                                                       PsiSubstitutor.EMPTY);
       }
       else {
-        stringPresentation = shortName = String.valueOf(value);
+        canonicalText = presentableText = String.valueOf(value);
       }
     }
     PsiElement anchor = ObjectUtils.notNull(UDeclarationKt.getAnchorPsi(parameter), parameter);
     if (!anchor.isPhysical()) return null;
-    String value1 = stringPresentation.startsWith("\"\"")
-                                 ? stringPresentation
-                                 : StringUtil.escapeLineBreak(stringPresentation);
     return manager.createProblemDescriptor(anchor,
                                            JavaBundle.message("inspection.same.parameter.problem.descriptor",
-                                                              StringUtil.unquoteString(shortName)),
-                                           suggestFix ? new InlineParameterValueFix(name, value1) : null,
+                                                              StringUtil.unquoteString(presentableText)),
+                                           suggestFix ? new InlineParameterValueFix(name, canonicalText) : null,
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
 

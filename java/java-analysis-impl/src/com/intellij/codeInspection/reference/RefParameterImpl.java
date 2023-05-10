@@ -20,8 +20,8 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public class RefParameterImpl extends RefJavaElementImpl implements RefParameter {
-  private static final int USED_FOR_READING_MASK = 0b1_00000000_00000000;
-  private static final int USED_FOR_WRITING_MASK = 0b10_00000000_00000000;
+  private static final int USED_FOR_READING_MASK = 0b01_00000000_00000000; // 17th bit
+  private static final int USED_FOR_WRITING_MASK = 0b10_00000000_00000000; // 18th bit
 
   private final short myIndex;
   private Object myActualValueTemplate; // guarded by this
@@ -185,10 +185,32 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
       }
       //don't unescape/escape to insert into the source file
       PsiElement sourcePsi = Objects.requireNonNull(expression.getSourcePsi());
-      return value instanceof String ? ("\"" + StringUtil.unquoteString(sourcePsi.getText()) + "\"") : value;
+      return value instanceof String
+             ? ("\"" + StringUtil.unquoteString(sourcePsi.getText()) + "\"")
+             : convertToStringRepresentation(value);
     }
-    Object constValue = expression.evaluate(); //JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
-    return constValue == null ? VALUE_IS_NOT_CONST : constValue instanceof String ? "\"" + constValue + "\"" : constValue;
+    Object value = expression.evaluate();
+    return value == null ? VALUE_IS_NOT_CONST : convertToStringRepresentation(value);
+  }
+
+  @Nullable
+  private static Object convertToStringRepresentation(Object value) {
+    if (value instanceof Long) {
+      return value + "L";
+    }
+    else if (value instanceof Short) {
+      return "(short)" + value;
+    }
+    else if (value instanceof Byte) {
+      return "(byte)" + value;
+    }
+    else if (value instanceof String string) {
+      return "\"" + StringUtil.escapeStringCharacters(string) + "\"";
+    }
+    else if (value instanceof Character character) {
+      return "'" + StringUtil.escapeCharCharacters(String.valueOf(character)) + "'";
+    }
+    return value;
   }
 
   private static boolean isAccessible(@NotNull UField field, @NotNull PsiElement place) {
