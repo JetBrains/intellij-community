@@ -588,19 +588,8 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       return ((ActionStubBase)action).getId();
     }
     synchronized (myLock) {
-      String id = actionToId.get(action);
-      AnAction unwrapped;
-      if (id == null && (unwrapped = tryToUnwrap(action)) != null) return actionToId.get(unwrapped);
-      return id;
+      return actionToId.get(action);
     }
-  }
-
-  @Nullable
-  private static AnAction tryToUnwrap(@NotNull AnAction action) {
-    if (action instanceof ActionGroupWrapper w) return w.getDelegate();
-    if (action instanceof AnActionWrapper w) return w.getDelegate();
-
-    return null;
   }
 
   @Override
