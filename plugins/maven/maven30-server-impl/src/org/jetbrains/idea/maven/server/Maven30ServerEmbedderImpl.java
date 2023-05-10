@@ -550,15 +550,15 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     try (LongRunningTask task = new LongRunningTask(longRunningTaskId, files.size())) {
-      return resolveProject(task, files, activeProfiles, inactiveProfiles);
+      return resolveProjects(task, files, activeProfiles, inactiveProfiles);
     }
   }
 
   @NotNull
-  private Collection<MavenServerExecutionResult> resolveProject(@NotNull LongRunningTask task,
-                                                                @NotNull Collection<File> files,
-                                                                @NotNull Collection<String> activeProfiles,
-                                                                @NotNull Collection<String> inactiveProfiles)
+  private Collection<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
+                                                                 @NotNull Collection<File> files,
+                                                                 @NotNull Collection<String> activeProfiles,
+                                                                 @NotNull Collection<String> inactiveProfiles)
     throws RemoteException {
     DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 

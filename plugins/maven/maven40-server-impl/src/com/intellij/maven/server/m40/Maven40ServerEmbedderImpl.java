@@ -249,15 +249,15 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                                 @NotNull Collection<String> inactiveProfiles, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try (LongRunningTask task = new LongRunningTask(longRunningTaskId, files.size())) {
-      return resolveProject(task, files, activeProfiles, inactiveProfiles);
+      return resolveProjects(task, files, activeProfiles, inactiveProfiles);
     }
   }
 
   @NotNull
-  private Collection<MavenServerExecutionResult> resolveProject(@NotNull LongRunningTask task,
-                                                                @NotNull Collection<File> files,
-                                                                @NotNull Collection<String> activeProfiles,
-                                                                @NotNull Collection<String> inactiveProfiles) {
+  private Collection<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
+                                                                 @NotNull Collection<File> files,
+                                                                 @NotNull Collection<String> activeProfiles,
+                                                                 @NotNull Collection<String> inactiveProfiles) {
     try {
       Collection<Maven40ExecutionResult> results = doResolveProject(
         task,
