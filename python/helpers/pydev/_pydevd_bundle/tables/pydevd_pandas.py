@@ -1,6 +1,4 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-import io
-
 import numpy as np
 import pandas as pd
 
@@ -25,12 +23,8 @@ def get_head(table, max_cols):
 # noinspection PyUnresolvedReferences
 def get_column_types(table):
     # type: (Union[pd.DataFrame, pd.Series, np.ndarray]) -> str
-    with io.StringIO() as output:
-        table = __convert_to_df(table)
-        print(table.index.dtype, *[str(t) for t in table.dtypes],
-              file=output)
-        return output.getvalue()
-
+    table = __convert_to_df(table)
+    return str(table.index.dtype) + ' ' + ' '.join([str(t) for t in table.dtypes])
 
 # used by pydevd
 # noinspection PyUnresolvedReferences
