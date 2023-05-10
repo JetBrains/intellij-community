@@ -2326,8 +2326,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           flushingPeriodMs
         );
         overallResult = overallResult.and(indexFlushResult);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("\t" + indexFlushingState + " " + indexFlushResult);
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("\t" + indexFlushingState + " " + indexFlushResult);
         }
 
         final int contentionQuotaRemains = contentionQuota.get();
