@@ -145,7 +145,6 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val zipFilePoolDeferred = async(Dispatchers.IO) {
-    // ZipFilePoolImpl uses Guava for Striped lock - load in parallel
     val result = ZipFilePoolImpl()
     ZipFilePool.POOL = result
     result
