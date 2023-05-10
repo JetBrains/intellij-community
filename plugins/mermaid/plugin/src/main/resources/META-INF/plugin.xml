@@ -115,4 +115,12 @@
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/MermaidDarcula.xml"/>
 
   </extensions>
+  <actions>
+    <action id="Mermaid.ExportDiagram"
+            icon="AllIcons.ToolbarDecorator.Export"
+            class="com.intellij.mermaid.preview.ExportDiagramAction">
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

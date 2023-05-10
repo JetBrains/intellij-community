@@ -10,6 +10,7 @@ import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.EventTarget
+import org.w3c.dom.parsing.XMLSerializer
 
 private fun configureLinks() {
   window.addEventListener("click") { event: Event ->
@@ -31,9 +32,19 @@ private fun Element.obtainLinkAttributeValue(): String? {
   return getAttribute("href") ?: getAttribute("xlink:href")
 }
 
+fun collectDiagramContent(): String {
+  val document = window.document
+  val container = document.getElementById("diagram-container") as HTMLElement
+  val element = container.firstChild
+  checkNotNull(element) { "Where should be an svg element" }
+  val serializer = XMLSerializer()
+  return serializer.serializeToString(element)
+}
+
 suspend fun viewerMain() {
   configureLinks()
   window.asDynamic()["updateMermaidDiagramContent"] = ::updateView
+  window.asDynamic()["collectDiagramContent"] = ::collectDiagramContent
   window.updateViewRequests().onEach { performViewUpdate(it.content) }.collect()
 }
 
