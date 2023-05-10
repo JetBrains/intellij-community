@@ -16,7 +16,8 @@ import javax.swing.JTextField
 interface ClientFileChooserFactory {
   companion object {
     @JvmStatic
-    val instance: ClientFileChooserFactory = service()
+    val instance: ClientFileChooserFactory
+      get() = service()
 
     @JvmStatic
     fun useNewChooser(descriptor: FileChooserDescriptor): Boolean {
