@@ -62,7 +62,7 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl, private v
     editor.document.addDocumentListener(this, this)
     editor.putUserData(KEY, this)
 
-    overrideCaretMove(editor)
+    //overrideCaretMove(editor)
 
     jobCall = scope.launch(CoroutineName("inline.completion.call")) {
       flow.debounce(minDelay)
@@ -88,18 +88,18 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl, private v
   }
 
   private fun overrideCaretMove(editor: EditorImpl) {
-    val moveCaretAction = ActionUtil.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) ?: return
-
-    DumbAwareAction.create {
-      val toAct = if (editor.getInlineCompletionContextOrNull()?.isCurrentlyDisplayingInlays == true) {
-        InsertInlineCompletionAction()
-      }
-      else {
-        moveCaretAction
-      }
-
-      ActionUtil.performActionDumbAwareWithCallbacks(toAct, it)
-    }.registerCustomShortcutSet(moveCaretAction.shortcutSet, editor.component)
+    //val moveCaretAction = ActionUtil.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) ?: return
+    //
+    //DumbAwareAction.create {
+    //  val toAct = if (editor.getInlineCompletionContextOrNull()?.isCurrentlyDisplayingInlays == true) {
+    //    InsertInlineCompletionAction()
+    //  }
+    //  else {
+    //    moveCaretAction
+    //  }
+    //
+    //  ActionUtil.performActionDumbAwareWithCallbacks(toAct, it)
+    //}.registerCustomShortcutSet(moveCaretAction.shortcutSet, editor.component)
   }
 
   override fun dispose() {
