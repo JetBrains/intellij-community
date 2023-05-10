@@ -193,7 +193,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   override fun loadProject(path: Path): Project {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
-    val project = ProjectImpl(filePath = path, projectName = null)
+    val project = ProjectImpl(filePath = path, projectName = null, parent = ApplicationManager.getApplication() as ComponentManagerImpl)
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(modalityState.asContextElement()) {
@@ -809,7 +809,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   protected open fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
     val activity = StartUpMeasurer.startActivity("project instantiation")
-    val project = ProjectImpl(filePath = projectStoreBaseDir, projectName = options.projectName)
+    val project = ProjectImpl(filePath = projectStoreBaseDir,
+                              projectName = options.projectName,
+                              parent = ApplicationManager.getApplication() as ComponentManagerImpl)
     activity.end()
     options.beforeInit?.invoke(project)
     return project

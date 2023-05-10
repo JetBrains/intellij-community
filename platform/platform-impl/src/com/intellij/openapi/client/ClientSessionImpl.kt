@@ -18,11 +18,13 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.util.messages.MessageBus
+import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<ClientSessionImpl>()
 
+@OptIn(DelicateCoroutinesApi::class)
 @ApiStatus.Experimental
 @ApiStatus.Internal
 abstract class ClientSessionImpl(
@@ -31,8 +33,8 @@ abstract class ClientSessionImpl(
   private val sharedComponentManager: ClientAwareComponentManager
 ) : ComponentManagerImpl(
   parent = null,
+  coroutineScope = GlobalScope.namedChildScope("ClientSessionImpl", clientId.asContextElement2()),
   setExtensionsRootArea = false,
-  context = clientId.asContextElement2(),
 ), ClientSession {
 
   override val isLightServiceSupported = false

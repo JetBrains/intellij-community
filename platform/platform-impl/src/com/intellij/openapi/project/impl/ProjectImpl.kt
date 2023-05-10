@@ -38,6 +38,7 @@ import com.intellij.util.childScope
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.impl.MessageBusEx
+import com.intellij.util.namedChildScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.cancel
@@ -50,8 +51,9 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
 @Internal
-open class ProjectImpl(filePath: Path, projectName: String?)
-  : ClientAwareComponentManager(ApplicationManager.getApplication() as ComponentManagerImpl), ProjectEx, ProjectStoreOwner {
+open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName: String?)
+  : ClientAwareComponentManager(parent = parent,
+                                coroutineScope = parent.getCoroutineScope().namedChildScope("ProjectImpl")), ProjectEx, ProjectStoreOwner {
   companion object {
     private val LOG = logger<ProjectImpl>()
 

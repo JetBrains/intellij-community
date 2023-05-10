@@ -34,7 +34,6 @@ import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.namedChildScope
-import com.intellij.util.requireNoJob
 import com.intellij.util.runSuppressing
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
@@ -53,8 +52,6 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 internal val LOG: Logger
   get() = logger<ComponentManagerImpl>()
@@ -76,19 +73,14 @@ private fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: Me
 @Internal
 abstract class ComponentManagerImpl(
   internal val parent: ComponentManagerImpl?,
+  private val coroutineScope: CoroutineScope?,
   setExtensionsRootArea: Boolean = parent == null,
-  context: CoroutineContext = EmptyCoroutineContext,
 ) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx, ComponentStoreOwner {
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
 
   companion object {
-    @JvmField
-    @Volatile
-    @Internal
-    var mainScope: CoroutineScope? = null
-
     @Internal
     @JvmField val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
 
@@ -129,10 +121,6 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  init {
-    requireNoJob(context)
-  }
-
   private val componentKeyToAdapter = ConcurrentHashMap<Any, ComponentAdapter>()
   private val componentAdapters = LinkedHashSetWrapper<MyComponentAdapter>()
   private val serviceInstanceHotCache = ConcurrentHashMap<Class<*>, Any?>()
@@ -164,25 +152,6 @@ abstract class ComponentManagerImpl(
 
   @Volatile
   internal var componentContainerIsReadonly: String? = null
-
-  private val coroutineScope: CoroutineScope? = when {
-    parent == null -> { // application
-      // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the Job
-      val mainJob = mainScope?.coroutineContext?.job
-      val parentScope = if (mainJob == null) {
-        @OptIn(DelicateCoroutinesApi::class)
-        GlobalScope
-      }
-      else {
-        CoroutineScope(mainJob)
-      }
-      parentScope.namedChildScope(debugString(short = true), context)
-    }
-    parent.parent == null -> { // project
-      parent.coroutineScope!!.namedChildScope(debugString(short = true), context)
-    }
-    else -> null
-  }
 
   @Suppress("MemberVisibilityCanBePrivate")
   fun getCoroutineScope(): CoroutineScope = coroutineScope ?: throw RuntimeException("Module doesn't have coroutineScope")

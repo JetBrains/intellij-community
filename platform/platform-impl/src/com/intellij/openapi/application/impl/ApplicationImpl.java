@@ -5,9 +5,6 @@ import com.intellij.CommonBundle;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.*;
-import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
-import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.ContainerDescriptor;
@@ -37,6 +34,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
 import com.intellij.psi.util.ReadActionCache;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.ComponentUtil;
@@ -49,6 +49,9 @@ import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.*;
 import sun.awt.AWTAccessor;
 
@@ -118,8 +121,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   @TestOnly
-  public ApplicationImpl(boolean isHeadless, RwLockHolder lockHolder) {
-    super(null, true);
+  public ApplicationImpl(boolean isHeadless, @NotNull RwLockHolder lockHolder) {
+    super(null,
+          CoroutineScopeKt.namedChildScope(GlobalScope.INSTANCE, ApplicationImpl.class.getName(), EmptyCoroutineContext.INSTANCE, true),
+          true);
 
     myLock = lockHolder.getLock$intellij_platform_ide_impl();
 
@@ -143,8 +148,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     ApplicationManager.setApplication(this, myLastDisposable);
   }
 
-  public ApplicationImpl(boolean isInternal, boolean isHeadless, boolean isCommandLine, RwLockHolder lockHolder) {
-    super(null, true);
+  public ApplicationImpl(@NotNull CoroutineScope coroutineScope,
+                         boolean isInternal,
+                         boolean isHeadless,
+                         boolean isCommandLine,
+                         @NotNull RwLockHolder lockHolder) {
+    super(null, coroutineScope, true);
 
     myLock = lockHolder.getLock$intellij_platform_ide_impl();
 

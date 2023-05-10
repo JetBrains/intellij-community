@@ -32,7 +32,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.*
 import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.mac.MacOSApplicationProvider
@@ -51,6 +50,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.io.BuiltInServer
 import sun.awt.AWTAutoShutdown
+import java.awt.EventQueue
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
@@ -170,10 +170,6 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  launch(Dispatchers.IO) {
-    ComponentManagerImpl.mainScope = mainScope
-  }
-
   // LookAndFeel type is not specified to avoid class loading
   val initLafJob = launch {
     initAwtToolkitAndEventQueueJob.join()
@@ -264,7 +260,13 @@ ${dumpCoroutines(stripDump = false)}
 
     val rwLockHolder = rwLockHolderDeferred.await()
     val app = runActivity("app instantiation") {
-      val app = ApplicationImpl(isInternal, AppMode.isHeadless(), AppMode.isCommandLine(), rwLockHolder)
+      // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the Job
+      val mainJob = mainScope.coroutineContext.job
+      val app = ApplicationImpl(CoroutineScope(mainJob).namedChildScope(ApplicationImpl::class.java.name),
+                                isInternal,
+                                AppMode.isHeadless(),
+                                AppMode.isCommandLine(),
+                                rwLockHolder)
       // acquire IW lock on EDT indefinitely in legacy mode
       if (!isImplicitReadOnEDTDisabled) {
         subtask("AppDelayQueue instantiation", RawSwingDispatcher) {
@@ -897,19 +899,22 @@ private fun logPath(path: String): String {
   return "$path -> ?"
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 fun runStartupWizard() {
   val stepsDialogName = ApplicationInfoImpl.getShadowInstance().welcomeWizardDialog ?: return
   try {
     val dialogClass = Class.forName(stepsDialogName)
     val ctor = dialogClass.getConstructor(AppStarter::class.java)
-    (ctor.newInstance(null) as CommonCustomizeIDEWizardDialog).showIfNeeded()
+    EventQueue.invokeAndWait {
+      (ctor.newInstance(null) as CommonCustomizeIDEWizardDialog).showIfNeeded()
+    }
   }
   catch (e: Throwable) {
     StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e)
     return
   }
   PluginManagerCore.invalidatePlugins()
-  PluginManagerCore.scheduleDescriptorLoading(ComponentManagerImpl.mainScope!!)
+  PluginManagerCore.scheduleDescriptorLoading(GlobalScope)
 }
 
 // the method must be called on EDT
