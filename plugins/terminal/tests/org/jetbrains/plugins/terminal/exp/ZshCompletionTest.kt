@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.io.createDirectory
@@ -35,6 +36,7 @@ class ZshCompletionTest : BasePlatformTestCase() {
     Assume.assumeTrue(File("/bin/zsh").exists())
     super.setUp()
 
+    Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, testRootDisposable)
     session = startTerminalSession(TermSize(200, 20))
     val completionManager = TerminalCompletionManager(session)
     val model = session.model

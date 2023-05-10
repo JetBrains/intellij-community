@@ -64,6 +64,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final String SH_NAME = "sh";
   private static final String ZSH_NAME = "zsh";
   private static final String FISH_NAME = "fish";
+  public static final String BLOCK_TERMINAL_REGISTRY = "ide.experimental.ui.new.terminal";
 
   protected final Charset myDefaultCharset;
   private final ThreadLocal<ShellStartupOptions> myStartupOptionsThreadLocal = new ThreadLocal<>();
@@ -146,8 +147,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     // Prevent sourcing non-existent 'terminal/fish/config.fish' and 'terminal/.zshenv' by Fig.io
     envs.put("FIG_JETBRAINS_SHELL_INTEGRATION", "1");
 
-    if (Registry.is("ide.experimental.ui.new.terminal", false)
-        || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (Registry.is(BLOCK_TERMINAL_REGISTRY, false)) {
       envs.put("INTELLIJ_TERMINAL_COMMAND_BLOCKS", "1");
     }
 
@@ -167,7 +167,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent, @NotNull ShellStartupOptions startupOptions) {
-    if (Registry.is("ide.experimental.ui.new.terminal", false)) {
+    if (Registry.is(BLOCK_TERMINAL_REGISTRY, false)) {
       return new TerminalWidgetImpl(myProject, getSettingsProvider(), parent);
     }
     return super.createShellTerminalWidget(parent, startupOptions);
