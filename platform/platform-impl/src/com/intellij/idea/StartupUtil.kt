@@ -486,8 +486,7 @@ private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job, preloadLa
       }
       runActivity("graphics environment checking") {
         if (env.isHeadlessInstance) {
-          StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
-                                           BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
+          StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
           exitProcess(AppExitCodes.NO_GRAPHICS)
         }
       }

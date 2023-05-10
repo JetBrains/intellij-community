@@ -58,10 +58,12 @@ public final class AppMode {
     return isRemoteDevHost;
   }
 
-  /** @deprecated please use {@link #isRemoteDevHost()} */
-  @Deprecated
-  public static boolean isIsRemoteDevHost() {
-    return isRemoteDevHost;
+  public static boolean isDevServer() {
+    return Boolean.getBoolean("idea.use.dev.build.server");
+  }
+
+  public static boolean isDroidFactory() {
+    return "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
   }
 
   public static void setFlags(@NotNull List<String> args) {
@@ -132,17 +134,13 @@ public final class AppMode {
 
     String firstArg = args.get(0);
 
-    @SuppressWarnings("SpellCheckingInspection") List<String> headlessCommands = Arrays.asList(
+    List<String> headlessCommands = Arrays.asList(
       "ant", "duplocate", "dataSources", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format",
       "keymap", "update", "inspections", "intentions", "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions",
       "cwmHostStatus", "remoteDevStatus", "invalidateCaches", "warmup", "buildEventsScheme", "inspectopedia-generator", "remoteDevShowHelp",
       "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler", "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit",
       "qodanaExcludedPlugins");
     return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");
-  }
-
-  public static boolean isDevServer() {
-    return Boolean.getBoolean("idea.use.dev.build.server");
   }
 
   public static @Nullable String getDevIdeaProjectDir() {
