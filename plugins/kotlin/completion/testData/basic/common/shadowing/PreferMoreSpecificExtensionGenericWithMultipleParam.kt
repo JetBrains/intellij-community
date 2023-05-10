@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun <T, S> List<T>.xxx(t: T){}
 fun <T, W> Iterable<T>.xxx(t: T){}
 

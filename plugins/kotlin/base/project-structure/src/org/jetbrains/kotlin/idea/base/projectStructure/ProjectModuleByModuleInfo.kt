@@ -69,6 +69,8 @@ open class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) 
 
     override val moduleName: String get() = ideaModule.name
 
+    override val stableModuleName: String? get() = moduleInfo.stableName?.asString()
+
     override val directRegularDependencies: List<KtModule>
         get() = moduleInfo.collectDependencies(ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED)
 

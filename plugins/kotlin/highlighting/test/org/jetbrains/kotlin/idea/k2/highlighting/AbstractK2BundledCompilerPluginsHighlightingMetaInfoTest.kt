@@ -66,6 +66,9 @@ abstract class AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest : Abstra
 
                 // annotations for serialization plugin
                 MavenDependencyUtil.addFromMaven(model, KOTLINX_SERIALIZATION_CORE_MAVEN_COORDINATES)
+
+                // annotations for parcelize plugin
+                MavenDependencyUtil.addFromMaven(model, PARCELIZE_RUNTIME_MAVEN_COORDINATES)
             }
         }
     }
@@ -74,3 +77,5 @@ abstract class AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest : Abstra
 private const val LOMBOK_MAVEN_COORDINATES = "org.projectlombok:lombok:1.18.26"
 
 private const val KOTLINX_SERIALIZATION_CORE_MAVEN_COORDINATES = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.0"
+
+private const val PARCELIZE_RUNTIME_MAVEN_COORDINATES = "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.8.20"

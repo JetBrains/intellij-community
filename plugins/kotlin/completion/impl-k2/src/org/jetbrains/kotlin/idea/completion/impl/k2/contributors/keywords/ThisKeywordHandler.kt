@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -64,7 +65,7 @@ internal class ThisKeywordHandler(
 
     private fun KtAnalysisSession.createThisLookupElement(receiver: KtImplicitReceiver, labelName: Name?): LookupElement {
         return createKeywordElement("this", labelName.labelNameToTail(), lookupObject = KeywordLookupObject())
-            .withTypeText(receiver.type.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
+            .withTypeText(receiver.type.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT))
     }
 
     private fun KtAnalysisSession.getThisLabelBySymbol(symbol: KtSymbol): Name? = when {

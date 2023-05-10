@@ -3,8 +3,9 @@
 package org.jetbrains.kotlin.idea.fir.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
@@ -14,6 +15,9 @@ import java.nio.file.Paths
 
 abstract class AbstractHighLevelQuickFixMultiFileTest : AbstractQuickFixMultiFileTest() {
     override fun isFirPlugin(): Boolean = true
+    override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    }
 
     override fun doTestWithExtraFile(beforeFileName: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(

@@ -18,11 +18,11 @@ internal object FirClassifierProvider {
         position: KtElement,
         scopeNameFilter: KtScopeNameFilter,
         visibilityChecker: CompletionVisibilityChecker
-    ): Sequence<KtSymbolWithContainingScopeKind<KtClassifierSymbol>> =
+    ): Sequence<KtClassifierSymbolWithContainingScopeKind> =
         originalKtFile.getScopeContextForPosition(position).scopes.asSequence().flatMap { scopeWithKind ->
             val classifiers = scopeWithKind.scope.getClassifierSymbols(scopeNameFilter)
                 .filter { visibilityChecker.isVisible(it) }
-                .map { KtSymbolWithContainingScopeKind(it, scopeWithKind.kind) }
+                .map { KtClassifierSymbolWithContainingScopeKind(it, scopeWithKind.kind) }
             classifiers
         }
 

@@ -12,7 +12,7 @@ import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.withSymbolInfo
+import org.jetbrains.kotlin.idea.completion.lookups.withClassifierSymbolInfo
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
@@ -33,7 +33,7 @@ internal class ClassLookupElementFactory {
         return LookupElementBuilder.create(ClassifierLookupObject(name, importingStrategy), name.asString())
             .withInsertHandler(ClassifierInsertionHandler)
             .withTailText(getTailText(symbol))
-            .let { withSymbolInfo(symbol, it) }
+            .let { withClassifierSymbolInfo(symbol, it) }
     }
 }
 

@@ -248,5 +248,6 @@
     <module name="kotlin.highlighting"/>
 
     <module name="kotlin.compiler-reference-index"/>
+    <module name="kotlin.compiler-plugins.assignment.common-k2"/>
   </content>
 </idea-plugin>

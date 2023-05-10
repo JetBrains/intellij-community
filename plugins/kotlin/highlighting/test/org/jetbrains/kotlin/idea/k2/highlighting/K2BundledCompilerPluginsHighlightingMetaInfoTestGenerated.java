@@ -33,6 +33,11 @@ public class K2BundledCompilerPluginsHighlightingMetaInfoTestGenerated extends A
         runTest("../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/lombok.kt");
     }
 
+    @TestMetadata("parcelize.kt")
+    public void testParcelize() throws Exception {
+        runTest("../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/parcelize.kt");
+    }
+
     @TestMetadata("samWithReceiver.kt")
     public void testSamWithReceiver() throws Exception {
         runTest("../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/samWithReceiver.kt");

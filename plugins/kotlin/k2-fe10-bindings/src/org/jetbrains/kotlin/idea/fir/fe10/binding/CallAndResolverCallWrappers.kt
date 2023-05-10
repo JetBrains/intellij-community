@@ -161,7 +161,7 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
                 return FunctionFe10WrapperResolvedCall(psiCall, constructorCall, diagnostic, context) as ResolvedCall<ConstructorDescriptor>
             }
             null -> return null
-            else -> context.implementationPlanned() // todo: Primary Constructor delegated call
+            else -> if (constructorPSI is KtPrimaryConstructor && !constructorPSI.hasBody()) return null else context.implementationPlanned() // todo: Primary Constructor delegated call
         }
     }
 

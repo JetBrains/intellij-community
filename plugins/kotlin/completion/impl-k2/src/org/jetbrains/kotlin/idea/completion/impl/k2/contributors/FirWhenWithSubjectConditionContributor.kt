@@ -91,7 +91,8 @@ internal class FirWhenWithSubjectConditionContributor(
     ) {
         val availableFromScope = mutableSetOf<KtClassifierSymbol>()
         getAvailableClassifiersCurrentScope(originalKtFile, whenCondition, scopeNameFilter, visibilityChecker)
-            .forEach { (classifier, _) ->
+            .forEach { classifierWithScopeKind ->
+                val classifier = classifierWithScopeKind.symbol
                 if (classifier !is KtNamedSymbol) return@forEach
                 availableFromScope += classifier
 

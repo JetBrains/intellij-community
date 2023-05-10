@@ -6,11 +6,10 @@ import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -18,6 +17,8 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.ImportableFqNameClassifier
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWeigher
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtExpression
@@ -87,22 +88,35 @@ internal object Weighers {
     fun applyWeighsToLookupElement(
         context: WeighingContext,
         lookupElement: LookupElement,
-        symbol: KtSymbol?,
-        scopeKind: KtScopeKind?,
+        symbolWithOrigin: KtSymbolWithOrigin?,
         substitutor: KtSubstitutor = KtSubstitutor.Empty(token)
     ) {
-        with(ExpectedTypeWeigher) { addWeight(context, lookupElement, symbol) }
+        with(ExpectedTypeWeigher) { addWeight(context, lookupElement, symbolWithOrigin?.symbol) }
 
-        if (symbol == null) return
+        if (symbolWithOrigin == null) return
+        val symbol = symbolWithOrigin.symbol
+
+        val availableWithoutImport = symbolWithOrigin.origin is CompletionSymbolOrigin.Scope
 
         with(DeprecatedWeigher) { addWeight(lookupElement, symbol) }
         with(PreferGetSetMethodsToPropertyWeigher) { addWeight(lookupElement, symbol) }
-        with(NotImportedWeigher) { addWeight(context, lookupElement, symbol, availableWithoutImport = scopeKind != null) }
+        with(NotImportedWeigher) { addWeight(context, lookupElement, symbol, availableWithoutImport) }
         with(KindWeigher) { addWeight(lookupElement, symbol) }
-        with(CallableWeigher) { addWeight(context, lookupElement, symbol, substitutor, scopeKind) }
-        with(ClassifierWeigher) { addWeight(lookupElement, symbol, scopeKind) }
+        with(ClassifierWeigher) { addWeight(lookupElement, symbol, symbolWithOrigin.origin) }
         with(VariableOrFunctionWeigher) { addWeight(lookupElement, symbol) }
         with(K2SoftDeprecationWeigher) { addWeight(lookupElement, symbol, context.languageVersionSettings) }
+    }
+
+    context(KtAnalysisSession)
+    fun applyWeighsToLookupElementForCallable(
+        context: WeighingContext,
+        lookupElement: LookupElement,
+        signature: KtCallableSignature<*>,
+        symbolOrigin: CompletionSymbolOrigin,
+    ) {
+        with(CallableWeigher) { addWeight(context, lookupElement, signature, symbolOrigin) }
+
+        applyWeighsToLookupElement(context, lookupElement, KtSymbolWithOrigin(signature.symbol, symbolOrigin))
     }
 
     fun addWeighersToCompletionSorter(sorter: CompletionSorter): CompletionSorter =

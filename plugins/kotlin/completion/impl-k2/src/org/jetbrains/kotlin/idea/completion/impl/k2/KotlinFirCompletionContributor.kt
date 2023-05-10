@@ -7,7 +7,6 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.low.level.api.fir.util.originalKtFile
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirPositionCompletionContextDetector
@@ -54,11 +53,11 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         val resultSet = createResultSet(parameters, result)
 
         val basicContext = FirBasicCompletionContext.createFromParameters(parameters, resultSet) ?: return
-        recordOriginalFile(basicContext)
 
         val positionContext = FirPositionCompletionContextDetector.detect(basicContext)
 
         FirPositionCompletionContextDetector.analyzeInContext(basicContext, positionContext) {
+            recordOriginalFile(basicContext)
             complete(basicContext, positionContext)
         }
     }
@@ -76,10 +75,10 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     }
 
 
-    private fun recordOriginalFile(basicCompletionContext: FirBasicCompletionContext) {
+    private fun KtAnalysisSession.recordOriginalFile(basicCompletionContext: FirBasicCompletionContext) {
         val originalFile = basicCompletionContext.originalKtFile
         val fakeFile = basicCompletionContext.fakeKtFile
-        fakeFile.originalKtFile = originalFile
+        fakeFile.recordOriginalKtFile(originalFile)
     }
 
     private fun createResultSet(parameters: KotlinFirCompletionParameters, result: CompletionResultSet): CompletionResultSet {

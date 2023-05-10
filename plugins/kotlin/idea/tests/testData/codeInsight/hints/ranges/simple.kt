@@ -1,3 +1,4 @@
+// LANGUAGE_VERSION: 1.9
 val range = 0<# ≤ #>..<# ≤ #>10
 val rangeUntil = 0<# ≤ #>..<10
 

@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.getStaticScope
@@ -23,7 +24,7 @@ internal open class FirClassifierCompletionContributor(
     protected open fun KtAnalysisSession.filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = true
 
     protected open fun KtAnalysisSession.getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
-        importStrategyDetector.detectImportStrategy(classifierSymbol)
+        importStrategyDetector.detectImportStrategyForClassifierSymbol(classifierSymbol)
 
     override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext, weighingContext: WeighingContext) {
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
@@ -44,12 +45,15 @@ internal open class FirClassifierCompletionContributor(
         context: WeighingContext
     ) {
         val reference = receiver.reference() ?: return
-        val scope = getStaticScope(reference) ?: return
-        scope
+        val scopeWithKind = getStaticScope(reference) ?: return
+        scopeWithKind.scope
             .getClassifierSymbols(scopeNameFilter)
             .filter { filterClassifiers(it) }
             .filter { visibilityChecker.isVisible(it) }
-            .forEach { addClassifierSymbolToCompletion(it, context, scopeKind = null, ImportStrategy.DoNothing) }
+            .forEach {
+                val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
+                addClassifierSymbolToCompletion(it, context, symbolOrigin, ImportStrategy.DoNothing)
+            }
     }
 
     private fun KtAnalysisSession.completeWithoutReceiver(
@@ -65,9 +69,11 @@ internal open class FirClassifierCompletionContributor(
             visibilityChecker
         )
             .filter { filterClassifiers(it.symbol) }
-            .forEach { (classifierSymbol, scopeKind) ->
+            .forEach { symbolWithScopeKind ->
+                val classifierSymbol = symbolWithScopeKind.symbol
+                val symbolOrigin = CompletionSymbolOrigin.Scope(symbolWithScopeKind.scopeKind)
                 availableFromScope += classifierSymbol
-                addClassifierSymbolToCompletion(classifierSymbol, context, scopeKind, getImportingStrategy(classifierSymbol))
+                addClassifierSymbolToCompletion(classifierSymbol, context, symbolOrigin, getImportingStrategy(classifierSymbol))
             }
 
         if (prefixMatcher.prefix.isNotEmpty()) {
@@ -78,7 +84,8 @@ internal open class FirClassifierCompletionContributor(
             )
                 .filter { it !in availableFromScope && filterClassifiers(it) }
                 .forEach { classifierSymbol ->
-                    addClassifierSymbolToCompletion(classifierSymbol, context, scopeKind = null, getImportingStrategy(classifierSymbol))
+                    val symbolOrigin = CompletionSymbolOrigin.Index
+                    addClassifierSymbolToCompletion(classifierSymbol, context, symbolOrigin, getImportingStrategy(classifierSymbol))
                 }
         }
     }
