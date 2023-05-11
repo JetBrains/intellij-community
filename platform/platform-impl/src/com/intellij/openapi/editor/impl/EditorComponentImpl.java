@@ -357,6 +357,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   // -----------------------------------------------------------------------------------------------
   private EditorSwingCaretUpdatesCourier myEditorSwingCaretUpdatesCourier = null;
 
+  @SuppressWarnings("UnusedReturnValue")
   @RequiresEdt
   private boolean setupEditorSwingCaretUpdatesCourierIfRequired() {
     if ((myEditorSwingCaretUpdatesCourier != null) || (myEditor == null) || (myEditor.isDisposed()) ) {
@@ -386,8 +387,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   /**
    * How it works:<br>
-   * 1. if {@link #beforeAllCaretsAction} gets called, then {@link #fireCaretUpdate} will be called ONLY at {@link #afterAllCaretsAction}
-   *    will have been called (if the primary caret position will have been changed)<br>
+   * 1. if {@link #beforeAllCaretsAction} / {@link #beforeDocumentChange(Document)} gets called, then {@link #fireCaretUpdate}
+   *    will be called ONLY after {@link #afterAllCaretsAction} / {@link #afterDocumentChange(Document)} will have been called respectively
+   *    (if the primary caret position will have been changed)<br>
    * 2. otherwise, if any of {@link #documentChanged}, {@link #caretPositionChanged}, {@link #caretAdded}, {@link #caretRemoved} gets called,
    *    {@link #fireCaretUpdate} will be called as well (again, if the primary caret position will have been changed)
    *
