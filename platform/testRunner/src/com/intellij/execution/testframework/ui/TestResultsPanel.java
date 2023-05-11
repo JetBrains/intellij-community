@@ -103,7 +103,9 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     outputTab.add(myToolbarComponent, BorderLayout.EAST);
     rightPanel.add(outputTab, BorderLayout.CENTER);
     mySplitter.setSecondComponent(rightPanel);
-    testTreeView.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
+    if (!ExperimentalUI.isNewUI()) {
+      testTreeView.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
+    }
     setLeftComponent(testTreeView);
   }
 

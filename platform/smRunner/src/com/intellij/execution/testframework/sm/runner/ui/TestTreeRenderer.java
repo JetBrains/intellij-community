@@ -8,8 +8,10 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -28,7 +30,11 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   private String myDurationText;
   private Color myDurationColor;
   private int myDurationWidth;
-  private int myDurationOffset;
+  /**
+   * An empty area before duration the text
+   */
+  private int myDurationLeftInset;
+
   private @Nullable Computable<String> myAccessibleStatus = null;
 
   public TestTreeRenderer(final TestConsoleProperties consoleProperties) {
@@ -46,7 +52,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     myDurationText = null;
     myDurationColor = null;
     myDurationWidth = 0;
-    myDurationOffset = 0;
+    myDurationLeftInset = 0;
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
     final Object userObj = node.getUserObject();
     if (userObj instanceof SMTRunnerNodeDescriptor desc) {
@@ -70,11 +76,11 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
         if (myDurationText != null) {
           FontMetrics metrics = getFontMetrics(RelativeFont.SMALL.derive(getFont()));
           myDurationWidth = metrics.stringWidth(myDurationText);
-          myDurationOffset = metrics.getHeight() / 2; // an empty area before and after the text
+          myDurationLeftInset = metrics.getHeight() / 4;
           myDurationColor = selected ? UIUtil.getTreeSelectionForeground(hasFocus) : SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor();
         }
       }
-      //Done
+
       return;
     }
 
@@ -88,7 +94,8 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   @Override
   public Dimension getPreferredSize() {
     final Dimension preferredSize = super.getPreferredSize();
-    if (myDurationWidth > 0) preferredSize.width += myDurationWidth + myDurationOffset;
+    preferredSize.width += getRightInset();
+    if (myDurationWidth > 0) preferredSize.width += myDurationWidth + myDurationLeftInset;
     return preferredSize;
   }
 
@@ -108,7 +115,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   protected void paintComponent(Graphics g) {
     UISettings.setupAntialiasing(g);
     Shape clip = null;
-    int width = getWidth();
+    int width = getWidth() - getRightInset();
     int height = getHeight();
     if (isOpaque()) {
       // paint background for expanded row
@@ -116,11 +123,11 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
       g.fillRect(0, 0, width, height);
     }
     if (myDurationWidth > 0) {
-      width -= myDurationWidth + myDurationOffset;
+      width -= myDurationWidth + myDurationLeftInset;
       if (width > 0 && height > 0) {
         g.setColor(myDurationColor);
         g.setFont(RelativeFont.SMALL.derive(getFont()));
-        g.drawString(myDurationText, width + myDurationOffset / 2, getTextBaseLine(g.getFontMetrics(), height));
+        g.drawString(myDurationText, width + myDurationLeftInset, getTextBaseLine(g.getFontMetrics(), height));
         clip = g.getClip();
         g.clipRect(0, 0, width, height);
       }
@@ -141,5 +148,9 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   @ApiStatus.Experimental
   public void setAccessibleStatus(@Nullable Computable<String> accessibleStatus) {
     myAccessibleStatus = accessibleStatus;
+  }
+
+  private static int getRightInset() {
+    return JBUI.scale(ExperimentalUI.isNewUI() ? 16 : 0);
   }
 }
