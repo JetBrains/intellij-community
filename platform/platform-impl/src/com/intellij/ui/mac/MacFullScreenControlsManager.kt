@@ -76,6 +76,12 @@ object MacFullScreenControlsManager {
     }
   }
 
+  fun configureForLightEdit() {
+    if (enabled()) {
+      System.setProperty("apple.awt.distraction.free.mode", "true")
+    }
+  }
+
   fun updateForDistractionFreeMode(enter: Boolean) {
     if (enabled()) {
       if (enter) {

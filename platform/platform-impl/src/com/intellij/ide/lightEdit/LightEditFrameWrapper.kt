@@ -17,6 +17,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.project.impl.applyBoundsOrDefault
 import com.intellij.openapi.project.impl.createNewProjectFrame
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
@@ -24,6 +25,7 @@ import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.adaptV2Widget
 import com.intellij.toolWindow.ToolWindowPane
+import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,6 +73,10 @@ internal class LightEditFrameWrapper(
         val frameHelper = projectFrameHelperFactory(frame)
         windowManager.lightFrameAssign(project, frameHelper)
         return frameHelper
+      }
+
+      if (SystemInfoRt.isMac) {
+        MacFullScreenControlsManager.configureForLightEdit()
       }
 
       val frame = projectFrameHelperFactory(null)
