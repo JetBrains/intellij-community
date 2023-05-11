@@ -6,6 +6,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logS
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.setupProjectFromBuilder
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -16,6 +17,7 @@ import com.intellij.openapi.externalSystem.service.ui.completion.whenItemChanged
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.util.bindEnumStorage
 import com.intellij.openapi.observable.util.not
@@ -349,8 +351,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   protected fun linkGradleProject(
     project: Project,
     configureBuildScript: GradleBuildScriptBuilder<*>.() -> Unit
-  ) {
+  ): Module? {
     val builder = InternalGradleModuleBuilder()
+
     builder.moduleJdk = sdk
     builder.name = parentStep.name
     builder.contentEntryPath = parentStep.path + "/" + parentStep.name
@@ -379,8 +382,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       it.configureBuildScript()
     }
 
-    val model = context.getUserData(NewProjectWizardStep.MODIFIABLE_MODULE_MODEL_KEY)
-    builder.commit(project, model)
+    return setupProjectFromBuilder(project, builder)
   }
 
   class GradleDataView(override val data: ProjectData) : DataView<ProjectData>() {
