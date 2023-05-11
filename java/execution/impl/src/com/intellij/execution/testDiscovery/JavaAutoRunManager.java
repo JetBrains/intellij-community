@@ -23,12 +23,12 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 @State(name = "JavaAutoRunManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class JvmAutoRunManager extends AbstractAutoTestManager implements Disposable {
-  public static @NotNull JvmAutoRunManager getInstance(Project project) {
-    return project.getService(JvmAutoRunManager.class);
+public class JavaAutoRunManager extends AbstractAutoTestManager implements Disposable {
+  public static @NotNull JavaAutoRunManager getInstance(Project project) {
+    return project.getService(JavaAutoRunManager.class);
   }
 
-  public JvmAutoRunManager(@NotNull Project project) {
+  public JavaAutoRunManager(@NotNull Project project) {
     super(project);
   }
 
@@ -50,7 +50,7 @@ public class JvmAutoRunManager extends AbstractAutoTestManager implements Dispos
         }
 
         myEventDisposable = Disposer.newDisposable();
-        Disposer.register(JvmAutoRunManager.this, myEventDisposable);
+        Disposer.register(JavaAutoRunManager.this, myEventDisposable);
         MessageBusConnection connection = project.getMessageBus().connect(myEventDisposable);
         connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
           private boolean myFoundFilesToMake = false;

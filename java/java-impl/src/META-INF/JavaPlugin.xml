@@ -641,7 +641,7 @@
     <applicationService serviceInterface="com.intellij.debugger.engine.DebuggerUtils"
                         serviceImplementation="com.intellij.debugger.impl.DebuggerUtilsImpl"/>
 
-    <projectService serviceImplementation="com.intellij.execution.testDiscovery.JvmAutoRunManager"/>
+    <projectService serviceImplementation="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
     <registryKey defaultValue="true" description="Trigger autotest on delay instead of build events" key="trigger.autotest.on.delay" />
 
     <applicationService serviceInterface="com.intellij.framework.library.DownloadableLibraryService"

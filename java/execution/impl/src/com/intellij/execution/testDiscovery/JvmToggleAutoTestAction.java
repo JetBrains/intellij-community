@@ -9,7 +9,7 @@ import com.intellij.openapi.util.registry.Registry;
 public class JvmToggleAutoTestAction extends ToggleAutoTestAction {
   @Override
   public AbstractAutoTestManager getAutoTestManager(Project project) {
-    return JvmAutoRunManager.getInstance(project);
+    return JavaAutoRunManager.getInstance(project);
   }
 
   @Override
