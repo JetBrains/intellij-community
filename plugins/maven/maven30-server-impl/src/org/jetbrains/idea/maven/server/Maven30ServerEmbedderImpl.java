@@ -434,11 +434,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
-  @NotNull
   @Override
-  public MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
-                                                                           boolean alwaysUpdateSnapshots,
-                                                                           MavenToken token) throws RemoteException {
+  public void customize(@Nullable MavenWorkspaceMap workspaceMap, boolean alwaysUpdateSnapshots, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
       customizeComponents(token);
@@ -453,7 +450,17 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       myWorkspaceMap = workspaceMap;
 
       myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
 
+  @NotNull
+  @Override
+  public MavenServerPullProgressIndicator getProgressIndicator(MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    try {
       myCurrentIndicator = new MavenServerProgressIndicatorWrapper();
       myConsoleWrapper.setWrappee(myCurrentIndicator);
 

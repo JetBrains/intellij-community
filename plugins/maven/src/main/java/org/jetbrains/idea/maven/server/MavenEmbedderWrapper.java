@@ -68,10 +68,12 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   private synchronized void doCustomize() throws RemoteException {
-    MavenServerPullProgressIndicator pullProgressIndicator =
-      getOrCreateWrappee().customizeAndGetProgressIndicator(myCustomization.workspaceMap,
-                                                            myCustomization.alwaysUpdateSnapshot,
-                                                            ourToken);
+    MavenServerEmbedder embedder = getOrCreateWrappee();
+    embedder.customize(myCustomization.workspaceMap,
+                       myCustomization.alwaysUpdateSnapshot,
+                       ourToken);
+
+    MavenServerPullProgressIndicator pullProgressIndicator = embedder.getProgressIndicator(ourToken);
     if (pullProgressIndicator == null) return;
     startPullingProgress(pullProgressIndicator, myCustomization.console, myCustomization.indicator);
   }

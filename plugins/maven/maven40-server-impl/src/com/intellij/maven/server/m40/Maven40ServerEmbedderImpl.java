@@ -1088,10 +1088,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
 
-  @NotNull
   @Override
-  public MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
-                                                                           boolean alwaysUpdateSnapshots, MavenToken token) {
+  public void customize(@Nullable MavenWorkspaceMap workspaceMap, boolean alwaysUpdateSnapshots, MavenToken token) {
     MavenServerUtil.checkToken(token);
 
     try {
@@ -1100,6 +1098,18 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
       myWorkspaceMap = workspaceMap;
       myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  @NotNull
+  @Override
+  public MavenServerPullProgressIndicator getProgressIndicator(MavenToken token) {
+    MavenServerUtil.checkToken(token);
+
+    try {
       myCurrentIndicator = new MavenServerProgressIndicatorWrapper();
 
       myConsoleWrapper.setWrappee(myCurrentIndicator);

@@ -12,9 +12,12 @@ import org.jetbrains.idea.maven.server.security.MavenToken
 import java.io.File
 
 abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
-  override fun customizeAndGetProgressIndicator(workspaceMap: MavenWorkspaceMap?,
-                                                alwaysUpdateSnapshots: Boolean,
-                                                token: MavenToken?): MavenServerPullProgressIndicator {
+  override fun customize(workspaceMap: MavenWorkspaceMap?,
+                         alwaysUpdateSnapshots: Boolean,
+                         token: MavenToken?): Unit {
+  }
+
+  override fun getProgressIndicator(token: MavenToken?): MavenServerPullProgressIndicator {
     return object : MavenServerPullProgressIndicator {
       override fun pullDownloadEvents(): MutableList<MavenArtifactDownloadServerProgressEvent>? {
         return null
