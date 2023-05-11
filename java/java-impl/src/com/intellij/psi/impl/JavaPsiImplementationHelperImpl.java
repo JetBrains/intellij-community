@@ -11,7 +11,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.model.Pointer;
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
-import com.intellij.navigation.NavigatableSymbol;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -31,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
-import com.intellij.platform.backend.documentation.DocumentationSymbol;
 import com.intellij.platform.backend.documentation.DocumentationTarget;
 import com.intellij.platform.backend.navigation.NavigationRequest;
 import com.intellij.platform.backend.navigation.NavigationRequests;
@@ -386,66 +384,41 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     };
   }
 
-  public static final class SnippetRegionSymbol implements NavigatableSymbol, DocumentationSymbol {
+  public static final class SnippetRegionSymbol implements Symbol, DocumentationTarget, NavigationTarget {
+
+    private final @NotNull PsiFile myFile;
     private final @NotNull TextRange myRangeInFile;
-    private final @NlsSafe @NotNull String myText;
-    private final @NotNull VirtualFile myVirtualFile;
 
     private SnippetRegionSymbol(@NotNull PsiFile file, @NotNull TextRange rangeInFile) {
-      myText = rangeInFile.substring(file.getText());
+      myFile = file;
       myRangeInFile = rangeInFile;
-      myVirtualFile = file.getVirtualFile();
     }
 
     @Override
-    public @NotNull Pointer<? extends DocumentationSymbol> createPointer() {
-      return Pointer.hardPointer(this);
+    public @NotNull Pointer<SnippetRegionSymbol> createPointer() {
+      return Pointer.fileRangePointer(myFile, myRangeInFile, SnippetRegionSymbol::new);
+    }
+
+    private @NlsSafe @NotNull String getText() {
+      return myRangeInFile.substring(myFile.getText());
     }
 
     @Override
-    public @NotNull DocumentationTarget getDocumentationTarget() {
-      return new DocumentationTarget() {
-        @NotNull
-        @Override
-        public Pointer<? extends DocumentationTarget> createPointer() {
-          return Pointer.hardPointer(this);
-        }
-
-        @Override
-        public @NlsContexts.HintText @NotNull String computeDocumentationHint() {
-          return myText;
-        }
-
-        @NotNull
-        @Override
-        public TargetPresentation computePresentation() {
-          return TargetPresentation.builder(myText)
-            .locationText(myVirtualFile.getName(), myVirtualFile.getFileType().getIcon())
-            .presentation();
-        }
-      };
+    public @NotNull TargetPresentation computePresentation() {
+      VirtualFile virtualFile = myFile.getVirtualFile();
+      return TargetPresentation.builder(getText())
+        .locationText(virtualFile.getName(), virtualFile.getFileType().getIcon())
+        .presentation();
     }
 
     @Override
-    public @NotNull Collection<? extends NavigationTarget> getNavigationTargets(@NotNull Project project) {
-      return List.of(
-        new NavigationTarget() {
-          @Override
-          public @NotNull Pointer<? extends NavigationTarget> createPointer() {
-            return Pointer.hardPointer(this);
-          }
+    public @NotNull @NlsContexts.HintText String computeDocumentationHint() {
+      return getText();
+    }
 
-          @Override
-          public @NotNull TargetPresentation computePresentation() {
-            return getDocumentationTarget().computePresentation();
-          }
-
-          @Override
-          public @Nullable NavigationRequest navigationRequest() {
-            return NavigationRequests.getInstance().sourceNavigationRequest(myVirtualFile, myRangeInFile.getStartOffset());
-          }
-        }
-      );
+    @Override
+    public @Nullable NavigationRequest navigationRequest() {
+      return NavigationRequests.getInstance().sourceNavigationRequest(myFile.getVirtualFile(), myRangeInFile.getStartOffset());
     }
   }
 }
