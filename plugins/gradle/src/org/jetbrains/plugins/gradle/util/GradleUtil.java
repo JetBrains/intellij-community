@@ -33,7 +33,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
-import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
 import org.jetbrains.plugins.gradle.model.data.GradleProjectBuildScriptData;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -341,7 +340,7 @@ public final class GradleUtil {
 
   @Nullable
   public static VirtualFile getGradleBuildScriptSource(@NotNull Module module) {
-    DataNode<? extends ModuleData> moduleData = CachedModuleDataFinder.getInstance(module.getProject()).findModuleData(module);
+    DataNode<? extends ModuleData> moduleData = findGradleModuleData(module);
     if (moduleData == null) return null;
     DataNode<GradleProjectBuildScriptData> dataNode = ExternalSystemApiUtil.find(moduleData, GradleProjectBuildScriptData.KEY);
     if (dataNode == null) return null;
