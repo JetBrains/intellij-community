@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
@@ -53,11 +54,13 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
    * @param action action previously wrapped with {@link #wrap(ProblemDescriptor, int)}
    * @return a {@link LocalQuickFix} wrapped inside that action; null if the action was not created via {@link QuickFixWrapper}
    */
-  public static @Nullable LocalQuickFix unwrap(@NotNull IntentionAction action) {
+  public static @Nullable LocalQuickFix unwrap(@NotNull CommonIntentionAction action) {
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.myFix;
     }
-    if (ModCommandAction.unwrap(action) instanceof ModCommandQuickFixAction qfAction) {
+    ModCommandAction modCommand = action instanceof ModCommandAction mc ? mc:
+                                  ModCommandAction.unwrap((IntentionAction)action);                              
+    if (modCommand instanceof ModCommandQuickFixAction qfAction) {
       return qfAction.myFix;
     }
     return null;

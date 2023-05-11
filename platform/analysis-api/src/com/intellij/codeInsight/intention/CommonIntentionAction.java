@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.modcommand.ModCommandAction
  */
 @ApiStatus.NonExtendable
-public interface BaseIntentionAction {
+public interface CommonIntentionAction {
   /**
    * Returns the name of the family of intentions.
    * It is used to externalize the "auto-show" state of intentions.

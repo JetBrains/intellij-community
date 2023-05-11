@@ -109,7 +109,7 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   @Override
   public @NotNull IntentionAction getDelegate() {
     if (instance == null) {
-      BaseIntentionAction base = extension.getInstance();
+      CommonIntentionAction base = extension.getInstance();
       instance = base instanceof IntentionAction action ? action :
                  ((ModCommandAction)base).asIntention();
     }

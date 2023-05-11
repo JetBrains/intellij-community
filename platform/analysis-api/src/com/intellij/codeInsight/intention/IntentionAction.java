@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * Can be {@link com.intellij.openapi.project.DumbAware}.
  */
-public interface IntentionAction extends FileModifier, BaseIntentionAction {
+public interface IntentionAction extends FileModifier, CommonIntentionAction {
 
   IntentionAction[] EMPTY_ARRAY = new IntentionAction[0];
 

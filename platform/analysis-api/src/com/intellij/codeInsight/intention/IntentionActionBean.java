@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ResourceBundle;
 
-public final class IntentionActionBean extends CustomLoadingExtensionPointBean<BaseIntentionAction> {
+public final class IntentionActionBean extends CustomLoadingExtensionPointBean<CommonIntentionAction> {
   @Tag
   @RequiredElement
   public String className;

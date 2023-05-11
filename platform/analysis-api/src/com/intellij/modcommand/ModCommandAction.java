@@ -2,7 +2,7 @@
 package com.intellij.modcommand;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.codeInsight.intention.BaseIntentionAction;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -20,12 +20,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 /**
  * Intention action replacement that operates on {@link ModCommand}.
  */
-public interface ModCommandAction extends BaseIntentionAction {
+public interface ModCommandAction extends CommonIntentionAction {
   /**
    * @param context context in which the action is executed
    * @return presentation if the action is available in the given context, and perform could be safely called;
