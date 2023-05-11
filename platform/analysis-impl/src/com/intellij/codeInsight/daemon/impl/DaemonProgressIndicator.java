@@ -31,7 +31,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   private static boolean debug;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug);
   private volatile Throwable myCancellationCause;
-  private Span mySpan;
+  private volatile Span mySpan;
   private final IJTracer myTraceManager = TelemetryTracer.Companion.getInstance().getTracer(new Scope("daemon", null));
 
   @Override
