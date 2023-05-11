@@ -99,6 +99,8 @@
 
     <starter.moduleImporter implementation="org.jetbrains.plugins.gradle.starters.GradleStarterModuleImporter"/>
 
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector$GradleVersionValidationRule"/>
     <dependencyCollector kind="java" implementation="org.jetbrains.plugins.gradle.service.project.GradleDependencyCollector"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.service.project.GradleDependencyUpdater"/>
     <newProjectWizard.java.buildSystem implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizard"/>

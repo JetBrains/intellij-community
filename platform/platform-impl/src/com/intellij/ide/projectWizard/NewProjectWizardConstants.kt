@@ -15,7 +15,6 @@ object NewProjectWizardConstants {
     const val SCALA = "Scala"
 
     val ALL = listOf(JAVA, KOTLIN, GROOVY, JAVASCRIPT, HTML, PYTHON, PHP, RUBY, GO, SCALA)
-    val ALL_DSL = listOf(KOTLIN, GROOVY)
   }
 
   object BuildSystem {

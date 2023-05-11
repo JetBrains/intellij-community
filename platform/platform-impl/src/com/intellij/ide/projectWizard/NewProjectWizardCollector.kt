@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
-import com.intellij.ide.projectWizard.NewProjectWizardConstants.NULL
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.OTHER
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -20,16 +19,18 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.lang.JavaVersion
+import org.jetbrains.annotations.ApiStatus
 import java.lang.Integer.min
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged as logAddSampleCodeChangedImpl
 
+@ApiStatus.Internal
 class NewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
   companion object {
 
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 18)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 19)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = EventFields.Int("screen")
@@ -43,7 +44,6 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val addSampleCodeField = EventFields.Boolean("add_sample_code")
     private val addSampleOnboardingTipsField = EventFields.Boolean("add_sample_onboarding_tips")
     private val buildSystemField = EventFields.String("build_system", NewProjectWizardConstants.BuildSystem.ALL)
-    private val buildSystemDslField = EventFields.String("build_system_dsl", NewProjectWizardConstants.Language.ALL_DSL)
     private val buildSystemSdkField = EventFields.Int("build_system_sdk_version")
     private val buildSystemParentField = EventFields.Boolean("build_system_parent")
     private val groovyVersionField = EventFields.Version
@@ -52,7 +52,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
     private val baseFields = arrayOf(sessionIdField, screenNumField)
     private val languageFields = arrayOf(*baseFields, languageField)
-    private val buildSystemFields = arrayOf(*languageFields, buildSystemField)
+    val buildSystemFields = arrayOf(*languageFields, buildSystemField)
 
     // @formatter:off
     private val open = GROUP.registerVarargEvent("wizard.dialog.open", *baseFields)
@@ -91,8 +91,6 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val groupIdChangedEvent = GROUP.registerVarargEvent("build.system.group.id.changed", *buildSystemFields)
     private val artifactIdChangedEvent = GROUP.registerVarargEvent("build.system.artifact.id.changed", *buildSystemFields)
     private val versionChangedEvent = GROUP.registerVarargEvent("build.system.version.changed", *buildSystemFields)
-
-    private val dslChangedEvent = GROUP.registerVarargEvent("build.system.dsl.changed", *buildSystemFields, buildSystemDslField)
 
     private val groovyLibraryChanged = GROUP.registerVarargEvent("groovy.lib.changed", *baseFields, groovySourceTypeField, groovyVersionField)
     private val groovyLibraryFinished = GROUP.registerVarargEvent("groovy.lib.finished", *baseFields, groovySourceTypeField, groovyVersionField)
@@ -147,7 +145,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private fun VarargEventId.logLanguageEvent(step: NewProjectWizardStep, vararg arguments: EventPair<*>) =
       logBaseEvent(step.context, languageField with step.language, *arguments)
 
-    private fun VarargEventId.logBuildSystemEvent(step: NewProjectWizardStep, vararg arguments: EventPair<*>) =
+    fun VarargEventId.logBuildSystemEvent(step: NewProjectWizardStep, vararg arguments: EventPair<*>) =
       logLanguageEvent(step, buildSystemField with step.buildSystem, *arguments)
 
     private val Sdk?.featureVersion: Int
@@ -254,15 +252,6 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
     fun NewProjectWizardStep.logVersionChanged() =
       versionChangedEvent.logBuildSystemEvent(this)
-  }
-
-  object Gradle {
-
-    fun NewProjectWizardStep.logDslChanged(isUseKotlinDsl: Boolean) =
-      dslChangedEvent.logBuildSystemEvent(
-        this,
-        buildSystemDslField with if (isUseKotlinDsl) NewProjectWizardConstants.Language.KOTLIN else NewProjectWizardConstants.Language.GROOVY
-      )
   }
 
   object Groovy {
