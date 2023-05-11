@@ -4,14 +4,20 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
+import com.intellij.collaboration.util.resolveRelative
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCiJobDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabPipelineDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCiJobStatus
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import java.net.URI
 
-class GitLabMergeRequestStatusViewModel(mergeRequest: GitLabMergeRequest) : CodeReviewStatusViewModel {
+class GitLabMergeRequestStatusViewModel(
+  mergeRequest: GitLabMergeRequest,
+  private val serverPath: GitLabServerPath
+) : CodeReviewStatusViewModel {
   private val pipeline: Flow<GitLabPipelineDTO?> = mergeRequest.pipeline
 
   override val hasConflicts: Flow<Boolean> = mergeRequest.hasConflicts
@@ -21,7 +27,8 @@ class GitLabMergeRequestStatusViewModel(mergeRequest: GitLabMergeRequest) : Code
   }
 
   private fun GitLabCiJobDTO.convert(): CodeReviewCIJob {
-    return CodeReviewCIJob(name, status.toCiState(), webPath)
+    val jobUrl: URI = serverPath.toURI().resolveRelative(webPath)
+    return CodeReviewCIJob(name, status.toCiState(), jobUrl.toString())
   }
 
   private fun GitLabCiJobStatus.toCiState(): CodeReviewCIJobState = when (this) {
