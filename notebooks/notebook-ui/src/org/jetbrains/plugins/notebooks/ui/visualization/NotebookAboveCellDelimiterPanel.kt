@@ -13,12 +13,14 @@ import javax.swing.JPanel
 
 class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout()) {
   val actions = ArrayList<AnAction>()
+  var isCodeCell = false
 
-  fun initialize(actions: Array<AnAction>) {
+  fun initialize(actions: Array<AnAction>, isCodeCell: Boolean) {
     this.actions.addAll(actions)
+    this.isCodeCell = isCodeCell
 
-    val cellRoofColor = editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme)
     val backgroundColor = editor.colorsScheme.defaultBackground
+    val cellRoofColor = if (isCodeCell) editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme) else backgroundColor
     val leftPanel = createCellDelimiterPanel(backgroundColor, cellRoofColor)
     val rightPanel = createCellDelimiterPanel(backgroundColor, cellRoofColor)
 
