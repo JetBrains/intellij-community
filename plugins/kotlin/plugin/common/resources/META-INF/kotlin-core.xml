@@ -57,6 +57,10 @@
             qualifiedName="org.jetbrains.kotlin.ktModuleFactory"
             interface="org.jetbrains.kotlin.idea.base.projectStructure.KtModuleFactory"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.classImportFilter"
+            interface="org.jetbrains.kotlin.idea.util.ClassImportFilter"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

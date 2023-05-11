@@ -52,15 +52,26 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
     }
 
     override fun mayImportOnShortenReferences(descriptor: DeclarationDescriptor, contextFile: KtFile): Boolean {
-        return when (descriptor.getImportableDescriptor()) {
+        return when (val importableDescriptor = descriptor.getImportableDescriptor()) {
             is PackageViewDescriptor -> false // now package cannot be imported
 
-            is ClassDescriptor -> {
-                descriptor.getImportableDescriptor().containingDeclaration is PackageFragmentDescriptor || getCodeStyleSettings(contextFile).IMPORT_NESTED_CLASSES
-            }
+            is ClassDescriptor -> allowClassImport(importableDescriptor, contextFile)
 
             else -> descriptor.getImportableDescriptor().containingDeclaration is PackageFragmentDescriptor // do not import members (e.g. java static members)
         }
+    }
+
+    private fun allowClassImport(classDescriptor: ClassDescriptor, contextFile: KtFile): Boolean {
+        val nested = classDescriptor.containingDeclaration !is PackageFragmentDescriptor
+        // If nested classes are blanket-prohibited from being imported, don't import any.
+        if (nested && !getCodeStyleSettings(contextFile).IMPORT_NESTED_CLASSES) return false
+        val classInfo = ClassImportFilter.ClassInfo(
+            classDescriptor.fqNameSafe,
+            classDescriptor.kind,
+            classDescriptor.modality,
+            classDescriptor.visibility.delegate,
+            nested)
+        return ClassImportFilter.allowClassImport(classInfo, contextFile)
     }
 
     override fun importDescriptor(
