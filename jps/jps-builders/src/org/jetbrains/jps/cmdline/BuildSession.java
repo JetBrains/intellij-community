@@ -491,6 +491,9 @@ final class BuildSession implements Runnable, CanceledStatus {
             FSOperations.traverseRecursively(buildRootIndex, descriptor, file, (f, attrs) -> {
               StampsStorage.Stamp stamp = stampsStorage.getPreviousStamp(f, descriptor.getTarget());
               if (attrs != null? stampsStorage.isDirtyStamp(stamp, f, attrs) : stampsStorage.isDirtyStamp(stamp, f)) {
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("Applying dirty path from fs event: " + f.getPath());
+                }
                 pd.fsState.markDirty(null, f, descriptor, stampsStorage, saveEventStamp);
               }
               else {
