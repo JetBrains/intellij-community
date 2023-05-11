@@ -42,7 +42,7 @@ class NotAvailableVfsSnapshot(point: OperationLogStorage.Iterator) : VfsSnapshot
 class CacheAwareVfsSnapshot(
   point: OperationLogStorage.Iterator,
   private val id2name: (Int) -> String?,
-  private val payloadReader: (PayloadRef) -> ByteArray?,
+  private val payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>,
   private val getPrecedingCachedSnapshot: (point: OperationLogStorage.Iterator) -> VfsSnapshot?,
   private val oracle: VfsStateOracle? = null
 ) : VfsSnapshot {

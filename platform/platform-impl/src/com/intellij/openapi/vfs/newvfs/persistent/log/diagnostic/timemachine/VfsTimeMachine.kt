@@ -3,13 +3,14 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine
 
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import java.lang.ref.SoftReference
 
 class VfsTimeMachine(
   zeroIterator: OperationLogStorage.Iterator,
   private val oracle: VfsStateOracle? = null,
   private val id2name: (Int) -> String?,
-  private val payloadReader: (PayloadRef) -> ByteArray?
+  private val payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>
 ) {
   private val cache = sortedMapOf<Long, SoftReference<VfsSnapshot>>()
   private val zeroLayer = NotAvailableVfsSnapshot(zeroIterator) // hard-reference so it won't be GCed from cache

@@ -12,6 +12,8 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.VfsRecoveryException
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
 
 object VfsChronicle {
 
@@ -141,26 +143,21 @@ object VfsChronicle {
       })
 
   sealed interface ContentOperation {
-    class SetValue(val data: ByteArray) : ContentOperation
-    class Modify(val modify: (ByteArray) -> ByteArray) : ContentOperation
-
-    /**
-     * Some operation is there, but recovery is not possible
-     */
-    class NotAvailable(val cause: NotEnoughInformationCause) : ContentOperation
+    fun interface Set : ContentOperation {
+      fun readContent(payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray>
+    }
+    fun interface Modify : ContentOperation {
+      fun modifyContent(previousContent: ByteArray,
+                        payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray>
+    }
   }
 
   fun lookupContentOperation(iterator: OperationLogStorage.Iterator,
                              contentRecordId: Int,
-                             payloadReader: (PayloadRef) -> ByteArray?,
                              direction: TraverseDirection = TraverseDirection.REWIND,
                              condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<ContentOperation> {
     val rewriteContentCase: (Int, PayloadRef) -> ContentOperation? = { recordId: Int, dataPayloadRef: PayloadRef ->
-      if (recordId == contentRecordId) {
-        val data = payloadReader(dataPayloadRef)
-        if (data == null) ContentOperation.NotAvailable(NotEnoughInformationCause("data can't be read"))
-        else ContentOperation.SetValue(data)
-      }
+      if (recordId == contentRecordId) ContentOperation.Set { payloadReader -> payloadReader(dataPayloadRef) }
       else null
     }
     return traverseOperationsLogForLookup(
@@ -170,18 +167,17 @@ object VfsChronicle {
                            CONTENT_REPLACE_BYTES, CONTENT_APPEND_STREAM),
       onValid = { operation, detect ->
         when (operation) {
-          is ContentsOperation.AcquireNewRecord -> {
-            if (operation.result.hasValue && operation.result.value == contentRecordId) detect(ContentOperation.SetValue(ByteArray(0)))
-          }
+          is ContentsOperation.AcquireNewRecord ->
+            if (operation.result.hasValue && operation.result.value == contentRecordId) {
+              detect(ContentOperation.Set { ByteArray(0).let(State::ready) })
+            }
           is ContentsOperation.WriteBytes -> rewriteContentCase(operation.recordId, operation.dataPayloadRef)?.let(detect)
           is ContentsOperation.WriteStream -> rewriteContentCase(operation.recordId, operation.dataPayloadRef)?.let(detect)
           is ContentsOperation.WriteStream2 -> rewriteContentCase(operation.recordId, operation.dataPayloadRef)?.let(detect)
           is ContentsOperation.ReplaceBytes -> {
             if (operation.recordId == contentRecordId) {
-              val data = payloadReader(operation.dataPayloadRef)
-              if (data == null) detect(ContentOperation.NotAvailable(NotEnoughInformationCause("data can't be read")))
-              else {
-                detect(ContentOperation.Modify { before ->
+              detect(ContentOperation.Modify { before, payloadReader ->
+                payloadReader(operation.dataPayloadRef).fmap { data ->
                   if (operation.offset < 0 || operation.offset + data.size > before.size) { // from AbstractStorage.replaceBytes
                     throw VfsRecoveryException("replaceBytes: replace is out of bounds: " +
                                                "offset=${operation.offset} data.size=${data.size} before.size=${before.size}")
@@ -191,15 +187,15 @@ object VfsChronicle {
                     data +
                     before.copyOfRange(operation.offset + data.size, before.size)
                   }
-                })
-              }
+                }
+              })
             }
           }
           is ContentsOperation.AppendStream -> {
             if (operation.recordId == contentRecordId) {
-              val data = payloadReader(operation.dataPayloadRef)
-              if (data == null) detect(ContentOperation.NotAvailable(NotEnoughInformationCause("data can't be read")))
-              else detect(ContentOperation.Modify { before -> before + data })
+              detect(ContentOperation.Modify { before, payloadReader ->
+                payloadReader(operation.dataPayloadRef).fmap { before + it }
+              })
             }
           }
           else -> throw IllegalStateException("filtered read is broken")
@@ -209,22 +205,20 @@ object VfsChronicle {
 
   fun restoreContent(iterator: OperationLogStorage.Iterator,
                      contentRecordId: Int,
-                     payloadReader: (PayloadRef) -> ByteArray?,
+                     payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>,
                      condition: (OperationLogStorage.Iterator) -> Boolean = { true }): State.DefinedState<ByteArray> {
     if (contentRecordId == 0) return State.NotAvailable(NotEnoughInformationCause("VFS didn't cache file's content"))
-    // TODO: payloadReader should provide diagnostic message on data n/a
     val restoreStack = mutableListOf<ContentOperation.Modify>()
     while (iterator.hasPrevious() && condition(iterator)) {
       val lookup =
-        lookupContentOperation(iterator, contentRecordId, payloadReader, TraverseDirection.REWIND, condition)
+        lookupContentOperation(iterator, contentRecordId, TraverseDirection.REWIND, condition)
       if (!lookup.found) return State.notAvailable() // didn't find any relevant content op
       when (val op = lookup.value) {
         is ContentOperation.Modify -> restoreStack.add(op)
-        is ContentOperation.NotAvailable -> return State.notAvailable(op.cause)
-        is ContentOperation.SetValue -> {
-          return restoreStack.foldRight(op.data) { modOp, data ->
-            modOp.modify(data)
-          }.let(State::ready)
+        is ContentOperation.Set -> {
+          return restoreStack.foldRight(op.readContent(payloadReader)) { modOp, data ->
+            data.bind { modOp.modifyContent(it, payloadReader) }
+          }
         }
       }
     }

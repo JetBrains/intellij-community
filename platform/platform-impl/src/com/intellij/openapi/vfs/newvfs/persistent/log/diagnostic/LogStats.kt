@@ -4,16 +4,14 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic
 
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl
-import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils
+import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.ReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEachContainedOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.FSRecordsOracle
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsTimeMachine
 import com.intellij.util.ExceptionUtil
@@ -170,17 +168,25 @@ private fun single(log: VfsLog) {
 private typealias Diff = Pair<List<String>, List<String>>
 
 @OptIn(ExperimentalTime::class)
-private fun vFileEventIterCheck(log: VfsLog,
-                                id2name: (Int) -> String?,
-                                fsRecordsOracle: FSRecordsOracle? = null) {
+private fun vfsRecoveryDraft(log: VfsLog,
+                             id2name: (Int) -> String?,
+                             fsRecords: FSRecordsImpl) {
   var singleOp = 0
   var vfileEvents = 0
   var vfileEventContentOps = 0
 
+  // TODO: this log.query {} thing doesn't look cool
+  val payloadReadAt = log.query { payloadStorage::readAt }
+  val payloadReader: (PayloadRef) -> State.DefinedState<ByteArray> = {
+    val data = payloadReadAt(it)
+    if (data == null) State.notAvailable(NotEnoughInformationCause("data is not available anymore"))
+    else State.Ready(data)
+  }
+  val fsRecordsOracle = FSRecordsOracle(fsRecords, log, payloadReader)
   val vfsTimeMachine = VfsTimeMachine(log.query { operationLogStorage.begin() },
                                       id2name = id2name,
-                                      payloadReader = log.query { payloadStorage::readAt },
-                                      oracle = fsRecordsOracle?.let { it::getSnapshot })
+                                      payloadReader = payloadReader,
+                                      oracle = fsRecordsOracle::getSnapshot)
 
   fun VfsSnapshot.VirtualFileSnapshot.represent(): String =
     "file: name=$name parent=$parentId id=$fileId ts=$timestamp len=$length flags=$flags contentId=$contentRecordId attrId=$attributesRecordId"
@@ -199,8 +205,9 @@ private fun vFileEventIterCheck(log: VfsLog,
     return linesBefore to linesAfter
   }
 
-  fun Diff.represent() = if (first.isEmpty() && second.isEmpty()) "No diff" else
-    "Diff:\n" + first.joinToString("\n") { "- $it" } + "\n" + second.joinToString("\n") { "+ $it" }
+  fun Diff.represent() =
+    if (first.isEmpty() && second.isEmpty()) "No diff"
+    else "Diff:\n" + first.joinToString("\n", postfix = "\n") { "- $it" } + second.joinToString("\n") { "+ $it" }
 
   val time = measureTime {
     log.query {
@@ -287,9 +294,8 @@ fun main(args: Array<String>) {
                                         FSRecordsImpl.ErrorHandler { records, error -> ExceptionUtil.rethrow(error) })
   //val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)::valueOf
   val names = { id: Int -> fsRecords.getNameByNameId(id)?.toString() }
-  val oracle = FSRecordsOracle(fsRecords, log)
 
-  vFileEventIterCheck(log, names, oracle)
+  vfsRecoveryDraft(log, names, fsRecords)
 
   fsRecords.dispose()
 }

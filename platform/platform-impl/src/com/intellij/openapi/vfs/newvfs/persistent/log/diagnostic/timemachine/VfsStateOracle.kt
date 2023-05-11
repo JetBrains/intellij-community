@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
+import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.FSRecordsOracle.LogDistanceEvaluator
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsChronicle.LookupResult.Companion.toState
@@ -23,6 +24,7 @@ typealias VfsStateOracle = (OperationLogStorage.Iterator) -> VfsSnapshot?
 class FSRecordsOracle(
   private val fsRecords: FSRecordsImpl,
   private val vfsLog: VfsLog,
+  private val payloadReader: (PayloadRef) -> DefinedState<ByteArray>,
   private val distanceEvaluator: LogDistanceEvaluator = LogDistanceEvaluator { iterator ->
     vfsLog.query { operationLogStorage.end().getPosition() - iterator.getPosition() } < 8_000_000 // 8mb, TODO can be smarter, like 20% or smth
   }
@@ -95,8 +97,7 @@ class FSRecordsOracle(
       )
 
       override fun getContent(): DefinedState<ByteArray> = contentRecordId.bind {
-        val payloadReader = vfsLog.query { payloadStorage::readAt }
-        val lookup = VfsChronicle.lookupContentOperation(point(), it, payloadReader, TraverseDirection.PLAY)
+        val lookup = VfsChronicle.lookupContentOperation(point(), it, TraverseDirection.PLAY)
         if (lookup.found) {
           // some operation took place in between (point(), end()) so FSRecords may not contain value as at point()
           return@bind VfsChronicle.restoreContent(point(), it, payloadReader)
