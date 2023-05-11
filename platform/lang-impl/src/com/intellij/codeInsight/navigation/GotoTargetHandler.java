@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.model.Pointer;
@@ -203,7 +204,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       nav = (Navigatable)element.getItem();
     }
     else {
-      nav = ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.navigation"),
+      nav = ActionUtil.underModalProgress(project, IdeBundle.message("progress.title.preparing.navigation"),
                                           () -> {
                                             PsiElement psiElement = ((SmartPsiElementPointer<?>)element.getItem()).getElement();
                                             return psiElement == null ? null : EditSourceUtil.getDescriptor(psiElement);
