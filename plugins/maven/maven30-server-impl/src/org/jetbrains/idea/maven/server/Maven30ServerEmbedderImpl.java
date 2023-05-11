@@ -429,9 +429,31 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
-  private void customize(@Nullable MavenWorkspaceMap workspaceMap) {
+  private void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) {
     try {
-      customizeComponents();
+      // replace some plexus components
+      myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
+      myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
+      myContainer.addComponent(getComponent(RepositoryMetadataManager.class, "ide"), RepositoryMetadataManager.class.getName());
+      myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
+      ModelInterpolator modelInterpolator = getComponent(ModelInterpolator.class, "ide");
+      myContainer.addComponent(modelInterpolator, ModelInterpolator.class.getName());
+      myContainer.addComponent(getComponent(org.apache.maven.project.interpolation.ModelInterpolator.class, "ide"),
+                               org.apache.maven.project.interpolation.ModelInterpolator.ROLE);
+      ModelValidator modelValidator = getComponent(ModelValidator.class, "ide");
+      myContainer.addComponent(modelValidator, ModelValidator.class.getName());
+
+      DefaultModelBuilder defaultModelBuilder = (DefaultModelBuilder)getComponent(ModelBuilder.class);
+      defaultModelBuilder.setModelValidator(modelValidator);
+      defaultModelBuilder.setModelInterpolator(modelInterpolator);
+
+      // IDEA-176117 - in older version of maven (3.0 - 3.0.3) "modelInterpolator" component is not fully initialized for some reason
+      // - "pathTranslator" and "urlNormalizer" fields are null, which causes NPE in paths interpolation process.
+      // Latest version (3.0.5) is the stable one so we expect "modelInterpolator" to be already valid in it.
+      if (!"3.0.5".equals(getMavenVersion()) && modelInterpolator instanceof StringSearchModelInterpolator) {
+        ((StringSearchModelInterpolator)modelInterpolator).setPathTranslator(getComponent(org.apache.maven.model.path.PathTranslator.class));
+        ((StringSearchModelInterpolator)modelInterpolator).setUrlNormalizer(getComponent(UrlNormalizer.class));
+      }
 
       ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
       if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
@@ -439,6 +461,26 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       }
       ((CustomMaven30ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, false);
       ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  private void resetComponents() {
+    try {
+      ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
+      if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
+        ((CustomMaven3ArtifactFactory)artifactFactory).reset();
+      }
+      ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
+      if (artifactResolver instanceof CustomMaven30ArtifactResolver) {
+        ((CustomMaven30ArtifactResolver)artifactResolver).reset();
+      }
+      RepositoryMetadataManager repositoryMetadataManager = getComponent(RepositoryMetadataManager.class);
+      if (repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {
+        ((CustomMaven3RepositoryMetadataManager)repositoryMetadataManager).reset();
+      }
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -464,32 +506,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  private void customizeComponents() {
-    // replace some plexus components
-    myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
-    myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
-    myContainer.addComponent(getComponent(RepositoryMetadataManager.class, "ide"), RepositoryMetadataManager.class.getName());
-    myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
-    ModelInterpolator modelInterpolator = getComponent(ModelInterpolator.class, "ide");
-    myContainer.addComponent(modelInterpolator, ModelInterpolator.class.getName());
-    myContainer.addComponent(getComponent(org.apache.maven.project.interpolation.ModelInterpolator.class, "ide"),
-                             org.apache.maven.project.interpolation.ModelInterpolator.ROLE);
-    ModelValidator modelValidator = getComponent(ModelValidator.class, "ide");
-    myContainer.addComponent(modelValidator, ModelValidator.class.getName());
-
-    DefaultModelBuilder defaultModelBuilder = (DefaultModelBuilder)getComponent(ModelBuilder.class);
-    defaultModelBuilder.setModelValidator(modelValidator);
-    defaultModelBuilder.setModelInterpolator(modelInterpolator);
-
-    // IDEA-176117 - in older version of maven (3.0 - 3.0.3) "modelInterpolator" component is not fully initialized for some reason
-    // - "pathTranslator" and "urlNormalizer" fields are null, which causes NPE in paths interpolation process.
-    // Latest version (3.0.5) is the stable one so we expect "modelInterpolator" to be already valid in it.
-    if (!"3.0.5".equals(getMavenVersion()) && modelInterpolator instanceof StringSearchModelInterpolator) {
-      ((StringSearchModelInterpolator)modelInterpolator).setPathTranslator(getComponent(org.apache.maven.model.path.PathTranslator.class));
-      ((StringSearchModelInterpolator)modelInterpolator).setUrlNormalizer(getComponent(UrlNormalizer.class));
     }
   }
 
@@ -547,11 +563,11 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     boolean updateSnapshots = myAlwaysUpdateSnapshots || request.updateSnapshots();
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, files.size())) {
       try {
-        customize(workspaceMap);
+        customizeComponents(workspaceMap);
         return resolveProjects(task, files, activeProfiles, inactiveProfiles, workspaceMap, updateSnapshots);
       }
       finally {
-        reset(token);
+        resetComponents();
       }
     }
   }
@@ -1146,19 +1162,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       }
       myCurrentIndicator = null;
       myConsoleWrapper.setWrappee(null);
-
-      final ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
-      if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
-        ((CustomMaven3ArtifactFactory)artifactFactory).reset();
-      }
-      final ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
-      if (artifactResolver instanceof CustomMaven30ArtifactResolver) {
-        ((CustomMaven30ArtifactResolver)artifactResolver).reset();
-      }
-      final RepositoryMetadataManager repositoryMetadataManager = getComponent(RepositoryMetadataManager.class);
-      if (repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {
-        ((CustomMaven3RepositoryMetadataManager)repositoryMetadataManager).reset();
-      }
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);

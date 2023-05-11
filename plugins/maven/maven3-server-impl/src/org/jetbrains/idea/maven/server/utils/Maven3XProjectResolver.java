@@ -438,7 +438,7 @@ public class Maven3XProjectResolver {
     DependencyResolutionResult resolutionResult;
 
     try {
-      ProjectDependenciesResolver dependencyResolver = myEmbedder.getDependenciesResolver();
+      ProjectDependenciesResolver dependencyResolver = myEmbedder.getComponent(ProjectDependenciesResolver.class);
       DefaultDependencyResolutionRequest resolution = new DefaultDependencyResolutionRequest(project, session);
       resolutionResult = dependencyResolver.resolve(resolution);
     }

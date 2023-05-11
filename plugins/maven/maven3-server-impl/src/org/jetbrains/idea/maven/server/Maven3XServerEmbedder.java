@@ -41,7 +41,6 @@ import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.project.InvalidProjectModelException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
-import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.project.validation.ModelValidationResult;
 import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.settings.Settings;
@@ -79,7 +78,6 @@ import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Overridden maven components:
@@ -114,10 +112,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @NotNull private final RepositorySystem myRepositorySystem;
 
   @NotNull private final Maven3ImporterSpy myImporterSpy;
-
-  private final AtomicReference<ProjectDependenciesResolver> myDependenciesResolver = new AtomicReference<>();
-
-  private final AtomicReference<PluginDependenciesResolver> myPluginDependenciesResolver = new AtomicReference<>();
 
   @NotNull protected final MavenEmbedderSettings myEmbedderSettings;
 
@@ -302,6 +296,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return (List<Exception>)((List)list);
   }
 
+  protected <T> void addComponent(T componemnt, Class<T> clazz) {
+    myContainer.addComponent(componemnt, clazz.getName());
+  }
+
   @Override
   @SuppressWarnings({"unchecked"})
   public <T> T getComponent(Class<T> clazz, String roleHint) {
@@ -368,12 +366,57 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
-  public void customize(@Nullable MavenWorkspaceMap workspaceMap) {
+  protected void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) {
     try {
-      customizeComponents(workspaceMap);
+      // replace some plexus components
+      if (VersionComparatorUtil.compare("3.7.0-SNAPSHOT", getMavenVersion()) < 0) {
+        myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
+      }
+      myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
+      myContainer.addComponent(getComponent(RepositoryMetadataManager.class, "ide"), RepositoryMetadataManager.class.getName());
+      myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
+      ModelInterpolator modelInterpolator = createAndPutInterpolator(myContainer);
+
+      ModelValidator modelValidator;
+      if (VersionComparatorUtil.compare(getMavenVersion(), "3.8.5") >= 0) {
+        modelValidator = new CustomModelValidator385((CustomMaven3ModelInterpolator2)modelInterpolator,
+                                                     (DefaultModelValidator)getComponent(ModelValidator.class));
+      }
+      else {
+        modelValidator = getComponent(ModelValidator.class, "ide");
+        myContainer.addComponent(modelValidator, ModelValidator.class.getName());
+      }
+
+      DefaultModelBuilder defaultModelBuilder = (DefaultModelBuilder)getComponent(ModelBuilder.class);
+      defaultModelBuilder.setModelValidator(modelValidator);
+      defaultModelBuilder.setModelInterpolator(modelInterpolator);
+
+      ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
+      if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
+        ((CustomMaven3ArtifactFactory)artifactFactory).customize();
+      }
+
+      ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap);
+      ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
+
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  protected void resetComponents() {
+    ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
+    if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
+      ((CustomMaven3ArtifactFactory)artifactFactory).reset();
+    }
+    ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
+    if (artifactResolver instanceof CustomMaven3ArtifactResolver) {
+      ((CustomMaven3ArtifactResolver)artifactResolver).reset();
+    }
+    RepositoryMetadataManager repositoryMetadataManager = getComponent(RepositoryMetadataManager.class);
+    if (repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {
+      ((CustomMaven3RepositoryMetadataManager)repositoryMetadataManager).reset();
     }
   }
 
@@ -398,39 +441,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
     }
-  }
-
-  private void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) {
-    // replace some plexus components
-    if (VersionComparatorUtil.compare("3.7.0-SNAPSHOT", getMavenVersion()) < 0) {
-      myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
-    }
-    myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
-    myContainer.addComponent(getComponent(RepositoryMetadataManager.class, "ide"), RepositoryMetadataManager.class.getName());
-    myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
-    ModelInterpolator modelInterpolator = createAndPutInterpolator(myContainer);
-
-    ModelValidator modelValidator;
-    if (VersionComparatorUtil.compare(getMavenVersion(), "3.8.5") >= 0) {
-      modelValidator = new CustomModelValidator385((CustomMaven3ModelInterpolator2)modelInterpolator,
-                                                   (DefaultModelValidator)getComponent(ModelValidator.class));
-    }
-    else {
-      modelValidator = getComponent(ModelValidator.class, "ide");
-      myContainer.addComponent(modelValidator, ModelValidator.class.getName());
-    }
-
-    DefaultModelBuilder defaultModelBuilder = (DefaultModelBuilder)getComponent(ModelBuilder.class);
-    defaultModelBuilder.setModelValidator(modelValidator);
-    defaultModelBuilder.setModelInterpolator(modelInterpolator);
-
-    ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
-    if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
-      ((CustomMaven3ArtifactFactory)artifactFactory).customize();
-    }
-
-    ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap);
-    ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
   }
 
   private ModelInterpolator createAndPutInterpolator(DefaultPlexusContainer container) {
@@ -512,25 +522,13 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     );
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, files.size())) {
       try {
-        customize(workspaceMap);
+        customizeComponents(workspaceMap);
         return projectResolver.resolveProjects(task, files, activeProfiles, inactiveProfiles);
       }
       finally {
-        reset(token);
+        resetComponents();
       }
     }
-  }
-
-  @NotNull
-  public ProjectDependenciesResolver getDependenciesResolver() {
-    ProjectDependenciesResolver dependenciesResolver = myDependenciesResolver.get();
-    if (dependenciesResolver != null) return dependenciesResolver;
-    return myDependenciesResolver.updateAndGet(value -> value == null ? createDependenciesResolver() : value);
-  }
-
-  @NotNull
-  protected ProjectDependenciesResolver createDependenciesResolver() {
-    return getComponent(ProjectDependenciesResolver.class);
   }
 
   @Override
@@ -818,18 +816,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return Maven3ModelConverter.convertArtifacts(res, new HashMap<>(), getLocalRepositoryFile());
   }
 
-  @NotNull
-  private PluginDependenciesResolver getPluginDependenciesResolver() {
-    PluginDependenciesResolver dependenciesResolver = myPluginDependenciesResolver.get();
-    if (dependenciesResolver != null) return dependenciesResolver;
-    return myPluginDependenciesResolver.updateAndGet(value -> value == null ? createPluginDependenciesResolver() : value);
-  }
-
-  @NotNull
-  protected PluginDependenciesResolver createPluginDependenciesResolver() {
-    return getComponent(PluginDependenciesResolver.class);
-  }
-
   @Override
   public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
                                                        MavenToken token) {
@@ -899,7 +885,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       plugin.setVersion(mavenPluginId.getVersion());
       plugin.setDependencies(pluginDependencies);
 
-      PluginDependenciesResolver pluginDependenciesResolver = getPluginDependenciesResolver();
+      PluginDependenciesResolver pluginDependenciesResolver = getComponent(PluginDependenciesResolver.class);
 
       org.eclipse.aether.artifact.Artifact pluginArtifact =
         pluginDependenciesResolver.resolve(plugin, remoteRepos, session);
@@ -1144,26 +1130,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       }
       myCurrentIndicator = null;
       myConsoleWrapper.setWrappee(null);
-
-      resetCustomizedComponents();
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  protected void resetCustomizedComponents() {
-    final ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
-    if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
-      ((CustomMaven3ArtifactFactory)artifactFactory).reset();
-    }
-    final ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
-    if (artifactResolver instanceof CustomMaven3ArtifactResolver) {
-      ((CustomMaven3ArtifactResolver)artifactResolver).reset();
-    }
-    final RepositoryMetadataManager repositoryMetadataManager = getComponent(RepositoryMetadataManager.class);
-    if (repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {
-      ((CustomMaven3RepositoryMetadataManager)repositoryMetadataManager).reset();
     }
   }
 

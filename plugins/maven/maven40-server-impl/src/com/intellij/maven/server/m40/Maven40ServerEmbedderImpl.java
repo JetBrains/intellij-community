@@ -250,11 +250,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     );
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, files.size())) {
       try {
-        customize(workspaceMap);
+        customizeComponents(workspaceMap);
         return projectResolver.resolveProjects(task, files, activeProfiles, inactiveProfiles);
       }
       finally {
-        reset(token);
+        resetComponents();
       }
     }
   }
@@ -1092,10 +1092,18 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
 
-  private void customize(@Nullable MavenWorkspaceMap workspaceMap) {
+  private void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) {
     try {
       // TODO: implement
-      //customizeComponents(workspaceMap);
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  private void resetComponents() {
+    try {
+      // TODO: implement
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -1134,9 +1142,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       }
       myCurrentIndicator = null;
       myConsoleWrapper.setWrappee(null);
-
-      // TODO: implement
-      //resetCustomizedComponents();
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
