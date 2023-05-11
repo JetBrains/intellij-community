@@ -8,13 +8,11 @@ import org.apache.maven.DefaultMaven;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.ArtifactUtils;
-import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblem;
-import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.project.*;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -130,7 +128,7 @@ public class Maven40ProjectResolver {
 
           loadExtensions(project, exceptions);
 
-          project.setDependencyArtifacts(project.createArtifacts(myEmbedder.getComponent(ArtifactFactory.class), null, null));
+          //project.setDependencyArtifacts(project.createArtifacts(myEmbedder.getComponent(ArtifactFactory.class), null, null));
 
           buildingResultsToResolveDependencies.put(buildingResult, exceptions);
         }
@@ -241,11 +239,15 @@ public class Maven40ProjectResolver {
       DependencyNode dependencyGraph =
         dependencyResolutionResult != null ? dependencyResolutionResult.getDependencyGraph() : null;
 
-      List<DependencyNode> dependencyNodes =
-        dependencyGraph != null ? dependencyGraph.getChildren() : Collections.emptyList();
+      List<DependencyNode> dependencyNodes = dependencyGraph != null ? dependencyGraph.getChildren() : Collections.emptyList();
       model = Maven40AetherModelConverter.convertModelWithAetherDependencyTree(
-        mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
-        mavenProject.getArtifacts(), dependencyNodes, mavenProject.getExtensionArtifacts(), myLocalRepositoryFile);
+        mavenProject.getModel(),
+        mavenProject.getCompileSourceRoots(),
+        mavenProject.getTestCompileSourceRoots(),
+        mavenProject.getArtifacts(),
+        dependencyNodes,
+        Collections.emptyList(), //mavenProject.getExtensionArtifacts(),
+        myLocalRepositoryFile);
     }
     catch (Exception e) {
       myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), result.getModelProblems(), problems);
@@ -431,16 +433,6 @@ public class Maven40ProjectResolver {
   @NotNull
   private List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Collection<File> files) {
     ProjectBuilder builder = myEmbedder.getComponent(ProjectBuilder.class);
-
-    ModelInterpolator modelInterpolator = myEmbedder.getComponent(ModelInterpolator.class);
-
-    String savedLocalRepository = null;
-/*    if (modelInterpolator instanceof CustomMaven3ModelInterpolator2) {
-      CustomMaven3ModelInterpolator2 customMaven3ModelInterpolator2 = (CustomMaven3ModelInterpolator2)modelInterpolator;
-      savedLocalRepository = customMaven3ModelInterpolator2.getLocalRepository();
-      customMaven3ModelInterpolator2.setLocalRepository(request.getLocalRepositoryPath().getAbsolutePath());
-    }*/
-
 
     List<ProjectBuildingResult> buildingResults = new ArrayList<>();
 
