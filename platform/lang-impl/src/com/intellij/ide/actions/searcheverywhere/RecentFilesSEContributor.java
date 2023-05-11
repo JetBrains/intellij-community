@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
@@ -106,5 +104,12 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   @Override
   public boolean isShownInSeparateTab() {
     return false;
+  }
+
+  public static class Factory implements SearchEverywhereContributorFactory<Object> {
+    @Override
+    public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
+      return PSIPresentationBgRendererWrapper.wrapIfNecessary(new RecentFilesSEContributor(initEvent));
+    }
   }
 }

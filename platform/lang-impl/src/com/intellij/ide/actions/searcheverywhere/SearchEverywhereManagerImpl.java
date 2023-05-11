@@ -76,9 +76,8 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     }
 
     Project project = initEvent.getProject();
-    Component contextComponent = initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
 
-    List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project, contextComponent);
+    List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project);
     SearchEverywhereContributorValidationRule.updateContributorsMap(contributors);
     SearchEverywhereSpellingCorrector spellingCorrector = SearchEverywhereSpellingCorrector.getInstance(project);
     mySearchEverywhereUI = createView(myProject, contributors, spellingCorrector);
@@ -165,17 +164,13 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     return myProject != null ? WindowStateService.getInstance(myProject) : WindowStateService.getInstance();
   }
 
-  private List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project, Component contextComponent) {
+  private static List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project) {
     if (project == null) {
       ActionSearchEverywhereContributor.Factory factory = new ActionSearchEverywhereContributor.Factory();
       return Collections.singletonList(factory.createContributor(initEvent));
     }
 
     List<SearchEverywhereContributor<?>> res = new ArrayList<>();
-    res.add(new TopHitSEContributor(project, contextComponent, s -> mySearchEverywhereUI.getSearchField().setText(s)));
-    res.add(PSIPresentationBgRendererWrapper.wrapIfNecessary(new RecentFilesSEContributor(initEvent)));
-    res.add(new RunConfigurationsSEContributor(project, contextComponent, () -> mySearchEverywhereUI.getSearchField().getText()));
-
     for (SearchEverywhereContributorFactory<?> factory : SearchEverywhereContributor.EP_NAME.getExtensionList()) {
       if (factory.isAvailable(project)) {
         SearchEverywhereContributor<?> contributor = factory.createContributor(initEvent);
