@@ -603,7 +603,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ConfigFile = load("ide/configFile.svg", 1287498598, 2);
     /** 20x20 */ public static final @NotNull Icon Dislike = load("ide/dislike.svg", 1254925866, 2);
     /** 20x20 */ public static final @NotNull Icon DislikeDimmed = load("ide/dislikeDimmed.svg", 515359443, 2);
-    /** 20x20 */ public static final @NotNull Icon DislikeSelected = load("ide/dislikeSelected.svg", 997726336, 2);
+    /** 20x20 */ public static final @NotNull Icon DislikeSelected = load("ide/dislikeSelected.svg", 287201342, 2);
     /** 6x6 */ public static final @NotNull Icon ErrorPoint = load("ide/errorPoint.svg", 1012076789, 2);
     /** 14x14 */ public static final @NotNull Icon External_link_arrow = load("ide/external_link_arrow.svg", 1070887805, 0);
     /** 16x16 */ public static final @NotNull Icon FatalErrorRead = load("ide/fatalError-read.svg", 567622805, 2);
@@ -620,7 +620,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon IncomingChangesOn = load("ide/incomingChangesOn.svg", 1661917715, 2);
     /** 20x20 */ public static final @NotNull Icon Like = load("ide/like.svg", -2074345401, 2);
     /** 20x20 */ public static final @NotNull Icon LikeDimmed = load("ide/likeDimmed.svg", -1358929505, 2);
-    /** 20x20 */ public static final @NotNull Icon LikeSelected = load("ide/likeSelected.svg", -1874016551, 2);
+    /** 20x20 */ public static final @NotNull Icon LikeSelected = load("ide/likeSelected.svg", 1510945465, 2);
     /** 12x12 */ public static final @NotNull Icon Link = load("ide/link.svg", 2028749339, 2);
     /** 16x16 */ public static final @NotNull Icon LocalScope = load("ide/localScope.svg", -569945429, 0);
     /** 16x16 */ public static final @NotNull Icon LocalScopeAction = load("ide/localScopeAction.svg", 336925654, 2);
