@@ -535,6 +535,7 @@
     <themeProvider id="JetBrainsLightTheme" path="/themes/Light.theme.json" targetUi="classic"/>
     <themeProvider id="ExperimentalLight" path="/themes/expUI/expUI_light.theme.json" targetUi="new"/>
     <themeProvider id="ExperimentalDark" path="/themes/expUI/expUI_dark.theme.json" targetUi="new"/>
+    <themeProvider id="ExperimentalLightWithLightHeader" path="/themes/expUI/expUI_light_with_light_header.theme.json" parentTheme="ExperimentalLight" targetUi="new"/>
     <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
     <iconMapper mappingFile="PlatformIconMappings.json"/>
 

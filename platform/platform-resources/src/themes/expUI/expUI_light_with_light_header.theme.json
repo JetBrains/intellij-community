@@ -3,6 +3,7 @@
   "dark": false,
   "author": "JetBrains",
   "parentTheme": "Light",
+  "editorScheme": "/themes/expUI/expUI_lightScheme.xml",
 
   "ui": {
     "CodeWithMe.MainToolbar.NoConnectionLabelForeground": "Grey7",
