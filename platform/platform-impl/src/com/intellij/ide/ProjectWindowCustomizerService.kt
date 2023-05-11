@@ -12,6 +12,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.ui.GotItTooltip
@@ -50,7 +51,7 @@ class ProjectWindowCustomizerService : Disposable {
   internal fun update(newValue: Boolean) {
     if (newValue != ourSettingsValue) {
       ourSettingsValue = newValue
-      wasGradientPainted = newValue && ProjectManager.getInstance().openProjects.size > 1
+      wasGradientPainted = newValue && conditionToEnable()
       fireUpdate()
     }
   }
@@ -71,11 +72,13 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   fun enableIfNeeded() {
-    if (ProjectManagerEx.getOpenProjects().size > 1 && !wasGradientPainted) {
+    if (conditionToEnable() && !wasGradientPainted) {
       wasGradientPainted = true
       fireUpdate()
     }
   }
+
+  private fun conditionToEnable() = ProjectManagerEx.getOpenProjects().size > 1 || Registry.`is`("ide.colorful.toolbar.force")
 
   fun addListener(disposable: Disposable, fireFirstTime: Boolean, listener: (Boolean) -> Unit) {
     if (fireFirstTime) {
@@ -92,6 +95,7 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   fun shouldShowGotIt() = !gotItShown
+
   private fun recordGotItShown() {
     gotItShown = true
   }
