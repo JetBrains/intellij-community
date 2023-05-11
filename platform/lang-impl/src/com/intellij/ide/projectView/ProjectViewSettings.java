@@ -15,8 +15,9 @@ public interface ProjectViewSettings extends ViewSettings {
     return false;
   }
 
-  default boolean isSortByTime() {
-    return false;
+  @NotNull
+  default NodeSortKey getSortKey() {
+    return NodeSortKey.BY_NAME;
   }
 
   /**
@@ -116,9 +117,9 @@ public interface ProjectViewSettings extends ViewSettings {
     }
 
     @Override
-    public boolean isSortByTime() {
+    public @NotNull NodeSortKey getSortKey() {
       ProjectView view = getProjectView();
-      return view != null && view.isSortByTime(getPaneID(view));
+      return view != null ? view.getSortKey(getPaneID(view)) : NodeSortKey.BY_NAME;
     }
 
     @Override

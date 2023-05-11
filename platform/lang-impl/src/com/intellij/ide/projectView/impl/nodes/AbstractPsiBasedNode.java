@@ -6,10 +6,7 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.bookmark.Bookmark;
 import com.intellij.ide.bookmark.BookmarkType;
 import com.intellij.ide.bookmark.BookmarksManager;
-import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.ProjectViewSettings;
-import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
 import com.intellij.ide.projectView.impl.ProjectViewInplaceCommentProducerImplKt;
 import com.intellij.ide.tags.TagManager;
@@ -216,7 +213,10 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   }
 
   private void updateTimestamp() {
-    if (getSettings() instanceof ProjectViewSettings projectViewSettings && !projectViewSettings.isSortByTime()) {
+    if (
+      getSettings() instanceof ProjectViewSettings projectViewSettings &&
+      projectViewSettings.getSortKey() != NodeSortKey.BY_TIME
+    ) {
       timestamp = 0; // skip for performance reasons
       return;
     }

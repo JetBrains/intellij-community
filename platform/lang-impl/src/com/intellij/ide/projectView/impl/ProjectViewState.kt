@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl
 
+import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.ProjectViewSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationManager.getApplication
@@ -29,7 +30,6 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
   var flattenPackages = ProjectViewSettings.Immutable.DEFAULT.isFlattenPackages
   var foldersAlwaysOnTop = ProjectViewSettings.Immutable.DEFAULT.isFoldersAlwaysOnTop
   var hideEmptyMiddlePackages = ProjectViewSettings.Immutable.DEFAULT.isHideEmptyMiddlePackages
-  var manualOrder = false
   var showExcludedFiles = ProjectViewSettings.Immutable.DEFAULT.isShowExcludedFiles
   var showLibraryContents = ProjectViewSettings.Immutable.DEFAULT.isShowLibraryContents
   var showMembers = ProjectViewSettings.Immutable.DEFAULT.isShowMembers
@@ -37,9 +37,18 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
   var showScratchesAndConsoles = ProjectViewSettings.Immutable.DEFAULT.isShowScratchesAndConsoles
   var showURL = ProjectViewSettings.Immutable.DEFAULT.isShowURL
   var showVisibilityIcons = ProjectViewSettings.Immutable.DEFAULT.isShowVisibilityIcons
-  var sortByType = false
-  var sortByTime = false
   var useFileNestingRules = ProjectViewSettings.Immutable.DEFAULT.isUseFileNestingRules
+  var sortKey = ProjectViewSettings.Immutable.DEFAULT.sortKey
+
+  @Deprecated(
+    "More sorting options are available now, use sortKey instead",
+    replaceWith = ReplaceWith("sortKey == NodeSortKey.BY_TYPE")
+  )
+  var sortByType: Boolean
+    get() = sortKey == NodeSortKey.BY_TYPE
+    set(value) {
+      sortKey = if (value) NodeSortKey.BY_TYPE else NodeSortKey.BY_NAME
+    }
 
   override fun noStateLoaded() {
     val application = getApplication()
@@ -54,7 +63,6 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
     flattenPackages = ProjectViewSharedSettings.instance.flattenPackages
     foldersAlwaysOnTop = ProjectViewSharedSettings.instance.foldersAlwaysOnTop
     hideEmptyMiddlePackages = ProjectViewSharedSettings.instance.hideEmptyPackages
-    manualOrder = ProjectViewSharedSettings.instance.manualOrder
     showExcludedFiles = ProjectViewSharedSettings.instance.showExcludedFiles
     showLibraryContents = ProjectViewSharedSettings.instance.showLibraryContents
     showMembers = ProjectViewSharedSettings.instance.showMembers
@@ -62,8 +70,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
     showScratchesAndConsoles = ProjectViewSharedSettings.instance.showScratchesAndConsoles
     showURL = Registry.`is`("project.tree.structure.show.url")
     showVisibilityIcons = ProjectViewSharedSettings.instance.showVisibilityIcons
-    sortByType = ProjectViewSharedSettings.instance.sortByType
-    sortByTime = ProjectViewSharedSettings.instance.sortByTime
+    sortKey = ProjectViewSharedSettings.instance.sortKey
   }
 
   override fun loadState(state: ProjectViewState) {

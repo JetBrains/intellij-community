@@ -9,9 +9,7 @@ import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.bookmark.BookmarksListener;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
-import com.intellij.ide.projectView.HelpID;
-import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
@@ -48,6 +46,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -97,6 +96,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -116,6 +116,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NotNull private final Project myProject;
 
   private final ProjectViewState myCurrentState;
+  private final AtomicReference<NodeSortKey> mySortKey = new AtomicReference<>();
   // + options
   private final Option myAbbreviatePackageNames = new Option() {
     @Override
@@ -353,37 +354,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   };
 
-  private final Option myManualOrder = new Option() {
-    @NotNull
-    @Override
-    public String getName() {
-      AbstractProjectViewPane pane = getCurrentProjectViewPane();
-      return pane != null
-             ? pane.getManualOrderOptionText()
-             : IdeBundle.message("action.manual.order");
-    }
-
-    @Override
-    public boolean isEnabled(@NotNull AbstractProjectViewPane pane) {
-      return pane.supportsManualOrder();
-    }
-
-    @Override
-    public boolean isSelected() {
-      return myCurrentState.getManualOrder();
-    }
-
-    @Override
-    public void setSelected(boolean selected) {
-      if (myProject.isDisposed()) return;
-      boolean updated = selected != isSelected();
-      myCurrentState.setManualOrder(selected);
-      getDefaultState().setManualOrder(selected);
-      getGlobalOptions().setManualOrder(selected);
-      if (updated) updatePanes(true);
-    }
-  };
-
   private final Option myShowExcludedFiles = new Option() {
     @Override
     public boolean isEnabled(@NotNull AbstractProjectViewPane pane) {
@@ -491,50 +461,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       getDefaultState().setShowVisibilityIcons(selected);
       getGlobalOptions().setShowVisibilityIcons(selected);
       if (updated) updatePanes(false);
-    }
-  };
-
-  private final Option mySortByType = new Option() {
-    @Override
-    public boolean isEnabled(@NotNull AbstractProjectViewPane pane) {
-      return pane.supportsSortByType();
-    }
-
-    @Override
-    public boolean isSelected() {
-      return myCurrentState.getSortByType();
-    }
-
-    @Override
-    public void setSelected(boolean selected) {
-      if (myProject.isDisposed()) return;
-      boolean updated = selected != isSelected();
-      myCurrentState.setSortByType(selected);
-      getDefaultState().setSortByType(selected);
-      getGlobalOptions().setSortByType(selected);
-      if (updated) updatePanes(true);
-    }
-  };
-
-  private final Option mySortByTime = new Option() {
-    @Override
-    public boolean isEnabled(@NotNull AbstractProjectViewPane pane) {
-      return pane.supportsSortByTime();
-    }
-
-    @Override
-    public boolean isSelected() {
-      return myCurrentState.getSortByTime();
-    }
-
-    @Override
-    public void setSelected(boolean selected) {
-      if (myProject.isDisposed()) return;
-      boolean updated = selected != isSelected();
-      myCurrentState.setSortByTime(selected);
-      getDefaultState().setSortByTime(selected);
-      getGlobalOptions().setSortByTime(selected);
-      if (updated) updatePanes(true);
     }
   };
 
@@ -1833,32 +1759,37 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public boolean isManualOrder(String paneId) {
-    return myManualOrder.isSelected() && myManualOrder.isEnabled(paneId);
+    return getSortKey(paneId) == NodeSortKey.MANUAL;
   }
 
   @Override
   public void setManualOrder(@NotNull String paneId, final boolean enabled) {
-    if (myManualOrder.isEnabled(paneId)) myManualOrder.setSelected(enabled);
+    setSortKey(paneId, enabled ? NodeSortKey.MANUAL : ProjectViewSettings.Immutable.DEFAULT.getSortKey());
   }
 
   @Override
   public boolean isSortByType(String paneId) {
-    return mySortByType.isSelected() && mySortByType.isEnabled(paneId);
-  }
-
-  @Override
-  public boolean isSortByTime(String paneId) {
-    return mySortByTime.isSelected() && mySortByTime.isEnabled(paneId);
+    return getSortKey(paneId) == NodeSortKey.BY_TYPE;
   }
 
   @Override
   public void setSortByType(@NotNull String paneId, final boolean sortByType) {
-    if (mySortByType.isEnabled(paneId)) mySortByType.setSelected(sortByType);
+    setSortKey(paneId, sortByType ? NodeSortKey.BY_TYPE : ProjectViewSettings.Immutable.DEFAULT.getSortKey());
   }
 
   @Override
-  public void setSortByTime(@NotNull String paneId, boolean sortByTime) {
-    if (mySortByTime.isEnabled(paneId)) mySortByTime.setSelected(sortByTime);
+  public @NotNull NodeSortKey getSortKey(String paneId) {
+    var currentSortKey = myCurrentState.getSortKey();
+    var pane = getProjectViewPaneById(paneId);
+    return pane != null && pane.supportsSortKey(currentSortKey) ? currentSortKey : ProjectViewSettings.Immutable.DEFAULT.getSortKey();
+  }
+
+  @Override
+  public void setSortKey(@NotNull String paneId, @NotNull NodeSortKey sortKey) {
+    var pane = getProjectViewPaneById(paneId);
+    if (pane != null && pane.supportsSortKey(sortKey)) {
+      myCurrentState.setSortKey(sortKey);
+    }
   }
 
   boolean isSelectOpenedFileEnabled() {
@@ -2010,12 +1941,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    static final class ManualOrder extends Action {
-      ManualOrder() {
-        super(view -> view.myManualOrder);
-      }
-    }
-
     static final class ShowExcludedFiles extends Action {
       ShowExcludedFiles() {
         super(view -> view.myShowExcludedFiles);
@@ -2046,15 +1971,102 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    static final class SortByType extends Action {
-      SortByType() {
-        super(view -> view.mySortByType);
+    static abstract class SortKeyAction extends DumbAwareToggleAction {
+
+      private final @NotNull NodeSortKey mySortKey;
+
+      SortKeyAction(@NotNull NodeSortKey sortKey) {
+        mySortKey = sortKey;
+      }
+
+      @Override
+      public boolean isSelected(@NotNull AnActionEvent e) {
+        var view = getProjectView(e);
+        return view != null && view.myCurrentState.getSortKey() == mySortKey;
+      }
+
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean selected) {
+        var view = getProjectView(e);
+        boolean updated = false;
+        if (view != null) {
+          updated = view.myCurrentState.getSortKey() != mySortKey;
+          view.myCurrentState.setSortKey(mySortKey);
+        }
+        getDefaultState().setSortKey(mySortKey);
+        getGlobalOptions().setSortKey(mySortKey);
+        if (updated) {
+          view.updatePanes(true);
+        }
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        var presentation = e.getPresentation();
+        presentation.setEnabledAndVisible(ApplicationManager.getApplication().isUnitTestMode());
+        if (ActionPlaces.isPopupPlace(e.getPlace())) {
+          presentation.setIcon(null);
+        }
+        var pane = getCurrentProjectViewPane(e);
+        if (pane == null) {
+          return;
+        }
+        presentation.setEnabledAndVisible(pane.supportsSortKey(mySortKey));
+      }
+
+      protected static @Nullable AbstractProjectViewPane getCurrentProjectViewPane(@NotNull AnActionEvent e) {
+        var view = getProjectView(e);
+        if (view == null) {
+          return null;
+        }
+        return view.getCurrentProjectViewPane();
+      }
+
+      private static @Nullable ProjectViewImpl getProjectView(@NotNull AnActionEvent event) {
+        Project project = event.getProject();
+        ProjectView view = project == null || project.isDisposed() ? null : getInstance(project);
+        return view instanceof ProjectViewImpl ? (ProjectViewImpl) view : null;
       }
     }
 
-    static final class SortByTime extends Action {
+    static final class ManualOrder extends SortKeyAction {
+      ManualOrder() {
+        super(NodeSortKey.MANUAL);
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        var pane = getCurrentProjectViewPane(e);
+        if (pane == null) {
+          e.getPresentation().setText(IdeBundle.message("action.manual.order"));
+          return;
+        }
+        e.getPresentation().setText(pane.getManualOrderOptionText());
+      }
+    }
+
+    static final class SortByName extends SortKeyAction {
+      SortByName() {
+        super(NodeSortKey.BY_NAME);
+      }
+    }
+
+    static final class SortByType extends SortKeyAction {
+      SortByType() {
+        super(NodeSortKey.BY_TYPE);
+      }
+    }
+
+    static final class SortByTime extends SortKeyAction {
       SortByTime() {
-        super(view -> view.mySortByTime);
+        super(NodeSortKey.BY_TIME);
       }
     }
   }

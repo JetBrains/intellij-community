@@ -105,8 +105,8 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     setModificationTime("a.txt", LocalDateTime.of(2023, Month.MAY, 8, 0, 1));
     setModificationTime("b.java", LocalDateTime.of(2023, Month.MAY, 7, 0, 1));
     setModificationTime("b.txt", LocalDateTime.of(2023, Month.MAY, 7, 0, 0));
-    myProjectView.setSortByTime(myPane.getId(), false);
-    myStructure.setSortByTime(false);
+    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_NAME);
+    myStructure.setSortKey(NodeSortKey.BY_NAME);
     assertTree("""
                  -sortByTime
                   a.java
@@ -115,8 +115,8 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                   b.txt
                  """);
 
-    myProjectView.setSortByTime(myPane.getId(), true);
-    myStructure.setSortByTime(true);
+    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME);
+    myStructure.setSortKey(NodeSortKey.BY_TIME);
     assertTree("""
                  -sortByTime
                   b.txt

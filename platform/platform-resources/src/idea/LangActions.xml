@@ -924,6 +924,8 @@
         <action id="ProjectView.ManualOrder"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ManualOrder"
                 icon="AllIcons.ObjectBrowser.Sorted"/>
+        <action id="ProjectView.SortByName"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByName"/>
         <action id="ProjectView.SortByType"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByType"
                 icon="AllIcons.ObjectBrowser.SortByType"/>

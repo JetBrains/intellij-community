@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.projectView.NodeSortKey;
 import com.intellij.ide.projectView.NodeSortSettings;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -8,6 +9,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -32,30 +34,18 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
 
   @Override
   public int compare(NodeDescriptor descriptor1, NodeDescriptor descriptor2) {
-    if (!isSortByType() && descriptor1 instanceof ProjectViewNode && ((ProjectViewNode<?>)descriptor1).isSortByFirstChild()) {
-      Collection<? extends AbstractTreeNode<?>> children = ((ProjectViewNode<?>)descriptor1).getChildren();
-      if (!children.isEmpty()) {
-        descriptor1 = children.iterator().next();
-        descriptor1.update();
-      }
-    }
-    if (!isSortByType() && descriptor2 instanceof ProjectViewNode && ((ProjectViewNode<?>)descriptor2).isSortByFirstChild()) {
-      Collection<? extends AbstractTreeNode<?>> children = ((ProjectViewNode<?>)descriptor2).getChildren();
-      if (!children.isEmpty()) {
-        descriptor2 = children.iterator().next();
-        descriptor2.update();
-      }
-    }
+    descriptor1 = getUpdatedDescriptor(descriptor1);
+    descriptor2 = getUpdatedDescriptor(descriptor2);
 
     if (descriptor1 instanceof ProjectViewNode<?> node1 && descriptor2 instanceof ProjectViewNode<?> node2) {
 
-      NodeSortSettings settings = new NodeSortSettings(isManualOrder(), isFoldersAlwaysOnTop(), isSortByType(), isSortByTime());
+      NodeSortSettings settings = NodeSortSettings.of(getSortKey(), isFoldersAlwaysOnTop());
       int sortResult = node1.getSortOrder(settings).compareTo(node2.getSortOrder(settings));
       if (sortResult != 0) return sortResult;
 
       if (settings.isManualOrder()) {
-        Comparable key1 = node1.getManualOrderKey();
-        Comparable key2 = node2.getManualOrderKey();
+        Comparable<?> key1 = node1.getManualOrderKey();
+        Comparable<?> key2 = node2.getManualOrderKey();
         int result = compare(key1, key2);
         if (result != 0) return result;
       }
@@ -74,23 +64,26 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
         }
       }
 
-      if (settings.isSortByTime()) {
-        final Comparable<?> timeSortKey1 = node1.getTimeSortKey();
-        final Comparable<?> timeSortKey2 = node2.getTimeSortKey();
-        int result = compare(timeSortKey1, timeSortKey2);
-        if (result != 0) return result;
-      }
-      else if (settings.isSortByType()) {
-        final Comparable<?> typeSortKey1 = node1.getTypeSortKey();
-        final Comparable<?> typeSortKey2 = node2.getTypeSortKey();
-        int result = compare(typeSortKey1, typeSortKey2);
-        if (result != 0) return result;
-      }
-      else {
-        final Comparable<?> typeSortKey1 = node1.getSortKey();
-        final Comparable<?> typeSortKey2 = node2.getSortKey();
-        if (typeSortKey1 != null && typeSortKey2 != null) {
+      switch (settings.getSortKey()) {
+        case MANUAL -> { }
+        case BY_NAME -> {
+          final Comparable<?> sortKey1 = node1.getSortKey();
+          final Comparable<?> sortKey2 = node2.getSortKey();
+          if (sortKey1 != null && sortKey2 != null) {
+            int result = compare(sortKey1, sortKey2);
+            if (result != 0) return result;
+          }
+        }
+        case BY_TYPE -> {
+          final Comparable<?> typeSortKey1 = node1.getTypeSortKey();
+          final Comparable<?> typeSortKey2 = node2.getTypeSortKey();
           int result = compare(typeSortKey1, typeSortKey2);
+          if (result != 0) return result;
+        }
+        case BY_TIME -> {
+          final Comparable<?> timeSortKey1 = node1.getTimeSortKey();
+          final Comparable<?> timeSortKey2 = node2.getTimeSortKey();
+          int result = compare(timeSortKey1, timeSortKey2);
           if (result != 0) return result;
         }
       }
@@ -108,25 +101,26 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
     return AlphaComparator.INSTANCE.compare(descriptor1, descriptor2);
   }
 
-  protected boolean isManualOrder() {
-    if (project == null) {
-      return true;
+  private NodeDescriptor<?> getUpdatedDescriptor(NodeDescriptor<?> descriptor) {
+    if (
+      getSortKey() == NodeSortKey.BY_NAME &&
+      descriptor instanceof ProjectViewNode<?> projectViewNode && projectViewNode.isSortByFirstChild()
+    ) {
+      Collection<? extends AbstractTreeNode<?>> children = projectViewNode.getChildren();
+      if (!children.isEmpty()) {
+        descriptor = children.iterator().next();
+        descriptor.update();
+      }
     }
-    return ProjectView.getInstance(project).isManualOrder(myPaneId);
+    return descriptor;
   }
 
-  protected boolean isSortByType() {
+  @NotNull
+  protected NodeSortKey getSortKey() {
     if (project == null) {
-      return myForceSortByType;
+      return myForceSortByType ? NodeSortKey.BY_TYPE : NodeSortKey.BY_NAME;
     }
-    return ProjectView.getInstance(project).isSortByType(myPaneId);
-  }
-
-  protected boolean isSortByTime() {
-    if (project == null) {
-      return false;
-    }
-    return ProjectView.getInstance(project).isSortByTime(myPaneId);
+    return ProjectView.getInstance(project).getSortKey(myPaneId);
   }
 
   protected boolean isAbbreviateQualifiedNames() {

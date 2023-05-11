@@ -147,12 +147,10 @@ public abstract class ProjectView {
 
   public abstract void setSortByType(@NotNull String paneId, final boolean sortByType);
 
-  public boolean isSortByTime(String paneId) {
-    return false;
-  }
+  @NotNull
+  public abstract NodeSortKey getSortKey(String paneId);
 
-  public void setSortByTime(@NotNull String paneId, final boolean sortByTime) {
-  }
+  public abstract void setSortKey(@NotNull String paneId, @NotNull NodeSortKey sortKey);
 
   public abstract AbstractProjectViewPane getCurrentProjectViewPane();
 
