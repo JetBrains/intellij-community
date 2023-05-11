@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ui
@@ -14,12 +14,14 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SystemProperties
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asContextElement
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.LongAdder
 import javax.swing.Icon
 
-internal class IconDeferrerImpl private constructor() : IconDeferrer() {
+internal class IconDeferrerImpl private constructor(private val coroutineScope: CoroutineScope) : IconDeferrer() {
   companion object {
     private val isEvaluationInProgress = ThreadLocal.withInitial { false }
 
@@ -44,20 +46,26 @@ internal class IconDeferrerImpl private constructor() : IconDeferrer() {
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect()
-    connection.subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener(::clearCache))
+    connection.subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener(::scheduleClearCache))
     // update "locked" icon
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
-        clearCache()
+        scheduleClearCache()
       }
     })
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosed(project: Project) {
-        clearCache()
+        scheduleClearCache()
       }
     })
-    connection.subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener { clearCache() })
-    LowMemoryWatcher.register(::clearCache, connection)
+    connection.subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener { scheduleClearCache() })
+    LowMemoryWatcher.register(::scheduleClearCache, connection)
+  }
+
+  private fun scheduleClearCache() {
+    coroutineScope.launch {
+      iconCache.invalidateAll()
+    }
   }
 
   override fun clearCache() {
