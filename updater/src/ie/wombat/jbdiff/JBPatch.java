@@ -44,7 +44,7 @@ public final class JBPatch {
 
     byte[] diffData = Utils.readBytes(diffFileIn);
 
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataInputStream diffIn = new DataInputStream(new ByteArrayInputStream(diffData));
+    DataInputStream diffIn = new DataInputStream(new ByteArrayInputStream(diffData));
 
     // ctrlBlockLen after gzip compression at heater offset 0 (length 8 bytes)
     long ctrlBlockLen = diffIn.readLong();
@@ -58,11 +58,11 @@ public final class JBPatch {
     InputStream in;
     in = new ByteArrayInputStream(diffData);
     skip(in, ctrlBlockLen + 24);
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPInputStream diffBlockIn = new GZIPInputStream(in);
+    GZIPInputStream diffBlockIn = new GZIPInputStream(in);
 
     in = new ByteArrayInputStream(diffData);
     skip(in, diffBlockLen + ctrlBlockLen + 24);
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPInputStream extraBlockIn = new GZIPInputStream(in);
+    GZIPInputStream extraBlockIn = new GZIPInputStream(in);
 
     byte[] oldBuf = oldFileIn.readAllBytes();
     int oldSize = oldBuf.length;
