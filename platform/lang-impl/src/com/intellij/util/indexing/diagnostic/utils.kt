@@ -3,6 +3,7 @@ package com.intellij.util.indexing.diagnostic
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.application.PathManager
 import java.nio.file.Path
@@ -14,7 +15,7 @@ import kotlin.io.path.div
 
 object IndexDiagnosticDumperUtils {
   val jacksonMapper: ObjectMapper by lazy {
-    jacksonObjectMapper().registerKotlinModule()
+    jsonMapper() // there is no need in registerKotlinModule
   }
 
   val diagnosticTimestampFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
