@@ -503,12 +503,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     List<String> inactiveProfiles = request.getInactiveProfiles();
     Maven3XProjectResolver projectResolver = new Maven3XProjectResolver(
       this,
-      myEmbedderSettings,
-      myConsoleWrapper,
       myAlwaysUpdateSnapshots,
       myImporterSpy,
       myCurrentIndicator,
       myWorkspaceMap,
+      myEmbedderSettings,
+      myConsoleWrapper,
       myLocalRepository
       );
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, files.size())) {

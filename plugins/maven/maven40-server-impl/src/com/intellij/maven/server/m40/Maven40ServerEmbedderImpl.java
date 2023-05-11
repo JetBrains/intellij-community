@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtilRt;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.apache.commons.cli.ParseException;
 import org.apache.maven.*;
 import org.apache.maven.api.ArtifactCoordinate;
@@ -16,7 +15,6 @@ import org.apache.maven.api.Session;
 import org.apache.maven.api.services.ArtifactResolver;
 import org.apache.maven.api.services.ArtifactResolverResult;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -28,13 +26,15 @@ import org.apache.maven.internal.impl.DefaultSessionFactory;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Repository;
-import org.apache.maven.model.building.*;
-import org.apache.maven.model.interpolation.ModelInterpolator;
+import org.apache.maven.model.building.FileModelSource;
+import org.apache.maven.model.building.ModelProblem;
+import org.apache.maven.model.building.ModelProcessor;
 import org.apache.maven.model.io.ModelReader;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectDependenciesResolver;
-import org.apache.maven.project.*;
 import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.session.scope.internal.SessionScope;
 import org.apache.maven.settings.Settings;
@@ -48,21 +48,14 @@ import org.codehaus.plexus.logging.BaseLoggerManager;
 import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.util.ExceptionUtils;
 import org.codehaus.plexus.util.StringUtils;
-import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
-import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.impl.RemoteRepositoryManager;
-import org.eclipse.aether.repository.LocalRepositoryManager;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.transfer.ArtifactTransferException;
-import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
-import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
-import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
@@ -249,190 +242,27 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     List<File> files = request.getPomFiles();
     List<String> activeProfiles = request.getActiveProfiles();
     List<String> inactiveProfiles = request.getInactiveProfiles();
+    Maven40ProjectResolver projectResolver = new Maven40ProjectResolver(
+      this,
+      myAlwaysUpdateSnapshots,
+      myImporterSpy,
+      myCurrentIndicator,
+      myWorkspaceMap,
+      getLocalRepositoryFile()
+    );
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, files.size())) {
-      return resolveProjects(task, files, activeProfiles, inactiveProfiles);
+      return projectResolver.resolveProjects(task, files, activeProfiles, inactiveProfiles);
     }
-  }
-
-  @NotNull
-  private Collection<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
-                                                                 @NotNull Collection<File> files,
-                                                                 @NotNull Collection<String> activeProfiles,
-                                                                 @NotNull Collection<String> inactiveProfiles) {
-    try {
-      Collection<Maven40ExecutionResult> results = doResolveProject(
-        task,
-        files,
-        new ArrayList<>(activeProfiles),
-        new ArrayList<>(inactiveProfiles)
-      );
-
-      return ContainerUtilRt.map2List(results, result -> createExecutionResult(result));
-    }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @NotNull
-  private Collection<Maven40ExecutionResult> doResolveProject(@NotNull LongRunningTask task,
-                                                              @NotNull Collection<File> files,
-                                                              @NotNull List<String> activeProfiles,
-                                                              @NotNull List<String> inactiveProfiles) {
-    File file = !files.isEmpty() ? files.iterator().next() : null;
-    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles);
-
-    request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
-
-    Collection<Maven40ExecutionResult> executionResults = new ArrayList<>();
-    Map<ProjectBuildingResult, List<Exception>> buildingResultsToResolveDependencies = new HashMap<>();
-
-    executeWithMavenSession(request, () -> {
-      try {
-        MavenSession mavenSession = getComponent(LegacySupport.class).getSession();
-        RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
-        if (repositorySession instanceof DefaultRepositorySystemSession) {
-          DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
-          myImporterSpy.setIndicator(myCurrentIndicator);
-          session.setTransferListener(new Maven40TransferListenerAdapter(myCurrentIndicator));
-
-          if (myWorkspaceMap != null) {
-            session.setWorkspaceReader(new Maven40WorkspaceMapReader(myWorkspaceMap));
-          }
-
-          session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
-          session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
-        }
-
-        List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
-        fillSessionCache(mavenSession, repositorySession, buildingResults);
-
-        for (ProjectBuildingResult buildingResult : buildingResults) {
-          MavenProject project = buildingResult.getProject();
-
-          if (project == null) {
-            List<Exception> exceptions = new ArrayList<>();
-            for (ModelProblem problem : buildingResult.getProblems()) {
-              exceptions.add(problem.getException());
-            }
-            executionResults.add(new Maven40ExecutionResult(buildingResult.getPomFile(), exceptions));
-            continue;
-          }
-
-          List<Exception> exceptions = new ArrayList<>();
-
-          loadExtensions(project, exceptions);
-
-          project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
-
-          buildingResultsToResolveDependencies.put(buildingResult, exceptions);
-        }
-
-        task.updateTotalRequests(buildingResultsToResolveDependencies.size());
-        boolean runInParallel = canResolveDependenciesInParallel();
-        Collection<Maven40ExecutionResult> execResults =
-          MavenServerParallelRunner.execute(
-            runInParallel,
-            buildingResultsToResolveDependencies.entrySet(), entry -> {
-              if (task.isCanceled()) return new Maven40ExecutionResult(Collections.emptyList());
-              Maven40ExecutionResult result = resolveBuildingResult(repositorySession, entry.getKey(), entry.getValue());
-              task.incrementFinishedRequests();
-              return result;
-            }
-          );
-
-        executionResults.addAll(execResults);
-      }
-      catch (Exception e) {
-        executionResults.add(handleException(e));
-      }
-    });
-
-    return executionResults;
-  }
-
-  private boolean canResolveDependenciesInParallel() {
-    return true;
-  }
-
-  @NotNull
-  private Maven40ExecutionResult resolveBuildingResult(RepositorySystemSession repositorySession,
-                                                       ProjectBuildingResult buildingResult,
-                                                       List<Exception> exceptions) {
-    MavenProject project = buildingResult.getProject();
-    try {
-      List<ModelProblem> modelProblems = new ArrayList<>();
-
-      if (buildingResult.getProblems() != null) {
-        modelProblems.addAll(buildingResult.getProblems());
-      }
-
-      DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
-      Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult);
-      project.setArtifacts(artifacts);
-
-      return new Maven40ExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems);
-    }
-    catch (Exception e) {
-      return handleException(project, e);
-    }
-  }
-
-  @NotNull
-  private MavenServerExecutionResult createExecutionResult(Maven40ExecutionResult result) {
-    File file = result.getPomFile();
-    Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
-    collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
-
-    Collection<MavenProjectProblem> unresolvedProblems = new HashSet<>();
-    collectUnresolvedArtifactProblems(file, result.getDependencyResolutionResult(), unresolvedProblems);
-
-    MavenProject mavenProject = result.getMavenProject();
-    if (mavenProject == null) return new MavenServerExecutionResult(null, problems, Collections.emptySet());
-
-    MavenModel model = new MavenModel();
-    try {
-      DependencyResolutionResult dependencyResolutionResult = result.getDependencyResolutionResult();
-      DependencyNode dependencyGraph =
-        dependencyResolutionResult != null ? dependencyResolutionResult.getDependencyGraph() : null;
-
-      List<DependencyNode> dependencyNodes =
-        dependencyGraph != null ? dependencyGraph.getChildren() : Collections.emptyList();
-      model = Maven40AetherModelConverter.convertModelWithAetherDependencyTree(
-        mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
-        mavenProject.getArtifacts(), dependencyNodes, mavenProject.getExtensionArtifacts(), getLocalRepositoryFile());
-    }
-    catch (Exception e) {
-      collectProblems(mavenProject.getFile(), Collections.singleton(e), result.getModelProblems(), problems);
-    }
-
-    RemoteNativeMaven40ProjectHolder holder = new RemoteNativeMaven40ProjectHolder(mavenProject);
-    try {
-      UnicastRemoteObject.exportObject(holder, 0);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
-
-    Collection<String> activatedProfiles = Maven40ProfileUtil.collectActivatedProfiles(mavenProject);
-
-    Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(mavenProject.getModel());
-    MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, mavenModelMap, holder, activatedProfiles);
-    if (null == model.getBuild() || null == model.getBuild().getDirectory()) {
-      data = null;
-    }
-    return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
   }
 
   private File getLocalRepositoryFile() {
     return new File(myEmbedderSettings.getSettings().getLocalRepositoryPath());
   }
 
-  private void collectProblems(@Nullable File file,
-                               @NotNull Collection<? extends Exception> exceptions,
-                               @NotNull List<? extends ModelProblem> modelProblems,
-                               @NotNull Collection<? super MavenProjectProblem> collector) {
+  public void collectProblems(@Nullable File file,
+                              @NotNull Collection<? extends Exception> exceptions,
+                              @NotNull List<? extends ModelProblem> modelProblems,
+                              @NotNull Collection<? super MavenProjectProblem> collector) {
     for (Throwable each : exceptions) {
       collector.addAll(collectExceptionProblems(file, each));
     }
@@ -515,7 +345,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @NotNull
-  private static String getRootMessage(Throwable each) {
+  public static String getRootMessage(Throwable each) {
     String baseMessage = each.getMessage() != null ? each.getMessage() : "";
     Throwable rootCause = ExceptionUtils.getRootCause(each);
     String rootMessage = rootCause != null ? rootCause.getMessage() : "";
@@ -534,147 +364,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return null;
   }
 
-  private void collectUnresolvedArtifactProblems(@Nullable File file,
-                                                 @Nullable DependencyResolutionResult result,
-                                                 Collection<MavenProjectProblem> problems) {
-    if (result == null) return;
-    String path = file == null ? "" : file.getPath();
-    for (Dependency unresolvedDependency : result.getUnresolvedDependencies()) {
-      for (Exception exception : result.getResolutionErrors(unresolvedDependency)) {
-        String message = getRootMessage(exception);
-        Artifact artifact = RepositoryUtils.toArtifact(unresolvedDependency.getArtifact());
-        MavenArtifact mavenArtifact = Maven40ModelConverter.convertArtifact(artifact, getLocalRepositoryFile());
-        problems.add(MavenProjectProblem.createUnresolvedArtifactProblem(path, message, true, mavenArtifact));
-        break;
-      }
-    }
-  }
-
-  private static Maven40ExecutionResult handleException(Exception e) {
-    return new Maven40ExecutionResult(Collections.singletonList(e));
-  }
-
-  private static Maven40ExecutionResult handleException(MavenProject mavenProject, Exception e) {
-    return new Maven40ExecutionResult(mavenProject, Collections.singletonList(e));
-  }
-
   @NotNull
-  private Set<Artifact> resolveArtifacts(DependencyResolutionResult dependencyResolutionResult) {
-    Map<Dependency, Artifact> winnerDependencyMap = new IdentityHashMap<>();
-    Set<Artifact> artifacts = new LinkedHashSet<>();
-    Set<Dependency> addedDependencies = Collections.newSetFromMap(new IdentityHashMap<>());
-    resolveConflicts(dependencyResolutionResult, winnerDependencyMap);
-
-    if (dependencyResolutionResult.getDependencyGraph() != null) {
-      dependencyResolutionResult.getDependencyGraph().getChildren();
-    }
-
-    for (Dependency dependency : dependencyResolutionResult.getDependencies()) {
-      Artifact artifact = dependency == null ? null : winnerDependencyMap.get(dependency);
-      if (artifact != null) {
-        addedDependencies.add(dependency);
-        artifacts.add(artifact);
-        resolveAsModule(artifact);
-      }
-    }
-
-    //if any syntax error presents in pom.xml we may not get dependencies via getDependencies, but they are in dependencyGraph.
-    // we need to BFS this graph and add dependencies
-    Queue<DependencyNode> queue =
-      new ArrayDeque<>(dependencyResolutionResult.getDependencyGraph().getChildren());
-    while (!queue.isEmpty()) {
-      DependencyNode node = queue.poll();
-      queue.addAll(node.getChildren());
-      Dependency dependency = node.getDependency();
-      if (dependency == null || !addedDependencies.add(dependency)) {
-        continue;
-      }
-      Artifact artifact = winnerDependencyMap.get(dependency);
-      if (artifact != null) {
-        addedDependencies.add(dependency);
-        //todo: properly resolve order
-        artifacts.add(artifact);
-        resolveAsModule(artifact);
-      }
-    }
-
-    return artifacts;
-  }
-
-  private boolean resolveAsModule(Artifact a) {
-    MavenWorkspaceMap map = myWorkspaceMap;
-    if (map == null) return false;
-
-    MavenWorkspaceMap.Data resolved = map.findFileAndOriginalId(Maven40ModelConverter.createMavenId(a));
-    if (resolved == null) return false;
-
-    a.setResolved(true);
-    a.setFile(resolved.getFile(a.getType()));
-    a.selectVersion(resolved.originalId.getVersion());
-    return true;
-  }
-
-  private static void resolveConflicts(DependencyResolutionResult dependencyResolutionResult,
-                                       Map<Dependency, Artifact> winnerDependencyMap) {
-    dependencyResolutionResult.getDependencyGraph().accept(new TreeDependencyVisitor(new DependencyVisitor() {
-      @Override
-      public boolean visitEnter(DependencyNode node) {
-        Object winner = node.getData().get(ConflictResolver.NODE_DATA_WINNER);
-        Dependency dependency = node.getDependency();
-        if (dependency != null && winner == null) {
-          Artifact winnerArtifact = Maven40AetherModelConverter.toArtifact(dependency);
-          winnerDependencyMap.put(dependency, winnerArtifact);
-        }
-        return true;
-      }
-
-      @Override
-      public boolean visitLeave(DependencyNode node) {
-        return true;
-      }
-    }));
-  }
-
-  /**
-   * copied from {@link DefaultProjectBuilder#resolveDependencies(MavenProject, RepositorySystemSession)}
-   */
-  private DependencyResolutionResult resolveDependencies(MavenProject project, RepositorySystemSession session) {
-    DependencyResolutionResult resolutionResult;
-
-    try {
-      ProjectDependenciesResolver dependencyResolver = getDependenciesResolver();
-      DefaultDependencyResolutionRequest resolution = new DefaultDependencyResolutionRequest(project, session);
-      resolutionResult = dependencyResolver.resolve(resolution);
-    }
-    catch (DependencyResolutionException e) {
-      resolutionResult = e.getResult();
-    }
-
-    Set<Artifact> artifacts = new LinkedHashSet<>();
-    if (resolutionResult.getDependencyGraph() != null) {
-      RepositoryUtils.toArtifacts(
-        artifacts,
-        resolutionResult.getDependencyGraph().getChildren(),
-        null == project.getArtifact() ? Collections.emptyList() : Collections.singletonList(project.getArtifact().getId()),
-        null);
-
-      // Maven 2.x quirk: an artifact always points at the local repo, regardless whether resolved or not
-      LocalRepositoryManager lrm = session.getLocalRepositoryManager();
-      for (Artifact artifact : artifacts) {
-        if (!artifact.isResolved()) {
-          String path = lrm.getPathForLocalArtifact(RepositoryUtils.toArtifact(artifact));
-          artifact.setFile(new File(lrm.getRepository().getBasedir(), path));
-        }
-      }
-    }
-    project.setResolvedArtifacts(artifacts);
-    project.setArtifacts(artifacts);
-
-    return resolutionResult;
-  }
-
-  @NotNull
-  private ProjectDependenciesResolver getDependenciesResolver() {
+  public ProjectDependenciesResolver getDependenciesResolver() {
     ProjectDependenciesResolver dependenciesResolver = myDependenciesResolver.get();
     if (dependenciesResolver != null) return dependenciesResolver;
     return myDependenciesResolver.updateAndGet(value -> value == null ? createDependenciesResolver() : value);
@@ -846,44 +537,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   /**
-   * adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
-   */
-  private void loadExtensions(MavenProject project, List<Exception> exceptions) {
-    ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
-    Collection<AbstractMavenLifecycleParticipant> lifecycleParticipants = getLifecycleParticipants(Collections.singletonList(project));
-    if (!lifecycleParticipants.isEmpty()) {
-      LegacySupport legacySupport = getComponent(LegacySupport.class);
-      MavenSession session = legacySupport.getSession();
-      if (null != session) {
-        session.setCurrentProject(project);
-        try {
-          // the method can be removed
-          session.setAllProjects(Collections.singletonList(project));
-        }
-        catch (NoSuchMethodError ignore) {
-        }
-        session.setProjects(Collections.singletonList(project));
-
-        for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
-          Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());
-          try {
-            listener.afterProjectsRead(session);
-          }
-          catch (Exception e) {
-            exceptions.add(e);
-          }
-          finally {
-            Thread.currentThread().setContextClassLoader(originalClassLoader);
-          }
-        }
-      }
-    }
-  }
-
-  /**
    * adapted from {@link DefaultMaven#getLifecycleParticipants(Collection)}
    */
-  private Collection<AbstractMavenLifecycleParticipant> getLifecycleParticipants(Collection<MavenProject> projects) {
+  public Collection<AbstractMavenLifecycleParticipant> getLifecycleParticipants(Collection<MavenProject> projects) {
     Collection<AbstractMavenLifecycleParticipant> lifecycleListeners = new LinkedHashSet<>();
 
     ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
@@ -934,141 +590,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     RepositorySystemSession repositorySession = maven.newRepositorySession(request);
     request.getProjectBuildingRequest().setRepositorySession(repositorySession);
     return new MavenSession(getContainer(), repositorySession, request, new DefaultMavenExecutionResult());
-  }
-
-  @NotNull
-  private List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Collection<File> files) {
-    ProjectBuilder builder = getComponent(ProjectBuilder.class);
-
-    ModelInterpolator modelInterpolator = getComponent(ModelInterpolator.class);
-
-    String savedLocalRepository = null;
-/*    if (modelInterpolator instanceof CustomMaven3ModelInterpolator2) {
-      CustomMaven3ModelInterpolator2 customMaven3ModelInterpolator2 = (CustomMaven3ModelInterpolator2)modelInterpolator;
-      savedLocalRepository = customMaven3ModelInterpolator2.getLocalRepository();
-      customMaven3ModelInterpolator2.setLocalRepository(request.getLocalRepositoryPath().getAbsolutePath());
-    }*/
-
-
-    List<ProjectBuildingResult> buildingResults = new ArrayList<>();
-
-    ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
-    projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
-    projectBuildingRequest.setResolveDependencies(false);
-
-    if (files.size() == 1) {
-      buildSinglePom(builder, buildingResults, projectBuildingRequest, files.iterator().next());
-    }
-    else {
-      try {
-        buildingResults = builder.build(new ArrayList<>(files), false, projectBuildingRequest);
-      }
-      catch (ProjectBuildingException e) {
-        for (ProjectBuildingResult result : e.getResults()) {
-          if (result.getProject() != null) {
-            buildingResults.add(result);
-          }
-          else {
-            buildSinglePom(builder, buildingResults, projectBuildingRequest, result.getPomFile());
-          }
-        }
-      }
-    }
-    return buildingResults;
-  }
-
-  private void buildSinglePom(ProjectBuilder builder,
-                              List<ProjectBuildingResult> buildingResults,
-                              ProjectBuildingRequest projectBuildingRequest,
-                              File pomFile) {
-    try {
-      ProjectBuildingResult build = builder.build(pomFile, projectBuildingRequest);
-      buildingResults.add(build);
-    }
-    catch (ProjectBuildingException e) {
-      handleProjectBuildingException(buildingResults, e);
-    }
-  }
-
-  private void handleProjectBuildingException(List<ProjectBuildingResult> buildingResults, ProjectBuildingException e) {
-    List<ProjectBuildingResult> results = e.getResults();
-    if (results != null && !results.isEmpty()) {
-      buildingResults.addAll(results);
-    }
-    else {
-      Throwable cause = e.getCause();
-      List<ModelProblem> problems = null;
-      if (cause instanceof ModelBuildingException) {
-        problems = ((ModelBuildingException)cause).getProblems();
-      }
-      buildingResults.add(new MyProjectBuildingResult(null, e.getPomFile(), null, problems, null));
-    }
-  }
-
-  private static class MyProjectBuildingResult implements ProjectBuildingResult {
-
-    private final String myProjectId;
-    private final File myPomFile;
-    private final MavenProject myMavenProject;
-    private final List<ModelProblem> myProblems;
-    private final DependencyResolutionResult myDependencyResolutionResult;
-
-    MyProjectBuildingResult(String projectId,
-                            File pomFile,
-                            MavenProject mavenProject,
-                            List<ModelProblem> problems,
-                            DependencyResolutionResult dependencyResolutionResult) {
-      myProjectId = projectId;
-      myPomFile = pomFile;
-      myMavenProject = mavenProject;
-      myProblems = problems;
-      myDependencyResolutionResult = dependencyResolutionResult;
-    }
-
-    @Override
-    public String getProjectId() {
-      return myProjectId;
-    }
-
-    @Override
-    public File getPomFile() {
-      return myPomFile;
-    }
-
-    @Override
-    public MavenProject getProject() {
-      return myMavenProject;
-    }
-
-    @Override
-    public List<ModelProblem> getProblems() {
-      return myProblems;
-    }
-
-    @Override
-    public DependencyResolutionResult getDependencyResolutionResult() {
-      return myDependencyResolutionResult;
-    }
-  }
-
-  private static void fillSessionCache(MavenSession mavenSession,
-                                       RepositorySystemSession session,
-                                       List<ProjectBuildingResult> buildingResults) {
-    if (session instanceof DefaultRepositorySystemSession) {
-      int initialCapacity = (int)(buildingResults.size() * 1.5);
-      Map<MavenId, Model> cacheMavenModelMap = new HashMap<MavenId, Model>(initialCapacity);
-      Map<String, MavenProject> mavenProjectMap = new HashMap<String, MavenProject>(initialCapacity);
-      for (ProjectBuildingResult result : buildingResults) {
-        if (result.getProblems() != null && !result.getProblems().isEmpty()) continue;
-        Model model = result.getProject().getModel();
-        String key = ArtifactUtils.key(model.getGroupId(), model.getArtifactId(), model.getVersion());
-        mavenProjectMap.put(key, result.getProject());
-        cacheMavenModelMap.put(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()), model);
-      }
-      mavenSession.setProjectMap(mavenProjectMap);
-      ((DefaultRepositorySystemSession)session).setWorkspaceReader(
-        new Maven40WorkspaceReader(session.getWorkspaceReader(), cacheMavenModelMap));
-    }
   }
 
 

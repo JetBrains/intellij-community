@@ -50,53 +50,46 @@ import static org.jetbrains.idea.maven.server.Maven3ServerEmbedder.USE_MVN2_COMP
 import static org.jetbrains.idea.maven.server.MavenServerEmbedder.MAVEN_EMBEDDER_VERSION;
 
 public class Maven3XProjectResolver {
-  @NotNull
-  private final Maven3XServerEmbedder myEmbedder;
-  @NotNull
-  private final MavenEmbedderSettings myEmbedderSettings;
-  @NotNull
-  private final Maven3ServerConsoleLogger myConsoleWrapper;
+  @NotNull private final Maven3XServerEmbedder myEmbedder;
   private final boolean myAlwaysUpdateSnapshots;
-  @NotNull
-  private final Maven3ImporterSpy myImporterSpy;
-  @NotNull
-  private final MavenServerProgressIndicatorWrapper myCurrentIndicator;
-  @Nullable
-  private final MavenWorkspaceMap myWorkspaceMap;
-  @NotNull
-  private final ArtifactRepository myLocalRepository;
+  @NotNull private final Maven3ImporterSpy myImporterSpy;
+  @NotNull private final MavenServerProgressIndicatorWrapper myCurrentIndicator;
+  @Nullable private final MavenWorkspaceMap myWorkspaceMap;
+  @NotNull private final MavenEmbedderSettings myEmbedderSettings;
+  @NotNull private final Maven3ServerConsoleLogger myConsoleWrapper;
+  @NotNull private final ArtifactRepository myLocalRepository;
 
   public Maven3XProjectResolver(@NotNull Maven3XServerEmbedder embedder,
-                                @NotNull MavenEmbedderSettings embedderSettings,
-                                @NotNull Maven3ServerConsoleLogger consoleWrapper,
                                 boolean alwaysUpdateSnapshots,
                                 @NotNull Maven3ImporterSpy importerSpy,
                                 @NotNull MavenServerProgressIndicatorWrapper currentIndicator,
                                 @Nullable MavenWorkspaceMap workspaceMap,
+                                @NotNull MavenEmbedderSettings embedderSettings,
+                                @NotNull Maven3ServerConsoleLogger consoleWrapper,
                                 @NotNull ArtifactRepository localRepository) {
     myEmbedder = embedder;
-    myEmbedderSettings = embedderSettings;
-    myConsoleWrapper = consoleWrapper;
     myAlwaysUpdateSnapshots = alwaysUpdateSnapshots;
     myImporterSpy = importerSpy;
     myCurrentIndicator = currentIndicator;
     myWorkspaceMap = workspaceMap;
+    myEmbedderSettings = embedderSettings;
+    myConsoleWrapper = consoleWrapper;
     myLocalRepository = localRepository;
   }
 
   @NotNull
   public Collection<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
                                                                 @NotNull Collection<File> files,
-                                                                @NotNull Collection<String> activeProfiles,
-                                                                @NotNull Collection<String> inactiveProfiles) {
+                                                                @NotNull List<String> activeProfiles,
+                                                                @NotNull List<String> inactiveProfiles) {
     try {
-      final DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
+      DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 
       Collection<Maven3ExecutionResult> results = doResolveProject(
         task,
         files,
-        new ArrayList<>(activeProfiles),
-        new ArrayList<>(inactiveProfiles),
+        activeProfiles,
+        inactiveProfiles,
         Collections.singletonList(listener)
       );
 
@@ -314,7 +307,7 @@ public class Maven3XProjectResolver {
 
   @NotNull
   private List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Collection<File> files) {
-    final ProjectBuilder builder = myEmbedder.getComponent(ProjectBuilder.class);
+    ProjectBuilder builder = myEmbedder.getComponent(ProjectBuilder.class);
 
     ModelInterpolator modelInterpolator = myEmbedder.getComponent(ModelInterpolator.class);
 
@@ -328,7 +321,7 @@ public class Maven3XProjectResolver {
 
     List<ProjectBuildingResult> buildingResults = new ArrayList<>();
 
-    final ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
+    ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
     projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
     projectBuildingRequest.setResolveDependencies(false);
 
@@ -475,7 +468,7 @@ public class Maven3XProjectResolver {
 
   @NotNull
   private Set<Artifact> resolveArtifacts(DependencyResolutionResult dependencyResolutionResult, boolean addUnresolvedNodes) {
-    final Map<Dependency, Artifact> winnerDependencyMap = new IdentityHashMap<>();
+    Map<Dependency, Artifact> winnerDependencyMap = new IdentityHashMap<>();
     Set<Artifact> artifacts = new LinkedHashSet<>();
     Set<Dependency> addedDependencies = Collections.newSetFromMap(new IdentityHashMap<>());
     resolveConflicts(dependencyResolutionResult, winnerDependencyMap);
@@ -485,7 +478,7 @@ public class Maven3XProjectResolver {
     }
 
     for (Dependency dependency : dependencyResolutionResult.getDependencies()) {
-      final Artifact artifact = dependency == null ? null : winnerDependencyMap.get(dependency);
+      Artifact artifact = dependency == null ? null : winnerDependencyMap.get(dependency);
       if (artifact != null) {
         addedDependencies.add(dependency);
         artifacts.add(artifact);
@@ -505,7 +498,7 @@ public class Maven3XProjectResolver {
         if (dependency == null || !addedDependencies.add(dependency)) {
           continue;
         }
-        final Artifact artifact = winnerDependencyMap.get(dependency);
+        Artifact artifact = winnerDependencyMap.get(dependency);
         if (artifact != null) {
           addedDependencies.add(dependency);
           //todo: properly resolve order
@@ -519,12 +512,12 @@ public class Maven3XProjectResolver {
   }
 
   private static void resolveConflicts(DependencyResolutionResult dependencyResolutionResult,
-                                       final Map<Dependency, Artifact> winnerDependencyMap) {
+                                       Map<Dependency, Artifact> winnerDependencyMap) {
     dependencyResolutionResult.getDependencyGraph().accept(new TreeDependencyVisitor(new DependencyVisitor() {
       @Override
       public boolean visitEnter(org.eclipse.aether.graph.DependencyNode node) {
-        final Object winner = node.getData().get(ConflictResolver.NODE_DATA_WINNER);
-        final Dependency dependency = node.getDependency();
+        Object winner = node.getData().get(ConflictResolver.NODE_DATA_WINNER);
+        Dependency dependency = node.getDependency();
         if (dependency != null && winner == null) {
           Artifact winnerArtifact = Maven3AetherModelConverter.toArtifact(dependency);
           winnerDependencyMap.put(dependency, winnerArtifact);
