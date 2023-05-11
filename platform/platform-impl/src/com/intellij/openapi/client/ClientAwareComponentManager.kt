@@ -26,18 +26,19 @@ abstract class ClientAwareComponentManager(
   }
 
   override fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
-    val sessionsManager = if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+    val sessionManager: ClientSessionsManager<*>?
+    if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
       if (createIfNeeded) {
-        throwAlreadyDisposedError(serviceClass.name, this)
+        throwAlreadyDisposedError(serviceDescription = serviceClass.name, componentManager = this)
       }
-      super.doGetService(ClientSessionsManager::class.java, false)
+      sessionManager = super.doGetService(serviceClass = ClientSessionsManager::class.java, createIfNeeded = false)
     }
     else {
-      super.doGetService(ClientSessionsManager::class.java, true)
+      sessionManager = super.doGetService(serviceClass = ClientSessionsManager::class.java, createIfNeeded = true)
     }
 
-    val session = sessionsManager?.getSession(ClientId.current) as? ClientSessionImpl
-    return session?.doGetService(serviceClass, createIfNeeded, false)
+    val session = sessionManager?.getSession(ClientId.current) as? ClientSessionImpl
+    return session?.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded, fallbackToShared = false)
   }
 
   override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
