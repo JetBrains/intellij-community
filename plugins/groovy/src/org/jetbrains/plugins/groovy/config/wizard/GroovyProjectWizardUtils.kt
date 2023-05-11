@@ -7,6 +7,7 @@ import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Groovy.logGroovyLibraryChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Groovy.logGroovyLibraryFinished
+import com.intellij.ide.projectWizard.NewProjectWizardConstants
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.command.WriteCommandAction
@@ -143,11 +144,11 @@ fun NewProjectWizardStep.logGroovySdkFinished(sdk: DistributionInfo?) {
   logGroovyLibraryFinished(type, version)
 }
 
-private fun getGroovySdkType(sdk: DistributionInfo?): String? {
+private fun getGroovySdkType(sdk: DistributionInfo?): String {
   return when (sdk) {
-    is FrameworkLibraryDistributionInfo -> "maven"
-    is LocalDistributionInfo -> "local"
-    null -> null
+    is FrameworkLibraryDistributionInfo -> NewProjectWizardConstants.GroovySdk.MAVEN
+    is LocalDistributionInfo -> NewProjectWizardConstants.GroovySdk.LOCAL
+    null -> NewProjectWizardConstants.GroovySdk.NONE
     else -> error("Unexpected distribution type: $sdk")
   }
 }

@@ -29,7 +29,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
 
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 17)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 18)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = EventFields.Int("screen")
@@ -47,7 +47,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val buildSystemSdkField = EventFields.Int("build_system_sdk_version")
     private val buildSystemParentField = EventFields.Boolean("build_system_parent")
     private val groovyVersionField = EventFields.Version
-    private val groovySourceTypeField = EventFields.String("groovy_sdk_type", listOf("maven", "local", NULL))
+    private val groovySourceTypeField = EventFields.String("groovy_sdk_type", NewProjectWizardConstants.GroovySdk.ALL)
     private val pluginField = EventFields.String("plugin_selected", NewProjectWizardConstants.Language.ALL)
 
     private val baseFields = arrayOf(sessionIdField, screenNumField)
@@ -267,17 +267,17 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   object Groovy {
 
-    fun NewProjectWizardStep.logGroovyLibraryChanged(groovyLibrarySource: String?, groovyLibraryVersion: String?) =
+    fun NewProjectWizardStep.logGroovyLibraryChanged(groovyLibrarySource: String, groovyLibraryVersion: String?) =
       groovyLibraryChanged.logBuildSystemEvent(
         this,
-        groovySourceTypeField with (groovyLibrarySource ?: NULL),
+        groovySourceTypeField with groovyLibrarySource,
         groovyVersionField with groovyLibraryVersion
       )
 
-    fun NewProjectWizardStep.logGroovyLibraryFinished(groovyLibrarySource: String?, groovyLibraryVersion: String?) =
+    fun NewProjectWizardStep.logGroovyLibraryFinished(groovyLibrarySource: String, groovyLibraryVersion: String?) =
       groovyLibraryFinished.logBuildSystemEvent(
         this,
-        groovySourceTypeField with (groovyLibrarySource ?: NULL),
+        groovySourceTypeField with groovyLibrarySource,
         groovyVersionField with groovyLibraryVersion
       )
   }

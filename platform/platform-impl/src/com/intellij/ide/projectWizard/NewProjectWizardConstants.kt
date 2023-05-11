@@ -34,6 +34,13 @@ object NewProjectWizardConstants {
     const val SIMPLE_MODULE = "simple-module"
   }
 
+  object GroovySdk {
+    const val MAVEN = "Maven"
+    const val LOCAL = "Local"
+    const val NONE = "None"
+
+    val ALL = listOf(MAVEN, LOCAL, NONE)
+  }
+
   const val OTHER = "other"
-  const val NULL = "null"
 }
