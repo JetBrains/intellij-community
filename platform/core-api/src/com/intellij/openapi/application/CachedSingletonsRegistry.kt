@@ -4,6 +4,7 @@ package com.intellij.openapi.application
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.function.Consumer
 import java.util.function.Supplier
 
 @ApiStatus.Internal
@@ -11,26 +12,26 @@ object CachedSingletonsRegistry {
   private val registeredLazyValues = CopyOnWriteArrayList<SynchronizedClearableLazy<*>>()
 
   @JvmStatic
-  fun <T> lazy(supplier: Supplier<T>): Supplier<T> {
-    val lazy = SynchronizedClearableLazy { supplier.get() }
+  fun <T> lazy(supplier: () -> T): Supplier<T> {
+    val lazy = SynchronizedClearableLazy(supplier)
     registeredLazyValues.add(lazy)
-    return Supplier {
-      val result: T? = lazy.get()
-      result ?: supplier.get()
+    return lazy
+  }
+
+  fun <T : Any> lazyWithNullProtection(supplier: () -> T?): (Boolean) -> T? {
+    val lazy = SynchronizedClearableLazy(supplier)
+    registeredLazyValues.add(lazy)
+    return { createIfNeeded ->
+      if (createIfNeeded) {
+        lazy.get() ?: supplier()
+      }
+      else {
+        lazy.valueIfInitialized
+      }
     }
   }
 
-  @Deprecated("Do not use.")
-  @JvmStatic
-  fun <T> markCachedField(@Suppress("unused") klass: Class<T>): T? {
-    return null
-  }
-
-  @JvmStatic
   fun cleanupCachedFields() {
-    val iterator = registeredLazyValues.iterator()
-    while (iterator.hasNext()) {
-      iterator.next().drop()
-    }
+    registeredLazyValues.forEach(Consumer(SynchronizedClearableLazy<*>::drop))
   }
 }

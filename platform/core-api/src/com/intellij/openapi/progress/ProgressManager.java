@@ -12,8 +12,8 @@ import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,14 +24,13 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
-  private final static SynchronizedClearableLazy<ProgressManager> ourInstance =
-    (SynchronizedClearableLazy<ProgressManager>)CachedSingletonsRegistry.lazy(() -> {
-      return ApplicationManager.getApplication().getService(ProgressManager.class);
-    });
+  private final static Function1<Boolean, ProgressManager> ourInstance = CachedSingletonsRegistry.INSTANCE.lazyWithNullProtection(() -> {
+    return ApplicationManager.getApplication().getService(ProgressManager.class);
+  });
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static @NotNull ProgressManager getInstance() {
-    return ourInstance.get();
+    return ourInstance.invoke(true);
   }
 
   /**
@@ -39,7 +38,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @ApiStatus.Internal
   public static @Nullable ProgressManager getInstanceOrNull() {
-    return ourInstance.getValueIfInitialized();
+    return ourInstance.invoke(false);
   }
 
   public abstract boolean hasProgressIndicator();
@@ -226,7 +225,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @RequiresBlockingContext
   public static void checkCanceled() throws ProcessCanceledException {
-    ProgressManager instance = ourInstance.getValueIfInitialized();
+    ProgressManager instance = getInstanceOrNull();
     if (instance != null) {
       instance.doCheckCanceled();
     }
