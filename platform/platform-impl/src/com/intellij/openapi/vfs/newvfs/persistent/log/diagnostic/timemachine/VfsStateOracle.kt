@@ -60,19 +60,8 @@ class FSRecordsOracle(
         queryFsRecords = { fsRecords.getParent(fileId) }
       )
       override val parent: Property<VfsSnapshot.VirtualFileSnapshot?> = parentId.fmap {
-        if (it == 0) null else OracledVirtualFileSnapshot(it)
+        if (it == 0) null else getFileById(it)
       }
-
-      override fun getContent(): DefinedState<ByteArray> = contentRecordId.bind {
-        val payloadReader = vfsLog.query { payloadStorage::readAt }
-        val lookup = VfsChronicle.lookupContentOperation(point(), it, payloadReader, TraverseDirection.PLAY)
-        if (lookup.found) {
-          // some operation took place in between (point(), end()) so FSRecords may not contain value as at point()
-          return@bind VfsChronicle.restoreContent(point(), it, payloadReader)
-        }
-        // content at point() is the same as in FSRecords
-        return@bind fsRecords.readContentById(it).readAllBytes().let(State::ready)
-      }.observeState()
 
       override val length: Property<Long> = OracledProp(
         queryLog = {
@@ -104,6 +93,17 @@ class FSRecordsOracle(
         },
         queryFsRecords = { fsRecords.getAttributeRecordId(fileId) }
       )
+
+      override fun getContent(): DefinedState<ByteArray> = contentRecordId.bind {
+        val payloadReader = vfsLog.query { payloadStorage::readAt }
+        val lookup = VfsChronicle.lookupContentOperation(point(), it, payloadReader, TraverseDirection.PLAY)
+        if (lookup.found) {
+          // some operation took place in between (point(), end()) so FSRecords may not contain value as at point()
+          return@bind VfsChronicle.restoreContent(point(), it, payloadReader)
+        }
+        // content at point() is the same as in FSRecords
+        return@bind fsRecords.readContentById(it).readAllBytes().let(State::ready)
+      }.observeState()
 
       private inner class OracledProp<T>(
         val queryLog: () -> DefinedState<T>,
