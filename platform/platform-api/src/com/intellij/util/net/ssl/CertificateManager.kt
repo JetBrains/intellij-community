@@ -79,7 +79,7 @@ class CertificateManager : PersistentStateComponent<CertificateManager.Config?> 
    *
    * @return instance of SSLContext with described behavior or default SSL context in case of error
    */
-  val sslContext by lazy(::calcSslContext)
+  val sslContext by lazy { calcSslContext() } // hot path, do not use method reference
 
   /**
    * Component initialization constructor

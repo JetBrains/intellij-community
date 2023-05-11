@@ -32,6 +32,6 @@ object CachedSingletonsRegistry {
   }
 
   fun cleanupCachedFields() {
-    registeredLazyValues.forEach(Consumer(SynchronizedClearableLazy<*>::drop))
+    registeredLazyValues.forEach { it.drop() } // hot path, do not use method reference
   }
 }

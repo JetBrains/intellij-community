@@ -840,7 +840,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     //addDispatcher(new UIMouseTracker(), null);
     abracadabraDaberBoreh()
     if (SystemProperties.getBooleanProperty("skip.move.resize.events", true)) {
-      postEventListeners.add(::skipMoveResizeEvents)
+      postEventListeners.add { skipMoveResizeEvents(it) } // hot path, do not use method reference
     }
   }
 
