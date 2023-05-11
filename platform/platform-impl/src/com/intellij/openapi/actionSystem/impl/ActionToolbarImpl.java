@@ -1889,7 +1889,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       accessibleContext.setAccessibleName(UIBundle.message("action.toolbar.accessible.group.name"));
     }
     else {
-      accessibleContext.setAccessibleName(null);
+      accessibleContext.setAccessibleName("");
     }
 
     return accessibleContext;
