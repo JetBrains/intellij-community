@@ -281,7 +281,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     configuration: TargetEnvironmentConfiguration
   ): List<Pair<String, TargetValue<String>?>> {
     val targetBuildArguments = ArrayList<Pair<String, TargetValue<String>?>>()
-    val iterator = parameters.arguments.iterator()
+    val iterator = parameters.arguments?.iterator() ?: return targetBuildArguments;
     while (iterator.hasNext()) {
       val arg = iterator.next()
       if (arg == INIT_SCRIPT_CMD_OPTION && iterator.hasNext()) {
