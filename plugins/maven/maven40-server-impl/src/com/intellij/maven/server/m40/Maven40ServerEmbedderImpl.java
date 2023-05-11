@@ -34,7 +34,6 @@ import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
-import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.session.scope.internal.SessionScope;
 import org.apache.maven.settings.Settings;
@@ -71,7 +70,6 @@ import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.intellij.maven.server.m40.utils.Maven40ModelConverter.convertRemoteRepositories;
@@ -91,10 +89,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   @NotNull private final RepositorySystem myRepositorySystem;
 
   @NotNull private final Maven40ImporterSpy myImporterSpy;
-
-  private final AtomicReference<ProjectDependenciesResolver> myDependenciesResolver = new AtomicReference<>();
-
-  private final AtomicReference<PluginDependenciesResolver> myPluginDependenciesResolver = new AtomicReference<>();
 
   @NotNull protected final MavenEmbedderSettings myEmbedderSettings;
 
@@ -366,19 +360,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       }
     }
     return null;
-  }
-
-  @NotNull
-  public ProjectDependenciesResolver getDependenciesResolver() {
-    ProjectDependenciesResolver dependenciesResolver = myDependenciesResolver.get();
-    if (dependenciesResolver != null) return dependenciesResolver;
-    return myDependenciesResolver.updateAndGet(value -> value == null ? createDependenciesResolver() : value);
-  }
-
-  // TODO: useCustomDependenciesResolver
-  @NotNull
-  protected ProjectDependenciesResolver createDependenciesResolver() {
-    return getComponent(ProjectDependenciesResolver.class);
   }
 
   @SuppressWarnings({"unchecked"})
@@ -666,7 +647,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       plugin.setVersion(mavenPluginId.getVersion());
       plugin.setDependencies(pluginDependencies);
 
-      PluginDependenciesResolver pluginDependenciesResolver = getPluginDependenciesResolver();
+      PluginDependenciesResolver pluginDependenciesResolver = getComponent(PluginDependenciesResolver.class);
 
       org.eclipse.aether.artifact.Artifact pluginArtifact =
         pluginDependenciesResolver.resolve(plugin, remoteRepos, session);
@@ -691,19 +672,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       MavenServerGlobals.getLogger().warn(e);
       return new PluginResolutionResponse(mavenPluginId, false, artifacts);
     }
-  }
-
-  @NotNull
-  private PluginDependenciesResolver getPluginDependenciesResolver() {
-    PluginDependenciesResolver dependenciesResolver = myPluginDependenciesResolver.get();
-    if (dependenciesResolver != null) return dependenciesResolver;
-    return myPluginDependenciesResolver.updateAndGet(value -> value == null ? createPluginDependenciesResolver() : value);
-  }
-
-  // TODO: useCustomDependenciesResolver
-  @NotNull
-  protected PluginDependenciesResolver createPluginDependenciesResolver() {
-    return getComponent(PluginDependenciesResolver.class);
   }
 
 
