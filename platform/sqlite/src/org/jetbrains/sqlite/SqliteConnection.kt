@@ -4,10 +4,11 @@
 package org.jetbrains.sqlite
 
 import org.intellij.lang.annotations.Language
-import org.jetbrains.sqlite.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
+
+private val COMMIT = "commit".encodeToByteArray()
 
 class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : AutoCloseable {
   @JvmField
@@ -19,16 +20,6 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
     get() = closed.get()
 
   private var currentBusyTimeout: Int
-  /**
-   * @return The busy timeout value for the connection.
-   * @see [http://www.sqlite.org/c3ref/busy_timeout.html](http://www.sqlite.org/c3ref/busy_timeout.html)
-   */
-  var busyTimeout: Int
-    get() = currentBusyTimeout
-    set(timeoutMillis) {
-      currentBusyTimeout = timeoutMillis
-      db.busy_timeout(timeoutMillis)
-    }
 
   init {
     file?.parent?.let { Files.createDirectories(it) }
@@ -56,26 +47,14 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
     }
   }
 
-  internal inline fun <T> withConnectionTimeout(queryTimeout: kotlin.time.Duration = kotlin.time.Duration.ZERO, callable: () -> T): T {
-    val queryTimeoutInMilliseconds = queryTimeout.inWholeMilliseconds.toInt()
-    if (queryTimeoutInMilliseconds <= 0) {
-      return callable()
-    }
-
-    val origBusyTimeout = busyTimeout
-    busyTimeout = queryTimeoutInMilliseconds
-    try {
-      return callable()
-    }
-    finally {
-      // reset connection timeout to the original value
-      busyTimeout = origBusyTimeout
-    }
-  }
-
   fun <T : Binder> prepareStatement(@Language("SQLite") sql: String, binder: T): SqlitePreparedStatement<T> {
     checkOpen()
-    return SqlitePreparedStatement(connection = this, sql = sql, binder = binder)
+    return SqlitePreparedStatement(connection = this, sql = sql.encodeToByteArray(), binder = binder)
+  }
+
+  fun <T : Binder> prepareStatement(sqlUtf8: ByteArray, binder: T): SqlitePreparedStatement<T> {
+    checkOpen()
+    return SqlitePreparedStatement(connection = this, sql = sqlUtf8, binder = binder)
   }
 
   //
@@ -119,7 +98,7 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
   //}
 
   fun selectBoolean(@Language("SQLite") sql: String, values: Any? = null): Boolean {
-    return executeLifecycle<Boolean>(sql, values) { statementPointer, isEmpty ->
+    return executeLifecycle<Boolean>(sql.encodeToByteArray(), values) { statementPointer, isEmpty ->
       if (isEmpty) {
         false
       }
@@ -131,16 +110,16 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
   }
 
   fun selectString(@Language("SQLite") sql: String, values: Any? = null): String? {
-    return executeLifecycle<String?>(sql, values) { statementPointer, empty ->
+    return executeLifecycle<String?>(sql.encodeToByteArray(), values) { statementPointer, empty ->
       if (empty) null else db.column_text(statementPointer, 0)
     }
   }
 
-  private inline fun <T> executeLifecycle(sql: String,
+  private inline fun <T> executeLifecycle(sql: ByteArray,
                                           values: Any? = null,
                                           executor: (statementPointer: Long, empty: Boolean) -> T): T {
     checkOpen()
-    val statementPointer = db.prepare_utf8(sql.encodeToByteArray())
+    val statementPointer = db.prepare_utf8(sql)
     try {
       synchronized(db) {
         bind(statementPointer = statementPointer, values = values)
@@ -153,7 +132,7 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
     }
   }
 
-  internal fun step(statementPointer: Long, sql: String): Boolean {
+  internal fun step(statementPointer: Long, sql: ByteArray): Boolean {
     return when (val status = db.step(statementPointer) and 0xFF) {
       SqliteCodes.SQLITE_DONE -> true
       SqliteCodes.SQLITE_ROW -> false
@@ -183,12 +162,12 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
 
   fun execute(@Language("SQLite") sql: String) {
     checkOpen()
-    db.exec(sql)
+    db.exec(sql.encodeToByteArray())
   }
 
   fun execute(@Language("SQLite") sql: String, values: Any) {
     checkOpen()
-    executeLifecycle<Unit>(sql, values) { _, _ -> }
+    executeLifecycle<Unit>(sql.encodeToByteArray(), values) { _, _ -> }
   }
 
   override fun close() {
@@ -207,12 +186,12 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
 
   fun commit() {
     checkOpen()
-    db.exec("commit")
+    db.exec(COMMIT)
   }
 
   fun rollback() {
     checkOpen()
-    db.exec("rollback")
+    db.exec("rollback".encodeToByteArray())
   }
 
   ///**

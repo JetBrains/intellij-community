@@ -1,0 +1,26 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("GradleCommandLineUtil")
+
+package org.jetbrains.plugins.gradle.service.execution
+
+import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask
+
+
+fun parseCommandLine(tasksAndArguments: List<String>, arguments: String?): GradleCommandLine {
+  val sortedArguments = GradleCommandLine.parse(arguments ?: "").tokens
+  return GradleCommandLine.parse(tasksAndArguments + sortedArguments)
+}
+
+fun parseCommandLine(tasksAndArguments: List<String>, arguments: List<String>): GradleCommandLine {
+  val sortedArguments = GradleCommandLine.parse(arguments).tokens
+  return GradleCommandLine.parse(tasksAndArguments + sortedArguments)
+}
+
+fun GradleCommandLineTask.getTestPatterns(): Set<String> {
+  return options
+    .filter { GradleConstants.TESTS_ARG_NAME == it.name }
+    .flatMap { it.values }
+    .toSet()
+}

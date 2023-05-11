@@ -10,10 +10,6 @@ interface KotlinMPPGradleModel : KotlinSourceSetContainer, Serializable {
     val targets: Collection<KotlinTarget>
     val extraFeatures: ExtraFeatures
     val kotlinNativeHome: String
-    val cacheAware: CompilerArgumentsCacheAware
-
-    @Deprecated(level = DeprecationLevel.WARNING, message = "Use KotlinMPPGradleModel#cacheAware instead")
-    val partialCacheAware: CompilerArgumentsCacheAware
 
     @Deprecated("Use 'sourceSetsByName' instead", ReplaceWith("sourceSetsByName"), DeprecationLevel.ERROR)
     val sourceSets: Map<String, KotlinSourceSet>
@@ -31,4 +27,3 @@ interface KotlinMPPGradleModel : KotlinSourceSetContainer, Serializable {
         const val NO_KOTLIN_NATIVE_HOME = ""
     }
 }
-

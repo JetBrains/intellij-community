@@ -2,14 +2,15 @@ package com.intellij.settingsSync
 
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
-import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.*
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.createFile
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
+import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -40,12 +41,14 @@ internal class GitSettingsLogTest {
 
   private lateinit var configDir: Path
   private lateinit var settingsSyncStorage: Path
+  private var jbaData: JBAccountInfoService.JBAData? = null
 
   @Before
   fun setUp() {
     val mainDir = tempDirManager.createDir()
     configDir = mainDir.resolve("rootconfig").createDirectories()
     settingsSyncStorage = configDir.resolve("settingsSync")
+    jbaData = null
   }
 
   @Test
@@ -365,8 +368,40 @@ internal class GitSettingsLogTest {
     assertMasterIsMergeOfIdeAndCloud()
   }
 
+  @Test
+  fun `use username from JBA`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+    (settingsSyncStorage / ".git" / "config").writeText("""
+[user]
+        name = Gawr Gura
+        email = just-email@non-existing.addr
+""".trimIndent())
+
+
+    val jbaEmail = "some-jba-email@jba-mail.com"
+    val jbaName = "JBA Name"
+
+    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, jbaEmail)
+
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "Editor Ide")
+        fileState("options/ide.general.xml", "General Ide")
+      }, "Local changes"
+    )
+    val headCommit = getRepository().headCommit()
+    val author = headCommit.authorIdent
+    val committer = headCommit.committerIdent
+    assertEquals(jbaEmail, author.emailAddress)
+    assertEquals(jbaEmail, committer.emailAddress)
+    assertEquals(jbaName, author.name)
+    assertEquals(jbaName, committer.name)
+  }
+
   private fun initializeGitSettingsLog(vararg filesToCopyInitially: Path): GitSettingsLog {
-    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
+    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable, { jbaData }) {
       val fileStates = collectFileStatesFromFiles(filesToCopyInitially.toSet(), configDir)
       SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), null), fileStates, plugins = null, emptyMap(), emptySet())
     }
@@ -377,9 +412,13 @@ internal class GitSettingsLogTest {
     return settingsLog
   }
 
-  private fun assertMasterIsMergeOfIdeAndCloud() {
+  private fun getRepository(): Repository {
     val dotGit = settingsSyncStorage.resolve(".git")
-    FileRepositoryBuilder.create(dotGit.toFile()).use { repository ->
+    return FileRepositoryBuilder.create(dotGit.toFile())
+  }
+
+  private fun assertMasterIsMergeOfIdeAndCloud() {
+    getRepository().use { repository ->
       val walk = RevWalk(repository)
       try {
         val commit: RevCommit = walk.parseCommit(repository.findRef("master").objectId)

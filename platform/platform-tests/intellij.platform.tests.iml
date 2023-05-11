@@ -75,5 +75,7 @@
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
     <orderEntry type="library" scope="TEST" name="HdrHistogram" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.testEntities" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Suites" level="project" />
   </component>
 </module>

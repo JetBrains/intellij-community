@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
@@ -95,12 +95,6 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       checkbox("ignoreConstructorMethodReferences", InspectionGadgetsBundle.message("ignore.constructor.method.references")),
       checkbox("ignoreGettersReturningResource", InspectionGadgetsBundle.message("ignore.getters.returning.resource"))
     );
-  }
-
-  @Override
-  public @NotNull OptionController getOptionController() {
-    return super.getOptionController()
-      .onPrefix("myMethodMatcher", myMethodMatcher.getOptionController());
   }
 
   @NotNull

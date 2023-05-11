@@ -9,8 +9,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
-import com.intellij.psi.stubs.StringStubIndexExtension
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analysis.decompiler.psi.text.ByDescriptorIndexer
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.fileClasses.JvmMultifileClassPartInfo
@@ -18,11 +19,13 @@ import org.jetbrains.kotlin.fileClasses.fileClassInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.*
+import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.receiverAndParametersShortTypesMatch
+import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.sameReceiverPresenceAndParametersCount
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -30,9 +33,17 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.debugText.getDebugText
-import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
+
+@ApiStatus.Internal
+class Fe10LibrarySourceScopeService: LibrarySourceScopeService {
+    override fun targetClassFilesToSourcesScopes(virtualFile: VirtualFile, project: Project): List<GlobalSearchScope> =
+        SourceNavigationHelper.targetClassFilesToSourcesScopes(virtualFile, project)
+
+}
 
 object SourceNavigationHelper {
     private val LOG = Logger.getInstance(SourceNavigationHelper::class.java)
@@ -89,7 +100,7 @@ object SourceNavigationHelper {
                         return ModuleInfoProvider.getInstance(project)
                             .collectLibraryBinariesModuleInfos(psiClass.containingFile.virtualFile)
                             .map { it.binariesScope }
-                            .toList()
+                            .toSet()
                             .union()
                     }
                 }
@@ -217,10 +228,8 @@ object SourceNavigationHelper {
             ProgressManager.checkCanceled()
 
             val candidateDescriptor = candidate.resolveToDescriptorIfAny() as? CallableDescriptor ?: continue
-            if (receiversMatch(declaration, candidateDescriptor)
-                && valueParametersTypesMatch(declaration, candidateDescriptor)
-                && typeParametersMatch(declaration as KtTypeParameterListOwner, candidateDescriptor.typeParameters)
-            ) {
+            if (declaration is KtCallableDeclaration &&
+                ByDescriptorIndexer.isSameCallable(declaration, candidateDescriptor)) {
                 return candidate
             }
         }

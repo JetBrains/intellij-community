@@ -9,12 +9,14 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
+import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.getNamesInPackage
 import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.idea.vfilefinder.KotlinModuleMappingIndex
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -53,9 +55,16 @@ private class IdeKotlinDeclarationProvider(
     }
 
     override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? {
-        return firstMatchingOrNull(KotlinFullClassNameIndex.indexKey, key = classId.asStringForIndexes()) { candidate ->
+        val classOrObject = firstMatchingOrNull(KotlinFullClassNameIndex.indexKey, key = classId.asStringForIndexes()) { candidate ->
             candidate.getClassId() == classId
-        } ?: getTypeAliasByClassId(classId)
+        }
+        val typeAlias = getTypeAliasByClassId(classId)
+        if (classOrObject != null && typeAlias != null) {
+            if (scope.compare(classOrObject.containingFile.virtualFile, typeAlias.containingFile.virtualFile) < 0) {
+                return typeAlias
+            }
+        }
+        return classOrObject ?: typeAlias
     }
 
     override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> =
@@ -81,6 +90,13 @@ private class IdeKotlinDeclarationProvider(
         return KotlinFileFacadeClassByPackageIndex[packageFqName.asString(), project, scope]
     }
 
+    /**
+     * [org.jetbrains.kotlin.idea.caches.resolve.IDEPackagePartProvider.computePackageSetWithNonClassDeclarations]
+     */
+    override fun computePackageSetWithTopLevelCallableDeclarations(): Set<String> = buildSet {
+        FileBasedIndex.getInstance().processAllKeys(KotlinModuleMappingIndex.NAME, { name -> add(name); true }, scope, null)
+    }
+
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
         //TODO original LC has platformSourcesFirst()
         return KotlinFileFacadeFqNameIndex[facadeFqName.asString(), project, scope]
@@ -88,6 +104,10 @@ private class IdeKotlinDeclarationProvider(
 
     override fun findInternalFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
         return KotlinMultiFileClassPartIndex[facadeFqName.asString(), project, scope]
+    }
+
+    override fun findFilesForScript(scriptFqName: FqName): Collection<KtScript> {
+        return KotlinScriptFqnIndex[scriptFqName.asString(), project, scope]
     }
 
     private fun getTypeAliasByClassId(classId: ClassId): KtTypeAlias? {

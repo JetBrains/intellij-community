@@ -23,7 +23,7 @@ import java.util.function.Function
  * Provides utilities for integration of [CompletableFuture]s
  * with platform concurrency API, e.g. EDT, Read/Write actions, progress manager, etc.
  *
- * For each method there is an idiomatic overload for Java.
+ * For each method, there is an idiomatic overload for Java.
  *
  * @see "com.intellij.collaboration.async.CompletableFutureUtil"
  */
@@ -43,7 +43,7 @@ object Futures {
    */
   @JvmStatic
   @JvmOverloads
-  fun inEdt(modalityState: ModalityState? = null) = Executor { runnable -> runInEdt(modalityState) { runnable.run() } }
+  fun inEdt(modalityState: ModalityState? = null): Executor = Executor { runnable -> runInEdt(modalityState) { runnable.run() } }
 
   /**
    * Is used to specify that the action should be executed on the EDT inside write action.
@@ -57,7 +57,7 @@ object Futures {
    */
   @JvmStatic
   @JvmOverloads
-  fun inWriteAction(modalityState: ModalityState? = null) = Executor { runnable ->
+  fun inWriteAction(modalityState: ModalityState? = null): Executor = Executor { runnable ->
     runInEdt(modalityState) {
       ApplicationManager.getApplication().runWriteAction(runnable)
     }
@@ -79,18 +79,6 @@ object Futures {
            || error is CancellationException
            || error is InterruptedException
            || error.cause?.let(::isCancellation) ?: false
-  }
-
-  /**
-   * Extract actual exception from the one returned by completable future
-   */
-  @JvmStatic
-  fun extractError(error: Throwable): Throwable {
-    return when (error) {
-      is CompletionException -> extractError(error.cause!!)
-      is ExecutionException  -> extractError(error.cause!!)
-      else                   -> error
-    }
   }
 
   /**
@@ -145,40 +133,6 @@ object Futures {
   //region CompletableFuture integration with platform progress
 
   /**
-   * Runs given [action] inside the [Task.Modal] and returns its result as [CompletableFuture]
-   */
-  @JvmStatic
-  @JvmOverloads
-  fun <T> runModalProgress(
-    project: Project,
-    @NlsContexts.DialogTitle title: String,
-    canBeCancelled: Boolean = true,
-    onCancel: Runnable? = null,
-    action: Function<in ProgressIndicator, out T>
-  ): CompletableFuture<T> {
-    val future = CompletableFuture<T>()
-    ApplicationManager.getApplication().executeOnPooledThread {
-      ProgressManager.getInstance().run(object : Task.Modal(project, title, canBeCancelled) {
-        var value: Result<T>? = null
-
-        override fun run(indicator: ProgressIndicator) {
-          try {
-            value = Result.success(action.apply(indicator))
-          }
-          catch (t: Throwable) {
-            value = Result.failure(t)
-          }
-        }
-
-        override fun onCancel(): Unit = onCancel?.run() ?: Unit
-        override fun onSuccess() = future.waitForProgressBarCloseAndComplete(value!!.getOrThrow())
-        override fun onThrowable(error: Throwable) = future.waitForProgressBarCloseAndCompleteExceptionally(error)
-      })
-    }
-    return future
-  }
-
-  /**
    * Runs given [action] inside the [Task.Backgroundable] and returns its result as [CompletableFuture]
    */
   @JvmStatic
@@ -228,6 +182,24 @@ object Futures {
     action: Function<in ProgressIndicator, out CompletableFuture<T>>
   ): CompletableFuture<T> {
     val future = CompletableFuture<T>()
+    runAsyncProgressInBackground(future, project, title, canBeCancelled, performInBackgroundOption, onCancel, action)
+    return future
+  }
+
+  /**
+   * Runs given asynchronous [action] and waits for its result inside the [Task.Backgroundable]
+   */
+  @JvmStatic
+  @JvmOverloads
+  fun <T> runAsyncProgressInBackground(
+    future: CompletableFuture<T>,
+    project: Project,
+    title: @NlsContexts.ProgressTitle String,
+    canBeCancelled: Boolean = true,
+    performInBackgroundOption: PerformInBackgroundOption? = null,
+    onCancel: Runnable? = null,
+    action: Function<in ProgressIndicator, out CompletableFuture<T>>
+  ) {
     ApplicationManager.getApplication().executeOnPooledThread {
       ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, canBeCancelled, performInBackgroundOption) {
         var value: Result<T>? = null
@@ -248,11 +220,10 @@ object Futures {
         override fun onThrowable(error: Throwable) = future.waitForProgressBarCloseAndCompleteExceptionally(error)
       })
     }
-    return future
   }
 
   /**
-   * We need to wait until progress bar will be hidden
+   * We need to wait until the progress bar will be hidden
    * what is periodically done by InfoAndProgressPanel#myUpdateQueue every 50ms
    */
   private fun <T> CompletableFuture<T>.waitForProgressBarCloseAndComplete(value: T) {
@@ -323,54 +294,6 @@ object Futures {
 
   inline fun <T> CompletableFuture<T>.thenRunAsync(executor: Executor, crossinline action: () -> Unit): CompletableFuture<Void> {
     return thenRunAsync(Runnable { action() }, executor)
-  }
-
-  inline fun <T, U, V> CompletableFuture<T>.thenCombineAsync(
-    executor: Executor,
-    other: CompletionStage<out U>,
-    crossinline fn: (T, U) -> V
-  ): CompletableFuture<V> {
-    return thenCombineAsync(other, BiFunction { a, b -> fn(a, b) }, executor)
-  }
-
-  inline fun <T, U> CompletableFuture<T>.thenAcceptBothAsync(
-    executor: Executor,
-    other: CompletionStage<out U>,
-    crossinline action: (T, U) -> U
-  ): CompletableFuture<Void> {
-    return thenAcceptBothAsync(other, BiConsumer { a, b -> action(a, b) }, executor)
-  }
-
-  inline fun <T> CompletableFuture<T>.runAfterBothAsync(
-    executor: Executor,
-    other: CompletionStage<*>,
-    crossinline action: () -> Unit
-  ): CompletableFuture<Void> {
-    return runAfterBothAsync(other, Runnable { action() }, executor)
-  }
-
-  inline fun <T, U> CompletableFuture<T>.applyToEitherAsync(
-    executor: Executor,
-    other: CompletionStage<out T>,
-    crossinline fn: (T) -> U
-  ): CompletableFuture<U> {
-    return applyToEitherAsync(other, Function { fn(it) }, executor)
-  }
-
-  inline fun <T> CompletableFuture<T>.acceptEitherAsync(
-    executor: Executor,
-    other: CompletionStage<out T>,
-    crossinline action: (T) -> Unit
-  ): CompletableFuture<Void> {
-    return acceptEitherAsync(other, Consumer { action(it) }, executor)
-  }
-
-  inline fun <T> CompletableFuture<T>.runAfterEitherAsync(
-    executor: Executor,
-    other: CompletionStage<*>,
-    crossinline action: () -> Unit
-  ): CompletableFuture<Void> {
-    return runAfterEitherAsync(other, Runnable { action() }, executor)
   }
 
   inline fun <T, U> CompletableFuture<T>.thenComposeAsync(

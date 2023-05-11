@@ -23,6 +23,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
   var abbreviatePackageNames = ProjectViewSettings.Immutable.DEFAULT.isAbbreviatePackageNames
   var autoscrollFromSource = false
   var autoscrollToSource = UISettings.getInstance().state.defaultAutoScrollToSource
+  var openDirectoriesWithSingleClick = false
   var compactDirectories = ProjectViewSettings.Immutable.DEFAULT.isCompactDirectories
   var flattenModules = ProjectViewSettings.Immutable.DEFAULT.isFlattenModules
   var flattenPackages = ProjectViewSettings.Immutable.DEFAULT.isFlattenPackages
@@ -46,6 +47,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
     abbreviatePackageNames = ProjectViewSharedSettings.instance.abbreviatePackages
     autoscrollFromSource = ProjectViewSharedSettings.instance.autoscrollFromSource
     autoscrollToSource = ProjectViewSharedSettings.instance.autoscrollToSource
+    openDirectoriesWithSingleClick = ProjectViewSharedSettings.instance.openDirectoriesWithSingleClick
     compactDirectories = ProjectViewSharedSettings.instance.compactDirectories
     flattenModules = ProjectViewSharedSettings.instance.flattenModules
     flattenPackages = ProjectViewSharedSettings.instance.flattenPackages

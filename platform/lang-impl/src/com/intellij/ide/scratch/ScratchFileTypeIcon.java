@@ -3,8 +3,8 @@ package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.IconReplacer;
-import com.intellij.ui.IconWithOverlay;
+import com.intellij.ui.icons.IconReplacer;
+import com.intellij.ui.icons.IconWithOverlay;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +15,7 @@ import java.awt.geom.Ellipse2D;
 /**
  * @author Konstantin Bulenkov
  */
-public class ScratchFileTypeIcon extends IconWithOverlay {
+public final class ScratchFileTypeIcon extends IconWithOverlay {
   public ScratchFileTypeIcon(Icon fileTypeIcon) {
     this(fileTypeIcon, AllIcons.Actions.Scratch);
   }
@@ -37,9 +37,8 @@ public class ScratchFileTypeIcon extends IconWithOverlay {
     return null;
   }
 
-  @NotNull
   @Override
-  public ScratchFileTypeIcon replaceBy(@NotNull IconReplacer replacer) {
+  public @NotNull ScratchFileTypeIcon replaceBy(@NotNull IconReplacer replacer) {
     return new ScratchFileTypeIcon(replacer.replaceIcon(getIcon(0)), replacer.replaceIcon(getIcon(1)));
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.ThreadDumper;
@@ -240,20 +241,20 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   @Override
   public final @NotNull List<T> getExtensionList() {
     List<T> result = cachedExtensions;
-    return result == null ? computeExtensionList() : result;
-  }
-
-  private synchronized @NotNull List<T> computeExtensionList() {
-    List<T> result = cachedExtensions;
     if (result == null) {
-      T[] array = processAdapters();
-      cachedExtensionsAsArray = array;
-      result = array.length == 0 ? Collections.emptyList() : ContainerUtil.immutableList(array);
-      cachedExtensions = result;
+      synchronized (this) {
+        result = cachedExtensions;
+        if (result == null) {
+          T[] array = processAdapters();
+          cachedExtensionsAsArray = array;
+          cachedExtensions = result = array.length == 0 ? Collections.emptyList() : ContainerUtil.immutableList(array);
+        }
+      }
     }
     return result;
   }
 
+  @ReviseWhenPortedToJDK(value="21?", description = "Remove .clone() when 'Frozen Arrays' JEP is implemented, see https://bugs.openjdk.org/browse/JDK-8261007")
   @Override
   public final T @NotNull [] getExtensions() {
     T[] array = cachedExtensionsAsArray;
@@ -276,7 +277,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
    * Use only for interface extension points, not for bean.
    * <p>
    * Due to internal reasons, there is no easy way to implement hasNext in a reliable manner,
-   * so, `next` may return `null` (in this case stop iteration).
+   * so, `next` may return `null` (in this case, stop iteration).
    */
   @Override
   @ApiStatus.Experimental
@@ -287,7 +288,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
 
   public final void processWithPluginDescriptor(boolean shouldBeSorted, @NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
     if (isInReadOnlyMode()) {
-      for (T extension : cachedExtensions) {
+      for (T extension : cachedExtensionsAsArray) {
         consumer.accept(extension, pluginDescriptor /* doesn't matter for tests */);
       }
       return;
@@ -303,7 +304,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
 
   public final void processImplementations(boolean shouldBeSorted, @NotNull BiConsumer<? super Supplier<? extends @Nullable T>, ? super PluginDescriptor> consumer) {
     if (isInReadOnlyMode()) {
-      for (T extension : cachedExtensions) {
+      for (T extension : cachedExtensionsAsArray) {
         consumer.accept((Supplier<T>)() -> extension, pluginDescriptor /* doesn't matter for tests */);
       }
       return;
@@ -322,7 +323,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     }
   }
 
-  // null id means that instance was created and extension element cleared
+  // null id means that instance was created and an extension element cleared
   public final void processIdentifiableImplementations(@NotNull BiConsumer<? super @NotNull Supplier<? extends @Nullable T>, ? super @Nullable String> consumer) {
     // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
     for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
@@ -368,14 +369,14 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
 
   @Override
   public final @NotNull Stream<T> extensions() {
-    List<T> result = cachedExtensions;
-    return result == null ? StreamSupport.stream(spliterator(), false) : result.stream();
+    T[] result = cachedExtensionsAsArray;
+    return result == null ? StreamSupport.stream(spliterator(), false) : Arrays.stream(result);
   }
 
   @Override
   public final int size() {
-    List<T> cache = cachedExtensions;
-    return cache == null ? adapters.size() : cache.size();
+    T[] cache = cachedExtensionsAsArray;
+    return cache == null ? adapters.size() : cache.length;
   }
 
   public final @NotNull List<ExtensionComponentAdapter> getSortedAdapters() {
@@ -542,9 +543,10 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     List<ExtensionComponentAdapter> oldAdapters = adapters;
     boolean oldAdaptersAreSorted = adaptersAreSorted;
 
-    cachedExtensions = ContainerUtil.immutableList(newList);
     //noinspection unchecked
-    cachedExtensionsAsArray = newList.toArray((T[])Array.newInstance(getExtensionClass(), 0));
+    T[] newArray = newList.toArray((T[])Array.newInstance(getExtensionClass(), 0));
+    cachedExtensionsAsArray = newArray;
+    cachedExtensions = ContainerUtil.immutableList(newArray);
     adapters = ContainerUtil.map(newList, it -> new ObjectComponentAdapter<>(it, pluginDescriptor, LoadingOrder.ANY));
     adaptersAreSorted = true;
 
@@ -838,7 +840,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   public final synchronized void reset() {
     List<ExtensionComponentAdapter> adapters = this.adapters;
     this.adapters = Collections.emptyList();
-    // clear cache before notify listeners to ensure that listeners don't get outdated data
+    // clear cache before notifying listeners to ensure that listeners don't get outdated data
     clearCache();
     if (!adapters.isEmpty() && listeners.length > 0) {
       notifyListeners(true, adapters, listeners);
@@ -906,7 +908,6 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
 
   /**
    * {@link #clearCache} is not called.
-   *
    * myAdapters is modified directly without copying - method must be called only during start-up.
    */
   public final synchronized void registerExtensions(@NotNull List<ExtensionDescriptor> extensionElements,
@@ -978,10 +979,10 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
       }
     }
 
-    List<T> extensionsCache = cachedExtensions;
+    T[] extensionsCache = cachedExtensionsAsArray;
     if (extensionsCache == null) {
       for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
-        // findExtension is called for a lot of extension point - do not fail if listeners were added (e.g., FacetTypeRegistryImpl)
+        // findExtension is called for a lot of extension points - do not fail if listeners were added (e.g., FacetTypeRegistryImpl)
         try {
           if (aClass.isAssignableFrom(adapter.getImplementationClass(componentManager))) {
             //noinspection unchecked
@@ -1004,7 +1005,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
 
     if (isRequired) {
       @NonNls String message = "cannot find extension implementation " + aClass + "(epName=" + getName() + ", extensionCount=" + size();
-      List<T> cache = cachedExtensions;
+      T[] cache = cachedExtensionsAsArray;
       if (cache != null) {
         message += ", cachedExtensions";
       }
@@ -1018,7 +1019,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   }
 
   public final <V> @NotNull List<@NotNull T> findExtensions(@NotNull Class<V> aClass) {
-    List<T> extensionsCache = cachedExtensions;
+    T[] extensionsCache = cachedExtensionsAsArray;
     if (extensionsCache == null) {
       List<T> suitableInstances = new ArrayList<>();
       for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
@@ -1043,7 +1044,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   }
 
   private @Nullable T findExtensionByExactClass(@NotNull Class<? extends T> aClass) {
-    List<T> cachedExtensions = this.cachedExtensions;
+    T[] cachedExtensions = this.cachedExtensionsAsArray;
     if (cachedExtensions == null) {
       for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
         Object classOrName = adapter.implementationClassOrName;

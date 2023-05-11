@@ -14,8 +14,8 @@ import java.util.Collection;
 
 public final class ExecutionSearchScopes {
   public static @NotNull GlobalSearchScope executionScope(@NotNull Project project, @Nullable RunProfile runProfile) {
-    return new DelegatingGlobalSearchScope() {
-      private NotNullLazyValue<GlobalSearchScope> myLazyValue = NotNullLazyValue.lazy(() -> {
+    return new DelegatingGlobalSearchScope(project) {
+      private final NotNullLazyValue<GlobalSearchScope> myLazyValue = NotNullLazyValue.lazy(() -> {
         if (runProfile instanceof SearchScopeProvidingRunProfile) {
           GlobalSearchScope scope = ((SearchScopeProvidingRunProfile)runProfile).getSearchScope();
           if (scope != null) return scope;
@@ -33,7 +33,7 @@ public final class ExecutionSearchScopes {
     if (modules.isEmpty()) {
       return null;
     }
-    return GlobalSearchScope.union(ContainerUtil.map2List(modules, module -> {
+    return GlobalSearchScope.union(ContainerUtil.map(modules, module -> {
       return GlobalSearchScope.moduleRuntimeScope(module, true);
     }));
   }

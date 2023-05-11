@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.utils.codeVision
 
 import com.intellij.codeInsight.codeVision.CodeVisionHost
@@ -13,6 +13,10 @@ import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 
 abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
+  companion object {
+    const val AUTHOR_HINT = "John Smith +2"
+  }
+
   protected open val onlyCodeVisionHintsAllowed: Boolean
     get() = false
 
@@ -20,16 +24,31 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
   override fun setUp() {
     Registry.get("editor.codeVision.new").setValue(true, testRootDisposable)
     TestModeFlags.set(CodeVisionHost.isCodeVisionTestKey, true, testRootDisposable)
-    CodeVisionHost.isCodeVisionTestKey
     super.setUp()
   }
 
-  protected fun testProviders(expectedText: String, fileName: String, vararg enabledProviderIds: String) {
+  override fun tearDown() {
+    try {
+      val settings = CodeVisionSettings.instance()
+      val codeVisionHost = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
+      codeVisionHost.providers.forEach {
+        settings.setProviderEnabled(it.groupId, true)
+      }
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
+  }
+
+  protected fun testProviders(expectedText: String, fileName: String, vararg enabledProviderGroupIds: String) {
     // set enabled providers
     val settings = CodeVisionSettings.instance()
     val codeVisionHost = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
-    codeVisionHost.providers.forEach {
-      settings.setProviderEnabled(it.id, enabledProviderIds.contains(it.id))
+    codeVisionHost.providers.map { it.groupId }.toSet().forEach {
+      settings.setProviderEnabled(it, enabledProviderGroupIds.contains(it))
     }
 
     val sourceText = InlayDumpUtil.removeHints(expectedText)
@@ -38,7 +57,7 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
     val editor = myFixture.editor
     project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
     codeVisionHost.providers.forEach {
-      if (it.id == "vcs.code.vision" && enabledProviderIds.contains(it.id)) {
+      if (it.id == "vcs.code.vision" && enabledProviderGroupIds.contains(it.groupId)) {
         it.preparePreview(myFixture.editor, myFixture.file)
       }
     }

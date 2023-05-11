@@ -11,3 +11,4 @@ class Test {
 fun test() {
     a.Test.Companion.S<caret>
 }
+// AUTOCOMPLETE_SETTING: true

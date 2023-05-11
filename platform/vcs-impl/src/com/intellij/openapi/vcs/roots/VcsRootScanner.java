@@ -37,7 +37,7 @@ import java.util.regex.PatternSyntaxException;
 import static com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.*;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class VcsRootScanner implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsRootScanner.class);
 
@@ -194,7 +194,7 @@ public final class VcsRootScanner implements Disposable {
   static final class TrustListener implements TrustedProjectsListener {
     @Override
     public void onProjectTrusted(@NotNull Project project) {
-      getInstance(project).scheduleScan();
+      ProjectLevelVcsManager.getInstance(project).runAfterInitialization(() -> getInstance(project).scheduleScan());
     }
   }
 }

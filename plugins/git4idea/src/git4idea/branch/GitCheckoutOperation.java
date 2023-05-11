@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
@@ -18,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitProtectedBranchesKt;
 import git4idea.changes.GitChangeUtils;
@@ -40,8 +40,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
+import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static git4idea.GitBranchesUsageCollector.*;
 import static git4idea.GitNotificationIdsHolder.CHECKOUT_ROLLBACK_ERROR;
@@ -88,7 +89,7 @@ class GitCheckoutOperation extends GitBranchOperation {
 
   @Override
   protected void execute() {
-    runWithSpan(TraceManager.INSTANCE.getTracer("vcs"), "checkout", (span) -> {
+    runWithSpan(TelemetryTracer.getInstance().getTracer(VcsScope), "checkout", (span) -> {
       StructuredIdeActivity checkoutActivity = CHECKOUT_ACTIVITY.started(myProject, () -> List.of(
         IS_BRANCH_PROTECTED.with(isBranchProtected()),
         IS_NEW_BRANCH.with(myNewBranch != null)

@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.experimental.ExperimentalUiCollector;
 import com.intellij.idea.AppMode;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -20,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.jcef.JBCefApp;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -56,6 +59,13 @@ public class WhatsNewAction extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent e) {
     var whatsNewUrl = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
     if (whatsNewUrl == null) throw new IllegalStateException();
+
+    if (ApplicationManager.getApplication().isInternal() && (e.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {
+      var title = IdeBundle.message("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName());
+      var prompt = IdeBundle.message("browser.url.popup");
+      whatsNewUrl = Messages.showInputDialog(e.getProject(), prompt, title, null, whatsNewUrl, null);
+      if (whatsNewUrl == null) return;
+    }
 
     var project = e.getProject();
     if (project != null && JBCefApp.isSupported()) {
@@ -88,6 +98,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
         if (ENABLE_NEW_UI_REQUEST.equals(jsRequest)) {
           if (!ExperimentalUI.isNewUI()) {
             ApplicationManager.getApplication().invokeLater(() -> {
+              ExperimentalUiCollector.logSwitchUi(ExperimentalUiCollector.SwitchSource.WHATS_NEW_PAGE, true);
               ExperimentalUI.setNewUI(true);
               UISettings.getInstance().fireUISettingsChanged();
             });
@@ -101,6 +112,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     }
   }
 
+  @ApiStatus.Internal
   public static void openWhatsNewPage(@NotNull Project project, @NotNull String url, @Nullable HTMLEditorProvider.JsQueryHandler queryHandler) {
     if (!JBCefApp.isSupported()) {
       throw new IllegalStateException("JCEF is not supported on this system");
@@ -110,13 +122,12 @@ public class WhatsNewAction extends AnAction implements DumbAware {
 
     var parameters = new HashMap<String, String>();
     parameters.put("var", "embed");
-    if (darkTheme) {
-      parameters.put("theme", "dark");
+    var theme = darkTheme ? "dark" : "light";
+    if (ExperimentalUI.isNewUI()) {
+      theme += "-new-ui";
     }
-    var locale = Locale.getDefault();
-    if (locale != null) {
-      parameters.put("lang", locale.toLanguageTag().toLowerCase(Locale.ENGLISH));
-    }
+    parameters.put("theme", theme);
+    parameters.put("lang", Locale.getDefault().toLanguageTag().toLowerCase(Locale.ENGLISH));
     var request = HTMLEditorProvider.Request.url(Urls.newFromEncoded(url).addParameters(parameters).toExternalForm());
 
     try (var stream = WhatsNewAction.class.getResourceAsStream("whatsNewTimeoutText.html")) {

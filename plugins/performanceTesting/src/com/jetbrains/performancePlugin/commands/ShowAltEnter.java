@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
-import com.intellij.diagnostic.telemetry.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -27,6 +27,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Command invokes alt+enter combination.
+ * Simulate invocation of alt+enter and pressing item in the list defined by parameter.
+ * Optional: it is possible to only open pop up and check if item from pa is presented in list.
+ * <p>
+ * Syntax: %altEnter <item in list>(Optional)|<invoke>
+ * Example: %altEnter Find cause|true
+ */
 public final class ShowAltEnter extends AbstractCommand implements Disposable {
   public static final String PREFIX = CMD_PREFIX + "altEnter";
   public static final String SPAN_NAME = "showQuickFixes";
@@ -62,8 +70,11 @@ public final class ShowAltEnter extends AbstractCommand implements Disposable {
               Optional<HighlightInfo.IntentionActionDescriptor>
                 singleIntention = combined.stream().filter(s -> s.getAction().getText().startsWith(actionName)).findFirst();
               if (singleIntention.isEmpty()) actionCallback.reject(actionName + " is not found among " + combined);
-              if (invoke) singleIntention
-                .ifPresent(c -> ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, c.getAction(), c.getAction().getText()));
+              if (invoke) {
+                singleIntention
+                  .ifPresent(
+                    c -> ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, c.getAction(), c.getAction().getText()));
+              }
             }
             if (!invoke || actionName.isEmpty()) {
               CachedIntentions cachedIntentions = CachedIntentions.create(project, psiFile, editor, intentions);

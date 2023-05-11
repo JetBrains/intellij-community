@@ -5,7 +5,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
@@ -75,6 +75,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -87,6 +88,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
 import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
@@ -96,7 +98,6 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.is
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static java.util.Arrays.asList;
 import static org.jetbrains.concurrency.Promises.cancelledPromise;
-import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 @State(
   name = "ChangesViewManager",
@@ -106,7 +107,7 @@ public class ChangesViewManager implements ChangesViewEx,
                                            PersistentStateComponent<ChangesViewManager.State>,
                                            Disposable {
 
-  private static final Tracer TRACER = TraceManager.INSTANCE.getTracer("vcs");
+  private static final Tracer TRACER = TelemetryTracer.getInstance().getTracer(VcsScopeKt.VcsScope);
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final Project myProject;
@@ -372,7 +373,7 @@ public class ChangesViewManager implements ChangesViewEx,
     @Nullable private ChangesViewCommitPanel myCommitPanel;
     @Nullable private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
 
-    private final BackgroundRefresher<Runnable> myBackgroundRefresher =
+    private final BackgroundRefresher<@Nullable Runnable> myBackgroundRefresher =
       new BackgroundRefresher<>(getClass().getSimpleName() + " refresh", this);
 
     private boolean myModelUpdateInProgress;
@@ -752,7 +753,7 @@ public class ChangesViewManager implements ChangesViewEx,
       return myBackgroundRefresher.requestRefresh(delayMillis, this::refreshView)
         .thenAsync(callback -> callback != null
                                ? AppUIExecutor.onUiThread(modalityState).submit(callback)
-                               : rejectedPromise("no callback"))
+                               : Promises.rejectedPromise(Promises.createError("ChangesViewManager is not available", false)))
         .onProcessed(__ -> setBusy(false));
     }
 
@@ -971,17 +972,19 @@ public class ChangesViewManager implements ChangesViewEx,
         OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), false);
         return true;
       });
+
+      new HoverChangesTree(this) {
+        @Override
+        public @Nullable HoverIcon getHoverIcon(@NotNull ChangesBrowserNode<?> node) {
+          return ChangesViewNodeAction.EP_NAME.computeSafeIfAny(myProject, (it) -> it.createNodeHoverIcon(node));
+        }
+      }.install();
     }
 
     @Override
     protected @NotNull ChangesGroupingSupport installGroupingSupport() {
       // can't install support here - 'rebuildTree' is not defined
       return new ChangesGroupingSupport(myProject, this, true);
-    }
-
-    @Override
-    public @Nullable HoverIcon getHoverIcon(@NotNull ChangesBrowserNode<?> node) {
-      return ChangesViewNodeAction.EP_NAME.computeSafeIfAny(myProject, (it) -> it.createNodeHoverIcon(node));
     }
 
     private static class MyTreeExpander extends DefaultTreeExpander {

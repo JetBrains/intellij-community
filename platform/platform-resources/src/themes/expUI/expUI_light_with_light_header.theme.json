@@ -1,0 +1,107 @@
+{
+  "name": "Light with Light Header",
+  "dark": false,
+  "author": "JetBrains",
+  "parentTheme": "Light",
+
+  "ui": {
+    "CodeWithMe.MainToolbar.NoConnectionLabelForeground": "Grey7",
+
+    "MainMenu": {
+      "background": "Grey13",
+      "foreground": "Grey1",
+      "selectionForeground": "Grey1",
+      "selectionBackground": "Blue11"
+    },
+
+    "MainWindow.Tab" : {
+      "selectedForeground": "Grey1",
+      "selectedBackground": "Grey13",
+      "selectedInactiveBackground": "Grey12",
+      "foreground": "Grey5",
+      "background": "Grey12",
+      "hoverForeground": "Grey1",
+      "hoverBackground": "Grey11",
+      "separatorColor": "Grey10",
+      "borderColor": "Grey13"
+    },
+
+    "MainToolbar": {
+      "background": "Grey13",
+      "foreground": "Grey1",
+      "inactiveBackground": "Grey12",
+      "separatorColor": "Grey11",
+      "Icon": {
+        "background": "Grey13",
+        "hoverBackground": "Grey12",
+        "pressedBackground": "Grey11"
+      },
+      "Dropdown": {
+        "foreground": "Grey1",
+        "background": "Grey13",
+        "hoverBackground": "Grey12",
+        "pressedBackground": "Grey11"
+      }
+    },
+
+    "MenuBar.borderColor": "Grey12",
+
+    "Notification": {
+      "background": "Grey14",
+      "borderColor": "Grey11",
+      "foreground": "Grey1",
+      "linkForeground": "Blue2",
+      "Button": {
+        "background": "Grey14",
+        "borderColor": "Grey9",
+        "foreground": "Grey1"
+      },
+      "MoreButton": {
+        "background": "Grey13",
+        "innerBorderColor": "Grey13",
+        "foreground": "Grey6"
+      }
+    },
+
+    "RunWidget" : {
+      "foreground": "Grey1",
+      "runningBackground": "Green5",
+      "stopBackground": "Red5",
+      "hoverBackground": "#00000022",
+      "pressedBackground": "#00000028",
+      "iconColor": "Grey6",
+      "runIconColor": "Green5",
+      "runningIconColor": "Grey14"
+    },
+
+    "ToolTip":{
+      "background": "Grey14",
+      "foreground": "Grey1",
+      "infoForeground": "Grey5",
+      "shortcutForeground": "Grey7",
+      "linkForeground": "Blue2",
+      "borderColor": "Grey11"
+    },
+
+    "GotItTooltip": {
+      "background": "Grey14",
+      "borderColor": "Grey11",
+      "foreground": "Grey3",
+      "stepForeground": "Grey7",
+      "Header.foreground": "Grey1",
+      "shortcutForeground": "Grey1",
+      "shortcutBackground": "Grey11",
+      "codeForeground": "Grey1",
+      "codeBackground": "Grey14",
+      "codeBorderColor": "Grey8",
+      "linkForeground": "Blue2",
+      "Button": {
+        "foreground": "Grey3",
+        "startBackground": "Grey11",
+        "endBackground": "Grey11",
+        "startBorderColor": "Grey11",
+        "endBorderColor": "Grey11"
+      }
+    }
+  }
+}

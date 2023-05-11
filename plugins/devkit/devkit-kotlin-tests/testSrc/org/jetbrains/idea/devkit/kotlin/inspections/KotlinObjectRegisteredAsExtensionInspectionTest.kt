@@ -11,12 +11,6 @@ internal class KotlinObjectRegisteredAsExtensionInspectionTest : KotlinObjectExt
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "/inspections/registrationProblems/code/extensions"
 
-  override fun setUp() {
-    super.setUp()
-    myFixture.addClass("package com.intellij.openapi.editor; public interface Editor {}")
-    myFixture.addClass("package com.intellij.openapi.util; public class UserDataHolderBase {}")
-  }
-
   fun testSingletonObjectsRegisteredAsExtension() {
     myFixture.testHighlighting("SingletonObjects.kt",
                                "singletonObjectExtensions.xml")

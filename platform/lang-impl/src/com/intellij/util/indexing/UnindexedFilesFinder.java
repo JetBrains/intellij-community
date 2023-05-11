@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ReadAction;
@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,16 +21,12 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.projectFilter.FileAddStatus;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -44,9 +41,47 @@ final class UnindexedFilesFinder {
   private final @NotNull ProjectIndexableFilesFilterHolder myIndexableFilesFilterHolder;
   private final boolean myShouldProcessUpToDateFiles;
 
+  private static class UnindexedFileStatusBuilder {
+    boolean shouldIndex = false;
+    boolean indexesWereProvidedByInfrastructureExtension = false;
+    long timeProcessingUpToDateFiles = 0;
+    long timeUpdatingContentLessIndexes = 0;
+    long timeIndexingWithoutContentViaInfrastructureExtension = 0;
+    private final List<Computable<Boolean>> appliersAndRemovers;
+    final boolean applyIndexValuesSeparately;
+    boolean indexInfrastructureExtensionInvalidated = false;
+    boolean mayMarkFileIndexed = true;
+
+    UnindexedFileStatusBuilder(boolean applyIndexValuesSeparately) {
+      this.applyIndexValuesSeparately = applyIndexValuesSeparately;
+      appliersAndRemovers = applyIndexValuesSeparately ? new SmartList<>() : Collections.emptyList();
+    }
+
+    boolean addOrRunApplierOrRemover(@Nullable Computable<Boolean> applierOrRemover) {
+      if (applierOrRemover == null) return true;
+
+      if (applyIndexValuesSeparately) {
+        return appliersAndRemovers.add(applierOrRemover);
+      }
+      else {
+        return applierOrRemover.compute();
+      }
+    }
+
+    @Contract(" -> new")
+    @NotNull UnindexedFileStatus build() {
+      return new UnindexedFileStatus(shouldIndex,
+                                     indexesWereProvidedByInfrastructureExtension,
+                                     timeProcessingUpToDateFiles,
+                                     timeUpdatingContentLessIndexes,
+                                     timeIndexingWithoutContentViaInfrastructureExtension);
+    }
+  }
+
   UnindexedFilesFinder(@NotNull Project project,
                        @NotNull FileBasedIndexImpl fileBasedIndex,
-                       @Nullable BooleanFunction<? super IndexedFile> forceReindexingTrigger) {
+                       @Nullable BooleanFunction<? super IndexedFile> forceReindexingTrigger,
+                       @Nullable VirtualFile root) {
     myProject = project;
     myFileBasedIndex = fileBasedIndex;
     myFileTypeIndex = fileBasedIndex.getIndex(FileTypeIndex.NAME);
@@ -77,10 +112,7 @@ final class UnindexedFilesFinder {
       }
       FileType fileType = checker.get() ? cachedFileType : null;
 
-      AtomicBoolean indexesWereProvidedByInfrastructureExtension = new AtomicBoolean();
-      AtomicLong timeProcessingUpToDateFiles = new AtomicLong();
-      AtomicLong timeUpdatingContentLessIndexes = new AtomicLong();
-      AtomicLong timeIndexingWithoutContent = new AtomicLong();
+      UnindexedFileStatusBuilder fileStatusBuilder = new UnindexedFileStatusBuilder(applyIndexValuesSeparately);
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, fileType, myProject);
       int inputId = FileBasedIndex.getFileId(file);
@@ -100,7 +132,7 @@ final class UnindexedFilesFinder {
                   }
                 }
                 finally {
-                  timeProcessingUpToDateFiles.addAndGet(System.nanoTime() - nowTime);
+                  fileStatusBuilder.timeProcessingUpToDateFiles += (System.nanoTime() - nowTime);
                 }
               }
             }
@@ -108,179 +140,222 @@ final class UnindexedFilesFinder {
         }
         if (!wasInvalidated) {
           IndexingStamp.flushCache(inputId);
-          return new UnindexedFileStatus(false,
-                                         false,
-                                         timeProcessingUpToDateFiles.get(),
-                                         timeUpdatingContentLessIndexes.get(),
-                                         timeIndexingWithoutContent.get());
+          return fileStatusBuilder.build();
         }
       }
 
-      AtomicBoolean shouldIndex = new AtomicBoolean();
-
       FileTypeManagerEx ex = FileTypeManagerEx.getInstanceEx();
       if (!(ex instanceof FileTypeManagerImpl)) {
-        return new UnindexedFileStatus(shouldIndex.get(),
-                                       indexesWereProvidedByInfrastructureExtension.get(),
-                                       timeProcessingUpToDateFiles.get(),
-                                       timeUpdatingContentLessIndexes.get(),
-                                       timeIndexingWithoutContent.get());
+        return fileStatusBuilder.build();
       }
       Ref<Runnable> finalization = new Ref<>();
       ((FileTypeManagerImpl)ex).freezeFileTypeTemporarilyWithProvidedValueIn(file, fileType, () -> {
         boolean isDirectory = file.isDirectory();
         FileIndexingState fileTypeIndexState = null;
-        if (!isDirectory && !myFileBasedIndex.isTooLarge(file)) {
+        boolean shouldCheckContentIndexes = !isDirectory && !myFileBasedIndex.isTooLarge(file);
+        if (shouldCheckContentIndexes) {
           if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, indexedFile)) == FileIndexingState.OUT_DATED) {
             if (myFileBasedIndex.doTraceIndexUpdates()) {
               LOG.info("Scheduling full indexing of " + indexedFile.getFileName() + " because file type index is outdated");
             }
             myFileBasedIndex.dropNontrivialIndexedStates(inputId);
-            shouldIndex.set(true);
+            fileStatusBuilder.shouldIndex = true;
+            shouldCheckContentIndexes = false;
           }
-          else {
-            final List<ID<?, ?>> affectedIndexCandidates = myFileBasedIndex.getAffectedIndexCandidates(indexedFile);
-            for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
-              final ID<?, ?> indexId = affectedIndexCandidates.get(i);
-              if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) continue;
-              try {
-                if (myFileBasedIndex.needsFileContentLoading(indexId)) {
-                  FileIndexingState fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
-                  boolean indexInfrastructureExtensionInvalidated = false;
-                  if (fileIndexingState == FileIndexingState.UP_TO_DATE && myShouldProcessUpToDateFiles) {
-                    for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor p : myStateProcessors) {
-                      long nowTime = System.nanoTime();
-                      try {
-                        if (!p.processUpToDateFile(indexedFile, inputId, indexId)) {
-                          indexInfrastructureExtensionInvalidated = true;
-                        }
-                      }
-                      finally {
-                        timeProcessingUpToDateFiles.addAndGet(System.nanoTime() - nowTime);
-                      }
-                    }
-                  }
-                  if (indexInfrastructureExtensionInvalidated) {
-                    fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
-                  }
-                  if (fileIndexingState.updateRequired()) {
-                    if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
-                      FileBasedIndexImpl.LOG.info(
-                        "Scheduling indexing of " + indexedFile.getFileName() + " by request of index; " + indexId +
-                        (indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : "") +
-                        ((myFileBasedIndex.acceptsInput(indexId, indexedFile)) ? " accepted;" : " unaccepted;") +
-                        ("indexing state = " + myFileBasedIndex.getIndexingState(indexedFile, indexId)));
-                    }
+        }
 
-                    long nowTime = System.nanoTime();
-                    boolean wasIndexedByInfrastructure;
-                    try {
-                      wasIndexedByInfrastructure = tryIndexWithoutContentViaInfrastructureExtension(indexedFile, inputId, indexId);
-                    }
-                    finally {
-                      timeIndexingWithoutContent.addAndGet(System.nanoTime() - nowTime);
-                    }
-                    if (wasIndexedByInfrastructure) {
-                      indexesWereProvidedByInfrastructureExtension.set(true);
-                    }
-                    else {
-                      shouldIndex.set(true);
-                      // NOTE! Do not break the loop here. We must process ALL IDs and pass them to the FileIndexingStatusProcessor
-                      // so that it can invalidate all "indexing states" (by means of clearing IndexingStamp)
-                      // for all indexes that became invalid. See IDEA-252846 for more details.
-                    }
-                  }
-                }
-              }
-              catch (RuntimeException e) {
-                final Throwable cause = e.getCause();
-                if (cause instanceof IOException || cause instanceof StorageException) {
-                  LOG.info(e);
-                  myFileBasedIndex.requestRebuild(indexId);
-                }
-                else {
-                  throw e;
-                }
-              }
+        boolean fileTypeIndexAlreadyUpToData = fileTypeIndexState != null && !fileTypeIndexState.updateRequired();
+        Set<ID<?, ?>> appliedIndexes = myFileBasedIndex.getAppliedIndexes(inputId);
+        for (ID<?, ?> indexId : myFileBasedIndex.getRequiredIndexes(indexedFile)) {
+          appliedIndexes.remove(indexId);
+
+          boolean needsFileContentLoading = myFileBasedIndex.needsFileContentLoading(indexId);
+          // this is the same: (shouldCheckContentIndexes && needsFileContentLoading) || !needsFileContentLoading
+          boolean shouldCheckAgainstSingleIndex = !needsFileContentLoading || shouldCheckContentIndexes;
+
+          // if FileTypeIndex already checked, no need to check it twice
+          if (shouldCheckAgainstSingleIndex && !(FileTypeIndex.NAME.equals(indexId) && fileTypeIndexAlreadyUpToData)) {
+            long contentlessStartTime = needsFileContentLoading ? -1 : System.nanoTime(); // measure contentless indexes only
+            try {
+              applyOrScheduleRequiredIndex(indexId, fileStatusBuilder, indexedFile, inputId);
+            }
+            finally {
+              if (contentlessStartTime >= 0) fileStatusBuilder.timeUpdatingContentLessIndexes += (System.nanoTime() - contentlessStartTime);
             }
           }
         }
 
-        boolean mayMarkFileIndexed = true;
-        long nowTime = System.nanoTime();
-        List<SingleIndexValueApplier<?>> appliers = applyIndexValuesSeparately ? new SmartList<>() : Collections.emptyList();
-        try {
-          for (ID<?, ?> indexId : myFileBasedIndex.getContentLessIndexes(isDirectory)) {
-            if (!RebuildStatus.isOk(indexId)) {
-              mayMarkFileIndexed = false;
-              continue;
-            }
-            if (FileTypeIndex.NAME.equals(indexId) && fileTypeIndexState != null && !fileTypeIndexState.updateRequired()) {
-              continue;
-            }
-            if (myFileBasedIndex.shouldIndexFile(indexedFile, indexId).updateRequired()) {
-              SingleIndexValueApplier<?> applier =
-                myFileBasedIndex.createSingleIndexValueApplier(indexId, file, inputId, new IndexedFileWrapper(indexedFile),
-                                                               applyIndexValuesSeparately);
-              if (applier == null) {
-                continue;
-              }
-
-              if (applyIndexValuesSeparately) {
-                appliers.add(applier);
-              }
-              else {
-                applier.apply();
-              }
-            }
-          }
-        }
-        finally {
-          timeUpdatingContentLessIndexes.addAndGet(System.nanoTime() - nowTime);
+        // remove unneeded data from indexes
+        for (ID<?, ?> indexId : appliedIndexes) {
+          LOG.assertTrue(myFileBasedIndex.getIndexingState(indexedFile, indexId) != FileIndexingState.NOT_INDEXED,
+                         "getAppliedIndexes returned index ID that in fact was not applied. IndexId=" + indexId);
+          removeIndexedValue(indexedFile, inputId, indexId, fileStatusBuilder);
         }
 
-        if (appliers.isEmpty()) {
-          finishGettingStatus(file, indexedFile, inputId, shouldIndex, mayMarkFileIndexed);
+        if (fileStatusBuilder.appliersAndRemovers.isEmpty()) {
+          finishGettingStatus(file, indexedFile, inputId, fileStatusBuilder);
           finalization.set(EmptyRunnable.getInstance());
         }
         else {
-          boolean finalMayMarkFileIndexed = mayMarkFileIndexed;
           finalization.set(() -> {
             long applyingStart = System.nanoTime();
             try {
-              for (SingleIndexValueApplier<?> applier : appliers) {
-                applier.apply();
+              for (Computable<Boolean> applierOrRemover : fileStatusBuilder.appliersAndRemovers) {
+                applierOrRemover.compute();
               }
             }
             finally {
-              timeUpdatingContentLessIndexes.addAndGet(System.nanoTime() - applyingStart);
+              fileStatusBuilder.timeUpdatingContentLessIndexes += (System.nanoTime() - applyingStart);
             }
-            finishGettingStatus(file, indexedFile, inputId, shouldIndex, finalMayMarkFileIndexed);
+            finishGettingStatus(file, indexedFile, inputId, fileStatusBuilder);
           });
         }
       });
 
       finalization.get().run();
-      return new UnindexedFileStatus(shouldIndex.get(),
-                                     indexesWereProvidedByInfrastructureExtension.get(),
-                                     timeProcessingUpToDateFiles.get(),
-                                     timeUpdatingContentLessIndexes.get(),
-                                     timeIndexingWithoutContent.get());
+      return fileStatusBuilder.build();
     });
+  }
+
+  private void applyOrScheduleRequiredIndex(ID<?, ?> indexId,
+                                            UnindexedFileStatusBuilder fileStatusBuilder,
+                                            IndexedFileImpl indexedFile,
+                                            int inputId) {
+    if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) return;
+    if (!RebuildStatus.isOk(indexId)) {
+      fileStatusBuilder.mayMarkFileIndexed = false;
+      return;
+    }
+
+    try {
+      FileIndexingState fileIndexingState = myFileBasedIndex.getIndexingState(indexedFile, indexId);
+      if (fileIndexingState == FileIndexingState.UP_TO_DATE && myShouldProcessUpToDateFiles) {
+        fileIndexingState = processUpToDateFileByInfrastructureExtensions(indexedFile, inputId, indexId, fileStatusBuilder);
+      }
+      if (fileIndexingState.updateRequired()) {
+        if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
+          FileBasedIndexImpl.LOG.info(
+            "Scheduling indexing of " + indexedFile.getFileName() + " by request of index; " + indexId +
+            (fileStatusBuilder.indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : "") +
+            ("indexing state = " + myFileBasedIndex.getIndexingState(indexedFile, indexId)));
+        }
+
+        if (!tryIndexWithoutContent(indexedFile, inputId, indexId, fileStatusBuilder)) {
+          // NOTE! Do not break the loop here. We must process ALL IDs and pass them to the FileIndexingStatusProcessor
+          // so that it can invalidate all "indexing states" (by means of clearing IndexingStamp)
+          // for all indexes that became invalid. See IDEA-252846 for more details.
+          fileStatusBuilder.shouldIndex = true;
+        }
+      }
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException || cause instanceof StorageException) {
+        LOG.info(e);
+        myFileBasedIndex.requestRebuild(indexId);
+      }
+      else {
+        throw e;
+      }
+    }
+  }
+
+  private FileIndexingState processUpToDateFileByInfrastructureExtensions(IndexedFileImpl indexedFile,
+                                                                          int inputId,
+                                                                          ID<?, ?> indexId,
+                                                                          UnindexedFileStatusBuilder fileStatusBuilder) {
+    // quick path: shared indexes do not have data for contentless indexes
+    if (!myFileBasedIndex.needsFileContentLoading(indexId)) return FileIndexingState.UP_TO_DATE;
+
+    long nowTime = System.nanoTime();
+    try {
+      FileIndexingState ret = FileIndexingState.UP_TO_DATE;
+      for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor p : myStateProcessors) {
+        if (!p.processUpToDateFile(indexedFile, inputId, indexId)) {
+          fileStatusBuilder.indexInfrastructureExtensionInvalidated = true;
+        }
+      }
+      if (fileStatusBuilder.indexInfrastructureExtensionInvalidated) {
+        ret = myFileBasedIndex.getIndexingState(indexedFile, indexId);
+      }
+      return ret;
+    }
+    finally {
+      fileStatusBuilder.timeProcessingUpToDateFiles += (System.nanoTime() - nowTime);
+    }
+  }
+
+  private boolean removeIndexedValue(IndexedFileImpl indexedFile,
+                                     int inputId,
+                                     ID<?, ?> indexId,
+                                     UnindexedFileStatusBuilder fileStatusBuilder) {
+
+    SingleIndexValueRemover remover =
+      myFileBasedIndex.createSingleIndexRemover(indexId, indexedFile.getFile(), new IndexedFileWrapper(indexedFile), inputId,
+                                                fileStatusBuilder.applyIndexValuesSeparately);
+    if (remover != null) {
+      boolean removed = fileStatusBuilder.addOrRunApplierOrRemover(remover::remove);
+      if (!removed) {
+        LOG.error("Failed to remove value from index " + indexId + " for file " + indexedFile.getFile() + ", " +
+                  "applyIndexValuesSeparately=" + fileStatusBuilder.applyIndexValuesSeparately);
+      }
+      return removed;
+    }
+    else {
+      return true;
+    }
+  }
+
+  private boolean tryIndexWithoutContent(IndexedFileImpl indexedFile,
+                                         int inputId,
+                                         ID<?, ?> indexId,
+                                         UnindexedFileStatusBuilder fileStatusBuilder) {
+    if (myFileBasedIndex.needsFileContentLoading(indexId)) {
+      long nowTime = System.nanoTime();
+      boolean wasIndexedByInfrastructure;
+      try {
+        wasIndexedByInfrastructure = tryIndexWithoutContentViaInfrastructureExtension(indexedFile, inputId, indexId);
+      }
+      finally {
+        fileStatusBuilder.timeIndexingWithoutContentViaInfrastructureExtension += (System.nanoTime() - nowTime);
+      }
+      if (wasIndexedByInfrastructure) {
+        fileStatusBuilder.indexesWereProvidedByInfrastructureExtension = true;
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+    else {
+      SingleIndexValueApplier<?> applier =
+        myFileBasedIndex.createSingleIndexValueApplier(indexId, indexedFile.getFile(), inputId, new IndexedFileWrapper(indexedFile),
+                                                       fileStatusBuilder.applyIndexValuesSeparately);
+      if (applier != null) {
+        boolean updated = fileStatusBuilder.addOrRunApplierOrRemover(applier::apply);
+        if (!updated) {
+          LOG.error("Failed to apply contentless indexer " + indexId + " to file " + indexedFile.getFile() + ", " +
+                    "applyIndexValuesSeparately=" + fileStatusBuilder.applyIndexValuesSeparately);
+        }
+        return updated;
+      }
+      else {
+        return true;
+      }
+    }
   }
 
   private void finishGettingStatus(@NotNull VirtualFile file,
                                    IndexedFileImpl indexedFile,
                                    int inputId,
-                                   AtomicBoolean shouldIndex,
-                                   boolean mayMarkFileIndexed) {
+                                   UnindexedFileStatusBuilder fileStatusBuilder) {
     if (myForceReindexingTrigger != null && myForceReindexingTrigger.fun(indexedFile)) {
       myFileBasedIndex.dropNontrivialIndexedStates(inputId);
-      shouldIndex.set(true);
+      fileStatusBuilder.shouldIndex = true;
     }
 
     IndexingStamp.flushCache(inputId);
-    if (!shouldIndex.get() && mayMarkFileIndexed) {
+    if (!fileStatusBuilder.shouldIndex && fileStatusBuilder.mayMarkFileIndexed) {
       IndexingFlag.setFileIndexed(file);
     }
   }

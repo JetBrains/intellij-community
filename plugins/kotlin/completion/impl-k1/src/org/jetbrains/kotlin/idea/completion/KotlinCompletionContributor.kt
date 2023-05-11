@@ -6,12 +6,14 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiJavaPatterns.elementType
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.psi.PsiComment
 import com.intellij.util.ProcessingContext
+import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.StringTemplateCompletion
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletion
@@ -133,7 +135,9 @@ class KotlinCompletionContributor : CompletionContributor() {
             return
         }
 
-        doComplete(parameters, result)
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+            doComplete(parameters, result)
+        })
     }
 
     private fun doComplete(
@@ -189,7 +193,8 @@ class KotlinCompletionContributor : CompletionContributor() {
                     javaGettersAndSetters = true,
                     javaClassesNotToBeUsed = false,
                     staticMembers = parameters.invocationCount > 0,
-                    dataClassComponentFunctions = true
+                    dataClassComponentFunctions = true,
+                    excludeEnumEntries = configuration.excludeEnumEntries,
                 )
 
                 val newSession = BasicCompletionSession(newConfiguration, parameters, result)

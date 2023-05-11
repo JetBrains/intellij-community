@@ -134,11 +134,34 @@ public final class MacKeymapUtil {
     if (isNativeShortcutSymbolsDisabled()) {
       return replacement;
     }
-    Font font = StartupUiUtil.getLabelFont();
-    return font == null || font.canDisplayUpTo(value) == -1 ? value : replacement;
+    return StartupUiUtil.getLabelFont().canDisplayUpTo(value) == -1 ? value : replacement;
   }
 
   private static boolean isNativeShortcutSymbolsDisabled() {
     return AdvancedSettings.getInstanceIfCreated() != null && AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols");
+  }
+
+  @NotNull
+  public static String getKeyModifiersTextForMacOSLeopard(@JdkConstants.InputEventMask int modifiers) {
+    StringBuilder buf = new StringBuilder();
+    if ((modifiers & InputEvent.META_MASK) != 0) {
+      buf.append("\u2318");
+    }
+    if ((modifiers & InputEvent.CTRL_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.control", "Ctrl"));
+    }
+    if ((modifiers & InputEvent.ALT_MASK) != 0) {
+      buf.append("\u2325");
+    }
+    if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.shift", "Shift"));
+    }
+    if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
+    }
+    if ((modifiers & InputEvent.BUTTON1_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
+    }
+    return buf.toString();
   }
 }

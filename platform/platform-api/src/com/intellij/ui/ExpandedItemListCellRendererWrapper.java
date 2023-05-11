@@ -9,9 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-public class ExpandedItemListCellRendererWrapper<T> implements ListCellRenderer<T> {
-  @NotNull private final ListCellRenderer<? super T> myWrappee;
-  @NotNull private final ExpandableItemsHandler<Integer> myHandler;
+public final class ExpandedItemListCellRendererWrapper<T> implements ListCellRenderer<T> {
+  private final @NotNull ListCellRenderer<? super T> myWrappee;
+  private final @NotNull ExpandableItemsHandler<Integer> myHandler;
 
   public ExpandedItemListCellRendererWrapper(@NotNull ListCellRenderer<? super T> wrappee, @NotNull ExpandableItemsHandler<Integer> handler) {
     myWrappee = wrappee;
@@ -25,10 +25,10 @@ public class ExpandedItemListCellRendererWrapper<T> implements ListCellRenderer<
     if (!myHandler.getExpandedItems().contains(index)) return result;
     Rectangle bounds = result.getBounds();
     ExpandedItemRendererComponentWrapper wrapper = ExpandedItemRendererComponentWrapper.wrap(result);
-    if (UIUtil.isClientPropertyTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
-      if (UIUtil.isClientPropertyTrue(result, ExpandableItemsHandler.USE_RENDERER_BOUNDS)) {
+    if (ClientProperty.isTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
+      if (ClientProperty.isTrue(result, ExpandableItemsHandler.USE_RENDERER_BOUNDS)) {
         wrapper.setBounds(bounds);
-        ComponentUtil.putClientProperty(wrapper, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
+        wrapper.putClientProperty(ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
       }
     }
     wrapper.owner = list;
@@ -40,8 +40,7 @@ public class ExpandedItemListCellRendererWrapper<T> implements ListCellRenderer<
     return "ExpandedItemListCellRendererWrapper[" + getWrappee().getClass().getName() + "]";
   }
 
-  @NotNull
-  public ListCellRenderer getWrappee() {
+  public @NotNull ListCellRenderer getWrappee() {
     return myWrappee;
   }
 

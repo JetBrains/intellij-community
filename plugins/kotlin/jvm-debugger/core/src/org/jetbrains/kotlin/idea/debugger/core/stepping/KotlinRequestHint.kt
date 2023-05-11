@@ -180,10 +180,10 @@ class KotlinStepIntoRequestHint(
                 lastWasKotlinFakeLineNumber = true
                 return StepRequest.STEP_INTO
             }
-            // If the last line was a fake line number, the next non-fake line number
-            // is always of interest (otherwise, we wouldn't have had to insert the
-            // fake line number in the first place).
-            if (lastWasKotlinFakeLineNumber) {
+            // If the last line was a fake line number, and we are not smart-stepping,
+            // the next non-fake line number is always of interest (otherwise, we wouldn't
+            // have had to insert the fake line number in the first place).
+            if (lastWasKotlinFakeLineNumber && methodFilter == null) {
                 lastWasKotlinFakeLineNumber = false
                 return STOP
             }

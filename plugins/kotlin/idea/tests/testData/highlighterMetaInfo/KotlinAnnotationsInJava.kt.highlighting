@@ -1,0 +1,16 @@
+// FIR_IDENTICAL
+// IGNORE_FE10
+// FILE: JTestRootUsage.java
+@TestRoot()
+public class JTestRootUsage {
+
+    @TestAnn2 String s;
+
+}
+
+class Test {
+    @MyNullable
+    String foo(CharSequence cs) {
+        return cs.toString();
+    }
+}

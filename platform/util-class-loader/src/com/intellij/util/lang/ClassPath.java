@@ -35,8 +35,6 @@ public final class ClassPath {
   static final boolean recordLoadingTime = recordLoadingInfo || Boolean.getBoolean("idea.record.classloading.stats");
   static final boolean logLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
 
-  private static final boolean enableCoroutineDump = Boolean.parseBoolean(System.getProperty("idea.enable.coroutine.dump", "true"));
-
   // DCEVM support
   private static final boolean isNewClassLoadingEnabled = false;
 
@@ -108,6 +106,11 @@ public final class ClassPath {
     return Arrays.asList(files);
   }
 
+  synchronized void reset(Collection<Path> newClassPath) {
+    reset();
+    files = newClassPath.toArray(new Path[]{});
+  }
+
   public synchronized void reset() {
     lastLoaderProcessed.set(0);
     allUrlsWereProcessed = false;
@@ -150,12 +153,12 @@ public final class ClassPath {
 
   /** Adding URLs to classpath at runtime could lead to hard-to-debug errors */
   // use only after approval
-  public synchronized void addFiles(@NotNull List<Path> newList) {
+  public synchronized void addFiles(@NotNull Collection<Path> newList) {
     if (newList.isEmpty()) {
       return;
     }
     else if (newList.size() == 1) {
-      addFile(newList.get(0));
+      addFile(newList instanceof List ? ((List<Path>)newList).get(0) : newList.iterator().next());
       return;
     }
 
@@ -175,20 +178,6 @@ public final class ClassPath {
                                       String fileName,
                                       long packageNameHash,
                                       ClassDataConsumer classDataConsumer) throws IOException {
-    if (packageNameHash == -3930079881136890558L &&
-        enableCoroutineDump &&
-        className.equals("kotlin.coroutines.jvm.internal.DebugProbesKt")) {
-      String resourceName = "DebugProbesKt.bin";
-      Resource resource = findResource(resourceName);
-      if (resource == null) {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.err.println("Cannot find " + resourceName);
-      }
-      else {
-        return classDataConsumer.consumeClassData(className, resource.getByteBuffer());
-      }
-    }
-
     long start = classLoading.startTiming();
     try {
       int i;
@@ -350,7 +339,10 @@ public final class ClassPath {
         return null;
       }
 
-      Path path = files[searchOffset++];
+      // https://youtrack.jetbrains.com/issue/IDEA-314175
+      // some environments (e.g. Bazel tests) put relative jar paths on the Java classpath,
+      // because relative paths are useful for hermeticity.
+      Path path = files[searchOffset++].toAbsolutePath();
       try {
         Loader loader = createLoader(path);
         if (loader != null) {

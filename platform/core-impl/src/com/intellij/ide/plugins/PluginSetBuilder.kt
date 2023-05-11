@@ -70,7 +70,7 @@ class PluginSetBuilder(
   private fun getSortedPlugins(): Array<IdeaPluginDescriptorImpl> {
     val pluginToNumber = Object2IntOpenHashMap<PluginId>(unsortedPlugins.size)
     pluginToNumber.put(PluginManagerCore.CORE_ID, 0)
-    var number = 0
+    var number = 0 // TODO: shouldn't it be 1?
     for (module in moduleGraph.nodes) {
       // no content, so will be no modules, add it
       if (module.descriptorPath != null || module.content.modules.isEmpty()) {

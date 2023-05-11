@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -8,19 +8,20 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.AbstractFontCombo;
-import com.intellij.ui.GroupedComboBoxRenderer;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+
+import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
 class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
 
@@ -32,9 +33,10 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
     super(new MyModel(!isPrimary));
     setSwingPopup(false);
     myIsPrimary = isPrimary;
+    ClientProperty.put(this, ANIMATION_IN_RENDERER_ALLOWED, true);
     setRenderer(new GroupedComboBoxRenderer<>(this) {
       @Override
-      public void customize(@NotNull SimpleColoredComponent item, MyFontItem value, int index) {
+      public void customize(@NotNull SimpleColoredComponent item, MyFontItem value, int index, boolean isSelected, boolean hasFocus) {
         if (value != null) {
           if (value instanceof MyWarningItem) {
             item.append(value.getFamilyName(), SimpleTextAttributes.ERROR_ATTRIBUTES);
@@ -70,6 +72,29 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
       @Override
       public int getMaxWidth() {
         return ITEM_WIDTH;
+      }
+
+      @NotNull
+      @Override
+      public Component getListCellRendererComponent(@Nullable JList<? extends MyFontItem> list,
+                                                    MyFontItem value,
+                                                    int index,
+                                                    boolean isSelected,
+                                                    boolean cellHasFocus) {
+        final var component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (index != -1 || !((MyModel)dataModel).isUpdating()) {
+          return component;
+        } else {
+          JPanel panel = new CellRendererPanel(new BorderLayout()) {
+            @Override
+            public AccessibleContext getAccessibleContext() { return component.getAccessibleContext(); }
+          };
+          component.setBackground(null);
+          panel.add(component, BorderLayout.CENTER);
+          JBLabel progressIcon = new JBLabel(AnimatedIcon.Default.INSTANCE);
+          panel.add(progressIcon, BorderLayout.EAST);
+          return panel;
+        }
       }
     });
   }
@@ -165,6 +190,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
       "Source Code Pro"
     };
 
+    private boolean myIsUpdating = true;
     private final Set<String> myMonospacedFamilies = new HashSet<>();
     private final List<MyFontItem> myItems = new ArrayList<>();
     private final @Nullable MyNoFontItem myNoFontItem;
@@ -184,6 +210,10 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
       );
       Collections.sort(myItems, new MyFontItemComparator());
       retrieveFontInfo();
+    }
+
+    public boolean isUpdating() {
+      return myIsUpdating;
     }
 
     @Override
@@ -240,6 +270,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
           if (myNoFontItem == null) { // Primary font
             myItems.removeIf(item -> !item.myFontCanDisplayName);
           }
+          myIsUpdating = false;
           Collections.sort(myItems, new MyFontItemComparator());
           fireContentsChanged(this, -1, -1);
         }, ModalityState.any());

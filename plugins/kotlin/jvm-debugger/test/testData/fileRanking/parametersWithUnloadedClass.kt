@@ -8,6 +8,7 @@ class B : A<SomeImpl>() {
         foo()
     }
 }
+// PRODUCED_CLASS_NAMES: a.B
 
 // DO_NOT_LOAD: a.SomeImpl
 class SomeImpl : Some()
@@ -22,6 +23,7 @@ class B : A<Some>() {
         foo()
     }
 }
+// PRODUCED_CLASS_NAMES: b.B
 
 //FILE: c/c.kt
 package c
@@ -33,3 +35,4 @@ abstract class A<T: Some> {
 }
 
 fun foo() {}
+// PRODUCED_CLASS_NAMES: c.Some, c.A, c.CKt

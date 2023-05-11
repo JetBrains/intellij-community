@@ -1,4 +1,4 @@
-// "Make 'Foo' implement 'Foo.Bar'" "true"
+// "Make 'Foo' implement 'Foo.Bar'" "true-preview"
 public class Foo implements Foo.Bar {
 
   public Bar getBar() {

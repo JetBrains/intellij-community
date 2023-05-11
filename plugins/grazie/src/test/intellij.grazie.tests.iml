@@ -13,9 +13,9 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" exported="" />
     <orderEntry type="module-library">
       <library name="org.languagetool:languagetool-core" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:6.0" />
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:6.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.0/languagetool-core-6.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.1/languagetool-core-6.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -23,9 +23,9 @@
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="org.languagetool:language-ru" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:6.0" />
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:6.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.0/language-ru-6.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.1/language-ru-6.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -33,17 +33,17 @@
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="org.languagetool:language-de" type="repository">
-        <properties maven-id="org.languagetool:language-de:6.0">
+        <properties maven-id="org.languagetool:language-de:6.1">
           <exclude>
             <dependency maven-id="org.languagetool:languagetool-core" />
             <dependency maven-id="org.apache.commons:commons-lang3" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.0/language-de-6.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.1/language-de-6.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.5/jwordsplitter-4.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -51,9 +51,9 @@
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="org.languagetool:language-it" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-it:6.0" />
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-it:6.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.0/language-it-6.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.1/language-it-6.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

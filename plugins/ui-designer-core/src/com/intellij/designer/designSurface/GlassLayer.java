@@ -40,7 +40,7 @@ public class GlassLayer extends JComponent implements DataProvider {
     myToolProvider = provider;
     myArea = area;
     enableEvents(EVENT_FLAGS);
-    new TreeDropListener(this, area, provider, PaletteItem.class);
+    TreeDropListener.installOn(this, area, provider, PaletteItem.class);
   }
 
   @Override

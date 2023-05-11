@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -195,15 +195,17 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    *
    * @param task task to run (either {@link Task.Modal} or {@link Task.Backgroundable}).
    *
-   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgressIndicator
+   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
    * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
    * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
    */
+  @RequiresBlockingContext
   public abstract void run(@NotNull Task task);
 
   /**
    * Runs a specified computation with a modal progress dialog.
    */
+  @RequiresBlockingContext
   public <T, E extends Exception> T run(@NotNull Task.WithResult<T, E> task) throws E {
     run((Task)task);
     return task.getResult();
@@ -264,6 +266,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, @Nullable ProgressIndicator indicator);
 
+  @RequiresBlockingContext
   public abstract boolean isInNonCancelableSection();
 
   /**

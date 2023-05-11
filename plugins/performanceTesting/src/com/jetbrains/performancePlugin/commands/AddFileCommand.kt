@@ -30,6 +30,11 @@ abstract class AbstractFileCommand(text: String, line: Int) : AbstractCallbackBa
   }
 }
 
+/**
+ * Command to add file to project.
+ * File name and path to project get from parameters.
+ * Example: %addFile C:\Users\username\intellij, fileName.java
+ */
 class AddFileCommand(text: String, line: Int) : AbstractFileCommand(text, line) {
   @Throws(Exception::class)
   override fun execute(callback: ActionCallback,

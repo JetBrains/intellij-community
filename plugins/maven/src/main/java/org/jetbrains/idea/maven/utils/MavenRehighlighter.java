@@ -122,7 +122,7 @@ public final class MavenRehighlighter implements Disposable {
     }
 
     @Override
-    public boolean canEat(Update update) {
+    public boolean canEat(@NotNull Update update) {
       return myMavenProject == null || myMavenProject == ((MyUpdate)update).myMavenProject;
     }
   }

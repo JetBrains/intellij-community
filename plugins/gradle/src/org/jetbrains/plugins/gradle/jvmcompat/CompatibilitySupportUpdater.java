@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.jvmcompat;
 
 
@@ -23,9 +23,9 @@ public class CompatibilitySupportUpdater {
 
   @NotNull
   public Future<?> checkForUpdates() {
-    String сonfigUrl = Registry.stringValue("gradle.compatibility.config.url");
+    String configUrl = Registry.stringValue("gradle.compatibility.config.url");
     int updateInterval = Registry.intValue("gradle.compatibility.update.interval");
-    if (updateInterval == 0 || StringUtil.isEmpty(сonfigUrl)) {
+    if (updateInterval == 0 || StringUtil.isEmpty(configUrl)) {
       return CompletableFuture.completedFuture(null);
     }
     return ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -34,13 +34,13 @@ public class CompatibilitySupportUpdater {
       if (lastUpdateTime + TimeUnit.DAYS.toMillis(updateInterval) > System.currentTimeMillis()) {
         return;
       }
-      retrieveNewData(сonfigUrl);
+      retrieveNewData(configUrl);
     });
   }
 
-  private void retrieveNewData(String сonfigUrl) {
+  private static void retrieveNewData(String configUrl) {
     try {
-      String json = HttpRequests.request(сonfigUrl)
+      String json = HttpRequests.request(configUrl)
         .forceHttps(!ApplicationManager.getApplication().isUnitTestMode())
         .productNameAsUserAgent()
         .readString();

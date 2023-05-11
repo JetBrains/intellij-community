@@ -17,5 +17,5 @@ suspend fun copyFilesAndReloadProject(project: Project, fromDir: Path) {
 
   FileUtil.copyDir(fromDir.toFile(), base.toFile())
   VfsUtil.markDirtyAndRefresh(false, true, true, projectDir)
-  StoreReloadManager.getInstance().reloadChangedStorageFiles()
+  StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
 }

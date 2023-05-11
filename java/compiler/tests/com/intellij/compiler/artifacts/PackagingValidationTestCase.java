@@ -59,7 +59,7 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
     }
 
     public void assertProblems(String... expectedMessages) {
-      Set<String> expected = ContainerUtil.set(expectedMessages);
+      Set<String> expected = ContainerUtil.newHashSet(expectedMessages);
       outer:
       for (String problem : myProblems) {
         for (String message : expected) {

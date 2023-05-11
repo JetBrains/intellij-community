@@ -9,7 +9,6 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -140,11 +139,10 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
   /**
    * Hardcoded known deprecated EPs with corresponding replacement EP or {@code null} none.
    */
-  private static final Map<String, String> ADDITIONAL_DEPRECATED_EP = ContainerUtil.<String, String>immutableMapBuilder()
-    .put("com.intellij.definitionsSearch", "com.intellij.definitionsScopedSearch")
-    .put("com.intellij.dom.fileDescription", "com.intellij.dom.fileMetaData")
-    .put("com.intellij.exportable", null)
-    .build();
+  private static final Map<String, String> ADDITIONAL_DEPRECATED_EP = Map.of(
+    "com.intellij.definitionsSearch", "com.intellij.definitionsScopedSearch",
+    "com.intellij.dom.fileDescription", "com.intellij.dom.fileMetaData",
+    "com.intellij.exportable", "");
 
   @NotNull
   @Override
@@ -196,7 +194,7 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
       public String getAdditionalData() {
         final Kind kind = getKind();
         if (kind == Kind.ADDITIONAL_DEPRECATED) {
-          return ADDITIONAL_DEPRECATED_EP.get(getEffectiveQualifiedName());
+          return StringUtil.nullize(ADDITIONAL_DEPRECATED_EP.get(getEffectiveQualifiedName()));
         }
 
         if (kind == Kind.SCHEDULED_FOR_REMOVAL_API) {

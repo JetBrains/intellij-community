@@ -1372,8 +1372,11 @@ public final class GenericsHighlightUtil {
         PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)qualifier).getParameterList();
         if (parameterList != null && parameterList.getTypeArguments().length > 0) {
           String message = JavaErrorBundle.message("generics.select.static.class.from.parameterized.type",
-                                                         HighlightUtil.formatClass((PsiClass)resolved));
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameterList).descriptionAndTooltip(message);
+                                                   HighlightUtil.formatClass((PsiClass)resolved));
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(parameterList)
+            .descriptionAndTooltip(message)
+            .registerFix(QUICK_FIX_FACTORY.createDeleteFix(parameterList), null, null, null, null);
         }
       }
     }

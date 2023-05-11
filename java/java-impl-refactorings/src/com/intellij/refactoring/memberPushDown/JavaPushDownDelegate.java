@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -38,6 +37,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
 public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember> {
   public static final Key<Boolean> REMOVE_QUALIFIER_KEY = Key.create("REMOVE_QUALIFIER_KEY");
@@ -75,7 +77,8 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
   }
 
   @Override
-  public void checkSourceClassConflicts(PushDownData<MemberInfo, PsiMember> pushDownData, MultiMap<PsiElement, String> conflicts) {
+  public void checkSourceClassConflicts(PushDownData<MemberInfo, PsiMember> pushDownData,
+                                        MultiMap<PsiElement, @DialogMessage String> conflicts) {
     List<MemberInfo> toMove = pushDownData.getMembersToMove();
     new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), toMove.toArray(new MemberInfo[0]), conflicts).checkSourceClassConflicts();
   }
@@ -83,7 +86,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
   @Override
   public void checkTargetClassConflicts(@Nullable PsiElement targetClass,
                                         PushDownData<MemberInfo, PsiMember> pushDownData,
-                                        MultiMap<PsiElement, String> conflicts,
+                                        MultiMap<PsiElement, @DialogMessage String> conflicts,
                                         NewSubClassData subClassData) {
     List<MemberInfo> toMove = pushDownData.getMembersToMove();
     PsiElement context = targetClass;
@@ -103,7 +106,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
   }
 
   @Override
-  public NewSubClassData preprocessNoInheritorsFound(PsiElement sourceClass, @NlsContexts.DialogTitle String conflictDialogTitle) {
+  public NewSubClassData preprocessNoInheritorsFound(PsiElement sourceClass, @DialogTitle String conflictDialogTitle) {
     final PsiClass aClass = (PsiClass)sourceClass;
     final PsiFile containingFile = aClass.getContainingFile();
     final boolean defaultPackage = StringUtil.isEmptyOrSpaces(containingFile instanceof PsiClassOwner ? ((PsiClassOwner)containingFile).getPackageName() : "");

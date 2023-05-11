@@ -74,6 +74,7 @@ CMD_STEP_INTO_MY_CODE = 144
 CMD_GET_CONCURRENCY_EVENT = 145
 CMD_SHOW_RETURN_VALUES = 146
 
+CMD_LOAD_FULL_VALUE = 151
 CMD_GET_THREAD_STACK = 152
 CMD_THREAD_DUMP_TO_STDERR = 153  # This is mostly for unit-tests to diagnose errors on ci.
 CMD_STOP_ON_START = 154
@@ -937,6 +938,8 @@ class AbstractWriterThread(threading.Thread):
     def write_get_variable(self, thread_id, frame_id, var_attrs, group_type=GET_FRAME_NORMAL_GROUP):
         self.write("%s\t%s\t%s\t%s\tFRAME\t%s\t%s" % (CMD_GET_VARIABLE, self.next_seq(), thread_id, frame_id, group_type, var_attrs, ))
 
+    def write_load_full_value(self, thread_id, frame_id, var_name):
+        self.write("%s\t%s\t%s\t%s\tFRAME\t%s\t__pydev_val__" % (CMD_LOAD_FULL_VALUE, self.next_seq(), thread_id, frame_id, var_name))
     def write_step_over(self, thread_id):
         self.write("%s\t%s\t%s" % (CMD_STEP_OVER, self.next_seq(), thread_id,))
 

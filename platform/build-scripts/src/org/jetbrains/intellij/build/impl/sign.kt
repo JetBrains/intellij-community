@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+@file:Suppress("RAW_RUN_BLOCKING", "ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.use
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.use
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.NioFiles
 import com.jcraft.jsch.agentproxy.AgentProxy
 import com.jcraft.jsch.agentproxy.AgentProxyException
 import com.jcraft.jsch.agentproxy.Connector
@@ -26,10 +28,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import net.schmizz.keepalive.KeepAliveProvider
 import net.schmizz.sshj.DefaultConfig
 import net.schmizz.sshj.PatchedSSHClient
@@ -43,22 +42,21 @@ import net.schmizz.sshj.userauth.method.AuthPassword
 import net.schmizz.sshj.userauth.method.PasswordResponseProvider
 import net.schmizz.sshj.userauth.password.PasswordFinder
 import net.schmizz.sshj.userauth.password.Resource
-import org.apache.commons.compress.utils.SeekableInMemoryByteChannel
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
-import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.jps.api.GlobalOptions
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.charset.StandardCharsets
 import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
-import java.nio.file.attribute.PosixFilePermission
 import java.security.SecureRandom
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -69,12 +67,16 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.logging.*
 import java.util.logging.Formatter
-import kotlin.io.path.*
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.name
+import kotlin.io.path.outputStream
 
 private val random by lazy { SecureRandom() }
 
 // 0644 octal -> 420 decimal
 private const val regularFileMode = 420
+
 // 0777 octal -> 511 decimal
 private const val executableFileMode = 511
 
@@ -177,12 +179,12 @@ internal fun notarizeAndBuildDmg(
 }
 
 private fun signFile(remoteDir: String,
-                        file: Path,
-                        ssh: SSHClient,
-                        ftpClient: SFTPClient,
-                        commandString: String,
-                        artifactDir: Path,
-                        artifactBuilt: Consumer<Path>) {
+                     file: Path,
+                     ssh: SSHClient,
+                     ftpClient: SFTPClient,
+                     commandString: String,
+                     artifactDir: Path,
+                     artifactBuilt: Consumer<Path>) {
   ftpClient.put(NioFileSource(file), "$remoteDir/${file.fileName}")
   processFile(localFile = file,
               ssh = ssh,
@@ -264,9 +266,7 @@ private fun InputStream.writeEachLineTo(vararg outputStreams: OutputStream, chan
   }
 }
 
-private fun downloadResult(remoteFile: String,
-                           localFile: Path,
-                           ftpClient: SFTPClient) {
+private fun downloadResult(remoteFile: String, localFile: Path, ftpClient: SFTPClient) {
   spanBuilder("download file")
     .setAttribute("remoteFile", remoteFile)
     .setAttribute("localFile", localFile.toString())
@@ -392,97 +392,112 @@ private fun removeDir(ssh: SSHClient, remoteDir: String) {
   }
 }
 
-private val macOsBinariesExtensions = setOf("jnilib", "dylib", "so", "tbd", "node")
-private val zipArchivesExtensions = setOf("jar", "zip")
+private fun isMacBinary(name: String): Boolean {
+  return name.endsWith(".jnilib") ||
+         name.endsWith(".dylib") ||
+         name.endsWith(".so") ||
+         name.endsWith(".tbd") ||
+         name.endsWith(".node")
+}
 
-internal suspend fun recursivelySignMacBinaries(
-  root: Path, context: BuildContext,
-  executableFileMatchers: Collection<PathMatcher> = emptyList()
-) = withContext(Dispatchers.IO) {
+internal fun CoroutineScope.recursivelySignMacBinaries(root: Path,
+                                                       context: BuildContext,
+                                                       executableFileMatchers: Collection<PathMatcher> = emptyList()) {
   val archives = mutableListOf<Path>()
   val binaries = mutableListOf<Path>()
-  Files.walk(root).use { files ->
-    files.forEach { file ->
+  Files.walkFileTree(root, object : SimpleFileVisitor<Path>() {
+    override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
       val relativePath = root.relativize(file)
-      when {
-        !file.isRegularFile() -> Unit
-        file.extension in zipArchivesExtensions -> archives.add(file)
-        file.extension in macOsBinariesExtensions ||
-        executableFileMatchers.any { it.matches(relativePath) } ||
-        SystemInfoRt.isUnix && PosixFilePermission.OWNER_EXECUTE in file.getPosixFilePermissions() -> {
-          binaries.add(file)
+      val name = file.fileName.toString()
+      if (name.endsWith(".jar") || name.endsWith(".zip")) {
+        archives.add(file)
+      }
+      else if (isMacBinary(name) ||
+               executableFileMatchers.any { it.matches(relativePath) } ||
+               (SystemInfoRt.isUnix && Files.isExecutable(file))) {
+        binaries.add(file)
+      }
+      return FileVisitResult.CONTINUE
+    }
+  })
+
+  launch {
+    signMacBinaries(binaries.filter {
+      isMacBinary(it) && !isSigned(it)
+    }, context)
+  }
+  for (file in archives) {
+    launch {
+      signAndRepackZipIfMacSignaturesAreMissing(file, context)
+    }
+  }
+}
+
+private suspend fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context: BuildContext) {
+  val filesToBeSigned = mutableMapOf<String, Path>()
+  suspendAwareReadZipFile(zip) { name, dataSupplier ->
+    if (!isMacBinary(name)) {
+      return@suspendAwareReadZipFile
+    }
+
+    val data = dataSupplier()
+    val byteChannel = ByteBufferChannel(data)
+    data.mark()
+    if (isMacBinary(byteChannel)) {
+      data.reset()
+      if (!isSigned(byteChannel, name)) {
+        data.reset()
+        val fileToBeSigned = Files.createTempFile(context.paths.tempDir, name.replace('/', '-').takeLast(128), "")
+        FileChannel.open(fileToBeSigned, EnumSet.of(StandardOpenOption.WRITE)).use {
+          it.write(data)
         }
+        filesToBeSigned.put(name, fileToBeSigned)
       }
     }
   }
-  launch {
-    signMacBinaries(context, binaries.filter {
-      it.isMacOsBinary() && !it.isSigned()
-    })
+
+  if (filesToBeSigned.isEmpty()) {
+    return
   }
-  archives.forEach {
-    launch {
-      signAndRepackZipIfMacSignaturesAreMissing(it, context)
-    }
+
+  coroutineScope {
+    signMacBinaries(files = filesToBeSigned.values.toList(), context = context, checkPermissions = false)
+  }
+
+  copyZipReplacing(origin = zip, entries = filesToBeSigned, context = context)
+  for (file in filesToBeSigned.values) {
+    Files.deleteIfExists(file)
   }
 }
 
-private suspend fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context: BuildContext) = withContext(Dispatchers.IO) {
-  val tempDir = context.paths.tempDir.resolve("${zip.name}-${UUID.randomUUID()}")
-  val filesToBeSigned = mutableMapOf<String, Path>()
-  readZipFile(zip) { name, entry ->
-    val binary = entry.getData()
-    if (binary.isMacOsBinary() && !runBlocking { binary.isSigned(name) }) {
-      tempDir.createDirectories()
-      val fileToBeSigned = tempDir.resolve(name.replace("/", "-"))
-      fileToBeSigned.writeBytes(binary)
-      filesToBeSigned[name] = fileToBeSigned
-    }
-  }
-  signMacBinaries(context, filesToBeSigned.values.toList())
-  try {
-    if (filesToBeSigned.isNotEmpty()) {
-      val repacked = tempDir.resolve(zip.name)
-      repacked.copyZipReplacing(zip, filesToBeSigned)
-      repacked.copyTo(zip, overwrite = true)
-      zip.setLastModifiedTime(FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
-    }
-  }
-  finally {
-    filesToBeSigned.values.forEach(NioFiles::deleteRecursively)
-  }
-}
-
-private fun Path.copyZipReplacing(origin: Path, entries: Map<String, Path>): Path {
-  spanBuilder("Replacing unsigned entries in zip")
-    .setAttribute("zip", "$origin")
+private fun copyZipReplacing(origin: Path, entries: Map<String, Path>, context: BuildContext) {
+  spanBuilder("replacing unsigned entries in zip")
+    .setAttribute("zip", origin.toString())
     .setAttribute(AttributeKey.stringArrayKey("unsigned"), entries.keys.toList())
     .useWithScope {
-      writeNewZip(this) { copy ->
+      transformZipUsingTempFile(origin) { zipWriter ->
         val index = PackageIndexBuilder()
-        readZipFile(origin) { name, entry ->
+        readZipFile(origin) { name, dataSupplier ->
           index.addFile(name)
-          if (entries.contains(name)) {
-            mapFileAndUse(entries.getValue(name)) { byteBuffer, _ ->
-              copy.uncompressedData(name, byteBuffer)
-            }
+          if (entries.containsKey(name)) {
+            zipWriter.file(name, entries.getValue(name))
           }
           else {
-            copy.uncompressedData(name, entry.getByteBuffer())
+            zipWriter.uncompressedData(name, dataSupplier())
           }
         }
-        index.writePackageIndex(copy)
+        index.writePackageIndex(zipWriter)
       }
+      Files.setLastModifiedTime(origin, FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
     }
-  return this
 }
 
-private fun BuildContext.signingOptions(contentType: String): PersistentMap<String, String> {
-  val certificateID = proprietaryBuildTools.macHostProperties?.codesignString
-  check(certificateID != null || !signMacOsBinaries) {
+internal fun signingOptions(contentType: String, context: BuildContext): PersistentMap<String, String> {
+  val certificateID = context.proprietaryBuildTools.macHostProperties?.codesignString
+  check(certificateID != null || !context.signMacOsBinaries) {
     "Missing certificate ID"
   }
-  val entitlements = paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts/entitlements.xml")
+  val entitlements = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts/entitlements.xml")
   check(entitlements.exists()) {
     "Missing $entitlements file"
   }
@@ -495,109 +510,113 @@ private fun BuildContext.signingOptions(contentType: String): PersistentMap<Stri
   )
 }
 
-internal suspend fun signMacBinaries(context: BuildContext, files: List<Path>, additionalOptions: Map<String, String> = emptyMap()) {
-  withContext(Dispatchers.IO) {
-    launch {
-      signMacBinaries(context, files.filter {
-        it.extension == "sit"
-      }, contentType = "application/x-mac-app-zip", additionalOptions)
-    }
-    launch {
-      signMacBinaries(context, files.filter {
-        it.extension != "sit"
-      }, contentType = "application/x-mac-app-bin", additionalOptions)
-    }
+internal suspend fun signMacBinaries(files: List<Path>,
+                                     context: BuildContext,
+                                     checkPermissions: Boolean = true,
+                                     additionalOptions: Map<String, String> = emptyMap()) {
+  if (files.isEmpty() || !context.isMacCodeSignEnabled) {
+    return
   }
-}
 
-private suspend fun signMacBinaries(context: BuildContext, files: List<Path>,
-                                    contentType: String, additionalOptions: Map<String, String>) {
-  if (files.isEmpty()) return
-  val permissions = if (SystemInfoRt.isUnix) {
+  check(files.none { it.extension == "sit" })
+  val permissions = if (checkPermissions && SystemInfoRt.isUnix) {
     files.associateWith {
-      HashSet(it.getPosixFilePermissions())
+      HashSet(Files.getPosixFilePermissions(it))
     }
   }
   else {
     emptyMap()
   }
+
   val span = spanBuilder("sign binaries for macOS distribution")
-  span.setAttribute("contentType", contentType)
+  span.setAttribute("contentType", "application/x-mac-app-bin")
   span.setAttribute(AttributeKey.stringArrayKey("files"), files.map { it.name })
-  val options = context.signingOptions(contentType).putAll(additionalOptions)
-  context.executeStep(span, BuildOptions.MAC_SIGN_STEP) {
-    context.signFiles(files, options)
-    if (SystemInfoRt.isUnix) {
+  val options = signingOptions(contentType = "application/x-mac-app-bin", context = context).putAll(m = additionalOptions)
+  span.useWithScope2 {
+    context.proprietaryBuildTools.signTool.signFiles(files = files, context = context, options = options)
+    if (!permissions.isEmpty()) {
       // SRE-1223 workaround
       files.forEach {
-        it.setPosixFilePermissions(permissions.getValue(it))
+        Files.setPosixFilePermissions(it, permissions.getValue(it))
       }
     }
-    val missingSignature = files.filter {
-      it.isMacOsBinary() && !it.isSigned()
-    }
+
+    val missingSignature = files.filter { !isSigned(it) }
     check(missingSignature.isEmpty()) {
       "Missing signature for:\n" + missingSignature.joinToString(separator = "\n\t")
     }
   }
 }
 
-private fun Path.isMacOsBinary(): Boolean = Files.newByteChannel(this@isMacOsBinary).isMacOsBinary()
-internal fun Path.isMultiArchMacOsBinary(): Boolean {
-  val (type, properties) = Files.newByteChannel(this@isMultiArchMacOsBinary).detectFileType()
-  return type == FileType.MachO && properties.contains(FileProperties.MultiArch)
+internal suspend fun signData(data: ByteBuffer, context: BuildContext): Path {
+  val options = signingOptions("application/x-mac-app-bin", context)
+
+  val file = Files.createTempFile(context.paths.tempDir, "", "")
+  FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE)).use {
+    it.write(data)
+  }
+  context.proprietaryBuildTools.signTool.signFiles(files = listOf(file), context = context, options = options)
+  check(isSigned(file)) { "Missing signature for $file" }
+  return file
 }
 
-private fun ByteArray.isMacOsBinary(): Boolean = SeekableInMemoryByteChannel(this).isMacOsBinary()
+private fun isMacBinary(path: Path): Boolean = isMacBinary(Files.newByteChannel(path))
 
-private suspend fun ByteArray.isSigned(binaryId: String): Boolean =
-  SeekableInMemoryByteChannel(this).isSigned(binaryId)
-
-private suspend fun Path.isSigned(): Boolean = withContext(Dispatchers.IO) {
-  Files.newByteChannel(this@isSigned).isSigned(this@isSigned.toString())
+internal suspend fun isSigned(path: Path): Boolean {
+  return withContext(Dispatchers.IO) {
+    Files.newByteChannel(path).use {
+      isSigned(byteChannel = it, binaryId = path.toString())
+    }
+  }
 }
 
-private fun SeekableByteChannel.isMacOsBinary(): Boolean = detectFileType().first == FileType.MachO
-private fun SeekableByteChannel.detectFileType(): Pair<FileType, EnumSet<FileProperties>> = use {
-  it.DetectFileType()
+internal fun isMacBinary(seekableByteChannel: SeekableByteChannel): Boolean = detectFileType(seekableByteChannel).first == FileType.MachO
+
+private fun detectFileType(seekableByteChannel: SeekableByteChannel): Pair<FileType, EnumSet<FileProperties>> {
+  return seekableByteChannel.use {
+    it.DetectFileType()
+  }
 }
 
 /**
- * Assumes [isMacOsBinary].
+ * Assumes [isMacBinary].
  */
-private suspend fun SeekableByteChannel.isSigned(binaryId: String): Boolean = use {
-  withContext(Dispatchers.IO) {
-    val verificationParams = SignatureVerificationParams(
-      signRootCertStore = null,
-      timestampRootCertStore = null,
-      buildChain = false,
-      withRevocationCheck = false
-    )
-    val binaries = MachoArch(it).Extract()
-    binaries.isNotEmpty() && binaries.all { binary ->
-      val signatureData = try {
-        binary.GetSignatureData()
-      }
-      catch (ignored: InvalidDataException) {
-        return@all false
-      }
-      if (signatureData.IsEmpty) return@all false
-      val signedMessage = try {
-        SignedMessage.CreateInstance(signatureData)
-      }
-      catch (ignored: Exception) {
-        // assuming Signature=adhoc
-        return@all false
-      }
-      val result = try {
-        val signedMessageVerifier = SignedMessageVerifier(SignatureVerificationLog(binaryId))
-        signedMessageVerifier.VerifySignatureAsync(signedMessage, verificationParams)
-      }
-      catch (e: Exception) {
-        throw Exception("Failed to verify $binaryId", e)
-      }
-      result.Status == VerifySignatureStatus.Valid
+internal suspend fun isSigned(byteChannel: SeekableByteChannel, binaryId: String): Boolean {
+  val verificationParams = SignatureVerificationParams(
+    signRootCertStore = null,
+    timestampRootCertStore = null,
+    buildChain = false,
+    withRevocationCheck = false
+  )
+  val binaries = MachoArch(byteChannel).Extract()
+  return binaries.all { binary ->
+    val signatureData = try {
+      binary.GetSignatureData()
     }
+    catch (ignored: InvalidDataException) {
+      return@all false
+    }
+
+    if (signatureData.IsEmpty) {
+      return@all false
+    }
+
+    val signedMessage = try {
+      SignedMessage.CreateInstance(signatureData)
+    }
+    catch (ignored: Exception) {
+      // assuming Signature=adhoc
+      return@all false
+    }
+
+    val result = try {
+      val signedMessageVerifier = SignedMessageVerifier(SignatureVerificationLog(binaryId))
+      signedMessageVerifier.VerifySignatureAsync(signedMessage, verificationParams)
+    }
+    catch (e: Exception) {
+      throw Exception("Failed to verify $binaryId", e)
+    }
+    result.Status == VerifySignatureStatus.Valid
   }
 }
 
@@ -612,5 +631,5 @@ private class SignatureVerificationLog(val binaryId: String) : ILogger {
   override fun Info(str: String) = addEvent(str, "INFO")
   override fun Warning(str: String) = addEvent(str, "WARN")
   override fun Error(str: String) = addEvent(str, "ERROR")
-  override fun Trace(str: String) = Unit
+  override fun Trace(str: String) {}
 }

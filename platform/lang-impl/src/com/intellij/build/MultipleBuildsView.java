@@ -2,6 +2,7 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -467,7 +468,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   private class ProgressWatcher implements Runnable {
 
     private final Alarm myRefreshAlarm = new Alarm();
-    private final Set<AbstractViewManager.BuildInfo> myBuilds = ContainerUtil.newConcurrentSet();
+    private final Set<AbstractViewManager.BuildInfo> myBuilds = ConcurrentCollectionFactory.createConcurrentSet();
 
     private volatile boolean myIsStopped = false;
 

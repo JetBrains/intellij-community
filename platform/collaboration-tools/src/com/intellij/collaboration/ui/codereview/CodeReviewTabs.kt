@@ -60,7 +60,7 @@ private fun TabInfo.appendUnreadIcon(tabLabel: TabLabel, unread: Int?) {
   }
   else {
     alertIcon = AlertIcon(
-      CollaborationToolsIcons.Review.FileUnread,
+      CollaborationToolsIcons.FileUnread,
       0,
       tabLabel.labelComponent.preferredSize.width + scale(3)
     )

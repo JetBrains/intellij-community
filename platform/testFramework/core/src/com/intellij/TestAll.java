@@ -3,6 +3,7 @@ package com.intellij;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.idea.Bombed;
+import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -82,7 +83,7 @@ public class TestAll implements Test {
     }
   };
 
-  public static final Filter NOT_BOMBED = new Filter() {
+  private static final Filter NOT_BOMBED = new Filter() {
     @Override
     public boolean shouldRun(Description description) {
       return !isBombed(description);
@@ -96,6 +97,18 @@ public class TestAll implements Test {
     private boolean isBombed(Description description) {
       Bombed bombed = description.getAnnotation(Bombed.class);
       return bombed != null && !TestFrameworkUtil.bombExplodes(bombed);
+    }
+  };
+
+  private static final Filter NOT_IGNORED = new Filter() {
+    @Override
+    public boolean shouldRun(Description description) {
+      return description.getAnnotation(IgnoreJUnit3.class) == null;
+    }
+
+    @Override
+    public String describe() {
+      return "Not @IgnoreJUnit3";
     }
   };
 
@@ -396,7 +409,7 @@ public class TestAll implements Test {
 
         JUnit4TestAdapter adapter = createJUnit4Adapter(testCaseClass);
         try {
-          adapter.filter(NOT_BOMBED.intersect(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE));
+          adapter.filter(NOT_BOMBED.intersect(NOT_IGNORED).intersect(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE));
         }
         catch (NoTestsRemainException ignored) {
         }
@@ -418,6 +431,10 @@ public class TestAll implements Test {
             }
 
             Method method = findTestMethod((TestCase)test);
+
+            if (method != null && method.getAnnotation(IgnoreJUnit3.class) != null) {
+              return;
+            }
             Bombed methodBomb = method == null ? null : method.getAnnotation(Bombed.class);
             if (methodBomb == null) {
               doAddTest(test);

@@ -245,17 +245,17 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     assertExternalProjectId("multiproject.main", "multiproject:main");
     assertExternalProjectId("multiproject.test", "multiproject:test");
 
-    assertExternalProjectId("multiproject.buildSrc", "multiproject:buildSrc");
-    assertExternalProjectId("multiproject.buildSrc.main", "multiproject:buildSrc:main");
-    assertExternalProjectId("multiproject.buildSrc.test", "multiproject:buildSrc:test");
+    assertExternalProjectId("multiproject.buildSrc", ":buildSrc");
+    assertExternalProjectId("multiproject.buildSrc.main", ":buildSrc:main");
+    assertExternalProjectId("multiproject.buildSrc.test", ":buildSrc:test");
 
-    assertExternalProjectId("multiproject.buildSrc.buildSrcSubProject", "multiproject:buildSrc:buildSrcSubProject");
-    assertExternalProjectId("multiproject.buildSrc.buildSrcSubProject.main", "multiproject:buildSrc:buildSrcSubProject:main");
-    assertExternalProjectId("multiproject.buildSrc.buildSrcSubProject.test", "multiproject:buildSrc:buildSrcSubProject:test");
+    assertExternalProjectId("multiproject.buildSrc.buildSrcSubProject", ":buildSrc:buildSrcSubProject");
+    assertExternalProjectId("multiproject.buildSrc.buildSrcSubProject.main", ":buildSrc:buildSrcSubProject:main");
+    assertExternalProjectId("multiproject.buildSrc.buildSrcSubProject.test", ":buildSrc:buildSrcSubProject:test");
 
-    assertExternalProjectId("multiproject.buildSrc.util", "multiproject:buildSrc:util");
-    assertExternalProjectId("multiproject.buildSrc.util.main", "multiproject:buildSrc:util:main");
-    assertExternalProjectId("multiproject.buildSrc.util.test", "multiproject:buildSrc:util:test");
+    assertExternalProjectId("multiproject.buildSrc.util", ":buildSrc:util");
+    assertExternalProjectId("multiproject.buildSrc.util.main", ":buildSrc:util:main");
+    assertExternalProjectId("multiproject.buildSrc.util.test", ":buildSrc:util:test");
 
     assertExternalProjectId("multiproject.app", ":app");
     assertExternalProjectId("multiproject.app.main", ":app:main");
@@ -265,20 +265,20 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     assertExternalProjectId("multiproject.util.main", ":util:main");
     assertExternalProjectId("multiproject.util.test", ":util:test");
 
-    assertExternalProjectId("inc-build", "inc-build");
-    assertExternalProjectId("inc-build.util", "inc-build:util");
+    assertExternalProjectId("inc-build", ":included-build");
+    assertExternalProjectId("inc-build.util", ":included-build:util");
 
-    assertExternalProjectId("inc-build.buildSrc", "inc-build:buildSrc");
-    assertExternalProjectId("inc-build.buildSrc.util", "inc-build:buildSrc:util");
-    assertExternalProjectId("inc-build.buildSrc.main", "inc-build:buildSrc:main");
-    assertExternalProjectId("inc-build.buildSrc.test", "inc-build:buildSrc:test");
+    assertExternalProjectId("inc-build.buildSrc", ":included-build:buildSrc");
+    assertExternalProjectId("inc-build.buildSrc.util", ":included-build:buildSrc:util");
+    assertExternalProjectId("inc-build.buildSrc.main", ":included-build:buildSrc:main");
+    assertExternalProjectId("inc-build.buildSrc.test", ":included-build:buildSrc:test");
 
     Map<String, ExternalProject> projectMap = getExternalProjectsMap();
     assertExternalProjectIds(projectMap, "multiproject", "multiproject:main", "multiproject:test");
     assertExternalProjectIds(projectMap, ":app", ":app:main", ":app:test");
     assertExternalProjectIds(projectMap, ":util", ":util:main", ":util:test");
-    assertExternalProjectIds(projectMap, "inc-build", ArrayUtilRt.EMPTY_STRING_ARRAY);
-    assertExternalProjectIds(projectMap, "inc-build:util", ArrayUtilRt.EMPTY_STRING_ARRAY);
+    assertExternalProjectIds(projectMap, ":included-build", ArrayUtilRt.EMPTY_STRING_ARRAY);
+    assertExternalProjectIds(projectMap, ":included-build:util", ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     // Note, currently ExternalProject models are not exposed for "buildSrc" projects
   }

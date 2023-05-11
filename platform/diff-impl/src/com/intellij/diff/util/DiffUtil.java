@@ -245,7 +245,7 @@ public final class DiffUtil {
       editor.getSettings().setLanguageSupplier(() -> language);
     }
     else if (editor.getProject() != null) {
-      editor.getSettings().setLanguageSupplier(() -> TextEditorImpl.getDocumentLanguage(editor));
+      editor.getSettings().setLanguageSupplier(() -> TextEditorImpl.Companion.getDocumentLanguage(editor));
     }
 
     editor.getSettings().setCaretRowShown(false);

@@ -23,7 +23,6 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.WizardPopup;
-import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
@@ -69,7 +68,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private Supplier<? extends @NotNull Dimension> myMinimumButtonSizeFunction;
   private PropertyChangeListener myPresentationListener;
   private Icon myDisabledIcon;
-  protected Icon myIcon;
+  private Icon myIcon;
   protected final Presentation myPresentation;
   protected final AnAction myAction;
   protected final String myPlace;
@@ -248,7 +247,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     popup.setShowSubmenuOnHover(true);
     popup.setAlignByParentBounds(false);
     popup.setActiveRoot(getPopupContainer(this) == null);
-    PopupImplUtil.setPopupToggleButton(popup, this);
     popup.showUnderneathOf(event.getInputEvent().getComponent());
     return popup;
   }
@@ -389,6 +387,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     Icon hoveredIcon = (popState == POPPED || popState == PUSHED) ? myPresentation.getHoveredIcon() : null;
     Icon icon = enabled ? (hoveredIcon == null ? myIcon : hoveredIcon) : myDisabledIcon;
     return icon == null ? getFallbackIcon(enabled) : icon;
+  }
+
+  public void setIcon(Icon icon) {
+    myIcon = icon;
   }
 
   @NotNull

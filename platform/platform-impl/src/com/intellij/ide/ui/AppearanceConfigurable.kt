@@ -6,12 +6,16 @@ import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
+import com.intellij.internal.statistic.service.fus.collectors.IdeZoomChanged
+import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.PlatformEditorBundle
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -21,6 +25,7 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
@@ -104,6 +109,9 @@ private val cdFullPathsInTitleBar
   get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
 private val cdShowMenuIcons
   get() = CheckboxDescriptor(message("checkbox.show.icons.in.menu.items"), settings::showIconsInMenus, groupName = windowOptionGroupName)
+private val cdDifferentiateProjects
+  get() = CheckboxDescriptor(message("checkbox.use.solution.colors.in.main.toolbar"), settings::differentiateProjects,
+                             message("text.use.solution.colors.in.main.toolbar"), groupName = uiOptionGroupName)
 
 internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
   return sequenceOf(
@@ -119,7 +127,8 @@ internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
     cdShowTreeIndents,
     cdDnDWithAlt,
     cdFullPathsInTitleBar,
-    cdSeparateMainMenu
+    cdSeparateMainMenu,
+    cdDifferentiateProjects
   ).map(CheckboxDescriptor::asUiOptionDescriptor)
 }
 
@@ -170,9 +179,13 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             .bindItem({ settings.ideScale.percentStringValue }, { })
             .onChanged {
               IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, false)?.let { scale ->
+                logIdeZoomChanged(scale, false)
                 resetZoom?.visible(scale.percentValue != defaultScale.percentValue)
                 settings.ideScale = scale
-                settings.fireUISettingsChanged()
+                invokeLater {
+                  // Invoke later to avoid NPE in JComboBox.repaint()
+                  settings.fireUISettingsChanged()
+                }
               }
             }.gap(RightGap.SMALL)
 
@@ -277,7 +290,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             }
             else {
               val enableColorBlindness = checkBox(UIBundle.message("color.blindness.combobox.text"))
-                .applyToComponent { isSelected = colorBlindnessProperty.get() != null }
+                .selected(colorBlindnessProperty.get() != null)
               comboBox(supportedValues)
                 .enabledIf(enableColorBlindness.selected)
                 .applyToComponent { renderer = SimpleListCellRenderer.create("") { PlatformEditorBundle.message(it.key) } }
@@ -332,6 +345,13 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           }
           yield({ checkBox(cdFullPathsInTitleBar) })
           yield({ checkBox(cdShowMenuIcons) })
+          if (ProjectWindowCustomizerService.getInstance().isAvailable()) {
+            yield {
+              checkBox(cdDifferentiateProjects)
+                .enabledIf(AtomicBooleanProperty(ExperimentalUI.isNewUI()))
+                .comment(cdDifferentiateProjects.comment, 30)
+            }
+          }
         }
 
         // Since some of the columns have variable number of items, enumerate them in a loop, while moving orphaned items from the right
@@ -463,6 +483,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               if (IdeScaleTransformer.Settings.validatePresentationModePercentScaleInput(it.item) != null) return@onChanged
 
               IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, true)?.let { scale ->
+                logIdeZoomChanged(scale, true)
                 settings.presentationModeIdeScale = scale
                 if (settings.presentationMode) {
                   settings.fireUISettingsChanged()
@@ -545,4 +566,16 @@ private class AAListCellRenderer(private val myUseEditorFont: Boolean) : SimpleL
 
     text = value.presentableName
   }
+}
+
+private fun logIdeZoomChanged(value: Float, isPresentation: Boolean) {
+  val oldScale = if (isPresentation) settings.presentationModeIdeScale else settings.ideScale
+
+  IdeZoomChanged.log(
+    IdeZoomEventFields.zoomMode.with(if (value.percentValue > oldScale.percentValue) IdeZoomEventFields.ZoomMode.ZOOM_IN
+                                     else IdeZoomEventFields.ZoomMode.ZOOM_OUT),
+    IdeZoomEventFields.place.with(IdeZoomEventFields.Place.SETTINGS),
+    IdeZoomEventFields.zoomScalePercent.with(value.percentValue),
+    IdeZoomEventFields.presentationMode.with(isPresentation)
+  )
 }

@@ -16,8 +16,10 @@ createSysRoot() {
   if [ "$1" == "x86_64" ]; then
     imageArch=amd64
   elif [ "$1" == "aarch64" ]; then
-    imageArch=arm64v8
+    imageArch=arm64/v8
   fi
+
+  nerdctl pull buildpack-deps:bionic
 
   mkdir -p "$outDir"
   # use old glibc (2.24)
@@ -29,21 +31,16 @@ createSysRoot() {
 createSysRoot x86_64
 #createSysRoot aarch64
 
-# echo "deb http://archive.ubuntu.com/ubuntu/ jammy-proposed universe" | tee /etc/apt/sources.list.d/docker.list
-
-# apt-get update && apt install -y install clang lldb lld
-#nerdctl run -ti -v "$SCRIPT_DIR":/work silkeh/clang@sha256:693fdfa16424b2f41408204933b63a796e2700f1865a19c7eec7f6606040d7fd
-
-#OS=mac ARCH=aarch64 ./make.sh
-#OS=mac ARCH=x86_64 ./make.sh
-#OS=linux ARCH=aarch64 ./make.sh
-#OS=linux ARCH=x86_64 ./make.sh
-#
-#nerdctl run --rm --platform linux/amd64 -v "$SCRIPT_DIR":/work --workdir=/work \
-#  dockcross/windows-static-x64 bash -c 'OS=win ARCH=x86_64 CC=gcc CROSS_PREFIX=x86_64-w64-mingw32.static- ./make.sh'
-#
-#nerdctl run --rm --platform linux/amd64 -v "$SCRIPT_DIR":/work --workdir=/work \
-#  dockcross/windows-arm64 bash -c 'OS=win ARCH=aarch64 CC=clang CROSS_PREFIX=aarch64-w64-mingw32- ./make.sh'
+OS=mac ARCH=aarch64 ./make.sh
+OS=mac ARCH=x86_64 ./make.sh
+OS=linux ARCH=aarch64 ./make.sh
+OS=linux ARCH=x86_64 ./make.sh
 
 nerdctl run --rm --platform linux/amd64 -v "$SCRIPT_DIR":/work --workdir=/work \
-  dockcross/linux-arm64 bash -c 'OS=linux ARCH=aarch64 CC=gcc CROSS_PREFIX=aarch64-unknown-linux-gnu- ./make.sh'
+  dockcross/windows-static-x64@sha256:8a53628099d9ce085303aa962120cd45b8f7a2b58b86fefc9797e9cbf43ce906 bash -c 'OS=win ARCH=x86_64 CC=gcc CROSS_PREFIX=x86_64-w64-mingw32.static- ./make.sh'
+
+nerdctl run --rm --platform linux/amd64 -v "$SCRIPT_DIR":/work --workdir=/work \
+  dockcross/windows-arm64@sha256:345e3c190fbdf44384ce256dd09f5ca9ace831a5344308c8dccb36b78c382d95 bash -c 'OS=win ARCH=aarch64 CC=clang CROSS_PREFIX=aarch64-w64-mingw32- ./make.sh'
+
+nerdctl run --rm --platform linux/amd64 -v "$SCRIPT_DIR":/work --workdir=/work \
+  dockcross/linux-arm64-lts@sha256:3bbb880b002f6cc1b5332719bbb0c2ba5c646260140c2ff15bff8d63a16187ba bash -c 'OS=linux ARCH=aarch64 CC=gcc CROSS_PREFIX=aarch64-unknown-linux-gnu- ./make.sh'

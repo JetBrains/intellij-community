@@ -14,8 +14,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
-public class MavenServerForIndexer extends MavenRemoteObject implements MavenServer {
-
+public class MavenServerForIndexer extends MavenWatchdogAware implements MavenServer {
   private volatile MavenIdeaIndexerImpl myIndexerRef;
   private volatile PlexusContainer myPlexusContainer;
 
@@ -100,11 +99,5 @@ public class MavenServerForIndexer extends MavenRemoteObject implements MavenSer
   @Override
   public MavenPullDownloadListener createPullDownloadListener(MavenToken token) throws RemoteException {
     throw new UnsupportedOperationException("indexing server");
-  }
-
-  @Override
-  public boolean isAlive(MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    return true;
   }
 }

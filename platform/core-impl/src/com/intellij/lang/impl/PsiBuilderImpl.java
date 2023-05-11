@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl;
 
 import com.intellij.lang.*;
@@ -119,11 +119,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
          null, chameleon);
   }
 
-  PsiBuilderImpl(@NotNull Project project,
-                 @NotNull ParserDefinition parserDefinition,
-                 @NotNull Lexer lexer,
-                 @NotNull LighterLazyParseableNode chameleon,
-                 @NotNull CharSequence text) {
+  public PsiBuilderImpl(@NotNull Project project,
+                        @NotNull ParserDefinition parserDefinition,
+                        @NotNull Lexer lexer,
+                        @NotNull LighterLazyParseableNode chameleon,
+                        @NotNull CharSequence text) {
     this(project, chameleon.getContainingFile(), parserDefinition, lexer,
          chameleon.getCharTable(), text, null, null, ((LazyParseableToken)chameleon).myParentStructure, chameleon);
   }
@@ -1223,7 +1223,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
           item = marker.myNext;
           itemDone = false;
         }
-        else if (!myOptionalData.isCollapsed(marker.markerId)) {
+        else if (!isCollapsed(marker)) {
           curMarker = marker;
 
           CompositeElement childNode = createComposite(marker, astFactory);
@@ -1250,6 +1250,10 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         itemDone = true;
       }
     }
+  }
+
+  public boolean isCollapsed(@NotNull ProductionMarker marker) {
+    return myOptionalData.isCollapsed(marker.markerId);
   }
 
   private int insertLeaves(int curToken, int lastIdx, @NotNull CompositeElement curNode) {
@@ -1551,7 +1555,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       while (child != null) {
         lexIndex = insertLeaves(lexIndex, child.myLexemeIndex, marker.myBuilder, marker);
 
-        if (child instanceof StartMarker && child.myBuilder.myOptionalData.isCollapsed(child.markerId)) {
+        if (child instanceof StartMarker && child.myBuilder.isCollapsed(child)) {
           int lastIndex = child.getEndIndex();
           insertLeaf(child.getTokenType(), marker.myBuilder, child.myLexemeIndex, lastIndex, true, marker);
         }
@@ -1711,7 +1715,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   @NotNull
   protected TreeElement createLeaf(@NotNull IElementType type, int start, int end) {
-    CharSequence text = myCharTable.intern(myText, start, end);
+    CharSequence text = getInternedText(start, end);
     if (myWhitespaces.contains(type)) {
       return new PsiWhiteSpaceImpl(text);
     }
@@ -1731,6 +1735,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
 
     return ASTFactory.leaf(type, text);
+  }
+
+  @NotNull
+  protected CharSequence getInternedText(int start, int end) {
+    return myCharTable.intern(myText, start, end);
   }
 
   @Override

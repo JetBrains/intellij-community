@@ -7,7 +7,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
@@ -17,7 +16,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
@@ -37,7 +36,6 @@ import java.util.function.Supplier;
  * Delegates to the VcsLogManager.
  */
 public final class VcsLogContentProvider implements ChangesViewContentProvider {
-  private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
   public static final @NonNls String TAB_NAME = "Log"; // used as tab id, not user-visible
   public static final @NonNls String MAIN_LOG_ID = "MAIN";
 
@@ -51,7 +49,7 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
   public VcsLogContentProvider(@NotNull Project project) {
     myProjectLog = VcsProjectLog.getInstance(project);
 
-    MessageBusConnection connection = project.getMessageBus().connect(myProjectLog);
+    SimpleMessageBusConnection connection = myProjectLog.getBusConnection$intellij_platform_vcs_log_impl();
     connection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
       @Override
       public void logCreated(@NotNull VcsLogManager logManager) {

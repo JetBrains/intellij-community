@@ -6,11 +6,13 @@ import com.intellij.configurationStore.Property;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.text.StringUtil;
@@ -521,8 +523,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
       return null;
     }
   }
-
-  public boolean ENABLE_SECOND_REFORMAT;
   // endregion
 
   //----------------------------------------------------------------------------------------
@@ -720,7 +720,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   @ApiStatus.Internal
   public @NotNull IndentOptions getIndentOptionsByFile(@NotNull Project project, @NotNull VirtualFile file, @Nullable TextRange formatRange) {
-    return getIndentOptionsByFile(project, file, formatRange, false, null);
+    try (AccessToken ignored = ProjectLocator.withPreferredProject(file, project)) {
+      return getIndentOptionsByFile(project, file, formatRange, false, null);
+    }
   }
 
   @ApiStatus.Internal

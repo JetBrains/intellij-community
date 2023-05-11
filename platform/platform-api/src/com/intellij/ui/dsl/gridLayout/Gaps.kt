@@ -3,9 +3,11 @@ package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBEmptyBorder
-import java.awt.Insets
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Deprecated("Use UnscaledGaps instead")
+@ApiStatus.ScheduledForRemoval
 data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val right: Int = 0) {
   companion object {
     @JvmField
@@ -28,14 +30,14 @@ data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val ri
     get() = top + bottom
 }
 
+
+@Deprecated("Use UnscaledGaps instead", replaceWith = ReplaceWith("UnscaledGaps(top, left, bottom, right)"))
+@ApiStatus.ScheduledForRemoval
 fun JBGaps(top: Int = 0, left: Int = 0, bottom: Int = 0, right: Int = 0): Gaps {
   return Gaps(JBUIScale.scale(top), JBUIScale.scale(left), JBUIScale.scale(bottom), JBUIScale.scale(right))
 }
 
-fun Gaps.toJBEmptyBorder(): JBEmptyBorder {
-  return JBEmptyBorder(top, left, bottom, right)
-}
-
-fun Insets.toGaps(): Gaps {
-  return Gaps(top = top, left = left, bottom = bottom, right = right)
-}
+@Internal
+@Deprecated("Use UnscaledGaps", replaceWith = ReplaceWith("UnscaledGaps()"))
+@ApiStatus.ScheduledForRemoval
+fun Gaps.toUnscaled() = UnscaledGaps(top = top.unscale(), left = left.unscale(), bottom = bottom.unscale(), right = right.unscale())

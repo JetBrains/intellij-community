@@ -50,7 +50,10 @@ fun isStringPlusExpressionWithoutNewLineInOperands(expression: KtBinaryExpressio
     if (expression.getKtType()?.isString != true) return false
     val plusOperation = expression.operationReference.mainReference.resolveToSymbol() as? KtCallableSymbol
     val classContainingPlus = plusOperation?.getContainingSymbol() as? KtNamedClassOrObjectSymbol
-    return classContainingPlus?.classIdIfNonLocal?.asSingleFqName() == StandardNames.FqNames.string.toSafe()
+    if (classContainingPlus == null) {
+        return plusOperation?.callableIdIfNonLocal?.asSingleFqName()?.asString() == "kotlin.text.plus"
+    }
+    return classContainingPlus.classIdIfNonLocal?.asSingleFqName() == StandardNames.FqNames.string.toSafe()
 }
 
 /**
@@ -210,16 +213,6 @@ private fun convertContent(element: KtStringTemplateExpression): String {
     return StringUtilRt.convertLineSeparators(text, "\n")
 }
 
-private fun hasTrailingSpaces(text: String): Boolean {
-    var afterSpace = false
-    for (c in text) {
-        if ((c == '\n' || c == '\r') && afterSpace) return true
-        afterSpace = c == ' ' || c == '\t'
-    }
-
-    return false
-}
-
 private fun KtStringTemplateEntry.value() = if (this is KtEscapeStringTemplateEntry) this.unescapedValue else text
 
 fun KtStringTemplateExpression.canBeConvertedToStringLiteral(): Boolean {
@@ -238,7 +231,7 @@ fun KtStringTemplateExpression.canBeConvertedToStringLiteral(): Boolean {
     }
 
     val converted = convertContent(this)
-    return !converted.contains("\"\"\"") && !hasTrailingSpaces(converted)
+    return !converted.contains("\"\"\"")
 }
 
 fun KtStringTemplateExpression.convertToStringLiteral(): KtExpression {

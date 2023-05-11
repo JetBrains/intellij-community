@@ -283,7 +283,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         List<ThreadReferenceProxyImpl> pausedThreads =
-          StreamEx.of(((SuspendManagerImpl)myDebugProcess.getSuspendManager()).getPausedContexts())
+          StreamEx.of(myDebugProcess.getSuspendManager().getPausedContexts())
             .map(SuspendContextImpl::getThread)
             .nonNull()
             .toList();

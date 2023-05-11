@@ -54,7 +54,7 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData, pri
 
   private fun createHeaderPanel(): JComponent {
     val learnIdeFeaturesHeader = DynamicFontLabel(data.getName(), data.getIcon()).apply {
-      val labelFont = StartupUiUtil.getLabelFont()
+      val labelFont = StartupUiUtil.labelFont
       font = labelFont.deriveFont(Font.BOLD).deriveFont(labelFont.size2D + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0 )
     }
 
@@ -100,7 +100,7 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData, pri
       super.setUI(ui)
       if (font != null) {
         font = FontUIResource(font.deriveFont(
-          StartupUiUtil.getLabelFont().size.toFloat() + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0 ).deriveFont(Font.BOLD))
+          StartupUiUtil.labelFont.size.toFloat() + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0 ).deriveFont(Font.BOLD))
       }
     }
   }

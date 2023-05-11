@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -12,8 +13,12 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.ContentFilterable
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.file.RegularFile
+import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.invocation.Gradle
+import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
@@ -30,15 +35,18 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.MessageReporter
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
-import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
 import static org.jetbrains.plugins.gradle.tooling.builder.ModelBuildersDataProviders.TASKS_PROVIDER
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.*
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
 /**
@@ -98,11 +106,23 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     defaultExternalProject.QName = qName
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
     def ideaPluginModule = ideaPlugin?.model?.module
-    def parentBuildRootProject = project.gradle.parent?.rootProject
-    def compositePrefix = parentBuildRootProject && !project.rootProject.is(parentBuildRootProject) && ":" != project.path ?
-                          (ideaPlugin?.model?.project?.name ?: project.rootProject.name) : ""
     def ideaModuleName = ideaPluginModule?.name ?: project.name
-    defaultExternalProject.id = compositePrefix + (":" == project.path ? ideaModuleName : qName)
+
+    /*
+    Right now, there is no public API available to get this identityPath
+    Agreement with Gradle: We can use ProjectInternal for now.
+    This identity path will get a public tooling API which will replace the cast.
+    Until then, this API will be kept stable as agreement between Gradle and JetBrains
+
+    Note: identityPath was introduced with Gradle 3.3:
+    https://github.com/gradle/gradle/commit/2c009b27b97c1564344f3cc93258ce5a0e18a03f
+     */
+    def projectIdentityPath = GradleVersion.current() >= GradleVersion.version("3.3") ?
+                              (project as ProjectInternal).identityPath.path : project.path
+
+    defaultExternalProject.id = projectIdentityPath == ":" ? ideaModuleName : projectIdentityPath
+    defaultExternalProject.path = project.path
+    defaultExternalProject.identityPath = projectIdentityPath
     defaultExternalProject.version = wrap(project.version)
     defaultExternalProject.description = project.description
     defaultExternalProject.buildDir = project.buildDir
@@ -212,7 +232,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def ideaTestSourceDirs = null
     def ideaTestResourceDirs = null
     def downloadJavadoc = false
-    def downloadSources = true
+    def downloadSources = Boolean.parseBoolean(System.getProperty("idea.disable.gradle.download.sources", "true"))
 
     def testSourceSets = []
 
@@ -250,7 +270,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def projectSourceCompatibility = getSourceCompatibility(project)
     def projectTargetCompatibility = getTargetCompatibility(project)
 
-    def result = [:] as Map<String, DefaultExternalSourceSet>
+    def result = new LinkedHashMap<String, DefaultExternalSourceSet>();
     def sourceSets = JavaPluginUtil.getSourceSetContainer(project)
     if (sourceSets == null) {
       return result
@@ -302,12 +322,17 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         externalSourceSet.targetCompatibility = projectTargetCompatibility
       }
 
-      def jarTask = project.tasks.findByName(sourceSet.jarTaskName)
-      if (jarTask instanceof AbstractArchiveTask) {
-        externalSourceSet.artifacts = [ is67OrBetter ?
-                                        ReflectionUtil.reflectiveGetProperty(jarTask, "getArchiveFile", RegularFile.class).getAsFile() :
-                                        jarTask.archivePath ]
+      project.tasks.withType(AbstractArchiveTask) { AbstractArchiveTask task ->
+        def isOwnJarTask = task.name == sourceSet.jarTaskName
+        if (isOwnJarTask ||
+          (isCustomJarTask(task, sourceSets) && containsAllSourceSetOutput(task, sourceSet))
+        ) {
+          externalSourceSet.artifacts.add(is67OrBetter ?
+                                          reflectiveGetProperty(task, "getArchiveFile", RegularFile.class).getAsFile() :
+                                          task.archivePath)
+        }
       }
+
 
       def sources = [:] as Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
@@ -714,5 +739,97 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     return ErrorMessageBuilder.create(
       project, e, "Project resolve errors"
     ).withDescription("Unable to resolve additional project configuration.")
+  }
+
+  private static boolean containsAllSourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull SourceSet sourceSet) {
+    def outputFiles = new HashSet<>(sourceSet.output.files)
+    def project = archiveTask.project
+
+    try {
+      final Method mainSpecGetter = AbstractCopyTask.class.getDeclaredMethod("getMainSpec");
+      mainSpecGetter.setAccessible(true);
+      Object mainSpec = mainSpecGetter.invoke(archiveTask);
+
+      final List<MetaMethod> sourcePathGetters =
+        DefaultGroovyMethods.respondsTo(mainSpec, "getSourcePaths", new Object[]{});
+      if (!sourcePathGetters.isEmpty()) {
+        Set<Object> sourcePaths = (Set<Object>)sourcePathGetters.get(0).doMethodInvoke(mainSpec, new Object[]{});
+        if (sourcePaths != null) {
+          for (Object path : sourcePaths) {
+            if (isSafeToResolve(path)) {
+              def files = project.files(path).files
+              outputFiles.removeAll(files)
+            }
+          }
+        }
+      }
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    return outputFiles.isEmpty()
+  }
+
+  /**
+   * Checks that object can be safely resolved using {@link Project#files(java.lang.Object...)} API.
+   *
+   * @param object
+   * @return true if object is safe to resolve using {@link Project#files(java.lang.Object...)}
+   * @see org.jetbrains.plugins.gradle.tooling.builder.ExternalProjectBuilderImpl#unpackPresentProvider
+   */
+  private static boolean isSafeToResolve(Object param) {
+    Object object = unpackPresentProvider(param)
+    boolean isDirectoryOrRegularFile = dynamicCheckInstanceOf(object,
+                                                              "org.gradle.api.file.Directory",
+                                                              "org.gradle.api.file.RegularFile")
+
+    return object instanceof CharSequence
+      || object instanceof File || object instanceof Path
+      || isDirectoryOrRegularFile
+      || object instanceof SourceSetOutput
+  }
+
+  /**
+   * Some Gradle {@link org.gradle.api.provider.Provider} implementations can not be resolved during sync,
+   * causing {@link org.gradle.api.InvalidUserCodeException}
+   * and {@link org.gradle.api.InvalidUserDataException}.
+   *
+   * @return provided value or current if value isn't present or cannot be evaluated
+   */
+  private static Object unpackPresentProvider(Object object) {
+    if (!dynamicCheckInstanceOf(object, "org.gradle.api.provider.Provider")) {
+      return object
+    }
+    try {
+      def providerClass = object.getClass()
+      def isPresentMethod = providerClass.getMethod("isPresent")
+      def getterMethod = providerClass.getMethod("get")
+      if ((Boolean)isPresentMethod.invoke(object)) {
+        return getterMethod.invoke(object)
+      }
+      return object
+    }
+    catch (InvocationTargetException exception) {
+      Throwable targetException = exception.targetException
+      boolean isCodeException = dynamicCheckInstanceOf(targetException, "org.gradle.api.InvalidUserCodeException")
+      boolean isDataException = dynamicCheckInstanceOf(targetException, "org.gradle.api.InvalidUserDataException")
+      if (isCodeException || isDataException) {
+        return object
+      }
+      throw exception
+    }
+  }
+
+  private static boolean isCustomJarTask(@NotNull AbstractArchiveTask archiveTask,
+                                         @NotNull SourceSetContainer sourceSets) {
+    for (final SourceSet sourceSet in sourceSets) {
+      if (archiveTask.name == sourceSet.jarTaskName) {
+        // there is a sourceSet that 'owns' this task
+        return false;
+      }
+    }
+    // name of this task is not associated with any source set
+    return true;
   }
 }

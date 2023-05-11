@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server
 
+import com.intellij.execution.rmi.IdeaWatchdog
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.server.MavenServerConnector.State
-import org.jetbrains.idea.maven.server.RemoteObjectWrapper.Retriable
 import org.jetbrains.idea.maven.server.security.MavenToken
 import java.io.File
 import java.rmi.RemoteException
@@ -62,7 +62,10 @@ class DummyMavenServerConnector(project: @NotNull Project,
 }
 
 class DummyMavenServer(val project: Project) : MavenServer {
-
+  private lateinit var watchdog: IdeaWatchdog;
+  override fun setWatchdog(watchdog: IdeaWatchdog) {
+    this.watchdog = watchdog
+  }
 
   override fun createEmbedder(settings: MavenEmbedderSettings?, token: MavenToken?): MavenServerEmbedder {
     return UntrustedDummyEmbedder(project)
@@ -96,7 +99,7 @@ class DummyMavenServer(val project: Project) : MavenServer {
     return null
   }
 
-  override fun isAlive(token: MavenToken?): Boolean {
+  override fun ping(token: MavenToken?): Boolean {
     return true
   }
 }
@@ -115,8 +118,12 @@ class DummyIndexer : MavenServerIndexer {
 
   override fun processArtifacts(indexId: MavenIndexId, startFrom: Int, token: MavenToken?): List<IndexedMavenId>? = null
 
-  override fun addArtifact(indexId: MavenIndexId, artifactFile: File?, token: MavenToken?): IndexedMavenId {
-    return IndexedMavenId(null, null, null, null, null)
+  override fun addArtifacts(indexId: MavenIndexId, artifactFiles: MutableCollection<File>, token: MavenToken): MutableList<AddArtifactResponse> {
+    val responses = mutableListOf<AddArtifactResponse>();
+    for (artifactFile in artifactFiles) {
+      responses.add(AddArtifactResponse(artifactFile, IndexedMavenId(null, null, null, null, null)))
+    }
+    return responses
   }
 
   override fun search(indexId: MavenIndexId, query: String, maxResult: Int, token: MavenToken?): Set<MavenArtifactInfo> {

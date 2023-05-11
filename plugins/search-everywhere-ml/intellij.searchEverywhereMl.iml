@@ -74,9 +74,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-classes-model-experimental" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-classes-model:231.3.1" />
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-classes-model:231.4.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231.3.1/find-classes-model-231.3.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231.4.1/find-classes-model-231.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -94,7 +94,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.vcs" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.yaml" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.searchEverywhereMl.java" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.searchEverywhereMl.kotlin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.typos" scope="RUNTIME" />
   </component>
 </module>

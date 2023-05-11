@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.util.ExceptionUtil;
@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storage;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage.RecordLayout.ActualRecords.*;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage.RecordLayout.OFFSET_BUCKET;
 
@@ -598,6 +599,8 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
                             final int length,
                             final int redirectToId,
                             final ByteBuffer payload) {
+        //FIXME RC: this limit on padding capacity is actually the limit of main record size -- because if there is
+        //          X-sized record, it could require up to X-1 padding
         if (capacity < MIN_CAPACITY || capacity > MAX_CAPACITY) {
           throw new IllegalArgumentException("capacity(" + capacity + ") must be in [" + MIN_CAPACITY + ".." + MAX_CAPACITY + "]");
         }
@@ -760,7 +763,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
 
   @Override
   public <Out> Out readRecord(final int recordId,
-                              final @NotNull Reader<Out> reader) throws IOException {
+                              final @NotNull ByteBufferReader<Out> reader) throws IOException {
     return readRecord(recordId, reader, null);
   }
 
@@ -834,7 +837,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
    */
   @Override
   public <Out> Out readRecord(final int recordId,
-                              final @NotNull Reader<Out> reader,
+                              final @NotNull ByteBufferReader<Out> reader,
                               final @Nullable IntRef redirectToIdRef) throws IOException {
     checkRecordIdExists(recordId);
     int currentRecordId = recordId;
@@ -882,13 +885,13 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
 
   @Override
   public int writeToRecord(final int recordId,
-                           final @NotNull Writer writer) throws IOException {
+                           final @NotNull ByteBufferWriter writer) throws IOException {
     return writeToRecord(recordId, writer, /*expectedRecordSizeHint: */ -1);
   }
 
   @Override
   public int writeToRecord(final int recordId,
-                           final @NotNull Writer writer,
+                           final @NotNull ByteBufferWriter writer,
                            final int expectedRecordSizeHint) throws IOException {
     return writeToRecord(recordId, writer, expectedRecordSizeHint, /* leaveRedirectOnRecordRelocation: */ false);
   }
@@ -917,7 +920,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
    */
   @Override
   public int writeToRecord(final int recordId,
-                           final @NotNull Writer writer,
+                           final @NotNull ByteBufferWriter writer,
                            final int expectedRecordSizeHint,
                            final boolean leaveRedirectOnRecordRelocation) throws IOException {
     //insert new record?
@@ -1555,7 +1558,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
 
   @NotNull
   private BatchCallback setupReportingToOpenTelemetry(final Path fileName) {
-    final Meter meter = TraceManager.INSTANCE.getMeter("storage");
+    final Meter meter = TelemetryTracer.getMeter(Storage);
 
     final var recordsAllocated = meter.counterBuilder("StreamlinedBlobStorage.recordsAllocated").buildObserver();
     final var recordsRelocated = meter.counterBuilder("StreamlinedBlobStorage.recordsRelocated").buildObserver();

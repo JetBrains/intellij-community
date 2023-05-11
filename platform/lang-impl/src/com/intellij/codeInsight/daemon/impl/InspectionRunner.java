@@ -9,6 +9,7 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -137,6 +138,8 @@ class InspectionRunner {
       };
       visitElements(init, outside, false, finalPriorityRange, TOMB_STONE, afterOutside, foundInjected, injectedContexts,
                     toolWrappers, empty(), enabledToolsPredicate);
+      reportIdsOfInspectionsReportedAnyProblemToFUS(init);
+
       boolean isWholeFileInspectionsPass = !init.isEmpty() && init.get(0).tool.runForWholeFile();
       if (myIsOnTheFly && !isWholeFileInspectionsPass) {
         // do not save stats for batch process, there could be too many files
@@ -148,6 +151,19 @@ class InspectionRunner {
     });
 
     return ContainerUtil.concat(init, redundantContexts, injectedContexts);
+  }
+
+  private void reportIdsOfInspectionsReportedAnyProblemToFUS(@NotNull List<? extends InspectionContext> init) {
+    if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return;
+    Set<String> inspectionIdsReportedProblems = new HashSet<>();
+    InspectionProblemHolder holder;
+    for (InspectionContext context : init) {
+      holder = context.holder;
+      if (holder.anyProblemWasReported()) {
+        inspectionIdsReportedProblems.add(context.tool.getID());
+      }
+    }
+    InspectionUsageStorage.getInstance(myPsiFile.getProject()).reportInspectionsWhichReportedProblems(inspectionIdsReportedProblems);
   }
 
   private static long finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<? extends Divider.DividedElements> allDivided) {
@@ -458,6 +474,10 @@ class InspectionRunner {
           otherStamp = System.nanoTime();
         }
       }
+    }
+
+    boolean anyProblemWasReported() {
+      return errorStamp > 0 || warningStamp > 0 || otherStamp > 0;
     }
   }
 

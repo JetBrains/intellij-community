@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.ShowLogAction
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.ActionsBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction.createSimple
@@ -21,7 +22,7 @@ private val LOG = logger<WindowsDefenderCheckerActivity>()
 
 internal class WindowsDefenderCheckerActivity : ProjectActivity {
   init {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (ApplicationManager.getApplication().isUnitTestMode || PluginManagerCore.isRunningFromSources()) {
       throw ExtensionNotApplicableException.create()
     }
   }
@@ -30,12 +31,14 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     val checker = WindowsDefenderChecker.getInstance()
     if (checker.isStatusCheckIgnored(project)) {
       LOG.info("status check is disabled")
+      WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
       return
     }
 
     val protection = checker.isRealTimeProtectionEnabled
     if (protection != true) {
       LOG.info("real-time protection: ${protection}")
+      WindowsDefenderStatisticsCollector.protectionCheckStatus(project, protection)
       return
     }
 
@@ -46,23 +49,24 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
       val manual = DiagnosticBundle.message("defender.config.manual")
       notification(DiagnosticBundle.message("defender.config.prompt", pathList, auto, manual), NotificationType.INFORMATION)
         .addAction(createSimpleExpiring(auto) { updateDefenderConfig(checker, project, paths) })
-        .addAction(createSimple(manual) { BrowserUtil.browse(checker.configurationInstructionsUrl) })
+        .addAction(createSimple(manual) { showInstructions(checker, project) })
     }
     else {
       notification(DiagnosticBundle.message("defender.config.prompt.no.script", pathList), NotificationType.INFORMATION)
-        .addAction(createSimple(DiagnosticBundle.message("defender.config.instructions")) { BrowserUtil.browse(checker.configurationInstructionsUrl) })
+        .addAction(createSimple(DiagnosticBundle.message("defender.config.instructions")) { showInstructions(checker, project) })
     }
     notification
       .also {
         it.isImportant = true
         it.collapseDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
       }
-      .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress1")) { suppressCheck(checker, project) })
-      .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress2")) { suppressCheck(checker, null) })
+      .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress1")) { suppressCheck(checker, project, globally = false) })
+      .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress2")) { suppressCheck(checker, project, globally = true) })
       .notify(project)
   }
 
   private fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>) {
+    WindowsDefenderStatisticsCollector.auto(project)
     @Suppress("DialogTitleCapitalization")
     runBackgroundableTask(DiagnosticBundle.message("defender.config.progress"), project, false) {
       val success = checker.excludeProjectPaths(paths)
@@ -76,14 +80,21 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
           .addAction(ShowLogAction.notificationAction())
           .notify(project)
       }
+      WindowsDefenderStatisticsCollector.configured(project, success)
     }
   }
 
-  private fun suppressCheck(checker: WindowsDefenderChecker, project: Project?) {
-    checker.ignoreStatusCheck(project, true)
+  private fun showInstructions(checker: WindowsDefenderChecker, project: Project) {
+    BrowserUtil.browse(checker.configurationInstructionsUrl)
+    WindowsDefenderStatisticsCollector.manual(project)
+  }
+
+  private fun suppressCheck(checker: WindowsDefenderChecker, project: Project, globally: Boolean) {
+    checker.ignoreStatusCheck(if (globally) null else project, true)
     val action = ActionsBundle.message("action.ResetWindowsDefenderNotification.text")
     notification(DiagnosticBundle.message("defender.config.restore", action), NotificationType.INFORMATION)
       .notify(project)
+    WindowsDefenderStatisticsCollector.suppressed(project, globally)
   }
 
   private fun notification(@NlsContexts.NotificationContent content: String, type: NotificationType): Notification =

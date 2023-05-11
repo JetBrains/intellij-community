@@ -67,7 +67,12 @@ public final class EncodingUtil {
   @NotNull
   static Magic8 isSafeToReloadIn(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytes, @NotNull Charset charset) {
     // file has BOM but the charset hasn't
-    byte[] bom = virtualFile.getBOM();
+    byte[] bom = null;
+    try {
+      bom = getBOMFromBytes(virtualFile.contentsToByteArray());
+    }
+    catch (IOException ignored) {
+    }
     if (bom != null && !CharsetToolkit.canHaveBom(charset, bom)) return Magic8.NO_WAY;
 
     // the charset has mandatory BOM (e.g. UTF-xx) but the file hasn't or has wrong
@@ -99,6 +104,17 @@ public final class EncodingUtil {
     return !Arrays.equals(bytesToSave, bytes) ? Magic8.NO_WAY : StringUtil.equals(loaded, text) ? Magic8.ABSOLUTELY : Magic8.WELL_IF_YOU_INSIST;
   }
 
+  private static byte[] getBOMFromBytes(byte @NotNull [] contents) {
+    Charset charset = CharsetToolkit.guessFromBOM(contents);
+    if (charset == null) {
+      return null;
+    }
+    if (charset.equals(StandardCharsets.UTF_8)) {
+      return CharsetToolkit.UTF8_BOM;
+    }
+    return CharsetToolkit.getMandatoryBom(charset);
+  }
+  
   @NotNull
   static Magic8 isSafeToConvertTo(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytesOnDisk, @NotNull Charset charset) {
     try {

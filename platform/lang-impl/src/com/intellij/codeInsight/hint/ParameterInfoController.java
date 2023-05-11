@@ -535,7 +535,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     }
   }
 
-  private static class WrapperPanel extends JPanel {
+  static class WrapperPanel extends JPanel {
     WrapperPanel() {
       super(new BorderLayout());
       setBorder(JBUI.Borders.empty());

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +74,7 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
   protected List<T> createReferences(final TextRange range, final int index) {
     T reference = createReference(range, index);
 
-    return reference == null ? Collections.emptyList() : Collections.singletonList(reference);
+    return ContainerUtil.createMaybeSingletonList(reference);
   }
 
   public PsiElement getElement() {

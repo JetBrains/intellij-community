@@ -8,6 +8,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.projectView.impl.SelectInProjectViewImpl;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
@@ -79,14 +80,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     ActionCallback result = new ActionCallback();
     Runnable runnable = () -> {
       projectView.changeViewCB(id, subviewId).doWhenProcessed(() -> {
-        Object element = toSelectSupplier.get();
-        AbstractProjectViewPane pane = requestFocus ? null : projectView.getProjectViewPaneById(id);
-        if (pane != null && pane.isVisibleAndSelected(element)) {
-          result.setDone();
-        }
-        else {
-          projectView.selectCB(element, virtualFile, requestFocus).notify(result);
-        }
+        project.getService(SelectInProjectViewImpl.class).ensureSelected(id, virtualFile, toSelectSupplier, requestFocus, true, result);
       });
     };
 

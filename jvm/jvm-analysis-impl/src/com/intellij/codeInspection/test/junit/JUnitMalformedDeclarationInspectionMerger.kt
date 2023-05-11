@@ -7,6 +7,7 @@ class JUnitMalformedDeclarationInspectionMerger : InspectionElementsMerger() {
   override fun getMergedToolName(): String = "JUnitMalformedDeclaration"
 
   override fun getSourceToolNames(): Array<String> = arrayOf(
+    "JUnitTestCaseWithNonTrivialConstructors",
     "JUnitRule",
     "JUnit5MalformedNestedClass",
     "JUnit5MalformedExtensions",
@@ -22,6 +23,7 @@ class JUnitMalformedDeclarationInspectionMerger : InspectionElementsMerger() {
   )
 
   override fun getSuppressIds(): Array<String> = arrayOf(
+    "JUnitTestCaseWithNonTrivialConstructors",
     "JUnitRule",
     "JUnit5MalformedNestedClass",
     "JUnit5MalformedExtensions",

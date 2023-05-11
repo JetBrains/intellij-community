@@ -99,17 +99,31 @@ public class DeleteSwitchLabelFix extends LocalQuickFixAndIntentionActionOnPsiEl
       else if (labelElementList.getElementCount() == 2) {
         PsiElement defaultElement = SwitchUtils.findDefaultElement(label);
         if (defaultElement != null && defaultElement != labelElement) {
-          PsiElement firstChild = label.getFirstChild();
-          assert PsiKeyword.CASE.equals(firstChild.getText()) && defaultElement instanceof PsiDefaultCaseLabelElement;
-          new CommentTracker().deleteAndRestoreComments(labelElementList);
-          PsiElementFactory factory = PsiElementFactory.getInstance(project);
-          PsiSwitchLabelStatement defaultLabel = (PsiSwitchLabelStatement)factory.createStatementFromText("default:", null);
-          firstChild.replace(defaultLabel.getFirstChild());
+          assert PsiKeyword.CASE.equals(label.getFirstChild().getText()) && defaultElement instanceof PsiDefaultCaseLabelElement;
+          makeLabelDefault(label, project);
           return;
         }
       }
     }
     new CommentTracker().deleteAndRestoreComments(labelElement);
+  }
+
+  private static void makeLabelDefault(@NotNull PsiSwitchLabelStatementBase label, @NotNull Project project) {
+    PsiElementFactory factory = PsiElementFactory.getInstance(project);
+    if (label instanceof PsiSwitchLabelStatement) {
+      PsiSwitchLabelStatementBase defaultLabel = (PsiSwitchLabelStatement)factory.createStatementFromText("default:", null);
+      new CommentTracker().replaceAndRestoreComments(label, defaultLabel);
+    }
+    else if (label instanceof PsiSwitchLabeledRuleStatement rule) {
+      PsiSwitchLabeledRuleStatement defaultLabel = (PsiSwitchLabeledRuleStatement)factory.createStatementFromText("default->{}", null);
+      PsiStatement body = rule.getBody();
+      assert body != null;
+      Objects.requireNonNull(defaultLabel.getBody()).replace(body);
+      new CommentTracker().replaceAndRestoreComments(label, defaultLabel);
+    }
+    else {
+      assert false;
+    }
   }
 
   public static void deleteLabel(PsiSwitchLabelStatementBase label) {

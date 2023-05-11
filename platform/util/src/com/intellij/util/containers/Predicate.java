@@ -6,6 +6,11 @@ package com.intellij.util.containers;
  */
 @Deprecated
 @FunctionalInterface
-public interface Predicate<T> {
+public interface Predicate<T> extends java.util.function.Predicate<T> {
   boolean apply(T input);
+
+  @Override
+  default boolean test(T t) {
+    return apply(t);
+  }
 }

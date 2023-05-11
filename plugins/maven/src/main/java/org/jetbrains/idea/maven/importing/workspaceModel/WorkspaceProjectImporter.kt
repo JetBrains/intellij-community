@@ -25,15 +25,16 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -141,9 +142,33 @@ internal class WorkspaceProjectImporter(
       }
       else {
         MavenLog.LOG.info("Project has been migrated to external project files storage")
+        notifyUserAboutExternalStorageMigration();
       }
     }
     return migratedToExternalStorage
+  }
+
+  private fun notifyUserAboutExternalStorageMigration() {
+    val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Maven") ?: return
+
+    val showNotification = {
+      val notification = notificationGroup
+        .createNotification(
+          SyncBundle.message("maven.workspace.external.storage.notification.title"),
+          SyncBundle.message("maven.workspace.external.storage.notification.text"),
+          NotificationType.INFORMATION)
+
+      notification.addAction(object : AnAction(
+        SyncBundle.message("maven.sync.quickfixes.open.settings")) {
+        override fun actionPerformed(e: AnActionEvent) {
+          notification.expire()
+          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenProjectBundle.message("maven.tab.importing"))
+        }
+      })
+      notification.notify(myProject)
+    }
+
+    ApplicationManager.getApplication().invokeLater(showNotification, myProject.disposed)
   }
 
   private data class ProjectChangesInfo(val hasChanges: Boolean, val allProjectsToChanges: Map<MavenProject, MavenProjectChanges>) {
@@ -205,10 +230,10 @@ internal class WorkspaceProjectImporter(
                              val modules: MutableList<ModuleWithTypeData<ModuleEntity>>)
 
     val projectToModulesData = mutableMapOf<MavenProject, PartialModulesData>()
-    val unloadedModuleNames = UnloadedModulesListStorage.getInstance(myProject).unloadedModuleNames.toSet()
+    val unloadedModulesNameHolder = UnloadedModulesListStorage.getInstance(myProject).unloadedModuleNameHolder
 
     for (importData in sortProjectsToImportByPrecedence(context)) {
-      if (importData.moduleData.moduleName in unloadedModuleNames) continue
+      if (unloadedModulesNameHolder.isUnloaded(importData.moduleData.moduleName)) continue
 
       val moduleEntity = WorkspaceModuleImporter(myProject,
                                                  storageBeforeImport,
@@ -323,6 +348,8 @@ internal class WorkspaceProjectImporter(
       .filter { it.contentRoots.isEmpty() }
       .forEach { currentStorage.removeEntity(it) }
 
+    retainPreviouslyExcludedFolders(currentStorage, newStorage)
+
     currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)
 
     // Now we have some modules with duplicating content roots. One content root existed before and another one exported from maven.
@@ -367,6 +394,34 @@ internal class WorkspaceProjectImporter(
           currentStorage.removeEntity(from)
         }
       }
+  }
+
+  // if a folder was excluded in legacy import, keep it excluded in workspace import as well
+  private fun retainPreviouslyExcludedFolders(currentStorage: MutableEntityStorage, newStorage: MutableEntityStorage) {
+    val virtualFileManager = VirtualFileUrlManager.getInstance(myProject)
+    val previouslyExcludedUrls = currentStorage.entities(ExcludeUrlEntity::class.java)
+    val newExcludedUrlMap = newStorage.entities(ExcludeUrlEntity::class.java).associateBy({ it.url }, { it })
+    val newContentRootMap = newStorage.entities(ContentRootEntity::class.java).associateBy({ it.url }, { it })
+    for (previouslyExcludedUrl in previouslyExcludedUrls) {
+      val url = previouslyExcludedUrl.url
+      if (!newExcludedUrlMap.containsKey(url)) {
+        var parentUrl: VirtualFileUrl? = url
+        while (parentUrl != null) {
+          val newContentRoot = newContentRootMap[parentUrl]
+          if (newContentRoot != null) {
+            if (!newContentRoot.excludedUrls.map { it.url }.contains(url)) {
+              newStorage.modifyEntity(newContentRoot) {
+                val excludedUrls = this.excludedUrls.toMutableList()
+                excludedUrls.add(ExcludeUrlEntity(url, previouslyExcludedUrl.entitySource))
+                this.excludedUrls = excludedUrls
+              }
+            }
+            break
+          }
+          parentUrl = virtualFileManager.getParentVirtualUrl(parentUrl)
+        }
+      }
+    }
   }
 
   private fun mapEntitiesToModulesAndRunAfterModelApplied(appliedStorage: EntityStorage,

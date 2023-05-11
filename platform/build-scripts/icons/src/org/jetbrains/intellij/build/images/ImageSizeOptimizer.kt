@@ -2,17 +2,17 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.pngencoder.PngEncoder
 import org.jetbrains.jps.model.module.JpsModule
-import java.awt.image.BufferedImage
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.LongAdder
 import javax.imageio.ImageIO
 
 class ImageSizeOptimizer(private val projectHome: Path) {
-  private val optimizedTotal = AtomicLong(0)
-  private val totalFiles = AtomicLong(0)
+  private val optimizedTotal = LongAdder()
+  private val totalFiles = LongAdder()
 
   fun optimizeIcons(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?) {
     val icons = ImageCollector(projectHome, moduleConfig = moduleConfig).collect(module)
@@ -26,7 +26,7 @@ class ImageSizeOptimizer(private val projectHome: Path) {
   fun optimizeImages(file: Path): Int {
     if (Files.isDirectory(file)) {
       var count = 0
-      file.processChildren {
+      processChildren(file) {
         count += optimizeImages(it)
       }
       return count
@@ -39,21 +39,23 @@ class ImageSizeOptimizer(private val projectHome: Path) {
 
   fun printStats() {
     println()
-    println("PNG size optimization: ${optimizedTotal.get()} bytes in total in ${totalFiles.get()} files(s)")
+    println("PNG size optimization: ${optimizedTotal.sum()} bytes in total in ${totalFiles.sum()} files(s)")
   }
 
   private fun tryToReduceSize(file: Path): Boolean {
     val image = optimizeImage(file) ?: return false
 
-    totalFiles.incrementAndGet()
-    if (image.hasOptimumSize) return true
+    totalFiles.increment()
+    if (image.hasOptimumSize) {
+      return true
+    }
 
     try {
       Files.createDirectories(file.parent)
       Files.newOutputStream(file).use { out ->
         out.write(image.optimizedArray.internalBuffer, 0, image.optimizedArray.size())
       }
-      optimizedTotal.getAndAdd(image.sizeBefore - image.sizeAfter)
+      optimizedTotal.add(image.sizeBefore - image.sizeAfter)
     }
     catch (e: IOException) {
       throw Exception("Cannot optimize $file")
@@ -61,34 +63,39 @@ class ImageSizeOptimizer(private val projectHome: Path) {
     println("$file ${image.compressionStats}")
     return true
   }
+}
 
-  companion object {
-    fun optimizeImage(file: Path): OptimizedImage? {
-      if (!file.fileName.toString().endsWith(".png")) {
-        return null
-      }
-
-      val image = Files.newInputStream(file).buffered().use { ImageIO.read(it) }
-      if (image == null) {
-        println(file + " loading failed")
-        return null
-      }
-
-      val byteArrayOutputStream = BufferExposingByteArrayOutputStream()
-      ImageIO.write(image, "png", byteArrayOutputStream)
-      return OptimizedImage(file, image, byteArrayOutputStream)
-    }
+internal fun optimizeImage(file: Path): OptimizedImage? {
+  if (!file.fileName.toString().endsWith(".png")) {
+    return null
   }
 
-  class OptimizedImage(val file: Path, val image: BufferedImage, val optimizedArray: BufferExposingByteArrayOutputStream) {
-    val sizeBefore: Long = Files.size(file)
-    val sizeAfter: Int = optimizedArray.size()
+  val image = Files.newInputStream(file).use { ImageIO.read(it) }
+  if (image == null) {
+    println("$file loading failed")
+    return null
+  }
 
-    val compressionStats: String get() {
+  val byteArrayOutputStream = BufferExposingByteArrayOutputStream()
+  PngEncoder()
+    .withBufferedImage(image)
+    .withCompressionLevel(9)
+    .withTryIndexedEncoding(true)
+    .withPredictorEncoding(true)
+    .toStream(byteArrayOutputStream)
+  return OptimizedImage(file = file, optimizedArray = byteArrayOutputStream)
+}
+
+internal class OptimizedImage(@JvmField val file: Path, @JvmField val optimizedArray: BufferExposingByteArrayOutputStream) {
+  val sizeBefore: Long = Files.size(file)
+  val sizeAfter: Int = optimizedArray.size()
+
+  val compressionStats: String
+    get() {
       val compression = (sizeBefore - sizeAfter) * 100 / sizeBefore
       return "$compression% optimized ($sizeBefore->$sizeAfter bytes)"
     }
 
-    val hasOptimumSize: Boolean get() = sizeBefore <= sizeAfter
-  }
+  val hasOptimumSize: Boolean
+    get() = sizeBefore <= sizeAfter
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.impl;
 
@@ -275,8 +275,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public void scrollToEnd() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Editor editor = getEditor();
-    if (editor != null) {
-      scrollToEnd(editor);
+    if (editor == null) return;
+    boolean hasSelection = editor.getSelectionModel().hasSelection();
+    List<CaretState> prevSelection = hasSelection ? editor.getCaretModel().getCaretsAndSelections() : null;
+    scrollToEnd(editor);
+    if (prevSelection != null) {
+      editor.getCaretModel().setCaretsAndSelections(prevSelection);
     }
   }
 
@@ -507,18 +511,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private void updateStickToEndState(@NotNull EditorEx editor, boolean useImmediatePosition) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    JScrollBar scrollBar = editor.getScrollPane().getVerticalScrollBar();
-    int scrollBarPosition = useImmediatePosition ? scrollBar.getValue() :
-                            editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
-    boolean vScrollAtBottom = scrollBarPosition == scrollBar.getMaximum() - scrollBar.getVisibleAmount();
-    boolean stickingToEnd = isStickingToEnd(editor);
-
-    if (!vScrollAtBottom && stickingToEnd) {
+    boolean vScrollAtBottom = isVScrollAtTheBottom(editor, useImmediatePosition);
+    boolean caretAtTheLastLine = isCaretAtTheLastLine(editor);
+    if (!vScrollAtBottom && caretAtTheLastLine) {
       myCancelStickToEnd = true;
     } 
-    else if (vScrollAtBottom && !stickingToEnd) {
-      scrollToEnd(editor);
-    }
   }
 
   @NotNull
@@ -588,7 +585,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   protected void disposeEditor() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       Editor editor = getEditor();
       if (!editor.isDisposed()) {
         EditorFactory.getInstance().releaseEditor(editor);
@@ -682,7 +679,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public void flushDeferredText() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed()) return;
-    Editor editor = getEditor();
+    EditorEx editor = (EditorEx)getEditor();
     boolean shouldStickToEnd = !myCancelStickToEnd && isStickingToEnd(editor);
     myCancelStickToEnd = false; // Cancel only needs to last for one update. Next time, isStickingToEnd() will be false.
 
@@ -700,7 +697,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     RangeMarker lastProcessedOutput = document.createRangeMarker(document.getTextLength(), document.getTextLength());
 
     if (!shouldStickToEnd) {
-      ((ScrollingModelEx)editor.getScrollingModel()).accumulateViewportChanges();
+      editor.getScrollingModel().accumulateViewportChanges();
     }
     Collection<ConsoleViewContentType> contentTypes = new HashSet<>();
     List<Pair<String, ConsoleViewContentType>> contents = new ArrayList<>();
@@ -731,7 +728,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     finally {
       if (!shouldStickToEnd) {
-        ((ScrollingModelEx)editor.getScrollingModel()).flushViewportChanges();
+        editor.getScrollingModel().flushViewportChanges();
       }
     }
     if (!contentTypes.isEmpty()) {
@@ -782,10 +779,22 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editor.getInlayModel().getInlineElementsInRange(0, 0).forEach(Disposer::dispose); // remove inlays if any
   }
 
-  protected static boolean isStickingToEnd(@NotNull Editor editor) {
+  protected static boolean isStickingToEnd(@NotNull EditorEx editor) {
+    return isCaretAtTheLastLine(editor) ||
+           isVScrollAtTheBottom(editor, true);
+  }
+
+  private static boolean isCaretAtTheLastLine(@NotNull Editor editor) {
     Document document = editor.getDocument();
     int caretOffset = editor.getCaretModel().getOffset();
     return document.getLineNumber(caretOffset) >= document.getLineCount() - 1;
+  }
+
+  private static boolean isVScrollAtTheBottom(@NotNull EditorEx editor, boolean useImmediatePosition) {
+    JScrollBar scrollBar = editor.getScrollPane().getVerticalScrollBar();
+    int scrollBarPosition = useImmediatePosition ? scrollBar.getValue() :
+                            editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
+    return scrollBarPosition == scrollBar.getMaximum() - scrollBar.getVisibleAmount();
   }
 
   private void clearHyperlinkAndFoldings() {
@@ -812,7 +821,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public Object getData(@NotNull String dataId) {
-    Editor editor = getEditor();
+    EditorEx editor = (EditorEx)getEditor();
     if (editor == null) {
       return null;
     }
@@ -835,6 +844,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
       return this;
     }
+    if (CommonDataKeys.CARET.is(dataId)) {
+      return editor.getCaretModel().getCurrentCaret();
+    }
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return editor.getCopyProvider();
+    }
+
     return null;
   }
 

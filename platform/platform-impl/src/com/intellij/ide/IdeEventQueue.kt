@@ -118,7 +118,9 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   @Internal
   @JvmField
-  val isDispatchingOnMainThread: Boolean = Thread.currentThread().name.contains("AppKit")
+  val isDispatchingOnMainThread: Boolean = Thread.currentThread().name.contains("AppKit").also {
+    if (it) System.setProperty("jb.dispatching.on.main.thread", "true")
+  }
 
   private var idleTracker: () -> Unit = {}
 
@@ -209,12 +211,14 @@ class IdeEventQueue private constructor() : EventQueue() {
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use IdleFlow and coroutines")
   fun addIdleListener(runnable: Runnable, timeoutMillis: Int) {
+    @Suppress("DEPRECATION")
     IdleTracker.getInstance().addIdleListener(runnable = runnable, timeoutMillis = timeoutMillis)
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use IdleFlow and coroutines")
   fun removeIdleListener(runnable: Runnable) {
+    @Suppress("DEPRECATION")
     IdleTracker.getInstance().removeIdleListener(runnable)
   }
 
@@ -263,11 +267,6 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   public override fun dispatchEvent(e: AWTEvent) {
     var event = e
-
-    if (isDispatchingOnMainThread && !isDispatchThread()) {
-      super.dispatchEvent(event)
-      return
-    }
 
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     val startedAt = System.currentTimeMillis()
@@ -456,15 +455,14 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   override fun getNextEvent(): AWTEvent {
-    val event = if (appIsLoaded()) {
-      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite<AWTEvent, InterruptedException> { super.getNextEvent() }
+    val applicationEx = ApplicationManagerEx.getApplicationEx()
+    val event = if (applicationEx != null && appIsLoaded()) {
+      applicationEx.runUnlockingIntendedWrite<AWTEvent, InterruptedException> { super.getNextEvent() }
     }
     else {
       super.getNextEvent()
     }
-    if (!(isDispatchingOnMainThread && isDispatchThread()) &&
-        isKeyboardEvent(event) &&
-        keyboardEventDispatched.incrementAndGet() > keyboardEventPosted.get()) {
+    if (isKeyboardEvent(event) && keyboardEventDispatched.incrementAndGet() > keyboardEventPosted.get()) {
       throw RuntimeException("$event; posted: $keyboardEventPosted; dispatched: $keyboardEventDispatched")
     }
     return event
@@ -490,7 +488,7 @@ class IdeEventQueue private constructor() : EventQueue() {
    * @param e event to be patched
    * @return new 'patched' event if you need, otherwise null
    *
-   * Note: As side effect this method tracks a special flag for 'Windows' key state that is valuable on itself
+   * Note: As a side effect, this method tracks a special flag for 'Windows' key state that is valuable in itself
    */
   private fun mapMetaState(e: AWTEvent): AWTEvent? {
     if (winMetaPressed) {
@@ -732,7 +730,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   private val isReady: Boolean
     get() = !keyboardBusy && keyEventDispatcher.isReady
 
-  fun maybeReady() {
+  internal fun maybeReady() {
     if (ready.isNotEmpty() && isReady) {
       invokeReadyHandlers()
     }
@@ -902,6 +900,7 @@ typealias PostEventHook = (event: AWTEvent) -> Boolean
 
 private val DISPATCHER_EP = ExtensionPointName<IdeEventQueue.EventDispatcher>("com.intellij.ideEventQueueDispatcher")
 
+@Suppress("ConstPropertyName")
 private const val defaultEventWithWrite = true
 
 private val isSkipMetaPressOnLinux = java.lang.Boolean.getBoolean("keymap.skip.meta.press.on.linux")
@@ -1111,6 +1110,14 @@ private object SequencedEventNestedFieldHolder {
       .findVirtual(SEQUENCED_EVENT_CLASS, "dispose", MethodType.methodType(Void.TYPE))
   }
 }
+
+/**
+ * This should've been an item in [IdeEventQueue.dispatchers],
+ * but [IdeEventQueue.dispatchByCustomDispatchers] is run after [IdePopupManager.dispatch]
+ * and after [processAppActivationEvent], which defeats the very purpose of this flag.
+ */
+@Internal
+internal var skipWindowDeactivationEvents: Boolean = false
 
 // we have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
 private class EditingCanceller : IdeEventQueue.EventDispatcher {

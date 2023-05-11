@@ -92,7 +92,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     LOG.assertTrue(type != null);
     final ExpectedTypeInfo[] expectedTypes =
       new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE)};
-    CreateMethodFromUsageFix.doCreate(targetClass, method, true, ContainerUtil.map2List(PsiExpression.EMPTY_ARRAY, Pair.createFunction(null)),
+    CreateMethodFromUsageFix.doCreate(targetClass, method, true, ContainerUtil.map(PsiExpression.EMPTY_ARRAY, Pair.createFunction(null)),
                                       getTargetSubstitutor(nameValuePair), expectedTypes, context);
   }
 

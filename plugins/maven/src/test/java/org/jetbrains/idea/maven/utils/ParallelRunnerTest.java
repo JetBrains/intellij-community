@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class ParallelRunnerTest {
   @Test
@@ -51,6 +52,22 @@ public class ParallelRunnerTest {
     var out = new ConcurrentHashMap<Integer, Integer>();
     ParallelRunner.runInParallel(in, it -> out.put(it, it));
     assertEquals(in, out.keySet());
+  }
+
+  @Test
+  public void testParallelRethrowRuntimeException() {
+    Exception rethrown = null;
+    var text = "should be rethrown";
+    var in = List.of(1, 2, 3, 4, 5);
+    try {
+      ParallelRunner.runInParallel(in, it -> {
+        throw new RuntimeException(text);
+      });
+    } catch (RuntimeException e) {
+      rethrown = e;
+    }
+    assertNotNull(rethrown);
+    assertEquals(text, rethrown.getMessage());
   }
 
   @Test

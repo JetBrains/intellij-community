@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +10,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -30,6 +31,7 @@ import java.io.PrintStream;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -135,7 +137,7 @@ public class Mappings {
       myRemovedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
       myAddedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
 
-      final Supplier<Collection<String>> fileCollectionFactory = CollectionFactory::createFilePathSet; // todo: do we really need set and not a list here?
+      final Supplier<Collection<String>> fileCollectionFactory = CollectionFactory::createFilePathSet;
       if (myIsDelta) {
         myClassToSubclasses = new IntIntTransientMultiMaplet();
         myClassToClassDependency = new IntIntTransientMultiMaplet();
@@ -224,28 +226,29 @@ public class Mappings {
   }
 
   @Nullable
-  private ClassRepr getClassReprByName(final @Nullable File source, final int qName) {
-    final ClassFileRepr reprByName = getReprByName(source, qName);
-    return reprByName instanceof ClassRepr? (ClassRepr)reprByName : null;
-  }
-
-  @Nullable
-  private ClassFileRepr getReprByName(@Nullable File source, int qName) {
-    final Iterable<String> sources = source != null? Collections.singleton(toRelative(source)) : myClassToRelativeSourceFilePath.get(qName);
-    if (sources != null) {
-      for (String src : sources) {
-        final Collection<ClassFileRepr> reprs = myRelativeSourceFilePathToClasses.get(src);
-        if (reprs != null) {
-          for (ClassFileRepr repr : reprs) {
-            if (repr.name == qName) {
-              return repr;
-            }
-          }
+  private ClassFileRepr getReprByName(@NotNull File source, int qName) {
+    final Collection<ClassFileRepr> reprs = myRelativeSourceFilePathToClasses.get(toRelative(source));
+    if (reprs != null) {
+      for (ClassFileRepr repr : reprs) {
+        if (repr.name == qName) {
+          return repr;
         }
       }
     }
-
     return null;
+  }
+
+  @NotNull
+  private Iterable<ClassRepr> getClassReprsByName(final int qName) {
+    return Iterators.filter(Iterators.map(getReprsByName(qName), repr -> repr instanceof ClassRepr? (ClassRepr)repr : null), Iterators.notNullFilter());
+  }
+
+  @NotNull
+  private Iterable<ClassFileRepr> getReprsByName(int qName) {
+    return Iterators.unique(Iterators.filter(
+      Iterators.flat(Iterators.map(myClassToRelativeSourceFilePath.get(qName), src -> myRelativeSourceFilePathToClasses.get(src))),
+      repr -> repr.name == qName
+    ));
   }
 
   private Collection<ClassFileRepr> sourceFileToClassesGet(File unchangedSource) {
@@ -336,17 +339,22 @@ public class Mappings {
       if (acc.contains(reflcass)) {
         return acc; // SOE prevention
       }
-      final ClassRepr repr = classReprByName(reflcass);
-      if (repr != null) {
+      final Iterable<ClassRepr> reprs = classReprsByName(reflcass);
+      if (!Iterators.isEmpty(reprs)) {
         if (!root) {
-          final Set<? extends ProtoMember> members = isField ? repr.getFields() : repr.getMethods();
 
-          for (ProtoMember m : members) {
-            if (isSame.test(m)) {
-              return acc;
+          Iterable<ClassRepr> reprsWithoutMatchingMember = Iterators.filter(reprs, repr -> {
+            for (ProtoMember m : isField? repr.getFields() : repr.getMethods()) {
+              if (isSame.test(m)) {
+                return false;
+              }
             }
+            return true;
+          });
+          if (Iterators.isEmpty(reprsWithoutMatchingMember)) {
+            return acc;
           }
-
+          // should continue, if at least one repr does not have matching member defined
           acc.add(reflcass);
         }
 
@@ -407,18 +415,30 @@ public class Mappings {
       }
       final IntSet _visitedClasses = visitedClasses;
       subClasses.forEach(subClassName -> {
-        final ClassRepr r = classReprByName(subClassName);
-
-        if (r != null) {
-          boolean cont = true;
-          final Collection<MethodRepr> methods = r.findMethods(predicate);
-          for (MethodRepr mm : methods) {
-            if (isVisibleIn(fromClass, m, r)) {
-              container.add(Pair.create(mm, r));
-              cont = false;
+        Iterable<ClassRepr> reprs = classReprsByName(subClassName);
+        if (!Iterators.isEmpty(reprs)) {
+          Iterable<Pair<MethodRepr, ClassRepr>> overriding = Iterators.filter(Iterators.map(reprs, r -> {
+            for (MethodRepr mm : r.findMethods(predicate)) {
+              if (isVisibleIn(fromClass, m, r)) {
+                return Pair.create(mm, r);
+              }
             }
+            return null;
+          }), Iterators.notNullFilter());
+
+          for (Pair<MethodRepr, ClassRepr> pair : overriding) {
+            container.add(pair);
           }
-          if (cont) {
+
+          for (ClassRepr r : Iterators.filter(reprs, r -> {
+            for (Pair<MethodRepr, ClassRepr> pair : overriding) {
+              if (pair.getSecond() == r) {
+                return false;
+              }
+            }
+            return true;
+          })) {
+            // continue with reprs, for those no overriding members were found
             addOverridingMethods(m, r, predicate, container, _visitedClasses);
           }
         }
@@ -451,8 +471,7 @@ public class Mappings {
         if (!visitedClasses.add(superName.className) || superName.className == myObjectClassName) {
           continue;
         }
-        final ClassRepr superClass = classReprByName(superName.className);
-        if (superClass != null) {
+        for (ClassRepr superClass : classReprsByName(superName.className)) {
           for (MethodRepr mm : superClass.findMethods(predicate)) {
             if (isVisibleIn(superClass, mm, fromClass)) {
               return true;
@@ -475,9 +494,14 @@ public class Mappings {
         if (!visitedClasses.add(superName.className) || superName.className == myObjectClassName) {
           continue;
         }
-        final ClassRepr superClass = classReprByName(superName.className);
-        if (superClass == null || extendsLibraryClass(superClass, visitedClasses)) {
+        Iterable<ClassRepr> superClasses = classReprsByName(superName.className);
+        if (Iterators.isEmpty(superClasses)) {
           return true;
+        }
+        for (ClassRepr superClass : superClasses) {
+          if (extendsLibraryClass(superClass, visitedClasses)) {
+            return true;
+          }
         }
       }
       return false;
@@ -492,17 +516,30 @@ public class Mappings {
         if (!visitedClasses.add(superName.className) || superName.className == myObjectClassName) {
           continue;  // prevent SOE
         }
-        final ClassRepr superClass = classReprByName(superName.className);
-        if (superClass != null) {
-          boolean cont = true;
-          final Collection<MethodRepr> methods = superClass.findMethods(predicate);
-          for (MethodRepr mm : methods) {
-            if (isVisibleIn(superClass, mm, fromClass)) {
-              container.add(Pair.create(mm, superClass));
-              cont = false;
+        Iterable<ClassRepr> superClasses = classReprsByName(superName.className);
+        if (!Iterators.isEmpty(superClasses)) {
+          Iterable<Pair<MethodRepr, ClassRepr>> pairs = Iterators.filter(Iterators.map(superClasses, superClass -> {
+            for (MethodRepr mm : superClass.findMethods(predicate)) {
+              if (isVisibleIn(superClass, mm, fromClass)) {
+                return Pair.create(mm, superClass);
+              }
             }
+            return null;
+          }), Iterators.notNullFilter());
+
+          for (Pair<MethodRepr, ClassRepr> pair : pairs) {
+            container.add(pair);
           }
-          if (cont) {
+
+          for (ClassRepr superClass : Iterators.filter(superClasses, superClass -> {
+            for (Pair<MethodRepr, ClassRepr> pair : pairs) {
+              if (pair.getSecond() == superClass) {
+                return false;
+              }
+            }
+            return true;
+          })) {
+            // continue with those, for whom the matching method was not found
             addOverridenMethods(superClass, predicate, container, visitedClasses);
           }
         }
@@ -521,8 +558,7 @@ public class Mappings {
         if (!visitedClasses.add(supername.className) || supername.className == myObjectClassName) {
           continue;
         }
-        final ClassRepr superClass = classReprByName(supername.className);
-        if (superClass != null) {
+        for (ClassRepr superClass : classReprsByName(supername.className)) {
           final FieldRepr ff = superClass.findField(f.name);
           if (ff != null && isVisibleIn(superClass, ff, fromClass)) {
             container.add(Pair.create(ff, superClass));
@@ -543,14 +579,12 @@ public class Mappings {
         if (!visitedClasses.add(supername.className) || supername.className == myObjectClassName) {
           continue;
         }
-        final ClassRepr superClass = classReprByName(supername.className);
-        if (superClass != null) {
+        for (ClassRepr superClass : classReprsByName(supername.className)) {
           final FieldRepr ff = superClass.findField(f.name);
           if (ff != null && isVisibleIn(superClass, ff, fromClass)) {
             return true;
           }
-          final boolean found = hasOverriddenFields(f, superClass, visitedClasses);
-          if (found) {
+          if (hasOverriddenFields(f, superClass, visitedClasses)) {
             return true;
           }
         }
@@ -560,17 +594,20 @@ public class Mappings {
 
     // test if a ClassRepr is a SAM interface
     boolean isLambdaTarget(int name) {
-      final ClassRepr cls = classReprByName(name);
-      if (cls == null || !cls.isInterface()) {
-        return false;
-      }
-      int amFound = 0;
-      for (MethodRepr method : allMethodsRecursively(cls)) {
-        if (method.isAbstract() && ++amFound > 1) {
-          return false;
+      for (ClassRepr cls : classReprsByName(name)) {
+        if (cls.isInterface()) {
+          int amFound = 0;
+          for (MethodRepr method : allMethodsRecursively(cls)) {
+            if (method.isAbstract() && ++amFound > 1) {
+              break;
+            }
+          }
+          if (amFound == 1) {
+            return true;
+          }
         }
       }
-      return amFound == 1;
+      return false;
     }
 
     private Iterable<MethodRepr> allMethodsRecursively(ClassRepr cls) {
@@ -578,47 +615,45 @@ public class Mappings {
     }
 
     private Iterable<OverloadDescriptor> findAllOverloads(final ClassRepr cls, Function<? super MethodRepr, Integer> correspondenceFinder) {
-      Function<ClassRepr, Iterable<OverloadDescriptor>> converter = c -> c == null? Collections.emptyList() : Iterators.filter(Iterators.map(c.getMethods(), m -> {
+      Function<ClassRepr, Iterable<OverloadDescriptor>> converter = c -> Iterators.filter(Iterators.map(c.getMethods(), m -> {
         Integer accessScope = correspondenceFinder.apply(m);
         return accessScope != null? new OverloadDescriptor(accessScope, m, c) : null;
-      }), Objects::nonNull);
+      }), Iterators.notNullFilter());
 
       return Iterators.flat(Iterators.flat(
         collectRecursively(cls, converter),
-        Iterators.map(getAllSubclasses(cls.name), subName -> converter.apply(subName != cls.name? classReprByName(subName) : null))
+        Iterators.map(
+          Iterators.flat(Iterators.map(getAllSubclasses(cls.name), subName -> subName != cls.name? classReprsByName(subName) : Collections.emptyList())),
+          repr -> converter.apply(repr)
+        )
       ));
     }
 
     private <T> Iterable<T> collectRecursively(ClassRepr cls, Function<? super ClassRepr, ? extends T> mapper) {
       return Iterators.flat(Iterators.asIterable(mapper.apply(cls)), Iterators.flat(Iterators.map(cls.getSuperTypes(), st -> {
-        final ClassRepr cr = classReprByName(st.className);
-        return cr != null ? collectRecursively(cr, mapper) : Collections.emptyList();
+        return Iterators.flat(Iterators.map(classReprsByName(st.className), cr -> collectRecursively(cr, mapper)));
       })));
     }
 
-    @Nullable
-    ClassRepr classReprByName(final int name) {
-      final ClassFileRepr r = reprByName(name);
-      return r instanceof ClassRepr? (ClassRepr)r : null;
+    @NotNull
+    Iterable<ClassRepr> classReprsByName(final int name) {
+      return Iterators.filter(Iterators.map(reprsByName(name), r -> r instanceof ClassRepr? (ClassRepr)r : null), Iterators.notNullFilter());
     }
 
-    @Nullable
-    ModuleRepr moduleReprByName(final int name) {
-      final ClassFileRepr r = reprByName(name);
-      return r instanceof ModuleRepr? (ModuleRepr)r : null;
+    @NotNull
+    Iterable<ModuleRepr> moduleReprsByName(final int name) {
+      return Iterators.filter(Iterators.map(reprsByName(name), r -> r instanceof ModuleRepr? (ModuleRepr)r : null), Iterators.notNullFilter());
     }
 
-    @Nullable
-    ClassFileRepr reprByName(final int name) {
+    @NotNull
+    Iterable<ClassFileRepr> reprsByName(final int name) {
       if (myMappings != null) {
-        final ClassFileRepr r = myMappings.getReprByName(null, name);
-
-        if (r != null) {
+        Iterable<ClassFileRepr> r = myMappings.getReprsByName(name);
+        if (!Iterators.isEmpty(r)) {
           return r;
         }
       }
-
-      return getReprByName(null, name);
+      return getReprsByName(name);
     }
 
     @Nullable
@@ -627,9 +662,7 @@ public class Mappings {
         return Boolean.TRUE;
       }
 
-      final ClassRepr repr = classReprByName(who);
-
-      if (repr != null) {
+      for (ClassRepr repr : classReprsByName(who)) {
         if (visitedClasses == null) {
           visitedClasses = new IntOpenHashSet();
           visitedClasses.add(who);
@@ -679,20 +712,27 @@ public class Mappings {
     }
 
     boolean isMethodVisible(final ClassRepr classRepr, final MethodRepr m) {
-      return classRepr.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0 || hasOverriddenMethods(classRepr, MethodRepr.equalByJavaRules(m), null);
+      return !classRepr.findMethods(MethodRepr.equalByJavaRules(m)).isEmpty() || hasOverriddenMethods(classRepr, MethodRepr.equalByJavaRules(m), null);
     }
 
     boolean isFieldVisible(final int className, final FieldRepr field) {
-      final ClassRepr r = classReprByName(className);
-      if (r == null || r.getFields().contains(field)) {
+      final Iterable<ClassRepr> reprs = classReprsByName(className);
+      if (Iterators.isEmpty(reprs)) {
         return true;
       }
-      return hasOverriddenFields(field, r, null);
+      for (ClassRepr r : reprs) {
+        if (r.getFields().contains(field)) {
+          return true;
+        }
+        if (hasOverriddenFields(field, r, null)) {
+          return true;
+        }
+      }
+      return false;
     }
 
     void collectSupersRecursively(final int className, @NotNull final IntSet container) {
-      final ClassRepr classRepr = classReprByName(className);
-      if (classRepr != null) {
+      for (ClassRepr classRepr : classReprsByName(className)) {
         final Iterable<TypeRepr.ClassType> supers = classRepr.getSuperTypes();
         boolean added = false;
         for (TypeRepr.ClassType aSuper : supers) {
@@ -732,10 +772,10 @@ public class Mappings {
       if (usages) {
         debug("Class usages affection requested");
 
-        final ClassRepr classRepr = classReprByName(className);
-        if (classRepr != null) {
+        for (ClassRepr classRepr : classReprsByName(className)) {
           debug("Added class usage for ", classRepr.name);
           affectedUsages.add(classRepr.createUsage());
+          break;
         }
       }
 
@@ -846,11 +886,11 @@ public class Mappings {
             }
             depNames.forEach(depName -> {
               if (visited.add(depName)) {
-                final ClassFileRepr depRepr = reprByName(depName);
-                if (depRepr instanceof ModuleRepr) {
+                for (ModuleRepr depRepr : moduleReprsByName(depName)) {
                   state.myDependants.add(depName);
-                  if (checkTransitive && ((ModuleRepr)depRepr).requiresTransitevely(modName)) {
+                  if (checkTransitive && depRepr.requiresTransitevely(modName)) {
                     next.add(depName);
+                    break;
                   }
                 }
               }
@@ -1296,20 +1336,19 @@ public class Mappings {
           }
 
           getAllSubclasses(it.name).forEach(subClass -> {
-            final ClassRepr r = myFuture.classReprByName(subClass);
-            if (r == null) {
+            Iterable<ClassRepr> reprs = myFuture.classReprsByName(subClass);
+            if (Iterators.isEmpty(reprs)) {
               return;
             }
             final Iterable<File> sourceFileNames = classToSourceFileGet(subClass);
             if (sourceFileNames != null && !containsAll(myCompiledFiles, sourceFileNames)) {
-              final int outerClass = r.getOuterClassName();
-              if (!isEmpty(outerClass)) {
-                final ClassRepr outerClassRepr = myFuture.classReprByName(outerClass);
-                if (outerClassRepr != null && (myFuture.isMethodVisible(outerClassRepr, addedMethod) || myFuture.extendsLibraryClass(outerClassRepr, null))) {
+              for (ClassRepr outerClassRepr : Iterators.flat(Iterators.map(reprs, r -> isEmpty(r.getOuterClassName())? Collections.emptyList() : myFuture.classReprsByName(r.getOuterClassName())))) {
+                if (myFuture.isMethodVisible(outerClassRepr, addedMethod) || myFuture.extendsLibraryClass(outerClassRepr, null)) {
                   ContainerUtil.addAll(myAffectedFiles, sourceFileNames);
                   for (File sourceFileName : sourceFileNames) {
                     debug("Affecting file due to local overriding: ", sourceFileName);
                   }
+                  break;
                 }
               }
             }
@@ -1341,7 +1380,7 @@ public class Mappings {
           myFuture.affectStaticMemberImportUsages(m.name, it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
         }
 
-        if (overriddenMethods.size() == 0) {
+        if (overriddenMethods.isEmpty()) {
           debug("No overridden methods found, affecting method usages");
           myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
         }
@@ -1383,9 +1422,7 @@ public class Mappings {
         if (!m.isAbstract() && !m.isStatic()) {
           propagated.get().forEach(p -> {
             if (p != it.name) {
-              final ClassRepr s = myFuture.classReprByName(p);
-
-              if (s != null) {
+              for (ClassRepr s : myFuture.classReprsByName(p)) {
                 final Collection<Pair<MethodRepr, ClassRepr>> overridenInS = myFuture.findOverriddenMethods(m, s);
 
                 overridenInS.addAll(overriddenMethods);
@@ -1415,7 +1452,6 @@ public class Mappings {
 
                 if (allAbstract && visited) {
                   final Iterable<File> sources = classToSourceFileGet(p);
-
                   if (sources != null && !containsAll(myCompiledFiles, sources)) {
                     ContainerUtil.addAll(myAffectedFiles, sources);
                     debug("Removed method is not abstract & overrides some abstract method which is not then over-overridden in subclass ", p);
@@ -1423,6 +1459,7 @@ public class Mappings {
                       debug("Affecting subclass source file ", source);
                     }
                   }
+                  break; // classReprs
                 }
               }
             }
@@ -1668,8 +1705,12 @@ public class Mappings {
         state.myAffectedUsages.add(usage);
         // only mark synthetic classes used to implement switch statements: this will limit the number of recompiled classes to those where switch statements on changed enum are used
         state.myUsageConstraints.put(usage, residence -> {
-          final ClassRepr candidate = myPresent.classReprByName(residence);
-          return candidate != null && candidate.isSynthetic();
+          for (ClassRepr candidate : myPresent.classReprsByName(residence)) {
+            if (candidate.isSynthetic()) {
+              return true;
+            }
+          }
+          return false;
         });
       }
       
@@ -1678,22 +1719,26 @@ public class Mappings {
 
         if (!f.isPrivate()) {
           getAllSubclasses(classRepr.name).forEach(subClass -> {
-            final ClassRepr r = myFuture.classReprByName(subClass);
-            if (r != null) {
+            final Iterable<ClassRepr> reprs = myFuture.classReprsByName(subClass);
+            if (!Iterators.isEmpty(reprs)) {
               final Iterable<File> sourceFileNames = classToSourceFileGet(subClass);
               if (sourceFileNames != null && !containsAll(myCompiledFiles, sourceFileNames)) {
-                if (r.isLocal()) {
-                  for (File sourceFileName : sourceFileNames) {
-                    debug("Affecting local subclass (introduced field can potentially hide surrounding method parameters/local variables): ", sourceFileName);
-                    myAffectedFiles.add(sourceFileName);
-                  }
-                }
-                else {
-                  final int outerClass = r.getOuterClassName();
-                  if (!isEmpty(outerClass) && myFuture.isFieldVisible(outerClass, f)) {
+                for (ClassRepr r : reprs) {
+                  if (r.isLocal()) {
                     for (File sourceFileName : sourceFileNames) {
-                      debug("Affecting inner subclass (introduced field can potentially hide surrounding class fields): ", sourceFileName);
+                      debug("Affecting local subclass (introduced field can potentially hide surrounding method parameters/local variables): ", sourceFileName);
                       myAffectedFiles.add(sourceFileName);
+                    }
+                    break;
+                  }
+                  else {
+                    final int outerClass = r.getOuterClassName();
+                    if (!isEmpty(outerClass) && myFuture.isFieldVisible(outerClass, f)) {
+                      for (File sourceFileName : sourceFileNames) {
+                        debug("Affecting inner subclass (introduced field can potentially hide surrounding class fields): ", sourceFileName);
+                        myAffectedFiles.add(sourceFileName);
+                      }
+                      break;
                     }
                   }
                 }
@@ -1949,11 +1994,9 @@ public class Mappings {
           if (superClassChanged) {
             myDelta.registerRemovedSuperClass(changedClass.name, changedClass.getSuperClass().className);
 
-            final ClassRepr newClass = myDelta.getClassReprByName(null, changedClass.name);
-
-            assert (newClass != null);
-
-            myDelta.registerAddedSuperClass(changedClass.name, newClass.getSuperClass().className);
+            for (ClassRepr newClass : myDelta.getClassReprsByName(changedClass.name)) {
+              myDelta.registerAddedSuperClass(changedClass.name, newClass.getSuperClass().className);
+            }
           }
 
           if (interfacesChanged) {
@@ -1988,8 +2031,7 @@ public class Mappings {
             if (extendsChanged && directDeps != null) {
               final TypeRepr.ClassType excClass = TypeRepr.createClassType(myContext, changedClass.name);
               directDeps.forEach(depClass -> {
-                final ClassRepr depClassRepr = myPresent.classReprByName(depClass);
-                if (depClassRepr != null) {
+                for (ClassRepr depClassRepr : myPresent.classReprsByName(depClass)) {
                   myPresent.affectMethodUsagesThrowing(depClassRepr, excClass, state.myAffectedUsages, state.myDependants);
                 }
               });
@@ -2284,75 +2326,91 @@ public class Mappings {
       debug("Checking dependent classes:");
       assert myAffectedFiles != null;
       assert myCompiledFiles != null;
-      IntIterator iterator = state.myDependants.iterator();
-      while (iterator.hasNext()) {
-        int depClass = iterator.nextInt();
-        Iterable<File> depFiles = classToSourceFileGet(depClass);
-        if (depFiles != null) {
-          for (File depFile : depFiles) {
-            if (!processDependentFile(depClass, depFile, state)) {
-              debug("Turning non-incremental for the BuildTarget because dependent class is annotation-processor generated");
-              return false;
-            }
-          }
-        }
-      }
-      return true;
-    }
 
-    @SuppressWarnings("DataFlowIssue")
-    private boolean processDependentFile(int depClass, @NotNull File depFile, DiffState state) {
-      debug("Dependent class: ", depClass);
-
-      final ClassFileRepr repr = getReprByName(depFile, depClass);
-      if (repr == null) {
+      if (state.myDependants.isEmpty()) {
         return true;
       }
-      boolean isGenerated = false;
-      if (repr instanceof ClassRepr) {
-        final ClassRepr clsRepr = (ClassRepr)repr;
-        if (!clsRepr.hasInlinedConstants() && myCompiledFiles.contains(depFile)) {
-          // Classes containing inlined constants from other classes and compiled against older constant values
-          // may need to be recompiled several times within compile session.
-          // Otherwise, it is safe to skip the file if it has already been compiled in this session.
-          return true;
+      
+      BiFunction<ClassFileRepr, File, Boolean> dependentReprProcessor = new BiFunction<>() {
+        private final Map<ClassFileRepr, Pair<Boolean, Boolean>> isAffected = new HashMap<>();
+
+        @Override
+        public Boolean apply(ClassFileRepr repr, File depFile) {
+          final boolean isGenerated;
+          if (repr instanceof ClassRepr) {
+            final ClassRepr clsRepr = (ClassRepr)repr;
+            if (!clsRepr.hasInlinedConstants() && myCompiledFiles.contains(depFile)) {
+              // Classes containing inlined constants from other classes and compiled against older constant values
+              // may need to be recompiled several times within compile session.
+              // Otherwise, it is safe to skip the file if it has already been compiled in this session.
+              return true;
+            }
+
+            // If among affected files are annotation processor-generated, then we might need to re-generate them.
+            // To achieve this, we need to recompile the whole chunk which will cause processors to re-generate these affected files
+            isGenerated = clsRepr.isGenerated();
+          }
+          else {
+            isGenerated = false;
+          }
+
+          if (myAffectedFiles.contains(depFile)) {
+            return !isGenerated;
+          }
+
+          Pair<Boolean, Boolean> shouldAffect = isAffected.computeIfAbsent(repr, r -> {
+            debug("Dependent class: ", r.name);
+            final Set<UsageRepr.Usage> depUsages = r.getUsages();
+            if (depUsages == null || depUsages.isEmpty()) {
+              return Pair.create(false, !isGenerated);
+            }
+            for (UsageRepr.Usage usage : depUsages) {
+              if (usage instanceof UsageRepr.AnnotationUsage) {
+                final UsageRepr.AnnotationUsage annotationUsage = (UsageRepr.AnnotationUsage)usage;
+                for (final UsageRepr.AnnotationUsage query : state.myAnnotationQuery) {
+                  if (query.satisfies(annotationUsage)) {
+                    debug("Added file due to annotation query");
+                    return Pair.create(true, !isGenerated);
+                  }
+                }
+              }
+              else if (state.myAffectedUsages.contains(usage)) {
+                final UsageConstraint constraint = state.myUsageConstraints.get(usage);
+                if (constraint == null) {
+                  debug("Added file with no constraints");
+                  return Pair.create(true, !isGenerated);
+                }
+                if (constraint.checkResidence(r.name)) {
+                  debug("Added file with satisfied constraint");
+                  return Pair.create(true, !isGenerated);
+                }
+              }
+            }
+            return Pair.create(false, true);
+          });
+
+          if (shouldAffect.getFirst()) {
+            myAffectedFiles.add(depFile);
+          }
+          return shouldAffect.getSecond();
         }
-        
-        // If among affected files are annotation processor-generated, then we might need to re-generate them.
-        // To achieve this, we need to recompile the whole chunk which will cause processors to re-generate these affected files
-        isGenerated = clsRepr.isGenerated();
-      }
+      };
 
-      if (myAffectedFiles.contains(depFile)) {
-        return !isGenerated;
-      }
-      final Set<UsageRepr.Usage> depUsages = repr.getUsages();
-      if (depUsages == null || depUsages.isEmpty()) {
-        return !isGenerated;
-      }
-
-      for (UsageRepr.Usage usage : depUsages) {
-        if (usage instanceof UsageRepr.AnnotationUsage) {
-          final UsageRepr.AnnotationUsage annotationUsage = (UsageRepr.AnnotationUsage)usage;
-          for (final UsageRepr.AnnotationUsage query : state.myAnnotationQuery) {
-            if (query.satisfies(annotationUsage)) {
-              debug("Added file due to annotation query");
-              myAffectedFiles.add(depFile);
-              return !isGenerated;
+      for (IntIterator dependants = state.myDependants.iterator(); dependants.hasNext(); ) {
+        int depName = dependants.nextInt();
+        Iterable<Pair<ClassFileRepr, File>> dependentReprs = Iterators.filter(Iterators.map(Iterators.map(myClassToRelativeSourceFilePath.get(depName), src -> Pair.create(myRelativeSourceFilePathToClasses.get(src), toFull(src))), p -> {
+          for (ClassFileRepr repr : p.getFirst()) {
+            if (repr.name == depName) {
+              return Pair.create(repr, p.getSecond());
             }
           }
-        }
-        else if (state.myAffectedUsages.contains(usage)) {
-          final UsageConstraint constraint = state.myUsageConstraints.get(usage);
-          if (constraint == null) {
-            debug("Added file with no constraints");
-            myAffectedFiles.add(depFile);
-            return !isGenerated;
-          }
-          if (constraint.checkResidence(depClass)) {
-            debug("Added file with satisfied constraint");
-            myAffectedFiles.add(depFile);
-            return !isGenerated;
+          return null;
+        }), Iterators.notNullFilter());
+
+        for (Pair<ClassFileRepr, File> pair : dependentReprs) {
+          if (!dependentReprProcessor.apply(pair.getFirst(), pair.getSecond())) {
+            debug("Turning non-incremental for the BuildTarget because dependent class is annotation-processor generated");
+            return false;
           }
         }
       }
@@ -2509,12 +2567,9 @@ public class Mappings {
           myPresent.affectDependentModules(state, moduleRepr.name, new UsageConstraint() {
             @Override
             public boolean checkResidence(int dep) {
-              final ModuleRepr depModule = myPresent.moduleReprByName(dep);
-              if (depModule != null) {
-                for (ModuleRequiresRepr requires : depModule.getRequires()) {
-                  if (requires.name == moduleRepr.name && requires.getVersion() == version) {
-                    return true;
-                  }
+              for (ModuleRequiresRepr requires : Iterators.flat(Iterators.map(myPresent.moduleReprsByName(dep), depModule -> depModule.getRequires()))) {
+                if (requires.name == moduleRepr.name && requires.getVersion() == version) {
+                  return true;
                 }
               }
               return false;
@@ -2612,20 +2667,13 @@ public class Mappings {
     return new Differential(delta, removed, filesToCompile, compiledWithErrors, compiledFiles, affectedFiles, filter).differentiate();
   }
 
-  private void cleanupBackDependency(final int className, @Nullable Set<? extends UsageRepr.Usage> usages, final IntIntMultiMaplet buffer) {
+  private void cleanupBackDependency(final int className, @Nullable Iterable<? extends UsageRepr.Usage> usages, final IntIntMultiMaplet buffer) {
     if (usages == null) {
-      final ClassFileRepr repr = getReprByName(null, className);
-      if (repr != null) {
-        usages = repr.getUsages();
-      }
+      usages = Iterators.flat(Iterators.map(getReprsByName(className), repr -> repr.getUsages()));
     }
-
-    if (usages != null) {
-      for (final UsageRepr.Usage u : usages) {
-        final int owner = u.getOwner();
-        if (owner != className) {
-          buffer.put(owner, className);
-        }
+    for (Integer owner : Iterators.unique(Iterators.map(usages, usage -> usage.getOwner()))) {
+      if (owner != className) {
+        buffer.put(owner, className);
       }
     }
   }
@@ -2653,6 +2701,8 @@ public class Mappings {
       // many files
       for (File file : currentlyMapped) {
         if (!FileUtil.filesEqual(sourceFile, file) && file.exists()) {
+          // ensure association with particular sourceFile is removed
+          myClassToRelativeSourceFilePath.removeFrom(className, toRelative(sourceFile));
           return;
         }
       }
@@ -2755,18 +2805,40 @@ public class Mappings {
             }
           });
 
-          delta.getChangedClasses().forEach(className -> {
-            final Collection<String> sourceFiles = delta.myClassToRelativeSourceFilePath.get(className);
-            myClassToRelativeSourceFilePath.replace(className, sourceFiles);
+          final Set<String> changedRelativePaths = CollectionFactory.createFilePathSet();
+          for (File file : delta.getChangedFiles()) {
+            changedRelativePaths.add(toRelative(file));
+          }
 
-            cleanupBackDependency(className, null, dependenciesTrashBin);
+          delta.getChangedClasses().forEach(new IntConsumer() {
+            final Set<String> pathsBuffer = CollectionFactory.createFilePathSet();
+            @Override
+            public void accept(int className) {
+              Collection<String> currentPaths = myClassToRelativeSourceFilePath.get(className);
+              if (currentPaths != null && !currentPaths.isEmpty()) {
+                try {
+                  pathsBuffer.addAll(currentPaths);
+                  pathsBuffer.removeAll(changedRelativePaths);
+                  pathsBuffer.addAll(delta.myClassToRelativeSourceFilePath.get(className));
+                  if (pathsBuffer.size() != currentPaths.size() || !pathsBuffer.containsAll(currentPaths)) {
+                    myClassToRelativeSourceFilePath.replace(className, pathsBuffer);
+                  }
+                }
+                finally {
+                  pathsBuffer.clear();
+                }
+              }
+              else {
+                myClassToRelativeSourceFilePath.replace(className, delta.myClassToRelativeSourceFilePath.get(className));
+              }
+
+              cleanupBackDependency(className, null, dependenciesTrashBin);
+            }
           });
 
-          delta.getChangedFiles().forEach(fileName -> {
-            String relative = toRelative(fileName);
-            Collection<ClassFileRepr> classes = delta.myRelativeSourceFilePathToClasses.get(relative);
-            myRelativeSourceFilePathToClasses.replace(relative, classes);
-          });
+          for (String path : changedRelativePaths) {
+            myRelativeSourceFilePathToClasses.replace(path, delta.myRelativeSourceFilePathToClasses.get(path));
+          }
 
           // some classes may be associated with multiple sources.
           // In case some of these sources was not compiled, but the class was changed, we need to update
@@ -2807,7 +2879,7 @@ public class Mappings {
         }
         else {
           myClassToSubclasses.putAll(delta.myClassToSubclasses);
-          myClassToRelativeSourceFilePath.replaceAll(delta.myClassToRelativeSourceFilePath);
+          myClassToRelativeSourceFilePath.putAll(delta.myClassToRelativeSourceFilePath);
           myRelativeSourceFilePathToClasses.replaceAll(delta.myRelativeSourceFilePathToClasses);
           delta.myRelativeSourceFilePathToClasses.forEachEntry(
             (src, classes) -> {
@@ -3185,7 +3257,7 @@ public class Mappings {
   }
 
   private static <T> Supplier<T> lazy(Supplier<? extends T> calculation) {
-    return new Supplier<T>() {
+    return new Supplier<>() {
       Ref<T> calculated;
       @Override
       public T get() {

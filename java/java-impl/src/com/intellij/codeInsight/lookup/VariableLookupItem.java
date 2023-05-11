@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.RecursionManager;
@@ -242,8 +243,11 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     if (target == null && ref != null &&
         JavaPsiFacade.getInstance(context.getProject()).getResolveHelper().resolveReferencedVariable(variable.getName(), ref) == null) {
       BringVariableIntoScopeFix fix = BringVariableIntoScopeFix.fromReference(ref);
-      if (fix != null && fix.isAvailable(context.getProject(), context.getEditor(), context.getFile())) {
-        fix.invoke(context.getProject(), context.getEditor(), context.getFile());
+      if (fix != null) {
+        ModCommandAction.ActionContext actionContext = ModCommandAction.ActionContext.from(context.getEditor(), context.getFile());
+        if (fix.getPresentation(actionContext) != null) {
+          fix.perform(actionContext).execute(context.getProject());
+        }
       }
     }
 
@@ -356,5 +360,10 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       JavaCompletionUtil.insertClassReference(containingClass, file, context.getStartOffset());
       PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getDocument());
     }
+  }
+
+  @Override
+  public boolean isWorthShowingInAutoPopup() {
+    return myTailText != null;
   }
 }

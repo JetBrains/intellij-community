@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.TerminalCustomCommandListener
+import java.nio.charset.StandardCharsets
+import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
@@ -18,8 +20,11 @@ class ShellCommandManager(terminal: Terminal) {
   init {
     terminal.addCustomCommandListener(TerminalCustomCommandListener {
       when (it.getOrNull(0)) {
+        "initialized" -> fireInitialized()
+        "prompt_shown" -> firePromptShown()
         "command_started" -> processCommandStartedEvent(it)
         "command_finished" -> processCommandFinishedEvent(it)
+        "command_history" -> processCommandHistoryEvent(it)
       }
     })
   }
@@ -29,8 +34,9 @@ class ShellCommandManager(terminal: Terminal) {
     val currentDirectory = event.getOrNull(2)
     if (command != null && command.startsWith("command=") &&
         currentDirectory != null && currentDirectory.startsWith("current_directory=")) {
-      val commandRun = CommandRun(System.nanoTime(), currentDirectory.removePrefix("current_directory="),
-                                  command.removePrefix("command="))
+      val commandRun = CommandRun(System.nanoTime(),
+                                  decodeHex(currentDirectory.removePrefix("current_directory=")),
+                                  decodeHex(command.removePrefix("command=")))
       this.commandRun = commandRun
       fireCommandStarted(commandRun)
     }
@@ -38,7 +44,9 @@ class ShellCommandManager(terminal: Terminal) {
 
   private fun processCommandFinishedEvent(event: List<String>) {
     val exitCodeStr = event.getOrNull(1)
-    if (exitCodeStr != null && exitCodeStr.startsWith("exit_code=")) {
+    val currentDirectoryField = event.getOrNull(2)
+    if (exitCodeStr != null && exitCodeStr.startsWith("exit_code=") &&
+        currentDirectoryField != null && currentDirectoryField.startsWith("current_directory=")) {
       val exitCode = try {
         exitCodeStr.removePrefix("exit_code=").toInt()
       }
@@ -47,34 +55,88 @@ class ShellCommandManager(terminal: Terminal) {
       }
       val commandRun = this.commandRun
       if (commandRun != null) {
+        val newDirectory = decodeHex(currentDirectoryField.removePrefix("current_directory="))
+        if (commandRun.workingDirectory != newDirectory) {
+          fireDirectoryChanged(newDirectory)
+        }
         fireCommandFinished(commandRun, exitCode)
       }
     }
   }
 
+  private fun processCommandHistoryEvent(event: List<String>) {
+    val history = event.getOrNull(1)
+    if (history != null && history.startsWith("history_string=")) {
+      fireCommandHistoryReceived(decodeHex(history.removePrefix("history_string=")))
+    }
+  }
+
+  private fun fireInitialized() {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: initialized")
+    }
+    for (listener in listeners) {
+      listener.initialized()
+    }
+  }
+
+  private fun firePromptShown() {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: prompt_shown")
+    }
+    for (listener in listeners) {
+      listener.promptShown()
+    }
+  }
+
   private fun fireCommandStarted(commandRun: CommandRun) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: command_started - $commandRun")
+    }
     for (listener in listeners) {
       listener.commandStarted(commandRun.command)
-    }
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Started $commandRun")
     }
   }
 
   private fun fireCommandFinished(commandRun: CommandRun, exitCode: Int) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: command_finished - $commandRun, exit code: $exitCode")
+    }
     for (listener in listeners) {
       listener.commandFinished(commandRun.command, exitCode, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - commandRun.commandStartedNano))
     }
+  }
+
+  private fun fireDirectoryChanged(newDirectory: String) {
+    for (listener in listeners) {
+      listener.directoryChanged(newDirectory)
+    }
     if (LOG.isDebugEnabled) {
-      LOG.debug("Finished $commandRun, exit code: $exitCode")
+      LOG.debug("Current directory changed from '${commandRun?.workingDirectory}' to '$newDirectory'")
     }
   }
 
-  fun addListener(listener: ShellCommandListener, parentDisposable: Disposable) {
-    listeners.add(listener)
-    Disposer.register(parentDisposable) {
-      listeners.remove(listener)
+  private fun fireCommandHistoryReceived(history: String) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: command_history of ${history.length} size")
     }
+    for (listener in listeners) {
+      listener.commandHistoryReceived(history)
+    }
+  }
+
+  fun addListener(listener: ShellCommandListener, parentDisposable: Disposable? = null) {
+    listeners.add(listener)
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable) {
+        listeners.remove(listener)
+      }
+    }
+  }
+
+  private fun decodeHex(hexStr: String): String {
+    val bytes = HexFormat.of().parseHex(hexStr)
+    return String(bytes, StandardCharsets.UTF_8)
   }
 
   companion object {
@@ -83,8 +145,24 @@ class ShellCommandManager(terminal: Terminal) {
 }
 
 interface ShellCommandListener {
+  /** Fired before the first prompt is printed */
+  fun initialized() {}
+
+  /**
+   * Fired each time when prompt is printed.
+   * The prompt itself is empty, so this event can be counted both as before or after prompt is printed.
+   * Fired on session start after [initialized] event, after [commandFinished] event, and after completion with multiple items is finished.
+   */
+  fun promptShown() {}
+
   fun commandStarted(command: String) {}
+
+  /** Fired after command is executed and before prompt is printed */
   fun commandFinished(command: String, exitCode: Int, duration: Long) {}
+
+  fun directoryChanged(newDirectory: String) {}
+
+  fun commandHistoryReceived(history: String) {}
 }
 
 private class CommandRun(val commandStartedNano: Long, val workingDirectory: String, val command: String) {

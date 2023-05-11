@@ -9,4 +9,4 @@ fun other() {
     testFu<caret>
 }
 
-// INSERT: test
+// ELEMENT: testFun

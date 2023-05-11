@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.ide.RemoteDesktopService
@@ -24,7 +24,6 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getAdjustedRatio
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getRegisteredMutableInfoOrLogError
 import com.intellij.openapi.wm.impl.WindowInfoImpl
-import com.intellij.reference.SoftReference
 import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.awt.DevicePoint
@@ -32,6 +31,7 @@ import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleContextCache
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.ImageUtil
@@ -43,7 +43,8 @@ import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.geom.Point2D
 import java.awt.image.BufferedImage
-import java.util.function.Function
+import java.lang.ref.SoftReference
+import java.util.concurrent.Future
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.LayoutFocusTraversalPolicy
@@ -241,8 +242,17 @@ class ToolWindowPane internal constructor(
     setWeight(anchor, weight)
   }
 
+  private val setAnchorWeightFutures = hashMapOf<ToolWindowAnchor, Future<*>>()
+
   internal fun setWeight(anchor: ToolWindowAnchor, weight: Float) {
+    setAnchorWeightFutures.remove(anchor)?.cancel(false)
     val size = rootPane.size
+    if (size.height == 0 && size.width == 0) {
+      setAnchorWeightFutures[anchor] = UIUtil.runOnceWhenResized(rootPane) {
+        setWeight(anchor, weight)
+      }
+      return
+    }
     when (anchor) {
       ToolWindowAnchor.TOP -> verticalSplitter.firstSize = (size.getHeight() * weight).toInt()
       ToolWindowAnchor.LEFT -> horizontalSplitter.firstSize = (size.getWidth() * weight).toInt()
@@ -713,20 +723,21 @@ private class ImageRef(image: BufferedImage) : SoftReference<BufferedImage?>(ima
   }
 }
 
-private class ImageCache(imageProvider: Function<ScaleContext, ImageRef>) : ScaleContext.Cache<ImageRef?>(imageProvider) {
-  fun get(ctx: ScaleContext): BufferedImage {
-    val ref = getOrProvide(ctx)
-    val image = SoftReference.dereference(ref)
-    if (image != null) {
-      return image
+private class ImageCache(imageProvider: (ScaleContext) -> ImageRef) : ScaleContextCache<ImageRef>(imageProvider) {
+  fun get(scaleContext: ScaleContext): BufferedImage {
+    val ref = getOrProvide(scaleContext)
+    ref?.get()?.let {
+      return it
     }
-    clear() // clear to recalculate the image
-    return get(ctx) // first recalculated image will be non-null
+    // clear to recalculate the image
+    clear()
+    // the first recalculated image will be non-null
+    return get(scaleContext)
   }
 }
 
 private class FrameLayeredPane(splitter: JComponent, frame: JFrame) : JBLayeredPane() {
-  private val imageProvider: Function<ScaleContext, ImageRef> = Function {
+  private val imageProvider: (ScaleContext) -> ImageRef = {
     val width = max(max(1, width), frame.width)
     val height = max(max(1, height), frame.height)
     ImageRef(ImageUtil.createImage(graphicsConfiguration, width, height, BufferedImage.TYPE_INT_RGB))

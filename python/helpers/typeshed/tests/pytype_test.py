@@ -4,8 +4,7 @@
 Depends on pytype being installed.
 
 If pytype is installed:
-    1. For every pyi, do nothing if it is in pytype_exclude_list.txt or is
-       Python 2-only.
+    1. For every pyi, do nothing if it is in pytype_exclude_list.txt.
     2. Otherwise, call 'pytype.io.parse_pyi'.
 Option two will load the file and all the builtins, typeshed dependencies. This
 will also discover incorrect usage of imported modules.
@@ -20,7 +19,7 @@ import traceback
 from collections.abc import Sequence
 
 from pytype import config as pytype_config, load_pytd  # type: ignore[import]
-from pytype.pytd import typeshed  # type: ignore[import]
+from pytype.imports import typeshed  # type: ignore[import]
 
 TYPESHED_SUBDIRS = ["stdlib", "stubs"]
 TYPESHED_HOME = "TYPESHED_HOME"

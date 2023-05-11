@@ -16,9 +16,12 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInsight.options.JavaInspectionButtons;
+import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalHandler;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -36,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 public class FieldMayBeFinalInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
@@ -48,6 +53,11 @@ public class FieldMayBeFinalInspection extends BaseInspection implements Cleanup
   @Override
   public boolean runForWholeFile() {
     return true;
+  }
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.IMPLICIT_WRITE_ANNOTATIONS));
   }
 
   @Override

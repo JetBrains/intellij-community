@@ -22,27 +22,41 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
-public class MavenProjectsProcessorResolvingTask extends MavenProjectsBatchProcessorBasicTask {
+public class MavenProjectsProcessorResolvingTask implements MavenProjectsProcessorTask {
+  @NotNull private final Collection<MavenProject> myMavenProjects;
   @NotNull private final MavenGeneralSettings myGeneralSettings;
-  @Nullable private final Runnable myOnCompletion;
-  @NotNull private final ResolveContext myContext;
+  @NotNull private final MavenProjectsTree myTree;
+  @Nullable private final Consumer<MavenProjectResolver.MavenProjectResolutionResult> myOnCompletion;
 
-  public MavenProjectsProcessorResolvingTask(@NotNull Collection<MavenProject> projects,
-                                             @NotNull MavenProjectsTree tree,
+  public MavenProjectsProcessorResolvingTask(@NotNull Collection<MavenProject> mavenProjects,
                                              @NotNull MavenGeneralSettings generalSettings,
-                                             @Nullable Runnable onCompletion,
-                                             @NotNull ResolveContext context) {
-    super(projects, tree);
+                                             @NotNull MavenProjectsTree tree,
+                                             @Nullable Consumer<MavenProjectResolver.MavenProjectResolutionResult> onCompletion) {
+    myMavenProjects = mavenProjects;
     myGeneralSettings = generalSettings;
+    myTree = tree;
     myOnCompletion = onCompletion;
-    myContext = context;
   }
 
   @Override
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myResolver.resolve(project, myMavenProjects, myGeneralSettings, embeddersManager, console, myContext, indicator);
-    if (myOnCompletion != null) myOnCompletion.run();
+    var resolver = MavenProjectResolver.getInstance(project);
+    var result = resolver.resolve(myMavenProjects, myTree, myGeneralSettings, embeddersManager, console, indicator);
+    if (myOnCompletion != null) myOnCompletion.accept(result);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    return myMavenProjects.equals(((MavenProjectsProcessorResolvingTask)o).myMavenProjects);
+  }
+
+  @Override
+  public int hashCode() {
+    return myMavenProjects.hashCode();
   }
 }

@@ -8,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ElementPresentationManager;
@@ -38,25 +37,24 @@ public final class PluginDescriptorStructureUtil {
     Set.of("id", "name", "version", "category", "resource-bundle");
 
   @NonNls
-  private static final Map<String, String> TAG_DISPLAY_NAME_REPLACEMENTS = new ContainerUtil.ImmutableMapBuilder<String, String>()
-    .put("psi", "PSI")
-    .put("dom", "DOM")
-    .put("sdk", "SDK")
-    .put("junit", "JUnit")
-    .put("idea", "IDEA")
-    .put("javaee", "JavaEE")
-    .put("jsf", "JSF")
-    .put("mvc", "MVC")
-    .put("el", "EL")
-    .put("id", "ID")
-    .put("jsp", "JSP")
-    .put("xml", "XML")
-    .put("ast", "AST")
-    .put("gdsl", "GDSL")
-    .put("pom", "POM")
-    .put("html", "HTML")
-    .put("php", "PHP")
-    .build();
+  private static final Map<String, String> TAG_DISPLAY_NAME_REPLACEMENTS = Map.ofEntries(
+    Map.entry("psi", "PSI"),
+    Map.entry("dom", "DOM"),
+    Map.entry("sdk", "SDK"),
+    Map.entry("junit", "JUnit"),
+    Map.entry("idea", "IDEA"),
+    Map.entry("javaee", "JavaEE"),
+    Map.entry("jsf", "JSF"),
+    Map.entry("mvc", "MVC"),
+    Map.entry("el", "EL"),
+    Map.entry("id", "ID"),
+    Map.entry("jsp", "JSP"),
+    Map.entry("xml", "XML"),
+    Map.entry("ast", "AST"),
+    Map.entry("gdsl", "GDSL"),
+    Map.entry("pom", "POM"),
+    Map.entry("html", "HTML"),
+    Map.entry("php", "PHP"));
 
   private PluginDescriptorStructureUtil() {
   }

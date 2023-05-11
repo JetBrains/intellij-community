@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -19,11 +20,20 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+/**
+ * Command takes screenshot.
+ * Takes JPG screenshot of current screen to specified file
+ * (or if empty parameter is specified, the file will be stored under the LOG dir).
+ * <p>
+ * Syntax: %takeScreenshot <fullPathToFile>
+ * Example: %takeScreenshot ./myScreenshot.jpg
+ */
 public class TakeScreenshotCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "takeScreenshot";
   private static final Logger LOG = Logger.getInstance(TakeScreenshotCommand.class);
@@ -35,7 +45,8 @@ public class TakeScreenshotCommand extends AbstractCommand {
   @Override
   public @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final AsyncPromise<Object> result = new AsyncPromise<>();
-    String fullPathToFile = extractCommandArgument(PREFIX);
+    String arguments = extractCommandArgument(PREFIX);
+    final String fullPathToFile = (!arguments.isEmpty()) ? arguments : Paths.get(PathManager.getLogPath()).resolve("screenshot_before_exit.png").toString();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       takeScreenshotOfFrame(fullPathToFile);
     });
@@ -73,32 +84,34 @@ public class TakeScreenshotCommand extends AbstractCommand {
 
   public static void takeScreenshotOfFrame(String fileName) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for(Project project: projects){
+    for (Project project : projects) {
       CompletableFuture<Boolean> result = new CompletableFuture<>();
-      ApplicationManager.getApplication().invokeLater(()->{
+      ApplicationManager.getApplication().invokeLater(() -> {
         IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
-        if(frame != null) {
+        if (frame != null) {
           JComponent component = frame.getComponent();
           BufferedImage img = ImageUtil.createImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
           component.printAll(img.createGraphics());
           String prefix = projects.length == 1 ? "" : project.getName() + "_";
-          ApplicationManager.getApplication().executeOnPooledThread(() ->{
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
             try {
-              result.complete(ImageIO.write(img, "png", new File(prefix+fileName)));
+              result.complete(ImageIO.write(img, "png", new File(prefix + fileName)));
             }
             catch (IOException e) {
               LOG.info(e);
             }
           });
-        } else {
+        }
+        else {
           LOG.info("Frame was empty when takeScreenshot was called");
         }
       });
       try {
         Boolean fileCreated = result.get(30, TimeUnit.SECONDS);
-        if(fileCreated){
+        if (fileCreated) {
           LOG.info("Screenshot is saved at: " + fileName);
-        } else {
+        }
+        else {
           LOG.info("No writers are found for screenshot");
         }
       }

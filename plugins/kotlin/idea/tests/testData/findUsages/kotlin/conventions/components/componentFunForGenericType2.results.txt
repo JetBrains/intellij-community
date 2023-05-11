@@ -1,1 +1,1 @@
-Value read 19 val (x1, y1) = f()
+Value read 20 val (x1, y1) = f()

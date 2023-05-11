@@ -7,20 +7,18 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.*
+import com.intellij.util.ui.JBDimension
 import java.awt.BorderLayout
-import java.awt.Dimension
-import java.awt.event.ItemEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.border.Border
 
-internal class UiDslTestAction : DumbAwareAction("Show UI DSL Tests") {
+internal class UiDslTestAction : DumbAwareAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -43,8 +41,8 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
 
   override fun createCenterPanel(): JComponent {
     val tabbedPane = JBTabbedPane()
-    tabbedPane.minimumSize = Dimension(300, 200)
-    tabbedPane.preferredSize = Dimension(1000, 800)
+    tabbedPane.minimumSize = JBDimension(300, 200)
+    tabbedPane.preferredSize = JBDimension(1000, 800)
     tabbedPane.addTab("Labels", JScrollPane(LabelsPanel().panel))
     tabbedPane.addTab("Text Fields", createTextFields())
     tabbedPane.addTab("Comments", JScrollPane(createCommentsPanel()))
@@ -59,6 +57,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     tabbedPane.addTab("Deprecated Api", JScrollPane(DeprecatedApiPanel().panel))
     tabbedPane.addTab("CheckBox/RadioButton", CheckBoxRadioButtonPanel().panel)
     tabbedPane.addTab("Validation API", ValidationPanel(myDisposable).panel)
+    tabbedPane.addTab("Validation Refactoring API", ValidationRefactoringPanel(myDisposable).panel)
     tabbedPane.addTab("OnChange", OnChangePanel().panel)
 
     return panel {
@@ -102,9 +101,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
       }
     }
 
-    val disposable = Disposer.newDisposable()
-    result.registerValidators(disposable)
-    Disposer.register(myDisposable, disposable)
+    result.registerValidators(myDisposable)
 
     return result
   }
@@ -159,9 +156,8 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
           for ((name, entity) in entities.toSortedMap()) {
             row(name) {
               checkBox("visible")
-                .applyToComponent {
-                  isSelected = true
-                }.onChanged {
+                .selected(true)
+                .onChanged {
                   when (entity) {
                     is Cell<*> -> entity.visible(it.isSelected)
                     is Row -> entity.visible(it.isSelected)
@@ -169,9 +165,8 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
                   }
                 }
               checkBox("enabled")
-                .applyToComponent {
-                  isSelected = true
-                }.onChanged {
+                .selected(true)
+                .onChanged {
                   when (entity) {
                     is Cell<*> -> entity.enabled(it.isSelected)
                     is Row -> entity.enabled(it.isSelected)
@@ -189,9 +184,9 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
 
         row {
           checkBoxRow = checkBox("Row")
-            .applyToComponent { isSelected = true }
+            .selected(true)
           checkBoxText = checkBox("textField")
-            .applyToComponent { isSelected = true }
+            .selected(true)
         }
 
         row("visibleIf test row") {

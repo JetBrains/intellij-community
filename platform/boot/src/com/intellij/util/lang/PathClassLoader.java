@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Locale;
 import java.util.function.Function;
 
@@ -39,6 +40,10 @@ public final class PathClassLoader extends UrlClassLoader {
 
   public PathClassLoader(@NotNull UrlClassLoader.Builder builder) {
     super(builder, RESOURCE_FILE_FACTORY, isParallelCapable);
+  }
+
+  public void reset(Collection<Path> newClassPath) {
+    classPath.reset(newClassPath);
   }
 
   public interface BytecodeTransformer {

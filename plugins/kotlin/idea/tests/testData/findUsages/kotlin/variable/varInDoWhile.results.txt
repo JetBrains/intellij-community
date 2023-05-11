@@ -1,2 +1,2 @@
-Receiver 9 } while (message.isEmpty())
-Value read 8 println(message)
+Receiver 10 } while (message.isEmpty())
+Value read 9 println(message)

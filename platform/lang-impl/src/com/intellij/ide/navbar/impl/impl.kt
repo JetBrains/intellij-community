@@ -3,6 +3,7 @@ package com.intellij.ide.navbar.impl
 
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemProvider
+import com.intellij.ide.navbar.ide.LOG
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.ModuleRootManager
@@ -21,6 +22,7 @@ private fun NavBarItem.findParent(): NavBarItem? {
     val parentCandidate = ext.findParent(this) ?: continue
 
     if (parentCandidate is PsiNavBarItem && !parentCandidate.data.isValid) {
+      LOG.warn("Extension [${ext::class.java}] returned invalid parent candidate of type [${(parentCandidate.data)::class.java}]")
       continue
     }
 

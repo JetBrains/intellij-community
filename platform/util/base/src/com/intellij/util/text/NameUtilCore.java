@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -35,48 +35,78 @@ public final class NameUtilCore {
   }
 
   public static int nextWord(@NotNull String text, int start) {
-    if (!Character.isLetterOrDigit(text.charAt(start))) {
-      return start + 1;
+    int ch = text.codePointAt(start);
+    int chLen = Character.charCount(ch);
+    if (!Character.isLetterOrDigit(ch)) {
+      return start + chLen;
     }
 
     int i = start;
-    while (i < text.length() && Character.isDigit(text.charAt(i))) i++;
+    while (i < text.length()) {
+      int codePoint = text.codePointAt(i);
+      if (!Character.isDigit(codePoint)) break;
+      i += Character.charCount(codePoint);
+    }
     if (i > start) {
       // digits form a separate hump
       return i;
     }
 
-    while (i < text.length() && Character.isUpperCase(text.charAt(i))) i++;
-
-    if (i > start + 1) {
-      // several consecutive uppercase letter form a hump
-      if (i == text.length() || !Character.isLetter(text.charAt(i))) {
-        return i;
-      }
-      return i - 1;
+    while (i < text.length()) {
+      int codePoint = text.codePointAt(i);
+      if (!Character.isUpperCase(codePoint)) break;
+      i += Character.charCount(codePoint);
     }
 
-    if (i == start) i++;
-    while (i < text.length() && Character.isLetter(text.charAt(i)) && !isWordStart(text, i)) i++;
+    if (i > start + chLen) {
+      // several consecutive uppercase letter form a hump
+      if (i == text.length() || !Character.isLetter(text.codePointAt(i))) {
+        return i;
+      }
+      return i - Character.charCount(text.codePointBefore(i));
+    }
+
+    if (i == start) i += chLen;
+    while (i < text.length()) {
+      int codePoint = text.codePointAt(i);
+      if (!Character.isLetter(codePoint) || isWordStart(text, i)) break;
+      i += Character.charCount(codePoint);
+    }
     return i;
   }
 
   public static boolean isWordStart(String text, int i) {
-    char c = text.charAt(i);
-    if (Character.isUpperCase(c)) {
-      if (i > 0 && Character.isUpperCase(text.charAt(i - 1))) {
+    int cur = text.codePointAt(i);
+    int prev = i > 0 ? text.codePointBefore(i) : -1;
+    if (Character.isUpperCase(cur)) {
+      if (Character.isUpperCase(prev)) {
         // check that we're not in the middle of an all-caps word
-        return i + 1 < text.length() && Character.isLowerCase(text.charAt(i + 1));
+        int nextPos = i + Character.charCount(cur);
+        return nextPos < text.length() && Character.isLowerCase(text.codePointAt(nextPos));
       }
       return true;
     }
-    if (Character.isDigit(c)) {
+    if (Character.isDigit(cur)) {
       return true;
     }
-    if (!Character.isLetter(c)) {
+    if (!Character.isLetter(cur)) {
       return false;
     }
-    return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1)) || isHardCodedWordStart(text, i);
+    if (Character.isIdeographic(cur)) {
+      // Consider every ideograph as a separate word
+      return true;
+    }
+    return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1)) || isHardCodedWordStart(text, i) ||
+           isKanaBreak(cur, prev);
+  }
+
+  private static boolean isKanaBreak(int cur, int prev) {
+    Character.UnicodeScript curScript = Character.UnicodeScript.of(cur);
+    Character.UnicodeScript prevScript = Character.UnicodeScript.of(prev);
+    if (prevScript == curScript) return false;
+    return (curScript == Character.UnicodeScript.KATAKANA || curScript == Character.UnicodeScript.HIRAGANA ||
+            prevScript == Character.UnicodeScript.KATAKANA || prevScript == Character.UnicodeScript.HIRAGANA) &&
+           prevScript != Character.UnicodeScript.COMMON && curScript != Character.UnicodeScript.COMMON;
   }
 
   private static boolean isHardCodedWordStart(String text, int i) {

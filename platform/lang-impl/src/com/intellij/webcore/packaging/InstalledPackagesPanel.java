@@ -85,7 +85,7 @@ public class InstalledPackagesPanel extends JPanel {
     };
     myPackagesTable.setShowGrid(false);
     myPackagesTable.getTableHeader().setReorderingAllowed(false);
-    new TableSpeedSearch(myPackagesTable);
+    TableSpeedSearch.installOn(myPackagesTable);
 
     myUpgradeButton = new DumbAwareActionButton(IdeBundle.messagePointer("action.AnActionButton.text.upgrade"), IconUtil.getMoveUpIcon()) {
       @Override

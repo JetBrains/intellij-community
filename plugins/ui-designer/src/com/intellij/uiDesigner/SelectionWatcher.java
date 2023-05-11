@@ -20,7 +20,6 @@ public abstract class SelectionWatcher {
     myEditor = editor;
     myChangeListener = new MyPropertyChangeListener();
     myRootContainer = editor.getRootContainer();
-    install(myRootContainer);
 
     myHierarchyChangeListener = new HierarchyChangeListener() {
       @Override
@@ -32,7 +31,11 @@ public abstract class SelectionWatcher {
         }
       }
     };
-    editor.addHierarchyChangeListener(myHierarchyChangeListener);
+  }
+
+  public void setupListeners() {
+    install(myRootContainer);
+    myEditor.addHierarchyChangeListener(myHierarchyChangeListener);
   }
 
   public void dispose() {

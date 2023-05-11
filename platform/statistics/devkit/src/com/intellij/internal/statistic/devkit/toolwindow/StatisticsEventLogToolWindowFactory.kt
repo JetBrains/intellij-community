@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.toolwindow
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.NonEmptyActionGroup
+import com.intellij.internal.statistic.devkit.PlatformStatisticsDevkitIcons
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil.DEFAULT_RECORDER
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil.getLogProvidersInTestMode
 import com.intellij.internal.statistic.devkit.actions.RecordStateStatisticsEventLogAction
@@ -44,6 +45,8 @@ private class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware
       }
     })
   }
+
+  override fun getIcon() = PlatformStatisticsDevkitIcons.StatisticsEventLog
 
   override fun isApplicable(project: Project) = StatisticsRecorderUtil.isAnyTestModeEnabled()
 }

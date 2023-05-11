@@ -104,7 +104,11 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
         onNewSdkAdded.consume(sdk);
       }
     };
-    setRenderer(new SdkListPresenter(() -> ((JdkComboBoxModel)this.getModel()).myInnerModel).forType(JdkComboBox::unwrapItem));
+    setRenderer(SdkListPresenter.create(
+      this,
+      () -> ((JdkComboBoxModel)this.getModel()).myInnerModel,
+      item -> unwrapItem(item)
+    ));
     reloadModel();
   }
 

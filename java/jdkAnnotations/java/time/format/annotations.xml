@@ -1,0 +1,17 @@
+<root>
+  <item name='java.time.format.DateTimeFormatter java.time.format.DateTimeFormatter ofPattern(java.lang.String) 0'>
+    <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.format.DateTimeFormatter java.time.format.DateTimeFormatter ofPattern(java.lang.String, java.util.Locale) 0'>
+    <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.format.DateTimeFormatter java.time.format.DateTimeFormatter ofPattern(java.lang.String, java.util.Locale) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.format.DateTimeFormatterBuilder java.time.format.DateTimeFormatterBuilder appendPattern(java.lang.String) 0'>
+    <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

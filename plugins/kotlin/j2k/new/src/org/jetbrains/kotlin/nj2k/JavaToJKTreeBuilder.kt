@@ -48,7 +48,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class JavaToJKTreeBuilder constructor(
+class JavaToJKTreeBuilder(
     private val symbolProvider: JKSymbolProvider,
     private val typeFactory: JKTypeFactory,
     converterServices: NewJavaToKotlinServices,
@@ -447,11 +447,16 @@ class JavaToJKTreeBuilder constructor(
                                     propertyAccess
 
                                 1 /* setter */ -> {
-                                    val argument = (arguments.expressions[if (isExtension) 1 else 0]).toJK()
+                                    val index = if (isExtension) 1 else 0
+                                    val (argument, type) = if (arguments.expressionCount > index) {
+                                        arguments.expressions[index].toJK() to arguments.expressions[index].type
+                                    } else {
+                                        JKStubExpression() to null
+                                    }
                                     JKJavaAssignmentExpression(
                                         propertyAccess,
                                         argument,
-                                        createOperator(JavaTokenType.EQ, type) //TODO correct type
+                                        createOperator(JavaTokenType.EQ, type)
                                     )
                                 }
 
@@ -1055,18 +1060,12 @@ class JavaToJKTreeBuilder constructor(
                     body.toJK()
                 )
 
-                is PsiForeachStatement -> {
-                    val parameter = iterationParameter
-                    if (parameter == null) {
-                        JKErrorStatement(this, "patterns in switch are not yet supported")
-                    } else {
-                        JKForInStatement(
-                            parameter.toJK(),
-                            with(expressionTreeMapper) { iteratedValue?.toJK() ?: JKStubExpression() },
-                            body?.toJK() ?: blockStatement()
-                        )
-                    }
-                }
+                is PsiForeachStatement ->
+                    JKForInStatement(
+                        iterationParameter.toJK(),
+                        with(expressionTreeMapper) { iteratedValue?.toJK() ?: JKStubExpression() },
+                        body?.toJK() ?: blockStatement()
+                    )
 
                 is PsiBlockStatement -> JKBlockStatement(codeBlock.toJK())
 

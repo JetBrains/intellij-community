@@ -152,8 +152,22 @@ public abstract class FileBasedIndex {
                                                               @NotNull Processor<? super VirtualFile> processor);
 
   /**
-   * It is guaranteed to return data which is up-to-date within the given project.
-   * Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist.
+   * Query all the keys in the project. Note that the result may contain keys from other projects, orphan keys and the like,
+   * but it is guaranteed that it contains at least all the keys from specified project.
+   *
+   * @param project is used to make sure that all the keys belonging to the project are found.
+   *                In addition to keys from specified project the method may return a number of keys irrelevant
+   *                to the project or orphan keys that are not relevant to any project.
+   *                <p>
+   *                {@code project} will be used to filter out irrelevant keys only if corresponding indexing extension returns
+   *                {@code true} from its {@linkplain FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()}
+   *
+   * @return collection that contains at least all the keys that can be found in the specified project.
+   * <p>
+   * It is often true that the result contains some strings that are not valid keys in given project, unless
+   * {@linkplain FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()} returns true.
+   *
+   * @see FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()
    */
   @NotNull
   public abstract <K> Collection<K> getAllKeys(@NotNull ID<K, ?> indexId, @NotNull Project project);
@@ -371,4 +385,18 @@ public abstract class FileBasedIndex {
 
   @ApiStatus.Internal
   public static final boolean IGNORE_PLAIN_TEXT_FILES = Boolean.getBoolean("idea.ignore.plain.text.indexing");
+
+  @ApiStatus.Internal
+  public static boolean isCompositeIndexer(@NotNull DataIndexer<?, ?, ?> indexer) {
+    return indexer instanceof CompositeDataIndexer && !USE_IN_MEMORY_INDEX;
+  }
+
+  @ApiStatus.Internal
+  public static <Key, Value> boolean hasSnapshotMapping(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
+    //noinspection unchecked
+    return indexExtension instanceof FileBasedIndexExtension &&
+           ((FileBasedIndexExtension<Key, Value>)indexExtension).hasSnapshotMapping() &&
+           ourSnapshotMappingsEnabled &&
+           !USE_IN_MEMORY_INDEX;
+  }
 }

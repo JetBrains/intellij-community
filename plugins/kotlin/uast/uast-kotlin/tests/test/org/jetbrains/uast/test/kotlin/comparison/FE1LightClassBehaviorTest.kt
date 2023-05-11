@@ -31,8 +31,20 @@ class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
         checkPropertyAccessorModifierListOffsets(myFixture)
     }
 
+    fun testFinalModifierOnEnumMembers() {
+        checkFinalModifierOnEnumMembers(myFixture)
+    }
+
     fun testThrowsList() {
         checkThrowsList(myFixture)
+    }
+
+    fun testComparatorInheritor() {
+        checkComparatorInheritor(myFixture)
+    }
+
+    fun testBoxedReturnTypeWhenOverridingNonPrimitive() {
+        checkBoxedReturnTypeWhenOverridingNonPrimitive(myFixture)
     }
 
     fun testAnnotationOnPsiType() {
@@ -41,5 +53,17 @@ class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
 
     fun testAnnotationOnPsiTypeArgument() {
         checkAnnotationOnPsiTypeArgument(myFixture)
+    }
+
+    fun testUpperBoundWildcardForCtor() {
+        checkUpperBoundWildcardForCtor(myFixture)
+    }
+
+    fun testUpperBoundWildcardForEnum() {
+        checkUpperBoundWildcardForEnum(myFixture)
+    }
+
+    fun testUpperBoundWildcardForVar() {
+        checkUpperBoundWildcardForVar(myFixture)
     }
 }

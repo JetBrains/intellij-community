@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
-import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPopupMenu
@@ -18,6 +18,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JLabelUtil
 import com.intellij.util.ui.UIUtil
 import git4idea.repo.GitRepository
 import icons.CollaborationToolsIcons
@@ -72,7 +73,8 @@ internal object GitLabMergeRequestDetailsBranchComponentFactory {
 
   private fun createBranchLabel(scope: CoroutineScope, branchName: Flow<@NlsContexts.Label String>): JBLabel {
     return JBLabel(CollaborationToolsIcons.Review.Branch).apply {
-      bindText(scope, branchName)
+      JLabelUtil.setTrimOverflow(this, true)
+      bindTextIn(scope, branchName)
     }.also {
       CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
         foreground = CurrentBranchComponent.TEXT_COLOR

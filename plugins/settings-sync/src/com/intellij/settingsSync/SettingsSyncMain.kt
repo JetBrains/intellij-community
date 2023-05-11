@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -65,7 +66,7 @@ class SettingsSyncMain : Disposable {
                       appConfigPath: Path,
                       remoteCommunicator: SettingsSyncRemoteCommunicator,
                       ideMediator: SettingsSyncIdeMediator): SettingsSyncControls {
-      val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable,
+      val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable, SettingsSyncAuthService.getInstance()::getUserData,
         initialSnapshotProvider = { currentSnapshot -> ideMediator.getInitialSnapshot(appConfigPath, currentSnapshot) })
       val updateChecker = SettingsSyncUpdateChecker(remoteCommunicator)
       val bridge = SettingsSyncBridge(parentDisposable, appConfigPath, settingsLog, ideMediator, remoteCommunicator, updateChecker)

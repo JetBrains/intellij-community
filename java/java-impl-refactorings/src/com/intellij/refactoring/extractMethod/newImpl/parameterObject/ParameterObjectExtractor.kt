@@ -39,18 +39,19 @@ object ParameterObjectExtractor {
       InplaceExtractUtils.showExtractErrorHint(editor, ExtractMultipleVariablesException(variables, scope))
       return
     }
-    val objectBuilder = if (HighlightingFeature.RECORDS.isAvailable(variables.first())) {
-      RecordParameterObjectBuilder.create(variables)
+    val shouldInsertRecord = HighlightingFeature.RECORDS.isAvailable(variables.first())
+    val objectBuilder = if (shouldInsertRecord) {
+      RecordResultObjectBuilder.create(variables)
     } else {
-      ClassParameterObjectBuilder.create(variables)
+      ClassResultObjectBuilder.create(variables)
     }
     val file = scope.first().containingFile
     val project = file.project
     val extractRange = createGreedyRangeMarker(file.viewProvider.document, scope.first().textRange.union(scope.last().textRange))
     val editorState = EditorState(editor)
+    val disposable = Disposer.newDisposable()
     WriteCommandAction.writeCommandAction(project).run<Throwable> {
       try {
-        val disposable = Disposer.newDisposable()
         val startMarkAction = StartMarkAction.start(editor, project, ExtractMethodHandler.getRefactoringName())
         Disposer.register(disposable) { FinishMarkAction.finish(project, editor, startMarkAction) }
         val (introducedClass, declaration, replacements) = introduceObjectForVariables(objectBuilder, variables, affectedReferences, scope.last())
@@ -64,7 +65,7 @@ object ParameterObjectExtractor {
           .onSuccess { invokeLater { MethodExtractor ().doExtract(file, extractRange.textRange) } }
           .disposeWithTemplate(disposable)
           .createTemplate(file, createTemplateFields(editor, introducedClass, declaration, introducedVariableReferences))
-        val objectType = if (HighlightingFeature.RECORDS.isAvailable(variables.first())) {
+        val objectType = if (shouldInsertRecord) {
           JavaRefactoringBundle.message("extract.method.error.wrap.many.outputs.record")
         }
         else {
@@ -73,6 +74,7 @@ object ParameterObjectExtractor {
         val message = JavaRefactoringBundle.message("extract.method.error.wrap.many.outputs", objectType)
         HintManager.getInstance().showInformationHint(editor, message)
       } catch (e: Throwable) {
+        Disposer.dispose(disposable)
         editorState.revert()
         throw e
       }
@@ -97,7 +99,7 @@ object ParameterObjectExtractor {
     return preview
   }
 
-  private fun introduceObjectForVariables(builder: ParameterObjectBuilder,
+  private fun introduceObjectForVariables(builder: ResultObjectBuilder,
                                           variables: List<PsiVariable>,
                                           affectedReferences: List<PsiReferenceExpression>,
                                           placeForDeclaration: PsiElement): IntroduceObjectResult {

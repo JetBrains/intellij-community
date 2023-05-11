@@ -79,7 +79,7 @@ While editing, you can right-click different identifiers to take advantage of se
 This extension utilizes [`terraform fmt`](https://www.terraform.io/cli/commands/fmt) to rewrite an open document to a canonical format and style. This command applies a subset of the [Terraform language style conventions](https://www.terraform.io/language/syntax/style), along with other minor adjustments for readability.
 
 
-See the [Formating](#formatting) Configuration section for information on how to configure this feature.
+See the [Formatting](#formatting) Configuration section for information on how to configure this feature.
 
 ### Code Snippets
 
@@ -123,7 +123,7 @@ The Terraform VS Code extension bundles the [Terraform Language Server](https://
 
 The extension does require the following to be installed before use:
 
-- VS Code v1.65 or greater
+- VS Code v1.75 or greater
 - Terraform v0.12 or greater
 
 ## Platform Support

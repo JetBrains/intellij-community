@@ -51,14 +51,8 @@ public final class VcsLogCachesInvalidator extends CachesInvalidator {
   @Override
   public void invalidateCaches() {
     boolean isEmpty = true;
-    try {
-      isEmpty = !ProjectUtil.hasCacheForAnyProjectStartingWith(SQLITE_VCS_LOG_DB_FILENAME_PREFIX);
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-    }
 
-    if (isEmpty && Files.exists(PersistentUtil.LOG_CACHE)) {
+    if (Files.exists(PersistentUtil.LOG_CACHE)) {
       try {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(PersistentUtil.LOG_CACHE)) {
           if (stream.iterator().hasNext()) {
@@ -91,6 +85,6 @@ public final class VcsLogCachesInvalidator extends CachesInvalidator {
   }
 
   public static @NotNull VcsLogCachesInvalidator getInstance() {
-    return EP_NAME.findExtension(VcsLogCachesInvalidator.class);
+    return EP_NAME.findExtensionOrFail(VcsLogCachesInvalidator.class);
   }
 }

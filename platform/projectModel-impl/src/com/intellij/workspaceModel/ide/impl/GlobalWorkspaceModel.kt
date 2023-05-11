@@ -10,7 +10,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
 import com.intellij.platform.workspaceModel.jps.JpsGlobalFileEntitySource
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
@@ -24,13 +27,14 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
 @ApiStatus.Internal
-class GlobalWorkspaceModel: Disposable {
+class GlobalWorkspaceModel : Disposable {
   /**
    * Store link to the project from which changes came from. It's needed to avoid redundant changes application at [applyStateToProject]
    */
@@ -77,7 +81,8 @@ class GlobalWorkspaceModel: Disposable {
     entityStorage = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
 
     val callback = JpsGlobalModelSynchronizer.getInstance().loadInitialState(mutableEntityStorage, entityStorage, loadedFromCache)
-    entityStorage.replaceSilently(mutableEntityStorage.toSnapshot())
+    val changes = mutableEntityStorage.collectChanges(EntityStorageSnapshot.empty())
+    entityStorage.replace(mutableEntityStorage.toSnapshot(), changes, {}, {})
     callback.invoke()
   }
 
@@ -115,7 +120,11 @@ class GlobalWorkspaceModel: Disposable {
         newStorage.assertConsistency()
       }
       entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged)
+    }.apply {
+      updatesCounter.incrementAndGet()
+      totalUpdatesTimeMs.addAndGet(this)
     }
+
     LOG.info("Global model updated to version ${entityStorage.pointer.version} in $generalTime ms: $description")
     if (generalTime > 1000) {
       LOG.info("Global model update details: Updater code: $updateTimeMillis ms, Collect changes: $collectChangesTimeMillis ms")
@@ -129,6 +138,7 @@ class GlobalWorkspaceModel: Disposable {
 
   override fun dispose() = Unit
 
+  @RequiresWriteLock
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     logErrorOnEventHandling {
@@ -142,6 +152,7 @@ class GlobalWorkspaceModel: Disposable {
     GlobalLibraryTableBridge.getInstance().handleBeforeChangeEvents(change)
   }
 
+  @RequiresWriteLock
   private fun onChanged(change: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
@@ -154,7 +165,10 @@ class GlobalWorkspaceModel: Disposable {
     isFromGlobalWorkspaceModel = false
   }
 
+  @RequiresWriteLock
   fun applyStateToProject(targetProject: Project) {
+    val start = System.currentTimeMillis()
+
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
     if (targetProject === filteredProject) {
@@ -167,14 +181,22 @@ class GlobalWorkspaceModel: Disposable {
     workspaceModel.updateProjectModel("Sync global entities with project: ${targetProject.name}") { builder ->
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
+
+    applyStateToProjectTimeMs.addElapsedTimeMs(start)
   }
 
   fun applyStateToProjectBuilder(project: Project, targetBuilder: MutableEntityStorage) {
-    LOG.info("Sync global entities with mutable entity storage")
-    targetBuilder.replaceBySource(globalEntitiesFilter, copyEntitiesToEmptyStorage(entityStorage.current, VirtualFileUrlManager.getInstance(project)))
+    applyStateToProjectBuilderTimeMs.addMeasuredTimeMs {
+      LOG.info("Sync global entities with mutable entity storage")
+      targetBuilder.replaceBySource(globalEntitiesFilter,
+                                    copyEntitiesToEmptyStorage(entityStorage.current, VirtualFileUrlManager.getInstance(project)))
+    }
   }
 
+  @RequiresWriteLock
   fun syncEntitiesWithProject(sourceProject: Project) {
+    val start = System.currentTimeMillis()
+
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     filteredProject = sourceProject
     val entitiesCopyAtBuilder = copyEntitiesToEmptyStorage(WorkspaceModel.getInstance(sourceProject).currentSnapshot,
@@ -183,6 +205,7 @@ class GlobalWorkspaceModel: Disposable {
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
     filteredProject = null
+    syncEntitiesWithProjectTimeMs.addElapsedTimeMs(start)
   }
 
   private fun copyEntitiesToEmptyStorage(storage: EntityStorage, vfuManager: VirtualFileUrlManager): MutableEntityStorage {
@@ -210,7 +233,8 @@ class GlobalWorkspaceModel: Disposable {
   private fun logErrorOnEventHandling(action: () -> Unit) {
     try {
       action.invoke()
-    } catch (e: Throwable) {
+    }
+    catch (e: Throwable) {
       val message = "Exception at Workspace Model event handling"
       LOG.error(message, e)
     }
@@ -219,6 +243,45 @@ class GlobalWorkspaceModel: Disposable {
   companion object {
     private val LOG = logger<GlobalWorkspaceModel>()
     fun getInstance(): GlobalWorkspaceModel = ApplicationManager.getApplication().service()
+
+    private val updatesCounter: AtomicLong = AtomicLong()
+    private val totalUpdatesTimeMs: AtomicLong = AtomicLong()
+    private val applyStateToProjectTimeMs: AtomicLong = AtomicLong()
+    private val applyStateToProjectBuilderTimeMs: AtomicLong = AtomicLong()
+    private val syncEntitiesWithProjectTimeMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val updatesGauge = meter.gaugeBuilder("workspaceModel.global.updates.count")
+        .ofLongs().setDescription("How many times global workspace model was updated").buildObserver()
+
+      val totalUpdatesTimeGauge = meter.gaugeBuilder("workspaceModel.global.updates.ms")
+        .ofLongs().setDescription("Total time spent on global workspace model updates").buildObserver()
+
+      val applyStateToProjectTimeGauge = meter.gaugeBuilder("workspaceModel.global.apply.state.to.project.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val applyStateToProjectBuilderTimeGauge = meter.gaugeBuilder("workspaceModel.global.apply.state.to.project.builder.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val syncEntitiesWithProjectTimeGauge = meter.gaugeBuilder("workspaceModel.sync.entities.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      meter.batchCallback(
+        {
+          updatesGauge.record(updatesCounter.get())
+          totalUpdatesTimeGauge.record(totalUpdatesTimeMs.get())
+          applyStateToProjectTimeGauge.record(applyStateToProjectTimeMs.get())
+          applyStateToProjectBuilderTimeGauge.record(applyStateToProjectBuilderTimeMs.get())
+          syncEntitiesWithProjectTimeGauge.record(syncEntitiesWithProjectTimeMs.get())
+        },
+        updatesGauge, totalUpdatesTimeGauge, applyStateToProjectTimeGauge,
+        applyStateToProjectBuilderTimeGauge, syncEntitiesWithProjectTimeGauge
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
   }
 }
 

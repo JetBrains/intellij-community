@@ -86,7 +86,7 @@ public class ProgressStripe extends JBPanel {
     }
 
     @Override
-    protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
+    protected @NotNull NonOpaquePanel customizeLoadingLayer(JPanel parent, @NotNull JLabel text, @NotNull AsyncProcessIcon icon) {
       parent.setLayout(new BorderLayout());
 
       NonOpaquePanel result = new NonOpaquePanel();

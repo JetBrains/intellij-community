@@ -10,3 +10,5 @@
 val x = { <caret>a: Int ->
     5
 }
+
+// IGNORE_FIR

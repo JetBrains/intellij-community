@@ -5,8 +5,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -15,15 +15,16 @@ public class PsiMethodCallFilter implements ElementFilter {
   @NonNls private final Set<String> myMethodNames;
 
 
-  public PsiMethodCallFilter(@NonNls final String className, @NonNls final String... methodNames) {
+  public PsiMethodCallFilter(@NonNls final String className, @NotNull @NonNls final String @NotNull ... methodNames) {
     myClassName = className;
-    myMethodNames = ContainerUtil.set(methodNames);
+    myMethodNames = Set.of(methodNames);
   }
 
   @Override
   public boolean isAcceptable(Object element, PsiElement context) {
     if (element instanceof PsiMethodCallExpression callExpression) {
-      if (!myMethodNames.contains(callExpression.getMethodExpression().getReferenceName())) {
+      String name = callExpression.getMethodExpression().getReferenceName();
+      if (name == null || !myMethodNames.contains(name)) {
         return false;
       }
 

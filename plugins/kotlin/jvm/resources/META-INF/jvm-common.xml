@@ -10,10 +10,6 @@
             <add-to-group group-id="KotlinToolsGroup"/>
         </action>
 
-        <action id="ConfigureKotlinJsInProject" class="org.jetbrains.kotlin.idea.actions.ConfigureKotlinJsInProjectAction">
-            <add-to-group group-id="KotlinToolsGroup"/>
-        </action>
-
         <action id="ShowKotlinBytecode" class="org.jetbrains.kotlin.idea.actions.ShowKotlinBytecodeAction">
             <add-to-group group-id="KotlinToolsGroup"/>
         </action>
@@ -116,9 +112,6 @@
         <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10CommonIdePlatformKindTooling"/>
 
         <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
-
-        <assignResolutionAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.assignment.IdeAssignPluginResolutionAltererExtension"/>
-        <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.assignment.IdeAssignmentContainerContributor"/>
 
         <declarationAttributeAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.IdeAllOpenDeclarationAttributeAltererExtension"/>
         <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.AllOpenUltraLightClassModifierExtension"/>

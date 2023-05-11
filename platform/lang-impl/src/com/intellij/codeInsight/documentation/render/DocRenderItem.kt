@@ -5,8 +5,8 @@ import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.platform.documentation.DocumentationTarget
-import com.intellij.platform.documentation.InlineDocumentation
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.InlineDocumentation
 import org.jetbrains.annotations.Nls
 
 interface DocRenderItem {

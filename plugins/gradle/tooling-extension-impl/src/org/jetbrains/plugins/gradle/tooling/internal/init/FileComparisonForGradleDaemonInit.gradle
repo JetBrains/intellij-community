@@ -1,0 +1,78 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
+
+gradle.taskGraph.whenReady { taskGraph ->
+  taskGraph.allTasks.each { Task task ->
+    if (task instanceof Test) {
+      task.doFirst {
+        try {
+          def testClasspath = getTestClasspath(task)
+          def classpath = findJarsForClasses(
+            testClasspath,
+            "com.intellij.rt.execution.junit.FileComparisonFailure",
+            "junit.framework.ComparisonFailure"
+          )
+          logger.debug("Test classpath:")
+          for (def url : testClasspath) {
+            logger.debug(url.toString())
+          }
+          logger.debug("Test classpath with FileComparisonFailure:")
+          for (def url : classpath) {
+            logger.debug(url.toString())
+          }
+          if (!classpath.isEmpty()) {
+            def classLoader = getDaemonClassLoader()
+            addClasspath(classLoader, classpath)
+          }
+        }
+        catch (Throwable exception) {
+          logger.error("Unable to enhance Gradle Daemon by FileComparisonFailure", exception)
+        }
+      }
+    }
+  }
+}
+
+private static URLClassLoader getDaemonClassLoader() {
+  try {
+    def daemonMainClass = Class.forName("org.gradle.launcher.daemon.bootstrap.DaemonMain")
+    def classLoader = daemonMainClass.getClassLoader()
+    if (classLoader instanceof URLClassLoader) {
+      return classLoader
+    }
+    throw new IllegalStateException("Unsupported Gradle daemon class loader: $classLoader")
+  }
+  catch (ClassNotFoundException exception) {
+    throw new IllegalStateException("Daemon class loader not found.", exception)
+  }
+}
+
+private static List<URL> getTestClasspath(Test task) {
+  return task.classpath.files.collect { it.toURI().toURL() }
+}
+
+private static List<URL> findJarsForClasses(List<URL> classpath, String... classNames) {
+  def reducedClasspath = new ArrayList<URL>()
+  for (def url : classpath) {
+    def classLoader = new URLClassLoader([url] as URL[])
+    for (def className : classNames) {
+      if (hasClass(classLoader, className)) {
+        reducedClasspath.add(url)
+        break
+      }
+    }
+  }
+  return reducedClasspath
+}
+
+private static boolean hasClass(URLClassLoader classLoader, String className) {
+  def classFile = className.replace(".", "/") + ".class"
+  return classLoader.findResource(classFile) == null
+}
+
+private static void addClasspath(URLClassLoader classLoader, List<URL> classpath) {
+  for (def url : classpath) {
+    //noinspection GroovyAccessibility
+    classLoader.addURL(url)
+  }
+}

@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.impl.PsiCachedValue;
@@ -70,7 +71,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return myFs;
   }
 
-  private @Nullable VirtualFileSystemEntry findChild(String name, boolean doRefresh, boolean ensureCanonicalName, NewVirtualFileSystem fs) {
+  private @Nullable VirtualFileSystemEntry findChild(@NotNull String name, boolean doRefresh, boolean ensureCanonicalName, @NotNull NewVirtualFileSystem fs) {
     updateCaseSensitivityIfUnknown(name);
     VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, fs, isCaseSensitive());
 
@@ -98,7 +99,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   // `null` if there can't be a child with this name,` NULL_VIRTUAL_FILE` if cached as absent, the file if found
-  private @Nullable VirtualFileSystemEntry doFindChild(String name, boolean ensureCanonicalName, NewVirtualFileSystem fs, boolean isCaseSensitive) {
+  private @Nullable VirtualFileSystemEntry doFindChild(@NotNull String name, boolean ensureCanonicalName, @NotNull NewVirtualFileSystem fs, boolean isCaseSensitive) {
     if (name.isEmpty()) {
       return null;
     }
@@ -126,7 +127,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findInPersistence(name, ensureCanonicalName, fs, isCaseSensitive);
   }
 
-  private @Nullable VirtualFileSystemEntry findInPersistence(String name, boolean ensureCanonicalName, NewVirtualFileSystem fs, boolean isCaseSensitive) {
+  private @Nullable VirtualFileSystemEntry findInPersistence(@NotNull String name, boolean ensureCanonicalName, @NotNull NewVirtualFileSystem fs, boolean isCaseSensitive) {
     VirtualFileSystemEntry child;
     synchronized (myData) {
       // maybe another doFindChild() sneaked in the middle
@@ -280,7 +281,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return child;
   }
 
-  private @Nullable VirtualFileSystemEntry createAndFindChildWithEventFire(String name, NewVirtualFileSystem fs) {
+  private @Nullable VirtualFileSystemEntry createAndFindChildWithEventFire(@NotNull String name, @NotNull NewVirtualFileSystem fs) {
     VirtualFile fake = new FakeVirtualFile(this, name);
     FileAttributes attributes = fs.getAttributes(fake);
     if (attributes == null) return null;
@@ -294,7 +295,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findChild(realName);
   }
 
-  private void updateCaseSensitivityIfUnknown(String childName) {
+  private void updateCaseSensitivityIfUnknown(@NotNull String childName) {
     VFilePropertyChangeEvent caseSensitivityEvent = generateCaseSensitivityChangedEventForUnknownCase(this, childName);
     if (caseSensitivityEvent != null) {
       PersistentFSImpl.executeChangeCaseSensitivity(this, (FileAttributes.CaseSensitivity)caseSensitivityEvent.getNewValue());
@@ -521,7 +522,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (i >= 0) {
       VirtualFileSystemEntry fileById = getVfsData().getFileById(id, this, true);
       if (fileById != null) {
-        LOG.assertTrue(fileById.getId() == id);
+        if (fileById.getId() != id) {
+          LOG.error("getFileById(" + id + ") returns " + fileById + " with different id(=" + fileById.getId() + ")");
+        }
       }
       return fileById;
     }
@@ -531,7 +534,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (fileByName != null && fileByName.getId() != id) {
       // a child with the same name and different ID was recreated after a refresh session -
       // it doesn't make sense to check it earlier because it is executed outside the VFS' read/write lock
-      LOG.assertTrue(FSRecords.isDeleted(id));
+      final boolean deleted = FSRecords.isDeleted(id);
+      if(!deleted) {
+        LOG.error("FSRecords(id: " + id + ", name: '" + name + "', !deleted), " +
+                  "but VDI.findChild(" + name + ")=" + fileByName + " with different id(=" + fileByName.getId() + ")");
+      }
       return null;
     }
     return fileByName;

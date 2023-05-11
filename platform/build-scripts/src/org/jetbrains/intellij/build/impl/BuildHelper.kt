@@ -4,8 +4,8 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.useWithScope
-import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.system.OS
 import com.intellij.util.xml.dom.readXmlAsModel

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.scale.JBUIScale;
@@ -30,6 +31,11 @@ import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
 import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_ROOT_NAMES;
 
 public class RootCellRenderer extends SimpleColoredRenderer implements TableCellRenderer, VcsLogCellRenderer {
+  private static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
+  private static final int ROOT_INDICATOR_WIDTH = ROOT_INDICATOR_WHITE_WIDTH + 8;
+  private static final int NEW_UI_ROOT_INDICATOR_WIDTH = 10;
+  private static final int ROOT_NAME_MAX_WIDTH = 300;
+
   private final @NotNull VcsLogUiProperties myProperties;
   private final @NotNull VcsLogColorManager myColorManager;
   protected @NotNull Color myColor = UIUtil.getTableBackground();
@@ -49,10 +55,10 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
     g.setColor(myColor);
 
     if (isNarrow) {
-      g.fillRect(x, 0, width - JBUIScale.scale(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH), height);
+      g.fillRect(x, 0, width - JBUIScale.scale(ROOT_INDICATOR_WHITE_WIDTH), height);
       g.setColor(myBorderColor);
-      g.fillRect(x + width - JBUIScale.scale(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH), 0,
-                 JBUIScale.scale(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH),
+      g.fillRect(x + width - JBUIScale.scale(ROOT_INDICATOR_WHITE_WIDTH), 0,
+                 JBUIScale.scale(ROOT_INDICATOR_WHITE_WIDTH),
                  height);
     }
     else {
@@ -71,7 +77,7 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
     myBorderColor = Objects.requireNonNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected, hovered).getBackground());
     setForeground(UIUtil.getTableForeground(false, hasFocus));
 
-    if (myProperties.exists(SHOW_ROOT_NAMES) && myProperties.get(SHOW_ROOT_NAMES)) {
+    if (isShowRootNames()) {
       if (isTextShown(table, value, row, column)) {
         if (path == null) {
           append("");
@@ -124,12 +130,15 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
   }
 
   public void updateInsets() {
-    boolean rootNamesVisible = myProperties.exists(SHOW_ROOT_NAMES) && myProperties.get(SHOW_ROOT_NAMES);
-    setBorderInsets(rootNamesVisible ? getRootNameInsets() : JBUI.emptyInsets());
+    setBorderInsets(isShowRootNames() ? getRootNameInsets() : JBUI.emptyInsets());
   }
 
   protected Insets getRootNameInsets() {
     return JBUI.emptyInsets();
+  }
+
+  private boolean isShowRootNames() {
+    return myProperties.exists(SHOW_ROOT_NAMES) && myProperties.get(SHOW_ROOT_NAMES);
   }
 
   private static boolean isTextShown(JTable table, Object value, int row, int column) {
@@ -148,6 +157,24 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
   @Override
   public String getToolTipText(MouseEvent event) {
     return myTooltip;
+  }
+
+  public int getColumnWidth() {
+    if (!myColorManager.hasMultiplePaths()) {
+      return 0;
+    }
+    if (!isShowRootNames()) {
+      return JBUIScale.scale(ExperimentalUI.isNewUI() ? NEW_UI_ROOT_INDICATOR_WIDTH : ROOT_INDICATOR_WIDTH);
+    }
+
+    Font tableFont = VcsLogGraphTable.getTableFont();
+    int textWidth = 0;
+    for (FilePath file : myColorManager.getPaths()) {
+      textWidth = Math.max(getFontMetrics(tableFont).stringWidth(file.getName() + "  "), textWidth);
+    }
+    Insets componentInsets = getRootNameInsets();
+    int insets = componentInsets.left + componentInsets.right;
+    return Math.min(textWidth + insets, JBUIScale.scale(ROOT_NAME_MAX_WIDTH));
   }
 
   private @NotNull @Nls String getTooltipText(@Nullable FilePath path, boolean isNarrow) {

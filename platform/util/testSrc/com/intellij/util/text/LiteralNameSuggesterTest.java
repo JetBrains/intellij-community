@@ -39,17 +39,16 @@ public class LiteralNameSuggesterTest {
       {"2012/2/3", "date"},
       {"23:59", "time"},
       {"7:00:00", "time"},
-      {"79054025255fb1a26e4bc422adfebeed", "md5", "hash"},
-      {"c3499c2729730aaff07efb8676a92dcb6f8a3f8f", "sha1", "hash"},
-      {"50d858e0985ecc7f60418aaf0cc5ab587f42c2570a884095a9e8ccacd0f6545c", "sha256", "hash"},
-      {"sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu", "sha384", "hash"},
-      {"fe5ec832d75fd78ec517f33a181259bb953dc54aa8a6332ba0800172c64b18e92b362e0188891efcdb3e3c7d4fb3c14b", "sha384", "hash"},
-      {"sha512-j0Q2QD83DuJB4LcfsSAoUINhA5gmZsrBgwxiYMXYhrRH+kwU09Ht3qKGuf+7WbaWnxDYOI0KiKKZ+HgshPR/fw==", "sha512", "hash"},
-      {"a65a5831694db0d4ef143cfabce59d4a55c19999e308b34f642e93ccb17bd2cd45642e255d9ecc517c5565a874daa0f903b006d5fa905d158cee43adb28254fa", "sha512", "hash"},
+      {"c3499c2729730aaff07efb8676a92dcb6f8a3f8f", "sha1", "hash", "key", "secret", "token"},
+      {"50d858e0985ecc7f60418aaf0cc5ab587f42c2570a884095a9e8ccacd0f6545c", "sha256", "hash", "key", "secret", "token"},
+      {"sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu", "sha384", "hash", "key", "secret", "token"},
+      {"fe5ec832d75fd78ec517f33a181259bb953dc54aa8a6332ba0800172c64b18e92b362e0188891efcdb3e3c7d4fb3c14b", "sha384", "hash", "key", "secret", "token"},
+      {"sha512-j0Q2QD83DuJB4LcfsSAoUINhA5gmZsrBgwxiYMXYhrRH+kwU09Ht3qKGuf+7WbaWnxDYOI0KiKKZ+HgshPR/fw==", "sha512", "hash", "key", "secret", "token"},
+      {"a65a5831694db0d4ef143cfabce59d4a55c19999e308b34f642e93ccb17bd2cd45642e255d9ecc517c5565a874daa0f903b006d5fa905d158cee43adb28254fa", "sha512", "hash", "key", "secret", "token"},
     };
     for (String[] test : data) {
       List<String> strings = LiteralNameSuggester.literalNames(test[0]);
-      assertEquals(test[0], strings, Arrays.asList(test).subList(1, test.length));
+      assertEquals(test[0], Arrays.asList(test).subList(1, test.length), strings);
     }
   }
 }

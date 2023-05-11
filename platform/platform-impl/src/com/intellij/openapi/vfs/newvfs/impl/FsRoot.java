@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class FsRoot extends VirtualDirectoryImpl {
@@ -33,15 +32,6 @@ public final class FsRoot extends VirtualDirectoryImpl {
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVE, attributes.areChildrenCaseSensitive() == FileAttributes.CaseSensitivity.SENSITIVE);
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, true);
     segment.setFlag(id, VfsDataFlags.IS_OFFLINE, PersistentFS.isOfflineByDefault(getPersistence().getFileAttributes(id)));
-  }
-
-  @Override
-  protected char @NotNull [] appendPathOnFileSystem(int pathLength, int @NotNull [] position) {
-    int myLength = myPathWithOneSlash.length() - 1;
-    char[] chars = new char[pathLength + myLength];
-    CharArrayUtil.getChars(myPathWithOneSlash, chars, 0, position[0], myLength);
-    position[0] += myLength;
-    return chars;
   }
 
   @Override

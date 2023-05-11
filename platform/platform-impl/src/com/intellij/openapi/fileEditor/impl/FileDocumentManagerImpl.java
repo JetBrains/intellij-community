@@ -5,6 +5,7 @@ import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.model.ModelBranch;
@@ -48,6 +49,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
@@ -82,7 +84,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
 
-  private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
+  private final Set<Document> myUnsavedDocuments = ConcurrentCollectionFactory.createConcurrentSet();
 
   private final FileDocumentManagerListener myMultiCaster;
   private final TrailingSpacesStripper myTrailingSpacesStripper = new TrailingSpacesStripper();
@@ -104,11 +106,14 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       }
       Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
+      VirtualFile virtualFile = getFile(document);
       if (project == null) {
-        VirtualFile virtualFile = getFile(document);
         project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
       }
-      String lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
+      CodeStyleSettings settings = project != null && virtualFile != null
+                                   ? CodeStyle.getSettings(project, virtualFile)
+                                   : CodeStyle.getProjectOrDefaultSettings(project);
+      String lineSeparator = settings.getLineSeparator();
       document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
 
       // avoid documents piling up during batch processing
@@ -207,8 +212,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @Override
-  @NotNull
-  protected Document createDocument(@NotNull CharSequence text, @NotNull VirtualFile file) {
+  protected @NotNull DocumentEx createDocument(@NotNull CharSequence text, @NotNull VirtualFile file) {
     boolean acceptSlashR = file instanceof LightVirtualFile && StringUtil.indexOf(text, '\r') >= 0;
     boolean freeThreaded = Boolean.TRUE.equals(file.getUserData(AbstractFileViewProvider.FREE_THREADED));
     DocumentImpl document = (DocumentImpl)((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(text, acceptSlashR, freeThreaded);
@@ -374,8 +378,16 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   private boolean maySaveDocument(@NotNull VirtualFile file, @NotNull Document document, boolean isExplicit) {
-    return !myConflictResolver.hasConflict(file) &&
-           FileDocumentSynchronizationVetoer.EP_NAME.getExtensionList().stream().allMatch(vetoer -> vetoer.maySaveDocument(document, isExplicit));
+    if (myConflictResolver.hasConflict(file)) {
+      return false;
+    }
+
+    for (FileDocumentSynchronizationVetoer vetoer : FileDocumentSynchronizationVetoer.EP_NAME.getExtensionList()) {
+      if (!vetoer.maySaveDocument(document, isExplicit)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void doSaveDocumentInWriteAction(@NotNull Document document, @NotNull VirtualFile file) throws IOException {
@@ -460,8 +472,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     return fs instanceof NewVirtualFileSystem && file.getTimeStamp() != ((NewVirtualFileSystem)fs).getTimeStamp(file);
   }
 
-  @NotNull
-  public static String getLineSeparator(@NotNull Document document, @NotNull VirtualFile file) {
+  public static @NotNull String getLineSeparator(@NotNull Document document, @NotNull VirtualFile file) {
     String lineSeparator = file.getDetectedLineSeparator();
     if (lineSeparator == null) {
       lineSeparator = document.getUserData(LINE_SEPARATOR_KEY);
@@ -471,11 +482,12 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @Override
-  @NotNull
-  public String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
+  public @NotNull String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
     String lineSeparator = file == null ? null : file.getDetectedLineSeparator();
     if (lineSeparator == null) {
-      lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
+      CodeStyleSettings settings =
+        project != null && file != null ? CodeStyle.getSettings(project, file) : CodeStyle.getProjectOrDefaultSettings(project);
+      lineSeparator = settings.getLineSeparator();
     }
     return lineSeparator;
   }
@@ -485,9 +497,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     return requestWritingStatus(document, project).hasWriteAccess();
   }
 
-  @NotNull
   @Override
-  public WriteAccessStatus requestWritingStatus(@NotNull Document document, @Nullable Project project) {
+  public @NotNull WriteAccessStatus requestWritingStatus(@NotNull Document document, @Nullable Project project) {
     VirtualFile file = getInstance().getFile(document);
     if (project != null && file != null && file.isValid()) {
       if (file.getFileType().isBinary()) return WriteAccessStatus.NON_WRITABLE;
@@ -795,8 +806,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     return true;
   }
 
-  @NotNull
-  private static List<FileDocumentManagerListener> getListeners() {
+  private static @NotNull List<FileDocumentManagerListener> getListeners() {
     return FileDocumentManagerListener.EP_NAME.getExtensionList();
   }
 

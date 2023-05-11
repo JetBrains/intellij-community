@@ -38,6 +38,7 @@ class TestDiffContent(
   private val fakeDocument = (EditorFactory.getInstance() as EditorFactoryImpl).createDocument("", true, false).apply {
     putUserData(UndoManager.ORIGINAL_DOCUMENT, original.document)
   }
+
   private val synchronizer: DocumentsSynchronizer = object : DocumentsSynchronizer(project, original.document, fakeDocument) {
     override fun onDocumentChanged1(event: DocumentEvent) {
       PsiDocumentManager.getInstance(project).performForCommittedDocument(document1, Runnable {
@@ -51,7 +52,7 @@ class TestDiffContent(
       try {
         myDuringModification = true
         val element = elemPtr.element ?: return
-        ElementManipulators.getManipulator(element)?.handleContentChange(element, event.document.text)
+        TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(element.language).updateExpected(element, event.document.text)
       }
       finally {
         myDuringModification = false
@@ -86,6 +87,7 @@ class TestDiffContent(
   }
 
   private var assignments = 0
+
   override fun onAssigned(isAssigned: Boolean) {
     if (isAssigned) {
       if (assignments == 0) synchronizer.startListen()

@@ -8,6 +8,7 @@ import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
 import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
+import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -127,12 +128,12 @@ interface JpsProjectSerializers {
                       builder: MutableEntityStorage,
                       orphanageBuilder: MutableEntityStorage,
                       unloadedEntityBuilder: MutableEntityStorage,
-                      unloadedModuleNames: Set<String>,
+                      unloadedModuleNames: UnloadedModulesNameHolder,
                       errorReporter: ErrorReporter): List<EntitySource>
 
   fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
                              reader: JpsFileContentReader,
-                             unloadedModuleNames: Set<String>,
+                             unloadedModuleNames: UnloadedModulesNameHolder,
                              errorReporter: ErrorReporter): ReloadingResult
 
   @TestOnly

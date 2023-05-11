@@ -12,6 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.Key
@@ -33,7 +34,9 @@ import org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.platform.JsPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import java.io.File
@@ -276,5 +279,12 @@ fun Module.externalSystemNativeMainRunTasks(): List<ExternalSystemNativeMainRunT
 
 private fun Module.externalSystemRunTasks(): List<ExternalSystemRunTask> {
     val settingsProvider = KotlinFacetSettingsProvider.getInstance(project) ?: return emptyList()
-    return settingsProvider.getInitializedSettings(this).externalSystemRunTasks
+    val settings = settingsProvider.getInitializedSettings(this)
+
+    //filter all K/JS run tasks if experimental features are disabled
+    if (!AdvancedSettings.getBoolean("kotlin.mpp.experimental")) {
+        return settings.externalSystemRunTasks.filter { it.kotlinPlatformId != KotlinPlatform.JS.id }
+    } else {
+        return settings.externalSystemRunTasks
+    }
 }

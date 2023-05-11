@@ -41,6 +41,7 @@ import javax.swing.text.*
 import javax.swing.text.View.X_AXIS
 import javax.swing.text.View.Y_AXIS
 import javax.swing.text.html.*
+import javax.swing.text.html.ParagraphView
 import kotlin.math.min
 
 @ApiStatus.Internal
@@ -76,7 +77,9 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
   init {
     val builder = GotItTextBuilderImpl()
-    this.text = ShortcutExtension.patchShortcutTags(textSupplier(builder))
+    val rawText = textSupplier(builder)
+    val withPatchedShortcuts = ShortcutExtension.patchShortcutTags(rawText)
+    this.text = InlineCodeExtension.patchCodeTags(withPatchedShortcuts)
     this.linkActionsMap = builder.getLinkActions()
     this.iconsMap = builder.getIcons()
   }
@@ -243,6 +246,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
       .setHideOnKeyOutside(false)
       .setHideOnClickOutside(false)
       .setBlockClicksThroughBalloon(true)
+      .setRequestFocus(requestFocus)
       .setBorderColor(JBUI.CurrentTheme.GotItTooltip.borderColor(useContrastColors))
       .setCornerToPointerDistance(getArrowShift())
       .setFillColor(JBUI.CurrentTheme.GotItTooltip.background(useContrastColors))
@@ -445,7 +449,10 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
     foreground = JBUI.CurrentTheme.GotItTooltip.foreground(useContrastColors)
     background = JBUI.CurrentTheme.GotItTooltip.background(useContrastColors)
 
-    editorKit = createEditorKit(useContrastColors, iconsMap)
+    val increasedLineSpacing = htmlBuilder.toString().let {
+      it.contains("""<span class="code">""") || it.contains("""<span class="shortcut">""")
+    }
+    editorKit = createEditorKit(useContrastColors, if (increasedLineSpacing) 0.2f else 0.1f, iconsMap)
 
     putClientProperty("caretWidth", 0)
 
@@ -468,12 +475,17 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
     preferredSize = Dimension(width, root.getPreferredSpan(Y_AXIS).toInt())
   }
 
-  private fun createEditorKit(useContrastColors: Boolean, iconsMap: Map<Int, Icon>): HTMLEditorKit {
+  private fun createEditorKit(useContrastColors: Boolean, lineSpacing: Float, iconsMap: Map<Int, Icon>): HTMLEditorKit {
     val styleSheet = StyleSheet()
     val linkStyles = "a { color: #${ColorUtil.toHex(JBUI.CurrentTheme.GotItTooltip.linkForeground())} }"
     val shortcutStyles = ShortcutExtension.getStyles(JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors),
                                                      JBUI.CurrentTheme.GotItTooltip.shortcutBackground(useContrastColors))
-    StringReader(linkStyles + shortcutStyles).use { styleSheet.loadRules(it, null) }
+    val codeFont = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size.toFloat())
+    val codeStyles = InlineCodeExtension.getStyles(JBUI.CurrentTheme.GotItTooltip.codeForeground(useContrastColors),
+                                                   JBUI.CurrentTheme.GotItTooltip.codeBackground(useContrastColors),
+                                                   JBUI.CurrentTheme.GotItTooltip.codeBorderColor(useContrastColors),
+                                                   codeFont)
+    StringReader(linkStyles + shortcutStyles + codeStyles).use { styleSheet.loadRules(it, null) }
 
     val iconsExtension = ExtendableHTMLViewFactory.Extensions.icons { iconKey ->
       val explicitIcon = iconKey.toIntOrNull()?.let { iconsMap[it] }
@@ -487,7 +499,10 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
 
     return HTMLEditorKitBuilder()
       .withStyleSheet(styleSheet)
-      .withViewFactoryExtensions(iconsExtension, ShortcutExtension())
+      .withViewFactoryExtensions(iconsExtension,
+                                 ShortcutExtension(),
+                                 InlineCodeExtension(),
+                                 LineSpacingExtension(lineSpacing))
       .build()
   }
 
@@ -564,7 +579,7 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
       val builder = StringBuilder()
       var ind = 0
       for (shortcut in shortcuts) {
-        builder.append(htmlText.substring(ind..shortcut.range.first))
+        builder.append(htmlText.substring(ind, shortcut.range.first))
         val text = getShortcutText(shortcut.groups["type"]!!.value, shortcut.groups["value"]!!.value)
         val span = shortcutSpan(text)
         builder.append("${StringUtil.NON_BREAK_SPACE}$span${StringUtil.NON_BREAK_SPACE}")
@@ -658,16 +673,18 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
         val text = element.document.getText(startOffset, element.endOffset - startOffset)
         val horIndent = horizontalIndent
         val vertIndent = verticalIndent
-        return SHORTCUT_PART_REGEX.findAll(text)
-          .map {
-            val range = it.range
-            val textRect = modelToView(startOffset + range.first, Position.Bias.Forward,
-                                       startOffset + range.last + 1, Position.Bias.Backward, allocation).bounds2D
-            RoundRectangle2D.Double(textRect.x - horIndent, textRect.y - vertIndent,
-                                    textRect.width + 2 * horIndent, textRect.height + 2 * vertIndent,
-                                    arcSize.toDouble(), arcSize.toDouble())
-          }
-          .toList()
+        val parts = text.split(SHORTCUT_PART_REGEX)
+        val rectangles = mutableListOf<RoundRectangle2D>()
+        var curInd = 0
+        for (part in parts) {
+          val textRect = modelToView(startOffset + curInd, Position.Bias.Forward,
+                                     startOffset + curInd + part.length, Position.Bias.Backward, allocation).bounds2D
+          rectangles.add(RoundRectangle2D.Double(textRect.x - horIndent, textRect.y - vertIndent,
+                                                 textRect.width + 2 * horIndent, textRect.height + 2 * vertIndent,
+                                                 arcSize.toDouble(), arcSize.toDouble()))
+          curInd += part.length + ShortcutsRenderingUtil.SHORTCUT_PART_SEPARATOR.length
+        }
+        return rectangles
       }
       catch (ex: BadLocationException) {
         // ignore
@@ -675,17 +692,149 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
       }
     }
 
-    private fun getFloatAttribute(key: Any, defaultValue: Float): Float {
-      val value = attributes.getAttribute(key)?.toString()?.toFloatOrNull() ?: defaultValue
-      return JBUIScale.scale(value)
+    companion object {
+      private const val DEFAULT_HORIZONTAL_INDENT: Float = 2.5f
+      private const val DEFAULT_VERTICAL_INDENT: Float = 0.5f
+      private const val DEFAULT_ARC: Float = 8.0f
+
+      private val SHORTCUT_PART_REGEX = Regex(ShortcutsRenderingUtil.SHORTCUT_PART_SEPARATOR)
+    }
+  }
+}
+
+/**
+ * Render inline code element surrounding it by thin border.
+ *
+ * Syntax is `<span class="code">CODE_TEXT_HERE</span>`.
+ *
+ * Also, you can use higher level syntax like `<code>CODE_TEXT_HERE</code>` if you patch input HTML text using [patchCodeTags].
+ *
+ * To install this extension you need to add styles returned from [getStyles] to your [StyleSheet].
+ */
+private class InlineCodeExtension : ExtendableHTMLViewFactory.Extension {
+  override fun invoke(elem: Element, defaultView: View): View? {
+    val tagAttributes = elem.attributes.getAttribute(HTML.Tag.SPAN) as? AttributeSet
+    return if (tagAttributes?.getAttribute(HTML.Attribute.CLASS) == "code") {
+      return InlineCodeView(elem)
+    }
+    else null
+  }
+
+  companion object {
+    fun getStyles(foreground: Color, background: Color, borderColor: Color, font: Font): String {
+      val fontStyles = StringBuilder()
+      fontStyles.append(" font-family: ").append(font.family).append(";").append(" font-size: ").append(font.size).append("pt;")
+      if (font.isBold) fontStyles.append(" font-weight: 700;")
+      if (font.isItalic) fontStyles.append(" font-style: italic;")
+      return ".code { color: ${ColorUtil.toHtmlColor(foreground)};" +
+             " background-color: ${ColorUtil.toHtmlColor(background)};" +
+             " border-color: #${ColorUtil.toHex(borderColor, true)};" +
+             fontStyles + " }"
+    }
+
+    fun patchCodeTags(htmlText: @Nls String): @Nls String {
+      val builder = StringBuilder()
+      var codeStartTagInd = htmlText.indexOf("<code>")
+      val tagLength = 6
+      var ind = 0
+      while (codeStartTagInd != -1) {
+        builder.append(htmlText.substring(ind, codeStartTagInd))
+        val codeEndTagInd = htmlText.indexOf("</code>", codeStartTagInd)
+        if (codeEndTagInd == -1) {
+          error("<code> tag opened but do not closed, html text:\n$htmlText")
+        }
+        val text = htmlText.substring(codeStartTagInd + tagLength, codeEndTagInd)
+        val span = codeSpan(text.replace(" ", StringUtil.NON_BREAK_SPACE))
+        builder.append("${StringUtil.NON_BREAK_SPACE}$span${StringUtil.NON_BREAK_SPACE}")
+        ind = codeEndTagInd + tagLength + 1
+        codeStartTagInd = htmlText.indexOf("<code>", ind)
+      }
+      builder.append(htmlText.substring(ind))
+
+      @Suppress("HardCodedStringLiteral")
+      return builder.toString()
+    }
+
+    private fun codeSpan(text: @NlsSafe String) = HtmlChunk.span().attr("class", "code").addText(text).toString()
+  }
+
+  private class InlineCodeView(elem: Element) : InlineView(elem) {
+    private val horizontalIndent: Float
+      get() = getFloatAttribute(CSS.Attribute.MARGIN_LEFT, DEFAULT_HORIZONTAL_INDENT)
+    private val verticalIndent: Float
+      get() = getFloatAttribute(CSS.Attribute.MARGIN_TOP, DEFAULT_VERTICAL_INDENT)
+    private val borderColor: Color?
+      get() = attributes.getAttribute(CSS.Attribute.BORDER_TOP_COLOR)?.toString()?.let { ColorUtil.fromHex(it) }
+    private val arcSize: Float
+      get() = JBUIScale.scale(DEFAULT_ARC)
+
+    override fun paint(g: Graphics, a: Shape) {
+      val g2d = g.create() as Graphics2D
+      val backgroundColor = background
+      try {
+        val baseRect = a.bounds2D
+        val horIndent = horizontalIndent
+        val vertIndent = verticalIndent
+        val rect = RoundRectangle2D.Double(baseRect.x - horIndent, baseRect.y - vertIndent,
+                                           baseRect.width + 2 * horIndent, baseRect.height + 2 * vertIndent,
+                                           arcSize.toDouble(), arcSize.toDouble())
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        g2d.color = backgroundColor
+        g2d.fill(rect)
+
+        val borderBg = borderColor
+        if (borderBg != null) {
+          g2d.color = borderBg
+          g2d.draw(rect)
+        }
+      }
+      finally {
+        g2d.dispose()
+      }
+
+      // It is a hack to not paint background in the super.paint()
+      // because it is already painted in the shape we need
+      try {
+        background = null
+        super.paint(g, a)
+      }
+      finally {
+        background = backgroundColor
+      }
     }
 
     companion object {
-      private const val DEFAULT_HORIZONTAL_INDENT: Float = 3f
-      private const val DEFAULT_VERTICAL_INDENT: Float = -0.5f
+      private const val DEFAULT_HORIZONTAL_INDENT: Float = 2.5f
+      private const val DEFAULT_VERTICAL_INDENT: Float = 0f
       private const val DEFAULT_ARC: Float = 8.0f
-
-      private val SHORTCUT_PART_REGEX = Regex("""[^ ${StringUtil.NON_BREAK_SPACE}]+""")
     }
   }
+}
+
+/**
+ * It is impossible to edit the line spacing of the paragraphs in JEditorPane when HTMLEditorKit are used.
+ * [CSS.Attribute.LINE_HEIGHT] is not taken into account, setting [AttributeSet] using [StyledDocument.setParagraphAttributes]
+ * also do not propagate [StyleConstants.LineSpacing] to the [ParagraphView].
+ * So, this is a workaround.
+ */
+private class LineSpacingExtension(val lineSpacing: Float) : ExtendableHTMLViewFactory.Extension {
+  override fun invoke(elem: Element, defaultView: View): View? {
+    return if (defaultView is ParagraphView) {
+      object : ParagraphView(elem) {
+        init {
+          super.setLineSpacing(lineSpacing)
+        }
+
+        override fun setLineSpacing(ls: Float) {
+          // do nothing to not override initial value
+        }
+      }
+    }
+    else null
+  }
+}
+
+private fun View.getFloatAttribute(key: Any, defaultValue: Float): Float {
+  val value = attributes.getAttribute(key)?.toString()?.toFloatOrNull() ?: defaultValue
+  return JBUIScale.scale(value)
 }

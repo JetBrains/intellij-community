@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP;
-import com.intellij.psi.stubs.StubElementTypeHolderEP;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -26,12 +25,10 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addLibrary("core", PathUtil.getJarPathForClass(Project.class));
-    moduleBuilder.addLibrary("core-api", PathUtil.getJarPathForClass(StubElementTypeHolderEP.class));
-    moduleBuilder.addLibrary("core-impl", PathUtil.getJarPathForClass(PsiReferenceContributorEP.class));
-    moduleBuilder.addLibrary("analysis-api", PathUtil.getJarPathForClass(IntentionActionBean.class));
-    moduleBuilder.addLibrary("lang-api", PathUtil.getJarPathForClass(LocalInspectionEP.class));
-    moduleBuilder.addLibrary("platform-rt", PathUtil.getJarPathForClass(IncorrectOperationException.class));
+    moduleBuilder.addLibrary("platform-core", PathUtil.getJarPathForClass(Project.class));
+    moduleBuilder.addLibrary("platform-core-impl", PathUtil.getJarPathForClass(PsiReferenceContributorEP.class));
+    moduleBuilder.addLibrary("platform-analysis", PathUtil.getJarPathForClass(IntentionActionBean.class));
+    moduleBuilder.addLibrary("platform-util-base", PathUtil.getJarPathForClass(IncorrectOperationException.class));
     moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
       .resolveSibling("intellij.platform.resources").toString());
   }

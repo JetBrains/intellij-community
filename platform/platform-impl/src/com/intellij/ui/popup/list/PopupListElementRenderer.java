@@ -85,6 +85,10 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     myInlineActionsSupport = PopupInlineActionsSupport.Companion.create(myPopup);
   }
 
+  public ListPopupImpl getPopup() {
+    return myPopup;
+  }
+
   @Override
   protected SeparatorWithText createSeparator() {
     Insets labelInsets = ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.separatorLabelInsets() :
@@ -136,6 +140,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     panel.add(myShortcutLabel, BorderLayout.EAST);
 
     myMnemonicLabel = new JLabel();
+    myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
+
     if (!ExperimentalUI.isNewUI()) {
       Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
       myMnemonicLabel.setBorder(new JBEmptyBorder(insets));
@@ -148,13 +154,14 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       myMnemonicLabel.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.ActionsList.mnemonicInsets()));
       myMnemonicLabel.setHorizontalAlignment(SwingConstants.RIGHT);
       //noinspection HardCodedStringLiteral
-      Dimension preferredSize = new JLabel("W").getPreferredSize();
+      myMnemonicLabel.setText("W");
+      Dimension preferredSize = myMnemonicLabel.getPreferredSize();
+      myMnemonicLabel.setText(null);
       JBInsets.addTo(preferredSize, JBUI.insetsLeft(4));
       myMnemonicLabel.setPreferredSize(preferredSize);
       myMnemonicLabel.setMinimumSize(JBUI.size(12, myMnemonicLabel.getMinimumSize().height));
     }
 
-    myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
     myMnemonicLabel.setVisible(false);
 
     myIconBar = createIconBar();

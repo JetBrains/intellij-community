@@ -14,6 +14,8 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import io.opentelemetry.api.metrics.Meter
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
 class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
@@ -101,11 +103,25 @@ class OrphanListener(private val project: Project) : WorkspaceModelChangeListene
         }
       }
     }
+    updateOrphanTimeMs.addAndGet(updateTime)
     if (updateTime > 1_000) log.warn("Orphanage update took $updateTime ms")
   }
 
   companion object {
     private val log = logger<OrphanListener>()
+
+    private val updateOrphanTimeMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val updateOrphanTimeGauge = meter.gaugeBuilder("workspaceModel.orphan.listener.update.ms")
+        .ofLongs().buildObserver()
+
+      meter.batchCallback({ updateOrphanTimeGauge.record(updateOrphanTimeMs.get()) }, updateOrphanTimeGauge)
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
   }
 }
 

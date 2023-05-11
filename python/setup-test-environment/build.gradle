@@ -43,16 +43,31 @@ envs {
   String python39version = "3.9.13"
   String python310version = "3.10.8"
   String python311version = "3.11.0"
+  String python312version = "3.12.0a7"
 
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
 
-  def djangoTrunkOnly  = System.getProperty("djangoTrunkOnly") ?: false
+  def djangoTrunkOnly = System.getProperty("djangoTrunkOnly") ?: false
 
-  if (System.getenv().containsKey("PYCHARM_ZIP_REPOSITORY")) {
-    zipRepository = new URL(System.getenv().get("PYCHARM_ZIP_REPOSITORY"))
-    shouldUseZipsFromRepository = isWindows
+
+  if (isWindows) {
+    // On Windows you almost always want to use cache server except you are outside of JB
+    def zipRepositoryURL = new URL(
+      System.getenv().getOrDefault("PYCHARM_ZIP_REPOSITORY", "https://repo.labs.intellij.net/pycharm/python-archives-windows/"))
+    try {
+      zipRepositoryURL.getContent()
+    }
+    catch (Exception ignored) {
+      zipRepositoryURL = null
+      System.err.println("Cache server is only accessible from JB network. Will try to build python from scratch. Use cache if possible")
+    }
+    if (zipRepositoryURL != null) {
+      zipRepository = zipRepositoryURL
+      shouldUseZipsFromRepository = true
+    }
   }
+
   Boolean shouldUseCondaInterpreters = System.getenv().getOrDefault("PYCHARM_USE_CONDA", "false").toBoolean()
 
   Closure createPython = { String pythonName,
@@ -107,11 +122,11 @@ envs {
      return
    }
 
-  createPython("py27_django11_full",
+  createPython("py27",
                python27version,
-               ["django==1.11", "tox>=3.8.3", "nose", "pytest", "Twisted", "behave",  "teamcity-messages", "django-nose",
+               ["tox>=3.8.3", "nose", "pytest", "Twisted", "behave",  "teamcity-messages",
                 "untangle"] + ( isWindows ? ['pypiwin32'] : []  ), //win32api is required for pypiwin32
-               "python2.7\ndjango\nnose\npytest\nbehave\npackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
+               "python2.7\nnose\npytest\nbehave\npackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
                true)
 
   createPython("py38_django22_full",
@@ -119,7 +134,7 @@ envs {
                // The version of Jinja2 is fixed due to a bug in recent versions which breaks the debugging.
                // See: https://github.com/pallets/jinja/pull/1178.
                // The version of NumPy is fixed due to https://tinyurl.com/y3dm3h86.
-               ["ipython==7.8", "django==2.2", "behave", "jinja2==2.10.2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
+               ["ipython==7.8", "django==2.2", "behave", "jinja2==3.1.2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
                 "pytest-xdist", "untangle", "numpy==1.19.3", "pandas"],
                "python3.8\npython3\nipython\nipython780\nskeletons\ndjango\nbehave\nbehave-django\ntox\njinja2\npackaging" +
                "\npytest\nnose\ndjango-nose\nbehave-django\ndjango2\nxdist\nuntangle\npandas",
@@ -143,6 +158,11 @@ envs {
                "python3.11",
                true)
 
+  createPython("python3.12",
+               python312version,
+               [],
+               "python3\npython3.12")
+
   // For tox
   createPython("py36",
                python36version,
@@ -160,21 +180,21 @@ envs {
   createPython("py37_tensorflow1_oldpaths",
                python37version,
                ["tensorflow < 1.15.0rc0"],
-               "tensorflow1\ntensorflow_oldpaths",
+               "tensorflow1\ntensorflow_oldpaths\npython3.7",
                true)
   createPython("py37_tensorflow1_newpaths",
                python37version,
                ["tensorflow >= 1.15.0rc0, < 2.0.0a0"],
-               "tensorflow1\ntensorflow_newpaths",
+               "tensorflow1\ntensorflow_newpaths\npython3.7",
                true)
   createPython("py37_tensorflow2_newpaths",
                python37version,
                ["tensorflow >= 2.0.0rc0"],
-               "tensorflow2\ntensorflow_newpaths",
+               "tensorflow2\ntensorflow_newpaths\npython3.7",
                true)
 
   if (isUnix) {
-    createPython("qt_env", python37version, ["pyqt5==5.12", "PySide2==5.12.1"], "qt", true)
+    createPython("qt_env", python37version, ["pyqt5==5.12", "PySide2==5.12.1"], "qt\npython3.7", true)
   }
 }
 

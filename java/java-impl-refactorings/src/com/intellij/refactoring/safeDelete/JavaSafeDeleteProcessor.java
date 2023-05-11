@@ -57,6 +57,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   private static final Logger LOG = Logger.getInstance(JavaSafeDeleteProcessor.class);
 
@@ -132,8 +134,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         return Collections.singletonList(element);
       }
       PsiMethod[] methods =
-        SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element,
-                                                 allElementsToDelete);
+        SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, allElementsToDelete);
       if (methods.length == 0) return null;
       ArrayList<PsiMethod> psiMethods = new ArrayList<>(Arrays.asList(methods));
       psiMethods.add((PsiMethod)element);
@@ -242,7 +243,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         if (getters != null) {
           List<PsiMethod> validGetters = new ArrayList<>(1);
           for (PsiMethod getter : getters) {
-            if (!allElementsToDelete.contains(getter) && getter != null && getter.isPhysical()) {
+            if (getter != null && !allElementsToDelete.contains(getter) && getter.isPhysical()) {
               validGetters.add(getter);
             }
           }
@@ -250,7 +251,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         }
 
         PsiMethod setter = PropertyUtilBase.findPropertySetter(aClass, propertyName, isStatic, false);
-        if (allElementsToDelete.contains(setter) || setter != null && !setter.isPhysical()) setter = null;
+        if (setter != null && (allElementsToDelete.contains(setter) || !setter.isPhysical())) {
+          setter = null;
+        }
         if (askUser && (getters != null || setter != null)) {
           String message =
             RefactoringMessageUtil.getGetterSetterMessage(field.getName(), RefactoringBundle.message("delete.title"), getters != null ? getters[0] : null, setter);
@@ -269,7 +272,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   @Override
-  public Collection<String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] elements, UsageInfo @NotNull [] usages) {
+  public Collection<@DialogMessage String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] elements, UsageInfo @NotNull [] usages) {
     String methodRefFound = null;
     if (element instanceof PsiMethod || element instanceof PsiParameter) {
       PsiMethod method;
@@ -303,7 +306,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   @Override
-  public Collection<String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete) {
+  public Collection<@DialogMessage String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete) {
     if (element instanceof PsiMethod) {
       PsiClass containingClass = ((PsiMethod)element).getContainingClass();
 
@@ -1018,7 +1021,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
            file.getClasses().length == 1;
   }
 
-  public static void collectMethodConflicts(MultiMap<PsiElement, String> conflicts, PsiMethod method, PsiParameter parameter) {
+  public static void collectMethodConflicts(MultiMap<PsiElement, @DialogMessage String> conflicts, PsiMethod method, PsiParameter parameter) {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass != null) {
       int parameterIndex = method.getParameterList().getParameterIndex(parameter);

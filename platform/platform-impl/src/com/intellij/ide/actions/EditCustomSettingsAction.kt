@@ -160,7 +160,7 @@ class EditCustomPropertiesAction : EditCustomSettingsAction() {
   }
 }
 
-class EditCustomVmOptionsAction : EditCustomSettingsAction() {
+open class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   companion object {
     @JvmField val JRE_PATH_KEY: Key<String> = Key.create("JRE_PATH_KEY")
     private val file: Lazy<Path?> = lazy { VMOptions.getUserOptionsFile() }

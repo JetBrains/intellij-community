@@ -17,7 +17,6 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiArrayAccessExpression
 import com.intellij.psi.PsiElement
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UArrayAccessExpression
 import org.jetbrains.uast.UElement

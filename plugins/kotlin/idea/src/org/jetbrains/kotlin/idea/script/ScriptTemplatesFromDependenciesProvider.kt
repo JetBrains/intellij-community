@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
+import com.intellij.psi.search.FilenameIndex
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -106,7 +107,16 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
                 val pluginDisposable = KotlinPluginDisposable.getInstance(project)
                 val (templates, classpath) =
                     ReadAction.nonBlocking(Callable {
-                        val files = FileTypeIndex.getFiles(ScriptDefinitionMarkerFileType, project.allScope())
+                        val templatesFolders = FilenameIndex.getVirtualFilesByName(ScriptDefinitionMarkerFileType.lastPathSegment, project.allScope())
+                        val projectFileIndex = ProjectFileIndex.getInstance(project)
+                        val files = mutableListOf<VirtualFile>()
+                        for (templatesFolder in templatesFolders) {
+                            val children =
+                              templatesFolder?.takeIf { ScriptDefinitionMarkerFileType.isParentOfMyFileType(it) }
+                                ?.takeIf { projectFileIndex.isInSource(it) || projectFileIndex.isInLibraryClasses(it) }
+                                ?.children ?: continue
+                            files += children
+                        }
                         getTemplateClassPath(files, indicator)
                     })
                         .expireWith(pluginDisposable)

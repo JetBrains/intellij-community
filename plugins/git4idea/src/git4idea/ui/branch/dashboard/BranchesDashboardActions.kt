@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
@@ -373,7 +373,7 @@ internal object BranchesDashboardActions {
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.EDT
+      return ActionUpdateThread.BGT
     }
 
     override fun update(e: AnActionEvent) {
@@ -535,7 +535,7 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class RemoveRemoteAction : RemoteActionBase() {
+  class RemoveRemoteAction : RemoteActionBase(messagePointer("action.Git.Log.Remove.Remote.text", 0)) {
 
     override fun update(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {
       e.presentation.text = message("action.Git.Log.Remove.Remote.text", selectedRemotes.size)
@@ -562,7 +562,7 @@ internal object BranchesDashboardActions {
     }
   }
 
-  abstract class RemoteActionBase(text: () -> @Nls(capitalization = Nls.Capitalization.Title) String = { "" },
+  abstract class RemoteActionBase(text: () -> @Nls(capitalization = Nls.Capitalization.Title) String,
                                   private val description: () -> @Nls(capitalization = Nls.Capitalization.Sentence) String = { "" },
                                   icon: Icon? = null) :
     DumbAwareAction(text, description, icon) {
@@ -648,7 +648,7 @@ internal object BranchesDashboardActions {
   class UpdateBranchFilterInLogAction : DumbAwareAction() {
 
     override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.EDT
+      return ActionUpdateThread.BGT
     }
 
     override fun update(e: AnActionEvent) {

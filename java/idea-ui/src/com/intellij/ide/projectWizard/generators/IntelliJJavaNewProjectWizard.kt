@@ -74,7 +74,11 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
     override fun setupAssets(project: Project) {
       outputDirectory = parent.contentRoot
-      addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
+
+      if (context.isCreatingNewProject) {
+        addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
+      }
+
       if (parent.addSampleCode) {
         withJavaSampleCodeAsset("src", "", parent.generateOnboardingTips)
       }

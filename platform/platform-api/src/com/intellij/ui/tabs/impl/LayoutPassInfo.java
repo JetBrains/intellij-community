@@ -2,14 +2,18 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ui.tabs.TabInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
 
 public abstract class LayoutPassInfo {
-
   public final List<TabInfo> myVisibleInfos;
+
+  @NotNull public Rectangle entryPointRect = new Rectangle();
+  @NotNull public Rectangle moreRect = new Rectangle();
+  @NotNull public Rectangle titleRect = new Rectangle();
 
   protected LayoutPassInfo(List<TabInfo> visibleInfos) {
     myVisibleInfos = visibleInfos;
@@ -30,4 +34,6 @@ public abstract class LayoutPassInfo {
   public abstract Rectangle getHeaderRectangle();
 
   public abstract int getRequiredLength();
+
+  public abstract int getScrollExtent();
 }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManager
@@ -32,9 +33,9 @@ import com.intellij.openapi.wm.impl.welcomeScreen.statistics.WelcomeScreenCounte
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.border.CustomLineBorder
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.launch
 import java.awt.BorderLayout
@@ -56,14 +57,14 @@ internal class ProjectsTabFactory : WelcomeTabFactory {
   override fun createWelcomeTab(parentDisposable: Disposable): WelcomeScreenTab = ProjectsTab(parentDisposable)
 }
 
-class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScreenTab(
+internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScreenTab(
   IdeBundle.message("welcome.screen.projects.title"),
   WelcomeScreenEventCollector.TabType.TabNavProject
 ) {
   private val projectsPanelWrapper: Wrapper = Wrapper()
   private val recentProjectsPanel: JComponent = createRecentProjectsPanel()
   private val emptyStatePanel: JComponent = createEmptyStatePanel()
-  private val notificationPanel: JComponent = createNotificationPanel()
+  private val notificationPanel: JComponent = WelcomeScreenComponentFactory.createNotificationToolbar(parentDisposable)
   private var panelState: PanelState
 
   init {
@@ -90,26 +91,37 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
   }
 
   override fun buildComponent(): JComponent {
-    val bottomPanel = JBUI.Panels.simplePanel().andTransparent().apply {
-      layout = VerticalLayout(0)
-      add(notificationPanel)
+    val recentPaths = RecentProjectsManagerBase.getInstanceEx().getRecentPaths()
+    WelcomeScreenCounterUsageCollector.reportWelcomeScreenShowed(recentPaths.size)
+    val promo = WelcomeScreenComponentFactory.getSinglePromotion(recentPaths.isEmpty())
 
-      val recentPaths = RecentProjectsManagerBase.getInstanceEx().getRecentPaths()
-      WelcomeScreenCounterUsageCollector.reportWelcomeScreenShowed(recentPaths.size)
-      val promo = WelcomeScreenComponentFactory.getSinglePromotion(recentPaths.isEmpty())
-      if (promo != null) {
-        val borderPanel = JBUI.Panels.simplePanel(promo).andTransparent().apply {
-          border = JBUI.Borders.empty(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET)
+    return panel {
+      customizeSpacingConfiguration(EmptySpacingConfiguration()) {
+        row {
+          cell(projectsPanelWrapper)
+            .align(Align.FILL)
+        }.resizableRow()
+        row {
+          cell(notificationPanel)
+            .align(AlignX.RIGHT)
+            .applyToComponent {
+              putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
+            }
         }
-
-        add(borderPanel)
+        if (promo != null) {
+          row {
+            cell(promo)
+              .customize(UnscaledGaps(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET))
+              .align(AlignX.FILL)
+              .applyToComponent {
+                putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
+              }
+          }
+        }
       }
+    }.apply {
+      background = WelcomeScreenUIManager.getProjectsBackground()
     }
-
-    return JBUI.Panels.simplePanel()
-      .withBackground(WelcomeScreenUIManager.getProjectsBackground())
-      .addToCenter(projectsPanelWrapper)
-      .addToBottom(bottomPanel)
   }
 
   private fun checkState() {
@@ -150,7 +162,7 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
 
     val projectSearch = recentProjectTree.installSearchField()
     if (ExperimentalUI.isNewUI()) {
-      projectSearch.textEditor.putClientProperty("JTextField.Search.Icon", ExperimentalUI.Icons.General.Search)
+      projectSearch.textEditor.putClientProperty("JTextField.Search.Icon", ExpUiIcons.General.Search)
     }
     val northPanel: JPanel = JBUI.Panels.simplePanel()
       .andTransparent()
@@ -178,10 +190,6 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
     return emptyStateProjectsPanel
   }
 
-  private fun createNotificationPanel(): JComponent {
-    return WelcomeScreenComponentFactory.createNotificationPanel(parentDisposable)
-  }
-
   private fun initDnD(component: JComponent) {
     val target = createDropFileTarget()
     DnDSupport.createBuilder(component)
@@ -198,7 +206,7 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
       { action: AnAction? -> ActionGroupPanelWrapper.wrapGroups(action!!, parentDisposable) },
       ProjectsTabFactory.PRIMARY_BUTTONS_NUM)
     val toolbarActionGroup = DefaultActionGroup(
-      ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null)) { action: AnAction -> createButtonWrapper(action) })
+      mainAndMore.getFirst().getChildren(null).map { action: AnAction -> createButtonWrapper(action) })
     val moreActionGroup: ActionGroup = mainAndMore.getSecond()
     val moreActionPresentation = moreActionGroup.templatePresentation
     moreActionPresentation.icon = AllIcons.Actions.More
@@ -222,10 +230,7 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
 
   private fun createButtonWrapper(action: AnAction): ToolbarTextButtonWrapper {
     if (action is ActionGroup) {
-      val actions = ContainerUtil.map(action.getChildren(null)) { a: AnAction? ->
-        ActionGroupPanelWrapper.wrapGroups(
-          a!!, parentDisposable)
-      }
+      val actions = action.getChildren(null).map { ActionGroupPanelWrapper.wrapGroups(it, parentDisposable) }
       return ToolbarTextButtonWrapper.wrapAsOptionButton(actions)
     }
     return ToolbarTextButtonWrapper.wrapAsTextButton(action)

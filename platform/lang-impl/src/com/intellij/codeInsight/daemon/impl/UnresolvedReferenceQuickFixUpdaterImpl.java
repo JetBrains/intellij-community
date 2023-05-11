@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -15,13 +16,11 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -64,7 +63,7 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
         job = ((UserDataHolderEx)refElement).putUserDataIfAbsent(JOB, newFuture);
         if (job == newFuture) {
           try {
-            ReadAction.run(() -> registerReferenceFixes(info, editor, file, reference));
+            ReadAction.run(() -> registerReferenceFixes(info, editor, file, reference, new ProperTextRange(file.getTextRange())));
             newFuture.complete(null);
           }
           catch (Throwable t) {
@@ -105,7 +104,7 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
         if (!info.isUnresolvedReference()) {
           return true;
         }
-        startUnresolvedRefsJob(info, editor, file);
+        startUnresolvedRefsJob(info, editor, file, visibleRange);
         // start no more than two jobs
         return unresolvedInfosProcessed.incrementAndGet() <= 2;
       });
@@ -115,14 +114,15 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
       DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, visibleRange.getStartOffset(),
                                              visibleRange.getEndOffset(), info -> {
           if (info.isUnresolvedReference()) {
-            startUnresolvedRefsJob(info, editor, file);
+            startUnresolvedRefsJob(info, editor, file, visibleRange);
           }
           return true;
         });
     }
   }
 
-  private void startUnresolvedRefsJob(@NotNull HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile file) {
+  private void startUnresolvedRefsJob(@NotNull HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile file,
+                                      @NotNull ProperTextRange visibleRange) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!enabled) {
@@ -139,11 +139,12 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
     job = ForkJoinPool.commonPool().submit(() ->
       ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(
         () -> ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
-          () -> registerReferenceFixes(info, editor, file, reference), new DaemonProgressIndicator())), null);
+          () -> registerReferenceFixes(info, editor, file, reference, visibleRange), new DaemonProgressIndicator())), null);
     refElement.putUserData(JOB, job);
   }
 
-  private void registerReferenceFixes(@NotNull HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiReference reference) {
+  private void registerReferenceFixes(@NotNull HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiReference reference,
+                                      @NotNull ProperTextRange visibleRange) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiElement referenceElement = reference.getElement();
@@ -170,20 +171,15 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
     finally {
       referenceElement.putUserData(JOB, null);
     }
-    if (changed.get()) {
-      VirtualFile virtualFile = file.getVirtualFile();
-      boolean isInContent = ModuleUtilCore.projectContainsFile(myProject, virtualFile, false);
-      // have to restart ShowAutoImportPass manually because the highlighting session might very well be over by now
-      ApplicationManager.getApplication().invokeLater(() -> {
-        DaemonProgressIndicator sessionIndicator = new DaemonProgressIndicator();
-        boolean canChangeFileSilently = CanISilentlyChange.thisFile(file).canIReally(isInContent);
-        ProgressManager.getInstance().executeProcessUnderProgress(() ->
-           HighlightingSessionImpl.runInsideHighlightingSession(file, null,
-                                                                ProperTextRange.create(file.getTextRange()), canChangeFileSilently,
-                                                                () -> DefaultHighlightInfoProcessor.showAutoImportHints(editor, file, sessionIndicator))
-          , sessionIndicator);
-      }, __ -> editor.isDisposed() || file.getProject().isDisposed());
+    if (!changed.get() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return;
     }
+    TextEditorHighlightingPass showAutoImportPass = new ShowAutoImportPass(file, editor, visibleRange);
+    // have to restart ShowAutoImportPass manually because the highlighting session might very well be over by now
+    ApplicationManager.getApplication().invokeLater(() -> {
+      DaemonProgressIndicator sessionIndicator = new DaemonProgressIndicator();
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> showAutoImportPass.doApplyInformationToEditor(), sessionIndicator);
+    }, __ -> editor.isDisposed() || file.getProject().isDisposed());
   }
 
   @TestOnly

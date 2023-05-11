@@ -17,33 +17,28 @@ package com.intellij.openapi.editor.richcopy.model;
 
 import com.intellij.util.io.CompactDataInput;
 import com.intellij.util.io.CompactDataOutput;
-import net.jpountz.lz4.LZ4BlockInputStream;
-import net.jpountz.lz4.LZ4BlockOutputStream;
+import com.intellij.util.io.LZ4Decompressor;
+import net.jpountz.lz4.LZ4DecompressorWithLength;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 /**
  * Not synchronized, stream implementations must be used from one thread at a time only
  */
-public class OutputInfoSerializer {
+public final class OutputInfoSerializer {
   private static final int TEXT_ID = 0;
   private static final int STYLE_ID = 1;
   private static final int FOREGROUND_ID = 2;
   private static final int BACKGROUND_ID = 3;
   private static final int FONT_ID = 4;
 
-  public static class OutputStream implements MarkupHandler {
+  public final static class OutputStream implements MarkupHandler {
     private final CompactDataOutput myOutputStream;
-    private final java.io.OutputStream myUnderlyingOutputStream;
     private int myCurrentOffset;
 
     public OutputStream(java.io.OutputStream stream) {
-      myUnderlyingOutputStream = new LZ4BlockOutputStream(stream);
-      myOutputStream = new CompactDataOutput(myUnderlyingOutputStream);
-    }
-
-    public void close() throws IOException {
-      myUnderlyingOutputStream.close();
+      myOutputStream = new CompactDataOutput(stream);
     }
 
     @Override
@@ -84,14 +79,12 @@ public class OutputInfoSerializer {
     }
   }
 
-  public static class InputStream {
+  public final static class InputStream {
     private final CompactDataInput myInputStream;
-    private final java.io.InputStream myUnderlyingInputStream;
     private int myCurrentOffset;
 
-    public InputStream(java.io.InputStream stream) {
-      myUnderlyingInputStream = new LZ4BlockInputStream(stream);
-      myInputStream = new CompactDataInput(myUnderlyingInputStream);
+    public InputStream(byte[] stream) {
+      myInputStream = new CompactDataInput(new ByteArrayInputStream(new LZ4DecompressorWithLength(LZ4Decompressor.INSTANCE).decompress(stream)));
     }
 
     public void read(MarkupHandler handler) throws Exception {
@@ -110,10 +103,6 @@ public class OutputInfoSerializer {
         case FONT_ID -> handler.handleFont(myInputStream.readInt());
         default -> throw new IllegalStateException("Unknown tag id: " + id);
       }
-    }
-
-    public void close() throws IOException {
-      myUnderlyingInputStream.close();
     }
   }
 }

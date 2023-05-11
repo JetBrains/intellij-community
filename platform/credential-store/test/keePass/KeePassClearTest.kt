@@ -14,32 +14,32 @@ internal class KeePassClearTest : BaseKeePassFileManagerTest() {
      val dbFile = store.dbFile
      TestKeePassFileManager(store).clear()
      assertThat(dbFile).exists()
-     assertThat(store.masterKeyFile).exists()
-     assertThat(KeePassCredentialStore(store.dbFile, store.masterKeyFile).get(testCredentialAttributes)).isNull()
+     assertThat(store.mainKeyFile).exists()
+     assertThat(KeePassCredentialStore(store.dbFile, store.mainKeyFile).get(testCredentialAttributes)).isNull()
    }
 
    @Test
    fun `clear and remove if master password file doesn't exist`() {
      val store = createTestStoreWithCustomMasterKey()
-     store.masterKeyFile.delete()
+     store.mainKeyFile.delete()
      val dbFile = store.dbFile
      TestKeePassFileManager(store).clear()
      assertThat(dbFile).doesNotExist()
-     assertThat(store.masterKeyFile).doesNotExist()
+     assertThat(store.mainKeyFile).doesNotExist()
    }
 
    @Test
    fun `clear and remove if master password file with incorrect master password`() {
      val store = createTestStoreWithCustomMasterKey()
 
-     val oldMasterPasswordFile = store.masterKeyFile.parent.resolve("old.pwd")
-     store.masterKeyFile.copy(oldMasterPasswordFile)
+     val oldMasterPasswordFile = store.mainKeyFile.parent.resolve("old.pwd")
+     store.mainKeyFile.copy(oldMasterPasswordFile)
      store.setMasterKey("boo", SECURE_RANDOM_CACHE.value)
-     oldMasterPasswordFile.copy(store.masterKeyFile)
+     oldMasterPasswordFile.copy(store.mainKeyFile)
 
      val dbFile = store.dbFile
      TestKeePassFileManager(store).clear()
      assertThat(dbFile).doesNotExist()
-     assertThat(store.masterKeyFile).exists()
+     assertThat(store.mainKeyFile).exists()
    }
 }

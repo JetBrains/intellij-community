@@ -26,7 +26,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.stubs.PsiFileStub;
-import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
@@ -122,35 +121,34 @@ public abstract class SubstrateRef {
 
     @Override
     public boolean isValid() {
-      StubElement<?> parent = myStub.getParentStub();
-      if (parent == null) {
-        LOG.error("No parent for stub " + myStub + " of class " + myStub.getClass());
-        return false;
-      }
-      PsiElement psi = parent.getPsi();
+      PsiFileStub<?> fileStub = myStub.getContainingFileStub();
+      if (fileStub == null) return false;
+      PsiFile psi = fileStub.getPsi();
       return psi != null && psi.isValid();
     }
 
     @NotNull
     @Override
     public PsiFile getContainingFile() {
-      StubElement<?> stub = myStub;
-      while (!(stub instanceof PsiFileStub)) {
-        stub = stub.getParentStub();
+      PsiFileStub<?> stub = myStub.getContainingFileStub();
+      if (stub == null) {
+        throw new PsiInvalidElementAccessException(myStub.getPsi(),
+                                                   "stub hierarchy is invalid: " + this + " (" + getClass() + ")" +
+                                                   " has null containing file stub", null);
       }
-      PsiFile psi = (PsiFile)stub.getPsi();
+      PsiFile psi = stub.getPsi();
       if (psi != null) {
         return psi;
       }
-      return reportError(stub);
+      return reportFileInvalidError(stub);
     }
 
-    private PsiFile reportError(@NotNull StubElement<?> stub) {
+    private PsiFile reportFileInvalidError(@NotNull PsiFileStub<?> stub) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
 
-      String reason = ((PsiFileStubImpl<?>)stub).getInvalidationReason();
+      String reason = stub.getInvalidationReason();
       PsiInvalidElementAccessException exception =
-        new PsiInvalidElementAccessException(myStub.getPsi(), "no psi for file stub " + stub + ", invalidation reason=" + reason, null);
+        new PsiInvalidElementAccessException(myStub.getPsi(), "no psi for file stub " + stub + " ("+stub.getClass()+"), invalidation reason=" + reason, null);
       if (PsiFileImpl.STUB_PSI_MISMATCH.equals(reason)) {
         // we're between finding stub-psi mismatch and the next EDT spot where the file is reparsed and stub rebuilt
         //    see com.intellij.psi.impl.source.PsiFileImpl.rebuildStub()

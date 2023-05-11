@@ -5,7 +5,6 @@ import com.intellij.execution.Executor
 import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandProvider
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
 import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectProvider
-import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator
 import com.intellij.internal.statistic.collectors.fus.TerminalFusAwareHandler
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -66,7 +65,6 @@ private class RunAnythingTerminalBridge : TerminalShellCommandHandler, TerminalF
       .ifEmpty { return }
       .first { provider -> provider.findMatchingValue(dataContext, command) != null }
 
-    data.add(EventFields.StringValidatedByCustomRule("runAnythingProvider",
-                                                     ClassNameRuleValidator::class.java).with(runAnythingProvider::class.java.name))
+    data.add(EventFields.Class("runAnythingProvider").with(runAnythingProvider::class.java))
   }
 }

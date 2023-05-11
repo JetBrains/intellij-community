@@ -113,6 +113,36 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantVisibilityModifier/protectedIsDefaultForSealedConstructor.kt");
         }
 
+        @TestMetadata("publicExplicitApiModeStrict.kt")
+        public void testPublicExplicitApiModeStrict() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantVisibilityModifier/publicExplicitApiModeStrict.kt");
+        }
+
+        @TestMetadata("publicExplicitApiModeStrict2.kt")
+        public void testPublicExplicitApiModeStrict2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantVisibilityModifier/publicExplicitApiModeStrict2.kt");
+        }
+
+        @TestMetadata("publicExplicitApiModeStrict3.kt")
+        public void testPublicExplicitApiModeStrict3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantVisibilityModifier/publicExplicitApiModeStrict3.kt");
+        }
+
+        @TestMetadata("publicExplicitApiModeWarning.kt")
+        public void testPublicExplicitApiModeWarning() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantVisibilityModifier/publicExplicitApiModeWarning.kt");
+        }
+
+        @TestMetadata("publicExplicitApiModeWarning2.kt")
+        public void testPublicExplicitApiModeWarning2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantVisibilityModifier/publicExplicitApiModeWarning2.kt");
+        }
+
+        @TestMetadata("publicExplicitApiModeWarning3.kt")
+        public void testPublicExplicitApiModeWarning3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantVisibilityModifier/publicExplicitApiModeWarning3.kt");
+        }
+
         @TestMetadata("publicOverrideProtectedSetter.kt")
         public void testPublicOverrideProtectedSetter() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantVisibilityModifier/publicOverrideProtectedSetter.kt");
@@ -357,6 +387,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/functionWithoutOverrideForList.kt");
         }
 
+        @TestMetadata("lambdaReturnType.kt")
+        public void testLambdaReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/lambdaReturnType.kt");
+        }
+
         @TestMetadata("listOfCallOnArray.kt")
         public void testListOfCallOnArray() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/listOfCallOnArray.kt");
@@ -475,6 +510,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/invalidArgument.kt");
         }
 
+        @TestMetadata("javaGet.kt")
+        public void testJavaGet() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/javaGet.kt");
+        }
+
+        @TestMetadata("javaSet.kt")
+        public void testJavaSet() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/javaSet.kt");
+        }
+
+        @TestMetadata("javaSet2.kt")
+        public void testJavaSet2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/javaSet2.kt");
+        }
+
         @TestMetadata("missingDefaultArgument.kt")
         public void testMissingDefaultArgument() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/missingDefaultArgument.kt");
@@ -493,6 +543,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("notOperator.kt")
         public void testNotOperator() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/notOperator.kt");
+        }
+
+        @TestMetadata("overriddenSet.kt")
+        public void testOverriddenSet() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/overriddenSet.kt");
         }
 
         @TestMetadata("qualifier.kt")
@@ -1869,6 +1924,26 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/localVariable2.kt");
         }
 
+        @TestMetadata("nestedTypeFromImplicitReceiverClass.kt")
+        public void testNestedTypeFromImplicitReceiverClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/nestedTypeFromImplicitReceiverClass.kt");
+        }
+
+        @TestMetadata("nestedTypeFromImplicitReceiverInterface.kt")
+        public void testNestedTypeFromImplicitReceiverInterface() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/nestedTypeFromImplicitReceiverInterface.kt");
+        }
+
+        @TestMetadata("nestedTypeFromSupertypeClass.kt")
+        public void testNestedTypeFromSupertypeClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/nestedTypeFromSupertypeClass.kt");
+        }
+
+        @TestMetadata("nestedTypeFromSupertypeInterface.kt")
+        public void testNestedTypeFromSupertypeInterface() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/nestedTypeFromSupertypeInterface.kt");
+        }
+
         @TestMetadata("notApplicableAsReceiver.kt")
         public void testNotApplicableAsReceiver() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableAsReceiver.kt");
@@ -2079,6 +2154,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableObject3.kt");
         }
 
+        @TestMetadata("notApplicableObject4.kt")
+        public void testNotApplicableObject4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableObject4.kt");
+        }
+
         @TestMetadata("notApplicableOuterClass.kt")
         public void testNotApplicableOuterClass() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableOuterClass.kt");
@@ -2176,8 +2256,159 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes")
+    public static class EqualsBetweenInconvertibleTypes extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("enumEqEnum.kt")
+        public void testEnumEqEnum() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/enumEqEnum.kt");
+        }
+
+        @TestMetadata("enumEqEnum2.kt")
+        public void testEnumEqEnum2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/enumEqEnum2.kt");
+        }
+
+        @TestMetadata("enumEqInt.kt")
+        public void testEnumEqInt() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/enumEqInt.kt");
+        }
+
+        @TestMetadata("enumEqString.kt")
+        public void testEnumEqString() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/enumEqString.kt");
+        }
+
+        @TestMetadata("enumEqUserType.kt")
+        public void testEnumEqUserType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/enumEqUserType.kt");
+        }
+
+        @TestMetadata("intEqEnum.kt")
+        public void testIntEqEnum() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/intEqEnum.kt");
+        }
+
+        @TestMetadata("intEqInt.kt")
+        public void testIntEqInt() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/intEqInt.kt");
+        }
+
+        @TestMetadata("intEqLong.kt")
+        public void testIntEqLong() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/intEqLong.kt");
+        }
+
+        @TestMetadata("intEqString.kt")
+        public void testIntEqString() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/intEqString.kt");
+        }
+
+        @TestMetadata("intEqUserType.kt")
+        public void testIntEqUserType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/intEqUserType.kt");
+        }
+
+        @TestMetadata("nullableEnumEqString.kt")
+        public void testNullableEnumEqString() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/nullableEnumEqString.kt");
+        }
+
+        @TestMetadata("nullableIntEqString.kt")
+        public void testNullableIntEqString() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/nullableIntEqString.kt");
+        }
+
+        @TestMetadata("nullableStringEqInt.kt")
+        public void testNullableStringEqInt() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/nullableStringEqInt.kt");
+        }
+
+        @TestMetadata("nullableStringEqString.kt")
+        public void testNullableStringEqString() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/nullableStringEqString.kt");
+        }
+
+        @TestMetadata("stringEqEnum.kt")
+        public void testStringEqEnum() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/stringEqEnum.kt");
+        }
+
+        @TestMetadata("stringEqInt.kt")
+        public void testStringEqInt() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/stringEqInt.kt");
+        }
+
+        @TestMetadata("stringEqNullableEnum.kt")
+        public void testStringEqNullableEnum() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/stringEqNullableEnum.kt");
+        }
+
+        @TestMetadata("stringEqNullableInt.kt")
+        public void testStringEqNullableInt() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/stringEqNullableInt.kt");
+        }
+
+        @TestMetadata("stringEqNullableString.kt")
+        public void testStringEqNullableString() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/stringEqNullableString.kt");
+        }
+
+        @TestMetadata("stringEqString.kt")
+        public void testStringEqString() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/stringEqString.kt");
+        }
+
+        @TestMetadata("stringEqUserType.kt")
+        public void testStringEqUserType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/stringEqUserType.kt");
+        }
+
+        @TestMetadata("userTypeEqInt.kt")
+        public void testUserTypeEqInt() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes/userTypeEqInt.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/canBePrimaryConstructorProperty")
+        public static class CanBePrimaryConstructorProperty extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("commentAfter.kt")
+            public void testCommentAfter() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/commentAfter.kt");
+            }
+
+            @TestMetadata("commentAhead.kt")
+            public void testCommentAhead() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/commentAhead.kt");
+            }
+
+            @TestMetadata("protectedOpenVar.kt")
+            public void testProtectedOpenVar() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/protectedOpenVar.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/simple.kt");
+            }
+
+            @TestMetadata("vararg.kt")
+            public void testVararg() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/vararg.kt");
+            }
+        }
+
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/destructuringWrongNameInspection")
         public static class DestructuringWrongNameInspection extends AbstractK2LocalInspectionTest {

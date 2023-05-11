@@ -98,6 +98,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.maven.server.m30.impl", "maven30-server.jar")
       spec.withModule("intellij.maven.server.m3.impl", "maven3-server.jar")
       spec.withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
+      spec.withModule("intellij.maven.server.m40", "maven40-server.jar")
       spec.withModule("intellij.maven.errorProne.compiler")
       spec.withModule("intellij.maven.server.indexer", "maven-server-indexer.jar")
       /*
@@ -133,17 +134,24 @@ object CommunityRepositoryModules {
 
       spec.withArtifact("maven-event-listener", "")
       spec.doNotCopyModuleLibrariesAutomatically(listOf(
-        "intellij.maven.server.m3.common", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl",
+        "intellij.maven.artifactResolver.common",
+        "intellij.maven.artifactResolver.m3",
+        "intellij.maven.artifactResolver.m31",
+        "intellij.maven.server.m3.common",
+        "intellij.maven.server.m3.impl",
         "intellij.maven.server.m30.impl",
-        "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
-        "intellij.maven.artifactResolver.common", "intellij.maven.artifactResolver.m3", "intellij.maven.artifactResolver.m31",
-        "intellij.maven.server.indexer"
+        "intellij.maven.server.m36.impl",
+        "intellij.maven.server.m40",
+        "intellij.maven.server.indexer",
       ))
       spec.withGeneratedResources { targetDir, context ->
         val targetLib = targetDir.resolve("lib")
 
-        val mavenLibs = BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDirRoot)
-        copyDir(mavenLibs, targetLib.resolve("maven3-server-lib"))
+        val maven4Libs = BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
+        copyDir(maven4Libs, targetLib.resolve("maven4-server-lib"))
+
+        val maven3Libs = BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
+        copyDir(maven3Libs, targetLib.resolve("maven3-server-lib"))
 
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
         copyDir(mavenDist, targetLib.resolve("maven3"))
@@ -186,7 +194,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.testng.rt", "testng-rt.jar")
       spec.withProjectLibrary("TestNG")
     },
-    plugin(listOf("intellij.dev", "intellij.dev.psiViewer")),
+    plugin(listOf("intellij.dev", "intellij.dev.psiViewer", "intellij.platform.statistics.devkit")),
     plugin("intellij.devkit") { spec ->
       spec.withModule("intellij.devkit.core")
       spec.withModule("intellij.devkit.git")
@@ -197,11 +205,12 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.devkit.intelliLang")
       spec.withModule("intellij.devkit.uiDesigner")
       spec.withModule("intellij.devkit.workspaceModel")
-      spec.withModule("intellij.platform.workspaceModel.codegen")
       spec.withModule("intellij.java.devkit")
       spec.withModule("intellij.groovy.devkit")
       spec.withModule("intellij.kotlin.devkit")
       spec.withModule("intellij.devkit.jps")
+      spec.withModule("intellij.devkit.runtimeModuleRepository.jps")
+      spec.withProjectLibrary("workspace-model-codegen")
     },
     plugin("intellij.eclipse") { spec ->
       spec.withModule("intellij.eclipse.jps", "eclipse-jps.jar")
@@ -221,8 +230,9 @@ object CommunityRepositoryModules {
     plugin("intellij.terminal") { spec ->
       spec.withResource("resources/zsh/.zshenv", "zsh")
       spec.withResource("resources/zsh/hooks.zsh", "zsh")
-      spec.withResource("resources/jediterm-bash.in", "")
+      spec.withResource("resources/bash/jediterm-bash.in", "bash")
       spec.withResource("resources/fish/init.fish", "fish")
+      spec.withResource("resources/pwsh/pwsh.ps1", "pwsh")
     },
     plugin("intellij.emojipicker") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)
@@ -278,8 +288,7 @@ object CommunityRepositoryModules {
       "intellij.searchEverywhereMl",
       "intellij.searchEverywhereMl.yaml",
       "intellij.searchEverywhereMl.vcs",
-      "intellij.searchEverywhereMl.java",
-      "intellij.searchEverywhereMl.kotlin",
+      "intellij.searchEverywhereMl.typos"
     )),
     plugin("intellij.platform.testFramework.ui") { spec ->
       spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")
@@ -571,7 +580,6 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("moshi", "intellij.android.core", "")
       //prebuilts/tools/common/m2:eclipse-layout-kernel <= not recognized
       spec.withModuleLibrary("juniversalchardet", "android.sdktools.db-compiler", "")
-      spec.withModuleLibrary("commons-lang", "android.sdktools.db-compiler", "")
       spec.withModuleLibrary("javapoet", "android.sdktools.db-compiler", "")
       spec.withModuleLibrary("auto-common", "android.sdktools.db-compiler", "")
       spec.withModuleLibrary("jetifier-core", "android.sdktools.db-compilerCommon", "")
@@ -583,6 +591,7 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("android-test-plugin-host-device-info-proto")
       spec.withProjectLibrary("asm-tools")
       spec.withProjectLibrary("baksmali")
+      spec.withProjectLibrary("commons-lang")
       spec.withProjectLibrary("dexlib2")
       spec.withProjectLibrary("emulator-proto")
       //tools/adt/idea/.idea/libraries:ffmpeg <= FIXME

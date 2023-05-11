@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -18,20 +19,20 @@ public final class MavenProjectsProcessorArtifactsDownloadingTask implements Mav
 
   private final @NotNull Collection<MavenProject> myProjects;
   private final @Nullable Collection<MavenArtifact> myArtifacts;
-  private final @NotNull MavenProjectResolver myResolver;
   private final boolean myDownloadSources;
   private final boolean myDownloadDocs;
   private final @Nullable AsyncPromise<? super MavenArtifactDownloader.DownloadResult> myCallbackResult;
+  private final @NotNull MavenProjectsTree myTree;
 
   public MavenProjectsProcessorArtifactsDownloadingTask(@NotNull Collection<MavenProject> projects,
+                                                        @NotNull MavenProjectsTree tree,
                                                         @Nullable Collection<MavenArtifact> artifacts,
-                                                        @NotNull MavenProjectResolver resolver,
                                                         boolean downloadSources,
                                                         boolean downloadDocs,
                                                         @Nullable AsyncPromise<? super MavenArtifactDownloader.DownloadResult> callbackResult) {
     myProjects = projects;
+    myTree = tree;
     myArtifacts = artifacts;
-    myResolver = resolver;
     myDownloadSources = downloadSources;
     myDownloadDocs = downloadDocs;
     myCallbackResult = callbackResult;
@@ -44,19 +45,13 @@ public final class MavenProjectsProcessorArtifactsDownloadingTask implements Mav
                       @NotNull MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     var progressListener = project.getService(SyncViewManager.class);
-    var downloadConsole = project.getService(MavenProjectsManager.class).getDownloadConsole();
+    var downloadConsole = new MavenDownloadConsole(project);
     MavenArtifactDownloader.DownloadResult result = null;
     try {
       downloadConsole.startDownload(progressListener, myDownloadSources, myDownloadDocs);
       downloadConsole.startDownloadTask();
-      result = myResolver.downloadSourcesAndJavadocs(project,
-                                                     myProjects,
-                                                     myArtifacts,
-                                                     myDownloadSources,
-                                                     myDownloadDocs,
-                                                     embeddersManager,
-                                                     console,
-                                                     indicator);
+      var downloader = new MavenArtifactDownloader(project, myTree, myArtifacts, indicator);
+      result = downloader.downloadSourcesAndJavadocs(myProjects, myDownloadSources, myDownloadDocs, embeddersManager, console);
       downloadConsole.finishDownloadTask();
     }
     catch (Exception e) {
@@ -70,7 +65,7 @@ public final class MavenProjectsProcessorArtifactsDownloadingTask implements Mav
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      VirtualFileManager.getInstance().asyncRefresh(null);
+      VirtualFileManager.getInstance().asyncRefresh();
     }, project.getDisposed());
   }
 }

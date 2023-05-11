@@ -21,14 +21,14 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 @ApiStatus.Experimental
-fun <VM : Any> EditorEx.controlInlaysIn(
+fun <VM : EditorMapped> EditorEx.controlInlaysIn(
   cs: CoroutineScope,
-  vmsFlow: Flow<Map<Int, List<VM>>>,
+  vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  componentFactory: (CoroutineScope, VM) -> JComponent
+  componentFactory: CoroutineScope.(VM) -> JComponent
 ) {
-  val inlaysManager1 = EditorComponentInlaysManager(this as EditorImpl)
-  EditorLineInlaysController(cs, vmsFlow, vmKeyExtractor, componentFactory, inlaysManager1)
+  val inlaysManager = EditorComponentInlaysManager(this as EditorImpl)
+  EditorLineInlaysController(cs, vmsFlow, vmKeyExtractor, inlaysManager, componentFactory)
 }
 
 @ApiStatus.Experimental
@@ -125,3 +125,7 @@ private fun EditorEx.hoveredLineFlow(): Flow<Int> =
       removeEditorMouseMotionListener(listener)
     }
   }
+
+interface EditorMapped {
+  val line: Flow<Int?>
+}

@@ -20,9 +20,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.actions.TerminalActionUtil;
+import com.intellij.terminal.search.DefaultJediTermSearchComponent;
+import com.intellij.terminal.search.JediTermSearchComponentProvider;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TtyConnectorAccessor;
-import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.LineSeparator;
@@ -32,10 +33,7 @@ import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
 import com.jediterm.core.compatibility.Point;
 import com.jediterm.core.util.TermSize;
-import com.jediterm.terminal.ProcessTtyConnector;
-import com.jediterm.terminal.SubstringFinder;
-import com.jediterm.terminal.TerminalColor;
-import com.jediterm.terminal.TtyConnector;
+import com.jediterm.terminal.*;
 import com.jediterm.terminal.model.SelectionUtil;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalSelection;
@@ -52,10 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -187,7 +182,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   @Override
   public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
     super.setTtyConnector(ttyConnector);
-    myBridge.getTtyConnectorAccessor().setTtyConnector(ttyConnector);
     myTerminalTitle.change(terminalTitleState -> {
       if (terminalTitleState.getDefaultTitle() == null) {
         terminalTitleState.setDefaultTitle(getDefaultSessionName(ttyConnector));
@@ -269,48 +263,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   @Override
   protected @NotNull JediTermSearchComponent createSearchComponent() {
-    return new JediTermSearchComponent() {
-      private final SearchTextField myTextField = new SearchTextField(false);
-
-      @Override
-      public @NotNull JComponent getComponent() {
-        myTextField.setOpaque(false);
-        return myTextField;
-      }
-
-      private void searchSettingsChanged(@NotNull JediTermSearchComponentListener listener) {
-        listener.searchSettingsChanged(myTextField.getText(), false);
-      }
-
-      @Override
-      public void addListener(@NotNull JediTermSearchComponentListener listener) {
-        myTextField.addDocumentListener(new DocumentListener() {
-          @Override
-          public void insertUpdate(DocumentEvent e) {
-            searchSettingsChanged(listener);
-          }
-
-          @Override
-          public void removeUpdate(DocumentEvent e) {
-            searchSettingsChanged(listener);
-          }
-
-          @Override
-          public void changedUpdate(DocumentEvent e) {
-            searchSettingsChanged(listener);
-          }
-        });
-      }
-
-      @Override
-      public void addKeyListener(@NotNull KeyListener listener) {
-        myTextField.addKeyboardListener(listener);
-      }
-
-      @Override
-      public void onResultUpdated(SubstringFinder.FindResult result) {
-      }
-    };
+    JediTermSearchComponentProvider provider = ApplicationManager.getApplication().getService(JediTermSearchComponentProvider.class);
+    return provider != null ? provider.createSearchComponent(this) : new DefaultJediTermSearchComponent();
   }
 
   public void addMessageFilter(@NotNull Filter filter) {
@@ -434,7 +388,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     }
 
     @Override
-    public void connectToTty(@NotNull TtyConnector ttyConnector) {
+    public void connectToTty(@NotNull TtyConnector ttyConnector, @NotNull TermSize initialTermSize) {
+      widget().getTerminal().resize(initialTermSize, RequestOrigin.User);
       widget().createTerminalSession(ttyConnector);
       widget().start();
       widget().getComponent().revalidate();

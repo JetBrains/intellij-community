@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowFactory;
@@ -21,6 +22,7 @@ import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.toolWindow.StripeButton;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.dsl.builder.impl.DslComponentPropertyInternal;
 import com.intellij.ui.dsl.gridLayout.Constraints;
 import com.intellij.ui.dsl.gridLayout.Grid;
 import com.intellij.ui.dsl.gridLayout.GridLayout;
@@ -74,7 +76,7 @@ public final class ComponentPropertiesCollector {
 
   private static final List<String> ACCESSIBLE_CONTEXT_PROPERTIES = Arrays.asList(
     "getAccessibleRole", "getAccessibleName", "getAccessibleDescription",
-    "getAccessibleAction", "getAccessibleChildrenCount",
+    "getAccessibleAction", "getAccessibleParent", "getAccessibleChildrenCount",
     "getAccessibleIndexInParent", "getAccessibleRelationSet",
     "getAccessibleStateSet", "getAccessibleEditableText",
     "getAccessibleTable", "getAccessibleText",
@@ -91,10 +93,10 @@ public final class ComponentPropertiesCollector {
 
   private ComponentPropertiesCollector() { }
 
-  private void collectProperties(Component component) {
+  private void collectProperties(@NotNull Component component) {
     addProperties("", component, PROPERTIES);
-    String addedAt = getAddedAtStacktrace(component);
-    myProperties.add(new PropertyBean("added-at", addedAt, addedAt != null));
+    Pair<String, String> addedAt = getAddedAtStacktrace(component);
+    myProperties.add(new PropertyBean(addedAt.first, addedAt.second, addedAt.second != null));
 
     // Add properties related to Accessibility support. This is useful for manually
     // inspecting what kind (if any) of accessibility support components expose.
@@ -167,7 +169,7 @@ public final class ComponentPropertiesCollector {
 
     StringBuilder classHierarchy = new StringBuilder();
     for (Class<?> cl = clazz.getSuperclass(); cl != null; cl = cl.getSuperclass()) {
-      if (classHierarchy.length() > 0) classHierarchy.append(" ").append(UIUtil.rightArrow()).append(" ");
+      if (!classHierarchy.isEmpty()) classHierarchy.append(" ").append(UIUtil.rightArrow()).append(" ");
       classHierarchy.append(cl.getName());
       if (JComponent.class.getName().equals(cl.getName())) break;
     }
@@ -655,18 +657,37 @@ public final class ComponentPropertiesCollector {
     return ClientProperty.get(c, ACTION_KEY);
   }
 
-  private static @Nullable String getAddedAtStacktrace(@Nullable Component component) {
-    Throwable throwable = ClientProperty.get(component, UiInspectorAction.ADDED_AT_STACKTRACE);
-    if (throwable == null) return null;
-    String text = ExceptionUtil.getThrowableText(throwable);
-    int first = text.indexOf("at com.intellij", text.indexOf("at java."));
+  private static @NotNull Pair<@NotNull String, @Nullable String> getAddedAtStacktrace(@NotNull Component component) {
+    Throwable throwable = null;
+    String propertyName = "added-at";
+    String text;
+    int first;
+    if (component instanceof JComponent c) {
+      throwable = (Throwable)c.getClientProperty(DslComponentPropertyInternal.CREATION_STACKTRACE);
+    }
+
+    if (throwable == null) {
+      throwable = ClientProperty.get(component, UiInspectorAction.ADDED_AT_STACKTRACE);
+      if (throwable == null) {
+        return new Pair<>(propertyName, null);
+      }
+
+      text = ExceptionUtil.getThrowableText(throwable);
+      first = text.indexOf("at com.intellij", text.indexOf("at java."));
+    }
+    else {
+      propertyName = "added-at (UI DSL)";
+      text = ExceptionUtil.getThrowableText(throwable);
+      first = text.indexOf("at com.intellij");
+    }
+
     int last = text.indexOf("at java.awt.EventQueue");
     if (last == -1) last = text.length();
-    return last > first && first > 0 ? text.substring(first, last).trim() : null;
+    return new Pair<>(propertyName, last > first && first > 0 ? text.substring(first, last).trim() : null);
   }
 
   private static final LazyInitializer.LazyValue<Map<Integer, String>> MIG_LAYOUT_UNIT_MAP =
-    new LazyInitializer.LazyValue<Map<Integer, String>>(() -> {
+    new LazyInitializer.LazyValue<>(() -> {
       Map<Integer, String> result = new HashMap<>();
       try {
         Field mapField = UnitValue.class.getDeclaredField("UNIT_MAP");

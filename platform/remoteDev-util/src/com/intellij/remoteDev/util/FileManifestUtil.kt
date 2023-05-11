@@ -1,13 +1,11 @@
 package com.intellij.remoteDev.util
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.Decompressor
-import com.intellij.util.io.DigestUtil
-import com.intellij.util.io.isDirectory
-import com.intellij.util.io.toByteArray
+import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
@@ -19,6 +17,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.function.BiConsumer
 import kotlin.io.path.*
+import kotlin.io.path.exists
 import com.intellij.util.io.Decompressor.Entry.Type as EntryType
 
 @ApiStatus.Experimental
@@ -29,10 +28,20 @@ object FileManifestUtil {
 
   private fun isSymlink(file: Path) = FileSystemUtil.getAttributes(file.toFile())?.isSymLink == true
 
-  class ManifestGenerator(private val targetDir: Path, private val includeInManifest: (Path) -> Boolean) : BiConsumer<Decompressor.Entry, Path> {
+  class ManifestGenerator(
+    private val targetDir: Path,
+    private val includeInManifest: (Path) -> Boolean,
+    private val includeModifiedDate: Boolean = true,
+    private val progress: ProgressIndicator? = null,
+    private val archiveSize: Long? = null,
+  ) : BiConsumer<Decompressor.Entry, Path> {
     private val list = mutableListOf<String>()
 
     override fun accept(entry: Decompressor.Entry, path: Path) {
+      if (progress != null && archiveSize != null && archiveSize != 0L) {
+        progress.fraction += entry.size.toDouble()/archiveSize
+      }
+
       if (!includeInManifest(path)) return
 
       require(entry.name != ManifestFileName) { "There already is a manifest file in archive." }
@@ -68,12 +77,17 @@ object FileManifestUtil {
     private data class FileAttributes(val mode: Int, val lastModifiedTime: FileTime, val size: Long)
 
     private fun addManifestEntry(name: String, type: EntryType, mode: Int, size: Long, lastModifiedTime: FileTime) {
+      // If the modified date is excluded from manifest, it will be 0 in all entries.
+      val modifiedDateValue = if (includeModifiedDate) {
+        (lastModifiedTime.toMillis() / 1000).toString()
+      } else "N/A"
+
       when(type) {
         EntryType.SYMLINK -> {
-          list.add("$name L ${size} ${lastModifiedTime.toMillis() / 1000}")
+          list.add("$name L ${size} $modifiedDateValue")
         }
         EntryType.FILE -> {
-          list.add("$name F ${Integer.toOctalString(mode)} ${size} ${lastModifiedTime.toMillis() / 1000}")
+          list.add("$name F ${Integer.toOctalString(mode)} ${size} $modifiedDateValue")
         }
         EntryType.DIR -> {
           list.add("$name D ${Integer.toOctalString(mode)}")
@@ -162,12 +176,18 @@ object FileManifestUtil {
     return start.toByteArray()
   }
 
-  fun decompressWithManifest(archiveFile: Path, targetDir: Path, includeInManifest: (Path) -> Boolean) {
+  fun decompressWithManifest(
+    archiveFile: Path,
+    targetDir: Path,
+    includeModifiedDate: Boolean,
+    includeInManifest: (Path) -> Boolean,
+    progress: ProgressIndicator? = null,
+  ) {
     if (targetDir.exists()) error("$targetDir already exists, refusing to extract to it")
 
     val start = getFileFirstBytes(archiveFile, 2)
 
-    val manifestor = ManifestGenerator(targetDir, includeInManifest)
+    val manifestor = ManifestGenerator(targetDir, includeInManifest, includeModifiedDate, progress, archiveFile.size())
     when {
       // 'PK' for zip files
       start[0] == 0x50.toByte() && start[1] == 0x4B.toByte() ->
@@ -190,13 +210,13 @@ object FileManifestUtil {
     manifestor.writeToDisk(targetDir)
   }
 
-  fun generateDirectoryManifest(root: Path, includeInManifest: (Path) -> Boolean): String {
-    val manifestor = ManifestGenerator(root, includeInManifest)
+  fun generateDirectoryManifest(root: Path, includeModifiedDate: Boolean, includeInManifest: (Path) -> Boolean): String {
+    val manifestor = ManifestGenerator(root, includeInManifest, includeModifiedDate)
     manifestor.calculateForExistingDirectory()
     return manifestor.generate()
   }
 
-  fun isUpToDate(root: Path, includeInManifest: (Path) -> Boolean): Boolean {
+  fun isUpToDate(root: Path, includeModifiedDate: Boolean, includeInManifest: (Path) -> Boolean): Boolean {
     val manifestFile = root.resolve(ManifestFileName)
     if (manifestFile.notExists()) {
       logger.info("isUpToDate false for '$root': manifest file $manifestFile does not exist")
@@ -204,7 +224,7 @@ object FileManifestUtil {
     }
 
     val manifestFileContent = manifestFile.readText(StandardCharsets.UTF_8)
-    val actualOnDiskContent = generateDirectoryManifest(root, includeInManifest)
+    val actualOnDiskContent = generateDirectoryManifest(root, includeModifiedDate, includeInManifest)
 
     if (manifestFileContent == actualOnDiskContent) {
       logger.info("isUpToDate true for '$root': manifest file $manifestFile contains actual information")
@@ -238,7 +258,7 @@ object FileManifestUtil {
    * @param path - base path to extract directory
    * @param filterPaths - filter files to check for up-to-date state
    */
-  fun getExtractDirectory(path: Path, filterPaths: (Path) -> Boolean): ExtractDirectory {
+  fun getExtractDirectory(path: Path, includeModifiedDate: Boolean, filterPaths: (Path) -> Boolean): ExtractDirectory {
     val suffix = ".${ProcessHandle.current().pid()}.${System.currentTimeMillis()}"
 
     val retriesCount = 100
@@ -246,7 +266,7 @@ object FileManifestUtil {
     (1..retriesCount).forEach moveFolder@{ attempt ->
       val destinationPath = if (attempt <= 1) path else Path.of("$path-$attempt")
 
-      val isUpToDate = isUpToDate(destinationPath, filterPaths)
+      val isUpToDate = isUpToDate(destinationPath, includeModifiedDate, filterPaths)
       if (isUpToDate) {
         logger.info("All files inside extract directory '$destinationPath' are up-to-date")
         return ExtractDirectory(destinationPath, true)

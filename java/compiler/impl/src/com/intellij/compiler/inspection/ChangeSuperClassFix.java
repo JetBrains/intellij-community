@@ -125,13 +125,13 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
         if (m.isConstructor()) return null;
         PsiMethod[] supers = m.findSuperMethods(oldSuperClass);
         if (supers.length == 0) return null;
-        return Pair.create(m, ContainerUtil.set(supers));
+        return Pair.create(m, ContainerUtil.newHashSet(supers));
       });
 
     WriteAction.run(() -> addSuperClass(aClass, oldSuperClass, newSuperClass));
 
     List<MemberInfo> memberInfos = oldOverridenMethods.stream().filter(m -> {
-      Set<PsiMethod> newSupers = ContainerUtil.set(m.getFirst().findSuperMethods(newSuperClass));
+      Set<PsiMethod> newSupers = ContainerUtil.newHashSet(m.getFirst().findSuperMethods(newSuperClass));
       return !newSupers.equals(m.getSecond());
     }).map(m -> m.getFirst())
       .map(m -> {

@@ -740,7 +740,7 @@ public final class HighlightMethodUtil {
     return null;
   }
 
-  /* see also PsiReferenceExpressionImpl.hasValidQualifier() */
+  /* see also PsiReferenceExpressionImpl.hasValidQualifier(), StaticImportResolveProcessor.checkStaticInterfaceMethodCallQualifier() */
   private static @NlsContexts.DetailedDescription String checkStaticInterfaceMethodCallQualifier(@NotNull PsiJavaCodeReferenceElement ref,
                                                                                                  @Nullable PsiElement scope,
                                                                                                  @NotNull PsiClass containingClass) {
@@ -1970,6 +1970,9 @@ public final class HighlightMethodUtil {
     if (classReference != null) {
       ConstructorParametersFixer.registerFixActions(classReference, constructorCall, builder, fixRange);
       ChangeTypeArgumentsFix.registerIntentions(results, list, builder, aClass, fixRange);
+    }
+    else if (aClass.isEnum()) {
+      ConstructorParametersFixer.registerFixActions(aClass, PsiSubstitutor.EMPTY, constructorCall, builder, fixRange);
     }
     ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, builder, fixRange);
     IntentionAction action = QUICK_FIX_FACTORY.createSurroundWithArrayFix(constructorCall, null);

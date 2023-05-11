@@ -45,6 +45,7 @@ open class HighlightingConfiguration(
     val renderSeverityOption: SeverityRenderingOption = SeverityRenderingOption.ALWAYS,
     val severityLevel: HighlightSeverity = HighlightSeverity.INFORMATION,
     val checkNoError: Boolean = false,
+    val renderHighlightingAttributesKey: Boolean = false,
 ) : AbstractCodeMetaInfoRenderConfiguration() {
 
     enum class DescriptionRenderingOption {
@@ -98,6 +99,13 @@ open class HighlightingConfiguration(
                 val keyName = this.externalName
                 params.add("textAttributesKey='$keyName'")
             }
+
+        if (renderHighlightingAttributesKey) {
+            highlightingCodeMetaInfo.highlightingInfo.type.attributesKey.apply {
+                val keyName = this.externalName
+                params.add("highlightingTextAttributesKey='$keyName'")
+            }
+        }
 
         params.add(getAdditionalParams(highlightingCodeMetaInfo))
         val paramsString = params.filter { it.isNotEmpty() }.joinToString("; ")

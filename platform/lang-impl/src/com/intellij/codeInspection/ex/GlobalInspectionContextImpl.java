@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -22,8 +22,8 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.diagnostic.telemetry.IJTracer;
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.ProblemGroup;
@@ -84,6 +84,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.*;
 import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL;
 import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL_SIMPLE;
 import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenActivityFinished;
@@ -273,7 +274,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
   @Override
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
-    IJTracer tracer = TraceManager.INSTANCE.getTracer("highlightVisitor");
+    IJTracer tracer = TelemetryTracer.getInstance().getTracer(HighlightVisitorScope);
     runToolsSpan = tracer.spanBuilder("globalInspections").setNoParent().startSpan();
     myInspectionStartedTimestamp = System.currentTimeMillis();
     ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
@@ -1085,6 +1086,16 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           List<LocalInspectionToolWrapper> lTools = new ArrayList<>();
           for (Tools tools : inspectionTools) {
             InspectionToolWrapper<?, ?> tool = tools.getEnabledTool(file, includeDoNotShow);
+            if (tool != null && profile instanceof InspectionProfileImpl profileImpl) {
+              @NotNull Set<InspectionToolWrapper<?, ?>> other = new HashSet<>();
+              profileImpl.collectDependentInspections(tool, other, getProject());
+              for (InspectionToolWrapper<?, ?> wrapper : other) {
+                if (wrapper instanceof LocalInspectionToolWrapper) {
+                  lTools.add((LocalInspectionToolWrapper)wrapper);
+                  wrapper.initialize(GlobalInspectionContextImpl.this);
+                }
+              }
+            }
             if (tool instanceof GlobalInspectionToolWrapper) {
               tool = ((GlobalInspectionToolWrapper)tool).getSharedLocalInspectionToolWrapper();
             }
@@ -1129,7 +1140,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           BatchModeDescriptorsUtil.addProblemDescriptors(descriptors,
                                                          toolPresentation,
                                                          true,
-                                                         GlobalInspectionContextImpl.this,
+                                                         this,
                                                          toolWrapper.getTool());
         }
       });

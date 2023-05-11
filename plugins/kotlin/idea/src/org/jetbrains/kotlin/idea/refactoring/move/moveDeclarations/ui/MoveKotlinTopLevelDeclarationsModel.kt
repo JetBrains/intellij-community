@@ -16,15 +16,14 @@ import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveHandler
 import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSourceRootMoveDestination
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.refactoring.getOrCreateKotlinFile
-import org.jetbrains.kotlin.idea.refactoring.move.mapWithReadActionInProcess
+import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
-import org.jetbrains.kotlin.idea.refactoring.move.updatePackageDirective
 import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector.MoveRefactoringDestination
 import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector.MovedEntity
 import org.jetbrains.kotlin.idea.util.collectAllExpectAndActualDeclaration
@@ -106,7 +105,7 @@ internal class MoveKotlinTopLevelDeclarationsModel(
         if (singleSourceFileMode) {
             val singeTargetFile = filesExistingInTargetDir.single() as? KtFile
             if (singeTargetFile != null) {
-                return KotlinMoveTargetForExistingElement(singeTargetFile)
+                return KotlinMoveTarget.ExistingElement(singeTargetFile)
             }
         } else {
             val filePathsToReport = filesExistingInTargetDir.joinToString(
@@ -133,7 +132,7 @@ internal class MoveKotlinTopLevelDeclarationsModel(
             targetDirectory = null
         }
 
-        return KotlinMoveTargetForDeferredFile(
+        return KotlinMoveTarget.DeferredFile(
             FqName(targetPackage),
             targetDirectory?.virtualFile
         ) {
@@ -157,7 +156,7 @@ internal class MoveKotlinTopLevelDeclarationsModel(
             if (sourceFiles.singleOrNull() == it) {
                 throw ConfigurationException(KotlinBundle.message("text.cannot.move.to.original.file"))
             }
-            return KotlinMoveTargetForExistingElement(it)
+            return KotlinMoveTarget.ExistingElement(it)
         }
 
         val targetDirectoryPath = targetFile.toPath().parent
@@ -181,7 +180,7 @@ internal class MoveKotlinTopLevelDeclarationsModel(
                 KotlinBundle.message("text.cannot.find.package.corresponding.to.0", targetDirectoryPath)
             )
 
-        return KotlinMoveTargetForDeferredFile(targetPackageFqName, psiDirectory.virtualFile) {
+        return KotlinMoveTarget.DeferredFile(targetPackageFqName, psiDirectory.virtualFile) {
             getOrCreateKotlinFile(targetFile.name, psiDirectory, targetPackageFqName.asString())
         }
     }
@@ -311,19 +310,19 @@ internal class MoveKotlinTopLevelDeclarationsModel(
         }
 
         val options = MoveDeclarationsDescriptor(
-            project,
-            MoveSource(elementsWithMPPIfNeeded),
-            target,
-            MoveDeclarationsDelegate.TopLevel,
-            isSearchInComments,
-            isSearchInNonJavaFiles,
-            deleteSourceFiles = isDeleteEmptyFiles,
-            moveCallback = moveCallback,
-            openInEditor = false,
-            allElementsToMove = null,
-            analyzeConflicts = true,
-            searchReferences = isSearchReferences
+          project,
+          KotlinMoveSource(elementsWithMPPIfNeeded),
+          target,
+          KotlinMoveDeclarationDelegate.TopLevel,
+          isSearchInComments,
+          isSearchInNonJavaFiles,
+          deleteSourceFiles = isDeleteEmptyFiles,
+          moveCallback = moveCallback,
+          openInEditor = false,
+          allElementsToMove = null,
+          analyzeConflicts = true,
+          searchReferences = isSearchReferences
         )
-        return MoveKotlinDeclarationsProcessor(options, Mover.Default, throwOnConflicts)
+        return MoveKotlinDeclarationsProcessor(options, KotlinMover.Default, throwOnConflicts)
     }
 }

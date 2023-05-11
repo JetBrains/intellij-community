@@ -47,7 +47,7 @@ public class PatternValidatorTest extends LightJavaCodeInsightFixtureTestCase {
     class X {
       @Pattern("[0-9]+") String str = createValue();
       
-      @Subst(<caret>)
+      @Subst("<caret>")
       public static String createValue() {
         return 123 + "a";
       }

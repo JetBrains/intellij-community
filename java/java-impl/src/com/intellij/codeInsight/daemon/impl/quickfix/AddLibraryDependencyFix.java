@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -41,7 +42,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
                           boolean exported) {
     super(reference);
     myCurrentModule = currentModule;
-    myLibraries = ContainerUtil.<Library, String>immutableMapBuilder().putAll(libraries).build();
+    myLibraries = Map.copyOf(libraries);
     myScope = scope;
     myExported = exported;
   }
@@ -102,7 +103,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
     JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, library, myScope, myExported);
 
     String qName = myLibraries.get(library);
-    if (qName != null && editor != null) {
+    if (!Strings.isEmpty(qName) && editor != null) {
       importClass(myCurrentModule, editor, restoreReference(), qName);
     }
   }
@@ -111,9 +112,9 @@ class AddLibraryDependencyFix extends OrderEntryFix {
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     Library firstItem = ContainerUtil.getFirstItem(myLibraries.keySet());
     String fqName = myLibraries.get(firstItem);
-    String refName = fqName != null ? StringUtil.getShortName(fqName) : null;
+    String refName = !StringUtil.isEmpty(fqName) ? StringUtil.getShortName(fqName) : null;
 
-    String libraryList = NlsMessages.formatAndList(ContainerUtil.map2List(myLibraries.keySet(), library -> "'" + library.getPresentableName() + "'"));
+    String libraryList = NlsMessages.formatAndList(ContainerUtil.map(myLibraries.keySet(), library -> "'" + library.getPresentableName() + "'"));
     String libraryName = firstItem.getPresentableName();
     String message = refName != null ? JavaBundle.message("adds.library.preview", myLibraries.size(), libraryName, libraryList, myCurrentModule.getName(), refName)
                                      : JavaBundle.message("adds.library.preview.no.import", myLibraries.size(), libraryName, libraryList, myCurrentModule.getName());

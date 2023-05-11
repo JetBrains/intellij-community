@@ -12,6 +12,7 @@ import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
@@ -20,10 +21,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
-import com.intellij.util.Consumer;
-import com.intellij.util.Functions;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -38,6 +36,7 @@ import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
@@ -47,6 +46,21 @@ import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 /**
  * Represents a single linux distribution in WSL, installed after <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Fall Creators Update</a>
  *
+ * <h2>On network connectivity</h2>
+ * WSL1 shares network stack and both sides may use ``127.0.0.1`` to connect to each other.
+ * <br/>
+ * On WSL2 both OSes have separate interfaces ("eth0" on Linux and "vEthernet (WSL)" on Windows).
+ * One can't connect from Linux to Windows because of <a href="https://www.jetbrains.com/help/idea/how-to-use-wsl-development-environment-in-product.html#debugging_system_settings">Windows Firewall which you need to disable or accomplish with rule</a>, because
+ * of that it is not recommended to connect to IJ from processes launched on WSL.
+ * In other words, you shouldn't use {@link #getHostIpAddress()} in most cases.
+ * <p>
+ * If you cant avoid that, use {@link com.intellij.execution.wsl.WslProxy} which makes tunnel to solve firewall issues.
+ * <br/>
+ * Connecting from Windows to Linux is possible in most cases (see {@link #getWslIpAddress()} and in modern WSL2 you can even use
+ * ``127.0.0.1`` if port is not occupied on Windows side.
+ * VPNs might break eth0 connectivity on WSL side (see PY-59608). In this case, enable <code>wsl.proxy.connect.localhost</code>
+ *
+ * @see <a href="https://learn.microsoft.com/en-us/windows/wsl/networking">Microsoft guide</a>
  * @see WSLUtil
  */
 public class WSLDistribution implements AbstractWslDistribution {
@@ -70,8 +84,25 @@ public class WSLDistribution implements AbstractWslDistribution {
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
   private @Nullable Integer myVersion;
-  private final NullableLazyValue<String> myHostIp = lazyNullable(this::readHostIp);
-  private final NullableLazyValue<String> myWslIp = lazyNullable(this::readWslIp);
+
+  private final LazyInitializer.LazyValue<IpOrException> myHostIp = new LazyInitializer.LazyValue<>(() -> {
+    try {
+      return new IpOrException(readHostIp());
+    }
+    catch (ExecutionException e) {
+      return new IpOrException(e);
+    }
+  });
+  private final LazyInitializer.LazyValue<String> myWslIp = new LazyInitializer.LazyValue<>(() -> {
+    try {
+      return readWslIp();
+    }
+    catch (ExecutionException ex) {
+      // See class doc, IP section
+      LOG.warn("Can't read WSL IP, will use default: 127.0.0.1", ex);
+      return "127.0.0.1";
+    }
+  });
   private final NullableLazyValue<String> myShellPath = lazyNullable(this::readShellPath);
   private final NullableLazyValue<String> myUserHomeProvider = lazyNullable(this::readUserHome);
 
@@ -550,34 +581,40 @@ public class WSLDistribution implements AbstractWslDistribution {
     return WslConstants.UNC_PREFIX + myDescriptor.getMsId();
   }
 
+  /**
+   * Windows IP address. See class doc before using it, because this is probably not what you are looking for.
+   *
+   * @throws ExecutionException if IP can't be obtained (see logs for more info)
+   */
+  @NotNull
+  public final InetAddress getHostIpAddress() throws ExecutionException {
+    return InetAddresses.forString(myHostIp.get().getIp());
+  }
+
+  /**
+   * Linux IP address. See class doc IP section for more info.
+   */
+  @NotNull
+  public final InetAddress getWslIpAddress() {
+    if (Registry.is("wsl.proxy.connect.localhost")) {
+      return InetAddress.getLoopbackAddress();
+    }
+    return InetAddresses.forString(myWslIp.get());
+  }
+
   // https://docs.microsoft.com/en-us/windows/wsl/compare-versions#accessing-windows-networking-apps-from-linux-host-ip
-  public String getHostIp() {
-    return myHostIp.getValue();
-  }
-
-  public String getWslIp() {
-    return myWslIp.getValue();
-  }
-
-  public InetAddress getHostIpAddress() {
-    return InetAddresses.forString(getHostIp());
-  }
-
-  public InetAddress getWslIpAddress() {
-    return InetAddresses.forString(getWslIp());
-  }
-
-  private @Nullable String readHostIp() {
+  private @NotNull String readHostIp() throws ExecutionException {
     String wsl1LoopbackAddress = getWsl1LoopbackAddress();
     if (wsl1LoopbackAddress != null) {
       return wsl1LoopbackAddress;
     }
     if (Registry.is("wsl.obtain.windows.host.ip.alternatively", true)) {
-      InetAddress wslAddr = getWslIpAddress();
       // Connect to any port on WSL IP. The destination endpoint is not needed to be reachable as no real connection is established.
       // This transfers the socket into "connected" state including setting the local endpoint according to the system's routing table.
       // Works on Windows and Linux.
       try (DatagramSocket datagramSocket = new DatagramSocket()) {
+        // We always need eth0 ip, can't use 127.0.0.1
+        InetAddress wslAddr = InetAddresses.forString(readWslIp());
         // Any port in range [1, 0xFFFF] can be used. Port=0 is forbidden: https://datatracker.ietf.org/doc/html/rfc8085
         // "A UDP receiver SHOULD NOT bind to port zero".
         // Java asserts "port != 0" since v15 (https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8240533).
@@ -586,53 +623,68 @@ public class WSLDistribution implements AbstractWslDistribution {
         return datagramSocket.getLocalAddress().getHostAddress();
       }
       catch (Exception e) {
-        LOG.error("Cannot obtain Windows host IP alternatively: failed to connect to WSL IP " + wslAddr + ". Fallback to default way.", e);
+        LOG.error("Cannot obtain Windows host IP alternatively: failed to connect to WSL IP. Fallback to default way.", e);
       }
     }
-    final String releaseInfo = "/etc/resolv.conf"; // available for all distributions
-    final ProcessOutput output;
-    try {
-      output = executeOnWsl(List.of("cat", releaseInfo), new WSLCommandLineOptions(), 10_000, null);
-    }
-    catch (ExecutionException e) {
-      LOG.info("Cannot read host ip", e);
+
+    return executeAndParseOutput(IdeBundle.message("wsl.win.ip"), strings -> {
+      for (String line : strings) {
+        if (line.startsWith("nameserver")) {
+          return line.substring("nameserver".length()).trim();
+        }
+      }
       return null;
-    }
-    if (LOG.isDebugEnabled()) LOG.debug("Reading release info: " + getId());
-    if (!output.checkSuccess(LOG)) return null;
-    for (String line : output.getStdoutLines(true)) {
-      if (line.startsWith("nameserver")) {
-        return line.substring("nameserver".length()).trim();
-      }
-    }
-    return null;
+    }, "cat", "/etc/resolv.conf");
   }
 
-  private @Nullable String readWslIp() {
+  private @NotNull String readWslIp() throws ExecutionException {
     String wsl1LoopbackAddress = getWsl1LoopbackAddress();
     if (wsl1LoopbackAddress != null) {
       return wsl1LoopbackAddress;
     }
-    final ProcessOutput output;
-    try {
-      output = executeOnWsl(List.of("ip", "addr", "show", "eth0"), new WSLCommandLineOptions(), 10_000, null);
-    }
-    catch (ExecutionException e) {
-      LOG.info("Cannot read wsl ip", e);
-      return null;
-    }
-    if (LOG.isDebugEnabled()) LOG.debug("Reading eth0 info: " + getId());
-    if (!output.checkSuccess(LOG)) return null;
-    for (String line : output.getStdoutLines(true)) {
-      String trimmed = line.trim();
-      if (trimmed.startsWith("inet ")) {
-        int index = trimmed.indexOf("/");
-        if (index != -1) {
-          return trimmed.substring("inet ".length(), index);
+
+    return executeAndParseOutput(IdeBundle.message("wsl.wsl.ip"), strings -> {
+      for (String line : strings) {
+        String trimmed = line.trim();
+        if (trimmed.startsWith("inet ")) {
+          int index = trimmed.indexOf("/");
+          if (index != -1) {
+            return trimmed.substring("inet ".length(), index);
+          }
         }
       }
+      return null;
+    }, "ip", "addr", "show", "eth0");
+  }
+
+  /**
+   * Run command on WSL and parse IP from it
+   *
+   * @param ipType  WSL or Windows
+   * @param parser  block that accepts stdout and parses IP from it
+   * @param command command to run on WSL
+   * @return IP
+   * @throws ExecutionException IP can't be parsed
+   */
+  @NotNull
+  private String executeAndParseOutput(@NlsContexts.DialogMessage @NotNull String ipType,
+                                       @NotNull Function<List<@NlsSafe String>, @Nullable String> parser,
+                                       @NotNull String @NotNull ... command)
+    throws ExecutionException {
+    final ProcessOutput output;
+    output = executeOnWsl(Arrays.asList(command), new WSLCommandLineOptions(), 10_000, null);
+    if (LOG.isDebugEnabled()) LOG.debug(ipType + " " + getId());
+    if (!output.checkSuccess(LOG)) {
+      LOG.warn(String.format("%s. Exit code: %s. Error %s", ipType, output.getExitCode(), output.getStderr()));
+      throw new ExecutionException(IdeBundle.message("wsl.cant.parse.ip.no.output", ipType));
     }
-    return null;
+    var stdout = output.getStdoutLines(true);
+    var ip = parser.apply(stdout);
+    if (ip != null) {
+      return ip;
+    }
+    LOG.warn(String.format("Can't parse data for %s, stdout is %s", ipType, String.join("\n", stdout)));
+    throw new ExecutionException(IdeBundle.message("wsl.cant.parse.ip.process.failed", ipType));
   }
 
   private @Nullable String getWsl1LoopbackAddress() {
@@ -657,5 +709,4 @@ public class WSLDistribution implements AbstractWslDistribution {
     return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", "SHELL"), options, DEFAULT_TIMEOUT,
                                                               true);
   }
-
 }

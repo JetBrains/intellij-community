@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 class FeedbackNotificationCountCollector : CounterUsagesCollector() {
   companion object {
     private val IDLE_FEEDBACK_TYPE = EventFields.Enum<IdleFeedbackTypes>("idle_feedback_type")
-    private val GROUP = EventLogGroup("feedback.in.ide.notification", 2)
+    private val GROUP = EventLogGroup("feedback.in.ide.notification", 4)
 
     private val REQUEST_NOTIFICATION_SHOWN = GROUP.registerEvent("notification.shown", IDLE_FEEDBACK_TYPE)
     private val RESPOND_NOTIFICATION_ACTION_INVOKED = GROUP.registerEvent("notification.respond.invoked", IDLE_FEEDBACK_TYPE)

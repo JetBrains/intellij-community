@@ -9,8 +9,9 @@ import com.intellij.webSymbols.WebSymbol
 interface WebSymbolCodeCompletionItemInsertHandler {
 
   val priority: WebSymbol.Priority
+    get() = WebSymbol.Priority.NORMAL
 
-  fun prepare(context: InsertionContext, item: LookupElement): Runnable
+  fun prepare(context: InsertionContext, item: LookupElement, completeAfterInsert: Boolean): Runnable?
 
   companion object {
 
@@ -21,8 +22,10 @@ interface WebSymbolCodeCompletionItemInsertHandler {
         override val priority: WebSymbol.Priority
           get() = priority
 
-        override fun prepare(context: InsertionContext, item: LookupElement) =
-          Runnable { insertHandler.handleInsert(context, item) }
+        override fun prepare(context: InsertionContext, item: LookupElement, completeAfterInsert: Boolean) =
+          if (!completeAfterInsert)
+            Runnable { insertHandler.handleInsert(context, item) }
+          else null
 
       }
 

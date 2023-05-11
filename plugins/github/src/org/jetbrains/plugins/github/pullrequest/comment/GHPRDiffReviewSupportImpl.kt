@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.comment
 
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.diff.DiffMappedValue
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
@@ -15,22 +16,20 @@ import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.project.Project
 import git4idea.changes.GitTextFilePatchWithHistory
-import git4idea.changes.filePath
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRDiffEditorReviewComponentsFactoryImpl
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewProcessModelImpl
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRSimpleOnesideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRTwosideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRUnifiedDiffViewerReviewThreadsHandler
+import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import java.util.function.Function
@@ -39,6 +38,7 @@ import kotlin.properties.Delegates.observable
 class GHPRDiffReviewSupportImpl(private val project: Project,
                                 private val reviewDataProvider: GHPRReviewDataProvider,
                                 private val detailsDataProvider: GHPRDetailsDataProvider,
+                                private val htmlImageLoader: AsyncHtmlImageLoader,
                                 private val avatarIconsProvider: GHAvatarIconsProvider,
                                 private val repositoryDataService: GHPRRepositoryDataService,
                                 private val diffData: GitTextFilePatchWithHistory,
@@ -79,14 +79,14 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
 
     loadReviewThreads(viewer)
 
-    val createCommentParametersHelper = GHPRCreateDiffCommentParametersHelper(diffData.patch.afterVersionId!!, diffData.patch.filePath)
     val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
                                                            viewer, repositoryDataService.remoteCoordinates.repository,
                                                            reviewDataProvider,
                                                            detailsDataProvider)
     val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project,
-                                                                      reviewDataProvider, avatarIconsProvider,
-                                                                      createCommentParametersHelper, suggestedChangesHelper,
+                                                                      reviewDataProvider,
+                                                                      htmlImageLoader, avatarIconsProvider,
+                                                                      diffData, suggestedChangesHelper,
                                                                       ghostUser,
                                                                       currentUser)
     when (viewer) {

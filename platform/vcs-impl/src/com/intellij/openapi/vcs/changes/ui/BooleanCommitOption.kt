@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.vcs.commit.CommitSessionCollector
 import org.jetbrains.annotations.Nls
@@ -23,13 +24,13 @@ import kotlin.reflect.KMutableProperty0
  * Prefer using [BooleanCommitOption.create] and [BooleanCommitOption.createLink].
  */
 open class BooleanCommitOption(
-  private val project: Project,
+  protected val project: Project,
   @Nls text: String,
   private val disableWhenDumb: Boolean,
-  private val getter: () -> Boolean,
-  private val setter: Consumer<Boolean>
+  protected val getter: () -> Boolean,
+  protected val setter: Consumer<Boolean>
 ) : RefreshableOnComponent,
-    UiDslUnnamedConfigurable {
+    UiDslUnnamedConfigurable.Simple() {
 
   constructor(project: Project, @Nls text: String, disableWhenDumb: Boolean, property: KMutableProperty0<Boolean>) :
     this(project, text, disableWhenDumb, { property.get() }, Consumer { property.set(it) })
@@ -42,7 +43,8 @@ open class BooleanCommitOption(
 
   protected val checkBox = JBCheckBox(text)
 
-  private var isInSettings = false
+  protected var isInSettings = false
+    private set
 
   private var checkinHandler: CheckinHandler? = null
   private var isDuringUpdate: Boolean = false
@@ -75,16 +77,6 @@ open class BooleanCommitOption(
   }
 
   /**
-   * Implement [com.intellij.openapi.options.UnnamedConfigurable]
-   */
-  final override fun createComponent(): JComponent {
-    isInSettings = true
-    return panel {
-      createOptionContent()
-    }
-  }
-
-  /**
    * Implement [com.intellij.openapi.options.UiDslUnnamedConfigurable]
    */
   final override fun Panel.createContent() {
@@ -94,15 +86,11 @@ open class BooleanCommitOption(
 
   protected open fun Panel.createOptionContent() {
     row {
-      cell(checkBox)
+      cell(checkBox).also {
+        if (isInSettings) it.bindSelected(getter, setter::accept)
+      }
     }
   }
-
-  override fun isModified() = checkBox.isSelected != getter()
-
-  override fun apply() = saveState()
-
-  override fun reset() = restoreState()
 
   protected fun setSelected(value: Boolean) {
     isDuringUpdate = true
@@ -183,7 +171,9 @@ private class BooleanCommitOptionWithLink(project: Project,
   override fun Panel.createOptionContent() {
     val configureFilterLink = LinkLabel(linkText, null, linkCallback, this@BooleanCommitOptionWithLink)
     row {
-      cell(checkBox)
+      cell(checkBox).also {
+        if (isInSettings) it.bindSelected(getter, setter::accept)
+      }
       cell(configureFilterLink)
     }
   }

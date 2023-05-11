@@ -20,9 +20,13 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.MoveDeclarationsDescriptor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinTopLevelDeclarationsDialog
 import org.jetbrains.kotlin.idea.refactoring.showWithTransaction
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -98,15 +102,15 @@ class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<K
             return
         }
 
-        val moveTarget = KotlinMoveTargetForDeferredFile(packageName, directory.virtualFile) {
+        val moveTarget = KotlinMoveTarget.DeferredFile(packageName, directory.virtualFile) {
             createKotlinFile(targetFileName, directory, packageName.asString())
         }
 
         val moveSource = element.tryGetExtraClassesToMove()
             ?.let { additionalElements ->
-                MoveSource(additionalElements.toMutableList().also { it.add(0, element) })
+                KotlinMoveSource(additionalElements.toMutableList().also { it.add(0, element) })
             }
-            ?: MoveSource(element)
+            ?: KotlinMoveSource(element)
 
         val moveCallBack = MoveCallback {
             val newFile = directory.findFile(targetFileName) as KtFile
@@ -120,7 +124,7 @@ class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<K
             project,
             moveSource,
             moveTarget,
-            MoveDeclarationsDelegate.TopLevel,
+            KotlinMoveDeclarationDelegate.TopLevel,
             searchInCommentsAndStrings = false,
             searchInNonCode = false,
             moveCallback = moveCallBack

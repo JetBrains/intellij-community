@@ -1,30 +1,40 @@
-<html><body>
-Reports cases when non-safe string is passed to a method with parameter marked with annotation <code>org.checkerframework.checker.tainting.qual.Untainted</code>.
+<html>
+<body>
+Reports cases when a non-safe string is passed to a method with a parameter marked with <code>@Untainted</code> annotations, returned from
+annotated methods or assigned to annotated fields, parameters, or local variables. Kotlin `set` and `get` methods for fields are not
+supported as entry points.
 <p>
-  Safe string is:
+  A safe object is:
 <ul>
-  <li>call of method that is marked as <code>@Untainted</code></li>
-  <li>local variable or method parameter that does not call non-safe methods</li>
-  <li>field, local variable or parameter that is marked as <code>@Untainted</code> and does not have non-safe methods calls assigned</li>
+  <li>a string literal, interface instance, or enum object</li>
+  <li>a result of a call of a method that is marked as <code>@Untainted</code></li>
+  <li>a private field, which is assigned only with a string literal and has a safe initializer</li>
+  <li>a final field, which has a safe initializer</li>
+  <li>local variable or parameter that are marked as <code>@Untainted</code> and are not assigned from non-safe objects</li>
+  This field, local variable, or parameter must not be passed as arguments to methods or used as a qualifier or must be a primitive, its
+  wrapper or immutable.
 </ul>
 <p>
-Example:
+  The analysis is performed only inside one file. To process dependencies from other classes, use options.
+  The analysis extends to private or static methods and has a limit of depth propagation.
+<p>
+  Example:
 <pre>
-<code>
+<code lang="java">
   void doSmth(boolean b) {
     String s = safe();
     String s1 = "other";
     if (b) s1 = s;
     sink(s);
   }
-  
+
   String sink(@Untainted String s) {}
 </code>
 </pre>
 <p>
-Here we do not have non-safe string assignments to <code>s</code> so warning is not produced. On the other hand:
+  Here we do not have non-safe string assignments to <code>s</code> so a warning is not produced. On the other hand:
 <pre>
-<code>
+<code lang="java">
   void doSmth(boolean b) {
     String s = safe();
     String s1 = "other";
@@ -32,14 +42,49 @@ Here we do not have non-safe string assignments to <code>s</code> so warning is 
     if (b) s = s1;
     sink(s);        // warning here
   }
-  
+
   String foo();
 
   String sink(@Untainted String s) {}
 </code>
 </pre>
 <p>
-Here we have a warning since <code>s1</code> has an unknown state after <code>foo</code> call result assignment.
-<!-- tooltip end -->
+  Here we have a warning since <code>s1</code> has an unknown state after <code>foo</code> call result assignment.
+  <!-- tooltip end -->
+<ul>
+  <li>
+    <p>Use the <b>Untainted annotations</b> table to specify annotations, which will be used as <code>@Untainted</code> annotations during
+      the analysis.
+      The first annotation from this list will be used for propagation if it exists in the classpath.
+  </li>
+  <li>
+    <p>Use the <b>Tainted annotations</b> table to specify annotations, which will be used as <code>@Tainted</code> annotations during the
+      analysis
+  </li>
+  <li>
+    <p>If the <b>Consider external methods untainted if receivers and arguments are untainted</b> option is enabled,
+      then external methods outside the current class will be considered as safe if their receivers and arguments are safe.
+      In some cases, it is not applicable, but it can be useful for stateless classes.
+      If this option is disabled, then all external methods will be considered as unsafe.
+  </li>
+  <li>
+    <p>Use the <b>Safe classes</b> option to specify classes, expressions with this type will be considered safe
+  </li>
+  <li>
+    <p>Use the <b>Untainted methods</b> table to specify methods, which return only safe objects
+  </li>
+  <li>
+    <p>Use the <b>Untainted fields</b> table to specify fields, which contain only safe objects
+  </li>
+  <li>
+    <p>Use the <b>Report if case is too complex to check</b> option to specify if it is needed to report strings, which can not be checked
+      because of the complexity
+  </li>
+  <li>
+    <p>Use the <b>Consider parameters of private methods as safe</b> option to specify that parameters of private methods, otherwise they
+      will be considered as unknown.
+  </li>
+</ul>
 <p><small>New in 2021.2</small></p>
-</body></html>
+</body>
+</html>

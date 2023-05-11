@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.usages.impl
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
 import com.intellij.find.usages.api.*
 import com.intellij.find.usages.symbol.SearchTargetSymbol
 import com.intellij.find.usages.symbol.SymbolSearchTargetFactory
@@ -55,6 +56,10 @@ fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget? {
   return null
 }
 
+internal fun usageAccess(usage: Usage): UsageAccess? {
+  return if (usage is ReadWriteUsage) usage.computeAccess() else null
+}
+
 @ApiStatus.Internal
 fun buildUsageViewQuery(
   project: Project,
@@ -63,7 +68,19 @@ fun buildUsageViewQuery(
 ): Query<out UVUsage> {
   return buildQuery(project, target, allOptions).transforming {
     if (it is PsiUsage && !it.declaration) {
-      listOf(Psi2UsageInfo2UsageAdapter(PsiUsage2UsageInfo(it)))
+      val access = when (usageAccess(it)) {
+        UsageAccess.Read -> ReadWriteAccessDetector.Access.Read
+        UsageAccess.Write -> ReadWriteAccessDetector.Access.Write
+        UsageAccess.ReadWrite -> ReadWriteAccessDetector.Access.ReadWrite
+        null -> null
+      }
+
+      if (access != null) {
+        listOf(Psi2ReadWriteAccessUsageInfo2UsageAdapter(PsiUsage2UsageInfo(it), access))
+      }
+      else {
+        listOf(Psi2UsageInfo2UsageAdapter(PsiUsage2UsageInfo(it)))
+      }
     }
     else {
       emptyList()

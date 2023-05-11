@@ -59,6 +59,7 @@ class ProjectLibraryTableBridgeImpl(
 
       override fun changed(event: VersionedStorageChange) {
         val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
+          .orderToRemoveReplaceAdd() // Since the listener is not deprecated, it will be better to keep the order of events as remove -> replace -> add
         if (changes.isEmpty()) return
 
         for (change in changes) {
@@ -140,12 +141,12 @@ class ProjectLibraryTableBridgeImpl(
     }
 
     if (targetBuilder == null) {
-      (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Add project library mapping") {
-        for ((entity, library) in libraries) {
-          it.mutableLibraryMap.addIfAbsent(entity, library)
-        }
-      }
       withContext(Dispatchers.EDT) {
+        (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Add project library mapping") {
+          for ((entity, library) in libraries) {
+            it.mutableLibraryMap.addIfAbsent(entity, library)
+          }
+        }
         ApplicationManager.getApplication().runWriteAction {
           for ((_, library) in libraries) {
             dispatcher.multicaster.afterLibraryAdded(library)

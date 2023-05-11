@@ -69,8 +69,8 @@ public class GitBranchPopupActions {
   public static final @NonNls String EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP = "Git.Experimental.Branch.Popup.Actions";
 
   private static final int MAX_BRANCH_NAME_LENGTH = 40;
-  private static final int BRANCH_NAME_LENGTH_DELTA = 4;
-  private static final int BRANCH_NAME_SUFFIX_LENGTH = 5;
+  public static final int BRANCH_NAME_LENGTH_DELTA = 4;
+  public static final int BRANCH_NAME_SUFFIX_LENGTH = 5;
   private final Project myProject;
   private final GitRepository myRepository;
 
@@ -254,11 +254,15 @@ public class GitBranchPopupActions {
     IssueNavigationConfiguration issueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
     List<IssueNavigationConfiguration.LinkMatch> issueMatches = issueNavigationConfiguration.findIssueLinks(branchName);
     int affectedMaxBranchNameLength = maxBranchNameLength - StringUtil.ELLIPSIS.length();
-    if (issueMatches.size() != 0) {
+    if (!issueMatches.isEmpty()) {
       // never truncate the first occurrence of the issue id
       IssueNavigationConfiguration.LinkMatch firstMatch = issueMatches.get(0);
       TextRange firstMatchRange = firstMatch.getRange();
       return truncateAndSaveIssueId(firstMatchRange, branchName, affectedMaxBranchNameLength, suffixLength, delta);
+    }
+
+    if (affectedMaxBranchNameLength - suffixLength - StringUtil.ELLIPSIS.length() < 0) {
+      return branchName;
     }
 
     return StringUtil.shortenTextWithEllipsis(branchName, affectedMaxBranchNameLength, suffixLength, true);

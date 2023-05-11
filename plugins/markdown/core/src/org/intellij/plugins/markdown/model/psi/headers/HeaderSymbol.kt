@@ -4,12 +4,12 @@ import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.model.Pointer
 import com.intellij.navigation.NavigatableSymbol
-import com.intellij.navigation.NavigationTarget
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.navigation.NavigationTarget
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
@@ -22,7 +22,6 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderContent
 import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
 import org.intellij.plugins.markdown.model.psi.MarkdownSourceNavigationTarget
-import org.intellij.plugins.markdown.model.psi.MarkdownSymbolWithUsages
 import org.intellij.plugins.markdown.model.psi.withLocationIn
 import org.jetbrains.annotations.ApiStatus
 
@@ -30,9 +29,9 @@ import org.jetbrains.annotations.ApiStatus
 data class HeaderSymbol(
   override val file: PsiFile,
   override val range: TextRange,
-  val text: @NlsSafe String,
-  val anchorText: @NlsSafe String
-): MarkdownSymbolWithUsages, SearchTarget, RenameTarget, NavigatableSymbol {
+  override val text: @NlsSafe String,
+  override val anchorText: @NlsSafe String
+): MarkdownHeaderSymbol, SearchTarget, RenameTarget, NavigatableSymbol {
   override fun createPointer(): Pointer<out HeaderSymbol> {
     val project = file.project
     val base = SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(file, range)
@@ -74,7 +73,7 @@ data class HeaderSymbol(
   }
 
   private inner class HeaderNavigationTarget(file: VirtualFile, offset: Int): MarkdownSourceNavigationTarget(file, offset) {
-    override fun presentation(): TargetPresentation {
+    override fun computePresentation(): TargetPresentation {
       return this@HeaderSymbol.presentation()
     }
   }

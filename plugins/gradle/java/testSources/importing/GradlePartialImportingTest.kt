@@ -89,11 +89,10 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
   fun `test composite project partial re-import`() {
     createAndImportTestCompositeProject()
 
-    // since Gradle 6.8, included (of the "main" build) builds became visible for `buildSrc` project
-    // there are separate TAPI request per `buildSrc` project in a composite
+    // since Gradle 6.8, included (of the "main" build) builds became visible for `buildSrc` project.
+    // Before Gradle 8.0 there are separate TAPI requests per `buildSrc` project in a composite
     // and hence included build models can be handled more than once
-    // should be fixed with https://github.com/gradle/gradle/issues/14563
-    val includedBuildModelsReceivedQuantity = if (isGradleOlderThan("6.8")) 1 else 2
+    val includedBuildModelsReceivedQuantity = if (isGradleOlderThan("6.8") || isGradleNewerOrSameAs("8.0")) 1 else 2
 
     assertReceivedModels(
       projectPath, "project",
@@ -198,7 +197,7 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
     )
     createProjectSubFile("includedBuild/settings.gradle", "include 'subProject'")
     createProjectSubDir("includedBuild/subProject")
-    createBuildFile("includedBuild") {
+    createBuildFile("includedBuild/buildSrc") {
       withGroovyPlugin()
       addImplementationDependency(code("gradleApi()"))
       addImplementationDependency(code("localGroovy()"))

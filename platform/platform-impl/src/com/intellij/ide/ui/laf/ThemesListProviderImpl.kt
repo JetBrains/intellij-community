@@ -8,16 +8,14 @@ import com.intellij.ui.ExperimentalUI
 import javax.swing.UIManager
 
 class ThemesListProviderImpl : ThemesListProvider {
-
   override fun getShownThemes(): List<List<UIManager.LookAndFeelInfo>> {
     val lmi = LafManager.getInstance() as? LafManagerImpl ?: return listOf()
     val result = mutableListOf<List<UIManager.LookAndFeelInfo>>()
 
     if (ExperimentalUI.isNewUI()) {
-      result.add(ArrayList(lmi.getLafListForTargetUI(TargetUIType.NEW)))
+      result.add(lmi.getLafListForTargetUI(TargetUIType.NEW).sortedBy { it.name })
     }
-    result.add(ArrayList(lmi.getLafListForTargetUI(TargetUIType.CLASSIC)))
-
+    result.add((lmi.getLafListForTargetUI(TargetUIType.CLASSIC) + lmi.getLafListForTargetUI(TargetUIType.UNSPECIFIED)).sortedBy { it.name })
     return result
   }
 

@@ -65,16 +65,21 @@ public class HtmlSyntaxInfoReader extends AbstractSyntaxAwareReader implements M
   }
 
   protected void appendCloseTags() {
-    myResultBuffer.append("</div></body></html>");
+    myResultBuffer.append("</pre></div></body></html>");
   }
 
   protected void appendStartTags() {
-    myResultBuffer.append("<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\"></head><body>")
-                  .append("<div style=\"background-color:");
+    myResultBuffer.append("<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\"></head><body>");
+
+    // IDEA-295350 background color is applied to a div block in order to be displayed in Google Docs correctly
+    myResultBuffer.append("<div style=\"background-color:");
     appendColor(myResultBuffer, myDefaultBackground);
     myResultBuffer.append(";color:");
     appendColor(myResultBuffer, myDefaultForeground);
-    myResultBuffer.append(';');
+    myResultBuffer.append("\">");
+
+    // the pre tag is used instead of `white-space:pre;` because of IDEA-316921
+    myResultBuffer.append("<pre style=\"");
     int[] fontIds = myFontNameRegistry.getAllIds();
     if (fontIds.length > 0) {
       myFontFamily = myDefaultFontFamily = fontIds[0];
@@ -88,7 +93,7 @@ public class HtmlSyntaxInfoReader extends AbstractSyntaxAwareReader implements M
     // this is the correction factor
     if (SystemInfo.isMac) fontSize *= 0.75f;
     myResultBuffer.append(String.format("font-size:%.1fpt;", fontSize));
-    myResultBuffer.append("white-space:pre;\">");
+    myResultBuffer.append("\">");
   }
 
   protected void appendFontFamilyRule(@NotNull StringBuilder styleBuffer, int fontFamilyId) {

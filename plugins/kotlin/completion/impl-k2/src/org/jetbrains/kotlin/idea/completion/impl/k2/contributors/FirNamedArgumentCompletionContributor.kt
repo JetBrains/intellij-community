@@ -15,6 +15,8 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvid
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.findValueArgument
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.parameterInfo.collectCallCandidates
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -25,7 +27,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompletionContext, priority: Int) :
     FirCompletionContributorBase<FirNameReferencePositionContext>(basicContext, priority) {
 
-    override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext) {
+    override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext, weighingContext: WeighingContext) {
         if (positionContext.explicitReceiver != null) return
 
         val valueArgument = findValueArgument(positionContext.nameExpression) ?: return
@@ -52,16 +54,21 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
         }
 
         for ((name, types) in namedArgumentInfos) {
-            with(lookupElementFactory) {
-                sink.addElement(createNamedArgumentLookupElement(name, types))
-                if (types.any { it.isBoolean }) {
-                    sink.addElement(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value))
-                    sink.addElement(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value))
-                }
-                if (types.any { it.isMarkedNullable }) {
-                    sink.addElement(createNamedArgumentWithValueLookupElement(name, KtTokens.NULL_KEYWORD.value))
+            val elements = buildList {
+                with(lookupElementFactory) {
+                    add(createNamedArgumentLookupElement(name, types))
+                    if (types.any { it.isBoolean }) {
+                        add(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value))
+                        add(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value))
+                    }
+                    if (types.any { it.isMarkedNullable }) {
+                        add(createNamedArgumentWithValueLookupElement(name, KtTokens.NULL_KEYWORD.value))
+                    }
                 }
             }
+            elements.forEach { Weighers.applyWeighsToLookupElement(weighingContext, it, symbolWithOrigin = null) }
+
+            sink.addAllElements(elements)
         }
     }
 

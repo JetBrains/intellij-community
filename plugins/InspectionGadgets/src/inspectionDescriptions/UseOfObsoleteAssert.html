@@ -3,7 +3,7 @@
 Reports any calls to methods from the <code>junit.framework.Assert</code> class. This class is
 obsolete and the calls can be replaced by calls to methods from the <code>org.junit.Assert</code> class.
 <p>For example:</p>
-<pre><code>
+<pre><code lang="java">
   <b>import</b> org.junit.*;
   <b>public class</b> NecessaryTest {
     @Test
@@ -13,7 +13,7 @@ obsolete and the calls can be replaced by calls to methods from the <code>org.ju
   }
 </code></pre>
 <p>After the quick fix is applied, the result looks like the following:</p>
-<pre><code>
+<pre><code lang="java">
   <b>import</b> org.junit;
   <b>public class</b> NecessaryTest {
 

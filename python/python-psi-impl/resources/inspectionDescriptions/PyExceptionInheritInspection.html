@@ -4,22 +4,22 @@
   raised but does not inherit from the
   <a href="https://docs.python.org/3/library/exceptions.html">builtin Exception class</a>.</p>
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 class A:
     pass
 
 
 def me_exception():
     raise A()
-</pre>
+</code></pre>
 <p>The proposed quick-fix changes the code to:</p>
-<pre style="font-family: monospace">
+<pre><code>
 class A(Exception):
     pass
 
 
 def me_exception():
     raise A()
-</pre>
+</code></pre>
 </body>
 </html>

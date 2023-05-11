@@ -73,7 +73,7 @@ public final class GenericRepositoryUtil {
   }
 
   public static List<String> createPlaceholdersList(List<? extends TemplateVariable> variables) {
-    return ContainerUtil.map2List(variables, variable -> String.format("{%s}", variable.getName()));
+    return ContainerUtil.map(variables, variable -> String.format("{%s}", variable.getName()));
   }
 
   public static @NlsContexts.Label String prettifyVariableName(@NlsContexts.Label String variableName) {

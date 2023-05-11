@@ -22,7 +22,7 @@ public abstract class AbstractXmlTagTreeElement<T extends XmlElement> extends Ps
   }
 
   protected static Collection<StructureViewTreeElement> getStructureViewTreeElements(XmlTag[] subTags) {
-    return ContainerUtil.map2List(subTags, xmlTag -> {
+    return ContainerUtil.map(subTags, xmlTag -> {
       for (final XmlStructureViewElementProvider provider : XmlStructureViewElementProvider.EP_NAME.getExtensionList()) {
         final StructureViewTreeElement element = provider.createCustomXmlTagTreeElement(xmlTag);
         if (element != null) {

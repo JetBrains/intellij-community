@@ -8,14 +8,12 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import junit.framework.TestCase
 import org.junit.Before
 import org.junit.Test
 import java.io.File
 
-class JpsIncorrectDataLoading  : HeavyPlatformTestCase() {
+class JpsIncorrectDataLoading : HeavyPlatformTestCase() {
 
   private lateinit var errorCollector: CollectingErrorReporter
 
@@ -27,7 +25,8 @@ class JpsIncorrectDataLoading  : HeavyPlatformTestCase() {
 
   @Test
   fun `test load broken library order entry`() {
-    val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/libraryOrderEntry")
+    val projectDir = PathManagerEx.findFileUnderCommunityHome(
+      "platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/libraryOrderEntry")
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).toList()
     assertEquals(1, modules.size)
@@ -36,7 +35,8 @@ class JpsIncorrectDataLoading  : HeavyPlatformTestCase() {
 
   @Test
   fun `test load broken library order entry multiple`() {
-    val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/multipleLibraryOrderEntry")
+    val projectDir = PathManagerEx.findFileUnderCommunityHome(
+      "platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/multipleLibraryOrderEntry")
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).toList()
     assertEquals(1, modules.size)
@@ -46,7 +46,8 @@ class JpsIncorrectDataLoading  : HeavyPlatformTestCase() {
 
   @Test
   fun `test mess in source folder`() {
-    val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/sourceFolder")
+    val projectDir = PathManagerEx.findFileUnderCommunityHome(
+      "platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/sourceFolder")
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).toList()
     assertEquals(1, modules.size)
@@ -55,7 +56,8 @@ class JpsIncorrectDataLoading  : HeavyPlatformTestCase() {
 
   @Test
   fun `test mess in broken url`() {
-    val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/sourceFolderBrokenUrl")
+    val projectDir = PathManagerEx.findFileUnderCommunityHome(
+      "platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/sourceFolderBrokenUrl")
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).toList()
     assertEquals(1, modules.size)
@@ -65,7 +67,8 @@ class JpsIncorrectDataLoading  : HeavyPlatformTestCase() {
 
   @Test
   fun `test mess in source folder - is test source`() {
-    val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/sourceFolderBrokenIsTestSource")
+    val projectDir = PathManagerEx.findFileUnderCommunityHome(
+      "platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/sourceFolderBrokenIsTestSource")
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).toList()
     assertEquals(1, modules.size)
@@ -76,7 +79,8 @@ class JpsIncorrectDataLoading  : HeavyPlatformTestCase() {
   private fun loadProject(projectFile: File): EntityStorage {
     val storageBuilder = MutableEntityStorage.create()
     val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, storageBuilder, virtualFileManager, errorReporter = errorCollector)
+    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, storageBuilder, virtualFileManager,
+                errorReporter = errorCollector)
     return storageBuilder.toSnapshot()
   }
 }

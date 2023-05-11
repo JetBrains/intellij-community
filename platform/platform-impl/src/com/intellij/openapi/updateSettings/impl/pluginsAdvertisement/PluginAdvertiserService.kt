@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
@@ -12,7 +12,6 @@ import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -24,17 +23,21 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.MultiMap
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.coroutineContext
 
+@ApiStatus.Internal
 sealed interface PluginAdvertiserService {
 
   companion object {
     @JvmStatic
     fun getInstance(project: Project): PluginAdvertiserService = project.service()
 
-    internal fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
+    fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
       return when (activeProductCode) {
         "IC", "AS" -> "IU"
         "PC" -> "PY"
@@ -84,6 +87,12 @@ sealed interface PluginAdvertiserService {
     includeIgnored: Boolean = false,
   )
 
+  suspend fun fetch(
+    customPlugins: List<PluginNode>,
+    unknownFeatures: Collection<UnknownFeature>,
+    includeIgnored: Boolean = false,
+  ): List<IdeaPluginDescriptor>
+
   @ApiStatus.Internal
   fun collectDependencyUnknownFeatures(includeIgnored: Boolean = false)
 
@@ -91,27 +100,65 @@ sealed interface PluginAdvertiserService {
   fun rescanDependencies(block: suspend CoroutineScope.() -> Unit = {})
 }
 
-open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdvertiserService,
-                                                                       Disposable {
+open class PluginAdvertiserServiceImpl(
+  private val project: Project,
+  private val cs: CoroutineScope,
+) : PluginAdvertiserService {
 
   companion object {
     private val notificationManager = SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
   }
-
-  private val coroutineScope = CoroutineScope(SupervisorJob())
 
   override suspend fun run(
     customPlugins: List<PluginNode>,
     unknownFeatures: Collection<UnknownFeature>,
     includeIgnored: Boolean,
   ) {
+    cs.launch(Dispatchers.IO) {
+      val (plugins, featuresMap) = fetchFeatures(unknownFeatures, includeIgnored)
+
+      val descriptorsById = PluginManagerCore.buildPluginIdMap()
+      val pluginManagerFilters = PluginManagerFilters.getInstance()
+      val disabledDescriptors = plugins.asSequence()
+        .map { it.pluginId }
+        .mapNotNull { descriptorsById[it] }
+        .filterNot { it.isEnabled }
+        .filter { pluginManagerFilters.allowInstallingPlugin(it) }
+        .filterNot { it.isOnDemand }
+        .toList()
+
+      val suggestToInstall = if (plugins.isEmpty())
+        emptyList()
+      else
+        fetchPluginSuggestions(
+          pluginIds = plugins.asSequence().map { it.pluginId }.toSet(),
+          customPlugins = customPlugins,
+          org = pluginManagerFilters,
+        )
+
+      launch(Dispatchers.EDT) {
+        notifyUser(
+          bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
+          suggestionPlugins = suggestToInstall,
+          disabledDescriptors = disabledDescriptors,
+          customPlugins = customPlugins,
+          featuresMap = featuresMap,
+          allUnknownFeatures = unknownFeatures,
+          dependencies = PluginFeatureCacheService.getInstance().dependencies,
+          includeIgnored = includeIgnored,
+        )
+      }
+    }
+  }
+
+  private suspend fun fetchFeatures(features: Collection<UnknownFeature>,
+                                    includeIgnored: Boolean): Pair<MutableSet<PluginData>, MultiMap<PluginId, UnknownFeature>> {
     val featuresMap = MultiMap.createSet<PluginId, UnknownFeature>()
-
     val plugins = mutableSetOf<PluginData>()
-    val dependencies = PluginFeatureCacheService.getInstance().dependencies
 
+    val dependencies = PluginFeatureCacheService.getInstance().dependencies
     val ignoredPluginSuggestionState = GlobalIgnoredPluginSuggestionState.getInstance()
-    for (feature in unknownFeatures) {
+    for (feature in features) {
       coroutineContext.ensureActive()
       val featureType = feature.featureType
       val implementationName = feature.implementationName
@@ -145,41 +192,70 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
       }
     }
 
-    val descriptorsById = PluginManagerCore.buildPluginIdMap()
-    val pluginManagerFilters = PluginManagerFilters.getInstance()
-    val disabledDescriptors = plugins.asSequence()
-      .map { it.pluginId }
-      .mapNotNull { descriptorsById[it] }
-      .filterNot { it.isEnabled }
-      .filter { pluginManagerFilters.allowInstallingPlugin(it) }
-      .filterNot { it.isOnDemand }
-      .toList()
-
-    val suggestToInstall = if (plugins.isEmpty())
-      emptyList()
-    else
-      fetchPluginSuggestions(
-        pluginIds = plugins.asSequence().map { it.pluginId }.toSet(),
-        customPlugins = customPlugins,
-        org = pluginManagerFilters,
-      )
-
-    coroutineScope.launch(Dispatchers.EDT) {
-      notifyUser(
-        bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
-        suggestionPlugins = suggestToInstall,
-        disabledDescriptors = disabledDescriptors,
-        customPlugins = customPlugins,
-        featuresMap = featuresMap,
-        allUnknownFeatures = unknownFeatures,
-        dependencies = dependencies,
-        includeIgnored = includeIgnored,
-      )
-    }
+    return plugins to featuresMap
   }
 
-  override fun dispose() {
-    coroutineScope.cancel()
+  override suspend fun fetch(customPlugins: List<PluginNode>,
+                             unknownFeatures: Collection<UnknownFeature>,
+                             includeIgnored: Boolean): List<IdeaPluginDescriptor> {
+    val (plugins, featuresMap) = fetchFeatures(unknownFeatures, includeIgnored)
+
+    if (plugins.isEmpty()) {
+      return emptyList()
+    }
+
+    val pluginIds = plugins.asSequence().map { it.pluginId }.toSet()
+    val pluginManagerFilters = PluginManagerFilters.getInstance()
+
+    val result = ArrayList<IdeaPluginDescriptor>(RepositoryHelper.mergePluginsFromRepositories(
+      MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds),
+      customPlugins,
+      true,
+    ).asSequence()
+      .filter { pluginIds.contains(it.pluginId) }
+      .filterNot { isBrokenPlugin(it) }
+      .filter { pluginManagerFilters.allowInstallingPlugin(it) }
+      .toList())
+
+    val localPluginIdMap = PluginManagerCore.buildPluginIdMap()
+
+    if (result.size < plugins.size) {
+      pluginIds.filterNot { pluginId -> result.find { pluginId == it.pluginId } != null }.mapNotNullTo(result) {
+        convertToNode(localPluginIdMap[it])
+      }
+    }
+
+    result.removeAll { localPluginIdMap[it.pluginId]?.isEnabled == true }
+
+    result.forEach { descriptor ->
+      val features = featuresMap[descriptor.pluginId]
+      if (features.isNotEmpty()) {
+        val suggestedFeatures = features.filter { "dependency" == it.featureDisplayName }.map {
+          IdeBundle.message("plugins.configurable.suggested.features.dependency", it.implementationDisplayName)
+        }
+        if (suggestedFeatures.isNotEmpty()) {
+          (descriptor as PluginNode).suggestedFeatures = suggestedFeatures
+        }
+      }
+    }
+
+    return result
+  }
+
+  private fun convertToNode(descriptor: IdeaPluginDescriptor?): PluginNode? {
+    if (descriptor == null) {
+      return null
+    }
+
+    val node = PluginNode(descriptor.pluginId, descriptor.name, "0")
+    node.description = descriptor.description
+    node.changeNotes = descriptor.changeNotes
+    node.version = descriptor.version
+    node.vendor = descriptor.vendor
+    node.organization = descriptor.organization
+    node.dependencies = descriptor.dependencies
+
+    return node
   }
 
   private fun fetchPluginSuggestions(
@@ -194,7 +270,7 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
     ).asSequence()
       .filter { pluginIds.contains(it.pluginId) }
       .filterNot { PluginManagerCore.isDisabled(it.pluginId) }
-      .filterNot { PluginManagerCore.isBrokenPlugin(it) }
+      .filterNot { isBrokenPlugin(it) }
       .filter { loadedPlugin ->
         when (val installedPlugin = PluginManagerCore.getPluginSet().findInstalledPlugin(loadedPlugin.pluginId)) {
           null -> true
@@ -230,7 +306,7 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
           IdeBundle.message("plugins.advertiser.action.enable.plugins")
 
         NotificationAction.createSimpleExpiring(title) {
-          coroutineScope.launch(Dispatchers.EDT) {
+          cs.launch(Dispatchers.EDT) {
             FUSEventSource.NOTIFICATION.logEnablePlugins(
               disabledDescriptors.map { it.pluginId.idString },
               project,
@@ -412,7 +488,7 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
   }
 
   override fun rescanDependencies(block: suspend CoroutineScope.() -> Unit) {
-    coroutineScope.launch(Dispatchers.IO) {
+    cs.launch(Dispatchers.IO) {
       rescanDependencies()
       block()
     }
@@ -439,6 +515,12 @@ open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
     unknownFeatures: Collection<UnknownFeature>,
     includeIgnored: Boolean,
   ) {
+  }
+
+  override suspend fun fetch(customPlugins: List<PluginNode>,
+                             unknownFeatures: Collection<UnknownFeature>,
+                             includeIgnored: Boolean): List<IdeaPluginDescriptor> {
+    return emptyList()
   }
 
   final override fun collectDependencyUnknownFeatures(includeIgnored: Boolean) {}

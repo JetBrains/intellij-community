@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow;
 
+import com.intellij.ide.actions.ToggleToolbarAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.project.DumbAware;
@@ -19,13 +22,13 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.intellij.ide.actions.ToggleToolbarAction.isToolbarVisible;
 
 public final class ProblemsView implements DumbAware, ToolWindowFactory {
   public static final String ID = "Problems View";
@@ -71,6 +74,11 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     return selectedContent == null ? null : get(ProblemsViewPanel.class, selectedContent);
   }
 
+  public static @Nullable ProblemsViewTab getSelectedTab(@NotNull Project project) {
+    Content selectedContent = getSelectedContent(project);
+    return selectedContent == null ? null : get(ProblemsViewTab.class, selectedContent);
+  }
+
   private static @Nullable Content getSelectedContent(@NotNull Project project) {
     ToolWindow window = getToolWindow(project);
     ContentManager manager = window == null ? null : window.getContentManagerIfCreated();
@@ -78,22 +86,23 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   private static void createContent(@NotNull ContentManager manager, @NotNull ProblemsViewTab panel) {
-    if (!(panel instanceof JComponent component))
-      throw new IllegalArgumentException("panel is not JComponent");
+    if (!(panel instanceof JComponent component)) {
+      throw new IllegalArgumentException("panel " + panel.getClass()+ " is not a JComponent");
+    }
 
     Content content = manager.getFactory().createContent(component, panel.getName(0), false);
-    content.setCloseable(false);
+    content.setCloseable(panel.isCloseable());
     manager.addContent(content);
   }
 
   private static void selectionChanged(boolean selected, @NotNull Content content) {
-    ProblemsViewPanel panel = get(ProblemsViewPanel.class, content);
-    if (panel != null) panel.selectionChangedTo(selected);
+    var problemsViewTab = get(ProblemsViewTab.class, content);
+    if (problemsViewTab != null) problemsViewTab.selectionChangedTo(selected);
   }
 
   private static void visibilityChanged(boolean visible, @NotNull Content content) {
-    ProblemsViewPanel panel = get(ProblemsViewPanel.class, content);
-    if (panel != null) panel.visibilityChangedTo(visible);
+    var problemsViewTab = get(ProblemsViewTab.class, content);
+    if (problemsViewTab != null) problemsViewTab.visibilityChangedTo(visible);
   }
 
   private static <T> @Nullable T get(@NotNull Class<T> type, @NotNull Content content) {
@@ -109,57 +118,70 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   public static void addPanel(@NotNull Project project, @NotNull ProblemsViewPanelProvider provider) {
-    var window = getToolWindow(project);
+    ToolWindow window = getToolWindow(project);
     assert window != null;
-    var manager = window.getContentManager();
-    var panel = provider.create();
+    ContentManager manager = window.getContentManager();
+    ProblemsViewTab panel = provider.create();
     if (panel == null) return;
     createContent(manager, panel);
   }
 
   public static void removePanel(Project project, String id) {
-    var content = ProblemsViewToolWindowUtils.INSTANCE.getContentById(project, id);
-    var toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
+    Content content = ProblemsViewToolWindowUtils.INSTANCE.getContentById(project, id);
+    ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
     if (content == null || toolWindow == null)
       return;
-    
+
     toolWindow.getContentManager().removeContent(content, true);
   }
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow window) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ProblemsViewState state = ProblemsViewState.getInstance(project);
-    state.setShowToolbar(isToolbarVisible(window, project));
+    state.setShowToolbar(ToggleToolbarAction.isToolbarVisible(window, project));
     ContentManager manager = window.getContentManager();
 
+    CompletableFuture<?> result = CompletableFuture.completedFuture(null);
     for (ProblemsViewPanelProvider provider : ProblemsViewPanelProvider.getEP().getExtensions(project)) {
-      var panel = provider.create();
-      if (panel == null) continue;
-      createContent(manager, panel);
-    }
-
-    var selectedTabId = state.getSelectedTabId();
-    if (selectedTabId != null) {
-      ProblemsViewToolWindowUtils.INSTANCE.selectContent(manager, selectedTabId);
-    }
-
-    Content selectedContent = manager.getSelectedContent();
-    if (selectedContent != null) {
-      selectionChanged(true, selectedContent);
-    }
-    manager.addContentManagerListener(new ContentManagerListener() {
-      @Override
-      public void selectionChanged(@NotNull ContentManagerEvent event) {
-        boolean selected = ContentManagerEvent.ContentOperation.add == event.getOperation();
-        var component = event.getContent().getComponent();
-        if (component instanceof ProblemsViewTab problemsView) {
-          ProblemsView.selectionChanged(selected, event.getContent());
-          if (selected)
-            state.setSelectedTabId(problemsView.getTabId());
+      ProblemsViewTab panel = provider.create();
+      if (panel != null) {
+        createContent(manager, panel);
+        if (panel instanceof HighlightingPanel) {
+          CompletableFuture<Void> future = new CompletableFuture<>();
+          ReadAction.nonBlocking(() -> ((HighlightingPanel)panel).initInBGT())
+            .submit(AppExecutorUtil.getAppExecutorService())
+            .onError(throwable -> future.completeExceptionally(throwable))
+            .onSuccess(o->future.complete(o));
+          result = result.thenCompose(__->future);
         }
       }
-    });
-    project.getMessageBus().connect(manager).subscribe(ToolWindowManagerListener.TOPIC, createListener());
+    }
+    result.thenRun(() -> ApplicationManager.getApplication().invokeLater(() -> {
+      if (project.isDisposed() || manager.isDisposed()) return;
+      String selectedTabId = state.getSelectedTabId();
+      if (selectedTabId != null) {
+        ProblemsViewToolWindowUtils.INSTANCE.selectContent(manager, selectedTabId);
+      }
+      Content selectedContent = manager.getSelectedContent();
+      if (selectedContent != null) {
+        selectionChanged(true, selectedContent);
+      }
+      manager.addContentManagerListener(new ContentManagerListener() {
+        @Override
+        public void selectionChanged(@NotNull ContentManagerEvent event) {
+          boolean selected = ContentManagerEvent.ContentOperation.add == event.getOperation();
+          JComponent component = event.getContent().getComponent();
+          if (component instanceof ProblemsViewTab problemsView) {
+            ProblemsView.selectionChanged(selected, event.getContent());
+            if (selected) {
+              state.setSelectedTabId(problemsView.getTabId());
+            }
+          }
+        }
+      });
+      project.getMessageBus().connect(manager).subscribe(ToolWindowManagerListener.TOPIC, createListener());
+    }));
   }
 
   @NotNull
@@ -176,8 +198,8 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
         boolean vertical = !window.getAnchor().isHorizontal();
         if (vertical != orientation.getAndSet(vertical)) {
           for (Content content : window.getContentManager().getContents()) {
-            ProblemsViewPanel panel = get(ProblemsViewPanel.class, content);
-            if (panel != null) panel.orientationChangedTo(vertical);
+            var problemsViewTab = get(ProblemsViewTab.class, content);
+            if (problemsViewTab != null) problemsViewTab.orientationChangedTo(vertical);
           }
         }
         boolean visible = window.isVisible();

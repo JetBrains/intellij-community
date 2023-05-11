@@ -45,6 +45,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.Assume.assumeTrue;
+
 public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -96,7 +98,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     WriteCommandAction.writeCommandAction(myProject).run(() -> myProjectPom.delete(this));
 
     configConfirmationForYesAnswer();
-    scheduleProjectImportAndWait();
+    importProject();
 
     assertEquals(0, getProjectsTree().getRootProjects().size());
 
@@ -104,11 +106,13 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
+                       <packaging>pom</packaging>
                        <modules>
                          <module>m</module>
                        </modules>
                        """);
-    scheduleProjectImportAndWait();
+    importProject();    //scheduleProjectImportAndWait();
+
 
     assertEquals(1, getProjectsTree().getRootProjects().size());
   }
@@ -217,7 +221,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     configConfirmationForYesAnswer();
     scheduleProjectImportAndWaitWithoutCheckFloatingBar();
-
+    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    waitForImportCompletion();
     assertEquals(0, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
   }
 
@@ -318,6 +323,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testAddingManagedFileAndChangingAggregation() {
+    assumeTrue(isWorkspaceImport());
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>parent</artifactId>
@@ -351,11 +357,10 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                        <version>1</version>
                        <packaging>pom</packaging>
                        """);
-    scheduleProjectImportAndWait();
+    importProject();
 
-    assertEquals(2, getProjectsTree().getRootProjects().size());
+    assertEquals(1, getProjectsTree().getRootProjects().size());
     assertEquals(0, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
-    assertEquals(0, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(1)).size());
   }
 
   @Test
@@ -1048,10 +1053,10 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                     """);
 
     assertSources("project", "src/main/java", "src1", "src2");
-    assertResources("project", "res1", "res2", "src/main/resources");
+    assertDefaultResources("project", "res1", "res2");
 
     assertTestSources("project", "src/test/java", "test1", "test2");
-    assertTestResources("project", "src/test/resources", "testres1", "testres2");
+    assertDefaultTestResources("project", "testres1", "testres2");
   }
 
   @Test
@@ -1072,7 +1077,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                        """);
     importProject();
     assertModules("project");
-
+    assertSources("project", "src/main/java");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableRootModel model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
@@ -1315,7 +1321,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testWhenDeleteModuleThenChangeModuleDependencyToLibraryDependency() {
-    if (!isWorkspaceImport()) return;
+    assumeTrue(isWorkspaceImport());
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1363,7 +1369,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testWhenDeleteModuleInProjectStructureThenChangeModuleDependencyToLibraryDependency() throws ConfigurationException {
-    if (!isWorkspaceImport()) return;
+    assumeTrue(isWorkspaceImport());
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1455,7 +1461,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testDoNotIgnoreProjectWhenSeparateMainAndTestModulesDeletedDuringImport() {
-    Assume.assumeTrue(isWorkspaceImport());
+    assumeTrue(isWorkspaceImport());
 
     importProject("""
                     <groupId>test</groupId>

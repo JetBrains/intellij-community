@@ -4,6 +4,7 @@
 
 package com.intellij.openapi.wm.impl
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
 import com.intellij.icons.AllIcons
@@ -24,7 +25,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -36,8 +39,11 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.popup.Balloon
@@ -61,7 +67,10 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.FocusUtil
+import com.intellij.util.ui.PositionTracker
+import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
@@ -72,6 +81,7 @@ import java.awt.event.*
 import java.beans.PropertyChangeListener
 import java.lang.Runnable
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
@@ -98,7 +108,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     get() = state.layout
     set(value) { state.layout = value }
 
-  private val idToEntry = HashMap<String, ToolWindowEntry>()
+  private val idToEntry = ConcurrentHashMap<String, ToolWindowEntry>()
   private val activeStack = ActiveStack()
   private val sideStack = SideStack()
   private val toolWindowPanes = LinkedHashMap<String, ToolWindowPane>()
@@ -368,7 +378,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   private fun revalidateStripeButtons() {
     val buttonManagers = toolWindowPanes.values.mapNotNull { it.buttonManager as? ToolWindowPaneNewButtonManager }
-    ApplicationManager.getApplication().invokeLater({ buttonManagers.forEach { it.refreshUi() } }, project.disposed)
+    ApplicationManager.getApplication().invokeLater(ContextAwareRunnable { buttonManagers.forEach { it.refreshUi() } }, project.disposed)
   }
 
   internal fun createNotInHierarchyIterable(paneId: String): Iterable<Component> {
@@ -741,6 +751,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       .filter { it.isAvailable }
   }
 
+  override fun isStripeButtonShow(toolWindow: ToolWindow): Boolean = idToEntry.get(toolWindow.id)?.stripeButton != null
+
   /**
    * @return windowed decorator for the tool window with specified `ID`.
    */
@@ -1001,9 +1013,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     return entry.toolWindow
   }
 
-  internal fun registerToolWindow(task: RegisterToolWindowTask,
-                                  buttonManager: ToolWindowButtonManager,
-                                  ensureToolWindowActionRegisteredIsNeeded: Boolean = true): ToolWindowEntry {
+  internal fun registerToolWindow(task: RegisterToolWindowTask, buttonManager: ToolWindowButtonManager): ToolWindowEntry {
     LOG.debug { "registerToolWindow($task)" }
 
     if (idToEntry.containsKey(task.id)) {
@@ -1016,7 +1026,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
                          && stripeManager.allowToShowOnStripe(task.id, info == null, isNewUi)
     // do not create layout for New UI - button is not created for toolwindow by default
     if (info == null) {
-      info = layoutState.create(task, isNewUi = isNewUi)
+      info = layoutState.create(task)
       if (isButtonNeeded) {
         // we must allocate order - otherwise, on drag-n-drop, we cannot move some tool windows to the end
         // because sibling's order is equal to -1, so, always in the end
@@ -1068,9 +1078,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
     }
 
-    if (ensureToolWindowActionRegisteredIsNeeded) {
-      ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow, ActionManager.getInstance())
-    }
+    ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow, ActionManager.getInstance())
 
     val stripeButton = if (isButtonNeeded) {
       buttonManager.createStripeButton(toolWindow, infoSnapshot, task)
@@ -1105,6 +1113,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   private fun isToolwindowOfBundledPlugin(task: RegisterToolWindowTask): Boolean {
+    if (ToolWindowId.BUILD_DEPENDENCIES == task.id) return true // platform toolwindow but registered dynamically
+
     val taskPlugin = task.pluginDescriptor
     if (taskPlugin != null) return taskPlugin.isBundled
 
@@ -1237,6 +1247,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         newLayout.addInfo(entry.id, old.copy())
       }
       else if (old != new) {
+        if (!entry.toolWindow.isAvailable) {
+          new.isVisible = false // Preserve invariants: if it can't be shown, don't consider it visible.
+        }
         list.add(LayoutData(old = old, new = new, entry = entry))
       }
     }
@@ -1247,8 +1260,20 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       return
     }
 
-    for (item in list) {
+    // Now, show/hide/dock/undock/rearrange tool windows and their stripe buttons.
+    val iterator = list.iterator()
+    while (iterator.hasNext()) {
+      val item = iterator.next()
+
+      // Apply the new info to all windows, including unavailable ones
+      // (so they're shown in their appropriate places if they ARE shown later by some user action).
       item.entry.applyWindowInfo(item.new)
+
+      // Then remove unavailable tool windows to exclude them from further processing.
+      if (!item.entry.toolWindow.isAvailable) {
+        iterator.remove()
+        continue
+      }
 
       if (item.old.isVisible && !item.new.isVisible) {
         updateStateAndRemoveDecorator(item.new, item.entry, dirtyMode = true)
@@ -1292,7 +1317,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     // Now that the windows are shown/hidden/docked/whatever, we can adjust their sizes properly:
-
     for (item in list) {
       if (item.new.isVisible && item.new.isDocked) {
         val toolWindowPane = getToolWindowPane(item.entry.toolWindow)
@@ -1331,6 +1355,21 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     fireStateChanged(ToolWindowManagerEventType.SetLayout)
 
     checkInvariants(null)
+  }
+
+  override fun getMoreButtonSide() = state.moreButton
+
+  override fun setMoreButtonSide(side: ToolWindowAnchor) {
+    state.moreButton = side
+
+    if (isNewUi) {
+      for (pane in toolWindowPanes.values) {
+        val buttonManager = pane.buttonManager
+        if (buttonManager is ToolWindowPaneNewButtonManager) {
+          buttonManager.updateMoreButtons()
+        }
+      }
+    }
   }
 
   override fun invokeLater(runnable: Runnable) {
@@ -1440,7 +1479,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     val buttonManager = toolWindowPane.buttonManager as ToolWindowPaneNewButtonManager
     var button = buttonManager.getSquareStripeFor(entry.readOnlyWindowInfo.anchor).getButtonFor(options.toolWindowId)?.getComponent()
     if (button == null || !button.isShowing) {
-      button = (buttonManager.getSquareStripeFor(ToolWindowAnchor.LEFT) as? ToolWindowLeftToolbar)?.moreButton!!
+      button = buttonManager.getMoreButton(getMoreButtonSide())
       position = Balloon.Position.atLeft
     }
     val show = Runnable {

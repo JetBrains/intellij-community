@@ -14,6 +14,7 @@ import com.jetbrains.python.console.transport.server.ServerClosedException
 import com.jetbrains.python.console.transport.server.TNettyServer
 import com.jetbrains.python.console.transport.server.TNettyServerTransport
 import com.jetbrains.python.debugger.PyDebugValueExecutionService
+import com.jetbrains.python.debugger.PyFrameAccessor
 import com.jetbrains.python.debugger.PyFrameListener
 import org.apache.thrift.protocol.TBinaryProtocol
 import org.apache.thrift.transport.TTransport
@@ -119,7 +120,7 @@ class PydevConsoleCommunicationServer(project: Project,
           executionService.cancelSubmittedTasks(this@PydevConsoleCommunicationServer)
         }
 
-        override fun sessionStopped() {
+        override fun sessionStopped(communication: PyFrameAccessor?) {
           executionService.cancelSubmittedTasks(this@PydevConsoleCommunicationServer)
         }
       })

@@ -45,14 +45,13 @@
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.k2.fe10-bindings" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.performance-tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.compiler-reference-index.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.coverage.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.copyright.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.tests" scope="TEST" />
@@ -70,5 +69,6 @@
     <orderEntry type="module" module-name="kotlin.highlighting" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.tests.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.searching.test.k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-reference-index.tests.k2" scope="TEST" />
   </component>
 </module>

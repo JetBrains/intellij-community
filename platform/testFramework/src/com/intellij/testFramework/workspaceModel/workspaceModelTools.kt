@@ -7,3 +7,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 fun WorkspaceModel.updateProjectModel(updater: (MutableEntityStorage) -> Unit) {
   updateProjectModel("Test update", updater)
 }
+
+suspend fun WorkspaceModel.updateProjectModelAsync(updater: (MutableEntityStorage) -> Unit) {
+  updateProjectModelAsync("Test update", updater)
+}

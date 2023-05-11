@@ -45,7 +45,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private val inclusionModel = PartialCommitInclusionModel(project)
 
-  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project) { getIncludedChanges() }
+  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project, ui.commitMessageUi) { getIncludedChanges() }
   private var currentChangeList: LocalChangeList
 
   init {
@@ -77,9 +77,7 @@ internal class ChangesViewCommitWorkflowHandler(
     val busConnection = project.messageBus.connect(this)
     busConnection.subscribe(ProjectCloseListener.TOPIC, this)
 
-    val initialCommitMessage = commitMessagePolicy.init(currentChangeList)
-    setCommitMessage(initialCommitMessage)
-    DelayedCommitMessageProvider.init(project, ui, initialCommitMessage)
+    commitMessagePolicy.init(currentChangeList, this)
   }
 
   override fun createDataProvider(): DataProvider = object : DataProvider {
@@ -189,7 +187,7 @@ internal class ChangesViewCommitWorkflowHandler(
     currentChangeList = newChangeList
 
     if (oldChangeList.id != newChangeList.id) {
-      commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList, ui.commitMessageUi)
+      commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList)
 
       commitOptions.changeListChanged(newChangeList)
     }
@@ -273,7 +271,7 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   override fun saveCommitMessageBeforeCommit() {
-    commitMessagePolicy.onBeforeCommit(currentChangeList, getCommitMessage())
+    commitMessagePolicy.onBeforeCommit(currentChangeList)
   }
 
   // save state on project close
@@ -292,7 +290,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private fun saveStateBeforeDispose() {
     commitOptions.saveState()
-    commitMessagePolicy.onDispose(currentChangeList, getCommitMessage())
+    commitMessagePolicy.onDispose(currentChangeList)
   }
 
   interface ActivityListener : EventListener {
@@ -302,7 +300,7 @@ internal class ChangesViewCommitWorkflowHandler(
   private inner class GitCommitStateCleaner : CommitStateCleaner() {
 
     override fun onSuccess() {
-      commitMessagePolicy.onAfterCommit(currentChangeList, ui.commitMessageUi)
+      commitMessagePolicy.onAfterCommit(currentChangeList)
       super.onSuccess()
     }
   }

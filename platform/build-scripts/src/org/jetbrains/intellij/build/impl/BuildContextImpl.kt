@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "RAW_RUN_BLOCKING")
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
 import io.opentelemetry.api.common.AttributeKey
@@ -43,16 +44,25 @@ class BuildContextImpl(
   override val systemSelector: String
     get() = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
-
   override val buildNumber: String = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDirRoot)
 
   override val xBootClassPathJarNames: List<String>
     get() = productProperties.xBootClassPathJarNames
 
   override var bootClassPathJarNames = persistentListOf("util.jar", "util_rt.jar")
+  
+  override val ideMainClassName: String
+    get() = if (useModularLoader) "com.intellij.platform.runtime.loader.Loader" else productProperties.mainClassName
+  
+  override val useModularLoader: Boolean
+    get() = productProperties.supportModularLoading && options.useModularLoader
 
   override val applicationInfo = ApplicationInfoPropertiesImpl(this)
   private var builtinModulesData: BuiltinModulesFileData? = null
+
+  internal val jarCacheManager: JarCacheManager by lazy {
+    options.jarCacheDir?.let { LocalDiskJarCacheManager(it) } ?: NonCachingJarCacheManager
+  }
 
   init {
     @Suppress("DEPRECATION")
@@ -137,19 +147,22 @@ class BuildContextImpl(
 
   override fun addDistFile(file: DistFile) {
     Span.current().addEvent("add app resource", Attributes.of(AttributeKey.stringKey("file"), file.toString()))
+
+    val existing = distFiles.firstOrNull { it.os == file.os && it.arch == file.arch && it.relativePath == file.relativePath }
+    check(existing == null) {
+      "$file duplicates $existing"
+    }
     distFiles.add(file)
   }
 
   override fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile> {
-    return distFiles.asSequence().filter {
+    val result = distFiles.filterTo(mutableListOf()) {
       (os == null && arch == null) ||
       (os == null || it.os == null || it.os == os) &&
       (arch == null || it.arch == null || it.arch == arch)
-    }.sortedWith(
-      compareBy<DistFile> { it.relativePath }
-        .thenBy { it.os }
-        .thenBy { it.arch }
-    ).toList()
+    }
+    result.sortWith(compareBy({ it.relativePath }, { it.os }, { it.arch }))
+    return result
   }
 
   override fun findApplicationInfoModule(): JpsModule {
@@ -157,7 +170,7 @@ class BuildContextImpl(
   }
 
   override fun notifyArtifactBuilt(artifactPath: Path) {
-    compilationContext.notifyArtifactWasBuilt(artifactPath)
+    compilationContext.notifyArtifactBuilt(artifactPath)
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String): Path? {
@@ -176,15 +189,14 @@ class BuildContextImpl(
     return null
   }
 
-  override fun executeStep(stepMessage: String, stepId: String, step: Runnable): Boolean {
-    if (options.buildStepsToSkip.contains(stepId)) {
-      Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage))
-    }
-    else {
-      messages.block(stepMessage, step::run)
-    }
-    return true
+  override val jetBrainsClientModuleFilter: JetBrainsClientModuleFilter by lazy {
+    val mainModule = productProperties.embeddedJetBrainsClientMainModule
+    if (mainModule != null && options.enableEmbeddedJetBrainsClient) JetBrainsClientModuleFilterImpl(mainModule, this)
+    else EmptyJetBrainsClientModuleFilter
   }
+  
+  override val isEmbeddedJetBrainsClientEnabled: Boolean
+    get() = productProperties.embeddedJetBrainsClientMainModule != null && options.enableEmbeddedJetBrainsClient
 
   override fun shouldBuildDistributions(): Boolean = !options.targetOs.isEmpty()
 
@@ -194,10 +206,9 @@ class BuildContextImpl(
 
   override fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext {
     val projectHomeForCustomizersAsString = FileUtilRt.toSystemIndependentName(projectHomeForCustomizers.toString())
-    val options = BuildOptions()
+    val options = BuildOptions(compressZipFiles = this.options.compressZipFiles)
     options.useCompiledClassesFromProjectOutput = this.options.useCompiledClassesFromProjectOutput
     options.buildStepsToSkip = this.options.buildStepsToSkip
-    options.compressZipFiles = this.options.compressZipFiles
     options.targetArch = this.options.targetArch
     options.targetOs = this.options.targetOs
     val compilationContextCopy = compilationContext.createCopy(
@@ -252,6 +263,11 @@ class BuildContextImpl(
     jvmArgs.add("-Djna.nosys=true")
     jvmArgs.add("-Djna.noclasspath=true")
 
+    if (useModularLoader) {
+      jvmArgs.add("-Dintellij.platform.runtime.repository.path=$macroName/${RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME}")
+      jvmArgs.add("-Dintellij.platform.root.module=${productProperties.applicationInfoModule}")
+    }
+
     if (productProperties.platformPrefix != null) {
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
     }
@@ -262,6 +278,9 @@ class BuildContextImpl(
       @Suppress("SpellCheckingInspection")
       jvmArgs.add("-Dsplash=true")
     }
+
+    // https://youtrack.jetbrains.com/issue/IDEA-269280
+    jvmArgs.add("-Daether.connector.resumeDownloads=false")
 
     jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(this, os))
 

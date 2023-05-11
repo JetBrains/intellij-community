@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -17,11 +17,10 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
@@ -237,7 +236,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
         Location location = context.getFrameProxy().location();
         evaluator = location == null ? null : myEvaluatorCache.get(location);
         if (evaluator == null && !StringUtil.isEmpty(myExpression)) {
-          evaluator = ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
+          evaluator = ReadAction.compute(() -> {
             SourcePosition sourcePosition = ContextUtil.getSourcePosition(context);
             PsiElement contextElement = ContextUtil.getContextElement(sourcePosition);
             return EvaluatorBuilderImpl.build(

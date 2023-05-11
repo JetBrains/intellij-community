@@ -20,6 +20,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 
 class SoftMargins implements Cloneable {
 
+  @Unmodifiable
   private List<Integer> myValues;
 
   @SuppressWarnings("unused") // Serialization getter
@@ -40,17 +42,21 @@ class SoftMargins implements Cloneable {
   public void setSOFT_MARGINS(@Nullable String valueList) {
     if (valueList != null) {
       String[] values = valueList.split(",\\s*");
-      myValues = new ArrayList<>(values.length);
+      List<Integer> newValues = new ArrayList<>(values.length);
       for (String value : values) {
         try {
-          myValues.add(Integer.parseInt(value));
+          newValues.add(Integer.parseInt(value));
         }
         catch (NumberFormatException nfe) {
-          myValues = null;
-          return;
+          newValues = null;
+          break;
         }
       }
-      Collections.sort(myValues);
+      if (newValues != null) {
+        Collections.sort(newValues);
+        newValues = Collections.unmodifiableList(newValues);
+      }
+      myValues = newValues;
     }
   }
 

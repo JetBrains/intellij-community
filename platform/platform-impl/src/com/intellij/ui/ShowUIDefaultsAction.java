@@ -118,7 +118,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
               final Ref<Boolean> changed = Ref.create(false);
 
               if (value instanceof Color) {
-                ColorPicker.showColorPickerPopup(null, (Color)value, new ColorListener() {
+                ColorChooserService.getInstance().showPopup(null, (Color)value, new ColorListener() {
                   @Override
                   public void colorChanged(Color color, Object source) {
                     if (color != null) {
@@ -251,7 +251,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
           }
         });
 
-        new TableSpeedSearch(table, (o, cell) -> cell.column == 1 ? null : String.valueOf(o));
+        TableSpeedSearch.installOn(table, (o, cell) -> cell.column == 1 ? null : String.valueOf(o));
         table.setShowGrid(false);
         TableHoverListener.DEFAULT.removeFrom(table);
         myTable = table;
@@ -336,39 +336,16 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       }
 
       private void addNewValue() {
-        ApplicationManager.getApplication().invokeLater(() -> new DialogWrapper(myTable, true) {
-          final JBTextField name = new JBTextField(40);
-          final JBTextField value = new JBTextField(40);
-          {
-            setTitle(IdeBundle.message("dialog.title.add.new.value"));
-            init();
+        ApplicationManager.getApplication().invokeLater(() -> new ShowUIDefaultsAddValue(myTable, true, (name, value) -> {
+          String key = name.trim();
+          String val = value.trim();
+          if (!key.isEmpty() && !val.isEmpty()) {
+            UIManager.put(key, UITheme.parseValue(key, val));
+            myTable.setModel(createFilteringModel());
+            updateFilter();
           }
-
-          @Override
-          protected JComponent createCenterPanel() {
-            return UI.PanelFactory.grid()
-              .add(UI.PanelFactory.panel(name).withLabel(IdeBundle.message("label.ui.name")))
-              .add(UI.PanelFactory.panel(value).withLabel(IdeBundle.message("label.ui.value")))
-              .createPanel();
-          }
-
-          @Override
-          public @NotNull JComponent getPreferredFocusedComponent() {
-            return name;
-          }
-
-          @Override
-          protected void doOKAction() {
-            String key = name.getText().trim();
-            String val = value.getText().trim();
-            if (!key.isEmpty() && !val.isEmpty()) {
-              UIManager.put(key, UITheme.parseValue(key, val));
-              myTable.setModel(createFilteringModel());
-              updateFilter();
-            }
-            super.doOKAction();
-          }
-        }.show());
+          return null;
+        }).show());
       }
 
       private void updateFilter() {

@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes
 
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -12,12 +13,14 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ReflectionUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.CREATE_BY_PATTERN_MAY_NOT_REFORMAT
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
+@ApiStatus.Internal
 abstract class QuickFixActionBase<out T : PsiElement>(element: T) : IntentionAction, Cloneable {
     @SafeFieldForPreview // not actually safe but will be properly patched in getFileModifierForPreview
     private val elementPointer = element.createSmartPointer()
@@ -58,7 +61,7 @@ abstract class QuickFixActionBase<out T : PsiElement>(element: T) : IntentionAct
         if (super.getFileModifierForPreview(target) !== this) return null
         val oldElement: PsiElement? = element
         if (oldElement == null) return null
-        if (target.originalFile != oldElement.containingFile) {
+        if (IntentionPreviewUtils.getOriginalFile(target) != oldElement.containingFile) {
             throw IllegalStateException("Intention action ${this::class} ($familyName) refers to the element from another source file. " +
                                                 "It's likely that it's going to modify a file not opened in the editor, " +
                                                 "so default preview strategy won't work. Also, if another file is modified, " +

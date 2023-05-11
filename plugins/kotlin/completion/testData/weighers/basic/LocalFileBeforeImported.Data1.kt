@@ -1,3 +1,3 @@
 package test
 
-fun foo3FromSamePackage() = 12
+fun foo4FromSamePackage() = 12

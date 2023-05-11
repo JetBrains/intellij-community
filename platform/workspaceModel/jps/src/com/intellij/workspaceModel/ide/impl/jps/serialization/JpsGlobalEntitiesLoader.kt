@@ -9,7 +9,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 object JpsGlobalEntitiesSerializers {
   const val GLOBAL_LIBRARIES_FILE_NAME: String = "applicationLibraries"
 
-  fun createApplicationSerializers(virtualFileUrlManager: VirtualFileUrlManager): JpsFileEntitiesSerializer<LibraryEntity>? {
+  fun createApplicationSerializers(virtualFileUrlManager: VirtualFileUrlManager): JpsFileEntitiesSerializer<LibraryEntity> {
     val globalLibrariesFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(GLOBAL_LIBRARIES_FILE_NAME).absolutePath)
     val globalLibrariesEntitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
     return JpsGlobalLibrariesFileSerializer(globalLibrariesEntitySource)

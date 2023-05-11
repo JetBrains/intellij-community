@@ -94,14 +94,13 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
           if (version != null && version.isAtLeast(JavaSdkVersion.JDK_1_8)) {
             val mSignatures = javaPsi.visibleSignatures.filter { defaultMethods.contains(LanguageLevelUtil.getSignature(it.method)) }
             if (mSignatures.isNotEmpty()) {
-              val toHighlight = node.uastAnchor?.sourcePsi ?: return true
               val jdkName = LanguageLevelUtil.getJdkName(effectiveLanguageLevel)
               val message = if (mSignatures.size == 1) {
                 JvmAnalysisBundle.message("jvm.inspections.1.8.problem.single.descriptor", mSignatures.first().name, jdkName)
               } else {
                 JvmAnalysisBundle.message("jvm.inspections.1.8.problem.descriptor", mSignatures.size, jdkName)
               }
-              holder.registerProblem(toHighlight, message, QuickFixFactory.getInstance().createImplementMethodsFix(javaPsi))
+              holder.registerUProblem(node, message, QuickFixFactory.getInstance().createImplementMethodsFix(javaPsi))
             }
           }
         }

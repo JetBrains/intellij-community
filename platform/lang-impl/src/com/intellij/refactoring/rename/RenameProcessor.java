@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -55,6 +54,9 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsContexts.Command;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(RenameProcessor.class);
 
@@ -67,7 +69,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private boolean mySearchTextOccurrences;
   protected boolean myForceShowPreview;
 
-  private @NlsContexts.Command String myCommandName;
+  private @Command String myCommandName;
 
   private NonCodeUsageInfo[] myNonCodeUsages = new NonCodeUsageInfo[0];
   private final List<AutomaticRenamerFactory> myRenamerFactories = new ArrayList<>();
@@ -144,7 +146,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   @Override
   public boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
 
     RenameUtil.addConflictDescriptions(usagesIn, conflicts);
     RenamePsiElementProcessor.forElement(myPrimaryElement).findExistingNameConflicts(myPrimaryElement, myNewName, conflicts, myAllRenames);
@@ -573,7 +575,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return mySearchTextOccurrences;
   }
 
-  public void setCommandName(final @NlsContexts.Command String commandName) {
+  public void setCommandName(@Command String commandName) {
     myCommandName = commandName;
   }
 

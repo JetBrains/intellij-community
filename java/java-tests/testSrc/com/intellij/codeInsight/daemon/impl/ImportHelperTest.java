@@ -13,6 +13,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,6 +42,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -64,6 +66,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     JavaCodeStyleSettings.getInstance(getProject()).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 100;
     DaemonCodeAnalyzer.getInstance(getProject()).setUpdateByTimerEnabled(false);
     enableInspectionTool(new UnusedImportInspection());
+    enableInspectionTool(new UnusedDeclarationInspection());
   }
 
   @Override
@@ -373,18 +376,18 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     @NonNls final String text = "class S { JFrame x; <caret> }";
     configureByText(text);
     boolean isInContent = true;
-    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent));
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent, ThreeState.UNSURE));
 
 
     doHighlighting();
-    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent));
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent, ThreeState.UNSURE));
 
     type(" ");
-    assertTrue(DaemonListeners.canChangeFileSilently(getFile(), isInContent));
+    assertTrue(DaemonListeners.canChangeFileSilently(getFile(), isInContent, ThreeState.UNSURE));
 
     UndoManager.getInstance(getProject()).undo(TextEditorProvider.getInstance().getTextEditor(getEditor()));
 
-    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent));
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent, ThreeState.UNSURE));
   }
 
 

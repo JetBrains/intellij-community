@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -97,6 +98,7 @@ public abstract class ModalityState {
    * corresponding to that progress' dialog. Otherwise, returns {@link #NON_MODAL}.
    */
   @NotNull
+  @RequiresBlockingContext
   public static ModalityState defaultModalityState() {
     return ApplicationManager.getApplication().getDefaultModalityState();
   }

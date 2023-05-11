@@ -308,7 +308,10 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
           try {
             //emulate 'write':
             buffer.clear();
-            page.getBuffer().put(0, buffer, 0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT);
+            page.putFromBuffer(buffer, 0);
+            //page.getBuffer().put(0, buffer, 0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT);
+            //page.markDirty();
+            //page.fileSizeMayChanged(SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT);
             return null;
           }
           finally {
@@ -331,7 +334,7 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
       final long finishedAtNs = System.nanoTime();
 
       printReportForResponseTime(
-        "Write randomly",
+        "Write randomly, at " + DIFFERENT_OFFSETS_TO_REQUEST + " offsets",
         SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT,
         DELAY_BETWEEN_RESPONSE_TIME_SHOTS_NS,
         RESPONSE_TIME_SHOTS,
@@ -375,7 +378,8 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
             try {
               //emulate 'read':
               buffer.clear();
-              buffer.put(page.getBuffer().duplicate());
+              buffer.put(0, page.getBuffer(), 0, BUFFER_SIZE);
+              //buffer.put(page.getBuffer().duplicate());
             }
             finally {
               page.unlock();
@@ -407,7 +411,8 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
           try {
             // emulate 'read':
             buffer.clear();
-            buffer.put(page.getBuffer().duplicate());
+            buffer.put(0, page.getBuffer(), 0, BUFFER_SIZE);
+            //buffer.put(page.getBuffer().duplicate());
           }
           finally {
             page.unlock();

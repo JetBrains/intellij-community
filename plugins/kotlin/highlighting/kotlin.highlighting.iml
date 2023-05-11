@@ -45,5 +45,7 @@
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="kotlin.base.code-insight" />
+    <orderEntry type="module" module-name="kotlin.base.statistics" />
   </component>
 </module>

@@ -26,6 +26,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class EnvironmentUtil {
   private static final Logger LOG = Logger.getInstance(EnvironmentUtil.class);
@@ -535,15 +537,25 @@ public final class EnvironmentUtil {
     inlineParentOccurrences(envs, getEnvironmentMap());
   }
 
+  private final static Pattern pattern = Pattern.compile("\\$(.*?)\\$");
+
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs, @NotNull Map<String, String> parentEnv) {
+    LinkedHashMap<String, String> lookup = new LinkedHashMap<>(envs);
+    lookup.putAll(parentEnv);
     for (Map.Entry<String, String> entry : envs.entrySet()) {
       String key = entry.getKey();
       String value = entry.getValue();
       if (value != null) {
-        String parentVal = parentEnv.get(key);
-        if (parentVal != null && containsEnvKeySubstitution(key, value)) {
-          envs.put(key, value.replace("$" + key + "$", parentVal));
+        Matcher matcher = pattern.matcher(value);
+        while (matcher.find()) {
+          String group = matcher.group(1);
+          String expanded = lookup.get(group);
+          if (expanded != null) {
+            value = value.replace("$" + group + "$", expanded);
+          }
         }
+        envs.put(key, value);
+        lookup.put(key, value);
       }
     }
   }

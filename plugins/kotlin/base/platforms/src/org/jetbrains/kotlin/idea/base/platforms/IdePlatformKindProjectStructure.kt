@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.platform.js.JsPlatforms
+import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
 import org.jetbrains.kotlin.utils.PathUtil
@@ -76,15 +77,16 @@ class IdePlatformKindProjectStructure(private val project: Project) {
             return when {
                 file.isKlibLibraryRootForPlatform(CommonPlatforms.defaultCommonPlatform) -> CommonIdePlatformKind
                 file.isKlibLibraryRootForPlatform(JsPlatforms.defaultJsPlatform) -> JsIdePlatformKind
+                file.isKlibLibraryRootForPlatform(WasmPlatforms.Default) -> JsIdePlatformKind
                 file.isKlibLibraryRootForPlatform(NativePlatforms.unspecifiedNativePlatform) -> NativeIdePlatformKind
                 else -> null
             }
         }
 
-        fun getLibraryKind(platformKind: IdePlatformKind): PersistentLibraryKind<*>? {
+        fun getLibraryKind(platformKind: IdePlatformKind): PersistentLibraryKind<*> {
             return when (platformKind) {
                 is CommonIdePlatformKind -> KotlinCommonLibraryKind
-                is JvmIdePlatformKind -> null
+                is JvmIdePlatformKind -> KotlinJvmEffectiveLibraryKind
                 is JsIdePlatformKind -> KotlinJavaScriptLibraryKind
                 is NativeIdePlatformKind -> KotlinNativeLibraryKind
                 else -> error("Unsupported platform kind: $platformKind")

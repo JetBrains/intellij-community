@@ -4,6 +4,7 @@ package com.intellij.usages.impl.rules;
 import com.intellij.openapi.project.Project;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.FileStructureGroupRuleProvider;
+import com.intellij.usages.impl.PackageGroupRuleProvider;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,7 +37,16 @@ public final class ActiveRules {
       rules.add(new ModuleGroupingRule(project, usageViewSettings.isFlattenModules()));
     }
     if (usageViewSettings.isGroupByPackage() && !usageViewSettings.isGroupByDirectoryStructure()) {
-      rules.add(DirectoryGroupingRule.getInstance(project));
+      UsageGroupingRule rule = DirectoryGroupingRule.getInstance(project);
+      if (presentation != null) {
+        for (PackageGroupRuleProvider ruleProvider : PackageGroupRuleProvider.EP_NAME.getExtensionList()) {
+          UsageGroupingRule candidate = ruleProvider.getUsageGroupingRule(project, usageViewSettings, presentation.isDetachedMode());
+          if (candidate == null) continue;
+          rule = candidate;
+          break;
+        }
+      }
+      rules.add(rule);
     }
     if (usageViewSettings.isGroupByDirectoryStructure()) {
       rules.add(new DirectoryStructureGroupingRule(project, usageViewSettings.isCompactMiddleDirectories()));
@@ -73,7 +83,19 @@ public final class ActiveRules {
       rules.add(new ModuleGroupingRule(project, usageViewSettings.isFlattenModules()));
     }
 
-    rules.add(DirectoryGroupingRule.getInstance(project));
+    UsageGroupingRule packageRule = DirectoryGroupingRule.getInstance(project);
+    if (presentation != null) {
+      for (PackageGroupRuleProvider ruleProvider : PackageGroupRuleProvider.EP_NAME.getExtensionList()) {
+        UsageGroupingRule rule = ruleProvider.getUsageGroupingRule(project, usageViewSettings, presentation.isDetachedMode());
+        if (rule == null) continue;
+        if (!(rule instanceof UsageGroupingRuleEx)) {
+          rule = new PackageGroupingRuleExWrapper(rule);
+        }
+        packageRule = rule;
+        break;
+      }
+    }
+    rules.add(packageRule);
 
     rules.add(new DirectoryStructureGroupingRule(project, usageViewSettings.isCompactMiddleDirectories()));
 
@@ -91,21 +113,16 @@ public final class ActiveRules {
     return rules.toArray(UsageGroupingRule.EMPTY_ARRAY);
   }
 
-  private static final class FileStructureGroupingRuleExWrapper implements UsageGroupingRuleEx {
+  private static abstract class GroupingRuleExWrapper implements UsageGroupingRuleEx {
     private final UsageGroupingRule myGroupingRule;
 
-    private FileStructureGroupingRuleExWrapper(@NotNull UsageGroupingRule rule) {
+    protected GroupingRuleExWrapper(@NotNull UsageGroupingRule rule) {
       myGroupingRule = rule;
     }
 
     @Override
     public @NotNull String getId() {
       return myGroupingRule.getClass().getName();
-    }
-
-    @Override
-    public @NotNull String getGroupingActionId() {
-      return "UsageGrouping.FileStructure";
     }
 
     @Override
@@ -117,6 +134,28 @@ public final class ActiveRules {
     @Override
     public int getRank() {
       return myGroupingRule.getRank();
+    }
+  }
+
+  private static final class FileStructureGroupingRuleExWrapper extends GroupingRuleExWrapper {
+    private FileStructureGroupingRuleExWrapper(@NotNull UsageGroupingRule rule) {
+      super(rule);
+    }
+
+    @Override
+    public @NotNull String getGroupingActionId() {
+      return "UsageGrouping.FileStructure";
+    }
+  }
+
+  private static final class PackageGroupingRuleExWrapper extends GroupingRuleExWrapper {
+    private PackageGroupingRuleExWrapper(@NotNull UsageGroupingRule rule) {
+      super(rule);
+    }
+
+    @Override
+    public @NotNull String getGroupingActionId() {
+      return "UsageGrouping.DirectoryStructure";
     }
   }
 }

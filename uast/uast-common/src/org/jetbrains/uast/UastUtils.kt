@@ -8,9 +8,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.ArrayUtil
 import com.intellij.util.SmartList
-import com.intellij.util.containers.ContainerUtil
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.visitor.AbstractUastVisitor
@@ -124,10 +122,11 @@ fun <T : UElement> PsiElement?.findAnyContaining(depthLimit: Int, vararg types: 
   return null
 }
 
-fun isPsiAncestor(ancestor: UElement, child: UElement): Boolean {
+@JvmOverloads
+fun isPsiAncestor(ancestor: UElement, child: UElement, strict: Boolean = false): Boolean {
   val ancestorPsi = ancestor.sourcePsi ?: return false
   val childPsi = child.sourcePsi ?: return false
-  return PsiTreeUtil.isAncestor(ancestorPsi, childPsi, false)
+  return PsiTreeUtil.isAncestor(ancestorPsi, childPsi, strict)
 }
 
 fun UElement.isUastChildOf(probablyParent: UElement?, strict: Boolean = false): Boolean {
@@ -249,7 +248,7 @@ fun UNamedExpression.getAnnotationMethod(): PsiMethod? {
   if (annotationSrc == null) return null
   val psiClass = JavaPsiFacade.getInstance(annotationSrc.project).findClass(fqn, annotationSrc.resolveScope)
   if (psiClass != null && psiClass.isAnnotationType) {
-    return ArrayUtil.getFirstElement(psiClass.findMethodsByName(this.name ?: "value", false))
+    return psiClass.findMethodsByName(this.name ?: "value", false).firstOrNull()
   }
   return null
 }
@@ -280,7 +279,7 @@ inline fun <reified T : UDeclaration> getUParentForDeclarationLineMarkerElement(
 fun nonStructuralChildren(expression: UExpression): Stream<UExpression> {
   return StreamEx.ofTree(expression) { e ->
     when (e) {
-      is UBlockExpression -> StreamEx.ofNullable(ContainerUtil.getLastItem(e.expressions))
+      is UBlockExpression -> StreamEx.ofNullable(e.expressions.lastOrNull())
       is UIfExpression -> StreamEx.of(e.thenExpression, e.elseExpression).nonNull()
       is UParenthesizedExpression -> StreamEx.ofNullable(e.expression)
       is USwitchExpression -> {
@@ -298,6 +297,6 @@ fun nonStructuralChildren(expression: UExpression): Stream<UExpression> {
       else -> null
     }
   }.remove { e ->
-    e is UBlockExpression || e is UIfExpression || e is UParenthesizedExpression || e is USwitchExpression || e is UReturnExpression
+    e is UBlockExpression || e is UIfExpression || e is UParenthesizedExpression || e is USwitchExpression
   }
 }

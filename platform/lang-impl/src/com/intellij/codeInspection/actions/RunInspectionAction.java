@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.CommonBundle;
@@ -7,7 +7,6 @@ import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.analysis.dialog.ModelScopeItem;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -212,7 +211,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
       @Override
       protected Action @NotNull [] createActions() {
         final List<Action> actions = new ArrayList<>();
-        final boolean hasFixAll = toolWrapper.getTool() instanceof CleanupLocalInspectionTool;
+        final boolean hasFixAll = toolWrapper.isCleanupTool();
         actions.add(new AbstractAction(hasFixAll ? CodeInsightBundle.message("action.analyze.verb")
                                                  : CommonBundle.getOkButtonText()) {
           {

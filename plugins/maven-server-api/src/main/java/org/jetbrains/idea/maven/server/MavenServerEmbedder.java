@@ -23,103 +23,84 @@ import org.jetbrains.idea.maven.server.security.MavenToken;
 import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public interface MavenServerEmbedder extends Remote {
   String MAVEN_EMBEDDER_VERSION = "idea.maven.embedder.version";
   String MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS = "idea.maven.embedder.ext.cli.args";
   String MAVEN_EXT_CLASS_PATH = "maven.ext.class.path";
 
+  void customize(@Nullable MavenWorkspaceMap workspaceMap,
+                 boolean alwaysUpdateSnapshots,
+                 MavenToken token) throws RemoteException;
 
   @Nullable
-  MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
-                                                                    boolean failOnUnresolvedDependency,
-                                                                    boolean alwaysUpdateSnapshots,
-                                                                    @Nullable Properties userProperties, MavenToken token)
-    throws RemoteException;
-
-  void customizeComponents(MavenToken token) throws RemoteException;
+  MavenServerPullProgressIndicator getProgressIndicator(MavenToken token) throws RemoteException;
 
   @NotNull
-  List<String> retrieveAvailableVersions(@NotNull String groupId,
-                                         @NotNull String artifactId,
-                                         @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token)
-    throws RemoteException;
+  Collection<MavenServerExecutionResult> resolveProjects(
+    @NotNull String longRunningTaskId,
+    @NotNull ProjectResolutionRequest request,
+    MavenToken token) throws RemoteException;
 
-
-  @NotNull
-  Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<File> files,
-                                                        @NotNull Collection<String> activeProfiles,
-                                                        @NotNull Collection<String> inactiveProfiles,
-                                                        boolean forceResolveDependenciesSequentially, MavenToken token)
-    throws
-    RemoteException,
-    MavenServerProcessCanceledException;
-
-  @Nullable
-  String evaluateEffectivePom(@NotNull File file,
-                              @NotNull List<String> activeProfiles,
-                              @NotNull List<String> inactiveProfiles, MavenToken token) throws RemoteException,
-                                                                                               MavenServerProcessCanceledException;
+  List<PluginResolutionResponse> resolvePlugins(
+    @NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
+    MavenToken token) throws RemoteException;
 
   @NotNull
-  MavenArtifact resolve(@NotNull MavenArtifactInfo info,
-                        @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token) throws RemoteException,
-                                                                                                          MavenServerProcessCanceledException;
-  /**
-   * @deprecated use {@link Maven3XServerEmbedder#resolveArtifactTransitively()}
-   */
-  @Deprecated
-  @NotNull
-  List<MavenArtifact> resolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
-                                          @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token) throws
-                                                                                                                     RemoteException,
-                                                                                                                     MavenServerProcessCanceledException;
-
-  Collection<MavenArtifact> resolvePlugin(@NotNull MavenPlugin plugin,
-                                          @NotNull List<MavenRemoteRepository> repositories,
-                                          int nativeMavenProjectId,
-                                          boolean transitive, MavenToken token) throws RemoteException, MavenServerProcessCanceledException;
+  List<MavenArtifact> resolveArtifacts(
+    @NotNull String longRunningTaskId,
+    @NotNull Collection<MavenArtifactResolutionRequest> requests,
+    MavenToken token) throws RemoteException;
 
   @NotNull
-  MavenServerExecutionResult execute(@NotNull File file,
-                                     @NotNull Collection<String> activeProfiles,
-                                     @NotNull Collection<String> inactiveProfiles,
-                                     @NotNull List<String> goals,
-                                     @NotNull final List<String> selectedProjects,
-                                     boolean alsoMake,
-                                     boolean alsoMakeDependents, MavenToken token)
-    throws RemoteException, MavenServerProcessCanceledException;
-
-  void reset(MavenToken token) throws RemoteException;
-
-  void release(MavenToken token) throws RemoteException;
-
-  void clearCaches(MavenToken token) throws RemoteException;
-
-  @Deprecated
-  void clearCachesFor(MavenId projectId, MavenToken token) throws RemoteException;
-
-  @Nullable
-  MavenModel readModel(File file, MavenToken token) throws RemoteException;
+  MavenArtifactResolveResult resolveArtifactsTransitively(
+    @NotNull List<MavenArtifactInfo> artifacts,
+    @NotNull List<MavenRemoteRepository> remoteRepositories,
+    MavenToken token) throws RemoteException;
 
   Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories, MavenToken token)
     throws RemoteException;
 
-  Collection<MavenArchetype> getArchetypes(MavenToken token) throws RemoteException;
+  @Nullable
+  String evaluateEffectivePom(
+    @NotNull File file,
+    @NotNull List<String> activeProfiles,
+    @NotNull List<String> inactiveProfiles,
+    MavenToken token) throws RemoteException;
+
+  @NotNull
+  List<MavenGoalExecutionResult> executeGoal(
+    @NotNull String longRunningTaskId,
+    @NotNull Collection<MavenGoalExecutionRequest> requests,
+    @NotNull String goal,
+    MavenToken token) throws RemoteException;
+
+  @Nullable
+  MavenModel readModel(File file, MavenToken token) throws RemoteException;
 
   Collection<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) throws RemoteException;
 
   Collection<MavenArchetype> getRemoteArchetypes(MavenToken token, @NotNull String url) throws RemoteException;
 
   @Nullable
-  Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
-                                                       @NotNull List<MavenRemoteRepository> repositories,
-                                                       @Nullable String url, MavenToken token) throws RemoteException;
+  Map<String, String> resolveAndGetArchetypeDescriptor(
+    @NotNull String groupId,
+    @NotNull String artifactId,
+    @NotNull String version,
+    @NotNull List<MavenRemoteRepository> repositories,
+    @Nullable String url,
+    MavenToken token) throws RemoteException;
+
+  void reset(MavenToken token) throws RemoteException;
+
+  void release(MavenToken token) throws RemoteException;
 
   @NotNull
-  MavenArtifactResolveResult resolveArtifactTransitively(
-    @NotNull List<MavenArtifactInfo> artifacts,
-    @NotNull List<MavenRemoteRepository> remoteRepositories,
-    MavenToken token) throws RemoteException;
+  LongRunningTaskStatus getLongRunningTaskStatus(@NotNull String longRunningTaskId, MavenToken token) throws RemoteException;
+
+  boolean cancelLongRunningTask(@NotNull String longRunningTaskId, MavenToken token) throws RemoteException;
 }

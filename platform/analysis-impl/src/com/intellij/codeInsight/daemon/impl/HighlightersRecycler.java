@@ -2,8 +2,10 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,11 +17,16 @@ import java.util.Collection;
 // and then call pickupHighlighterFromGarbageBin() (if there is a sudden need for fresh highlighter with specified offsets) to remove it from the cache to re-initialize and use.
 final class HighlightersRecycler {
   private final MultiMap<TextRange, RangeHighlighter> incinerator = new MultiMap<>();
+  private static final Key<Boolean> BEING_RECYCLED_KEY = Key.create("RECYCLED_KEY"); // set when the highlighter is just recycled, but not yet transferred to EDT to change its attributes. used to prevent double recycling the same RH
 
-  void recycleHighlighter(@NotNull RangeHighlighter highlighter) {
-    if (highlighter.isValid()) {
+  // return true if RH is successfully recycled, false if race condition intervened
+  boolean recycleHighlighter(@NotNull RangeHighlighter highlighter) {
+    //ApplicationManager.getApplication().assertIsNonDispatchThread();
+    if (highlighter.isValid() && ((UserDataHolderEx)highlighter).replace(BEING_RECYCLED_KEY, null, Boolean.TRUE)) {
       incinerator.putValue(ProperTextRange.create(highlighter), highlighter);
+      return true;
     }
+    return false;
   }
 
   @Nullable // null means no highlighter found in the cache
@@ -29,6 +36,7 @@ final class HighlightersRecycler {
     for (RangeHighlighter highlighter : collection) {
       if (highlighter.isValid() && highlighter.getLayer() == layer) {
         incinerator.remove(range, highlighter);
+        highlighter.putUserData(BEING_RECYCLED_KEY, null);
         return highlighter;
       }
     }

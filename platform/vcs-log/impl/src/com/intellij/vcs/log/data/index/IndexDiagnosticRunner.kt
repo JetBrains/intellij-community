@@ -26,7 +26,7 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
                                      private val errorHandler: VcsLogErrorHandler,
                                      parent: Disposable) : Disposable {
   private val indexingListener = VcsLogIndex.IndexingFinishedListener { root -> runDiagnostic(listOf(root)) }
-  private val checkedRoots = ConcurrentCollectionFactory.createConcurrentSet<VirtualFile>(HashingStrategy.canonical())
+  private val checkedRoots = ConcurrentCollectionFactory.createConcurrentSet<VirtualFile>()
 
   init {
     index.addListener(indexingListener)

@@ -18,11 +18,11 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.walkUp
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.Query
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
-import com.intellij.webSymbols.references.WebSymbolReference
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.references.WebSymbolReference
 import java.util.*
 
 class WebSymbolsUsageSearcher : UsageSearcher {
@@ -73,13 +73,17 @@ class WebSymbolsUsageSearcher : UsageSearcher {
               }
           }
 
-          return getReferences(element, PsiSymbolReferenceHints.offsetHint(offsetInElement))
+          val foundReferences = getReferences(element, PsiSymbolReferenceHints.offsetHint(offsetInElement))
             .asSequence()
             .filterIsInstance<WebSymbolReference>()
             .filter { it.rangeInElement.containsOffset(offsetInElement) }
             .filter { ref -> ref.resolvesTo(symbol) }
             .map { WebSymbolPsiUsage(it.element.containingFile, it.absoluteRange, false) }
             .toList()
+
+          if (foundReferences.isNotEmpty()) {
+            return foundReferences
+          }
         }
 
         emptyList()

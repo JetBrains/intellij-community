@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun foo(javaClass: JavaClass<String, Int>) {
     javaClass.<caret>
 }

@@ -373,7 +373,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
         return;
       }
       PsiExpression returnExpr = PropertyUtilBase.getSingleReturnValue(accessor);
-      boolean isDefaultAccessor = backingField.equals(PropertyUtil.getFieldOfGetter(accessor, returnExpr, false));
+      boolean isDefaultAccessor = backingField.equals(PropertyUtil.getFieldOfGetter(accessor, () -> returnExpr, false));
       if (!isDefaultAccessor) {
         myDefault = false;
         return;

@@ -6,8 +6,8 @@ import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.ClassifierFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.diagnostic.telemetry.IJTracer;
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -31,7 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
+import static com.intellij.codeInsight.util.CodeCompletionKt.*;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
 
 /**
  * @author peter
@@ -40,8 +41,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   private static final Logger LOG = Logger.getInstance(CompletionServiceImpl.class);
 
   private static final CompletionPhaseHolder DEFAULT_PHASE_HOLDER = new CompletionPhaseHolder(CompletionPhase.NoCompletion, null);
-
-  private final IJTracer myCompletionTracer = TraceManager.INSTANCE.getTracer("codeCompletion");
+  private final IJTracer myCompletionTracer = TelemetryTracer.getInstance().getTracer(CodeCompletion);
 
   private static class ClientCompletionService implements Disposable {
     @Nullable

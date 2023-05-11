@@ -15,7 +15,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.kotlin.FirKotlinConverter.convertDeclarationOrElement
-import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.ClassSetsWrapper
 
@@ -85,7 +85,7 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
                 FirKotlinConverter.convertNonLocalProperty(element, null, requiredTypes) as Sequence<T>
             element is KtParameter ->
                 FirKotlinConverter.convertParameter(element, null, requiredTypes) as Sequence<T>
-            element is UastFakeLightPrimaryConstructor ->
+            element is UastFakeSourceLightPrimaryConstructor ->
                 FirKotlinConverter.convertFakeLightConstructorAlternatives(element, null, requiredTypes) as Sequence<T>
             else ->
                 sequenceOf(convertElementWithParent(element, requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)) as? T).filterNotNull()

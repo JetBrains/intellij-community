@@ -84,7 +84,7 @@ public final class PlatformUtils {
 
   /**
    * If you're enabling some behavior in IntelliJ IDEA, it's quite probable that it makes sense to enable it in Android Studio as well,
-   * so consider adding {@code || getPlatformPrefix().equals("AndroidStudio")} condition.
+   * so consider adding {@code || IdeInfo.isAndroidStudio()} condition.
    */
   public static boolean isIntelliJ() {
     return isIdeaUltimate() || isIdeaCommunity() || is(IDEA_EDU_PREFIX);
@@ -96,7 +96,7 @@ public final class PlatformUtils {
 
   /**
    * If you're enabling some behavior in IntelliJ IDEA, it's quite probable that it makes sense to enable it in Android Studio as well,
-   * so consider adding {@code || getPlatformPrefix().equals("AndroidStudio")} condition.
+   * so consider adding {@code || IdeInfo.isAndroidStudio()} condition.
    */
   public static boolean isIdeaCommunity() {
     return is(IDEA_CE_PREFIX);

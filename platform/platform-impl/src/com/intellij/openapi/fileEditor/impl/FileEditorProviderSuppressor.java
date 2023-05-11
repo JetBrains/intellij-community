@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This interface is a way to suppress creating of editors by certain valid FileEditorProvider-s in very specific case.
+ * This interface is a way to suppress creating of editors by certain valid FileEditorProvider-s in a very specific case.
  * <p>
  * PLEASE, DO NOT TRY TO USE THIS INTERFACE!
  * <p>
@@ -17,9 +17,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Internal
 public interface FileEditorProviderSuppressor {
-
-  ExtensionPointName<FileEditorProviderSuppressor> EP_NAME = ExtensionPointName.create("com.intellij.fileEditorProviderSuppressor");
+  ExtensionPointName<FileEditorProviderSuppressor> EP_NAME = new ExtensionPointName<>("com.intellij.fileEditorProviderSuppressor");
 
   boolean isSuppressed(@NotNull Project project, @NotNull VirtualFile file, @NotNull FileEditorProvider provider);
-
 }

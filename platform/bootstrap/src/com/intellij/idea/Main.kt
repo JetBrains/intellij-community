@@ -1,57 +1,55 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Main")
+@file:Suppress("RAW_RUN_BLOCKING", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.idea
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.rootTask
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.BootstrapBundle
+import com.intellij.ide.BytecodeTransformer
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.platform.impl.toolkit.IdeFontManager
+import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
+import com.intellij.platform.impl.toolkit.IdeToolkit
+import com.intellij.util.lang.PathClassLoader
+import com.intellij.util.lang.UrlClassLoader
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
+import sun.font.FontManagerFactory
 import java.awt.GraphicsEnvironment
+import java.awt.Toolkit
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.Supplier
+import java.util.*
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
 
-fun main(rawArgs: Array<String>) {
-  val startupTimings = ArrayList<Pair<String, Long>>(6)
-  startupTimings.add("startup begin" to System.nanoTime())
+private const val MARKETPLACE_BOOTSTRAP_JAR = "marketplace-bootstrap.jar"
 
-  val args: List<String> = preprocessArgs(rawArgs)
+fun main(rawArgs: Array<String>) {
+  val startupTimings = ArrayList<Any>(12)
+  addBootstrapTiming("startup begin", startupTimings)
+
+  val args = preprocessArgs(rawArgs)
   AppMode.setFlags(args)
 
   try {
     bootstrap(startupTimings)
-    startupTimings.add("main scope creating" to System.nanoTime())
-    @Suppress("RAW_RUN_BLOCKING")
+    addBootstrapTiming("main scope creating", startupTimings)
     runBlocking(rootTask()) {
       StartUpMeasurer.addTimings(startupTimings, "bootstrap")
       val appInitPreparationActivity = StartUpMeasurer.startActivity("app initialization preparation")
-      val busyThread = Thread.currentThread()
-
-      if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
-        launch(CoroutineName("coroutine debug probes init")) {
-          enableCoroutineDump()
-        }
-      }
-
-      launch(CoroutineName("ForkJoin CommonPool configuration") + Dispatchers.Default) {
-        IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
-      }
 
       // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
       val appStarterDeferred = async(CoroutineName("main class loading") + Dispatchers.Default) {
@@ -59,16 +57,16 @@ fun main(rawArgs: Array<String>) {
         MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
       }
 
-      initProjectorIfNeeded(args)
-      // Must be called after projector init
-      initLuxIfNeeded(args)
+      launch(CoroutineName("ForkJoin CommonPool configuration") + Dispatchers.Default) {
+        IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
+      }
 
+      initRemoteDevIfNeeded(args)
+
+      val busyThread = Thread.currentThread()
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler()) {
         StartUpMeasurer.appInitPreparationActivity = appInitPreparationActivity
-        startApplication(args = args,
-                         appStarterDeferred = appStarterDeferred,
-                         mainScope = this@runBlocking,
-                         busyThread = busyThread)
+        startApplication(args = args, appStarterDeferred = appStarterDeferred, mainScope = this@runBlocking, busyThread = busyThread)
       }
 
       awaitCancellation()
@@ -80,48 +78,74 @@ fun main(rawArgs: Array<String>) {
   }
 }
 
-private fun initProjectorIfNeeded(args: List<String>) {
-  if (args.isEmpty() || (AppMode.CWM_HOST_COMMAND != args[0] && AppMode.CWM_HOST_NO_LOBBY_COMMAND != args[0] && AppMode.REMOTE_DEV_HOST_COMMAND != args[0])) {
-    return
-  }
-
-  if (!JBR.isProjectorUtilsSupported()) {
-    error("JBR version 17.0.5b653.12 or later is required to run a remote-dev server")
-  }
-
-  runActivity("cwm host init") {
-    JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider(Supplier {
-      val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
-      projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
-    })
-
-    val projectorMainClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.server.ProjectorLauncher\$Starter")
-    MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
-      projectorMainClass, "runProjectorServer", MethodType.methodType(Boolean::class.javaPrimitiveType)
-    ).invoke()
-  }
-}
-
-private fun initLuxIfNeeded(args: List<String>) {
-  if (args.isEmpty() || (AppMode.CWM_HOST_COMMAND != args[0] && AppMode.CWM_HOST_NO_LOBBY_COMMAND != args[0] && AppMode.REMOTE_DEV_HOST_COMMAND != args[0])) {
-    return
-  }
-  if (!System.getProperty("lux.enabled").toBoolean()) {
+private fun initRemoteDevIfNeeded(args: List<String>) {
+  val command = args.firstOrNull()
+  val isRemoteDevEnabled = AppMode.CWM_HOST_COMMAND == command ||
+                           AppMode.CWM_HOST_NO_LOBBY_COMMAND == command ||
+                           AppMode.REMOTE_DEV_HOST_COMMAND == command
+  if (!isRemoteDevEnabled) {
     return
   }
   if (!JBR.isGraphicsUtilsSupported()) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
 
-  System.setProperty("awt.nativeDoubleBuffering", false.toString())
-  System.setProperty("swing.bufferPerWindow", true.toString())
+  runActivity("cwm host init") {
+    initRemoteDevGraphicsEnvironment()
+    if (isLuxEnabled()) {
+      initLux()
+    } else {
+      initProjector()
+    }
+  }
 }
 
-private fun bootstrap(startupTimings: ArrayList<Pair<String, Long>>) {
-  startupTimings.add("properties loading" to System.nanoTime())
+private fun isLuxEnabled() = System.getProperty("lux.enabled", "true").toBoolean()
+
+private fun initProjector() {
+  val projectorMainClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.server.ProjectorLauncher\$Starter")
+  MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
+    projectorMainClass, "runProjectorServer", MethodType.methodType(Boolean::class.javaPrimitiveType)
+  ).invoke()
+}
+
+private fun initRemoteDevGraphicsEnvironment() {
+  JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
+    if (isLuxEnabled()) IdeGraphicsEnvironment.instance
+    else AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment").getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
+  }
+}
+
+private fun setStaticField(clazz: Class<out Any>, fieldName: String, value: Any) {
+  val lookup = MethodHandles.lookup()
+
+  val field = clazz.getDeclaredField(fieldName)
+  field.isAccessible = true
+  val handle = lookup.unreflectSetter(field)
+  handle.invoke(value)
+}
+
+private fun initLux() {
+  if (!isLuxEnabled()) return
+
+  System.setProperty("java.awt.headless", false.toString())
+  System.setProperty("swing.volatileImageBufferEnabled", false.toString())
+  System.setProperty("keymap.current.os.only", false.toString())
+  System.setProperty("awt.nativeDoubleBuffering", false.toString())
+  System.setProperty("swing.bufferPerWindow", true.toString())
+
+  setStaticField(Toolkit::class.java, "toolkit", IdeToolkit())
+  System.setProperty("awt.toolkit", IdeToolkit::class.java.canonicalName)
+
+  setStaticField(FontManagerFactory::class.java, "instance", IdeFontManager())
+  System.setProperty("sun.font.fontmanager", IdeFontManager::class.java.canonicalName)
+}
+
+private fun bootstrap(startupTimings: MutableList<Any>) {
+  addBootstrapTiming("properties loading", startupTimings)
   PathManager.loadProperties()
 
-  startupTimings.add("plugin updates install" to System.nanoTime())
+  addBootstrapTiming("plugin updates install", startupTimings)
   // this check must be performed before system directories are locked
   if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
     val configImportNeeded = !AppMode.isHeadless() && !Files.exists(Path.of(PathManager.getConfigPath()))
@@ -136,12 +160,107 @@ private fun bootstrap(startupTimings: ArrayList<Pair<String, Long>>) {
     }
   }
 
-  startupTimings.add("classloader init" to System.nanoTime())
-  BootstrapClassLoaderUtil.initClassLoader(AppMode.isRemoteDevHost())
+  addBootstrapTiming("classloader init", startupTimings)
+  initClassLoader(AppMode.isRemoteDevHost())
+}
+
+fun initClassLoader(addCwmLibs: Boolean) {
+  val distDir = Path.of(PathManager.getHomePath())
+  val classLoader = AppMode::class.java.classLoader as? PathClassLoader
+                    ?: throw RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
+  val classpath = LinkedHashSet<Path>()
+  val preinstalledPluginDir = distDir.resolve("plugins")
+  
+  var pluginDir = preinstalledPluginDir
+  var marketPlaceBootDir = BootstrapClassLoaderUtil.findMarketplaceBootDir(pluginDir)
+  var mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR)
+  var installMarketplace = Files.exists(mpBoot) // enough to check for existence as preinstalled plugin is always compatible
+
+  if (!installMarketplace) {
+    pluginDir = Path.of(PathManager.getPluginsPath())
+    marketPlaceBootDir = BootstrapClassLoaderUtil.findMarketplaceBootDir(pluginDir)
+    mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR)
+    installMarketplace = BootstrapClassLoaderUtil.isMarketplacePluginCompatible(distDir, pluginDir, mpBoot)
+  }
+  
+  if (installMarketplace) {
+    val marketplaceImpl = marketPlaceBootDir.resolve("marketplace-impl.jar")
+    if (Files.exists(marketplaceImpl)) {
+      classpath.add(marketplaceImpl)
+    }
+    else {
+      installMarketplace = false
+    }
+  }
+  
+  var updateSystemClassLoader = false
+  if (addCwmLibs) {
+    // Remote dev requires Projector libraries in system classloader due to AWT internals (see below)
+    // At the same time, we don't want to ship them with base (non-remote) IDE due to possible unwanted interference with plugins
+    // See also: com.jetbrains.codeWithMe.projector.PluginClassPathRuntimeCustomizer
+    val relativeLibPath = "cwm-plugin-projector/lib/projector"
+    var remoteDevPluginLibs = preinstalledPluginDir.resolve(relativeLibPath)
+    var exists = Files.exists(remoteDevPluginLibs)
+    if (!exists) {
+      remoteDevPluginLibs = Path.of(PathManager.getPluginsPath(), relativeLibPath)
+      exists = Files.exists(remoteDevPluginLibs)
+    }
+    if (exists) {
+      Files.newDirectoryStream(remoteDevPluginLibs).use { dirStream ->
+        // add all files in that dir except for plugin jar
+        for (f in dirStream) {
+          if (f.toString().endsWith(".jar")) {
+            classpath.add(f)
+          }
+        }
+      }
+    }
+
+    // AWT can only use builtin and system class loaders to load classes,
+    // so set the system loader to something that can find projector libs
+    updateSystemClassLoader = true
+  }
+
+  if (!classpath.isEmpty()) {
+    classLoader.classPath.addFiles(classpath)
+  }
+
+  if (installMarketplace) {
+    try {
+      val spiLoader = PathClassLoader(UrlClassLoader.build().files(listOf(mpBoot)).parent(classLoader))
+      val transformers = ServiceLoader.load(BytecodeTransformer::class.java, spiLoader).iterator()
+      if (transformers.hasNext()) {
+        classLoader.setTransformer(BytecodeTransformerAdapter(transformers.next()))
+      }
+    }
+    catch (e: Throwable) {
+      // at this point, logging is not initialized yet, so reporting the error directly
+      val path = pluginDir.resolve(BootstrapClassLoaderUtil.MARKETPLACE_PLUGIN_DIR).toString()
+      val message = "As a workaround, you may uninstall or update JetBrains Marketplace Support plugin at $path"
+      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.jetbrains.marketplace.boot.failure"),
+                                       Exception(message, e))
+    }
+  }
+  if (updateSystemClassLoader) {
+    val aClass = ClassLoader::class.java
+    MethodHandles.privateLookupIn(aClass, MethodHandles.lookup()).findStaticSetter(aClass, "scl", aClass).invoke(classLoader)
+  }
+}
+
+private fun addBootstrapTiming(name: String, startupTimings: MutableList<Any>) {
+  startupTimings.add(name)
+  startupTimings.add(System.nanoTime())
 }
 
 private fun preprocessArgs(args: Array<String>): List<String> {
-  if (args.size == 1 && args[0] == "%f") return emptyList()  // a buggy DE may fail to strip an unused parameter from a .desktop file
+  if (args.isEmpty()) {
+    return Collections.emptyList()
+  }
+
+  // a buggy DE may fail to strip an unused parameter from a .desktop file
+  if (args.size == 1 && args[0] == "%f") {
+    return Collections.emptyList()
+  }
 
   @Suppress("SuspiciousPackagePrivateAccess")
   if (AppMode.HELP_OPTION in args) {
@@ -170,9 +289,9 @@ private fun preprocessArgs(args: Array<String>): List<String> {
     exitProcess(0)
   }
 
-  val (propertyArgs, otherArgs) = args.partition { it.startsWith("-D") && it.contains("=") }
+  val (propertyArgs, otherArgs) = args.partition { it.startsWith("-D") && it.contains('=') }
   propertyArgs.forEach { arg ->
-    val (option, value) = arg.removePrefix("-D").split("=", limit = 2)
+    val (option, value) = arg.removePrefix("-D").split('=', limit = 2)
     System.setProperty(option, value)
   }
   return otherArgs
@@ -211,4 +330,14 @@ private class StartupAbortedExceptionHandler : AbstractCoroutineContextElement(C
   }
 
   override fun toString() = "StartupAbortedExceptionHandler"
+}
+
+private class BytecodeTransformerAdapter(private val impl: BytecodeTransformer) : PathClassLoader.BytecodeTransformer {
+  override fun isApplicable(className: String, loader: ClassLoader): Boolean {
+    return impl.isApplicable(className, loader, null)
+  }
+
+  override fun transform(loader: ClassLoader, className: String, classBytes: ByteArray): ByteArray {
+    return impl.transform(loader, className, null, classBytes)
+  }
 }

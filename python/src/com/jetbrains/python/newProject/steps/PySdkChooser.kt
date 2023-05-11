@@ -31,7 +31,7 @@ internal fun createPythonSdkComboBox(sdks: List<Sdk>, initialSelection: Sdk?): C
   comboBox.model = CollectionComboBoxModel<Sdk>(sdks, initialSelection)
   comboBox.renderer = PySdkListCellRenderer()
   comboBox.addActionListener { comboBox.updateTooltip() }
-  ComboboxSpeedSearch(comboBox)
+  ComboboxSpeedSearch.installOn(comboBox)
   comboBox.updateTooltip()
   return comboBox
 }

@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginNode
@@ -11,7 +12,9 @@ import com.intellij.ide.plugins.newui.Tags
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -47,6 +50,11 @@ import kotlin.io.path.exists
 
 private val LOG = logger<MarketplaceRequests>()
 private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
+private const val JB_PLUGINS_XML_IDS_FILENAME = "jbPluginsXMLIds.json"
+
+private val PLUGIN_NAMES_IN_COMMUNITY_EDITION: Map<String, String> = mapOf(
+  "com.intellij.database" to "Database Tools and SQL"
+)
 
 private val objectMapper by lazy { ObjectMapper() }
 private val pluginManagerUrl by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -67,7 +75,7 @@ class MarketplaceRequests : PluginInfoProvider {
         val handler = RepositoryContentHandler()
 
         val spf = SAXParserFactory.newDefaultInstance()
-        spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
         spf.setFeature("http://xml.org/sax/features/external-general-entities", false)
         spf.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
 
@@ -166,9 +174,11 @@ class MarketplaceRequests : PluginInfoProvider {
           if (eTag != null) {
             connection.setRequestProperty("If-None-Match", eTag)
           }
-          serviceIfCreated<PluginRepositoryAuthService>()
-            ?.connectionTuner
-            ?.tune(connection)
+          if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+            serviceOrNull<PluginRepositoryAuthService>()
+              ?.connectionTuner
+              ?.tune(connection)
+          }
         }
         .productNameAsUserAgent()
         .connect { request ->
@@ -212,10 +222,6 @@ class MarketplaceRequests : PluginInfoProvider {
 
   private val MARKETPLACE_ORGANIZATIONS_URL = Urls.newFromEncoded("${pluginManagerUrl}/api/search/aggregation/organizations")
     .addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
-
-  private val JETBRAINS_PLUGINS_URL = Urls.newFromEncoded(
-    "${pluginManagerUrl}/api/search/plugins?organization=JetBrains&max=1000"
-  ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
   private val IDE_EXTENSIONS_URL = Urls.newFromEncoded("${pluginManagerUrl}/files/IDE/extensions.json")
     .addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
@@ -351,13 +357,35 @@ class MarketplaceRequests : PluginInfoProvider {
             && it.nearestUpdate.supports(suggestedIdeCode)) {
 
           pluginNode.suggestedCommercialIde = suggestedIdeCode
-          pluginNode.tags = ((pluginNode.tags ?: emptyList()) + Tags.Ultimate.name).distinct()
+          pluginNode.tags = getTagsForUi(pluginNode).distinct()
+          pluginNode.name = getPluginNameForUi(pluginNode)
 
           return@mapNotNull pluginNode
         }
 
         null
       }
+  }
+
+  private fun getPluginNameForUi(pluginNode: PluginNode): String {
+    if (pluginNode.suggestedCommercialIde != null) {
+      // convert name for Database plugin in Community Edition
+      return PLUGIN_NAMES_IN_COMMUNITY_EDITION[pluginNode.pluginId.idString] ?: pluginNode.name
+    }
+
+    return pluginNode.name
+  }
+
+  private fun getTagsForUi(pluginNode: PluginNode): MutableList<String> {
+    if (pluginNode.suggestedCommercialIde != null) {
+      // drop Paid in Community edition if it is Ultimate-only plugin
+      val newTags = (pluginNode.tags ?: emptyList()).toMutableList()
+      newTags -= Tags.Paid.name
+      newTags += Tags.Ultimate.name
+      return newTags
+    }
+
+    return pluginNode.tags ?: mutableListOf()
   }
 
   private fun NearestUpdate.supports(productCode: String?): Boolean {
@@ -460,7 +488,8 @@ class MarketplaceRequests : PluginInfoProvider {
         downloads = pluginNode.downloads
         date = pluginNode.date
         suggestedCommercialIde = pluginNode.suggestedCommercialIde
-        tags = ((this.tags ?: emptyList()) + (pluginNode.tags ?: emptyList())).distinct()
+        tags = getTagsForUi(this).distinct()
+        name = getPluginNameForUi(pluginNode)
       }
     }
     catch (e: IOException) {
@@ -527,36 +556,39 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
-  var jetBrainsPluginsIds: Set<String>? = null
-    private set
-
-  fun loadJetBrainsPluginsIds() {
-    if (jetBrainsPluginsIds != null) {
-      return
-    }
-
-    try {
-      HttpRequests
-        .request(JETBRAINS_PLUGINS_URL)
-        .productNameAsUserAgent()
-        .setHeadersViaTuner()
-        .throwStatusCodeException(false)
-        .connect {
-          deserializeJetBrainsPluginsIds(it.inputStream)
-        }
-    }
-    catch (e: Exception) {
-      LOG.infoOrDebug("Can not get JetBrains plugins' IDs from Marketplace", e)
-      jetBrainsPluginsIds = null
+  @RequiresBackgroundThread
+  private fun getJetBrainsMarketplacePlugins(indicator: ProgressIndicator?): Set<PluginId> {
+    return runCatching {
+      readOrUpdateFile(
+        Path.of(PathManager.getPluginTempPath(), JB_PLUGINS_XML_IDS_FILENAME),
+        "${pluginManagerUrl}/files/$JB_PLUGINS_XML_IDS_FILENAME",
+        indicator,
+        IdeBundle.message("progress.downloading.available.plugins"),
+        ::parseXmlIds,
+      )
+    }.getOrElse {
+      LOG.infoOrDebug("Cannot get the list of JetBrains plugins from Marketplace", it)
+      emptySet()
     }
   }
 
-  @VisibleForTesting
-  fun deserializeJetBrainsPluginsIds(stream: InputStream) {
-    jetBrainsPluginsIds = objectMapper.readValue(stream, object : TypeReference<List<MarketplaceSearchPluginData>>() {})
-      .asSequence()
-      .map(MarketplaceSearchPluginData::id)
-      .toCollection(HashSet())
+  fun loadJetBrainsPluginsIds(indicator: ProgressIndicator? = null): Future<Set<PluginId>> {
+    return ApplicationManager.getApplication().executeOnPooledThread(Callable {
+      getJetBrainsMarketplacePlugins(indicator)
+    })
+  }
+
+  fun loadCachedJBPlugins(): Set<PluginId>? {
+    val pluginXmlIdsFile = Paths.get(PathManager.getPluginTempPath(), JB_PLUGINS_XML_IDS_FILENAME)
+    try {
+      if (Files.size(pluginXmlIdsFile) > 0) {
+        return Files.newInputStream(pluginXmlIdsFile).use(::parseXmlIds)
+      }
+    } catch (_: IOException) { }
+
+    // can't find/read jb plugins xml ids cache file, schedule reload
+    loadJetBrainsPluginsIds()
+    return null
   }
 
   var extensionsForIdes: Map<String, List<String>>? = null
@@ -616,11 +648,14 @@ class MarketplaceRequests : PluginInfoProvider {
  * NB!: any previous tuners set by {@link RequestBuilder#tuner} will be overwritten by this call
  */
 fun RequestBuilder.setHeadersViaTuner(): RequestBuilder {
-  return ApplicationManager.getApplication()
-           ?.getServiceIfCreated(PluginRepositoryAuthService::class.java)
-           ?.connectionTuner
-           ?.let(::tuner)
-         ?: this
+  return if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+    serviceOrNull<PluginRepositoryAuthService>()
+      ?.connectionTuner
+      ?.let(::tuner) ?: this
+  }
+  else {
+    this
+  }
 }
 
 private fun loadETagForFile(file: Path): String {

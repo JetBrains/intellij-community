@@ -32,7 +32,7 @@ public abstract class BuildTargetType<T extends BuildTarget<?>> {
   /**
    * Creates type of targets which are not {@link #isFileBased() file based}, consider using {@link #BuildTargetType(String, boolean)} instead
    */
-  protected BuildTargetType(String typeId) {
+  protected BuildTargetType(@NotNull String typeId) {
     this(typeId, false);
   }
 
@@ -41,12 +41,12 @@ public abstract class BuildTargetType<T extends BuildTarget<?>> {
    * @param fileBased {@code true} if targets of this type operate only on files under their source roots
    * @see #isFileBased()
    */
-  protected BuildTargetType(String typeId, boolean fileBased) {
+  protected BuildTargetType(@NotNull String typeId, boolean fileBased) {
     myTypeId = typeId;
     myFileBased = fileBased;
   }
 
-  public final String getTypeId() {
+  public final @NotNull String getTypeId() {
     return myTypeId;
   }
 

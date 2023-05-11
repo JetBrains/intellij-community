@@ -10,7 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.devkit" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.testFramework" />
-    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.devkit.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.i18n" scope="TEST" />
@@ -18,4 +17,5 @@
     <orderEntry type="module" module-name="intellij.kotlin.devkit" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
   </component>
+  <component name="TestModuleProperties" production-module="intellij.kotlin.devkit" />
 </module>

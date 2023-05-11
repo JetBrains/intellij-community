@@ -15,7 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
-import runCompletion
 
 
 abstract class GradleMapStyleInsertHandler : InsertHandler<LookupElement> {

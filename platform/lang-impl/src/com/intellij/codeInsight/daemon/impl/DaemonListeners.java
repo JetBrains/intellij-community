@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
@@ -10,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSettingList
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.facet.Facet;
@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -73,6 +74,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.ThreeState;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
@@ -127,7 +129,7 @@ public final class DaemonListeners implements Disposable {
     EditorFactory editorFactory = EditorFactory.getInstance();
     EditorEventMulticasterEx eventMulticaster = (EditorEventMulticasterEx)editorFactory.getEventMulticaster();
     eventMulticaster.addDocumentListener(new DocumentListener() {
-      // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
+      // clearing highlighters before changing the document because change can damage editor highlighters drastically, so we'll clear more than necessary
       @Override
       public void beforeDocumentChange(@NotNull DocumentEvent e) {
         Document document = e.getDocument();
@@ -237,13 +239,7 @@ public final class DaemonListeners implements Disposable {
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         stopDaemonAndRestartAllFiles("Project roots changed");
         // re-initialize TrafficLightRenderer in each editor since root change event could change highlightability
-        for (Editor editor : myActiveEditors) {
-          EditorMarkupModel editorMarkupModel = (EditorMarkupModel)editor.getMarkupModel();
-          ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
-          if (renderer instanceof TrafficLightRenderer tlr) {
-            tlr.invalidate();
-          }
-        }
+        reInitTrafficLightRendererForAllEditors();
       }
     });
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (_1, _2, _3, _4) -> stopDaemonAndRestartAllFiles("Additional libraries changed"));
@@ -260,7 +256,14 @@ public final class DaemonListeners implements Disposable {
       }
     });
 
-    connection.subscribe(PowerSaveMode.TOPIC, () -> stopDaemonAndRestartAllFiles("Power save mode changed to "+PowerSaveMode.isEnabled()));
+    connection.subscribe(PowerSaveMode.TOPIC, () -> {
+      stopDaemonAndRestartAllFiles("Power save mode changed to " + PowerSaveMode.isEnabled());
+      if (PowerSaveMode.isEnabled()) {
+        clearAllHighlightersInAllEditors();
+        reInitTrafficLightRendererForAllEditors();
+        repaintTrafficLightIconForAllEditors();
+      }
+    });
     connection.subscribe(EditorColorsManager.TOPIC, __ -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
     connection.subscribe(CommandListener.TOPIC, new MyCommandListener());
     connection.subscribe(ProfileChangeAdapter.TOPIC, new MyProfileChangeListener());
@@ -303,17 +306,8 @@ public final class DaemonListeners implements Disposable {
         if (document == null) {
           return;
         }
-
-        // highlight markers no more
-        //todo clear all highlights regardless the pass id
-
-        // Here color scheme required for TextEditorFields, as far as I understand this
-        // code related to standard file editors, which always use Global color scheme,
-        // thus we can pass null here.
-        UpdateHighlightersUtil.setHighlightersToEditor(myProject, document, 0, document.getTextLength(),
-                                                       Collections.emptyList(),
-                                                       null,
-                                                       Pass.UPDATE_ALL);
+        // when the file becomes un-highlighteable, clear all highlighters from previous HighlightPasses
+        removeAllHighlightersFromHighlightPasses(document, project);
       }
     });
     connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
@@ -411,6 +405,46 @@ public final class DaemonListeners implements Disposable {
     HeavyProcessLatch.INSTANCE.addListener(this, __ -> stopDaemon(true, "re-scheduled to execute after heavy processing finished"));
   }
 
+  private void removeAllHighlightersFromHighlightPasses(@NotNull Document document, @NotNull Project project) {
+    MarkupModel model = DocumentMarkupModel.forDocument(document, project, false);
+    if (model == null) return;
+    for (RangeHighlighter highlighter : model.getAllHighlighters()) {
+      Object tooltip = highlighter.getErrorStripeTooltip();
+      if (tooltip instanceof HighlightInfo) {
+        highlighter.dispose();
+      }
+    }
+  }
+
+  void repaintTrafficLightIconForAllEditors() {
+    for (Editor editor : myActiveEditors) {
+      MarkupModel markup = editor.getMarkupModel();
+      if (markup instanceof EditorMarkupModelImpl) {
+        ((EditorMarkupModelImpl)markup).repaintTrafficLightIcon();
+      }
+    }
+  }
+
+  private void reInitTrafficLightRendererForAllEditors() {
+    for (Editor editor : myActiveEditors) {
+      EditorMarkupModel editorMarkupModel = (EditorMarkupModel)editor.getMarkupModel();
+      ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
+      if (renderer instanceof TrafficLightRenderer tlr) {
+        tlr.invalidate();
+      }
+    }
+  }
+
+  private void clearAllHighlightersInAllEditors() {
+    for (Editor editor : myActiveEditors) {
+      editor.getMarkupModel().removeAllHighlighters();
+      MarkupModel documentMarkupModel = DocumentMarkupModel.forDocument(editor.getDocument(), myProject, false);
+      if (documentMarkupModel != null) {
+        documentMarkupModel.removeAllHighlighters();
+      }
+    }
+  }
+
   private Project guessProject(@NotNull VirtualFile virtualFile) {
     if (FileEditorManager.getInstance(myProject).getAllEditors(virtualFile).length != 0) {
       // if at least one editor in myProject frame has opened this file, then we can assume this file does belong to the myProject
@@ -467,7 +501,8 @@ public final class DaemonListeners implements Disposable {
    * - files under explicit write permission version control (such as Perforce, which asks "do you want to edit this file"),
    * - files in the middle of cut-n-paste operation.
    */
-  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent) {
+  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent,
+                                              @NotNull ThreeState extensionsAllowToChangeFileSilently) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Project project = file.getProject();
     DaemonListeners listeners = getInstance(project);
@@ -478,16 +513,21 @@ public final class DaemonListeners implements Disposable {
     if (listeners.cutOperationJustHappened) {
       return false;
     }
-    return CanISilentlyChange.thisFile(file).canIReally(isInContent);
+    return CanISilentlyChange.thisFile(file).canIReally(isInContent, extensionsAllowToChangeFileSilently);
   }
 
   /**
-   * @deprecated use {@link #canChangeFileSilently(PsiFileSystemItem, boolean)} instead
+   * @deprecated use {@link #canChangeFileSilently(PsiFileSystemItem, boolean, ThreeState)} instead
    */
   @Deprecated
   public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
     PluginException.reportDeprecatedUsage("this method", "");
-    return canChangeFileSilently(file, true);
+    return canChangeFileSilently(file, true, ThreeState.UNSURE);
+  }
+  @Deprecated
+  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent) {
+    PluginException.reportDeprecatedUsage("this method", "");
+    return canChangeFileSilently(file, isInContent, ThreeState.UNSURE);
   }
 
   private class MyApplicationListener implements ApplicationListener {
@@ -678,18 +718,11 @@ public final class DaemonListeners implements Disposable {
   }
 
   private static void removeHighlightersOnPluginUnload(@NotNull MarkupModel model, @NotNull PluginDescriptor pluginDescriptor) {
+    ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
     for (RangeHighlighter highlighter: model.getAllHighlighters()) {
-      if (!(highlighter instanceof RangeHighlighterEx && ((RangeHighlighterEx)highlighter).isPersistent())) {
-        model.removeHighlighter(highlighter);
-        continue;
-      }
-
-      ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
-      if (!(pluginClassLoader instanceof PluginAwareClassLoader)) {
-        continue;
-      }
-
-      if (isHighlighterFromPlugin(highlighter, pluginClassLoader)) {
+      if (!(highlighter instanceof RangeHighlighterEx)
+          || !((RangeHighlighterEx)highlighter).isPersistent()
+          || pluginClassLoader instanceof PluginAwareClassLoader && isHighlighterFromPlugin(highlighter, pluginClassLoader)) {
         model.removeHighlighter(highlighter);
       }
     }
@@ -706,9 +739,11 @@ public final class DaemonListeners implements Disposable {
       IntentionAction quickFixFromPlugin =
         ((HighlightInfo)errorStripeTooltip).findRegisteredQuickFix((descriptor, range) -> {
           IntentionAction intentionAction = IntentionActionDelegate.unwrap(descriptor.getAction());
-          if (intentionAction.getClass().getClassLoader() == pluginClassLoader ||
-              intentionAction instanceof QuickFixWrapper && ((QuickFixWrapper)intentionAction).getFix().getClass().getClassLoader() ==
-                                                            pluginClassLoader) {
+          if (intentionAction.getClass().getClassLoader() == pluginClassLoader) {
+            return intentionAction;
+          }
+          LocalQuickFix fix = QuickFixWrapper.unwrap(intentionAction);
+          if (fix != null && fix.getClass().getClassLoader() == pluginClassLoader) {
             return intentionAction;
           }
           return null;

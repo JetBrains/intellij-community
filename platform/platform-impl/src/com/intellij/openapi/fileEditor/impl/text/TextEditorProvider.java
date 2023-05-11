@@ -14,7 +14,6 @@ import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -66,15 +65,14 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
   }
 
   @Override
-  public @NotNull FileEditor createEditor(@NotNull Project project, final @NotNull VirtualFile file) {
-    LOG.assertTrue(accept(project, file));
-    return new TextEditorImpl(project, file, this);
+  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    return new TextEditorImpl(project, file, this, TextEditorImpl.Companion.createTextEditor(project, file));
   }
 
   @Override
   public @NotNull FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
     TextEditorState state = new TextEditorState();
-    if (JDOMUtil.isEmpty(element)) {
+    if (element.isEmpty()) {
       return state;
     }
 
@@ -130,7 +128,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
       writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE);
       writeIfNot0(e, SELECTION_END_COLUMN_ATTR, caretState.SELECTION_END_COLUMN);
 
-      if (!JDOMUtil.isEmpty(e)) {
+      if (!e.isEmpty()) {
         element.addContent(e);
       }
     }
@@ -199,7 +197,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
     editor.putUserData(TEXT_EDITOR_KEY, textEditor);
   }
 
-  protected @NotNull TextEditorState getStateImpl(final Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level) {
+  protected @NotNull TextEditorState getStateImpl(@Nullable Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level) {
     TextEditorState state = new TextEditorState();
     CaretModel caretModel = editor.getCaretModel();
     List<CaretState> caretsAndSelections = caretModel.getCaretsAndSelections();
@@ -222,7 +220,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
       state.CARETS[i] = s;
     }
 
-    // Saving scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since
+    // Saving a scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since
     // scrolling proportion restored slightly differs from what have been saved.
     state.RELATIVE_CARET_POSITION = level == FileEditorStateLevel.UNDO ? Integer.MAX_VALUE : EditorUtil.calcRelativeCaretPosition(editor);
 
@@ -246,7 +244,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
     return pos == null ? 0 : pos.column;
   }
 
-  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state, boolean exactState) {
+  protected void setStateImpl(@Nullable Project project, @NotNull Editor editor, @NotNull TextEditorState state, boolean exactState) {
     TextEditorState.CaretState[] carets = state.CARETS;
     if (carets.length > 0) {
       List<CaretState> states = new ArrayList<>(carets.length);
@@ -259,25 +257,32 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
       editor.getCaretModel().setCaretsAndSelections(states, false);
     }
 
-    final int relativeCaretPosition = state.RELATIVE_CARET_POSITION;
-    Runnable scrollingRunnable = () -> {
-      if (!editor.isDisposed()) {
-        editor.getScrollingModel().disableAnimation();
-        if (relativeCaretPosition != Integer.MAX_VALUE) {
-          EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition);
-        }
-        if (!exactState) editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        editor.getScrollingModel().enableAnimation();
-      }
-    };
+    int relativeCaretPosition = state.RELATIVE_CARET_POSITION;
     AsyncEditorLoader.performWhenLoaded(editor, () -> {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        scrollingRunnable.run();
+      // not safe to optimize doWhenFirstShown and execute runnable right away if `isShowing() == true`,
+      // let's check only here for now
+      if (ApplicationManager.getApplication().isUnitTestMode() || editor.getContentComponent().isShowing()) {
+        scrollToCaret(editor, exactState, relativeCaretPosition);
       }
       else {
-        UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), scrollingRunnable);
+        UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), () -> {
+          if (!editor.isDisposed()) {
+            scrollToCaret(editor, exactState, relativeCaretPosition);
+          }
+        });
       }
     });
+  }
+
+  private static void scrollToCaret(Editor editor, boolean exactState, int relativeCaretPosition) {
+    editor.getScrollingModel().disableAnimation();
+    if (relativeCaretPosition != Integer.MAX_VALUE) {
+      EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition);
+    }
+    if (!exactState) {
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
+    editor.getScrollingModel().enableAnimation();
   }
 
   @Override

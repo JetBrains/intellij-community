@@ -16,7 +16,8 @@ import com.intellij.psi.PsiVariable
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.refactoring.IntroduceVariableUtil
 import com.intellij.refactoring.JavaRefactoringSettings
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import java.awt.event.MouseEvent
 import java.util.function.Supplier
 
@@ -33,40 +34,42 @@ class IntroduceVariablePopupComponent(private val editor: Editor,
       if (!cantChangeFinal && variable != null) {
         row {
           val finalListener = FinalListener(editor)
-          checkBox(JavaRefactoringBundle.message("declare.final"),
-                   JavaVariableInplaceIntroducer.createFinals(variable.containingFile)) { _, cb ->
-            WriteCommandAction.writeCommandAction(project).withName(commandName).withGroupId(commandName).run<RuntimeException> {
-              PsiDocumentManager.getInstance(project).commitDocument(editor.document)
-              val newVar = variableSupplier.get()
-              if (newVar != null) {
-                finalListener.perform(cb.isSelected, newVar)
+          checkBox(JavaRefactoringBundle.message("declare.final"))
+            .selected(JavaVariableInplaceIntroducer.createFinals(variable.containingFile))
+            .onChanged {
+              WriteCommandAction.writeCommandAction(project).withName(commandName).withGroupId(commandName).run<RuntimeException> {
+                PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+                val newVar = variableSupplier.get()
+                if (newVar != null) {
+                  finalListener.perform(it.isSelected, newVar)
+                }
               }
             }
-          }
         }
       }
       if (canBeVarType) {
         row {
-          checkBox(JavaRefactoringBundle.message("declare.var.type"),
-                   IntroduceVariableBase.createVarType()) { _, cb ->
-            WriteCommandAction.writeCommandAction(project).withName(commandName).withGroupId(commandName).run<RuntimeException> {
-              val newVar = variableSupplier.get()
-              if (newVar != null) {
-                var typeElement = newVar.typeElement
-                LOG.assertTrue(typeElement != null)
-                if (cb.isSelected) {
-                  IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar(typeElement,
-                                                                                    newVar)
-                }
-                else {
-                  typeElement = PsiTypesUtil.replaceWithExplicitType(typeElement)
-                  if (typeElement != null) { //simplify as it was before `var`
-                    IntroduceVariableBase.simplifyVariableInitializer(newVar.initializer, typeElement.type)
+          checkBox(JavaRefactoringBundle.message("declare.var.type"))
+            .selected(IntroduceVariableBase.createVarType())
+            .onChanged {
+              WriteCommandAction.writeCommandAction(project).withName(commandName).withGroupId(commandName).run<RuntimeException> {
+                val newVar = variableSupplier.get()
+                if (newVar != null) {
+                  var typeElement = newVar.typeElement
+                  LOG.assertTrue(typeElement != null)
+                  if (it.isSelected) {
+                    IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar(typeElement,
+                                                                                      newVar)
+                  }
+                  else {
+                    typeElement = PsiTypesUtil.replaceWithExplicitType(typeElement)
+                    if (typeElement != null) { //simplify as it was before `var`
+                      IntroduceVariableBase.simplifyVariableInitializer(newVar.initializer, typeElement.type)
+                    }
                   }
                 }
               }
             }
-          }
         }
       }
     }

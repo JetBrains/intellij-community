@@ -2,7 +2,7 @@
 package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.*
-import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
+import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
 import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
@@ -20,10 +20,10 @@ import java.security.SecureRandom
 import kotlin.io.path.exists
 
 open class KeePassFileManager(private val file: Path,
-                              masterKeyFile: Path,
-                              private val masterKeyEncryptionSpec: EncryptionSpec,
+                              mainKeyFile: Path,
+                              private val mainKeyEncryptionSpec: EncryptionSpec,
                               private val secureRandom: Lazy<SecureRandom>) {
-  private val masterKeyFileStorage = MasterKeyFileStorage(masterKeyFile)
+  private val mainKeyFileStorage = MainKeyFileStorage(mainKeyFile)
 
   fun clear() {
     if (!file.exists()) {
@@ -31,20 +31,20 @@ open class KeePassFileManager(private val file: Path,
     }
 
     try {
-      // don't create with preloaded empty db because "clear" action should remove only IntelliJ group from database,
+      // don't create with preloaded empty db because "clear" action should remove only IntelliJ group from a database,
       // but don't remove other groups
-      val masterPassword = masterKeyFileStorage.load()
-      if (masterPassword != null) {
-        val db = loadKdbx(file, KdbxPassword.createAndClear(masterPassword))
-        val store = KeePassCredentialStore(file, masterKeyFileStorage, db)
+      val mainPassword = mainKeyFileStorage.load()
+      if (mainPassword != null) {
+        val db = loadKdbx(file, KdbxPassword.createAndClear(mainPassword))
+        val store = KeePassCredentialStore(file, mainKeyFileStorage, db)
         store.clear()
-        store.save(masterKeyEncryptionSpec)
+        store.save(mainKeyEncryptionSpec)
         return
       }
     }
     catch (e: Exception) {
       // ok, just remove file
-      if (e !is IncorrectMasterPasswordException && ApplicationManager.getApplication()?.isUnitTestMode == false) {
+      if (e !is IncorrectMainPasswordException && ApplicationManager.getApplication()?.isUnitTestMode == false) {
         LOG.error(e)
       }
     }
@@ -60,7 +60,7 @@ open class KeePassFileManager(private val file: Path,
     try {
       doImportOrUseExisting(fromFile, event)
     }
-    catch (e: IncorrectMasterPasswordException) {
+    catch (e: IncorrectMainPasswordException) {
       throw e
     }
     catch (e: Exception) {
@@ -72,16 +72,16 @@ open class KeePassFileManager(private val file: Path,
     }
   }
 
-  // throws IncorrectMasterPasswordException if user cancelled ask master password dialog
-  @Throws(IncorrectMasterPasswordException::class)
+  // throws IncorrectMainPasswordException if user cancelled ask the main password dialog
+  @Throws(IncorrectMainPasswordException::class)
   fun useExisting() {
     if (file.exists()) {
       if (!doImportOrUseExisting(file, event = null)) {
-        throw IncorrectMasterPasswordException()
+        throw IncorrectMainPasswordException()
       }
     }
     else {
-      saveDatabase(file, KeePassDatabase(), generateRandomMasterKey(masterKeyEncryptionSpec, secureRandom.value), masterKeyFileStorage,
+      saveDatabase(file, KeePassDatabase(), generateRandomMainKey(mainKeyEncryptionSpec, secureRandom.value), mainKeyFileStorage,
                    secureRandom.value)
     }
   }
@@ -89,28 +89,28 @@ open class KeePassFileManager(private val file: Path,
   private fun doImportOrUseExisting(file: Path, event: AnActionEvent?): Boolean {
     val contextComponent = event?.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
 
-    // check master key file in parent dir of imported file
-    val possibleMasterKeyFile = file.parent.resolve(MASTER_KEY_FILE_NAME)
-    var masterPassword = MasterKeyFileStorage(possibleMasterKeyFile).load()
-    if (masterPassword != null) {
+    // check the main key file in parent dir of imported file
+    val possibleMainKeyFile = file.parent.resolve(MAIN_KEY_FILE_NAME)
+    var mainPassword = MainKeyFileStorage(possibleMainKeyFile).load()
+    if (mainPassword != null) {
       try {
-        loadKdbx(file, KdbxPassword(masterPassword))
+        loadKdbx(file, KdbxPassword(mainPassword))
       }
-      catch (e: IncorrectMasterPasswordException) {
-        LOG.warn("On import \"$file\" found existing master key file \"$possibleMasterKeyFile\" but key is not correct")
-        masterPassword = null
+      catch (e: IncorrectMainPasswordException) {
+        LOG.warn("On import \"$file\" found existing main key file \"$possibleMainKeyFile\" but key is not correct")
+        mainPassword = null
       }
     }
 
-    if (masterPassword == null && !requestMasterPassword(CredentialStoreBundle.message("kee.pass.dialog.request.master.title"),
-                                                         contextComponent = contextComponent) {
+    if (mainPassword == null && !requestMainPassword(CredentialStoreBundle.message("kee.pass.dialog.request.main.title"),
+                                                     contextComponent = contextComponent) {
         try {
           loadKdbx(file, KdbxPassword(it))
-          masterPassword = it
+          mainPassword = it
           null
         }
-        catch (e: IncorrectMasterPasswordException) {
-          CredentialStoreBundle.message("dialog.message.master.password.not.correct")
+        catch (e: IncorrectMainPasswordException) {
+          CredentialStoreBundle.message("dialog.message.main.password.not.correct")
         }
       }) {
       return false
@@ -119,69 +119,76 @@ open class KeePassFileManager(private val file: Path,
     if (file !== this.file) {
       Files.copy(file, this.file, StandardCopyOption.REPLACE_EXISTING)
     }
-    masterKeyFileStorage.save(createMasterKey(masterPassword!!))
+    mainKeyFileStorage.save(createMainKey(mainPassword!!))
     return true
   }
 
-  fun askAndSetMasterKey(event: AnActionEvent?, @DialogMessage topNote: String? = null): Boolean {
+  fun askAndSetMainKey(event: AnActionEvent?, @DialogMessage topNote: String? = null): Boolean {
     val contextComponent = event?.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
 
-    // to open old database, key can be required, so, to avoid showing 2 dialogs, check it before
+    // to open an old database, key can be required, so, to avoid showing 2 dialogs, check it before
     val db = try {
       if (file.exists()) loadKdbx(file, KdbxPassword(
-        this.masterKeyFileStorage.load() ?: throw IncorrectMasterPasswordException(isFileMissed = true)))
+        this.mainKeyFileStorage.load() ?: throw IncorrectMainPasswordException(isFileMissed = true)))
       else KeePassDatabase()
     }
-    catch (e: IncorrectMasterPasswordException) {
+    catch (e: IncorrectMainPasswordException) {
       // ok, old key is required
       return requestCurrentAndNewKeys(contextComponent)
     }
 
-    return requestMasterPassword(CredentialStoreBundle.message("kee.pass.dialog.title.set.master.password"), topNote = topNote,
-                                 contextComponent = contextComponent) {
-      saveDatabase(file, db, createMasterKey(it), masterKeyFileStorage, secureRandom.value)
+    return requestMainPassword(title = CredentialStoreBundle.message("kee.pass.dialog.title.set.main.password"),
+                               topNote = topNote,
+                               contextComponent = contextComponent) {
+      saveDatabase(file, db, createMainKey(it), mainKeyFileStorage, secureRandom.value)
       null
     }
   }
 
   protected open fun requestCurrentAndNewKeys(contextComponent: Component?): Boolean {
-    return CredentialStoreUiService.getInstance().showChangeMasterPasswordDialog(contextComponent, ::doSetNewMasterPassword)
+    return CredentialStoreUiService.getInstance().showChangeMainPasswordDialog(contextComponent, ::doSetNewMainPassword)
   }
 
-  protected fun doSetNewMasterPassword(current: CharArray, new: CharArray): Boolean {
-    val db = loadKdbx(file, KdbxPassword.createAndClear(current.toByteArrayAndClear()))
-    saveDatabase(file, db, createMasterKey(new.toByteArrayAndClear()), masterKeyFileStorage, secureRandom.value)
+  protected fun doSetNewMainPassword(current: CharArray, new: CharArray): Boolean {
+    val db = loadKdbx(file = file, credentials = KdbxPassword.createAndClear(current.toByteArrayAndClear()))
+    saveDatabase(dbFile = file,
+                 db = db,
+                 mainKey = createMainKey(new.toByteArrayAndClear()),
+                 mainKeyStorage = mainKeyFileStorage,
+                 secureRandom = secureRandom.value)
     return false
   }
 
-  private fun createMasterKey(value: ByteArray, isAutoGenerated: Boolean = false) =
-    MasterKey(value, isAutoGenerated, masterKeyEncryptionSpec)
-
-  protected open fun requestMasterPassword(@DialogTitle title: String,
-                                           @DialogMessage topNote: String? = null,
-                                           contextComponent: Component? = null,
-                                           @DialogMessage ok: (value: ByteArray) -> String?): Boolean {
-    return CredentialStoreUiService.getInstance().showRequestMasterPasswordDialog(title, topNote, contextComponent, ok)
+  private fun createMainKey(value: ByteArray, isAutoGenerated: Boolean = false): MainKey {
+    return MainKey(value, isAutoGenerated, mainKeyEncryptionSpec)
   }
 
-  fun saveMasterKeyToApplyNewEncryptionSpec() {
-    // if null, master key file doesn't exist now, it will be saved later somehow, no need to re-save with a new encryption spec
-    val existing = masterKeyFileStorage.load() ?: return
-    // no need to re-save db file because master password is not changed, only master key encryption spec changed
-    masterKeyFileStorage.save(createMasterKey(existing, isAutoGenerated = masterKeyFileStorage.isAutoGenerated()))
+  protected open fun requestMainPassword(@DialogTitle title: String,
+                                         @DialogMessage topNote: String? = null,
+                                         contextComponent: Component? = null,
+                                         @DialogMessage ok: (value: ByteArray) -> String?): Boolean {
+    return CredentialStoreUiService.getInstance().showRequestMainPasswordDialog(title, topNote, contextComponent, ok)
   }
 
-  fun setCustomMasterPasswordIfNeeded(defaultDbFile: Path) {
+  fun saveMainKeyToApplyNewEncryptionSpec() {
+    // if null, the main key file doesn't exist now, it will be saved later somehow, no need to re-save with a new encryption spec
+    val existing = mainKeyFileStorage.load() ?: return
+    // no need to re-save db file because the main password is not changed, only the main key encryption spec changed
+    mainKeyFileStorage.save(createMainKey(existing, isAutoGenerated = mainKeyFileStorage.isAutoGenerated()))
+  }
+
+  fun setCustomMainPasswordIfNeeded(defaultDbFile: Path) {
     // https://youtrack.jetbrains.com/issue/IDEA-174581#focus=streamItem-27-3081868-0-0
-    // for custom location require to set custom master password to make sure that user will be able to reuse file on another machine
+    // for custom location require
+    // to set the custom main password to make sure that user will be able to reuse file on another machine
     if (file == defaultDbFile) {
       return
     }
 
-    if (!masterKeyFileStorage.isAutoGenerated()) {
+    if (!mainKeyFileStorage.isAutoGenerated()) {
       return
     }
 
-    askAndSetMasterKey(null, topNote = CredentialStoreBundle.message("kee.pass.top.note"))
+    askAndSetMainKey(null, topNote = CredentialStoreBundle.message("kee.pass.top.note"))
   }
 }

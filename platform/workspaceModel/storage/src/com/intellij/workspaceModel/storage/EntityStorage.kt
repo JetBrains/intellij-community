@@ -22,7 +22,6 @@ annotation class EqualsBy
 interface EntityStorage {
   fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E>
   fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int
-  fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
   fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(id: SymbolicEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E?
   operator fun <E : WorkspaceEntityWithSymbolicId> contains(id: SymbolicEntityId<E>): Boolean

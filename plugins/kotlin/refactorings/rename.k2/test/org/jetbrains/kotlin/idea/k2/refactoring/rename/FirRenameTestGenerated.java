@@ -888,6 +888,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinFunctionParameterWithByNameUsages/renameKotlinFunctionParameterWithByNameUsages.test");
     }
 
+    @TestMetadata("renameKotlinFunctionSameNameAsFilename/renameKotlinFunctionSameNameAsFilename.test")
+    public void testRenameKotlinFunctionSameNameAsFilename_RenameKotlinFunctionSameNameAsFilename() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameKotlinFunctionSameNameAsFilename/renameKotlinFunctionSameNameAsFilename.test");
+    }
+
     @TestMetadata("renameKotlinMethodWithEscapedName/renameKotlinMethodWithEscapedName.test")
     public void testRenameKotlinMethodWithEscapedName_RenameKotlinMethodWithEscapedName() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinMethodWithEscapedName/renameKotlinMethodWithEscapedName.test");
@@ -1133,6 +1138,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinValPropertyInObject/renameKotlinValPropertyInObject.test");
     }
 
+    @TestMetadata("renameKotlinValPropertyWithKDoc/renameKotlinValPropertyWithKDoc.test")
+    public void testRenameKotlinValPropertyWithKDoc_RenameKotlinValPropertyWithKDoc() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameKotlinValPropertyWithKDoc/renameKotlinValPropertyWithKDoc.test");
+    }
+
     @TestMetadata("renameKotlinValProperty/renameAsJavaGetterForExplicitGetter.test")
     public void testRenameKotlinValProperty_RenameAsJavaGetterForExplicitGetter() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinValProperty/renameAsJavaGetterForExplicitGetter.test");
@@ -1206,6 +1216,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
     @TestMetadata("renameReferencedResourceFile/renameReferencedResourceFile.test")
     public void testRenameReferencedResourceFile_RenameReferencedResourceFile() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameReferencedResourceFile/renameReferencedResourceFile.test");
+    }
+
+    @TestMetadata("renameSamConstructorDescriptor/renameSamConstructorDescriptor.test")
+    public void testRenameSamConstructorDescriptor_RenameSamConstructorDescriptor() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameSamConstructorDescriptor/renameSamConstructorDescriptor.test");
     }
 
     @TestMetadata("renameSet/set.test")

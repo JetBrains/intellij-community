@@ -3,18 +3,18 @@
 Reports a problem when instance attribute
 definition is outside <code>__init__</code> method.
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
     class Book:
     def __init__(self):
         self.author = 'Mark Twain'
 
     def release(self):
         self.year = '1889'
-</pre>
+</code></pre>
 <p>
   When the quick-fix is applied, the code sample changes to:
 </p>
-<pre style="font-family: monospace">
+<pre><code>
     class Book:
     def __init__(self):
         self.year = '1889'
@@ -22,6 +22,6 @@ definition is outside <code>__init__</code> method.
 
     def release(self):
         pass
-</pre>
+</code></pre>
 </body>
 </html>

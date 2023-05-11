@@ -52,7 +52,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = -1478724711463014225L
+        const val serializationHash = 2087951295194916404L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -170,6 +170,7 @@ class RdTestSession private constructor(
     private val _shutdown: RdSignal<Unit>,
     private val _dumpThreads: RdSignal<Unit>,
     private val _closeProject: RdCall<Unit, Boolean>,
+    private val _closeProjectIfOpened: RdCall<Unit, Boolean>,
     private val _runNextAction: RdCall<Unit, Boolean>,
     private val _makeScreenshot: RdCall<String, Boolean>
 ) : RdBindableBase() {
@@ -190,9 +191,10 @@ class RdTestSession private constructor(
             val _shutdown = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
             val _dumpThreads = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
             val _closeProject = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
+            val _closeProjectIfOpened = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
-            return RdTestSession(agentId, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _dumpThreads, _closeProject, _runNextAction, _makeScreenshot).withId(_id)
+            return RdTestSession(agentId, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _dumpThreads, _closeProject, _closeProjectIfOpened, _runNextAction, _makeScreenshot).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
@@ -206,6 +208,7 @@ class RdTestSession private constructor(
             RdSignal.write(ctx, buffer, value._shutdown)
             RdSignal.write(ctx, buffer, value._dumpThreads)
             RdCall.write(ctx, buffer, value._closeProject)
+            RdCall.write(ctx, buffer, value._closeProjectIfOpened)
             RdCall.write(ctx, buffer, value._runNextAction)
             RdCall.write(ctx, buffer, value._makeScreenshot)
         }
@@ -219,6 +222,7 @@ class RdTestSession private constructor(
     val shutdown: ISignal<Unit> get() = _shutdown
     val dumpThreads: IAsyncSignal<Unit> get() = _dumpThreads
     val closeProject: RdCall<Unit, Boolean> get() = _closeProject
+    val closeProjectIfOpened: RdCall<Unit, Boolean> get() = _closeProjectIfOpened
     val runNextAction: RdCall<Unit, Boolean> get() = _runNextAction
     val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
     //methods
@@ -238,6 +242,7 @@ class RdTestSession private constructor(
         bindableChildren.add("shutdown" to _shutdown)
         bindableChildren.add("dumpThreads" to _dumpThreads)
         bindableChildren.add("closeProject" to _closeProject)
+        bindableChildren.add("closeProjectIfOpened" to _closeProjectIfOpened)
         bindableChildren.add("runNextAction" to _runNextAction)
         bindableChildren.add("makeScreenshot" to _makeScreenshot)
     }
@@ -259,6 +264,7 @@ class RdTestSession private constructor(
         RdSignal<Unit>(FrameworkMarshallers.Void),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
+        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool)
     )
     
@@ -277,6 +283,7 @@ class RdTestSession private constructor(
             print("shutdown = "); _shutdown.print(printer); println()
             print("dumpThreads = "); _dumpThreads.print(printer); println()
             print("closeProject = "); _closeProject.print(printer); println()
+            print("closeProjectIfOpened = "); _closeProjectIfOpened.print(printer); println()
             print("runNextAction = "); _runNextAction.print(printer); println()
             print("makeScreenshot = "); _makeScreenshot.print(printer); println()
         }
@@ -294,6 +301,7 @@ class RdTestSession private constructor(
             _shutdown.deepClonePolymorphic(),
             _dumpThreads.deepClonePolymorphic(),
             _closeProject.deepClonePolymorphic(),
+            _closeProjectIfOpened.deepClonePolymorphic(),
             _runNextAction.deepClonePolymorphic(),
             _makeScreenshot.deepClonePolymorphic()
         )

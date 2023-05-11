@@ -1,3 +1,6 @@
+#!/bin/bash
+set -euxo pipefail
+
 g++ -m64 -shared -o attach_linux_amd64.so -fPIC -nostartfiles attach.cpp
 mv attach_linux_amd64.so ../attach_linux_amd64.so
 echo Compiled amd64

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.SaveAndSyncHandler
@@ -17,10 +16,8 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.client.ClientAwareComponentManager
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
@@ -32,7 +29,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
-import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -42,10 +38,10 @@ import com.intellij.util.childScope
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.impl.MessageBusEx
+import com.intellij.util.namedChildScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -55,10 +51,11 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
 @Internal
-open class ProjectImpl(filePath: Path, projectName: String?)
-  : ClientAwareComponentManager(ApplicationManager.getApplication() as ComponentManagerImpl), ProjectEx, ProjectStoreOwner {
+open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName: String?)
+  : ClientAwareComponentManager(parent = parent,
+                                coroutineScope = parent.getCoroutineScope().namedChildScope("ProjectImpl")), ProjectEx, ProjectStoreOwner {
   companion object {
-    protected val LOG = Logger.getInstance(ProjectImpl::class.java)
+    private val LOG = logger<ProjectImpl>()
 
     @Internal
     val RUN_START_UP_ACTIVITIES = Key.create<Boolean>("RUN_START_UP_ACTIVITIES")
@@ -79,29 +76,14 @@ open class ProjectImpl(filePath: Path, projectName: String?)
     @JvmField
     val USED_TEST_NAMES = Key.create<String>("ProjectImpl.USED_TEST_NAMES")
 
-    internal fun CoroutineScope.preloadServicesAndCreateComponents(project: ProjectImpl, preloadServices: Boolean) {
-      if (preloadServices) {
-        val app = ApplicationManager.getApplication()
-        if (project.isLight || app.isHeadlessEnvironment || app.isUnitTestMode) {
-          launch {
-            project.serviceAsync<FileEditorManager>().join()
-            project.serviceAsync<WolfTheProblemSolver>().join()
-            project.serviceAsync<DaemonCodeAnalyzer>().join()
-          }
-        }
-
-        // for light projects, preload only services that are essential
-        // ("await" means "project component loading activity is completed only when all such services are completed")
-        project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-                                activityPrefix = "project ",
-                                syncScope = this,
-                                onlyIfAwait = project.isLight,
-                                asyncScope = project.asyncPreloadServiceScope)
-      }
-
-      launch {
-        project.createComponentsNonBlocking()
-      }
+    // for light projects, preload only services that are essential
+    // ("await" means "project component loading activity is completed only when all such services are completed")
+    internal fun CoroutineScope.preloadServices(project: ProjectImpl) {
+      project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                              activityPrefix = "project ",
+                              syncScope = this,
+                              onlyIfAwait = project.isLight,
+                              asyncScope = project.asyncPreloadServiceScope)
     }
   }
 
@@ -120,7 +102,7 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
   private var cachedName: String?
 
-  private var componentStoreValue = SynchronizedClearableLazy {
+  private val componentStoreValue = SynchronizedClearableLazy {
     ApplicationManager.getApplication().getService(ProjectStoreFactory::class.java).createStore(this)
   }
 

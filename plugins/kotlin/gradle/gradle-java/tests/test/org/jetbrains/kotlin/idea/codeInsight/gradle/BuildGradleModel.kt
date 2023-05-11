@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.tooling.core.Extras
 import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportAction
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
+import org.jetbrains.plugins.gradle.service.execution.createMainInitScript
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
@@ -84,27 +85,25 @@ fun <T : Any> buildGradleModel(
 
         val executionSettings = GradleExecutionSettings(null, null, DistributionType.BUNDLED, false)
         GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings)
-        val initScript = GradleExecutionHelper.generateInitScript(
-            false, AbstractModelBuilderTest.getToolingExtensionClasses() +
-                    setOf(
-                        /* Representative of the `gradle-tooling` module */
-                        KotlinMPPGradleModelBuilder::class.java,
+        val toolingExtensionClasses = AbstractModelBuilderTest.getToolingExtensionClasses()
+        val kotlinToolingExtensionClasses = setOf(
+            /* Representative of the `gradle-tooling` module */
+            KotlinMPPGradleModelBuilder::class.java,
 
-                        /* Representative of the `kotlin.project-module` module */
-                        KotlinCompilation::class.java,
+            /* Representative of the `kotlin.project-module` module */
+            KotlinCompilation::class.java,
 
-                        /* Representative of the `kotlin-tooling-core` library */
-                        Extras::class.java,
+            /* Representative of the `kotlin-tooling-core` library */
+            Extras::class.java,
 
-                        /* Representative of the `kotlin-gradle-plugin-idea` library */
-                        IdeaKotlinDependency::class.java,
+            /* Representative of the `kotlin-gradle-plugin-idea` library */
+            IdeaKotlinDependency::class.java,
 
-                        /* Representative of the kotlin stdlib */
-                        Unit::class.java
-                    )
-
-        ) ?: error("Failed to generateInitScript")
-        executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.absolutePath)
+            /* Representative of the kotlin stdlib */
+            Unit::class.java
+        )
+        val initScript = createMainInitScript(false, toolingExtensionClasses + kotlinToolingExtensionClasses)
+        executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString())
 
         val buildActionExecutor = gradleConnection.action(projectImportAction)
         buildActionExecutor.withArguments(executionSettings.arguments)

@@ -304,8 +304,8 @@ public class ExternalJavacManager extends ProcessAdapter {
     final List<String> cmdLine = new ArrayList<>();
 
     final WslToLinuxPathConverter wslConverter = WslToLinuxPathConverter.createFrom(sdkHomePath);
-    final boolean launchInLinuxVM = wslConverter != null;
-    final ExternalJavacMessageHandler.WslSupport wslSupport = launchInLinuxVM? wslConverter : ExternalJavacMessageHandler.WslSupport.DIRECT;
+    final boolean launchWSL = wslConverter != null;
+    final ExternalJavacMessageHandler.WslSupport wslSupport = launchWSL? wslConverter : ExternalJavacMessageHandler.WslSupport.DIRECT;
     appendParam(cmdLine, wslSupport.convertPath(sdkHomePath + "/bin/java"));
     appendParam(cmdLine, "-Djava.awt.headless=true");
 
@@ -339,8 +339,14 @@ public class ExternalJavacManager extends ProcessAdapter {
 
     appendParam(cmdLine, "-classpath");
     List<File> cp = ClasspathBootstrap.getExternalJavacProcessClasspath(sdkHomePath, compilingTool);
-    final String pathSeparator = launchInLinuxVM? ":" : File.pathSeparator;
-    appendParam(cmdLine, String.join(pathSeparator, Iterators.map(cp, f -> wslSupport.convertPath(f.getPath()))));
+    String pathSeparator = launchWSL? ":" : File.pathSeparator;
+    String classpath = String.join(pathSeparator, Iterators.map(cp, f -> wslSupport.convertPath(f.getPath())));
+    if (launchWSL && !classpath.isEmpty()) {
+      cmdLine.add("'" + classpath.replace("'", "\\'") + "'");
+    }
+    else {
+      appendParam(cmdLine, classpath);
+    }
 
     appendParam(cmdLine, ExternalJavacProcess.class.getName());
     appendParam(cmdLine, processId.toString());
@@ -352,11 +358,9 @@ public class ExternalJavacManager extends ProcessAdapter {
     appendParam(cmdLine, Integer.toString(port));
     appendParam(cmdLine, Boolean.toString(keepProcessAlive));  // keep in memory after build finished
 
-    if (launchInLinuxVM) {
-      cmdLine.add(0, "&&");
-      cmdLine.add(0, wslSupport.convertPath(workingDir.getPath()));
-      cmdLine.add(0, "cd");
-      final String command = StringUtil.join(cmdLine, " ");
+    if (launchWSL) {
+      String command =
+        "\"cd '" + wslSupport.convertPath(workingDir.getPath()) + "' && " + String.join(" ", cmdLine) + "\"";
       cmdLine.clear();
       cmdLine.add(myWslExePath);
       cmdLine.add("--distribution");
@@ -364,7 +368,7 @@ public class ExternalJavacManager extends ProcessAdapter {
       cmdLine.add("--exec");
       cmdLine.add("/bin/sh");
       cmdLine.add("-c");
-      cmdLine.add("\"" + command + "\"");
+      cmdLine.add(command);
     }
 
     debug(()-> "starting external compiler: " + cmdLine);
@@ -372,10 +376,10 @@ public class ExternalJavacManager extends ProcessAdapter {
 
     final int processHash = processHash(sdkHomePath, vmOptions, compilingTool);
     final ProcessBuilder processBuilder = new ProcessBuilder(cmdLine);
-    if (!launchInLinuxVM) {
+    if (!launchWSL) {
       processBuilder.directory(workingDir);
     }
-    final ExternalJavacProcessHandler processHandler = createProcessHandler(processId, processBuilder.start(), StringUtil.join(cmdLine, " "), keepProcessAlive);
+    final ExternalJavacProcessHandler processHandler = createProcessHandler(processId, processBuilder.start(), String.join(" ", cmdLine), keepProcessAlive);
     WSL_SUPPORT.set(processHandler, wslSupport);
     PROCESS_HASH.set(processHandler, processHash);
     processHandler.lock();
@@ -458,9 +462,9 @@ public class ExternalJavacManager extends ProcessAdapter {
   private static void appendParam(List<? super String> cmdLine, String parameter) {
     if (SystemInfo.isWindows) {
       if (parameter.contains("\"")) {
-        parameter = StringUtil.replace(parameter, "\"", "\\\"");
+        parameter = parameter.replace("\"", "\\\"");
       }
-      else if (parameter.length() == 0) {
+      else if (parameter.isEmpty()) {
         parameter = "\"\"";
       }
     }

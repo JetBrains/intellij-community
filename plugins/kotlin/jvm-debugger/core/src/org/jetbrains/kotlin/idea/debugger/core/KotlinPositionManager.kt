@@ -15,11 +15,10 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
@@ -61,6 +60,7 @@ import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_A
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
     private val stackFrameInterceptor: StackFrameInterceptor? = debugProcess.project.serviceOrNull()
@@ -147,16 +147,48 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             throw NoDataException.INSTANCE
         }
 
-        val lambdaOrFunIfInside = getLambdaOrFunStartingOrEndingOnLineIfInside(location, psiFile, sourceLineNumber)
+        val sourcePosition = createSourcePosition(location, psiFile, sourceLineNumber)
+            ?: SourcePosition.createFromLine(psiFile, sourceLineNumber)
+
+        // There may be several locations for same source line. If same source position would be created for all of them,
+        // breakpoints at this line will stop on every location.
+        if (sourcePosition !is KotlinReentrantSourcePosition && location.shouldBeTreatedAsReentrantSourcePosition(psiFile, fileName)) {
+            return KotlinReentrantSourcePosition(sourcePosition)
+        }
+
+		// Here we are trying to detect whether we should highlight the entire line of a source position or not.
+		// Consider the example:
+		//    1.also { // Stop on a breakpoint here and perform a step over
+		//        println(it)
+		//    }.also { // You will get to this line
+		//        println(it)
+		//    }
+		// In this example the entire line with `also` should be highlighted.
+		// Another example:
+		//    1.also {
+		//        println(it) // Stop on a breakpoint here and perform a step over
+		//    }.also { // You will get to this line
+		//        println(it)
+		//    }
+		// Now we should highlight the line before the curly brace, since we are still inside the `also` inline lambda.
+		val lines = sourcePosition.elementAt?.parent.safeAs<KtFunctionLiteral>()?.getLineRange() ?: return sourcePosition
+		if (!location.hasVisibleInlineLambdasOnLines(lines)) {
+			return KotlinSourcePositionWithEntireLineHighlighted(sourcePosition)
+		}
+		return sourcePosition
+    }
+
+    private fun createSourcePosition(location: Location, file: KtFile, sourceLineNumber: Int): SourcePosition? {
+        val lambdaOrFunIfInside = getLambdaOrFunStartingOrEndingOnLineIfInside(location, file, sourceLineNumber)
         if (lambdaOrFunIfInside != null) {
-            val elementAt = getFirstElementInsideLambdaOnLine(psiFile, lambdaOrFunIfInside, sourceLineNumber)
+            val elementAt = getFirstElementInsideLambdaOnLine(file, lambdaOrFunIfInside, sourceLineNumber)
             if (elementAt != null) {
                 return SourcePosition.createFromElement(elementAt)
             }
-            return SourcePosition.createFromLine(psiFile, sourceLineNumber)
+            return SourcePosition.createFromLine(file, sourceLineNumber)
         }
 
-        val callableReferenceIfInside = getCallableReferenceIfInside(location, psiFile, sourceLineNumber)
+        val callableReferenceIfInside = getCallableReferenceIfInside(location, file, sourceLineNumber)
         if (callableReferenceIfInside != null) {
             val sourcePosition = SourcePosition.createFromElement(callableReferenceIfInside)
             if (sourcePosition != null) {
@@ -165,18 +197,11 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             }
         }
 
-        val elementInDeclaration = getElementForDeclarationLine(location, psiFile, sourceLineNumber)
+        val elementInDeclaration = getElementForDeclarationLine(location, file, sourceLineNumber)
         if (elementInDeclaration != null) {
             return SourcePosition.createFromElement(elementInDeclaration)
         }
-
-        // There may be several locations for same source line. If same source position would be created for all of them,
-        // breakpoints at this line will stop on every location.
-        if (location.shouldBeTreatedAsReentrantSourcePosition(psiFile, fileName)) {
-            return KotlinReentrantSourcePosition(SourcePosition.createFromLine(psiFile, sourceLineNumber))
-        }
-        val sourcePosition = SourcePosition.createFromLine(psiFile, sourceLineNumber)
-        return decorateSourcePosition(location, sourcePosition)
+        return null
     }
 
     private fun getFirstElementInsideLambdaOnLine(file: PsiFile, lambda: KtFunction, line: Int): PsiElement? {
@@ -194,11 +219,9 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                 it.lineNumber() == lineNumber()
             }
 
-        /*
-            `finally {}` block code is placed in the class file twice.
-            Unless the debugger metadata is available, we can't figure out if we are inside `finally {}`, so we have to check it using PSI.
-            This is conceptually wrong and won't work in some cases, but it's still better than nothing.
-        */
+        //  The `finally {}` block code is placed in the class file twice.
+        //  Unless the debugger metadata is available, we can't figure out if we are inside `finally {}`, so we have to check it using PSI.
+        //  This is conceptually wrong and won't work in some cases, but it's still better than nothing.
         if (sameLineLocations.size < 2 || hasFinallyBlockInParent(psiFile)) {
             return false
         }
@@ -318,13 +341,14 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     private fun List<KtFunction>.getAppropriateLiteralBasedOnLambdaName(location: Location, lineNumber: Int): KtFunction? {
         val method = location.safeMethod() ?: return null
-        if (!method.name().isGeneratedIrBackendLambdaMethodName()) {
+        if (!method.name().isGeneratedIrBackendLambdaMethodName() || method.isGeneratedErasedLambdaMethod()) {
             return null
         }
 
         val lambdas = location.declaringType().methods()
             .filter {
               it.name().isGeneratedIrBackendLambdaMethodName() &&
+              !it.isGeneratedErasedLambdaMethod() &&
               DebuggerUtilsEx.locationsOfLine(it, lineNumber + 1).isNotEmpty()
             }
 
@@ -518,7 +542,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
 
         val isInsideProjectWithCompose = position.isInsideProjectWithCompose()
-        return DumbService.getInstance(debugProcess.project).runReadActionInSmartMode(Computable {
+        return ReadAction.nonBlocking<List<ClassPrepareRequest>> {
             val kotlinRequests = createKotlinClassPrepareRequests(requestor, position)
             if (isInsideProjectWithCompose) {
                 val singletonRequest = getClassPrepareRequestForComposableSingletons(debugProcess, requestor, file)
@@ -529,7 +553,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             } else {
                 kotlinRequests
             }
-        })
+        }.inSmartMode(debugProcess.project).executeSynchronously()
     }
 
     @RequiresReadLock
@@ -545,37 +569,30 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                 listOfNotNull(
                     debugProcess.requestsManager.createClassPrepareRequest(requestor, name),
                     debugProcess.requestsManager.createClassPrepareRequest(requestor, "$name$*")
-                )
+               )
             }
     }
 }
 
-// This method detects whether we should highlight the entire line of a source position or not.
-// Consider the example:
-//
-//    1.also { // Stop on a breakpoint here and perform a step over
-//        println(it)
-//    }.also { // You will get to this line
-//        println(it)
-//    }
-//
-// In this example the entire line with `also` should be highlighted.
-// Another example:
-//
-//    1.also {
-//        println(it) // Stop on a breakpoint here and perform a step over
-//    }.also { // You will get to this line
-//        println(it)
-//    }
-//
-// Now we should highlight the line before the curly brace, since we are still inside the `also` inline lambda.
-private fun decorateSourcePosition(location: Location, sourcePosition: SourcePosition): SourcePosition {
-    val lambda = sourcePosition.elementAt?.parent as? KtFunctionLiteral ?: return sourcePosition
-    val lines = lambda.getLineRange() ?: return sourcePosition
-    if (!location.hasVisibleInlineLambdasOnLines(lines)) {
-        return KotlinSourcePositionWithEntireLineHighlighted(sourcePosition)
+// Kotlin compiler generates private final static <outer-method>$lambda$0 method
+// per each lambda that takes lambda (kotlin.jvm.functions.FunctionN) as the first parameter
+// and all the rest are the lambda parameters (java.lang.Object).
+// This generated method just calls the lambda with provided parameters.
+// However, this method contains a line number (where a lambda is defined), so it should be ignored.
+internal fun Method.isGeneratedErasedLambdaMethod(): Boolean {
+    if (name().isGeneratedIrBackendLambdaMethodName() && isPrivate && isStatic) {
+        val args = argumentTypeNames()
+        val kotlinFunctionPrefix = "kotlin.jvm.functions.Function"
+        if (args.size >= 2 && args[0].startsWith(kotlinFunctionPrefix)) {
+            val parameterCount = args[0].removePrefix(kotlinFunctionPrefix).toIntOrNull()
+            if (parameterCount != null && args.size == parameterCount + 1 &&
+                args.drop(1).all { it == "java.lang.Object" }
+            ) {
+                return true
+            }
+        }
     }
-    return sourcePosition
+    return false
 }
 
 private fun Location.getZeroBasedLineNumber(): Int =

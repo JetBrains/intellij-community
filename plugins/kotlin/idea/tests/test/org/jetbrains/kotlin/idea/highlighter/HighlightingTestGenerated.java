@@ -237,6 +237,11 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
             runTest("testData/highlighter/KDoc.kt");
         }
 
+        @TestMetadata("KotlinInJavaInjection.java")
+        public void testKotlinInJavaInjection() throws Exception {
+            runTest("testData/highlighter/KotlinInJavaInjection.java");
+        }
+
         @TestMetadata("KotlinInjection.kt")
         public void testKotlinInjection() throws Exception {
             runTest("testData/highlighter/KotlinInjection.kt");
@@ -315,6 +320,11 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
         @TestMetadata("TypeAlias2.kt")
         public void testTypeAlias2() throws Exception {
             runTest("testData/highlighter/TypeAlias2.kt");
+        }
+
+        @TestMetadata("TypeAliasAnnotation.kt")
+        public void testTypeAliasAnnotation() throws Exception {
+            runTest("testData/highlighter/TypeAliasAnnotation.kt");
         }
 
         @TestMetadata("TypesAndAnnotations.kt")

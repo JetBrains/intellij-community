@@ -11,6 +11,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+/**
+ * Command stops async or yourkit profiler based on system property <i>integrationTests.profiler</i>.
+ * <p>
+ * In case when yourkit profiler was used parameters are ignored.
+ * <p>
+ * Syntax: %stopProfile [parameters]
+ * Example: %stopProfile collapsed,flamegraph,traces=5000
+ */
 public class StopProfileCommand extends AbstractCommand {
 
   public static final String PREFIX = CMD_PREFIX + "stopProfile";

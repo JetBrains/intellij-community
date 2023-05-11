@@ -7,6 +7,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -18,6 +19,7 @@ import java.util.List;
  */
 public interface FileManager {
   @Nullable
+  @RequiresReadLock
   PsiFile findFile(@NotNull VirtualFile vFile);
 
   @Nullable

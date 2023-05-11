@@ -1071,6 +1071,30 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  // PY-49946
+  public void testDataclassKwOnlyOnClass() {
+    final PyFile file = getTestFile();
+
+    assertTrue(file.findTopLevelClass("Foo1").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+    assertFalse(file.findTopLevelClass("Foo2").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+    assertFalse(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+
+    assertNotParsed(file);
+  }
+
+  // PY-49946
+  public void testDataclassKwOnlyOnField() {
+    final PyFile file = getTestFile();
+    final PyClass cls = file.findTopLevelClass("Foo");
+
+    assertFalse(cls.findClassAttribute("bar1", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+    assertTrue(cls.findClassAttribute("bar2", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+    assertFalse(cls.findClassAttribute("bar3", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+
+    assertNotParsed(file);
+  }
+
+
   private void doTestTypingTypedDictArguments() {
     doTestTypedDict("name", Arrays.asList("x", "y"), Arrays.asList("str", "int"), QualifiedName.fromComponents("TypedDict"));
   }

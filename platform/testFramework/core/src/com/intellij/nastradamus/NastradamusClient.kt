@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.nastradamus
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.TestCaseLoader
@@ -26,32 +27,68 @@ class NastradamusClient(
     private val jacksonMapper: ObjectMapper = jacksonObjectMapper()
   }
 
-  private lateinit var sortedClassesCachedResult: Map<Class<*>, Int>
+  /** Classes for current bucket. Map<Class to Sorting order> */
+  private lateinit var sortedClassesInCurrentBucket: Set<Class<*>>
+  private lateinit var allSortedClasses: Map<Class<*>, Int>
 
   fun collectTestRunResults(): TestResultRequestEntity {
     val tests = teamCityClient.getTestRunInfo()
+    val build = teamCityClient.getBuildInfo()
+    val buildProperties: List<JsonNode> = build.findValue("properties")
+                                            ?.findValue("property")
+                                            ?.elements()?.asSequence()?.toList() ?: listOf()
 
-    val testResultEntities = tests.map { json ->
-      TestResultEntity(
+    val bucketId: Int = buildProperties.firstOrNull { (it.findValue("name")?.asText() ?: "") == "system.pass.idea.test.runner.index" }
+                          ?.findValue("value")?.asInt() ?: 0
+    val bucketsNumber: Int = buildProperties.firstOrNull { (it.findValue("name")?.asText() ?: "") == "system.pass.idea.test.runners.count" }
+                               ?.findValue("value")?.asInt() ?: 0
+
+    val testResultEntities = mutableMapOf<String, TestClassResultEntity>()
+
+    tests.map { json ->
+      val testResult = TestResultEntity(
         name = json.findValue("name").asText(),
         status = TestStatus.fromString(json.findValue("status").asText()),
         runOrder = json.findValue("runOrder").asInt(),
-        duration = json.findValue("duration")?.asLong() ?: 0,
-        buildType = teamCityClient.buildTypeId,
-        buildStatusMessage = teamCityClient.getBuildInfo().findValue("statusText").asText(),
+        durationMs = json.findValue("duration")?.asLong() ?: 0,
+        currentlyInvestigated = json.findValue("currentlyInvestigated")?.asBoolean() ?: false,
         isMuted = json.findValue("currentlyMuted")?.asBoolean() ?: false
       )
+
+      val parsedTestName = json.findValue("test").findValue("parsedTestName")
+      val packageName = parsedTestName.findValue("testPackage").asText()
+      val shortClassName = parsedTestName.findValue("testClass").asText()
+      val fullClassName = "$packageName.$shortClassName"
+
+      testResultEntities.computeIfPresent(fullClassName) { _, oldClassResult ->
+        oldClassResult.copy(
+          durationMs = oldClassResult.durationMs + testResult.durationMs,
+          testResults = oldClassResult.testResults.toMutableSet().apply { add(testResult) }
+        )
+      }
+
+      testResultEntities.computeIfAbsent(fullClassName) {
+        TestClassResultEntity(
+          fullName = fullClassName,
+          durationMs = testResult.durationMs,
+          testResults = mutableSetOf(testResult),
+          bucketId = bucketId,
+          bucketsNumber = bucketsNumber
+        )
+      }
     }
 
-    return TestResultRequestEntity(testRunResults = testResultEntities)
+    return TestResultRequestEntity(buildInfo = getBuildInfo(),
+                                   testRunResults = testResultEntities.values.toList(),
+                                   changes = getTeamCityChangesDetails())
   }
 
-  fun sendTestRunResults(testResultRequestEntity: TestResultRequestEntity) {
+  fun sendTestRunResults(testResultRequestEntity: TestResultRequestEntity, wasNastradamusDataUsed: Boolean) {
     val uri = URIBuilder(baseUrl.resolve("/result/").normalize())
-      .addParameter("build_id", teamCityClient.buildId)
+      .addParameter("was_nastradamus_data_used", wasNastradamusDataUsed.toString())
       .build()
 
-    val stringJson = jacksonMapper.writeValueAsString(testResultRequestEntity.testRunResults)
+    val stringJson = jacksonMapper.writeValueAsString(testResultRequestEntity)
 
     val httpPost = HttpPost(uri).apply {
       addHeader("Content-Type", "application/json")
@@ -87,9 +124,13 @@ class NastradamusClient(
   /**
    * Will return tests for this particular bucket
    */
-  fun sendSortingRequest(sortRequestEntity: SortRequestEntity, bucketsCount: Int, currentBucketIndex: Int): List<TestCaseEntity> {
+  fun sendSortingRequest(sortRequestEntity: SortRequestEntity,
+                         bucketsCount: Int,
+                         currentBucketIndex: Int,
+                         wasNastradamusDataUsed: Boolean): List<TestCaseEntity> {
     val uri = URIBuilder(baseUrl.resolve("/sort/").normalize())
       .addParameter("buckets", bucketsCount.toString())
+      .addParameter("was_nastradamus_data_used", wasNastradamusDataUsed.toString())
       .build()
 
     val stringJson = jacksonMapper.writeValueAsString(sortRequestEntity)
@@ -144,6 +185,7 @@ class NastradamusClient(
   private fun getTeamCityChangesetPatch(): List<String> {
     println("Fetching changesets patches from TeamCity ...")
 
+    @Suppress("RAW_RUN_BLOCKING")
     val changesets = runBlocking {
       teamCityClient.getChanges().mapConcurrently(maxConcurrency = 5) { change ->
         val modificationId = change.findValue("id").asText()
@@ -161,6 +203,7 @@ class NastradamusClient(
     println("Getting changes details from TeamCity ...")
 
     // across all changes - get their details
+    @Suppress("RAW_RUN_BLOCKING")
     val changeDetails = runBlocking {
       val changes = teamCityClient.getChanges()
       changes.mapConcurrently(maxConcurrency = 5) { change ->
@@ -180,12 +223,17 @@ class NastradamusClient(
     val aggregatorBuildId: String = if (triggeredByBuild == null) teamCityClient.buildId
     else triggeredByBuild.findValue("id").asText(teamCityClient.buildId)
 
-    val branchName = teamCityClient.getBuildInfo().findValue("branchName")?.asText("") ?: ""
+    val buildInfo = teamCityClient.getBuildInfo()
+    val branchName = buildInfo.findValue("branchName")?.asText("") ?: ""
 
     return BuildInfo(buildId = teamCityClient.buildId,
                      aggregatorBuildId = aggregatorBuildId,
                      branchName = branchName,
-                     os = teamCityClient.os)
+                     os = teamCityClient.os,
+                     buildType = teamCityClient.buildTypeId,
+                     status = buildInfo.findValue("status")?.asText("") ?: "",
+                     buildStatusMessage = buildInfo.findValue("statusText")?.asText("") ?: ""
+    )
   }
 
   fun getRankedClasses(): Map<Class<*>, Int> {
@@ -206,14 +254,18 @@ class NastradamusClient(
           val sortedCases = sendSortingRequest(
             sortRequestEntity = SortRequestEntity(buildInfo = getBuildInfo(), changes = changesets, tests = cases),
             bucketsCount = TestCaseLoader.TEST_RUNNERS_COUNT,
-            currentBucketIndex = TestCaseLoader.TEST_RUNNER_INDEX
+            currentBucketIndex = TestCaseLoader.TEST_RUNNER_INDEX,
+            wasNastradamusDataUsed = TestCaseLoader.IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED
           )
 
           var rank = 1
-          val ranked = sortedCases.associate { case -> case.name to rank++ }
-          sortedClassesCachedResult = unsortedClasses.associateWith { clazz -> ranked[clazz.name] ?: Int.MAX_VALUE }
+          val rankedTestClassesForCurrentBucket = sortedCases.associate { case -> case.name to rank++ }
+
+          sortedClassesInCurrentBucket = unsortedClasses.filter { it.name in rankedTestClassesForCurrentBucket.keys }.toSet()
+
+          allSortedClasses = unsortedClasses.associateWith { clazz -> rankedTestClassesForCurrentBucket[clazz.name] ?: Int.MAX_VALUE }
           println("Fetching sorted test classes from Nastradamus completed")
-          sortedClassesCachedResult
+          allSortedClasses
         },
         fallbackOnThresholdReached = { fallback() }
       )
@@ -221,21 +273,22 @@ class NastradamusClient(
     catch (e: Throwable) {
       // fallback in case of any failure (just to get aggregator running)
       System.err.println("Failure during sorting test classes via Nastradamus. Fallback to simple natural sorting.")
-      sortedClassesCachedResult = fallback()
-      sortedClassesCachedResult
+      allSortedClasses = fallback()
+      allSortedClasses
     }
   }
 
-  fun isClassInBucket(testIdentifier: String): Boolean {
-    if (!this::sortedClassesCachedResult.isInitialized) getRankedClasses()
+  fun isClassInBucket(testIdentifier: String, fallbackFunc: (String) -> Boolean): Boolean {
+    if (!this::allSortedClasses.isInitialized) getRankedClasses()
 
     val isMatch: Boolean = withErrorThreshold(
       objName = "NastradamusClient-isClassInBucket",
       errorThreshold = 1,
-      action = {
-        sortedClassesCachedResult.keys.any { it.name == testIdentifier }
-      },
-      fallbackOnThresholdReached = { throw RuntimeException("Couldn't find appropriate bucket for $testIdentifier via Nastradamus") }
+      action = { sortedClassesInCurrentBucket.any { it.name == testIdentifier } },
+      fallbackOnThresholdReached = {
+        System.err.println("Couldn't find appropriate bucket for $testIdentifier via Nastradamus")
+        fallbackFunc(testIdentifier)
+      }
     )
 
     if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {

@@ -44,17 +44,16 @@ private object MySpacingConfiguration: IntelliJSpacingConfiguration() {
     get() = 0
 
   override val verticalSmallGap: Int
-    get() = JBUI.scale(8)
+    get() = 8
 
   override val verticalMediumGap: Int
-    get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 16 else 8)
+    get() = if (ExperimentalUI.isNewUI()) 16 else 8
 }
 
 internal class BookmarkTypeChooser(
   private var current: BookmarkType?,
   assigned: Set<BookmarkType>,
   private var description: String?,
-  private val onChosen: (BookmarkType, String) -> Unit
 ) {
   private val bookmarkLayoutGrid = BookmarkLayoutGrid(
     current,
@@ -66,6 +65,7 @@ internal class BookmarkTypeChooser(
 
   val firstButton = bookmarkLayoutGrid.buttons().first()
   val content: JPanel
+  var onChosen: (BookmarkType, String) -> Unit = { _, _ -> }
 
   init {
     content = panel {

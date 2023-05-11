@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -98,9 +99,10 @@ public class LanguageTextField extends EditorTextField {
       documentCreator.customizePsiFile(psiFile);
 
       // No need to guess project in getDocument - we already know it
-      final Document document = ProjectLocator.computeWithPreferredProject(
-        psiFile.getVirtualFile(), notNullProject,
-        () -> PsiDocumentManager.getInstance(notNullProject).getDocument(psiFile));
+      Document document;
+      try (AccessToken ignored = ProjectLocator.withPreferredProject(psiFile.getVirtualFile(), notNullProject)) {
+        document = PsiDocumentManager.getInstance(notNullProject).getDocument(psiFile);
+      }
       assert document != null;
 
       if (!value.isEmpty()) {
@@ -117,14 +119,12 @@ public class LanguageTextField extends EditorTextField {
 
   @Override
   protected @NotNull EditorEx createEditor() {
-    final EditorEx ex = super.createEditor();
-
+    EditorEx editor = super.createEditor();
     if (myLanguage != null) {
-      final FileType fileType = myLanguage.getAssociatedFileType();
-      ex.setHighlighter(HighlighterFactory.createHighlighter(myProject, fileType));
+      FileType fileType = myLanguage.getAssociatedFileType();
+      editor.setHighlighter(HighlighterFactory.createHighlighter(myProject, fileType));
     }
-    ex.setEmbeddedIntoDialogWrapper(true);
-
-    return ex;
+    editor.setEmbeddedIntoDialogWrapper(true);
+    return editor;
   }
 }

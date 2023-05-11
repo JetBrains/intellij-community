@@ -5,7 +5,7 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem;
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
+import static com.intellij.codeInsight.util.CodeCompletionKt.*;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
 
 public class BaseCompletionLookupArranger extends LookupArranger implements CompletionLookupArranger {
   private static final Logger LOG = Logger.getInstance(BaseCompletionLookupArranger.class);
@@ -349,7 +350,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   @NotNull
   private synchronized Pair<List<LookupElement>, Integer> doArrangeItems(@NotNull LookupElementListPresenter lookup,
                                                                          boolean onExplicitAction) {
-    return computeWithSpan(TraceManager.INSTANCE.getTracer("codeCompletion"), "arrangeItems", span -> {
+    return computeWithSpan(TelemetryTracer.getInstance().getTracer(CodeCompletion), "arrangeItems", span -> {
       List<LookupElement> items = getMatchingItems();
       Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(groupItemsBySorter(items));
 

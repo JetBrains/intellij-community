@@ -34,7 +34,7 @@ public class PluginDescriptorTreeElement extends PsiTreeElementBase<XmlTag> impl
     if (tag == null || !tag.isValid()) {
       return Collections.emptyList();
     }
-    return ContainerUtil.map2List(tag.getSubTags(), psiElement -> new PluginDescriptorTreeElement(psiElement, false, myIsRoot));
+    return ContainerUtil.map(tag.getSubTags(), psiElement -> new PluginDescriptorTreeElement(psiElement, false, myIsRoot));
   }
 
   @Nullable

@@ -1,15 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
-import com.intellij.diagnostic.telemetry.TraceManager
-import com.intellij.diagnostic.telemetry.computeWithSpan
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Consumer
-import com.intellij.util.EmptyConsumer
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.impl.computeWithSpan
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.TimedVcsCommit
@@ -98,7 +97,7 @@ fun getIncorrectCommits(project: Project, root: VirtualFile): Set<Hash> {
 private fun getIncorrectCommitsFromIndex(dataManager: VcsLogData,
                                          dataGetter: IndexDataGetter,
                                          root: VirtualFile): Set<Hash> {
-  computeWithSpan(TraceManager.getTracer("vcs"), "getting incorrect merges from index") { span ->
+  computeWithSpan(TelemetryTracer.getInstance().getTracer(VcsScope), "getting incorrect merges from index") { span ->
     span.setAttribute("rootName", root.name)
 
     val commits = dataGetter.filter(listOf(MAGIC_FILTER)).asSequence()
@@ -108,7 +107,7 @@ private fun getIncorrectCommitsFromIndex(dataManager: VcsLogData,
 
 @Throws(VcsException::class)
 fun getIncorrectCommitsFromGit(project: Project, root: VirtualFile): MutableSet<Hash> {
-  return computeWithSpan(TraceManager.getTracer("vcs"), "getting incorrect merges from git") { span ->
+  return computeWithSpan(TelemetryTracer.getInstance().getTracer(VcsScope), "getting incorrect merges from git") { span ->
     span.setAttribute("rootName", root.name)
 
     val filterParameters = mutableListOf<String>()
@@ -118,8 +117,7 @@ fun getIncorrectCommitsFromGit(project: Project, root: VirtualFile): MutableSet<
     GitLogProvider.appendTextFilterParameters(MAGIC_REGEX, true, false, filterParameters)
 
     val result = mutableSetOf<Hash>()
-    GitLogUtil.readTimedCommits(project, root, filterParameters, EmptyConsumer.getInstance(),
-                                EmptyConsumer.getInstance(), Consumer { commit -> result.add(commit.id) })
+    GitLogUtil.readTimedCommits(project, root, filterParameters, {}, {}, { commit -> result.add(commit.id) })
     return@computeWithSpan result
   }
 }

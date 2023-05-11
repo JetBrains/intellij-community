@@ -187,7 +187,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   public static String getBestDocumentation(boolean preferShort, @NotNull final JsonSchemaObject schema) {
     String htmlDescription = schema.getHtmlDescription();
     if (htmlDescription != null && hasNonTrustedProjects()) {
-      htmlDescription = htmlDescription.replaceAll("<a[^>]*>", "").replaceAll("</a>", "");
+      htmlDescription = StringUtil.escapeXmlEntities(htmlDescription);
     }
     final String description = schema.getDescription();
     final String title = schema.getTitle();

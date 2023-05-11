@@ -36,7 +36,7 @@ class SQLiteConfig {
       yield("PRAGMA temp_store = MEMORY")
       yield("pragma cache_size = 2000")
     }.joinToString(";")
-    connection.db.exec(sql)
+    connection.db.exec(sql.encodeToByteArray())
   }
 }
 

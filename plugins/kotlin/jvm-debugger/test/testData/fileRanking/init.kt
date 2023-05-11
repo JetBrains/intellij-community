@@ -5,6 +5,7 @@ class A {
         val b = 3
     }
 }
+// PRODUCED_CLASS_NAMES: A
 
 //FILE: b/a.kt
 class B {
@@ -12,3 +13,4 @@ class B {
         val x = 1
     }
 }
+// PRODUCED_CLASS_NAMES: B

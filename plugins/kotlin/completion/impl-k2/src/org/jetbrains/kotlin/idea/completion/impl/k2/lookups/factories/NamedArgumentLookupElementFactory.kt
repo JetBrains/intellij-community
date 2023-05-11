@@ -8,22 +8,20 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.NamedArgumentInsertHandler
+import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
-import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher
-import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 
 internal class NamedArgumentLookupElementFactory {
     fun KtAnalysisSession.createNamedArgumentLookup(name: Name, types: List<KtType>): LookupElement {
-        val typeText = types.singleOrNull()?.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT) ?: "..."
+        val typeText = types.singleOrNull()?.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT) ?: "..."
         val nameString = name.asString()
         return LookupElementBuilder.create(NamedArgumentLookupObject(name), "$nameString =")
             .withTailText(" $typeText")
             .withIcon(KotlinIcons.PARAMETER)
             .withInsertHandler(NamedArgumentInsertHandler(name))
-            .apply { matchesExpectedType = ExpectedTypeWeigher.MatchesExpectedType.MATCHES }
     }
 
     fun createNamedArgumentWithValueLookup(name: Name, value: String): LookupElement {
@@ -31,7 +29,7 @@ internal class NamedArgumentLookupElementFactory {
             .withIcon(KotlinIcons.PARAMETER)
             .withInsertHandler { context, _ ->
                 context.document.replaceString(context.startOffset, context.tailOffset, "${name.render()} = $value")
-            }.apply { matchesExpectedType = ExpectedTypeWeigher.MatchesExpectedType.MATCHES }
+            }
     }
 }
 

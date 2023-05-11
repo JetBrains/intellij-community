@@ -6,18 +6,19 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import org.ec4j.core.*
+import com.intellij.util.SlowOperations
+import org.ec4j.core.EditorConfigConstants
+import org.ec4j.core.EditorConfigLoader
+import org.ec4j.core.ResourceProperties
+import org.ec4j.core.ResourcePropertiesService
 import org.ec4j.core.parser.ParseException
 import org.editorconfig.EditorConfigRegistry
 import org.editorconfig.core.ec4jwrappers.EditorConfigPermanentCache
@@ -67,7 +68,9 @@ class SettingsProviderComponent(private val project: Project) : SimpleModificati
 
   fun getProperties(file: VirtualFile): ResourceProperties {
     return try {
-      resourcePropertiesService.queryProperties(VirtualFileResource(file))
+      SlowOperations.knownIssue("IDEA-307301, EA-775214").use {
+        resourcePropertiesService.queryProperties(VirtualFileResource(file))
+      }
     } catch (e: IOException) {
       // error reading from an .editorconfig file
       EMPTY_PROPERTIES

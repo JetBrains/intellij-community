@@ -1,35 +1,29 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbModeProgressTitle;
+import com.intellij.openapi.project.FilesScanningTask;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.VfsUsageCollector;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.BooleanFunction;
-import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
@@ -37,35 +31,31 @@ import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.PerProjectIndexingQueue.PerProviderSink;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
-import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
-import com.intellij.util.indexing.diagnostic.ScanningStatistics;
-import com.intellij.util.indexing.diagnostic.ScanningType;
+import com.intellij.util.indexing.diagnostic.*;
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics;
 import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
-import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.indexing.roots.kind.SdkOrigin;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import kotlin.Pair;
 import org.jetbrains.annotations.*;
 
+import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getImmediateValuesEx;
-import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getModuleImmediateValues;
+import static com.intellij.openapi.project.UnindexedFilesScannerExecutor.shouldScanInSmartMode;
 
 @ApiStatus.Internal
-public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesScanner> {
+public class UnindexedFilesScanner implements FilesScanningTask {
   @VisibleForTesting
   public static final Key<Boolean> INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY = new Key<>("INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY");
 
-  private static final Logger LOG = Logger.getInstance(UnindexedFilesScanner.class);  // only for test debugging purpose
+  static final Logger LOG = Logger.getInstance(UnindexedFilesScanner.class);  // only for test debugging purpose
 
   public enum TestMode {
     PUSHING, PUSHING_AND_SCANNING
@@ -85,6 +75,8 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
   private final PushedFilePropertiesUpdater myPusher;
   private final @Nullable StatusMark myProvidedStatusMark;
   private final @Nullable List<IndexableFilesIterator> myPredefinedIndexableFilesIterators;
+  private boolean flushQueueAfterScanning = true;
+
 
   public UnindexedFilesScanner(@NotNull Project project,
                                boolean startSuspended,
@@ -108,7 +100,8 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     }
   }
 
-  protected boolean isFullIndexUpdate() {
+  @Override
+  public boolean isFullIndexUpdate() {
     return myPredefinedIndexableFilesIterators == null;
   }
 
@@ -118,9 +111,11 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
   }
 
   @Override
-  public @Nullable UnindexedFilesScanner tryMergeWith(@NotNull UnindexedFilesScanner oldTask) {
-    if (oldTask.getClass() != getClass()) return null;
-    if (!myProject.equals(oldTask.myProject)) return null;
+  public @Nullable UnindexedFilesScanner tryMergeWith(@NotNull FilesScanningTask _oldTask) {
+    LOG.assertTrue(_oldTask.getClass() == getClass());
+    UnindexedFilesScanner oldTask = (UnindexedFilesScanner)_oldTask;
+
+    LOG.assertTrue(myProject.equals(oldTask.myProject));
     String reason;
     if (oldTask.isFullIndexUpdate()) {
       reason = oldTask.myIndexingReason;
@@ -163,16 +158,19 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
 
   private void scan(@NotNull PerformanceWatcher.Snapshot snapshot,
                     @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+                    @NotNull ProjectScanningHistoryImpl scanningHistory,
                     @NotNull ProgressIndicator indicator,
                     @NotNull Ref<? super StatusMark> markRef) {
-    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.PushProperties);
+    markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.PushProperties,
+              scanningHistory, ProjectScanningHistoryImpl.ScanningStage.DelayedPushProperties, true);
     try {
       if (myPusher instanceof PushedFilePropertiesUpdaterImpl) {
         ((PushedFilePropertiesUpdaterImpl)myPusher).performDelayedPushTasks();
       }
     }
     finally {
-      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.PushProperties);
+      markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.PushProperties,
+                scanningHistory, ProjectScanningHistoryImpl.ScanningStage.DelayedPushProperties, false);
     }
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Performing delayed pushing properties tasks for " + myProject.getName()));
 
@@ -183,7 +181,8 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     }
 
     List<IndexableFilesIterator> orderedProviders;
-    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators);
+    markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.CreatingIterators,
+              scanningHistory, ProjectScanningHistoryImpl.ScanningStage.CreatingIterators, true);
     try {
       if (myPredefinedIndexableFilesIterators == null) {
         Pair<@NotNull List<IndexableFilesIterator>, @NotNull StatusMark> pair = collectProviders(myProject, myIndex);
@@ -195,24 +194,46 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
       }
     }
     finally {
-      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators);
+      markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.CreatingIterators,
+                scanningHistory, ProjectScanningHistoryImpl.ScanningStage.CreatingIterators, false);
     }
 
-    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Scanning);
+    markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.Scanning,
+              scanningHistory, ProjectScanningHistoryImpl.ScanningStage.CollectingIndexableFiles, true);
     try {
-      collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory);
+      collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory, scanningHistory);
       if (isFullIndexUpdate()) {
         myProject.putUserData(CONTENT_SCANNED, true);
       }
     }
     finally {
-      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Scanning);
+      markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.Scanning,
+                scanningHistory, ProjectScanningHistoryImpl.ScanningStage.CollectingIndexableFiles, false);
     }
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
   }
 
+  private static void markStage(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+                                @NotNull ProjectIndexingHistoryImpl.Stage stage,
+                                @NotNull ProjectScanningHistoryImpl scanningHistory,
+                                @NotNull ProjectScanningHistoryImpl.ScanningStage scanningStage,
+                                boolean isStart) {
+    ProgressManager.checkCanceled();
+    Instant scanningStageTime = Instant.now();
+    if (isStart) {
+      projectIndexingHistory.startStage(stage, scanningStageTime);
+      scanningHistory.startStage(scanningStage, scanningStageTime);
+    }
+    else {
+      projectIndexingHistory.stopStage(stage, scanningStageTime);
+      scanningHistory.stopStage(scanningStage, scanningStageTime);
+    }
+    ProgressManager.checkCanceled();
+  }
+
   private void scanAndUpdateUnindexedFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+                                           @NotNull ProjectScanningHistoryImpl scanningHistory,
                                            @NotNull ProgressIndicator indicator,
                                            @NotNull Ref<? super StatusMark> markRef) {
     if (!IndexInfrastructure.hasIndices()) {
@@ -223,7 +244,22 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
     if (suspender != null) {
       ApplicationManager.getApplication().getMessageBus().connect(this)
-        .subscribe(ProgressSuspender.TOPIC, projectIndexingHistory.getSuspendListener(suspender));
+        .subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
+          @Override
+          public void suspendedStatusChanged(@NotNull ProgressSuspender changedSuspender) {
+            if (suspender == changedSuspender) {
+              Instant now = Instant.now();
+              if (suspender.isSuspended()) {
+                projectIndexingHistory.suspendStages(now);
+                scanningHistory.suspendStages(now);
+              }
+              else {
+                projectIndexingHistory.stopSuspendingStages(now);
+                scanningHistory.stopSuspendingStages(now);
+              }
+            }
+          }
+        });
     }
 
     if (myStartSuspended) {
@@ -245,7 +281,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
         DumbModeProgressTitle.getInstance(myProject)
           .attachProgressTitleText(IndexingBundle.message("progress.indexing.scanning.title"), scanningLifetime);
       }
-      scan(snapshot, projectIndexingHistory, indicator, markRef);
+      scan(snapshot, projectIndexingHistory, scanningHistory, indicator, markRef);
     }
     finally {
       Disposer.dispose(scanningLifetime);
@@ -255,9 +291,15 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (myOnProjectOpen && !isUnitTestMode && !skipInitialRefresh) {
       // the full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
-      scheduleInitialVfsRefresh();
+      InitialRefreshKt.scheduleInitialVfsRefresh(myProject, LOG);
     }
 
+    if (flushQueueAfterScanning) {
+      flushPerProjectIndexingQueue(projectIndexingHistory, indicator);
+    }
+  }
+
+  private void flushPerProjectIndexingQueue(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory, @NotNull ProgressIndicator indicator) {
     if (shouldScanInSmartMode()) {
       // Switch to dumb mode and index
       myProject.getService(PerProjectIndexingQueue.class).flushNow(myIndexingReason);
@@ -266,10 +308,6 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
       // Already in dumb mode. Just invoke indexer
       myProject.getService(PerProjectIndexingQueue.class).flushNowSync(projectIndexingHistory, indicator);
     }
-  }
-
-  static boolean shouldScanInSmartMode() {
-    return !DumbServiceImpl.isSynchronousTaskExecution() && Registry.is("scanning.in.smart.mode", true);
   }
 
   private static @NotNull String getLogScanningCompletedStageMessage(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory) {
@@ -331,14 +369,13 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     @NotNull Project project,
     @NotNull ProgressIndicator indicator,
     @NotNull List<? extends IndexableFilesIterator> providers,
-    @NotNull ProjectIndexingHistoryImpl projectIndexingHistory
-  ) {
+    @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+    @NotNull ProjectScanningHistoryImpl projectScanningHistory) {
     if (providers.isEmpty()) {
       return;
     }
     List<IndexableFileScanner.ScanSession> sessions =
       ContainerUtil.map(IndexableFileScanner.EP_NAME.getExtensionList(), scanner -> scanner.startSession(project));
-    UnindexedFilesFinder unindexedFileFinder = new UnindexedFilesFinder(project, myIndex, getForceReindexingTrigger());
 
     IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
 
@@ -368,10 +405,14 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
 
       return () -> {
         subTaskIndicator.setText(provider.getRootsScanningProgressText());
-        try (PerProviderSink perProviderSink = project.getService(PerProjectIndexingQueue.class).getSink(provider)) {
-          CollectingIterator collectingIterator = new CollectingIterator(project, subTaskIndicator, provider, fileScannerVisitors,
-                                                                         unindexedFileFinder, scanningStatistics, perProviderSink);
-          provider.iterateFiles(project, collectingIterator, thisProviderDeduplicateFilter);
+        try (PerProviderSink perProviderSink = project.getService(PerProjectIndexingQueue.class)
+          .getSink(provider, projectScanningHistory.getScanningSessionId())) {
+          Function<@Nullable VirtualFile, ContentIterator> singleProviderIteratorFactory = root -> {
+            UnindexedFilesFinder finder = new UnindexedFilesFinder(project, myIndex, getForceReindexingTrigger(), root);
+            return new SingleProviderIterator(project, subTaskIndicator, provider, fileScannerVisitors,
+                                              finder, scanningStatistics, perProviderSink);
+          };
+          provider.iterateFilesInRoots(project, singleProviderIteratorFactory, thisProviderDeduplicateFilter);
           perProviderSink.commit();
         }
         catch (ProcessCanceledException pce) {
@@ -388,6 +429,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
           synchronized (allTasksFinished) {
             if (!allTasksFinished.get()) {
               projectIndexingHistory.addScanningStatistics(scanningStatistics);
+              projectScanningHistory.addScanningStatistics(scanningStatistics);
             }
           }
           subTaskIndicator.finished();
@@ -405,142 +447,6 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     }
   }
 
-  private static final class CollectingIterator implements ContentIterator {
-    private final Project project;
-    private final PerProviderSink perProviderSink;
-    private final SubTaskProgressIndicator subTaskIndicator;
-    private final List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors;
-    private final List<FilePropertyPusher<?>> pushers;
-    private final List<FilePropertyPusherEx<?>> pusherExs;
-    private final Object[] moduleValues;
-    private final UnindexedFilesFinder unindexedFileFinder;
-    private final ScanningStatistics scanningStatistics;
-    private final PushedFilePropertiesUpdater pushedFilePropertiesUpdater;
-
-    CollectingIterator(Project project, SubTaskProgressIndicator subTaskIndicator, IndexableFilesIterator provider,
-                       List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors,
-                       UnindexedFilesFinder unindexedFileFinder, ScanningStatistics scanningStatistics,
-                       PerProviderSink perProviderSink) {
-      this.project = project;
-      this.subTaskIndicator = subTaskIndicator;
-      this.fileScannerVisitors = fileScannerVisitors;
-      this.unindexedFileFinder = unindexedFileFinder;
-      this.scanningStatistics = scanningStatistics;
-
-      pushedFilePropertiesUpdater = PushedFilePropertiesUpdater.getInstance(project);
-
-      // We always need to properly dispose perProviderSink. Make this fact explicit to clients by requiring clients to provide an instance
-      this.perProviderSink = perProviderSink;
-
-      IndexableSetOrigin origin = provider.getOrigin();
-      if (origin instanceof ModuleRootOrigin && !((ModuleRootOrigin)origin).getModule().isDisposed()) {
-        pushers = FilePropertyPusher.EP_NAME.getExtensionList();
-        pusherExs = null;
-        moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, ((ModuleRootOrigin)origin).getModule()));
-      }
-      else {
-        pushers = null;
-        List<FilePropertyPusherEx<?>> extendedPushers = new SmartList<>();
-        for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensionList()) {
-          if (pusher instanceof FilePropertyPusherEx && ((FilePropertyPusherEx<?>)pusher).acceptsOrigin(project, origin)) {
-            extendedPushers.add((FilePropertyPusherEx<?>)pusher);
-          }
-        }
-        if (extendedPushers.isEmpty()) {
-          pusherExs = null;
-          moduleValues = null;
-        }
-        else {
-          pusherExs = extendedPushers;
-          moduleValues = ReadAction.compute(() -> getImmediateValuesEx(extendedPushers, origin));
-        }
-      }
-    }
-
-    @Override
-    public boolean processFile(@NotNull VirtualFile fileOrDir) {
-      ProgressManager.checkCanceled(); // give a chance to suspend indexing
-      if (subTaskIndicator.isCanceled()) {
-        return false;
-      }
-
-      try {
-        processFileRethrowExceptions(fileOrDir);
-      }
-      catch (ProcessCanceledException pce) {
-        throw pce;
-      }
-      catch (Exception e) {
-        LOG.error("Error while scanning " + fileOrDir.getPresentableUrl() + "\n" +
-                                     "To reindex this file IDEA has to be restarted", e);
-      }
-      return true;
-    }
-
-    private void processFileRethrowExceptions(@NotNull VirtualFile fileOrDir) {
-      long scanningStart = System.nanoTime();
-      PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
-      if (pushers != null && pushedFilePropertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
-        ((PushedFilePropertiesUpdaterImpl)pushedFilePropertiesUpdater).applyPushersToFile(fileOrDir, pushers, moduleValues);
-      }
-      else if (pusherExs != null && pushedFilePropertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
-        ((PushedFilePropertiesUpdaterImpl)pushedFilePropertiesUpdater).applyPushersToFile(fileOrDir, pusherExs, moduleValues);
-      }
-
-      UnindexedFileStatus status;
-      long statusTime = System.nanoTime();
-      try {
-        status = ourTestMode == TestMode.PUSHING ? null : unindexedFileFinder.getFileStatus(fileOrDir);
-      }
-      finally {
-        statusTime = System.nanoTime() - statusTime;
-      }
-      if (status != null) {
-        if (status.getShouldIndex() && ourTestMode == null) {
-          perProviderSink.addFile(fileOrDir);
-        }
-        scanningStatistics.addStatus(fileOrDir, status, statusTime, project);
-      }
-      scanningStatistics.addScanningTime(System.nanoTime() - scanningStart);
-    }
-  }
-
-  private void scheduleInitialVfsRefresh() {
-    var projectId = myProject.getLocationHash();
-    LOG.info(projectId + ": marking roots for initial VFS refresh");
-    ProjectRootManagerEx.getInstanceEx(myProject).markRootsForRefresh();
-
-    LOG.info(projectId + ": starting initial VFS refresh");
-    var app = ApplicationManager.getApplication();
-    var t = System.nanoTime();
-    if (!app.isCommandLine() || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
-      var sessionId = VirtualFileManager.getInstance().asyncRefresh(() -> timeInitialVfsRefresh(t));
-      var connection = app.getMessageBus().connect();
-      connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
-        @Override
-        public void projectClosed(@NotNull Project project) {
-          if (project == myProject) {
-            LOG.info(projectId + ": cancelling initial VFS refresh");
-            RefreshQueue.getInstance().cancelSession(sessionId);
-            connection.disconnect();
-          }
-        }
-      });
-    }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        VirtualFileManager.getInstance().syncRefresh();
-        timeInitialVfsRefresh(t);
-      });
-    }
-  }
-
-  private void timeInitialVfsRefresh(long t) {
-    var duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t);
-    LOG.info(myProject.getLocationHash() + ": initial VFS refresh finished " + duration + " ms");
-    VfsUsageCollector.logInitialRefresh(myProject, duration);
-  }
-
   @Override
   public void perform(@NotNull ProgressIndicator indicator) {
     LOG.assertTrue(myProject.getUserData(INDEX_UPDATE_IN_PROGRESS) != Boolean.TRUE, "Scanning is already in progress");
@@ -555,22 +461,27 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
   protected @NotNull ProjectIndexingHistoryImpl performScanningAndIndexing(@NotNull ProgressIndicator indicator) {
     ProjectIndexingHistoryImpl projectIndexingHistory =
       new ProjectIndexingHistoryImpl(myProject, myIndexingReason, myScanningType);
+    ProjectScanningHistoryImpl scanningHistory = new ProjectScanningHistoryImpl(myProject, myIndexingReason, myScanningType);
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     Ref<StatusMark> markRef = new Ref<>();
     try {
+      ProjectScanningHistoryImpl.Companion.startDumbModeBeginningTracking(myProject, scanningHistory, projectIndexingHistory);
       ((GistManagerImpl)GistManager.getInstance()).
-        runWithMergingDependentCacheInvalidations(() -> scanAndUpdateUnindexedFiles(projectIndexingHistory, indicator, markRef));
+        runWithMergingDependentCacheInvalidations(() -> scanAndUpdateUnindexedFiles(projectIndexingHistory, scanningHistory,
+                                                                                    indicator, markRef));
     }
     catch (Throwable e) {
       projectIndexingHistory.setWasInterrupted(true);
+      scanningHistory.setWasInterrupted();
       if (e instanceof ControlFlowException) {
         LOG.info("Cancelled indexing of " + myProject.getName());
       }
       throw e;
     }
     finally {
+      ProjectScanningHistoryImpl.Companion.finishDumbModeBeginningTracking(myProject);
       myIndex.filesUpdateFinished(myProject);
       projectIndexingHistory.finishTotalUpdatingTime();
       if (DependenciesIndexedStatusService.shouldBeUsed() && IndexInfrastructure.hasIndices()) {
@@ -578,6 +489,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
           .indexingFinished(!projectIndexingHistory.getTimes().getWasInterrupted(), markRef.get());
       }
       IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);
+      IndexDiagnosticDumper.getInstance().onScanningFinished(scanningHistory);
     }
     return projectIndexingHistory;
   }
@@ -620,5 +532,10 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
   @Nullable
   List<IndexableFilesIterator> getPredefinedIndexableFilesIterators() {
     return myPredefinedIndexableFilesIterators;
+  }
+
+  @TestOnly
+  void setFlushQueueAfterScanning(boolean flushQueueAfterScanning) {
+    this.flushQueueAfterScanning = flushQueueAfterScanning;
   }
 }

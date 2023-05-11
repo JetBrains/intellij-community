@@ -109,8 +109,8 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     Class<?> aClass = getClass();
-    throw new IncorrectOperationException("Rebind cannot be performed for " + aClass, 
-                                          (Throwable) PluginException.createByClass("", null, aClass));
+    throw new IncorrectOperationException("Rebind cannot be performed for " + aClass,
+                                          (Throwable)PluginException.createByClass("", null, aClass));
   }
 
   @Override
@@ -132,8 +132,9 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   private ElementManipulator<T> getManipulator() {
     ElementManipulator<T> manipulator = ElementManipulators.getManipulator(myElement);
     if (manipulator == null) {
-      throw PluginException.createByClass("No ElementManipulator instance registered for " + myElement +
-                                          " in " + this + " class " + getClass(), null, myElement.getClass());
+      throw PluginException.createByClass(
+        "No ElementManipulator instance registered for " + myElement + " [" + myElement.getClass() + "]" +
+        " in " + this + " [" + getClass() + "]", null, myElement.getClass());
     }
     return manipulator;
   }

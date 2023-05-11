@@ -1,17 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Debug;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
+import org.jetbrains.annotations.*;
 
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Provides a named file set to be indexed for a single project structure entity (module, library, SDK, etc.)
@@ -55,9 +54,9 @@ public interface IndexableFilesIterator {
    * like complex workspace change.
    * <p>
    * Consider implementing suitable interface from indexableSetOriginsApi.kt. Those interfaces are used to distinguish sources of files.
-   * Especially use {@link com.intellij.util.indexing.roots.kind.ModuleRootOrigin} when files to be indexed
+   * Especially use {@link com.intellij.util.indexing.roots.kind.ContentOrigin} when files to be indexed
    * belong to the project content. By default, instances of {@link com.intellij.openapi.roots.impl.FilePropertyPusher} are applied on files
-   * from {@link com.intellij.util.indexing.roots.kind.ModuleRootOrigin} only.
+   * from {@link com.intellij.util.indexing.roots.kind.ModuleContentOrigin} only.
    */
   @NotNull
   IndexableSetOrigin getOrigin();
@@ -76,6 +75,24 @@ public interface IndexableFilesIterator {
   boolean iterateFiles(@NotNull Project project,
                        @NotNull ContentIterator fileIterator,
                        @NotNull VirtualFileFilter fileFilter);
+
+  /**
+   * Same as {@linkplain #iterateFiles(Project, ContentIterator, VirtualFileFilter)}, but allows to create different iterators for different
+   * roots inside provider. This is helpful to exclude roots from indexing. For example, language-specific indexers (kotlin, java) usually
+   * do not need to index files in resources.
+   *
+   * @param contentIteratorFactory factory that produces {@link ContentIterator} for given root. Note that there can be no single root,
+   *                               e.g. 42 random files refreshed by VFS (in this case root is {@code null}). Also note that
+   *                               we don't specify what exactly `root` means (therefore the API is annotated as experimental). For java
+   *                               projects this likely will be a content root, not source root.
+   * @return {@code false} if the {@code fileIterator} has stopped the iteration by returning {@code false}, {@code true} otherwise.
+   */
+  @ApiStatus.Experimental
+  default boolean iterateFilesInRoots(@NotNull Project project,
+                                      @NotNull Function<@Nullable VirtualFile, ContentIterator> contentIteratorFactory,
+                                      @NotNull VirtualFileFilter fileFilter) {
+    return iterateFiles(project, contentIteratorFactory.apply(null), fileFilter);
+  }
 
   @NotNull Set<String> getRootUrls(@NotNull Project project);
 }

@@ -2,12 +2,16 @@
 
 package org.jetbrains.kotlin.idea.search.usagesSearch
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.*
 import com.intellij.psi.util.MethodSignatureUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -16,10 +20,10 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMethodDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaOrKotlinMemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.hasJavaResolutionFacade
@@ -29,6 +33,7 @@ import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.util.FuzzyType
+import org.jetbrains.kotlin.idea.util.KotlinPsiDeclarationRenderer
 import org.jetbrains.kotlin.idea.util.fuzzyExtensionReceiverType
 import org.jetbrains.kotlin.idea.util.toFuzzyType
 import org.jetbrains.kotlin.psi.*
@@ -43,31 +48,19 @@ import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.util.isValidOperator
 
-@get:ApiStatus.ScheduledForRemoval
-@get:Deprecated(
-    "This method is obsolete and will be removed",
-    ReplaceWith(
-        "resolveToDescriptorIfAny(BodyResolveMode.FULL)",
-        "org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny",
-        "org.jetbrains.kotlin.resolve.lazy.BodyResolveMode"
-    )
-)
-@get:JvmName("getDescriptor")
-val KtDeclaration.descriptorCompat: DeclarationDescriptor?
-    get() = if (this is KtParameter) this.descriptorCompat else this.resolveToDescriptorIfAny(BodyResolveMode.FULL)
-
-@Deprecated(
-    "This method is obsolete and will be removed",
-    ReplaceWith(
-        "resolveToParameterDescriptorIfAny(BodyResolveMode.FULL)",
-        "org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny",
-        "org.jetbrains.kotlin.resolve.lazy.BodyResolveMode"
-    )
-)
-
-@get:JvmName("getDescriptor")
-val KtParameter.descriptorCompat: ValueParameterDescriptor?
-    get() = this.resolveToParameterDescriptorIfAny(BodyResolveMode.FULL)
+inline fun <R> calculateInModalWindow(
+    contextElement: PsiElement,
+    @NlsContexts.DialogTitle windowTitle: String,
+    crossinline action: () -> R
+): R {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val task = object : Task.WithResult<R, Exception>(contextElement.project, windowTitle, /*canBeCancelled*/ true) {
+        override fun compute(indicator: ProgressIndicator): R =
+          ApplicationManager.getApplication().runReadAction(Computable { action() })
+    }
+    task.queue()
+    return task.result
+}
 
 class KotlinConstructorCallLazyDescriptorHandle(ktElement: KtDeclaration) :
     KotlinSearchUsagesSupport.ConstructorCallHandle {
@@ -91,7 +84,10 @@ class JavaConstructorCallLazyDescriptorHandle(psiMethod: PsiMethod) :
 }
 
 fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? =
-    declaration.descriptor?.let { DescriptorRenderer.COMPACT.render(it) }
+  KotlinPsiDeclarationRenderer.render(declaration) ?: calculateInModalWindow(
+    declaration,
+    KotlinBundle.message("find.usages.prepare.dialog.progress")
+  ) { declaration.descriptor?.let { DescriptorRenderer.COMPACT.render(it) } }
 
 val KtDeclaration.constructor: ConstructorDescriptor?
     get() {

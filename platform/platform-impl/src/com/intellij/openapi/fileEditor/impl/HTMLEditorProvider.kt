@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.browsers.actions.WebPreviewFileType
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
@@ -44,11 +45,13 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     }
 
     @JvmStatic
-    fun openEditor(project: Project, @DialogTitle title: String, request: Request): FileEditor {
+    fun openEditor(project: Project, @DialogTitle title: String, request: Request): FileEditor? {
+      logger<HTMLEditorProvider>().info(if (request.url != null) "URL=${request.url}" else "HTML (${request.html!!.length} chars)")
       val file = LightVirtualFile(title, WebPreviewFileType.INSTANCE, "")
       REQUEST_KEY.set(file, request)
-      val editors = FileEditorManager.getInstance(project).openFile(file, true)
-      return editors.find { it is HTMLFileEditor } ?: editors[0]
+      return FileEditorManager.getInstance(project)
+        .openFile(file, true)
+        .find { it is HTMLFileEditor }
     }
   }
 

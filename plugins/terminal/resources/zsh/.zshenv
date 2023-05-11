@@ -86,12 +86,17 @@ function _jedi_precmd_hook() {
   precmd_functions=(${precmd_functions:#_jedi_precmd_hook})
   builtin unset -f _jedi_precmd_hook
 
-  [ -r "$_INTELLIJ_ZDOTDIR/hooks.zsh" ] && source "$_INTELLIJ_ZDOTDIR/hooks.zsh"
+  [ -n "$INTELLIJ_TERMINAL_COMMAND_BLOCKS" ] && [ -r "$_INTELLIJ_ZDOTDIR/hooks.zsh" ] && source "$_INTELLIJ_ZDOTDIR/hooks.zsh"
   'builtin' 'unset' '_INTELLIJ_ZDOTDIR'
 }
 
 builtin typeset -ga precmd_functions
 precmd_functions+=(_jedi_precmd_hook)
+
+if [[ -n "$INTELLIJ_TERMINAL_COMMAND_BLOCKS" ]]; then
+  # always show new prompt after completion list
+  builtin unsetopt ALWAYS_LAST_PROMPT
+fi
 
 (( _jedi_restore_aliases )) && builtin setopt aliases
 'builtin' 'unset' '_jedi_restore_aliases'

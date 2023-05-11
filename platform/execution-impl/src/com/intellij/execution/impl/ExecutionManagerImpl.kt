@@ -166,6 +166,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationFinishType.FAILED_TO_START)
     val executorId = environment.executor.id
     inProgress.remove(InProgressEntry(executorId, environment.runner.runnerId))
+    environment.callback?.processNotStarted()
     project.messageBus.syncPublisher(EXECUTION_TOPIC).processNotStarted(executorId, environment, e)
   }
 
@@ -187,7 +188,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
             }
 
             environment.runnerAndConfigurationSettings?.let {
-              descriptor.isActivateToolWindowWhenAdded = it.isActivateToolWindowBeforeRun
+              descriptor.isActivateToolWindowWhenAdded = it.isActivateToolWindowBeforeRun || it.isFocusToolWindowBeforeRun
+              descriptor.isAutoFocusContent= it.isFocusToolWindowBeforeRun
             }
           }
           environment.callback?.let {

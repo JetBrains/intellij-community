@@ -5,6 +5,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.workspaceModel.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
@@ -578,14 +579,11 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
     abstract fun symbolicId(): SymbolicEntityId<*>
   }
 
-  @Suppress("UNCHECKED_CAST")
-  protected fun <T: WorkspaceEntity> getCached(storage: EntityStorage, init: () -> T): T {
-    if (storage is EntityStorageSnapshotImpl) {
-      return storage.getCachedEntityById(createEntityId(), init) as T
+  protected fun <T : WorkspaceEntity> getCached(storage: EntityStorage, init: () -> T): T {
+    if (storage !is EntityStorageInstrumentation) {
+      error("Entities implementation is supposed to work with ${EntityStorageInstrumentation::class.simpleName} storage only")
     }
-    else {
-      return init()
-    }
+    return storage.initializeEntity(createEntityId(), init)
   }
 }
 

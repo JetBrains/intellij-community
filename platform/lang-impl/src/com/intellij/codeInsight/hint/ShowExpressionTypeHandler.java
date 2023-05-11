@@ -84,7 +84,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
       if (typeInfo.isRepeating() && provider.hasAdvancedInformation()) {
         displayHint(typeInfo, true);
       } else {
-        callback.pass(expression);
+        callback.accept(expression);
       }
     }
     else {

@@ -10,10 +10,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.TestModeFlags;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.BitUtil;
+import com.intellij.util.Functions;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.*;
 import com.intellij.util.keyFMap.KeyFMap;
@@ -142,8 +146,11 @@ public final class VfsData {
     }
     final int nameId = segment.getNameId(id);
     if (nameId <= 0) {
-      FSRecords.invalidateCaches();
-      throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + FSRecords.getParent(id));
+      String message = "nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() +
+                             "; db.parent=" + FSRecords.getParent(id);
+      final AssertionError error = new AssertionError(message);
+      FSRecords.invalidateCaches(message, error);
+      throw error;
     }
 
     if (o instanceof DirectoryData) {
@@ -194,8 +201,10 @@ public final class VfsData {
 
     Object existingData = segment.myObjectArray.get(offset);
     if (existingData != null) {
-      String msg = FSRecords.diagnosticsForAlreadyCreatedFile(id, nameId, existingData);
-      throw new FileAlreadyCreatedException(msg);
+      String msg = FSRecords.describeAlreadyCreatedFile(id, nameId);
+      final FileAlreadyCreatedException exception = new FileAlreadyCreatedException(msg);
+      FSRecords.invalidateCaches(msg, exception);
+      throw exception;
     }
     segment.myObjectArray.set(offset, data);
   }

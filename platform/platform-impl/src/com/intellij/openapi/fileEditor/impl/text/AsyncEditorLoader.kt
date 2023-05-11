@@ -1,59 +1,37 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
-import com.intellij.diagnostic.ThreadDumper
-import com.intellij.openapi.application.*
-import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters.Companion.isOpenedInBulk
-import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.psi.PsiDocumentManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotifications
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
-import java.util.concurrent.*
-import java.util.concurrent.CancellationException
-import java.util.concurrent.atomic.AtomicBoolean
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.*
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
-class AsyncEditorLoader internal constructor(private val textEditor: TextEditorImpl,
-                                             private val editorComponent: TextEditorComponent,
-                                             private val provider: TextEditorProvider) {
-  private val editor: Editor = textEditor.editor
-  private val project: Project = textEditor.myProject
-  private val delayedActions = ArrayList<Runnable>()
-  private var delayedState: TextEditorState? = null
-  private val loadingFinished = AtomicBoolean()
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private val dispatcher = Dispatchers.Default.limitedParallelism(2)
-
-  init {
-    editor.putUserData(ASYNC_LOADER, this)
-    editorComponent.editor.component.isVisible = false
-  }
+class AsyncEditorLoader internal constructor(private val project: Project,
+                                             private val provider: TextEditorProvider,
+                                             private val coroutineScope: CoroutineScope) {
+  private val delayedActions = ArrayDeque<Runnable>()
 
   companion object {
     private val ASYNC_LOADER = Key.create<AsyncEditorLoader>("ASYNC_LOADER")
-    private const val SYNCHRONOUS_LOADING_WAITING_TIME_MS = 200
-    private const val DOCUMENT_COMMIT_WAITING_TIME_MS = 5000L
     private val LOG = logger<AsyncEditorLoader>()
-
-    private fun <T> resultInTimeOrNull(future: CompletableFuture<T>): T? {
-      try {
-        return future.get(SYNCHRONOUS_LOADING_WAITING_TIME_MS.toLong(), TimeUnit.MILLISECONDS)
-      }
-      catch (ignored: InterruptedException) {
-      }
-      catch (ignored: TimeoutException) {
-      }
-      return null
-    }
 
     @JvmStatic
     @RequiresEdt
@@ -62,145 +40,102 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
       loader?.delayedActions?.add(runnable) ?: runnable.run()
     }
 
+    internal suspend fun waitForLoaded(editor: Editor) {
+      if (editor.getUserData(ASYNC_LOADER) != null) {
+        withContext(Dispatchers.EDT) {
+          suspendCoroutine {
+            performWhenLoaded(editor) { it.resume(Unit) }
+          }
+        }
+      }
+    }
+
     @JvmStatic
     fun isEditorLoaded(editor: Editor): Boolean {
       return editor.getUserData(ASYNC_LOADER) == null
     }
   }
 
+  fun createHighlighterAsync(document: Document, file: VirtualFile): Deferred<EditorHighlighter> {
+    return coroutineScope.async {
+      TextEditorImpl.createHighlighter(document = document, file = file, project = project)
+    }
+  }
+
+  @Internal
   @RequiresEdt
-  fun start() {
-    @Suppress("DEPRECATION")
-    val asyncLoading = project.coroutineScope.async(dispatcher) {
-      doLoad()
-    }
-    asyncLoading.cancelOnDispose(editorComponent)
+  fun start(textEditor: TextEditorImpl, highlighterSupplier: suspend () -> EditorHighlighter) {
+    val editor = textEditor.editor
+    editor.putUserData(ASYNC_LOADER, this)
 
-    // we can't return the result of async call because it's only finished on EDT later,
-    // but we need to get the result of bg calculation in the same EDT event, if it's quick
-    if (worthWaiting()) {
-      /*
-       * Possible alternatives:
-       * 1. show "Loading" from the beginning, then it'll be always noticeable at least in fade-out phase
-       * 2. show a gray screen for some time and then "Loading" if it's still loading; it'll produce quick background blinking for all editors
-       * 3. show non-highlighted and unfolded editor as "Loading" background and allow it to relayout at the end of loading phase
-       * 4. freeze EDT a bit and hope that for small editors it'll suffice and for big ones show "Loading" after that.
-       * This strategy seems to produce minimal blinking annoyance.
-       */
-      resultInTimeOrNull(asyncLoading.asCompletableFuture())?.let {
-        loadingFinished(it)
-        return
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      val continuation = runBlockingModal(project, "") {
+        textEditor.loadEditorInBackground(highlighterSupplier)
+      }
+      editor.putUserData(ASYNC_LOADER, null)
+      continuation.run()
+      while (true) {
+        (delayedActions.pollFirst() ?: break).run()
       }
     }
+    else {
+      val continuationDeferred = coroutineScope.async {
+        textEditor.loadEditorInBackground(highlighterSupplier)
+      }
 
-    editorComponent.startLoading()
-    @Suppress("DEPRECATION")
-    project.coroutineScope.async(dispatcher) {
-      val continuation = asyncLoading.await()
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        loadingFinished(continuation)
+      // do not show half-ready editor (not highlighted)
+      editor.component.isVisible = false
+
+      val editorComponent = textEditor.component
+      val modality = ModalityState.current().asContextElement()
+      val indicatorJob = editorComponent.loadingDecorator.startLoading(scope = coroutineScope + modality,
+                                                                       addUi = editorComponent::addLoadingDecoratorUi)
+
+      coroutineScope.launch(modality) {
+        val continuation = continuationDeferred.await()
+        editorComponent.loadingDecorator.stopLoading(scope = this, indicatorJob = indicatorJob)
+        loaded(continuation = continuation, editor = editor)
+        EditorNotifications.getInstance(project).updateNotifications(textEditor.file)
       }
     }
   }
 
-  private suspend fun doLoad(): Runnable? {
-    waitForCommit()
+  private suspend fun loaded(continuation: Runnable, editor: Editor) {
+    withContext(Dispatchers.EDT) {
+      editor.putUserData(ASYNC_LOADER, null)
 
-    try {
-      return readAction { textEditor.loadEditorInBackground() }
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: IndexOutOfBoundsException) {
-      // EA-232290 investigation
-      val filePathAttachment = Attachment("filePath.txt", textEditor.file.toString())
-      val threadDumpAttachment = Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString())
-      threadDumpAttachment.isIncluded = true
-      LOG.error("Error during async editor loading", e, filePathAttachment, threadDumpAttachment)
-      return null
-    }
-    catch (e: Exception) {
-      LOG.error("Error during async editor loading", e)
-      return null
-    }
-  }
-
-  private suspend fun waitForCommit() {
-    val document = editor.document
-    val psiDocumentManager = PsiDocumentManager.getInstance(project)
-    if (psiDocumentManager.isCommitted(document)) {
-      return
-    }
-
-    val deferred = CompletableDeferred<Unit>()
-    psiDocumentManager.performForCommittedDocument(document) { deferred.complete(Unit) }
-    withTimeoutOrNull(DOCUMENT_COMMIT_WAITING_TIME_MS) {
-      deferred.join()
-    }
-  }
-
-  private val isDone: Boolean
-    get() = loadingFinished.get()
-
-  private fun worthWaiting(): Boolean {
-    // cannot perform commitAndRunReadAction in parallel to EDT waiting
-    return !isOpenedInBulk(textEditor.myFile) &&
-           !PsiDocumentManager.getInstance(project).hasUncommitedDocuments() &&
-           !ApplicationManager.getApplication().isWriteAccessAllowed
-  }
-
-  private fun loadingFinished(continuation: Runnable?) {
-    if (!loadingFinished.compareAndSet(false, true)) {
-      return
-    }
-    editor.putUserData(ASYNC_LOADER, null)
-    if (editorComponent.isDisposed) {
-      return
-    }
-    if (continuation != null) {
-      try {
+      runCatching {
         continuation.run()
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
-    }
-    editorComponent.loadingFinished()
-    if (delayedState != null && PsiDocumentManager.getInstance(project).isCommitted(editor.document)) {
-      val state = TextEditorState()
-      state.RELATIVE_CARET_POSITION = Int.MAX_VALUE // don't do any scrolling
-      state.foldingState = delayedState!!.foldingState
-      provider.setStateImpl(project, editor, state, true)
-      delayedState = null
-    }
-    for (runnable in delayedActions) {
+      }.getOrLogException(LOG)
+
+      ensureActive()
+
+      // should be before executing delayed actions - editor state restoration maybe a delayed action, and it uses `doWhenFirstShown`,
+      // for performance reasons better to avoid
+      editor.component.isVisible = true
+
       editor.scrollingModel.disableAnimation()
-      runnable.run()
+      while (true) {
+        (delayedActions.pollFirst() ?: break).run()
+        ensureActive()
+      }
+      editor.scrollingModel.enableAnimation()
     }
-    delayedActions.clear()
-    editor.scrollingModel.enableAnimation()
-    EditorNotifications.getInstance(project).updateNotifications(textEditor.myFile)
   }
 
-  fun getEditorState(level: FileEditorStateLevel): TextEditorState {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    val state = provider.getStateImpl(project, editor, level)
-    val delayedState = delayedState
-    if (!isDone && delayedState != null) {
-      state.setDelayedFoldState { delayedState.foldingState }
-    }
-    return state
+  @RequiresReadLock
+  fun getEditorState(level: FileEditorStateLevel, editor: Editor): TextEditorState {
+    ApplicationManager.getApplication().assertReadAccessAllowed()
+    return provider.getStateImpl(project, editor, level)
   }
 
-  fun setEditorState(state: TextEditorState, exactState: Boolean) {
+  @RequiresEdt
+  fun setEditorState(state: TextEditorState, exactState: Boolean, editor: Editor) {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    if (!isDone) {
-      delayedState = state
-    }
     provider.setStateImpl(project, editor, state, exactState)
+  }
+
+  internal fun dispose() {
+    coroutineScope.cancel()
   }
 }

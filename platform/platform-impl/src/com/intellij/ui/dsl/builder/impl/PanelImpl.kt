@@ -9,12 +9,9 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.SpacingConfiguration
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.gridLayout.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.PropertyBinding
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.JComponent
@@ -301,7 +298,13 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     this.init()
   }
 
+  @Deprecated("Use customize(UnscaledGaps) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): PanelImpl {
+    return customize(customGaps.toUnscaled())
+  }
+
+  override fun customize(customGaps: UnscaledGaps): PanelImpl {
     super.customize(customGaps)
     return this
   }
@@ -358,14 +361,14 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return visible && isRowFromVisibleRange(rowIndex) && (parent == null || parent.isVisible())
   }
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelImpl {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): PanelImpl {
     super.verticalAlign(verticalAlign)

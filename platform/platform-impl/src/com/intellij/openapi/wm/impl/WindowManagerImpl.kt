@@ -39,6 +39,7 @@ import java.awt.event.ComponentListener
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JDialog
 import javax.swing.JFrame
+import javax.swing.JOptionPane
 import javax.swing.JWindow
 
 private val LOG = logger<WindowManagerImpl>()
@@ -90,8 +91,10 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, windowWatcher)
 
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-      override fun projectClosing(project: Project) {
-        getFrameHelper(project)?.let {
+      override fun projectClosed(project: Project) {
+        val helper = getFrameHelper(project)
+        LOG.info("=== Release(${helper != null}) frame on closed project ===")
+        helper?.let {
           releaseFrame(it)
         }
       }
@@ -285,9 +288,13 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       projectToFrame.remove(project)?.release()
 
       if (frameReuseEnabled && frameToReuse.get() == null && project !is LightEditCompatible) {
+        releasedFrameHelper.storeStateForReuse()
         frameToReuse.set(releasedFrameHelper.frame)
         releasedFrameHelper.frame.doSetRootPane(null)
         releasedFrameHelper.frame.setFrameHelper(null)
+        if (JOptionPane.getRootFrame() === releasedFrameHelper.frame) {
+          JOptionPane.setRootFrame(null)
+        }
       }
     }
 
@@ -454,6 +461,7 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
     }
 
     val frameHelper = frame.frameHelper?.helper as? ProjectFrameHelper ?: return
+
     val project = frameHelper.project
     if (project == null) {
       // Component moved during project loading - update myDefaultFrameInfo directly.

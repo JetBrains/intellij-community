@@ -31,11 +31,13 @@ abstract class FileReportGenerator(
     val (resourcePath, reportPath) = dirs.getPaths(fileName)
     val sessionsJson = sessionSerializer.serialize(sessions.map { it.sessionsInfo.sessions }.flatten())
     val resourceFile = File(resourcePath.toString())
-    resourceFile.writeText("var sessions = {};\nlet features={};\nlet fullLineLog={};\nsessions = ${parseJsonInJs(sessionsJson)};\n")
+    resourceFile.writeText("var sessions = {};\nvar features={};\nvar fullLineLog=[];\nsessions = ${parseJsonInJs(sessionsJson)};\n")
     processStorages(sessions, resourceFile)
     val reportTitle = "Code Completion Report for file $fileName ($filterName and $comparisonFilterName filter)"
     createHTML().html {
-      createHead(reportTitle, resourcePath)
+      head {
+        createHead(this, reportTitle, resourcePath)
+      }
       body {
         h1 { +reportTitle }
         unsafe {
@@ -51,16 +53,14 @@ abstract class FileReportGenerator(
     reportReferences[fileInfo.sessionsInfo.filePath] = ReferenceInfo(reportPath, sessions.map { it.metrics }.flatten())
   }
 
-  private fun HTML.createHead(reportTitle: String, resourcePath: Path) {
-    head {
-      meta(charset = "UTF-8")
-      title(reportTitle)
-      script { src = "../res/pako.min.js" }
-      script { src = dirs.filesDir.relativize(resourcePath).toString() }
-      link {
-        href = "../res/style.css"
-        rel = "stylesheet"
-      }
+  open fun createHead(head: HEAD, reportTitle: String, resourcePath: Path) = with(head) {
+    meta(charset = "UTF-8")
+    title(reportTitle)
+    script { src = "../res/pako.min.js" }
+    script { src = dirs.filesDir.relativize(resourcePath).toString() }
+    link {
+      href = "../res/style.css"
+      rel = "stylesheet"
     }
   }
 

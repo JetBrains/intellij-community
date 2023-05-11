@@ -109,7 +109,7 @@ public class FileTypeAssociationForm {
     myFileTypesList = checkBoxList;
     if (!myFileTypesList.isEmpty()) myFileTypesList.setSelectedIndex(0);
     // noinspection rawtypes,unchecked
-    new ListSpeedSearch<>(myFileTypesList, o -> ((MyFileTypeItem)o).getText());
+    ListSpeedSearch.installOn(myFileTypesList, o -> ((MyFileTypeItem)o).getText());
   }
 
   public JPanel getTopPanel() {

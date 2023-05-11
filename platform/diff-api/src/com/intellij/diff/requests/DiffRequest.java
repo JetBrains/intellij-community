@@ -28,6 +28,12 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Represents some data that can be shown by a {@link com.intellij.diff.DiffTool}.
+ * <p>
+ * Ex: two files to compare, a three-way resolved merge - {@link ContentDiffRequest},
+ * a standalone patch file - {@link com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest},
+ * an error message - {@link ErrorDiffRequest}.
+ *
  * @see com.intellij.diff.DiffRequestFactory
  * @see SimpleDiffRequest
  */

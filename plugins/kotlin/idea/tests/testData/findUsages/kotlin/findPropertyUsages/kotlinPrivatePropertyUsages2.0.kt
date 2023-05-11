@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtParameter
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "foo: String = ..."
 package server
 
 public open class Server(private val <caret>foo: String = "foo") {

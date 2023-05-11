@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
@@ -151,35 +151,35 @@ class Outer {
 '''
   }
 
-  void testToar() throws Throwable {
+  void testToar() {
     configure()
     startTemplate("toar", "Java")
     state.gotoEnd(false)
     checkResult()
   }
 
-  void testElseIf() throws Throwable {
+  void testElseIf() {
     configure()
     startTemplate("else-if", "Java")
     WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
     checkResult()
   }
 
-  void testElseIf2() throws Throwable {
+  void testElseIf2() {
     configure()
     startTemplate("else-if", "Java")
     WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
     checkResult()
   }
 
-  void testElseIf3() throws Throwable {
+  void testElseIf3() {
     configure()
     startTemplate("else-if", "Java")
     WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
     checkResult()
   }
 
-  void testIter() throws Throwable {
+  void testIter() {
     configure()
     startTemplate("iter", "Java")
     WriteCommandAction.runWriteCommandAction(project) { state.nextTab() }
@@ -187,7 +187,7 @@ class Outer {
     checkResult()
   }
 
-  void testIter1() throws Throwable {
+  void testIter1() {
     configure()
     startTemplate("iter", "Java")
     myFixture.performEditorAction("NextTemplateVariable")
@@ -247,6 +247,15 @@ class Outer {
     WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
     checkResult()
   }
+
+  void testInst() {
+    configure()
+    startTemplate("inst", "Java")
+    myFixture.type('\n')
+    myFixture.type('\n')
+    myFixture.type('\n')
+    checkResult()
+  }
   
   void testSoutConsumerApplicability() {
     for (String name : ["soutc", "serrc"]) {
@@ -269,7 +278,7 @@ class Outer {
     checkResult()
   }
 
-  private boolean isApplicable(String text, TemplateImpl inst) throws IOException {
+  private boolean isApplicable(String text, TemplateImpl inst) {
     myFixture.configureByText("a.java", text)
     return TemplateManagerImpl.isApplicable(myFixture.getFile(), getEditor().getCaretModel().getOffset(), inst)
   }
@@ -303,6 +312,7 @@ class Outer {
     assert isApplicable("class Foo {{ Runnable r = () -> { <caret>System.out.println(\"foo\"); }; ) }}", template)
     assert isApplicable("class Foo {{ Runnable r = () -> <caret>System.out.println(\"foo\"); ) }}", template)
     assert !isApplicable("class Foo extends <caret>t {}", template)
+    assert !isApplicable("record R(int i, <caret>toar) {}",template)
   }
 
   void testJavaStringContext() {
@@ -336,6 +346,9 @@ class Outer {
     assertTrue(isApplicable("class Foo { /**\nfoo **/ <caret>xxx String[] foo(String[] bar) {} }", template))
 
     assertTrue(isApplicable("<caret>xxx package foo; class Foo {}", template))
+    assertTrue(isApplicable("record R(<caret>xxx int i) {}", template))
+    assertTrue(isApplicable("record R(<caret>xxx) {}", template))
+    assertFalse(isApplicable("record R(int <caret>xxx)", template))
   }
 
   void "test inner class name"() {

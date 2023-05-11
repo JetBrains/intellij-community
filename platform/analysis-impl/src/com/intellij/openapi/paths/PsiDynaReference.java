@@ -28,19 +28,17 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
  */
 public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
-  implements FileReferenceOwner, PsiPolyVariantReference, LocalQuickFixProvider, EmptyResolveMessageProvider {
+  implements FileReferenceOwner, PsiPolyVariantReference, LocalQuickFixProvider, EmptyResolveMessageProvider, PsiReferencesWrapper {
 
   private final List<PsiReference> myReferences = new ArrayList<>();
   private int myChosenOne = -1;
@@ -53,18 +51,19 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
   public void addReferences(Collection<? extends PsiReference> references) {
     myReferences.addAll(references);
-    for (PsiReference reference : references) {
-      if (!reference.isSoft()) mySoft = false;
-    }
   }
 
-  public List<PsiReference> getReferences() {
-    return myReferences;
+  @Override
+  public @NotNull List<PsiReference> getReferences() {
+    return ContainerUtil.concat(myReferences,
+                                it -> it instanceof PsiReferencesWrapper ?
+                                      ((PsiReferencesWrapper)it).getReferences() :
+                                      Collections.singleton(it)
+    );
   }
 
   public void addReference(PsiReference reference) {
     myReferences.add(reference);
-    if (!reference.isSoft()) mySoft = false;
   }
 
   @Override
@@ -78,7 +77,10 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   public TextRange getRangeInElement() {
 
     PsiReference resolved = null;
-    PsiReference reference = myReferences.get(0);
+    List<PsiReference> references =
+      ContainerUtil.filter(myReferences, ref -> !(ref instanceof PsiReferencesWrapper) ||
+                                                !((PsiReferencesWrapper)ref).getReferences().isEmpty());
+    PsiReference reference = !references.isEmpty() ? references.get(0) : myReferences.get(0);
 
     if (reference.resolve() != null) {
       resolved = reference;
@@ -87,8 +89,8 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     final TextRange range = reference.getRangeInElement();
     int start = range.getStartOffset();
     int end = range.getEndOffset();
-    for (int i = 1; i < myReferences.size(); i++) {
-      reference = myReferences.get(i);
+    for (int i = 1; i < references.size(); i++) {
+      reference = references.get(i);
       TextRange textRange = PsiMultiReference.getReferenceRange(reference, myElement);
       start = Math.min(start, textRange.getStartOffset());
       if (resolved == null) {
@@ -100,20 +102,25 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  public PsiElement resolve(){
+  public PsiElement resolve() {
     final ResolveResult[] resolveResults = multiResolve(false);
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
   }
 
   @Override
+  public boolean isSoft() {
+    return ContainerUtil.and(myReferences, it -> it.isSoft());
+  }
+
+  @Override
   @NotNull
-  public String getCanonicalText(){
+  public String getCanonicalText() {
     final PsiReference reference = chooseReference();
     return reference == null ? myReferences.get(0).getCanonicalText() : reference.getCanonicalText();
   }
 
   @Override
-  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException{
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final PsiReference reference = chooseReference();
     if (reference != null) {
       return reference.handleElementRename(newElementName);
@@ -132,7 +139,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  public boolean isReferenceTo(@NotNull PsiElement element){
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     for (PsiReference reference : myReferences) {
       if (reference.isReferenceTo(element)) return true;
     }
@@ -152,7 +159,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     LinkedHashSet<ResolveResult> result = new LinkedHashSet<>();
     for (PsiReference reference : myReferences) {
       if (reference instanceof PsiPolyVariantReference) {
-        for (ResolveResult rr: ((PsiPolyVariantReference)reference).multiResolve(incompleteCode)) {
+        for (ResolveResult rr : ((PsiPolyVariantReference)reference).multiResolve(incompleteCode)) {
           if (rr.isValidResult()) {
             result.add(rr);
           }
@@ -170,20 +177,20 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Nullable
-  private PsiReference chooseReference(){
-    if(myChosenOne != -1){
+  private PsiReference chooseReference() {
+    if (myChosenOne != -1) {
       return myReferences.get(myChosenOne);
     }
     boolean flag = false;
-    for(int i = 0; i < myReferences.size(); i++){
+    for (int i = 0; i < myReferences.size(); i++) {
       final PsiReference reference = myReferences.get(i);
-      if(reference.isSoft() && flag) continue;
-      if(!reference.isSoft() && !flag){
+      if (reference.isSoft() && flag) continue;
+      if (!reference.isSoft() && !flag) {
         myChosenOne = i;
         flag = true;
         continue;
       }
-      if(reference.resolve() != null){
+      if (reference.resolve() != null) {
         myChosenOne = i;
       }
     }
@@ -198,13 +205,13 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
     return reference instanceof EmptyResolveMessageProvider ?
            ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern() :
-            AnalysisBundle.message("cannot.resolve.symbol");
+           AnalysisBundle.message("cannot.resolve.symbol");
   }
 
   @Override
   public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     final ArrayList<LocalQuickFix> list = new ArrayList<>();
-    for (Object ref: myReferences) {
+    for (Object ref : myReferences) {
       if (ref instanceof LocalQuickFixProvider) {
         ContainerUtil.addAll(list, ((LocalQuickFixProvider)ref).getQuickFixes());
       }
@@ -225,5 +232,14 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
       }
     }
     return null;
+  }
+
+  public static PsiReference[] filterByOffset(PsiReference[] references, int offset) {
+    return StreamEx.of(references)
+      .flatMap(ref ->
+                 ref instanceof PsiDynaReference<?>
+                 ? StreamEx.of(((PsiDynaReference<?>)ref).myReferences).filter(it -> it.getRangeInElement().contains(offset))
+                 : StreamEx.of(ref)
+      ).toArray(PsiReference.EMPTY_ARRAY);
   }
 }

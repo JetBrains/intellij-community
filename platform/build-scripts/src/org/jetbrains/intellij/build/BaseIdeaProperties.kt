@@ -5,8 +5,8 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.*
 import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PlatformLayout
-import org.jetbrains.intellij.build.impl.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import java.nio.file.Files
 import java.nio.file.Path
@@ -69,6 +69,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.vcs.svn",
   "intellij.vcs.hg",
   "intellij.vcs.github",
+  "intellij.vcs.gitlab",
   "intellij.groovy",
   "intellij.junit",
   "intellij.testng",
@@ -147,7 +148,7 @@ abstract class BaseIdeaProperties : ProductProperties() {
         "intellij.platform.testFramework.common",
         "intellij.platform.testFramework.junit5",
         "intellij.platform.testFramework",
-        "intellij.platform.uast.tests",
+        "intellij.platform.uast.testFramework",
         "intellij.tools.testsBootstrap",
       )) {
         if (!productLayout.productApiModules.contains(moduleName) && !productLayout.productImplementationModules.contains(moduleName)) {
@@ -170,8 +171,10 @@ abstract class BaseIdeaProperties : ProductProperties() {
       // this library is placed into subdirectory of the 'lib' directory in Android plugin layout, so we need to exclude it from the platform layout explicitly
       layout.withoutProjectLibrary("layoutlib")
 
-      layout.withoutProjectLibrary("qodana-sarif")
       layout.withoutProjectLibrary("jetbrains.qodana.publisher")
+      layout.withoutProjectLibrary("jetbrains.qodana.sarif.converter")
+      layout.withoutProjectLibrary("jetbrains.qodana.web.ui")
+      layout.withoutProjectLibrary("qodana-sarif")
       // todo it is a quick fix - fix the root cause
       layout.withoutProjectLibrary("assertJ")
       layout.withoutProjectLibrary("hamcrest")

@@ -30,6 +30,8 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
 
   interface Callback {
     void processStarted(RunContentDescriptor descriptor);
+
+    default void processNotStarted() {}
   }
 
   @Nullable

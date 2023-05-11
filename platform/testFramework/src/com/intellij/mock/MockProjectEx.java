@@ -4,7 +4,6 @@ package com.intellij.mock;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.project.ex.ProjectEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,7 @@ public class MockProjectEx extends MockProject implements ProjectEx {
 
   private static @Nullable PicoContainer getParentContainer() {
     Application app = ApplicationManager.getApplication();
-    return app == null || app instanceof ComponentManagerEx ? null : app.getPicoContainer();
+    return app instanceof MockApplication ? ((MockApplication)app).getPicoContainer() : null;
   }
 
   @Override

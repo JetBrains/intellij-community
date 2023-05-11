@@ -13,6 +13,7 @@ sealed class ObjPropertyBase<T : Obj, V>(
   override val valueType: ValueType<V>,
   override val valueKind: ObjProperty.ValueKind,
   override val open: Boolean,
+  override val mutable: Boolean,
   override val content: Boolean,
   override val sourceElement: SourceElement
 ) : ObjProperty<T, V>, ObjMetaElementWithSource {
@@ -33,12 +34,13 @@ class OwnPropertyImpl<T : Obj, V>(
   valueType: ValueType<V>,
   valueKind: ObjProperty.ValueKind,
   open: Boolean,
+  mutable: Boolean,
   content: Boolean,
   override val constructorParameter: Boolean,
   override val classLocalId: Int,
   override val isKey: Boolean,
   sourceElement: SourceElement
-) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, content, sourceElement), OwnProperty<T, V> {
+) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, mutable, content, sourceElement), OwnProperty<T, V> {
 
   override fun toString(): String = "$name (${receiver.name})"
 }
@@ -49,10 +51,11 @@ class ExtPropertyImpl<T : Obj, V>(
   valueType: ValueType<V>,
   valueKind: ObjProperty.ValueKind,
   open: Boolean,
+  mutable: Boolean,
   content: Boolean,
   override val module: ObjModule,
   override val moduleLocalId: Int,
   sourceElement: SourceElement
-) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, content, sourceElement), ExtProperty<T, V> {
+) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, mutable, content, sourceElement), ExtProperty<T, V> {
   override fun toString(): String = "$name (${receiver.name})"
 }

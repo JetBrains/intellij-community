@@ -4,7 +4,6 @@ package com.intellij.ide.util
 import com.intellij.ide.ui.text.paragraph.ListParagraph
 import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.ide.ui.text.parts.*
-import com.intellij.ide.util.TipUtils.IconWithRoundedBorder
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil.NON_BREAK_SPACE
@@ -18,7 +17,7 @@ import javax.swing.Icon
 import javax.swing.text.StyleConstants
 
 internal class TipContentConverter(private val tipContent: Element,
-                                   private val iconsMap: Map<String, Icon>,
+                                   private val iconMap: Map<String, Icon>,
                                    private val isStrict: Boolean) {
   fun convert(): List<TextParagraph> {
     val list = mutableListOf<TextParagraph>()
@@ -54,7 +53,7 @@ internal class TipContentConverter(private val tipContent: Element,
     for (node in element.childNodes()) {
       if (node is Element && node.tagName() == "img" && node.hasAttr("src")) {
         val path = node.attr("src")
-        val icon = iconsMap[path]
+        val icon = iconMap[path]
         if (icon != null) {
           val roundedIcon = IconWithRoundedBorder(icon)
           return TextParagraph(listOf(IllustrationTextPart(roundedIcon))).editAttributes {
@@ -137,7 +136,7 @@ internal class TipContentConverter(private val tipContent: Element,
           }
           node.tagName() == "img" && node.hasAttr("src") -> {
             val path = node.attr("src")
-            val icon = iconsMap[path]
+            val icon = iconMap[path]
             if (icon != null) {
               IconTextPart(icon)
             }

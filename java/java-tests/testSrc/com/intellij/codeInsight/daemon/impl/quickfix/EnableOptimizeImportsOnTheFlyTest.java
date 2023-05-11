@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +14,7 @@ public class EnableOptimizeImportsOnTheFlyTest extends LightQuickFixParameterize
   protected void setUp() throws Exception {
     super.setUp();
     enableInspectionTool(new UnusedImportInspection());
+    enableInspectionTool(new UnusedDeclarationInspection());
   }
 
   @Override

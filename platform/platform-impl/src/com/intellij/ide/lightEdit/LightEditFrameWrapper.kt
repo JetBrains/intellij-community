@@ -3,12 +3,14 @@ package com.intellij.ide.lightEdit
 
 import com.intellij.diagnostic.IdeMessagePanel
 import com.intellij.ide.lightEdit.menuBar.LightEditMainMenuHelper
+import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
 import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -46,9 +48,11 @@ internal class LightEditFrameWrapper(
     fun allocate(project: Project, frameInfo: FrameInfo?, closeHandler: BooleanSupplier): LightEditFrameWrapper {
       return runBlockingModalWithRawProgressReporter(project, "") {
         withContext(Dispatchers.EDT) {
-          allocateLightEditFrame(project) { frame ->
+          val wrapper = allocateLightEditFrame(project) { frame ->
             LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrame(frameInfo).create(), closeHandler = closeHandler)
           } as LightEditFrameWrapper
+          (FileEditorManager.getInstance(project) as LightEditFileEditorManagerImpl).internalInit()
+          wrapper
         }
       }
     }
@@ -155,32 +159,23 @@ internal class LightEditFrameWrapper(
 
   override fun getTitleInfoProviders(): List<TitleInfoProvider> = emptyList()
 
-  override fun windowClosing(project: Project) {
-    if (closeHandler.asBoolean) {
-      super.windowClosing(project)
-    }
-  }
-
   override fun dispose() {
-    Disposer.dispose(editPanel!!)
-  }
-
-  fun closeAndDispose(lightEditServiceImpl: LightEditServiceImpl) {
     val frameInfo = getInstance(project).getActualFrameInfoInDeviceSpace(
       frameHelper = this,
       frame = frame,
       windowManager = (WindowManager.getInstance() as WindowManagerImpl)
     )
-
+    val lightEditServiceImpl = LightEditService.getInstance() as LightEditServiceImpl
     lightEditServiceImpl.setFrameInfo(frameInfo)
-    frame.isVisible = false
-    Disposer.dispose(this)
+    lightEditServiceImpl.frameDisposed()
+    Disposer.dispose(editPanel!!)
+    super.dispose()
   }
 
   private inner class LightEditRootPane(frame: JFrame,
                                         parentDisposable: Disposable) : IdeRootPane(frame = frame,
                                                                                     parentDisposable = parentDisposable,
-                                                                                    loadingState = null) {
+                                                                                    loadingState = null), LightEditCompatible {
     override fun createCenterComponent(frame: JFrame, parentDisposable: Disposable): Component {
       val panel = LightEditPanel(LightEditUtil.requireProject())
       editPanel = panel
@@ -192,10 +187,10 @@ internal class LightEditFrameWrapper(
     }
 
     override val mainMenuActionGroup: ActionGroup
-      get() = LightEditMainMenuHelper().mainMenuActionGroup
+      get() = LightEditMainMenuHelper.getMainMenuActionGroup()
 
     override fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
-      return object : IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false) {
+      return object : IdeStatusBarImpl(disposable = frameHelper, frameHelper = frameHelper, addToolWindowWidget = false) {
         override fun updateUI() {
           setUI(LightEditStatusBarUI())
         }

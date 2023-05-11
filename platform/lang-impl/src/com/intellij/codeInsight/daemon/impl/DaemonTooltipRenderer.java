@@ -21,14 +21,9 @@ import java.awt.*;
 import java.util.List;
 
 class DaemonTooltipRenderer extends LineTooltipRenderer {
-  @NonNls protected static final String END_MARKER = "<!-- end marker -->";
+  @NonNls private static final String END_MARKER = "<!-- end marker -->";
 
-
-  DaemonTooltipRenderer(@Tooltip String text, Object[] comparable) {
-    super(text, comparable);
-  }
-
-  DaemonTooltipRenderer(@Tooltip String text, int width, Object[] comparable) {
+  DaemonTooltipRenderer(@Tooltip @Nullable String text, int width, Object @NotNull [] comparable) {
     super(text, width, comparable);
   }
 

@@ -20,10 +20,16 @@ class JavaReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
 
   override fun acceptsElement(element: PsiElement): Boolean = element is PsiMember && element !is PsiTypeParameter
 
-  override fun getHint(element: PsiElement, file: PsiFile): String? {
+  override fun getVisionInfo(element: PsiElement, file: PsiFile): CodeVisionInfo? {
     val inspection = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(element)
-    if (inspection.isEntryPoint(element)) return null;
-    return JavaTelescope.usagesHint(element as PsiMember, file)
+    if (inspection.isEntryPoint(element)) return null
+    return JavaTelescope.usagesHint(element as PsiMember, file)?.let {
+      CodeVisionInfo(it.hint, it.count)
+    }
+  }
+
+  override fun getHint(element: PsiElement, file: PsiFile): String? {
+    return getVisionInfo(element, file)?.text
   }
 
   override fun logClickToFUS(element: PsiElement, hint: String) {

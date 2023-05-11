@@ -3,6 +3,7 @@ package com.intellij.htmltools.xml.util;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.html.impl.providers.HtmlAttributeValueProvider;
 import com.intellij.html.impl.util.MicrodataUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
@@ -31,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.URLUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
@@ -44,6 +46,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.doIfNotNull;
+
 public class HtmlReferenceProvider extends PsiReferenceProvider {
   @NonNls private static final String NAME_ATTR_LOCAL_NAME = "name";
   @NonNls private static final String USEMAP_ATTR_NAME = "usemap";
@@ -52,7 +56,7 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
   @NonNls private static final String SRC_ATTR_NAME = "src";
   @NonNls private static final String JAVASCRIPT_PREFIX = "javascript:";
 
-  private static final FileType[] IMAGE_FILE_TYPES = new FileType[]{ImageFileTypeManager.getInstance().getImageFileType()};
+  public static final FileType[] IMAGE_FILE_TYPES = new FileType[]{ImageFileTypeManager.getInstance().getImageFileType()};
   public static final String LABELLEDBY = "aria-labelledby";
 
   public static ElementFilter getFilter() {
@@ -284,7 +288,6 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
     return fileType == null ? null : new FileType[]{fileType};
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String[] getAttributeValues() {
     return new String[] {SRC_ATTR_NAME, HREF_ATTRIBUTE_NAME, USEMAP_ATTR_NAME, "action", "background", "width", "height", "type", "bgcolor", "color", "vlink",
       "link", "alink", "text", "name", HtmlUtil.ID_ATTRIBUTE_NAME, HtmlUtil.CLASS_ATTRIBUTE_NAME, FOR_ATTR_NAME, MicrodataUtil.ITEM_REF, "data", "poster", "srcset",
@@ -388,9 +391,15 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
     @Nullable
     public static ImageInfoReader.Info getImageInfo(@NotNull final XmlTag tag) {
       return CachedValuesManager.getCachedValue(tag, () -> {
-        final XmlAttribute src = tag.getAttribute(SRC_ATTR_NAME, null);
-        if (src != null) {
-          final PsiFile psiFile = FileReferenceUtil.findFile(src.getValueElement());
+        PsiElement srcValue = JBIterable.from(HtmlAttributeValueProvider.EP_NAME.getExtensionList())
+          .filterMap(it -> it.getCustomAttributeValue(tag, SRC_ATTR_NAME))
+          .first();
+        if (srcValue == null) {
+          var attr = tag.getAttribute(SRC_ATTR_NAME, null);
+          srcValue = attr != null ? attr.getValueElement() : null;
+        }
+        if (srcValue != null) {
+          final PsiFile psiFile = FileReferenceUtil.findFile(srcValue);
           if (psiFile != null) {
             final VirtualFile virtualFile = psiFile.getVirtualFile();
             if (virtualFile instanceof VirtualFileWithId) {
@@ -398,19 +407,19 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
               if (value == null) return null;
               return CachedValueProvider.Result.create(
                 new ImageInfoReader.Info(value.width, value.height, value.bpp, IfsUtil.isSVG(virtualFile)),
-                src,
+                srcValue,
                 virtualFile
               );
             }
           }
-          final String srcValue = src.getValue();
-          if (srcValue != null && URLUtil.isDataUri(srcValue)) {
-            final byte[] bytesFromDataUri = URLUtil.getBytesFromDataUri(srcValue);
+          final String srcValueText = doIfNotNull(srcValue.getText(), StringUtil::unquoteString);
+          if (srcValueText != null && URLUtil.isDataUri(srcValueText)) {
+            final byte[] bytesFromDataUri = URLUtil.getBytesFromDataUri(srcValueText);
             if (bytesFromDataUri != null) {
               try {
                 ImageInfoReader.Info info = ImageInfoReader.getInfo(bytesFromDataUri);
                 if (info != null) {
-                  return CachedValueProvider.Result.create(info, src);
+                  return CachedValueProvider.Result.create(info, srcValue);
                 }
               }
               catch (Exception ignored) {

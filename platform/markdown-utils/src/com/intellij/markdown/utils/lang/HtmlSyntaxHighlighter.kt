@@ -5,14 +5,16 @@ import com.intellij.lang.Language
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.ColorUtil
 import java.awt.Color
 
 interface HtmlSyntaxHighlighter {
-  fun color(language: String?, rawContent: String): HtmlChunk
+  fun color(language: String?, rawContent: @NlsSafe String): HtmlChunk
 
   companion object {
     fun parseContent(project: Project?,
@@ -38,12 +40,13 @@ interface HtmlSyntaxHighlighter {
       }
     }
 
-    fun colorHtmlChunk(project: Project?, language: Language, rawContent: String): HtmlChunk {
+    fun colorHtmlChunk(project: Project?, language: Language, rawContent: @NlsSafe String): HtmlChunk {
       val html = HtmlBuilder()
-      parseContent(project, language, rawContent) { content, _, color ->
+      parseContent(project, language, rawContent) { content: @NlsSafe String, _, color ->
+        val escapedContent = StringUtil.escapeXmlEntities(content)
         html.append(
-          if (color != null) HtmlChunk.span("color:${ColorUtil.toHtmlColor(color)}").addText(content)
-          else HtmlChunk.text(content)
+          if (color != null) HtmlChunk.span("color:${ColorUtil.toHtmlColor(color)}").addRaw(escapedContent)
+          else HtmlChunk.raw(escapedContent)
         )
       }
 

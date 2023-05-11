@@ -3,11 +3,8 @@ package com.jetbrains.performancePlugin.commands;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.module.kotlin.ExtensionsKt;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
-import com.intellij.diagnostic.telemetry.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesHandlerFactory;
@@ -51,6 +48,10 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
+/**
+ * Command looks for and count psi usages of element under caret.
+ * Example: %findUsages
+ */
 public class FindUsagesCommand extends AbstractCommand {
   private static final String DUMP_FOUND_USAGES_DESTINATION_FILE = "find.usages.command.found.usages.list.file";
 
@@ -150,7 +151,7 @@ public class FindUsagesCommand extends AbstractCommand {
     Collections.sort(foundUsages);
 
     FoundUsagesReport foundUsagesReport = new FoundUsagesReport(foundUsages.size(), foundUsages);
-    DataDumper.dump(foundUsagesReport,jsonPath);
+    DataDumper.dump(foundUsagesReport, jsonPath);
   }
 
   @NotNull

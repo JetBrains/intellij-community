@@ -29,7 +29,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     super(new DefaultComboBoxModel<>());
     setRenderer(new GroupedComboBoxRenderer<>(this) {
       @Override
-      public void customize(@NotNull SimpleColoredComponent item, MySchemeListItem<T> value, int index) {
+      public void customize(@NotNull SimpleColoredComponent item, MySchemeListItem<T> value, int index, boolean isSelected, boolean hasFocus) {
         customizeComponent(item, value, index);
       }
 

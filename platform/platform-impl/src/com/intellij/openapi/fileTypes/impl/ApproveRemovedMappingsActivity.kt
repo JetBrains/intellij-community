@@ -9,7 +9,7 @@ import com.intellij.openapi.startup.ProjectActivity
 private class ApproveRemovedMappingsActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val fileTypeManager = FileTypeManager.getInstance() as FileTypeManagerImpl
-    DumbService.getInstance(project).unsafeRunWhenSmart {
+    DumbService.getInstance(project).runWhenSmart {
       val removedMappings = fileTypeManager.removedMappingTracker
       removedMappings.approveUnapprovedMappings()
     }

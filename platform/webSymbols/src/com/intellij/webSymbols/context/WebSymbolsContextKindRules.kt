@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.context
 
-import com.intellij.model.Pointer
 import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.context.impl.WebSymbolsContextKindRulesImpl
 
@@ -14,7 +13,7 @@ interface WebSymbolsContextKindRules {
                               val fileNamePatterns: List<Regex>)
 
   data class EnablementRules(val pkgManagerDependencies: List<String>,
-                             val projectTools: List<String>,
+                             val projectToolExecutables: List<String>,
                              val fileExtensions: List<String>,
                              val ideLibraries: List<String>,
                              val fileNamePatterns: List<Regex>,

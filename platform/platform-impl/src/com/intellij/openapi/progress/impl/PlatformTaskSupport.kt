@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
-import com.intellij.concurrency.currentThreadContext
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.consumeUnrelatedEvent
 import com.intellij.openapi.application.EDT
@@ -10,7 +8,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.JobProvider
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.inModalContext
-import com.intellij.openapi.application.impl.onEdtInNonAnyModality
+import com.intellij.openapi.application.isModalAwareContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.*
@@ -97,9 +95,15 @@ class PlatformTaskSupport : TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
-  ): T = onEdtInNonAnyModality {
-    val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-    runBlockingModalInternal(cs = this, descriptor, action)
+  ): T {
+    check(isModalAwareContext()) {
+      "Trying to enter modality from modal-unaware modality state (ModalityState.any). " +
+      "This may lead to deadlocks, and indicates a problem with scoping."
+    }
+    return withContext(Dispatchers.EDT) {
+      val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
+      runBlockingModalInternal(cs = this, descriptor, action)
+    }
   }
 
   override fun <T> runBlockingModalInternal(
@@ -107,18 +111,23 @@ class PlatformTaskSupport : TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
-  ): T = ensureCurrentJobAllowingOrphan {
+  ): T = prepareThreadContext { ctx ->
     val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-    val scope = CoroutineScope(currentThreadContext())
-    runBlockingModalInternal(cs = scope, descriptor, action)
+    val scope = CoroutineScope(ctx)
+    try {
+      runBlockingModalInternal(cs = scope, descriptor, action)
+    }
+    catch (ce: CancellationException) {
+      throw CeProcessCanceledException(ce)
+    }
   }
 
   private fun <T> runBlockingModalInternal(
     cs: CoroutineScope,
     descriptor: ModalIndicatorDescriptor,
     action: suspend CoroutineScope.() -> T,
-  ): T = resetThreadContext().use {
-    inModalContext(JobProviderWithOwnerContext(cs.coroutineContext.job, descriptor.owner)) { newModalityState ->
+  ): T {
+    return inModalContext(JobProviderWithOwnerContext(cs.coroutineContext.job, descriptor.owner)) { newModalityState ->
       val deferredDialog = CompletableDeferred<DialogWrapper>()
       val mainJob = cs.async(Dispatchers.Default + newModalityState.asContextElement()) {
         TextDetailsProgressReporter(this@async).use { reporter ->

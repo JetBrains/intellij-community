@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.migration.KotlinMigrationBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Ignore
@@ -346,7 +347,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
             ExternalSystemUtil.getExternalProjectInfo(module.project, GradleConstants.SYSTEM_ID, projectPath)
                 ?: return ContainerUtil.emptyList()
         val tasks: List<String>
-        val gradlePath = GradleProjectResolverUtil.getGradlePath(module)
+        val gradlePath = getGradleIdentityPathOrNull(module)
             ?: return ContainerUtil.emptyList()
         val taskPrefix = if (StringUtil.endsWithChar(gradlePath, ':')) gradlePath else "$gradlePath:"
         val moduleNode = GradleProjectResolverUtil.findModule(externalProjectInfo.externalProjectStructure, projectPath)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -58,7 +58,10 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       do {
         parent = parent.getParent();
       } while(parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement);
-      if (parent instanceof PsiParameterList || parent instanceof PsiParameter) return false;
+      if (parent instanceof PsiParameterList ||
+          (parent instanceof PsiParameter && !(parent instanceof PsiPatternVariable))) {
+        return false;
+      }
 
       if (!".".equals(lastElement.getText()) && !"#".equals(lastElement.getText())) {
         return JavaClassReferenceCompletionContributor.findJavaClassReference(file, offset - 1) != null;

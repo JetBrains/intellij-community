@@ -9,3 +9,4 @@ class Test {
 fun test() {
     Test.Companion.Some
 }
+// AUTOCOMPLETE_SETTING: true

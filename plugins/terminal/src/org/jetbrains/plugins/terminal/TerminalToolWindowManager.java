@@ -296,6 +296,12 @@ public final class TerminalToolWindowManager implements Disposable {
         .commandHistoryFileProvider(() -> commandHistoryFileLazyValue.getValue())
         .build();
       widget = terminalRunner.startShellTerminalWidget(content, startupOptions, deferSessionStartUntilUiShown);
+      widget.getTerminalTitle().change(state -> {
+        if (state.getDefaultTitle() == null) {
+          state.setDefaultTitle(terminalRunner.getDefaultTabTitle());
+        }
+        return Unit.INSTANCE;
+      });
       TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
     }
     else {

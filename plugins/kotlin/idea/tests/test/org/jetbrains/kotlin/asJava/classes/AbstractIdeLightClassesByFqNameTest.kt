@@ -2,12 +2,19 @@
 
 package org.jetbrains.kotlin.asJava.classes
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiModifierList
 import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.kotlin.asJava.elements.*
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinStdlib
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinStdlibCommonSources
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinStdlibJdk8
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinStdlibJdk8Sources
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinStdlibSources
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
@@ -16,16 +23,6 @@ import kotlin.test.assertNotNull
 
 abstract class AbstractIdeLightClassesByFqNameTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
 
-    override fun setUp() {
-        super.setUp()
-        module.setupKotlinFacet {
-            // LanguageVersionSettingsProvider#computeProjectLanguageVersionSettings uses
-            // kotlin-dist-for-ide/kotlinc-dist-for-ide-from-sources/build.txt
-            // as languageVersion that could point to jpsPluginVersion from model.properties
-            // and could be slightly behind latest supported analysis version
-            settings.languageLevel = LanguageVersion.LATEST_STABLE
-        }
-    }
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         withCustomCompilerOptions(dataFile().readText(), project, module) {
             val ktFiles = files.filterIsInstance<KtFile>()
@@ -54,7 +51,25 @@ abstract class AbstractIdeLightClassesByFqNameTest : KotlinMultiFileLightCodeIns
         }
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk8()
+    override fun getProjectDescriptor() = descriptor
+}
+
+private val descriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
+  listOf(kotlinStdlib, kotlinStdlibJdk8),
+  listOf(kotlinStdlibSources,
+         kotlinStdlibCommonSources,
+         kotlinStdlibJdk8Sources)
+) {
+    override fun configureModule(module: Module, model: ModifiableRootModel) {
+        module.setupKotlinFacet {
+            // LanguageVersionSettingsProvider#computeProjectLanguageVersionSettings uses
+            // kotlin-dist-for-ide/kotlinc-dist-for-ide-from-sources/build.txt
+            // as languageVersion that could point to jpsPluginVersion from model.properties
+            // and could be slightly behind latest supported analysis version
+            settings.languageLevel = LanguageVersion.LATEST_STABLE
+        }
+        super.configureModule(module, model)
+    }
 }
 
 private fun checkConsistency(lightClass: KtLightClass) {

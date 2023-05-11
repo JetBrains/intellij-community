@@ -1,11 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
@@ -17,6 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UElementKt;
@@ -33,6 +31,16 @@ public class UnsafeReturnStatementVisitorInspection extends DevKitUastInspection
   private static final @NonNls String EMPTY_VISIT_LAMBDA_METHOD = "public void visitLambdaExpression(PsiLambdaExpression expression) {}";
   private static final @NonNls String EMPTY_VISIT_CLASS_METHOD = "public void visitClass(PsiClass aClass) {}";
 
+  public UnsafeReturnStatementVisitorInspection() {
+    super(UClass.class);
+  }
+
+  @Override
+  protected boolean isAllowed(@NotNull ProblemsHolder holder) {
+    return super.isAllowed(holder) &&
+           DevKitInspectionUtil.isClassAvailable(holder, BASE_VISITOR_NAME);
+  }
+
   @Override
   public ProblemDescriptor @Nullable [] checkClass(@NotNull UClass uClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     PsiClass aClass = uClass.getJavaPsi();
@@ -42,14 +50,11 @@ public class UnsafeReturnStatementVisitorInspection extends DevKitUastInspection
         final boolean visitLambdaMissing = !hasMethod(uClass, "visitLambdaExpression", PsiLambdaExpression.class.getName());
         final boolean visitClassMissing = !hasMethod(uClass, "visitClass", PsiClass.class.getName());
         if (visitLambdaMissing || visitClassMissing) {
-          PsiElement classNameAnchor = UElementKt.getSourcePsiElement(uClass.getUastAnchor());
-          if (classNameAnchor != null) {
-            final ProblemsHolder holder = createProblemsHolder(uClass, manager, isOnTheFly);
-            holder.registerProblem(classNameAnchor,
-                                   DevKitBundle.message("inspections.unsafe.return.message"),
-                                   createFixes(uClass, visitLambdaMissing, visitClassMissing));
-            return holder.getResultsArray();
-          }
+          final ProblemsHolder holder = createProblemsHolder(uClass, manager, isOnTheFly);
+          ProblemHolderUtilKt.registerUProblem(holder, uClass,
+                                               DevKitBundle.message("inspections.unsafe.return.message"),
+                                               createFixes(uClass, visitLambdaMissing, visitClassMissing));
+          return holder.getResultsArray();
         }
       }
     }

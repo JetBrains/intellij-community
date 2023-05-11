@@ -5,22 +5,21 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.JavaPsiTestCase
-import org.junit.Test
 
 class GradleExecutionSettingsUtilTest : JavaPsiTestCase() {
 
   fun `test filter generation by name`() {
     assertEquals("""--tests *""", createTestFilterFromPackage(""))
+    assertEquals("""--tests *""", createTestFilter(null, null, null))
     assertEquals("""--tests "org.jetbrains.test.*"""", createTestFilterFromPackage("org.jetbrains.test"))
     assertEquals("""--tests "org.jetbrains.te*st.*"""", createTestFilterFromPackage("org.jetbrains.te\"st"))
     assertEquals("""--tests "org.jetbrains.te\st.*"""", createTestFilterFromPackage("org.jetbrains.te\\st"))
-    assertEquals("""--tests "My favorite test case"""", createTestFilterFromClass("My favorite test case"))
-    assertEquals("""--tests "It isn't a favorite * test case"""", createTestFilterFromClass("It isn't a favorite \" test case"))
-    assertEquals("""--tests "Test case.it is my favorite test"""", createTestFilterFromMethod("Test case", "it is my favorite test"))
-    assertEquals("""--tests "Test.it isn't a favorite * test"""", createTestFilterFromMethod("Test", "it isn't a favorite . test"))
+    assertEquals("""--tests "My favorite test case"""", createTestFilter("My favorite test case", null, null))
+    assertEquals("""--tests "It isn't a favorite * test case"""", createTestFilter("It isn't a favorite \" test case", null, null))
+    assertEquals("""--tests "Test case.it is my favorite test"""", createTestFilter("Test case", "it is my favorite test", null))
+    assertEquals("""--tests "Test.it isn't a favorite * test"""", createTestFilter("Test", "it isn't a favorite . test", null))
   }
 
-  @Test
   fun `test filter generation by groovy method`() {
     val psiFile = createGroovyPsiFile(
       "Test",
@@ -52,7 +51,6 @@ class GradleExecutionSettingsUtilTest : JavaPsiTestCase() {
     }
   }
 
-  @Test
   fun `test filter generation by groovy class`() {
     val psiFile = createGroovyPsiFile("Test")
     val actualFilter = runReadActionAndWait {
@@ -62,7 +60,6 @@ class GradleExecutionSettingsUtilTest : JavaPsiTestCase() {
     assertEquals("""--tests "Test"""", actualFilter)
   }
 
-  @Test
   fun `test filter generation by java method`() {
     val psiFile = createJavaPsiFile(
       "Test",
@@ -87,7 +84,6 @@ class GradleExecutionSettingsUtilTest : JavaPsiTestCase() {
     }
   }
 
-  @Test
   fun `test filter generation by java class`() {
     val psiFile = createJavaPsiFile("Te${'$'}${'$'}${'$'}st")
     val actualFilter = runReadActionAndWait {

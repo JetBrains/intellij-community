@@ -38,8 +38,8 @@ internal class SearchEverywhereOptionFeaturesProvider :
 
     val data = arrayListOf<EventPair<*>>()
     data.add(IS_OPTION.with(true))
-    addIfTrue(data, FROM_CONFIGURABLE, StringUtil.isNotEmpty(optionDescription.configurableId))
-    addIfTrue(data, IS_BOOLEAN_OPTION, optionDescription is BooleanOptionDescription)
+    data.addIfTrue(FROM_CONFIGURABLE, StringUtil.isNotEmpty(optionDescription.configurableId))
+    data.addIfTrue(IS_BOOLEAN_OPTION, optionDescription is BooleanOptionDescription)
     if (optionDescription is BooleanOptionDescription) {
       data.add(IS_ENABLED.with(optionDescription.isOptionEnabled))
     }

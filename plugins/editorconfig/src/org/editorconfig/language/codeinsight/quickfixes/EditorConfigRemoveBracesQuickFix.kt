@@ -6,14 +6,14 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigPatternEnumeration
+import org.editorconfig.language.psi.EditorConfigEnumerationPattern
 import org.editorconfig.language.services.EditorConfigElementFactory
 
 class EditorConfigRemoveBracesQuickFix : LocalQuickFix {
   override fun getFamilyName() = EditorConfigBundle.get("quickfix.pattern-enumeration.redundant.remove-braces.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val patternEnumeration = descriptor.psiElement as? EditorConfigPatternEnumeration ?: return
+    val patternEnumeration = descriptor.psiElement as? EditorConfigEnumerationPattern ?: return
     val pattern = patternEnumeration.patternList.single()
     val header = patternEnumeration.header
 

@@ -163,6 +163,8 @@ class EntityStorageSerializerImpl(
     kryo.register(ChangeEntry.ReplaceEntity::class.java)
     kryo.register(ChangeEntry.ChangeEntitySource::class.java)
     kryo.register(ChangeEntry.ReplaceAndChangeSource::class.java)
+    kryo.register(ChangeEntry.ReplaceEntity.Data::class.java)
+    kryo.register(ChangeEntry.ReplaceEntity.References::class.java)
 
     registerFieldSerializer(kryo, Collections.unmodifiableCollection<Any>(emptySet()).javaClass) {
       Collections.unmodifiableCollection(emptySet())

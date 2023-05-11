@@ -99,6 +99,9 @@ object ConfigFactory {
   private fun deserializeReportGeneration(map: Map<String, Any>?, language: String, builder: Config.Builder) {
     if (map == null) return
     builder.evaluationTitle = map.handleEnv("evaluationTitle")
+    if (map.containsKey("defaultMetrics")) {
+      builder.defaultMetrics = map.getAs("defaultMetrics")
+    }
     val filtersList = map.getAs<List<Map<String, Any>>>("sessionsFilters")
     val filters = mutableListOf<SessionsFilter>()
     filtersList.forEach {

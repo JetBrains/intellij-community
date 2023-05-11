@@ -24,7 +24,7 @@ class PluginBundlingRestrictions private constructor(
   val supportedArch: List<JvmArchitecture>,
 
   /**
-   * Set to {@code true} if the plugin should be included in distribution for EAP builds only.
+   * Set to `true` if the plugin should be included in distribution for EAP builds only.
    */
   @JvmField
   val includeInEapOnly: Boolean,
@@ -63,7 +63,7 @@ class PluginBundlingRestrictions private constructor(
     var supportedArch: List<JvmArchitecture> = JvmArchitecture.ALL
 
     /**
-     * Set to {@code true} if the plugin should be included in distribution for EAP builds only.
+     * Set to `true` if the plugin should be included in distribution for EAP builds only.
      */
     var includeInEapOnly: Boolean = false
 

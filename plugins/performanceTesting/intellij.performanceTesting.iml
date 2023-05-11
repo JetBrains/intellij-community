@@ -16,7 +16,6 @@
     <orderEntry type="library" scope="PROVIDED" name="cli-parser" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
-    <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
@@ -41,12 +40,16 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.debugger" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>

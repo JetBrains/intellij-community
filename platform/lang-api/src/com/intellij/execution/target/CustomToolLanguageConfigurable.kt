@@ -4,6 +4,8 @@ package com.intellij.execution.target
 import com.intellij.openapi.ui.ValidationInfo
 
 interface CustomToolLanguageConfigurable<T> {
+  fun setIntrospectable(introspectable: LanguageRuntimeType.Introspectable)
+
   /**
    * Call [validate] first to make sure there are no errors
    */

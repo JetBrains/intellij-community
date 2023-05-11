@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.list
 
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.list.*
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
@@ -29,7 +30,7 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
         if (GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId)) it.selectedValue else null
       }
       val groupId = "Github.PullRequest.ToolWindow.List.Popup"
-      PopupHandler.installSelectionListPopup(it, ActionManager.getInstance().getAction(groupId) as ActionGroup, groupId)
+      PopupHandler.installPopupMenu(it, ActionManager.getInstance().getAction(groupId) as ActionGroup, groupId)
       val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
       EmptyAction.registerWithShortcutSet("Github.PullRequest.Show", shortcuts, it)
     }
@@ -81,13 +82,13 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
 
   private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHActor?): UserPresentation? {
     if (user == null) return null
-    return UserPresentation.Simple(user.login, null, avatarIconsProvider.getIcon(user.avatarUrl, GHUIUtil.AVATAR_SIZE))
+    return UserPresentation.Simple(user.login, null, avatarIconsProvider.getIcon(user.avatarUrl, Avatar.Sizes.BASE))
   }
 
   private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHUser): UserPresentation =
-    UserPresentation.Simple(user.login, user.name, avatarIconsProvider.getIcon(user.avatarUrl, GHUIUtil.AVATAR_SIZE))
+    UserPresentation.Simple(user.login, user.name, avatarIconsProvider.getIcon(user.avatarUrl, Avatar.Sizes.BASE))
 
   private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHPullRequestRequestedReviewer): UserPresentation {
-    return UserPresentation.Simple(user.shortName, user.name, avatarIconsProvider.getIcon(user.avatarUrl, GHUIUtil.AVATAR_SIZE))
+    return UserPresentation.Simple(user.shortName, user.name, avatarIconsProvider.getIcon(user.avatarUrl, Avatar.Sizes.BASE))
   }
 }

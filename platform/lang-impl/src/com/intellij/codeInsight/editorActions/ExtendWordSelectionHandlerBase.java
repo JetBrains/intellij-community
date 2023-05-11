@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -68,14 +68,14 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     TextRange elementRange = element.getTextRange();
     if (cursorOffset < elementRange.getStartOffset() || cursorOffset > elementRange.getEndOffset()) return null;
 
-    Integer startOffset = cursorOffset;
+    int startOffset = cursorOffset;
     for (int i = cursorOffset - 1; ; --i) {
       Character charBeforeCursor = SelectWordUtil.getCharAfterCursorInPsiElement(element, i);
       if (charBeforeCursor == null || !SelectWordUtil.isExpandableWhiteSpace(charBeforeCursor)) break;
       startOffset = i;
     }
 
-    Integer endOffset = cursorOffset;
+    int endOffset = cursorOffset;
     for (int i = cursorOffset + 1; ; ++i) {
       Character charAfterCursor = SelectWordUtil.getCharBeforeCursorInPsiElement(element, i);
       if (charAfterCursor == null || !SelectWordUtil.isExpandableWhiteSpace(charAfterCursor)) break;

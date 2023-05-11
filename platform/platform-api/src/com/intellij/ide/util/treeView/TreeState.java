@@ -511,6 +511,11 @@ public final class TreeState implements JDOMExternalizable {
       this.elements = elements;
     }
 
+    @Override
+    public @NotNull TreeVisitor.VisitThread visitThread() {
+      return VisitThread.BGT;
+    }
+
     @NotNull
     @Override
     public Action visit(@NotNull TreePath path) {

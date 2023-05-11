@@ -7,6 +7,10 @@ import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Command to reload project files from disk.
+ * Example: %reloadFiles
+ */
 public final class ReloadFilesCommand extends AbstractCallbackBasedCommand {
 
   public static final @NonNls String PREFIX = CMD_PREFIX + "reloadFiles";
@@ -16,8 +20,8 @@ public final class ReloadFilesCommand extends AbstractCallbackBasedCommand {
   }
 
   @Override
-  protected void execute(@NotNull ActionCallback callback, @NotNull PlaybackContext context)  {
-      LocalFileSystem.getInstance().refresh(false);
-      callback.setDone();
+  protected void execute(@NotNull ActionCallback callback, @NotNull PlaybackContext context) {
+    LocalFileSystem.getInstance().refresh(false);
+    callback.setDone();
   }
 }

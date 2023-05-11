@@ -89,11 +89,19 @@ class LibraryPropertiesTest : ModuleRootManagerTestCase() {
     }
 
     assertEquals("2", getMockLibraryData())
+
+    ModuleRootModificationUtil.updateModel(myModule) {
+      val library = it.moduleLibraryTable.libraries.single()
+      val model = library.modifiableModel as LibraryEx.ModifiableModelEx
+      model.kind = null
+      runWriteAction { model.commit() }
+    }
+    assertNull(getMockLibraryData())
   }
 
-  private fun getMockLibraryData(): String {
+  private fun getMockLibraryData(): String? {
     val libEntries = ModuleRootManager.getInstance(myModule).orderEntries.filterIsInstance<LibraryOrderEntry>()
-    return ((libEntries.single().library as LibraryEx).properties as MockLibraryProperties).data
+    return ((libEntries.single().library as LibraryEx).properties as? MockLibraryProperties)?.data
   }
 
   private fun runWithRegisteredType(action: () -> Unit) {

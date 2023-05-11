@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.credentialStore.kdbx
 
 import com.intellij.credentialStore.LOG
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.getOrCreate
 import org.jdom.Element
 import java.time.Instant
 import java.time.LocalDateTime
@@ -17,7 +18,7 @@ internal class KdbxGroup(internal val element: Element, private val database: Ke
     get() = element.getChildText(KdbxDbElementNames.name) ?: "Unnamed"
     @Synchronized
     set(value) {
-      val nameElement = element.getOrCreate(KdbxDbElementNames.name)
+      val nameElement = element.getOrCreateChild(KdbxDbElementNames.name)
       if (nameElement.text == value) {
         return
       }
@@ -34,7 +35,9 @@ internal class KdbxGroup(internal val element: Element, private val database: Ke
   private var locationChanged: Long
     get() = element.getChild("Times")?.getChild("LocationChanged")?.text?.let(::parseTime) ?: 0
     set(value) {
-      element.getOrCreate("Times").getOrCreate("LocationChanged").text = Instant.ofEpochMilli(value).atZone(ZoneOffset.UTC).format(dateFormatter)
+      element.getOrCreateChild("Times").getOrCreateChild("LocationChanged").text = Instant.ofEpochMilli(value).atZone(
+        ZoneOffset.UTC).format(
+        dateFormatter)
     }
 
   @Synchronized

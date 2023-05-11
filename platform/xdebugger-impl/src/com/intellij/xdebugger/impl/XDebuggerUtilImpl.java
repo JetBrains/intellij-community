@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -52,10 +51,7 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueContainer;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
-import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
@@ -427,26 +423,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return XSourcePositionImpl.createByOffset(file, offset);
   }
 
-  @NotNull
-  public static Collection<XSourcePosition> getAllCaretsPositions(@NotNull Project project, DataContext context) {
-    Editor editor = getEditor(project, context);
-    if (editor == null) {
-      return Collections.emptyList();
-    }
-
-    VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-    List<XSourcePosition> res = new SmartList<>();
-    for (Caret caret : editor.getCaretModel().getAllCarets()) {
-      XSourcePositionImpl position = XSourcePositionImpl.createByOffset(file, caret.getOffset());
-      if (position != null) {
-        res.add(position);
-      }
-    }
-    return res;
-  }
-
   @Nullable
-  private static Editor getEditor(@NotNull Project project, DataContext context) {
+  public static Editor getEditor(@NotNull Project project, DataContext context) {
     Editor editor = CommonDataKeys.EDITOR.getData(context);
     if (editor == null) {
       @Nullable FileEditor fileEditor = context.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
@@ -483,11 +461,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<? super PsiElement> processor) {
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (file == null) {
-      return;
-    }
-
     int lineStart;
     int lineEnd;
     try {
@@ -498,10 +471,18 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       return;
     }
 
-    PsiElement element;
-    int offset = lineStart;
+    iterateOffsetRange(project, document, lineStart, lineEnd, processor);
+  }
 
-    while (offset < lineEnd) {
+  public void iterateOffsetRange(@NotNull Project project, @NotNull Document document, int startOffset, int endOffset,
+                                 @NotNull Processor<? super PsiElement> processor) {
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null) {
+      return;
+    }
+    PsiElement element;
+    int offset = startOffset;
+    while (offset < endOffset) {
       element = file.findElementAt(offset);
       if (element != null && element.getTextLength() > 0) {
         if (!processor.process(element)) {

@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.ide.actions.ImportProjectAction
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.maven.testFramework.MavenImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.xml.MavenBuildFileBuilder
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -27,7 +27,7 @@ import org.jetbrains.idea.maven.project.actions.AddManagedFilesAction
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager
 import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID
 
-abstract class MavenSetupProjectTestCase : MavenImportingTestCase() {
+abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() {
 
   override fun runInDispatchThread() = false
 

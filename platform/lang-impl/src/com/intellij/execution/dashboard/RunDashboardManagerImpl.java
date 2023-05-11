@@ -409,9 +409,12 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private List<RunContentDescriptor> getConfigurationDescriptors(@NotNull RunConfiguration configuration) {
-    return ExecutionManagerImpl.getInstance(myProject).getDescriptors(s -> configuration.equals(s.getConfiguration()) ||
-                                                                           configuration.equals(
-                                                                             getBaseConfiguration(s.getConfiguration())));
+    ExecutionManager instance = ExecutionManager.getInstance(myProject);
+    if (!(instance instanceof ExecutionManagerImpl)) {
+      return Collections.emptyList();
+    }
+    return ((ExecutionManagerImpl)instance).getDescriptors(s -> configuration.equals(s.getConfiguration()) ||
+                                                                configuration.equals(getBaseConfiguration(s.getConfiguration())));
   }
 
   @Override
@@ -825,8 +828,9 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       if (onAdd) {
         RunConfigurationNode node = createNode(content);
         if (node != null) {
-          var shouldActivate = node.getConfigurationSettings().isActivateToolWindowBeforeRun();
-          ServiceViewManager.getInstance(myProject).select(node, RunDashboardServiceViewContributor.class, shouldActivate, false);
+          RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
+          ServiceViewManager.getInstance(myProject).select(node, RunDashboardServiceViewContributor.class,
+                                                           settings.isActivateToolWindowBeforeRun(), settings.isFocusToolWindowBeforeRun());
         }
       }
     }

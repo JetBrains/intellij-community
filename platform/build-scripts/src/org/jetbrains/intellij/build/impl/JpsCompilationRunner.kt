@@ -3,8 +3,9 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.use
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
+import com.intellij.platform.diagnostic.telemetry.impl.use
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.MultiMap
@@ -123,6 +124,15 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
              artifactNames = emptyList(),
              includeTests = false,
              resolveProjectDependencies = true)
+  }
+  
+  fun generateRuntimeModuleRepository() {
+    runBuild(moduleSet = emptyList(),
+             allModules = false,
+             artifactNames = emptyList(),
+             includeTests = false,
+             resolveProjectDependencies = false,
+             generateRuntimeModuleRepository = true)
   }
 
   fun buildModuleTests(module: JpsModule) {
@@ -272,7 +282,8 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
                        allModules: Boolean,
                        artifactNames: Collection<String>,
                        includeTests: Boolean,
-                       resolveProjectDependencies: Boolean) {
+                       resolveProjectDependencies: Boolean,
+                       generateRuntimeModuleRepository: Boolean = false) {
     synchronized(context.paths.projectHome.toString().intern()) {
       messageHandler = JpsMessageHandler(context)
       if (context.options.compilationLogEnabled) {
@@ -313,6 +324,10 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
         scopes.add(TargetTypeBuildScope.newBuilder().setTypeId("project-dependencies-resolving")
                      .setForceBuild(false).setAllTargets(true).build())
       }
+      if (generateRuntimeModuleRepository && !compilationData.runtimeModuleRepositoryGenerated) {
+        scopes.add(TargetTypeBuildScope.newBuilder().setTypeId(RuntimeModuleRepositoryBuildConstants.TARGET_TYPE_ID)
+                     .setForceBuild(false).setAllTargets(true).build())
+      }
       val artifactsToBuild = artifactNames - compilationData.builtArtifacts
       if (!artifactsToBuild.isEmpty()) {
         val builder = TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.typeId).setForceBuild(forceBuild)
@@ -324,6 +339,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
         .setAttribute("includeTests", includeTests)
         .setAttribute("artifactsToBuild", artifactsToBuild.size.toLong())
         .setAttribute("resolveProjectDependencies", resolveProjectDependencies)
+        .setAttribute("generateRuntimeModuleRepository", generateRuntimeModuleRepository)
         .setAttribute("modules", moduleSet.joinToString(separator = ", "))
         .setAttribute("incremental", context.options.incrementalCompilation)
         .setAttribute("includeTests", includeTests)
@@ -353,6 +369,9 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
       }
       if (resolveProjectDependencies) {
         compilationData.projectDependenciesResolved = true
+      }
+      if (generateRuntimeModuleRepository) {
+        compilationData.runtimeModuleRepositoryGenerated = true
       }
     }
   }

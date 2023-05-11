@@ -6,8 +6,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import org.jetbrains.annotations.NotNull;
 
 public interface TextEditorCustomizer {
-  ExtensionPointName<TextEditorCustomizer> EP =
-    new ExtensionPointName<>("com.intellij.textEditorCustomizer");
+  ExtensionPointName<TextEditorCustomizer> EP = new ExtensionPointName<>("com.intellij.textEditorCustomizer");
 
   /**
    * Use to customize editor after it was created

@@ -4,12 +4,17 @@ package com.intellij.workspaceModel.core.fileIndex
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Provides access to the information collected from [WorkspaceFileIndexContributor]s.
- * If `platform.projectModel.workspace.model.file.index` registry option is enabled, this index is used instead of [com.intellij.openapi.roots.impl.DirectoryIndex]
- * in [com.intellij.openapi.roots.ProjectFileIndex] and [com.intellij.openapi.roots.ModuleFileIndex].
+ * This interfaces supersedes [ProjectFileIndex][com.intellij.openapi.roots.ProjectFileIndex] and [ModuleFileIndex][com.intellij.openapi.roots.ModuleFileIndex], 
+ * and provides more generic API which isn't bound to concepts like 'module' and 'source root', which are actually specific for Java projects.
+ * Implementations of [ProjectFileIndex][com.intellij.openapi.roots.ProjectFileIndex] and 
+ * [ModuleFileIndex][com.intellij.openapi.roots.ModuleFileIndex] delegate to this interface.
+ * 
+ * See [the package documentation](psi_element://com.intellij.workspaceModel.core.fileIndex) for more details.
  */
 interface WorkspaceFileIndex {
   companion object {
@@ -42,6 +47,14 @@ interface WorkspaceFileIndex {
    */
   @RequiresReadLock
   fun getContentFileSetRoot(file: VirtualFile, honorExclusion: Boolean): VirtualFile?
+
+  /**
+   * Checks whether a file identified by [url] will belong to a file set of [content][WorkspaceFileKind.isContent] kind. This function
+   * is supposed to be used only if the file and its possible parent file sets aren't created yet, in other cases [isInContent] should be 
+   * used instead.
+   */
+  @RequiresReadLock
+  fun isUrlInContent(url: String): ThreeState
 
   /**
    * Searches for the first parent of [file] (or [file] itself) which has an associated [WorkspaceFileSet] taking into account the passed

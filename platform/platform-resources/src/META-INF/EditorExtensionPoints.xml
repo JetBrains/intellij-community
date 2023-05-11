@@ -69,5 +69,10 @@
     <extensionPoint name="listSplitJoinContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.lists.ListSplitJoinContext"/>
     </extensionPoint>
+
+    <extensionPoint
+      name="inline.completion.provider"
+      interface="com.intellij.codeInsight.inline.completion.InlineCompletionProvider"
+      dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

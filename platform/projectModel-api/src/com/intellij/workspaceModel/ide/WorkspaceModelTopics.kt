@@ -9,6 +9,9 @@ import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import java.util.*
 
+/**
+ * For the asynchronous handling of changes form workspace model collect them from [com.intellij.workspaceModel.ide.WorkspaceModel.changesEventFlow]
+ */
 interface WorkspaceModelChangeListener : EventListener {
   /**
    * This method is invoked under Write Action before changes are applied.
@@ -25,14 +28,16 @@ interface WorkspaceModelChangeListener : EventListener {
 }
 
 /**
- * Topics to subscribe to Workspace changes
+ * Topics to subscribe to Workspace changes.
+ *
+ * For the asynchronous approach please consider to collect changes from [com.intellij.workspaceModel.ide.WorkspaceModel.changesEventFlow]
  */
 @Service(Service.Level.PROJECT)
 class WorkspaceModelTopics : Disposable {
   companion object {
     @Topic.ProjectLevel
     @JvmField
-    val CHANGED = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
+    val CHANGED: Topic<WorkspaceModelChangeListener> = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
 
     /**
      * Subscribe to this topic to be notified about changes in unloaded entities. 
@@ -40,13 +45,14 @@ class WorkspaceModelTopics : Disposable {
      */
     @Topic.ProjectLevel
     @JvmField
-    val UNLOADED_ENTITIES_CHANGED = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
+    val UNLOADED_ENTITIES_CHANGED: Topic<WorkspaceModelChangeListener> = Topic(WorkspaceModelChangeListener::class.java,
+                                                                               Topic.BroadcastDirection.NONE, true)
 
-    @JvmStatic
     fun getInstance(project: Project): WorkspaceModelTopics = project.service()
   }
 
   var modulesAreLoaded = false
+    private set
 
   fun notifyModulesAreLoaded() {
     modulesAreLoaded = true

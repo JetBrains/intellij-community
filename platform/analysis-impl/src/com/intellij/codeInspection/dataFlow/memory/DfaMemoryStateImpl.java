@@ -228,6 +228,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
       }
     }
+    else if (isUnstableValue(value)) {
+      applyDerivedVariablesEquivalence(var, value);
+    }
   }
 
   protected DfType filterDfTypeOnAssignment(DfaVariableValue var, @NotNull DfType dfType) {

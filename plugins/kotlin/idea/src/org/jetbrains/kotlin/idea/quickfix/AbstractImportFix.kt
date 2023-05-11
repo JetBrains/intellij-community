@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
@@ -28,6 +29,7 @@ import com.intellij.util.Processors
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.impl.AbstractTypeAliasDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -85,7 +87,8 @@ import java.util.*
 /**
  * Check possibility and perform fix for unresolved references.
  */
-internal abstract class ImportFixBase<T : KtExpression> protected constructor(
+@IntellijInternalApi
+abstract class ImportFixBase<T : KtExpression> protected constructor(
     expression: T,
     private val expressionToAnalyzePointer: SmartPsiElementPointer<KtExpression>?,
     factory: Factory
@@ -140,7 +143,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     @IntentionName
     private fun calculateText(suggestionDescriptors: Collection<DeclarationDescriptor>): String {
         val descriptors  =
-            suggestionDescriptors.mapTo(hashSetOf()) { it.original }
+            suggestionDescriptors.mapTo(hashSetOf()) { it.original }.takeIf { it.isNotEmpty() } ?: return ""
 
         val ktFile = element?.containingKtFile ?: return KotlinBundle.message("fix.import")
         val languageVersionSettings = ktFile.languageVersionSettings
@@ -376,7 +379,8 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     abstract class FactoryWithUnresolvedReferenceQuickFix: Factory(), UnresolvedReferenceQuickFixFactory
 }
 
-internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, factory: Factory) : ImportFixBase<T>(expression, factory) {
+@IntellijInternalApi
+abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, factory: Factory) : ImportFixBase<T>(expression, factory) {
     override fun fillCandidates(
         name: String,
         callTypeAndReceiver: CallTypeAndReceiver<*, *>,
@@ -462,7 +466,8 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
 }
 
 // This is required to be abstract to reduce bunch file size
-internal abstract class AbstractImportFix(expression: KtSimpleNameExpression, factory: Factory) :
+@IntellijInternalApi
+abstract class AbstractImportFix(expression: KtSimpleNameExpression, factory: Factory) :
     OrdinaryImportFixBase<KtSimpleNameExpression>(expression, factory) {
 
     override fun getCallTypeAndReceiver() = element?.let { CallTypeAndReceiver.detect(it) }
@@ -975,7 +980,11 @@ private fun KotlinIndicesHelper.getClassesByName(expressionForPlatform: KtExpres
     }
 
 private fun CallTypeAndReceiver<*, *>.toFilter() = { descriptor: DeclarationDescriptor ->
-    callType.descriptorKindFilter.accepts(descriptor)
+    val kindFilter = callType.descriptorKindFilter
+    kindFilter.accepts(descriptor) || ((descriptor as? AbstractTypeAliasDescriptor)?.let {
+        val containingDeclaration = descriptor.containingDeclaration
+        kindFilter.accepts(containingDeclaration)
+    } ?: false)
 }
 
 object AbstractImportFixInfo {

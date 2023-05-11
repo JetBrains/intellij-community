@@ -146,6 +146,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public static final int INDENT_EACH_LINE = 3;
   public static final int REFORMAT_BLOCK = 4;
 
+  public boolean ENABLE_SECOND_REFORMAT;
+
   public boolean INDENT_TO_CARET_ON_PASTE;
 
   @MagicConstant(intValues = {YES, NO, ASK})

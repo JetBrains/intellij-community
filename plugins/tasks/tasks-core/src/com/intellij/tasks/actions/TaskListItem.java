@@ -15,6 +15,8 @@
  */
 package com.intellij.tasks.actions;
 
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.tasks.LocalTask;
@@ -26,7 +28,7 @@ import javax.swing.*;
 /**
  * @author Dmitry Avdeev
  */
-abstract class TaskListItem {
+abstract class TaskListItem implements ShortcutProvider {
 
   private final @NlsContexts.ListItem String myText;
   private final Icon myIcon;
@@ -72,5 +74,10 @@ abstract class TaskListItem {
 
   public boolean isTemp() {
     return myTemp;
+  }
+
+  @Override
+  public @Nullable ShortcutSet getShortcut() {
+    return null;
   }
 }

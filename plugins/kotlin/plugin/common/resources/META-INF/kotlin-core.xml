@@ -50,12 +50,12 @@
             area="IDEA_PROJECT"
             dynamic="true"/>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.kotlinTestFramework"
-            interface="org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idea.caches.resolve.resolveOptimizingOptionsProvider"
             interface="org.jetbrains.kotlin.idea.caches.resolve.ResolveOptimizingOptionsProvider"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.ktModuleFactory"
+            interface="org.jetbrains.kotlin.idea.base.projectStructure.KtModuleFactory"
             dynamic="true"/>
   </extensionPoints>
 
@@ -263,6 +263,8 @@
     <runLineMarkerContributor
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor"/>
+
+    <lang.inspectionSuppressor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.suppress.KotlinInspectionSuppressor"/>
   </extensions>
 
   <!-- Editing -->
@@ -377,6 +379,15 @@
     <tipAndTrick file="Kotlin_Java_convert.html"/>
   </extensions>
 
+  <!-- Advanced Settings -->
+  <extensions defaultExtensionNs="com.intellij">
+    <advancedSetting
+            id="kotlin.mpp.experimental"
+            default="true"
+            groupKey="group.advanced.settings.kotlin"
+            bundle="messages.KotlinBundle"/>
+  </extensions>
+
   <!-- Notifications -->
   <extensions defaultExtensionNs="com.intellij">
     <notificationGroup
@@ -421,6 +432,12 @@
             id="Kotlin dist downloading failed"
             displayType="STICKY_BALLOON"
             key="kotlin.dist.downloading.failed.group.name"
+    />
+    <notificationGroup
+            id="Configure Kotlin"
+            displayType="STICKY_BALLOON"
+            key="configure.kotlin"
+            bundle="messages.KotlinProjectConfigurationBundle"
     />
   </extensions>
 
@@ -475,8 +492,14 @@
   </extensions>
 
   <actions>
-    <action id="Kotlin.NewFile" class="org.jetbrains.kotlin.idea.actions.NewKotlinFileAction">
+    <action id="Kotlin.NewFile" class="org.jetbrains.kotlin.idea.actions.NewKotlinFileAction"
+            icon="org.jetbrains.kotlin.idea.KotlinIcons.FILE">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewGroup1"/>
+    </action>
+
+    <action id="Kotlin.NewScript" class="org.jetbrains.kotlin.idea.actions.NewKotlinScriptAction"
+            icon="org.jetbrains.kotlin.idea.KotlinIcons.SCRIPT">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
     </action>
 
     <group id="KotlinToolsGroup" popup="true" icon="/org/jetbrains/kotlin/idea/icons/kotlin13.svg"

@@ -6,11 +6,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.openapi.util.ClearableLazyValue.createAtomic;
 
 public final class LiveTemplateContextBean extends BaseKeyedLazyInstance<TemplateContextType> implements LiveTemplateContext {
   static final ExtensionPointName<LiveTemplateContextBean> EP_NAME = new ExtensionPointName<>("com.intellij.liveTemplateContext");
@@ -73,7 +72,7 @@ public final class LiveTemplateContextBean extends BaseKeyedLazyInstance<Templat
 
       if (!EVERYWHERE_CONTEXT_ID.equals(contextId)) {
         String actualBaseId = baseContextId != null ? baseContextId : EVERYWHERE_CONTEXT_ID;
-        instance.myBaseContextType = createAtomic(() -> LiveTemplateContextService.getInstance().getTemplateContextType(actualBaseId));
+        instance.myBaseContextType = new SynchronizedClearableLazy(() -> LiveTemplateContextService.getInstance().getTemplateContextType(actualBaseId));
       }
     }
     return instance;

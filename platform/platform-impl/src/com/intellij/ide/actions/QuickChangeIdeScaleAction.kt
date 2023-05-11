@@ -5,6 +5,9 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.ui.percentStringValue
 import com.intellij.ide.ui.percentValue
+import com.intellij.internal.statistic.service.fus.collectors.IdeZoomChanged
+import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
+import com.intellij.internal.statistic.service.fus.collectors.IdeZoomSwitcherClosed
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -19,11 +22,9 @@ import javax.swing.event.ListSelectionEvent
 
 class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
   private val switchAlarm = Alarm()
-  private var initialScale = UISettingsUtils.instance.currentIdeScale
-  private var listPopup: ListPopup? = null
 
   override fun fillActions(project: Project?, group: DefaultActionGroup, dataContext: DataContext) {
-    initialScale = UISettingsUtils.instance.currentIdeScale
+    val initialScale = UISettingsUtils.getInstance().currentIdeScale
 
     val options = IdeScaleTransformer.Settings.currentScaleOptions.toMutableList()
     if (options.firstOrNull { it.percentValue == initialScale.percentValue } == null) {
@@ -43,7 +44,7 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
   }
 
   override fun showPopup(e: AnActionEvent?, popup: ListPopup) {
-    listPopup = popup
+    val initialScale = UISettingsUtils.getInstance().currentIdeScale
     switchAlarm.cancelAllRequests()
 
     popup.addListSelectionListener { event: ListSelectionEvent ->
@@ -53,7 +54,10 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
         if (anAction is ChangeScaleAction) {
           switchAlarm.cancelAllRequests()
           switchAlarm.addRequest(Runnable {
-            applyScale(anAction.scale)
+            applyUserScale(anAction.scale, true)
+            if (!popup.isDisposed) {
+              popup.pack(true, true)
+            }
           }, SELECTION_THROTTLING_MS)
         }
       }
@@ -62,9 +66,9 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
     popup.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
         switchAlarm.cancelAllRequests()
-        listPopup = null
         if (!event.isOk) {
-          applyScale(initialScale)
+          applyUserScale(initialScale, false)
+          logSwitcherClosed(false)
         }
       }
     })
@@ -73,32 +77,44 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
   }
 
   override fun preselectAction(): Condition<in AnAction?> {
-    return Condition { a: AnAction? -> a is ChangeScaleAction && a.scale.percentValue == initialScale.percentValue }
-  }
-
-  private fun applyScale(scale: Float) {
-    if (UISettingsUtils.instance.currentIdeScale.percentValue == scale.percentValue) return
-
-    UISettingsUtils.instance.setCurrentIdeScale(scale)
-    UISettings.getInstance().fireUISettingsChanged()
-
-    if (listPopup?.isDisposed == false) {
-      listPopup?.pack(true, true)
-    }
+    return Condition { a: AnAction? -> a is ChangeScaleAction && a.scale.percentValue == UISettingsUtils.getInstance().currentIdeScale.percentValue }
   }
 
   private class ChangeScaleAction(val scale: Float) : DumbAwareAction(scale.percentStringValue) {
     override fun getActionUpdateThread() = ActionUpdateThread.EDT
     override fun actionPerformed(e: AnActionEvent) {
-      val utils = UISettingsUtils.instance
-      if (utils.currentIdeScale.percentValue != scale.percentValue) {
-        utils.setCurrentIdeScale(scale)
-        UISettings.getInstance().fireUISettingsChanged()
-      }
+      applyUserScale(scale, true)
+      logSwitcherClosed(true)
     }
   }
 
   companion object {
+    private fun applyUserScale(scale: Float, shouldLog: Boolean) {
+      if (UISettingsUtils.getInstance().currentIdeScale.percentValue == scale.percentValue) return
+      if (shouldLog) logIdeZoomChanged(scale)
+
+      UISettingsUtils.getInstance().setCurrentIdeScale(scale)
+      UISettings.getInstance().fireUISettingsChanged()
+    }
+
     private const val SELECTION_THROTTLING_MS = 500
   }
+}
+
+private fun logIdeZoomChanged(value: Float) {
+  IdeZoomChanged.log(
+    IdeZoomEventFields.zoomMode.with(if (value.percentValue > UISettingsUtils.getInstance().currentIdeScale.percentValue) IdeZoomEventFields.ZoomMode.ZOOM_IN
+                                     else IdeZoomEventFields.ZoomMode.ZOOM_OUT),
+    IdeZoomEventFields.place.with(IdeZoomEventFields.Place.SWITCHER),
+    IdeZoomEventFields.zoomScalePercent.with(value.percentValue),
+    IdeZoomEventFields.presentationMode.with(UISettings.getInstance().presentationMode)
+  )
+}
+
+private fun logSwitcherClosed(applied: Boolean) {
+  IdeZoomSwitcherClosed.log(
+    IdeZoomEventFields.applied.with(applied),
+    IdeZoomEventFields.finalZoomScalePercent.with(UISettingsUtils.getInstance().currentIdeScale.percentValue),
+    IdeZoomEventFields.presentationMode.with(UISettings.getInstance().presentationMode)
+  )
 }

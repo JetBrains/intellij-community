@@ -104,6 +104,8 @@ interface BaseKotlinUastResolveProviderService {
 
     fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType?
 
+    fun hasInheritedGenericType(psiElement: PsiElement): Boolean
+
     fun nullability(psiElement: PsiElement): KtTypeNullability?
 
     // ----------

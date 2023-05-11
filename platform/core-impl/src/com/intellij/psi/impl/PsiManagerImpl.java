@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
@@ -151,6 +152,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
+  @RequiresReadLock
   public PsiFile findFile(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findFile(file);

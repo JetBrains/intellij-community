@@ -83,6 +83,32 @@ public interface EditorSettings {
   boolean isVirtualSpace();
   void setVirtualSpace(boolean allow);
 
+  /**
+   * Vertical scroll offset - number of lines to keep above and below the caret.
+   * If the number is too big for the editor height, the caret will be centered.
+   */
+  int getVerticalScrollOffset();
+  void setVerticalScrollOffset(int val);
+
+  /**
+   * Vertical scroll jump - minimum number of lines to scroll at a time.
+   */
+  int getVerticalScrollJump();
+  void setVerticalScrollJump(int val);
+
+  /**
+   * Horizontal scroll offset - number of characters to keep to the left and right of the caret.
+   * If the number is too big for the editor width, the caret will be centered.
+   */
+  int getHorizontalScrollOffset();
+  void setHorizontalScrollOffset(int val);
+
+  /**
+   * Horizontal scroll jump - minimum number of characters to scroll horizontally at a time.
+   */
+  int getHorizontalScrollJump();
+  void setHorizontalScrollJump(int val);
+
   boolean isCaretInsideTabs();
   void setCaretInsideTabs(boolean allow);
 

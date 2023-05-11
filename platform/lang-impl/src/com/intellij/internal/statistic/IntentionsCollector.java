@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic;
 
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -34,12 +36,12 @@ public final class IntentionsCollector extends CounterUsagesCollector {
     return GROUP;
   }
 
-  public static void record(@NotNull Project project, @NotNull IntentionAction action, @NotNull Language language) {
+  public static void record(@NotNull Project project, @NotNull CommonIntentionAction action, @NotNull Language language) {
     recordIntentionEvent(project, action, language, CALLED);
   }
 
   private static void recordIntentionEvent(@NotNull Project project,
-                                           @NotNull IntentionAction action,
+                                           @NotNull CommonIntentionAction action,
                                            @NotNull Language language,
                                            EventId3<Class<?>, PluginInfo, Language> eventId) {
     final Class<?> clazz = getOriginalHandlerClass(action);
@@ -51,18 +53,18 @@ public final class IntentionsCollector extends CounterUsagesCollector {
   }
 
   @NotNull
-  private static Class<?> getOriginalHandlerClass(@NotNull IntentionAction action) {
-    Object handler = action;
-    if (action instanceof IntentionActionDelegate) {
-      IntentionAction delegate = ((IntentionActionDelegate)action).getDelegate();
+  private static Class<?> getOriginalHandlerClass(@NotNull CommonIntentionAction action) {
+    if (action instanceof IntentionActionDelegate actionDelegate) {
+      IntentionAction delegate = actionDelegate.getDelegate();
       if (delegate != action) {
         return getOriginalHandlerClass(delegate);
       }
     }
-    else if (action instanceof QuickFixWrapper) {
-      handler = ((QuickFixWrapper)action).getFix();
+    LocalQuickFix quickFix = QuickFixWrapper.unwrap(action);
+    if (quickFix != null) {
+      return quickFix.getClass();
     }
-    return handler.getClass();
+    return action.getClass();
   }
 
   public static void reportShownIntentions(@NotNull Project project,

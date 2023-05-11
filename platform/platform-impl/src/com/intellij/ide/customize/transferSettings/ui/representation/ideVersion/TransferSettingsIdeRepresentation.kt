@@ -5,8 +5,7 @@ import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.ui.representation.TransferSettingsRepresentationPanel
 import com.intellij.ide.customize.transferSettings.ui.representation.ideVersion.sections.TransferSettingsSection
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.JBGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 
 class TransferSettingsIdeRepresentation(ideVersion: IdeVersion, sectionFactory: (IdeVersion) -> List<TransferSettingsSection>)
   : TransferSettingsRepresentationPanel {
@@ -17,7 +16,7 @@ class TransferSettingsIdeRepresentation(ideVersion: IdeVersion, sectionFactory: 
       if (!section.worthShowing()) continue
 
       row {
-        cell(section.getUI()).customize(JBGaps(bottom = 20))
+        cell(section.getUI()).customize(UnscaledGaps(bottom = 20))
       }
     }
   }

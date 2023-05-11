@@ -289,7 +289,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     ijMessageView.getContentManager().addContent(content);
     ijMessageView.getContentManager().setSelectedContent(content);
     content.setDisposer(() -> Disposer.dispose(messageView));
-    new CloseListener(content, ijMessageView.getContentManager(), project);
+    new CloseListener(content, ijMessageView.getContentManager(), project).setupListeners();
 
     if (!buildFile.isRunInBackground()) {
       final ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
@@ -564,10 +564,13 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       myContent = content;
       myContentManager = contentManager;
       myProject = project;
-      contentManager.addContentManagerListener(this);
+    }
+
+    private void setupListeners() {
+      myContentManager.addContentManagerListener(this);
       ProjectManager.getInstance().addProjectManagerListener(myProject, this);
 
-      Disposer.register(content, () -> {
+      Disposer.register(myContent, () -> {
         myContentManager.removeContentManagerListener(this);
         ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
       });

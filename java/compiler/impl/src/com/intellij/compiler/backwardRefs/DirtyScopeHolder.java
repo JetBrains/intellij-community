@@ -3,6 +3,7 @@ package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
@@ -61,7 +62,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
   private final List<ExcludeEntryDescription> myExcludedDescriptions = new SmartList<>(); // guarded by myLock
   private boolean myCompilationPhase; // guarded by myLock
   private volatile GlobalSearchScope myExcludedFilesScope; // calculated outside myLock
-  private final Set<String> myCompilationAffectedModules = ContainerUtil.newConcurrentSet(); // used outside myLock
+  private final Set<String> myCompilationAffectedModules = ConcurrentCollectionFactory.createConcurrentSet(); // used outside myLock
 
   private final FileTypeRegistry myFileTypeRegistry = FileTypeRegistry.getInstance();
 

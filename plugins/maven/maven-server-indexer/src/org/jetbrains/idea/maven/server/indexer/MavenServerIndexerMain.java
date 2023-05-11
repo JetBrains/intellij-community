@@ -3,11 +3,12 @@ package org.jetbrains.idea.maven.server.indexer;
 
 import com.intellij.execution.rmi.RemoteServer;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.jetbrains.idea.maven.server.RemoteServerUtil;
 
 public class MavenServerIndexerMain extends RemoteServer {
 
   public static void main(String[] args) throws Exception {
     MavenServerUtil.readToken();
-    start(new MavenServerForIndexer(), true);
+    start(new MavenServerForIndexer(), true, RemoteServerUtil.isDebug(args));
   }
 }

@@ -57,8 +57,6 @@
 
     <projectService serviceInterface="com.intellij.psi.util.CachedValuesManager"
                     serviceImplementation="com.intellij.util.CachedValuesManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.psi.util.ReadActionCache"
-                        serviceImplementation="com.intellij.openapi.application.impl.ReadActionCacheIml"/> 
     <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry"
                         serviceImplementation="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl"/>
     <projectService serviceInterface="com.intellij.psi.util.PsiModificationTracker"

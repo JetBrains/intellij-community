@@ -43,7 +43,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       !isAffectedByDesktopBug() && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
 
     private fun isAffectedByDesktopBug(): Boolean =
-      Patches.SUN_BUG_ID_6486393 && (GraphicsEnvironment.isHeadless() || !GraphicsUtil.isProjectorEnvironment())
+      Patches.SUN_BUG_ID_6486393 && (GraphicsEnvironment.isHeadless() || !GraphicsUtil.isRemoteEnvironment())
   }
 
   override fun open(url: String): Unit = openOrBrowse(url, false)

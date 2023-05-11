@@ -9,23 +9,29 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.core.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.intentions.AddJvmStaticIntention
 import org.jetbrains.kotlin.idea.intentions.MoveMemberToCompanionObjectIntention
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.util.addAnnotation
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
-class MakeMemberStaticFix(private val declaration: KtNamedDeclaration) : KotlinQuickFixAction<KtNamedDeclaration>(declaration) {
+class MakeMemberStaticFix(declaration: KtNamedDeclaration) : KotlinQuickFixAction<KtNamedDeclaration>(declaration) {
     override fun startInWriteAction(): Boolean = false
 
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+        val declaration = element ?: return IntentionPreviewInfo.EMPTY
+        if (declaration is KtClass) {
+            if (declaration.hasModifier(KtTokens.INNER_KEYWORD)) declaration.removeModifier(KtTokens.INNER_KEYWORD)
+            return IntentionPreviewInfo.DIFF
+        }
         val copyDeclaration = PsiTreeUtil.findSameElementInCopy(declaration, file)
         val containingClass = copyDeclaration.containingClassOrObject ?: return IntentionPreviewInfo.EMPTY
         val copyDeclarationInCompanion = if (containingClass is KtClass) {
@@ -50,7 +56,11 @@ class MakeMemberStaticFix(private val declaration: KtNamedDeclaration) : KotlinQ
                 runWriteAction { CodeStyleManager.getInstance(declaration.project).reformat(declaration, true) }
             }
         }
-
+        val declaration = element ?: return
+        if (declaration is KtClass) {
+            if (declaration.hasModifier(KtTokens.INNER_KEYWORD)) declaration.removeModifier(KtTokens.INNER_KEYWORD)
+            return
+        }
         val containingClass = declaration.containingClassOrObject ?: return
         if (containingClass is KtClass) {
             val moveMemberToCompanionObjectIntention = MoveMemberToCompanionObjectIntention()
@@ -71,7 +81,7 @@ class MakeMemberStaticFix(private val declaration: KtNamedDeclaration) : KotlinQ
         } else makeStaticAndReformat(declaration, editor)
     }
 
-    override fun getText(): String = KotlinBundle.message("make.member.static.quickfix", declaration.name ?: "")
+    override fun getText(): String = KotlinBundle.message("make.member.static.quickfix", element?.name ?: "")
 
     override fun getFamilyName(): String = text
 

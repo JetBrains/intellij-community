@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtPrimaryConstructor
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "constructor A(Int)"
 open class A <caret>constructor(n: Int) {
     constructor() : this(1)
 }

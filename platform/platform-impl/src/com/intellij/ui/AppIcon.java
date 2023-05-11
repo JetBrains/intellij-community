@@ -50,7 +50,7 @@ public abstract class AppIcon {
   @NotNull
   public static AppIcon getInstance() {
     if (ourIcon == null) {
-      if (GraphicsEnvironment.isHeadless() || GraphicsUtil.isProjectorEnvironment()) {
+      if (GraphicsEnvironment.isHeadless() || GraphicsUtil.isRemoteEnvironment()) {
         ourIcon = new EmptyIcon();
       }
       else if (SystemInfoRt.isMac) {
@@ -211,6 +211,7 @@ public abstract class AppIcon {
       try {
         if (myAppImage != null) return myAppImage;
 
+        if (!Taskbar.isTaskbarSupported()) return null;
         Image appImage = Taskbar.getTaskbar().getIconImage();
         if (appImage == null) return null;
 
@@ -230,6 +231,7 @@ public abstract class AppIcon {
       EDT.assertIsEdt();
 
       try {
+        if (!Taskbar.isTaskbarSupported()) return;
         Taskbar.getTaskbar().setIconBadge(text);
       }
       catch (Exception e) {
@@ -262,6 +264,7 @@ public abstract class AppIcon {
       EDT.assertIsEdt();
 
       try {
+        if (!Taskbar.isTaskbarSupported()) return;
         Taskbar.getTaskbar().requestUserAttention(true, critical);
       }
       catch (Exception e) {
@@ -390,6 +393,7 @@ public abstract class AppIcon {
 
     static void setDockIcon(BufferedImage image) {
       try {
+        if (!Taskbar.isTaskbarSupported()) return;
         Taskbar.getTaskbar().setIconImage(image);
       }
       catch (Exception e) {

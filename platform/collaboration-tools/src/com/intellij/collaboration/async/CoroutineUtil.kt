@@ -12,6 +12,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 @ApiStatus.Experimental
 @Suppress("FunctionName")
@@ -52,6 +53,9 @@ fun CoroutineScope.nestedDisposable(): Disposable {
     })
   }
 }
+
+fun CoroutineScope.launchNow(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit): Job =
+  launch(context, CoroutineStart.UNDISPATCHED, block)
 
 @ApiStatus.Experimental
 fun <T1, T2, R> combineState(scope: CoroutineScope,
@@ -109,7 +113,7 @@ fun <T, M> StateFlow<T>.mapState(
 @ApiStatus.Experimental
 fun <T, R> StateFlow<T>.mapStateScoped(scope: CoroutineScope,
                                        sharingStart: SharingStarted = SharingStarted.Eagerly,
-                                       mapper: (CoroutineScope, T) -> R): StateFlow<R> {
+                                       mapper: CoroutineScope.(T) -> R): StateFlow<R> {
   var nestedScope: CoroutineScope = scope.childScope()
   val originalState = this
   return drop(1).transformLatest { newValue ->

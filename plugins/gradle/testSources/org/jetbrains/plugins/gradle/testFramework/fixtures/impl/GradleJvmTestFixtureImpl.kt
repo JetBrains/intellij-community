@@ -8,37 +8,46 @@ import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListen
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.SdkTestFixture
+import com.intellij.testFramework.fixtures.impl.AbstractSdkTestFixture
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.isSupported
 
 
-internal class GradleJvmTestFixtureImpl(private val gradleVersion: GradleVersion) : SdkTestFixture {
+internal class GradleJvmTestFixtureImpl(private val gradleVersion: GradleVersion) : AbstractSdkTestFixture() {
 
   private lateinit var fixtureDisposable: Disposable
 
-  private lateinit var sdkTestFixture: SdkTestFixture
+  override val sdkType: SdkType
+    get() = JavaSdk.getInstance()
 
-  override fun getSdk(): Sdk = sdkTestFixture.getSdk()
+  override fun isSdkSupported(versionString: String): Boolean {
+    return isSupported(gradleVersion, versionString)
+  }
+
+  override fun findOrCreateSdk(): Sdk {
+    return findSdkInTable() ?: findAndAddSdk() ?: throw AssertionError(
+      "Cannot find JDK for $gradleVersion.\n" +
+      "Please, research JDK restrictions or discuss it with test author, and install JDK manually.\n" +
+      "Checked paths: " + sdkType.suggestHomePaths()
+    )
+  }
 
   override fun setUp() {
-    fixtureDisposable = Disposer.newDisposable()
+    super.setUp()
 
-    sdkTestFixture = IdeaTestFixtureFactory.getFixtureFactory()
-      .createSdkFixture(JavaSdk.getInstance()) { isSupported(gradleVersion, it) }
-    sdkTestFixture.setUp()
+    fixtureDisposable = Disposer.newDisposable()
 
     installLinkedSettingsWatcher()
   }
 
   override fun tearDown() {
     runAll(
-      { sdkTestFixture.tearDown() },
-      { Disposer.dispose(fixtureDisposable) }
+      { Disposer.dispose(fixtureDisposable) },
+      { super.tearDown() }
     )
   }
 

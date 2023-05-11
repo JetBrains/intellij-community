@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("LiftReturnOrAssignment")
-
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.RecentProjectsManager
-import com.intellij.notification.ActionCenter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -42,14 +39,14 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Rectangle
 import java.awt.Window
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.accessibility.AccessibleContext
 import javax.swing.*
+
+private const val INIT_BOUNDS_KEY = "InitBounds"
 
 open class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
@@ -116,15 +113,13 @@ open class ProjectFrameHelper internal constructor(
         }
       }
     })
+    if (frameDecorator != null && getReusedFullScreenState()) {
+      frameDecorator.setStoredFullScreen()
+    }
     frame.background = JBColor.PanelBackground
     rootPane.preInit(isInFullScreen = { isInFullScreen })
 
-    balloonLayout = if (ActionCenter.isEnabled()) {
-      ActionCenterBalloonLayout(rootPane, JBUI.insets(8))
-    }
-    else {
-      BalloonLayoutImpl(rootPane, JBUI.insets(8))
-    }
+    balloonLayout = ActionCenterBalloonLayout(rootPane, JBUI.insets(8))
   }
 
   companion object {
@@ -186,15 +181,14 @@ open class ProjectFrameHelper internal constructor(
     if (SystemInfoRt.isMac) {
       frame.iconImage = null
     }
-    else if (SystemInfoRt.isLinux) {
-      frame.addComponentListener(object : ComponentAdapter() {
-        override fun componentShown(e: ComponentEvent) {
-          frame.removeComponentListener(this)
-          IdeMenuBar.installAppMenuIfNeeded(frame)
-        }
-      })
-      // in production (not from sources) makes sense only on Linux
-      AppUIUtil.updateWindowIcon(frame)
+    else {
+      if (SystemInfoRt.isLinux) {
+        IdeMenuBar.installAppMenuIfNeeded(frame)
+      }
+
+      // in production (not from sources) it makes sense only on Linux
+      // or on Windows (for products that don't use a native launcher, e.g. MPS)
+      updateAppWindowIcon(frame)
     }
     return frame
   }
@@ -319,6 +313,26 @@ open class ProjectFrameHelper internal constructor(
     activationTimestamp?.let {
       RecentProjectsManager.getInstance().setActivationTimestamp(project, it)
     }
+    applyInitBounds()
+  }
+
+  fun setInitBounds(bounds: Rectangle?) {
+    if (bounds != null && frame.isInFullScreen) {
+      frame.rootPane.putClientProperty(INIT_BOUNDS_KEY, bounds)
+    }
+  }
+
+  private fun applyInitBounds() {
+    if (isInFullScreen) {
+      val bounds = rootPane.getClientProperty(INIT_BOUNDS_KEY)
+      rootPane.putClientProperty(INIT_BOUNDS_KEY, null)
+      if (bounds is Rectangle) {
+        ProjectFrameBounds.getInstance(project!!).markDirty(bounds)
+      }
+    }
+    else {
+      ProjectFrameBounds.getInstance(project!!).markDirty(frame.bounds)
+    }
   }
 
   open suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
@@ -376,6 +390,16 @@ open class ProjectFrameHelper internal constructor(
     }
   }
 
+  fun storeStateForReuse() {
+    frame.reusedFullScreenState = frameDecorator != null && frameDecorator.isInFullScreen
+  }
+
+  private fun getReusedFullScreenState(): Boolean {
+    val reusedFullScreenState = frame.reusedFullScreenState
+    frame.reusedFullScreenState = false
+    return reusedFullScreenState
+  }
+
   private fun temporaryFixForIdea156004(state: Boolean): Boolean {
     if (SystemInfoRt.isMac) {
       try {
@@ -407,6 +431,7 @@ open class ProjectFrameHelper internal constructor(
 
   internal val isTabbedWindow: Boolean
     get() = frameDecorator?.isTabbedWindow ?: false
+
 
   open fun windowClosing(project: Project) {
     CloseProjectWindowHelper().windowClosing(project)

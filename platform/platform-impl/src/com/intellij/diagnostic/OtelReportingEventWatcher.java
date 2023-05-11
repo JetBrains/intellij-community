@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.openapi.Disposable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import io.opentelemetry.api.metrics.BatchCallback;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.EDT;
 import static java.util.concurrent.TimeUnit.HOURS;
 
 /**
@@ -82,7 +83,7 @@ public class OtelReportingEventWatcher implements EventWatcher, Disposable {
 
 
   public OtelReportingEventWatcher() {
-    this(TraceManager.INSTANCE.getMeter("EDT"));
+    this(TelemetryTracer.getMeter(EDT));
   }
 
   public OtelReportingEventWatcher(final @NotNull Meter meter) {

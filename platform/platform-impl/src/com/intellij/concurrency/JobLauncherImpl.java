@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
-import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,6 +24,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 public final class JobLauncherImpl extends JobLauncher {
   static final int CORES_FORK_THRESHOLD = 1;
@@ -188,7 +188,7 @@ public final class JobLauncherImpl extends JobLauncher {
         finally {
           myStatus = Status.EXECUTED;
           if (myOnDoneCallback != null) {
-            myOnDoneCallback.consume(this);
+            myOnDoneCallback.accept(this);
           }
         }
         return true;

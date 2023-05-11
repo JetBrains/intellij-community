@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -11,16 +10,11 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.runProcess
-import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
-import java.util.*
-import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
-import kotlin.io.path.moveTo
-import kotlin.io.path.name
+import kotlin.io.path.*
 import kotlin.time.Duration.Companion.hours
 
 internal val BuildContext.publishSitArchive: Boolean
@@ -38,19 +32,26 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
                                      suffix: String,
                                      arch: JvmArchitecture,
                                      notarize: Boolean) {
-  require(macZip.exists())
+  require(Files.isRegularFile(macZip))
+
   val targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
   val sitFile = (if (context.publishSitArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$targetName.sit")
-  macZip.moveTo(sitFile, overwrite = true)
-  signMacBinaries(context, listOf(sitFile))
+  Files.move(macZip, sitFile, StandardCopyOption.REPLACE_EXISTING)
+
+  if (context.isMacCodeSignEnabled) {
+    context.proprietaryBuildTools.signTool.signFiles(files = listOf(sitFile),
+                                                     context = context,
+                                                     options = signingOptions("application/x-mac-app-zip", context))
+  }
+
   val useNotaryRestApi = useNotaryRestApi()
   val useNotaryXcodeApi = notarize && !useNotaryRestApi
   if (notarize && useNotaryRestApi) {
     notarize(sitFile, context)
   }
-  val useMacHost = macHostProperties?.host != null &&
-                   macHostProperties.userName != null &&
-                   macHostProperties.password != null
+  val useMacHost = !macHostProperties?.host.isNullOrBlank() &&
+                   !macHostProperties?.userName.isNullOrBlank() &&
+                   !macHostProperties?.password.isNullOrBlank()
   if (useMacHost && (useNotaryXcodeApi || !context.isStepSkipped(BuildOptions.MAC_DMG_STEP))) {
     notarizeAndBuildDmgViaMacBuilderHost(
       sitFile, requireNotNull(macHostProperties),
@@ -58,9 +59,13 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
       staple = notarize,
       customizer, context
     )
+    // for testing, to be removed
+    val tempDir = Files.createTempDirectory(sitFile.nameWithoutExtension)
+    val entrypoint = prepareDmgBuildScripts(context, customizer, tempDir, staple = notarize)
+    publishDmgBuildScripts(context, entrypoint, tempDir)
   }
   else {
-    buildLocally(sitFile, targetName, notarize = useNotaryXcodeApi, customizer, context)
+    buildLocally(sitFile = sitFile, targetName = targetName, notarize = useNotaryXcodeApi, customizer = customizer, context = context)
   }
   check(Files.exists(sitFile)) {
     "$sitFile wasn't created"
@@ -117,7 +122,7 @@ private fun notarizeAndBuildDmgViaMacBuilderHost(sitFile: Path,
     communityHome = context.paths.communityHomeDirRoot,
     artifactDir = Path.of(context.paths.artifacts),
     dmgImage = dmgImage,
-    artifactBuilt = context::notifyArtifactWasBuilt,
+    artifactBuilt = context::notifyArtifactBuilt,
     publishAppArchive = context.publishSitArchive,
     staple = staple
   )
@@ -133,7 +138,7 @@ private suspend fun buildLocally(sitFile: Path,
   Files.createDirectories(tempDir)
   try {
     if (notarize) notarizeSitLocally(sitFile, tempDir, customizer, context)
-    buildDmgLocally(sitFile, tempDir, targetName, customizer, context)
+    buildDmgLocally(sitFile, tempDir, targetName, customizer, context, staple = notarize)
   }
   finally {
     NioFiles.deleteRecursively(tempDir)
@@ -144,11 +149,12 @@ private suspend fun notarizeSitLocally(sitFile: Path,
                                        tempDir: Path,
                                        customizer: MacDistributionCustomizer,
                                        context: BuildContext) {
-  context.executeStep(spanBuilder("Notarizing .sit locally").setAttribute("sitFile", "$sitFile"), BuildOptions.MAC_NOTARIZE_STEP) {
+  context.executeStep(spanBuilder("notarizing .sit locally").setAttribute("sitFile", "$sitFile"), BuildOptions.MAC_NOTARIZE_STEP) { span ->
     if (!SystemInfoRt.isMac) {
-      Span.current().addEvent(".sit can be notarized only on macOS")
+      span.addEvent(".sit can be notarized only on macOS")
       return@executeStep
     }
+
     val targetFile = tempDir.resolve(sitFile.fileName)
     Files.copy(sitFile, targetFile)
     val scripts = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
@@ -183,41 +189,82 @@ private suspend fun buildDmgLocally(sitFile: Path,
                                     tempDir: Path,
                                     targetName: String,
                                     customizer: MacDistributionCustomizer,
-                                    context: BuildContext) {
+                                    context: BuildContext,
+                                    staple: Boolean) {
   context.executeStep(spanBuilder("build .dmg locally"), BuildOptions.MAC_DMG_STEP) {
+    context.paths.artifactDir.createDirectories()
+    val entrypoint = prepareDmgBuildScripts(context, customizer, tempDir, staple)
     if (!SystemInfoRt.isMac) {
-      Span.current().addEvent(".dmg can be built only on macOS")
+      it.addEvent(".dmg can be built only on macOS")
+      publishDmgBuildScripts(context, entrypoint, tempDir)
       return@executeStep
     }
-    val exploded = tempDir.resolve("${context.fullBuildNumber}.exploded")
-    if (!exploded.exists()) {
-      exploded.createDirectories()
-      runProcess(listOf("unzip", "-q", "-o", "$sitFile", "-d", "$exploded"))
+    val tmpSit = Files.move(sitFile, tempDir.resolve(sitFile.fileName))
+    runProcess(args = listOf("./${entrypoint.name}"), workingDir = tempDir, inheritOut = true)
+    val dmgFile = tempDir.resolve("$targetName.dmg")
+    check(dmgFile.exists()) {
+      "$dmgFile wasn't created"
     }
-    val dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
-    Files.copy(Path.of((if (context.applicationInfo.isEAP) customizer.dmgImagePathForEAP else null) ?: customizer.dmgImagePath),
-               dmgImageCopy)
-    val scriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
-    Files.copy(scriptDir.resolve("makedmg.sh"), tempDir.resolve("makedmg.sh"),
-               StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
-    NioFiles.setExecutable(tempDir.resolve("makedmg.sh"))
-    Files.copy(scriptDir.resolve("makedmg.py"), tempDir.resolve("makedmg.py"),
-               StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
-    val artifactDir = context.paths.artifactDir
-    Files.createDirectories(artifactDir)
-    val mountName = "$targetName-${UUID.randomUUID().toString().substring(1..4)}"
-    val dmgFile = artifactDir.resolve("$targetName.dmg")
-    val cleanUpExploded = true
-    runProcess(
-      args = listOf(
-        "./makedmg.sh", mountName, context.fullBuildNumber,
-        "$dmgFile", "${context.fullBuildNumber}.exploded",
-        "$cleanUpExploded",
-        "${context.signMacOsBinaries}" // isContentSigned
-      ),
-      additionalEnvVariables = mapOf(GlobalOptions.BUILD_DATE_IN_SECONDS to "${context.options.buildDateInSeconds}"),
-      workingDir = tempDir
-    )
+    Files.move(dmgFile, context.paths.artifactDir.resolve(dmgFile.name), StandardCopyOption.REPLACE_EXISTING)
     context.notifyArtifactBuilt(dmgFile)
+    Files.move(tmpSit, sitFile)
+  }
+}
+
+private fun prepareDmgBuildScripts(context: BuildContext,
+                                   customizer: MacDistributionCustomizer,
+                                   tempDir: Path, staple: Boolean): Path {
+  NioFiles.deleteRecursively(tempDir)
+  tempDir.createDirectories()
+  val dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
+  Files.copy(Path.of((if (context.applicationInfo.isEAP) customizer.dmgImagePathForEAP else null) ?: customizer.dmgImagePath),
+             dmgImageCopy)
+  val scriptsDir = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
+  Files.copy(scriptsDir.resolve("makedmg.sh"), tempDir.resolve("makedmg.sh"),
+             StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+  NioFiles.setExecutable(tempDir.resolve("makedmg.sh"))
+  Files.copy(scriptsDir.resolve("makedmg.py"), tempDir.resolve("makedmg.py"),
+             StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+  Files.copy(scriptsDir.resolve("staple.sh"), tempDir.resolve("staple.sh"),
+             StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+  val entrypoint = tempDir.resolve("build.sh")
+  entrypoint.writeText(
+    scriptsDir.resolve("build-template.sh").readText()
+      .resolveTemplateVar("staple", "$staple")
+      .resolveTemplateVar("appName", context.fullBuildNumber)
+      .resolveTemplateVar("contentSigned", "${context.signMacOsBinaries}")
+      .resolveTemplateVar("buildDateInSeconds", "${context.options.buildDateInSeconds}")
+  )
+  NioFiles.setExecutable(entrypoint)
+  return entrypoint
+}
+
+private fun String.resolveTemplateVar(variable: String, value: String): String {
+  val reference = "%$variable%"
+  check(contains(reference)) {
+    "No $reference is found in:\n'$this'"
+  }
+  return replace(reference, value)
+}
+
+private fun publishDmgBuildScripts(context: BuildContext, entrypoint: Path, tempDir: Path) {
+  if (context.publishSitArchive) {
+    val artifactDir = context.paths.artifactDir.resolve("macos-dmg-build")
+    artifactDir.createDirectories()
+    synchronized("$artifactDir".intern()) {
+      tempDir.listDirectoryEntries().forEach {
+        Files.copy(it, artifactDir.resolve(it.name), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+      }
+      val message = """
+        To build .dmg(s):
+        1. transfer .sit(s) to macOS host;
+        2. transfer ${artifactDir.name}/ content to the same folder;
+        3. execute ${entrypoint.name} from Terminal. 
+        .dmg(s) will be built in the same folder.
+      """.trimIndent()
+      artifactDir.resolve("README.txt").writeText(message)
+      context.messages.info(message)
+      context.notifyArtifactBuilt(artifactDir)
+    }
   }
 }

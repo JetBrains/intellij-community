@@ -8,10 +8,10 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class IdeBundle extends DynamicBundle {
+public final class IdeBundle {
   public static final String BUNDLE = "messages.IdeBundle";
 
-  private static final IdeBundle INSTANCE = new IdeBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(IdeBundle.class, BUNDLE);
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.containsKey(key) ? INSTANCE.getMessage(key, params) : IdeDeprecatedMessagesBundle.message(key, params);
@@ -22,6 +22,5 @@ public final class IdeBundle extends DynamicBundle {
   }
 
   private IdeBundle() {
-    super(BUNDLE);
   }
 }

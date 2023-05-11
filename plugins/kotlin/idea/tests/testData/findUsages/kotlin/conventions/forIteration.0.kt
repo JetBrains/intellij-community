@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "operator fun iterator(): Iterator<T>"
 
 class A<T : Any> {
     operator fun <caret>iterator(): Iterator<T> = throw IllegalStateException("")

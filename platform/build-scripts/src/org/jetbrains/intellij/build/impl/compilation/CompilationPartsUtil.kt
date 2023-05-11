@@ -3,9 +3,9 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.diagnostic.telemetry.forkJoinTask
-import com.intellij.diagnostic.telemetry.use
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.forkJoinTask
+import com.intellij.platform.diagnostic.telemetry.impl.use
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -40,15 +40,17 @@ class CompilationCacheUploadConfiguration(
   val uploadOnly: Boolean = false,
   branch: String? = null,
 ) {
-  val serverUrl: String = serverUrl ?: normalizeServerUrl()
-  val branch: String = branch ?: System.getProperty(branchPropertyName).also {
-    check(!it.isNullOrBlank()) {
-      "Git branch is not defined. Please set $branchPropertyName system property."
+  val serverUrl: String by lazy { serverUrl ?: normalizeServerUrl() }
+  val branch: String by lazy {
+    branch ?: System.getProperty(BRANCH_PROPERTY_NAME).also {
+      check(!it.isNullOrBlank()) {
+        "Git branch is not defined. Please set $BRANCH_PROPERTY_NAME system property."
+      }
     }
   }
 
   companion object {
-    private const val branchPropertyName = "intellij.build.compiled.classes.branch"
+    private const val BRANCH_PROPERTY_NAME = "intellij.build.compiled.classes.branch"
 
     private fun normalizeServerUrl(): String {
       val serverUrlPropertyName = "intellij.build.compiled.classes.server.url"
@@ -179,7 +181,7 @@ private fun isModuleOutputDirEmpty(moduleOutDir: Path): Boolean {
 }
 
 // TODO: Remove hardcoded constant
-internal const val uploadPrefix = "intellij-compile/v2"
+internal const val UPLOAD_PREFIX = "intellij-compile/v2"
 
 private fun upload(config: CompilationCacheUploadConfiguration,
                    zipDir: Path,
@@ -190,7 +192,7 @@ private fun upload(config: CompilationCacheUploadConfiguration,
   val metadataJson = Json.encodeToString(CompilationPartsMetadata(
     serverUrl = config.serverUrl,
     branch = config.branch,
-    prefix = uploadPrefix,
+    prefix = UPLOAD_PREFIX,
     files = items.associateTo(TreeMap()) { item ->
       item.name to item.hash!!
     },

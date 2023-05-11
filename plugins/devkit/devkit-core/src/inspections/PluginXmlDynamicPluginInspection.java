@@ -43,7 +43,7 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
   }
 
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     if (element instanceof ApplicationComponents ||
         element instanceof ProjectComponents ||
         element instanceof ModuleComponents) {

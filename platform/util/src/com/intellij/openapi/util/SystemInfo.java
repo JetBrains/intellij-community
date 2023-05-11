@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Provides information about operating system, system-wide settings, and Java Runtime.
@@ -81,14 +82,14 @@ public final class SystemInfo {
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
 
-  private static final NotNullLazyValue<Boolean> ourHasXdgOpen = PathExecLazyValue.create("xdg-open");
+  private static final Supplier<Boolean> ourHasXdgOpen = isXWindow ? PathExecLazyValue.create("xdg-open") : () -> false;
   public static boolean hasXdgOpen() {
-    return isXWindow && ourHasXdgOpen.getValue();
+    return ourHasXdgOpen.get();
   }
 
-  private static final NotNullLazyValue<Boolean> ourHasXdgMime = PathExecLazyValue.create("xdg-mime");
+  private static final Supplier<Boolean> ourHasXdgMime = isXWindow ? PathExecLazyValue.create("xdg-mime") : () -> false;
   public static boolean hasXdgMime() {
-    return isXWindow && ourHasXdgMime.getValue();
+    return ourHasXdgMime.get();
   }
 
   public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");

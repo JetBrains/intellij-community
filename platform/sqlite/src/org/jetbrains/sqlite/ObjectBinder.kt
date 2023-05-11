@@ -99,4 +99,20 @@ class ObjectBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramC
     batch[batchPosition + 3] = v4
     batch[batchPosition + 4] = v5
   }
+
+  fun bindMultiple(vararg values: Any?) {
+    assert(values.size == paramCount)
+    System.arraycopy(values, 0, batch, batchPosition, paramCount)
+  }
+
+  fun bind(v1: Any?, v2: Any?, v3: Any?, v4: Any?, v5: Any?, v6: Any?, v7: Any?) {
+    assert(paramCount == 7)
+    batch[batchPosition] = v1
+    batch[batchPosition + 1] = v2
+    batch[batchPosition + 2] = v3
+    batch[batchPosition + 3] = v4
+    batch[batchPosition + 4] = v5
+    batch[batchPosition + 5] = v6
+    batch[batchPosition + 6] = v7
+  }
 }

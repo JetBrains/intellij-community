@@ -41,6 +41,9 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
   private final ArrayList<ToggleModelAction> myActions = new ArrayList<>();
 
+  public final AnAction[] actionsToMerge;
+  public final AnAction[] additionalActionsToMerge;
+
   public ToolbarPanel(final TestConsoleProperties properties,
                       final JComponent parent) {
     super(new BorderLayout());
@@ -143,6 +146,9 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     properties.appendAdditionalActions(secondaryGroup, parent, properties);
     moreGroup.addSeparator();
     moreGroup.add(secondaryGroup);
+
+    actionsToMerge = actionGroup.getChildActionsOrStubs();
+    additionalActionsToMerge = moreGroup.getChildActionsOrStubs();
 
     if (isNewLayout) {
       actionGroup.add(moreGroup);

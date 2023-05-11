@@ -19,6 +19,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.BrowserLink;
+import com.intellij.ui.components.JBFontScaler;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
@@ -119,6 +120,7 @@ public class HelpTooltip {
   private @NlsSafe String shortcut;
   private @Tooltip String description;
   private ActionLink link;
+  private @Nullable JBFontScaler linkOriginalFontScaler;
   private boolean neverHide;
   private @NotNull Alignment alignment = Alignment.CURSOR;
 
@@ -285,6 +287,7 @@ public class HelpTooltip {
     if (external) {
       link.setExternalLinkIcon();
     }
+    linkOriginalFontScaler = new JBFontScaler(link.getFont());
     return this;
   }
 
@@ -444,9 +447,9 @@ public class HelpTooltip {
       tipPanel.add(shortcutLabel, VerticalLayout.TOP);
     }
 
-    if (link != null) {
+    if (link != null && linkOriginalFontScaler != null) {
       link.setForeground(LINK_COLOR);
-      link.setFont(deriveDescriptionFont(link.getFont(), hasTitle));
+      link.setFont(deriveDescriptionFont(linkOriginalFontScaler.scaledFont(), hasTitle));
       tipPanel.add(link, VerticalLayout.TOP);
     }
 
@@ -616,8 +619,8 @@ public class HelpTooltip {
   }
 
   private static Border textBorder(boolean multiline) {
-    Insets i = UIManager.getInsets(multiline ? "HelpTooltip.defaultTextBorderInsets" : "HelpTooltip.smallTextBorderInsets");
-    return i != null ? new JBEmptyBorder(i) : JBUI.Borders.empty();
+    Insets i = multiline ? JBUI.CurrentTheme.HelpTooltip.defaultTextBorderInsets() : JBUI.CurrentTheme.HelpTooltip.smallTextBorderInsets();
+    return new JBEmptyBorder(i);
   }
 
   private static Font deriveHeaderFont(Font font) {

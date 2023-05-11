@@ -31,7 +31,7 @@ import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.server.MavenGoalExecutionResult;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -134,7 +134,7 @@ public class MavenProject {
     newState.myOutputDirectory = model.getBuild().getOutputDirectory();
     newState.myTestOutputDirectory = model.getBuild().getTestOutputDirectory();
 
-    doSetFolders(newState, readerResult);
+    doSetFolders(newState, readerResult.mavenModel.getBuild());
 
     newState.myFilters = model.getBuild().getFilters();
     newState.myProperties = model.getProperties();
@@ -226,19 +226,27 @@ public class MavenProject {
     state.myAnnotationProcessors = new ArrayList<>(newAnnotationProcessors);
   }
 
-  private MavenProjectChanges setFolders(MavenProjectReaderResult readerResult) {
+  @ApiStatus.Internal
+  public MavenProjectChanges setFolders(MavenGoalExecutionResult.Folders folders) {
     State newState = myState.clone();
-    doSetFolders(newState, readerResult);
+    doSetFolders(newState, folders.getSources(), folders.getTestSources(), folders.getResources(), folders.getTestResources());
     return setState(newState);
   }
 
-  private static void doSetFolders(State newState, MavenProjectReaderResult readerResult) {
-    MavenModel model = readerResult.mavenModel;
-    newState.mySources = model.getBuild().getSources();
-    newState.myTestSources = model.getBuild().getTestSources();
+  private static void doSetFolders(State newState, MavenBuild build) {
+    doSetFolders(newState, build.getSources(), build.getTestSources(), build.getResources(), build.getTestResources());
+  }
 
-    newState.myResources = model.getBuild().getResources();
-    newState.myTestResources = model.getBuild().getTestResources();
+  private static void doSetFolders(State newState,
+                                   List<String> sources,
+                                   List<String> testSources,
+                                   List<MavenResource> resources,
+                                   List<MavenResource> testResources) {
+    newState.mySources = sources;
+    newState.myTestSources = testSources;
+
+    newState.myResources = resources;
+    newState.myTestResources = testResources;
   }
 
   private Map<String, String> collectModulePathsAndNames(MavenModel mavenModel, String baseDir) {
@@ -341,6 +349,10 @@ public class MavenProject {
 
   public @NotNull MavenId getMavenId() {
     return myState.myMavenId;
+  }
+
+  boolean isNew() {
+    return null == myState.myMavenId;
   }
 
   public @Nullable MavenId getParentId() {
@@ -650,21 +662,6 @@ public class MavenProject {
     return set(reader.readProject(generalSettings, myFile, profiles, locator), generalSettings, true, false, true);
   }
 
-  public @NotNull Pair<Boolean, MavenProjectChanges> resolveFolders(@NotNull MavenEmbedderWrapper embedder,
-                                                                    @NotNull MavenImportingSettings importingSettings,
-                                                                    @NotNull MavenConsole console) throws MavenProcessCanceledException {
-    MavenProjectReaderResult result = MavenProjectReader.generateSources(embedder,
-                                                                         importingSettings,
-                                                                         getFile(),
-                                                                         getActivatedProfilesIds(),
-                                                                         console);
-    if (result == null || !MavenProjectReaderResult.shouldResetDependenciesAndFolders(result)) {
-      return Pair.create(false, MavenProjectChanges.NONE);
-    }
-    MavenProjectChanges changes = setFolders(result);
-    return Pair.create(true, changes);
-  }
-
   public void resetCache() {
     // todo a bit hacky
     synchronized (myState) {
@@ -871,7 +868,7 @@ public class MavenProject {
   }
 
   public @NotNull Set<String> getSupportedDependencyScopes() {
-    Set<String> result = ContainerUtil.set(MavenConstants.SCOPE_COMPILE,
+    Set<String> result = ContainerUtil.newHashSet(MavenConstants.SCOPE_COMPILE,
                                            MavenConstants.SCOPE_PROVIDED,
                                            MavenConstants.SCOPE_RUNTIME,
                                            MavenConstants.SCOPE_TEST,
@@ -1058,7 +1055,7 @@ public class MavenProject {
     List<Element> configurations = getCompileExecutionConfigurations();
     if(!configurations.isEmpty()) return configurations;
     Element configuration = getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
-    return configuration == null ? Collections.emptyList() : Collections.singletonList(configuration);
+    return ContainerUtil.createMaybeSingletonList(configuration);
   }
 
   public @NotNull Properties getProperties() {
@@ -1160,7 +1157,7 @@ public class MavenProject {
 
   @Override
   public String toString() {
-    return getMavenId().toString();
+    return null == myState.myMavenId ? myFile.getPath() : getMavenId().toString();
   }
 
   private static class State implements Cloneable, Serializable {

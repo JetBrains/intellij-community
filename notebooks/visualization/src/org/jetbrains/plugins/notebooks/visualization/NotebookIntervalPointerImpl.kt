@@ -31,11 +31,8 @@ class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactor
 }
 
 
-private class NotebookIntervalPointerImpl(var interval: NotebookCellLines.Interval?) : NotebookIntervalPointer {
-  override fun get(): NotebookCellLines.Interval? {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    return interval
-  }
+private class NotebookIntervalPointerImpl(@Volatile var interval: NotebookCellLines.Interval?) : NotebookIntervalPointer {
+  override fun get(): NotebookCellLines.Interval? = interval
 
   override fun toString(): String = "NotebookIntervalPointerImpl($interval)"
 }
@@ -319,6 +316,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   private fun onUpdated(event: NotebookIntervalPointersEvent) {
     try {
       changeListeners.multicaster.onUpdated(event)
+      ApplicationManager.getApplication().messageBus.syncPublisher(NotebookIntervalPointerFactory.ChangeListener.TOPIC).onUpdated(event)
     }
     catch (e: Exception) {
       thisLogger().error("NotebookIntervalPointerFactory.ChangeListener shouldn't throw exceptions", e)

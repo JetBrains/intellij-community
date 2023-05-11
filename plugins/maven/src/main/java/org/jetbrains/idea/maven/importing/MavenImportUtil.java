@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.tree.MavenJavaVersionHolder;
@@ -165,7 +167,16 @@ public final class MavenImportUtil {
   public static LanguageLevel getDefaultLevel(MavenProject mavenProject) {
     MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
     if (plugin != null && plugin.getVersion() != null) {
-      if (VersionComparatorUtil.compare("3.8.1", plugin.getVersion()) <= 0) {
+      //https://github.com/apache/maven-compiler-plugin/blob/master/src/main/java/org/apache/maven/plugin/compiler/AbstractCompilerMojo.java
+      // consider "source" parameter documentation.
+      // also note, that this are versions of plugin, not maven.
+      if (VersionComparatorUtil.compare("3.11.0", plugin.getVersion()) <= 0) {
+        return LanguageLevel.JDK_1_8;
+      }
+      if (VersionComparatorUtil.compare("3.9.0", plugin.getVersion()) <= 0) {
+        return LanguageLevel.JDK_1_7;
+      }
+      if (VersionComparatorUtil.compare("3.8.0", plugin.getVersion()) <= 0) {
         return LanguageLevel.JDK_1_6;
       }
       else {
@@ -277,5 +288,23 @@ public final class MavenImportUtil {
 
       return module;
     });
+  }
+
+  private static boolean needSplitMainAndTest(MavenProject project, MavenJavaVersionHolder mavenJavaVersions) {
+    if (!Registry.is("maven.import.separate.main.and.test.modules.when.needed")) return false;
+    return !project.isAggregator() && mavenJavaVersions.needSeparateTestModule() && isCompilerTestSupport(project);
+  }
+
+  @ApiStatus.Internal
+  public static StandardMavenModuleType getModuleType(MavenProject project, MavenJavaVersionHolder mavenJavaVersions) {
+    if (needSplitMainAndTest(project, mavenJavaVersions)) {
+      return StandardMavenModuleType.COMPOUND_MODULE;
+    }
+    else if (project.isAggregator()) {
+      return StandardMavenModuleType.AGGREGATOR;
+    }
+    else {
+      return StandardMavenModuleType.SINGLE_MODULE;
+    }
   }
 }

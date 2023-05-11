@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
+import com.intellij.util.io.DataOutputStream
+import java.io.DataInputStream
 import java.io.OutputStream
 
 interface PayloadStorage {
@@ -28,5 +30,13 @@ value class PayloadRef(val value: Long) {
     const val SIZE_BYTES = Long.SIZE_BYTES
 
     val ZERO_SIZE = PayloadRef(-1L)
+
+    fun DataInputStream.readPayloadRef(): PayloadRef {
+      return PayloadRef(readLong())
+    }
+
+    fun DataOutputStream.writePayloadRef(payloadRef: PayloadRef) {
+      writeLong(payloadRef.value)
+    }
   }
 }

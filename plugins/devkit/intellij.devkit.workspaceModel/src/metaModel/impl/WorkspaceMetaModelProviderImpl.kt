@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.resolve.DescriptorUtils.isInterface
@@ -39,7 +40,7 @@ class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
   }
 
   override fun getObjModule(packageName: String, module: Module): CompiledObjModule {
-    val sourceInfo = module.productionSourceInfo ?: error("No production sources in ${module.name}")
+    val sourceInfo = module.productionSourceInfo ?: module.testSourceInfo ?: error("No production sources in ${module.name}")
     val resolutionFacade = KotlinCacheService.getInstance(module.project).getResolutionFacadeByModuleInfo(sourceInfo, sourceInfo.platform)!!
     val moduleDescriptor = resolutionFacade.moduleDescriptor
     return getObjModule(packageName, moduleDescriptor)
@@ -114,7 +115,7 @@ class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
     private fun createExtProperty(extProperty: PropertyDescriptor, receiverClass: ClassDescriptor, extPropertyId: Int): ExtProperty<*, *> {
       val valueType = convertType(extProperty.type, "${receiverClass.fqNameSafe.asString()}::${extProperty.name}")
       return ExtPropertyImpl(findObjClass(receiverClass), extProperty.name.identifier, valueType,
-                             computeKind(extProperty), extProperty.isAnnotatedBy(StandardNames.OPEN_ANNOTATION),
+                             computeKind(extProperty), extProperty.isAnnotatedBy(StandardNames.OPEN_ANNOTATION), extProperty.isVar,
                              false, module, extPropertyId, extProperty.source)
     }
 
@@ -124,8 +125,8 @@ class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
                                   receiver: ObjClassImpl<Obj>): OwnProperty<Obj, *> {
       val valueType = convertType(property.type, "${classDescriptor.fqNameSafe.asString()}::${property.name}", property.isAnnotatedBy(StandardNames.CHILD_ANNOTATION))
       return OwnPropertyImpl(receiver, property.name.identifier, valueType, computeKind(property),
-                             property.isAnnotatedBy(StandardNames.OPEN_ANNOTATION), false, false, propertyId,
-                             property.isAnnotatedBy(StandardNames.EQUALS_BY_ANNOTATION), 
+                             property.isAnnotatedBy(StandardNames.OPEN_ANNOTATION), property.isVar, false, false, propertyId,
+                             property.isAnnotatedBy(StandardNames.EQUALS_BY_ANNOTATION),
                              property.source)
     }
 

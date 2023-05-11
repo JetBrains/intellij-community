@@ -9,7 +9,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleComponent
 
 @State(name = "XXX")
-class TestModuleComponent: ModuleComponent, PersistentStateComponent<TestModuleComponent> {
+class TestModuleComponent : ModuleComponent, PersistentStateComponent<TestModuleComponent> {
   var testString: String = ""
 
   override fun getState(): TestModuleComponent = this

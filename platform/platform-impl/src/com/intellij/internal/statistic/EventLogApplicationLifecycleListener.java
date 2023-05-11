@@ -36,7 +36,8 @@ final class EventLogApplicationLifecycleListener implements AppLifecycleListener
   }
 
   private static boolean isSendingOnExitEnabled() {
-    return Registry.is("feature.usage.event.log.send.on.ide.close");
+    // the default value is true, but if a registry is yet not loaded on appWillBeClosed, it means that something bad happened
+    return Registry.is("feature.usage.event.log.send.on.ide.close", false);
   }
 
   private static boolean isUpdateInProgress() {

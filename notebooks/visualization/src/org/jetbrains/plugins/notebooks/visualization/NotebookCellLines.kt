@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -23,15 +24,6 @@ interface NotebookCellLines {
     CODE, MARKDOWN, RAW
   }
 
-  data class Marker(
-    val ordinal: Int,
-    val type: CellType,
-    val offset: Int,
-    val length: Int
-  ) : Comparable<Marker> {
-    override fun compareTo(other: Marker): Int = offset - other.offset
-  }
-
   enum class MarkersAtLines(val hasTopLine: Boolean, val hasBottomLine: Boolean) {
     NO(false, false),
     TOP(true, false),
@@ -44,6 +36,7 @@ interface NotebookCellLines {
     val type: CellType,
     val lines: IntRange,
     val markers: MarkersAtLines,
+    val language: Language,
   ) : Comparable<Interval> {
     override fun compareTo(other: Interval): Int = lines.first - other.lines.first
   }

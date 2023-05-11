@@ -1,6 +1,6 @@
 {
   "name": "terraform",
-  "version": "2.25.0",
+  "version": "2.26.0",
   "description": "Syntax highlighting and autocompletion for Terraform",
   "license": "MPL-2.0",
   "contributes": {
@@ -102,6 +102,11 @@
         "id": "hcl-typePrimitive",
         "superType": "keyword",
         "description": "Type (primitive)"
+      },
+      {
+        "id": "hcl-functionName",
+        "superType": "function",
+        "description": "Function name"
       }
     ],
     "semanticTokenScopes": [
@@ -142,6 +147,9 @@
           ],
           "hcl-typePrimitive": [
             "keyword.control"
+          ],
+          "hcl-functionName": [
+            "support.function"
           ]
         }
       }

@@ -40,6 +40,11 @@
         "scopeName": "source.regexp.python",
         "path": "./syntaxes/MagicRegExp.tmLanguage.json"
       }
-    ]
+    ],
+    "configurationDefaults": {
+      "[python]": {
+        "diffEditor.ignoreTrimWhitespace": false
+      }
+    }
   }
 }

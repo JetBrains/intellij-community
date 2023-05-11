@@ -104,7 +104,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   init {
     setParentValue(parentValue)
-    minimumSize = if (isNewUI) JBDimension(450, 300) else JBDimension(300, 200)
+    minimumSize = if (isNewUI) JBDimension(350, 300) else JBDimension(300, 200)
     dimensionServiceKey = if (isChild()) null else GitBranchPopup.DIMENSION_SERVICE_KEY
     userResized = !isChild() && WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
     installGeneralShortcutActions()
@@ -193,7 +193,6 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     val haveBranches = traverseNodesAndExpand()
     if (haveBranches) {
       selectPreferred()
-      traverseNodesAndExpand()
       expandPreviouslyExpandedBranches()
     }
     val model = tree.model
@@ -512,9 +511,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   private val findKeyStroke = KeymapUtil.getKeyStroke(am.getAction("Find").shortcutSet)
 
   override fun afterShow() {
-    if (!isNewUI) {
-      selectPreferred()
-    }
+    selectPreferred()
     traverseNodesAndExpand()
     if (treeStep.isSpeedSearchEnabled) {
       installSpeedSearchActions()

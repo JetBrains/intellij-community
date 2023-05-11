@@ -17,14 +17,12 @@ public final class JVMElementFactories extends LanguageExtension<JVMElementFacto
     super("com.intellij.generation.topLevelFactory");
   }
 
-  @Nullable
-  public static JVMElementFactory getFactory(@NotNull Language language, @NotNull Project project) {
+  public static @Nullable JVMElementFactory getFactory(@NotNull Language language, @NotNull Project project) {
     final JVMElementFactoryProvider provider = INSTANCE.forLanguage(language);
     return provider != null? provider.getFactory(project) : null;
   }
 
-  @NotNull
-  public static JVMElementFactory requireFactory(@NotNull Language language, @NotNull Project project) {
+  public static @NotNull JVMElementFactory requireFactory(@NotNull Language language, @NotNull Project project) {
     final JVMElementFactory factory = getFactory(language, project);
     assert factory != null : language;
     return factory;

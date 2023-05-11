@@ -47,10 +47,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
-import com.intellij.util.Consumer;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -272,7 +269,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                                               boolean toCopyJavaDoc,
                                                                               boolean toInsertAtOverride)
     throws IncorrectOperationException {
-    List<CandidateInfo> candidateInfos = ContainerUtil.map2List(candidates, s -> new CandidateInfo(s.getElement(), s.getSubstitutor()));
+    List<CandidateInfo> candidateInfos = ContainerUtil.map(candidates, s -> new CandidateInfo(s.getElement(), s.getSubstitutor()));
     final List<PsiMethod> methods = overrideOrImplementMethodCandidates(aClass, candidateInfos, toCopyJavaDoc, toInsertAtOverride);
     return convert2GenerationInfos(methods);
   }
@@ -294,7 +291,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   @NotNull
   public static List<PsiGenerationInfo<PsiMethod>> convert2GenerationInfos(@NotNull Collection<? extends PsiMethod> methods) {
-    return ContainerUtil.map2List(methods, s -> createGenerationInfo(s));
+    return ContainerUtil.map(methods, s -> createGenerationInfo(s));
   }
 
   @NotNull
@@ -399,10 +396,10 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), originalMethod.getProject());
     if (factory == null) factory = JavaPsiFacade.getElementFactory(originalMethod.getProject());
     @NonNls String methodText;
-
+    Project project = result.getProject();
     try {
       methodText = "void foo () {\n" + template.getText(properties) + "\n}";
-      methodText = FileTemplateUtil.indent(methodText, result.getProject(), fileType);
+      methodText = FileTemplateUtil.indent(methodText, project, fileType);
     }
     catch (Exception e) {
       throw new IncorrectOperationException("Failed to parse file template", (Throwable)e);

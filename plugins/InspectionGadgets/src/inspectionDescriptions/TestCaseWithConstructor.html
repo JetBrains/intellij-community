@@ -5,7 +5,7 @@ If a constructor fails, the <code>@After</code> annotated or <code>tearDown()</c
 This can leave the test environment partially initialized, which can adversely affect other tests.
 Instead, initialization of test cases should be done in a <code>setUp()</code> or <code>@Before</code> annotated method.
 <p>Bad example:</p>
-<pre><code>
+<pre><code lang="java">
   public class ImportantTest {
     private File file;
 

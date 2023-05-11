@@ -86,8 +86,10 @@ class JpsGlobalEntitiesSyncTest {
             builder.removeEntity(libraryEntity)
             globalLibrariesNames.remove(libraryNameToRemove)
 
-            val gradleLibraryEntity = LibraryEntity("com.gradle", LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL),
-                                                    listOf(LibraryRoot(virtualFileManager.fromUrl("/a/b/one.txt"), LibraryRootTypeId.SOURCES)),
+            val gradleLibraryEntity = LibraryEntity("com.gradle",
+                                                    LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL),
+                                                    listOf(
+                                                      LibraryRoot(virtualFileManager.fromUrl("/a/b/one.txt"), LibraryRootTypeId.SOURCES)),
                                                     entitySource)
             builder.addEntity(gradleLibraryEntity)
             globalLibrariesNames.add(gradleLibraryEntity.name)
@@ -101,7 +103,9 @@ class JpsGlobalEntitiesSyncTest {
     }
   }
 
-  private fun checkLibrariesInStorages(globalLibrariesNames: List<String>, projectLibrariesNames: List<String>, loadedProjects: List<Project>) {
+  private fun checkLibrariesInStorages(globalLibrariesNames: List<String>,
+                                       projectLibrariesNames: List<String>,
+                                       loadedProjects: List<Project>) {
     val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
     libraryTable as GlobalLibraryTableBridgeImpl
     val libraryBridges = libraryTable.libraries
@@ -137,7 +141,7 @@ class JpsGlobalEntitiesSyncTest {
   private fun loadProject(): Project {
     val tmpFolder = temporaryFolder.newFolder()
     val projectDir = File(PathManagerEx.getCommunityHomePath(),
-                     "platform/workspaceModel/jps/tests/testData/serialization/moduleTestProperties")
+                          "platform/workspaceModel/jps/tests/testData/serialization/moduleTestProperties")
     FileUtil.copyDir(projectDir, tmpFolder)
     return PlatformTestUtil.loadAndOpenProject(tmpFolder.toPath(), disposableRule.disposable)
   }

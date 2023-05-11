@@ -29,7 +29,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.ui.dsl.gridLayout.GapsKt.toGaps;
+import static com.intellij.ui.dsl.gridLayout.UnscaledGapsKt.toUnscaledGaps;
 
 public class SearchTextField extends JPanel {
 
@@ -175,7 +175,7 @@ public class SearchTextField extends JPanel {
     myTextField.putClientProperty("JTextField.variant", "search");
 
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
-    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toGaps(myTextField.getInsets()));
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toUnscaledGaps(myTextField.getInsets()));
     DumbAwareAction.create(event -> {
       showPopup();
     }).registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ShowSearchHistory"), myTextField);
@@ -416,7 +416,7 @@ public class SearchTextField extends JPanel {
       myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setMovable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(chooseRunnable)
+        .setItemChosenCallback(chooseRunnable)
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         .createPopup();
       AlignedPopup.showUnderneathWithoutAlignment(myPopup, getPopupLocationComponent());

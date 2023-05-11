@@ -38,7 +38,9 @@ import org.jetbrains.kotlin.idea.caches.trackers.inBlockModifications
 import org.jetbrains.kotlin.idea.caches.trackers.removeInBlockModifications
 import org.jetbrains.kotlin.idea.compiler.IdeMainFunctionDetectorFactory
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
+import org.jetbrains.kotlin.idea.project.IdeaAbsentDescriptorHandler
 import org.jetbrains.kotlin.idea.project.IdeaModuleStructureOracle
+import org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactory
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.*
@@ -62,6 +64,7 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
     private val resolveSession = componentProvider.get<ResolveSession>()
     private val codeFragmentAnalyzer = componentProvider.get<CodeFragmentAnalyzer>()
     private val bodyResolveCache = componentProvider.get<BodyResolveCache>()
+    private val pluginDeclarationProviderFactory = componentProvider.get<PluginDeclarationProviderFactory>()
 
     private val cache = HashMap<PsiElement, AnalysisResult>()
     private var fileResult: AnalysisResult? = null
@@ -292,6 +295,7 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
                 moduleDescriptor,
                 resolveSession,
                 codeFragmentAnalyzer,
+                pluginDeclarationProviderFactory,
                 bodyResolveCache,
                 analyzableElement,
                 bindingTrace,
@@ -528,6 +532,7 @@ private object KotlinResolveDataProvider {
         moduleDescriptor: ModuleDescriptor,
         resolveSession: ResolveSession,
         codeFragmentAnalyzer: CodeFragmentAnalyzer,
+        pluginDeclarationProviderFactory: PluginDeclarationProviderFactory,
         bodyResolveCache: BodyResolveCache,
         analyzableElement: KtElement,
         bindingTrace: BindingTrace?,
@@ -576,6 +581,8 @@ private object KotlinResolveDataProvider {
                     IdeMainFunctionDetectorFactory(),
                     IdeSealedClassInheritorsProvider,
                     ControlFlowInformationProviderImpl.Factory,
+                    absentDescriptorHandler = IdeaAbsentDescriptorHandler(pluginDeclarationProviderFactory),
+                    optimizingOptions = null
                 ).get<LazyTopDownAnalyzer>()
 
                 lazyTopDownAnalyzer.analyzeDeclarations(TopDownAnalysisMode.TopLevelDeclarations, listOf(analyzableElement))

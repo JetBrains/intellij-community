@@ -41,6 +41,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.listeners.RefactoringElementAdapter
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.util.PathUtil
+import com.intellij.util.containers.addIfNotNull
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
@@ -403,7 +404,22 @@ private fun KtNamedFunction.isAMainCandidate(): Boolean {
 }
 
 private fun KtDeclarationContainer.getMainFunCandidates(): List<KtNamedFunction> =
-    declarations.filterIsInstance<KtNamedFunction>().filter { it.isAMainCandidate() }
+    buildList {
+        for (declaration in declarations) {
+            when (declaration) {
+                is KtNamedFunction -> addIfNotNull(declaration.takeIf { it.isAMainCandidate() })
+                is KtObjectDeclaration -> {
+                    if (declaration.isCompanion()) {
+                        for (objectDeclaration in declaration.declarations) {
+                            if (objectDeclaration is KtNamedFunction) {
+                                addIfNotNull(objectDeclaration.takeIf { it.isAMainCandidate() })
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 private fun KtElement.findMainFunCandidates(): List<KtNamedFunction> =
     collectDescendantsOfType<KtNamedFunction>().filter { it.isAMainCandidate() }

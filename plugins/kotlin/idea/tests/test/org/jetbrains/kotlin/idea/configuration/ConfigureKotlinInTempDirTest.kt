@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.facet.FacetManager
-import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
@@ -30,6 +30,8 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 
 @RunWith(JUnit38ClassRunner::class)
 class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
@@ -65,7 +67,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
     fun testNoKotlincExistsNoSettingsRuntime10() {
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, myProject.languageVersionSettings.languageVersion)
-        runBlockingUnderModalProgress {
+        runBlockingModal(project, "") {
             saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = myProject)
         }
         checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
@@ -75,10 +77,11 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         assertFalse(KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(project))
 
         val connection = project.messageBus.connect(testRootDisposable)
-        var kotlinBundledWasDetected = false
+
+        val kotlinBundledDetected = CompletableFuture<Unit>()
         connection.subscribe(KotlinBundledUsageDetector.TOPIC, object : KotlinBundledUsageDetectorListener {
             override fun kotlinBundledDetected() {
-                kotlinBundledWasDetected = true
+                kotlinBundledDetected.complete(Unit)
             }
         })
 
@@ -92,10 +95,10 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
             }
         }
 
-        assertTrue(KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(project))
-
         connection.deliverImmediately()
-        assertTrue(kotlinBundledWasDetected)
+
+        kotlinBundledDetected.get(5, TimeUnit.SECONDS)
+        assertTrue(KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(project))
     }
 
     fun testMigrationNotificationWithStdlib() {
@@ -108,7 +111,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
             Assert.assertEquals(LanguageVersion.KOTLIN_1_5, projectLanguageVersionSettingsBefore.languageVersion)
             Assert.assertEquals(ApiVersion.KOTLIN_1_5, projectLanguageVersionSettingsBefore.apiVersion)
 
-            runBlockingUnderModalProgress {
+            runBlockingModal(project, "") {
                 saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = myProject)
             }
             checkKotlincPresence(true)
@@ -171,7 +174,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         val expectedLanguageVersion = KotlinPluginLayout.standaloneCompilerVersion.languageVersion
         Assert.assertEquals(expectedLanguageVersion, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(expectedLanguageVersion, myProject.languageVersionSettings.languageVersion)
-        runBlockingUnderModalProgress {
+        runBlockingModal(project, "") {
             saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = myProject)
         }
         checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
@@ -185,7 +188,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
             autoAdvanceLanguageVersion = false
             autoAdvanceApiVersion = false
         }
-        runBlockingUnderModalProgress {
+        runBlockingModal(project, "") {
             saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = myProject)
         }
         checkKotlincPresence()
@@ -197,7 +200,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
             autoAdvanceLanguageVersion = true
             autoAdvanceApiVersion = true
         }
-        runBlockingUnderModalProgress {
+        runBlockingModal(project, "") {
             saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = myProject)
         }
         checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
@@ -227,7 +230,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
 
     fun testLoadAndSaveProjectWithV2FacetConfig() {
         val moduleFileContentBefore = moduleFileContent()
-        runBlockingUnderModalProgress {
+        runBlockingModal(project, "") {
             saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = myProject)
         }
         val moduleFileContentAfter = moduleFileContent()
@@ -266,7 +269,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
             sourceMapPrefix = ""
             sourceMapEmbedSources = ""
         }
-        runBlockingUnderModalProgress {
+        runBlockingModal(project, "") {
             saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = myProject)
         }
         checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
@@ -277,7 +280,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         val moduleFileContentBefore = moduleFileContent()
         Assert.assertTrue(moduleFileContentBefore.contains(valueBefore))
         facetManager.allFacets.forEach { facetManager.facetConfigurationChanged(it) }
-        runBlockingUnderModalProgress {
+        runBlockingModal(project, "") {
             saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = myProject)
         }
         val moduleFileContentAfter = moduleFileContent()

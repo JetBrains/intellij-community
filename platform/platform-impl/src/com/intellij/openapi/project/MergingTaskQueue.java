@@ -14,8 +14,38 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
+  public static class SubmissionReceipt {
+    private final long submittedTaskCount;
+
+    private SubmissionReceipt(long submittedTaskCount) {
+      this.submittedTaskCount = submittedTaskCount;
+    }
+
+    public boolean isAfter(@NotNull SubmissionReceipt other) {
+      return submittedTaskCount > other.submittedTaskCount;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      return (submittedTaskCount == ((SubmissionReceipt)o).submittedTaskCount);
+    }
+
+    @Override
+    public int hashCode() {
+      return Long.hashCode(submittedTaskCount);
+    }
+
+    @Override
+    public String toString() {
+      return "SubmissionReceipt{" + submittedTaskCount + '}';
+    }
+  }
+
   private static final Logger LOG = Logger.getInstance(MergingTaskQueue.class);
 
   private final Object myLock = new Object();
@@ -24,6 +54,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
   //includes running tasks too
   private final Map<T, ProgressIndicatorBase> myProgresses = new HashMap<>();
+  private final AtomicLong mySubmittedTasksCount = new AtomicLong();
 
   /**
    * Disposes tasks, cancel underlying progress indicators, clears tasks queue
@@ -45,7 +76,9 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     disposeSafe(disposeQueue);
   }
 
-  public void cancelAllTasks() {
+  // This method is not public because it cannot cancel tasks paused by ProgressSuspender.
+  // Use methods from appropriate executor instead (e.g. MergingQueueGuiExecutor#cancelAllTasks)
+  void cancelAllTasks() {
     List<ProgressIndicatorEx> tasks;
     synchronized (myLock) {
       tasks = new ArrayList<>(myProgresses.values());
@@ -67,9 +100,17 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
   }
 
-  public void addTask(@NotNull T task) {
+  /**
+   * Adds a task to the queue. Added task can be merged with one of the existing tasks.
+   *
+   * @param task to add
+   * @return receipt that later can be used to handle concurrent operations. Note that addTask may produce duplicate receipt if new task
+   * does not modify queue state (e.g. when new task is merged into one of the existing tasks)
+   */
+  public SubmissionReceipt addTask(@NotNull T task) {
     List<T> disposeQueue = new ArrayList<>(1);
     T newTask = task;
+    SubmissionReceipt receipt;
 
     synchronized (myLock) {
       for (int i = myTasksQueue.size() - 1; i >= 0; i--) {
@@ -112,6 +153,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       T taskToAdd = newTask;
       if (taskToAdd != null) {
         myTasksQueue.add(taskToAdd);
+        mySubmittedTasksCount.incrementAndGet();
         ProgressIndicatorBase progress = new ProgressIndicatorBase();
         myProgresses.put(taskToAdd, progress);
         Disposer.register(taskToAdd, () -> {
@@ -122,9 +164,22 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
           progress.cancel();
         });
       }
+
+      receipt = new SubmissionReceipt(mySubmittedTasksCount.get());
     }
 
     disposeSafe(disposeQueue);
+    return receipt;
+  }
+
+  /**
+   * @return receipt that equals to the latest receipt returned by {@linkplain #addTask(MergeableQueueTask)}
+   */
+  public SubmissionReceipt getLatestSubmissionReceipt() {
+    synchronized (myLock) {
+      // don't be fooled by AtomicLong. We need "synchronized" to make sure that mySubmittedTaskCount and myTasksQueue are changing together
+      return new SubmissionReceipt(mySubmittedTasksCount.get());
+    }
   }
 
   @Nullable

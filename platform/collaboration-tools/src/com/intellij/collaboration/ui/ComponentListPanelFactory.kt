@@ -6,7 +6,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import java.util.LinkedList
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ListModel
@@ -100,6 +100,7 @@ object ComponentListPanelFactory {
 
     cs.launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
       items.collect { items ->
+        var revalidate = false
         // remove missing
         val itemsByKey = items.associateBy(itemKeyExtractor)
         // remove missing
@@ -108,6 +109,7 @@ object ComponentListPanelFactory {
           val key = keyList[currentIdx]
           if (!itemsByKey.containsKey(key)) {
             removeComponent(currentIdx)
+            revalidate = true
           }
           else {
             currentIdx++
@@ -119,6 +121,7 @@ object ComponentListPanelFactory {
           val key = itemKeyExtractor(item)
           if (idx > keyList.size - 1) {
             addComponent(idx, key, item)
+            revalidate = true
             continue
           }
 
@@ -132,16 +135,20 @@ object ComponentListPanelFactory {
             }
             if (existingIdx > 0) {
               moveComponent(existingIdx, idx)
+              revalidate = true
             }
             else {
               addComponent(idx, key, item)
+              revalidate = true
             }
           }
         }
 
-        withContext(Dispatchers.Main.immediate) {
-          panel.revalidate()
-          panel.repaint()
+        if (revalidate) {
+          withContext(Dispatchers.Main.immediate) {
+            panel.revalidate()
+            panel.repaint()
+          }
         }
       }
     }

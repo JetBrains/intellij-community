@@ -9,8 +9,12 @@ import org.jetbrains.annotations.NotNull;
 public class CompositeGeneralTroubleInfoCollector implements TroubleInfoCollector {
   @Override
   public @NotNull String collectInfo(@NotNull Project project) {
+    return collectInfo(project, GeneralTroubleInfoCollector.EP_SETTINGS.getExtensions());
+  }
+
+  static @NotNull String collectInfo(@NotNull Project project, @NotNull GeneralTroubleInfoCollector @NotNull... collectors) {
     StringBuilder builder = new StringBuilder();
-    for (GeneralTroubleInfoCollector collector : GeneralTroubleInfoCollector.EP_SETTINGS.getExtensions()) {
+    for (GeneralTroubleInfoCollector collector : collectors) {
       builder.append("=== ").append(collector.getTitle()).append(" ===\n");
       builder.append(collector.collectInfo(project).trim());
       builder.append("\n\n");

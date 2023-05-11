@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.ui.ExperimentalUI
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.util.text.JBDateFormat
@@ -48,7 +47,7 @@ internal sealed class VcsLogDefaultColumn<T>(
 internal object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) {
   override val isResizable = false
 
-  override fun getValue(model: GraphTableModel, row: Int): FilePath {
+  override fun getValue(model: GraphTableModel, row: Int): FilePath? {
     val visiblePack = model.visiblePack
     if (visiblePack.hasPathsInformation()) {
       val path = visiblePack.filePathOrDefault(visiblePack.visibleGraph.getRowInfo(row).commit)
@@ -56,7 +55,7 @@ internal object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) 
         return path
       }
     }
-    return VcsUtil.getFilePath(visiblePack.getRoot(row))
+    return visiblePack.getRoot(row)?.let(VcsUtil::getFilePath)
   }
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
@@ -67,10 +66,10 @@ internal object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) 
     }
 
     if (ExperimentalUI.isNewUI()) return NewUiRootCellRenderer(table.properties, table.colorManager)
-    return RootCellRenderer(table.properties, table.colorManager);
+    return RootCellRenderer(table.properties, table.colorManager)
   }
 
-  override fun getStubValue(model: GraphTableModel): FilePath = VcsUtil.getFilePath(ContainerUtil.getFirstItem(model.logData.roots))
+  override fun getStubValue(model: GraphTableModel): FilePath = VcsUtil.getFilePath(model.logData.roots.first())
 }
 
 internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject", VcsLogBundle.message("vcs.log.column.subject"), false),
@@ -200,10 +199,7 @@ private fun doOnPropertyChange(graphTable: VcsLogGraphTable, listener: (VcsLogUi
       listener(property)
     }
   }
-  graphTable.properties.addChangeListener(propertiesChangeListener)
-  Disposer.register(graphTable) {
-    graphTable.properties.removeChangeListener(propertiesChangeListener)
-  }
+  graphTable.properties.addChangeListener(propertiesChangeListener, graphTable)
 }
 
 @ApiStatus.Internal

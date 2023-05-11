@@ -1,3 +1,3 @@
 fun Explicit() {
-    MainClass.Name.f()
+    MainClass.Name
 }

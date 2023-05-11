@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.api.dto
 import com.intellij.collaboration.api.dto.GraphQLFragment
 
 @GraphQLFragment("/graphql/fragment/project.graphql")
-class GitLabProjectDTO(
+data class GitLabProjectDTO(
   val httpUrlToRepo: String,
   val webUrl: String
 )

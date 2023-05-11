@@ -44,7 +44,7 @@ public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
     myChooseColorButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        final Color color = ColorChooser.chooseColor(myColorSample, XDebuggerBundle.message("value.marker.dialog.choose.label.color"), myColor);
+        final Color color = ColorChooserService.getInstance().showDialog(myColorSample, XDebuggerBundle.message("value.marker.dialog.choose.label.color"), myColor);
         if (color != null) {
           myColor = color;
           updateLabelSample();

@@ -55,7 +55,7 @@ public class AnimatedIcon extends JComponent implements Disposable {
 
     setOpaque(false);
 
-    new UiNotifyConnector(this, new Activatable() {
+    UiNotifyConnector.installOn(this, new Activatable() {
       @Override
       public void showNotify() {
         if (myRunning) {

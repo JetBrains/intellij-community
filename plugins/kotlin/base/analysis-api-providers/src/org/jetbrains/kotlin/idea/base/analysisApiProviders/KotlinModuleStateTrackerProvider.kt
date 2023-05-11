@@ -7,6 +7,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
@@ -24,6 +30,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
+import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
@@ -33,15 +40,18 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
         val busConnection = project.messageBus.connect(this)
         busConnection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
         busConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, JdkListener())
+        busConnection.subscribe(VirtualFileManager.VFS_CHANGES, ScriptFileListener())
     }
 
     private val libraryCache = ConcurrentHashMap<Library, ModuleStateTrackerImpl>()
     private val sourceModuleCache = ConcurrentHashMap<Module, ModuleStateTrackerImpl>()
     private val sdkCache = ConcurrentHashMap<Sdk, ModuleStateTrackerImpl>()
+    private val scriptCache = ConcurrentHashMap<VirtualFile, ModuleStateTrackerImpl>()
 
     fun getModuleStateTrackerFor(module: KtModule): KtModuleStateTracker {
         return when (module) {
-            is KtBuiltinsModule -> ModuleStateTrackerImpl()
+            is KtScriptDependencyModule -> ModuleStateTrackerImpl()
+
             is KtLibraryModule -> {
                 val libraryInfo = module.moduleInfo as LibraryInfo
                 libraryInfo.checkValidity()
@@ -62,7 +72,31 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
             }
 
             is KtLibrarySourceModule -> getModuleStateTrackerFor(module.binaryLibrary)
+
+            is KtBuiltinsModule -> ModuleStateTrackerImpl()
+
+            is KtScriptModule -> {
+                val virtualFile = module.file.virtualFile ?: error("Script ${module.file} does not have a backing 'VirtualFile'")
+                scriptCache.computeIfAbsent(virtualFile) { ModuleStateTrackerImpl() }
+            }
+
             is KtNotUnderContentRootModule -> ModuleStateTrackerImpl() // TODO need proper cache?
+        }
+    }
+
+    private inner class ScriptFileListener : BulkFileListener {
+        override fun after(events: List<VFileEvent>) {
+            for (event in events) {
+                val file = when (event) {
+                    is VFileDeleteEvent -> event.file
+                    is VFileMoveEvent -> event.file
+                    else -> continue
+                }
+
+                if (file.extension == KotlinParserDefinition.STD_SCRIPT_SUFFIX) {
+                    scriptCache.remove(file)?.invalidate()
+                }
+            }
         }
     }
 
@@ -165,10 +199,12 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
     }
 
     @TestOnly
-    fun incrementModificationCountForAllModules() {
-        libraryCache.forEach { _, tracker -> tracker.incModificationCount() }
+    fun incrementModificationCountForAllModules(includeBinaryModules: Boolean) {
         sourceModuleCache.forEach { _, tracker -> tracker.incModificationCount() }
-        sdkCache.forEach { _, tracker -> tracker.incModificationCount() }
+        if (includeBinaryModules) {
+            libraryCache.forEach { _, tracker -> tracker.incModificationCount() }
+            sdkCache.forEach { _, tracker -> tracker.incModificationCount() }
+        }
     }
 
     override fun dispose() {}
@@ -184,16 +220,20 @@ private class ModuleStateTrackerImpl : KtModuleStateTracker {
     private val modificationCount = AtomicLong()
 
     @Volatile
-    private var _isValid = true
+    override var isValid: Boolean = true
+        private set
 
     fun incModificationCount() {
-        modificationCount.incrementAndGet()
+        if (isValid) {
+            modificationCount.incrementAndGet()
+        }
     }
 
     fun invalidate() {
-        _isValid = false
+        incModificationCount()
+        isValid = false
     }
 
-    override val isValid: Boolean get() = _isValid
-    override val rootModificationCount: Long get() = modificationCount.get()
+    override val rootModificationCount: Long
+        get() = modificationCount.get()
 }

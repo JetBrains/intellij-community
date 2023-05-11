@@ -51,12 +51,11 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyValidationMessageConsumer,RngSchemaValidator.MyValidationMessageConsumer> {
+public final class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyValidationMessageConsumer,RngSchemaValidator.MyValidationMessageConsumer> {
   private static final Logger LOG = Logger.getInstance(RngSchemaValidator.class.getName());
 
-  @Nullable
   @Override
-  public MyValidationMessageConsumer collectInformation(@NotNull final PsiFile file) {
+  public @Nullable MyValidationMessageConsumer collectInformation(final @NotNull PsiFile file) {
     final FileType type = file.getFileType();
     if (type != XmlFileType.INSTANCE && type != RncFileType.getInstance()) {
       return null;
@@ -98,9 +97,8 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
     return consumer;
   }
 
-  @Nullable
   @Override
-  public MyValidationMessageConsumer doAnnotate(MyValidationMessageConsumer collectedInfo) {
+  public @Nullable MyValidationMessageConsumer doAnnotate(MyValidationMessageConsumer collectedInfo) {
     return collectedInfo;
   }
 
@@ -246,8 +244,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
   }
 
   private static class ErrorMessageConsumer extends MessageConsumerImpl {
-    @NonNls
-    private static final String MISSING_START_ELEMENT = "missing \"start\" element";
+    private static final @NonNls String MISSING_START_ELEMENT = "missing \"start\" element";
     private static final String UNDEFINED_PATTERN = "reference to undefined pattern ";
 
     ErrorMessageConsumer(AnnotationHolder holder) {
@@ -287,7 +284,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
     }
   }
 
-  private static class MyErrorFinder extends PsiRecursiveElementVisitor {
+  private static final class MyErrorFinder extends PsiRecursiveElementVisitor {
     private static final MyErrorFinder INSTANCE = new MyErrorFinder();
 
     private static final class HasError extends RuntimeException {

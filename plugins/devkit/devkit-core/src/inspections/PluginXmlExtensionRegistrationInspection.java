@@ -41,7 +41,7 @@ import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInspectionBase {
 
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     if (!(element instanceof Extension extension)) {
       return;
     }

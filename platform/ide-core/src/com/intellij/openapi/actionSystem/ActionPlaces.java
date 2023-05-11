@@ -31,6 +31,8 @@ public abstract class ActionPlaces {
   public static final String MAIN_TOOLBAR = "MainToolbar";
   public static final String EDITOR_POPUP = "EditorPopup";
   public static final String EDITOR_TOOLBAR = "EditorToolbar";
+
+  public static final String EDITOR_FLOATING_TOOLBAR = "EditorFloatingToolbar";
   public static final String EDITOR_TAB_POPUP = "EditorTabPopup";
   public static final String EDITOR_TAB = "EditorTab";
   public static final String TABS_MORE_TOOLBAR = "TabsMoreToolbar";
@@ -46,6 +48,7 @@ public abstract class ActionPlaces {
   public static final String TOOLWINDOW_TITLE = "ToolwindowTitle";
   public static final String TOOLWINDOW_CONTENT = "ToolwindowContent";
   public static final String EDITOR_INSPECTIONS_TOOLBAR = "EditorInspectionsToolbar";
+  public static final String EDITOR_HINT = "EditorHint";
   public static final String LEARN_TOOLWINDOW = "LearnToolwindow";
   public static final String TOOLWINDOW_GRADLE = "Gradle tool window";
   public static final String NEW_UI_RUN_TOOLBAR = "NewUiRunToolbar";
@@ -121,6 +124,7 @@ public abstract class ActionPlaces {
   public static final String RUN_ANYTHING_POPUP = "RunAnythingPopup";
 
   public static final String WELCOME_SCREEN = "WelcomeScreen";
+  public static final String WELCOME_SCREEN_QUICK_PANEL = "WelcomeScreen.QuickPanel";
 
   public static final String CHANGES_VIEW_TOOLBAR = "ChangesViewToolbar";
   public static final String CHANGES_VIEW_POPUP = "ChangesViewPopup";
@@ -143,6 +147,7 @@ public abstract class ActionPlaces {
   public static final String COMPOSER_EDITOR_NOTIFICATION_PANEL = "ComposerEditorNotificationPanel";
   public static final String COMPOSER_EDITOR_NOTIFICATION_PANEL_EXTRA = "ComposerEditorNotificationPanel.ExtraActions";
   public static final String COMPOSER_LOG_RERUN = "ComposerLogRerun";
+  public static final String PHP_TEST_RUN_CONFIGURATION = "PhpTestRunConfiguration";
 
   public static final String DIFF_TOOLBAR = "DiffToolbar";
   public static final String DIFF_RIGHT_TOOLBAR = "DiffRightToolbar";

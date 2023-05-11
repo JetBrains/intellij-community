@@ -12,7 +12,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.DefaultProgramRunnerKt;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.ExecutionUiService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,7 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -161,9 +160,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return acquire(target, configuration, null);
   }
 
+  @RequiresBackgroundThread
   public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration, @Nullable ProgressIndicator indicator)
     throws Exception {
-    ExecutionUiService.getInstance().assertTimeConsuming();
 
     EntryPoint inProcess = acquireInProcess(target, configuration);
     if (inProcess != null) return inProcess;
@@ -335,12 +334,6 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     // init hard ref that will keep it from DGC and thus preventing from System.exit
     info.entryPointHardRef = result;
     return result;
-  }
-
-  @ApiStatus.Internal
-  @Nullable
-  public Heartbeat getHeartBeat() {
-    return myHeartbeatRef.get();
   }
 
   private ProcessListener getProcessListener(@NotNull final Pair<Target, Parameters> key) {

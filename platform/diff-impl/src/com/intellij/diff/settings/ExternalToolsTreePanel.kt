@@ -12,6 +12,8 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Disposer
@@ -275,7 +277,7 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
       addActionListener { showTestMerge() }
     }
 
-    private val toolOutputEditor = ConsoleViewUtil.setupConsoleEditor(null, false, false).also {
+    private val toolOutputEditor: EditorEx = ConsoleViewUtil.setupConsoleEditor(null, false, false).also {
       it.settings.additionalLinesCount = 3
     }
     private var toolOutputConsole: MyTestOutputConsole? = null
@@ -295,7 +297,10 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
     init {
       title = DiffBundle.message("settings.external.tool.tree.add.dialog.title")
 
-      Disposer.register(disposable) { toolOutputConsole?.let { Disposer.dispose(it) } }
+      Disposer.register(disposable) {
+        toolOutputConsole?.let { Disposer.dispose(it) }
+        EditorFactory.getInstance().releaseEditor(toolOutputEditor)
+      }
 
       init()
     }

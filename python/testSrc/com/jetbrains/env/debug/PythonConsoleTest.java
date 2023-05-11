@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -296,6 +297,11 @@ public class PythonConsoleTest extends PyEnvTestCase {
         String currentOutput = output();
         assertFalse("Property was called for completion", currentOutput.contains("239"));
       }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return ImmutableSet.of("-python3.8", "-python3.9", "-python3.10", "-python3.11", "-python3.12");
+      }
     });
   }
 
@@ -308,9 +314,26 @@ public class PythonConsoleTest extends PyEnvTestCase {
         exec("print(\"Hi\")");
         waitForOutput("Hi");
         addTextToEditor("getenv()");
-        ApplicationManager.getApplication().invokeAndWait(() -> {
+        ApplicationManager.getApplication().runReadAction(() -> {
           checkParameters(7, getConsoleFile(), "key, default=None", new String[]{"key, "});
         });
+      }
+    });
+  }
+
+  @Test
+  public void testCheckForThreadLeaks() {
+    runPythonTest(new PyConsoleTask() {
+      @Override
+      public void testing() throws Exception {
+        exec("x = 42");
+        exec("print(x)");
+        waitForOutput("42");
+      }
+
+      @Override
+      public boolean reportThreadLeaks() {
+        return true;
       }
     });
   }

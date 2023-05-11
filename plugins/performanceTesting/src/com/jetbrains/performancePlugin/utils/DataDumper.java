@@ -23,4 +23,13 @@ public final class DataDumper {
     }
   }
 
+  public static <T> T read(@NotNull Path path, @NotNull Class<T> tClass) {
+    try {
+      return objectMapper.readValue(path.toFile(), tClass);
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Fail to read data from file " + path, e);
+    }
+  }
+
 }

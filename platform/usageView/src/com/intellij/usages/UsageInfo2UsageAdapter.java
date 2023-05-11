@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.ide.SelectInEditorManager;
@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageTreeColorsScheme;
@@ -36,9 +35,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
@@ -467,7 +469,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   @Override
   public final @Nullable UsageNodePresentation getCachedPresentation() {
-    return SoftReference.dereference(myCachedPresentation);
+    return dereference(myCachedPresentation);
   }
 
   @Override

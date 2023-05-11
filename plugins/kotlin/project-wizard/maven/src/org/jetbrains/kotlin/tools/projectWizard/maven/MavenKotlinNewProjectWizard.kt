@@ -83,7 +83,9 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
     private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
 
         override fun setupAssets(project: Project) {
-            addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
+            if (context.isCreatingNewProject) {
+                addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
+            }
         }
     }
 }

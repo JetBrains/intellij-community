@@ -33,7 +33,7 @@ private fun extractHostAndPath(url: String) : String {
   val urlWithScheme = if (URLUtil.containsScheme(url)) url else "ssh://$url"
   val uri = URI(urlWithScheme)
   val host = uri.host
-  val path = uri.path ?: ""
+  val path = uri.path?.removeSuffix("/") ?: ""
 
   //val host, path
   if (host != null) {

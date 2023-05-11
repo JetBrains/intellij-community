@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION", "LiftReturnOrAssignment")
 
 package com.intellij.ide
 
 import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.subtask
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.isSameProject
@@ -23,7 +24,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.*
+import com.intellij.openapi.project.impl.OpenProjectImplOptions
+import com.intellij.openapi.project.impl.createNewProjectFrame
+import com.intellij.openapi.project.impl.frame
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
@@ -33,19 +36,18 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PathUtilRt
-import com.intellij.util.SingleAlarm
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -62,14 +64,17 @@ import javax.swing.JFrame
 import kotlin.collections.Map.Entry
 import kotlin.collections.component1
 import kotlin.collections.component2
+import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<RecentProjectsManager>()
 
 /**
  * Used directly by IntelliJ IDEA.
  */
+@OptIn(FlowPreview::class)
 @State(name = "RecentProjectsManager", storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
-open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
+open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
+  RecentProjectsManager, PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
   companion object {
     const val MAX_PROJECTS_IN_MAIN_MENU: Int = 6
 
@@ -93,19 +98,27 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
   private val disableUpdatingRecentInfo = AtomicBoolean()
 
-  private val nameResolver = SingleAlarm.pooledThreadSingleAlarm(50, ApplicationManager.getApplication()) {
-    var paths: Set<String>
-    synchronized(namesToResolve) {
-      paths = HashSet(namesToResolve)
-      namesToResolve.clear()
-    }
-    for (p in paths) {
-      nameCache.put(p, readProjectName(p))
-    }
-  }
+  private val nameResolveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val stateLock = Any()
   private var state = RecentProjectManagerState()
+
+  init {
+    coroutineScope.launch {
+      nameResolveRequests
+        .debounce(50.milliseconds)
+        .collectLatest {
+          val paths = synchronized(namesToResolve) {
+            val paths = namesToResolve.toList()
+            namesToResolve.clear()
+            paths
+          }
+          for (p in paths) {
+            nameCache.put(p, readProjectName(p))
+          }
+        }
+    }
+  }
 
   final override fun getState() = state
 
@@ -313,6 +326,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
     val projectPath = getProjectPath(project) ?: return
     synchronized(stateLock) {
+      findAndRemoveNewlyClonedProject(projectPath)
       val info = state.additionalInfo.computeIfAbsent(projectPath) { RecentProjectMetaInfo() }
       info.activationTimestamp = timestamp
       info.opened = true
@@ -409,11 +423,11 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       return it
     }
 
-    nameResolver.cancel()
     synchronized(namesToResolve) {
       namesToResolve.add(path)
     }
-    nameResolver.request()
+    check(nameResolveRequests.tryEmit(Unit))
+
     val name = PathUtilRt.getFileName(path)
     return if (path.endsWith(".ipr")) FileUtilRt.getNameWithoutExtension(name) else name
   }
@@ -435,23 +449,23 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       return false
     }
 
-    val openPaths = lastOpenedProjects
+    val openPaths = synchronized(stateLock) {
+      state.additionalInfo.entries.filter { canReopenProject(it.value) }
+    }
     if (openPaths.isEmpty()) {
       return false
     }
 
     disableUpdatingRecentInfo.set(true)
     try {
-      val isOpened = if (openPaths.size == 1 || isOpenProjectsOneByOneRequired()) {
-        openOneByOne(java.util.List.copyOf(openPaths), index = 0, someProjectWasOpened = false)
+      if (openPaths.size == 1 || isOpenProjectsOneByOneRequired()) {
+        return openOneByOne(openPaths, index = 0, someProjectWasOpened = false)
       }
       else {
-        openMultiple(openPaths)
+        return openMultiple(openPaths)
       }
-      return isOpened
     }
     finally {
-      WelcomeFrame.showIfNoProjectOpened(null)
       disableUpdatingRecentInfo.set(false)
     }
   }
@@ -486,70 +500,61 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
   protected open fun isValidProjectPath(file: Path) = ProjectUtilCore.isValidProjectPath(file)
 
   private suspend fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): Boolean {
-    val toOpen = ArrayList<Pair<Path, RecentProjectMetaInfo>>(openPaths.size)
-    for (entry in openPaths) {
+    val toOpen = openPaths.mapNotNull { entry ->
       val path = Path.of(entry.key)
-      if (entry.value.frame == null || !isValidProjectPath(path)) {
-        return false
-      }
-
-      toOpen.add(Pair(path, entry.value))
+      if (entry.value.frame != null && isValidProjectPath(path)) Pair(path, entry.value) else null
     }
 
     // ok, no non-existent project paths and every info has a frame
     val activeInfo = toOpen.maxByOrNull { it.second.activationTimestamp }!!.second
     val taskList = ArrayList<Pair<Path, OpenProjectTask>>(toOpen.size)
-    withContext(Dispatchers.EDT) {
-      runActivity("project frame initialization") {
-        var activeTask: Pair<Path, OpenProjectTask>? = null
-        for ((path, info) in toOpen) {
-          val frameInfo = info.frame!!
-          val isActive = info == activeInfo
-          val ideFrame = createNewProjectFrame(frameInfo).create()
-          info.frameTitle?.let {
-            ideFrame.title = it
-          }
-
-          IdeRootPane.customizeRawFrame(ideFrame)
-          ideFrame.isVisible = true
-          val task = Pair(path, OpenProjectTask {
-            forceOpenInNewFrame = true
-            showWelcomeScreen = false
-            projectWorkspaceId = info.projectWorkspaceId
-            implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frame = ideFrame)
-          })
-          if (isActive) {
-            activeTask = task
-          }
-          else {
-            taskList.add(task)
-          }
+    subtask("project frame initialization", Dispatchers.EDT) {
+      var activeTask: Pair<Path, OpenProjectTask>? = null
+      for ((path, info) in toOpen) {
+        val frameInfo = info.frame!!
+        val isActive = info == activeInfo
+        val ideFrame = createNewProjectFrame(frameInfo).create()
+        info.frameTitle?.let {
+          ideFrame.title = it
         }
 
-        // we open project windows in the order projects were opened historically (to preserve taskbar order),
-        // but once the windows are created, we start project loading from the latest active project (and put its window at front)
-        taskList.add(activeTask!!)
-        taskList.reverse()
-        activeTask.second.frame?.toFront()
+        IdeRootPane.customizeRawFrame(ideFrame)
+        ideFrame.isVisible = true
+        val task = Pair(path, OpenProjectTask {
+          forceOpenInNewFrame = true
+          showWelcomeScreen = false
+          projectWorkspaceId = info.projectWorkspaceId
+          implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frame = ideFrame)
+        })
+        if (isActive) {
+          activeTask = task
+        }
+        else {
+          taskList.add(task)
+        }
       }
+
+      // we open project windows in the order projects were opened historically (to preserve taskbar order),
+      // but once the windows are created, we start project loading from the latest active project (and put its window at front)
+      taskList.add(activeTask!!)
+      taskList.reverse()
+      activeTask.second.frame?.toFront()
     }
 
     val projectManager = ProjectManagerEx.getInstanceEx()
-    val iterator = taskList.iterator()
-    while (iterator.hasNext()) {
-      val entry = iterator.next()
+    for ((path, options) in taskList) {
       try {
-        projectManager.openProjectAsync(entry.first, entry.second)
+        projectManager.openProjectAsync(path, options)
       }
-      catch (e: Exception) {
-        withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          (entry.second.frame as MyProjectUiFrameManager?)?.dispose()
-          while (iterator.hasNext()) {
-            (iterator.next().second.frame as MyProjectUiFrameManager?)?.dispose()
-          }
+      catch (e: CancellationException) {
+        // we must catch it here because as we create a project frame before calling `openProjectAsync`,
+        // it is possible that a user will cancel the loading before ProjectManagerImpl will be able to catch and handle the error
+        if (e.message == FrameLoadingState.PROJECT_LOADING_CANCELLED_BY_USER) {
+          LOG.info("Reopening project cancelled (path=$path)")
         }
-
-        throw e
+        else {
+          throw e
+        }
       }
     }
     return true
@@ -560,7 +565,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
   }
 
   /**
-   * Do not reopen project on restart and do not show it in the recent projects list
+   * Do not reopen a project on restart and do not show it in the recent projects list
    */
   fun setProjectHidden(project: Project, hidden: Boolean) {
     val path = getProjectPath(project) ?: return
@@ -571,11 +576,6 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       modCounter.increment()
     }
   }
-
-  protected val lastOpenedProjects: List<Entry<String, RecentProjectMetaInfo>>
-    get() = synchronized(stateLock) {
-      return state.additionalInfo.entries.filter { canReopenProject(it.value) }
-    }
 
   override val groups: List<ProjectGroup>
     get() {
@@ -832,14 +832,6 @@ private fun getLastProjectFrameInfoFile() = appSystemDir.resolve("lastProjectFra
 private fun convertToSystemIndependentPaths(list: MutableList<String>) {
   list.replaceAll {
     FileUtilRt.toSystemIndependentName(it)
-  }
-}
-
-private open class MyProjectUiFrameManager(val frame: IdeFrameImpl, private val frameHelper: ProjectFrameHelper) : ProjectUiFrameManager {
-  override suspend fun createFrameHelper(allocator: ProjectUiFrameAllocator) = frameHelper
-
-  fun dispose() {
-    frame.dispose()
   }
 }
 

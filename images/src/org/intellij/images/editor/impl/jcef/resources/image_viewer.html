@@ -72,8 +72,9 @@
 
     #svg_canvas {
       transform-origin: 0 0;
-      width: fit-content;
-      height: fit-content;
+      width: 0;
+      height: 0;
+      overflow: hidden;
       position: absolute;
       top: 50%;
       left: 50%;
@@ -113,8 +114,14 @@
       mix-blend-mode: difference;
     }
   </style>
+
+  <link type="text/css" href="overlayscrollbars.css" rel="stylesheet" />
+  <script type="text/javascript" src="overlayscrollbars.browser.es6.js"></script>
+
   <link id="scrollbars_style" rel="stylesheet" type="text/css" href="scrollbars.css"/>
   <link id="chessboard_style" rel="stylesheet" type="text/css" href="chessboard.css"/>
+  <link id="pixel_grid_style" rel="stylesheet" type="text/css" href="pixel_grid.css"/>
+
   <title>Image viewer</title>
 </head>
 
@@ -152,7 +159,7 @@
 <script>
   const gIsDebug = (new URL(window.location.href).searchParams.get('debug') != null)
 
-  const MIN_GRID_ZOOM = 10
+  const MIN_GRID_ZOOM = 3
   const MAX_ZOOM = 150
   const MIN_IMAGE_SIZE = 5
   const ViewerStatus = {
@@ -163,7 +170,6 @@
 
   const gState = {
     'zoom': 1.0,
-    'url': '',
     'grid_visible': false,
     'chessboard_visible': false,
     'status': ViewerStatus.INIT
@@ -171,10 +177,12 @@
 
   let gUrl = ''
 
+  const overlayScrollbars = OverlayScrollbarsGlobal.OverlayScrollbars(document.getElementById('view_port'), {});
+
   const gUI = {
     'image': document.getElementById('image'),
     'canvas': document.getElementById('svg_canvas'),
-    'view_port': document.getElementById('view_port'),
+    'view_port': overlayScrollbars.elements().viewport,
     'chessboard': document.getElementById('chessboard'),
     'pixel_grid': document.getElementById('pixel_grid'),
     'control_panel': document.getElementById('control_panel'),
@@ -184,7 +192,8 @@
 
   const gStyles = {
     'scrollbars': document.getElementById('scrollbars_style'),
-    'chessboard': document.getElementById('chessboard_style')
+    'chessboard': document.getElementById('chessboard_style'),
+    'pixel_grid': document.getElementById('pixel_grid_style')
   }
   let sendInfo = function (info_string) {}
 
@@ -382,17 +391,19 @@
   function setImageUrl(url) {
     if (!url) return
 
-    let size_observer = new ResizeObserver(() => {
-      setZoom(gState.zoom)
-    })
-    size_observer.observe(gUI.image)
+    if (gState.status === ViewerStatus.INIT) {
+      let size_observer = new ResizeObserver(() => {
+        setZoom(gState.zoom)
+      })
+      size_observer.observe(gUI.image)
 
-    let image_loaded_listener = function () {
-      size_observer.unobserve(gUI.image)
-      size_observer.disconnect()
-      gUI.image.removeEventListener('load', image_loaded_listener)
+      let remove_observer = function () {
+        size_observer.unobserve(gUI.image)
+        size_observer.disconnect()
+        gUI.image.removeEventListener('load', remove_observer)
+      }
+      gUI.image.addEventListener('load', remove_observer)
     }
-    gUI.image.addEventListener('load', image_loaded_listener)
 
     if (gIsDebug) {
       let url_input = document.getElementById("url_input")
@@ -449,6 +460,10 @@
     gStyles.chessboard.href = _setTimestamp(url)
   }
 
+  function loadPixelGridStyle(url) {
+    gStyles.pixel_grid.href = _setTimestamp(url)
+  }
+
   function _setTimestamp(url) {
     let patched_url = new URL(url)
     patched_url.searchParams.set('timestamp', new Date().getTime().toString())
@@ -458,6 +473,7 @@
   function reloadStyles() {
     loadScrollbarsStyle(gStyles.scrollbars.href)
     loadChessboardStyle(gStyles.chessboard.href)
+    loadPixelGridStyle(gStyles.pixel_grid.href)
   }
 </script>
 

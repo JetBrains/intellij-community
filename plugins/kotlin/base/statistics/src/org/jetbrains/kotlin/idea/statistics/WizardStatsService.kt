@@ -22,7 +22,7 @@ class WizardStatsService : CounterUsagesCollector() {
     companion object {
 
         // Collector ID
-        private val GROUP = EventLogGroup("kotlin.ide.new.project", 10)
+        private val GROUP = EventLogGroup("kotlin.ide.new.project", 11)
 
         // Whitelisted values for the events fields
         private val allowedProjectTemplates = listOf( // Modules
@@ -48,6 +48,7 @@ class WizardStatsService : CounterUsagesCollector() {
             "fullStackWebApplication",
             "nodejsApplication",
             "reactApplication",
+            "simpleWasmApplication",
             "none",
             // AppCode KMM
             "multiplatformMobileApplicationUsingAppleGradlePlugin",
@@ -61,6 +62,7 @@ class WizardStatsService : CounterUsagesCollector() {
             "reactJsClient",
             "simpleJsClient",
             "simpleNodeJs",
+            "simpleWasmClient",
             "none",
         )
 
@@ -200,6 +202,7 @@ class WizardStatsService : CounterUsagesCollector() {
             "IOS_Module",
             "jsBrowserSinglePlatform",
             "jsNodeSinglePlatform",
+            "wasmSimple",
         )
 
 

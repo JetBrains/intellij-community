@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.ThreadDumpService;
@@ -11,6 +12,7 @@ import com.intellij.internal.DebugAttachDetector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.ex.InlineActionsHolder;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -48,14 +50,17 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
-import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
 
 final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
@@ -68,8 +73,8 @@ final class ActionUpdater {
   private static final Executor ourCommonExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
   private static final Executor ourFastTrackExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Fast)", 1);
 
-  private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
-  private static final List<CancellablePromise<?>> ourToolbarPromises = new CopyOnWriteArrayList<>();
+  private static final Set<CancellablePromise<?>> ourPromises = ConcurrentCollectionFactory.createConcurrentSet();
+  private static final Set<CancellablePromise<?>> ourToolbarPromises = ConcurrentCollectionFactory.createConcurrentSet();
   private static FList<String> ourInEDTActionOperationStack = FList.emptyList();
   private static boolean ourNoRulesInEDTSection;
 
@@ -381,7 +386,7 @@ final class ActionUpdater {
         return null;
       };
     };
-    List<CancellablePromise<?>> targetPromises = myToolbarAction ? ourToolbarPromises : ourPromises;
+    Set<CancellablePromise<?>> targetPromises = myToolbarAction ? ourToolbarPromises : ourPromises;
     targetPromises.add(promise);
     boolean isFastTrack = myLaterInvocator != null && SlowOperations.isInSection(SlowOperations.FAST_TRACK);
     Executor executor = isFastTrack ? ourFastTrackExecutor : ourCommonExecutor;
@@ -430,13 +435,12 @@ final class ActionUpdater {
     cancelPromises(ourPromises, adjusted);
   }
 
-  private static void cancelPromises(@NotNull List<CancellablePromise<?>> promises, @NotNull Object reason) {
+  private static void cancelPromises(@NotNull Collection<CancellablePromise<?>> promises, @NotNull Object reason) {
     if (promises.isEmpty()) return;
-    CancellablePromise<?>[] copy = promises.toArray(new CancellablePromise[0]);
-    promises.clear();
-    for (CancellablePromise<?> promise : copy) {
+    for (CancellablePromise<?> promise : promises) {
       cancelPromise(promise, reason);
     }
+    promises.clear();
   }
 
   static void waitForAllUpdatesToFinish() {
@@ -520,7 +524,15 @@ final class ActionUpdater {
     List<AnAction> children = getGroupChildren(group, strategy);
     List<AnAction> result = ContainerUtil.concat(children, child -> expandGroupChild(child, hideDisabled, strategy));
     myForcedUpdateThread = prevForceAsync;
-    return group.postProcessVisibleChildren(result, asUpdateSession(strategy));
+    List<AnAction> actions = group.postProcessVisibleChildren(result, asUpdateSession(strategy));
+    for (AnAction action : actions) {
+      if (action instanceof InlineActionsHolder holder) {
+        for (AnAction inlineAction : holder.getInlineActions()) {
+          update(inlineAction, strategy);
+        }
+      }
+    }
+    return actions;
   }
 
   private List<AnAction> getGroupChildren(ActionGroup group, UpdateStrategy strategy) {
@@ -611,10 +623,10 @@ final class ActionUpdater {
 
   static @NotNull List<AnAction> removeUnnecessarySeparators(@NotNull List<? extends AnAction> visible) {
     List<AnAction> result = new ArrayList<>();
-    for (AnAction child : visible) {
+    for (int i = 0; i < visible.size(); i++) {
+      AnAction child = visible.get(i);
       if (child instanceof Separator &&
-          (result.isEmpty() || ContainerUtil.getLastItem(result) instanceof Separator) &&
-          StringUtil.isEmpty(((Separator)child).getText())) {
+          (result.isEmpty() || i == visible.size() - 1 || visible.get(i + 1) instanceof Separator)) {
         continue;
       }
       result.add(child);

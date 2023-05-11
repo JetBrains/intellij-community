@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware;
@@ -11,8 +12,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
@@ -60,7 +59,7 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
   public void testChangeConfigInOurProjectShouldCallUpdatePomFile() throws Exception {
     assertEmpty(myNotificationAware.getProjectsWithNotification());
     VirtualFile mavenConfig = createProjectSubFile(".mvn/maven.config");
-    waitForImportCompletion();
+    importProject();
     replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true");
     //    assertTrue(MavenImportingManager.getInstance(myProject).isImportingInProgress());
     assertNotEmpty(myNotificationAware.getProjectsWithNotification());
@@ -84,7 +83,8 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
 
     assertModules("project");
 
-    replaceContent(myProjectPom, createPomXml(createPomContent("test", "project") + "\n<modules><module>module</module></modules>"));
+    replaceContent(myProjectPom, createPomXml(
+      createPomContent("test", "project") + "<packaging>pom</packaging>\n<modules><module>module</module></modules>"));
     createModulePom("module", createPomContent("test", "module"));
     scheduleProjectImportAndWait();
 

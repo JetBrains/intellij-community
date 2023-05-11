@@ -27,9 +27,4 @@ class JavaKeywordsTest {
     assertTrue(JavaLexer.isSoftKeyword(ByteArrayCharSequence("module".toByteArray()), LanguageLevel.JDK_1_9))
     assertTrue(JavaLexer.isSoftKeyword(CharArrayCharSequence("[module]".toCharArray(), 1, 7), LanguageLevel.JDK_1_9))
   }
-
-  @Test fun nullTolerance() {
-    assertFalse(JavaLexer.isKeyword(null, LanguageLevel.JDK_1_3))
-    assertFalse(JavaLexer.isSoftKeyword(null, LanguageLevel.JDK_1_9))
-  }
 }

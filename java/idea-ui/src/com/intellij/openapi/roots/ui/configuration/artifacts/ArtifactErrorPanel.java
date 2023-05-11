@@ -34,7 +34,7 @@ public final class ArtifactErrorPanel {
     myMainPanel.add(myErrorLabel, BorderLayout.CENTER);
     myFixButton = new JButton();
     myMainPanel.add(myFixButton, BorderLayout.EAST);
-    new UiNotifyConnector(myMainPanel, new Activatable() {
+    UiNotifyConnector.installOn(myMainPanel, new Activatable() {
       @Override
       public void showNotify() {
         if (myErrorText != null) {

@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiField;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -59,7 +60,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -386,7 +386,7 @@ public class BreakpointManager {
         }
       }
 
-      DebuggerInvocationUtil.invokeLater(myProject, this::updateBreakpointsUI);
+      updateBreakpointsUI();
     });
 
     myUIProperties.clear();
@@ -512,7 +512,7 @@ public class BreakpointManager {
         breakpoint.markVerified(requestManager.isVerified(breakpoint));
         requestManager.deleteRequest(breakpoint);
       }
-      SwingUtilities.invokeLater(this::updateBreakpointsUI);
+      updateBreakpointsUI();
     }
   }
 
@@ -523,7 +523,7 @@ public class BreakpointManager {
         breakpoint.markVerified(false); // clean cached state
         breakpoint.createRequest(debugProcess);
       }
-      SwingUtilities.invokeLater(this::updateBreakpointsUI);
+      updateBreakpointsUI();
     }
   }
 
@@ -535,6 +535,11 @@ public class BreakpointManager {
       return;
     }
     requestManager.setFilterThread(newFilterThread);
+
+    if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
+      return;
+    }
+
     EventRequestManager eventRequestManager = requestManager.getVMRequestManager();
     if (DebuggerUtilsAsync.isAsyncEnabled() && eventRequestManager instanceof EventRequestManagerImpl) {
       Stream<EventRequestManagerImpl.ThreadVisibleEventRequestImpl> requests =
@@ -598,8 +603,10 @@ public class BreakpointManager {
   }
 
   public void updateBreakpointsUI() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    getBreakpoints().forEach(Breakpoint::updateUI);
+    ReadAction.nonBlocking(this::getBreakpoints)
+      .coalesceBy(this)
+      .submit(AppExecutorUtil.getAppExecutorService())
+      .onSuccess(b -> b.forEach(Breakpoint::updateUI));
   }
 
   public void reloadBreakpoints() {

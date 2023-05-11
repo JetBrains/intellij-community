@@ -17,7 +17,6 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiClassObjectAccessExpression
 import com.intellij.psi.PsiType
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UClassLiteralExpression
 import org.jetbrains.uast.UElement

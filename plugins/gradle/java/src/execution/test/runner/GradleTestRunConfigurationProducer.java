@@ -79,8 +79,8 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
 
     if (sourceElement.isNull()) return false;
     if (isUsedTestRunners(context, PLATFORM)) return false;
-    configuration.setScriptDebugEnabled(false);
-    configuration.setForceTestExecution(true);
+    configuration.setDebugServerProcess(false);
+    configuration.setRunAsTest(true);
     boolean result = doSetupConfigurationFromContext(configuration, context, sourceElement);
     restoreDefaultScriptParametersIfNeeded(configuration, context);
     return result;
@@ -199,7 +199,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
       for (String sourceFolder : sourceFolders) {
         if (FileUtil.isAncestor(sourceFolder, sourcePath, false)) {
           String testTaskSimpleName = testData.getTestName();
-          List<String> tasks = new SmartList<>(gradleModuleData.getTaskPath(testTaskSimpleName, true));
+          List<String> tasks = new SmartList<>(gradleModuleData.getTaskPathOfSimpleTaskName(testTaskSimpleName));
           testTasks.add(new TasksToRun.Impl(testTaskSimpleName, tasks));
         }
       }

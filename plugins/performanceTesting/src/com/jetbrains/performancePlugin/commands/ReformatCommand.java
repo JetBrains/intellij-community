@@ -11,6 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+/**
+ * Command reformat project
+ */
 public class ReformatCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "reformat";
 

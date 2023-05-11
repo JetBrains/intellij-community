@@ -44,7 +44,7 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
         }
       }));
 
-    new ComboboxSpeedSearch(getComboBox()) {
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(getComboBox(), null) {
       @Override
       protected String getElementText(Object element) {
         if (element instanceof Trinity) {
@@ -52,7 +52,9 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
         }
         return null;
       }
-    }.setComparator(new SpeedSearchComparator(true));
+    };
+    search.setupListeners();
+    search.setComparator(new SpeedSearchComparator(true));
     setButtonListener(null);
   }
 

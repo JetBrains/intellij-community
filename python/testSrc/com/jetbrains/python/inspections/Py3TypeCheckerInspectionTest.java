@@ -298,7 +298,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
               y = attr.ib(default=0)
               z = attr.ib(default=attr.Factory(list))
              \s
-          Weak1(1, "str", 2)
+          Weak1(1, <warning descr="Expected type 'int', got 'str' instead">"str"</warning>, <warning descr="Expected type 'list', got 'int' instead">2</warning>)
 
 
           @attr.s

@@ -2,6 +2,9 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
+    <content url="file://$MODULE_DIR$/../testData">
+      <sourceFolder url="file://$MODULE_DIR$/../testData" type="java-test-resource" />
+    </content>
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$" isTestSource="true" />
     </content>
@@ -19,7 +22,6 @@
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="bouncy-castle-provider" level="project" />
     <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />

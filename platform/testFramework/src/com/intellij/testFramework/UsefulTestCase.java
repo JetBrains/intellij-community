@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -30,8 +30,8 @@ import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
-import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.icons.CoreIconManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
 import com.intellij.util.io.PathKt;
@@ -76,6 +76,8 @@ import static org.junit.Assume.assumeTrue;
  * <p>
  * To use JUnit 4, annotate your test subclass with {@code @RunWith(JUnit4.class)} or any other (like {@code Parametrized.class}),
  * and you are all set.
+ * If you're looking for JUnit 4 for Assume support and still have JUnit 3 tests,
+ * consider using {@code @RunWith(JUnit38AssumeSupportRunner.class)}.
  * <p>
  * Don't annotate the JUnit 3 {@linkplain #setUp()}/{@linkplain #tearDown()} methods as {@code @Before}/{@code @After},
  * and don't call them from other {@code @Before}/{@code @After} methods.
@@ -225,7 +227,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (isIconRequired()) {
       // ensure that IconLoader will not use fake empty icon
       try {
-        IconManager.activate(new CoreIconManager());
+        IconManager.Companion.activate(new CoreIconManager());
       }
       catch (Exception e) {
         throw e;
@@ -289,7 +291,7 @@ public abstract class UsefulTestCase extends TestCase {
     new RunAll(
       () -> {
         if (isIconRequired()) {
-          IconManager.deactivate();
+          IconManager.Companion.deactivate();
           IconLoader.clearCacheInTests();
         }
       },
@@ -703,7 +705,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static @NotNull String toString(@NotNull Collection<?> collection, @NotNull String separator) {
-    List<String> list = ContainerUtil.sorted(ContainerUtil.map2List(collection, String::valueOf));
+    List<String> list = ContainerUtil.sorted(ContainerUtil.map(collection, String::valueOf));
     StringBuilder builder = new StringBuilder();
     boolean flag = false;
     for (String o : list) {
@@ -745,7 +747,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (collection.size() != checkers.length) {
       Assert.fail(toString(collection));
     }
-    Set<Consumer<? super T>> checkerSet = ContainerUtil.set(checkers);
+    Set<Consumer<? super T>> checkerSet = ContainerUtil.newHashSet(checkers);
     int i = 0;
     Throwable lastError = null;
     for (T actual : collection) {
@@ -1012,13 +1014,7 @@ public abstract class UsefulTestCase extends TestCase {
   public final boolean isStressTest() {
     String testName = getName();
     String className = getClass().getSimpleName();
-    return TestFrameworkUtil.isPerformanceTest(testName, className) ||
-           containsStressWords(testName) ||
-           containsStressWords(className);
-  }
-
-  private static boolean containsStressWords(@Nullable String name) {
-    return name != null && (name.contains("Stress") || name.contains("Slow"));
+    return TestFrameworkUtil.isStressTest(testName, className);
   }
 
   public static void doPostponedFormatting(@NotNull Project project) {

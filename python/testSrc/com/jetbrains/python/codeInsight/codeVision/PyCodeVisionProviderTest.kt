@@ -24,7 +24,7 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
 
     cc = MyClass()
     cc.method()
-  """.trimIndent())
+  """.trimIndent(), PyReferencesCodeVisionProvider().groupId)
 
   fun testTwoDynamicUsages() = doTest("""
     <# block [1 usage] #>
@@ -41,7 +41,7 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
 
     cc = MyClass()
     cc.method()
-  """.trimIndent())
+  """.trimIndent(), PyReferencesCodeVisionProvider().groupId)
 
   fun testLocalDefinitionsNotAnalysed() = doTest("""
     <# block [1 usage] #>
@@ -57,7 +57,7 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
         
         
     foo()
-  """.trimIndent())
+  """.trimIndent(), PyReferencesCodeVisionProvider().groupId)
 
   fun testMagicMethodUsagesNotAnalysed() = doTest("""
     <# block [2 usages] #>
@@ -70,7 +70,7 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
     b = MyClass()
     c = a + b
     d = a.__add__(b)
-  """.trimIndent())
+  """.trimIndent(), PyReferencesCodeVisionProvider().groupId)
 
   fun testInnerClassNotAnalysed() = doTest("""
     <# block [2 usages] #>
@@ -88,9 +88,9 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
     mc.foo()
     mic = MyClass.MyInnerClass()
     mic.inner_foo()
-  """.trimIndent())
+  """.trimIndent(), PyReferencesCodeVisionProvider().groupId)
 
-  private fun doTest(text: String) {
-    testProviders(text, "test.py")
+  private fun doTest(text: String, vararg enabledProviderGroupIds: String) {
+    testProviders(text, "test.py", *enabledProviderGroupIds)
   }
 }

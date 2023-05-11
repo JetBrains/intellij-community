@@ -53,7 +53,7 @@ abstract class MavenServerConnectorBase extends AbstractMavenServerConnector {
     if (!myConnectStarted.compareAndSet(false, true)) {
       return;
     }
-    MavenLog.LOG.debug("connecting new maven server:", new Exception());
+    MavenLog.LOG.debug("connecting new maven server: " + this);
     ApplicationManager.getApplication().executeOnPooledThread(newStartServerTask());
   }
 
@@ -92,7 +92,6 @@ abstract class MavenServerConnectorBase extends AbstractMavenServerConnector {
       }
       catch (Throwable ignored) {
       }
-      MavenServerManager.getInstance().cleanUp(this);
       throw e instanceof CannotStartServerException
             ? (CannotStartServerException)e
             : new CannotStartServerException(e);
@@ -148,19 +147,12 @@ abstract class MavenServerConnectorBase extends AbstractMavenServerConnector {
   @Override
   public boolean ping() {
     try {
-      var server = getServer();
-
-      var support = mySupport;
-      if (null == support) return false;
-
-      var heartBeat = support.getHeartBeat();
-      if (null == heartBeat) return false;
-
-      if (!heartBeat.beat()) return false;
-
-      return server.isAlive(MavenRemoteObjectWrapper.ourToken);
+      boolean pinged = getServer().ping(MavenRemoteObjectWrapper.ourToken);
+      MavenLog.LOG.debug("maven server ping: " + pinged);
+      return pinged;
     }
     catch (RemoteException e) {
+      MavenLog.LOG.warn("maven server ping error", e);
       return false;
     }
   }

@@ -91,7 +91,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
       expectedExecutionTree += "  :buildSrc:clean\n"
     }
 
-    if (isGradleNewerOrSameAs("3.3")) {
+    if (isGradleNewerOrSameAs("3.3") && isGradleOlderThan("8.0")) {
       expectedExecutionTree += "  :buildSrc:compileJava\n" +
                                "  :buildSrc:compileGroovy\n" +
                                "  :buildSrc:processResources\n" +
@@ -105,6 +105,14 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                                "  :buildSrc:test\n" +
                                "  :buildSrc:check\n" +
                                "  :buildSrc:build\n"
+    }
+
+    if (isGradleNewerOrSameAs("8.0")) {
+      expectedExecutionTree += "  :buildSrc:compileJava\n" +
+                               "  :buildSrc:compileGroovy\n" +
+                               "  :buildSrc:processResources\n" +
+                               "  :buildSrc:classes\n" +
+                               "  :buildSrc:jar\n"
     }
 
     expectedExecutionTree += "  -build.gradle\n" +

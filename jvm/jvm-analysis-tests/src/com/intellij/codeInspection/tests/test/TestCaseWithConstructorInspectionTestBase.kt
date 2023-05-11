@@ -2,8 +2,6 @@ package com.intellij.codeInspection.tests.test
 
 import com.intellij.codeInspection.test.TestCaseWithConstructorInspection
 import com.intellij.codeInspection.tests.JvmInspectionTestBase
-import com.intellij.codeInspection.tests.test.junit.addJUnit3Library
-import com.intellij.codeInspection.tests.test.junit.addJUnit4Library
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel

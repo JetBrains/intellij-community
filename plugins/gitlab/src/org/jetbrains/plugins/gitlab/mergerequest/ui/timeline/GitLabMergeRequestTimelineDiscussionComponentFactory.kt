@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
 import com.intellij.collaboration.async.inverted
+import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.*
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil.animatedLoadingIcon
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.wrapWithLimitedSize
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.Wrapper
@@ -33,12 +34,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createNoteTitleComponent
+import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
 import org.jetbrains.plugins.gitlab.ui.comment.*
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.event.HyperlinkEvent
 
 @OptIn(ExperimentalCoroutinesApi::class)
 object GitLabMergeRequestTimelineDiscussionComponentFactory {
@@ -58,9 +63,9 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
         val replyVm = vm.replyVm
         if (replyVm != null) {
-          bindChild(cs, replyVm.newNoteVm) { cs, newNoteVm ->
+          bindChildIn(cs, replyVm.newNoteVm) { newNoteVm ->
             newNoteVm?.let {
-              GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, cs, it, vm.resolveVm,
+              GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, this, it, vm.resolveVm,
                                                                 avatarIconsProvider)
             }
           }
@@ -73,12 +78,12 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
         }
       }
     }.apply {
-      bindVisibility(cs, vm.repliesFolded.inverted())
+      bindVisibilityIn(cs, vm.repliesFolded.inverted())
     }
 
     val titlePanel = Wrapper().apply {
-      bindContent(cs, vm.mainNote) { titleCs, mainNote ->
-        createNoteTitleComponent(titleCs, mainNote)
+      bindContentIn(cs, vm.mainNote) { mainNote ->
+        GitLabNoteComponentFactory.createTitle(this, mainNote)
       }
     }
 
@@ -104,11 +109,9 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     val mainNoteVm = vm.mainNote
     val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, vm).apply {
       border = JBUI.Borders.empty(Replies.ActionsFolded.VERTICAL_PADDING, 0)
-      bindVisibility(cs, vm.repliesFolded)
+      bindVisibilityIn(cs, vm.repliesFolded)
     }
-    val textPanel = GitLabNoteComponentFactory.createTextPanel(cs, mainNoteVm.flatMapLatest { it.htmlBody }).let {
-      collapseDiscussionTextIfNeeded(cs, vm, it)
-    }
+    val textPanel = createDiscussionTextPane(cs, vm)
 
     // oh well... probably better to make a suitable API in EditableComponentFactory, but that would look ugly
     val actionAndEditVmsFlow: Flow<Pair<GitLabNoteAdminActionsViewModel, GitLabNoteEditingViewModel>?> =
@@ -124,17 +127,16 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
     }
 
-    val diffPanel = createDiffPanel(project, cs, vm)
+    val diffPanelFlow = vm.diffVm.mapScoped { diffVm ->
+      diffVm?.let { createDiffPanel(project, vm, it) }
+    }
 
     val contentPanel = VerticalListPanel().apply {
       add(repliesActionsPanel)
     }
 
-    if (diffPanel == null) {
-      contentPanel.add(textContentPanel, null, 0)
-    }
-    else {
-      contentPanel.bindChild(cs, vm.collapsed, index = 0) { _, collapsed ->
+    contentPanel.bindChildIn(cs, combine(vm.collapsed, diffPanelFlow, ::Pair), index = 0) { (collapsed, diffPanel) ->
+      if (diffPanel != null) {
         VerticalListPanel(4).apply {
           if (collapsed) {
             add(textContentPanel)
@@ -146,42 +148,62 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
           }
         }
       }
+      else {
+        textContentPanel
+      }
     }
+
     return contentPanel
   }
 
-  private fun createDiffPanel(project: Project,
-                              cs: CoroutineScope,
-                              vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent? {
-    val diffVm = vm.diffVm ?: return null
-    return TimelineDiffComponentFactory.createDiffWithHeader(cs, vm, diffVm.position.filePath, {}) {
-      Wrapper().apply {
-        bindContent(it, diffVm.patchHunk) { _, hunkState ->
+  private const val OPEN_DIFF_LINK_HREF = "OPEN_DIFF"
+
+  private fun CoroutineScope.createDiffPanel(project: Project,
+                                             vm: GitLabMergeRequestTimelineDiscussionViewModel,
+                                             diffVm: GitLabDiscussionDiffViewModel): JComponent {
+    val fileNameClickHandler = diffVm.showDiffHandler.map { handler ->
+      handler?.let { ActionListener { _ -> it() } }
+    }
+    return TimelineDiffComponentFactory.createDiffWithHeader(this, vm, diffVm.position.filePath, fileNameClickHandler) {
+      val diffCs = this
+      Wrapper(LoadingLabel()).apply {
+        bindContentIn(diffCs, diffVm.patchHunk) { hunkState ->
+          val loadedDiffCs = this
           when (hunkState) {
-            GitLabDiscussionDiffViewModel.PatchHunkLoadingState.Loading -> {
-              JLabel(animatedLoadingIcon)
-            }
-            is GitLabDiscussionDiffViewModel.PatchHunkLoadingState.Loaded -> {
+            is GitLabDiscussionDiffViewModel.PatchHunkResult.Loaded -> {
               TimelineDiffComponentFactory.createDiffComponent(project, EditorFactory.getInstance(), hunkState.hunk, hunkState.anchor, null)
             }
-            is GitLabDiscussionDiffViewModel.PatchHunkLoadingState.LoadingError,
-            GitLabDiscussionDiffViewModel.PatchHunkLoadingState.NotAvailable -> {
-              val text = HtmlBuilder()
-                .append(HtmlChunk.p().addText("Not able to load diff hunk"))
-                .apply {
-                  if (hunkState is GitLabDiscussionDiffViewModel.PatchHunkLoadingState.LoadingError) {
-                    append(HtmlChunk.p().addText(hunkState.error.localizedMessage))
-                  }
-                }
-                .append(HtmlChunk.p().child(HtmlChunk.link("OPEN", "Open full diff")))
-                .wrapWith(HtmlChunk.div("text-align: center"))
-                .toString()
-
+            is GitLabDiscussionDiffViewModel.PatchHunkResult.Error,
+            GitLabDiscussionDiffViewModel.PatchHunkResult.NotLoaded -> {
               JPanel(SingleComponentCenteringLayout()).apply {
                 isOpaque = false
                 border = JBUI.Borders.empty(16)
 
-                add(SimpleHtmlPane(text))
+                bindChildIn(loadedDiffCs, fileNameClickHandler) { clickListener ->
+                  if (clickListener != null) {
+                    val text = buildCantLoadHunkText(hunkState)
+                      .append(HtmlChunk.p().child(
+                        HtmlChunk.link(OPEN_DIFF_LINK_HREF, GitLabBundle.message("merge.request.timeline.discussion.open.full.diff"))))
+                      .wrapWith(HtmlChunk.div("text-align: center"))
+                      .toString()
+
+                    SimpleHtmlPane(addBrowserListener = false).apply {
+                      setHtmlBody(text)
+                    }.also {
+                      it.addHyperlinkListener(object : HyperlinkAdapter() {
+                        override fun hyperlinkActivated(e: HyperlinkEvent) {
+                          if (e.description == OPEN_DIFF_LINK_HREF) {
+                            clickListener.actionPerformed(ActionEvent(it, ActionEvent.ACTION_PERFORMED, "execute"))
+                          }
+                        }
+                      })
+                    }
+                  }
+                  else {
+                    val text = buildCantLoadHunkText(hunkState).toString()
+                    SimpleHtmlPane(text)
+                  }
+                }
               }
             }
           }
@@ -189,6 +211,15 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       }
     }
   }
+
+  private fun buildCantLoadHunkText(hunkState: GitLabDiscussionDiffViewModel.PatchHunkResult) =
+    HtmlBuilder()
+      .append(HtmlChunk.p().addText(GitLabBundle.message("merge.request.timeline.discussion.cant.load.diff")))
+      .apply {
+        if (hunkState is GitLabDiscussionDiffViewModel.PatchHunkResult.Error) {
+          append(HtmlChunk.p().addText(hunkState.error.localizedMessage))
+        }
+      }
 
   private fun Flow<GitLabUserDTO>.createIconValue(cs: CoroutineScope, iconsProvider: IconsProvider<GitLabUserDTO>, size: Int) =
     SingleValueModel<Icon>(EmptyIcon.create(size)).apply {
@@ -203,14 +234,14 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
                                         avatarIconsProvider: IconsProvider<GitLabUserDTO>,
                                         vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
     val authorsLabel = JLabel().apply {
-      bindVisibility(cs, vm.replies.map { it.isNotEmpty() })
+      bindVisibilityIn(cs, vm.replies.map { it.isNotEmpty() })
 
       val repliesAuthors = vm.replies.map { replies ->
         val authors = LinkedHashSet<GitLabUserDTO>()
         replies.mapTo(authors) { it.author }
       }
 
-      bindIcon(cs, repliesAuthors.map { authors ->
+      bindIconIn(cs, repliesAuthors.map { authors ->
         authors.map {
           avatarIconsProvider.getIcon(it, ComponentType.COMPACT.iconSize)
         }.nullize()?.let {
@@ -224,8 +255,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     val repliesLink = LinkLabel<Any>("", null, LinkListener { _, _ ->
       vm.setRepliesFolded(false)
     }).apply {
-      bindVisibility(cs, hasRepliesOrCanCreateNewFlow)
-      bindText(cs, vm.replies.map { replies ->
+      bindVisibilityIn(cs, hasRepliesOrCanCreateNewFlow)
+      bindTextIn(cs, vm.replies.map { replies ->
         val replyCount = replies.size
         if (replyCount == 0) {
           CollaborationToolsBundle.message("review.comments.reply.action")
@@ -239,8 +270,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     val lastReplyDateLabel = JLabel().apply {
       foreground = UIUtil.getContextHelpForeground()
     }.apply {
-      bindVisibility(cs, vm.replies.map { it.isNotEmpty() })
-      bindText(cs, vm.replies.mapNotNull { replies ->
+      bindVisibilityIn(cs, vm.replies.map { it.isNotEmpty() })
+      bindTextIn(cs, vm.replies.mapNotNull { replies ->
         replies.lastOrNull()?.createdAt?.let { JBDateFormat.getFormatter().formatPrettyDateTime(it) }
       })
     }
@@ -250,39 +281,44 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       add(repliesLink)
       add(lastReplyDateLabel)
     }.apply {
-      bindVisibility(cs, hasRepliesOrCanCreateNewFlow)
+      bindVisibilityIn(cs, hasRepliesOrCanCreateNewFlow)
     }
     return HorizontalListPanel(Replies.ActionsFolded.HORIZONTAL_GROUP_GAP).apply {
       add(repliesActions)
 
-      vm.resolveVm?.let {
+      vm.resolveVm?.takeIf { it.canResolve }?.let {
         GitLabDiscussionComponentFactory.createUnResolveLink(cs, it).also(::add)
       }
     }
   }
 
-  private fun collapseDiscussionTextIfNeeded(cs: CoroutineScope, vm: GitLabMergeRequestTimelineDiscussionViewModel,
-                                             textPane: JComponent): JComponent {
-    val resolveVm = vm.resolveVm
-    if (resolveVm == null) return textPane
+  private fun createDiscussionTextPane(cs: CoroutineScope, vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
+    val collapsedFlow = combine(vm.collapsible, vm.collapsed) { collapsible, collapsed ->
+      collapsible && collapsed
+    }
 
-    return JPanel(null).apply {
+    val textFlow = combine(collapsedFlow, vm.mainNote) { collapsed, mainNote ->
+      if (collapsed) mainNote.body else mainNote.bodyHtml
+    }.flatMapLatest { it }
+
+    val textPane = GitLabNoteComponentFactory.createTextPanel(cs, textFlow)
+    val layout = SizeRestrictedSingleComponentLayout()
+    return JPanel(layout).apply {
       name = "Text pane wrapper"
       isOpaque = false
-      layout = SizeRestrictedSingleComponentLayout().apply {
-        cs.launch {
-          vm.collapsed.collect {
-            if (it) {
-              textPane.foreground = UIUtil.getContextHelpForeground()
-              maxSize = DimensionRestrictions.LinesHeight(textPane, 2)
-            }
-            else {
-              textPane.foreground = UIUtil.getLabelForeground()
-              maxSize = DimensionRestrictions.None
-            }
-            revalidate()
-            repaint()
+
+      cs.launch {
+        collapsedFlow.collect {
+          if (it) {
+            textPane.foreground = UIUtil.getContextHelpForeground()
+            layout.maxSize = DimensionRestrictions.LinesHeight(textPane, 2)
           }
+          else {
+            textPane.foreground = UIUtil.getLabelForeground()
+            layout.maxSize = DimensionRestrictions.None
+          }
+          revalidate()
+          repaint()
         }
       }
       add(textPane)

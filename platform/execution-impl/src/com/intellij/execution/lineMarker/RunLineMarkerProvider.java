@@ -126,22 +126,41 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
       }
     }
 
-    Function<PsiElement, String> tooltipProvider = element1 -> {
-      final StringBuilder tooltip = new StringBuilder();
-      for (Info info : infos) {
+    Function<PsiElement, String> tooltipProvider = new EquatableTooltipProvider(infos);
+    return new RunLineMarkerInfo(element, icon, tooltipProvider, actionGroup);
+  }
+
+  // must provide sensible equals() to be able to reuse LineMarker on change
+  private static class EquatableTooltipProvider implements Function<PsiElement, String> {
+    private final @NotNull List<? extends Info> myInfos;
+
+    EquatableTooltipProvider(@NotNull List<? extends Info> infos) { myInfos = infos; }
+
+    @Override
+    public int hashCode() {
+      return myInfos.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof EquatableTooltipProvider other && myInfos.equals(other.myInfos);
+    }
+
+    @Override
+    public String fun(PsiElement element1) {
+      StringBuilder tooltip = new StringBuilder();
+      for (Info info : myInfos) {
         if (info.tooltipProvider != null) {
           String string = info.tooltipProvider.apply(element1);
           if (string == null) continue;
-          if (tooltip.length() != 0) {
+          if (!tooltip.isEmpty()) {
             tooltip.append("\n");
           }
           tooltip.append(string);
         }
       }
-
-      return tooltip.length() == 0 ? null : appendShortcut(tooltip.toString());
-    };
-    return new RunLineMarkerInfo(element, icon, tooltipProvider, actionGroup);
+      return tooltip.isEmpty() ? null : appendShortcut(tooltip.toString());
+    }
   }
 
 

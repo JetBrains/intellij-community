@@ -1,3 +1,4 @@
+// HIGHLIGHT: GENERIC_ERROR_OR_WARNING
 // FIX: Replace 'set' call with indexing operator
 
 class C {

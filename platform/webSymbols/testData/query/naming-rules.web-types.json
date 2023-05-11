@@ -13,18 +13,18 @@
     },
     "canonical-names": {
       "/html/elements": "kebab-case",
-      "/js/properties": "kebab-case"
+      "/js/custom-properties": "kebab-case"
     },
     "match-names": {
       "/html/elements": [
         "kebab-case"
       ],
-      "/js/properties": [
+      "/js/custom-properties": [
         "as-is"
       ]
     },
     "name-variants": {
-      "/js/properties": [
+      "/js/custom-properties": [
         "kebab-case"
       ],
       "/html/elements": [
@@ -48,7 +48,7 @@
       ]
     },
     "js": {
-      "properties": [
+      "custom-properties": [
         {
           "name": "propOne"
         },

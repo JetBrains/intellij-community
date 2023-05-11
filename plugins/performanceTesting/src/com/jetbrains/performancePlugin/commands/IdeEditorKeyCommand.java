@@ -1,6 +1,6 @@
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.diagnostic.telemetry.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -24,6 +24,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+/**
+ * Command simulates pressing a keyboard key.
+ * Only defined set of key is supported for now: "ENTER", "BACKSPACE", "TAB" and "ESCAPE"
+ * <p>
+ * Syntax: %pressKey <KEY>
+ * Example: %pressKey ENTER
+ */
 public class IdeEditorKeyCommand extends KeyCodeTypeCommand {
 
   public static final String PREFIX = CMD_PREFIX + "pressKey";

@@ -6,8 +6,8 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.lang.HashMapZipFile
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.*
@@ -18,14 +18,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
-internal suspend fun packNativePresignedFiles(nativeFiles: Map<ZipSource, List<String>>, dryRun: Boolean, context: BuildContext) {
-  coroutineScope {
-    for ((source, paths) in nativeFiles) {
-      val sourceFile = source.file
-      async(Dispatchers.IO) {
-        unpackNativeLibraries(sourceFile = sourceFile, paths = paths, dryRun = dryRun, context = context)
-      }
-      continue
+internal fun CoroutineScope.packNativePresignedFiles(nativeFiles: Map<ZipSource, List<String>>, dryRun: Boolean, context: BuildContext) {
+  for ((source, paths) in nativeFiles) {
+    val sourceFile = source.file
+    launch(Dispatchers.IO) {
+      unpackNativeLibraries(sourceFile = sourceFile, paths = paths, dryRun = dryRun, context = context)
     }
   }
 }
@@ -46,7 +43,8 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
 
   val libName = sourceFile.fileName.toString().substringBefore('-')
   HashMapZipFile.load(sourceFile).use { zipFile ->
-    val outDir = if (dryRun) context.paths.tempDir.resolve(libName) else Files.createTempDirectory(context.paths.tempDir, libName)
+    val outDir = context.paths.tempDir.resolve(libName)
+    Files.createDirectories(outDir)
     for (pathWithPackage in paths) {
       val path = pathWithPackage.substring(packagePrefix.length)
       val fileName = path.substring(path.lastIndexOf('/') + 1)
@@ -59,6 +57,10 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
         else -> continue
       }
 
+      if (!context.options.targetOs.contains(os) && signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
+        continue
+      }
+
       val osAndArch = path.substring(0, path.indexOf('/'))
       val arch: JvmArchitecture? = when {
         osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") -> JvmArchitecture.aarch64
@@ -66,6 +68,12 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
         // universal library
         os == OsFamily.MACOS && path.count { it == '/' } == 1 -> null
         else -> continue
+      }
+
+      if (arch != null &&
+          (context.options.targetArch != null && context.options.targetArch != arch) &&
+          signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
+        continue
       }
 
       var file: Path? = if (os == OsFamily.LINUX || signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
@@ -108,7 +116,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
     coroutineScope {
       launch {
         unsignedFiles.get(OsFamily.MACOS)?.let {
-          signMacBinaries(context, it, additionalOptions = versionOption)
+          signMacBinaries(files = it, context = context, additionalOptions = versionOption, checkPermissions = false)
         }
       }
       launch {

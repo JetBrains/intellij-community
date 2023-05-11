@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,10 +19,6 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.lang.JavaVersion;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntIterator;
-import it.unimi.dsi.fastutil.objects.AbstractObject2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +40,6 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
-import org.jetbrains.jps.javac.ast.api.JavacRef;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -432,7 +427,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
       // when forking external javac, compilers from SDK 1.7 and higher are supported
       final Pair<String, Integer> forkSdk;
-      if (shouldForkCompilerProcess(context, chunk, targetLanguageLevel)) {
+      if (shouldForkCompilerProcess(context, chunk, targetLanguageLevel, compilingTool)) {
         forkSdk = getForkedJavacSdk(diagnosticSink, chunk, targetLanguageLevel);
         if (forkSdk == null) {
           return false;
@@ -682,8 +677,8 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     return false;
   }
 
-  private static boolean shouldForkCompilerProcess(CompileContext context, ModuleChunk chunk, int chunkLanguageLevel) {
-    if (!isJavac(COMPILING_TOOL.get(context))) {
+  private static boolean shouldForkCompilerProcess(CompileContext context, ModuleChunk chunk, int chunkLanguageLevel, JavaCompilingTool compilingTool) {
+    if (!isJavac(compilingTool)) {
       return false; // applicable to javac only
     }
     final int compilerSdkVersion = JavaVersion.current().feature;
@@ -891,7 +886,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    if (customArgs != null) {
+    if (customArgs != null && !customArgs.isEmpty()) {
       BiConsumer<List<String>, String> appender = List::add;
       final JpsModule module = chunk.representativeTarget().getModule();
       final File baseDirectory = JpsModelSerializationDataService.getBaseDirectory(module);
@@ -1285,25 +1280,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     @Override
     public void registerJavacFileData(JavacFileData data) {
       for (JavacFileReferencesRegistrar registrar : myRegistrars) {
-        TObjectIntHashMap<JavacRef> refs = data.getRefs();
-        registrar.registerFile(myContext, data.getFilePath(), new Iterable<Object2IntMap.Entry<? extends JavacRef>>() {
-          @Override
-          public @NotNull Iterator<Object2IntMap.Entry<? extends JavacRef>> iterator() {
-            TObjectIntIterator<JavacRef> iterator = refs.iterator();
-            return new Iterator<Object2IntMap.Entry<? extends JavacRef>>() {
-              @Override
-              public boolean hasNext() {
-                return iterator.hasNext();
-              }
-
-              @Override
-              public Object2IntMap.Entry<? extends JavacRef> next() {
-                iterator.advance();
-                return new AbstractObject2IntMap.BasicEntry<>(iterator.key(), iterator.value());
-              }
-            };
-          }
-        }, data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
+        registrar.registerFile(myContext, data.getFilePath(), Iterators.map(data.getRefs().entrySet(), entry -> entry), data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
       }
     }
 

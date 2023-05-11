@@ -16,6 +16,7 @@ import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.targetEnvConfiguration
@@ -36,9 +37,9 @@ class CondaPackageCache : PythonPackageCache<String> {
     withContext(Dispatchers.IO) {
       val pathOnTarget = (sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env.fullCondaPathOnTarget
       val targetConfig = sdk.targetEnvConfiguration
-
-      val command = PyCondaCommand(pathOnTarget, targetConfig, project)
-      val baseConda = PyCondaEnv.getEnvs(command).getOrThrow()
+      val targetRequest = targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()
+      val commandExecutor = TargetEnvironmentRequestCommandExecutor(targetRequest)
+      val baseConda = PyCondaEnv.getEnvs(commandExecutor, pathOnTarget).getOrThrow()
         .first { it.envIdentity is PyCondaEnvIdentity.UnnamedEnv && it.envIdentity.isBase }
 
       val helpersAware = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)

@@ -9,7 +9,9 @@ import com.intellij.openapi.fileEditor.impl.EditorComposite
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
  * Per-client version of file editor manager
@@ -44,7 +46,12 @@ interface ClientFileEditorManager {
   fun getEditorsWithProviders(file: VirtualFile): List<FileEditorWithProvider>
   fun getEditors(file: VirtualFile): List<FileEditor>
 
-  fun openFile(file: VirtualFile, forceCreate: Boolean): List<FileEditorWithProvider>
+  @RequiresBlockingContext
+  fun openFile(file: VirtualFile, forceCreate: Boolean, requestFocus: Boolean): List<FileEditorWithProvider>
+
+  @Experimental
+  suspend fun openFileAsync(file: VirtualFile, forceCreate: Boolean, requestFocus: Boolean): List<FileEditorWithProvider>
+
   fun closeFile(file: VirtualFile, closeAllCopies: Boolean)
   fun isFileOpen(file: VirtualFile): Boolean
 

@@ -1,10 +1,12 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.module.impl.UnloadedModulesNameHolderImpl
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries
@@ -32,7 +34,8 @@ class JpsProjectReloadingTest {
   @ValueSource(strings = ["", "util", "util,main", "main"])
   fun `modify iml`(unloaded: String) {
     val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
-    checkProjectAfterReload("common/modifyIml", "common/modifyIml", unloadedModuleNames) { (storage, unloadedEntityStorage, projectDirUrl) ->
+    val unloadedHolder = UnloadedModulesNameHolderImpl(unloadedModuleNames)
+    checkProjectAfterReload("common/modifyIml", "common/modifyIml", unloadedHolder) { (storage, unloadedEntityStorage, projectDirUrl) ->
       val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()
       assertEquals(3 - unloadedModuleNames.size, modules.size)
       val unloadedModules = unloadedEntityStorage.entities(ModuleEntity::class.java).toList()
@@ -54,7 +57,7 @@ class JpsProjectReloadingTest {
 
   @Test
   fun `add library`() {
-    checkProjectAfterReload( "directoryBased/addLibrary", "fileBased/addLibrary") { (storage, _, projectDirUrl) ->
+    checkProjectAfterReload("directoryBased/addLibrary", "fileBased/addLibrary") { (storage, _, projectDirUrl) ->
       val libraries = storage.projectLibraries.sortedBy { it.name }.toList()
       assertEquals(4, libraries.size)
       val junitLibrary = libraries[2]
@@ -67,7 +70,7 @@ class JpsProjectReloadingTest {
   @Test
   fun `all libraries for directory based project`() {
     val projectDir = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/imlUnderDotIdea")
-    val (storage, _, projectDirUrl) = reload(projectDir, "directoryBased/addLibrary", emptySet())
+    val (storage, _, projectDirUrl) = reload(projectDir, "directoryBased/addLibrary", UnloadedModulesNameHolder.DUMMY)
 
     val libraries = storage.projectLibraries.sortedBy { it.name }.toList()
     assertEquals(1, libraries.size)
@@ -81,7 +84,9 @@ class JpsProjectReloadingTest {
   @ValueSource(strings = ["", "newModule", "newModule,main", "main"])
   fun `add module`(unloaded: String) {
     val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
-    checkProjectAfterReload("directoryBased/addModule", "fileBased/addModule", unloadedModuleNames) { (storage, unloadedEntitiesStorage, projectDirUrl) ->
+    val unloadedHolder = UnloadedModulesNameHolderImpl(unloadedModuleNames)
+    checkProjectAfterReload("directoryBased/addModule", "fileBased/addModule",
+                            unloadedHolder) { (storage, unloadedEntitiesStorage, projectDirUrl) ->
       val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()
       assertEquals(4 - unloadedModuleNames.size, modules.size)
       val unloadedModules = unloadedEntitiesStorage.entities(ModuleEntity::class.java)
@@ -97,16 +102,19 @@ class JpsProjectReloadingTest {
   @ValueSource(strings = ["", "util", "util,main", "main"])
   fun `remove module`(unloaded: String) {
     val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
-    checkProjectAfterReload("directoryBased/removeModule", "fileBased/removeModule", unloadedModuleNames) { (storage, unloadedEntitiesStorage, _) ->
+    val unloadedHolder = UnloadedModulesNameHolderImpl(unloadedModuleNames)
+    checkProjectAfterReload("directoryBased/removeModule", "fileBased/removeModule",
+                            unloadedHolder) { (storage, unloadedEntitiesStorage, _) ->
       assertEquals(unloadedModuleNames - "util", unloadedEntitiesStorage.entities(ModuleEntity::class.java).mapTo(HashSet()) { it.name })
       val allEntities = storage.entities(ModuleEntity::class.java) + unloadedEntitiesStorage.entities(ModuleEntity::class.java)
-      assertEquals(setOf("main", "xxx"), allEntities.mapTo(HashSet()) {it.name})
+      assertEquals(setOf("main", "xxx"), allEntities.mapTo(HashSet()) { it.name })
     }
   }
 
   @Test
   fun `modify library`() {
-    checkProjectAfterReload("directoryBased/modifyLibrary", "fileBased/modifyLibrary") { (storage, originalUnloadedEntitiesBuilder, projectDirUrl) ->
+    checkProjectAfterReload("directoryBased/modifyLibrary",
+                            "fileBased/modifyLibrary") { (storage, originalUnloadedEntitiesBuilder, projectDirUrl) ->
       val libraries = storage.projectLibraries.sortedBy { it.name }.toList()
       assertEquals(3, libraries.size)
       val junitLibrary = libraries[1]
@@ -119,44 +127,49 @@ class JpsProjectReloadingTest {
   @Test
   fun `remove library`() {
     checkProjectAfterReload("directoryBased/removeLibrary", "fileBased/removeLibrary") { (storage, originalUnloadedEntitiesBuilder, _) ->
-      assertEquals(setOf("jarDir", "log4j"), storage.projectLibraries.mapTo(HashSet()) {it.name})
+      assertEquals(setOf("jarDir", "log4j"), storage.projectLibraries.mapTo(HashSet()) { it.name })
     }
   }
 
   @Test
   fun `remove all libraries`() {
-    checkProjectAfterReload("directoryBased/removeAllLibraries", "fileBased/removeAllLibraries") { (storage, originalUnloadedEntitiesBuilder, _) ->
-      assertEquals(emptySet<String>(), storage.projectLibraries.mapTo(HashSet()) {it.name})
+    checkProjectAfterReload("directoryBased/removeAllLibraries",
+                            "fileBased/removeAllLibraries") { (storage, originalUnloadedEntitiesBuilder, _) ->
+      assertEquals(emptySet<String>(), storage.projectLibraries.mapTo(HashSet()) { it.name })
     }
   }
 
   private fun checkProjectAfterReload(directoryNameForDirectoryBased: String,
                                       directoryNameForFileBased: String,
-                                      unloadedModuleNames: Set<String> = emptySet(),
+                                      unloadedModulesNameHolder: UnloadedModulesNameHolder = UnloadedModulesNameHolder.DUMMY,
                                       checkAction: (ReloadedProjectData) -> Unit) {
-    val dirBasedData = reload(sampleDirBasedProjectFile, directoryNameForDirectoryBased, unloadedModuleNames)
+    val dirBasedData = reload(sampleDirBasedProjectFile, directoryNameForDirectoryBased, unloadedModulesNameHolder)
     checkAction(dirBasedData)
-    val fileBasedData = reload(sampleFileBasedProjectFile, directoryNameForFileBased, unloadedModuleNames)
+    val fileBasedData = reload(sampleFileBasedProjectFile, directoryNameForFileBased, unloadedModulesNameHolder)
     checkAction(fileBasedData)
   }
 
   private fun reload(originalProjectFile: File,
-                     unloadedModuleNames: Set<String>,
+                     unloadedModulesNameHolder: UnloadedModulesNameHolder,
                      updateAction: (LoadedProjectData) -> JpsConfigurationFilesChange): ReloadedProjectData {
-    val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager, unloadedModuleNames)
+    val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager, unloadedModulesNameHolder)
     val change = updateAction(projectData)
     val result =
-      projectData.serializers.reloadFromChangedFiles(change, CachingJpsFileContentReader(projectData.configLocation), unloadedModuleNames, TestErrorReporter)
+      projectData.serializers.reloadFromChangedFiles(change, CachingJpsFileContentReader(projectData.configLocation),
+                                                     unloadedModulesNameHolder, TestErrorReporter)
     val originalBuilder = MutableEntityStorage.from(projectData.storage)
-    originalBuilder.replaceBySource({it in result.affectedSources}, result.builder)
+    originalBuilder.replaceBySource({ it in result.affectedSources }, result.builder)
     val originalUnloadedEntitiesBuilder = MutableEntityStorage.from(projectData.unloadedEntitiesStorage)
-    originalUnloadedEntitiesBuilder.replaceBySource({it in result.affectedSources}, result.unloadedEntityBuilder)
-    projectData.serializers.checkConsistency(projectData.configLocation, originalBuilder, originalUnloadedEntitiesBuilder, virtualFileManager)
+    originalUnloadedEntitiesBuilder.replaceBySource({ it in result.affectedSources }, result.unloadedEntityBuilder)
+    projectData.serializers.checkConsistency(projectData.configLocation, originalBuilder, originalUnloadedEntitiesBuilder,
+                                             virtualFileManager)
     return ReloadedProjectData(originalBuilder, originalUnloadedEntitiesBuilder, projectData.projectDirUrl)
   }
 
-  private fun reload(originalProjectDir: File, directoryName: String, unloadedModuleNames: Set<String>): ReloadedProjectData {
-    return reload(originalProjectDir, unloadedModuleNames) { projectData ->
+  private fun reload(originalProjectDir: File,
+                     directoryName: String,
+                     unloadedModulesNameHolder: UnloadedModulesNameHolder): ReloadedProjectData {
+    return reload(originalProjectDir, unloadedModulesNameHolder) { projectData ->
       val changedDir = PathManagerEx.findFileUnderCommunityHome(
         "platform/workspaceModel/jps/tests/testData/serialization/reload/$directoryName")
       val newUrls = collectFileUrlsRec(changedDir, projectData.projectDirUrl, true) { it != "<delete/>" }
@@ -189,7 +202,9 @@ class JpsProjectReloadingTest {
         if (!relativeFileUrl.endsWith(".idea/libraries") && !relativeFileUrl.endsWith(".idea/artifacts")) return@forEach
 
         // Existing files + files that will be copied
-        val children = (JpsPathUtil.urlToFile(replaceBaseUrl(baseUrl, dir, file)).listFiles()?.map { JpsPathUtil.pathToUrl(it.absolutePath) } ?: emptyList()) +
+        val children = (JpsPathUtil.urlToFile(replaceBaseUrl(baseUrl, dir, file)).listFiles()?.map {
+          JpsPathUtil.pathToUrl(it.absolutePath)
+        } ?: emptyList()) +
                        (file.listFiles()?.map { replaceBaseUrl(baseUrl, dir, it) } ?: emptyList())
         if (children.all { it in res }) {
           if (replaceByParent) children.forEach { res.remove(it) }

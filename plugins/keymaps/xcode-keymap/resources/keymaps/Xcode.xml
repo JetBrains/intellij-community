@@ -227,11 +227,11 @@
     <keyboard-shortcut first-keystroke="control meta alt SLASH"/>
     <keyboard-shortcut first-keystroke="shift F1"/>
   </action>
+  <action id="FileChooser.GoToParent"/>
+  <action id="FileChooser.GoToRoot"/>
   <action id="FileChooser.GotoHome"/>
   <action id="FileChooser.GotoProject"/>
   <action id="FileChooser.TogglePathBar"/>
-  <action id="FileChooserList.Root"/>
-  <action id="FileChooserList.LevelUp"/>
   <action id="FindNext">
     <keyboard-shortcut first-keystroke="meta G"/>
     <keyboard-shortcut first-keystroke="F3"/>

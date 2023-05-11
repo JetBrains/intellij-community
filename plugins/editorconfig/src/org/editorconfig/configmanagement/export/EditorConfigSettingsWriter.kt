@@ -10,7 +10,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.util.containers.MultiMap
 import org.editorconfig.Utils
 import org.editorconfig.configmanagement.ConfigEncodingManager
-import org.editorconfig.configmanagement.LineEndingsManager
 import org.editorconfig.configmanagement.StandardEditorConfigProperties
 import org.editorconfig.configmanagement.extended.EditorConfigIntellijNameUtil
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind
@@ -30,7 +29,8 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
   private var myNoHeaders = false
 
   // region Filters
-  private var myLanguages: Set<Language> = emptySet()
+  // null means no filtering -- settings for all languages should be written
+  private var myLanguages: Set<Language>? = null
   private var myPropertyKinds: Set<EditorConfigPropertyKind> = EnumSet.allOf(EditorConfigPropertyKind::class.java)
   // endregion
 
@@ -47,7 +47,7 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
     }
     val lineSeparator = Utils.getLineSeparatorString(mySettings.lineSeparator)
     if (lineSeparator != null) {
-      target[LineEndingsManager.lineEndingsKey] = lineSeparator
+      target["end_of_line"] = lineSeparator
     }
     target[StandardEditorConfigProperties.INSERT_FINAL_NEWLINE] = EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF.toString()
     val trimSpaces = Utils.getTrimTrailingSpaces()
@@ -123,7 +123,8 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
   @Throws(IOException::class)
   private fun writeLangSection(mapper: LanguageCodeStylePropertyMapper, pattern: String?): Boolean {
     val language = mapper.language
-    if (language in myLanguages) {
+    val languages = myLanguages
+    if (languages == null || language in languages) {
       val optionValueList = getKeyValuePairs(mapper)
       if (!optionValueList.isEmpty()) {
         if (pattern != null && !myNoHeaders) {

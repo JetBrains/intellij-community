@@ -1,19 +1,13 @@
 package org.intellij.plugins.markdown.formatter
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.RegistryKeyRule
 import org.intellij.plugins.markdown.formatter.MarkdownFormatterTest.Companion.performReformatting
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class FrontMatterFormatterTest: LightPlatformCodeInsightTestCase() {
-  @Rule
-  @JvmField
-  val rule = RegistryKeyRule("markdown.experimental.frontmatter.support.enable", true)
-
   @Test
   fun `test formatter does not affect frontmatter header content`() {
     // language=Markdown

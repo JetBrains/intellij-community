@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeHighlighting.*
@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
@@ -42,9 +41,11 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
       for (editor in EditorFactory.getInstance().allEditors) {
         clearModificationStamp(editor)
       }
-      ProjectManager.getInstance().openProjects.forEach { project ->
-        DaemonCodeAnalyzer.getInstance(project).restart()
-      }
+    }
+
+    fun restartDaemonUpdatingHints(project: Project) {
+      forceHintsUpdateOnNextPass()
+      DaemonCodeAnalyzer.getInstance(project).restart()
     }
 
     @JvmStatic
@@ -88,7 +89,7 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
       forceHintsUpdateOnNextPass()
     }
 
-    private fun getProviders(element: PsiElement, editor: Editor): List<ProviderWithSettings<out Any>> {
+    private fun getProviders(element: PsiElement, editor: Editor): List<ProviderWithSettings<*>> {
       val settings = InlayHintsSettings.instance()
       val language = element.language
 
@@ -97,22 +98,20 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
 
       return HintUtils.getHintProvidersForLanguage(language)
         .filter {
-          (!isDumbMode || DumbService.isDumbAware(it.provider))
-          && !(it.provider.group == InlayGroup.CODE_VISION_GROUP && Registry.`is`("editor.codeVision.new")) // to avoid cases when old and new code vision UI are shown
-          && (settings.hintsShouldBeShown(it.provider.key, language)
-              || isProviderAlwaysEnabledForEditor(editor, it.provider.key)) }
+          (!isDumbMode || DumbService.isDumbAware(it.provider)) &&
+          // to avoid cases when old and new code vision UI are shown
+          !(it.provider.group == InlayGroup.CODE_VISION_GROUP && Registry.`is`("editor.codeVision.new")) &&
+          (settings.hintsShouldBeShown(it.provider.key, language) || isProviderAlwaysEnabledForEditor(editor, it.provider.key))
+        }
     }
 
-    @ApiStatus.Internal
-    fun collectPlaceholders(file: PsiFile, editor: Editor): HintsBuffer? {
-      val collector = getProviders(file, editor).firstNotNullOfOrNull { it.getPlaceholdersCollectorFor(file, editor) }
-
-      return collector?.collectTraversing(editor, file, true)
+    internal fun collectPlaceholders(file: PsiFile, editor: Editor): HintsBuffer? {
+      val collector = getProviders(file, editor).firstNotNullOfOrNull { it.getPlaceholderCollectorFor(file, editor) }
+      return collector?.collectTraversing(editor = editor, file = file, enabled = true)
     }
 
     @ApiStatus.Internal
     @RequiresEdt
-    fun applyPlaceholders(file: PsiFile, editor: Editor, hints: HintsBuffer) =
-      InlayHintsPass.applyCollected(hints, file, editor, true)
+    fun applyPlaceholders(file: PsiFile, editor: Editor, hints: HintsBuffer) = InlayHintsPass.applyCollected(hints, file, editor, true)
   }
 }

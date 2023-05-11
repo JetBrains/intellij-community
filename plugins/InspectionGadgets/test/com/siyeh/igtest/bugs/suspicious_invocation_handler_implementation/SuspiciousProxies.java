@@ -4,6 +4,30 @@ import java.lang.reflect.Proxy;
 import java.util.*;
 
 class Test {
+  interface Abc { }
+
+  // IDEA-319193
+  public static void methodEquality() {
+    Abc a = (Abc) Proxy.newProxyInstance(
+      Abc.class.getClassLoader(),
+      new Class<?>[]{Abc.class},
+      (proxy, method, args) -> {
+        if (method.equals(Object.class.getDeclaredMethod("equals", Object.class))) {
+          return (Boolean) (proxy == args[0]);
+        } else if (method.equals(Object.class.getDeclaredMethod("hashCode"))) {
+          return (Integer) System.identityHashCode(proxy);
+        } else if (method.equals(Object.class.getDeclaredMethod("toString"))) {
+          return Abc.class.getSimpleName();
+        } else {
+          return null;
+        }
+      });
+
+    System.out.println(a.equals(a));
+    System.out.println(a.hashCode());
+    System.out.println(a);
+  }
+
   void test1() {
     Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
                            new Class[]{Runnable.class}, (proxy, method, params) -> {

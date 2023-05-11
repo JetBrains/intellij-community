@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.google.common.util.concurrent.Futures
@@ -83,14 +83,13 @@ object VcsLogNavigationUtil {
    * - Otherwise try main log tab.
    * - Otherwise create a new tab without filters and show commit there.
    */
-  private suspend fun showCommitInLogTab(project: Project, hash: Hash, root: VirtualFile,
-                                         requestFocus: Boolean, predicate: (MainVcsLogUi) -> Boolean): MainVcsLogUi? {
-    val logInitFuture = VcsProjectLog.waitWhenLogIsReady(project)
-    if (!logInitFuture.isDone) {
-      withContext(Dispatchers.IO) {
-        logInitFuture.get()
-      }
-    }
+  private suspend fun showCommitInLogTab(project: Project,
+                                         hash: Hash,
+                                         root: VirtualFile,
+                                         requestFocus: Boolean,
+                                         predicate: (MainVcsLogUi) -> Boolean): MainVcsLogUi? {
+    VcsProjectLog.waitWhenLogIsReady(project)
+
     val manager = VcsProjectLog.getInstance(project).logManager ?: return null
     val isLogUpToDate = manager.isLogUpToDate
     if (!manager.containsCommit(hash, root)) {
@@ -101,7 +100,7 @@ object VcsLogNavigationUtil {
 
     val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return null
     if (!window.isVisible) {
-      suspendCancellableCoroutine<Unit> { continuation ->
+      suspendCancellableCoroutine { continuation ->
         window.activate { continuation.resumeWith(Result.success(Unit)) }
       }
     }
@@ -141,12 +140,10 @@ object VcsLogNavigationUtil {
     return null
   }
 
-  private suspend fun MainVcsLogUi.showCommit(hash: Hash, root: VirtualFile,
-                                              requestFocus: Boolean): Boolean {
-    val jumpResult = jumpToCommitInternal(hash, root, true, requestFocus).await()
-    return when (jumpResult) {
+  private suspend fun MainVcsLogUi.showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
+    return when (jumpToCommitInternal(hash, root, true, requestFocus).await()) {
       JumpResult.SUCCESS -> true
-      null, JumpResult.COMMIT_NOT_FOUND -> {
+      JumpResult.COMMIT_NOT_FOUND -> {
         LOG.warn("Commit $hash for $root not found in $this")
         false
       }
@@ -165,7 +162,7 @@ object VcsLogNavigationUtil {
   }
 
   private suspend fun VcsLogManager.waitForRefresh() {
-    suspendCancellableCoroutine<Unit> { continuation ->
+    suspendCancellableCoroutine { continuation ->
       val dataPackListener = object : DataPackChangeListener {
         override fun onDataPackChange(newDataPack: DataPack) {
           if (isLogUpToDate) {
@@ -240,7 +237,7 @@ object VcsLogNavigationUtil {
    */
   @JvmStatic
   fun VcsLogUiEx.jumpToRefOrHash(reference: String, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
-    if (StringUtil.isEmptyOrSpaces(reference)) return Futures.immediateFuture(false)
+    if (reference.isBlank()) return Futures.immediateFuture(false)
     val future = SettableFuture.create<Boolean>()
     val refs = dataPack.refs
     ApplicationManager.getApplication().executeOnPooledThread {
@@ -311,13 +308,27 @@ object VcsLogNavigationUtil {
     return future
   }
 
+  @JvmStatic
+  fun VcsLogUiEx.jumpToCommit(commitIndex: Int, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
+    val future = SettableFuture.create<JumpResult>()
+    jumpTo(commitIndex, { visiblePack, id ->
+      if (visiblePack.dataPack is ErrorDataPack) return@jumpTo VcsLogUiEx.COMMIT_NOT_FOUND
+      if (visiblePack is ErrorVisiblePack) return@jumpTo VcsLogUiEx.COMMIT_DOES_NOT_MATCH
+      visiblePack.getCommitRow(id)
+    }, future, silently, focus)
+    return mapToJumpSuccess(future)
+  }
+
   private fun getBranchRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, referenceName: String): Int {
     val matchingRefs = visiblePack.refs.branches.filter { ref -> ref.name == referenceName }
-    if (matchingRefs.isEmpty()) {
-      return VcsLogUiEx.COMMIT_NOT_FOUND
+    if (matchingRefs.isEmpty()) return VcsLogUiEx.COMMIT_NOT_FOUND
+
+    val sortedRefs = matchingRefs.sortedWith(VcsGoToRefComparator(visiblePack.logProviders))
+    for (ref in sortedRefs) {
+      val branchRow = getCommitRow(vcsLogData.storage, visiblePack, ref.commitHash, ref.root)
+      if (branchRow >= 0) return branchRow
     }
-    val ref = matchingRefs.minWith(VcsGoToRefComparator(visiblePack.logProviders))
-    return getCommitRow(vcsLogData.storage, visiblePack, ref.commitHash, ref.root)
+    return VcsLogUiEx.COMMIT_DOES_NOT_MATCH
   }
 
   private fun getCommitRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, partialHash: String): Int {
@@ -349,15 +360,16 @@ object VcsLogNavigationUtil {
     if (visiblePack.dataPack is ErrorDataPack) return VcsLogUiEx.COMMIT_NOT_FOUND
     if (visiblePack is ErrorVisiblePack) return VcsLogUiEx.COMMIT_DOES_NOT_MATCH
 
-    val commitIndex = storage.getCommitIndex(hash, root)
-    val visibleGraph = visiblePack.visibleGraph
-    if (visibleGraph is VisibleGraphImpl<*>) {
-      val nodeId = (visibleGraph as VisibleGraphImpl<Int>).permanentGraph.permanentCommitsInfo.getNodeId(commitIndex)
-      if (nodeId == VcsLogUiEx.COMMIT_NOT_FOUND) return VcsLogUiEx.COMMIT_NOT_FOUND
-      if (nodeId < 0) return VcsLogUiEx.COMMIT_DOES_NOT_MATCH
-      return visibleGraph.linearGraph.getNodeIndex(nodeId) ?: VcsLogUiEx.COMMIT_DOES_NOT_MATCH
-    }
-    return visibleGraph.getVisibleRowIndex(commitIndex) ?: VcsLogUiEx.COMMIT_DOES_NOT_MATCH
+    return visiblePack.getCommitRow(storage.getCommitIndex(hash, root))
+  }
+
+  private fun VisiblePack.getCommitRow(commitIndex: Int): Int {
+    val visibleGraphImpl = visibleGraph as? VisibleGraphImpl<Int> ?: return visibleGraph.getVisibleRowIndex(commitIndex)
+                                                                            ?: VcsLogUiEx.COMMIT_DOES_NOT_MATCH
+    val nodeId = visibleGraphImpl.permanentGraph.permanentCommitsInfo.getNodeId(commitIndex)
+    if (nodeId == VcsLogUiEx.COMMIT_NOT_FOUND) return VcsLogUiEx.COMMIT_NOT_FOUND
+    if (nodeId < 0) return VcsLogUiEx.COMMIT_DOES_NOT_MATCH
+    return visibleGraphImpl.linearGraph.getNodeIndex(nodeId) ?: VcsLogUiEx.COMMIT_DOES_NOT_MATCH
   }
 
   private fun mapToJumpSuccess(future: ListenableFuture<JumpResult>): ListenableFuture<Boolean> {

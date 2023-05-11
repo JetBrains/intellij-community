@@ -23,6 +23,7 @@ import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.InvalidSdkException
+import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -111,6 +112,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
           generatorScriptExecution.addParameter("--init-state-file")
         }
       }
+      generatorScriptExecution.addEnvironmentVariable(PythonEnvUtil.PYTHONDONTWRITEBYTECODE, "1")
 
       val targetEnvironment = targetEnvRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
       try {

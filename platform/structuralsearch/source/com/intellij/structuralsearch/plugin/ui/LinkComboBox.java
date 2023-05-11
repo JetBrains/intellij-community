@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.NullableConsumer;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +18,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author Bas Leijdekkers
@@ -28,7 +28,7 @@ class LinkComboBox extends ActionLink {
   private final List<String> myItems = new SmartList<>();
   private String mySelectedItem;
   private @NlsContexts.Label String myDefaultItem;
-  private NullableConsumer<? super String> myConsumer;
+  private @Nullable Consumer<? super String> myConsumer;
 
   LinkComboBox(@NlsContexts.Label String defaultItem) {
     setAutoHideOnDisable(false);
@@ -37,7 +37,7 @@ class LinkComboBox extends ActionLink {
     addActionListener(e -> showPopup());
   }
 
-  public void setItemConsumer(@Nullable NullableConsumer<? super String> consumer) {
+  public void setItemConsumer(@Nullable Consumer<? super String> consumer) {
     myConsumer = consumer;
   }
 
@@ -89,7 +89,7 @@ class LinkComboBox extends ActionLink {
       @Override
       public PopupStep<?> onChosen(@NlsContexts.Label String selectedValue, boolean finalChoice) {
         setSelectedItem(selectedValue);
-        if (myConsumer != null) myConsumer.consume(selectedValue);
+        if (myConsumer != null) myConsumer.accept(selectedValue);
         return super.onChosen(selectedValue, finalChoice);
       }
 

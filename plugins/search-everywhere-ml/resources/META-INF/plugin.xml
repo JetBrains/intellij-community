@@ -13,16 +13,15 @@
   ]]></description>
 
   <content>
+    <module name="intellij.searchEverywhereMl.typos"/>
     <module name="intellij.searchEverywhereMl.yaml"/>
     <module name="intellij.searchEverywhereMl.vcs"/>
-    <module name="intellij.searchEverywhereMl.java"/>
-    <module name="intellij.searchEverywhereMl.kotlin"/>
   </content>
 
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhereMlService implementation="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService"/>
+    <searchEverywhereMlService implementation="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlServiceImpl"/>
     <statistic.eventLog.eventLoggerProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereEventLoggerProvider"
       order="first"/>
@@ -58,6 +57,9 @@
     <registryKey defaultValue="-1"
                  description="Defines the experiment group number. Negative value will be ignored."
                  key="search.everywhere.ml.experiment.group"/>
+    <registryKey defaultValue="false"
+                 description="Mark position changes in Search Everywhere"
+                 key="search.everywhere.ml.show.diff"/>
 
     <registryKey defaultValue=""
                  description="Path to the local action-ranking model."
@@ -84,6 +86,8 @@
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereRunConfigurationFeaturesProvider$RunConfigurationTypeValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereMlElementFeatureValidationRule"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLStatisticsCollector"/>
   </extensions>

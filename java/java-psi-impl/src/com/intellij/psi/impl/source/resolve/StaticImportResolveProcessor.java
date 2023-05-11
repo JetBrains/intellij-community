@@ -44,7 +44,7 @@ public class StaticImportResolveProcessor implements PsiScopeProcessor, NameHint
 
   private static boolean checkDomination(final PsiMember candidate, final List<JavaResolveResult> results) {
     if (!results.isEmpty()) {
-      for (ListIterator<JavaResolveResult> i = results.listIterator(results.size()); i.hasPrevious();) {
+      for (ListIterator<JavaResolveResult> i = results.listIterator(results.size()); i.hasPrevious(); ) {
         final Domination domination = dominates(candidate, (PsiMember)i.previous().getElement());
         if (domination == Domination.DOMINATED_BY) {
           return true;
@@ -102,7 +102,7 @@ public class StaticImportResolveProcessor implements PsiScopeProcessor, NameHint
 
   private static void filterInvalid(final List<JavaResolveResult> resultList) {
     if (resultList.isEmpty()) return;
-    for (ListIterator<JavaResolveResult> i = resultList.listIterator(resultList.size()); i.hasPrevious();) {
+    for (ListIterator<JavaResolveResult> i = resultList.listIterator(resultList.size()); i.hasPrevious(); ) {
       if (!i.previous().isValidResult()) i.remove();
     }
   }
@@ -124,6 +124,39 @@ public class StaticImportResolveProcessor implements PsiScopeProcessor, NameHint
 
     @Override
     public boolean isStaticsScopeCorrect() {
+      return true;
+    }
+
+    @Override
+    public boolean isValidResult() {
+      return super.isValidResult() && checkStaticInterfaceMethodCallQualifier();
+    }
+
+    /**
+     * Return false if the result with methods from interfaces refers to another class or interface<br>
+     * (see JavaMethodsConflictResolver.checkStaticMethodsOfInterfaces(),
+     * and HighlightMethodUtil.checkStaticInterfaceMethodCallQualifier())
+     */
+    private boolean checkStaticInterfaceMethodCallQualifier() {
+      PsiElement element = getElement();
+      if (!(element instanceof PsiMethod)) {
+        return true;
+      }
+
+      PsiElement qualifier = myReference.getQualifier();
+      if (!(qualifier instanceof PsiReference)) {
+        return true;
+      }
+      PsiElement resolved = ((PsiReference)qualifier).resolve();
+      if (!(resolved instanceof PsiClass)) {
+        return true;
+      }
+      PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+      if (containingClass != null && containingClass.isInterface()) {
+        if (!containingClass.getManager().areElementsEquivalent(resolved, containingClass)) {
+          return false;
+        }
+      }
       return true;
     }
   }

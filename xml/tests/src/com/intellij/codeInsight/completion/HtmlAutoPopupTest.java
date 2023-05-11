@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.HtmlSettings;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -167,6 +168,19 @@ public class HtmlAutoPopupTest extends CompletionAutoPopupTestCase {
     assertNull(getLookup().getCurrentItemOrEmpty());
     myFixture.type("\n");
     myFixture.checkResult("p\n");
+  }
+
+  public void testTypingInHtmlDisabledAutopopup() {
+    myFixture.configureByText(HtmlFileType.INSTANCE, "<caret>");
+    try {
+      HtmlSettings.getInstance().AUTO_POPUP_TAG_CODE_COMPLETION_ON_TYPING_IN_TEXT = false;
+      type("p");
+      assertNull(getLookup());
+      myFixture.completeBasic();
+      assertContainsElements(myFixture.getLookupElementStrings(), "<pre", "<p", "<picture");
+    } finally {
+      HtmlSettings.getInstance().AUTO_POPUP_TAG_CODE_COMPLETION_ON_TYPING_IN_TEXT = true;
+    }
   }
 
   public void testStartsWithCharMatchingAutoPopup() {

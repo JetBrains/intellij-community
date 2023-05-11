@@ -5,11 +5,13 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 
 @Deprecated("Use Panel.collapsibleGroup in Kotlin UI DSL 2")
+@ApiStatus.ScheduledForRemoval
 class HideableTitledSeparator(@NlsContexts.Separator title: String) : TitledSeparator(title) {
 
   private var isExpanded: Boolean = true

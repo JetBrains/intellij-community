@@ -13,9 +13,9 @@ internal interface FeaturesProviderTestCase {
 
   fun roundDouble(value: Double) = SearchEverywhereElementFeaturesProvider.roundDouble(value)
 
-  fun checkThatFeature(feature: String) = AssertionElementSelector(this, feature)
+  fun <T> checkThatFeature(feature: EventField<T>) = AssertionElementSelector(this, feature)
 
-  fun checkThatFeatures() = AssertionElementSelector(this, null)
+  fun checkThatFeatures() = AssertionElementSelector<List<*>>(this, null)
 
   /**
    * The [AssertionElementSelector] and its inner classes allow for writing concise
@@ -33,7 +33,7 @@ internal interface FeaturesProviderTestCase {
    *   - [AssertionSpecifier.withQuery]
    *   - [AssertionSpecifier.withPriority]
    */
-  class AssertionElementSelector(private val testCase: FeaturesProviderTestCase, private val feature: String?) {
+  class AssertionElementSelector<T>(private val testCase: FeaturesProviderTestCase, private val feature: EventField<T>?) {
     fun <E : Any> ofElement(element: E) = AssertionSpecifier(element)
 
     inner class AssertionSpecifier<E : Any>(private val element: E) {
@@ -78,21 +78,22 @@ internal interface FeaturesProviderTestCase {
       /**
        * Checks if the specified [feature] of the element has the [expectedValue]
        */
-      fun isEqualTo(expectedValue: Any?) = assert(expectedValue)
+      fun isEqualTo(expectedValue: T) = assert(expectedValue)
 
       /**
        * Checks if the value of the [feature] will change from [from] to [to] after the specified operation is performed.
        *
        * @see ChangeOperation.after
        */
-      fun changes(from: Any?, to: Any?) = ChangeOperation(from, to)
+      fun changes(from: T, to: T) = ChangeOperation(from, to)
 
       /**
        * Checks whether feature exists or not
        */
       fun exists(expected: Boolean) {
         features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache)
-        val containsFeature = feature in features.map { it.field.name }
+        if (feature == null) throw IllegalStateException("Cannot check if a feature exists with no feature specified")
+        val containsFeature = feature in features.map { it.field }
         assertEquals(expected, containsFeature)
       }
 
@@ -100,15 +101,14 @@ internal interface FeaturesProviderTestCase {
         features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache)
 
         for (missingFeature in expectedMissingFeatures) {
-          val featureName = missingFeature.name
-          val actualFeatureByName = features.find { it.field.name == featureName }
+          val actualFeatureByName = features.find { it.field == missingFeature }
           if (actualFeatureByName != null) {
-            fail("Feature '$featureName' should not be reported")
+            fail("Feature '${missingFeature.name}' should not be reported")
           }
         }
       }
 
-      private fun assert(expectedValue: Any?) {
+      private fun assert(expectedValue: T?) {
         features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache)
 
         if (features.isEmpty()) {
@@ -117,35 +117,25 @@ internal interface FeaturesProviderTestCase {
           return
         }
 
+        @Suppress("UNCHECKED_CAST")
         when (feature) {
-          null -> assertMultipleFeatures(expectedValue)
+          null -> assertMultipleFeatures(expectedValue as List<EventPair<*>>)
           else -> assertSingleFeature(feature, expectedValue)
         }
       }
 
-      private fun assertSingleFeature(key: String, expectedValue: Any?) {
-        val actualValue = features.find { it.field.name == key }
-        assertEquals("Assertion of the feature $key has failed", expectedValue, actualValue?.data)
+      private fun assertSingleFeature(feature: EventField<*>, expectedValue: Any?) {
+        val actualValue = features.find { it.field == feature }
+        assertEquals("Assertion of the feature ${feature.name} has failed", expectedValue, actualValue?.data)
       }
 
-      private fun assertMultipleFeatures(expectedValue: Any?) {
-        if (expectedValue == null) {
-          throw IllegalArgumentException("The expected value for checkThatFeatures() must be of type List<EventPair<*>>, not null")
-        }
-        else if (expectedValue !is List<*>) {
-          throw IllegalArgumentException("The expected value for checkThatFeatures() must be of type List<EventPair<*>>")
-        }
-
+      private fun assertMultipleFeatures(expectedValue: List<EventPair<*>>) {
         for (expected in expectedValue) {
-          if (expected !is EventPair<*>) {
-            throw IllegalArgumentException("The expected value for checkThatFeatures() must be of type List<EventPair<*>>")
-          }
-
-          assertSingleFeature(expected.field.name, expected.data)
+          assertSingleFeature(expected.field, expected.data)
         }
       }
 
-      inner class ChangeOperation(private val oldValue: Any?, private val newValue: Any?) {
+      inner class ChangeOperation(private val oldValue: T?, private val newValue: T?) {
         /**
          * Checks if the value of the feature will change after [operation] is performed.
          */

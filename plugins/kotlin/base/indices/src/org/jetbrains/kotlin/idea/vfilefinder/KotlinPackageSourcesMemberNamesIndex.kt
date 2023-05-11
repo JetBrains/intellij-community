@@ -6,11 +6,13 @@ import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.parsing.KotlinParserDefinition
+import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_EXT
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.DataInput
 import java.io.DataOutput
+
+private const val KOTLIN_DOT_FILE_EXTENSION = ".${KotlinFileType.EXTENSION}"
 
 class KotlinPackageSourcesMemberNamesIndex internal constructor() : FileBasedIndexExtension<String, Collection<String>>() {
     companion object {
@@ -28,7 +30,10 @@ class KotlinPackageSourcesMemberNamesIndex internal constructor() : FileBasedInd
     override fun getValueExternalizer() = StringSetExternalizer
 
     override fun getInputFilter(): FileBasedIndex.InputFilter =
-        FileBasedIndex.InputFilter { file -> file.extension == KotlinFileType.EXTENSION || file.extension == KotlinParserDefinition.STD_SCRIPT_SUFFIX }
+        FileBasedIndex.InputFilter { file ->
+            file.nameSequence.endsWith(KOTLIN_DOT_FILE_EXTENSION)
+            || file.nameSequence.endsWith(STD_SCRIPT_EXT)
+        }
 
     override fun getVersion(): Int = 2
 

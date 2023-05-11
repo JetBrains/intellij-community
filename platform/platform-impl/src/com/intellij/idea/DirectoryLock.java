@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.Suppressions;
 import com.intellij.util.User32Ex;
 import com.sun.jna.platform.win32.WinDef;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,8 +47,8 @@ final class DirectoryLock {
     }
 
     @Override
-    public String getMessage() {
-      return getCause().getMessage();
+    public @Nls String getMessage() {
+      return BootstrapBundle.message("bootstrap.error.cannot.activate.message", getCause().getClass().getSimpleName(), getCause().getMessage());
     }
   }
 
@@ -57,7 +58,6 @@ final class DirectoryLock {
   private static final int MARKER = 0xFACADE;
   private static final int HEADER_LENGTH = 6;  // the marker (4 bytes) + a packet length (2 bytes)
   private static final String SERVER_THREAD_NAME = "External Command Listener";
-  private static final String INTERNAL_DIAGNOSTIC_COMMAND = "ij-activation-diagnostic";
 
   private static final Logger LOG = Logger.getInstance(DirectoryLock.class);
   private static final AtomicInteger COUNT = new AtomicInteger();  // to ensure redirected port file uniqueness in tests
@@ -75,7 +75,7 @@ final class DirectoryLock {
     myPortFile = systemPath.resolve(SpecialConfigFiles.PORT_FILE);
     myLockFile = configPath.resolve(SpecialConfigFiles.LOCK_FILE);
 
-    myFallbackMode = myPortFile.getFileSystem().getClass().getModule() != Object.class.getModule();
+    myFallbackMode = !areUdsSupported(myPortFile);
 
     if (!myFallbackMode && myPortFile.toString().length() > UDS_PATH_LENGTH_LIMIT) {
       var baseDir = SystemInfoRt.isWindows ? Path.of(System.getenv("SystemRoot"), "Temp") : Path.of("/tmp");
@@ -88,41 +88,53 @@ final class DirectoryLock {
     myProcessor = processor;
   }
 
+  private static boolean areUdsSupported(Path file) {
+    if (!SystemInfoRt.isUnix) {
+      try {
+        SocketChannel.open(StandardProtocolFamily.UNIX).close();
+      }
+      catch (UnsupportedOperationException e) {
+        return false;
+      }
+      catch (IOException ignored) { }
+    }
+
+    return file.getFileSystem().getClass().getModule() == Object.class.getModule();
+  }
+
   /**
    * Tries to grab a port file and start listening for incoming requests.
    * Failing that, attempts to connect via the existing port file to an already running instance.
    * Returns {@code null} on successfully locking the directories, a non-null value on successfully activating another instance,
    * or throws a {@link CannotActivateException}.
    */
-  @Nullable CliResult lockOrActivate(@NotNull Path currentDirectory, @NotNull List<String> args) throws CannotActivateException {
+  @Nullable CliResult lockOrActivate(@NotNull Path currentDirectory, @NotNull List<String> args) throws CannotActivateException, IOException {
+    var configDir = NioFiles.createDirectories(myLockFile.getParent());
+    var systemDir = NioFiles.createDirectories(myPortFile.getParent());
+    if (Files.isSameFile(systemDir, configDir)) {
+      throw new IllegalArgumentException(BootstrapBundle.message("bootstrap.error.same.directories"));
+    }
+
     try {
-      var configDir = NioFiles.createDirectories(myLockFile.getParent());
-      var systemDir = NioFiles.createDirectories(myPortFile.getParent());
-      if (Files.isSameFile(systemDir, configDir)) {
-        throw new IllegalArgumentException(BootstrapBundle.message("bootstrap.error.same.directories"));
-      }
-
-      try {
-        return tryListen();
-      }
-      catch (BindException | FileAlreadyExistsException e) {
-        LOG.debug(e);
-      }
-
-      try {
-        return tryConnect(args, currentDirectory);
-      }
-      catch (SocketException e) {
-        LOG.debug(e);
-      }
-
-      Files.deleteIfExists(myPortFile);
       return tryListen();
+    }
+    catch (BindException | FileAlreadyExistsException e) {
+      LOG.debug(e);
+    }
+
+    try {
+      return tryConnect(args, currentDirectory);
+    }
+    catch (SocketException e) {
+      LOG.debug(e);
     }
     catch (IOException e) {
       LOG.debug(e);
       throw new CannotActivateException(e);
     }
+
+    Files.deleteIfExists(myPortFile);
+    return tryListen();
   }
 
   void dispose() {
@@ -273,13 +285,7 @@ final class DirectoryLock {
 
       CliResult result;
       try {
-        if (request.size() == 2 && INTERNAL_DIAGNOSTIC_COMMAND.equals(request.get(1))) {
-          @SuppressWarnings("HardCodedStringLiteral") var message = "PID=" + myPid + " thread=" + Thread.currentThread();
-          result = new CliResult(0, message);
-        }
-        else {
-          result = myProcessor.apply(request);
-        }
+        result = myProcessor.apply(request);
       }
       catch (Throwable t) {
         LOG.error(t);

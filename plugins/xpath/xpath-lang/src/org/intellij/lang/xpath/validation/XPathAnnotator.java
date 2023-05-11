@@ -274,12 +274,12 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
       if (!variableResolver.canResolve()) {
         final Object[] variablesInScope = variableResolver.getVariablesInScope(reference);
         if (variablesInScope instanceof String[]) {
-          final Set<String> variables = ContainerUtil.set((String[])variablesInScope);
+          final Set<String> variables = ContainerUtil.newHashSet((String[])variablesInScope);
           if (!variables.contains(reference.getReferencedName())) {
             markUnresolvedVariable(reference, holder);
           }
         } else if (variablesInScope instanceof QName[]) {
-          final Set<QName> variables = ContainerUtil.set((QName[])variablesInScope);
+          final Set<QName> variables = ContainerUtil.newHashSet((QName[])variablesInScope);
           if (!variables.contains(contextProvider.getQName(reference))) {
             markUnresolvedVariable(reference, holder);
           }

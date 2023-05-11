@@ -31,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
 import org.jetbrains.idea.maven.MavenVersionSupportUtil;
 import org.jetbrains.idea.maven.config.MavenConfig;
-import org.jetbrains.idea.maven.execution.MavenRCSettingsWatcher;
-import org.jetbrains.idea.maven.execution.MavenSettingsObservable;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -51,7 +49,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObservable {
+public class MavenEnvironmentForm implements PanelWithAnchor {
   private JPanel panel;
   private LabeledComponent<ComponentWithBrowseButton<TextFieldWithHistory>> mavenHomeComponent;
   private ContextHelpLabel mavenHomeOnTargetHelpLabel;
@@ -177,8 +175,11 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
                                                () -> {
                                                  final String resolvedMavenHome = resolveMavenHome(data.getMavenHome());
                                                  final String mavenHome = ObjectUtils.chooseNotNull(resolvedMavenHome, data.getMavenHome());
+                                                 if (MavenServerManager.BUNDLED_MAVEN_4.equals(mavenHome)) {
+                                                   return MavenProjectBundle.message("maven.bundled.version.4.title");
+                                                 }
                                                  if (MavenServerManager.BUNDLED_MAVEN_3.equals(mavenHome)) {
-                                                   return MavenProjectBundle.message("maven.bundled.version.title");
+                                                   return MavenProjectBundle.message("maven.bundled.version.3.title");
                                                  }
                                                  if (MavenServerManager.WRAPPED_MAVEN.equals(mavenHome)) {
                                                    return MavenProjectBundle.message("maven.wrapper.version.title");
@@ -197,15 +198,6 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
     localRepositoryOverrider.reset(data.getLocalRepository());
   }
 
-  @Override
-  public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
-    watcher.registerComponent("mavenHome", mavenHomeField);
-    watcher.registerComponent("settingsFileOverride.checkbox", userSettingsFileOverrider.checkBox);
-    watcher.registerComponent("settingsFileOverride.text", userSettingsFileOverrider.component);
-    watcher.registerComponent("localRepoOverride.checkbox", localRepositoryOverrider.checkBox);
-    watcher.registerComponent("localRepoOverride.text", localRepositoryOverrider.component);
-  }
-
   @Nullable
   private static String resolveMavenHome(@Nullable String mavenHome) {
     if (StringUtil.equals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome) ||
@@ -218,7 +210,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
 
   private void updateMavenVersionLabel() {
     boolean localTarget = myTargetName == null;
-    String version = MavenUtil.getMavenVersion(MavenServerManager.getMavenHomeFile(getMavenHome()));
+    String version = MavenUtil.getMavenVersion(MavenUtil.getMavenHomeFile(getMavenHome()));
     String versionText = null;
     if (version != null) {
       if (StringUtil.compareVersionNumbers(version, "3") < 0) {
@@ -259,7 +251,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
   @Nullable
   public String getMavenHome() {
     String mavenHome = FileUtil.toSystemIndependentName(mavenHomeField.getText().trim());
-    final File mavenHomeFile = MavenServerManager.getMavenHomeFile(mavenHome);
+    final File mavenHomeFile = MavenUtil.getMavenHomeFile(mavenHome);
     return mavenHomeFile != null ? mavenHomeFile.getPath() : null;
   }
 

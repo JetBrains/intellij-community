@@ -4,8 +4,8 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.TestCaseLoader
-import com.intellij.diagnostic.telemetry.use
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.use
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
@@ -66,6 +66,15 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
   }
 
+  private fun loadTestRunConfigurations(): List<JUnitRunConfigurationProperties>? {
+    val testConfigurationsOption = options.testConfigurations ?: return null
+    return testConfigurationsOption
+      .splitToSequence(';')
+      .filter(String::isNotEmpty)
+      .flatMap(::loadRunConfigurations)
+      .toList()
+  }
+
   override fun runTests(additionalJvmOptions: List<String>, defaultMainModule: String?, rootExcludeCondition: ((Path) -> Boolean)?) {
     if (options.isTestDiscoveryEnabled && options.isPerformanceTestsOnly) {
       context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
@@ -75,23 +84,28 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val mainModule = options.mainModule ?: defaultMainModule!!
     checkOptions(mainModule)
 
-    val compilationTasks = create(context)
-    options.beforeRunProjectArtifacts?.splitToSequence(';')?.filterNotTo(HashSet(), String::isEmpty)?.let {
-      compilationTasks.buildProjectArtifacts(it)
-    }
+    val runConfigurations = loadTestRunConfigurations()
 
-    val runConfigurations = options.testConfigurations
-      ?.splitToSequence(';')
-      ?.filter(String::isNotEmpty)
-      ?.flatMap(::loadRunConfigurations)
-      ?.toList()
-    if (runConfigurations != null) {
-      compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"),
-                                      listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName })
-      compilationTasks.buildProjectArtifacts(runConfigurations.flatMapTo(LinkedHashSet()) { it.requiredArtifacts })
+    try {
+      val compilationTasks = create(context)
+      options.beforeRunProjectArtifacts?.splitToSequence(';')?.filterNotTo(HashSet(), String::isEmpty)?.let {
+        compilationTasks.buildProjectArtifacts(it)
+      }
+
+      if (runConfigurations != null) {
+        compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"),
+                                        listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName })
+        compilationTasks.buildProjectArtifacts(runConfigurations.flatMapTo(LinkedHashSet()) { it.requiredArtifacts })
+      }
+      else {
+        compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"), listOf(mainModule, "intellij.platform.buildScripts"))
+      }
     }
-    else {
-      compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"), listOf(mainModule, "intellij.platform.buildScripts"))
+    catch (e: Exception) {
+      if (options.isCancelBuildOnTestPreparationFailure) {
+        throw BuildCancellationException(e)
+      }
+      throw e
     }
 
     val remoteDebugJvmOptions = System.getProperty("teamcity.remote-debug.jvm.options")
@@ -298,7 +312,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
     val testClasspath: List<String>
     val modulePath : List<String>?
-    
+
     val moduleInfoFile = JpsJavaExtensionService.getInstance().getJavaModuleIndex(context.project).getModuleInfoFile(mainJpsModule, true)
     val toStringConverter: (File) -> String? = { if (it.exists()) it.absolutePath else null }
     if (moduleInfoFile != null) {
@@ -321,7 +335,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     testPatterns?.let { allSystemProperties.putIfAbsent("intellij.build.test.patterns", it) }
     testGroups?.let { allSystemProperties.putIfAbsent("intellij.build.test.groups", it) }
     allSystemProperties.putIfAbsent("intellij.build.test.sorter", System.getProperty("intellij.build.test.sorter"))
-    allSystemProperties.putIfAbsent("bootstrap.testcases", "com.intellij.AllTests")
+    allSystemProperties.putIfAbsent(TestingTasks.BOOTSTRAP_TESTCASES_PROPERTY, "com.intellij.AllTests")
     allSystemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.isPerformanceTestsOnly.toString())
     val allJvmArgs = ArrayList(jvmArgs)
     prepareEnvForTestRun(allJvmArgs, allSystemProperties, bootstrapClasspath.toMutableList(), remoteDebugging)
@@ -389,7 +403,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val option = "-XX:HeapDumpPath="
     val file = Path.of(jvmArgs.first { it.startsWith(option) }.substring(option.length))
     if (Files.exists(file)) {
-      context.notifyArtifactWasBuilt(file)
+      context.notifyArtifactBuilt(file)
     }
   }
 
@@ -424,12 +438,16 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     jvmArgs += options.jvmMemoryOptions?.split(Regex("\\s+")) ?: listOf("-Xms750m", "-Xmx750m")
 
     val tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
+    val ideaSystemPath = Path.of("${tempDir}/system")
+    context.messages.block("idea.system.path cleanup") {
+      NioFiles.deleteRecursively(ideaSystemPath)
+    }
     @Suppress("SpellCheckingInspection")
     mapOf(
       "idea.platform.prefix" to options.platformPrefix,
       "idea.home.path" to context.paths.projectHome.toString(),
       "idea.config.path" to "${tempDir}/config",
-      "idea.system.path" to "${tempDir}/system",
+      "idea.system.path" to "$ideaSystemPath",
       "intellij.build.compiled.classes.archives.metadata" to System.getProperty("intellij.build.compiled.classes.archives.metadata"),
       "intellij.build.compiled.classes.archive" to System.getProperty("intellij.build.compiled.classes.archive"),
       BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY to "${context.classesOutputDirectory}",

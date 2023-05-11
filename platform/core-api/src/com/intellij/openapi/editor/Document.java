@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -17,8 +17,8 @@ import java.beans.PropertyChangeListener;
  * text editor. Line breaks in the document text are always normalized as single {@code \n} characters,
  * and are converted to proper format when the document is saved.
  * <p/>
- * Please see <a href="https://plugins.jetbrains.com/docs/intellij/documents.html">IntelliJ Platform Docs</a>.
- * for high-level overview.
+ * Please see <a href="https://plugins.jetbrains.com/docs/intellij/documents.html">IntelliJ Platform Docs</a>
+ * for a high-level overview.
  *
  * @see Editor#getDocument()
  * @see com.intellij.psi.PsiDocumentManager

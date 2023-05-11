@@ -91,22 +91,9 @@ View root() {
     }
     my-utils() {
       Tasks() {
-        build() {
-          assemble()
-          build()
-          buildDependents()
-          buildNeeded()
-          classes()
-          clean()
-          jar()
-          testClasses()
-        }
         build setup() {
           init()
           wrapper()
-        }
-        documentation() {
-          javadoc()
         }
         help() {
           buildEnvironment()
@@ -119,16 +106,6 @@ View root() {
           projects()
           properties()
           tasks()
-        }
-        other() {
-          compileJava()
-          compileTestJava()
-          processResources()
-          processTestResources()
-        }
-        verification() {
-          check()
-          test()
         }
       }
       number-utils() {

@@ -1,0 +1,182 @@
+alias
+ant
+apt
+apt-cache
+apt-get
+assoc
+attrib
+az
+brew
+cargo
+cat
+cd
+chkdsk
+chmod
+chown
+cipher
+clear
+cls
+code
+command
+compact
+copy
+cp
+curl
+cypress
+del
+df
+dig
+dir
+docker
+docker compose
+docker-compose
+du
+echo
+eslint
+exit
+expand
+export
+find
+format
+free
+g++
+gcc
+gdb
+git
+git add
+git branch
+git checkout
+git clone
+git commit
+git diff
+git init
+git log
+git merge
+git pull
+git push
+git rebase
+git reset
+git stash
+git status
+git tag
+gradle
+grep
+grunt
+gulp
+helm
+help
+hg
+history
+hostname
+htop
+ifconfig
+ip
+ipconfig
+java
+javac
+jest
+karma
+kill
+kubectl
+less
+ls
+make
+md
+mkdir
+mocha
+mode
+more
+move
+msbuild
+mv
+mvn
+nano
+net
+netsh
+netstat
+ng
+node
+nodejs
+npm
+npm install
+npm run
+npm test
+npx
+nslookup
+nvm
+pathping
+pause
+ping
+playwright
+pnpm
+pnpm install
+pnpm run
+pnpm test
+powershell
+prettier
+prompt
+ps
+pwd
+pwsh
+python
+rd
+reg
+rm
+rmdir
+route
+rsync
+ruby
+rustup
+rvm
+sc
+scp
+screen
+service
+set
+shutdown
+sort
+source
+ssh
+ssh-keygen
+start
+subst
+sudo
+svn
+svn checkout
+svn commit
+svn status
+svn update
+systemctl
+systeminfo
+tar
+taskkill
+tasklist
+taskmgr
+telnet
+title
+top
+touch
+traceroute
+tracert
+tree
+type
+unzip
+vagrant
+valgrind
+ver
+vi
+vim
+vitest
+webpack
+wget
+whence
+where
+which
+whois
+xcopy
+yarn
+yarn install
+yarn run
+yarn test
+yum
+zip

@@ -4,10 +4,12 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamBase;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
@@ -20,7 +22,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -79,6 +80,9 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
         return null;
       }
+      else if (attributeRecordId < NON_EXISTENT_ATTR_RECORD_ID) {
+        throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attributeRecordId + "] is negative, must be >=0");
+      }
       final int encodedAttributeId = connection.getAttributeId(attribute.getId());
 
       final byte[] attributeValueBytes = readAttributeValue(
@@ -92,6 +96,34 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       return new AttributeInputStream(
         new UnsyncByteArrayInputStream(attributeValueBytes),
         connection.getEnumeratedAttributes()
+      );
+    }
+    finally {
+      lock.readLock().unlock();
+    }
+  }
+
+  public <R> R readAttributeRaw(final PersistentFSConnection connection,
+                                final int fileId,
+                                final @NotNull FileAttribute attribute,
+                                final ByteBufferReader<R> reader) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(fileId);
+    lock.readLock().lock();
+    try {
+      final int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
+      if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+        return null;
+      }
+      if (attributeRecordId < 0) {
+        throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attributeRecordId + "] is negative, must be >=0");
+      }
+      final int encodedAttributeId = connection.getAttributeId(attribute.getId());
+
+      return readAttributeValue(
+        attributeRecordId,
+        fileId,
+        encodedAttributeId,
+        reader
       );
     }
     finally {
@@ -231,7 +263,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   public static boolean deleteStorageFiles(final Path file) throws IOException {
-    return Files.deleteIfExists(file);
+    return FileUtil.delete(file.toFile());
   }
 
   /**
@@ -479,6 +511,11 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       final byte[] entryValue = new byte[valueLength];
       buffer.get(inlinedValueStartOffset(), entryValue);
       return entryValue;
+    }
+
+    public ByteBuffer inlinedValueAsSlice() {
+      final int valueLength = inlinedValueLength();
+      return buffer.slice(inlinedValueStartOffset(), valueLength);
     }
 
     @Override
@@ -878,6 +915,40 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
 
   @VisibleForTesting
   //@GuardedBy("lock")
+  protected <R> R readAttributeValue(final int attributesRecordId,
+                                     final int fileId,
+                                     final int attributeId,
+                                     final ByteBufferReader<R> reader) throws IOException {
+    return storage.readRecord(attributesRecordId, buffer -> {
+      final AttributesRecord attributesRecord = new AttributesRecord(buffer);
+      assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
+                                                        " != backref fileId(" + attributesRecord.backRefFileId + ")";
+
+      if (!attributesRecord.findAttributeInDirectoryRecord(attributeId)) {
+        return null;
+      }
+
+      final AttributeEntry attributeEntry = attributesRecord.currentEntry();
+      if (attributeEntry.isValueInlined()) {
+        return reader.read(attributeEntry.inlinedValueAsSlice());
+      }
+
+      final int dedicatedRecordId = attributeEntry.dedicatedValueRecordId();
+      return storage.readRecord(
+        dedicatedRecordId,
+        dedicatedRecordBuffer -> reader.read(
+          readDedicatedRecordPayloadAsSlice(
+            attributesRecordId, fileId, attributeEntry.attributeId,
+            dedicatedRecordBuffer
+          )
+        )
+      );
+    });
+  }
+
+
+  @VisibleForTesting
+  //@GuardedBy("lock")
   protected boolean hasAttribute(final int attributesRecordId,
                                  final int fileId,
                                  final int attributeId) throws IOException {
@@ -954,6 +1025,22 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     dedicatedRecordBuffer.get(AttributesRecord.DEDICATED_RECORD_HEADER_SIZE, entryValue);
     return entryValue;
   }
+
+  private static ByteBuffer readDedicatedRecordPayloadAsSlice(final int dedicatedAttributeRecordId,
+                                                              final int fileId,
+                                                              final int attributeId,
+                                                              final ByteBuffer dedicatedRecordBuffer) {
+    final int backRefFileId = -dedicatedRecordBuffer.getInt(AttributesRecord.RECORD_FILE_ID_OFFSET);
+    final int backRefAttributeId = dedicatedRecordBuffer.getInt(AttributesRecord.DEDICATED_RECORD_ATTRIBUTE_ID_OFFSET);
+    assert backRefFileId == fileId : "record(" + dedicatedAttributeRecordId + ").fileId(" + fileId + ") " +
+                                     "!= backref fileId(" + backRefFileId + ")";
+    assert backRefAttributeId == attributeId : "record(" + attributeId + ").attributeId(" + attributeId + ") " +
+                                               "!= backref attributeId(" + backRefAttributeId + ")";
+
+    final int valueLength = dedicatedRecordBuffer.remaining() - AttributesRecord.DEDICATED_RECORD_HEADER_SIZE;
+    return dedicatedRecordBuffer.slice(AttributesRecord.DEDICATED_RECORD_HEADER_SIZE, valueLength);
+  }
+
 
   private int writeDedicatedAttributeRecord(final int dedicatedAttributeRecordId,
                                             final int fileId,

@@ -33,6 +33,7 @@ import com.intellij.refactoring.rename.BindablePsiReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ArrayListSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
@@ -166,7 +167,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
     if (projectToSearchFrom == null) {
       return null;
     }
-    return TargetResolver.resolve(projectToSearchFrom, contextTarget, referenceText == null ? Collections.emptyList() : Collections.singletonList(referenceText));
+    return TargetResolver.resolve(projectToSearchFrom, contextTarget, ContainerUtil.createMaybeSingletonList(referenceText));
   }
 
   private Set<String> getExistingNames() {

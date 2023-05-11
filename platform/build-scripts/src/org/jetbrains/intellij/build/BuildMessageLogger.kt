@@ -21,19 +21,7 @@ open class LogMessage(val kind: Kind, val text: String) {
 internal class CompilationErrorsLogMessage(@JvmField val compilerName: String, @JvmField val errorMessages: List<String>)
   : LogMessage(Kind.COMPILATION_ERRORS, "$compilerName compilation errors")
 
-class CompositeBuildMessageLogger(private val loggers: List<BuildMessageLogger>) : BuildMessageLogger() {
-  override fun processMessage(message: LogMessage) {
-    for (it in loggers) {
-      it.processMessage(message)
-    }
-  }
-
-  override fun dispose() {
-    loggers.forEach(BuildMessageLogger::dispose)
-  }
-}
-
-class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
+internal class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
   companion object {
     @JvmField
     val FACTORY: () -> BuildMessageLogger = ::ConsoleBuildMessageLogger

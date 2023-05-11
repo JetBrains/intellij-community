@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.reference.SoftReference;
@@ -90,7 +90,7 @@ public class FocusWatcher implements ContainerListener, FocusListener {
     if (e.isTemporary() || !component.isShowing()) {
       return;
     }
-    if (component instanceof JTextComponent) {
+    if (component instanceof JTextComponent && ((JTextComponent)component).isEditable()) {
       SwingUndoUtil.addUndoRedoActions((JTextComponent)component);
     }
     setFocusedComponentImpl(component, e);

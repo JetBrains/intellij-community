@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -277,20 +278,21 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
     }
 
     private static List<PropertyBean> findActionsFor(Object object) {
-      if (object instanceof PopupFactoryImpl.ActionItem) {
-        AnAction action = ((PopupFactoryImpl.ActionItem)object).getAction();
+      if (object instanceof PopupFactoryImpl.ActionItem item) {
+        AnAction action = item.getAction();
         return UiInspectorUtil.collectAnActionInfo(action);
       }
-      if (object instanceof QuickFixWrapper) {
-        return findActionsFor(((QuickFixWrapper)object).getFix());
-      }
-      else if (object instanceof IntentionActionDelegate) {
-        IntentionAction delegate = ((IntentionActionDelegate)object).getDelegate();
+      if (object instanceof IntentionActionDelegate actionDelegate) {
+        IntentionAction delegate = IntentionActionDelegate.unwrap(actionDelegate.getDelegate());
         if (delegate != object) {
           return findActionsFor(delegate);
         }
       }
-      else if (object instanceof IntentionAction) {
+      else if (object instanceof IntentionAction action) {
+        LocalQuickFix quickFix = QuickFixWrapper.unwrap(action);
+        if (quickFix != null) {
+          return findActionsFor(quickFix);
+        }
         return Collections.singletonList(new PropertyBean("intention action", object.getClass().getName(), true));
       }
       else if (object instanceof QuickFix) {

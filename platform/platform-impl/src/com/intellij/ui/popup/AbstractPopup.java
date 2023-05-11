@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -26,18 +26,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
+import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -54,10 +57,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
@@ -177,6 +178,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   protected SearchTextField mySpeedSearchPatternField;
+  private PopupComponentFactory.PopupType myPopupType;
   private boolean myNativePopup;
   private boolean myMayBeParent;
   private JComponent myAdComponent;
@@ -291,7 +293,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myHeaderPanel = new JPanel(new BorderLayout()) {
       @Override
       public Color getBackground() {
-        return ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.BACKGROUND : super.getBackground();
+        return JBUI.CurrentTheme.Popup.headerBackground(true);
       }
     };
 
@@ -361,6 +363,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myKeyEventHandler = keyEventHandler;
     debugState("popup initialized", State.NEW);
     myState = State.INIT;
+
+    Component clickSource = PopupImplUtil.getClickSourceFromLastInputEvent();
+    if (!(clickSource instanceof JList<?> || clickSource instanceof JTree)) {
+      PopupUtil.setPopupToggleComponent(this, clickSource);
+    }
     return this;
   }
 
@@ -489,13 +496,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     WindowManagerEx manager = getWndManager();
     if (manager != null) {
-      Component focusedComponent = manager.getFocusedComponent(project);
-      if (focusedComponent != null) {
-        Component parent = UIUtil.findUltimateParent(focusedComponent);
-        if (parent instanceof Window) {
-          window = (Window)parent;
-        }
-      }
+      window = getTargetWindow(manager.getFocusedComponent(project));
     }
     if (window == null) {
       window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
@@ -506,6 +507,20 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (window != null && window.isShowing()) {
       showInCenterOf(window);
     }
+  }
+
+  private static Window getTargetWindow(Component component) {
+    while (component != null) {
+      if (component instanceof FloatingDecorator fd) {
+        return fd;
+      }
+      Component parent = component.getParent();
+      if (parent == null && component instanceof Window w) {
+        return w;
+      }
+      component = parent;
+    }
+    return null;
   }
 
   @Override
@@ -937,6 +952,25 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     prepareToShow();
     installWindowHook(this);
 
+    Object roundedCornerParams = null;
+    if (WindowRoundedCornersManager.isAvailable()) {
+      PopupCornerType cornerType = getUserData(PopupCornerType.class);
+      if (cornerType == null) {
+        cornerType = PopupCornerType.RoundedWindow;
+      }
+      if (cornerType != PopupCornerType.None) {
+        if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
+          roundedCornerParams = new Object[]{cornerType,
+            SystemInfoRt.isWindows ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor};
+          // must set the border before calculating size below
+          myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
+        }
+        else {
+          roundedCornerParams = cornerType;
+        }
+      }
+    }
+
     Dimension sizeToSet = getStoredSize();
     if (myForcedSize != null) {
       sizeToSet = myForcedSize;
@@ -1033,10 +1067,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     myRequestorComponent = owner;
 
-    boolean forcedDialog = myMayBeParent || SystemInfo.isMac && !(myOwner instanceof IdeFrame) && myOwner.isShowing();
-
-    PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
-    myNativePopup = factory.isNativePopup();
+    myPopupType = getMostSuitablePopupType();
+    myNativePopup = myPopupType != PopupComponentFactory.PopupType.DIALOG;
     Component popupOwner = myOwner;
     if (popupOwner instanceof RootPaneContainer && !(popupOwner instanceof IdeFrame && !Registry.is("popup.fix.ide.frame.owner"))) {
       // JDK uses cached heavyweight popup for a window ancestor
@@ -1047,7 +1079,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (LOG.isDebugEnabled()) {
       LOG.debug("expected preferred size: " + myContent.getPreferredSize());
     }
-    myPopup = factory.getPopup(popupOwner, myContent, targetBounds.x, targetBounds.y, this);
+    PopupComponentFactory factory = PopupComponentFactory.getCurrentInstance();
+    myPopup = factory.createPopupComponent(myPopupType, popupOwner, myContent, targetBounds.x, targetBounds.y, this);
     if (LOG.isDebugEnabled()) {
       LOG.debug("  actual preferred size: " + myContent.getPreferredSize());
     }
@@ -1071,32 +1104,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       final IdeGlassPaneImpl glass = new IdeGlassPaneImpl(root);
       root.setGlassPane(glass);
 
-      WindowResizeListener resizeListener = new WindowResizeListener(
+      WindowResizeListenerEx resizeListener = new WindowResizeListenerEx(
+        glass,
         myComponent,
         myMovable ? JBUI.insets(4) : JBUI.insets(0, 0, 4, 4),
-        null) {
-        private Cursor myCursor;
-
-        @Override
-        protected void setCursor(@NotNull Component content, Cursor cursor) {
-          if (myCursor != cursor || myCursor != Cursor.getDefaultCursor()) {
-            glass.setCursor(cursor, this);
-            myCursor = cursor;
-
-            if (content instanceof JComponent) {
-              IdeGlassPaneImpl.savePreProcessedCursor((JComponent)content, content.getCursor());
-            }
-            super.setCursor(content, cursor);
-          }
-        }
-
-        @Override
-        protected void notifyResized() {
-          myResizeListeners.forEach(Runnable::run);
-        }
-      };
-      glass.addMousePreprocessor(resizeListener, this);
-      glass.addMouseMotionPreprocessor(resizeListener, this);
+        null);
+      resizeListener.install(this);
+      resizeListener.addResizeListeners(() -> {
+        myResizeListeners.forEach(Runnable::run);
+      });
       myResizeListener = resizeListener;
     }
 
@@ -1154,21 +1170,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     window.setAutoRequestFocus(myRequestFocus);
 
-    if (WindowRoundedCornersManager.isAvailable()) {
-      PopupCornerType cornerType = getUserData(PopupCornerType.class);
-      if (cornerType == null) {
-        cornerType = PopupCornerType.RoundedWindow;
-      }
-      if (cornerType != PopupCornerType.None) {
-        if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
-          WindowRoundedCornersManager.setRoundedCorners(window, new Object[]{cornerType,
-            SystemInfoRt.isWindows ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor});
-          myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
-        }
-        else {
-          WindowRoundedCornersManager.setRoundedCorners(window, cornerType);
-        }
-      }
+    if (roundedCornerParams != null) {
+      WindowRoundedCornersManager.setRoundedCorners(window, roundedCornerParams);
     }
 
     myWindow = window;
@@ -1359,31 +1362,35 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     };
     mySpeedSearchPatternField.getTextEditor().setFocusable(mySpeedSearchAlwaysShown);
+    customizeSearchFieldLook(mySpeedSearchPatternField, mySpeedSearchAlwaysShown);
 
-    JBTextField textField = mySpeedSearchPatternField.getTextEditor();
+    if (mySpeedSearchAlwaysShown) {
+      setHeaderComponent(mySpeedSearchPatternField);
+    }
+  }
+
+  public static void customizeSearchFieldLook(@NotNull SearchTextField searchTextField, boolean isAlwaysShown) {
+    JBTextField textField = searchTextField.getTextEditor();
+
     if (ExperimentalUI.isNewUI()) {
-      mySpeedSearchPatternField.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+      searchTextField.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
       textField.setOpaque(false);
       textField.putClientProperty("TextFieldWithoutMargins", true);
       textField.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, true);
       textField.putClientProperty("TextField.NoMinHeightBounds", true);
       EmptyBorder outsideBorder = new EmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets());
       Border lineBorder = JBUI.Borders.customLine(JBUI.CurrentTheme.Popup.separatorColor(), 0, 0, 1, 0);
-      mySpeedSearchPatternField.setBorder(JBUI.Borders.compound(outsideBorder, lineBorder,
+      searchTextField.setBorder(JBUI.Borders.compound(outsideBorder, lineBorder,
                                                                 new EmptyBorder(JBUI.CurrentTheme.Popup.searchFieldInputInsets())));
       textField.setBorder(JBUI.Borders.empty());
     } else {
-      if (mySpeedSearchAlwaysShown) {
-        mySpeedSearchPatternField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));
+      if (isAlwaysShown) {
+        searchTextField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));
         textField.setBorder(JBUI.Borders.empty());
       }
     }
     if (SystemInfo.isMac) {
-      RelativeFont.TINY.install(mySpeedSearchPatternField);
-    }
-
-    if (mySpeedSearchAlwaysShown) {
-      setHeaderComponent(mySpeedSearchPatternField);
+      RelativeFont.TINY.install(searchTextField);
     }
   }
 
@@ -1478,19 +1485,20 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     return null;
   }
 
-  private PopupComponent.@NotNull Factory getFactory(boolean forceHeavyweight, boolean forceDialog) {
+  private PopupComponentFactory.PopupType getMostSuitablePopupType() {
+    boolean forceDialog = myMayBeParent || SystemInfo.isMac && !(myOwner instanceof IdeFrame) && myOwner.isShowing();
     if (Registry.is("allow.dialog.based.popups")) {
       boolean noFocus = !myFocusable || !myRequestFocus;
       boolean cannotBeDialog = noFocus; // && SystemInfo.isXWindow
 
       if (!cannotBeDialog && (isPersistent() || forceDialog)) {
-        return new PopupComponent.Factory.Dialog();
+        return PopupComponentFactory.PopupType.DIALOG;
       }
     }
-    if (forceHeavyweight) {
-      return new PopupComponent.Factory.AwtHeavyweight();
+    if (myForcedHeavyweight || myResizable) {
+      return PopupComponentFactory.PopupType.HEAVYWEIGHT;
     }
-    return new PopupComponent.Factory.AwtDefault();
+    return PopupComponentFactory.PopupType.DEFAULT;
   }
 
   @Override
@@ -1740,8 +1748,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
           }
         }
       };
-      myCaption.addMouseListener(moveListener);
-      myCaption.addMouseMotionListener(moveListener);
+      moveListener.installTo(myCaption);
       final MyContentPanel saved = myContent;
       Disposer.register(this, () -> {
         ListenerUtil.removeMouseListener(saved, moveListener);
@@ -1768,7 +1775,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       switch (event.getID()) {
         case WINDOW_ACTIVATED, WINDOW_GAINED_FOCUS -> {
           if (myCancelOnWindow && myPopup != null && isCancelNeeded((WindowEvent)event, myPopup.getWindow())) {
-            cancel();
+            ApplicationManager.getApplication().invokeLater(() ->cancel());
           }
         }
         case MOUSE_ENTERED -> {
@@ -1825,7 +1832,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public void setSize(final @NotNull Dimension size) {
     // do not update the bounds programmatically if the user moves or resizes the popup
-    if (!isBusy()) setBounds(null, new Dimension(size));
+    if (!isBusy()) {
+      setBounds(null, new Dimension(size));
+      if (myPopup != null) Optional.ofNullable(getContentWindow(myContent)).ifPresent(Container::validate); // to adjust content size
+    }
   }
 
   public int getAdComponentHeight() {
@@ -2135,7 +2145,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
 
     if (sizeFromHeader == null) {
-      int minimumSize = myWindow.getGraphics().getFontMetrics(myHeaderPanel.getFont()).getHeight();
+      int minimumSize = myWindow.getFontMetrics(myHeaderPanel.getFont()).getHeight();
       sizeFromHeader = new Dimension(minimumSize, minimumSize);
     }
     return sizeFromHeader;

@@ -6,6 +6,7 @@ package com.intellij.openapi.extensions.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ThreeState
@@ -16,45 +17,44 @@ import java.lang.reflect.Modifier
 import java.util.*
 import java.util.function.Consumer
 
+private val LOG: Logger
+  get() = logger<ExtensionsAreaImpl>()
+
+private const val DEBUG_REGISTRATION = false
+
 @Internal
-class ExtensionsAreaImpl(private val componentManager: ComponentManager) : ExtensionsArea {
-  companion object {
-    private val LOG = Logger.getInstance(ExtensionsAreaImpl::class.java)
-
-    private const val DEBUG_REGISTRATION = false
-
-    @Internal
-    fun createExtensionPoints(points: List<ExtensionPointDescriptor>,
-                              componentManager: ComponentManager,
-                              result: MutableMap<String, ExtensionPointImpl<*>>,
-                              pluginDescriptor: PluginDescriptor) {
-      for (descriptor in points) {
-        val name = descriptor.getQualifiedName(pluginDescriptor)
-        val point: ExtensionPointImpl<Any> = if (descriptor.isBean) {
-          BeanExtensionPoint(name = name,
-                             className = descriptor.className,
-                             pluginDescriptor = pluginDescriptor,
-                             componentManager = componentManager,
-                             dynamic = descriptor.isDynamic)
-        }
-        else {
-          InterfaceExtensionPoint(name = name,
-                                  className = descriptor.className,
-                                  pluginDescriptor = pluginDescriptor,
-                                  componentManager = componentManager,
-                                  clazz = null,
-                                  dynamic = descriptor.isDynamic)
-        }
-        result.putIfAbsent(name, point)?.let { old ->
-          val oldPluginDescriptor = old.getPluginDescriptor()
-          throw componentManager.createError(
-            "Duplicate registration for EP $name first in $oldPluginDescriptor, second in $pluginDescriptor", pluginDescriptor.pluginId
-          )
-        }
-      }
+fun createExtensionPoints(points: List<ExtensionPointDescriptor>,
+                          componentManager: ComponentManager,
+                          result: MutableMap<String, ExtensionPointImpl<*>>,
+                          pluginDescriptor: PluginDescriptor) {
+  for (descriptor in points) {
+    val name = descriptor.getQualifiedName(pluginDescriptor)
+    val point: ExtensionPointImpl<Any> = if (descriptor.isBean) {
+      BeanExtensionPoint(name = name,
+                         className = descriptor.className,
+                         pluginDescriptor = pluginDescriptor,
+                         componentManager = componentManager,
+                         dynamic = descriptor.isDynamic)
+    }
+    else {
+      InterfaceExtensionPoint(name = name,
+                              className = descriptor.className,
+                              pluginDescriptor = pluginDescriptor,
+                              componentManager = componentManager,
+                              clazz = null,
+                              dynamic = descriptor.isDynamic)
+    }
+    result.putIfAbsent(name, point)?.let { old ->
+      val oldPluginDescriptor = old.getPluginDescriptor()
+      throw componentManager.createError(
+        "Duplicate registration for EP $name first in $oldPluginDescriptor, second in $pluginDescriptor", pluginDescriptor.pluginId
+      )
     }
   }
+}
 
+@Internal
+class ExtensionsAreaImpl(private val componentManager: ComponentManager) : ExtensionsArea {
   @Volatile
   @Internal
   @JvmField

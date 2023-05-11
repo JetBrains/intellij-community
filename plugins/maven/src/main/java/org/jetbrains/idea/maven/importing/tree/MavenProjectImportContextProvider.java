@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.importing.tree;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,23 +160,6 @@ public class MavenProjectImportContextProvider {
       holder.testSourceLevel == null ? null : adjustLevelAndNotify(myProject, holder.testSourceLevel),
       holder.testTargetLevel == null ? null : adjustLevelAndNotify(myProject, holder.testTargetLevel)
     );
-  }
-
-  private static StandardMavenModuleType getModuleType(MavenProject project, MavenJavaVersionHolder mavenJavaVersions) {
-    if (needSplitMainAndTest(project, mavenJavaVersions)) {
-      return StandardMavenModuleType.COMPOUND_MODULE;
-    }
-    else if (project.isAggregator()) {
-      return StandardMavenModuleType.AGGREGATOR;
-    }
-    else {
-      return StandardMavenModuleType.SINGLE_MODULE;
-    }
-  }
-
-  private static boolean needSplitMainAndTest(MavenProject project, MavenJavaVersionHolder mavenJavaVersions) {
-    if (!Registry.is("maven.import.separate.main.and.test.modules.when.needed")) return false;
-    return !project.isAggregator() && mavenJavaVersions.needSeparateTestModule() && isCompilerTestSupport(project);
   }
 
   private static class ModuleImportDataContext {

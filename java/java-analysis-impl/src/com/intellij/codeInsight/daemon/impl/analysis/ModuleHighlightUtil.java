@@ -12,10 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -31,6 +28,8 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 import java.util.function.Function;
@@ -102,28 +101,30 @@ final class ModuleHighlightUtil {
   }
 
   static HighlightInfo.Builder checkFileDuplicates(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
+    Project project = file.getProject();
     Module module = ModuleUtilCore.findModuleForFile(file);
-    if (module != null) {
-      Project project = file.getProject();
-      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE, module.getModuleScope());
-      if (others.size() > 1) {
-        if (others.size() == 2 &&
-            others.stream().map(ModuleRootManager.getInstance(module).getFileIndex()::isInTestSourceContent).distinct().count() > 1) {
-          return null;
+    if (module == null) return null;
+    Collection<VirtualFile> moduleInfos = FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE, module.getModuleScope());
+    JpsModuleSourceRootType<?> type = ProjectFileIndex.getInstance(project).getContainingSourceRootType(file.getVirtualFile());
+    if (type == null || !JavaModuleSourceRootTypes.SOURCES.contains(type)) return null;
+    ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
+    Collection<VirtualFile> rootModuleInfos = ContainerUtil.filter(moduleInfos, moduleInfo ->
+      moduleFileIndex.isUnderSourceRootOfType(moduleInfo, ContainerUtil.newHashSet(type))
+    );
+    if (rootModuleInfos.size() > 1) {
+      String message = JavaErrorBundle.message("module.file.duplicate");
+      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(range(element))
+        .descriptionAndTooltip(message);
+      rootModuleInfos.stream().map(f -> PsiManager.getInstance(project).findFile(f)).filter(f -> f != file).findFirst().ifPresent(
+        duplicate -> {
+          IntentionAction action = new GoToSymbolFix(duplicate, JavaErrorBundle
+            .message("module.open.duplicate.text"));
+          info.registerFix(action, null, null, null, null);
         }
-        String message = JavaErrorBundle.message("module.file.duplicate");
-        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).descriptionAndTooltip(message);
-        others.stream().map(f -> PsiManager.getInstance(project).findFile(f)).filter(f -> f != file).findFirst().ifPresent(
-          duplicate -> {
-            IntentionAction action = new GoToSymbolFix(duplicate, JavaErrorBundle
-              .message("module.open.duplicate.text"));
-            info.registerFix(action, null, null, null, null);
-          }
-        );
-        return info;
-      }
+      );
+      return info;
     }
-
     return null;
   }
 

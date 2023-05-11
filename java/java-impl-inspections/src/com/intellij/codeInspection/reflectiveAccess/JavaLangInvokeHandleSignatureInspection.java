@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -35,8 +35,8 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
   public static final Key<ReflectiveSignature> DEFAULT_SIGNATURE = Key.create("DEFAULT_SIGNATURE");
   public static final Key<List<LookupElement>> POSSIBLE_SIGNATURES = Key.create("POSSIBLE_SIGNATURES");
 
-  static final Set<String> KNOWN_METHOD_NAMES = Collections.unmodifiableSet(
-    ContainerUtil.union(Arrays.asList(HANDLE_FACTORY_METHOD_NAMES), Collections.singletonList(FIND_CONSTRUCTOR)));
+  static final Set<String> KNOWN_METHOD_NAMES =
+    ContainerUtil.union(Arrays.asList(HANDLE_FACTORY_METHOD_NAMES), Collections.singletonList(FIND_CONSTRUCTOR));
 
   private interface CallChecker {
     boolean checkCall(@NotNull PsiMethodCallExpression callExpression, @NotNull ProblemsHolder holder);
@@ -154,7 +154,8 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
             fix = ReplaceSignatureQuickFix
               .createFix(constructorTypeExpression, ownerClassName, validSignatures, true, holder.isOnTheFly());
           }
-          holder.registerProblem(constructorTypeExpression, JavaErrorBundle.message("cannot.resolve.constructor", declarationText), fix);
+          holder.registerProblem(constructorTypeExpression, JavaErrorBundle.message("cannot.resolve.constructor", declarationText),
+                                 LocalQuickFix.notNullElements(fix));
         }
       }
     }
@@ -181,7 +182,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
         final LocalQuickFix fix = SwitchStaticnessQuickFix.createFix(factoryMethodName, isStaticExpected);
         final String message = JavaBundle.message(
           isStaticExpected ? "inspection.handle.signature.field.not.static" : "inspection.handle.signature.field.static", fieldName);
-        holder.registerProblem(factoryMethodNameElement, message, fix);
+        holder.registerProblem(factoryMethodNameElement, message, LocalQuickFix.notNullElements(fix));
         return;
       }
     }
@@ -218,7 +219,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
         final LocalQuickFix fix = SwitchStaticnessQuickFix.createFix(factoryMethodName, isStaticExpected);
         final String message = JavaBundle.message(
           isStaticExpected ? "inspection.handle.signature.method.not.static" : "inspection.handle.signature.method.static", methodName);
-        holder.registerProblem(factoryMethodNameElement, message, fix);
+        holder.registerProblem(factoryMethodNameElement, message, LocalQuickFix.notNullElements(fix));
         return;
       }
     }
@@ -235,7 +236,8 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
         .collect(Collectors.toList());
       final LocalQuickFix fix =
         ReplaceSignatureQuickFix.createFix(methodTypeExpression, methodName, validSignatures, false, holder.isOnTheFly());
-      holder.registerProblem(methodTypeExpression, JavaErrorBundle.message("cannot.resolve.method", declarationText), fix);
+      holder.registerProblem(methodTypeExpression, JavaErrorBundle.message("cannot.resolve.method", declarationText),
+                             LocalQuickFix.notNullElements(fix));
       return;
     }
     if (!isAbstractAllowed) {

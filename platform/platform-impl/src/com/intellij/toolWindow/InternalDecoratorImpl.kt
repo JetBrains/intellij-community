@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.CheckedDisposable
@@ -43,6 +44,7 @@ import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.Border
 
@@ -514,8 +516,11 @@ class InternalDecoratorImpl internal constructor(
     get() = toolWindow.isActive
 
   fun updateActiveAndHoverState() {
+    val isHoverAlphaAnimationEnabled =
+      toolWindow.toolWindowManager.isNewUi &&
+      !AdvancedSettings.getBoolean("ide.always.show.tool.window.header.icons")
     val narrow = this.toolWindow.decorator?.width?.let { it < JBUI.scale(120) } ?: false
-    val isVisible = narrow || !toolWindow.toolWindowManager.isNewUi || isWindowHovered || header.isPopupShowing || toolWindow.isActive
+    val isVisible = narrow || !isHoverAlphaAnimationEnabled || isWindowHovered || header.isPopupShowing || toolWindow.isActive
 
     val toolbar = header.getToolbar()
     if (toolbar is AlphaAnimated) {
@@ -730,6 +735,10 @@ class InternalDecoratorImpl internal constructor(
                ((toolWindow.title?.takeIf(String::isNotEmpty) ?: toolWindow.stripeTitle).takeIf(String::isNotEmpty) ?: toolWindow.id)
                + " " + IdeBundle.message("internal.decorator.accessible.postfix")
                 )
+    }
+
+    override fun getAccessibleRole(): AccessibleRole {
+      return AccessibleRole.GROUP_BOX
     }
   }
 }

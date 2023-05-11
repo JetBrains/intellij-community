@@ -3,7 +3,6 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle.message
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutText
@@ -12,9 +11,7 @@ import com.intellij.openapi.util.Iconable.ICON_FLAG_READ_STATUS
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
-import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
@@ -38,7 +35,7 @@ private fun shortcutText(actionId: String) = ActionManager.getInstance().getKeyb
 
 private val mainTextComparator by lazy { Comparator.comparing(SwitcherListItem::mainText, NaturalComparator.INSTANCE) }
 
-internal interface SwitcherListItem {
+interface SwitcherListItem {
   val mnemonic: String? get() = null
   val mainText: String
   val statusText: String get() = ""
@@ -120,13 +117,16 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
 }
 
 
-internal class SwitcherVirtualFile(
+class SwitcherVirtualFile(
   val project: Project,
   val file: VirtualFile,
   val window: EditorWindow?
 ) : SwitcherListItem, BackgroundSupplier {
 
   private val icon by lazy { IconUtil.getIcon(file, ICON_FLAG_READ_STATUS, project) }
+
+  var backgroundColor: Color? = null
+  var foregroundTextColor: Color? = null
 
   val isProblemFile
     get() = WolfTheProblemSolver.getInstance(project)?.isProblemFile(file) == true
@@ -148,7 +148,7 @@ internal class SwitcherVirtualFile(
       true -> RenderingUtil.getIcon(icon, selected)
       else -> icon
     }
-    val foreground = if (selected) null else FileStatusManager.getInstance(project).getStatus(file).color
+    val foreground = if (selected) null else foregroundTextColor
     val effectColor = if (isProblemFile) JBColor.red else null
     val style = when (effectColor) {
       null -> SimpleTextAttributes.STYLE_PLAIN
@@ -157,9 +157,7 @@ internal class SwitcherVirtualFile(
     component.append(mainText, SimpleTextAttributes(style, foreground, effectColor))
   }
 
-  override fun getElementBackground(row: Int) : Color? {
-    return runReadAction { getFileBackgroundColor(project, file) }
-  }
+  override fun getElementBackground(row: Int) : Color? = backgroundColor
 }
 
 

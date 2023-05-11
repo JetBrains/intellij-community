@@ -93,7 +93,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   protected void tearDown() throws Exception {
     myOrder.clear();
     flushSwingQueue();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> LaterInvocator.leaveAllModals());
+    UIUtil.invokeAndWaitIfNeeded(() -> LaterInvocator.leaveAllModals());
     EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
   }
 
@@ -109,7 +109,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   public void testReorder() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       LaterInvocator.enterModal(myWindow1);
       synchronized (this) {
         blockSwingThread();
@@ -139,7 +139,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   public void testEverInvoked() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       LaterInvocator.enterModal(myWindow1);
       ApplicationManager.getApplication().invokeLater(ENTER_MODAL, ModalityState.NON_MODAL);
       ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.NON_MODAL);
@@ -155,7 +155,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   public void testDoesNotInvokeWhenModal() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       LaterInvocator.enterModal(myWindow1);
 
       ApplicationManager.getApplication().invokeLater(ENTER_MODAL, ModalityState.NON_MODAL);
@@ -170,7 +170,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   public void testStress() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       int N = 1000;
       for (int i = 0; i < N; i++) {
         UsefulTestCase.assertEmpty(LaterInvocator.getCurrentModalEntities());
@@ -219,7 +219,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
 
 
   public void testOrderWithSwingInvokeLater2() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       LaterInvocator.enterModal(myWindow1);
       synchronized (this) {
         blockSwingThread();
@@ -234,7 +234,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   public void testOrderWithSwingInvokeLater3() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       LaterInvocator.enterModal(myWindow1);
       synchronized (this) {
         blockSwingThread();
@@ -281,7 +281,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   public void testOrderWithSwingInvokeLater4() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       SwingUtilities.invokeLater(ENTER_MODAL);
       flushSwingQueue();
       synchronized (this) {
@@ -308,7 +308,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     final boolean[] started = { false };
     final AtomicReference<Future<?>> thread = new AtomicReference<>();
 
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       synchronized (this) {
         blockSwingThread();
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -438,7 +438,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   public void testModalityStateStaysTheSameBetweenInvocations() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       Object modal1 = new Object();
       Object modal2 = new Object();
 
@@ -457,7 +457,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   public void testNonNestedModalityState() { //happens with per-project modality
     Object modal1 = ObjectUtils.sentinel("modal1");
     Object modal2 = ObjectUtils.sentinel("modal2");
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       LaterInvocator.enterModal(modal1); // [modal1]
       ModalityState ms_1 = ModalityState.current();
       ApplicationManager.getApplication().invokeLater(new MyRunnable("m1"), ms_1);
@@ -626,12 +626,12 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     application.invokeAndWait(r);
     PlatformTestUtil.startPerformanceTest(getTestName(false), 900, () -> {
       counter.set(0);
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> LaterInvocator.enterModal(myWindow1));
+      UIUtil.invokeAndWaitIfNeeded(() -> LaterInvocator.enterModal(myWindow1));
       for (int i = 0; i < N; i++) {
         application.invokeLater(r);
       }
       assertEquals(0, counter.get());
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> LaterInvocator.leaveModal(myWindow1));
+      UIUtil.invokeAndWaitIfNeeded(() -> LaterInvocator.leaveModal(myWindow1));
       application.invokeAndWait(EmptyRunnable.getInstance());
       assertEquals(N, counter.get());
     }).assertTiming();
@@ -691,18 +691,6 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       LaterInvocator.enterModal(myModalDialog);
       UIUtil.dispatchAllInvocationEvents();
       assertTrue(invoked.get());
-    });
-  }
-
-  public void testInvokeLaterAlwaysSchedulesFlush() {
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      AtomicBoolean executed = new AtomicBoolean();
-      for (int i = 0; i < 1_000_000; i++) {
-        executed.set(false);
-        ApplicationManager.getApplication().invokeLater(() -> executed.set(true));
-        UIUtil.dispatchAllInvocationEvents();
-        assertTrue(executed.get());
-      }
     });
   }
 

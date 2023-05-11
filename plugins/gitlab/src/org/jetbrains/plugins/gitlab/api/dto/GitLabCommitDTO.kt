@@ -6,11 +6,12 @@ import com.intellij.openapi.util.NlsSafe
 import java.util.*
 
 @GraphQLFragment("/graphql/fragment/glCommit.graphql")
-class GitLabCommitDTO(
+data class GitLabCommitDTO(
   val sha: String,
   val shortId: String,
-  val title: @NlsSafe String?,
+  val fullTitle: @NlsSafe String?,
   val description: @NlsSafe String?,
-  val author: GitLabUserDTO,
+  val author: GitLabUserDTO?,
+  val authorName: String,
   val authoredDate: Date
 )

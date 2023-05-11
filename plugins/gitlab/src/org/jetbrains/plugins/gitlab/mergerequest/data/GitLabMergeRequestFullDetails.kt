@@ -17,6 +17,7 @@ data class GitLabMergeRequestFullDetails(
   override val assignees: List<GitLabUserDTO>,
   override val reviewers: List<GitLabUserDTO>,
   override val webUrl: @NlsSafe String,
+  val detailedLabels: List<GitLabLabelDTO>,
   val targetProject: GitLabProjectDTO,
   val sourceProject: GitLabProjectDTO,
   val description: String,
@@ -26,8 +27,10 @@ data class GitLabMergeRequestFullDetails(
   val conflicts: Boolean,
   val commits: List<GitLabCommitDTO>,
   val diffRefs: GitLabDiffRefs,
-  val headPipeline: GitLabPipelineDTO?
-) : GitLabMergeRequestDetails(iid, title, createdAt, author, mergeStatus, state, draft, assignees, reviewers, webUrl) {
+  val headPipeline: GitLabPipelineDTO?,
+  val userPermissions: GitLabMergeRequestPermissionsDTO
+) : GitLabMergeRequestDetails(iid, title, createdAt, author, mergeStatus, state, draft, assignees, reviewers, webUrl,
+                              detailedLabels.map { it.title }) {
 
   companion object {
     fun fromGraphQL(dto: GitLabMergeRequestDTO) = GitLabMergeRequestFullDetails(
@@ -50,7 +53,9 @@ data class GitLabMergeRequestFullDetails(
       conflicts = dto.conflicts,
       commits = dto.commits,
       diffRefs = dto.diffRefs,
-      headPipeline = dto.headPipeline
+      headPipeline = dto.headPipeline,
+      userPermissions = dto.userPermissions,
+      detailedLabels = dto.labels
     )
   }
 }

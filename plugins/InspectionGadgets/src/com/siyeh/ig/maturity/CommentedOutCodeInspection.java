@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.core.JavaPsiBundle;
@@ -19,6 +20,7 @@ import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -53,7 +55,11 @@ public class CommentedOutCodeInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    return new InspectionGadgetsFix[] { new DeleteCommentedOutCodeFix(), new UncommentCodeFix() };
+    int lines = (int)infos[0];
+    return new InspectionGadgetsFix[]{new DeleteCommentedOutCodeFix(), new UncommentCodeFix(),
+      new DelegatingFix(new SetInspectionOptionFix(
+        this, "minLines", InspectionGadgetsBundle.message("inspection.commented.out.code.disable.short.fragments"), lines + 1))
+    };
   }
 
   private static class DeleteCommentedOutCodeFix extends InspectionGadgetsFix {
@@ -174,10 +180,11 @@ public class CommentedOutCodeInspection extends BaseInspection {
       }
       else {
         final String text = getCommentText(comment);
-        if (StringUtil.countNewLines(text) + 1 < minLines || isCode(text, comment) != ThreeState.YES) {
+        final int lines = StringUtil.countNewLines(text) + 1;
+        if (lines < minLines || isCode(text, comment) != ThreeState.YES) {
           return;
         }
-        registerErrorAtOffset(comment, 0, 2, StringUtil.countNewLines(text) + 1);
+        registerErrorAtOffset(comment, 0, 2, lines);
       }
     }
   }

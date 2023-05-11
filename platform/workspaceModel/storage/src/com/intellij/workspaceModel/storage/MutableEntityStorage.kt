@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -11,9 +10,6 @@ import org.jetbrains.annotations.NonNls
  * reading its state after modifications.
  */
 interface MutableEntityStorage : EntityStorage {
-  @Deprecated("The name may be misleading, use !hasChanges() instead", ReplaceWith("!hasChanges()"))
-  fun isEmpty(): Boolean
-
   /**
    * Returns `true` if there are changes recorded in this storage after its creation. Note, that this method may return `true` if these
    * changes actually don't modify the resulting set of entities, you may use [hasSameEntities] to perform more sophisticated check.
@@ -33,7 +29,7 @@ interface MutableEntityStorage : EntityStorage {
 
   /**
    * Return changes in entities recorded in this instance. [original] parameter is used to get the old instances of modified
-   * and removed entities.
+   *   and removed entities.
    */
   fun collectChanges(original: EntityStorage): Map<Class<*>, List<EntityChange<*>>>
   fun addDiff(diff: MutableEntityStorage)

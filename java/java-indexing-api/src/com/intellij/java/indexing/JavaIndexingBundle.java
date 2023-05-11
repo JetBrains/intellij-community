@@ -9,12 +9,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class JavaIndexingBundle extends DynamicBundle {
+public final class JavaIndexingBundle {
   @NonNls private static final String BUNDLE = "messages.JavaIndexingBundle";
-  private static final JavaIndexingBundle INSTANCE = new JavaIndexingBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(JavaIndexingBundle.class, BUNDLE);
 
   private JavaIndexingBundle() {
-    super(BUNDLE);
   }
 
   @NotNull

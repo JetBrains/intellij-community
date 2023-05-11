@@ -59,7 +59,9 @@ public final class PythonModulePathCache extends PythonPathCache implements Disp
 
     @Override
     public void changed(@NotNull VersionedStorageChange event) {
-      updateCacheForSdk(myModule);
+      if (!myModule.isDisposed()) {
+        updateCacheForSdk(myModule);
+      }
       List<EntityChange<ModuleEntity>> changes = event.getChanges(ModuleEntity.class);
       for (EntityChange<ModuleEntity> change : changes) {
         ModuleEntity entity = null;

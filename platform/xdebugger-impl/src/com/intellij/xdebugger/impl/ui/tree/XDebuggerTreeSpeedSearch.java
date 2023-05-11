@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,8 +47,8 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
   private MyActionButton mySearchOption = null;
   private ShortcutSet myOptionShortcutSet;
 
-  XDebuggerTreeSpeedSearch(XDebuggerTree tree, Convertor<? super TreePath, String> toStringConvertor) {
-    super(tree, PropertiesComponent.getInstance().getBoolean(CAN_EXPAND_PROPERTY, false), toStringConvertor.asFunction());
+  private XDebuggerTreeSpeedSearch(XDebuggerTree tree, Convertor<? super TreePath, String> toStringConvertor) {
+    super(tree, PropertiesComponent.getInstance().getBoolean(CAN_EXPAND_PROPERTY, false), null, toStringConvertor);
     setComparator(new SpeedSearchComparator(false, false) {
 
       @Override
@@ -65,6 +66,13 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
     });
 
     setSearchOption(new SearchCollapsedNodesAction());
+  }
+
+  @Contract("_, _ -> new")
+  static @NotNull XDebuggerTreeSpeedSearch installOn(XDebuggerTree tree, Convertor<? super TreePath, String> toStringConvertor) {
+    XDebuggerTreeSpeedSearch search = new XDebuggerTreeSpeedSearch(tree, toStringConvertor);
+    search.setupListeners();
+    return search;
   }
 
   @Override

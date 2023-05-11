@@ -7,7 +7,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +87,7 @@ final class JavaLangReflectVarHandleInvocationChecker {
   }
 
   private static final Set<String> WITH_RETURN_VALUE_NAMES =
-    ContainerUtil.set(GET, GET_VOLATILE, GET_OPAQUE, GET_ACQUIRE,
+    Set.of(GET, GET_VOLATILE, GET_OPAQUE, GET_ACQUIRE,
                       GET_AND_SET, GET_AND_SET_ACQUIRE, GET_AND_SET_RELEASE,
                       GET_AND_ADD, GET_AND_ADD_ACQUIRE, GET_AND_ADD_RELEASE,
                       GET_AND_BITWISE_OR, GET_AND_BITWISE_OR_ACQUIRE, GET_AND_BITWISE_OR_RELEASE,
@@ -173,6 +172,6 @@ final class JavaLangReflectVarHandleInvocationChecker {
 
   private static boolean isWithReturnValue(@NotNull PsiMethodCallExpression accessCall) {
     final String name = accessCall.getMethodExpression().getReferenceName();
-    return WITH_RETURN_VALUE_NAMES.contains(name);
+    return name != null && WITH_RETURN_VALUE_NAMES.contains(name);
   }
 }

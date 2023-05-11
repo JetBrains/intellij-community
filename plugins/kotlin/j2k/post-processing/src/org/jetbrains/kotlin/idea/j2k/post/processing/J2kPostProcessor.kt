@@ -226,7 +226,6 @@ private val inspectionLikePostProcessingGroup =
         intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()),
         intentionBasedProcessing(DestructureIntention(), writeActionNeeded = false),
         inspectionBasedProcessing(SimplifyAssertNotNullInspection()),
-        intentionBasedProcessing(RemoveRedundantCallsOfConversionMethodsIntention()),
         LiftReturnInspectionBasedProcessing(),
         LiftAssignmentInspectionBasedProcessing(),
         intentionBasedProcessing(RemoveEmptyPrimaryConstructorIntention()),

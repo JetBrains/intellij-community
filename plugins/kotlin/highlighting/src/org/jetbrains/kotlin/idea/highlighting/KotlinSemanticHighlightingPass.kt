@@ -6,11 +6,9 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
-import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -34,29 +32,26 @@ class KotlinSemanticHighlightingPass(
     document: Document,
 ) : TextEditorHighlightingPass(ktFile.project, document) {
 
-    private val annotationHolder = AnnotationHolderImpl(AnnotationSession(ktFile), false)
-
     override fun doCollectInformation(progress: ProgressIndicator) {
         if (isDispatchThread()) {
             throw ProcessCanceledException()
         }
-        val highlighters = AfterResolveHighlighter.createHighlighters(annotationHolder, ktFile.project)
+        val highlighters = AfterResolveHighlighter.createHighlighters(ktFile.project)
+        val infos = mutableListOf<HighlightInfo>()
         ktFile.descendantsOfType<KtElement>().forEach { element ->
             analyze(element) {
                 highlighters.forEach { highlighter ->
-                    annotationHolder.runAnnotatorWithContext(element) { _, _ ->
-                        highlighter.highlight(element)
-                    }
+                    val list = highlighter.highlight(element)
+                    list.forEach { it.create()?.let { infos.add(it) }}
                 }
             }
         }
+        BackgroundUpdateHighlightersUtil.setHighlightersToEditor(
+            myProject, myDocument, /* startOffset = */ 0, ktFile.textLength, infos, colorsScheme, id
+        )
     }
 
     override fun doApplyInformationToEditor() {
-        val diagnosticInfos = annotationHolder.map(HighlightInfo::fromAnnotation)
-        UpdateHighlightersUtil.setHighlightersToEditor(
-            myProject, myDocument, /* startOffset = */ 0, ktFile.textLength, diagnosticInfos, colorsScheme, id
-        )
     }
 }
 

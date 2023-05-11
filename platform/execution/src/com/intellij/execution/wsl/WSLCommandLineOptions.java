@@ -18,7 +18,7 @@ public final class WSLCommandLineOptions {
   private boolean myLaunchWithWslExe = true;
   private boolean myExecuteCommandInShell = true;
   private boolean myExecuteCommandInInteractiveShell = false;
-  private boolean myExecuteCommandInLoginShell = false;
+  private boolean myExecuteCommandInLoginShell = true;
   private boolean mySudo = false;
   private String myRemoteWorkingDirectory;
   private boolean myPassEnvVarsUsingInterop = false;

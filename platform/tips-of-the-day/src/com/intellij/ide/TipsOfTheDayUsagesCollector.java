@@ -15,8 +15,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.ide.util.TipsOrderUtil.SHUFFLE_ALGORITHM;
-import static com.intellij.ide.util.TipsOrderUtil.SORTING_ALGORITHM;
+import static com.intellij.ide.util.TipOrderUtil.SHUFFLE_ALGORITHM;
+import static com.intellij.ide.util.TipOrderUtil.SORTING_ALGORITHM;
 
 public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 12);

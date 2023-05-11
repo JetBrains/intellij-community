@@ -466,7 +466,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
 
     private static boolean hasTotalSwitchLabel(@NotNull PsiCodeBlock switchBody) {
       for (PsiStatement statement : switchBody.getStatements()) {
-        if (statement instanceof PsiSwitchLabelStatement && SwitchUtils.isTotalLabel((PsiSwitchLabelStatement)statement)) {
+        if (statement instanceof PsiSwitchLabelStatement && SwitchUtils.isUnconditionalLabel((PsiSwitchLabelStatement)statement)) { // TODO check because isUnconditionalLabel was chanched
           return true;
         }
       }

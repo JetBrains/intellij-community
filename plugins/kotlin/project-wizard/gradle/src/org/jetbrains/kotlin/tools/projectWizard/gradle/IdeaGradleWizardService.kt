@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemT
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.isGradle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaWizardService
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
+import org.jetbrains.plugins.gradle.settings.DistributionType
+import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import java.nio.file.Path
 
 internal class IdeaGradleWizardService(private val project: Project) : ProjectImportingWizardService, IdeaWizardService {
@@ -30,14 +32,13 @@ internal class IdeaGradleWizardService(private val project: Project) : ProjectIm
     }
 
     private fun withGradleWrapperEnabled(action: () -> Unit) {
-        val oldGradleDistributionType = System.getProperty("idea.gradle.distributionType")
-        System.setProperty("idea.gradle.distributionType", "WRAPPED")
+        val settings = GradleDefaultProjectSettings.getInstance()
+        val oldGradleDistributionType = settings.distributionType
+        settings.distributionType = DistributionType.WRAPPED
         try {
             action()
         } finally {
-            if (oldGradleDistributionType != null) {
-                System.setProperty("idea.gradle.distributionType", oldGradleDistributionType)
-            }
+            settings.distributionType = oldGradleDistributionType
         }
     }
 }

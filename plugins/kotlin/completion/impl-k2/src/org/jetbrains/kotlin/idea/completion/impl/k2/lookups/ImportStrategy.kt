@@ -29,10 +29,10 @@ private fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
 
     withAllowedResolve {
         analyze(file) {
-            val scopes = file.getScopeContextForFile().scopes
-            if (!scopes.mayContainName(nameToImport.shortName())) return false
+            val scope = file.getImportingScopeContext().getCompositeScope()
+            if (!scope.mayContainName(nameToImport.shortName())) return false
 
-            val anyCallableSymbolMatches = scopes
+            val anyCallableSymbolMatches = scope
                 .getCallableSymbols { it == nameToImport.shortName() }
                 .any { callable ->
                     val callableFqName = callable.callableIdIfNonLocal?.asSingleFqName()
@@ -41,7 +41,7 @@ private fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
                 }
             if (anyCallableSymbolMatches) return true
 
-            return scopes.getClassifierSymbols { it == nameToImport.shortName() }.any { classifier ->
+            return scope.getClassifierSymbols { it == nameToImport.shortName() }.any { classifier ->
                 val classId = (classifier as? KtClassLikeSymbol)?.classIdIfNonLocal
                 classId?.asSingleFqName() == nameToImport
             }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple
 
 import com.intellij.diff.tools.simple.SimpleAlignedDiffModel.ChangeIntersection.*
@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.ui.ColorUtil
 import java.awt.Color
 import java.awt.Graphics
@@ -140,10 +141,12 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
   }
 
   private fun realignChanges() {
-    if (viewer.editors.any { (it.foldingModel as FoldingModelImpl).isInBatchFoldingOperation }) return
+    if (viewer.editors.any { it.isDisposed || (it.foldingModel as FoldingModelImpl).isInBatchFoldingOperation }) return
 
-    clear()
-    viewer.diffChanges.forEach(::alignChange)
+    RecursionManager.doPreventingRecursion(this, true) {
+      clear()
+      viewer.diffChanges.forEach(::alignChange)
+    }
   }
 
   fun clear() {
@@ -224,7 +227,7 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     val alignSide = inlaySide.other()
     val isAboveInlay = inlay.properties.isShownAbove
     val lineToBeAligned = getRelatedLogicalLine(inlaySide, inlayLine, isAboveInlay)
-    val changeIntersection = getChangeIntersection(inlaySide, inlayLine)
+    val changeIntersection = getChangeIntersection(inlaySide, inlayLine, isAboveInlay)
     val inlayId = InlayId(alignSide, inlay.offset, inlay.id)
 
     when (processType) {
@@ -241,6 +244,10 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
           is AboveChange -> {
             val alignInlayPriority = if (isAboveInlay) ALIGNED_CHANGE_INLAY_PRIORITY else Int.MIN_VALUE
             addEmptyInlay(inlayId, lineToBeAligned, inlay.heightInPixels, isAboveInlay, alignInlayPriority, parent = inlay)
+          }
+          is UnderChange -> {
+            val changeHeightDelta = with(changeIntersection.change) { countHeight(alignSide) - countHeight(inlaySide) }
+            addEmptyInlay(inlayId, lineToBeAligned, inlay.heightInPixels, changeHeightDelta < 0, Int.MAX_VALUE, parent = inlay)
           }
           is InsideChange -> {
             changeAlignedInlayHeight(changeIntersection, alignSide, inlay, processType)
@@ -312,10 +319,12 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
         .also { Disposer.register(parent, disposable) }
   }
 
-  private fun getChangeIntersection(side: Side, logicalLine: Int): ChangeIntersection {
+  private fun getChangeIntersection(side: Side, logicalLine: Int, isAboveLine: Boolean): ChangeIntersection {
     for (change in viewer.diffChanges) {
       when {
-        change.isStartLine(side, logicalLine) -> return AboveChange
+        change.isStartLine(side, logicalLine) && isAboveLine -> return AboveChange
+        change.isStartLine(side, logicalLine) && change.countHeight(side) > 0 && !isAboveLine -> return InsideChange(change)
+        change.isEndLine(side, logicalLine) && change.isChangedSide(side) && !isAboveLine -> return UnderChange(change)
         change.isMiddleLine(side, logicalLine) -> return InsideChange(change)
       }
     }
@@ -323,13 +332,17 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     return NoIntersection
   }
 
+  private fun SimpleDiffChange.countHeight(side: Side) = getEndLine(side) - 1 - getStartLine(side)
+  private fun SimpleDiffChange.isChangedSide(side: Side) = getStartLine(side) != getEndLine(side) - 1
   private fun SimpleDiffChange.isStartLine(side: Side, logicalLine: Int) = getStartLine(side) == logicalLine
+  private fun SimpleDiffChange.isEndLine(side: Side, logicalLine: Int) = getEndLine(side) - 1 == logicalLine
   private fun SimpleDiffChange.isMiddleLine(side: Side, logicalLine: Int) =
     getStartLine(side) < logicalLine && getEndLine(side) - 1 >= logicalLine
 
   private sealed class ChangeIntersection {
     class InsideChange(val change: SimpleDiffChange) : ChangeIntersection()
     object AboveChange : ChangeIntersection()
+    class UnderChange(val change: SimpleDiffChange) : ChangeIntersection()
     object NoIntersection : ChangeIntersection()
   }
 
@@ -354,12 +367,16 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
       // for last line and below added inlay, related line should be always the last line (if there is no change intersection)
       val alignSide = side.other()
       val lastLine = DiffUtil.getLineCount(viewer.getEditor(alignSide).document) - 1
-      val changeIntersection = getChangeIntersection(alignSide, lastLine)
-      if (changeIntersection == NoIntersection) {
+      val changeIntersection = getChangeIntersection(alignSide, lastLine, false)
+      if (changeIntersection == NoIntersection
+          || changeIntersection is UnderChange) { // e.g. change with deleted last N lines
         return lastLine
       }
     }
 
+    //TODO line can be transferred before some change.
+    // E.g.: added N new lines, review comment inlay placed on the left side, on the next line after aligning inlay.
+    // In result the transferred position will be before the add change which leads adding of empty aligning inlay inside that change.
     return viewer.transferPosition(side, LineCol(logicalLine, 0)).line
   }
 

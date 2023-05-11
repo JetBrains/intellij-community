@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -16,13 +16,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.AppUIUtilKt;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.event.InputEvent;
+import java.awt.event.ActionEvent;
 import java.util.Collection;
 
 import static com.intellij.ide.browsers.OpenInBrowserRequestKt.createOpenInBrowserRequest;
@@ -32,7 +32,7 @@ import static com.intellij.ide.browsers.OpenInBrowserRequestKt.createOpenInBrows
  */
 final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
   OpenHtmlInEmbeddedBrowserAction() {
-    super(IdeBundle.message("action.open.web.preview.text"), null, AppUIUtil.loadSmallApplicationIconForRelease(ScaleContext.create(), 16));
+    super(IdeBundle.message("action.open.web.preview.text"), null, AppUIUtilKt.loadSmallApplicationIcon(ScaleContext.create(), 16, true));
   }
 
   @Override
@@ -40,7 +40,7 @@ final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
     Project project = event.getRequiredData(CommonDataKeys.PROJECT);
     PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
     VirtualFile virtualFile = psiFile.getVirtualFile();
-    boolean preferLocalFileUrl = BitUtil.isSet(event.getModifiers(), InputEvent.SHIFT_MASK);
+    boolean preferLocalFileUrl = BitUtil.isSet(event.getModifiers(), ActionEvent.SHIFT_MASK);
 
     try {
       OpenInBrowserRequest browserRequest = createOpenInBrowserRequest(psiFile, false);

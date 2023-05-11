@@ -70,7 +70,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     myTree.setRootVisible(true);
     MyCellRenderer renderer = new MyCellRenderer();
     myTree.setCellRenderer(renderer);
-    mySpeedSearch = new TreeSpeedSearch(myTree, false, x -> renderer.getTreeCellRendererComponent(myTree, x.getLastPathComponent(), false, false, false, 0, false).toString());
+    mySpeedSearch = TreeSpeedSearch.installOn(myTree, false, x -> renderer.getTreeCellRendererComponent(myTree, x.getLastPathComponent(), false, false, false, 0, false).toString());
     init();
     TreeUtil.expandAll(myTree);
     setTitle("Image Duplicates");
@@ -137,7 +137,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
         JBPopupFactory.getInstance().createListPopupBuilder(modules)
           .setTitle("Add Resource Module")
           .setNamerForFiltering(o -> o.getName())
-          .setItemChoosenCallback(() -> {
+          .setItemChosenCallback(() -> {
             Module value = modules.getSelectedValue();
             if (value != null && !myResourceModules.contains(value)) {
               myResourceModules.add(value);

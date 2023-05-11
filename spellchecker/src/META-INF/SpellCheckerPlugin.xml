@@ -29,6 +29,7 @@
     <spellchecker.dictionary.customDictionaryProvider implementation="com.intellij.spellchecker.hunspell.HunspellDictionaryProvider"/>
 
     <registryKey key="spellchecker.corrections.limit" defaultValue="3" description="Spellchecker corrections limit" restartRequired="false"/>
+    <registryKey key="spellchecker.inspection.enabled" defaultValue="true" description="Enable spellchecking inspection" restartRequired="false"/>
 
     <projectService serviceImplementation="com.intellij.spellchecker.state.ProjectDictionaryState"/>
     <statistics.projectUsagesCollector implementation="com.intellij.spellchecker.statistics.SpellcheckerConfigCollector"/>

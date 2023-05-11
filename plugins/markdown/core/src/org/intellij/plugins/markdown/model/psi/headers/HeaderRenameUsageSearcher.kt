@@ -20,7 +20,7 @@ internal class HeaderRenameUsageSearcher: RenameUsageSearcher {
     }
     val searchText = target.searchText.takeIf { it.isNotEmpty() } ?: return emptyList()
     val usages = MarkdownSymbolUsageSearcher.buildSearchRequest(parameters.project, target, searchText, parameters.searchScope)
-    val selfUsage = MarkdownSymbolUsageSearcher.buildDirectTargetQuery(MarkdownPsiUsage.create(target.file, target.range, declaration = true))
+    val selfUsage = MarkdownDirectUsageQuery(MarkdownPsiUsage.create(target.file, target.range, declaration = true))
     val modifiedUsages = usages.mapping { HeaderAnchorModifiableRenameUsage(it.file, it.range) }
     val modifiedSelfUsage = selfUsage.mapping { ModifiableRenameUsageWrapper(it) }
     return listOf(modifiedUsages, modifiedSelfUsage)

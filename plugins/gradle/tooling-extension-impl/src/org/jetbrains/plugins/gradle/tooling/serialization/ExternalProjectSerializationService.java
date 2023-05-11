@@ -65,6 +65,8 @@ public final class ExternalProjectSerializationService implements SerializationS
         writer.writeInt(objectId);
         if (isAdded) {
           writeString(writer, "id", project.getId());
+          writeString(writer, "path", project.getPath());
+          writeString(writer, "identityPath", project.getIdentityPath());
           writeString(writer, "name", project.getName());
           writeString(writer, "qName", project.getQName());
           writeString(writer, "description", project.getDescription());
@@ -116,7 +118,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     writeString(writer, "name", sourceSet.getName());
     writeString(writer, "sourceCompatibility", sourceSet.getSourceCompatibility());
     writeString(writer, "targetCompatibility", sourceSet.getTargetCompatibility());
-    writeBoolean(writer,"isPreview", sourceSet.isPreview());
+    writeBoolean(writer, "isPreview", sourceSet.isPreview());
     writeFiles(writer, "artifacts", sourceSet.getArtifacts());
     writeDependencies(writer, context, sourceSet.getDependencies());
     writeSourceDirectorySets(writer, sourceSet.getSources());
@@ -387,6 +389,8 @@ public final class ExternalProjectSerializationService implements SerializationS
         public void fill(DefaultExternalProject externalProject) {
           externalProject.setExternalSystemId("GRADLE");
           externalProject.setId(assertNotNull(readString(reader, "id")));
+          externalProject.setPath(assertNotNull(readString(reader, "path")));
+          externalProject.setIdentityPath(assertNotNull(readString(reader, "identityPath")));
           externalProject.setName(assertNotNull(readString(reader, "name")));
           externalProject.setQName(assertNotNull(readString(reader, "qName")));
           externalProject.setDescription(readString(reader, "description"));
@@ -462,7 +466,7 @@ public final class ExternalProjectSerializationService implements SerializationS
                                      DefaultExternalProject project) {
     reader.next();
     reader.stepIn();
-    Map<String, DefaultExternalSourceSet> sourceSets = new HashMap<>();
+    Map<String, DefaultExternalSourceSet> sourceSets = new LinkedHashMap<>();
     DefaultExternalSourceSet sourceSet;
     while ((sourceSet = readSourceSet(reader, context)) != null) {
       sourceSets.put(sourceSet.getName(), sourceSet);
@@ -480,7 +484,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     sourceSet.setName(readString(reader, "name"));
     sourceSet.setSourceCompatibility(readString(reader, "sourceCompatibility"));
     sourceSet.setTargetCompatibility(readString(reader, "targetCompatibility"));
-    sourceSet.setPreview(readBoolean(reader,"isPreview"));
+    sourceSet.setPreview(readBoolean(reader, "isPreview"));
     sourceSet.setArtifacts(readFiles(reader));
     sourceSet.getDependencies().addAll(readDependencies(reader, context));
     sourceSet.setSources(readSourceDirectorySets(reader));

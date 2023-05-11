@@ -2,13 +2,16 @@
 
 package org.jetbrains.kotlin.idea.util
 
-import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.nextLeaf
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
+import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
@@ -432,7 +435,11 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
 
         private fun addImport(fqName: FqName, allUnder: Boolean, aliasName: Name? = null): KtImportDirective {
             return runAction(runImmediately) {
-                addImport(project, file, fqName, allUnder, aliasName)
+                if (file.isPhysical) {
+                    runWriteAction { addImport(project, file, fqName, allUnder, aliasName) }
+                } else {
+                    addImport(project, file, fqName, allUnder, aliasName)
+                }
             }
         }
     }
@@ -482,14 +489,28 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
 
             val importList = file.importList
             if (importList != null) {
-                val isInjectedScript = file.virtualFile is VirtualFileWindow && file.isScript()
                 val newDirective = psiFactory.createImportDirective(importPath)
                 val imports = importList.imports
-                return if (imports.isEmpty()) { //TODO: strange hack
-                    if (!isInjectedScript) importList.add(psiFactory.createNewLine())
+                return if (imports.isEmpty()) {
+                    val packageDirective = file.packageDirective?.takeIf { it.packageKeyword != null }
+                    packageDirective?.let {
+                        file.addAfter(psiFactory.createNewLine(2), it)
+                    }
+
                     (importList.add(newDirective) as KtImportDirective).also {
-                        if (isInjectedScript) {
-                            importList.add(psiFactory.createNewLine(2))
+                        if (packageDirective == null) {
+                            val whiteSpace = importList.nextLeaf(true)
+                            if (whiteSpace is PsiWhiteSpace) {
+                                val newLineBreak = if (whiteSpace.isMultiLine()) {
+                                    psiFactory.createWhiteSpace("\n" + whiteSpace.text)
+                                } else {
+                                    psiFactory.createWhiteSpace("\n\n" + whiteSpace.text)
+                                }
+
+                                whiteSpace.replace(newLineBreak)
+                            } else {
+                                file.addAfter(psiFactory.createNewLine(2), importList)
+                            }
                         }
                     }
                 } else {
@@ -499,15 +520,8 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                         directivePath != null && importPathComparator.compare(directivePath, importPath) <= 0
                     }
 
-                    (importList.addAfter(newDirective, insertAfter) as KtImportDirective).also { insertedDirective ->
-                        if (isInjectedScript) {
-                            if (insertAfter != null) {
-                                importList.addBefore(psiFactory.createNewLine(1), insertedDirective)
-                            }
-                            if (insertAfter == null) {
-                                importList.addAfter(psiFactory.createNewLine(1), insertedDirective)
-                            }
-                        }
+                    (importList.addAfter(newDirective, insertAfter) as KtImportDirective).also {
+                        importList.addBefore(psiFactory.createNewLine(1), it)
                     }
                 }
             } else {

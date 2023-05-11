@@ -84,11 +84,15 @@
     <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenPomPathModuleService"/>
     <trustedProjectsLocator implementation="org.jetbrains.idea.maven.wizards.MavenTrustedProjectsLocator"/>
 
-    <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager"/>
+    <applicationService serviceInterface="org.jetbrains.idea.maven.server.MavenServerManager"
+                        serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManagerImpl"/>
     <applicationService serviceInterface="org.jetbrains.idea.maven.server.MavenServerManager$MavenServerConnectorFactory"
                         serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager$MavenServerConnectorFactoryImpl"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenWrapperMapping"/>
+
+    <projectService serviceInterface="org.jetbrains.idea.maven.project.MavenProjectResolver"
+                    serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectResolverImpl"/>
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.server.MavenDistributionsCache"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.importing.MavenImportingManager"/>
@@ -349,11 +353,14 @@
     <registryKey key="maven.server.force.resolve.dependencies.sequentially" defaultValue="false"
                  description="Resolve maven dependencies sequentially (slow in case of many maven modules)"/>
 
+    <registryKey key="maven.server.use.custom.dependencies.resolver" defaultValue="true"
+                 description="Use custom maven dependencies resolver to speed up dependency resolution"/>
+
+    <registryKey key="maven.server.generate.sources.for.aggregator.projects" defaultValue="true"
+                 description="Generate sources for aggregator projects (instead of all projects) for better performance"/>
+
     <registryKey key="maven.import.to.workspace.model.fast.facet.creation" defaultValue="false"
                  description="Create facets in a background thread instead of EDT"/>
-
-    <registryKey key="maven.import.to.workspace.model.ignored.facet.importers" defaultValue=""
-                 description="Comma-separated list of facet importer class names that should be ignored during import for better performance. E.g., JpaFacetImporter"/>
 
     <intentionAction>
       <language>XML</language>
@@ -523,6 +530,7 @@
     <mavenServerSupportFactory implementation="org.jetbrains.idea.maven.server.wsl.WslMavenRemoteProcessSupportFactory"/>
     <remotePathTransformerFactory implementation="org.jetbrains.idea.maven.server.wsl.WslRemotePathTransformFactory"/>
     <versionAwareMavenSupport implementation="org.jetbrains.idea.maven.maven3.Maven3Support"/>
+    <versionAwareMavenSupport implementation="org.jetbrains.idea.maven.maven4.Maven4Support"/>
 
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerConfigurator"/>
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenCompilerConfigurator"/>

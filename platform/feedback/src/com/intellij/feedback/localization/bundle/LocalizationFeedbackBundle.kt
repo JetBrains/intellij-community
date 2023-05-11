@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
 @NonNls
-private const val BUNDLE = "messages.LocalizationFeedbackMessages"
+private const val BUNDLE = "messages.LocalizationFeedbackMessagesBundle"
 
 internal object LocalizationFeedbackBundle : AbstractBundle(BUNDLE) {
   @Suppress("SpreadOperator")

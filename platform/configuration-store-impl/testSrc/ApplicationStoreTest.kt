@@ -547,7 +547,7 @@ internal class ApplicationStoreTest {
     override val serviceContainer: ComponentManagerImpl
       get() = ApplicationManager.getApplication() as ComponentManagerImpl
 
-    override val storageManager = ApplicationStorageManager(ApplicationManager.getApplication())
+    override val storageManager = ApplicationStorageManager()
 
     init {
       setPath(testAppConfigPath)

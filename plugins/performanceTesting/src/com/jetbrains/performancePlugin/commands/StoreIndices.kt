@@ -24,6 +24,10 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
+/**
+ * Command stores created indices.
+ * Stores created during indexing indices in the defined by the parameter '-Dstore.indices.command.stored.indexes.dump.directory' directory.
+ */
 class StoreIndices(text: String, line: Int) : AbstractCommand(text, line) {
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     val actionCallback = ActionCallbackProfilerStopper()

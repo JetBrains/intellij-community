@@ -18,9 +18,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.ColorChooser;
+import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorLineMarkerProvider;
-import com.intellij.ui.ColorPicker;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
@@ -130,9 +129,9 @@ public class ThemeColorAnnotator implements Annotator {
           boolean withAlpha = isRgbaColorHex(myColorText);
 
           if (Registry.is("ide.new.color.picker")) {
-            ColorPicker.showColorPickerPopup(e.getProject(), currentColor, (c, l) -> applyColor(currentColor, withAlpha, c));
+            ColorChooserService.getInstance().showPopup(e.getProject(), currentColor, (c, l) -> applyColor(currentColor, withAlpha, c));
           } else {
-            Color newColor = ColorChooser.chooseColor(editor.getProject(),
+            Color newColor = ColorChooserService.getInstance().showDialog(editor.getProject(),
                                                       editor.getComponent(),
                                                       DevKitThemesBundle.message("theme.choose.color.dialog.title"),
                                                       currentColor,

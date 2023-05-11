@@ -19,16 +19,15 @@ import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import java.util.function.BiConsumer
-import java.util.function.Function
 
 private var EP_NAME = ExtensionPointName<BundledQuickListsProvider>("com.intellij.bundledQuickListsProvider")
 
-@Service
+@Service(Service.Level.APP)
 class QuickListsManager {
   private val schemeProcessor = object : LazySchemeProcessor<QuickList, QuickList>(QuickList.DISPLAY_NAME_TAG) {
     override fun createScheme(dataHolder: SchemeDataHolder<QuickList>,
                               name: String,
-                              attributeProvider: Function<in String, String?>,
+                              attributeProvider: (String) -> String?,
                               isBundled: Boolean): QuickList {
       val item = QuickList()
       item.readExternal(dataHolder.read())
@@ -63,13 +62,11 @@ class QuickListsManager {
 
   companion object {
     @JvmStatic
-    fun getInstance() = service<QuickListsManager>()
+    fun getInstance(): QuickListsManager = service()
   }
 
   val allQuickLists: Array<QuickList>
-    get() {
-      return schemeManager.allSchemes.toTypedArray()
-    }
+    get() = schemeManager.allSchemes.toTypedArray()
 
   private fun registerActions(actionManager: ActionManager) {
     for (oldId in actionManager.getActionIdList(QuickList.QUICK_LIST_PREFIX)) {

@@ -15,11 +15,14 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
+ * Deprecated. Use {@link java.util.function.Function} instead.
  */
+@ApiStatus.Obsolete
 public final class NullableConstantFunction<Param, Result> implements NullableFunction<Param, Result> {
   private final Result value;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
@@ -98,7 +98,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
 
     UIUtil.decorateWindowHeader((frame as RootPaneContainer).rootPane)
     if (frame is JFrame) {
-      val handlerProvider = Supplier { FullScreeSupport.NEW.apply("com.intellij.ui.mac.MacFullScreenSupport") }
+      val handlerProvider = Supplier { FullScreenSupport.NEW.apply("com.intellij.ui.mac.MacFullScreenSupport") }
       ToolbarUtil.setTransparentTitleBar(frame, frame.rootPane, handlerProvider) { runnable ->
         Disposer.register(this, Disposable { runnable.run() })
       }
@@ -139,7 +139,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     }
 
     if (images.isEmpty()) {
-      AppUIUtil.updateWindowIcon(frame)
+      updateAppWindowIcon(frame)
     }
     else {
       // unwrap the image before setting as frame's icon

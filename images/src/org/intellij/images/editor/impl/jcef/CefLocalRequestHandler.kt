@@ -31,7 +31,11 @@ class CefLocalRequestHandler(
       if (!url.protocol.equals(myProtocol) || !url.authority.equals(myAuthority)) {
         return REJECTING_RESOURCE_HANDLER
       }
-      return myResources[url.path]?.let { it() } ?: REJECTING_RESOURCE_HANDLER
+      return try {
+        myResources[url.path]?.let { it() } ?: REJECTING_RESOURCE_HANDLER
+      } catch (e: RuntimeException) {
+        REJECTING_RESOURCE_HANDLER
+      }
     }
   }
 

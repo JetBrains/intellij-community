@@ -103,7 +103,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
       }
     });
 
-    new TreeSpeedSearch(myArchetypesTree, false, path -> {
+    TreeSpeedSearch.installOn(myArchetypesTree, false, path -> {
       MavenArchetype info = getArchetypeInfoFromPathComponent(path.getLastPathComponent());
       return info.groupId + ":" + info.artifactId + ":" + info.version;
     }).setComparator(new SpeedSearchComparator(false));

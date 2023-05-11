@@ -63,6 +63,7 @@ import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.*;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
+import com.jetbrains.python.debugger.pydev.tables.TableCommandParameters;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoContext;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoHandler;
@@ -231,6 +232,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             getSession().positionReached(createSuspendContext(threadInfo));
           }
         }
+        PyFrameListener.publisher().frameChanged();
         for (PyFrameListener listener : myFrameListeners) {
           listener.frameChanged();
         }
@@ -238,9 +240,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
       @Override
       public void sessionStopped() {
+        PyFrameListener.publisher().sessionStopped(null);
         XDebugSessionListener.super.sessionStopped();
         for (PyFrameListener listener : myFrameListeners) {
-          listener.sessionStopped();
+          listener.sessionStopped(null);
         }
       }
     });
@@ -794,9 +797,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public String execTableCommand(String command, TableCommandType commandType) throws PyDebuggerException {
+  public String execTableCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
-    return myDebugger.execTableCommand(frame.getThreadId(), frame.getFrameId(), command, commandType);
+    return myDebugger.execTableCommand(frame.getThreadId(), frame.getFrameId(), command, commandType, tableCommandParameters);
   }
 
   @Override
@@ -1422,7 +1425,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (pyType == null) {
       PyElementGenerator generator = PyElementGenerator.getInstance(getProject());
       PyPsiFacade psiFacade = PyPsiFacade.getInstance(getProject());
-      PsiFile dummyFile = generator.createDummyFile(((PyFile)file).getLanguageLevel(), "");
+      PsiFile dummyFile = generator.createDummyFile((LanguageLevel.forElement(file)), "");
       Module moduleForFile = ModuleUtilCore.findModuleForPsiElement(file);
       dummyFile.putUserData(ModuleUtilCore.KEY_MODULE, moduleForFile);
 

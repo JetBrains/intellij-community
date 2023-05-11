@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
-import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.runAll
@@ -12,10 +12,12 @@ import com.intellij.testFramework.fixtures.SdkTestFixture
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.vfs.createDirectory
+import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.ESListenerLeakTracker
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.ESReloadLeakTracker
+import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
+import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
@@ -24,7 +26,7 @@ import org.junit.jupiter.api.TestInfo
 abstract class GradleBaseTestCase {
 
   private lateinit var listenerLeakTracker: ESListenerLeakTracker
-  private lateinit var reloadLeakTracker: ESReloadLeakTracker
+  private lateinit var reloadLeakTracker: OperationLeakTracker
 
   lateinit var testDisposable: Disposable
 
@@ -39,15 +41,12 @@ abstract class GradleBaseTestCase {
   val gradleVersion: GradleVersion
     get() = GradleVersion.current()
 
-  val gradleReload: ESReloadLeakTracker
-    get() = reloadLeakTracker
-
   @BeforeEach
   fun setUpGradleBaseTestCase(testInfo: TestInfo) {
     listenerLeakTracker = ESListenerLeakTracker()
     listenerLeakTracker.setUp()
 
-    reloadLeakTracker = ESReloadLeakTracker()
+    reloadLeakTracker = OperationLeakTracker { getGradleProjectReloadOperation(it) }
     reloadLeakTracker.setUp()
 
     testDisposable = Disposer.newDisposable()
@@ -57,9 +56,11 @@ abstract class GradleBaseTestCase {
 
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
     fileFixture.setUp()
-    runWriteActionAndWait {
-      testRoot = fileFixture.findOrCreateDir(testInfo.testClass.get().simpleName)
-        .createDirectory(testInfo.testMethod.get().name)
+    runBlocking {
+      writeAction {
+        testRoot = fileFixture.findOrCreateDir(testInfo.testClass.get().simpleName)
+          .createDirectory(testInfo.testMethod.get().name)
+      }
     }
 
     AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
@@ -75,5 +76,16 @@ abstract class GradleBaseTestCase {
       { reloadLeakTracker.tearDown() },
       { listenerLeakTracker.tearDown() }
     )
+  }
+
+  suspend fun <R> awaitAnyGradleProjectReload(wait: Boolean = true, action: suspend () -> R): R {
+    if (!wait) {
+      return action()
+    }
+    return reloadLeakTracker.withAllowedOperationAsync(1) {
+      org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleProjectReload {
+        action()
+      }
+    }
   }
 }

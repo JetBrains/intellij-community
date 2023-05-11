@@ -207,6 +207,10 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
             updatedRecord.readValueFromStorage(storage),
             updatedRecord.attributeBytes()
           );
+          assertArrayEquals(
+            updatedRecord.readValueFromStorageRaw(storage),
+            updatedRecord.attributeBytes()
+          );
         }
       }
       catch (IOException e) {

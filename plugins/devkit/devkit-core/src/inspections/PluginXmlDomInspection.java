@@ -27,7 +27,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -42,6 +41,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.*;
@@ -91,7 +91,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   @XCollection
   public List<PluginModuleSet> PLUGINS_MODULES = new ArrayList<>();
-  private final ClearableLazyValue<Map<String, PluginModuleSet>> myPluginModuleSetByModuleName = ClearableLazyValue.createAtomic(() -> {
+  private final SynchronizedClearableLazy<Map<String, PluginModuleSet>> myPluginModuleSetByModuleName = new SynchronizedClearableLazy<>(() -> {
     Map<String, PluginModuleSet> result = new HashMap<>();
     for (PluginModuleSet modulesSet : PLUGINS_MODULES) {
       for (String module : modulesSet.modules) {
@@ -115,7 +115,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                  new JavaClassValidator().withTitle(DevKitBundle.message("inspections.plugin.xml.add.ignored.class.title")));
     if (ApplicationManager.getApplication().isInternal()) {
       return pane(ignoreClassList,
-                  OptPane.stringList("PLUGINS_MODULES", DevKitBundle.message("inspections.plugin.xml.plugin.modules.label"))
+                  stringList("PLUGINS_MODULES", DevKitBundle.message("inspections.plugin.xml.plugin.modules.label"))
                     .description(DevKitBundle.message("inspections.plugin.xml.plugin.modules.description"))
       );
     }
@@ -151,7 +151,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     super.checkDomElement(element, holder, helper);
 
     ComponentModuleRegistrationChecker componentModuleRegistrationChecker =
@@ -213,7 +213,8 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         annotateProjectComponent((Component.Project)element, holder);
       }
     }
-    else if (element instanceof Helpset) {
+    else //noinspection deprecation
+      if (element instanceof Helpset) {
       highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
     }
     else if (element instanceof Listeners) {
@@ -345,9 +346,12 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
     if (resolveStatus == PluginPlatformInfo.PlatformResolveStatus.DEVKIT_NO_SINCE_BUILD) {
       final boolean noSinceBuildXml = !DomUtil.hasXml(platformInfo.getMainIdeaPlugin().getIdeaVersion().getSinceBuild());
+      LocalQuickFix[] fixes =
+        noSinceBuildXml ? new LocalQuickFix[]{new AddDomElementQuickFix<>(platformInfo.getMainIdeaPlugin().getIdeaVersion())} :
+        LocalQuickFix.EMPTY_ARRAY;
       holder.createProblem(listeners, ProblemHighlightType.ERROR,
                            DevKitBundle.message("inspections.plugin.xml.since.build.must.be.specified"), null,
-                           noSinceBuildXml ? new AddDomElementQuickFix<>(platformInfo.getMainIdeaPlugin().getIdeaVersion()) : null)
+                           fixes)
         .highlightWholeElement();
       return;
     }
@@ -648,8 +652,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
     @NonNls String name = nameAttrValue.getValue();
 
+    // skip some known offenders in IJ project
     if (name != null
-        && StringUtil.startsWith(name, "Pythonid.") // NON-NLS
+        && (StringUtil.startsWith(name, "Pythonid.") ||
+            StringUtil.startsWith(name, "DevKit.")) // NON-NLS
         && PsiUtil.isIdeaProject(nameAttrValue.getManager().getProject())) {
       return true;
     }

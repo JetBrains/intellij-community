@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.CodeStyleSettings
 
 val visualFormattingElementKey = Key.create<Boolean>("visual.formatting.element")
@@ -36,6 +37,11 @@ abstract class VisualFormattingLayerService {
   abstract fun applyVisualFormattingLayerElementsToEditor(editor: Editor, elements: List<VisualFormattingLayerElement>)
 
   companion object {
+    private const val removeZombieFoldingsRegistryKey = "editor.readerMode.vfmt.removeZombies"
+
+    @JvmStatic
+    fun shouldRemoveZombieFoldings() = Registry.`is`(removeZombieFoldingsRegistryKey)
+
     @JvmStatic
     fun getInstance(): VisualFormattingLayerService =
       ApplicationManager.getApplication().getService(VisualFormattingLayerService::class.java)

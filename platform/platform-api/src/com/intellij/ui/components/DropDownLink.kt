@@ -21,6 +21,7 @@ import javax.swing.ListCellRenderer
 
 open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) : ActionLink() {
 
+  @Deprecated("Do not use popupState")
   val popupState = PopupState.forPopup()
   var selectedItem: T = item
     set(newItem) {
@@ -35,11 +36,8 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
     text = itemToString(item)
     setDropDownLinkIcon()
     addActionListener {
-      if (!popupState.isRecentlyHidden) {
-        val popup = popupBuilder(this)
-        popupState.prepareToShow(popup)
-        popup.show(RelativePoint(this, popupPoint()))
-      }
+      val popup = popupBuilder(this)
+      popup.show(RelativePoint(this, popupPoint()))
     }
     getInputMap(WHEN_FOCUSED)?.run {
       put(getKeyStroke(KeyEvent.VK_DOWN, 0, false), "pressed")

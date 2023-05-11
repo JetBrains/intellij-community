@@ -429,7 +429,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Does not actually convert to title case, but just capitalizes all words.
+   * Does not actually convert to a title case, but just capitalizes all words.
    * This is probably not correct for any language.
    * For actual (English) title case see {@link #wordsToBeginFromUpperCase(String)}.
    */
@@ -945,6 +945,11 @@ public class StringUtil extends StringUtilRt {
     return Strings.isCapitalized(s);
   }
 
+  @Contract(value = "null -> false", pure = true)
+  public static boolean canBeCapitalized(@Nullable String s) {
+    return isNotEmpty(s) && Character.isLowerCase(s.charAt(0));
+  }
+
   @Contract(pure = true)
   public static @NotNull String capitalizeWithJavaBeanConvention(@NotNull String s) {
     if (s.length() > 1 && Character.isUpperCase(s.charAt(1))) {
@@ -1216,7 +1221,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Allows to answer if given symbol is white space, tabulation or line feed.
+   * True if given symbol is white space, tabulation or line feed.
    *
    * @param c symbol to check
    * @return {@code true} if given symbol is white space, tabulation or line feed; {@code false} otherwise
@@ -1377,7 +1382,7 @@ public class StringUtil extends StringUtilRt {
    * @param text text to get word ranges in.
    * @param separatorsSet if not null, only these characters will be considered as separators (i.e., not a part of word).
    *                   Otherwise {@link Character#isJavaIdentifierPart(char)} will be used to determine whether a symbol is part of word.
-   * @return ranges ranges of words in passed text.
+   * @return ranges of words in passed text.
    */
   @Contract(pure = true)
   public static @NotNull List<TextRange> getWordIndicesIn(@NotNull String text, @Nullable Set<Character> separatorsSet) {
@@ -1653,7 +1658,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Find position of the first character accepted by given filter.
+   * Find the position of the first character accepted by given filter.
    *
    * @param s      the string to search
    * @param filter search filter
@@ -1762,7 +1767,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Allows to answer if target symbol is contained at given char sequence at {@code [start; end)} interval.
+   * True if the target symbol {@code c} is contained in the given sequence at {@code [start; end)} interval.
    *
    * @param s     target char sequence to check
    * @param start start offset to use within the given char sequence (inclusive)
@@ -1894,7 +1899,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Allows to retrieve index of last occurrence of the given symbols at {@code [start; end)} sub-sequence of the given text.
+   * return the index of last occurrence of the given symbols at {@code [start; end)} sub-sequence of the given text.
    *
    * @param s     target text
    * @param c     target symbol which last occurrence we want to check
@@ -2465,7 +2470,8 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Splits string by lines. If several line separators are in a row corresponding empty lines
+   * Splits string by lines.
+   * If several line separators are in a row, corresponding empty lines
    * are also added to result if {@code excludeEmptyStrings} is {@code false}.
    *
    * @param string String to split
@@ -2536,15 +2542,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract("null -> false")
   public static boolean isNotNegativeNumber(@Nullable CharSequence s) {
-    if (s == null) {
-      return false;
-    }
-    for (int i = 0; i < s.length(); i++) {
-      if (!isDecimalDigit(s.charAt(i))) {
-        return false;
-      }
-    }
-    return true;
+    return Strings.isNotNegativeNumber(s);
   }
 
   @Contract(pure = true)
@@ -2558,20 +2556,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int compare(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean ignoreCase) {
-    if (s1 == s2) return 0;
-    if (s1 == null) return -1;
-    if (s2 == null) return 1;
-
-    int length1 = s1.length();
-    int length2 = s2.length();
-    int i = 0;
-    for (; i < length1 && i < length2; i++) {
-      int diff = Strings.compare(s1.charAt(i), s2.charAt(i), ignoreCase);
-      if (diff != 0) {
-        return diff;
-      }
-    }
-    return length1 - length2;
+    return Strings.compare(s1, s2, ignoreCase);
   }
 
   @Contract(pure = true)
@@ -2800,7 +2785,7 @@ public class StringUtil extends StringUtilRt {
    * Equivalent for {@code getShortName(fqName).equals(shortName)}, but could be faster.
    *
    * @param fqName    fully-qualified name (dot-separated)
-   * @param shortName a short name, must not contain dots
+   * @param shortName a short name, which must not contain dots
    * @return true if specified short name is a short name of fully-qualified name
    */
   public static boolean isShortNameOf(@NotNull String fqName, @NotNull String shortName) {
@@ -2829,9 +2814,14 @@ public class StringUtil extends StringUtilRt {
            trimStart(s, className) : s;
   }
 
+  /**
+   * @param sequence original CharSequence
+   * @param delayMillis max delay in milliseconds
+   * @return a wrapped CharSequence that throws {@link ProcessCanceledException} if still accessed after delay.
+   */
   @Contract(pure = true)
-  public static @NotNull CharSequence newBombedCharSequence(@NotNull CharSequence sequence, long delay) {
-    long myTime = System.currentTimeMillis() + delay;
+  public static @NotNull CharSequence newBombedCharSequence(@NotNull CharSequence sequence, long delayMillis) {
+    long myTime = System.currentTimeMillis() + delayMillis;
     return new BombedCharSequence(sequence) {
       @Override
       protected void checkCanceled() {
@@ -2958,9 +2948,31 @@ public class StringUtil extends StringUtilRt {
     protected abstract void checkCanceled();
 
     @Override
-    public @NotNull CharSequence subSequence(int i, int i1) {
+    public @NotNull CharSequence subSequence(int start, int end) {
       check();
-      return delegate.subSequence(i, i1);
+      CharSequence subSequence = delegate.subSequence(start, end);
+      BombedCharSequence bombedParent = this instanceof ChildBombedCharSequence ? ((ChildBombedCharSequence)this).myBombedParent : this;
+      return new ChildBombedCharSequence(subSequence, bombedParent);
+    }
+  }
+
+  private static final class ChildBombedCharSequence extends BombedCharSequence {
+    private final BombedCharSequence myBombedParent;
+
+    ChildBombedCharSequence(@NotNull CharSequence sequence,
+                            @NotNull BombedCharSequence bombedParent) {
+      super(sequence);
+      myBombedParent = bombedParent;
+    }
+
+    @Override
+    protected void check() {
+      myBombedParent.check();
+    }
+
+    @Override
+    protected void checkCanceled() {
+      throw new UnsupportedOperationException();
     }
   }
 

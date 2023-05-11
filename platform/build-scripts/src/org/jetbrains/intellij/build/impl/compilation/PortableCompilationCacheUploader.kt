@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.diagnostic.telemetry.use
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.use
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
@@ -80,9 +80,10 @@ internal class PortableCompilationCacheUploader(
   }
 
   private fun uploadToS3() {
-    spanBuilder("aws s3 sync").useWithScope {
-      context.messages.info(awsS3Cli("sync", "--no-progress", "--include", "*", "$s3Folder", "s3://intellij-jps-cache"))
-      println("##teamcity[setParameter name='jps.caches.aws.sync.skip' value='true']")
+    if (remoteCache.shouldBeSyncedToS3) {
+      spanBuilder("aws s3 sync").useWithScope {
+        context.messages.info(awsS3Cli("sync", "--no-progress", "--include", "*", "$s3Folder", "s3://intellij-jps-cache"))
+      }
     }
   }
 
@@ -96,14 +97,18 @@ internal class PortableCompilationCacheUploader(
     if (forcedUpload || !uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
     }
-    moveFile(zipFile, s3Folder.resolve(cachePath))
+    if (remoteCache.shouldBeSyncedToS3) {
+      moveFile(zipFile, s3Folder.resolve(cachePath))
+    }
   }
 
   private fun uploadMetadata() {
     val metadataPath = "metadata/$commitHash"
     val sourceStateFile = sourcesStateProcessor.sourceStateFile
     uploader.upload(metadataPath, sourceStateFile)
-    moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
+    if (remoteCache.shouldBeSyncedToS3) {
+      moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
+    }
   }
 
   private fun uploadCompilationOutputs(currentSourcesState: Map<String, Map<String, BuildTargetState>>,
@@ -124,7 +129,9 @@ internal class PortableCompilationCacheUploader(
           uploader.upload(sourcePath, zipFile)
           uploadedOutputCount.incrementAndGet()
         }
-        moveFile(zipFile, s3Folder.resolve(sourcePath))
+        if (remoteCache.shouldBeSyncedToS3) {
+          moveFile(zipFile, s3Folder.resolve(sourcePath))
+        }
       }
     }
   }

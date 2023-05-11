@@ -8,7 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.LocalFilePath;
 import com.intellij.openapi.vcs.UrlFilePath;
-import com.intellij.openapi.vfs.VersionedFileSystem;
+import com.intellij.openapi.vfs.VersionManagingFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
@@ -123,7 +123,7 @@ public final class Paths {
 
   @NotNull
   public static FilePath createDvcsFilePath(@NotNull VirtualFile file) {
-    if (file.getFileSystem() instanceof VersionedFileSystem) {
+    if (VersionManagingFileSystem.isEnforcedNonLocal(file)) {
       return new UrlFilePath(file.getUrl(), file.isDirectory());
     }
     else {

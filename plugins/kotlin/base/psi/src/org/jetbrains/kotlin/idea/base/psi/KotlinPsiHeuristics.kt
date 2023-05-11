@@ -126,18 +126,36 @@ object KotlinPsiHeuristics {
     fun findAnnotation(declaration: KtAnnotated, fqName: FqName, useSiteTarget: AnnotationUseSiteTarget? = null): KtAnnotationEntry? {
         val targetShortName = fqName.shortName().asString()
         val targetAliasName = declaration.containingKtFile.findAliasByFqName(fqName)?.name
+        return findAnnotationInList(declaration.annotationEntries, targetShortName, targetAliasName, useSiteTarget)
+    }
 
-        for (annotationEntry in declaration.annotationEntries) {
+    @JvmStatic
+    fun findAnnotation(
+        fileAnnotationList: KtFileAnnotationList,
+        fqName: FqName,
+        useSiteTarget: AnnotationUseSiteTarget? = null
+    ): KtAnnotationEntry? {
+        val targetShortName = fqName.shortName().asString()
+        val targetAliasName = fileAnnotationList.containingKtFile.findAliasByFqName(fqName)?.name
+        return findAnnotationInList(fileAnnotationList.annotationEntries, targetShortName, targetAliasName, useSiteTarget)
+    }
+
+    @JvmStatic
+    fun findAnnotationInList(
+        annotationEntries: List<KtAnnotationEntry>,
+        targetShortName: String,
+        targetAliasName: String?,
+        useSiteTarget: AnnotationUseSiteTarget? = null
+    ): KtAnnotationEntry? {
+        for (annotationEntry in annotationEntries) {
             if (!checkAnnotationUseSiteTarget(annotationEntry, useSiteTarget)) {
                 continue
             }
-
             val annotationShortName = annotationEntry.shortName?.asString() ?: continue
             if (annotationShortName == targetShortName || annotationShortName == targetAliasName) {
                 return annotationEntry
             }
         }
-
         return null
     }
 

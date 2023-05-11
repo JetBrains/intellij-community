@@ -16,20 +16,41 @@
 package com.jetbrains.python;
 
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.LazyInitializer;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 public final class PythonHelpersLocator {
   private static final Logger LOG = Logger.getInstance(PythonHelpersLocator.class);
   private static final String PROPERTY_HELPERS_LOCATION = "idea.python.helpers.path";
+
+  private static final LazyInitializer.LazyValue<@NotNull File> ourTemporaryHelpersRootDir = new LazyInitializer.LazyValue<>(() -> {
+    try {
+      return FileUtil.createTempDirectory(
+        "python-helpers-" + ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode(),
+        null,
+        true);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException("Failed to create temporary directory for helpers", e);
+    }
+  });
+
+  private static final Set<@NotNull File> ourCopiedHelpers = ContainerUtil.newConcurrentSet();
 
   private PythonHelpersLocator() {}
 
@@ -57,7 +78,23 @@ public final class PythonHelpersLocator {
     else {
       final File pluginBaseDir = getPluginBaseDir(jarPath);
       if (pluginBaseDir != null) {
-        return new File(pluginBaseDir, PathUtil.getFileName(relativePath));
+        String dirName = PathUtil.getFileName(relativePath);
+        File source = new File(pluginBaseDir, dirName);
+        File destination = new File(ourTemporaryHelpersRootDir.get(), dirName);
+        if (ourCopiedHelpers.add(destination)) {
+          // Python creates *.pyc files near to *.py files after importing. It used to break patch updates from Toolbox on macOS
+          // due to signature mismatches: macOS refuses to launch such applications and users had to reinstall the IDE.
+          // There is no check for macOS though, since such problems may appear in other operating systems as well, and since it's a bad
+          // idea to modify the IDE distributive during running in general.
+          try {
+            FileUtil.copyDir(source, destination, true);
+          }
+          catch (IOException e) {
+            ourCopiedHelpers.remove(destination);
+            throw new UncheckedIOException(String.format("Failed to copy %s to %s", source, destination), e);
+          }
+        }
+        return destination;
       }
       else {
         return new File(new File(jarPath).getParentFile(), moduleName);

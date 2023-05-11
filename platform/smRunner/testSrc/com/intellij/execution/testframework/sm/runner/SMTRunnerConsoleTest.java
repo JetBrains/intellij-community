@@ -52,7 +52,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     final TestConsoleProperties consoleProperties = createConsoleProperties();
 
-    myMockResettablePrinter = new MockPrinter(true);
+    myMockResettablePrinter = new MockPrinter();
     myConsole = new MyConsoleView(consoleProperties);
     myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
@@ -200,7 +200,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     assertAllOutputs(myMockResettablePrinter, "stdout1 ", "\nerror msg\nmethod1:1\nmethod2:2\nstderr1 ", "");
 
-    final MockPrinter mockPrinter1 = new MockPrinter(true);
+    final MockPrinter mockPrinter1 = new MockPrinter();
     mockPrinter1.onNewAvailable(myTest1);
     assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
 
@@ -211,7 +211,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestFailure(new TestFailedEvent("my_test2", "error msg", "method1:1\nmethod2:2", false, null, null));
 
     assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
-    final MockPrinter mockPrinter2 = new MockPrinter(true);
+    final MockPrinter mockPrinter2 = new MockPrinter();
     mockPrinter2.onNewAvailable(myTest2);
     assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
   }
@@ -225,7 +225,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     assertAllOutputs(myMockResettablePrinter, "stdout1 ", "\nerror msg\nstderr1 ", "");
 
-    final MockPrinter mockPrinter1 = new MockPrinter(true);
+    final MockPrinter mockPrinter1 = new MockPrinter();
     mockPrinter1.onNewAvailable(myTest1);
     assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 \nerror msg\n", "");
   }
@@ -254,7 +254,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                      // std sys
                      "Expected :Actual   :");
 
-    final MockPrinter mockPrinter1 = new MockPrinter(true);
+    final MockPrinter mockPrinter1 = new MockPrinter();
     mockPrinter1.onNewAvailable(myTest1);
     assertAllOutputs(mockPrinter1,
                      // std out
@@ -291,7 +291,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
       method2:2
       stderr1\s""", "");
 
-    final MockPrinter mockPrinter1 = new MockPrinter(true);
+    final MockPrinter mockPrinter1 = new MockPrinter();
     mockPrinter1.onNewAvailable(myTest1);
     assertAllOutputs(mockPrinter1, "stdout1 ", """
       stderr1\s
@@ -312,7 +312,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     assertAllOutputs(myMockResettablePrinter, "stdout1 ", "\nerror msg\nmethod1:1\nmethod2:2\nstderr1 ", "");
 
-    final MockPrinter mockPrinter1 = new MockPrinter(true);
+    final MockPrinter mockPrinter1 = new MockPrinter();
     mockPrinter1.onNewAvailable(myTest1);
     assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
 
@@ -323,7 +323,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestFailure(new TestFailedEvent("my_test2", "error msg", "method1:1\nmethod2:2", true, null, null));
 
     assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
-    final MockPrinter mockPrinter2 = new MockPrinter(true);
+    final MockPrinter mockPrinter2 = new MockPrinter();
     mockPrinter2.onNewAvailable(myTest2);
     assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
   }
@@ -337,7 +337,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     assertAllOutputs(myMockResettablePrinter, "stdout1 ", "\nerror msg\nmethod1:1\nmethod2:2\nstderr1 ", "");
 
-    final MockPrinter mockPrinter1 = new MockPrinter(true);
+    final MockPrinter mockPrinter1 = new MockPrinter();
     mockPrinter1.onNewAvailable(myTest1);
     assertAllOutputs(mockPrinter1, "stdout1 ", """
 
@@ -355,7 +355,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onError("error msg", "method1:1\nmethod2:2", true);
 
     assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
-    final MockPrinter mockPrinter2 = new MockPrinter(true);
+    final MockPrinter mockPrinter2 = new MockPrinter();
     mockPrinter2.onNewAvailable(myTest2);
     assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
   }
@@ -375,7 +375,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
       method2:2
       """, "");
 
-    final MockPrinter mockSuitePrinter = new MockPrinter(true);
+    final MockPrinter mockSuitePrinter = new MockPrinter();
     mockSuitePrinter.onNewAvailable(suite);
     assertAllOutputs(mockSuitePrinter, "", """
 
@@ -383,7 +383,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
       method1:1
       method2:2
       """, "");
-    final MockPrinter mockRootSuitePrinter = new MockPrinter(true);
+    final MockPrinter mockRootSuitePrinter = new MockPrinter();
     mockRootSuitePrinter.onNewAvailable(myRootSuite);
     assertAllOutputs(mockRootSuitePrinter, "", """
 
@@ -406,7 +406,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg\n");
 
-    final MockPrinter mockPrinter1 = new MockPrinter(true);
+    final MockPrinter mockPrinter1 = new MockPrinter();
     mockPrinter1.onNewAvailable(myTest1);
     assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 ", "\nignored msg\n");
 
@@ -417,7 +417,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestIgnored(new TestIgnoredEvent("my_test2", "ignored msg", null));
 
     assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg\n");
-    final MockPrinter mockPrinter2 = new MockPrinter(true);
+    final MockPrinter mockPrinter2 = new MockPrinter();
     mockPrinter2.onNewAvailable(myTest2);
     assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 ", "\nignored msg\n");
   }
@@ -433,7 +433,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                      "stderr1 ",
                      "\nignored2 msg\n\nmethod1:1\nmethod2:2\n");
 
-    final MockPrinter mockPrinter1 = new MockPrinter(true);
+    final MockPrinter mockPrinter1 = new MockPrinter();
     mockPrinter1.onNewAvailable(myTest1);
     assertAllOutputs(mockPrinter1,
                      "stdout1 ",
@@ -450,7 +450,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                      "stdout1 ",
                      "stderr1 ",
                      "\nignored msg\n\nmethod1:1\nmethod2:2\n");
-    final MockPrinter mockPrinter2 = new MockPrinter(true);
+    final MockPrinter mockPrinter2 = new MockPrinter();
     mockPrinter2.onNewAvailable(myTest2);
     assertAllOutputs(mockPrinter2,
                      "stdout1 ",

@@ -12,6 +12,6 @@ internal object Test {
     fun test() {
         Integer.valueOf("1")
         Integer.valueOf("1")
-        java.lang.Integer.valueOf("1")
+        "1".toInt()
     }
 }

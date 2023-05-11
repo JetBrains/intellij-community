@@ -262,7 +262,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnUncapturedOutput(final String text, final Key outputType) {
+  protected void fireOnUncapturedOutput(final String text, final Key outputType) {
     assertNotNull(text);
 
     if (StringUtil.isEmpty(text)) {

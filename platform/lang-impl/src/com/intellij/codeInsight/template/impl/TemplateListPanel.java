@@ -623,7 +623,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
           return ActionUpdateThread.EDT;
         }
       });
-    return decorator.setToolbarPosition(ActionToolbarPosition.RIGHT);
+    return decorator;
   }
 
   private void addTemplateOrGroup(AnActionButton button) {

@@ -28,10 +28,13 @@
 
   <actions resource-bundle="messages.TaskBundle">
 
+    <action id="tasks.switch" class="com.intellij.tasks.actions.SwitchTaskAction">
+      <add-to-group group-id="MainToolbarLeft" anchor="last"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="alt shift T"/>
+    </action>
+
     <group id="task.actions">
-      <action id="tasks.switch" class="com.intellij.tasks.actions.SwitchTaskAction">
-        <keyboard-shortcut keymap="$default" first-keystroke="alt shift T"/>
-      </action>
+      <reference id="tasks.switch"/>
       <action id="tasks.goto" class="com.intellij.tasks.actions.GotoTaskAction">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift N"/>
       </action>
@@ -153,5 +156,8 @@
 
     <vcs.changeListDecorator implementation="com.intellij.tasks.impl.TaskManagerDecorator"/>
     <notificationGroup id="Task Group" displayType="BALLOON" bundle="messages.TaskBundle" key="notification.group.tasks"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.tasks.impl.TaskManagementUsageCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.tasks.impl.TaskManagementConfigurationCollector"/>
   </extensions>
 </idea-plugin>

@@ -5,10 +5,7 @@ import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
-import com.intellij.codeInsight.daemon.impl.DaemonListeners;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
 import com.intellij.codeInsight.daemon.impl.analysis.UpgradeSdkFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
@@ -54,20 +51,15 @@ import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.siyeh.ig.controlflow.UnnecessaryDefaultInspection;
-import com.siyeh.ig.fixes.CreateDefaultBranchFix;
-import com.siyeh.ig.fixes.CreateEnumMissingSwitchBranchesFix;
-import com.siyeh.ig.fixes.CreateSealedClassMissingSwitchBranchesFix;
-import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.fixes.*;
 import com.siyeh.ipp.modifiers.ChangeModifierIntention;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public final class QuickFixFactoryImpl extends QuickFixFactory {
@@ -236,7 +228,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddExceptionToCatchFix() {
-    return new AddExceptionToCatchFix(true);
+    return new AddExceptionToCatchFix(true).asIntention();
   }
 
   @NotNull
@@ -268,7 +260,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createChangeToAppendFix(@NotNull IElementType sign,
                                                  @NotNull PsiType type,
                                                  @NotNull PsiAssignmentExpression assignment) {
-    return new ChangeToAppendFix(sign, type, assignment);
+    return new ChangeToAppendFix(sign, type, assignment).asIntention();
   }
 
   @NotNull
@@ -346,7 +338,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddNewArrayExpressionFix(@NotNull PsiArrayInitializerExpression expression) {
-    return new AddNewArrayExpressionFix(expression);
+    return new AddNewArrayExpressionFix(expression).asIntention();
   }
 
   @NotNull
@@ -670,7 +662,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createMakeVarargParameterLastFix(@NotNull PsiParameter parameter) {
+  public IntentionAction createMakeVarargParameterLastFix(@NotNull PsiVariable parameter) {
     return new MakeVarargParameterLastFix(parameter);
   }
 
@@ -703,14 +695,16 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     VirtualFile virtualFile = file.getVirtualFile();
     boolean isInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(file.getProject(), virtualFile, false);
-    return new OptimizeImportsFix(onTheFly, isInContent);
+    return new OptimizeImportsFix(onTheFly, isInContent, virtualFile == null ? ThreeState.UNSURE : SilentChangeVetoer.extensionsAllowToChangeFileSilently(file.getProject(), virtualFile));
   }
 
   private static final class OptimizeImportsFix implements IntentionAction {
     private final boolean myOnTheFly;
     private final boolean myInContent;
+    private final ThreeState extensionsAllowToChangeFileSilently;
 
-    private OptimizeImportsFix(boolean onTheFly, boolean isInContent) {
+    private OptimizeImportsFix(boolean onTheFly, boolean isInContent, @NotNull ThreeState extensionsAllowToChangeFileSilently) {
+      this.extensionsAllowToChangeFileSilently = extensionsAllowToChangeFileSilently;
       ApplicationManager.getApplication().assertIsNonDispatchThread();
       myOnTheFly = onTheFly;
       myInContent = isInContent;
@@ -730,7 +724,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      if (myOnTheFly && !timeToOptimizeImports(file, myInContent) || !(file instanceof PsiJavaFile)) {
+      if (myOnTheFly && !timeToOptimizeImports(file, myInContent, extensionsAllowToChangeFileSilently) || !(file instanceof PsiJavaFile)) {
         return false;
       }
       VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
@@ -895,7 +889,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return AddAnnotationAttributeNameFix.createFixes(pair);
   }
 
-  private static boolean timeToOptimizeImports(@NotNull PsiFile file, boolean isInContent) {
+  private static boolean timeToOptimizeImports(@NotNull PsiFile file, boolean isInContent, @NotNull ThreeState extensionsAllowToChangeFileSilently) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!CodeInsightWorkspaceSettings.getInstance(file.getProject()).isOptimizeImportsOnTheFly()) {
       return false;
@@ -908,7 +902,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     if (!codeAnalyzer.isErrorAnalyzingFinished(file)) return false;
     boolean errors = containsErrorsPreventingOptimize(file);
 
-    return !errors && DaemonListeners.canChangeFileSilently(file, isInContent);
+    return !errors && DaemonListeners.canChangeFileSilently(file, isInContent, extensionsAllowToChangeFileSilently);
   }
 
   private static boolean containsErrorsPreventingOptimize(@NotNull PsiFile file) {
@@ -1002,6 +996,15 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return new CreateSealedClassMissingSwitchBranchesFix(switchBlock, missingCases, allNames);
   }
 
+  @Nullable
+  @Override
+  public IntentionAction createAddMissingRecordClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
+                                                                @NotNull PsiClass selectorType,
+                                                                @NotNull Map<PsiType, Set<List<PsiType>>> branches,
+                                                                @NotNull List<? extends PsiCaseLabelElement> elements) {
+    return CreateMissingDeconstructionRecordClassBranchesFix.create(switchBlock, selectorType, branches, elements);
+  }
+
   @NotNull
   @Override
   public IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, @IntentionName String message) {
@@ -1035,7 +1038,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddEmptyRecordHeaderFix(@NotNull PsiClass psiClass) {
-    return new AddEmptyRecordHeaderFix(psiClass);
+    return new AddEmptyRecordHeaderFix(psiClass).asIntention();
   }
 
   @Override
@@ -1125,7 +1128,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createInsertReturnFix(@NotNull PsiExpression expression) {
-    return new ConvertExpressionToReturnFix(expression);
+    return new ConvertExpressionToReturnFix(expression).asIntention();
   }
 
   @Override
@@ -1150,7 +1153,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation,
                                                                @NotNull PsiAnnotation.TargetType target) {
-    return new AddAnnotationTargetFix(annotation, target);
+    return new AddAnnotationTargetFix(annotation, target).asIntention();
   }
 
   @Override

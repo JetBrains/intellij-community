@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
     <orderEntry type="module" module-name="kotlin.base.plugin" />
     <orderEntry type="module" module-name="kotlin.base.platforms" />
+    <orderEntry type="module" module-name="kotlin.base.project-model" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />

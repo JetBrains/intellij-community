@@ -17,7 +17,6 @@ internal class MacIntelliJLaf : IntelliJLaf() {
   override fun loadDefaults(defaults: UIDefaults) {
     super.loadDefaults(defaults)
 
-    defaults.put("ClassLoader", javaClass.classLoader)
     for ((key, value) in baseDefaults) {
       if (key is String && key.endsWith(".selectionBackground")) {
         defaults.put(key, value)

@@ -2,9 +2,9 @@
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.*;
 /**
  * @author anna
  */
-public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction implements PriorityAction {
+public class ConvertFieldToAtomicIntention extends BaseElementAtCaretIntentionAction implements PriorityAction {
   private static final Logger LOG = Logger.getInstance(ConvertFieldToAtomicIntention.class);
   private final Map<PsiType, String> myFromToMap = Map.of(
     PsiTypes.intType(), AtomicInteger.class.getName(),
@@ -69,12 +69,25 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     if (variable == null) return IntentionPreviewInfo.EMPTY;
     PsiType type = variable.getType();
     String toType = myFromToMap.get(type);
-    if (toType == null) toType = AtomicReference.class.getName();
     String variableName = variable.getName();
-    String presentableText = StringUtil.getShortName(toType);
-    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, null,
-                                               type.getCanonicalText() + " " + variableName,
-                                               presentableText + " " + variableName + " = new " + presentableText + "(...)");
+    String modifiedText;
+    if (toType == null) {
+      Class<?> atomicClass;
+      if (type instanceof PsiArrayType arrayType) {
+        type = arrayType.getComponentType();
+        atomicClass = AtomicReferenceArray.class;
+      }
+      else {
+        atomicClass = AtomicReference.class;
+      }
+      String presentableText = StringUtil.getShortName(atomicClass.getName());
+      modifiedText = presentableText + '<' + type.getPresentableText() + "> " + variableName + " = new " + presentableText + "<>(...)";
+    }
+    else {
+      String presentableText = StringUtil.getShortName(toType);
+      modifiedText = presentableText + " " + variableName + " = new " + presentableText + "(...)";
+    }
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, type.getPresentableText() + " " + variableName, modifiedText);
   }
 
   @Override
@@ -142,7 +155,6 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   }
 
   static void postProcessVariable(@NotNull PsiVariable var, @NotNull String toType) {
-
     Project project = var.getProject();
     if (var instanceof PsiField || JavaCodeStyleSettings.getInstance(var.getContainingFile()).GENERATE_FINAL_LOCALS) {
       PsiModifierList modifierList = Objects.requireNonNull(var.getModifierList());

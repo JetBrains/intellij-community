@@ -2,16 +2,11 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
-import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.project.ModuleData
-import com.intellij.openapi.externalSystem.model.project.ProjectData
-import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinUnresolvedBinaryDependency
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinDependenciesContainer
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.projectModel.KotlinGradlePluginVersionDependentApi
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 @OptIn(KotlinGradlePluginVersionDependentApi::class)
 internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependencies() {
@@ -34,8 +29,8 @@ internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWi
     val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
 
     mppModel.sourceSetsByName.values.forEach { sourceSet ->
-        val sourceSetModuleIde = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
-        val sourceSetDataNode = moduleDataNode.findSourceSetNode(sourceSetModuleIde) ?: return@forEach
+        val sourceSetModuleId = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
+        val sourceSetDataNode = moduleDataNode.findSourceSetNode(sourceSetModuleId) ?: return@forEach
         val sourceSetDependencies = dependencies[sourceSet.name]
 
         /* Call into extension points, skipping dependency population of source set if instructed */
@@ -53,24 +48,27 @@ internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWi
 
         /*
         Some dependencies are represented as IdeaKotlinProjectArtifactDependency.
-        Such dependencies can be resolved to the actual source sets that built this artifact.
+        Such dependencies can be substituted with the actual source sets that built this artifact.
          */
         val projectArtifactDependencyResolver = KotlinProjectArtifactDependencyResolver()
-        val resolvedSourceSetDependencies = sourceSetDependencies.flatMap { dependency ->
+        val substitutedSourceSetDependencies = sourceSetDependencies.flatMap { dependency ->
             if (dependency is IdeaKotlinProjectArtifactDependency)
                 projectArtifactDependencyResolver.resolve(this, sourceSetDataNode, dependency)
             else listOf(dependency)
         }.toSet()
 
-        /* Add each resolved dependency */
-        val createdDependencyNodes = resolvedSourceSetDependencies.flatMapIndexed { index, dependency ->
+        /* Add each substituted dependency, reporting build errors for unresolved dependencies */
+        val createdDependencyNodes = substitutedSourceSetDependencies.flatMapIndexed { index, dependency ->
+            if (dependency is IdeaKotlinUnresolvedBinaryDependency) {
+                reportIdeaKotlinUnresolvedDependency(dependency, this, sourceSetModuleId)
+            }
             sourceSetDataNode.addDependency(dependency)/* The classpath order of the dependencies is given by the order they were sent by the Kotlin Gradle Plugin */
                 .onEach { it.data.setOrder(index) }
         }
 
         /* Calling into extensions, notifying them about all populated dependencies */
         extensionInstance.afterPopulateSourceSetDependencies(
-            this, sourceSetDataNode, sourceSet, resolvedSourceSetDependencies, createdDependencyNodes
+            this, sourceSetDataNode, sourceSet, substitutedSourceSetDependencies, createdDependencyNodes
         )
     }
 }

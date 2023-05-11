@@ -19,7 +19,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -39,11 +38,6 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   public BackgroundUpdaterTaskBase(@Nullable Project project, @ProgressTitle @NotNull String title, @Nullable Comparator<? super T> comparator) {
     super(project, title);
     myData = comparator == null ? new SmartList<>() : new TreeSet<>(comparator);
-  }
-
-  @TestOnly
-  public GenericListComponentUpdater<T> getUpdater() {
-    return myUpdater;
   }
 
   public void init(@NotNull JBPopup popup, @NotNull GenericListComponentUpdater<T> updater, @NotNull Ref<? extends UsageView> usageView) {
@@ -185,6 +179,11 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
     return null;
   }
 
+  public Collection<T> getItems() {
+    synchronized (lock) {
+      return new ArrayList<>(myData);
+    }
+  }
   public boolean isFinished() {
     return myFinished;
   }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.execution.rmi.IdeaWatchdogAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -26,7 +27,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Collection;
 
-public interface MavenServer extends Remote {
+public interface MavenServer extends Remote, IdeaWatchdogAware {
 
   MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) throws RemoteException;
 
@@ -48,5 +49,5 @@ public interface MavenServer extends Remote {
   @Nullable
   MavenPullDownloadListener createPullDownloadListener(MavenToken token) throws RemoteException;
 
-  boolean isAlive(MavenToken token) throws RemoteException;
+  boolean ping(MavenToken token) throws RemoteException;
 }

@@ -16,7 +16,9 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
+import com.intellij.util.indexing.EntityIndexingServiceEx;
 import com.intellij.util.indexing.IndexableFilesIndex;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
@@ -24,7 +26,7 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
-import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetVisitor;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
@@ -65,6 +67,18 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
   public boolean shouldBeIndexed(@NotNull VirtualFile file) {
     if (WorkspaceFileIndex.getInstance(project).isInWorkspace(file)) return true;
     return filesFromIndexableSetContributors.isInSet(file);
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableSetOrigin> getOrigins(@NotNull Collection<VirtualFile> files) {
+    if (files.isEmpty()) return Collections.emptyList();
+    OriginClassifier classifier = OriginClassifier.classify(project, files);
+    Collection<IndexableFilesIterator> iterators =
+      EntityIndexingServiceEx.getInstanceEx().createIteratorsForOrigins(project, classifier.entityStorage, classifier.entityReferences,
+                                                                        classifier.sdks, classifier.libraryIds,
+                                                                        classifier.filesFromAdditionalLibraryRootsProviders,
+                                                                        classifier.filesFromIndexableSetContributors);
+    return ContainerUtil.map(iterators, iterator -> iterator.getOrigin());
   }
 
   @Override
@@ -112,9 +126,9 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       }
     }
 
-    IndexingRootsCollectionUtil.IndexingRootsDescriptions descriptions =
-      IndexingRootsCollectionUtil.collectRootsFromWorkspaceFileIndexContributors(project, entityStorage, null);
-    IndexingRootsCollectionUtil.addIteratorsFromRootsDescriptions(descriptions, iterators, libraryOrigins, entityStorage);
+    WorkspaceIndexingRootsBuilder builder =
+      WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(project, entityStorage);
+    builder.addIteratorsFromRoots(iterators, libraryOrigins, entityStorage);
 
     boolean addedFromDependenciesIndexedStatusService = false;
     if (DependenciesIndexedStatusService.shouldBeUsed()) {
@@ -166,8 +180,8 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
         @Override
         public void visitIncludedRoot(@NotNull WorkspaceFileSet fileSet) {
           if (!(fileSet instanceof WorkspaceFileSetWithCustomData<?>)) return;
-          ModuleContentOrSourceRootData data =
-            ObjectUtils.tryCast(((WorkspaceFileSetWithCustomData<?>)fileSet).getData(), ModuleContentOrSourceRootData.class);
+          ModuleRelatedRootData data =
+            ObjectUtils.tryCast(((WorkspaceFileSetWithCustomData<?>)fileSet).getData(), ModuleRelatedRootData.class);
           if (data != null && data.getModule().equals(module)) {
             files.add(fileSet.getRoot());
           }

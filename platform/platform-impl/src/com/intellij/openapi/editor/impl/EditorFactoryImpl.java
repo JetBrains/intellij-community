@@ -218,8 +218,7 @@ public class EditorFactoryImpl extends EditorFactory {
   public @NotNull EditorImpl createMainEditor(@NotNull Document document, @NotNull Project project, @NotNull VirtualFile file) {
     assert !(document instanceof DocumentWindow);
     EditorImpl editor = new EditorImpl(document, false, project, EditorKind.MAIN_EDITOR, file);
-    ClientEditorManager editorManager = ClientEditorManager.getCurrentInstance();
-    postEditorCreation(editor, editorManager);
+    postEditorCreation(editor, ClientEditorManager.getCurrentInstance());
     return editor;
   }
 

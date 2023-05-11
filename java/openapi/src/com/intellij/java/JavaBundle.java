@@ -9,16 +9,14 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class JavaBundle extends DynamicBundle {
-  @NonNls public static final String BUNDLE = "messages.JavaBundle";
-  private static final JavaBundle INSTANCE = new JavaBundle();
+public final class JavaBundle {
+  public static final @NonNls String BUNDLE = "messages.JavaBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(JavaBundle.class, BUNDLE);
 
   private JavaBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
@@ -28,8 +26,7 @@ public final class JavaBundle extends DynamicBundle {
     return INSTANCE.getPartialMessage(key, unassignedParams, params);
   }
   
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

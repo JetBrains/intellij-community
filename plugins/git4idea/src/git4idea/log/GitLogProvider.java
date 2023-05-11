@@ -1,8 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log;
 
-import com.intellij.diagnostic.telemetry.IJTracer;
-import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,7 +12,12 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.CollectConsumer;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.*;
@@ -50,9 +53,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
-import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
-import static com.intellij.diagnostic.telemetry.TraceUtil.computeWithSpanThrows;
+import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.computeWithSpanThrows;
 import static com.intellij.vcs.log.VcsLogFilterCollection.*;
 import static git4idea.history.GitCommitRequirements.DiffRenameLimit;
 
@@ -79,7 +83,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
-  @NotNull private final IJTracer myTracer = TraceManager.INSTANCE.getTracer("vcs");
+  @NotNull private final IJTracer myTracer = TelemetryTracer.getInstance().getTracer(VcsScope);
 
   public GitLogProvider(@NotNull Project project) {
     myProject = project;
@@ -336,7 +340,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @Override
   public void readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes, @NotNull Consumer<? super VcsCommitMetadata> consumer)
     throws VcsException {
-    GitLogUtil.collectMetadata(myProject, root, hashes, consumer);
+    GitLogUtil.collectMetadata(myProject, root, hashes, consumer::consume);
   }
 
   @NotNull
@@ -522,8 +526,8 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     }
 
     List<TimedVcsCommit> commits = new ArrayList<>();
-    GitLogUtil.readTimedCommits(myProject, root, configParameters, filterParameters, EmptyConsumer.getInstance(),
-                                EmptyConsumer.getInstance(), new CollectConsumer<>(commits));
+    GitLogUtil.readTimedCommits(myProject, root, configParameters, filterParameters, user -> {},
+                                ref -> {}, new CollectConsumer<>(commits));
     return commits;
   }
 

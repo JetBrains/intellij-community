@@ -6,7 +6,6 @@ import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +28,7 @@ public final class StringToConstraintsTransformer {
   @NonNls private static final String CONTEXT = "context";
 
   private static final Set<String> knownOptions =
-    ContainerUtil.set(REF, REGEX, REGEXW, EXPRTYPE, FORMAL, SCRIPT, CONTAINS, WITHIN, CONTEXT);
+    Set.of(REF, REGEX, REGEXW, EXPRTYPE, FORMAL, SCRIPT, CONTAINS, WITHIN, CONTEXT);
 
   @SuppressWarnings("AssignmentToForLoopParameter")
   public static void transformCriteria(@NotNull String criteria, @NotNull MatchOptions options) {

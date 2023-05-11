@@ -797,6 +797,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
         if (showIcon) {
           Icon icon = presentation.getIcon();
+          if (isSelected && presentation.getSelectedIcon() != null) {
+            icon = presentation.getSelectedIcon();
+          }
           panel.setIcon(createLayeredIcon(icon, disabled));
         }
 
@@ -865,7 +868,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
     @ActionText
     @NotNull
-    private static String calcHit(@NotNull OptionDescription value) {
+    public static String calcHit(@NotNull OptionDescription value) {
       if (value instanceof RegistryTextOptionDescriptor) {
         return value.getHit() + " = " + value.getValue();
       }

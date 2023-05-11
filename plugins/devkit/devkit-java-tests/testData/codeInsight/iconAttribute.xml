@@ -11,7 +11,7 @@
 
     <!-- AllIcons -->
     <myIconEP icon="AllIcons.Actions.AddFile"/>
-    <myIconEP icon="<warning descr="'Chrome16' is deprecated">AllIcons.Xml.Browsers.Chrome16</warning>"/>
+    <myIconEP icon="<warning descr="'Icon' is deprecated">AllIcons.Icon</warning>"/>
     <myIconEP icon="<error descr="Cannot resolve icon 'AllIcons.INVALID_VALUE'">AllIcons.INVALID_VALUE</error>"/>
 
     <!-- icons.MyIcons -->

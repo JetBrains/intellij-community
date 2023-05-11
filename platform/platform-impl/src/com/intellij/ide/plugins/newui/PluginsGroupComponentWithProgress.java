@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +14,8 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
+
+  private final Logger LOG = Logger.getInstance(PluginsGroupComponentWithProgress.class);
 
   private AsyncProcessIcon myIcon = new AsyncProcessIcon.BigCentered(IdeBundle.message("progress.text.loading"));
   private @Nullable Runnable myVisibleRunnable;
@@ -44,6 +47,7 @@ public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComp
   }
 
   public void startLoading() {
+    LOG.info("Marketplace tab: loading started");
     if (myIcon != null) {
       myIcon.setVisible(true);
       myIcon.resume();
@@ -52,6 +56,7 @@ public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComp
   }
 
   public void stopLoading() {
+    LOG.info("Marketplace tab: loading stopped");
     if (myIcon != null) {
       myIcon.suspend();
       myIcon.setVisible(false);

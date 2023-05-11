@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util
 
 import com.intellij.execution.CommandLineUtil
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.IdeUtilIoBundle
+import com.intellij.util.io.SuperUserStatus
 import org.jetbrains.annotations.Nls
 import java.io.*
 import java.nio.charset.Charset
@@ -147,7 +148,7 @@ object ExecUtil {
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
   fun sudoCommand(commandLine: GeneralCommandLine, prompt: @Nls String): GeneralCommandLine {
-    if (SystemInfoRt.isUnix && "root" == System.getenv("USER")) { //NON-NLS
+    if (SuperUserStatus.isSuperUser) {
       return commandLine
     }
 
@@ -170,13 +171,13 @@ object ExecUtil {
         GeneralCommandLine(osascriptPath, "-e", escapedScript)
       }
       // other UNIX
-      hasGkSudo.value -> {
+      hasGkSudo.get() -> {
         GeneralCommandLine(listOf("gksudo", "--message", prompt, "--") + envCommand(commandLine) + command)//NON-NLS
       }
-      hasKdeSudo.value -> {
+      hasKdeSudo.get() -> {
         GeneralCommandLine(listOf("kdesudo", "--comment", prompt, "--") + envCommand(commandLine) + command)//NON-NLS
       }
-      hasPkExec.value -> {
+      hasPkExec.get() -> {
         GeneralCommandLine(listOf("pkexec") + envCommand(commandLine) + command)//NON-NLS
       }
       hasTerminalApp() -> {
@@ -239,7 +240,7 @@ object ExecUtil {
   @JvmStatic
   fun hasTerminalApp(): Boolean {
     return SystemInfoRt.isWindows || SystemInfoRt.isMac ||
-           hasKdeTerminal.value || hasGnomeTerminal.value || hasUrxvt.value || hasXTerm.value
+           hasKdeTerminal.get() || hasGnomeTerminal.get() || hasUrxvt.get() || hasXTerm.get()
   }
 
   @NlsSafe
@@ -250,21 +251,35 @@ object ExecUtil {
         listOf(windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(title?.replace('"', '\'') ?: ""), command)
       }
       SystemInfoRt.isMac -> {
-        listOf(openCommandPath, "-a", "Terminal", command)
+        var script = "\"clear ; exec \" & " + escapeAppleScriptArgument(command)
+        if (title != null)
+          script = "\"echo -n \" & " + escapeAppleScriptArgument("\\0033]0;$title\\007") + " & \" ; \" & " + script
+
+        // At this point, the script variable will contain a shell script line like this:
+        // clear ; exec $command                                  # in case no title is provided
+        // echo -n "\\0033]0;$title\\007" ; clear ; exec $command # in case title was provided
+
+        val escapedScript = """
+          |tell application "Terminal"
+          |  activate
+          |  do script $script
+          |end tell
+          """.trimMargin()
+        listOf(osascriptPath, "-e", escapedScript)
       }
-      hasKdeTerminal.value -> {
+      hasKdeTerminal.get() -> {
         if (title != null) listOf("konsole", "-p", "tabtitle=\"${title.replace('"', '\'')}\"", "-e", command)
         else listOf("konsole", "-e", command)
       }
-      hasGnomeTerminal.value -> {
+      hasGnomeTerminal.get() -> {
         if (title != null) listOf("gnome-terminal", "-t", title, "-x", command)
         else listOf("gnome-terminal", "-x", command)
       }
-      hasUrxvt.value -> {
+      hasUrxvt.get() -> {
         if (title != null) listOf("urxvt", "-title", title, "-e", command)
         else listOf("urxvt", "-e", command)
       }
-      hasXTerm.value -> {
+      hasXTerm.get() -> {
         if (title != null) listOf("xterm", "-T", title, "-e", command)
         else listOf("xterm", "-e", command)
       }
@@ -299,7 +314,7 @@ object ExecUtil {
 
   @JvmStatic
   fun setupNoTtyExecution(commandLine: GeneralCommandLine) {
-    if (SystemInfoRt.isLinux && hasSetsid.value) {
+    if (SystemInfoRt.isLinux && hasSetsid.get()) {
       val executablePath = commandLine.exePath
       commandLine.exePath = "setsid"
       commandLine.parametersList.prependAll(executablePath)

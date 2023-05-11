@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.util.ThrowableComputable;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,7 @@ public final class ConcurrencyUtil {
   public static final long DEFAULT_TIMEOUT_MS = 10;
 
   /**
-   * Invokes and waits all tasks using threadPool, avoiding thread starvation on the way
+   * Invokes and waits for all tasks using {@code executorService}, avoiding thread starvation on the way.
    * (see <a href="http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html">"A Thread Pool Puzzler"</a>).
    */
   public static <T> List<Future<T>> invokeAll(@NotNull Collection<? extends Callable<T>> tasks, ExecutorService executorService) throws Throwable {
@@ -38,7 +39,7 @@ public final class ConcurrencyUtil {
         Future<T> future = executorService.submit(t);
         futures.add(future);
       }
-      // force not started futures to execute using the current thread
+      // force not yet started futures to execute using the current thread
       for (Future<?> f : futures) {
         ((Runnable)f).run();
       }
@@ -68,7 +69,7 @@ public final class ConcurrencyUtil {
   }
 
   /**
-   * @return defaultValue if there is no entry in the map (in that case defaultValue is placed into the map),
+   * @return defaultValue if there is no entry in the map (in that case, defaultValue is placed into the map),
    *         or corresponding value if entry already exists.
    */
   @NotNull
@@ -114,7 +115,7 @@ public final class ConcurrencyUtil {
   }
 
   /**
-   * Service which executes tasks synchronously immediately after they submitted
+   * Service, which executes tasks synchronously, immediately after they submitted
    */
   @NotNull
   public static ExecutorService newSameThreadExecutorService() {
@@ -242,6 +243,14 @@ public final class ConcurrencyUtil {
     };
   }
 
+  /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This method does not respect cancellation.
+   * Use {@link com.intellij.util.progress.CancellationUtil#withLockCancellable}.
+   * </p>
+   */
+  @Obsolete
   public static <T, E extends Throwable> T withLock(@NotNull Lock lock, @NotNull ThrowableComputable<T, E> runnable) throws E {
     lock.lock();
     try {
@@ -252,6 +261,14 @@ public final class ConcurrencyUtil {
     }
   }
 
+  /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This method does not respect cancellation.
+   * Use {@link com.intellij.util.progress.CancellationUtil#withLockCancellable}.
+   * </p>
+   */
+  @Obsolete
   public static <E extends Throwable> void withLock(@NotNull Lock lock, @NotNull ThrowableRunnable<E> runnable) throws E {
     lock.lock();
     try {

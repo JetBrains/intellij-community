@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlerPro
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlers
 import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHandlerProvider
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtContainerNode
@@ -36,7 +38,7 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
 
     private val resolveDependentCompletionKeywordHandlers = ResolveDependentCompletionKeywordHandlerProvider(basicContext)
 
-    override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext) {
+    override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext, weighingContext: WeighingContext) {
         val expression = when (positionContext) {
             is FirNameReferencePositionContext -> positionContext.reference.expression.let {
                 it.parentsWithSelf.match(KtLabelReferenceExpression::class, KtContainerNode::class, last = KtExpressionWithLabel::class)
@@ -48,11 +50,11 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
             is FirMemberDeclarationExpectedPositionContext,
             is FirUnknownPositionContext -> null
         }
-        completeWithResolve(expression ?: positionContext.position, expression)
+        completeWithResolve(expression ?: positionContext.position, expression, weighingContext)
     }
 
 
-    private fun KtAnalysisSession.completeWithResolve(position: PsiElement, expression: KtExpression?) {
+    private fun KtAnalysisSession.completeWithResolve(position: PsiElement, expression: KtExpression?, weighingContext: WeighingContext) {
         complete(position) { lookupElement, keyword ->
             val lookups = DefaultCompletionKeywordHandlerProvider.getHandlerForKeyword(keyword)
                 ?.createLookups(parameters, expression, lookupElement, project)
@@ -60,6 +62,7 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
                     createLookups(parameters, expression, lookupElement, project)
                 }
                 ?: listOf(lookupElement)
+            lookups.forEach { Weighers.applyWeighsToLookupElement(weighingContext, it, symbolWithOrigin = null) }
             sink.addAllElements(lookups)
         }
     }

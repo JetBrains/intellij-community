@@ -3,16 +3,15 @@ package com.intellij.ui
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.notification.ActionCenter
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.NotificationsManagerImpl
-import com.intellij.notification.impl.NotificationsToolWindowFactory
 import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
@@ -191,17 +190,21 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
   }
 
   override fun setBounds(balloons: List<Balloon>, startX: Int, startY: Int) {
+    val shadowVerticalOffset = JBUI.scale(8)
+    var verticalOffset = JBUI.scale(2)
     var y = startY
 
     for (balloon in balloons) {
       val bounds = Rectangle(super.getSize(balloon))
       val info = collapsedData[balloon]
       if (info != null) {
-        info.balloon.setBounds(Rectangle(startX - bounds.width, y - info.fullHeight, bounds.width, info.fullHeight))
+        val offset = if (verticalOffset != shadowVerticalOffset) 0 else shadowVerticalOffset
+        info.balloon.setBounds(Rectangle(startX - bounds.width, y - info.fullHeight + offset, bounds.width, info.fullHeight))
         y -= info.height
       }
 
-      y -= bounds.height
+      y -= bounds.height - verticalOffset
+      verticalOffset = shadowVerticalOffset
       bounds.setLocation(startX - bounds.width, y)
       balloon.setBounds(bounds)
     }
@@ -233,7 +236,7 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
         val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(titleLabel))
         if (project != null) {
           closeAll()
-          ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)?.show()
+          ActionCenter.getToolWindow(project)?.show()
         }
       }, null)
 

@@ -44,29 +44,27 @@ public class TreeTraverserTest extends TestCase {
    * </pre>
    */
   private static Map<Integer, Collection<Integer>> numbers() {
-    return ContainerUtil.<Integer, Collection<Integer>>immutableMapBuilder().
-      put(1, Arrays.asList(2, 3, 4)).
-      put(2, Arrays.asList(5, 6, 7)).
-      put(3, Arrays.asList(8, 9, 10)).
-      put(4, Arrays.asList(11, 12, 13)).
-      build();
+    return Map.of(
+      1, Arrays.asList(2, 3, 4),
+      2, Arrays.asList(5, 6, 7),
+      3, Arrays.asList(8, 9, 10),
+      4, Arrays.asList(11, 12, 13));
   }
 
   private static Map<Integer, Collection<Integer>> numbers2() {
-    return ContainerUtil.<Integer, Collection<Integer>>immutableMapBuilder().
-      put(1, Arrays.asList(2, 3, 4)).
-      put(2, Arrays.asList(5, 6, 7)).
-      put(3, Arrays.asList(8, 9, 10)).
-      put(4, Arrays.asList(11, 12, 13)).
-      put(5, Arrays.asList(14, 15, 16)).
-      put(6, Arrays.asList(17, 18, 19)).
-      put(7, Arrays.asList(20, 21, 22)).
-      put(8, Arrays.asList(23, 24, 25)).
-      put(9, Arrays.asList(26, 27, 28)).
-      put(10, Arrays.asList(29, 30, 31)).
-      put(11, Arrays.asList(32, 33, 34)).
-      put(12, Arrays.asList(35, 36, 37)).
-      build();
+    return Map.ofEntries(
+      Map.entry(1, Arrays.asList(2, 3, 4)),
+      Map.entry(2, Arrays.asList(5, 6, 7)),
+      Map.entry(3, Arrays.asList(8, 9, 10)),
+      Map.entry(4, Arrays.asList(11, 12, 13)),
+      Map.entry(5, Arrays.asList(14, 15, 16)),
+      Map.entry(6, Arrays.asList(17, 18, 19)),
+      Map.entry(7, Arrays.asList(20, 21, 22)),
+      Map.entry(8, Arrays.asList(23, 24, 25)),
+      Map.entry(9, Arrays.asList(26, 27, 28)),
+      Map.entry(10, Arrays.asList(29, 30, 31)),
+      Map.entry(11, Arrays.asList(32, 33, 34)),
+      Map.entry(12, Arrays.asList(35, 36, 37)));
   }
 
   private static final Function<Integer, Integer> ASSERT_NUMBER = o -> {
@@ -629,10 +627,10 @@ public class TreeTraverserTest extends TestCase {
 
   public void testCyclicInterlacedDfs() {
     Function<Integer, JBIterable<Integer>> traversal = TreeTraversal.INTERLEAVED_DFS.traversal(Functions.fromMap(
-      ContainerUtil.<Integer, Collection<Integer>>immutableMapBuilder()
-        .put(1, Arrays.asList(1, 2))
-        .put(2, Arrays.asList(1, 2, 3))
-        .put(3, Arrays.asList()).build()));
+      Map.of(
+        1, Arrays.asList(1, 2),
+        2, Arrays.asList(1, 2, 3),
+        3, Arrays.asList())));
     assertEquals(Arrays.asList(1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 3), traversal.fun(1).takeWhile(UP_TO(3)).toList());
   }
 

@@ -2,14 +2,11 @@
 package com.intellij.debugger;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * The properties of a breakpoint from a test source file, specified by a 'Breakpoint!' comment.
@@ -44,17 +41,25 @@ import java.util.Map;
  */
 public final class BreakpointComment {
 
-  private String kind;
-  private String kindValue;
-  private final Map<String, String> values = new LinkedHashMap<>();
-  private final String fileName;
+  private @Nullable String kind;
+  private @Nullable String kindValue;
+  private final Map<@NotNull String, @NotNull String> values = new LinkedHashMap<>();
+  private final Map<@NotNull String, Integer> index = new LinkedHashMap<>();
+  private final Set<@NotNull String> validValues = new TreeSet<>();
+  private final @NotNull String fileName;
   private final int lineNumber;
 
+  /**
+   * @param text       the line containing the comment
+   * @param fileName   the file name, for diagnostics
+   * @param lineNumber the 0-based line containing the comment, for diagnostics
+   */
   public static @NotNull BreakpointComment parse(@NotNull String text, @NotNull String fileName, int lineNumber) {
-    return new Parser(text, fileName, lineNumber).parse();
+    BreakpointComment comment = new BreakpointComment(fileName, lineNumber);
+    return new Parser(text, comment).parse();
   }
 
-  private BreakpointComment(String fileName, int lineNumber) {
+  private BreakpointComment(@NotNull String fileName, int lineNumber) {
     this.fileName = fileName;
     this.lineNumber = lineNumber;
   }
@@ -66,8 +71,9 @@ public final class BreakpointComment {
    *
    * @see #readKindValue()
    */
-  public @Nullable String readKind() {
+  public @NotNull String readKind() {
     String kind = this.kind;
+    assert kind != null;
     this.kind = null;
     return kind;
   }
@@ -86,7 +92,10 @@ public final class BreakpointComment {
    * Reads a named property of the breakpoint, which has the form <i>name(value)</i>.
    * Any parentheses in the value must be balanced.
    */
-  public @Nullable String readValue(@NotNull String name) { return values.remove(name); }
+  public @Nullable String readValue(@NotNull String name) {
+    validValues.add(name);
+    return values.remove(name);
+  }
 
   /**
    * Reads a named boolean property of the breakpoint.
@@ -96,7 +105,21 @@ public final class BreakpointComment {
     if (value == null) return null;
     if (value.equals("true")) return true;
     if (value.equals("false")) return false;
-    throw error("Invalid boolean value '" + value + "' for '" + name + "'");
+    throw error("Invalid boolean value '" + value + "' for '" + name + "'", index.get(name));
+  }
+
+  /**
+   * Reads a named integer property of the breakpoint.
+   */
+  public @Nullable Integer readIntValue(@NotNull String name) {
+    String value = readValue(name);
+    if (value == null) return null;
+    try {
+      return Integer.parseInt(value);
+    }
+    catch (NumberFormatException e) {
+      throw error("Invalid integer value '" + value + "' for '" + name + "'", index.get(name));
+    }
   }
 
   /**
@@ -121,12 +144,24 @@ public final class BreakpointComment {
   public void done() {
     if (kind != null) throw error("Unprocessed kind '" + kind + "'");
     if (kindValue != null) throw error("Unprocessed kind value '" + kindValue + "'");
-    if (values.size() > 1) throw error("Unprocessed values '" + String.join(", ", values.keySet()) + "'");
-    if (values.size() == 1) throw error("Unprocessed value '" + values.keySet().iterator().next() + "'");
+    if (values.size() >= 1) {
+      String valid = String.join(", ", validValues);
+      String msg = "Unprocessed %s '%s', %s".formatted(
+        values.size() > 1 ? "values" : "value",
+        String.join(", ", values.keySet()),
+        validValues.size() > 1 ? "valid values are '" + valid + "'" :
+        validValues.size() == 1 ? "the only valid value is '" + valid + "'" :
+        "the breakpoint takes no values");
+      throw error(msg, index.get(values.keySet().iterator().next()));
+    }
   }
 
-  private RuntimeException error(String msg) {
-    return new IllegalArgumentException(msg + " at " + fileName + ":" + lineNumber);
+  private @NotNull RuntimeException error(String msg) {
+    return new IllegalArgumentException(msg + " at " + fileName + ":" + (lineNumber + 1));
+  }
+
+  private @NotNull RuntimeException error(String msg, int index) {
+    return new IllegalArgumentException(msg + " at " + fileName + ":" + (lineNumber + 1) + ":" + (index + 1));
   }
 
   private static class Parser {
@@ -136,13 +171,16 @@ public final class BreakpointComment {
     private int i;
     private final BreakpointComment comment;
 
-    private Parser(String text, String fileName, int lineNumber) {
-      s = StringUtil.substringAfter(text, "//").codePoints().toArray();
+    private Parser(@NotNull String lineText, BreakpointComment comment) {
+      s = lineText.codePoints().toArray();
       len = s.length;
-      comment = new BreakpointComment(fileName, lineNumber);
+      this.comment = comment;
     }
 
     @NotNull BreakpointComment parse() {
+      while (i + 1 < len && !(s[i] == '/' && s[i + 1] == '/')) i++;
+      skip('/');
+      skip('/');
       skipWhitespace();
 
       String kind = parseName();
@@ -150,16 +188,17 @@ public final class BreakpointComment {
         comment.kind = kind;
         comment.kindValue = parseValue();
         skipWhitespace();
+        int nameStart = i;
         kind = parseName();
         if (!kind.equals("Breakpoint")) {
-          throw errorAt(i, "Expected 'Breakpoint' instead of '" + kind + "'");
+          throw errorAt(nameStart, "Expected 'Breakpoint' instead of '" + kind + "'");
         }
       }
       else {
         comment.kind = switch (kind) {
           case "Method Breakpoint" -> "Method";
           case "Breakpoint" -> "Line";
-          default -> throw errorAt(i, "Invalid");
+          default -> kind.replaceFirst("\\s+Breakpoint$", "");
         };
       }
       skip('!');
@@ -167,10 +206,13 @@ public final class BreakpointComment {
       while (i < len) {
         skipWhitespace();
         if (i >= len) break; // Allow trailing space.
+        int nameStart = i;
         String key = parseName();
         if (key.isEmpty()) throw errorAt(i, "Expected breakpoint property key");
+        if (comment.values.containsKey(key)) throw errorAt(nameStart, "Duplicate property key '" + key + "'");
         String value = parseValue();
         comment.values.put(key, value);
+        comment.index.put(key, nameStart);
       }
 
       skipWhitespace();
@@ -184,34 +226,30 @@ public final class BreakpointComment {
     }
 
     private void skip(int cp) {
-      if (!(i < len && s[i] == cp)) throw errorAt(i, "Expected '" + new String(new int[]{cp}, 0, 1) + "'");
+      if (!(i < len && s[i] == cp)) throw errorAt(i, "Expected '" + Character.toString(cp) + "'");
       i++;
     }
 
-    private String parseName() {
+    private @NotNull String parseName() {
       int start = i;
       while (i < len && (Character.isJavaIdentifierPart(s[i]) || Character.isWhitespace(s[i]))) i++;
       if (i == start) throw errorAt(start, "Expected a name");
       return new String(s, start, i - start);
     }
 
-    private String parseValue() {
+    private @NotNull String parseValue() {
       skip('(');
       int start = i;
       int depth = 1;
       for (; i < len; i++) {
-        if (s[i] == '(') {
-          depth++;
-        }
-        else if (s[i] == ')' && --depth == 0) return new String(s, start, i++ - start);
+        if (s[i] == '(') depth++;
+        if (s[i] == ')' && --depth == 0) return new String(s, start, i++ - start);
       }
       throw errorAt(start, "Unfinished value '" + new String(s, start, len - start) + "'");
     }
 
-    private RuntimeException errorAt(int index, String msg) {
-      return new IllegalArgumentException(
-        msg + " at index " + index + " of '" + new String(s, 0, len) + "' at " + comment.fileName + ":" + comment.lineNumber
-      );
+    private @NotNull RuntimeException errorAt(int index, String msg) {
+      return new IllegalArgumentException(msg + " at " + comment.fileName + ":" + (comment.lineNumber + 1) + ":" + (index + 1));
     }
   }
 }

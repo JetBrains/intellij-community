@@ -1200,6 +1200,58 @@ public class Py3TypeTest extends PyTestCase {
                       """);
   }
 
+  public void testParamSpecArgsKwargsInAnnotations() {
+    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+      from typing import Callable, ParamSpec
+      
+      P = ParamSpec('P')
+      
+      def func(c: Callable[P, int], *args: P.args, **kwargs: P.kwargs) -> None:
+          ...
+      
+      expr = func
+      """);
+  }
+
+  public void testParamSpecArgsKwargsInTypeComments() {
+    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+      from typing import Callable, ParamSpec
+      
+      P = ParamSpec('P')
+      
+      def func(c, # type: Callable[P, int]
+               *args, # type: P.args
+               **kwargs, # type: P.kwargs
+               ):
+          # type: (...) -> None
+          ...
+      
+      expr = func
+      """);
+  }
+
+  public void testParamSpecArgsKwargsInFunctionTypeComment() {
+    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+      from typing import Callable, ParamSpec
+      
+      P = ParamSpec('P')
+      
+      def func(c, *args, **kwargs):
+          # type: (Callable[P, int], *P.args, **P.kwargs) -> None
+          ...
+      
+      expr = func
+      """);
+  }
+
+  public void testParamSpecArgsKwargsInImportedFile() {
+    doMultiFileTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+      from mod import func
+            
+      expr = func
+      """);
+  }
+
   // PY-49935
   public void testParamSpecSeveral() {
     doTest("(y: int, x: str) -> bool",
@@ -1604,8 +1656,8 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-54336
   public void testCyclePreventionDuringGenericsSubstitution() {
-    PyGenericType typeVarT = new PyGenericType("T", null, false);
-    PyGenericType typeVarV = new PyGenericType("V", null, false);
+    PyGenericType typeVarT = new PyTypeVarTypeImpl("T", null);
+    PyGenericType typeVarV = new PyTypeVarTypeImpl("V", null);
     TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
     PyType substituted;
 
@@ -1673,6 +1725,45 @@ public class Py3TypeTest extends PyTestCase {
                      def my_function(literal_string: LiteralString) -> LiteralString: ...
                      expr = my_function("42")""")
     );
+  }
+
+  // PY-59795
+  public void testDictTypeFromValueModificationsConsidersOnlyRelevantAssignments() {
+    doTest("dict[str, int]",
+           """
+             d = {}
+             d['foo'] = 1
+             unrelated = {}
+             unrelated[2] = 'bar'
+             expr = d
+             """);
+  }
+
+  // PY-59795
+  public void testNestedTypedDictFromValueModifications() {
+    myFixture.configureByText(PythonFileType.INSTANCE,
+                              """
+                                d = {}
+                                d['foo'] = {'key': 'value'}
+                                d['bar'] = {'key': 'value'}
+                                expr = d
+                                """);
+    PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+    TypeEvalContext context = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
+    PyTypedDictType topLevelTypedDict = assertInstanceOf(context.getType(expr), PyTypedDictType.class);
+    assertSize(2, topLevelTypedDict.getFields().entrySet());
+
+    PyTypedDictType.FieldTypeAndTotality fooField = topLevelTypedDict.getFields().get("foo");
+    assertNotNull(fooField);
+    PyTypedDictType fooFieldTypedDict = assertInstanceOf(fooField.getType(), PyTypedDictType.class);
+    assertEquals("key", assertOneElement(fooFieldTypedDict.getFields().keySet()));
+
+    PyTypedDictType.FieldTypeAndTotality barField = topLevelTypedDict.getFields().get("bar");
+    assertNotNull(barField);
+    PyTypedDictType barFieldTypedDict = assertInstanceOf(barField.getType(), PyTypedDictType.class);
+    assertEquals("key", assertOneElement(barFieldTypedDict.getFields().keySet()));
+
+    assertProjectFilesNotParsed(expr.getContainingFile());
   }
 
   private void doTest(final String expectedType, final String text) {

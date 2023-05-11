@@ -19,10 +19,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -34,7 +31,6 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.BitUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -67,7 +63,9 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     addListener(new TabsListener() {
       @Override
       public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
-        ObjectUtils.consumeIfNotNull(oldSelection, tabInfo -> tabInfo.setTabColor(null));
+        if (oldSelection != null) {
+          oldSelection.setTabColor(null);
+        }
         asyncUpdateTab(newSelection);
         onSelectionChange(newSelection);
       }
@@ -87,7 +85,8 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   private void addEditorTab(@NotNull LightEditorInfo editorInfo, int index) {
-    EditorComposite editorContainer = ((LightEditFileEditorManagerImpl)FileEditorManager.getInstance(myProject)).createEditorComposite(editorInfo);
+    LightEditFileEditorManagerImpl fileEditorManager = (LightEditFileEditorManagerImpl)FileEditorManager.getInstance(myProject);
+    EditorComposite editorContainer = fileEditorManager.createEditorComposite(editorInfo);
     TabInfo tabInfo = new TabInfo(editorContainer.getComponent())
       .setText(editorInfo.getFile().getPresentableName())
       .setIcon(getFileTypeIcon(editorInfo));
@@ -102,11 +101,17 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     select(tabInfo, true);
     asyncUpdateTab(tabInfo);
     myEditorManager.fireEditorSelected(editorInfo);
+    myProject.getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(
+      fileEditorManager, editorInfo.getFile()
+    );
   }
 
   @Override
   public void close() {
-    ObjectUtils.consumeIfNotNull(getSelectedInfo(), tabInfo -> closeTab(tabInfo));
+    TabInfo info = getSelectedInfo();
+    if (info != null) {
+      this.closeTab(info);
+    }
   }
 
   private static Icon getFileTypeIcon(@NotNull LightEditorInfo editorInfo) {

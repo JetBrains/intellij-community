@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel.forDocument
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ui.EdtInvocationManager
 import java.lang.ref.WeakReference
 
 internal class HighlightingWatcher(
@@ -21,6 +22,7 @@ internal class HighlightingWatcher(
   private val level: Int)
   : MarkupModelListener, Disposable {
 
+  private var disposed: Boolean = false
   private val problems = mutableMapOf<RangeHighlighterEx, Problem>()
   private var reference: WeakReference<MarkupModelEx>? = null
 
@@ -34,18 +36,41 @@ internal class HighlightingWatcher(
       problems.clear()
       list
     }.forEach { listener.problemDisappeared(it) }
+    disposed = true
   }
 
   override fun afterAdded(highlighter: RangeHighlighterEx) {
-    getProblem(highlighter)?.let { listener.problemAppeared(it) }
+    val problem = getProblem(highlighter)
+    if (problem != null) {
+      EdtInvocationManager.invokeLaterIfNeeded {
+        if (!disposed) {
+          listener.problemAppeared(problem)
+        }
+      }
+    }
+    problem?.let {  }
   }
 
   override fun beforeRemoved(highlighter: RangeHighlighterEx) {
-    getProblem(highlighter)?.let { listener.problemDisappeared(it) }
+    val problem = getProblem(highlighter)
+    if (problem != null) {
+      EdtInvocationManager.invokeLaterIfNeeded {
+        if (!disposed) {
+          listener.problemDisappeared(problem)
+        }
+      }
+    }
   }
 
   override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean, fontStyleOrColorChanged: Boolean) {
-    findProblem(highlighter)?.let { listener.problemUpdated(it) }
+    val problem = getProblem(highlighter)
+    if (problem != null) {
+      EdtInvocationManager.invokeLaterIfNeeded {
+        if (!disposed) {
+          listener.problemUpdated(problem)
+        }
+      }
+    }
   }
 
   fun update() {

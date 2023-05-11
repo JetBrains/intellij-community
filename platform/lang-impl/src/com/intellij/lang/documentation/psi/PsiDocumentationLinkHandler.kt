@@ -9,9 +9,9 @@ import com.intellij.lang.documentation.CompositeDocumentationProvider
 import com.intellij.lang.documentation.ExternalDocumentationHandler
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import com.intellij.platform.documentation.DocumentationLinkHandler
-import com.intellij.platform.documentation.DocumentationTarget
-import com.intellij.platform.documentation.LinkResolveResult
+import com.intellij.platform.backend.documentation.DocumentationLinkHandler
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.LinkResolveResult
 
 internal class PsiDocumentationLinkHandler : DocumentationLinkHandler {
 

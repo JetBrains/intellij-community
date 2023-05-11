@@ -17,12 +17,13 @@ import java.awt.image.DataBufferInt;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-@SuppressWarnings({"UndesirableClassUsage", "NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized"})
+@SuppressWarnings({"UndesirableClassUsage", "NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized", "unused"})
 public class MenuItem implements Disposable, PropertyChangeListener {
   long nativePeer;
   Runnable actionDelegate;
   boolean isInHierarchy = false;
   Presentation presentation;
+  String myTitle; // used for logging and debug
 
   public MenuItem() {}
 
@@ -80,12 +81,14 @@ public class MenuItem implements Disposable, PropertyChangeListener {
       keyChar = 0;
     }
 
+    myTitle = label;
     nativeSetTitleAndAccelerator(nativePeer, label, keyChar, keyCode, modifiers, isInHierarchy);
   }
 
   public void setLabel(String label) {
     ensureNativePeer();
     if (label == null) label = "";
+    myTitle = label;
     nativeSetTitle(nativePeer, label, isInHierarchy);
   }
 

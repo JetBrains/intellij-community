@@ -73,6 +73,7 @@ public final class GitCommand {
    */
   public static final @NonNls String GIT_ASK_PASS_ENV = "GIT_ASKPASS";
   public static final @NonNls String GIT_SSH_ASK_PASS_ENV = "SSH_ASKPASS";
+  public static final @NonNls String SSH_ASKPASS_REQUIRE_ENV = "SSH_ASKPASS_REQUIRE";
   public static final @NonNls String DISPLAY_ENV = "DISPLAY";
 
   enum LockingPolicy {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class PrintStreamLogger extends PrintStream {
   PrintStreamLogger(String name, PrintStream originalStream) {
@@ -18,7 +19,7 @@ class OutputStreamLogger extends OutputStream {
   private static final int BUFFER_SIZE = 10000;
   private final byte[] myBuffer = new byte[BUFFER_SIZE];
   private final PrintStream myOriginalStream;
-  private final Logger myLogger;
+  @SuppressWarnings("NonConstantLogger") private final Logger myLogger;
   private int myPosition;
   private boolean mySlashRWritten;
 
@@ -63,8 +64,24 @@ class OutputStreamLogger extends OutputStream {
     }
   }
 
+  private final AtomicBoolean myStackOverflowProtectionTriggered = new AtomicBoolean();
+  private final ThreadLocal<Boolean> myStackOverflowProtection = ThreadLocal.withInitial(() -> false);
+
   private void writeBuffer() {
-    myLogger.info(new String(myBuffer, 0, myPosition, Charset.defaultCharset()));
-    myPosition = 0;
+    if (myStackOverflowProtection.get()) {
+      if (myStackOverflowProtectionTriggered.compareAndSet(false, true)) {
+        myLogger.error("Stack overflow protection triggered in logger. A standard stream overridden to write to logs?");
+      }
+
+      return;
+    }
+
+    myStackOverflowProtection.set(true);
+    try {
+      myLogger.info(new String(myBuffer, 0, myPosition, Charset.defaultCharset()));
+      myPosition = 0;
+    } finally {
+      myStackOverflowProtection.set(false);
+    }
   }
 }

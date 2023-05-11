@@ -3,6 +3,7 @@ package com.intellij.codeInspection.tests.test.junit
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.test.junit.JUnitAssertEqualsOnArrayInspection
 import com.intellij.codeInspection.tests.JvmInspectionTestBase
+import com.intellij.codeInspection.tests.test.addJUnit5Library
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel

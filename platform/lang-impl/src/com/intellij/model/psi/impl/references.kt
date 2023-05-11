@@ -9,9 +9,11 @@ import com.intellij.model.psi.PsiSymbolReferenceService
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.util.elementsAroundOffsetUp
 import com.intellij.psi.util.elementsAtOffsetUp
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 
 /**
  * @return collection of [references][PsiSymbolReferenceService.getReferences] to the right of given [offset]
@@ -85,6 +87,23 @@ private fun implicitReference(element: PsiElement): PsiSymbolReference? {
     }
   }
   return null
+}
+
+@TestOnly
+fun PsiFile.allReferences(): Collection<PsiSymbolReference> {
+  val references = ArrayList<PsiSymbolReference>()
+  accept(ReferenceCollectingVisitor(references))
+  return references
+}
+
+private class ReferenceCollectingVisitor(
+  private val references: MutableList<PsiSymbolReference>
+) : PsiRecursiveElementWalkingVisitor(true) {
+
+  override fun visitElement(element: PsiElement) {
+    super.visitElement(element)
+    references.addAll(allReferencesInElement(element, -1))
+  }
 }
 
 private class ImmediatePsiSymbolReference(

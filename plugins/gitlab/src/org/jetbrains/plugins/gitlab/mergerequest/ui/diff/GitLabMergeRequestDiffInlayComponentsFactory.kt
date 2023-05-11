@@ -7,7 +7,7 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.bindEnabled
+import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JBUI
@@ -22,7 +22,7 @@ object GitLabMergeRequestDiffInlayComponentsFactory {
   fun createDiscussion(project: Project,
                        cs: CoroutineScope,
                        avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                       vm: GitLabDiscussionViewModel): JComponent =
+                       vm: GitLabMergeRequestDiffDiscussionViewModel): JComponent =
     GitLabDiscussionComponentFactory.create(project, cs, avatarIconsProvider, vm).apply {
       border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(CodeReviewChatItemUIUtil.ComponentType.COMPACT))
     }.let {
@@ -37,7 +37,7 @@ object GitLabMergeRequestDiffInlayComponentsFactory {
     val submitAction = swingAction(CollaborationToolsBundle.message("review.comment.submit")) {
       vm.submit()
     }.apply {
-      bindEnabled(cs, vm.state.map { it != GitLabNoteEditingViewModel.SubmissionState.Loading })
+      bindEnabledIn(cs, vm.state.map { it != GitLabNoteEditingViewModel.SubmissionState.Loading })
     }
 
     val actions = CommentInputActionsComponentFactory.Config(

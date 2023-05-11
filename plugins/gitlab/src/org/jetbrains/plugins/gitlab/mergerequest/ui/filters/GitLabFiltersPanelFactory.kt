@@ -1,17 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.popup.PopupState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.*
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 
@@ -82,9 +82,9 @@ internal class GitLabFiltersPanelFactory(
     viewScope,
     filterName = GitLabBundle.message("merge.request.list.filter.category.label"),
     valuePresenter = { labelFilterValue -> labelFilterValue.title },
-    chooseValue = { point, popupState ->
+    chooseValue = { point ->
       ChooserPopupUtil.showAsyncChooserPopup(
-        point, popupState,
+        point,
         itemsLoader = { vm.getLabels().map { label -> LabelFilterValue(label.title) } },
         presenter = { labelFilterValue -> ChooserPopupUtil.PopupItemPresentation.Simple(shortText = labelFilterValue.title) }
       )
@@ -100,8 +100,8 @@ internal class GitLabFiltersPanelFactory(
     viewScope,
     filterName,
     valuePresenter = { participant -> participant.fullname },
-    chooseValue = { point, popupState ->
-      val selectedAuthor = showParticipantChooser(point, popupState, participantsLoader = {
+    chooseValue = { point ->
+      val selectedAuthor = showParticipantChooser(point, participantsLoader = {
         vm.getMergeRequestMembers().map { member -> member.user }
       })
       selectedAuthor?.let { user -> participantCreator(user) }
@@ -109,17 +109,14 @@ internal class GitLabFiltersPanelFactory(
 
   private suspend fun showParticipantChooser(
     point: RelativePoint,
-    popupState: PopupState<JBPopup>,
     participantsLoader: suspend () -> List<GitLabUserDTO>
-  ): GitLabUserDTO? {
-    return ChooserPopupUtil.showAsyncChooserPopup(point, popupState, itemsLoader = { participantsLoader() }) { user ->
-      ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.name, icon = vm.avatarIconsProvider.getIcon(user, AVATAR_SIZE))
-    }
-  }
+  ): GitLabUserDTO? = ChooserPopupUtil.showAsyncChooserPopup(
+    point, itemsLoader = { participantsLoader() },
+    presenter = { user ->
+      ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.name, icon = vm.avatarIconsProvider.getIcon(user, Avatar.Sizes.BASE))
+    })
 
   companion object {
-    private const val AVATAR_SIZE = 20
-
     private fun getShortText(stateFilterValue: MergeRequestStateFilterValue): @Nls String = when (stateFilterValue) {
       MergeRequestStateFilterValue.OPENED -> GitLabBundle.message("merge.request.list.filter.state.open")
       MergeRequestStateFilterValue.MERGED -> GitLabBundle.message("merge.request.list.filter.state.merged")

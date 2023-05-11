@@ -51,7 +51,7 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
   private static void invoke(@NotNull DataContext dataContext, @NotNull SelectInContext context) {
     List<SelectInTarget> targetVector = SelectInManager.getInstance(context.getProject()).getTargetList();
     ListPopup popup;
-    if (Registry.is("ide.selectIn.experimental.popup", false)) {
+    if (Registry.is("ide.selectIn.experimental.popup", true)) {
       popup = createActionPopup(dataContext, context, targetVector);
     }
     else {

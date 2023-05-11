@@ -153,7 +153,7 @@ public final class XmlUtil {
   @NonNls private static final String FILE = "file:";
   @NonNls private static final String CLASSPATH = "classpath:/";
   @NonNls private static final String URN = "urn:";
-  private final static Set<String> doNotVisitTags = ContainerUtil.set("annotation", "element", "attribute");
+  private final static Set<String> doNotVisitTags = Set.of("annotation", "element", "attribute");
 
   private XmlUtil() {
   }
@@ -1269,6 +1269,13 @@ public final class XmlUtil {
     return ContainerUtil.exists(manager.getNonEditableFragments((DocumentWindow)doc), range -> {
       return range.getStartOffset() <= offset && offset <= (range.getEndOffset() + 1);
     });
+  }
+
+  public static boolean isNotInjectedOrCustomHtmlFile(@NotNull PsiFile file) {
+    if (InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file) == null) return true;
+    var language = file.getLanguage();
+    return language instanceof HTMLLanguage
+           && language != HTMLLanguage.INSTANCE;
   }
 
   public interface DuplicationInfoProvider<T extends PsiElement> {

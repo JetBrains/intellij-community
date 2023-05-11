@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
@@ -218,6 +218,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       uiDensity = if (value) UIDensity.COMPACT else UIDensity.DEFAULT
     }
 
+  var differentiateProjects: Boolean
+    get() = state.differentiateProjects
+    set(value) {
+      state.differentiateProjects = value
+    }
+
   var uiDensity: UIDensity
     get() = state.uiDensity
     set(value) {
@@ -352,9 +358,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var overrideLafFonts: Boolean
-    get() = state.overrideLafFonts
+    get() = notRoamableOptions.state.overrideLafFonts
     set(value) {
-      state.overrideLafFonts = value
+      notRoamableOptions.state.overrideLafFonts = value
     }
 
   var fontFace: @NlsSafe String?
@@ -478,6 +484,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.showVisualFormattingLayer
     set(value) {
       state.showVisualFormattingLayer = value
+    }
+
+  var showBreakpointsOverLineNumbers: Boolean
+    get() = state.showBreakpointsOverLineNumbers
+    set(value) {
+      state.showBreakpointsOverLineNumbers = value
     }
 
   companion object {
@@ -688,7 +700,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   override fun noStateLoaded() {
     super.noStateLoaded()
-    migratePresentationFontSize()
+    migrateFontParameters()
   }
 
   override fun loadState(state: UISettingsState) {
@@ -699,7 +711,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (migrateOldFontSettings()) {
       notRoamableOptions.fixFontSettings()
     }
-    migratePresentationFontSize()
+    migrateFontParameters()
 
     // Check tab placement in editor
     val editorTabPlacement = state.editorTabPlacement
@@ -763,8 +775,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     return migrated
   }
 
-  private fun migratePresentationFontSize() {
+  private fun migrateFontParameters() {
     notRoamableOptions.migratePresentationModeFontSize(state.presentationModeFontSize)
+    notRoamableOptions.migrateOverrideLafFonts(state.overrideLafFonts)
   }
 
   //<editor-fold desc="Deprecated stuff.">

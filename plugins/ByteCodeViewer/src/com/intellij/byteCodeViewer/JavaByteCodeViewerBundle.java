@@ -7,21 +7,18 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class JavaByteCodeViewerBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.JavaByteCodeViewerBundle";
-  private static final JavaByteCodeViewerBundle INSTANCE = new JavaByteCodeViewerBundle();
+public final class JavaByteCodeViewerBundle {
+  private static final @NonNls String BUNDLE = "messages.JavaByteCodeViewerBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(JavaByteCodeViewerBundle.class, BUNDLE);
 
   private JavaByteCodeViewerBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

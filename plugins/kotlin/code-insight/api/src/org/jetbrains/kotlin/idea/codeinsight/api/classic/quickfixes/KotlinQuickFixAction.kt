@@ -6,8 +6,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtFile
 
+@ApiStatus.Internal
 abstract class KotlinQuickFixAction<out T : PsiElement>(element: T) : QuickFixActionBase<T>(element) {
     protected open fun isAvailable(project: Project, editor: Editor?, file: KtFile) = true
 

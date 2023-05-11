@@ -19,9 +19,7 @@ import org.jetbrains.kotlin.idea.versions.DEPRECATED_LIBRARIES_INFORMATION
 class DeprecatedMavenDependencyInspection :
     DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java), CleanupLocalInspectionTool {
 
-    override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>?, holder: DomElementAnnotationHolder?) {
-        if (domFileElement == null || holder == null) return
-
+    override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>, holder: DomElementAnnotationHolder) {
         val file = domFileElement.file
         val module = domFileElement.module ?: return
         val manager = MavenProjectsManager.getInstance(module.project) ?: return

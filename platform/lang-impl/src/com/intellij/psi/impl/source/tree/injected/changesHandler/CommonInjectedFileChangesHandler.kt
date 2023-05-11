@@ -315,6 +315,7 @@ data class MarkersMapping(val hostMarker: RangeMarker,
 infix fun TextRange?.union(another: TextRange?) = another?.let { this?.union(it) ?: it } ?: this
 
 inline val Segment.range: TextRange get() = TextRange.create(this)
+inline val RangeMarker.range: TextRange get() = this.textRange
 
 inline val PsiLanguageInjectionHost.Shred.innerRange: TextRange
   get() = TextRange.create(this.range.startOffset + this.prefix.length,

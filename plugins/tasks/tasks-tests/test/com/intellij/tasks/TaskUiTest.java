@@ -77,6 +77,7 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
 
     LocalTask task = manager.createLocalTask("test");
     manager.activateTask(task, false);
+    TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = true;
 
     presentation = doTest(combo, toolbar);
     assertTrue(presentation.isVisible());
@@ -105,9 +106,16 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
   public void testUnderscore() {
     String summary = "foo_bar";
     TaskManager.getManager(getProject()).activateTask(new LocalTaskImpl("", summary), false);
+    TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = true;
     AnActionEvent event = TestActionEvent.createTestToolbarEvent(null);
     new SwitchTaskAction().update(event);
     assertEquals(summary, event.getPresentation().getText());
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = false;
   }
 
   private static Presentation doTest(AnAction action, ActionToolbarImpl toolbar) {

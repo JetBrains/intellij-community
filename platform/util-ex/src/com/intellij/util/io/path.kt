@@ -2,7 +2,6 @@
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.NioFiles
-import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -14,6 +13,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.*
 import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
 
 @Suppress("DeprecatedCallableAddReplaceWith") // ReplaceWith does not work
 @Deprecated(message = "Use kotlin.io.path.exists", level = DeprecationLevel.ERROR)
@@ -103,7 +103,7 @@ fun Path.deleteChildrenStartingWith(prefix: String) {
 fun Path.lastModified(): FileTime = Files.getLastModifiedTime(this)
 
 val Path.systemIndependentPath: String
-  get() = toString().replace(File.separatorChar, '/')
+  get() = invariantSeparatorsPathString
 
 @Throws(IOException::class)
 fun Path.readBytes(): ByteArray = Files.readAllBytes(this)

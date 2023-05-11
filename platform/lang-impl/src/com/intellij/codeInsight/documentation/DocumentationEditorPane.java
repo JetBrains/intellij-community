@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.lang.documentation.DocumentationImageResolver;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -37,7 +38,7 @@ import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.addDo
 import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions;
 
 @Internal
-public abstract class DocumentationEditorPane extends JEditorPane {
+public abstract class DocumentationEditorPane extends JEditorPane implements Disposable  {
   private static final Color BACKGROUND_COLOR = JBColor.lazy(() -> {
     ColorKey colorKey = DocumentationComponent.COLOR_KEY;
     EditorColorsScheme scheme = EditorColorsUtil.getColorSchemeForBackground(null);
@@ -82,6 +83,11 @@ public abstract class DocumentationEditorPane extends JEditorPane {
 
     setEditorKit(editorKit);
     setBorder(JBUI.Borders.empty());
+  }
+
+  @Override
+  public void dispose() {
+    getCaret().setVisible(false); // Caret, if blinking, has to be deactivated.
   }
 
   @Override

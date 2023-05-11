@@ -3,8 +3,7 @@ package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.util.createException
 
-
-internal fun <T> Result<T>.onFailureCatching(action: (Throwable) -> Unit): Result<T> {
+internal inline fun <T> Result<T>.onFailureCatching(action: (Throwable) -> Unit): Result<T> {
   val exception = exceptionOrNull() ?: return this
   val secondaryException = runCatching { action(exception) }.exceptionOrNull()
   val compound = createException(listOf(exception, secondaryException))!!

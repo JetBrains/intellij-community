@@ -2,8 +2,8 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.github.luben.zstd.ZstdDirectBufferDecompressingStreamNoFinalizer
-import com.intellij.diagnostic.telemetry.forkJoinTask
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.forkJoinTask
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes

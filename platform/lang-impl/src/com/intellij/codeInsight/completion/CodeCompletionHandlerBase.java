@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
@@ -11,7 +11,7 @@ import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
@@ -67,7 +67,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
 
-import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
+import static com.intellij.codeInsight.util.CodeCompletionKt.*;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
 
 @SuppressWarnings("deprecation")
 public class CodeCompletionHandlerBase {
@@ -86,7 +87,7 @@ public class CodeCompletionHandlerBase {
   final boolean autopopup;
   private static int ourAutoInsertItemTimeout = Registry.intValue("ide.completion.auto.insert.item.timeout", 2000);
 
-  private final Tracer completionTracer = TraceManager.INSTANCE.getTracer("codeCompletion");
+  private final Tracer completionTracer = TelemetryTracer.getInstance().getTracer(CodeCompletion);
 
   public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType) {
     return createHandler(completionType, true, false, true);
@@ -602,21 +603,16 @@ public class CodeCompletionHandlerBase {
       Ref<WatchingInsertionContext> lastContext = Ref.create();
       Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       boolean wasInjected = hostEditor != editor;
+      PsiDocumentManager.getInstance(project).commitDocument(hostEditor.getDocument());
       hostEditor.getCaretModel().runForEachCaret(caret -> {
-        OffsetsInFile targetOffsets = findInjectedOffsetsIfAny(caret, wasInjected, topLevelOffsets, hostEditor);
-        PsiFile targetFile = targetOffsets.getFile();
-        Editor targetEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, targetFile);
-        int targetCaretOffset = targetEditor.getCaretModel().getOffset();
-        int idEnd = targetCaretOffset + idEndOffsetDelta;
-        if (idEnd > targetEditor.getDocument().getTextLength()) {
-          idEnd = targetCaretOffset; // no replacement by Tab when offsets gone wrong for some reason
+        OffsetsInFile targetOffsets;
+        if (!wasInjected) {
+          targetOffsets = topLevelOffsets;
         }
-
-        WatchingInsertionContext currentContext = insertItem(items, item, completionChar, update,
-          targetEditor, targetFile,
-          targetCaretOffset, idEnd,
-          targetOffsets.getOffsets());
-        lastContext.set(currentContext);
+        else {
+          targetOffsets = topLevelOffsets.toInjectedIfAny(caret.getOffset());
+        }
+        doInsertItemForSingleCaret(item, completionChar, update, items, idEndOffsetDelta, lastContext, hostEditor, targetOffsets);
       });
       context = lastContext.get();
     }
@@ -628,14 +624,27 @@ public class CodeCompletionHandlerBase {
     return context;
   }
 
-  private static OffsetsInFile findInjectedOffsetsIfAny(@NotNull Caret caret,
-                                                        boolean wasInjected,
-                                                        @NotNull OffsetsInFile topLevelOffsets,
-                                                        @NotNull Editor hostEditor) {
-    if (!wasInjected) return topLevelOffsets;
+  private static void doInsertItemForSingleCaret(LookupElement item,
+                                                 char completionChar,
+                                                 StatisticsUpdate update,
+                                                 List<LookupElement> items,
+                                                 int idEndOffsetDelta,
+                                                 Ref<WatchingInsertionContext> lastContext,
+                                                 Editor hostEditor,
+                                                 OffsetsInFile targetOffsets) {
+    PsiFile targetFile = targetOffsets.getFile();
+    Editor targetEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, targetFile);
+    int targetCaretOffset = targetEditor.getCaretModel().getOffset();
+    int idEnd = targetCaretOffset + idEndOffsetDelta;
+    if (idEnd > targetEditor.getDocument().getTextLength()) {
+      idEnd = targetCaretOffset; // no replacement by Tab when offsets gone wrong for some reason
+    }
 
-    PsiDocumentManager.getInstance(topLevelOffsets.getFile().getProject()).commitDocument(hostEditor.getDocument());
-    return topLevelOffsets.toInjectedIfAny(caret.getOffset());
+    WatchingInsertionContext currentContext = insertItem(items, item, completionChar, update,
+                                                         targetEditor, targetFile,
+                                                         targetCaretOffset, idEnd,
+                                                         targetOffsets.getOffsets());
+    lastContext.set(currentContext);
   }
 
   private static void checkPsiTextConsistency(CompletionProcessEx indicator) {

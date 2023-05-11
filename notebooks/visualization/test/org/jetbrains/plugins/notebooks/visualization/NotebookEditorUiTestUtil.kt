@@ -124,7 +124,7 @@ private fun extractCarets(editor: Editor, withPrimary: Boolean): List<Pair<Strin
   return tags
 }
 
-private fun insertTags(text: String, orderedTags: List<Pair<String, Int>>): String {
+fun insertTags(text: String, orderedTags: List<Pair<String, Int>>): String {
   val result = StringBuilder()
 
   var end = 0

@@ -13,12 +13,11 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.components.DslLabel
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.map2Array
+import com.intellij.util.ui.JBFont
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import java.awt.ItemSelectable
@@ -58,14 +57,14 @@ internal class CellImpl<T : JComponent>(
 
   val onChangeManager = OnChangeManager(component)
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellImpl<T> {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): CellImpl<T> {
     super.verticalAlign(verticalAlign)
@@ -149,12 +148,14 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun bold(): CellImpl<T> {
-    component.font = component.font.deriveFont(Font.BOLD)
+    component.font = JBFont.create(component.font.deriveFont(Font.BOLD), false)
     return this
   }
 
   override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<T> {
-    this.comment = if (comment == null) null else createComment(comment, maxLineLength, action)
+    this.comment = if (comment == null) null else createComment(comment, maxLineLength, action).apply {
+      registerCreationStacktrace(this)
+    }
     return this
   }
 
@@ -166,6 +167,7 @@ internal class CellImpl<T : JComponent>(
     this.label = label
     labelPosition = position
     label.putClientProperty(DslComponentPropertyInternal.CELL_LABEL, true)
+    registerCreationStacktrace(label)
     return this
   }
 
@@ -218,8 +220,8 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun validationRequestor(validationRequestor: DialogValidationRequestor): CellImpl<T> {
-    val origin = component.interactiveComponent
-    dialogPanelConfig.validationRequestors.list(origin).add(validationRequestor)
+    val interactiveComponent = component.interactiveComponent
+    dialogPanelConfig.validationRequestors.list(interactiveComponent).add(validationRequestor)
     return this
   }
 
@@ -251,20 +253,20 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun cellValidation(init: CellValidation<T>.() -> Unit): CellImpl<T> {
-    cellValidation.init()
+  override fun cellValidation(init: CellValidation<T>.(T) -> Unit): CellImpl<T> {
+    cellValidation.init(component)
     return this
   }
 
   override fun validationOnInput(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
-    val origin = component.interactiveComponent
-    return validationOnInput(DialogValidation { ValidationInfoBuilder(origin).validation(component) })
+    val interactiveComponent = component.interactiveComponent
+    return validationOnInput(DialogValidation { ValidationInfoBuilder(interactiveComponent).validation(component) })
   }
 
   override fun validationOnInput(vararg validations: DialogValidation): CellImpl<T> {
-    val origin = component.interactiveComponent
-    dialogPanelConfig.validationsOnInput.list(origin)
-      .addAll(validations.map { it.forComponentIfNeeded(origin) })
+    val interactiveComponent = component.interactiveComponent
+    dialogPanelConfig.validationsOnInput.list(interactiveComponent)
+      .addAll(validations.map { it.forComponentIfNeeded(interactiveComponent) })
 
     // Fallback in case if no validation requestors is defined
     guessAndInstallValidationRequestor()
@@ -282,9 +284,9 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun validationOnApply(vararg validations: DialogValidation): CellImpl<T> {
-    val origin = component.interactiveComponent
-    dialogPanelConfig.validationsOnApply.list(origin)
-      .addAll(validations.map { it.forComponentIfNeeded(origin) })
+    val interactiveComponent = component.interactiveComponent
+    dialogPanelConfig.validationsOnApply.list(interactiveComponent)
+      .addAll(validations.map { it.forComponentIfNeeded(interactiveComponent) })
     return this
   }
 
@@ -300,8 +302,8 @@ internal class CellImpl<T : JComponent>(
 
   private fun guessAndInstallValidationRequestor() {
     val stackTrace = Throwable()
-    val origin = component.interactiveComponent
-    val validationRequestors = dialogPanelConfig.validationRequestors.list(origin)
+    val interactiveComponent = component.interactiveComponent
+    val validationRequestors = dialogPanelConfig.validationRequestors.list(interactiveComponent)
     if (validationRequestors.isNotEmpty()) return
 
     validationRequestors.add(object : DialogValidationRequestor {
@@ -311,9 +313,9 @@ internal class CellImpl<T : JComponent>(
         val property = property
         val requestor = when {
           property != null -> WHEN_PROPERTY_CHANGED(property)
-          origin is JTextComponent -> WHEN_TEXT_CHANGED(origin)
-          origin is ItemSelectable -> WHEN_STATE_CHANGED(origin)
-          origin is EditorTextField -> WHEN_TEXT_FIELD_TEXT_CHANGED(origin)
+          interactiveComponent is JTextComponent -> WHEN_TEXT_CHANGED(interactiveComponent)
+          interactiveComponent is ItemSelectable -> WHEN_STATE_CHANGED(interactiveComponent)
+          interactiveComponent is EditorTextField -> WHEN_TEXT_FIELD_TEXT_CHANGED(interactiveComponent)
           else -> null
         }
         if (requestor != null) {
@@ -353,7 +355,13 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  @Deprecated("Use customize(UnscaledGaps) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): CellImpl<T> {
+    return customize(customGaps.toUnscaled())
+  }
+
+  override fun customize(customGaps: UnscaledGaps): CellImpl<T> {
     super.customize(customGaps)
     return this
   }

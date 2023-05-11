@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.ByteBuffer;
 
 public interface Resource {
   @NotNull URL getURL();
@@ -14,8 +13,4 @@ public interface Resource {
   @NotNull InputStream getInputStream() throws IOException;
 
   byte @NotNull [] getBytes() throws IOException;
-
-  default @NotNull ByteBuffer getByteBuffer() throws IOException {
-    return ByteBuffer.wrap(getBytes());
-  }
 }

@@ -7,7 +7,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -16,6 +15,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.CursorShape;
 import com.jediterm.terminal.TerminalColor;
@@ -33,7 +33,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -83,7 +82,11 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
 
   @Override
   public @NotNull TerminalActionPresentation getSelectAllActionPresentation() {
-    List<KeyStroke> strokes = getKeyStrokesByActionId("Terminal.SelectAll");
+    return getSelectAllActionPresentation(true);
+  }
+
+  protected @NotNull TerminalActionPresentation getSelectAllActionPresentation(boolean useCommonShortcuts) {
+    List<KeyStroke> strokes = getKeyStrokesByActionId(useCommonShortcuts ? "$SelectAll" : "Terminal.SelectAll");
     return new TerminalActionPresentation(UIUtil.removeMnemonic(ActionsBundle.message("action.$SelectAll.text")), strokes);
   }
 
@@ -158,15 +161,9 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
   }
 
   public static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId) {
-    List<KeyStroke> keyStrokes = new ArrayList<>();
-    Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts();
-    for (Shortcut sc : shortcuts) {
-      if (sc instanceof KeyboardShortcut) {
-        KeyStroke ks = ((KeyboardShortcut)sc).getFirstKeyStroke();
-        keyStrokes.add(ks);
-      }
-    }
-    return keyStrokes;
+    return ContainerUtil.mapNotNull(KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts(), shortcut -> {
+      return shortcut instanceof KeyboardShortcut ks ? ks.getFirstKeyStroke() : null;
+    });
   }
 
   public @NotNull TerminalActionPresentation getNextTabActionPresentation() {

@@ -7,6 +7,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Paths
 
+/**
+ * Command delete file from project if file exists.
+ * File name and path to project get from parameters.
+ * Example: %deleteFile C:\Users\username\intellij, fileName.java
+ */
 class DeleteFileCommand(text: String, line: Int) : AbstractFileCommand(text, line) {
   @Throws(Exception::class)
   override fun execute(callback: ActionCallback,

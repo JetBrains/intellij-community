@@ -44,7 +44,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractFileViewProvider extends UserDataHolderBase implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance(AbstractFileViewProvider.class);
@@ -171,7 +174,8 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   public Document getDocument() {
     Document document = com.intellij.reference.SoftReference.dereference(myDocument);
     if (document == null) {
-      document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
+      VirtualFile file = getVirtualFile();
+      document = FileDocumentManager.getInstance().getDocument(file, myManager.getProject());
       myDocument = document == null ? null : new SoftReference<>(document);
     }
     return document;

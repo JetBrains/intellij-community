@@ -194,7 +194,7 @@ enum class DependencyKind(val text: String) {
 
 enum class StdlibType(val artifact: String) {
     StdlibJdk7("stdlib-jdk7"),
-    StdlibJdk8("stdlib-jdk8"),
+    Stdlib("stdlib"),
     StdlibJs("stdlib-js"),
     StdlibWasm("stdlib-wasm"),
     StdlibCommon("stdlib-common"),

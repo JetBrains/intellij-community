@@ -25,7 +25,7 @@ import java.util.*
  *
  * @see VcsLogColumnUtilKt with useful column operations
  */
-@Service
+@Service(Service.Level.APP)
 internal class VcsLogColumnManager : Disposable {
   companion object {
     private val defaultColumns = listOf(Root, Commit, Author, Date, Hash)

@@ -71,7 +71,7 @@ public final class NavBarPresentation {
     }
 
     if (object instanceof Project) {
-      return ExperimentalUI.isNewUI() ? NavBarItem.MODULE_ICON : AllIcons.Nodes.Project;
+      return ExperimentalUI.isNewUI() ? NavBarItem.getModuleIcon() : AllIcons.Nodes.Project;
     }
     if (object instanceof Module) {
       return ModuleType.get(((Module)object)).getIcon();

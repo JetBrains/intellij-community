@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
@@ -68,9 +67,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       TaskManager taskManager = TaskManager.getManager(project);
       LocalTask activeTask = taskManager.getActiveTask();
 
-      if (isImplicit(activeTask) &&
-          taskManager.getAllRepositories().length == 0 &&
-          !TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO) {
+      if (!TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO) {
         presentation.setEnabledAndVisible(false);
       }
       else {
@@ -90,10 +87,6 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
-  }
-
-  private static boolean isImplicit(LocalTask activeTask) {
-    return activeTask.isDefault() && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
   }
 
   private static @NlsActions.ActionText String getText(LocalTask activeTask) {
@@ -248,6 +241,11 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
         ActionManager.getInstance().tryToExecute(gotoTaskAction, ActionCommand.getInputEvent(GotoTaskAction.ID),
                                                  contextComponent, ActionPlaces.UNKNOWN, false);
       }
+
+      @Override
+      public ShortcutSet getShortcut() {
+        return gotoTaskAction.getShortcutSet();
+      }
     });
 
     final TaskManager manager = TaskManager.getManager(project);
@@ -259,7 +257,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       if (task == activeTask) {
         continue;
       }
-      if (manager.isLocallyClosed(task)) {
+      if (task.isClosed()) {
         temp.add(task);
         continue;
       }

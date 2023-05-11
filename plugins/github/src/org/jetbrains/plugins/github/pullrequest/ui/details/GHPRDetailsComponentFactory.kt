@@ -1,28 +1,33 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
-import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.codereview.details.*
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.gap
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
-import com.intellij.ui.components.panels.HorizontalLayout
 import kotlinx.coroutines.CoroutineScope
+import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction
-import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadStateAction
+import org.jetbrains.plugins.github.api.data.GHCommit
+import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCommitsViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTitleComponent
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRCommitsViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -32,7 +37,8 @@ internal object GHPRDetailsComponentFactory {
   fun create(
     project: Project,
     scope: CoroutineScope,
-    reviewDetailsVm: GHPRDetailsViewModel,
+    reviewDetailsVm: CodeReviewDetailsViewModel,
+    reviewStatusVm: GHPRStatusViewModel,
     reviewFlowVm: GHPRReviewFlowViewModel,
     commitsVm: GHPRCommitsViewModel,
     dataProvider: GHPRDataProvider,
@@ -40,21 +46,18 @@ internal object GHPRDetailsComponentFactory {
     securityService: GHPRSecurityService,
     avatarIconsProvider: GHAvatarIconsProvider,
     branchesModel: GHPRBranchesModel,
-    commitFilesBrowserComponent: JComponent,
-    diffBridge: GHPRDiffController
+    commitFilesBrowserComponent: JComponent
   ): JComponent {
-    val title = GHPRTitleComponent.create(scope, reviewDetailsVm)
-    val description = GHPRDetailsDescriptionComponentFactory.create(scope, reviewDetailsVm)
-    val commitsAndBranches = JPanel(HorizontalLayout(0)).apply {
+    val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
-      add(GHPRDetailsCommitsComponentFactory.create(scope, commitsVm, diffBridge), HorizontalLayout.LEFT)
-      add(GHPRDetailsBranchesComponentFactory.create(project, dataProvider, repositoryDataService, branchesModel), HorizontalLayout.RIGHT)
+      add(CodeReviewDetailsCommitsComponentFactory.create(scope, commitsVm) { commit: GHCommit? ->
+        createCommitsPopupPresenter(commit, commitsVm.reviewCommits.value.size, securityService.ghostUser)
+      })
+      add(GHPRDetailsBranchesComponentFactory.create(project, dataProvider, repositoryDataService, branchesModel))
     }
-    val commitInfo = GHPRDetailsCommitInfoComponentFactory.create(scope, commitsVm)
-    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewDetailsVm, reviewFlowVm, securityService, avatarIconsProvider)
-    val state = GHPRStatePanel(scope, reviewDetailsVm, reviewFlowVm, dataProvider).also {
-      PopupHandler.installPopupMenu(it, DefaultActionGroup(GHPRReloadStateAction()), "GHPRStatePanelPopup")
-    }
+    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewStatusVm, reviewFlowVm, securityService, avatarIconsProvider)
+    val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, reviewDetailsVm.reviewRequestState, reviewFlowVm, dataProvider)
+    val actionGroup = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
 
     return JPanel(MigLayout(
       LC()
@@ -65,35 +68,47 @@ internal object GHPRDetailsComponentFactory {
     )).apply {
       isOpaque = false
 
-      add(title, CC().growX().gap(
-        left = ReviewDetailsUIUtil.indentLeft,
-        right = ReviewDetailsUIUtil.indentRight,
-        top = ReviewDetailsUIUtil.indentTop,
-        bottom = ReviewDetailsUIUtil.gapBetweenTitleAndDescription))
-      add(description, CC().growX().gap(
-        left = ReviewDetailsUIUtil.indentLeft,
-        right = ReviewDetailsUIUtil.indentRight,
-        bottom = ReviewDetailsUIUtil.gapBetweenDescriptionAndCommits))
-      add(commitsAndBranches, CC().growX().gap(
-        left = ReviewDetailsUIUtil.indentLeft,
-        right = ReviewDetailsUIUtil.indentRight,
-        bottom = ReviewDetailsUIUtil.gapBetweenCommitsAndCommitInfo))
-      add(commitInfo, CC().growX().maxHeight("${ReviewDetailsUIUtil.commitInfoMaxHeight}").gap(
-        left = ReviewDetailsUIUtil.indentLeft,
-        right = ReviewDetailsUIUtil.indentRight,
-        bottom = ReviewDetailsUIUtil.gapBetweenCommitInfoAndCommitsBrowser))
+      add(CodeReviewDetailsTitleComponentFactory.create(scope, reviewDetailsVm, GithubBundle.message("open.on.github.action"), actionGroup,
+                                                        htmlPaneFactory = { SimpleHtmlPane() }),
+          CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
+      add(CodeReviewDetailsDescriptionComponentFactory.create(scope, reviewDetailsVm, actionGroup, ::showTimelineAction,
+                                                              htmlPaneFactory = { SimpleHtmlPane() }),
+          CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))
+      add(commitsAndBranches, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
+      add(CodeReviewDetailsCommitInfoComponentFactory.create(scope, commitsVm.selectedCommit,
+                                                             commitPresenter = { commit ->
+                                                               createCommitInfoPresenter(commit, commitsVm.ghostUser)
+                                                             },
+                                                             htmlPaneFactory = { SimpleHtmlPane() }),
+          CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
       add(commitFilesBrowserComponent, CC().grow().push())
-      add(statusChecks, CC().growX().maxHeight("${ReviewDetailsUIUtil.statusChecksMaxHeight}").gap(
-        left = ReviewDetailsUIUtil.indentLeft,
-        right = ReviewDetailsUIUtil.indentRight,
-        top = ReviewDetailsUIUtil.gapBetweenCommitsBrowserAndStatusChecks,
-        bottom = ReviewDetailsUIUtil.gapBetweenCheckAndActions))
-      add(state, CC().growX().pushX().minHeight("pref").gap(
-        left = ReviewDetailsUIUtil.indentLeft - 2,
-        right = ReviewDetailsUIUtil.indentRight,
-        bottom = ReviewDetailsUIUtil.indentBottom))
+      add(statusChecks, CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
+      add(actionsComponent, CC().growX().pushX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS).minHeight("pref"))
 
-      PopupHandler.installPopupMenu(this, DefaultActionGroup(GHPRReloadDetailsAction()), "GHPRDetailsPopup")
+      PopupHandler.installPopupMenu(this, actionGroup, "GHPRDetailsPopup")
     }
+  }
+
+  private fun showTimelineAction(parentComponent: JComponent) {
+    val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Show") ?: return
+    ActionUtil.invokeAction(action, parentComponent, ActionPlaces.UNKNOWN, null, null)
+  }
+
+  private fun createCommitsPopupPresenter(commit: GHCommit?, commitsCount: Int, ghostUser: GHUser): CommitPresenter {
+    return if (commit == null) {
+      CommitPresenter.AllCommits(title = CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount))
+    }
+    else {
+      createCommitInfoPresenter(commit, ghostUser)
+    }
+  }
+
+  private fun createCommitInfoPresenter(commit: GHCommit, ghostUser: GHUser): CommitPresenter {
+    return CommitPresenter.SingleCommit(
+      title = commit.messageHeadlineHTML,
+      description = commit.messageBodyHTML,
+      author = (commit.author?.user ?: ghostUser).getPresentableName(),
+      committedDate = commit.committedDate
+    )
   }
 }

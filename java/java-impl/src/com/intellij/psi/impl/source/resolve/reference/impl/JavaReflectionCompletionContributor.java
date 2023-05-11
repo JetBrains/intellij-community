@@ -97,7 +97,7 @@ public class JavaReflectionCompletionContributor extends CompletionContributor i
 
   private static void addAnnotationClasses(@NotNull PsiClass psiClass, boolean isDeclared, @NotNull CompletionResultSet result) {
     Set<PsiAnnotation> declaredAnnotations =
-      isDeclared ? ContainerUtil.set(AnnotationUtil.getAllAnnotations(psiClass, false, null, false)) : null;
+      isDeclared ? ContainerUtil.immutableSet(AnnotationUtil.getAllAnnotations(psiClass, false, null, false)) : null;
 
     PsiAnnotation[] annotations = AnnotationUtil.getAllAnnotations(psiClass, true, null, false);
     for (PsiAnnotation annotation : annotations) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.core.JavaPsiBundle;
@@ -33,7 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiImportStaticReferenceElementImpl extends CompositePsiElement implements PsiImportStaticReferenceElement {
+public final class PsiImportStaticReferenceElementImpl extends CompositePsiElement implements PsiImportStaticReferenceElement {
   private static final Logger LOG = Logger.getInstance(PsiImportStaticReferenceElementImpl.class);
   private volatile String myCanonicalText;
 
@@ -59,7 +45,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   @Override
-  public final ASTNode findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
       default:
@@ -78,7 +64,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   @Override
-  public final int getChildRole(@NotNull ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaElementType.JAVA_CODE_REFERENCE) {
@@ -166,15 +152,13 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return childByRole.getText();
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return this;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     TreeElement nameChild = (TreeElement)findChildByRole(ChildRole.REFERENCE_NAME);
     if (nameChild == null) return new TextRange(0, getTextLength());
     int startOffset = nameChild.getStartOffsetInParent();
@@ -182,8 +166,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     String canonicalText = myCanonicalText;
     if (canonicalText == null) {
       myCanonicalText = canonicalText = calcCanonicalText();
@@ -207,8 +190,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult advancedResolve(boolean incompleteCode) {
+  public @NotNull JavaResolveResult advancedResolve(boolean incompleteCode) {
     JavaResolveResult[] results = multiResolve(incompleteCode);
     if (results.length == 1) return results[0];
     return JavaResolveResult.EMPTY;
@@ -250,7 +232,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
     String name = getReferenceName();
-    if (name == null || !(element instanceof PsiNamedElement) || !name.equals(((PsiNamedElement)element).getName())) {
+    if (!(element instanceof PsiNamedElement) || !name.equals(((PsiNamedElement)element).getName())) {
       return false;
     }
 

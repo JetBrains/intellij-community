@@ -14,7 +14,7 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JComponent
 
-internal class GrazieConfigurable :
+class GrazieConfigurable :
   ConfigurableBase<GrazieSettingsPanel, GrazieConfig>(
     "reference.settingsdialog.project.grazie", GraziePlugin.settingsPageName, "reference.settings.ide.settings.grammar"),
   WithEpDependencies,
@@ -51,6 +51,13 @@ internal class GrazieConfigurable :
     if (ruleNode != null) {
       TreeUtil.selectNode(tree, ruleNode)
     }
+  }
+
+  // used in Grazie Pro
+  @Suppress("unused", "SpellCheckingInspection")
+  fun ruleEnablednessChanged(state: GrazieConfig.State) {
+    val tree = ui.rules.impl
+    (tree.model.root as GrazieRulesTreeNode).resetMark(tree.apply(state))
   }
 
   override fun getDependencies(): Collection<BaseExtensionPointName<*>> {

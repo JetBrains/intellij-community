@@ -13,6 +13,8 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.idea.StartupErrorReporter;
+import com.intellij.openapi.application.migrations.BigDataTools232;
+import com.intellij.openapi.application.migrations.PackageSearch232;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -34,9 +36,8 @@ import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.Restarter;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -53,6 +54,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.reflect.Constructor;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
@@ -247,12 +249,20 @@ public final class ConfigImportHelper {
   static @Nullable ConfigImportSettings findCustomConfigImportSettings() {
     try {
       String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
-      @SuppressWarnings("unchecked") Class<ConfigImportSettings> customProviderClass = (Class<ConfigImportSettings>)Class.forName(customProviderName);
+      @SuppressWarnings("unchecked")
+      Class<ConfigImportSettings> customProviderClass = (Class<ConfigImportSettings>)Class.forName(customProviderName);
       if (ConfigImportSettings.class.isAssignableFrom(customProviderClass)) {
-        return ReflectionUtil.newInstance(customProviderClass);
+        Constructor<ConfigImportSettings> constructor = customProviderClass.getDeclaredConstructor();
+        try {
+          constructor.setAccessible(true);
+        }
+        catch (SecurityException ignored) {
+        }
+        return constructor.newInstance();
       }
     }
-    catch (Exception ignored) { }
+    catch (Exception ignored) {
+    }
     return null;
   }
 
@@ -357,7 +367,7 @@ public final class ConfigImportHelper {
 
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, ConfigImportHelper::findConfigDirectoryByPath);
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
-    AppUIUtil.updateWindowIcon(dialog);
+    AppUIUtilKt.updateAppWindowIcon(dialog);
 
     hideSplash();
     dialog.setVisible(true);
@@ -556,7 +566,7 @@ public final class ConfigImportHelper {
     return StringUtilRt.startsWithIgnoreCase(name, strictPrefix) && !name.equalsIgnoreCase(strictPrefix);
   }
 
-  private static String getNameWithVersion(Path configDir) {
+  public static String getNameWithVersion(Path configDir) {
     String name = configDir.getFileName().toString();
     if (CONFIG.equals(name)) {
       name = Strings.trimStart(configDir.getParent().getFileName().toString(), ".");
@@ -697,8 +707,8 @@ public final class ConfigImportHelper {
           idx++;
         }
       }
-      if (configDir.length() > 0) {
-        return Paths.get(fixDirName(configDir.toString())).toString();
+      if (!configDir.isEmpty()) {
+        return Path.of(fixDirName(configDir.toString())).toString();
       }
     }
 
@@ -846,10 +856,10 @@ public final class ConfigImportHelper {
 
     try {
       Map<PluginId, Set<String>> brokenPluginVersions = options.brokenPluginVersions;
-      PluginLoadingResult result = PluginDescriptorLoader.loadDescriptors(oldPluginsDir,
-                                                                          options.bundledPluginPath,
-                                                                          brokenPluginVersions,
-                                                                          options.compatibleBuildNumber);
+      PluginLoadingResult result = PluginDescriptorLoader.loadDescriptorsFromOtherIde(oldPluginsDir,
+                                                                                      options.bundledPluginPath,
+                                                                                      brokenPluginVersions,
+                                                                                      options.compatibleBuildNumber);
 
       partitionNonBundled(result.getIdMap().values(), pluginsToDownload, pluginsToMigrate, descriptor -> {
         Set<String> brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(descriptor.getPluginId()) : null;
@@ -874,6 +884,11 @@ public final class ConfigImportHelper {
                                                      pluginsToDownload);
     }
 
+    migrateGlobalPlugins(newConfigDir,
+                         oldConfigDir,
+                         pluginsToMigrate,
+                         pluginsToDownload);
+
     pluginsToMigrate.removeIf(hasPendingUpdate);
     if (!pluginsToMigrate.isEmpty()) {
       migratePlugins(newPluginsDir, pluginsToMigrate, log);
@@ -886,6 +901,20 @@ public final class ConfigImportHelper {
       // migrating plugins for which we weren't able to download updates
       migratePlugins(newPluginsDir, pluginsToDownload, log);
     }
+  }
+
+  private static void migrateGlobalPlugins(@NotNull Path newConfigDir,
+                                           @NotNull Path oldConfigDir,
+                                           @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
+                                           @NotNull List<IdeaPluginDescriptor> pluginsToDownload) {
+    String currentProductVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
+
+    PluginMigrationOptions options = new PluginMigrationOptions(currentProductVersion,
+                                                                newConfigDir, oldConfigDir,
+                                                                pluginsToMigrate, pluginsToDownload);
+
+    new BigDataTools232().migratePlugins(options);
+    new PackageSearch232().migratePlugins(options);
   }
 
   private static void partitionNonBundled(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
@@ -976,7 +1005,7 @@ public final class ConfigImportHelper {
 
       ConfigImportProgressDialog dialog = new ConfigImportProgressDialog();
       dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
-      AppUIUtil.updateWindowIcon(dialog);
+      AppUIUtilKt.updateAppWindowIcon(dialog);
       hideSplash();
       PluginDownloader.runSynchronouslyInBackground(() -> {
         downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, dialog.getIndicator());
@@ -1023,7 +1052,7 @@ public final class ConfigImportHelper {
   private static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor,
                                         @Nullable Map<PluginId, Set<String>> brokenPluginVersions) {
     if (brokenPluginVersions == null) {
-      return PluginManagerCore.isBrokenPlugin(descriptor);
+      return BrokenPluginFileKt.isBrokenPlugin(descriptor);
     }
     Set<String> versions = brokenPluginVersions.get(descriptor.getPluginId());
     return versions != null && versions.contains(descriptor.getVersion());

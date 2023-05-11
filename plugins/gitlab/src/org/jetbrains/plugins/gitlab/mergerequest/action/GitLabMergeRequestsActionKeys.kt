@@ -7,6 +7,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesController
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel
 
 internal object GitLabMergeRequestsActionKeys {
   @JvmStatic
@@ -14,6 +15,10 @@ internal object GitLabMergeRequestsActionKeys {
 
   @JvmStatic
   val FILES_CONTROLLER = DataKey.create<GitLabMergeRequestsFilesController>("org.jetbrains.plugins.gitlab.mergerequests.files.controller")
+
+  @JvmStatic
+  val REVIEW_LIST_VM: DataKey<GitLabMergeRequestsListViewModel> =
+    DataKey.create("org.jetbrains.plugins.gitlab.mergerequests.review.list.viewmodel")
 
   @JvmStatic
   val REVIEW_DETAILS_LOADING_VM: DataKey<GitLabMergeRequestDetailsLoadingViewModel> =

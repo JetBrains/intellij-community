@@ -4,6 +4,7 @@ package com.intellij.build;
 import com.intellij.build.events.*;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -120,7 +121,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
   private final ExecutionNode myBuildProgressRootNode;
   private final Set<Predicate<? super ExecutionNode>> myNodeFilters;
   private final ProblemOccurrenceNavigatorSupport myOccurrenceNavigatorSupport;
-  private final Set<BuildEvent> myDeferredEvents = ContainerUtil.newConcurrentSet();
+  private final Set<BuildEvent> myDeferredEvents = ConcurrentCollectionFactory.createConcurrentSet();
 
   /**
    * @deprecated BuildViewSettingsProvider is not used anymore.
@@ -140,7 +141,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     myBuildDescriptor = buildDescriptor instanceof DefaultBuildDescriptor
                         ? (DefaultBuildDescriptor)buildDescriptor
                         : new DefaultBuildDescriptor(buildDescriptor);
-    myNodeFilters = ContainerUtil.newConcurrentSet();
+    myNodeFilters = ConcurrentCollectionFactory.createConcurrentSet();
     myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
     myNavigateToTheFirstErrorLocation = isNavigateToTheFirstErrorLocation(project, buildDescriptor);
 
@@ -381,7 +382,9 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
         nodesMap.put(eventId, currentNode);
       }
       else {
-        LOG.warn("start event id collision found:" + eventId + ", was also in node: " + currentNode.getTitle());
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("start event id collision found:" + eventId + ", was also in node: " + currentNode.getTitle());
+        }
         return;
       }
     }
@@ -869,7 +872,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     tree.setRootVisible(false);
     EditSourceOnDoubleClickHandler.install(tree);
     EditSourceOnEnterKeyHandler.install(tree);
-    new TreeSpeedSearch(tree).setComparator(new SpeedSearchComparator(false));
+    TreeSpeedSearch.installOn(tree).setComparator(new SpeedSearchComparator(false));
     TreeUtil.installActions(tree);
     if (Registry.is("build.toolwindow.show.inline.statistics")) {
       tree.setCellRenderer(new MyNodeRenderer());
@@ -1243,7 +1246,10 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     private String myDurationText;
     private Color myDurationColor;
     private int myDurationWidth;
-    private int myDurationOffset;
+    /**
+     * An empty area before duration the text
+     */
+    private int myDurationLeftInset;
 
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
@@ -1257,7 +1263,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       myDurationText = null;
       myDurationColor = null;
       myDurationWidth = 0;
-      myDurationOffset = 0;
+      myDurationLeftInset = 0;
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
       final Object userObj = node.getUserObject();
       if (userObj instanceof ExecutionNode) {
@@ -1265,7 +1271,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
         if (myDurationText != null) {
           FontMetrics metrics = getFontMetrics(RelativeFont.SMALL.derive(getFont()));
           myDurationWidth = metrics.stringWidth(myDurationText);
-          myDurationOffset = metrics.getHeight() / 2; // an empty area before and after the text
+          myDurationLeftInset = metrics.getHeight() / 4;
           myDurationColor = selected ? getTreeSelectionForeground(hasFocus) : GRAYED_ATTRIBUTES.getFgColor();
         }
       }
@@ -1275,7 +1281,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     protected void paintComponent(Graphics g) {
       UISettings.setupAntialiasing(g);
       Shape clip = null;
-      int width = getWidth();
+      int width = getWidth() - getRightInset();
       int height = getHeight();
       if (isOpaque()) {
         // paint background for expanded row
@@ -1283,11 +1289,11 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
         g.fillRect(0, 0, width, height);
       }
       if (myDurationWidth > 0) {
-        width -= myDurationWidth + myDurationOffset;
+        width -= myDurationWidth + myDurationLeftInset;
         if (width > 0 && height > 0) {
           g.setColor(myDurationColor);
           g.setFont(RelativeFont.SMALL.derive(getFont()));
-          g.drawString(myDurationText, width + myDurationOffset / 2, getTextBaseLine(g.getFontMetrics(), height));
+          g.drawString(myDurationText, width + myDurationLeftInset, getTextBaseLine(g.getFontMetrics(), height));
           clip = g.getClip();
           g.clipRect(0, 0, width, height);
         }
@@ -1296,6 +1302,10 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       super.paintComponent(g);
       // restore clip area if needed
       if (clip != null) g.setClip(clip);
+    }
+
+    private static int getRightInset() {
+      return JBUI.scale(ExperimentalUI.isNewUI() ? 16 : 0);
     }
   }
 

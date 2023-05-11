@@ -4,13 +4,11 @@ package com.intellij.openapi.externalSystem.statistics
 import com.intellij.featureStatistics.fusCollectors.EventsRateThrottle
 import com.intellij.featureStatistics.fusCollectors.ThrowableDescription
 import com.intellij.ide.plugins.PluginUtil
-import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.eventLog.events.EventFields.DurationMs
 import com.intellij.internal.statistic.eventLog.events.EventFields.Int
-import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByCustomRule
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
@@ -34,7 +32,7 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("build.gradle.import", 6)
+    val GROUP = EventLogGroup("build.gradle.import", 7)
 
     private val activityIdField = EventFields.Long("ide_activity_id")
     private val importPhaseField = EventFields.Enum<Phase>("phase")
@@ -48,7 +46,7 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
                                                                DurationMs,
                                                                Int("error_count"))
 
-    private val errorField = StringValidatedByCustomRule("error", ClassNameRuleValidator::class.java)
+    private val errorField = EventFields.Class("error")
     private val severityField = EventFields.String("severity", listOf("fatal", "warning"))
     private val errorHashField = Int("error_hash")
     private val tooManyErrorsField = Boolean("too_many_errors")
@@ -91,7 +89,7 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
 
       val pluginId = PluginUtil.getInstance().findPluginId(throwable)
       data.add(EventFields.PluginInfo.with(if (pluginId == null) platformPlugin else getPluginInfoById(pluginId)))
-      data.add(errorField.with(description.className))
+      data.add(errorField.with(description.throwableClass))
       if (ourErrorsRateThrottle.tryPass(System.currentTimeMillis())) {
         data.add(errorHashField.with(framesHash))
       }

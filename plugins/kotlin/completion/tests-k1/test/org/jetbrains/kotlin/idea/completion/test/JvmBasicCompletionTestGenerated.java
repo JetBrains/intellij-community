@@ -78,6 +78,26 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/annotations/NoSetterParameterAutopopup.kt");
             }
 
+            @TestMetadata("OnFunction.kt")
+            public void testOnFunction() throws Exception {
+                runTest("../testData/basic/common/annotations/OnFunction.kt");
+            }
+
+            @TestMetadata("OnFunction2.kt")
+            public void testOnFunction2() throws Exception {
+                runTest("../testData/basic/common/annotations/OnFunction2.kt");
+            }
+
+            @TestMetadata("OnFunctionWithoutDot.kt")
+            public void testOnFunctionWithoutDot() throws Exception {
+                runTest("../testData/basic/common/annotations/OnFunctionWithoutDot.kt");
+            }
+
+            @TestMetadata("OnFunctionWithoutDot2.kt")
+            public void testOnFunctionWithoutDot2() throws Exception {
+                runTest("../testData/basic/common/annotations/OnFunctionWithoutDot2.kt");
+            }
+
             @TestMetadata("OnlyAnnotations.kt")
             public void testOnlyAnnotations() throws Exception {
                 runTest("../testData/basic/common/annotations/OnlyAnnotations.kt");
@@ -598,6 +618,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             public void testSmartCast() throws Exception {
                 runTest("../testData/basic/common/extensionFunctionTypeValues/SmartCast.kt");
             }
+
+            @TestMetadata("TypeAliasParameter.kt")
+            public void testTypeAliasParameter() throws Exception {
+                runTest("../testData/basic/common/extensionFunctionTypeValues/TypeAliasParameter.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -738,6 +763,16 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             @TestMetadata("ExtensionOnNestedClassObject.kt")
             public void testExtensionOnNestedClassObject() throws Exception {
                 runTest("../testData/basic/common/extensions/ExtensionOnNestedClassObject.kt");
+            }
+
+            @TestMetadata("ExtensionWithStubType.kt")
+            public void testExtensionWithStubType() throws Exception {
+                runTest("../testData/basic/common/extensions/ExtensionWithStubType.kt");
+            }
+
+            @TestMetadata("ExtensionWithUninferredType.kt")
+            public void testExtensionWithUninferredType() throws Exception {
+                runTest("../testData/basic/common/extensions/ExtensionWithUninferredType.kt");
             }
 
             @TestMetadata("Extensions.kt")
@@ -1373,6 +1408,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/namedArguments/ParamsFromSingleUnapplicableOverload.kt");
             }
 
+            @TestMetadata("TypeAliasParameter.kt")
+            public void testTypeAliasParameter() throws Exception {
+                runTest("../testData/basic/common/namedArguments/TypeAliasParameter.kt");
+            }
+
             @TestMetadata("WithParameterExpression.kt")
             public void testWithParameterExpression() throws Exception {
                 runTest("../testData/basic/common/namedArguments/WithParameterExpression.kt");
@@ -1977,6 +2017,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/shadowing/InInitializer7.kt");
             }
 
+            @TestMetadata("InInitializerProperty.kt")
+            public void testInInitializerProperty() throws Exception {
+                runTest("../testData/basic/common/shadowing/InInitializerProperty.kt");
+            }
+
             @TestMetadata("Locals1.kt")
             public void testLocals1() throws Exception {
                 runTest("../testData/basic/common/shadowing/Locals1.kt");
@@ -2007,6 +2052,16 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/shadowing/PreferCloserReceiverGeneric.kt");
             }
 
+            @TestMetadata("PreferExtensionFunctionToFunctionalVariable.kt")
+            public void testPreferExtensionFunctionToFunctionalVariable() throws Exception {
+                runTest("../testData/basic/common/shadowing/PreferExtensionFunctionToFunctionalVariable.kt");
+            }
+
+            @TestMetadata("PreferExtensionsForCloserReceiver.kt")
+            public void testPreferExtensionsForCloserReceiver() throws Exception {
+                runTest("../testData/basic/common/shadowing/PreferExtensionsForCloserReceiver.kt");
+            }
+
             @TestMetadata("PreferMemberExtension.kt")
             public void testPreferMemberExtension() throws Exception {
                 runTest("../testData/basic/common/shadowing/PreferMemberExtension.kt");
@@ -2032,6 +2087,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionGeneric.kt");
             }
 
+            @TestMetadata("PreferMoreSpecificExtensionGeneric2.kt")
+            public void testPreferMoreSpecificExtensionGeneric2() throws Exception {
+                runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionGeneric2.kt");
+            }
+
             @TestMetadata("PreferMoreSpecificExtensionGenericWithMultipleParam.kt")
             public void testPreferMoreSpecificExtensionGenericWithMultipleParam() throws Exception {
                 runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionGenericWithMultipleParam.kt");
@@ -2040,6 +2100,16 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             @TestMetadata("PreferMoreSpecificExtensionGenericWithParam.kt")
             public void testPreferMoreSpecificExtensionGenericWithParam() throws Exception {
                 runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionGenericWithParam.kt");
+            }
+
+            @TestMetadata("PreferMoreSpecificExtensionLocalClass.kt")
+            public void testPreferMoreSpecificExtensionLocalClass() throws Exception {
+                runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionLocalClass.kt");
+            }
+
+            @TestMetadata("VarargValueParameter.kt")
+            public void testVarargValueParameter() throws Exception {
+                runTest("../testData/basic/common/shadowing/VarargValueParameter.kt");
             }
         }
 
@@ -2246,6 +2316,24 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/basic/common/typeAliasTypes")
+        public static class TypeAliasTypes extends AbstractJvmBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("TypeAliasParameter.kt")
+            public void testTypeAliasParameter() throws Exception {
+                runTest("../testData/basic/common/typeAliasTypes/TypeAliasParameter.kt");
+            }
+
+            @TestMetadata("TypeAliasThis.kt")
+            public void testTypeAliasThis() throws Exception {
+                runTest("../testData/basic/common/typeAliasTypes/TypeAliasThis.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/typeArgsOrNot")
         public static class TypeArgsOrNot extends AbstractJvmBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -2405,6 +2493,16 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/DataClassMembers2.kt");
             }
 
+            @TestMetadata("EnumEntriesInsideAbsentWhenFeatureDisabled.kt")
+            public void testEnumEntriesInsideAbsentWhenFeatureDisabled() throws Exception {
+                runTest("../testData/basic/common/EnumEntriesInsideAbsentWhenFeatureDisabled.kt");
+            }
+
+            @TestMetadata("EnumEntriesQualifiedAbsentWhenFeatureDisabled.kt")
+            public void testEnumEntriesQualifiedAbsentWhenFeatureDisabled() throws Exception {
+                runTest("../testData/basic/common/EnumEntriesQualifiedAbsentWhenFeatureDisabled.kt");
+            }
+
             @TestMetadata("EnumItemsThroughChainedTypeAlias.kt")
             public void testEnumItemsThroughChainedTypeAlias() throws Exception {
                 runTest("../testData/basic/common/EnumItemsThroughChainedTypeAlias.kt");
@@ -2413,6 +2511,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             @TestMetadata("EnumItemsThroughSingleTypeAlias.kt")
             public void testEnumItemsThroughSingleTypeAlias() throws Exception {
                 runTest("../testData/basic/common/EnumItemsThroughSingleTypeAlias.kt");
+            }
+
+            @TestMetadata("EnumUserDefinedEntriesNotAbsentWhenFeatureDisabled.kt")
+            public void testEnumUserDefinedEntriesNotAbsentWhenFeatureDisabled() throws Exception {
+                runTest("../testData/basic/common/EnumUserDefinedEntriesNotAbsentWhenFeatureDisabled.kt");
             }
 
             @TestMetadata("EnumValuesMethodLowerPriority.kt")

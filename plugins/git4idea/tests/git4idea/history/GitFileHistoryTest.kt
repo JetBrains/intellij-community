@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.dvcs.DvcsUtil
@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.util.CollectConsumer
-import com.intellij.util.Consumer
 import com.intellij.util.ExceptionUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
@@ -97,7 +96,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
 
     val history = ArrayList<GitFileRevision>()
     GitFileHistory.loadHistory(myProject, VcsUtil.getFilePath(commits.first().file), null, CollectConsumer(history),
-                               Consumer { exception: VcsException ->
+                               { exception: VcsException ->
                                  TestCase.fail("No exception expected " + ExceptionUtil.getThrowableText(exception))
                                })
     assertSameHistory(commits, history)

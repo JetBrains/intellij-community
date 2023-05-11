@@ -81,8 +81,9 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
    */
   private boolean adjustVerticalOffsetIfNecessary() {
     Editor editor = mySupplier.getEditor();
-    // There is a possible case that the editor is configured to show virtual space at file bottom and requested position is located
-    // somewhere around. We don't want to position viewport in a way that most of its area is used to represent that virtual empty space.
+    // There is a possible case that the editor is configured to show virtual space at file bottom
+    // and the requested position is located somewhere around.
+    // We don't want to position the viewport in a way that most of its area is used to represent that virtual empty space.
     // So, we tweak vertical offset if necessary.
     int maxY = Math.max(editor.getLineHeight(), editor.getDocument().getLineCount() * editor.getLineHeight());
     int minPreferredY = maxY - getVisibleArea().height * 2 / 3;
@@ -185,87 +186,8 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     myAnimationDisabled = false;
   }
 
-  private Point calcOffsetsToScroll(Point targetLocation, ScrollType scrollType, Rectangle viewRect) {
-    Editor editor = mySupplier.getEditor();
-    if (editor.getSettings().isRefrainFromScrolling() && viewRect.contains(targetLocation)) {
-      if (scrollType == ScrollType.CENTER ||
-          scrollType == ScrollType.CENTER_DOWN ||
-          scrollType == ScrollType.CENTER_UP ||
-          scrollType == ScrollType.CENTER_CENTER) {
-        scrollType = ScrollType.RELATIVE;
-      }
-    }
-
-    int hOffset;
-    if (scrollType == ScrollType.CENTER_CENTER) {
-      hOffset = Math.max(0, targetLocation.x - viewRect.width / 2);
-    } else {
-      hOffset = scrollType == ScrollType.CENTER ||
-                scrollType == ScrollType.CENTER_DOWN ||
-                scrollType == ScrollType.CENTER_UP ? 0 : viewRect.x;
-      int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
-      int xInsets = editor.getSettings().getAdditionalColumnsCount() * spaceWidth;
-      if (targetLocation.x < hOffset) {
-        int inset = 4 * spaceWidth;
-        if (scrollType == ScrollType.MAKE_VISIBLE && targetLocation.x < viewRect.width - inset) {
-          // if we need to scroll to the left to make target position visible,
-          // let's scroll to the leftmost position (if that will make caret visible)
-          hOffset = 0;
-        }
-        else {
-          hOffset = Math.max(0, targetLocation.x - inset);
-        }
-      }
-      else if (viewRect.width > 0 && targetLocation.x >= hOffset + viewRect.width) {
-        hOffset = targetLocation.x - Math.max(0, viewRect.width - xInsets);
-      }
-    }
-
-    // the following code tries to keeps 1 line above and 1 line below if available in viewRect
-    int lineHeight = editor.getLineHeight();
-    // to avoid 'hysteresis', minAcceptableY should be always less or equal to maxAcceptableY
-    int minAcceptableY = viewRect.y + Math.max(0, Math.min(lineHeight, viewRect.height - 3 * lineHeight));
-    int maxAcceptableY = viewRect.y + (viewRect.height <= lineHeight ? 0 :
-                                       viewRect.height - (viewRect.height <= 2 * lineHeight ? lineHeight : 2 * lineHeight));
-    int scrollUpBy = minAcceptableY - targetLocation.y;
-    int scrollDownBy = targetLocation.y - maxAcceptableY;
-    int centerPosition = targetLocation.y - viewRect.height / 3;
-
-    int vOffset = viewRect.y;
-    if (scrollType == ScrollType.CENTER || scrollType == ScrollType.CENTER_CENTER) {
-      vOffset = centerPosition;
-    }
-    else if (scrollType == ScrollType.CENTER_UP) {
-      if (scrollUpBy > 0 || scrollDownBy > 0 || vOffset > centerPosition) {
-        vOffset = centerPosition;
-      }
-    }
-    else if (scrollType == ScrollType.CENTER_DOWN) {
-      if (scrollUpBy > 0 || scrollDownBy > 0 || vOffset < centerPosition) {
-        vOffset = centerPosition;
-      }
-    }
-    else if (scrollType == ScrollType.RELATIVE) {
-      if (scrollUpBy > 0) {
-        vOffset = viewRect.y - scrollUpBy;
-      }
-      else if (scrollDownBy > 0) {
-        vOffset = viewRect.y + scrollDownBy;
-      }
-    }
-    else if (scrollType == ScrollType.MAKE_VISIBLE) {
-      if (scrollUpBy > 0 || scrollDownBy > 0) {
-        vOffset = centerPosition;
-      }
-    }
-
-    JScrollPane scrollPane = mySupplier.getScrollPane();
-    hOffset = Math.max(0, hOffset);
-    vOffset = Math.max(0, vOffset);
-    hOffset = Math.min(scrollPane.getHorizontalScrollBar().getMaximum() - getExtent(scrollPane.getHorizontalScrollBar()), hOffset);
-    vOffset = Math.min(scrollPane.getVerticalScrollBar().getMaximum() - getExtent(scrollPane.getVerticalScrollBar()), vOffset);
-
-    return new Point(hOffset, vOffset);
+  private @NotNull Point calcOffsetsToScroll(@NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect) {
+    return ApplicationManager.getApplication().getService(ScrollPositionCalculator.class).calcOffsetsToScroll(mySupplier.getEditor(), targetLocation, scrollType, viewRect, mySupplier.getScrollPane());
   }
 
   @Nullable
@@ -294,10 +216,6 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   private static int getOffset(JScrollBar scrollBar) {
     return scrollBar == null ? 0 :
            scrollBar instanceof Interpolable ? ((Interpolable)scrollBar).getTargetValue() : scrollBar.getValue();
-  }
-
-  private static int getExtent(JScrollBar scrollBar) {
-    return scrollBar == null ? 0 : scrollBar.getModel().getExtent();
   }
 
   @Override
@@ -439,7 +357,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     Disposer.register(parentDisposable, () -> myScrollRequestListeners.remove(scrollRequestListener));
   }
 
-  private final class AnimatedScrollingRunnable {
+  private class AnimatedScrollingRunnable {
 
     private final int myStartHOffset;
     private final int myStartVOffset;

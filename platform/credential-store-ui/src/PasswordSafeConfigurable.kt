@@ -3,11 +3,11 @@ package com.intellij.credentialStore
 
 import com.intellij.credentialStore.gpg.Pgp
 import com.intellij.credentialStore.gpg.PgpKey
-import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
+import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
 import com.intellij.credentialStore.keePass.DB_FILE_NAME
 import com.intellij.credentialStore.keePass.KeePassFileManager
-import com.intellij.credentialStore.keePass.MasterKeyFileStorage
-import com.intellij.credentialStore.keePass.getDefaultMasterPasswordFile
+import com.intellij.credentialStore.keePass.MainKeyFileStorage
+import com.intellij.credentialStore.keePass.getDefaultMainPasswordFile
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
@@ -16,6 +16,8 @@ import com.intellij.ide.passwordSafe.impl.getDefaultKeePassDbFile
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
@@ -40,6 +42,9 @@ import javax.swing.JPanel
 import javax.swing.JRadioButton
 import kotlin.io.path.exists
 
+private val LOG: Logger
+  get() = logger<PasswordSafeConfigurable>()
+
 class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
                                                                                                              CredentialStoreBundle.message("password.safe.configurable"),
                                                                                                              "reference.ide.settings.password.safe") {
@@ -51,7 +56,7 @@ class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, Pa
 }
 
 class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : ConfigurableUi<PasswordSafeSettings> {
-  private lateinit var myPanel: DialogPanel
+  private lateinit var panel: DialogPanel
   private lateinit var usePgpKey: JCheckBox
   private lateinit var pgpKeyCombo: ComboBox<PgpKey>
   private lateinit var keepassRadioButton: JRadioButton
@@ -70,13 +75,13 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     pgpListModel.replaceAll(secretKeys)
     usePgpKey.text = usePgpKeyText()
 
-    myPanel.reset()
+    panel.reset()
 
     keePassDbFile?.text = settings.keepassDb ?: getDefaultKeePassDbFile().toString()
   }
 
   override fun isModified(settings: PasswordSafeSettings): Boolean {
-    if (myPanel.isModified()) return true
+    if (panel.isModified()) return true
 
     if (keePassDbFile == null) {
       return false
@@ -92,7 +97,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     val pgpKeyChanged = getNewPgpKey()?.keyId != this.settings.state.pgpKeyId
     val oldProviderType = this.settings.providerType
 
-    myPanel.apply()
+    panel.apply()
     val providerType = this.settings.providerType
 
     // close if any, it is more reliable just close current store and later it will be recreated lazily with a new settings
@@ -135,7 +140,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     else if (providerType == ProviderType.KEEPASS && pgpKeyChanged) {
       try {
         // not our business in this case, if there is no db file, do not require not null KeePassFileManager
-        createKeePassFileManager()?.saveMasterKeyToApplyNewEncryptionSpec()
+        createKeePassFileManager()?.saveMainKeyToApplyNewEncryptionSpec()
       }
       catch (e: ConfigurationException) {
         throw e
@@ -149,7 +154,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     // not in createAndSaveKeePassDatabaseWithNewOptions (as logically should be) because we want to force users to set custom master passwords even if some another setting (not path) was changed
     // (e.g. PGP key)
     if (providerType == ProviderType.KEEPASS) {
-      createKeePassFileManager()?.setCustomMasterPasswordIfNeeded(getDefaultKeePassDbFile())
+      createKeePassFileManager()?.setCustomMainPasswordIfNeeded(getDefaultKeePassDbFile())
     }
 
     settings.providerType = providerType
@@ -172,9 +177,9 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     settings.keepassDb = newDbFile.toString()
 
     try {
-      KeePassFileManager(newDbFile, getDefaultMasterPasswordFile(), getEncryptionSpec(), secureRandom).useExisting()
+      KeePassFileManager(newDbFile, getDefaultMainPasswordFile(), getEncryptionSpec(), secureRandom).useExisting()
     }
-    catch (e: IncorrectMasterPasswordException) {
+    catch (e: IncorrectMainPasswordException) {
       throw ConfigurationException(CredentialStoreBundle.message("settings.password.master.password.for.keepass.database.is.not.correct"))
     }
     catch (e: Exception) {
@@ -188,7 +193,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
   private fun getNewDbFileAsString() = keePassDbFile!!.text.trim().nullize()
 
   override fun getComponent(): JPanel {
-    myPanel = panel {
+    panel = panel {
       buttonsGroup(CredentialStoreBundle.message("passwordSafeConfigurable.save.password")) {
         row {
           radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.in.native.keychain"), ProviderType.KEYCHAIN)
@@ -250,7 +255,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
 
       }.bind(settings::providerType)
     }
-    return myPanel
+    return panel
   }
 
   @NlsContexts.Checkbox
@@ -266,7 +271,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
   }
 
   private fun createKeePassFileManager(): KeePassFileManager? {
-    return KeePassFileManager(getNewDbFile() ?: return null, getDefaultMasterPasswordFile(), getEncryptionSpec(), secureRandom)
+    return KeePassFileManager(getNewDbFile() ?: return null, getDefaultMainPasswordFile(), getEncryptionSpec(), secureRandom)
   }
 
   private fun getEncryptionSpec(): EncryptionSpec {
@@ -314,14 +319,14 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
   }
 
   private inner class ChangeKeePassDatabaseMasterPasswordAction : DumbAwareAction(
-    if (MasterKeyFileStorage(getDefaultMasterPasswordFile()).isAutoGenerated()) CredentialStoreBundle.message("action.set.password.text")
+    if (MainKeyFileStorage(getDefaultMainPasswordFile()).isAutoGenerated()) CredentialStoreBundle.message("action.set.password.text")
     else CredentialStoreBundle.message("action.change.password.text")
   ) {
     override fun actionPerformed(event: AnActionEvent) {
       closeCurrentStore()
 
       // even if current provider is not KEEPASS, all actions for db file must be applied immediately (show error if new master password not applicable for existing db file)
-      if (createKeePassFileManager()?.askAndSetMasterKey(event) == true) {
+      if (createKeePassFileManager()?.askAndSetMainKey(event) == true) {
         templatePresentation.text = CredentialStoreBundle.message("settings.password.change.master.password")
       }
     }

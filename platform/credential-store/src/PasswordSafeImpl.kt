@@ -4,21 +4,24 @@ package com.intellij.ide.passwordSafe.impl
 
 import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.credentialStore.*
-import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
+import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
 import com.intellij.credentialStore.keePass.*
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.serviceContainer.NonInjectable
-import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asPromise
@@ -26,8 +29,11 @@ import java.io.Closeable
 import java.nio.file.Path
 import java.nio.file.Paths
 
-open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSafeSettings, provider: CredentialStore? = null /* TestOnly */) : PasswordSafe() {
-  constructor() : this(service<PasswordSafeSettings>(), null)
+private val LOG: Logger
+  get() = logger<CredentialStore>()
+
+abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : PasswordSafe() {
+  protected abstract val settings: PasswordSafeSettings
 
   override var isRememberPasswordByDefault: Boolean
     get() = settings.state.isRememberPasswordByDefault
@@ -37,7 +43,7 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
 
   private val _currentProvider = SynchronizedClearableLazy { computeProvider(settings) }
 
-  protected val currentProviderIfComputed: CredentialStore?
+  private val currentProviderIfComputed: CredentialStore?
     get() = if (_currentProvider.isInitialized()) _currentProvider.value else null
 
   var currentProvider: CredentialStore
@@ -55,7 +61,7 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
     _currentProvider.drop()
     if (isSave && store is KeePassCredentialStore) {
       try {
-        store.save(createMasterKeyEncryptionSpec())
+        store.save(createMainKeyEncryptionSpec())
       }
       catch (e: ProcessCanceledException) {
         throw e
@@ -69,23 +75,18 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
     }
   }
 
-  internal fun createMasterKeyEncryptionSpec(): EncryptionSpec =
-    when (val pgpKey = settings.state.pgpKeyId) {
+  private fun createMainKeyEncryptionSpec(): EncryptionSpec {
+    return when (val pgpKey = settings.state.pgpKeyId) {
       null -> EncryptionSpec(type = getDefaultEncryptionType(), pgpKeyId = null)
       else -> EncryptionSpec(type = EncryptionType.PGP_KEY, pgpKeyId = pgpKey)
     }
+  }
 
-  // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
+  // it is a helper storage to support set password as memory-only (see setPassword memoryOnly flag)
   private val memoryHelperProvider: Lazy<CredentialStore> = lazy { InMemoryCredentialStore() }
 
   override val isMemoryOnly: Boolean
     get() = settings.providerType == ProviderType.MEMORY_ONLY
-
-  init {
-    provider?.let {
-      currentProvider = it
-    }
-  }
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)
@@ -112,7 +113,7 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
   override fun set(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean) {
     if (memoryOnly) {
       memoryHelperProvider.value.set(attributes.toPasswordStoreable(), credentials)
-      // remove to ensure that on getPassword we will not return some value from default provider
+      // remove to ensure that on getPassword we will not return some value from the default provider
       currentProvider.set(attributes, null)
     }
     else {
@@ -120,16 +121,18 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
     }
   }
 
-  // maybe in the future we will use native async, so, this method added here instead "if needed, just use runAsync in your code"
+  // maybe in the future we will use native async; this method added here instead "if needed, just use runAsync in your code"
   override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> {
-    return ApplicationManager.getApplication().coroutineScope.async(Dispatchers.IO) {
+    return coroutineScope.async(Dispatchers.IO) {
       get(attributes)
     }.asCompletableFuture().asPromise()
   }
 
-  open suspend fun save() {
+  suspend fun save() {
     val keePassCredentialStore = currentProviderIfComputed as? KeePassCredentialStore ?: return
-    keePassCredentialStore.save(createMasterKeyEncryptionSpec())
+    withContext(Dispatchers.IO) {
+      keePassCredentialStore.save(createMainKeyEncryptionSpec())
+    }
   }
 
   override fun isPasswordStoredOnlyInMemory(attributes: CredentialAttributes, credentials: Credentials): Boolean {
@@ -147,21 +150,28 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
   }
 }
 
-class PasswordSafeImpl : BasePasswordSafe(), SettingsSavingComponent {
-  // SecureRandom (used to generate master password on first save) can be blocking on Linux
-  private val saveAlarm = SingleAlarm.pooledThreadSingleAlarm(delay = 0, ApplicationManager.getApplication()) {
-    val currentThread = Thread.currentThread()
-    ShutDownTracker.getInstance().executeWithStopperThread(currentThread) {
-      (currentProviderIfComputed as? KeePassCredentialStore)?.save(createMasterKeyEncryptionSpec())
-    }
-  }
+@TestOnly
+class TestPasswordSafeImpl @NonInjectable constructor(
+  override val settings: PasswordSafeSettings
+) : BasePasswordSafe(
+  @Suppress("DEPRECATION")
+  ApplicationManager.getApplication().coroutineScope
+) {
 
-  override suspend fun save() {
-    val keePassCredentialStore = currentProviderIfComputed as? KeePassCredentialStore ?: return
-    if (keePassCredentialStore.isNeedToSave()) {
-      saveAlarm.request()
-    }
+  @TestOnly
+  constructor() : this(service<PasswordSafeSettings>())
+
+  @TestOnly
+  @NonInjectable
+  constructor(settings: PasswordSafeSettings, provider: CredentialStore) : this(settings) {
+    currentProvider = provider
   }
+}
+
+@Internal
+class PasswordSafeImpl(coroutineScope: CoroutineScope) : BasePasswordSafe(coroutineScope), SettingsSavingComponent {
+  override val settings: PasswordSafeSettings
+    get() = service<PasswordSafeSettings>()
 }
 
 fun getDefaultKeePassDbFile(): Path = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
@@ -186,9 +196,9 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
     if (settings.providerType == ProviderType.KEEPASS) {
       try {
         val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultKeePassDbFile()
-        return KeePassCredentialStore(dbFile, getDefaultMasterPasswordFile())
+        return KeePassCredentialStore(dbFile, getDefaultMainPasswordFile())
       }
-      catch (e: IncorrectMasterPasswordException) {
+      catch (e: IncorrectMainPasswordException) {
         LOG.warn(e)
         showError(if (e.isFileMissed) CredentialStoreBundle.message("notification.title.password.missing")
                   else CredentialStoreBundle.message("notification.title.password.incorrect"))
@@ -237,14 +247,16 @@ fun createPersistentCredentialStore(): CredentialStore? {
 }
 
 @TestOnly
-fun createKeePassStore(dbFile: Path, masterPasswordFile: Path): PasswordSafe {
-  val store = KeePassCredentialStore(dbFile, masterPasswordFile)
+fun createKeePassStore(dbFile: Path, mainPasswordFile: Path): PasswordSafe {
+  val store = KeePassCredentialStore(dbFile, mainPasswordFile)
   val settings = PasswordSafeSettings()
-  settings.loadState(PasswordSafeSettings.PasswordSafeOptions().apply {
+  settings.loadState(PasswordSafeOptions().apply {
     provider = ProviderType.KEEPASS
     keepassDb = store.dbFile.toString()
   })
-  return BasePasswordSafe(settings, store)
+  return TestPasswordSafeImpl(settings, store)
 }
 
-private fun CredentialAttributes.toPasswordStoreable() = if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
+private fun CredentialAttributes.toPasswordStoreable(): CredentialAttributes {
+  return if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
+}

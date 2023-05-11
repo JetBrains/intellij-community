@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.openapi.components.BaseState
@@ -33,6 +33,10 @@ class UISettingsState : BaseState() {
   @get:OptionTag("FONT_SCALE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontScale"))
   var fontScale by property(0f)
+
+  @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS")
+  @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.overrideLafFonts"))
+  var overrideLafFonts by property(false)
 
   @get:ReportValue
   @get:OptionTag("RECENT_FILES_LIMIT")
@@ -116,6 +120,9 @@ class UISettingsState : BaseState() {
   @get:OptionTag("UI_DENSITY")
   var uiDensity by enum(UIDensity.DEFAULT)
 
+  @get:OptionTag("DIFFERENTIATE_PROJECTS")
+  var differentiateProjects by property(true)
+
   @get:OptionTag("SORT_TABS_ALPHABETICALLY")
   var sortTabsAlphabetically by property(false)
   @get:OptionTag("KEEP_TABS_ALPHABETICALLY_SORTED")
@@ -152,8 +159,6 @@ class UISettingsState : BaseState() {
   var alphaModeDelay by property(1500)
   @get:OptionTag("ALPHA_MODE_RATIO")
   var alphaModeRatio by property(0.5f)
-  @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS")
-  var overrideLafFonts by property(false)
   @get:OptionTag("SHOW_ICONS_IN_MENUS")
   var showIconsInMenus by property(true)
   // IDEADEV-33409, should be disabled by default on MacOS
@@ -220,6 +225,9 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("SHOW_VISUAL_FORMATTING_LAYER")
   var showVisualFormattingLayer by property(false)
+
+  @get:OptionTag("SHOW_BREAKPOINTS_OVER_LINE_NUMBERS")
+  var showBreakpointsOverLineNumbers by property(true)
 
   @Suppress("FunctionName")
   fun _incrementModificationCount() = incrementModificationCount()

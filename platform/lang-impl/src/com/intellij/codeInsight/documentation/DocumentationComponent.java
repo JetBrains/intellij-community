@@ -16,7 +16,6 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ide.DocumentationUtil;
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget;
 import com.intellij.model.Pointer;
-import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -41,8 +40,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.platform.documentation.impl.DocumentationRequest;
-import com.intellij.platform.documentation.impl.ImplKt;
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest;
+import com.intellij.platform.backend.documentation.impl.ImplKt;
+import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -73,15 +73,13 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
-
 /**
  * @see com.intellij.lang.documentation.ide.ui.DocumentationUI
  * @see com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
  * @see com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
  * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
   static final DataProvider HELP_DATA_PROVIDER =
@@ -137,18 +135,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @NotNull PsiElement element,
     @NotNull Disposable disposable
   ) {
-    if (isDocumentationV2Enabled()) {
-      DocumentationRequest request;
-      try (AccessToken ignored = SlowOperations.allowSlowOperations(SlowOperations.GENERIC)) {
-        request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
-      }
-      return DocumentationUtil.documentationComponent(project, request, disposable);
+    DocumentationRequest request;
+    try (AccessToken ignored = SlowOperations.allowSlowOperations(SlowOperations.GENERIC)) {
+      request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
     }
-    DocumentationManager manager = DocumentationManager.getInstance(project);
-    DocumentationComponent component = new DocumentationComponent(manager);
-    Disposer.register(disposable, component);
-    manager.fetchDocInfo(element, component);
-    return component;
+    return DocumentationUtil.documentationComponent(project, request, disposable);
   }
 
   public DocumentationComponent(DocumentationManager manager) {

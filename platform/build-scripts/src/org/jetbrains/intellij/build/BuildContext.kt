@@ -1,12 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.impl.use
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
@@ -17,6 +25,9 @@ interface BuildContext : CompilationContext {
   val proprietaryBuildTools: ProprietaryBuildTools
 
   val applicationInfo: ApplicationInfoProperties
+
+  val isMacCodeSignEnabled: Boolean
+    get() = !isStepSkipped(BuildOptions.MAC_SIGN_STEP) && proprietaryBuildTools.signTool.signNativeFileMode != SignNativeFileMode.DISABLED
 
   /**
    * Relative paths to files in distribution which should take 'executable' permissions.
@@ -53,6 +64,17 @@ interface BuildContext : CompilationContext {
   var bootClassPathJarNames: PersistentList<String>
 
   /**
+   * Specifies name of Java class which should be used to start the IDE.
+   */
+  val ideMainClassName: String
+
+  /**
+   * Specifies whether the new modular loader should be used in the IDE distributions, see [ProductProperties.supportModularLoading] and
+   * [BuildOptions.useModularLoader].
+   */
+  val useModularLoader: Boolean
+  
+  /**
    * see BuildTasksImpl.buildProvidedModuleList
    */
   var builtinModule: BuiltinModulesFileData?
@@ -72,15 +94,13 @@ interface BuildContext : CompilationContext {
   fun patchInspectScript(path: Path)
 
   /**
-   * Unlike VM options produced by {@link org.jetbrains.intellij.build.impl.VmOptionsGenerator},
+   * Unlike VM options produced by [org.jetbrains.intellij.build.impl.VmOptionsGenerator],
    * these are hard-coded into launchers and aren't supposed to be changed by a user.
    */
   fun getAdditionalJvmArguments(os: OsFamily,
                                 arch: JvmArchitecture,
                                 isScript: Boolean = false,
                                 isPortableDist: Boolean = false): List<String>
-
-  fun notifyArtifactBuilt(artifactPath: Path)
 
   fun findApplicationInfoModule(): JpsModule
 
@@ -92,12 +112,10 @@ interface BuildContext : CompilationContext {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 
-  /**
-   * Execute a build step or skip it if {@code stepId} is included in {@link BuildOptions#buildStepsToSkip}
-   * @return {@code true} if the step was executed
-   */
-  fun executeStep(stepMessage: String, stepId: String, step: Runnable): Boolean
-
+  val jetBrainsClientModuleFilter: JetBrainsClientModuleFilter
+  
+  val isEmbeddedJetBrainsClientEnabled: Boolean
+  
   fun shouldBuildDistributions(): Boolean
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
@@ -105,12 +123,25 @@ interface BuildContext : CompilationContext {
   fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext
 }
 
-suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, crossinline step: suspend () -> Unit) {
+@Obsolete
+fun executeStepSync(context: BuildContext, stepMessage: String, stepId: String, step: Runnable): Boolean {
+  if (context.isStepSkipped(stepId)) {
+    Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage))
+  }
+  else {
+    spanBuilder(stepMessage).use {
+      step.run()
+    }
+  }
+  return true
+}
+
+suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, crossinline step: suspend CoroutineScope.(Span) -> Unit) {
   if (isStepSkipped(stepId)) {
     spanBuilder.startSpan().addEvent("skip '$stepId' step").end()
   }
   else {
-    spanBuilder.useWithScope2 { step() }
+    spanBuilder.useWithScope(Dispatchers.IO, step)
   }
 }
 

@@ -17,6 +17,7 @@ import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.protocol.*;
@@ -31,6 +32,8 @@ import com.jetbrains.python.debugger.pydev.SetUserTypeRenderersCommand;
 import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
+import com.jetbrains.python.debugger.pydev.tables.PyDevCommandParameters;
+import com.jetbrains.python.debugger.pydev.tables.TableCommandParameters;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRenderer;
@@ -340,12 +343,18 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   }
 
   @Override
-  public String execTableCommand(String command, TableCommandType commandType) throws PyDebuggerException {
+  public String execTableCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
       return executeBackgroundTask(
         () -> {
+          String startIndex = "";
+          String endIndex = "";
           try {
-            return getPythonConsoleBackendClient().execTableCommand(command, commandType.name());
+            if (tableCommandParameters instanceof PyDevCommandParameters) {
+              startIndex = String.valueOf(((PyDevCommandParameters)tableCommandParameters).getStart());
+              endIndex = String.valueOf(((PyDevCommandParameters)tableCommandParameters).getEnd());
+            }
+            return getPythonConsoleBackendClient().execTableCommand(command, commandType.name(), startIndex, endIndex);
           }
           catch (PythonTableException e) {
             throw new PyDebuggerException(e.message);
@@ -782,20 +791,29 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   @Override
   public void notifyCommandExecuted(boolean more) {
     super.notifyCommandExecuted(more);
+    PyFrameListener.publisher().frameChanged();
     for (PyFrameListener listener : myFrameListeners) {
       listener.frameChanged();
     }
   }
 
   private void notifyVariablesLoaded(XValueChildrenList values) {
+    PyFrameListener.publisher().valuesUpdated(this, values);
     for (PyFrameListener listener : myFrameListeners) {
-      listener.updateVariables(this, values);
+      listener.valuesUpdated(this, values);
+    }
+  }
+
+  void notifyViewCreated(XStandaloneVariablesView view) {
+    PyFrameListener.publisher().viewCreated(this, view);
+    for (PyFrameListener listener : myFrameListeners) {
+      listener.viewCreated(this, view);
     }
   }
 
   private void notifySessionStopped() {
+    PyFrameListener.publisher().sessionStopped(this);
     for (PyFrameListener listener : myFrameListeners) {
-      listener.sessionStopped();
       listener.sessionStopped(this);
     }
   }
@@ -837,9 +855,6 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     myDebugCommunication = debugCommunication;
   }
 
-  public PythonDebugConsoleCommunication getDebugCommunication() {
-    return myDebugCommunication;
-  }
 
   public void setConsoleView(@Nullable PythonConsoleView consoleView) {
     myConsoleView = consoleView;

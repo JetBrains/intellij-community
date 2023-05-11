@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.ide.file.BatchFileChangeListener
+import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -18,7 +19,10 @@ import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
-import com.intellij.openapi.observable.properties.*
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.MutableBooleanProperty
+import com.intellij.openapi.observable.properties.whenPropertyChanged
+import com.intellij.openapi.observable.properties.whenPropertySet
 import com.intellij.openapi.observable.util.set
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.impl.CoreProgressManager
@@ -31,6 +35,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.streams.asStream
 
 @ApiStatus.Internal
@@ -79,7 +84,9 @@ class AutoImportProjectTracker(
 
   override fun scheduleProjectRefresh() {
     LOG.debug("Schedule project reload", Throwable())
-    schedule(priority = 0, dispatchIterations = 1) { reloadProject(explicitReload = true) }
+    schedule(priority = 0, dispatchIterations = 1) {
+      reloadProject(explicitReload = true)
+    }
   }
 
   override fun scheduleChangeProcessing() {
@@ -100,13 +107,21 @@ class AutoImportProjectTracker(
     schedule(priority = 2, dispatchIterations = 9) { reloadProject(explicitReload = false) }
   }
 
+  private val currentActivity = AtomicReference<ProjectInitializationDiagnosticService.ActivityTracker?>()
+
   private fun schedule(priority: Int, dispatchIterations: Int, action: () -> Unit) {
+    currentActivity.updateAndGet {
+      it ?: ProjectInitializationDiagnosticService.registerTracker(project, "AutoImportProjectTracker.schedule")
+    }
     dispatcher.queue(PriorityEatUpdate(priority) {
       if (dispatchIterations - 1 > 0) {
         schedule(priority, dispatchIterations - 1, action)
       }
       else {
         action()
+        if (dispatcher.isEmpty) {
+          currentActivity.getAndSet(null)?.activityFinished()
+        }
       }
     })
   }

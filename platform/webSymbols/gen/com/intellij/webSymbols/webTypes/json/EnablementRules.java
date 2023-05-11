@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "file-extensions",
     "file-name-patterns",
     "ide-libraries",
-    "project-tools"
+    "project-tool-executables"
 })
 public class EnablementRules {
 
@@ -60,12 +60,12 @@ public class EnablementRules {
     @JsonPropertyDescription("Global JavaScript libraries names enabled within the IDE, which enable framework support in the whole project")
     private List<String> ideLibraries = new ArrayList<String>();
     /**
-     * List of tool executables (without .exe), which presence should be checked in the project. In case of Node projects, such tools will be searched in node_modules/.bin/
+     * List of tool executables (without extension), which presence should be checked in the project. In case of Node projects, such tools will be searched in node_modules/.bin/
      * 
      */
-    @JsonProperty("project-tools")
-    @JsonPropertyDescription("List of tool executables (without .exe), which presence should be checked in the project. In case of Node projects, such tools will be searched in node_modules/.bin/")
-    private List<String> projectTools = new ArrayList<String>();
+    @JsonProperty("project-tool-executables")
+    @JsonPropertyDescription("List of tool executables (without extension), which presence should be checked in the project. In case of Node projects, such tools will be searched in node_modules/.bin/")
+    private List<String> projectToolExecutables = new ArrayList<String>();
 
     /**
      * Node.js package names, which enable framework support within the folder containing the package.json.
@@ -158,21 +158,21 @@ public class EnablementRules {
     }
 
     /**
-     * List of tool executables (without .exe), which presence should be checked in the project. In case of Node projects, such tools will be searched in node_modules/.bin/
+     * List of tool executables (without extension), which presence should be checked in the project. In case of Node projects, such tools will be searched in node_modules/.bin/
      * 
      */
-    @JsonProperty("project-tools")
-    public List<String> getProjectTools() {
-        return projectTools;
+    @JsonProperty("project-tool-executables")
+    public List<String> getProjectToolExecutables() {
+        return projectToolExecutables;
     }
 
     /**
-     * List of tool executables (without .exe), which presence should be checked in the project. In case of Node projects, such tools will be searched in node_modules/.bin/
+     * List of tool executables (without extension), which presence should be checked in the project. In case of Node projects, such tools will be searched in node_modules/.bin/
      * 
      */
-    @JsonProperty("project-tools")
-    public void setProjectTools(List<String> projectTools) {
-        this.projectTools = projectTools;
+    @JsonProperty("project-tool-executables")
+    public void setProjectToolExecutables(List<String> projectToolExecutables) {
+        this.projectToolExecutables = projectToolExecutables;
     }
 
 }

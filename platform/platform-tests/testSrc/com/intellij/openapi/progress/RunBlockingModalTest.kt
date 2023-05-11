@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
-import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -11,6 +11,7 @@ import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.ModalCoroutineTest
 import com.intellij.openapi.application.impl.processApplicationQueue
+import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import org.junit.jupiter.api.Assertions.*
@@ -18,10 +19,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.lang.Runnable
 import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.EmptyCoroutineContext
 
 /**
- * @see WithModalProgressIndicatorTest
+ * @see WithModalProgressTest
  */
 class RunBlockingModalTest : ModalCoroutineTest() {
 
@@ -31,11 +31,11 @@ class RunBlockingModalTest : ModalCoroutineTest() {
     withContext(testElement) {
       runBlockingModalContext {
         assertSame(testElement, coroutineContext[TestElementKey])
-        assertSame(currentThreadContext(), EmptyCoroutineContext)
+        assertNull(currentThreadContextOrNull())
         withContext(Dispatchers.EDT) {
-          assertSame(currentThreadContext(), EmptyCoroutineContext)
+          assertNull(currentThreadContextOrNull())
         }
-        assertSame(currentThreadContext(), EmptyCoroutineContext)
+        assertNull(currentThreadContextOrNull())
       }
     }
   }
@@ -45,7 +45,9 @@ class RunBlockingModalTest : ModalCoroutineTest() {
     withContext(Dispatchers.EDT) {
       assertFalse(LaterInvocator.isInModalContext())
       runBlockingModal {
+        assertNull(currentThreadContextOrNull())
         withContext(Dispatchers.EDT) {
+          assertNull(currentThreadContextOrNull())
           assertTrue(LaterInvocator.isInModalContext())
           val contextModality = coroutineContext.contextModality()
           assertNotEquals(ModalityState.any(), contextModality)
@@ -74,15 +76,29 @@ class RunBlockingModalTest : ModalCoroutineTest() {
 
   @Test
   fun rethrow(): Unit = timeoutRunBlocking {
-    val t: Throwable = object : Throwable() {}
     withContext(Dispatchers.EDT) {
-      val thrown = assertThrows<Throwable> {
-        runBlockingModal<Unit> {
-          throw t // fail the scope
-        }
-      }
-      assertSame(t, thrown)
+      testRunBlockingModalRethrow(object : Throwable() {})
+      testRunBlockingModalRethrow(CancellationException()) // manual CE
+      testRunBlockingModalRethrow(ProcessCanceledException()) // manual PCE
     }
+  }
+
+  private inline fun <reified T : Throwable> testRunBlockingModalRethrow(t: T) {
+    val thrown = assertThrows<T> {
+      runBlockingModal {
+        throw t
+      }
+    }
+    assertSame(t, thrown)
+  }
+
+  private fun testRunBlockingModalRethrow(t: CancellationException) {
+    val thrown = assertThrows<CeProcessCanceledException> {
+      runBlockingModal {
+        throw t
+      }
+    }
+    assertSame(t, assertInstanceOf<CancellationException>(thrown.cause).cause)
   }
 
   @Test

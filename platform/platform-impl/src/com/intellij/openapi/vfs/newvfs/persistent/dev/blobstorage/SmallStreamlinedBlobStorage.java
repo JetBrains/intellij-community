@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.util.io.DirectBufferWrapper;
@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
+
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storage;
 
 /**
  * Store blobs, like {@link com.intellij.util.io.storage.AbstractStorage}, but tries to be faster:
@@ -265,7 +267,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
 
   @Override
   public <Out> Out readRecord(final int recordId,
-                              final @NotNull Reader<Out> reader) throws IOException {
+                              final @NotNull ByteBufferReader<Out> reader) throws IOException {
     return readRecord(recordId, reader, null);
   }
 
@@ -333,7 +335,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
    */
   @Override
   public <Out> Out readRecord(final int recordId,
-                              final @NotNull Reader<Out> reader,
+                              final @NotNull ByteBufferReader<Out> reader,
                               final @Nullable IntRef redirectToIdRef) throws IOException {
     pagedStorage.lockRead();
     try {
@@ -374,13 +376,13 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
 
   @Override
   public int writeToRecord(final int recordId,
-                           final @NotNull Writer writer) throws IOException {
+                           final @NotNull ByteBufferWriter writer) throws IOException {
     return writeToRecord(recordId, writer, /*expectedRecordSizeHint: */ -1);
   }
 
   @Override
   public int writeToRecord(final int recordId,
-                           final @NotNull Writer writer,
+                           final @NotNull ByteBufferWriter writer,
                            final int expectedRecordSizeHint) throws IOException {
     return writeToRecord(recordId, writer, expectedRecordSizeHint, /* leaveRedirectOnRecordRelocation: */ false);
   }
@@ -408,7 +410,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
    */
   @Override
   public int writeToRecord(final int recordId,
-                           final @NotNull Writer writer,
+                           final @NotNull ByteBufferWriter writer,
                            final int expectedRecordSizeHint,
                            final boolean leaveRedirectOnRecordRelocation) throws IOException {
     //insert new record?
@@ -1082,7 +1084,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
 
   @NotNull
   private BatchCallback setupReportingToOpenTelemetry(final Path fileName) {
-    final Meter meter = TraceManager.INSTANCE.getMeter("storage");
+    final Meter meter = TelemetryTracer.getMeter(Storage);
 
     final var recordsAllocated = meter.counterBuilder("StreamlinedBlobStorage.recordsAllocated").buildObserver();
     final var recordsRelocated = meter.counterBuilder("StreamlinedBlobStorage.recordsRelocated").buildObserver();

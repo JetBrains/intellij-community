@@ -1,0 +1,5 @@
+version = "5.4.*"
+requires = ["types-setuptools"]
+
+[tool.stubtest]
+ignore_missing_stub = false

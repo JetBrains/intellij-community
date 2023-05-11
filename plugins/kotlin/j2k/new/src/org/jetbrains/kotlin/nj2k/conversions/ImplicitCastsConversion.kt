@@ -107,27 +107,47 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
     private fun convertAssignmentStatement(statement: JKKtAssignmentStatement) {
         val fieldType = statement.field.calculateType(typeFactory) ?: return
         val expressionType = statement.expression.calculateType(typeFactory) ?: return
-        val isCompoundAssignmentWithIncompatibleFloatingPointType =
-            expressionType.asPrimitiveType()?.isFloatingPoint() == true &&
-                    fieldType.asPrimitiveType()?.isFloatingPoint() == false &&
-                    compoundAssignmentMap.contains(statement.token)
 
-        if (isCompoundAssignmentWithIncompatibleFloatingPointType) {
-            // Code like `int *= double` must be converted to `int = (int * double).toInt()`
+        fun castExpressionToFieldType() {
+            statement.expression.castTo(fieldType)?.let {
+                statement.expression = it
+            }
+        }
+
+        val isCompoundAssignment = compoundAssignmentMap.contains(statement.token)
+        if (!isCompoundAssignment) {
+            castExpressionToFieldType()
+            return
+        }
+
+        val fieldIsByte = fieldType.asPrimitiveType()?.isByte() == true
+        val fieldIsShort = fieldType.asPrimitiveType()?.isShort() == true
+        val isOnlyExpressionFloatingPointType =
+            expressionType.asPrimitiveType()?.isFloatingPoint() == true &&
+                fieldType.asPrimitiveType()?.isFloatingPoint() == false
+
+        if (fieldIsByte || fieldIsShort || isOnlyExpressionFloatingPointType) {
+            // Case 1: Byte and Short don't work with compound assignment (KT-7907)
+            // Case 2: Code like `int *= double` loses the floating-point part of `double`
+            // Both cases need to be converted to regular assignment
             val newToken = compoundAssignmentMap.getValue(statement.token)
+            val newType = if (numberTypesStrongerThanInt.contains(expressionType.asPrimitiveType())) {
+                expressionType
+            } else {
+                typeFactory.types.int
+            }
             val newExpression = JKBinaryExpression(
                 left = statement.field.copyTreeAndDetach(),
                 right = statement.expression.copyTreeAndDetach().parenthesizeIfCompoundExpression(),
-                operator = JKKtOperatorImpl(newToken, expressionType)
+                operator = JKKtOperatorImpl(newToken, newType)
             ).parenthesize()
+
             newExpression.castTo(fieldType)?.let {
                 statement.token = JKOperatorToken.EQ
                 statement.expression = it
             }
         } else {
-            statement.expression.castTo(fieldType)?.let {
-                statement.expression = it
-            }
+            castExpressionToFieldType()
         }
     }
 
@@ -175,6 +195,8 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
     private fun JKJavaPrimitiveType.isBoolean() = jvmPrimitiveType == JvmPrimitiveType.BOOLEAN
     private fun JKJavaPrimitiveType.isChar() = jvmPrimitiveType == JvmPrimitiveType.CHAR
     private fun JKJavaPrimitiveType.isLong() = jvmPrimitiveType == JvmPrimitiveType.LONG
+    private fun JKJavaPrimitiveType.isByte(): Boolean = this == JKJavaPrimitiveType.BYTE
+    private fun JKJavaPrimitiveType.isShort(): Boolean = this == JKJavaPrimitiveType.SHORT
 
     private fun JKJavaPrimitiveType.isFloatingPoint(): Boolean =
         this == JKJavaPrimitiveType.FLOAT || this == JKJavaPrimitiveType.DOUBLE
@@ -186,4 +208,10 @@ private val compoundAssignmentMap: Map<JKOperatorToken, JKOperatorToken> = mapOf
     JKOperatorToken.MULTEQ to JKOperatorToken.MUL,
     JKOperatorToken.DIVEQ to JKOperatorToken.DIV,
     JKOperatorToken.PERCEQ to JKOperatorToken.PERC
+)
+
+private val numberTypesStrongerThanInt: Set<JKJavaPrimitiveType> = setOf(
+    JKJavaPrimitiveType.LONG,
+    JKJavaPrimitiveType.FLOAT,
+    JKJavaPrimitiveType.DOUBLE,
 )

@@ -1552,6 +1552,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         public void testRecursiveCall() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/recursiveCall.kt");
         }
+
+        @TestMetadata("selfCallWithDifferentReceiver.kt")
+        public void testSelfCallWithDifferentReceiver() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/selfCallWithDifferentReceiver.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

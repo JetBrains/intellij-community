@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
@@ -71,8 +72,8 @@ final class WholeFileLocalInspectionsPassFactory implements MainHighlightingPass
       }
 
       @Override
-      protected void applyInformationWithProgress() {
-        super.applyInformationWithProgress();
+      protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
+        super.collectInformationWithProgress(progress);
         WholeFileLocalInspectionPassTracker.getInstance(file.getProject()).informationApplied(file);
       }
     };

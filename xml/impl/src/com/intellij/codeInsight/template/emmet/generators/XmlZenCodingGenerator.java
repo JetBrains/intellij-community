@@ -48,7 +48,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   public TemplateImpl generateTemplate(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
     TemplateImpl tokenTemplate = token.getTemplate();
     if (!ApplicationManager.getApplication().isDispatchThread()) return tokenTemplate;
-    
+
     String s = toString(token, hasChildren, context);
     assert tokenTemplate != null;
     TemplateImpl template = tokenTemplate.copy();
@@ -60,7 +60,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   public TemplateImpl createTemplateByKey(@NotNull String key, boolean forceSingleTag) {
     StringBuilder builder = new StringBuilder("<");
     builder.append(key).append('>');
-    if (!forceSingleTag && !HtmlUtil.isSingleHtmlTag(key)) {
+    if (!forceSingleTag && !HtmlUtil.isSingleHtmlTag(key, false)) {
       builder.append("$END$</").append(key).append('>');
     }
     return new TemplateImpl("", builder.toString(), "");

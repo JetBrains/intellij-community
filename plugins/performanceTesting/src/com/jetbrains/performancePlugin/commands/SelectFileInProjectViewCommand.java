@@ -10,6 +10,10 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.performancePlugin.commands.OpenFileCommand.findFile;
 
+/**
+ * Command to select file in project view.
+ * Example: %selectFileInProjectView MyClass.php
+ */
 public class SelectFileInProjectViewCommand extends AbstractCallbackBasedCommand {
   public static final @NonNls String PREFIX = "%selectFileInProjectView";
 

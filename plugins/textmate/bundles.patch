@@ -81,3 +81,16 @@ diff --git a/community/plugins/textmate/lib/bundles/erlang/language-configuratio
      // Dedent after brackets, end or lone "->". The latter happens in a spec
      // with indented types, typically after "when". Only do this if it's _only_
      // preceded by whitespace.
+diff --git a/community/plugins/textmate/lib/bundles/cmake/package.json b/community/plugins/textmate/lib/bundles/cmake/package.json
+--- a/community/plugins/textmate/lib/bundles/cmake/package.json	(revision 56be55b1c6fab2be43c34f4cc23c5d2998e79f8c)
++++ b/community/plugins/textmate/lib/bundles/cmake/package.json	(date 1676914978628)
+@@ -44,7 +44,7 @@
+ 					".cmake"
+ 				],
+ 				"filenames": [
+-					"CMakelists.txt"
++					"CMakeLists.txt"
+ 				],
+ 				"aliases": [
+ 					"CMake"
+

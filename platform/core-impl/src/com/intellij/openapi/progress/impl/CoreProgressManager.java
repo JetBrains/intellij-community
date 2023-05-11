@@ -1,13 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityKt;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -35,6 +33,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Supplier;
+
+import static com.intellij.openapi.application.ModalityKt.currentThreadContextModality;
 
 public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(CoreProgressManager.class);
@@ -387,6 +387,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   // from any: bg
   private void runAsynchronously(@NotNull Task.Backgroundable task) {
+    if (LOG.isDebugEnabled()) LOG.debug("CoreProgressManager#runAsynchronously, " + task, new Throwable());
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runProcessWithProgressAsynchronously(task);
     }
@@ -426,6 +427,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @Deprecated
   protected void startTask(@NotNull Task task, @NotNull ProgressIndicator indicator, @Nullable Runnable continuation) {
     try {
+      if (LOG.isDebugEnabled()) LOG.debug("Starting task '" + task + "' under progress: " + indicator, new Throwable());
       task.run(indicator);
     }
     finally {
@@ -507,6 +509,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // ASSERT IS EDT->UI bg or calling if can't
   // NEW: no assert; bg or calling ...
   protected boolean runProcessWithProgressSynchronously(@NotNull Task task) {
+    if (LOG.isDebugEnabled()) LOG.debug("CoreProgressManager#runProcessWithProgressSynchronously, " + task, new Throwable());
     Ref<Throwable> exceptionRef = new Ref<>();
     Runnable taskContainer = () -> {
       try {
@@ -547,6 +550,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   public void runProcessWithProgressInCurrentThread(@NotNull Task task,
                                                     @NotNull ProgressIndicator progressIndicator,
                                                     @NotNull ModalityState modalityState) {
+    if (LOG.isDebugEnabled()) LOG.debug("CoreProgressManager#runProcessWithProgressInCurrentThread, " + task, new Throwable());
     if (progressIndicator instanceof Disposable) {
       Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
     }
@@ -932,7 +936,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @NotNull
   public static ModalityState getCurrentThreadProgressModality() {
-    ModalityState contextModality = ModalityKt.contextModality(ThreadContext.currentThreadContext());
+    ModalityState contextModality = currentThreadContextModality();
     if (contextModality != null) {
       return contextModality;
     }

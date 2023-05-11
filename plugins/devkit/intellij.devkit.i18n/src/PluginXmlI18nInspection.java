@@ -64,7 +64,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   private static final Logger LOG = Logger.getInstance(PluginXmlI18nInspection.class);
 
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     if (element instanceof ActionOrGroup) {
       highlightActionOrGroup(holder, (ActionOrGroup)element);
     }

@@ -3,6 +3,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -474,7 +475,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     private final AtomicInteger contextsConsidered = new AtomicInteger();
     private final AtomicInteger sureExprsAfterLightCheck = new AtomicInteger();
     private final AtomicInteger exprsToHeavyCheck = new AtomicInteger();
-    private final Set<VirtualFile> filesLookedInside = ContainerUtil.newConcurrentSet();
+    private final Set<VirtualFile> filesLookedInside = ConcurrentCollectionFactory.createConcurrentSet();
     private final @Nullable PsiMethod method;
 
     public Session(@NotNull SearchParameters parameters, @NotNull Processor<? super PsiFunctionalExpression> consumer) {

@@ -31,7 +31,7 @@ public abstract class ArtifactBasedBuildTarget extends BuildTarget<ArtifactRootD
   }
 
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return myArtifact.getName();
   }
 

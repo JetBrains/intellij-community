@@ -107,8 +107,9 @@ public final class XFramesView extends XDebugView {
       }
 
       @Override
-      protected @NotNull Navigatable getSelectedFrameNavigatable() {
-        Navigatable navigatable = super.getSelectedFrameNavigatable();
+      protected @NotNull Navigatable getFrameNavigatable(@NotNull XStackFrame frame, boolean isMainSourceKindPreferred) {
+        XSourcePosition position = getFrameSourcePosition(frame, isMainSourceKindPreferred);
+        Navigatable navigatable = position != null ? position.createNavigatable(session.getProject()) : null;
         return new NavigatableAdapter() {
           @Override
           public void navigate(boolean requestFocus) {
@@ -118,10 +119,15 @@ public final class XFramesView extends XDebugView {
         };
       }
 
-      @Override
-      protected @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame) {
-        XSourcePosition position = session.getFrameSourcePosition(frame);
-        return position != null ? position.createNavigatable(session.getProject()) : null;
+      @Nullable
+      private XSourcePosition getFrameSourcePosition(@NotNull XStackFrame frame, boolean isMainSourceKindPreferred) {
+        if (isMainSourceKindPreferred) {
+          XSourcePosition position = frame.getSourcePosition();
+          if (position != null) {
+            return position;
+          }
+        }
+        return session.getFrameSourcePosition(frame);
       }
     };
     myFrameSelectionHandler.install(myFramesList);
@@ -202,12 +208,13 @@ public final class XFramesView extends XDebugView {
         }
       }
     });
-    new ComboboxSpeedSearch(myThreadComboBox) {
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(myThreadComboBox, null) {
       @Override
       protected String getElementText(Object element) {
         return ((XExecutionStack)element).getDisplayName();
       }
     };
+    search.setupListeners();
 
     ActionToolbarImpl toolbar = createToolbar();
     myThreadsPanel = new Wrapper();

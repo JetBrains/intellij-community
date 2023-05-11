@@ -29,4 +29,7 @@ private class JGitCoroutineProgressMonitor(private val context: CoroutineContext
   }
 
   override fun isCancelled() = context.job.isCancelled
+  override fun showDuration(enabled: Boolean) {
+    // todo
+  }
 }

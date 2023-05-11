@@ -36,7 +36,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.AstLoadingFilter;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +59,7 @@ public class IdentifierHighlighterPass {
 
   /**
    * @param file may be injected fragment, in which case the {@code editor} must be corresponding injected editor and  {@code visibleRange} must have consistent offsets inside the injected document.
-   * In both cases, {@link #doCollectInformation()} will produce and {@link #doApplyInformationToEditor()} will apply HighlightInfos for the host file.
+   * In both cases, {@link #doCollectInformation()} will produce and apply HighlightInfos to the host file.
    */
   IdentifierHighlighterPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull TextRange visibleRange) {
     myFile = file;
@@ -70,7 +69,10 @@ public class IdentifierHighlighterPass {
   }
 
   public void doCollectInformation() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     HighlightUsagesHandlerBase<PsiElement> highlightUsagesHandler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile, myVisibleRange);
+    boolean runFindUsages = true;
     if (highlightUsagesHandler != null) {
       List<PsiElement> targets = highlightUsagesHandler.getTargets();
       highlightUsagesHandler.computeUsages(targets);
@@ -84,11 +86,24 @@ public class IdentifierHighlighterPass {
         LOG.assertTrue(writeUsage != null, "null text range from " + highlightUsagesHandler);
       }
       myWriteAccessRanges.addAll(writeUsages);
-      if (!highlightUsagesHandler.highlightReferences()) return;
+      if (!highlightUsagesHandler.highlightReferences()) {
+        runFindUsages = false;
+      }
     }
 
-    collectCodeBlockMarkerRanges();
-    highlightReferencesAndDeclarations();
+    if (runFindUsages) {
+      collectCodeBlockMarkerRanges();
+      highlightReferencesAndDeclarations();
+    }
+
+    if (!myEditor.isDisposed()) {
+      boolean virtSpace = EditorUtil.isCaretInVirtualSpace(myEditor);
+      List<HighlightInfo> infos = virtSpace || isCaretOverCollapsedFoldRegion() ? Collections.emptyList() : getHighlights();
+      PsiFile hostFile = InjectedLanguageManager.getInstance(myFile.getProject()).getTopLevelFile(myFile);
+      Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
+      BackgroundUpdateHighlightersUtil.setHighlightersToSingleEditor(myFile.getProject(), hostEditor, 0, hostFile.getTextLength(), infos,
+                                                                     hostEditor.getColorsScheme(), getId());
+    }
   }
 
   @ApiStatus.Internal
@@ -110,9 +125,17 @@ public class IdentifierHighlighterPass {
    * Collects code block markers ranges to highlight. E.g. if/elsif/else. Collected ranges will be highlighted the same way as braces
    */
   private void collectCodeBlockMarkerRanges() {
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myFile.getProject());
+
     PsiElement contextElement = myFile.findElementAt(
       TargetElementUtil.adjustOffset(myFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset()));
-    myCodeBlockMarkerRanges.addAll(CodeBlockSupportHandler.findMarkersRanges(contextElement));
+    if (contextElement == null) {
+      return;
+    }
+
+    for (TextRange range : CodeBlockSupportHandler.findMarkersRanges(contextElement)) {
+      myCodeBlockMarkerRanges.add(manager.injectedToHost(contextElement, range));
+    }
   }
 
   /**
@@ -223,24 +246,20 @@ public class IdentifierHighlighterPass {
              "virtual file: " + myFile.getVirtualFile());
   }
 
-  private static int id;
+  private static volatile int id;
   private int getId() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     int id = IdentifierHighlighterPass.id;
     if (id == 0) {
-      IdentifierHighlighterPass.id = id = ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(
-        myFile.getProject())).getNextAvailableId();
+      TextEditorHighlightingPassRegistrarImpl registrar =
+        (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myFile.getProject());
+      synchronized (IdentifierHighlighterPass.class) {
+        id = IdentifierHighlighterPass.id;
+        if (id == 0) {
+          IdentifierHighlighterPass.id = id = registrar.getNextAvailableId();
+        }
+      }
     }
     return id;
-  }
-
-  public void doApplyInformationToEditor() {
-    boolean virtSpace = EditorUtil.isCaretInVirtualSpace(myEditor);
-    List<HighlightInfo> infos = virtSpace || isCaretOverCollapsedFoldRegion() ? Collections.emptyList() : getHighlights();
-    PsiFile hostFile = InjectedLanguageManager.getInstance(myFile.getProject()).getTopLevelFile(myFile);
-    Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
-    UpdateHighlightersUtil.setHighlightersToSingleEditor(myFile.getProject(), hostEditor, 0, hostFile.getTextLength(), infos, hostEditor.getColorsScheme(), getId());
-    doAdditionalCodeBlockHighlighting();
   }
 
   private boolean isCaretOverCollapsedFoldRegion() {
@@ -255,7 +274,7 @@ public class IdentifierHighlighterPass {
    *
    * In brace matching case this is done from {@link BraceHighlightingHandler#highlightBraces(TextRange, TextRange, boolean, boolean, com.intellij.openapi.fileTypes.FileType)}
    */
-  private void doAdditionalCodeBlockHighlighting() {
+  public void doAdditionalCodeBlockHighlighting() {
     if (myCodeBlockMarkerRanges.size() < 2 || !(myEditor instanceof EditorEx)) {
       return;
     }
@@ -284,14 +303,13 @@ public class IdentifierHighlighterPass {
 
     List<HighlightInfo> result = new ArrayList<>(myReadAccessRanges.size() + myWriteAccessRanges.size() + myCodeBlockMarkerRanges.size());
     for (TextRange range: myReadAccessRanges) {
-      ContainerUtil.addIfNotNull(result, createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_READ, existingMarkupTooltips));
+      result.add(createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_READ, existingMarkupTooltips));
     }
     for (TextRange range: myWriteAccessRanges) {
-      ContainerUtil.addIfNotNull(result, createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE, existingMarkupTooltips));
+      result.add(createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE, existingMarkupTooltips));
     }
     if (CodeInsightSettings.getInstance().HIGHLIGHT_BRACES) {
-      myCodeBlockMarkerRanges.forEach(
-        it -> ContainerUtil.addIfNotNull(result, createHighlightInfo(it, ELEMENT_UNDER_CARET_STRUCTURAL, existingMarkupTooltips)));
+      myCodeBlockMarkerRanges.forEach(range -> result.add(createHighlightInfo(range, ELEMENT_UNDER_CARET_STRUCTURAL, existingMarkupTooltips)));
     }
 
     return result;

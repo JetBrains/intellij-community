@@ -24,8 +24,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -2539,7 +2540,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDefaultDictFromDict() {
-    doTest("defaultdict[Any, dict] | defaultdict[str, dict]",
+    doTest("defaultdict[Any, dict]",
            "from collections import defaultdict\n" +
            "expr = defaultdict(dict)");
   }
@@ -2686,6 +2687,91 @@ public class PyTypingTest extends PyTestCase {
                  return f(x, y)
                           
              expr = g(42, 'foo')
+             """);
+  }
+
+  // PY-56541
+  public void testRecursiveTypedDictDeclarations() {
+    //RecursionManager.assertOnRecursionPrevention(getTestRootDisposable());
+    StringBuilder text = new StringBuilder("""
+                                             from __future__ import annotations
+                                             from typing import TypedDict, Union
+                                             """);
+    int typedDictCount = 30;
+    for (int i = 1; i <= typedDictCount; i++) {
+      text.append(String.format("""
+                                  class D%d(TypedDict):
+                                      key%d: Alias
+                                  """, i, i));
+    }
+    text.append("Alias = Union[");
+    for (int i = 1; i <= typedDictCount; i++) {
+      text.append("D").append(i).append(", ");
+    }
+    text.append("]\n");
+    text.append("expr: D1\n");
+
+    myFixture.configureByText(PythonFileType.INSTANCE, text.toString());
+    PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+    TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
+    PyType type = codeAnalysis.getType(expr);
+    assertInstanceOf(type, PyTypedDictType.class);
+    assertTrue(countTypes(type) < 100);
+  }
+
+  public static int countTypes(@Nullable PyType type) {
+    int result = 1;
+    if (type instanceof PyUnionType pyUnionType) {
+      for (PyType member : pyUnionType.getMembers()) {
+        result += countTypes(member);
+      }
+    }
+    else if (type instanceof PyCollectionType pyCollectionType) {
+      for (PyType member : pyCollectionType.getElementTypes()) {
+        result += countTypes(member);
+      }
+    }
+    return result;
+  }
+
+  // PY-59548
+  public void testGenericBaseClassSpecifiedThroughAlias() {
+    doTest("int",
+           """
+             from typing import Generic, TypeVar
+             
+             T = TypeVar('T')
+             
+             class Super(Generic[T]):
+                 pass
+             
+             Alias = Super
+             
+             class Sub(Alias[T]):
+                 pass
+             
+             def f(x: Super[T]) -> T:
+                 pass
+             
+             arg: Sub[int]
+             expr = f(arg)
+             """);
+  }
+
+  // PY-59548
+  public void testGenericBaseClassSpecifiedThroughAliasInImportedFile() {
+    doMultiFileStubAwareTest("int",
+           """
+             from typing import TypeVar
+             from mod import Sub, Super
+             
+             T = TypeVar('T')
+             
+             def f(x: Super[T]) -> T:
+                 pass
+             
+             arg: Sub[int]
+             expr = f(arg)
              """);
   }
 

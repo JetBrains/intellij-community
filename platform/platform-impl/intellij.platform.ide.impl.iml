@@ -83,16 +83,15 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="module" module-name="intellij.platform.statistics.devkit" scope="RUNTIME" />
     <orderEntry type="module-library">
       <library name="byte-buddy-agent" type="repository">
-        <properties include-transitive-deps="false" maven-id="net.bytebuddy:byte-buddy-agent:1.12.17" />
+        <properties include-transitive-deps="false" maven-id="net.bytebuddy:byte-buddy-agent:1.14.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.12.17/byte-buddy-agent-1.12.17.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.0/byte-buddy-agent-1.14.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.12.17/byte-buddy-agent-1.12.17-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.0/byte-buddy-agent-1.14.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -137,11 +136,14 @@
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.tips" scope="RUNTIME" />
     <orderEntry type="library" name="HdrHistogram" level="project" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
+    <orderEntry type="library" name="hash4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
   </component>
 </module>

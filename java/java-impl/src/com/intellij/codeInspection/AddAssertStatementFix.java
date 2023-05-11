@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -24,7 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 
-public class AddAssertStatementFix implements LocalQuickFix {
+public class AddAssertStatementFix extends ModCommandQuickFix {
   private final String myText;
 
   public AddAssertStatementFix(@NotNull String text) {
@@ -38,24 +26,26 @@ public class AddAssertStatementFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiExpression element = PsiTreeUtil.getNonStrictParentOfType(descriptor.getPsiElement(), PsiExpression.class);
-    if (element == null) return;
-    CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(element);
-    if (surrounder == null) return;
-    CodeBlockSurrounder.SurroundResult result = surrounder.surround();
-    element = result.getExpression();
-    PsiElement anchorElement = result.getAnchor();
-    PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(anchorElement);
-    if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
-      anchorElement = prev;
-    }
+    if (element == null) return ModCommands.nop();
+    return ModCommands.psiUpdate(element, expr -> {
+      CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(expr);
+      if (surrounder == null) return;
+      CodeBlockSurrounder.SurroundResult result = surrounder.surround();
+      expr = result.getExpression();
+      PsiElement anchorElement = result.getAnchor();
+      PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(anchorElement);
+      if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
+        anchorElement = prev;
+      }
 
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-    @NonNls String text = "assert " + myText + ";";
-    PsiAssertStatement assertStatement = (PsiAssertStatement)factory.createStatementFromText(text, element);
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
+      @NonNls String text = "assert " + myText + ";";
+      PsiAssertStatement assertStatement = (PsiAssertStatement)factory.createStatementFromText(text, expr);
 
-    anchorElement.getParent().addBefore(assertStatement, anchorElement);
+      anchorElement.getParent().addBefore(assertStatement, anchorElement);
+    });
   }
 
   @Override

@@ -16,24 +16,26 @@
 package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   @Test 
@@ -145,7 +147,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m1, roots.get(0).getFile());
     assertEquals(m2, roots.get(1).getFile());
 
-    assertEquals("updated: m1 m2 deleted: <none> ", listener.log);
+    assertEquals(log().add("updated", "m1", "m2").add("deleted"), listener.log);
   }
 
   @Test 
@@ -179,12 +181,12 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     List<MavenProject> roots = myTree.getRootProjects();
     assertEquals(2, roots.size());
-    assertEquals(m2, roots.get(0).getFile());
-    assertEquals(m1, roots.get(1).getFile());
-    assertEquals("m2", roots.get(0).getMavenId().getArtifactId());
-    assertEquals("m1", roots.get(1).getMavenId().getArtifactId());
+    assertEquals(m1, roots.get(0).getFile());
+    assertEquals(m2, roots.get(1).getFile());
+    assertEquals("m1", roots.get(0).getMavenId().getArtifactId());
+    assertEquals("m2", roots.get(1).getMavenId().getArtifactId());
 
-    assertEquals("updated: m2 m1 deleted: <none> ", listener.log);
+    assertEquals(log().add("updated", "m2", "m1").add("deleted"), listener.log);
   }
 
   @Test 
@@ -266,11 +268,18 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     List<MavenProject> roots = myTree.getRootProjects();
 
     assertEquals(1, roots.size());
-    assertEquals(1, myTree.getModules(roots.get(0)).size());
-    assertEquals(m1, myTree.getModules(roots.get(0)).get(0).getFile());
+    var allModules = collectAllModulesRecursively(myTree, roots.get(0));
+    assertEquals(2, allModules.size());
+    assertSameElements(Set.of(m1, m2), ContainerUtil.map(allModules, m -> m.getFile()));
+  }
 
-    assertEquals(1, myTree.getModules(myTree.getModules(roots.get(0)).get(0)).size());
-    assertEquals(m2, myTree.getModules(myTree.getModules(roots.get(0)).get(0)).get(0).getFile());
+  private static List<MavenProject> collectAllModulesRecursively(MavenProjectsTree tree, MavenProject aggregator) {
+    var directModules = new ArrayList<>(tree.getModules(aggregator));
+    var allModules = new ArrayList<>(directModules);
+    for (var directModule : directModules) {
+      allModules.addAll(collectAllModulesRecursively(tree, directModule));
+    }
+    return allModules;
   }
 
   @Test 
@@ -356,7 +365,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(2, roots.size());
     assertEquals(1, myTree.getModules(roots.get(0)).size());
 
-    assertEquals("updated: project m2 deleted: <none> ", listener.log);
+    assertEquals(log().add("updated", "project", "m2").add("deleted"), listener.log);
   }
 
   @Test 
@@ -441,15 +450,15 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     myTree.addListener(l, getTestRootDisposable());
 
     updateAll(myProjectPom);
-    assertEquals("updated: project m deleted: <none> ", l.log);
-    l.log = "";
+    assertEquals(log().add("updated", "project", "m").add("deleted"), l.log);
+    l.log.clear();
 
     myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
-    assertEquals("", l.log);
-    l.log = "";
+    assertEquals(log(), l.log);
+    l.log.clear();
 
     myTree.updateAll(true, getMavenGeneralSettings(), getMavenProgressIndicator());
-    assertEquals("updated: project m deleted: <none> ", l.log);
+    assertEquals(log().add("updated", "project", "m").add("deleted"), l.log);
   }
 
   @Test 
@@ -475,16 +484,16 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     myTree.addListener(l, getTestRootDisposable());
 
     update(myProjectPom);
-    assertEquals("updated: project m deleted: <none> ", l.log);
-    l.log = "";
+    assertEquals(log().add("updated", "project", "m").add("deleted"), l.log);
+    l.log.clear();
 
     myTree.update(Collections.singletonList(myProjectPom), false, getMavenGeneralSettings(), getMavenProgressIndicator());
-    assertEquals("", l.log);
-    l.log = "";
+    assertEquals(log(), l.log);
+    l.log.clear();
 
     myTree.update(Collections.singletonList(myProjectPom), true, getMavenGeneralSettings(), getMavenProgressIndicator());
-    assertEquals("updated: project deleted: <none> ", l.log);
-    l.log = "";
+    assertEquals(log().add("updated", "project").add("deleted"), l.log);
+    l.log.clear();
   }
 
   @Test 
@@ -681,7 +690,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                        """);
     updateAll(myProjectPom);
 
-    assertEquals("updated: m1 deleted: <none> ", listener.log);
+    assertEquals(log().add("updated", "m1").add("deleted"), listener.log);
   }
 
   @Test 
@@ -708,19 +717,19 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
           nativeProject.add(nativeMavenProject);
         }
       }, getTestRootDisposable());
-      myProjectResolver = new MavenProjectResolver(myTree);
-      myProjectResolver.resolve(myProject, project,
-                                getMavenGeneralSettings(),
-                                embeddersManager,
-                                NULL_MAVEN_CONSOLE,
-                                getMavenProgressIndicator()
+      resolve(myProject,
+              project,
+              getMavenGeneralSettings(),
+              embeddersManager,
+              NULL_MAVEN_CONSOLE,
+              getMavenProgressIndicator()
       );
     }
     finally {
       embeddersManager.releaseInTests();
     }
 
-    assertEquals("resolved: project ", listener.log);
+    assertEquals(log().add("resolved", "project"), listener.log);
     assertTrue(project.hasReadingProblems());
     assertSize(1, nativeProject);
     assertNull(nativeProject.get(0));
@@ -763,25 +772,51 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
           nativeProject[0] = nativeMavenProject;
         }
       }, getTestRootDisposable());
-      myProjectResolver = new MavenProjectResolver(myTree);
-      myProjectResolver.resolve(myProject, parentProject,
-                                getMavenGeneralSettings(),
-                                embeddersManager,
-                                NULL_MAVEN_CONSOLE,
-                                getMavenProgressIndicator()
+      resolve(myProject,
+              parentProject,
+              getMavenGeneralSettings(),
+              embeddersManager,
+              NULL_MAVEN_CONSOLE,
+              getMavenProgressIndicator()
       );
-      myProjectResolver.resolvePlugins(parentProject, nativeProject[0], embeddersManager, NULL_MAVEN_CONSOLE,
-                                       getMavenProgressIndicator(), false, false);
-      myProjectResolver
-        .resolveFolders(parentProject, getMavenImporterSettings(), embeddersManager, NULL_MAVEN_CONSOLE, getMavenProgressIndicator());
+
+      var pluginResolver = new MavenPluginResolver(myTree);
+      pluginResolver.resolvePlugins(List.of(new MavenProjectWithHolder(parentProject, nativeProject[0])),
+                                    embeddersManager,
+                                    NULL_MAVEN_CONSOLE,
+                                    getMavenProgressIndicator(),
+                                    false,
+                                    false);
+
+      var folderResolver = new MavenFolderResolver();
+      folderResolver.resolveFolders(List.of(parentProject),
+                                    myTree,
+                                    getMavenImporterSettings(),
+                                    embeddersManager,
+                                    NULL_MAVEN_CONSOLE,
+                                    getMavenProgressIndicator());
     }
     finally {
       embeddersManager.releaseInTests();
     }
 
-    assertEquals("updated: parent child deleted: <none> resolved: parent plugins: parent folders: parent ", listener.log);
+    assertEquals(
+      log()
+        .add("updated", "parent", "child")
+        .add("deleted")
+        .add("resolved", "parent")
+        .add("plugins", "parent")
+        .add("folders", "parent"),
+      listener.log);
     myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
-    assertEquals("updated: parent child deleted: <none> resolved: parent plugins: parent folders: parent ", listener.log);
+    assertEquals(
+      log()
+        .add("updated", "parent", "child")
+        .add("deleted")
+        .add("resolved", "parent")
+        .add("plugins", "parent")
+        .add("folders", "parent"),
+      listener.log);
   }
 
   @Test 
@@ -847,17 +882,48 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("child", myTree.findProject(child).getMavenId().getArtifactId());
   }
 
-  @Test 
+  @Test
+  public void testParentPropertyInterpolation() {
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <properties>
+                         <childName>child</childName>
+                       </properties>
+                       """);
+    update(myProjectPom);
+
+    VirtualFile child = createModulePom("child",
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>${childName}</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
+
+    update(child);
+
+    assertEquals("child", myTree.findProject(child).getMavenId().getArtifactId());
+  }
+
+  @Test
   public void testAddingInheritanceChildOnParentUpdate() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
+                       <packaging>pom</packaging>
                        <properties>
                          <childName>child</childName>
                        </properties>
                        <modules>
-                        <module>child</module>
+                         <module>child</module>
                        </modules>
                        """);
 
@@ -1611,7 +1677,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     deleteProject(m1);
 
-    assertEquals("updated: <none> deleted: m2 m1 ", listener.log);
+    assertEquals(log().add("updated").add("deleted", "m2", "m1"), listener.log);
   }
 
   @Test 
@@ -1663,7 +1729,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m2, roots.get(1).getFile());
     assertEquals(0, myTree.getModules(roots.get(1)).size());
 
-    assertEquals("updated: m2 deleted: m1 ", listener.log);
+    assertEquals(log().add("updated", "m2").add("deleted", "m1"), listener.log);
   }
 
   @Test 
@@ -1752,13 +1818,13 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     myTree.addManagedFilesWithProfiles(Collections.singletonList(myProjectPom), MavenExplicitProfiles.NONE);
     myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
 
-    assertEquals("updated: parent m1 m2 deleted: <none> ", l.log);
-    l.log = "";
+    assertEquals(log().add("updated", "parent", "m1", "m2").add("deleted"), l.log);
+    l.log.clear();
 
     myTree.removeManagedFiles(Arrays.asList(myProjectPom));
     myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
 
-    assertEquals("updated: <none> deleted: m1 m2 parent ", l.log);
+    assertEquals(log().add("updated").add("deleted", "m1", "m2", "parent"), l.log);
   }
 
   @Test 
@@ -1911,7 +1977,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     List<MavenProject> roots = myTree.getRootProjects();
 
-    MavenProject childProject = roots.get(1);
+    assertEquals(2, roots.size());
+    MavenProject childProject = roots.get(0);
     assertUnorderedPathsAreEqual(childProject.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
 
     createProfilesXmlOldStyle("parent",
@@ -2096,9 +2163,12 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
-      myProjectResolver = new MavenProjectResolver(myTree);
-      myProjectResolver
-        .resolve(myProject, parentProject, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, getMavenProgressIndicator());
+      resolve(myProject,
+              parentProject,
+              getMavenGeneralSettings(),
+              embeddersManager,
+              NULL_MAVEN_CONSOLE,
+              getMavenProgressIndicator());
     }
     finally {
       embeddersManager.releaseInTests();
@@ -2185,12 +2255,12 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
-      myProjectResolver = new MavenProjectResolver(myTree);
-      myProjectResolver.resolve(myProject, myTree.getRootProjects().get(0),
-                                getMavenGeneralSettings(),
-                                embeddersManager,
-                                NULL_MAVEN_CONSOLE,
-                                getMavenProgressIndicator()
+      resolve(myProject,
+              myTree.getRootProjects().get(0),
+              getMavenGeneralSettings(),
+              embeddersManager,
+              NULL_MAVEN_CONSOLE,
+              getMavenProgressIndicator()
       );
     }
     finally {
@@ -2289,7 +2359,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                             "xxx"),
               myProjectPom);
 
-    myProjectResolver = new MavenProjectResolver(myTree);
     MavenProject project = myTree.findProject(myProjectPom);
     assertUnorderedElementsAreEqual(project.getActivatedProfilesIds().getEnabledProfiles(),
                                     "projectProfileXml",
@@ -2302,11 +2371,12 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
-      myProjectResolver.resolve(myProject, project,
-                                getMavenGeneralSettings(),
-                                embeddersManager,
-                                NULL_MAVEN_CONSOLE,
-                                getMavenProgressIndicator()
+      resolve(myProject,
+              project,
+              getMavenGeneralSettings(),
+              embeddersManager,
+              NULL_MAVEN_CONSOLE,
+              getMavenProgressIndicator()
       );
     }
     finally {
@@ -2501,8 +2571,12 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
-      myProjectResolver = new MavenProjectResolver(myTree);
-      myProjectResolver.resolve(myProject, project, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, getMavenProgressIndicator());
+      resolve(myProject,
+              project,
+              getMavenGeneralSettings(),
+              embeddersManager,
+              NULL_MAVEN_CONSOLE,
+              getMavenProgressIndicator());
     }
     finally {
       embeddersManager.releaseInTests();
@@ -2513,38 +2587,63 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/test-classes"), project.getTestOutputDirectory());
   }
 
+  private void resolve(@NotNull Project project,
+                       @NotNull MavenProject mavenProject,
+                       @NotNull MavenGeneralSettings generalSettings,
+                       @NotNull MavenEmbeddersManager embeddersManager,
+                       @NotNull MavenConsole console,
+                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
+    var resolver = MavenProjectResolver.getInstance(project);
+    resolver.resolve(List.of(mavenProject), myTree, generalSettings, embeddersManager, console, process);
+  }
+
+  private static ListenerLog log() {
+    return new ListenerLog();
+  }
+
+  private static class ListenerLog extends CopyOnWriteArrayList<Pair<String, Set<String>>> {
+    ListenerLog() { super(); }
+
+    ListenerLog(ListenerLog log) { super(log); }
+
+    ListenerLog add(String key, String... values) {
+      var log = new ListenerLog(this);
+      log.add(new Pair<>(key, Set.of(values)));
+      return log;
+    }
+  }
+
   private static class MyLoggingListener implements MavenProjectsTree.Listener {
-    String log = "";
+    List<Pair<String, Set<String>>> log = new CopyOnWriteArrayList<>();
+
+    private void add(String key, Set<String> value) {
+      log.add(new Pair<>(key, value));
+    }
 
     @Override
     public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
-      append(MavenUtil.collectFirsts(updated), "updated:");
-      append(deleted, "deleted:");
+      append(MavenUtil.collectFirsts(updated), "updated");
+      append(deleted, "deleted");
     }
 
     private void append(List<MavenProject> updated, String text) {
-      log += text + " ";
-      if (updated.isEmpty()) {
-        log += "<none> ";
-        return;
-      }
-      log += StringUtil.join(updated, each -> each.getMavenId().getArtifactId(), " ") + " ";
+      add(text, updated.stream().map(each -> each.getMavenId().getArtifactId()).collect(Collectors.toSet()));
     }
 
     @Override
     public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                 NativeMavenProjectHolder nativeMavenProject) {
-      log += "resolved: " + projectWithChanges.first.getMavenId().getArtifactId() + " ";
+      add("resolved", Set.of(projectWithChanges.first.getMavenId().getArtifactId()));
     }
 
     @Override
     public void pluginsResolved(@NotNull MavenProject project) {
-      log += "plugins: " + project.getMavenId().getArtifactId() + " ";
+      add("plugins", Set.of(project.getMavenId().getArtifactId()));
     }
 
     @Override
     public void foldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-      log += "folders: " + projectWithChanges.first.getMavenId().getArtifactId() + " ";
+      add("folders", Set.of(projectWithChanges.first.getMavenId().getArtifactId()));
     }
   }
 }

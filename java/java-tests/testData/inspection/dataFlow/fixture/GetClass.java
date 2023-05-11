@@ -135,4 +135,9 @@ class GetClass {
     if (x.getClass().getName().equals("GetClass$X")) {}
     if (x.getClass().getCanonicalName().<warning descr="Method invocation 'equals' will produce 'NullPointerException'">equals</warning>("GetClass.X")) {}
   }
+
+  boolean isSorted(Collection<?> c) {
+    Class<?> klass = c.getClass();
+    return <warning descr="Condition 'klass == SortedSet.class' is always 'false'">klass == SortedSet.class</warning>;
+  }
 }

@@ -1,17 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 use std::{env, fs};
+use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::{Path, PathBuf};
+
+use anyhow::{anyhow, bail, Context, Result};
 use log::{debug, info};
-use path_absolutize::Absolutize;
-use anyhow::{bail, Context, Result};
-use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, read_file_to_end};
-use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_known_intellij_commands, get_logs_home, get_remote_dev_env_vars, IjStarterCommand, LaunchConfiguration};
+
+use crate::*;
 use crate::docker::is_running_in_docker;
 
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
+    launcher_name: String,
     config_dir: PathBuf,
     system_dir: PathBuf,
     logs_dir: Option<PathBuf>,
@@ -23,46 +26,32 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         self.default.get_args()
     }
 
-    fn get_intellij_vm_options(&self) -> Result<Vec<String>> {
-        let default_vm_options = self.default.get_intellij_vm_options()?;
+    fn get_vm_options(&self) -> Result<Vec<String>> {
+        let mut vm_options = self.default.get_vm_options()?;
 
         // TODO: add default Xmx to productInfo as right now we patch the user one
-        let mut patched_xmx: Vec<String> = default_vm_options
-            .into_iter()
-            .filter(|vm| !vm.starts_with("-Xmx"))
-            .collect();
+        vm_options.push("-Xmx2048m".to_string());
 
-        patched_xmx.push("-Xmx2048m".to_string());
-        Ok(patched_xmx)
+        Ok(vm_options)
     }
 
-    fn get_properties_file(&self) -> Result<Option<PathBuf>> {
+    fn get_properties_file(&self) -> Result<PathBuf> {
         let remote_dev_properties = self.get_remote_dev_properties();
         let remote_dev_properties_file = self.write_merged_properties_file(&remote_dev_properties?[..])
             .context("Failed to write remote dev IDE properties file")?;
 
-        Ok(Some(remote_dev_properties_file))
+        Ok(remote_dev_properties_file)
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
         self.default.get_class_path()
     }
 
-    #[cfg(any(target_os = "macos", target_os = "windows"))]
-    fn prepare_for_launch(&self) -> Result<PathBuf> {
-        init_env_vars()?;
+    fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
+        init_env_vars(&self.launcher_name)?;
         let project_trust_file = self.init_project_trust_file_if_needed()?;
         debug!("Project trust file is: {:?}", project_trust_file);
 
-        self.default.prepare_for_launch()
-    }
-
-    #[cfg(target_os = "linux")]
-    fn prepare_for_launch(&self) -> Result<PathBuf> {
-        init_env_vars()?;
-        self.init_project_trust_file_if_needed()?;
-
-        // TODO: ld patching
         self.default.prepare_for_launch()
     }
 }
@@ -115,13 +104,13 @@ impl DefaultLaunchConfiguration {
         per_project_config_dir_name: &str) -> Result<PathBuf> {
         debug!("Per-project {human_readable_name} name: {per_project_config_dir_name:?}");
 
-        let specific_dir = match get_path_from_env_var(specific_dir_env_var_name) {
+        let specific_dir = match get_path_from_env_var(specific_dir_env_var_name, None) {
             Ok(x) => {
                 debug!("{human_readable_name}: {specific_dir_env_var_name} is set to {x:?}, will use it as a target dir");
                 x
             },
             Err(_) => {
-                let base_dir = match get_path_from_env_var(base_dir_env_var_name) {
+                let base_dir = match get_path_from_env_var(base_dir_env_var_name, None) {
                     Ok(x) => {
                         debug!("{human_readable_name}: {base_dir_env_var_name} is set to {x:?}, will use it as a base dir");
                         x
@@ -150,8 +139,26 @@ impl DefaultLaunchConfiguration {
 }
 
 impl RemoteDevLaunchConfiguration {
+    pub fn new(exe_path: &Path, args: Vec<String>) -> Result<Box<dyn LaunchConfiguration>> {
+        let (project_path, default_cfg_args) = Self::parse_remote_dev_args(&args)?;
+
+        // required for the most basic launch (e.g. showing help)
+        // as there may be nothing on user system and we'll crash
+        Self::setup_font_config()?;
+
+        let default_cfg = DefaultLaunchConfiguration::new(exe_path, default_cfg_args)?;
+
+        match project_path {
+            Some(project_path) => {
+                let configuration = Self::create(exe_path, &project_path, default_cfg)?;
+                Ok(Box::new(configuration))
+            }
+            None => Ok(Box::new(default_cfg))
+        }
+    }
+
     // remote-dev-server.exe ij_command_name /path/to/project args
-    pub fn parse_remote_dev_args(args: &[String]) -> Result<RemoteDevArgs> {
+    fn parse_remote_dev_args(args: &[String]) -> Result<(Option<PathBuf>, Vec<String>)> {
         debug!("Parsing remote dev command-line arguments");
 
         if args.len() < 2 {
@@ -181,16 +188,12 @@ impl RemoteDevLaunchConfiguration {
         let project_path = if args.len() > 2 {
             let arg = args[2].as_str();
             if arg == "-h" || arg == "--help" {
-                return Ok(
-                    RemoteDevArgs {
-                        project_path: None,
-                        ij_args: vec![
-                            args[0].to_string(),
-                            "remoteDevShowHelp".to_string(),
-                            ij_starter_command.ij_command
-                        ]
-                    }
-                );
+                let args = vec![
+                    args[0].to_string(),
+                    "remoteDevShowHelp".to_string(),
+                    ij_starter_command.ij_command
+                ];
+                return Ok((None, args));
             }
 
             Some(Self::get_project_path(arg)?)
@@ -221,7 +224,7 @@ impl RemoteDevLaunchConfiguration {
             }
         }.concat();
 
-        Ok(RemoteDevArgs { project_path, ij_args })
+        Ok((project_path, ij_args))
     }
 
     fn get_project_path(argument: &str) -> Result<PathBuf> {
@@ -234,31 +237,21 @@ impl RemoteDevLaunchConfiguration {
             bail!("Project path does not exist: {project_path_string}");
         }
 
-        // if [ -d "$PROJECT_PATH" ]; then
-        // PROJECT_PATH="$(cd "$PROJECT_PATH" && pwd)"
-        // else
-        // PROJECT_PATH="$(cd "$(dirname "$PROJECT_PATH")" && pwd)/$(basename "$PROJECT_PATH")"
-        // fi
-
-        // taking parent dir in the bash launcher was added by @mfillipov for macos, let's ignore it
-        let absolute_project_path = project_path.absolutize()?.to_path_buf();
-
-        return Ok(absolute_project_path);
+        return Ok(project_path);
     }
 
-    pub fn new(project_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
+    fn create(exe_path: &Path, project_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
         // prevent opening of 2 backends for the same directory via symlinks
-        let canonical_project_path = canonical_non_unc(project_path)?;
+        let canonical_project_path = project_path.canonicalize()?.strip_ns_prefix()?;
 
-        if project_path != project_path.canonicalize()? {
+        if project_path != canonical_project_path {
             info!("Will use canonical form '{canonical_project_path:?}' of '{project_path:?}' to avoid concurrent IDE instances on the same project");
         }
 
-        let per_project_config_dir_name = canonical_project_path
+        let per_project_config_dir_name = canonical_project_path.to_string_lossy()
             .replace("/", "_")
             .replace("\\", "_")
             .replace(":", "_");
-
         debug!("Per-project config dir name: '{per_project_config_dir_name}'");
 
         let config_dir = default.prepare_host_config_dir(&per_project_config_dir_name)?;
@@ -266,8 +259,13 @@ impl RemoteDevLaunchConfiguration {
         let logs_dir = default.prepare_host_logs_dir(&per_project_config_dir_name)?;
         let ij_starter_command = default.args[0].to_string();
 
+        let launcher_name = exe_path.file_name()
+            .ok_or(anyhow!("Invalid executable path: {exe_path:?}"))?
+            .to_string_lossy().to_string();
+
         let config = RemoteDevLaunchConfiguration {
             default,
+            launcher_name,
             config_dir,
             system_dir,
             logs_dir,
@@ -307,12 +305,33 @@ impl RemoteDevLaunchConfiguration {
             // For pre-configured environment (e.g. cloud) the version is fixed anyway
             ("ide.no.platform.update", "true"),
 
+            // Don't ask user about indexes download
+            ("shared.indexes.download", "true"),
+            ("shared.indexes.download.auto.consent", "true"),
+
             // TODO: disable once IDEA doesn't require JBA login for remote dev
             ("eap.login.enabled", "false"),
 
             // TODO: CWM-5782 figure out why posix_spawn / jspawnhelper does not work in tests
             // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
+
+        match env::var("REMOTE_DEV_NEW_UI_ENABLED") {
+            Ok(remote_dev_new_ui_enabled) => {
+                match remote_dev_new_ui_enabled.as_str() {
+                    "1" | "true" => {
+                        info!("Force enable new UI");
+                        remote_dev_properties.push(("ide.experimental.ui", "true"));
+                    },
+                    _ => {
+                        bail!("Unsupported value for REMOTE_DEV_NEW_UI_ENABLED variable: '{}'", remote_dev_new_ui_enabled);
+                    },
+                }
+            }
+            Err(_) => {
+                info!("Using ui config with default values");
+            }
+        }
 
         match env::var("REMOTE_DEV_JDK_DETECTION") {
             Ok(remote_dev_jdk_detection_value) => {
@@ -359,10 +378,9 @@ impl RemoteDevLaunchConfiguration {
         let filename = format!("pid.{pid}.temp.remote-dev.properties");
         let path = self.system_dir.join(filename);
 
-        match path.parent() {
-            None => {}
-            Some(x) => fs::create_dir_all(x)
-                .context("Failed to create to parent folder for IDE properties file at path {x:?}")?
+        if let Some(dir) = path.parent() {
+            fs::create_dir_all(dir)
+                .with_context(|| format!("Failed to create to parent folder for IDE properties file at path {dir:?}"))?
         }
 
         let file = File::create(&path)?;
@@ -372,11 +390,11 @@ impl RemoteDevLaunchConfiguration {
         // let default_properties = self.default.get_properties_file();
 
         // TODO: use IDE-specific properties file
-        let distribution_properties = self.default.ide_bin.join("idea.properties");
-        let default_properties = read_file_to_end(&distribution_properties).context("Failed to read IDE properties file")?;
+        let dist_properties_path = self.default.ide_home.join("bin").join("idea.properties");
+        let dist_properties_file = File::open(&dist_properties_path).context("Failed to open IDE properties file")?;
 
-        for l in default_properties.lines() {
-            writeln!(&mut writer, "{l}")?;
+        for l in BufReader::new(dist_properties_file).lines() {
+            writeln!(&mut writer, "{}", l.context("Failed to read IDE properties file")?)?;
         }
 
         for p in remote_dev_properties {
@@ -430,26 +448,92 @@ impl RemoteDevLaunchConfiguration {
         Ok(trust_file_path)
     }
 
-    #[cfg(any(target_os = "macos", target_os = "windows"))]
-    pub fn setup_font_config() -> Result<()> {
+    #[cfg(not(target_os = "linux"))]
+    fn setup_font_config() -> Result<()> {
         Ok(())
     }
 
-    #[cfg(any(target_os = "linux"))]
-    pub fn setup_font_config() -> Result<()> {
+    #[cfg(target_os = "linux")]
+    fn setup_font_config() -> Result<()> {
         // TODO: implement
         Ok(())
     }
 }
 
+#[allow(non_snake_case)]
+#[derive(Debug)]
+struct IjStarterCommand {
+    pub ij_command: String,
+    pub is_project_path_required: bool,
+    pub is_arguments_required: bool,
+}
+
+impl std::fmt::Display for IjStarterCommand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let path = if self.is_project_path_required {"/path/to/project"} else { "" };
+        let args = if self.is_arguments_required {"[arguments...]"} else { "" };
+        write!(f, "{} {}", path, args)
+    }
+}
+
+fn get_known_intellij_commands() -> HashMap<&'static str, IjStarterCommand> {
+    std::collections::HashMap::from([
+        ("run", IjStarterCommand {ij_command: "cwmHostNoLobby".to_string(), is_project_path_required: true, is_arguments_required: true}),
+        ("status", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("cwmHostStatus", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("remoteDevStatus", IjStarterCommand {ij_command: "remoteDevStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("dumpLaunchParameters", IjStarterCommand {ij_command: "dump-launch-parameters".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("warmup", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
+        ("warm-up", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
+        ("invalidate-caches", IjStarterCommand {ij_command: "invalidateCaches".to_string(), is_project_path_required: true, is_arguments_required: false}),
+        ("installPlugins", IjStarterCommand {ij_command: "installPlugins".to_string(), is_project_path_required: false, is_arguments_required: true}),
+        ("stop", IjStarterCommand {ij_command: "exit".to_string(), is_project_path_required: true, is_arguments_required: false}),
+        ("registerBackendLocationForGateway", IjStarterCommand {ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("help", IjStarterCommand{ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
+    ])
+}
+
+#[allow(non_snake_case)]
+#[derive(Debug)]
+struct RemoteDevEnvVar {
+    pub name: String,
+    pub description: String,
+}
+
+#[allow(non_snake_case)]
+#[derive(Debug)]
+struct RemoteDevEnvVars(Vec<RemoteDevEnvVar>);
+
+impl std::fmt::Display for RemoteDevEnvVars {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let max_len = self
+            .0
+            .iter()
+            .map(|remote_dev_env_var| remote_dev_env_var.name.len())
+            .max()
+            .unwrap_or(0);
+
+        for remote_dev_env_var in &self.0 {
+            write!(f, "\t{:max_len$} {}\n", remote_dev_env_var.name, remote_dev_env_var.description)?;
+        }
+        Ok(())
+    }
+}
+
+fn get_remote_dev_env_vars() -> RemoteDevEnvVars {
+    RemoteDevEnvVars(vec![
+        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_TRACE".to_string(), description: "set to any value to get more debug output from the startup script".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_JCEF_ENABLED".to_string(), description: "set to '1' to enable JCEF (embedded chromium) in IDE".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS".to_string(), description: "set to '0' to skip using bundled X11 and other linux libraries from plugins/remote-dev-server/selfcontained. Use everything from the system. by default bundled libraries are used".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE".to_string(), description: "set to any value to use as the script name in this output".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_TRUST_PROJECTS".to_string(), description: "set to any value to skip project trust warning (will execute build scripts automatically)".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_NON_INTERACTIVE".to_string(), description: "set to any value to skip all interactive shell prompts (set automatically if running without TTY)".to_string()},
+    ])
+}
+
 struct IdeProperty {
     key: String,
     value: String
-}
-
-pub struct RemoteDevArgs {
-    pub project_path: Option<PathBuf>,
-    pub ij_args: Vec<String>
 }
 
 fn print_help() {
@@ -468,13 +552,12 @@ fn print_help() {
     println!("{help_message}{remote_dev_commands_message}{remote_dev_environment_variables_message}");
 }
 
-fn init_env_vars() -> Result<()> {
-    let remote_dev_launcher_name_for_usage = get_remote_dev_launcher_name_for_usage()?;
+fn init_env_vars(launcher_name_for_usage: &str) -> Result<()> {
     let remote_dev_env_var_values = vec![
         ("IDEA_RESTART_VIA_EXIT_CODE", "88"),
         ("ORG_JETBRAINS_PROJECTOR_SERVER_ENABLE_WS_SERVER", "false"),
         ("ORG_JETBRAINS_PROJECTOR_SERVER_ATTACH_TO_IDE", "false"),
-        ("REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE", &remote_dev_launcher_name_for_usage),
+        ("REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE", launcher_name_for_usage)
     ];
 
     for (key, value) in remote_dev_env_var_values {
@@ -510,17 +593,6 @@ fn create_trust_file(trust_file_path: &PathBuf) -> Result<()> {
     debug!("File '{:?}' has been created", file);
 
     Ok(())
-}
-
-fn get_remote_dev_launcher_name_for_usage() -> Result<String>{
-    let current_exe = get_current_exe();
-    let remote_dev_launcher_name_for_usage_with_exit_code_check = current_exe.file_name()
-        .context("Failed to get current filename")?.to_os_string();
-
-    let result = remote_dev_launcher_name_for_usage_with_exit_code_check.into_string()
-        .expect("Failed to convert current executable name to string");
-
-    Ok(result)
 }
 
 fn escape_for_idea_properties(path: &Path) -> String {

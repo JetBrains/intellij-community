@@ -29,7 +29,7 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
 
   @JvmField
   val unstableApiAnnotations: MutableList<String> =
-    ExternalizableStringSet(*StaticAnalysisAnnotationManager.getInstance().knownUnstableApiAnnotations.toTypedArray())
+    ExternalizableStringSet(*StaticAnalysisAnnotationManager.getInstance().knownUnstableApiAnnotations)
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (unstableApiAnnotations.none { AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(it, holder.file) }) {
@@ -58,7 +58,6 @@ private class UnstableTypeUsedInSignatureVisitor(
     }
     val annotatedTypeUsedInSignature = findAnnotatedTypeUsedInDeclarationSignature(node, unstableApiAnnotations) ?: return true
 
-    val elementToHighlight = node.uastAnchor.sourcePsiElement ?: return true
     val typeName = (annotatedTypeUsedInSignature.target as? PsiClass)?.qualifiedName ?: return true
     val annotationName = annotatedTypeUsedInSignature.psiAnnotation.qualifiedName ?: return true
 
@@ -73,7 +72,7 @@ private class UnstableTypeUsedInSignatureVisitor(
         "jvm.inspections.unstable.type.used.in.class.signature.description", annotationName, typeName
       )
     }
-    problemsHolder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+    problemsHolder.registerUProblem(node, message)
     return true
   }
 

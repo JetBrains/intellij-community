@@ -12,8 +12,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.project.RootsChangeRescanningInfo
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModulePackageIndex
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
@@ -27,12 +27,12 @@ import com.intellij.util.Query
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
-import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
+import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
@@ -111,7 +111,7 @@ private fun findLongestExistingPackage(
 private val kotlinSourceRootTypes: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
     setOf(SourceKotlinRootType, TestSourceKotlinRootType) + JavaModuleSourceRootTypes.SOURCES
 
-private class PureKotlinSourceFoldersHolder {
+class PureKotlinSourceFoldersHolder {
     private val moduleMap = mutableMapOf<Module, Collection<String>?>()
 
     /***
@@ -143,7 +143,7 @@ private fun Module.findNonGeneratedKotlinSourceFolders(): Sequence<SourceFolder>
         it.jpsElement.getProperties(kotlinSourceRootTypes)?.isForGeneratedSources != true
     }
 
-private fun Module.findExistingNonGeneratedKotlinSourceRootFiles(
+fun Module.findExistingNonGeneratedKotlinSourceRootFiles(
     pureKotlinSourceFoldersHolder: PureKotlinSourceFoldersHolder
 ): List<VirtualFile> = findNonGeneratedKotlinSourceFolders().toExistingFiles(project, pureKotlinSourceFoldersHolder)
 
@@ -157,7 +157,7 @@ private fun Sequence<SourceFolder>.toExistingFiles(
     sourceFolder.file?.takeIf { pureKotlinSourceFoldersHolder.hasPurePrefixInVirtualFile(project, it) }
 }.toList()
 
-private fun Module.findOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder: PureKotlinSourceFoldersHolder): List<VirtualFile> {
+fun Module.findOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder: PureKotlinSourceFoldersHolder): List<VirtualFile> {
     val nonGeneratedSourceFolders = findNonGeneratedKotlinSourceFolders().toList()
     nonGeneratedSourceFolders.asSequence().toExistingFiles(project, pureKotlinSourceFoldersHolder).ifNotEmpty { return this }
     return listOfNotNull(createSourceRootDirectory(nonGeneratedSourceFolders))

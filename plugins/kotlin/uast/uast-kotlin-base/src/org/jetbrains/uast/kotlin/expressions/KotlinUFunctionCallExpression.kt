@@ -6,7 +6,10 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
+import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.kotlin.internal.TypedResolveResult
@@ -120,12 +123,28 @@ class KotlinUFunctionCallExpression(
         baseResolveProviderService.callKind(sourcePsi)
     }
 
+    override fun hasKind(expectedKind: UastCallKind): Boolean {
+        if (expectedKind == UastCallKind.NESTED_ARRAY_INITIALIZER
+            && !sourcePsi.isAnnotationArgument) {
+            // do not try to resolve arbitrary calls if we only need array initializer inside annotations
+            return false
+        }
+
+        return super.hasKind(expectedKind)
+    }
+
     override val receiver: UExpression? by lz {
         (uastParent as? UQualifiedReferenceExpression)?.let {
             if (it.selector == this) return@lz it.receiver
         }
 
-        val ktNameReferenceExpression = sourcePsi.calleeExpression as? KtNameReferenceExpression ?: return@lz null
+        val callee = sourcePsi.calleeExpression
+
+        if (callee is KtLambdaExpression && methodName == OperatorNameConventions.INVOKE.identifier) {
+            baseResolveProviderService.baseKotlinConverter.convertOrNull(callee, uastParent)?.let { return@lz it }
+        }
+
+        val ktNameReferenceExpression = callee as? KtNameReferenceExpression ?: return@lz null
         val callableDeclaration = baseResolveProviderService.resolveToDeclaration(ktNameReferenceExpression) ?: return@lz null
 
         val variable = when (callableDeclaration) {
@@ -196,7 +215,67 @@ class KotlinUFunctionCallExpression(
     }
 
     override fun isMethodNameOneOf(names: Collection<String>): Boolean {
-        // TODO implement the optimized check for IDEA-313303
-        return names.contains(methodName ?: return false)
+        if (methodNameCanBeOneOf(names)) {
+            // canMethodNameBeOneOf can return false-positive results, additional resolve is needed
+            val methodName = methodName ?: return false
+            return methodName in names
+        }
+        return false
+    }
+
+    fun methodNameCanBeOneOf(names: Collection<String>): Boolean {
+        if (isMethodNameOneOfWithoutConsideringImportAliases(names)) return true
+        val ktFile = sourcePsi.containingKtFile
+        val aliasedNames = collectAliasedNamesForName(ktFile, names)
+        return isMethodNameOneOfWithoutConsideringImportAliases(aliasedNames)
+    }
+
+    /**
+     * For the [actualNames], returns the possible import alias name it might be expanded to
+     *
+     * E.g., for the file with imports
+     * ```
+     * import a.b.c as foo
+     * ```
+     * The call `collectAliasedNamesForName(ktFile, listOf("c")` will return `["foo"]`
+     */
+    private fun collectAliasedNamesForName(
+        ktFile: KtFile,
+        actualNames: Collection<String>,
+    ): Set<String> = buildSet {
+        for (importDirective in ktFile.importDirectives) {
+            val importedName = importDirective.importedFqName?.pathSegments()?.lastOrNull()?.asString() ?: continue
+            if (importedName in actualNames) {
+                importDirective.aliasName?.let(::add)
+            }
+        }
+    }
+
+
+    private fun isMethodNameOneOfWithoutConsideringImportAliases(names: Collection<String>): Boolean {
+        if (names.isEmpty()) return false
+        if (names.any { it in methodNamesForWhichResolveIsNeeded }) {
+            // we need an additional resolve to say if the method name is one of expected
+            return true
+        }
+        val referencedName = sourcePsi.getCallNameExpression()?.getReferencedName() ?: return false
+        return referencedName in names
+    }
+
+    companion object {
+        private val methodNamesForWhichResolveIsNeeded = buildSet {
+            /*
+                operator fun Int.invoke() {}
+                val foo = 1
+                foo() // the methodName is `invoke` here which we cannot determine by psi, the resolve is needed
+             */
+            add(OperatorNameConventions.INVOKE.asString())
+
+            /*
+              class A
+              A() // the methodName is `<init>` here which we cannot determine by psi, the resolve is needed
+           */
+            add(SpecialNames.INIT.asString())
+        }
     }
 }

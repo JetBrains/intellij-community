@@ -183,7 +183,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
 
     new PopupChooserBuilder(treeTable).
       setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
-      setItemChoosenCallback(runnable).
+      setItemChosenCallback(runnable).
       setSouthComponent(createCommentsPanel(treeTable)).
       setResizable(true).
       setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").
@@ -265,7 +265,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
       table.clearSelection();
     }
 
-    new SpeedSearchBase<TableView>(table) {
+    SpeedSearchBase<TableView> search = new SpeedSearchBase<>(table, null) {
       @Override
       protected int getSelectedIndex() {
         return table.getSelectedRow();
@@ -283,17 +283,18 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
 
       @Override
       protected String getElementText(Object element) {
-        VcsFileRevision revision = (VcsFileRevision) element;
+        VcsFileRevision revision = (VcsFileRevision)element;
         return revision.getRevisionNumber().asString() + " " + revision.getBranchName() + " " + revision.getAuthor();
       }
 
       @Override
       protected void selectElement(Object element, String selectedText) {
-        VcsFileRevision revision = (VcsFileRevision) element;
-        TableUtil.selectRows(myComponent, new int[] {myComponent.convertRowIndexToView(revisions.indexOf(revision))});
+        VcsFileRevision revision = (VcsFileRevision)element;
+        TableUtil.selectRows(myComponent, new int[]{myComponent.convertRowIndexToView(revisions.indexOf(revision))});
         TableUtil.scrollSelectionToVisible(myComponent);
       }
     };
+    search.setupListeners();
 
     table.setMinimumSize(new JBDimension(300, 50));
     final PopupChooserBuilder builder = new PopupChooserBuilder(table);
@@ -303,7 +304,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
     }
 
     builder.setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
-        setItemChoosenCallback(runnable).
+        setItemChosenCallback(runnable).
         setResizable(true).
         setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").setMinSize(new JBDimension(300, 300));
     final JBPopup popup = builder.createPopup();

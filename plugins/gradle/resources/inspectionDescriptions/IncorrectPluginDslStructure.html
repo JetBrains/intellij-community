@@ -1,15 +1,15 @@
 <html>
-<body>                                            
+<body>
 <p>Detects disallowed statements before 'plugins {}' block. </p>
 Due to the limitations of Gradle Plugin DSL, only a restricted set of Groovy statements is available before '<code>plugins {}</code>' block. The only options are '<code>buildscript {}</code>', '<code>pluginManagement {}</code>' and other '<code>plugins {}</code>'. <br>
   <a href="https://docs.gradle.org/current/userguide/plugins.html#plugins_dsl_limitations">See Gradle documentation</a>
 
 <p><b>Example:</b></p>
-<pre><code>
+<pre><code lang="groovy">
 import foo.bar.Baz
 plugins {} // reports 'plugins'
 plugins {
-  foo() // reporst 'foo'
+  foo() // reports 'foo'
   id 'java'
 }
 </code></pre>

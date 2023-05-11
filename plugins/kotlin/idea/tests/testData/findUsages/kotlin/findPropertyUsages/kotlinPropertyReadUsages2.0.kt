@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtParameter
 // OPTIONS: usages, skipWrite
+// PSI_ELEMENT_AS_TITLE: "foo: T"
 
 package server
 

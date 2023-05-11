@@ -6,3 +6,5 @@ fun test() {
     // '=' is expected
     foo(param<caret>)
 }
+
+// AUTOCOMPLETE_SETTING: true

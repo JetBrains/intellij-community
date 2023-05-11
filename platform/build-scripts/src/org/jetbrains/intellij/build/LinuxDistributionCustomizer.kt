@@ -13,7 +13,7 @@ abstract class LinuxDistributionCustomizer {
   var iconPngPath: String? = null
 
   /**
-   * Path to png file for EAP builds (if {@code null} {@link #iconPngPath} will be used)
+   * Path to png file for EAP builds (if `null` [iconPngPath] will be used)
    */
   var iconPngPathForEAP: String? = null
 
@@ -39,12 +39,12 @@ abstract class LinuxDistributionCustomizer {
   }
 
   /**
-   * If {@code true} a separate *-no-jbr.tar.gz artifact without runtime will be produced.
+   * If `true` a separate *-no-jbr.tar.gz artifact without runtime will be produced.
    */
   var buildTarGzWithoutBundledRuntime = false
 
   /**
-   * If {@code true}, the only *-no-jbr.tar.gz will be produced, no other binaries for Linux will be built.
+   * If `true`, the only *-no-jbr.tar.gz will be produced, no other binaries for Linux will be built.
    */
   var buildOnlyBareTarGz = false
 
@@ -64,7 +64,7 @@ abstract class LinuxDistributionCustomizer {
 
   /**
    * Override this method to copy additional files to Linux distribution of the product.
-   * @param targetDir contents of this directory will be packed into .tar.gz archive under {@link #getRootDirectoryName(ApplicationInfoProperties, String)}
+   * @param targetDir contents of this directory will be packed into .tar.gz archive under [getRootDirectoryName]
    */
   open fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
   }

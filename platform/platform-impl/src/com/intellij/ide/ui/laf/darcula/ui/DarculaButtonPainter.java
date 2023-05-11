@@ -95,6 +95,10 @@ public class DarculaButtonPainter implements Border, UIResource {
   }
 
   public Paint getBorderPaint(Component button) {
+    return getBorderPaint(button, button.hasFocus());
+  }
+
+  Paint getBorderPaint(Component button, boolean hasFocus) {
     AbstractButton b = (AbstractButton)button;
     Color borderColor = (Color)b.getClientProperty("JButton.borderColor");
     Rectangle r = new Rectangle(b.getSize());
@@ -108,7 +112,7 @@ public class DarculaButtonPainter implements Border, UIResource {
       else if (isGotItButton(button)) {
         return new GradientPaint(0, 0, getGotItBorderColorStart(button), 0, r.height, getGotItBorderColorEnd(button));
       }
-      else if (button.hasFocus()) {
+      else if (hasFocus) {
         return JBUI.CurrentTheme.Button.focusBorderColor(defButton);
       }
       else {

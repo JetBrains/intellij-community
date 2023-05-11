@@ -15,10 +15,20 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.ApiStatus;
+
+import java.util.function.Consumer;
+
 /**
  * Deprecated. Please use {@link java.util.function.Consumer} instead
  */
 @FunctionalInterface
-public interface ParameterizedRunnable<T> {
+@ApiStatus.Obsolete
+public interface ParameterizedRunnable<T> extends Consumer<T> {
   void run(T t);
+
+  @Override
+  default void accept(T t) {
+    run(t);
+  }
 }

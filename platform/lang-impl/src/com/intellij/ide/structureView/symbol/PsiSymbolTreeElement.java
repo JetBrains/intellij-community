@@ -28,12 +28,10 @@ import java.util.Objects;
 public class PsiSymbolTreeElement extends PsiTreeElementBase<PsiElement> {
   private static final Logger LOG = Logger.getInstance(PsiSymbolTreeElement.class);
   private final @NotNull Pointer<? extends Symbol> mySymbolPointer;
-  private final @NotNull SymbolBasedStructureViewModel myStructureViewModel;
 
-  public PsiSymbolTreeElement(@NotNull PsiSymbolDeclaration declaration, @NotNull SymbolBasedStructureViewModel structureViewModel) {
+  public PsiSymbolTreeElement(@NotNull PsiSymbolDeclaration declaration) {
     super(declaration.getDeclaringElement());
     mySymbolPointer = declaration.getSymbol().createPointer();
-    myStructureViewModel = structureViewModel;
   }
 
   public final @Nullable PsiSymbolDeclaration getSymbolDeclaration() {
@@ -110,7 +108,7 @@ public class PsiSymbolTreeElement extends PsiTreeElementBase<PsiElement> {
     var symbolDeclaration = getSymbolDeclaration();
     return getNavigatable(symbolDeclaration);
   }
-  
+
   static public @Nullable Navigatable getNavigatable(@Nullable PsiSymbolDeclaration symbolDeclaration) {
     if (symbolDeclaration == null) {
       LOG.debug("No symbol declaration for navigation");
@@ -132,8 +130,7 @@ public class PsiSymbolTreeElement extends PsiTreeElementBase<PsiElement> {
 
   @Override
   public @NotNull Collection<StructureViewTreeElement> getChildrenBase() {
-    var declarationElement = getElement();
-    return declarationElement == null ? Collections.emptyList() : myStructureViewModel.collectClosestChildrenSymbols(declarationElement);
+    return Collections.emptyList();
   }
 
   @Override

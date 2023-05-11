@@ -641,9 +641,6 @@ class ModifiableRootModelBridgeImpl(
 
   override fun isWritable(): Boolean = true
 
-  override fun <T : OrderEntry?> replaceEntryOfType(entryClass: Class<T>, entry: T) =
-    throw NotImplementedError("Not implemented since it was used only by project model implementation")
-
   override fun getSdkName(): String? = orderEntries.filterIsInstance<JdkOrderEntry>().firstOrNull()?.jdkName
 
   // TODO

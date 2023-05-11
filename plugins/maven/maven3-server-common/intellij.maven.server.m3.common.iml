@@ -10,7 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.maven.server" />
     <orderEntry type="library" name="commons-logging" level="project" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.sonatype.nexus:nexus-indexer-artifact:1.0.1" type="repository">
         <properties maven-id="org.sonatype.nexus:nexus-indexer-artifact:1.0.1">
           <exclude>
@@ -25,7 +25,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.sonatype.nexus:nexus-indexer:3.0.4" type="repository">
         <properties maven-id="org.sonatype.nexus:nexus-indexer:3.0.4">
           <exclude>
@@ -47,7 +47,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven.shared:maven-dependency-tree:1.2" type="repository">
         <properties maven-id="org.apache.maven.shared:maven-dependency-tree:1.2">
           <exclude>
@@ -61,7 +61,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven.archetype:archetype-common:2.2" type="repository">
         <properties maven-id="org.apache.maven.archetype:archetype-common:2.2">
           <exclude>
@@ -155,7 +155,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.lucene:lucene-core:2.4.1" type="repository">
         <properties maven-id="org.apache.lucene:lucene-core:2.4.1" />
         <CLASSES>

@@ -45,7 +45,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @SuppressWarnings("PublicField") public boolean checkModuleApi = true; // public & protected fields & methods within exported packages
-  @SuppressWarnings("PublicField") public boolean checkPublicApi; // All public & protected fields & methods
+  @SuppressWarnings("PublicField") public boolean checkPublicApi = true; // All public & protected fields & methods
   @SuppressWarnings("PublicField") public boolean checkPackageLocal;
 
   @Pattern(VALID_ID_PATTERN)

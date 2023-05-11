@@ -142,7 +142,7 @@ public final class BuildOperations {
         private final Object2IntMap<T> idsCache = new Object2IntOpenHashMap<>();
 
         @Override
-        public boolean apply(T target, File file, R sourceRoot) throws IOException {
+        public boolean apply(@NotNull T target, @NotNull File file, @NotNull R sourceRoot) throws IOException {
           SourceToOutputMapping srcToOut = mappingsCache.get(target);
           if (srcToOut == null) {
             srcToOut = dataManager.getSourceToOutputMap(target);

@@ -10,8 +10,13 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -93,6 +98,14 @@ public class MockDumbService extends DumbService {
   @Override
   public void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
     activity.run();
+  }
+
+  @Nullable
+  @Override
+  public Object suspendIndexingAndRun(@NotNull @NlsContexts.ProgressText String activityName,
+                                      @NotNull Function1<? super Continuation<? super Unit>, ?> activity,
+                                      @NotNull Continuation<? super Unit> $completion) {
+    return activity.invoke($completion);
   }
 
   @Override

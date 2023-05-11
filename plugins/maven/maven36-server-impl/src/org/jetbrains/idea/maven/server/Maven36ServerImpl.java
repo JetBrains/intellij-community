@@ -11,8 +11,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
-public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer {
-
+public class Maven36ServerImpl extends MavenServerBase {
   @Override
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) {
     MavenServerUtil.checkToken(token);
@@ -52,7 +51,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
   public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven3XServerEmbedder.interpolateAndAlignModel(model, basedir);
+      return Maven3XProfileUtil.interpolateAndAlignModel(model, basedir);
     }
     catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);
@@ -63,7 +62,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
   public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven3XServerEmbedder.assembleInheritance(model, parentModel);
+      return Maven3ModelInheritanceAssembler.assembleInheritance(model, parentModel);
     }
     catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);
@@ -77,48 +76,10 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
                                                 Collection<String> alwaysOnProfiles, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven3XServerEmbedder.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+      return Maven3XProfileUtil.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);
     }
-  }
-
-
-  @Override
-  public MavenPullServerLogger createPullLogger(MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      MavenServerLoggerWrapper result = Maven3ServerGlobals.getLogger();
-      UnicastRemoteObject.exportObject(result, 0);
-      return result;
-    }
-    catch (Throwable e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
-  public MavenPullDownloadListener createPullDownloadListener(MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      MavenServerDownloadListenerWrapper result = Maven3ServerGlobals.getDownloadListener();
-      UnicastRemoteObject.exportObject(result, 0);
-      return result;
-    }
-    catch (Throwable e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
-  public boolean isAlive(MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    return true;
-  }
-
-  @Override
-  public synchronized void unreferenced() {
-    System.exit(0);
   }
 }

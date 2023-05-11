@@ -18,9 +18,11 @@ package com.intellij.java.codeInsight.intention;
 import com.intellij.JavaTestUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
+@TestDataPath("$CONTENT_ROOT/testData/codeInsight/surroundAutoCloseable/")
 public class SurroundAutoCloseableActionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
@@ -40,6 +42,7 @@ public class SurroundAutoCloseableActionTest extends LightJavaCodeInsightFixture
     JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_LOCALS = true;
     doTest();
   }
+  public void testImplicitlyTypedDeclaration() { doTest(); }
 
   private void doTest() {
     String name = getTestName(false);

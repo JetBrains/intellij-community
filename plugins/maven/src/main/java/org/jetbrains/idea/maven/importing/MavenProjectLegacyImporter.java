@@ -399,7 +399,7 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
     Module existingModule = myMavenProjectToModule.get(project);
     if (existingModule != null && existingModule != myPreviewModule) return false;
     final String path = myMavenProjectToModulePath.get(project);
-    String moduleName = ModulePath.getModuleNameByFilePath(path);
+    String moduleName = ModulePath.Companion.getModuleNameByFilePath(path);
 
     // for some reason newModule opens the existing iml file, so we
     // have to remove it beforehand.

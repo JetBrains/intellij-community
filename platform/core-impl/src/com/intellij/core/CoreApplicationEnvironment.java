@@ -3,7 +3,6 @@ package com.intellij.core;
 
 import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
-import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginDescriptorLoader;
@@ -25,7 +24,6 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.ClassExtension;
@@ -45,9 +43,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
-import com.intellij.util.Consumer;
 import com.intellij.util.KeyedLazyInstanceEP;
-import com.intellij.util.Processor;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
 import org.jetbrains.annotations.NonNls;
@@ -59,18 +55,15 @@ import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 
 public class CoreApplicationEnvironment {
   private final CoreFileTypeRegistry myFileTypeRegistry;
-  protected final MockApplication myApplication;
+  protected final MockApplication application;
   private final CoreLocalFileSystem myLocalFileSystem;
-  @NotNull
-  protected final VirtualFileSystem myJarFileSystem;
+  protected final @NotNull VirtualFileSystem myJarFileSystem;
   private final VirtualFileSystem myJrtFileSystem;
-  @NotNull private final Disposable myParentDisposable;
+  private final @NotNull Disposable myParentDisposable;
   private final boolean myUnitTestMode;
 
   public CoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
@@ -85,8 +78,8 @@ public class CoreApplicationEnvironment {
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
 
-    myApplication = createApplication(myParentDisposable);
-    ApplicationManager.setApplication(myApplication,
+    application = createApplication(myParentDisposable);
+    ApplicationManager.setApplication(application,
                                       () -> myFileTypeRegistry,
                                       myParentDisposable);
     myLocalFileSystem = createLocalFileSystem();
@@ -117,22 +110,20 @@ public class CoreApplicationEnvironment {
     registerApplicationService(CommandProcessor.class, new CoreCommandProcessor());
     registerApplicationService(GraphAlgorithms.class, new GraphAlgorithmsImpl());
 
-    myApplication.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
+    application.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
 
     registerApplicationExtensionPoint(DynamicBundle.LanguageBundleEP.EP_NAME, DynamicBundle.LanguageBundleEP.class);
   }
 
   public <T> void registerApplicationService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
-    myApplication.registerService(serviceInterface, serviceImplementation);
+    application.registerService(serviceInterface, serviceImplementation);
   }
 
-  @NotNull
-  protected VirtualFilePointerManager createVirtualFilePointerManager() {
+  protected @NotNull VirtualFilePointerManager createVirtualFilePointerManager() {
     return new CoreVirtualFilePointerManager();
   }
 
-  @NotNull
-  protected MockApplication createApplication(@NotNull Disposable parentDisposable) {
+  protected @NotNull MockApplication createApplication(@NotNull Disposable parentDisposable) {
     return new MockApplication(parentDisposable) {
       @Override
       public boolean isUnitTestMode() {
@@ -141,68 +132,38 @@ public class CoreApplicationEnvironment {
     };
   }
 
-  @NotNull
-  protected JobLauncher createJobLauncher() {
-    return new JobLauncher() {
-      @Override
-      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
-                                                         ProgressIndicator progress,
-                                                         boolean runInReadAction,
-                                                         boolean failFastOnAcquireReadAction,
-                                                         @NotNull Processor<? super T> thingProcessor) {
-        for (T thing : things) {
-          if (!thingProcessor.process(thing))
-            return false;
-        }
-        return true;
-      }
-
-      @NotNull
-      @Override
-      public Job<Void> submitToJobThread(@NotNull Runnable action, Consumer<? super Future<?>> onDoneCallback) {
-        action.run();
-        if (onDoneCallback != null) {
-          onDoneCallback.consume(CompletableFuture.completedFuture(null));
-        }
-        return Job.nullJob();
-      }
-    };
+  protected @NotNull JobLauncher createJobLauncher() {
+    return new CoreJobLauncher();
   }
 
-  @NotNull
-  protected ProgressManager createProgressIndicatorProvider() {
+  protected @NotNull ProgressManager createProgressIndicatorProvider() {
     return new CoreProgressManager();
   }
 
-  @NotNull
-  protected VirtualFileSystem createJarFileSystem() {
+  protected @NotNull VirtualFileSystem createJarFileSystem() {
     return new CoreJarFileSystem();
   }
 
-  @NotNull
-  protected CoreLocalFileSystem createLocalFileSystem() {
+  protected @NotNull CoreLocalFileSystem createLocalFileSystem() {
     return new CoreLocalFileSystem();
   }
 
-  @Nullable
-  protected VirtualFileSystem createJrtFileSystem() {
+  protected @Nullable VirtualFileSystem createJrtFileSystem() {
     return null;
   }
 
-  @NotNull
-  public MockApplication getApplication() {
-    return myApplication;
+  public @NotNull MockApplication getApplication() {
+    return application;
   }
 
-  @NotNull
-  public Disposable getParentDisposable() {
+  public @NotNull Disposable getParentDisposable() {
     return myParentDisposable;
   }
 
   public <T> void registerApplicationComponent(@NotNull Class<T> interfaceClass, @NotNull T implementation) {
-    registerComponentInstance(myApplication.getPicoContainer(), interfaceClass, implementation);
+    registerComponentInstance(application.getPicoContainer(), interfaceClass, implementation);
     if (implementation instanceof Disposable) {
-      Disposer.register(myApplication, (Disposable)implementation);
+      Disposer.register(application, (Disposable)implementation);
     }
   }
 
@@ -227,15 +188,15 @@ public class CoreApplicationEnvironment {
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, language, parserDefinition);
   }
 
-  public <T> void addExplicitExtension(@NotNull final FileTypeExtension<T> instance, @NotNull final FileType fileType, @NotNull final T object) {
+  public <T> void addExplicitExtension(final @NotNull FileTypeExtension<T> instance, final @NotNull FileType fileType, final @NotNull T object) {
     instance.addExplicitExtension(fileType, object, myParentDisposable);
   }
 
-  public <T> void addExplicitExtension(@NotNull final ClassExtension<T> instance, @NotNull final Class aClass, @NotNull final T object) {
+  public <T> void addExplicitExtension(final @NotNull ClassExtension<T> instance, final @NotNull Class aClass, final @NotNull T object) {
     instance.addExplicitExtension(aClass, object, myParentDisposable);
   }
 
-  public <T> void addExtension(@NotNull ExtensionPointName<T> name, @NotNull final T extension) {
+  public <T> void addExtension(@NotNull ExtensionPointName<T> name, final @NotNull T extension) {
     final ExtensionPoint<T> extensionPoint = Extensions.getRootArea().getExtensionPoint(name);
     //noinspection TestOnlyProblems
     extensionPoint.registerExtension(extension, myParentDisposable);
@@ -284,18 +245,15 @@ public class CoreApplicationEnvironment {
     descriptor.registerExtensions(areaImpl.extensionPoints, descriptor.appContainerDescriptor, null);
   }
 
-  @NotNull
-  public CoreLocalFileSystem getLocalFileSystem() {
+  public @NotNull CoreLocalFileSystem getLocalFileSystem() {
     return myLocalFileSystem;
   }
 
-  @NotNull
-  public VirtualFileSystem getJarFileSystem() {
+  public @NotNull VirtualFileSystem getJarFileSystem() {
     return myJarFileSystem;
   }
 
-  @Nullable
-  public VirtualFileSystem getJrtFileSystem() {
+  public @Nullable VirtualFileSystem getJrtFileSystem() {
     return myJrtFileSystem;
   }
 }

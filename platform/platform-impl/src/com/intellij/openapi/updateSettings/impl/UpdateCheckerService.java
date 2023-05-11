@@ -5,10 +5,7 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.WhatsNewAction;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.InstalledPluginsState;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -39,10 +36,15 @@ import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static java.lang.Math.max;
 
 final class UpdateCheckerService {
+
+  public static final Predicate<String> OBSOLETE_TBE_REPO_PREDICATE = host -> host.startsWith("https://secure.feed.toolbox.app/plugins");
+
   public static UpdateCheckerService getInstance() {
     return ApplicationManager.getApplication().getService(UpdateCheckerService.class);
   }
@@ -162,6 +164,8 @@ final class UpdateCheckerService {
       checkIfPreviousUpdateFailed(current);
       showWhatsNew(project, current);
       showSnapUpdateNotification(project, current);
+
+      cleanupObsoleteCustomRepositories();
 
       showUpdatedPluginsNotification(project);
 
@@ -358,6 +362,17 @@ final class UpdateCheckerService {
         PropertiesComponent.getInstance().unsetValue(OLD_DIRECTORIES_SCAN_SCHEDULED);
         LOG.info("old directories scan complete");
       }
+    }
+  }
+
+  private static void cleanupObsoleteCustomRepositories() {
+    UpdateSettings settings = UpdateSettings.getInstance();
+    if (settings.isObsoleteCustomRepositoriesCleanNeeded()) {
+      boolean obsoleteTbeReposHaveBeenRemoved = settings.getStoredPluginHosts().removeIf(OBSOLETE_TBE_REPO_PREDICATE);
+      if (obsoleteTbeReposHaveBeenRemoved) {
+        LOG.info("Some obsolete TBE custom repositories have been removed");
+      }
+      settings.setObsoleteCustomRepositoriesCleaned(false);
     }
   }
 }

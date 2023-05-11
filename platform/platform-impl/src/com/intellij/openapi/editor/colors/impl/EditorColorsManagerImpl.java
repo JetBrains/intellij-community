@@ -48,6 +48,7 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
@@ -64,6 +65,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import kotlin.jvm.functions.Function1;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -75,9 +77,6 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Function;
-
-import static com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser.installAndEnable;
 
 @State(
   name = "EditorColorsManagerImpl",
@@ -143,7 +142,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     @Override
     public @NotNull EditorColorsSchemeImpl createScheme(@NotNull SchemeDataHolder<? super EditorColorsSchemeImpl> dataHolder,
                                                         @NotNull String name,
-                                                        @NotNull Function<? super String, String> attributeProvider,
+                                                        @NotNull Function1<? super String, String> attributeProvider,
                                                         boolean isBundled) {
       EditorColorsSchemeImpl scheme = isBundled ? new BundledScheme() : new EditorColorsSchemeImpl(null);
       // todo be lazy
@@ -579,9 +578,10 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       Ref<EditorColorsScheme> schemeRef = Ref.create(colorsScheme);
       String schemeName = colorsScheme.getName();
       //todo[kb] remove after 23.1 EAPs
-      if (ExperimentalUI.isNewUI() && (schemeName.equals("_@user_Dark") || schemeName.equals("Dark"))) {
-        RunOnceUtil.runOnceForApp("force.switch.to.new.dark.editor.scheme", ()-> {
-          EditorColorsScheme newDark = mySchemeManager.findSchemeByName("New Dark RC");
+      // New Dark RC is renamed to Dark, switch the scheme accordingly
+      if (ExperimentalUI.isNewUI() && (schemeName.equals("_@user_New Dark RC") || schemeName.equals("New Dark RC"))) {
+        RunOnceUtil.runOnceForApp("force.switch.from.new.dark.editor.scheme", ()-> {
+          EditorColorsScheme newDark = mySchemeManager.findSchemeByName("Dark");
           if (newDark != null) {
             schemeRef.set(newDark);
           }
@@ -761,7 +761,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
                   }
                 });
 
-                installAndEnable(project, Sets.newHashSet(pluginId), notification::expire);
+                PluginsAdvertiser.installAndEnable(project, Sets.newHashSet(pluginId), notification::expire);
               }
             });
           }

@@ -62,8 +62,8 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
         }
 
         val versionPromise = if (config.javaVersionString.isBlank()) {
-          subject.promiseExecuteScript("java -version")
-            .thenApply { acceptJavaVersionOutput(it) }
+          subject.promiseExecuteScript(listOf("java", "-version"))
+            .thenApply { acceptJavaVersionOutput(it.stderr) }
         }
         else {
           Introspector.DONE

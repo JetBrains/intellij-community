@@ -16,9 +16,8 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.ui.Messages
-import com.intellij.util.Consumer
-import com.intellij.util.EmptyConsumer
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.Consumer
 import java.util.function.Function
 
 private val LOG = logger<UnknownSdkDownloadTask>()
@@ -29,8 +28,8 @@ internal data class UnknownSdkDownloadTask
   private val info: UnknownSdk,
   private val fix: UnknownSdkDownloadableSdkFix,
   private val createSdk: Function<in SdkDownloadTask?, out Sdk>,
-  private val onSdkNameReady: Consumer<in Sdk?> = EmptyConsumer.getInstance(),
-  private val onCompleted: Consumer<in Sdk?> = EmptyConsumer.getInstance()
+  private val onSdkNameReady: Consumer<in Sdk?> = Consumer { },
+  private val onCompleted: Consumer<in Sdk?> = Consumer { }
 ) {
 
   fun withListener(listener : UnknownSdkFixAction.Listener): UnknownSdkDownloadTask {
@@ -38,11 +37,11 @@ internal data class UnknownSdkDownloadTask
     val oldOnResolved = this.onCompleted
     return copy(
       onSdkNameReady = {
-        oldOnSdkNameReady.consume(it)
+        oldOnSdkNameReady.accept(it)
         it?.let { listener.onSdkNameResolved(it) }
       },
       onCompleted = {
-        oldOnResolved.consume(it)
+        oldOnResolved.accept(it)
         if (it != null) {
           listener.onSdkResolved(it)
         } else {
@@ -82,11 +81,11 @@ internal data class UnknownSdkDownloadTask
       val downloadTracker = SdkDownloadTracker.getInstance()
       val sdk = invokeAndWaitIfNeeded { createSdk.apply(task) }
       downloadTracker.configureSdk(sdk, task)
-      invokeAndWaitIfNeeded { onSdkNameReady.consume(sdk) }
+      invokeAndWaitIfNeeded { onSdkNameReady.accept(sdk) }
       downloadTracker.downloadSdk(task, listOf(sdk), indicator)
       sdk
     }
-    invokeAndWaitIfNeeded { onCompleted.consume(sdk.getOrNull()) }
+    invokeAndWaitIfNeeded { onCompleted.accept(sdk.getOrNull()) }
 
     return sdk.getOrElse { t ->
       if (t is ControlFlowException) throw t

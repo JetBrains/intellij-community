@@ -2,11 +2,8 @@
 
 package com.intellij.toolWindow
 
-import com.intellij.openapi.actionSystem.ActionPlaces.TOOLWINDOW_TOOLBAR_BAR
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowManager
@@ -15,27 +12,32 @@ import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.LayoutData
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.UIBundle
+import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.border.Border
 
-internal abstract class ToolWindowToolbar : JPanel() {
+internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPanel<ToolWindowToolbar>() {
   lateinit var defaults: List<String>
 
   abstract val bottomStripe: StripeV2
   abstract val topStripe: StripeV2
+
+  abstract val moreButton: MoreSquareStripeButton
 
   protected fun init() {
     layout = BorderLayout()
     isOpaque = true
     background = JBUI.CurrentTheme.ToolWindow.background()
 
-    val topWrapper = JPanel(BorderLayout()).apply {
+    val topWrapper = JBPanel<JBPanel<*>>(BorderLayout()).apply {
       border = JBUI.Borders.customLineTop(getBorderColor())
     }
     border = createBorder()
@@ -46,6 +48,12 @@ internal abstract class ToolWindowToolbar : JPanel() {
     topWrapper.add(topStripe, BorderLayout.NORTH)
     add(topWrapper, BorderLayout.NORTH)
     add(bottomStripe, BorderLayout.SOUTH)
+  }
+
+  fun initMoreButton() {
+    if (isPrimary) {
+      topStripe.parent?.add(moreButton, BorderLayout.CENTER)
+    }
   }
 
   open fun createBorder():Border = JBUI.Borders.empty()
@@ -68,10 +76,6 @@ internal abstract class ToolWindowToolbar : JPanel() {
       return bottomStripe
     }
     return null
-  }
-
-  fun removeStripeButton(toolWindow: ToolWindow, anchor: ToolWindowAnchor) {
-    remove(getStripeFor(anchor), toolWindow)
   }
 
   fun hasButtons() = topStripe.getButtons().isNotEmpty() || bottomStripe.getButtons().isNotEmpty()
@@ -113,10 +117,6 @@ internal abstract class ToolWindowToolbar : JPanel() {
     }
   }
 
-  open class ToolwindowActionToolbar(val panel: JComponent) : ActionToolbarImpl(TOOLWINDOW_TOOLBAR_BAR, DefaultActionGroup(), false) {
-    override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) = updateButtons(panel)
-  }
-
   internal class StripeV2(private val toolBar: ToolWindowToolbar,
                           paneId: String,
                           override val anchor: ToolWindowAnchor,
@@ -137,6 +137,21 @@ internal abstract class ToolWindowToolbar : JPanel() {
 
     override fun containsPoint(screenPoint: Point): Boolean {
       if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
+        if (!toolBar.isShowing) {
+          val bounds = Rectangle(rootPane.locationOnScreen, rootPane.size)
+          bounds.height /= 2
+
+          val toolWindowWidth = getFirstVisibleToolWindowSize(true)
+
+          if (anchor == ToolWindowAnchor.RIGHT) {
+            bounds.x = bounds.x + bounds.width - toolWindowWidth
+          }
+
+          bounds.width = toolWindowWidth
+
+          return bounds.contains(screenPoint)
+        }
+
         val bounds = Rectangle(toolBar.locationOnScreen, toolBar.size)
         bounds.height /= 2
 
@@ -215,5 +230,18 @@ internal abstract class ToolWindowToolbar : JPanel() {
     }
 
     override fun toString() = "StripeNewUi(anchor=$anchor)"
+  }
+
+  protected open val accessibleGroupName: @NlsSafe String get() = UIBundle.message("toolbar.group.default.accessible.group.name")
+
+  override fun getAccessibleContext(): AccessibleContext {
+    if (accessibleContext == null) accessibleContext = AccessibleToolWindowToolbar()
+    accessibleContext.accessibleName = accessibleGroupName
+
+    return accessibleContext
+  }
+
+  private inner class AccessibleToolWindowToolbar : AccessibleJPanel() {
+    override fun getAccessibleRole(): AccessibleRole = AccessibleRole.GROUP_BOX
   }
 }

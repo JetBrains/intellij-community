@@ -54,6 +54,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -61,13 +62,11 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.*;
+import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
-import org.jetbrains.idea.maven.model.MavenConstants;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.model.MavenPlugin;
-import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.*;
 import org.xml.sax.Attributes;
@@ -86,7 +85,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -321,6 +319,10 @@ public class MavenUtil {
     return virtualBaseDir.toNioPath();
   }
 
+  public static MultiMap<String, MavenProject> groupByBasedir(@NotNull Collection<MavenProject> projects, @NotNull MavenProjectsTree tree) {
+    return ContainerUtil.groupBy(projects, p -> getBaseDir(tree.findRootProject(p).getDirectoryFile()).toString());
+  }
+
   public static VirtualFile getVFileBaseDir(@NotNull VirtualFile file) {
     VirtualFile baseDir = file.isDirectory() || file.getParent() == null ? file : file.getParent();
     VirtualFile dir = baseDir;
@@ -392,7 +394,7 @@ public class MavenUtil {
 
   @NotNull
   public static <T, U> List<Pair<T, U>> mapToList(Map<T, U> map) {
-    return ContainerUtil.map2List(map.entrySet(), tuEntry -> Pair.create(tuEntry.getKey(), tuEntry.getValue()));
+    return ContainerUtil.map(map.entrySet(), tuEntry -> Pair.create(tuEntry.getKey(), tuEntry.getValue()));
   }
 
   public static String formatHtmlImage(URL url) {
@@ -574,25 +576,14 @@ public class MavenUtil {
     if (errorEx[0] != null) throw errorEx[0];
   }
 
-
   @NotNull
-  public static MavenTaskHandler runInBackground(@NotNull final Project project,
-                                                 @NotNull @NlsContexts.Command final String title,
-                                                 final boolean cancellable,
-                                                 @NotNull final MavenTask task) {
-    return runInBackground(project, title, cancellable, task, null);
-  }
-
-  @NotNull
-  public static MavenTaskHandler runInBackground(@NotNull final Project project,
-                                                 @NotNull @NlsContexts.Command final String title,
-                                                 final boolean cancellable,
-                                                 @NotNull final MavenTask task,
-                                                 @Nullable("null means application pooled thread")
-                                                 ExecutorService executorService) {
+  public static MavenTaskHandler runInBackground(@NotNull Project project,
+                                                 @NotNull @NlsContexts.Command String title,
+                                                 boolean cancellable,
+                                                 @NotNull MavenTask task) {
     MavenProjectsManager manager = MavenProjectsManager.getInstanceIfCreated(project);
     Supplier<MavenSyncConsole> syncConsoleSupplier = manager == null ? null : () -> manager.getSyncConsole();
-    final MavenProgressIndicator indicator = new MavenProgressIndicator(project, syncConsoleSupplier);
+    MavenProgressIndicator indicator = new MavenProgressIndicator(project, syncConsoleSupplier);
 
     Runnable runnable = () -> {
       if (project.isDisposed()) return;
@@ -614,14 +605,9 @@ public class MavenUtil {
       };
     }
     else {
-      final Future<?> future;
-      if (executorService == null) {
-        future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
-      }
-      else {
-        future = executorService.submit(runnable);
-      }
-      final MavenTaskHandler handler = new MavenTaskHandler() {
+      Future<?> future;
+      future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
+      MavenTaskHandler handler = new MavenTaskHandler() {
         @Override
         public void waitFor() {
           try {
@@ -649,7 +635,7 @@ public class MavenUtil {
   @Nullable
   public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
     if (!isEmptyOrSpaces(overrideMavenHome)) {
-      return MavenServerManager.getMavenHomeFile(overrideMavenHome);
+      return getMavenHomeFile(overrideMavenHome);
     }
 
     String m2home = System.getenv(ENV_M2_HOME);
@@ -698,7 +684,7 @@ public class MavenUtil {
       }
     }
 
-    return MavenServerManager.getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3);
+    return getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3);
   }
 
   public static void addEventListener(@NotNull String mavenVersion, @NotNull SimpleJavaParameters params) {
@@ -706,7 +692,7 @@ public class MavenUtil {
       MavenLog.LOG.warn("Maven version less than 3.0.2 are not correctly displayed in Build Window");
       return;
     }
-    String listenerPath = MavenServerManager.getMavenEventListener().getAbsolutePath();
+    String listenerPath = MavenServerManager.getInstance().getMavenEventListener().getAbsolutePath();
     String extClassPath = params.getVMParametersList().getPropertyValue(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH);
     if (isEmpty(extClassPath)) {
       params.getVMParametersList()
@@ -787,6 +773,27 @@ public class MavenUtil {
 
   public static File getMavenConfFile(File mavenHome) {
     return new File(new File(mavenHome, BIN_DIR), M2_CONF_FILE);
+  }
+
+  /**
+   * do not use this method directly, as it is impossible to resolve correct version if maven home is set to wrapper
+   * @see MavenDistributionsCache
+   */
+  @Nullable
+  @ApiStatus.Internal
+  public static File getMavenHomeFile(@Nullable String mavenHome) {
+    if (mavenHome == null) return null;
+    for (MavenVersionAwareSupportExtension e : MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.getExtensionList()) {
+      File file = e.getMavenHomeFile(mavenHome);
+      if (file != null) return file;
+    }
+
+    final File home = new File(mavenHome);
+    return isValidMavenHome(home) ? home : null;
+  }
+
+  public static @Nullable String getMavenVersionByMavenHome(@Nullable String mavenHome) {
+    return getMavenVersion(getMavenHomeFile(mavenHome));
   }
 
   @Nullable
@@ -1105,7 +1112,7 @@ public class MavenUtil {
       result = doResolveSuperPomFile(new File(mavenHome, LIB_DIR));
     }
     return result == null ? doResolveSuperPomFile(
-      new File(MavenServerManager.getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3), LIB_DIR)) : result;
+      new File(getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3), LIB_DIR)) : result;
   }
 
   @Nullable
@@ -1172,6 +1179,20 @@ public class MavenUtil {
 
   public static void restartMavenConnectors(@NotNull Project project, boolean wait) {
     restartMavenConnectors(project, wait, c -> Boolean.TRUE);
+  }
+
+  public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {
+    if (compareVersionNumbers(mavenVersion, "3.3.1") < 0) {
+      return true;
+    }
+    SdkTypeId sdkType = jdk.getSdkType();
+    if (sdkType instanceof JavaSdk) {
+      JavaSdkVersion version = ((JavaSdk)sdkType).getVersion(jdk);
+      if (version == null || version.isAtLeast(JavaSdkVersion.JDK_1_7)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public interface MavenTaskHandler {
@@ -1317,7 +1338,7 @@ public class MavenUtil {
 
   @NotNull
   public static <K, V extends Map<?, ?>> V getOrCreate(Map<K, V> map, K key) {
-    V res = (V)map.get(key);
+    V res = map.get(key);
     if (res == null) {
       //noinspection unchecked
       res = (V)new HashMap<>();
@@ -1597,7 +1618,7 @@ public class MavenUtil {
       baseDir = EMPTY;
     }
 
-    MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir, baseDir);
+    MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir);
     try {
       Set<MavenRemoteRepository> resolvedRepositories = embedderWrapper.resolveRepositories(repositories);
       return resolvedRepositories.isEmpty() ? repositories : resolvedRepositories;
@@ -1621,5 +1642,12 @@ public class MavenUtil {
 
   public static boolean isLinearImportEnabled() {
     return Registry.is("maven.linear.import");
+  }
+
+  @ApiStatus.Internal
+  public static boolean shouldResetDependenciesAndFolders(Collection<MavenProjectProblem> readingProblems) {
+    if (Registry.is("maven.always.reset")) return true;
+    MavenProjectProblem unrecoverable = ContainerUtil.find(readingProblems, it -> !it.isRecoverable());
+    return unrecoverable == null;
   }
 }

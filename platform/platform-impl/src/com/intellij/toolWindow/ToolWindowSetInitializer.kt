@@ -173,9 +173,7 @@ private fun registerToolWindows(registerTasks: List<RegisterToolWindowTask>,
     try {
       val paneId = layout.getInfo(task.id)?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
       if (shouldRegister(paneId)) {
-        entries.add(manager.registerToolWindow(task = task,
-                                               buttonManager = manager.getToolWindowPane(paneId).buttonManager,
-                                               ensureToolWindowActionRegisteredIsNeeded = false))
+        entries.add(manager.registerToolWindow(task = task, buttonManager = manager.getToolWindowPane(paneId).buttonManager))
       }
     }
     catch (e: ProcessCanceledException) {

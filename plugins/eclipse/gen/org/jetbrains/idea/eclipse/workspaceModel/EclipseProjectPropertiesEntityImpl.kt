@@ -1,6 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
+import com.intellij.platform.workspaceModel.jps.JpsFileDependentEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -20,6 +24,9 @@ import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceLis
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
+import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)

@@ -19,7 +19,7 @@ internal fun generateDb(file: Path, count: Int): List<Pair<Int, ByteArray>> {
     writer.use {
       for (i in 0 until count) {
         val data = random.nextBytes(random.nextInt(64, 512))
-        val key = Xxh3.hash32(data)
+        val key = Xxh3.hash(data).toInt()
         writer.write(writer.entry(key), data)
         list.add(Pair(key, data))
       }

@@ -19,11 +19,13 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.tree.TreeVisitor;
@@ -58,6 +60,8 @@ import java.util.function.Supplier;
 
 public final class CustomizationUtil {
   private static final Logger LOG = Logger.getInstance(CustomizationUtil.class);
+
+  public static final Key<Boolean> DISABLE_CUSTOMIZE_POPUP_KEY = Key.create("CustomizationUtil.DisablePopup");
 
   private CustomizationUtil() {
   }
@@ -555,20 +559,39 @@ public final class CustomizationUtil {
           customizationGroup.add(rollbackAction);
         }
 
-        return PopupHandler.installPopupMenu(component, customizationGroup, place, new PopupMenuListenerAdapter() {
-        @Override
-        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-          JBPopupMenu menu = ObjectUtils.tryCast(e.getSource(), JBPopupMenu.class);
-          popupInvoker.set(menu != null ? menu.getInvoker() : null);
-        }
+      customizationGroup.addSeparator();
+      ActionGroup popupActionsGroup = (ActionGroup)ActionManager.getInstance().getAction("ToolbarPopupActions");
+      customizationGroup.addAll(popupActionsGroup);
 
+      PopupHandler popupHandler = new PopupHandler() {
         @Override
-        public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            popupInvoker.set(null);
+        public void invokePopup(Component comp, int x, int y) {
+          if (Boolean.TRUE.equals(ClientProperty.get(comp, DISABLE_CUSTOMIZE_POPUP_KEY))) {
+            return;
+          }
+          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(place, customizationGroup);
+          popupMenu.setTargetComponent(component);
+          JPopupMenu menu = popupMenu.getComponent();
+          menu.addPopupMenuListener(new PopupMenuListenerAdapter() {
+            @Override
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+              JBPopupMenu menu = ObjectUtils.tryCast(e.getSource(), JBPopupMenu.class);
+              popupInvoker.set(menu != null ? menu.getInvoker() : null);
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                popupInvoker.set(null);
+              });
+            }
           });
+          menu.show(comp, x, y);
         }
-      });
+      };
+      component.addMouseListener(popupHandler);
+
+      return popupHandler;
     }
     return null;
   }

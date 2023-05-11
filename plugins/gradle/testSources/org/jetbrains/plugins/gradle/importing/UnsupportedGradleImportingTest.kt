@@ -14,14 +14,15 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
     importProject("")
     val expectedExecutionTree: String
     when {
-      currentGradleVersion < GradleVersion.version("2.6") -> expectedExecutionTree =
+      currentGradleVersion < GradleVersion.version("3.0") -> expectedExecutionTree =
         "-\n" +
         " -failed\n" +
         "  Unsupported Gradle"
-      currentGradleVersion < GradleVersion.version("3.0") -> expectedExecutionTree =
-        "-\n" +
-        " -finished\n" +
-        "  Gradle ${currentGradleVersion.version} support can be dropped in the next release"
+      // sample assertion for deprecated Gradle version.
+      //currentGradleVersion < GradleVersion.version("3.0") -> expectedExecutionTree =
+      //  "-\n" +
+      //  " -finished\n" +
+      //  "  Gradle ${currentGradleVersion.version} support can be dropped in the next release"
       else -> expectedExecutionTree = "-\n" +
                                       " finished"
     }

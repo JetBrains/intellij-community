@@ -6,6 +6,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.editorActions.wordSelection.DocTagSelectioner;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
+import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
@@ -14,6 +15,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
 import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
+import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -76,6 +78,11 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
   static final PsiElementPattern.Capture<PsiElement> THROWS_TAG_EXCEPTION = psiElement().inside(
     psiElement(PsiDocTag.class).withName(
       string().oneOf(PsiKeyword.THROWS, "exception")));
+
+  private static final PsiElementPattern<?, ?> SNIPPET_ATTRIBUTE_NAME = psiElement(PsiDocToken.class)
+    .withElementType(JavaDocTokenType.DOC_TAG_ATTRIBUTE_NAME).inside(psiElement(PsiSnippetAttribute.class));
+
+  private static final PsiElementPattern<?, ?> SNIPPET_ATTRIBUTE_VALUE = psiElement(PsiSnippetAttributeValue.class);
 
   public JavaDocCompletionContributor() {
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME), new TagChooser());
@@ -143,6 +150,69 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
               result.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(exception), TailType.HUMBLE_SPACE_BEFORE_WORD));
             }
           }
+        }
+      }
+    });
+    
+    extend(CompletionType.BASIC, SNIPPET_ATTRIBUTE_NAME, new CompletionProvider<>() {
+      static final String[] ATTRIBUTES = {
+        PsiSnippetAttribute.CLASS_ATTRIBUTE, PsiSnippetAttribute.FILE_ATTRIBUTE, PsiSnippetAttribute.LANG_ATTRIBUTE,
+        PsiSnippetAttribute.REGION_ATTRIBUTE, PsiSnippetAttribute.ID_ATTRIBUTE
+      };
+      
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    @NotNull ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        PsiSnippetAttributeList list = ObjectUtils.tryCast(parameters.getPosition().getParent().getParent(), PsiSnippetAttributeList.class);
+        if (list == null) return;
+        for (String attribute : ATTRIBUTES) {
+          if (list.getAttribute(attribute) == null) {
+            result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(attribute).withTailText("=", true), TailType.EQUALS));
+          }
+        }
+      }
+    });
+    
+    extend(CompletionType.BASIC, SNIPPET_ATTRIBUTE_VALUE, new CompletionProvider<>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    @NotNull ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        PsiSnippetAttributeValue value = (PsiSnippetAttributeValue)parameters.getPosition();
+        PsiSnippetAttribute attribute = ObjectUtils.tryCast(value.getParent(), PsiSnippetAttribute.class);
+        if (attribute == null) return;
+        PsiSnippetAttributeList list = ObjectUtils.tryCast(attribute.getParent(), PsiSnippetAttributeList.class);
+        if (list == null) return;
+        PsiSnippetDocTagValue snippet = ObjectUtils.tryCast(list.getParent(), PsiSnippetDocTagValue.class);
+        if (snippet == null) return;
+        boolean alreadyQuoted = value.getText().startsWith("\"");
+        switch (attribute.getName()) {
+          case PsiSnippetAttribute.REGION_ATTRIBUTE -> {
+            SnippetMarkup markup = SnippetMarkup.fromSnippet(snippet);
+            if (markup != null) {
+              for (String region : markup.getRegions()) {
+                addAttributeValue(result, region, alreadyQuoted);
+              }
+            }
+          }
+          case PsiSnippetAttribute.LANG_ATTRIBUTE -> {
+            result = result.caseInsensitive();
+            for (Language language : Language.getRegisteredLanguages()) {
+              String id = language.getID();
+              if (id.equals("JAVA")) id = "java";
+              addAttributeValue(result, id, alreadyQuoted);
+            }
+          }
+        }
+      }
+
+      private static void addAttributeValue(@NotNull CompletionResultSet result, String id, boolean alreadyQuoted) {
+        if (!alreadyQuoted && !StringUtil.isJavaIdentifier(id)) {
+          result.addElement(LookupElementBuilder.create('"' + id + '"').withLookupStrings(List.of(id)));
+        }
+        else {
+          result.addElement(LookupElementBuilder.create(id));
         }
       }
     });
@@ -286,7 +356,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
         result.addElement(LookupElementDecorator.withInsertHandler(element, wrapIntoLinkTag((context, item) -> element.handleInsert(context))));
       }
     }
-    else if (matcher.getPrefix().length() > 0) {
+    else if (!matcher.getPrefix().isEmpty()) {
       InsertHandler<JavaPsiClassReferenceElement> handler = wrapIntoLinkTag(JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER);
       AllClassesGetter.processJavaClasses(parameters, matcher, parameters.getInvocationCount() == 1, psiClass ->
         result.addElement(AllClassesGetter.createLookupItem(psiClass, handler)));

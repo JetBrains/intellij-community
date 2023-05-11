@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
+import com.intellij.openapi.util.Conditions
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.Runnable
@@ -31,7 +32,7 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
     else {
       DispatchedRunnable(context.job, block)
     }
-    ApplicationManager.getApplication().invokeLater(runnable, state)
+    ApplicationManager.getApplication().invokeLaterRaw(runnable, state, Conditions.alwaysFalse<Nothing?>())
   }
 
   companion object : EdtCoroutineDispatcher() {

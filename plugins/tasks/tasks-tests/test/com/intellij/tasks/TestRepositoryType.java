@@ -14,6 +14,10 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public class TestRepositoryType extends TaskRepositoryType<TestRepository> {
+  public static final TestRepositoryType INSTANCE = new TestRepositoryType();
+
+  private TestRepositoryType() { }
+
   @NotNull
   @Override
   public String getName() {
@@ -37,9 +41,7 @@ public class TestRepositoryType extends TaskRepositoryType<TestRepository> {
   @NotNull
   @Override
   public TaskRepository createRepository() {
-    TestRepository repository = new TestRepository();
-    repository.setRepositoryType(this);
-    return repository;
+    return new TestRepository();
   }
 
   @Override

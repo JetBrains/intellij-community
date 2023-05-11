@@ -160,7 +160,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     final PsiImportStatementBase[] imports = importList.getAllImportStatements();
     if (imports.length == 0) return null;
 
-    Set<PsiImportStatementBase> allImports = ContainerUtil.set(imports);
+    Set<PsiImportStatementBase> allImports = ContainerUtil.newHashSet(imports);
     final Collection<PsiImportStatementBase> redundant;
     if (FileTypeUtils.isInServerPageFile(file)) {
       // remove only duplicate imports

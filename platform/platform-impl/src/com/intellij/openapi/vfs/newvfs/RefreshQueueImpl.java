@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
@@ -57,12 +58,12 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
       runRefreshSession(session, -1L);
       fireEvents(session);
     }
+    else if (app.holdsReadLock() || EDT.isCurrentThreadEdt()) {
+      LOG.error("Do not perform a synchronous refresh under read lock (causes deadlocks if there are events to fire). " +
+                "EDT=" + EDT.isCurrentThreadEdt());
+    }
     else {
-      if (app.holdsReadLock() || EDT.isCurrentThreadEdt()) {
-        LOG.error("Do not perform a synchronous refresh under read lock (causes deadlocks if there are events to fire)");
-        return;
-      }
-      queueSession(session, ModalityState.defaultModalityState());
+      queueSession(session, session.getModality());
       session.waitFor();
     }
   }
@@ -172,6 +173,10 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     if (session != null) {
       session.cancel();
     }
+  }
+
+  RefreshSessionImpl getSession(long id) {
+    return mySessions.get(id);
   }
 
   @Override

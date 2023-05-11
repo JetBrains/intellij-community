@@ -15,6 +15,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Command starts async or yourkit profiler based on system property integrationTests.profiler.
+ * Command must be followed by activity name and optionally by parameters.
+ * <p>
+ * Syntax: %startProfile &lt;activityName&gt; [parameters]
+ * Example: %startProfile magento_inspection event=alloc
+ */
 public final class StartProfileCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "startProfile";
 

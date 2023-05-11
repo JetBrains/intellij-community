@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.services.ServiceEventListener.ServiceEvent;
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
@@ -48,7 +49,10 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
 import kotlin.Unit;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
@@ -188,8 +192,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   /*
    * Temporary fix for restoring Services Tool Window (IDEA-288804)
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   private static void restoreBrokenToolWindowIfNeeded(@NotNull ToolWindow toolWindow) {
     if (!toolWindow.isShowStripeButton() && toolWindow.isVisible()) {
       toolWindow.hide();
@@ -626,7 +629,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     else if (!contributors.isEmpty()) {
       String servicesToolWindowId = ToolWindowId.SERVICES;
       Collection<ServiceViewContributor<?>> servicesContributors =
-        myGroups.computeIfAbsent(servicesToolWindowId, __ -> ContainerUtil.newConcurrentSet());
+        myGroups.computeIfAbsent(servicesToolWindowId, __ -> ConcurrentCollectionFactory.createConcurrentSet());
       servicesContributors.addAll(contributors);
     }
   }
@@ -705,7 +708,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       state.viewStates = new SmartList<>();
       return;
     }
-    for (Object o: ((List)state.viewStates)) {
+    for (Object o: state.viewStates) {
       if (!(o instanceof ServiceViewState)) {
         state.viewStates = new SmartList<>();
         return;
@@ -802,7 +805,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
   public @Nullable String getToolWindowId(@NotNull Class<?> contributorClass) {
     for (Map.Entry<String, Collection<ServiceViewContributor<?>>> entry : myGroups.entrySet()) {
-      if (entry.getValue().stream().anyMatch(contributorClass::isInstance)) {
+      if (ContainerUtil.exists(entry.getValue(), contributorClass::isInstance)) {
         return entry.getKey();
       }
     }
@@ -1017,7 +1020,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       });
     }
 
-    private void unregisterActivateByContributorActions(ServiceViewContributor<?> extension) {
+    private static void unregisterActivateByContributorActions(ServiceViewContributor<?> extension) {
       String actionId = getActivateContributorActionId(extension);
       if (actionId != null) {
         ActionManager actionManager = ActionManager.getInstance();

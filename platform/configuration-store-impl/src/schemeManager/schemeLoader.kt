@@ -1,6 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.configurationStore.schemeManager
 
+import com.dynatrace.hash4j.hashing.HashStream64
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.configurationStore.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.options.NonLazySchemeProcessor
@@ -19,10 +23,8 @@ import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
-import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.Function
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamReader
 
@@ -35,12 +37,12 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
   private val schemes: MutableList<T> = oldSchemes.toMutableList()
   private var newSchemesOffset = schemes.size
 
-  // scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
+  // the scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
   private val schemeToInfo = IdentityHashMap<T, ExternalInfo>()
 
   private val isApplied = AtomicBoolean()
 
-  private var digest: MessageDigest? = null
+  private var digest: HashStream64? = null
 
   // or from current session, or from current state
   private fun getInfoForExistingScheme(existingScheme: T): ExternalInfo? {
@@ -75,10 +77,10 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
     return result
   }
 
-  private fun getDigest(): MessageDigest {
+  private fun getHashStream(): HashStream64 {
     var result = digest
     if (result == null) {
-      result = createDataDigest()
+      result = Hashing.komihash4_3().hashStream()!!
       digest = result
     }
     else {
@@ -95,7 +97,7 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
     val existingSchemeIndex = schemes.indexOfFirst { processor.getSchemeKey(it) == schemeKey }
     val existingScheme = (if (existingSchemeIndex == -1) null else schemes.get(existingSchemeIndex)) ?: return true
     if (schemeManager.schemeListManager.readOnlyExternalizableSchemes.get(processor.getSchemeKey(existingScheme)) === existingScheme) {
-      // so, bundled scheme is shadowed
+      // so, a bundled scheme is shadowed
       schemes.removeAt(existingSchemeIndex)
       if (existingSchemeIndex < newSchemesOffset) {
         newSchemesOffset--
@@ -106,7 +108,7 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
 
     if (processor.isExternalizable(existingScheme)) {
       val existingInfo = getInfoForExistingScheme(existingScheme)
-      // is from file with old extension
+      // is from file with an old extension
       if (existingInfo != null && schemeManager.schemeExtension != existingInfo.fileExtension) {
         schemeToInfo.remove(existingScheme)
         existingInfo.scheduleDelete(filesToDelete, "from file with old extension")
@@ -116,7 +118,7 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
           newSchemesOffset--
         }
 
-        // when existing loaded scheme removed, we need to remove it from schemeManager.schemeToInfo,
+        // when an existing loaded scheme removed, we need to remove it from schemeManager.schemeToInfo,
         // but SchemeManager will correctly remove info on save, no need to complicate
         return true
       }
@@ -128,8 +130,9 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
       filesToDelete.add(fileName)
     }
     else {
-      // We don't load scheme with duplicated name - if we generate unique name for it, it will be saved then with new name.
-      // It is not what all can expect. Such situation in most cases indicates error on previous level, so, we just warn about it.
+      // We don't load a scheme with a duplicated name - if we generate a unique name for it, it will be saved then with a new name.
+      // It is not what all can expect.
+      // Such situation in most cases indicates an error on previous level, so we just warn about it.
       LOG.warn("Scheme file \"$fileName\" is not loaded because defines duplicated name \"$schemeKey\"")
     }
     return false
@@ -148,7 +151,9 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
     fun createInfo(schemeName: String, element: Element?): ExternalInfo {
       val info = ExternalInfo(fileNameWithoutExtension, extension)
       if (element != null) {
-        info.digest = element.digest(getDigest())
+        val hashStream = getHashStream()
+        hashElement(element, hashStream)
+        info.digest = hashStream.asLong
       }
       info.schemeKey = schemeName
       return info
@@ -158,7 +163,7 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
     if (processor is LazySchemeProcessor) {
       val bytes = preloadedBytes ?: input!!.readBytes()
       lazyPreloadScheme(bytes, schemeManager.isOldSchemeNaming) { name, parser ->
-        val attributeProvider = Function<String, String?> {
+        val attributeProvider: (String) -> String? = {
           if (parser.eventType == XMLStreamConstants.START_ELEMENT) {
             parser.getAttributeValue(null, it)
           }
@@ -271,7 +276,7 @@ internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtens
   // we keep it to detect rename
   var schemeKey: String? = null
 
-  var digest: ByteArray? = null
+  var digest: Long? = null
 
   val fileName: String
     get() = "$fileNameWithoutExtension$fileExtension"
@@ -281,7 +286,7 @@ internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtens
     fileExtension = extension
   }
 
-  fun isDigestEquals(newDigest: ByteArray) = Arrays.equals(digest, newDigest)
+  fun isDigestEquals(newDigest: Long) = digest == newDigest
 
   fun scheduleDelete(filesToDelete: MutableSet<String>, @NonNls reason: String) {
     LOG.debug { "Schedule to delete: $fileName (reason: $reason)" }

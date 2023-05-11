@@ -4,6 +4,8 @@ package com.intellij.webSymbols.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.injected.editor.DocumentWindow
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
@@ -25,7 +27,15 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
 
     if (parameters.offset > elementOffset) {
       position = parameters.offset - elementOffset
-      name = parameters.editor.document.getText(TextRange(elementOffset, parameters.offset))
+      val document = parameters.editor.document.let {
+        if (it is DocumentWindow && !InjectedLanguageManager.getInstance(psiContext.project).isInjectedFragment(parameters.originalFile)) {
+          // the completion process is run for the parameters.position from host file,
+          // but the caret is inside injection, so let's get the correct document for the offsets
+          it.delegate
+        }
+        else it
+      }
+      name = document.getText(TextRange(elementOffset, parameters.offset))
     }
     else {
       position = 0

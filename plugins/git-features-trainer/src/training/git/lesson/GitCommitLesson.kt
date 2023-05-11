@@ -15,13 +15,11 @@ import com.intellij.openapi.vcs.VcsNotificationIdsHolder
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.util.DocumentUtil
-import com.intellij.util.ui.JBUI
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.AbstractCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitActionsPanel
@@ -38,6 +36,7 @@ import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickChangeElement
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import training.git.GitLessonsUtil.openCommitWindow
+import training.git.GitLessonsUtil.openGitWindow
 import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
 import training.git.GitLessonsUtil.showWarningIfCommitWindowClosed
@@ -154,7 +153,9 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
     task {
       val analyzeOptionText = VcsBundle.message("before.checkin.standard.options.check.smells").dropMnemonic()
-      text(GitLessonsBundle.message("git.commit.analyze.code.explanation", strong(analyzeOptionText)))
+      if (!PlatformUtils.isRider()) {
+        text(GitLessonsBundle.message("git.commit.analyze.code.explanation", strong(analyzeOptionText)))
+      }
       text(GitLessonsBundle.message("git.commit.enable.reformat.code", strong(reformatCodeButtonText)))
       triggerUI().component { ui: JBCheckBox ->
         ui.text?.contains(reformatCodeButtonText) == true && ui.isSelected
@@ -198,16 +199,9 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     task("ActivateVersionControlToolWindow") {
-      val gitWindowName = GitBundle.message("git4idea.vcs.name")
-      text(GitLessonsBundle.message("git.commit.open.git.window", action(it),
-                                    icon(AllIcons.Toolwindows.ToolWindowChanges), strong(gitWindowName)))
-      text(GitLessonsBundle.message("git.open.tool.window.balloon", strong(gitWindowName)),
-           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
-      stateCheck {
-        val toolWindowManager = ToolWindowManager.getInstance(project)
-        toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
-      }
-      test { actions(it) }
+      openGitWindow(GitLessonsBundle.message("git.commit.open.git.window", action(it),
+                                             icon(AllIcons.Toolwindows.ToolWindowChanges),
+                                             strong(GitBundle.message("git4idea.vcs.name"))))
     }
 
     resetGitLogWindow()
@@ -219,7 +213,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     task {
       text(GitLessonsBundle.message("git.commit.select.top.commit"))
       text(GitLessonsBundle.message("git.commit.select.top.commit.balloon"),
-           LearningBalloonConfig(Balloon.Position.below, width = JBUI.scale(300)))
+           LearningBalloonConfig(Balloon.Position.below, width = 300))
       triggerOnTopCommitSelected()
       showWarningIfGitWindowClosed()
       test {
@@ -238,7 +232,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       text(GitLessonsBundle.message("git.commit.committed.file.explanation", strong(GitBundle.message("git4idea.vcs.name"))))
       gotItStep(Balloon.Position.atLeft, width = 0,
                 GitLessonsBundle.message("git.commit.committed.file.got.it"),
-                cornerToPointerDistance = JBUI.scale(20), duplicateMessage = false)
+                cornerToPointerDistance = 20, duplicateMessage = false)
       showWarningIfGitWindowClosed()
     }
 
@@ -329,7 +323,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     task {
       gotItStep(Balloon.Position.atLeft, width = 0,
                 GitLessonsBundle.message("git.commit.two.committed.files.explanation"),
-                cornerToPointerDistance = JBUI.scale(20))
+                cornerToPointerDistance = 20)
     }
 
     restoreCommitWindowStateInformer()

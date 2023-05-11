@@ -8,7 +8,6 @@ import com.intellij.compiler.progress.CompilerMessagesService;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
-import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -425,11 +424,7 @@ public final class CompileDriver {
       }
 
       // ensure the project model seen by build process is up-to-date
-      StoreUtil.saveSettings(myProject);
-      if (!isUnitTestMode) {
-        StoreUtil.saveSettings(ApplicationManager.getApplication());
-      }
-
+      CompilerDriverHelperKt.saveSettings(myProject, isUnitTestMode);
       Tracer.Span compileWorkSpan = Tracer.start("compileWork");
       CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
       final BuildManager buildManager = BuildManager.getInstance();

@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.IconUtil;
@@ -52,7 +53,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     mySuitesTree = new CheckboxTree(new SuitesRenderer(), myRootNode) {
       @Override
       protected void installSpeedSearch() {
-        new TreeSpeedSearch(this, false, path -> {
+        TreeSpeedSearch.installOn(this, false, path -> {
           final DefaultMutableTreeNode component = (DefaultMutableTreeNode)path.getLastPathComponent();
           final Object userObject = component.getUserObject();
           if (userObject instanceof CoverageSuite) {
@@ -98,7 +99,9 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     final List<CoverageSuite> suites = collectSelectedSuites();
-    myCoverageManager.chooseSuitesBundle(suites.isEmpty() ? null : new CoverageSuitesBundle(suites.toArray(new CoverageSuite[0])));
+    final CoverageSuitesBundle bundle = suites.isEmpty() ? null : new CoverageSuitesBundle(suites.toArray(new CoverageSuite[0]));
+    CoverageLogger.logSuiteImport(myProject, bundle);
+    myCoverageManager.chooseSuitesBundle(bundle);
     ((CoverageDataManagerImpl)myCoverageManager).addRootsToWatch(suites);
     super.doOKAction();
   }
@@ -140,7 +143,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   private static CoverageRunner getCoverageRunner(@NotNull VirtualFile file) {
     for (CoverageRunner runner : CoverageRunner.EP_NAME.getExtensionList()) {
       for (String extension : runner.getDataFileExtensions()) {
-        if (Comparing.strEqual(file.getExtension(), extension)) return runner;
+        if (Comparing.strEqual(file.getExtension(), extension) && runner.canBeLoaded(VfsUtilCore.virtualToIoFile(file))) return runner;
       }
     }
     return null;

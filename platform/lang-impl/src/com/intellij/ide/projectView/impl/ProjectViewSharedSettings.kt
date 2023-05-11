@@ -27,6 +27,7 @@ class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSett
   var abbreviatePackages: Boolean = false
   var autoscrollFromSource: Boolean = false
   var autoscrollToSource: Boolean = false
+  var openDirectoriesWithSingleClick: Boolean = false
   var foldersAlwaysOnTop: Boolean = true
   var manualOrder: Boolean = false
 

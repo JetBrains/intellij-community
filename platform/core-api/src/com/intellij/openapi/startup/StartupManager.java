@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.startup;
 
 import com.intellij.openapi.project.Project;
@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Allows registering activities that are run during project loading.
  *
+ * @see ProjectActivity
  * @see StartupActivity
  */
 public abstract class StartupManager {
@@ -41,9 +42,7 @@ public abstract class StartupManager {
    * <p>
    * See <a href="https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity">docs</a> for details.
    * <p>
-   * Consider using extension point instead.
-   *
-   * @see StartupActivity#POST_STARTUP_ACTIVITY
+   * Consider using extension point {@link ProjectActivity}/{@link StartupActivity} instead.
    */
   @ApiStatus.Internal
   public abstract void runAfterOpened(@NotNull Runnable runnable);

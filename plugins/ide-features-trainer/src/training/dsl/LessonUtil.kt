@@ -1,12 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl
 
-import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
-import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled
-import com.intellij.execution.ui.layout.impl.JBRunnerTabs
+import com.intellij.execution.RunManager
+import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.impl.RunManagerImpl
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
+import com.intellij.execution.ui.UIExperiment
 import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -22,6 +26,8 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.project.DumbService
@@ -40,6 +46,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.content.Content
 import com.intellij.ui.tabs.impl.JBTabsImpl
@@ -48,6 +55,8 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XExpression
+import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
 import org.assertj.swing.timing.Timeout
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
@@ -60,16 +69,21 @@ import training.learn.lesson.LessonManager
 import training.ui.*
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.getActionById
-import training.util.isToStringContains
 import training.util.learningToolWindow
 import training.util.surroundWithNonBreakSpaces
-import java.awt.*
+import java.awt.Component
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.Window
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JWindow
+import javax.swing.KeyStroke
 
 object LessonUtil {
   val productName: String get() {
@@ -248,6 +262,8 @@ object LessonUtil {
     }
   }
 
+  fun rawShift() = rawKeyStroke(KeyStroke.getKeyStroke("SHIFT"))
+
   fun checkToolbarIsShowing(ui: ActionButton): Boolean {
     // Some buttons are duplicated to several tab-panels. It is a way to find an active one.
     val parentOfType = UIUtil.getParentOfType(JBTabsImpl.Toolbar::class.java, ui)
@@ -257,7 +273,7 @@ object LessonUtil {
   }
 
 
-  val breakpointXRange: (width: Int) -> IntRange = { IntRange(20, it - 27) }
+  val breakpointXRange: (width: Int) -> IntRange = { IntRange(14, it - 30) }
 
   fun LessonContext.highlightBreakpointGutter(xRange: (width: Int) -> IntRange = breakpointXRange,
                                               logicalPosition: () -> LogicalPosition
@@ -363,18 +379,6 @@ object LessonUtil {
     return true
   }
 
-  inline fun<reified T: Component> findUiParent(start: Component, predicate: (Component) -> Boolean): T? {
-    if (start is T && predicate(start)) return start
-    var ui: Container? = start.parent
-    while (ui != null) {
-      if (ui is T && predicate(ui)) {
-        return ui
-      }
-      ui = ui.parent
-    }
-    return null
-  }
-
   fun returnToWelcomeScreenRemark(): String {
     val isSingleProject = ProjectManager.getInstance().openProjects.size == 1
     return if (isSingleProject) LessonsBundle.message("onboarding.return.to.welcome.remark") else ""
@@ -395,6 +399,9 @@ object LessonUtil {
     }
   }
 
+  fun lastHighlightedUi(): JComponent? {
+    return LearningUiHighlightingManager.highlightingComponents.getOrNull(0) as? JComponent
+  }
 }
 
 fun LessonContext.firstLessonCompletedMessage() {
@@ -413,17 +420,23 @@ fun LessonContext.highlightRunToolbar(highlightInside: Boolean = true, usePulsat
   }
 }
 
-fun LessonContext.highlightDebugActionsToolbar(highlightInside: Boolean = true, usePulsation: Boolean = true) {
+fun LessonContext.highlightDebugActionsToolbar(highlightInside: Boolean = false, usePulsation: Boolean = false) {
   task {
-    // wait for the treads & variables tab to be become selected
+    // wait for the treads & variables tab to become selected
     // otherwise the incorrect toolbar can be highlighted in the next task
-    triggerUI().component { tabs: JBRunnerTabs ->
-      tabs.selectedInfo?.text.isToStringContains(XDebuggerBundle.message("xdebugger.threads.vars.tab.title"))
-    }
+    triggerUI().component { ui: XDebuggerEmbeddedComboBox<XExpression> -> ui.isEditable }
   }
+
+  waitBeforeContinue(500)
 
   task {
     highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", highlightInside, usePulsation)
+  }
+  task {
+    if (!ExperimentalUI.isNewUI() && !UIExperiment.isNewDebuggerUIEnabled()) {
+      highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint",
+                                 highlightInside, usePulsation, clearPreviousHighlights = false)
+    }
   }
 }
 
@@ -606,7 +619,8 @@ fun LessonContext.restoreChangedSettingsInformer(restoreSettings: () -> Unit) {
 fun LessonContext.highlightButtonById(actionId: String,
                                       highlightInside: Boolean = true,
                                       usePulsation: Boolean = true,
-                                      clearHighlights: Boolean = true) {
+                                      clearHighlights: Boolean = true,
+                                      additionalContent: (TaskContext.() -> Unit)? = null) {
   val needToFindButton = getActionById(actionId)
 
   task {
@@ -639,6 +653,7 @@ fun LessonContext.highlightButtonById(actionId: String,
       }
     }
     addStep(feature)
+    additionalContent?.invoke(this)
   }
 }
 
@@ -682,11 +697,23 @@ fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(compo
 }
 
 fun TaskContext.triggerOnQuickDocumentationPopup() {
-  if (isDocumentationV2Enabled()) {
-    triggerUI().component { _: DocumentationEditorPane -> true }
-  }
-  else {
-    triggerUI().component { _: DocumentationComponent -> true }
+  triggerUI().component { _: DocumentationEditorPane -> true }
+}
+
+fun TaskContext.triggerOnEditorText(text: String, centerOffset: Int? = null, highlightBorder: Boolean = false) {
+  triggerUI { this.highlightBorder = highlightBorder }.componentPart l@{ ui: EditorComponentImpl ->
+    if (ui.editor != editor) return@l null
+    val offset = editor.document.charsSequence.indexOf(text)
+    if (offset < 0) return@l null
+    if (centerOffset == null) {
+      val point = editor.offsetToPoint2D(offset)
+      val width = (editor as EditorImpl).charHeight * text.length
+      Rectangle(point.x.toInt(), point.y.toInt(), width, editor.lineHeight)
+    }
+    else {
+      val point = editor.offsetToPoint2D(offset + centerOffset)
+      Rectangle(point.x.toInt() - 1, point.y.toInt(), 2, editor.lineHeight)
+    }
   }
 }
 
@@ -727,4 +754,15 @@ fun LessonContext.sdkConfigurationTasks() {
   if (langSupport != null && lesson.languageId == langSupport.primaryLanguage) {
     langSupport.sdkConfigurationTasks.invoke(this, lesson)
   }
+}
+
+fun TaskRuntimeContext.addNewRunConfigurationFromContext(editConfiguration: (RunConfiguration) -> Unit = {}) {
+  val runManager = RunManager.getInstance(project) as RunManagerImpl
+  val dataContext = DataManagerImpl.getInstance().getDataContext(editor.component)
+  val configurationsFromContext = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN).configurationsFromContext
+  val configurationSettings = configurationsFromContext?.singleOrNull() ?.configurationSettings ?: return
+  val runConfiguration = configurationSettings.configuration.clone()
+  editConfiguration(runConfiguration)
+  val newSettings = RunnerAndConfigurationSettingsImpl(runManager, runConfiguration)
+  runManager.addConfiguration(newSettings)
 }

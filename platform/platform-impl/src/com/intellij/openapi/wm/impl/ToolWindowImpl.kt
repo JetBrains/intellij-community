@@ -11,7 +11,6 @@ import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.notification.EventLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -56,6 +55,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
 import javax.swing.*
+import javax.swing.text.JTextComponent
 import kotlin.math.abs
 
 internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
@@ -164,7 +164,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
     val contentComponent = contentManager.component
     InternalDecoratorImpl.installFocusTraversalPolicy(contentComponent, LayoutFocusTraversalPolicy())
-    Disposer.register(parentDisposable, UiNotifyConnector(contentComponent, object : Activatable {
+    Disposer.register(parentDisposable, UiNotifyConnector.installOn(contentComponent, object : Activatable {
       override fun showNotify() {
         showing.onReady()
       }
@@ -452,11 +452,11 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   internal fun doSetIcon(newIcon: Icon) {
     val oldIcon = icon
-    if (EventLog.LOG_TOOL_WINDOW_ID != id && oldIcon !== newIcon &&
+    if (oldIcon !== newIcon &&
         newIcon !is LayeredIcon &&
         !toolWindowManager.isNewUi &&
         (abs(newIcon.iconHeight - JBUIScale.scale(13f)) >= 1 || abs(newIcon.iconWidth - JBUIScale.scale(13f)) >= 1)) {
-      logger<ToolWindowImpl>().warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  $id) or icon $newIcon")
+      logger<ToolWindowImpl>().warn("ToolWindow icons should be 13x13, but got: ${newIcon.iconWidth}x${newIcon.iconHeight}. Please fix ToolWindow (ID:  $id) or icon $newIcon")
     }
     icon = ToolWindowIcon(newIcon, id)
   }
@@ -836,7 +836,7 @@ private class ToolWindowFocusWatcher(private val toolWindow: ToolWindowImpl, com
 
 private fun setBackgroundRecursively(component: Component, bg: Color) {
   UIUtil.forEachComponentInHierarchy(component, Consumer { c ->
-    if (c !is ActionButton && c !is Divider) {
+    if (c !is ActionButton && c !is Divider && c !is JTextComponent) {
       c.background = bg
     }
   })

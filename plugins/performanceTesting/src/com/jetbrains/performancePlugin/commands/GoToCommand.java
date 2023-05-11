@@ -21,6 +21,13 @@ import org.jetbrains.concurrency.Promises;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * Command puts caret to the line and column.
+ * Puts the caret to the location defined by parameters.
+ * <p>
+ * Syntax: %goto <line> <column>
+ * Example: %goto 25 17
+ */
 public class GoToCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "goto";
 

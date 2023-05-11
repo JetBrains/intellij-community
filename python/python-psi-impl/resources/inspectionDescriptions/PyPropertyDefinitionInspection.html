@@ -2,7 +2,7 @@
 <body>
 <p>Reports problems with the arguments of <code>property()</code> and functions
   annotated with <code>@property</code>.</p>
-<pre style="font-family: monospace">
+<pre><code>
 class C:
     @property
     def abc(self):  # Getter should return or yield something
@@ -19,7 +19,7 @@ class C:
     @abc.deleter
     def abc(self, v1):  # Delete signature should be (self)
         pass
-</pre>
+</code></pre>
 <p>A quick-fix offers to update parameters.</p>
 </body>
 </html>

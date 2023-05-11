@@ -11,7 +11,6 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
@@ -21,7 +20,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import java.awt.datatransfer.StringSelection
 
 abstract class CopyPathProvider : AnAction() {
@@ -116,18 +114,9 @@ class CopyContentRootPathProvider : DumbAwareCopyPathProvider() {
                                 virtualFile: VirtualFile?,
                                 editor: Editor?): String? {
     if (virtualFile == null) return null
-    
-    if (WorkspaceFileIndexEx.IS_ENABLED) {
-      val root = WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(virtualFile, false) ?: return null
-      return VfsUtilCore.getRelativePath(virtualFile, root)
-    }
-    else {
-      return ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false)?.let { module ->
-        ModuleRootManager.getInstance(module).contentRoots.mapNotNull { root ->
-          VfsUtilCore.getRelativePath(virtualFile, root)
-        }.singleOrNull()
-      }
-    }
+
+    val root = WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(virtualFile, false) ?: return null
+    return VfsUtilCore.getRelativePath(virtualFile, root)
   }
 }
 

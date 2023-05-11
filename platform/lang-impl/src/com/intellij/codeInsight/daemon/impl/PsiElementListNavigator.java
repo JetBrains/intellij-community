@@ -65,6 +65,10 @@ public final class PsiElementListNavigator {
     }
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.codeInsight.navigation.PsiTargetNavigator }
+   */
+  @Deprecated
   public static <T extends NavigatablePsiElement> void openTargets(@NotNull Editor e,
                                                                    T @NotNull [] targets,
                                                                    @NlsContexts.PopupTitle String title,

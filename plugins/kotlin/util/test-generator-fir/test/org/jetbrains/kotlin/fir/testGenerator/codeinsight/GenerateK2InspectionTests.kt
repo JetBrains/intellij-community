@@ -37,6 +37,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/whenWithOnlyElse")
             model("${idea}/inspectionsLocal/equalsOrHashCode")
             model("${idea}/inspectionsLocal/removeRedundantQualifierName")
+            model("${idea}/inspectionsLocal/equalsBetweenInconvertibleTypes")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
 
@@ -47,6 +48,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspections/redundantUnitReturnType", pattern = pattern)
             model("${idea}/inspections/redundantIf", pattern = pattern)
             model("${idea}/inspections/equalsAndHashCode", pattern = pattern)
+            model("${idea}/inspections/protectedInFinal", pattern = pattern)
             model("${idea}/intentions/convertToStringTemplate", pattern = pattern)
         }
 
@@ -55,6 +57,8 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/redundantIf", pattern = pattern)
             model("${idea}/quickfix/redundantModalityModifier", pattern = pattern)
             model("${idea}/quickfix/removeToStringInStringTemplate", pattern = pattern)
+            model("${idea}/quickfix/suppress", pattern = pattern)
+            model("${idea}/quickfix/protectedInFinal", pattern = pattern)
         }
     }
 

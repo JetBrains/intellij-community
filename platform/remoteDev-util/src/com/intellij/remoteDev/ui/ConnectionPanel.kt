@@ -50,10 +50,10 @@ open class ConnectionPanel(private val manager: ConnectionManager) : ActionPanel
 
     titleLabel = JBLabel(RemoteDevUtilBundle.message("connection.panel.description"), SwingConstants.LEFT).apply {
       isOpaque = false
-      font = font.deriveFont(StartupUiUtil.getLabelFont().size + JBUIScale.scale(5).toFloat()).deriveFont(Font.BOLD)
+      font = font.deriveFont(StartupUiUtil.labelFont.size + JBUIScale.scale(5).toFloat()).deriveFont(Font.BOLD)
     }
     userNameTextLabel = JBLabel(RemoteDevUtilBundle.message("connection.panel.cwm.name.label")).apply {
-      font = StartupUiUtil.getLabelFont().deriveFont(StartupUiUtil.getLabelFont().size + JBUIScale.scale(1).toFloat()).deriveFont(Font.BOLD)
+      font = StartupUiUtil.labelFont.deriveFont(StartupUiUtil.labelFont.size + JBUIScale.scale(1).toFloat()).deriveFont(Font.BOLD)
     }
     userNameTextField = JBTextField(LocalUserSettings.userName)
     userNameTextField.minimumSize = Dimension(JBUI.scale(280), userNameTextField.minimumSize.height)
@@ -61,7 +61,7 @@ open class ConnectionPanel(private val manager: ConnectionManager) : ActionPanel
     TextComponentHint(userNameTextField, RemoteDevUtilBundle.message("connection.panel.cwm.name.textfield"))
 
     remoteUrlTextLabel = JBLabel(RemoteDevUtilBundle.message("connection.panel.url.label")).apply {
-      font = StartupUiUtil.getLabelFont().deriveFont(StartupUiUtil.getLabelFont().size + JBUIScale.scale(1).toFloat()).deriveFont(Font.BOLD)
+      font = StartupUiUtil.labelFont.deriveFont(StartupUiUtil.labelFont.size + JBUIScale.scale(1).toFloat()).deriveFont(Font.BOLD)
     }
     remoteUrlTextField = JBTextField()
     remoteUrlTextField.minimumSize = Dimension(JBUI.scale(280), remoteUrlTextField.minimumSize.height)

@@ -115,7 +115,7 @@ public final class TemplateContext {
       String name = option.getAttributeValue("name");
       String value = option.getAttributeValue("value");
       if (name != null && value != null) {
-        myContextStates.put(ContainerUtil.getOrElse(internMap, name, name), Boolean.parseBoolean(value));
+        myContextStates.put(internMap.getOrDefault(name, name), Boolean.parseBoolean(value));
       }
     }
 

@@ -172,7 +172,7 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
             else {
               Set<String> detectedUrls =
                 Arrays.stream(library.getFiles(OrderRootType.CLASSES)).map(VirtualFile::getUrl).collect(Collectors.toSet());
-              Set<String> declaredUrls = ContainerUtil.set(library.getUrls(OrderRootType.CLASSES));
+              Set<String> declaredUrls = ContainerUtil.newHashSet(library.getUrls(OrderRootType.CLASSES));
               declaredUrls.removeAll(detectedUrls);
               declaredUrls.removeIf(library::isJarDirectory);
               if (!declaredUrls.isEmpty()) {

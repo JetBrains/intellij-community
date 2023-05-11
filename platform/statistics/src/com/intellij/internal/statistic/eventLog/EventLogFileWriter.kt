@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.openapi.util.text.StringUtil
@@ -22,7 +22,7 @@ open class EventLogFileWriter(
   private val maxFileAge: Long = 7 * 24 * 60 * 60 * 100
 ) : AutoCloseable {
   private val lock = Any() // protects all mutable fields
-  private var currentFileData: FileData = createFileData()
+  private val currentFileData: FileData by lazy { FileData(dir, logFilePathProvider) }
   private var closed = false
   protected var oldestExistingFile = -1L
   private var logFilesSupplier: Supplier<List<File>> = Supplier {
@@ -42,10 +42,10 @@ open class EventLogFileWriter(
 
   open fun getActiveLogName(): String {
     synchronized(lock) {
-      if (!currentFileData.logFile.exists()) {
+      if (!currentFileData.getLogFile().exists()) {
         rollOver()
       }
-      return currentFileData.logFile.name
+      return currentFileData.getLogFile().name
     }
   }
 
@@ -53,7 +53,7 @@ open class EventLogFileWriter(
     synchronized(lock) {
       try {
         if (closed) throw IllegalStateException("Attempt to use closed FUS log")
-        val outputStream = currentFileData.countingOutputStream
+        val outputStream = currentFileData.getCountingOutputStream()
         outputStream.write(text.toByteArray())
         outputStream.write('\n'.code)
         if (outputStream.bytesWritten > maxFileSizeInBytes) {
@@ -78,15 +78,15 @@ open class EventLogFileWriter(
   @Throws(IOException::class)
   fun rollOver() {
     synchronized(lock) {
-      closeCurrent()
-      currentFileData = createFileData()
+      currentFileData.close()
+      currentFileData.initialize()
     }
   }
 
   override fun close() {
     synchronized(lock) {
       try {
-        closeCurrent()
+        currentFileData.close()
         closed = true
       }
       catch (e: IOException) {
@@ -129,7 +129,7 @@ open class EventLogFileWriter(
 
   fun cleanUp() {
     synchronized(lock) {
-      closeCurrent()
+      currentFileData.close()
       val files = logFilesSupplier.get()
       for (file in files) {
         if (!file.delete()) {
@@ -143,22 +143,8 @@ open class EventLogFileWriter(
   @Throws(IOException::class)
   fun flush() {
     synchronized(lock) {
-      currentFileData.countingOutputStream.flush()
+      currentFileData.getCountingOutputStream().flush()
     }
-  }
-
-  private fun createFileData(): FileData {
-    val file = logFilePathProvider(dir)
-    file.parentFile.mkdirs()
-    file.createNewFile()
-    val countingOutputStream = CountingOutputStream(BufferedOutputStream(FileOutputStream(file)))
-    return FileData(file, countingOutputStream)
-  }
-
-  private fun closeCurrent() {
-    val outputStream = currentFileData.countingOutputStream
-    outputStream.flush()
-    outputStream.close()
   }
 }
 
@@ -189,4 +175,35 @@ private class CountingOutputStream(private val delegate: OutputStream) : OutputS
   }
 }
 
-private class FileData(val logFile: File, val countingOutputStream: CountingOutputStream)
+private class FileData(private val dir: Path, private val logFilePathProvider: (dir: Path) -> File) {
+  private var logFile: File? = null
+  private var countingOutputStream: CountingOutputStream? = null
+
+  private fun isInitialized(): Boolean = logFile != null && countingOutputStream != null
+
+  fun initialize() {
+    logFile = logFilePathProvider(dir)
+    logFile!!.parentFile.mkdirs()
+    logFile!!.createNewFile()
+    countingOutputStream = CountingOutputStream(BufferedOutputStream(FileOutputStream(logFile!!)))
+  }
+
+  fun close() {
+    if (isInitialized()) {
+      countingOutputStream!!.flush()
+      countingOutputStream!!.close()
+      countingOutputStream = null
+      logFile = null
+    }
+  }
+
+  fun getLogFile(): File {
+    if (!isInitialized()) initialize()
+    return logFile!!
+  }
+
+  fun getCountingOutputStream(): CountingOutputStream {
+    if (!isInitialized()) initialize()
+    return countingOutputStream!!
+  }
+}

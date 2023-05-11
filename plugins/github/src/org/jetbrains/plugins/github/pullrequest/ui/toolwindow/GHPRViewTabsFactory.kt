@@ -23,7 +23,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle.messagePointer
 import javax.swing.JComponent
 
 internal class GHPRViewTabsFactory(private val project: Project, private val disposable: Disposable) {
-
   private val uiDisposable = Disposer.newDisposable().also {
     Disposer.register(disposable, it)
   }
@@ -34,15 +33,15 @@ internal class GHPRViewTabsFactory(private val project: Project, private val dis
              diffController: GHPRDiffController,
              filesComponent: JComponent,
              filesCountModel: Flow<Int?>,
-             notViewedFilesCountModel: Flow<Int?>?,
-             commitsComponent: JComponent,
-             commitsCountModel: Flow<Int?>): JBTabs {
-    return create(infoComponent, filesComponent, filesCountModel, notViewedFilesCountModel, commitsComponent, commitsCountModel).also {
+             notViewedFileCountModel: Flow<Int?>?,
+             commitComponent: JComponent,
+             commitCountModel: Flow<Int?>): JBTabs {
+    return create(infoComponent, filesComponent, filesCountModel, notViewedFileCountModel, commitComponent, commitCountModel).also {
       val listener = object : TabsListener {
         override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
           diffController.activeTree = when (newSelection?.component) {
             filesComponent -> GHPRDiffController.ActiveTree.FILES
-            commitsComponent -> GHPRDiffController.ActiveTree.COMMITS
+            commitComponent -> GHPRDiffController.ActiveTree.COMMITS
             else -> null
           }
         }
@@ -68,7 +67,7 @@ internal class GHPRViewTabsFactory(private val project: Project, private val dis
     }
 
     val tabs = object : SingleHeightTabs(project, uiDisposable) {
-      override fun adjust(each: TabInfo?) = Unit
+      override fun adjust(tabInfo: TabInfo) = Unit
     }.apply {
       addTab(infoTabInfo)
       addTab(filesTabInfo)

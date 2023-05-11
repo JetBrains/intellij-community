@@ -74,27 +74,11 @@ abstract class JvmInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     hint: String = InspectionsBundle.message(
       "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
     ),
+    testPreview: Boolean = false,
     fileName: String = generateFileName(),
   ) {
     configureByText("$fileName${lang.ext}", before)
-    runQuickFix(hint)
-    checkResult(after)
-  }
-
-  /**
-   * Run the [hint] quickfix on [before] at the cursor position marked with <caret> and compares the result and the preview with [after].
-   */
-  protected fun JavaCodeInsightTestFixture.testQuickFixWithPreview(
-    lang: JvmLanguage,
-    before: String,
-    after: String,
-    hint: String = InspectionsBundle.message(
-      "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
-    ),
-    fileName: String = generateFileName(),
-  ) {
-    configureByText("$fileName${lang.ext}", before)
-    testPreview(lang, before, after, hint, fileName)
+    if (testPreview) testPreview(lang, before, after, hint, fileName)
     runQuickFix(hint)
     checkResult(after)
   }
@@ -134,8 +118,10 @@ abstract class JvmInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   ) {
     configureByText("$fileName${lang.ext}", before)
     myFixture.getAllQuickFixes()
-      .filterIsInstance(QuickFixWrapper::class.java)
-      .filter {(hints.isEmpty() || hints.contains(it.fix.familyName)) }
+      .filter { action -> 
+        val fix = QuickFixWrapper.unwrap(action)
+        return@filter fix != null && (hints.isEmpty() || hints.contains(fix.familyName)) 
+      }
       .forEach { myFixture.launchAction(it) }
     checkResult(after)
   }

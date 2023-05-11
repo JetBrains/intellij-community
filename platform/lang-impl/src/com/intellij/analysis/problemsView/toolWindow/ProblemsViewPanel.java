@@ -23,7 +23,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -64,7 +64,7 @@ import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider, ProblemsViewTab {
   protected final ClientId myClientId = ClientId.getCurrent();
-
+  volatile boolean myDisposed;
   private final Project myProject;
   private final String myId;
   private final ProblemsViewState myState;
@@ -209,7 +209,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     myTree.getSelectionModel().setSelectionMode(SINGLE_TREE_SELECTION);
     myTree.addTreeSelectionListener(new RestoreSelectionListener());
     myTree.addTreeSelectionListener(event -> mySelectionAlarm.cancelAndRequest());
-    new TreeSpeedSearch(myTree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
     PopupHandler.installPopupMenu(myTree, getPopupHandlerGroupId(), "ProblemsView.ToolWindow.TreePopup");
@@ -224,8 +224,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     if (ExperimentalUI.isNewUI()) {
       scrollPane.getHorizontalScrollBar().addAdjustmentListener(event -> {
         int orientation = ((ActionToolbarImpl)myToolbar).getOrientation();
-        Insets i = orientation == SwingConstants.VERTICAL ? UIManager.getInsets("ToolBar.verticalToolbarInsets")
-                                                          : UIManager.getInsets("ToolBar.horizontalToolbarInsets");
+        Insets i = orientation == SwingConstants.VERTICAL ? JBUI.CurrentTheme.Toolbar.verticalToolbarInsets()
+                                                          : JBUI.CurrentTheme.Toolbar.horizontalToolbarInsets();
         Border innerBorder = i != null ? JBUI.Borders.empty(i.top, i.left, i.bottom, i.right)
                                        : JBUI.Borders.empty(2);
 
@@ -249,6 +249,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   public void dispose() {
     visibilityChangedTo(false);
     myPreview.close();
+    myDisposed = true;
   }
 
   private @Nullable Content getCurrentContent() {
@@ -369,7 +370,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     return true;
   }
 
-  void orientationChangedTo(boolean vertical) {
+  @Override
+  public void orientationChangedTo(boolean vertical) {
     setOrientation(vertical);
     myPanel.remove(myToolbar.getComponent());
     myToolbar.setOrientation(vertical ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
@@ -379,7 +381,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     updatePreview();
   }
 
-  void selectionChangedTo(boolean selected) {
+  @Override
+  public void selectionChangedTo(boolean selected) {
     if (selected) {
       myTreeModel.setComparator(createComparator());
       updatePreview();
@@ -393,7 +396,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     visibilityChangedTo(selected);
   }
 
-  void visibilityChangedTo(boolean visible) {
+  @Override
+  public void visibilityChangedTo(boolean visible) {
     if (visible) {
       myShowTime.set(System.nanoTime());
       ProblemsViewStatsCollector.tabShown(this);

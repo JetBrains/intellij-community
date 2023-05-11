@@ -164,9 +164,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
 
     FileViewProvider viewProvider = file.getViewProvider();
-    if (!viewProvider.isEventSystemEnabled()) return null;
+    if (!viewProvider.isEventSystemEnabled()) {
+      return null;
+    }
 
-    document = FileDocumentManager.getInstance().getDocument(viewProvider.getVirtualFile());
+    VirtualFile virtualFile = viewProvider.getVirtualFile();
+    document = FileDocumentManager.getInstance().getDocument(virtualFile, myProject);
     if (document != null) {
       if (document.getTextLength() != file.getTextLength()) {
         String message = "Document/PSI mismatch: " + file + " of " + file.getClass() +

@@ -143,9 +143,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       layout.setHGap(0);
       myPanel.setLayout(layout);
 
+      myProjectTypePanel.setMinimumSize(new Dimension(240, 100));
+
       JBSplitter splitter = new OnePixelSplitter(false, 0.25f);
+      splitter.setHonorComponentsMinimumSize(true);
       splitter.setFirstComponent(myProjectTypePanel);
       splitter.setSecondComponent(mySettingsPanel);
+
       myPanel.removeAll();
       myPanel.add(splitter, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH,
                                                 GridConstraints.FILL_BOTH,
@@ -484,8 +488,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
         }
 
         myFrameworksPanel.setProviders(new ArrayList<>(set),
-                                       ContainerUtil.set(category.getAssociatedFrameworkIds()),
-                                       ContainerUtil.set(category.getPreselectedFrameworkIds()));
+                                       Set.of(category.getAssociatedFrameworkIds()),
+                                       Set.of(category.getPreselectedFrameworkIds()));
       }
       else {
         myFrameworksPanel.setProviders(providers);

@@ -7,7 +7,6 @@ import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.FieldAcce
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -36,15 +35,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsContexts.Command;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 import static com.intellij.psi.PsiModifier.PRIVATE;
 
-public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
+class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   private final RecordCandidate myRecordCandidate;
   private final boolean myShowAffectedMembers;
 
   private final Map<PsiElement, String> myAllRenames = new LinkedHashMap<>();
 
-  public ConvertToRecordProcessor(@NotNull RecordCandidate recordCandidate, boolean showAffectedMembers) {
+  ConvertToRecordProcessor(@NotNull RecordCandidate recordCandidate, boolean showAffectedMembers) {
     super(recordCandidate.getProject());
     myRecordCandidate = recordCandidate;
     myShowAffectedMembers = showAffectedMembers;
@@ -184,7 +185,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     RenameUtil.addConflictDescriptions(usages, conflicts);
     Set<PsiField> conflictingFields = new SmartHashSet<>();
     for (UsageInfo usage : usages) {
@@ -456,7 +457,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull @NlsContexts.Command String getCommandName() {
+  protected @NotNull @Command String getCommandName() {
     return JavaRefactoringBundle.message("convert.to.record.title");
   }
 

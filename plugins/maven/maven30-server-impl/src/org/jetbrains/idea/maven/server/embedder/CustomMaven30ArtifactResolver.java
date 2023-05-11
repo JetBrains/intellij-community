@@ -25,8 +25,7 @@ import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.logging.Logger;
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
-import org.jetbrains.idea.maven.server.MavenModelConverter;
-import org.jetbrains.idea.maven.server.UnresolvedArtifactsCollector;
+import org.jetbrains.idea.maven.server.Maven3ModelConverter;
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.repository.LocalRepositoryManager;
@@ -74,8 +73,6 @@ public class CustomMaven30ArtifactResolver
   private final Executor executor;
 
   private volatile MavenWorkspaceMap myWorkspaceMap;
-  private volatile UnresolvedArtifactsCollector myUnresolvedCollector;
-
 
   public CustomMaven30ArtifactResolver()
   {
@@ -154,7 +151,7 @@ public class CustomMaven30ArtifactResolver
       resolveOld(artifact, remoteRepositories, session);
     }
     catch (AbstractArtifactResolutionException e) {
-      myUnresolvedCollector.collectAndSetResolved(artifact);
+      artifact.setResolved(true);
     }
   }
 
@@ -530,16 +527,10 @@ public class CustomMaven30ArtifactResolver
 
   public void customize(MavenWorkspaceMap workspaceMap, boolean failOnUnresolved) {
     myWorkspaceMap = workspaceMap;
-    myUnresolvedCollector = new UnresolvedArtifactsCollector(failOnUnresolved);
   }
 
   public void reset() {
     myWorkspaceMap = null;
-    myUnresolvedCollector = null;
-  }
-
-  public UnresolvedArtifactsCollector getUnresolvedCollector() {
-    return myUnresolvedCollector;
   }
 
   private boolean resolveAsModule(Artifact a) {
@@ -547,7 +538,7 @@ public class CustomMaven30ArtifactResolver
     MavenWorkspaceMap map = myWorkspaceMap;
     if (map == null) return false;
 
-    MavenWorkspaceMap.Data resolved = map.findFileAndOriginalId(MavenModelConverter.createMavenId(a));
+    MavenWorkspaceMap.Data resolved = map.findFileAndOriginalId(Maven3ModelConverter.createMavenId(a));
     if (resolved == null) return false;
 
     a.setResolved(true);

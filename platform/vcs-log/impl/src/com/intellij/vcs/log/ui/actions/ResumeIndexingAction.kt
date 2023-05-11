@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions
 
 import com.intellij.icons.AllIcons
@@ -7,10 +7,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
-import com.intellij.vcs.log.data.index.VcsLogIndex
-import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
-import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.data.index.*
+import com.intellij.vcs.log.data.index.toggleIndexing
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
@@ -20,17 +18,19 @@ class ResumeIndexingAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val data = e.getData(VcsLogInternalDataKeys.LOG_DATA)
     val project = e.project
-    if (data == null || project == null || !VcsLogSharedSettings.isIndexSwitchedOn(project)) {
+    val index = data?.index as? VcsLogModifiableIndex
+    if (data == null || project == null || !VcsLogSharedSettings.isIndexSwitchedOn(project) || index == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    val rootsForIndexing = VcsLogPersistentIndex.getRootsForIndexing(data.logProviders)
+
+    val rootsForIndexing = index.indexingRoots
     if (rootsForIndexing.isEmpty()) {
       e.presentation.isEnabledAndVisible = false
       return
     }
 
-    val scheduledForIndexing = rootsForIndexing.filter { it.isScheduledForIndexing(data.index) }
+    val scheduledForIndexing = rootsForIndexing.filter { data.index.isScheduledForIndexing(it) }
     val bigRepositories = rootsForIndexing.filter { it.isBig() }
     e.presentation.isEnabledAndVisible = (bigRepositories.isNotEmpty() || scheduledForIndexing.isNotEmpty())
 
@@ -59,25 +59,11 @@ class ResumeIndexingAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this)
 
-    val data = e.getRequiredData(VcsLogInternalDataKeys.LOG_DATA)
-    val rootsForIndexing = VcsLogPersistentIndex.getRootsForIndexing(data.logProviders)
-    if (rootsForIndexing.isEmpty()) return
+    val index = e.getRequiredData(VcsLogInternalDataKeys.LOG_DATA).index as? VcsLogModifiableIndex ?: return
+    if (index.indexingRoots.isEmpty()) return
 
-    if (rootsForIndexing.any { it.isScheduledForIndexing(data.index) }) {
-      rootsForIndexing.filter { !it.isBig() }.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
-    }
-    else {
-      var resumed = false
-      for (root in rootsForIndexing.filter { it.isBig() }) {
-        resumed = resumed or VcsLogBigRepositoriesList.getInstance().removeRepository(root)
-      }
-      if (resumed) (data.index as? VcsLogModifiableIndex)?.scheduleIndex(false)
-    }
+    index.toggleIndexing()
   }
-
-  private fun VirtualFile.isBig(): Boolean = VcsLogBigRepositoriesList.getInstance().isBig(this)
-  private fun VirtualFile.isScheduledForIndexing(index: VcsLogIndex): Boolean = index.isIndexingEnabled(this) &&
-                                                                                !index.isIndexed(this)
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }

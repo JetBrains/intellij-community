@@ -3,25 +3,31 @@ package com.intellij.util.concurrency
 
 import com.intellij.concurrency.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.progress.timeoutRunBlocking
-import com.intellij.openapi.progress.timeoutWaitUp
+import com.intellij.openapi.application.currentThreadContextModality
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Conditions
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
-import kotlinx.coroutines.suspendCancellableCoroutine
+import com.intellij.util.timeoutRunBlocking
+import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
+import java.lang.Runnable
 import java.lang.reflect.Method
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.assertNull
 
 @TestApplication
 @ExtendWith(ThreadContextPropagationTest.Enabler::class)
@@ -34,7 +40,7 @@ class ThreadContextPropagationTest {
       invocationContext: ReflectiveInvocationContext<Method>,
       extensionContext: ExtensionContext,
     ) {
-      Propagation.runWithContextPropagationEnabled {
+      runWithContextPropagationEnabled {
         invocation.proceed()
       }
     }
@@ -110,14 +116,16 @@ class ThreadContextPropagationTest {
   }
 
   private suspend fun doTest(submit: (() -> Unit) -> Unit) {
-    return suspendCancellableCoroutine { continuation ->
-      val element = TestElement("element")
-      withThreadContext(element) {                                       // install context in calling thread
-        submit {                                                         // switch to another thread
-          val result: Result<Unit> = runCatching {
-            assertSame(element, currentThreadContext()[TestElementKey])  // the same element must be present in another thread context
+    val element = TestElement("element")
+    withContext(element) {
+      suspendCancellableCoroutine { continuation ->
+        blockingContext(continuation.context) {                            // install context in calling thread
+          submit {                                                         // switch to another thread
+            val result: Result<Unit> = runCatching {
+              assertSame(element, currentThreadContext()[TestElementKey])  // the same element must be present in another thread context
+            }
+            continuation.resumeWith(result)
           }
-          continuation.resumeWith(result)
         }
       }
     }
@@ -164,5 +172,47 @@ class ThreadContextPropagationTest {
       future = service.scheduleWithFixedDelay(runOnce, 10, 10, TimeUnit.MILLISECONDS)
       canStart.up()
     }
+  }
+
+  @Test
+  fun `EDT dispatcher does not capture thread context`() = timeoutRunBlocking {
+    blockingContext {
+      launch(Dispatchers.EDT) {
+        assertNull(currentThreadContextOrNull())
+      }
+    }
+  }
+
+  @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
+  @Test
+  fun `Task Modal`(): Unit = timeoutRunBlocking {
+    doTest {
+      object : Task.Modal(null, "", true) {
+        override fun run(indicator: ProgressIndicator) {
+          it()
+        }
+      }.queue()
+    }
+  }
+
+  @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
+  @Test
+  fun `Task Modal receives newly entered modality state in the context`(): Unit = timeoutRunBlocking {
+    val finished = CompletableDeferred<Unit>()
+    withModalProgress(ModalTaskOwner.guess(), "", TaskCancellation.cancellable()) {
+      blockingContext {
+        assertSame(currentThreadContextModality(), ModalityState.defaultModalityState())
+        object : Task.Modal(null, "", true) {
+          override fun run(indicator: ProgressIndicator) {
+            finished.completeWith(runCatching {
+              assertFalse(currentThreadContextModality() == ModalityState.NON_MODAL)
+              assertSame(currentThreadContextModality(), indicator.modalityState)
+              assertSame(currentThreadContextModality(), ModalityState.defaultModalityState())
+            })
+          }
+        }.queue()
+      }
+    }
+    finished.await()
   }
 }

@@ -33,6 +33,11 @@
         "language": "fsharp",
         "path": "./snippets/fsharp.code-snippets"
       }
-    ]
+    ],
+    "configurationDefaults": {
+      "[fsharp]": {
+        "diffEditor.ignoreTrimWhitespace": false
+      }
+    }
   }
 }

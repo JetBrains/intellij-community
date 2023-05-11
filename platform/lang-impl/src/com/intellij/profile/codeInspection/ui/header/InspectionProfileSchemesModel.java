@@ -12,6 +12,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -190,6 +191,7 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
   }
 
   @NotNull
+  @Unmodifiable
   public static List<InspectionProfileImpl> getSortedProfiles(@NotNull InspectionProfileManager appManager,
                                                               @NotNull InspectionProfileManager projectManager) {
     return ContainerUtil.notNullize(ContainerUtil.concat(ContainerUtil.sorted(appManager.getProfiles()),

@@ -88,6 +88,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
         myConnectionTester.testConnection();
       }
     };
+    myRunner.queueChangesCheck();
   }
 
   private static <C extends ServerConfiguration> RemoteServerConfigurable createConfigurable(RemoteServer<C> server, C configuration) {

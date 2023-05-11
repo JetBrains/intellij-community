@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 public inline fun <T, R> with(receiver: T, block: T.() -> R): R = receiver.block()
 
 fun aaGlobalFun(){}

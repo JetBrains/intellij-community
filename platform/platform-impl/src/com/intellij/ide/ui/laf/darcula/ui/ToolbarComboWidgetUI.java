@@ -2,36 +2,48 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ProjectWindowCustomizerService;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class ToolbarComboWidgetUI extends ComponentUI {
+import static com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes.*;
 
-  private static final int ELEMENTS_GAP = 5;
+public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeListener {
   private static final Icon EXPAND_ICON = AllIcons.General.ChevronDown;
   private static final int SEPARATOR_WIDTH = 1;
+  private static final int SEPARATOR_HEIGHT = 20;
   private static final int DEFAULT_MAX_WIDTH = 350;
 
   private final HoverAreaTracker hoverTracker = new HoverAreaTracker();
   private final ClickListener clickListener = new ToolbarComboWidgetClickListener();
   private TextCutStrategy textCutStrategy = new DefaultCutStrategy();
   private int maxWidth;
+
+  private int separatorPosition = 0;
 
   public ToolbarComboWidgetUI() {
     maxWidth = UIManager.getInt("MainToolbar.Dropdown.maxWidth");
@@ -47,6 +59,8 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   public void installUI(JComponent c) {
     ToolbarComboWidget widget = (ToolbarComboWidget)c;
     setUIDefaults(widget);
+    widget.addPropertyChangeListener(this);
+    tryUpdateHtmlRenderer(widget, widget.getText());
     hoverTracker.installTo(widget);
     clickListener.installOn(widget);
   }
@@ -54,16 +68,33 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   @Override
   public void uninstallUI(JComponent c) {
     ToolbarComboWidget widget = (ToolbarComboWidget)c;
+    widget.removePropertyChangeListener(this);
+    tryUpdateHtmlRenderer(widget, "");
     hoverTracker.uninstall();
     clickListener.uninstall(widget);
   }
 
+  @Override
+  public void propertyChange(PropertyChangeEvent evt) {
+    if (Objects.equals(evt.getPropertyName(), "text") || Objects.equals(evt.getPropertyName(), "font")) {
+      ToolbarComboWidget widget = (ToolbarComboWidget)evt.getSource();
+      tryUpdateHtmlRenderer(widget, widget.getText());
+    }
+  }
+
+  private void tryUpdateHtmlRenderer(ToolbarComboWidget widget, String text) {
+    if (widget.getFont() == null && BasicHTML.isHTMLString(text))
+      return;
+    BasicHTML.updateRenderer(widget, text);
+  }
+
   private static void setUIDefaults(ToolbarComboWidget c) {
     c.setForeground(JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground()));
-    c.setBackground(JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.foreground()));
+    c.setBackground(JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.background()));
     c.setHoverBackground(JBColor.namedColor("MainToolbar.Dropdown.hoverBackground", JBColor.background()));
+    c.setTransparentHoverBackground(JBColor.namedColor("MainToolbar.Dropdown.transparentHoverBackground", c.getHoverBackground()));
 
-    Insets insets = UIManager.getInsets("MainToolbar.Dropdown.borderInsets");
+    Insets insets = JBUI.CurrentTheme.MainToolbar.Dropdown.borderInsets();
     JBEmptyBorder border = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
     c.setBorder(border);
   }
@@ -81,31 +112,36 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     Rectangle paintRect = new Rectangle(0, 0, innerArea.width, innerArea.height);
     int maxTextWidth = calcMaxTextWidth(combo, paintRect);
     try {
+      GraphicsUtil.setupAAPainting(g2);
       if (!leftIcons.isEmpty()) {
         Rectangle iconsRect = paintIcons(leftIcons, combo, g2, paintRect, combo.getLeftIconsGap());
-        doClip(paintRect, iconsRect.width + ELEMENTS_GAP);
+        doClip(paintRect, iconsRect.width + getGapAfterLeftIcons());
       }
 
-      String text = combo.getText();
+      String text = getText(combo);
       if (!StringUtil.isEmpty(text) && maxTextWidth > 0) {
         g2.setColor(c.getForeground());
         Rectangle textRect = new Rectangle(paintRect.x, paintRect.y, maxTextWidth, paintRect.height);
         drawText(c, text, g2, textRect);
-        doClip(paintRect, maxTextWidth + ELEMENTS_GAP);
+        doClip(paintRect, maxTextWidth);
       }
 
       if (!rightIcons.isEmpty()) {
+        doClip(paintRect, getGapBeforeRightIcons());
         Rectangle iconsRect = paintIcons(rightIcons, combo, g2, paintRect, combo.getRightIconsGap());
-        doClip(paintRect, iconsRect.width + ELEMENTS_GAP);
+        doClip(paintRect, iconsRect.width);
       }
 
       if (isSeparatorShown(combo)) {
-        g2.setColor(UIManager.getColor("Separator.separatorColor"));
-        g2.fillRect(paintRect.x, paintRect.y, SEPARATOR_WIDTH, paintRect.height);
-        doClip(paintRect, SEPARATOR_WIDTH + ELEMENTS_GAP);
+        doClip(paintRect, getGapBeforeSeparator());
+        g2.setColor(UIManager.getColor("MainToolbar.separatorColor"));
+        g2.fillRect(paintRect.x, ((int)paintRect.getCenterY()) - SEPARATOR_HEIGHT / 2, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
+        separatorPosition = paintRect.x;
+        doClip(paintRect, SEPARATOR_WIDTH);
       }
 
       if (combo.isExpandable()) {
+        doClip(paintRect, getGapBeforeExpandIcon());
         paintIcons(Collections.singletonList(EXPAND_ICON), combo, g2, paintRect, 0); // no gap for single icon
       }
     }
@@ -120,7 +156,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     ToolbarComboWidget widget = (ToolbarComboWidget)c;
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
-    SwingUtilities.layoutCompoundLabel(c, c.getFontMetrics(c.getFont()), widget.getText(), null,
+    SwingUtilities.layoutCompoundLabel(c, c.getFontMetrics(c.getFont()), getText(widget), null,
                                        SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER,
                                        new Rectangle(width, height), iconRect, textRect, 0);
     FontMetrics fm = c.getFontMetrics(c.getFont());
@@ -145,7 +181,8 @@ public class ToolbarComboWidgetUI extends ComponentUI {
       }
 
       Rectangle hoverRect = hoverTracker.getHoverRect();
-      Color hoverBackground = c.getHoverBackground();
+      Color hoverBackground = ProjectWindowCustomizerService.getInstance().isActive()
+                              ? c.getTransparentHoverBackground() : c.getHoverBackground();
       if (hoverRect != null && hoverBackground != null) {
         g2.setColor(hoverBackground);
         g2.fillRect(hoverRect.x, hoverRect.y, hoverRect.width, hoverRect.height);
@@ -162,19 +199,27 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     int baseline = c.getBaseline(textBounds.width, textBounds.height);
     String text = textCutStrategy.calcShownText(fullText, metrics, textBounds.width);
     Rectangle strBounds = metrics.getStringBounds(text, g).getBounds();
-    strBounds.setLocation((int)(textBounds.getCenterX() - strBounds.getCenterX()), baseline);
-    SwingUtilities2.drawString(c, g, text, strBounds.x, strBounds.y);
+    strBounds.setLocation(Math.max(0, (int)(textBounds.getCenterX() - strBounds.getCenterX())), baseline);
+
+    View v = (View)c.getClientProperty(BasicHTML.propertyKey);
+    if (v != null) {
+      strBounds.y -= metrics.getAscent();
+      v.paint(g, strBounds);
+    }
+    else {
+      SwingUtilities2.drawString(c, g, text, strBounds.x, strBounds.y);
+    }
   }
 
   private static int calcMaxTextWidth(ToolbarComboWidget c, Rectangle paintRect) {
     int left = calcIconsWidth(c.getLeftIcons(), c.getLeftIconsGap());
-    if (left > 0) left += ELEMENTS_GAP;
+    if (left > 0) left += getGapAfterLeftIcons();
 
     int right = calcIconsWidth(c.getRightIcons(), c.getRightIconsGap());
-    if (right > 0) right += ELEMENTS_GAP;
+    if (right > 0) right += getGapBeforeRightIcons();
 
-    int separator = isSeparatorShown(c) ? ELEMENTS_GAP + SEPARATOR_WIDTH : 0;
-    int expandButton = c.isExpandable() ? ELEMENTS_GAP + EXPAND_ICON.getIconWidth() : 0;
+    int separator = isSeparatorShown(c) ? getGapBeforeSeparator() + SEPARATOR_WIDTH : 0;
+    int expandButton = c.isExpandable() ? getGapBeforeExpandIcon() + EXPAND_ICON.getIconWidth() : 0;
 
     int otherElementsWidth = left + right + separator + expandButton;
     return paintRect.width - otherElementsWidth;
@@ -219,31 +264,31 @@ public class ToolbarComboWidgetUI extends ComponentUI {
 
     List<Icon> icons = combo.getLeftIcons();
     if (!icons.isEmpty()) {
-      res.width += calcIconsWidth(icons, combo.getLeftIconsGap());
+      res.width += calcIconsWidth(icons, combo.getLeftIconsGap()) + getGapAfterLeftIcons();
       res.height = icons.stream().mapToInt(Icon::getIconHeight).max().orElse(0);
     }
 
     if (!StringUtil.isEmpty(combo.getText())) {
-      if (res.width > 0) res.width += ELEMENTS_GAP;
       FontMetrics metrics = c.getFontMetrics(c.getFont());
-      res.width += metrics.stringWidth(combo.getText());
+      String text = getText(combo);
+      res.width += metrics.stringWidth(text);
       res.height = Math.max(res.height, metrics.getHeight());
     }
 
     icons = combo.getRightIcons();
     if (!icons.isEmpty()) {
-      if (res.width > 0) res.width += ELEMENTS_GAP;
+      if (res.width > 0) res.width += getGapBeforeSeparator();
       res.width += calcIconsWidth(icons, combo.getRightIconsGap());
       res.height = Math.max(res.height, icons.stream().mapToInt(Icon::getIconHeight).max().orElse(0));
     }
 
     if (isSeparatorShown(combo)) {
-      if (res.width > 0) res.width += ELEMENTS_GAP;
-      res.width += SEPARATOR_WIDTH;
+      if (res.width > 0) res.width += getGapBeforeSeparator();
+      res.width += SEPARATOR_WIDTH + getGapBeforeSeparator();
     }
 
     if (combo.isExpandable()) {
-      if (res.width > 0) res.width += ELEMENTS_GAP;
+      if (res.width > 0) res.width += getGapBeforeExpandIcon();
       res.width += EXPAND_ICON.getIconWidth();
       res.height = Math.max(res.height, EXPAND_ICON.getIconHeight());
     }
@@ -254,6 +299,20 @@ public class ToolbarComboWidgetUI extends ComponentUI {
 
     res.width = Integer.min(maxWidth, res.width);
     return res;
+  }
+
+  private @Nls String getText(ToolbarComboWidget widget) {
+    View v = (View)widget.getClientProperty(BasicHTML.propertyKey);
+    if (v != null) {
+      try {
+        @NlsSafe String text = (v.getDocument().getText(0, v.getDocument().getLength())).strip();
+        return text;
+      }
+      catch (BadLocationException ignored) {
+      }
+    }
+
+    return widget.getText();
   }
 
   private static boolean isSeparatorShown(ToolbarComboWidget widget) {
@@ -276,7 +335,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     }
   }
 
-  private static class HoverAreaTracker extends MyMouseTracker {
+  private class HoverAreaTracker extends MyMouseTracker {
 
     private Rectangle hoverRect;
 
@@ -306,9 +365,9 @@ public class ToolbarComboWidgetUI extends ComponentUI {
         return;
       }
 
-      int rightPart = SEPARATOR_WIDTH + ELEMENTS_GAP + EXPAND_ICON.getIconWidth() + comp.getInsets().right;
-      Rectangle right = new Rectangle((int)(compBounds.getMaxX() - rightPart), compBounds.y, rightPart, compBounds.height);
-      Rectangle left = new Rectangle(compBounds.x, compBounds.y, compBounds.width - rightPart + SEPARATOR_WIDTH, compBounds.height);
+      Insets insets = comp.getInsets();
+      Rectangle left = new Rectangle(compBounds.x, compBounds.y, separatorPosition + insets.left + SEPARATOR_WIDTH, compBounds.height);
+      Rectangle right = new Rectangle(separatorPosition + insets.left, compBounds.y, (int)(compBounds.getMaxX() - insets.right - separatorPosition), compBounds.height);
 
       updateHoverRect(left.contains(mousePosition) ? left : right);
     }
@@ -341,7 +400,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
         return true;
       }
 
-      int leftPartWidth = comp.getWidth() - (ELEMENTS_GAP + EXPAND_ICON.getIconWidth() + comp.getInsets().right);
+      int leftPartWidth = comp.getWidth() - (getGapBeforeExpandIcon() + EXPAND_ICON.getIconWidth() + comp.getInsets().right);
       if (e.getPoint().x <= leftPartWidth) {
         notifyPressListeners(e);
         return false;

@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="hash4j" type="repository">
+    <properties maven-id="com.dynatrace.hash4j:hash4j:0.9.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.9.0/hash4j-0.9.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.9.0/hash4j-0.9.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

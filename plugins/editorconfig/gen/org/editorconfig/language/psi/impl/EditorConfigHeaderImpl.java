@@ -28,15 +28,9 @@ public class EditorConfigHeaderImpl extends EditorConfigHeaderBase implements Ed
   }
 
   @Override
-  @NotNull
-  public List<EditorConfigPattern> getPatternList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigPattern.class);
-  }
-
-  @Override
-  @NotNull
-  public List<EditorConfigPatternEnumeration> getPatternEnumerationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigPatternEnumeration.class);
+  @Nullable
+  public EditorConfigPattern getPattern() {
+    return findChildByClass(EditorConfigPattern.class);
   }
 
 }

@@ -17,7 +17,6 @@ import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -67,10 +66,7 @@ public class SearchEverywhereHeader {
     myToolbar = createToolbar(showInFindToolWindowAction);
     header = ExperimentalUI.isNewUI() ? createNewUITabs() : createHeader();
 
-    MessageBusConnection busConnection = myProject != null
-                                         ? myProject.getMessageBus().connect(ui)
-                                         : ApplicationManager.getApplication().getMessageBus().connect(ui);
-    busConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(ui).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
         if (action == mySelectedTab.everywhereAction && event.getInputEvent() != null) {
@@ -266,7 +262,9 @@ public class SearchEverywhereHeader {
   }
 
   public void resetScope() {
-    ObjectUtils.consumeIfNotNull(mySelectedTab.everywhereAction, action -> action.setEverywhere(true));
+    if (mySelectedTab.everywhereAction != null) {
+      mySelectedTab.everywhereAction.setEverywhere(true);
+    }
   }
 
   public boolean isEverywhere() {

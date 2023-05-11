@@ -4,8 +4,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.ide.actions.searcheverywhere.ml.*
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereFoundElementInfoWithMl
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlServiceImpl
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContributorFeaturesProvider
 import com.intellij.ide.scratch.ScratchFileCreationHelper
 import com.intellij.ide.scratch.ScratchFileService
@@ -27,6 +28,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     private const val SEARCH_STATE_FEATURES_KEY = "searchStateFeatures"
     private const val CONTRIBUTORS_KEY = "contributors"
     private const val FOUND_ELEMENTS_KEY = "foundElements"
+    private const val RANKING_DIFFS_KEY = "rankingDiffs"
   }
 
   override fun update(e: AnActionEvent) {
@@ -39,7 +41,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
 
   private fun shouldActionBeEnabled(e: AnActionEvent): Boolean {
     val seManager = SearchEverywhereManager.getInstance(e.project)
-    val session = SearchEverywhereMlSessionService.getService()?.getCurrentSession()
+    val session = SearchEverywhereMlServiceImpl.getService()?.getCurrentSession()
 
     return e.project != null
            && seManager.isShown
@@ -59,11 +61,13 @@ class OpenFeaturesInScratchFileAction : AnAction() {
   }
 
   private fun getFeaturesReport(searchEverywhereUI: SearchEverywhereUI): Map<String, Any> {
-    val mlSessionService = SearchEverywhereMlSessionService.getService() ?: return emptyMap()
+    val mlSessionService = SearchEverywhereMlServiceImpl.getService() ?: return emptyMap()
     val searchSession = mlSessionService.getCurrentSession()!!
     val state = searchSession.getCurrentSearchState()!!
 
-    val features = searchEverywhereUI.foundElementsInfo
+    val foundElementsInfo = searchEverywhereUI.foundElementsInfo.sortedByDescending { it.priority }
+
+    val features = foundElementsInfo
       .map { SearchEverywhereFoundElementInfoWithMl.from(it) }
       .map { info ->
         val rankingWeight = info.priority
@@ -83,16 +87,20 @@ class OpenFeaturesInScratchFileAction : AnAction() {
         )
       }
 
-    val contributors = searchEverywhereUI.foundElementsInfo.map { info -> info.contributor }.toHashSet()
+    val contributors = foundElementsInfo.map { info -> info.contributor }.toHashSet()
     val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
-    val contributorFeatures = contributors.map { contributorFeaturesProvider.getFeatures(it, searchSession.mixedListInfo)}
+    val contributorFeatures = contributors.map { contributorFeaturesProvider.getFeatures(it, searchSession.mixedListInfo) }
+
+    val diffInfos = if (state.orderByMl) SearchEverywhereRankingDiffCalculator.getRankingDiffInfos(foundElementsInfo) else emptyList()
+
     return mapOf(
       SHOULD_ORDER_BY_ML_KEY to state.orderByMl,
       EXPERIMENT_GROUP_KEY to mlSessionService.experiment.experimentGroup,
       CONTEXT_INFO_KEY to searchSession.cachedContextInfo.features.associate { it.field.name to it.data },
       SEARCH_STATE_FEATURES_KEY to state.searchStateFeatures.associate { it.field.name to it.data },
       CONTRIBUTORS_KEY to contributorFeatures.map { c -> c.associate { it.field.name to it.data }.toSortedMap() },
-      FOUND_ELEMENTS_KEY to features
+      FOUND_ELEMENTS_KEY to features,
+      RANKING_DIFFS_KEY to diffInfos
     )
   }
 

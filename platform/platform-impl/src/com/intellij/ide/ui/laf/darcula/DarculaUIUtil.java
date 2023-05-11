@@ -142,6 +142,11 @@ public final class DarculaUIUtil {
   @SuppressWarnings("SuspiciousNameCombination")
   public static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
     float bw = UIUtil.isUnderDefaultMacTheme() ? JBUIScale.scale(3) : BW.getFloat();
+    doPaint(g, width, height, arc, bw, symmetric);
+  }
+
+  @SuppressWarnings("SuspiciousNameCombination")
+  public static void doPaint(Graphics2D g, int width, int height, float arc, float bw, boolean symmetric) {
     float f = UIUtil.isRetina(g) ? 0.5f : 1.0f;
     float lw = UIUtil.isUnderDefaultMacTheme() ? JBUIScale.scale(f) : LW.getFloat();
 

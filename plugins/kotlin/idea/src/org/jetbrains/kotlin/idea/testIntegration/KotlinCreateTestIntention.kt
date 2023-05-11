@@ -11,6 +11,7 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.Messages
@@ -25,17 +26,19 @@ import com.intellij.testIntegration.createTest.TestGenerators
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.runWhenSmart
 import org.jetbrains.kotlin.idea.base.util.runWithAlternativeResolveEnabled
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.j2k.j2k
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.publicByDefault
+import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
@@ -47,7 +50,8 @@ class KotlinCreateTestIntention : SelfTargetingRangeIntention<KtNamedDeclaration
 ) {
     override fun applicabilityRange(element: KtNamedDeclaration): TextRange? {
         if (element.hasExpectModifier() || element.nameIdentifier == null) return null
-        if (ModuleUtilCore.findModuleForPsiElement(element) == null) return null
+        val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return null
+        if (module.platform.isJs() && !AdvancedSettings.getBoolean("kotlin.mpp.experimental")) return null
 
         if (element is KtClassOrObject) {
             if (element.isLocal) return null

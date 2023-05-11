@@ -4,11 +4,9 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.util.CompressionUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.DigestUtil;
-import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.io.storage.IStorageDataOutput;
 import com.intellij.util.io.storage.RefCountingContentStorage;
 import org.jetbrains.annotations.NotNull;
@@ -39,9 +37,9 @@ public final class PersistentFSContentAccessor {
 
   @Nullable
   DataInputStream readContent(int fileId) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(fileId);
     myLock.readLock().lock();
     try {
-      PersistentFSConnection.ensureIdIsValid(fileId);
       int page = myFSConnection.getRecords().getContentRecordId(fileId);
       if (page == 0) return null;
       return readContentDirectly(page);
@@ -92,10 +90,10 @@ public final class PersistentFSContentAccessor {
   }
 
   boolean writeContent(int fileId, @NotNull ByteArraySequence bytes, boolean fixedSize) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(fileId);
     myLock.writeLock().lock();
     try {
       PersistentFSConnection connection = myFSConnection;
-      PersistentFSConnection.ensureIdIsValid(fileId);
 
       boolean modified;
       RefCountingContentStorage contentStorage = connection.getContents();

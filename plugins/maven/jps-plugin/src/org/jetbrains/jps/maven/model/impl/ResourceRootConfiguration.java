@@ -44,4 +44,15 @@ public final class ResourceRootConfiguration extends FilePattern {
     //result = 31 * result + excludes.hashCode();
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "ResourceRootConfiguration{" +
+           "directory='" + directory + '\'' +
+           ", targetPath='" + targetPath + '\'' +
+           ", isFiltered=" + isFiltered +
+           ", includes=" + includes +
+           ", excludes=" + excludes +
+           '}';
+  }
 }

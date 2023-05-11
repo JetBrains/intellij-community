@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
@@ -35,6 +36,7 @@ import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.repository.*
+import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.applyHelperPackageToPythonPath
 import com.jetbrains.python.run.buildTargetedCommandLine
@@ -72,6 +74,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
   }
 
   suspend fun detailsForPackage(selectedPackage: DisplayablePackage): PythonPackageDetails {
+    PythonPackagesToolwindowStatisticsCollector.requestDetailsEvent.log(project)
     val spec = selectedPackage.repository.createPackageSpecification(selectedPackage.name)
     return manager.repositoryManager.getPackageDetails(spec)
   }
@@ -106,11 +109,13 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
   }
 
   suspend fun installPackage(specification: PythonPackageSpecification) {
+    PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
     val result = manager.installPackage(specification)
     if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.installed", specification.name))
   }
 
   suspend fun deletePackage(selectedPackage: InstalledPackage) {
+    PythonPackagesToolwindowStatisticsCollector.uninstallPackageEvent.log(project)
     val result = manager.uninstallPackage(selectedPackage.instance)
     if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.deleted", selectedPackage.name))
   }
@@ -209,7 +214,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
   suspend fun convertToHTML(contentType: String?, description: String): String {
     return withContext(Dispatchers.IO) {
       when (contentType) {
-        "text/markdown" -> markdownToHtml(description, currentSdk!!.homeDirectory!!, project)
+        "text/markdown" -> markdownToHtml(description, ProjectRootManager.getInstance(project).contentRoots.first(), project)
         "text/x-rst", "" -> rstToHtml(description, currentSdk!!)
         else -> description
       }
@@ -289,6 +294,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
   fun manageRepositories() {
     val updated = SingleConfigurableEditor(project, PyRepositoriesList(project)).showAndGet()
     if (updated) {
+      PythonPackagesToolwindowStatisticsCollector.repositoriesChangedEvent.log(project)
       serviceScope.launch(Dispatchers.IO) {
         val packageService = PyPackageService.getInstance()
         val repositoryService = service<PyPackageRepositories>()

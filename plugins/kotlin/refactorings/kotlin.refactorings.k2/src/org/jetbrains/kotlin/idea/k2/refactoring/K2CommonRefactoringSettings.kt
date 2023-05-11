@@ -28,4 +28,19 @@ internal class K2CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
 
     override var RENAME_SEARCH_FOR_TEXT_FOR_PROPERTY: Boolean
             by delegateTo { it::RENAME_SEARCH_IN_COMMENTS_FOR_PROPERTY }
+
+    override var MOVE_PREVIEW_USAGES: Boolean
+            by delegateTo { it::MOVE_PREVIEW_USAGES }
+
+    override var MOVE_SEARCH_IN_COMMENTS: Boolean
+            by delegateTo { it::MOVE_SEARCH_IN_COMMENTS }
+
+    override var MOVE_SEARCH_FOR_TEXT: Boolean
+            by delegateTo { it::MOVE_SEARCH_FOR_TEXT }
+
+    override var MOVE_DELETE_EMPTY_SOURCE_FILES: Boolean
+            by delegateTo { it::MOVE_DELETE_EMPTY_SOURCE_FILES }
+
+    override var MOVE_MPP_DECLARATIONS: Boolean
+            by delegateTo { it::MOVE_MPP_DECLARATIONS }
 }
