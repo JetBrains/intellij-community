@@ -12,6 +12,7 @@ import com.intellij.tracing.Tracer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.StorageLockContext;
 import io.netty.channel.Channel;
@@ -481,28 +482,26 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     for (String changed : event.getChangedPathsList()) {
       final File file = new File(changed);
-      Collection<BuildRootDescriptor> descriptors = buildRootIndex.findAllParentDescriptors(file, null, null);
+      Collection<BuildRootDescriptor> descriptors = ContainerUtil.filter(
+        // ignore generates sources as they are processed at the time of generation
+        buildRootIndex.findAllParentDescriptors(file, null, null), d -> !d.isGenerated()
+      );
       if (!descriptors.isEmpty()) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Applying dirty path from fs event: " + changed);
-        }
         for (BuildRootDescriptor descriptor : descriptors) {
-          if (!descriptor.isGenerated()) { // ignore generates sources as they are processed at the time of generation
-            FSOperations.traverseRecursively(buildRootIndex, descriptor, file, (f, attrs) -> {
-              StampsStorage.Stamp stamp = stampsStorage.getPreviousStamp(f, descriptor.getTarget());
-              if (attrs != null? stampsStorage.isDirtyStamp(stamp, f, attrs) : stampsStorage.isDirtyStamp(stamp, f)) {
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug("Applying dirty path from fs event: " + f.getPath());
-                }
-                pd.fsState.markDirty(null, f, descriptor, stampsStorage, saveEventStamp);
+          FSOperations.traverseRecursively(buildRootIndex, descriptor, file, (f, attrs) -> {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Applying dirty path from fs event: " + f.getPath());
+            }
+            StampsStorage.Stamp stamp = stampsStorage.getPreviousStamp(f, descriptor.getTarget());
+            if (attrs != null? stampsStorage.isDirtyStamp(stamp, f, attrs) : stampsStorage.isDirtyStamp(stamp, f)) {
+              pd.fsState.markDirty(null, f, descriptor, stampsStorage, saveEventStamp);
+            }
+            else {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug(descriptor.getTarget() + ": Path considered up-to-date: " + f.getPath() + "; stamp= " + stamp);
               }
-              else {
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug(descriptor.getTarget() + ": Path considered up-to-date: " + f.getPath() + "; stamp= " + stamp);
-                }
-              }
-            });
-          }
+            }
+          });
         }
       }
       else {
