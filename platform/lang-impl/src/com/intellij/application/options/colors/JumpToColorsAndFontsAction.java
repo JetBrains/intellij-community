@@ -29,6 +29,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -155,15 +156,26 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
     }
   }
 
+  /**
+   * Includes attributes at selection start, doesn't include at end.
+   */
   @VisibleForTesting
   public static @NotNull List<TextAttributesKey> getTextAttributesKeys(@NotNull Project project, @NotNull Editor editor) {
     List<TextAttributesKey> keys = new ArrayList<>();
+    Ref<TextRange> selectionRef = new Ref<>();
+    Ref<Boolean> hasEraseMarkerRef = new Ref<>();
     Processor<RangeHighlighterEx> processor = r -> {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(r);
-      TextAttributesKey key = info != null
+      boolean relevant =
+        selectionRef.get().getStartOffset() < r.getEndOffset() &&
+        (selectionRef.get().getLength() == 0 || r.getStartOffset() < selectionRef.get().getEndOffset());
+      TextAttributesKey key = info != null && relevant
                               ? ObjectUtils.chooseNotNull(info.forcedTextAttributesKey, info.type.getAttributesKey())
                               : null;
-      if (key != null) {
+      if (r.getForcedTextAttributes() == TextAttributes.ERASE_MARKER) {
+        hasEraseMarkerRef.set(true);
+      }
+      else if (key != null) {
         keys.add(key);
       }
       return true;
@@ -172,6 +184,8 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
       editor);
     for (Editor ed : editors) {
       TextRange selection = EditorUtil.getSelectionInAnyMode(ed);
+      selectionRef.set(selection);
+      hasEraseMarkerRef.set(false);
       MarkupModel forDocument = DocumentMarkupModel.forDocument(ed.getDocument(), project, false);
       if (forDocument != null) {
         ((MarkupModelEx)forDocument).processRangeHighlightersOverlappingWith(selection.getStartOffset(), selection.getEndOffset(), processor);
@@ -179,7 +193,7 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
       ((MarkupModelEx)ed.getMarkupModel()).processRangeHighlightersOverlappingWith(selection.getStartOffset(), selection.getEndOffset(), processor);
       EditorHighlighter highlighter = editor.getHighlighter();
       SyntaxHighlighter syntaxHighlighter = highlighter instanceof LexerEditorHighlighter ? ((LexerEditorHighlighter)highlighter).getSyntaxHighlighter() : null;
-      if (syntaxHighlighter != null) {
+      if (syntaxHighlighter != null && !hasEraseMarkerRef.get()) {
         HighlighterIterator iterator = highlighter.createIterator(selection.getStartOffset());
         while (!iterator.atEnd()) {
           for (TextAttributesKey key : syntaxHighlighter.getTokenHighlights(iterator.getTokenType())) {
