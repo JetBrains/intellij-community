@@ -39,6 +39,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     private val KtExpression.parentValueArgument: ValueArgument?
         get() = parents.firstOrNull { it is ValueArgument } as? ValueArgument
 
+    fun isSupportedElement(psiElement: PsiElement): Boolean
+
     override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
         return ktElement.toLightAnnotation()
     }
