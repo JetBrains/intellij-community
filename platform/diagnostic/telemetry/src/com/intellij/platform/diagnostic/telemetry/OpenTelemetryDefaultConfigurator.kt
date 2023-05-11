@@ -39,9 +39,9 @@ open class OpenTelemetryDefaultConfigurator(protected val mainScope: CoroutineSc
   val aggregatedMetricsExporter = AggregatedMetricsExporter()
   val aggregatedSpansProcessor = AggregatedSpansProcessor(mainScope)
   protected val spanExporters = mutableListOf<AsyncSpanExporter>()
-  protected val metricsExporters = mutableListOf<MetricsExporterEntry>()
+  private val metricsExporters = mutableListOf<MetricsExporterEntry>()
 
-  protected fun isMetricsEnabled(): Boolean {
+  private fun isMetricsEnabled(): Boolean {
     return metricsReportingPath != null
   }
 
@@ -86,7 +86,7 @@ open class OpenTelemetryDefaultConfigurator(protected val mainScope: CoroutineSc
         duration = Duration.ofMinutes(1))
     )
 
-    metricsExporters.add(MetricsExporterEntry(listOf(aggregatedMetricsExporter), Duration.ofSeconds(1)))
+    metricsExporters.add(MetricsExporterEntry(listOf(aggregatedMetricsExporter), Duration.ofMinutes(1)))
 
     return metricsExporters
   }
@@ -94,22 +94,6 @@ open class OpenTelemetryDefaultConfigurator(protected val mainScope: CoroutineSc
   open fun configureSpanExporters(): List<AsyncSpanExporter> = getDefaultSpanExporters()
 
   open fun configureMetricsExporter(): List<MetricsExporterEntry> = getDefaultMetricsExporters()
-
-  fun addMetricsExporters(extraMetricsExporters: List<MetricsExporterEntry>) {
-    if (extraMetricsExporters.isEmpty()) return
-    for (exporter in extraMetricsExporters) {
-      if (!metricsExporters.contains(exporter)) metricsExporters.add(exporter)
-    }
-    registerMetricsExporter()
-  }
-
-  fun addSpanExporters(extraSpanExporters: List<AsyncSpanExporter>) {
-    if (extraSpanExporters.isEmpty()) return
-    for (exporter in extraSpanExporters) {
-      if (!spanExporters.contains(exporter)) spanExporters.add(exporter)
-    }
-    registerSpanExporters()
-  }
 
   fun getConfiguredSdkBuilder(): OpenTelemetrySdkBuilder {
     val metricsEnabled = isMetricsEnabled()
