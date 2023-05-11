@@ -1142,6 +1142,12 @@ public final class UIUtil {
     );
   }
 
+  /**
+   * @param c1
+   * @param c2
+   * @param factor impact of color specified in @param c2
+   * @return Mixed color
+   */
   public static @NotNull Color mix(@NotNull Color c1, final Color c2, final double factor) {
     assert 0 <= factor && factor <= 1.0 : factor;
     final double backFactor = 1.0 - factor;
