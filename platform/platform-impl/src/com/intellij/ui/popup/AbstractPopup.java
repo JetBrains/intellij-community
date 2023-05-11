@@ -267,7 +267,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
                                  PopupBorder.Factory.createEmpty();
     myPopupBorder.setPopupUsed();
     myShadowed = showShadow;
-    if (showBorder && SystemInfo.isMac) {
+    if (showBorder) {
       myPopupBorderColor = borderColor == null ? JBUI.CurrentTheme.Popup.borderColor(true) : borderColor;
     }
     myContent = createContentPanel(resizable, myPopupBorder, false);
@@ -961,7 +961,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       if (cornerType != PopupCornerType.None) {
         if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
           roundedCornerParams = new Object[]{cornerType,
-            SystemInfoRt.isWindows ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor};
+            myPopupBorderColor == null ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor};
           // must set the border before calculating size below
           myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
         }
