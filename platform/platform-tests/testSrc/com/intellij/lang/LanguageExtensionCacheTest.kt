@@ -20,8 +20,11 @@ import com.intellij.testFramework.registerExtension
 import com.intellij.util.KeyedLazyInstance
 
 class LanguageExtensionCacheTest : LightPlatformTestCase() {
+  @Suppress("UnresolvedPluginConfigReference")
   private val myExtensionPointName = ExtensionPointName<KeyedLazyInstance<String>>("testLangExt")
+  @Suppress("UnresolvedPluginConfigReference")
   private val myCompletionExtensionPointName = ExtensionPointName<KeyedLazyInstance<String>>("testCompletionExt")
+
   private val myExtensionPointXML = """
       <extensionPoint qualifiedName="$myExtensionPointName" beanClass="com.intellij.lang.LanguageExtensionPoint">
         <with attribute="implementationClass" implements="java.lang.String"/>
