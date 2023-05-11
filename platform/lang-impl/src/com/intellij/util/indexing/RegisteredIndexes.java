@@ -45,6 +45,8 @@ public final class RegisteredIndexes {
 
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
 
+  private volatile RequiredIndexesEvaluator myRequiredIndexesEvaluator;
+
   RegisteredIndexes(@NotNull FileDocumentManager fileDocumentManager,
                     @NotNull FileBasedIndexImpl fileBasedIndex) {
     myFileDocumentManager = fileDocumentManager;
@@ -95,6 +97,7 @@ public final class RegisteredIndexes {
 
   void markInitialized() {
     myInitialized = true;
+    myRequiredIndexesEvaluator = new RequiredIndexesEvaluator(this);
   }
 
   void ensureLoadedIndexesUpToDate() {
@@ -178,5 +181,10 @@ public final class RegisteredIndexes {
     void doProcess(Document document, Project project) {
       myFileBasedIndex.indexUnsavedDocument(document, myIndexId, project, myFileDocumentManager.getFile(document));
     }
+  }
+
+  @NotNull
+  List<ID<?, ?>> getRequiredIndexes(@NotNull IndexedFile indexedFile) {
+    return myRequiredIndexesEvaluator.getRequiredIndexes(indexedFile);
   }
 }

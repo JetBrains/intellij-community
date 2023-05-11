@@ -130,7 +130,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
 
   private volatile RegisteredIndexes myRegisteredIndexes;
-  private volatile RequiredIndexesEvaluator myRequiredIndexesEvaluator;
   private volatile @Nullable String myShutdownReason;
 
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
@@ -171,7 +170,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     LOG.assertTrue(myTransactionMap.isEmpty());
 
     myRegisteredIndexes = null;
-    myRequiredIndexesEvaluator = null;
   }
 
   public FileBasedIndexImpl() {
@@ -434,7 +432,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       LOG.assertTrue(myRegisteredIndexes == null);
       myStorageBufferingHandler.resetState();
       myRegisteredIndexes = new RegisteredIndexes(myFileDocumentManager, this);
-      myRequiredIndexesEvaluator = new RequiredIndexesEvaluator(myRegisteredIndexes);
       myShutdownReason = null;
     }
   }
@@ -1521,7 +1518,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       // 2. pushers that do synchronous indexing for contentless indices
       waitUntilIndicesAreInitialized();
     }
-    return myRequiredIndexesEvaluator.getRequiredIndexes(indexedFile);
+    return myRegisteredIndexes.getRequiredIndexes(indexedFile);
   }
 
   private static void cleanFileContent(FileContentImpl fc, PsiFile psiFile) {
