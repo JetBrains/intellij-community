@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
 import com.intellij.collaboration.async.mapCaching
+import com.intellij.collaboration.async.mapFiltered
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
@@ -115,7 +116,8 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
         miles.map(GitLabMergeRequestTimelineItem::MilestoneEvent)
       }
 
-    return combine(simpleEvents, mr.systemNotes, mr.discussions, mr.standaloneDraftNotes) { events, systemNotes, discussions, draftNotes ->
+    val standaloneDraftNotes = mr.draftNotes.mapFiltered { it.discussionId == null }
+    return combine(simpleEvents, mr.systemNotes, mr.discussions, standaloneDraftNotes) { events, systemNotes, discussions, draftNotes ->
       (events +
        systemNotes.map { GitLabMergeRequestTimelineItem.SystemNote(it) } +
        discussions.map(GitLabMergeRequestTimelineItem::UserDiscussion)

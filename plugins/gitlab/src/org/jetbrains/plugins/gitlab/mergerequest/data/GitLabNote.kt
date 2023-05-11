@@ -43,6 +43,7 @@ interface GitLabMergeRequestNote : GitLabNote {
 }
 
 interface GitLabMergeRequestDraftNote : GitLabMergeRequestNote, MutableGitLabNote {
+  val discussionId: String?
   override val createdAt: Date? get() = null
   override val canAdmin: Boolean get() = true
   override val resolved: StateFlow<Boolean> get() = MutableStateFlow(false)
@@ -130,6 +131,7 @@ class GitLabMergeRequestDraftNoteImpl(
   private val operationsGuard = Mutex()
 
   override val id: String = noteData.id.toString()
+  override val discussionId: String? = noteData.discussionId
 
   private val data = MutableStateFlow(noteData)
   override val body: StateFlow<String> = data.mapState(cs, GitLabMergeRequestDraftNoteRestDTO::note)

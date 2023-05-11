@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.collaboration.async.mapCaching
+import com.intellij.collaboration.async.mapFiltered
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
@@ -55,7 +56,7 @@ internal class GitLabMergeRequestDiffChangeViewModelImpl(
       GitLabMergeRequestDiffDiscussionViewModelImpl::destroy
     ).modelFlow(cs, LOG)
 
-  override val draftDiscussions: DiscussionsFlow = mergeRequest.standaloneDraftNotes
+  override val draftDiscussions: DiscussionsFlow = mergeRequest.draftNotes.mapFiltered { it.discussionId == null }
     .mapCaching(
       GitLabNote::id,
       { cs, note -> GitLabMergeRequestDiffDraftDiscussionViewModel(cs, diffData, note) },

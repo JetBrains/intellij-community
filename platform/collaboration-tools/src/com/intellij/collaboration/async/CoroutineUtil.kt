@@ -240,3 +240,5 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.mapCachingIndexed(sourceIdentifier: (T) -
                                                          destroy: suspend R.() -> Unit,
                                                          update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> =
   associateIndexedBy(sourceIdentifier, mapper, destroy, update).map { it.values.toList() }
+
+fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }

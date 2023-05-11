@@ -5,6 +5,7 @@ import com.intellij.collaboration.api.data.GraphQLRequestPagination
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapCaching
+import com.intellij.collaboration.async.mapFiltered
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
@@ -27,7 +28,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 interface GitLabMergeRequestDiscussionsContainer {
   val discussions: Flow<Collection<GitLabMergeRequestDiscussion>>
   val systemNotes: Flow<Collection<GitLabNote>>
-  val standaloneDraftNotes: Flow<Collection<GitLabMergeRequestDraftNote>>
+  val draftNotes: Flow<Collection<GitLabMergeRequestDraftNote>>
 
   val canAddNotes: Boolean
 
@@ -204,10 +205,8 @@ class GitLabMergeRequestDiscussionsContainerImpl(
     }
   }
 
-  override val standaloneDraftNotes: Flow<Collection<GitLabMergeRequestDraftNote>> =
-    draftNotesData.mapFiltered {
-      it.note.discussionId == null
-    }.mapCaching(
+  override val draftNotes: Flow<Collection<GitLabMergeRequestDraftNote>> =
+    draftNotesData.mapCaching(
       { it.note.id },
       { cs, (note, author) -> GitLabMergeRequestDraftNoteImpl(cs, api, project, mr, draftNotesEvents::emit, note, author) },
       GitLabMergeRequestDraftNoteImpl::destroy,
@@ -217,13 +216,10 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   private data class DraftNoteWithAuthor(val note: GitLabMergeRequestDraftNoteRestDTO, val author: GitLabUserDTO)
 
   private fun getDiscussionDraftNotes(discussionGid: String): Flow<List<GitLabMergeRequestDraftNote>> =
-    draftNotesData.mapFiltered {
-      it.note.discussionId != null && discussionGid.endsWith(it.note.discussionId)
-    }.mapCaching(
-      { it.note.id },
-      { cs, (note, author) -> GitLabMergeRequestDraftNoteImpl(cs, api, project, mr, draftNotesEvents::emit, note, author) },
-      GitLabMergeRequestDraftNoteImpl::destroy
-    )
+    draftNotes.mapFiltered {
+      val discussionId = it.discussionId
+      discussionId != null && discussionGid.endsWith(discussionId)
+    }
 
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
@@ -248,8 +244,6 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       }
     }
   }
-
-  private fun <T> Flow<List<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }
 
   fun requestReload() {
     cs.launch {
