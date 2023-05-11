@@ -134,6 +134,7 @@ private suspend fun doInitApplication(rawArgs: List<String>,
                           initAppActivity = initAppActivity,
                           pluginSet = pluginSet,
                           app = app,
+                          asyncScope = this,
                           deferredStarter = deferredStarter)
     }
   }
@@ -143,11 +144,12 @@ private suspend fun initApplicationImpl(args: List<String>,
                                         initAppActivity: Activity,
                                         pluginSet: PluginSet,
                                         app: ApplicationImpl,
+                                        asyncScope: CoroutineScope,
                                         deferredStarter: Deferred<ApplicationStarter>) {
   val appInitializedListeners = coroutineScope {
     preloadCriticalServices(app)
 
-    app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this, asyncScope = app.coroutineScope)
+    app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this, asyncScope = asyncScope)
 
     launch {
       initAppActivity.runChild("old component init task creating", app::createInitOldComponentsTask)?.let { loadComponentInEdtTask ->
@@ -160,20 +162,17 @@ private suspend fun initApplicationImpl(args: List<String>,
       StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
     }
 
-    subtask("app init listener preload", Dispatchers.IO) {
+    subtask("app init listener preload") {
       getAppInitializedListeners(app)
     }
   }
 
-  val asyncScope = app.coroutineScope
-  coroutineScope {
-    initAppActivity.runChild("app initialized callback") {
-      callAppInitialized(appInitializedListeners, asyncScope)
-    }
-
-    // doesn't block app start-up
-    asyncScope.runPostAppInitTasks(app)
+  subtask("app initialized callback") {
+    callAppInitialized(appInitializedListeners, asyncScope)
   }
+
+  // doesn't block app start-up
+  asyncScope.runPostAppInitTasks(app)
 
   initAppActivity.end()
 
@@ -231,10 +230,12 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
   }
 }
 
-fun getAppInitializedListeners(app: Application): List<ApplicationInitializedListener> {
+suspend fun getAppInitializedListeners(app: Application): List<ApplicationInitializedListener> {
   val extensionArea = app.extensionArea as ExtensionsAreaImpl
   val point = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
-  val result = point.extensionList
+  val result = withContext(Dispatchers.IO) {
+    point.extensionList
+  }
   point.reset()
   return result
 }
