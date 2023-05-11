@@ -1,0 +1,51 @@
+<html>
+<body>
+Reports suspicious return expressions, which return the <code>byte</code> type from the <code>InputStream.read()</code> method.
+<p>
+  This is suspicious because it is expected that <code>InputStream.read()</code> returns the range from 0 to 255.
+  At the same time, byte contains numbers from -128 to 127.
+  A quickfix converts a return value into an unsigned byte, applying the bitmask <code>0xFF</code>.
+</p>
+<p><b>Example:</b></p>
+<pre><code lang="java">
+class MyInputStream extends InputStream {
+  int pos = 0;
+  byte[] data;
+
+  MyInputStream(byte[] input) {
+    data = input;
+  }
+
+  @Override
+  public int read() {
+    if (pos == data.length) {
+      return -1;
+    }
+    return data[pos++]; // it will be reported
+  }
+}
+</code></pre>
+<p>After applying the quick-fix:</p>
+<pre><code>
+class MyInputStream extends InputStream {
+  int pos = 0;
+  byte[] data;
+
+  MyInputStream(byte[] input) {
+    data = input;
+  }
+
+  @Override
+  public int read() {
+    if (pos == data.length) {
+      return -1;
+    }
+    return data[pos++] & 0xFF;
+  }
+}
+</code></pre>
+
+<!-- tooltip end -->
+<p><small>New in 2023.2</small></p>
+</body>
+</html>

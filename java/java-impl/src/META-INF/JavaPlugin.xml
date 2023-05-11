@@ -1889,6 +1889,11 @@
                      groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.refactoring.extractMethod.ExtractMethodRecommenderInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousReturnByteInputStream"
+                     key="inspection.suspicious.return.byte.input.stream.name" bundle="messages.JavaBundle"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.SuspiciousReturnByteInputStreamInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantLabeledSwitchRuleCodeBlock"
                      key="inspection.labeled.switch.rule.redundant.code.block.display.name" bundle="messages.JavaBundle"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
