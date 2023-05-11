@@ -628,10 +628,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
     RunnerLayoutUiImpl ui = getRunnerLayoutUi(descriptor);
     if (ui != null) {
-      if (UIExperiment.isNewDebuggerUIEnabled()) {
-        ui.setTopLeftActionsVisible(visible);
-      }
-      else {
+      if (!UIExperiment.isNewDebuggerUIEnabled()) {
         ui.setLeftToolbarVisible(visible);
       }
       ui.setContentToolbarBefore(visible);

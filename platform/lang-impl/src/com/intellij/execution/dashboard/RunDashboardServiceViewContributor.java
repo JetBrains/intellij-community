@@ -7,6 +7,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.dashboard.actions.ExecutorAction;
 import com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule.FolderDashboardGroup;
 import com.intellij.execution.dashboard.tree.GroupingNode;
 import com.intellij.execution.dashboard.tree.RunConfigurationNode;
@@ -158,7 +159,7 @@ public final class RunDashboardServiceViewContributor
         if (action instanceof MoreActionGroup) {
           actionGroup.add(getServicesMoreActionGroup((MoreActionGroup)action, descriptor));
         }
-        else if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction)) {
+        else if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction) && !(action instanceof ExecutorAction)) {
           actionGroup.add(action);
         }
       }

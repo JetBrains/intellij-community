@@ -1481,9 +1481,17 @@
 
     <group id="RunDashboardContentToolbar">
       <!--suppress PluginXmlValidity -->
-      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" icon="AllIcons.Actions.Execute" use-shortcut-of="RunClass"/>
+      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" icon="AllIcons.Actions.Execute" use-shortcut-of="RunClass">
+        <add-to-group anchor="first" group-id="RunTab.TopToolbar"/>
+        <add-to-group anchor="first" group-id="RunTab.TopToolbar.Old"/>
+        <add-to-group anchor="first" group-id="XDebugger.ToolWindow.TopToolbar3"/>
+      </action>
       <!--suppress PluginXmlValidity -->
-      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass"/>
+      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass">
+        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar"/>
+        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar.Old"/>
+        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="XDebugger.ToolWindow.TopToolbar3"/>
+      </action>
       <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction" icon="AllIcons.Actions.Suspend"
               use-shortcut-of="Stop"/>
     </group>
