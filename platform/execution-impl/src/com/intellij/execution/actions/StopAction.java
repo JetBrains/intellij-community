@@ -22,6 +22,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -273,7 +274,7 @@ public class StopAction extends DumbAwareAction {
   @ApiStatus.Internal
   public static @NotNull List<RunContentDescriptor> getActiveStoppableDescriptors(@Nullable Project project) {
     List<RunContentDescriptor> runningProcesses = project != null ?
-                                                  getStoppableDescriptors(project).stream().map(kotlin.Pair::getFirst).toList() :
+                                                  ContainerUtil.map(getStoppableDescriptors(project), kotlin.Pair::getFirst) :
                                                   Collections.emptyList();
     if (runningProcesses.isEmpty()) {
       return Collections.emptyList();
