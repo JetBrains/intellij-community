@@ -334,7 +334,7 @@ public class DirectoryChooser extends DialogWrapper {
     private final String myPostfix;
     private final Icon myIcon;
 
-    private String myRelativeToProjectPath = null;
+    private final String myRelativeToProjectPath;
 
     /**
      * Can be created outside BG thread.
