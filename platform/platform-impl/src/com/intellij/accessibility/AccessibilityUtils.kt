@@ -8,14 +8,19 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.Foundation.NSAutoreleasePool
 import com.intellij.ui.mac.foundation.ID
 import com.intellij.util.User32Ex
 import com.sun.jna.platform.win32.WinDef
+import javax.accessibility.AccessibleRole
 
 object AccessibilityUtils {
+  @JvmField
+  val GROUPED_ELEMENTS: AccessibleRole = if (SystemInfo.isMac) AccessibleRole.GROUP_BOX else AccessibleRole.PANEL
+
   fun enableScreenReaderSupportIfNecessary() {
     if (GeneralSettings.isSupportScreenReadersOverridden()) {
       featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED_VM)

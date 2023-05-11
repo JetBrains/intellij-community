@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
@@ -1902,7 +1903,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private class AccessibleActionToolbar extends AccessibleJPanel {
     @Override
     public AccessibleRole getAccessibleRole() {
-      return AccessibleRole.GROUP_BOX;
+      return AccessibilityUtils.GROUPED_ELEMENTS;
     }
   }
 }

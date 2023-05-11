@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
@@ -738,7 +739,7 @@ class InternalDecoratorImpl internal constructor(
     }
 
     override fun getAccessibleRole(): AccessibleRole {
-      return AccessibleRole.GROUP_BOX
+      return AccessibilityUtils.GROUPED_ELEMENTS
     }
   }
 }

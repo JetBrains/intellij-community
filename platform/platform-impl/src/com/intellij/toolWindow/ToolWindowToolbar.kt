@@ -2,6 +2,7 @@
 
 package com.intellij.toolWindow
 
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindow
@@ -242,6 +243,6 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
   }
 
   private inner class AccessibleToolWindowToolbar : AccessibleJPanel() {
-    override fun getAccessibleRole(): AccessibleRole = AccessibleRole.GROUP_BOX
+    override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
 }

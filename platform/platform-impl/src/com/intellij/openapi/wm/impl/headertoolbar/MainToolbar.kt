@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
@@ -22,11 +23,7 @@ import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.JBColor
-import com.intellij.ui.UIBundle
+import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
@@ -141,12 +138,12 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     accessibleContext.accessibleName =
       if (ExperimentalUI.isNewUI() && UISettings.getInstance().separateMainMenu)
         UIBundle.message("main.toolbar.accessible.group.name")
-      else null
+      else ""
     return accessibleContext
   }
 
   private inner class AccessibleMainToolbar : AccessibleJPanel() {
-    override fun getAccessibleRole(): AccessibleRole = AccessibleRole.GROUP_BOX
+    override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
 }
 

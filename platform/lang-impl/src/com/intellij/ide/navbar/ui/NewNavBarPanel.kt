@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.CopyPasteDelegator
 import com.intellij.ide.CopyPasteSupport
 import com.intellij.ide.IdeBundle
@@ -266,6 +267,6 @@ internal class NewNavBarPanel(
   }
 
   private inner class AccessibleNewNavBarPanel : AccessibleJPanel() {
-    override fun getAccessibleRole(): AccessibleRole = AccessibleRole.GROUP_BOX
+    override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
 }

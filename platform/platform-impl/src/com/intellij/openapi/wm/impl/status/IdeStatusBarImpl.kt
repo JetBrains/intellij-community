@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.wm.impl.status
 
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.HelpTooltipManager
 import com.intellij.ide.IdeEventQueue
@@ -692,7 +693,7 @@ open class IdeStatusBarImpl internal constructor(
   }
 
   protected inner class AccessibleIdeStatusBarImpl : AccessibleJComponent() {
-    override fun getAccessibleRole(): AccessibleRole = AccessibleRole.GROUP_BOX
+    override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
 }
 

@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.CommonBundle
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
@@ -253,7 +254,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   private inner class AccessibleCustomHeader: AccessibleJPanel() {
     override fun getAccessibleRole(): AccessibleRole {
-      return AccessibleRole.GROUP_BOX
+      return AccessibilityUtils.GROUPED_ELEMENTS
     }
   }
 
