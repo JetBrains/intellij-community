@@ -43,7 +43,7 @@ public class MavenPluginResolver {
     process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", firstProject.getDisplayName()));
 
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_PLUGINS_RESOLVE, baseDir);
-    embedder.customizeForResolve(console, process, forceUpdateSnapshots,  null);
+    embedder.startPullingProgress(console, process);
 
     Set<MavenId> unresolvedPluginIds;
     Set<Path> filesToRefresh = new HashSet<>();

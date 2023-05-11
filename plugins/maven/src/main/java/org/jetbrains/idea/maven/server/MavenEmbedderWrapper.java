@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<MavenServerEmbedder> {
   private Customization myCustomization;
+  private ResolveCustomization myResolveCustomization; // TODO: remove
   private final Project myProject;
   private ScheduledFuture<?> myProgressPullingFuture;
   private AtomicInteger myFails = new AtomicInteger(0);
@@ -40,22 +41,34 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   protected synchronized void onWrappeeCreated() throws RemoteException {
     super.onWrappeeCreated();
     if (myCustomization != null) {
-      doCustomize();
+      MavenServerEmbedder embedder = getOrCreateWrappee();
+      embedder.customize(myResolveCustomization.workspaceMap, myResolveCustomization.alwaysUpdateSnapshot, ourToken);
+      startPullingProgress(embedder, myCustomization.console, myCustomization.indicator);
     }
   }
 
-  public void customizeForResolve(MavenConsole console,
-                                  MavenProgressIndicator indicator,
-                                  boolean forceUpdateSnapshots,
+  public void customizeForResolve(boolean forceUpdateSnapshots,
                                   @Nullable MavenWorkspaceMap workspaceMap) {
     boolean alwaysUpdateSnapshots =
       forceUpdateSnapshots
       ? forceUpdateSnapshots
       : MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().isAlwaysUpdateSnapshots();
     MavenWorkspaceMap serverWorkspaceMap = convertWorkspaceMap(workspaceMap);
-    setCustomization(console, indicator, serverWorkspaceMap, alwaysUpdateSnapshots);
+    myResolveCustomization = new ResolveCustomization(serverWorkspaceMap, alwaysUpdateSnapshots);
     perform(() -> {
-      doCustomize();
+      MavenServerEmbedder embedder = getOrCreateWrappee();
+      embedder.customize(myResolveCustomization.workspaceMap, myResolveCustomization.alwaysUpdateSnapshot, ourToken);
+      return null;
+    });
+  }
+
+  public void startPullingProgress(MavenConsole console,
+                                   MavenProgressIndicator indicator) {
+    stopPulling();
+    myCustomization = new Customization(console, indicator);
+    perform(() -> {
+      MavenServerEmbedder embedder = getOrCreateWrappee();
+      startPullingProgress(embedder, myCustomization.console, myCustomization.indicator);
       return null;
     });
   }
@@ -67,18 +80,12 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     return MavenWorkspaceMap.copy(map, transformer::toRemotePath);
   }
 
-  private synchronized void doCustomize() throws RemoteException {
-    MavenServerEmbedder embedder = getOrCreateWrappee();
-    embedder.customize(myCustomization.workspaceMap, myCustomization.alwaysUpdateSnapshot, ourToken);
-    MavenServerPullProgressIndicator pullProgressIndicator = embedder.getProgressIndicator(ourToken);
-    startPullingProgress(pullProgressIndicator, myCustomization.console, myCustomization.indicator);
-  }
-
-  private void startPullingProgress(MavenServerPullProgressIndicator serverPullProgressIndicator,
+  private void startPullingProgress(MavenServerEmbedder embedder,
                                     MavenConsole console,
-                                    MavenProgressIndicator indicator) {
+                                    MavenProgressIndicator indicator) throws RemoteException {
+    MavenServerPullProgressIndicator serverPullProgressIndicator = embedder.getProgressIndicator(ourToken);
     ScheduledFuture<?> future = myProgressPullingFuture;
-    if(future!=null && !future.isCancelled()) {
+    if (future != null && !future.isCancelled()) {
       future.cancel(true);
     }
     myProgressPullingFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
@@ -298,17 +305,6 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   public void clearCachesFor(MavenId projectId) {
   }
 
-  private synchronized void setCustomization(MavenConsole console,
-                                             MavenProgressIndicator indicator,
-                                             MavenWorkspaceMap workspaceMap,
-                                             boolean alwaysUpdateSnapshot) {
-    stopPulling();
-    myCustomization = new Customization(console,
-                                        indicator,
-                                        workspaceMap,
-                                        alwaysUpdateSnapshot);
-  }
-
   private synchronized void stopPulling() {
     if (myProgressPullingFuture != null) {
       myProgressPullingFuture.cancel(true);
@@ -328,18 +324,21 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     private final MavenConsole console;
     private final MavenProgressIndicator indicator;
 
+    private Customization(MavenConsole console,
+                          MavenProgressIndicator indicator) {
+      this.console = console;
+      this.indicator = indicator;
+    }
+  }
+
+  private static final class ResolveCustomization {
     private final MavenWorkspaceMap workspaceMap;
     private final boolean alwaysUpdateSnapshot;
 
-    private Customization(MavenConsole console,
-                          MavenProgressIndicator indicator,
-                          MavenWorkspaceMap workspaceMap,
-                          boolean alwaysUpdateSnapshot) {
-      this.console = console;
-      this.indicator = indicator;
+    private ResolveCustomization(MavenWorkspaceMap workspaceMap,
+                                 boolean alwaysUpdateSnapshot) {
       this.workspaceMap = workspaceMap;
       this.alwaysUpdateSnapshot = alwaysUpdateSnapshot;
     }
   }
-
 }

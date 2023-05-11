@@ -54,7 +54,8 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
         for (MavenProject mavenProject : mavenProjectsInBaseDir) {
           mavenProject.setConfigFileError(null);
         }
-        embedder.customizeForResolve(console, process, updateSnapshots, tree.getWorkspaceMap());
+        embedder.customizeForResolve(updateSnapshots, tree.getWorkspaceMap());
+        embedder.startPullingProgress(console, process);
         var projectsWithUnresolvedPluginsChunk = doResolve(mavenProjectsInBaseDir, tree, generalSettings, embedder, process);
         projectsWithUnresolvedPlugins.put(baseDir, projectsWithUnresolvedPluginsChunk);
       }
