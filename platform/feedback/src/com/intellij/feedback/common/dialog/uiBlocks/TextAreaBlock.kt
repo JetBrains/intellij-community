@@ -8,12 +8,12 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
 
-class TextAreaBlock(myProperty: ObservableMutableProperty<String>,
-                    @NlsContexts.Label val myLabel: String,
-                    private val myTextAreaRowSize: Int = TEXT_AREA_ROW_SIZE,
-                    private val myTextAreaColumnSize: Int = TEXT_AREA_COLUMN_SIZE,
-                    @NlsContexts.DialogMessage private val myShouldNotEmptyMessage: String? = null
-) : SingleInputFeedbackBlock<String>(myProperty) {
+class TextAreaBlock(private val myProperty: ObservableMutableProperty<String>,
+                    @NlsContexts.Label private val myLabel: String) : BaseFeedbackBlock() {
+
+  private var myTextAreaRowSize: Int = TEXT_AREA_ROW_SIZE
+  private var myTextAreaColumnSize: Int = TEXT_AREA_COLUMN_SIZE
+  private var myRequireNotEmptyMessage: String? = null
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
@@ -27,8 +27,8 @@ class TextAreaBlock(myProperty: ObservableMutableProperty<String>,
             adjustBehaviourForFeedbackForm()
           }
           .apply {
-            if (myShouldNotEmptyMessage != null) {
-              errorOnApply(myShouldNotEmptyMessage) {
+            if (myRequireNotEmptyMessage != null) {
+              errorOnApply(myRequireNotEmptyMessage!!) {
                 myProperty.get().isBlank()
               }
             }
@@ -37,4 +37,26 @@ class TextAreaBlock(myProperty: ObservableMutableProperty<String>,
     }
   }
 
+  override fun collectBlockTextDescription(stringBuilder: StringBuilder) {
+    stringBuilder.apply {
+      appendLine(myLabel)
+      appendLine(myProperty.get())
+      appendLine()
+    }
+  }
+
+  fun setRowSize(rowSize: Int): TextAreaBlock {
+    myTextAreaRowSize = rowSize
+    return this
+  }
+
+  fun setColumnSize(columnSize: Int): TextAreaBlock {
+    myTextAreaColumnSize = columnSize
+    return this
+  }
+
+  fun requireNotEmpty(requireNotEmptyMessage: String): TextAreaBlock {
+    myRequireNotEmptyMessage = requireNotEmptyMessage
+    return this
+  }
 }

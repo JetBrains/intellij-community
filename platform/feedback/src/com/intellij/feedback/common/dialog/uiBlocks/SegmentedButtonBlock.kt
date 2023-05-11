@@ -10,26 +10,26 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.util.ui.JBUI
 import javax.swing.SwingConstants
 
-class SegmentedButtonBlock<T>(myProperty: ObservableMutableProperty<T>,
-                              @NlsContexts.Label val mainLabel: String?,
-                              val items: List<T>,
-                              val renderer: (T) -> String,
-                              @NlsContexts.Label val leftBottomLabel: String? = null,
-                              @NlsContexts.Label val midBottomLabel: String? = null,
-                              @NlsContexts.Label val rightBottomLabel: String? = null) : SingleInputFeedbackBlock<T>(myProperty) {
+class SegmentedButtonBlock(private val myProperty: ObservableMutableProperty<String>,
+                           @NlsContexts.Label private val myMainLabel: String?,
+                           private val myItems: List<String>) : BaseFeedbackBlock() {
+
+  private var myLeftBottomLabel: String? = null
+  private var myMiddleBottomLabel: String? = null
+  private var myRightBottomLabel: String? = null
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
-      if (mainLabel != null) {
+      if (myMainLabel != null) {
         row {
-          label(mainLabel)
+          label(myMainLabel)
             .customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
         }.bottomGap(BottomGap.SMALL)
       }
       row {
-        segmentedButton(items, renderer)
+        segmentedButton(myItems) { it }
           .apply {
-            maxButtonsCount(items.size)
+            maxButtonsCount(myItems.size)
           }.customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
           .whenItemSelected { myProperty.set(it) }
           .align(Align.FILL)
@@ -37,28 +37,28 @@ class SegmentedButtonBlock<T>(myProperty: ObservableMutableProperty<T>,
             addApplyRule(CommonFeedbackBundle.message("dialog.feedback.segmentedButton.required")) { it.selectedItem == null }
           }
       }.apply {
-        if (leftBottomLabel == null && midBottomLabel == null && rightBottomLabel == null) {
+        if (myLeftBottomLabel == null && myMiddleBottomLabel == null && myRightBottomLabel == null) {
           this.bottomGap(BottomGap.MEDIUM)
           return
         }
       }
 
       row {
-        if (leftBottomLabel != null) {
-          label(leftBottomLabel)
+        if (myLeftBottomLabel != null) {
+          label(myLeftBottomLabel!!)
             .applyToComponent {
               font = ComponentPanelBuilder.getCommentFont(font)
               foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
             }
             .widthGroup("Group")
             .apply {
-              if (midBottomLabel == null) {
+              if (myMiddleBottomLabel == null) {
                 resizableColumn()
               }
             }
         }
-        if (midBottomLabel != null) {
-          label(midBottomLabel)
+        if (myMiddleBottomLabel != null) {
+          label(myMiddleBottomLabel!!)
             .applyToComponent {
               font = ComponentPanelBuilder.getCommentFont(font)
               foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
@@ -66,8 +66,8 @@ class SegmentedButtonBlock<T>(myProperty: ObservableMutableProperty<T>,
             .align(AlignX.CENTER)
             .resizableColumn()
         }
-        if (rightBottomLabel != null) {
-          label(rightBottomLabel)
+        if (myRightBottomLabel != null) {
+          label(myRightBottomLabel!!)
             .applyToComponent {
               font = ComponentPanelBuilder.getCommentFont(font)
               foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
@@ -77,5 +77,28 @@ class SegmentedButtonBlock<T>(myProperty: ObservableMutableProperty<T>,
         }
       }.bottomGap(BottomGap.MEDIUM)
     }
+  }
+
+  override fun collectBlockTextDescription(stringBuilder: StringBuilder) {
+    stringBuilder.apply {
+      appendLine(myMainLabel)
+      appendLine(myProperty.get())
+      appendLine()
+    }
+  }
+
+  fun addLeftBottomLabel(leftBottomLabel: String): SegmentedButtonBlock {
+    myLeftBottomLabel = leftBottomLabel
+    return this
+  }
+
+  fun addMiddleBottomLabel(middleBottomLabel: String): SegmentedButtonBlock {
+    myMiddleBottomLabel = middleBottomLabel
+    return this
+  }
+
+  fun addRightBottomLabel(rightBottomLabel: String): SegmentedButtonBlock {
+    myRightBottomLabel = rightBottomLabel
+    return this
   }
 }

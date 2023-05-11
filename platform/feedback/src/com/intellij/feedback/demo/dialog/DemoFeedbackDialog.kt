@@ -15,6 +15,7 @@ import com.intellij.feedback.new_ui.CancelFeedbackNotification
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.ui.LicensingFacade
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
@@ -36,23 +37,37 @@ class DemoFeedbackDialog(
   private val TICKET_TITLE_ZENDESK = "Demo in-IDE Feedback"
   private val FEEDBACK_TYPE_ZENDESK = "Demo in-IDE Feedback"
 
-  private val systemInfoData: CommonFeedbackSystemInfoData = CommonFeedbackSystemInfoData.getCurrentData()
+  private val systemInfoData: CommonFeedbackSystemInfoData by lazy {
+    CommonFeedbackSystemInfoData.getCurrentData()
+  }
 
   private val propertyGraph = PropertyGraph()
   private val textFieldEmailProperty = propertyGraph.lazyProperty { LicensingFacade.INSTANCE?.getLicenseeEmail().orEmpty() }
 
   private val jsonConverter = Json { prettyPrint = true }
-  
+
   private val blocks: List<BaseFeedbackBlock> = listOf(
     TopLabelBlock(DemoFeedbackBundle.message("dialog.title")),
-    TextAreaBlock(propertyGraph.property(""), DemoFeedbackBundle.message("dialog.textarea.label")),
-    SegmentedButtonBlock(propertyGraph.property(0),
+    DescriptionBlock(DemoFeedbackBundle.message("dialog.description")),
+    RatingBlock(propertyGraph.property(0), DemoFeedbackBundle.message("dialog.rating.label")),
+    SegmentedButtonBlock(propertyGraph.property(""),
                          DemoFeedbackBundle.message("dialog.segmentedButton.label"),
-                                   (1..9).toList(),
-                         { it.toString() },
-                         DemoFeedbackBundle.message("dialog.segmentedButton.leftHint"),
-                         DemoFeedbackBundle.message("dialog.segmentedButton.middleHint"),
-                         DemoFeedbackBundle.message("dialog.segmentedButton.rightHint")),
+                         List(8) { it -> (it + 1).toString() }).addLeftBottomLabel(
+      DemoFeedbackBundle.message("dialog.segmentedButton.leftHint"))
+      .addMiddleBottomLabel(DemoFeedbackBundle.message("dialog.segmentedButton.middleHint"))
+      .addRightBottomLabel(DemoFeedbackBundle.message("dialog.segmentedButton.rightHint")),
+    ComboBoxBlock(propertyGraph.property(""),
+                  DemoFeedbackBundle.message("dialog.combobox.label"),
+                  List(3) { it -> DemoFeedbackBundle.message("dialog.combobox.item.${it}") })
+      .addComment(DemoFeedbackBundle.message("dialog.combobox.comment"))
+      .setColumnSize(10),
+    CheckBoxGroupBlock(DemoFeedbackBundle.message("dialog.checkbox.group.label"),
+                       List(4) {
+                         CheckBoxItemData(propertyGraph.property(false),
+                                          DemoFeedbackBundle.message("dialog.checkbox.item.${it}.label"))
+                       })
+      .addOtherTextField(propertyGraph.property("")),
+    TextAreaBlock(propertyGraph.property(""), DemoFeedbackBundle.message("dialog.textarea.label")),
     EmailBlock(textFieldEmailProperty, myProject) { showFeedbackSystemInfoDialog(myProject, systemInfoData) }
   )
 
@@ -64,11 +79,12 @@ class DemoFeedbackDialog(
   override fun doOKAction() {
     super.doOKAction()
     val feedbackData = FeedbackRequestDataWithDetailedAnswer(feedbackReportId, TICKET_TITLE_ZENDESK, createRequestDescription(),
-                                                             DEFAULT_FEEDBACK_CONSENT_ID, FEEDBACK_TYPE_ZENDESK, createCollectedDataJsonObject())
-    submitFeedback(myProject, 
+                                                             DEFAULT_FEEDBACK_CONSENT_ID, FEEDBACK_TYPE_ZENDESK,
+                                                             createCollectedDataJsonObject())
+    submitFeedback(myProject,
                    feedbackData,
-                   { }, 
-                   { }, 
+                   { },
+                   { },
                    if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST)
   }
 
@@ -78,23 +94,16 @@ class DemoFeedbackDialog(
   }
 
   private fun createRequestDescription(): String {
-    return buildString {
-      // TODO: FIX IT
-      //appendLine(DemoFeedbackBundle.message("dialog.zendesk.title"))
-      //appendLine(DemoFeedbackBundle.message("dialog.zendesk.description"))
-      //appendLine()
-      //appendLine(DemoFeedbackBundle.message("dialog.zendesk.rating.label"))
-      //appendLine(" ${ratingProperty.get()}")
-      //appendLine()
-      //appendLine(DemoFeedbackBundle.message("dialog.zendesk.like_most.textarea.label"))
-      //appendLine(textAreaLikeMostFeedbackProperty.get())
-      //appendLine()
-      //appendLine(DemoFeedbackBundle.message("dialog.zendesk.dislike.textarea.label"))
-      //appendLine(textAreaDislikeFeedbackProperty.get())
-      //appendLine()
-      //appendLine()
-      //appendLine(newUISystemInfoData.value.toString())
+    val stringBuilder = StringBuilder()
+
+    for (block in blocks) {
+      block.collectBlockTextDescription(stringBuilder)
     }
+
+    stringBuilder.appendLine()
+    stringBuilder.appendLine()
+    stringBuilder.appendLine(systemInfoData.toString())
+    return stringBuilder.toString()
   }
 
   private fun createCollectedDataJsonObject(): JsonObject {
@@ -118,7 +127,10 @@ class DemoFeedbackDialog(
     }.also { dialog ->
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
     }
-    return mainPanel
+
+    return JBScrollPane(mainPanel, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER).apply {
+      border = JBUI.Borders.empty()
+    }
   }
 
   override fun createActions(): Array<Action> {

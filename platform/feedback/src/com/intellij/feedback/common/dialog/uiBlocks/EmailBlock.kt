@@ -16,9 +16,9 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import java.util.function.Predicate
 
-class EmailBlock(property: ObservableMutableProperty<String>,
-                 val myProject: Project?,
-                 private val showFeedbackSystemInfoDialog: () -> Unit) : SingleInputFeedbackBlock<String>(property) {
+class EmailBlock(private val myProperty: ObservableMutableProperty<String>,
+                 private val myProject: Project?,
+                 private val showFeedbackSystemInfoDialog: () -> Unit) : BaseFeedbackBlock() {
 
   private var checkBoxEmail: JBCheckBox? = null
 

@@ -49,14 +49,8 @@ class AquaNewUserFeedbackDialog(
   private val otherPrimaryTestingTarget: ObservableMutableProperty<String> = propertyGraph.property("")
   private val textFieldEmailProperty = propertyGraph.lazyProperty { LicensingFacade.INSTANCE?.getLicenseeEmail().orEmpty() }
 
-  private val dailyTasksLabels: List<String> = List(6) {
-    AquaFeedbackBundle.message("new.user.dialog.primary.tasks.${it}.label")
-  }
   private val projectTeamSizeOptionLabels: List<String> = List(5) {
     AquaFeedbackBundle.message("new.user.dialog.team.size.${it}.label")
-  }
-  private val primaryTestingTargetLabels: List<String> = List(3) {
-    AquaFeedbackBundle.message("new.user.dialog.primary.testing.targets.${it}.label")
   }
 
   private val jsonConverter = Json { prettyPrint = true }
@@ -65,12 +59,21 @@ class AquaNewUserFeedbackDialog(
     TopLabelBlock(AquaFeedbackBundle.message("new.user.dialog.title")),
     DescriptionBlock(AquaFeedbackBundle.message("new.user.dialog.description")),
     CheckBoxGroupBlock(AquaFeedbackBundle.message("new.user.dialog.primary.tasks.group.label"),
-                       dailyTasks, dailyTasksLabels, otherDailyTask),
+                       List(6) {
+                         CheckBoxItemData(dailyTasks[it],
+                                          AquaFeedbackBundle.message("new.user.dialog.primary.tasks.${it}.label"))
+                       })
+      .addOtherTextField(otherDailyTask),
     ComboBoxBlock(projectTeamSize, AquaFeedbackBundle.message("new.user.dialog.team.size.label"),
-                  projectTeamSizeOptionLabels,
-                  AquaFeedbackBundle.message("new.user.dialog.team.size.bottom.label.left"), myColumnSize = 15),
+                  projectTeamSizeOptionLabels
+    ).addComment(AquaFeedbackBundle.message("new.user.dialog.team.size.bottom.label.left"))
+      .setColumnSize(15),
     CheckBoxGroupBlock(AquaFeedbackBundle.message("new.user.dialog.primary.testing.targets.group.label"),
-                       primaryTestingTargets, primaryTestingTargetLabels, otherPrimaryTestingTarget),
+                       List(3) {
+                         CheckBoxItemData(primaryTestingTargets[it],
+                                          AquaFeedbackBundle.message("new.user.dialog.primary.testing.targets.${it}.label"))
+                       })
+      .addOtherTextField(otherPrimaryTestingTarget),
     EmailBlock(textFieldEmailProperty, myProject) { showFeedbackSystemInfoDialog(myProject, systemInfoData.value) }
   )
 
@@ -97,28 +100,16 @@ class AquaNewUserFeedbackDialog(
 
 
   private fun createRequestDescription(): String {
-    return buildString {
-      appendLine(AquaFeedbackBundle.message("new.user.dialog.title"))
-      appendLine(AquaFeedbackBundle.message("new.user.dialog.description"))
-      appendLine()
-      appendLine(AquaFeedbackBundle.message("new.user.dialog.primary.tasks.group.label"))
-      for (i in dailyTasks.indices) {
-        appendLine(" ${dailyTasksLabels[i]} - ${dailyTasks[i].get()}")
-      }
-      appendLine(" Other: ${otherDailyTask.get()}")
-      appendLine()
-      appendLine(AquaFeedbackBundle.message("new.user.dialog.team.size.label"))
-      appendLine(" ${projectTeamSize.get()}")
-      appendLine()
-      appendLine(AquaFeedbackBundle.message("new.user.dialog.primary.testing.targets.group.label"))
-      for (i in primaryTestingTargets.indices) {
-        appendLine(" ${primaryTestingTargetLabels[i]} - ${primaryTestingTargets[i].get()}")
-      }
-      appendLine(" Other: ${otherPrimaryTestingTarget.get()}")
-      appendLine()
-      appendLine()
-      appendLine(systemInfoData.value.toString())
+    val stringBuilder = StringBuilder()
+
+    for (block in blocks) {
+      block.collectBlockTextDescription(stringBuilder)
     }
+
+    stringBuilder.appendLine()
+    stringBuilder.appendLine()
+    stringBuilder.appendLine(systemInfoData.value.toString())
+    return stringBuilder.toString()
   }
 
   private fun createCollectedDataJsonString(): JsonObject {

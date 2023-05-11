@@ -7,4 +7,7 @@ abstract class BaseFeedbackBlock {
 
   abstract fun addToPanel(panel: Panel)
 
+  open fun collectBlockTextDescription(stringBuilder: StringBuilder) {
+    // Nothing to add
+  }
 }

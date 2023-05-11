@@ -2,10 +2,7 @@
 package com.intellij.feedback.common.dialog.uiBlocks
 
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.util.NlsContexts
 
-abstract class SingleInputFeedbackBlock<T>(val myProperty: ObservableMutableProperty<T>) : BaseFeedbackBlock() {
-
-  open fun collectInput(): T {
-    return myProperty.get()
-  }
-}
+data class CheckBoxItemData(val property: ObservableMutableProperty<Boolean>,
+                            @NlsContexts.Checkbox val label: String)

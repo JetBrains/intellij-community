@@ -8,19 +8,19 @@ import com.intellij.ui.dsl.builder.*
 
 class CheckBoxGroupBlock(
   @NlsContexts.Label private val myGroupLabel: String,
-  private val myCheckBoxProperties: List<ObservableMutableProperty<Boolean>>,
-  private val myCheckBoxLabels: List<String>,
-  private val myOtherProperty: ObservableMutableProperty<String>? = null
-) : BaseFeedbackBlock() {
+  private val myItemsData: List<CheckBoxItemData>) : BaseFeedbackBlock() {
+
+  private var myOtherProperty: ObservableMutableProperty<String>? = null
+
   override fun addToPanel(panel: Panel) {
     panel.apply {
       @Suppress("DialogTitleCapitalization")
       buttonsGroup(myGroupLabel) {
-        for (i: Int in myCheckBoxProperties.indices) {
+        myItemsData.forEachIndexed { i, itemData ->
           row {
-            checkBox(myCheckBoxLabels[i]).bindSelected(myCheckBoxProperties[i])
+            checkBox(itemData.label).bindSelected(itemData.property)
           }.apply {
-            if (i == myCheckBoxProperties.size - 1 && myOtherProperty == null) {
+            if (i == myItemsData.size - 1 && myOtherProperty == null) {
               this.bottomGap(BottomGap.MEDIUM)
             }
           }
@@ -30,10 +30,29 @@ class CheckBoxGroupBlock(
           row {
             textField().applyToComponent {
               emptyText.text = CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.other.placeholder")
-            }.bindText(myOtherProperty).columns(COLUMNS_MEDIUM)
+            }.bindText(myOtherProperty!!).columns(COLUMNS_MEDIUM)
           }.bottomGap(BottomGap.MEDIUM)
         }
       }
     }
+  }
+
+  override fun collectBlockTextDescription(stringBuilder: StringBuilder) {
+    stringBuilder.apply {
+      appendLine(myGroupLabel)
+      myItemsData.forEach { itemData ->
+        appendLine(" ${itemData.label} - ${itemData.property.get()}")
+      }
+
+      if (myOtherProperty != null) {
+        appendLine(" Other: ${myOtherProperty!!.get()}")
+      }
+      appendLine()
+    }
+  }
+
+  fun addOtherTextField(otherProperty: ObservableMutableProperty<String>): CheckBoxGroupBlock {
+    myOtherProperty = otherProperty
+    return this
   }
 }
