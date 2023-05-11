@@ -122,10 +122,15 @@ object LocalTrackerDiffUtil {
     val rangesFragmentData = mutableListOf<LineFragmentData>()
 
     for (localRange in ranges) {
-      val isExcludedFromCommit = localRange.isExcludedFromCommit
-      lstRanges += localRange
-      linesRanges += Range(localRange.vcsLine1, localRange.vcsLine2, localRange.line1, localRange.line2)
-      rangesFragmentData += LineFragmentData(activeChangelistId, isExcludedFromCommit, localRange.changelistId)
+      when (val exclusionState = localRange.exclusionState) {
+        RangeExclusionState.Included, RangeExclusionState.Excluded -> {
+          val isExcludedFromCommit = exclusionState == RangeExclusionState.Excluded
+          lstRanges += localRange
+          linesRanges += Range(localRange.vcsLine1, localRange.vcsLine2, localRange.line1, localRange.line2)
+          rangesFragmentData += LineFragmentData(activeChangelistId, isExcludedFromCommit, localRange.changelistId)
+        }
+        is RangeExclusionState.Partial -> TODO()
+      }
     }
 
     val newFragments = textDiffProvider.compare(diffData.vcsText, diffData.localText, linesRanges, indicator)!!

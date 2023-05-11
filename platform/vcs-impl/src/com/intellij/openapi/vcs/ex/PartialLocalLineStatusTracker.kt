@@ -114,9 +114,12 @@ class PartialCommitContent(val vcsContent: CharSequence, val currentContent: Cha
 
 enum class ExclusionState { ALL_INCLUDED, ALL_EXCLUDED, PARTIALLY, NO_CHANGES }
 
-class LocalRange(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int, innerRanges: List<InnerRange>?,
-                 val changelistId: String, val isExcludedFromCommit: Boolean)
-  : Range(line1, line2, vcsLine1, vcsLine2, innerRanges)
+class LocalRange internal constructor(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int, innerRanges: List<InnerRange>?,
+                                      val changelistId: String, val exclusionState: RangeExclusionState)
+  : Range(line1, line2, vcsLine1, vcsLine2, innerRanges) {
+  @Deprecated("Use [exclusionState] instead", ReplaceWith("exclusionState == RangeExclusionState.Excluded"))
+  val isExcludedFromCommit: Boolean get() = exclusionState == RangeExclusionState.Excluded
+}
 
 
 class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
@@ -391,10 +394,14 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   private inner class PartialDocumentTrackerHandler : DocumentTracker.Handler {
     override fun onRangeRefreshed(before: Block, after: List<Block>) {
-      val isExcludedFromCommit = before.excludedFromCommit
+      val excludedFromCommit = when (before.excludedFromCommit) {
+        RangeExclusionState.Included -> RangeExclusionState.Included
+        RangeExclusionState.Excluded -> RangeExclusionState.Excluded
+        is RangeExclusionState.Partial -> RangeExclusionState.Excluded
+      }
       val marker = before.marker
       for (block in after) {
-        block.excludedFromCommit = isExcludedFromCommit
+        block.excludedFromCommit = excludedFromCommit
         block.marker = marker
       }
     }
@@ -403,14 +410,15 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       val activeMarker = activeChangeListTracker.getActiveChangeListId()?.let { ChangeListMarker(it) }
                          ?: defaultMarker
 
-      if (before.isEmpty()) {
+      val shouldExclude = if (before.isEmpty()) {
         val changeListBlocks = blocks.filter { it.marker == activeMarker }
         // default value for new blocks: include only if all changed blocks from this changelist are included
-        after.excludedFromCommit = changeListBlocks.isEmpty() || changeListBlocks.any { it.excludedFromCommit }
+        changeListBlocks.isEmpty() || changeListBlocks.any { it.excludedFromCommit != RangeExclusionState.Included }
       }
       else {
-        after.excludedFromCommit = before.all { it.excludedFromCommit }
+        before.all { it.excludedFromCommit == RangeExclusionState.Excluded }
       }
+      after.excludedFromCommit = if (shouldExclude) RangeExclusionState.Excluded else RangeExclusionState.Included
 
       val affectedMarkers = before.map { it.marker }.distinct()
       if (affectedMarkers.isEmpty()) {
@@ -463,7 +471,10 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
     override fun onUnfreeze() {
       if (initialExcludeState.isNotEmpty()) {
-        blocks.forEach { block -> initialExcludeState[block.marker]?.let { block.excludedFromCommit = it } }
+        blocks.forEach { block ->
+          val initWithExclusion = initialExcludeState[block.marker] ?: return@forEach
+          block.excludedFromCommit = if (initWithExclusion) RangeExclusionState.Excluded else RangeExclusionState.Included
+        }
         initialExcludeState.clear()
       }
 
@@ -479,11 +490,13 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       var hasIncluded = false
       var hasExcluded = false
       blocks.forEach {
-        if (it.excludedFromCommit) {
-          hasExcluded = true
-        }
-        else {
-          hasIncluded = true
+        when (it.excludedFromCommit) {
+          RangeExclusionState.Included -> hasIncluded = true
+          RangeExclusionState.Excluded -> hasExcluded = true
+          is RangeExclusionState.Partial -> {
+            hasIncluded = true
+            hasExcluded = true
+          }
         }
       }
       return@readLock hasIncluded && hasExcluded
@@ -499,7 +512,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   override fun hasPartialChangesToCommit(): Boolean {
     return documentTracker.readLock {
-      affectedChangeLists.size > 1 || blocks.any { it.excludedFromCommit }
+      affectedChangeLists.size > 1 || blocks.any { it.excludedFromCommit != RangeExclusionState.Included }
     }
   }
 
@@ -560,25 +573,33 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       val toCommitCondition = ToCommitCondition(changelistIds, honorExcludedFromCommit)
       val vcsContent = documentTracker.getContent(Side.LEFT)
       val currentContent = documentTracker.getContent(Side.RIGHT)
-      val ranges = blocks.filter { !it.range.isEmpty }.filter(toCommitCondition).map { toRange(it) }
+      val ranges = blocks.filter { !it.range.isEmpty }
+        .flatMap { block ->
+          val exclusionState = toCommitCondition(block)
+          return@flatMap when (exclusionState) {
+            RangeExclusionState.Included -> listOf(toRange(block))
+            RangeExclusionState.Excluded -> emptyList()
+            is RangeExclusionState.Partial -> TODO()
+          }
+        }
 
       PartialCommitContent(vcsContent, currentContent, ranges)
     }
   }
 
   private inner class ToCommitCondition(changelistsIds: List<String>,
-                                        val honorExcludedFromCommit: Boolean) : (Block) -> Boolean {
+                                        val honorExcludedFromCommit: Boolean) : (Block) -> RangeExclusionState {
     private val idsSet = changelistsIds.toSet()
 
-    override fun invoke(block: Block): Boolean {
+    override fun invoke(block: Block): RangeExclusionState {
       if (!idsSet.contains(block.marker.changelistId)) {
-        return false
+        return RangeExclusionState.Excluded
       }
       if (honorExcludedFromCommit) {
-        return !block.excludedFromCommit
+        return block.excludedFromCommit
       }
       else {
-        return true
+        return RangeExclusionState.Included
       }
     }
   }
@@ -707,11 +728,13 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     documentTracker.readLock {
       for (block in blocks) {
         if (block.marker == marker) {
-          if (block.excludedFromCommit) {
-            hasExcluded = true
-          }
-          else {
-            hasIncluded = true
+          when (block.excludedFromCommit) {
+            RangeExclusionState.Included -> hasIncluded = true
+            RangeExclusionState.Excluded -> hasExcluded = true
+            is RangeExclusionState.Partial -> {
+              hasIncluded = true
+              hasExcluded = true
+            }
           }
         }
       }
@@ -748,7 +771,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     documentTracker.writeLock {
       for (block in blocks) {
         if (condition(block)) {
-          block.excludedFromCommit = isExcluded
+          block.excludedFromCommit = if (isExcluded) RangeExclusionState.Excluded else RangeExclusionState.Included
         }
       }
     }
@@ -901,7 +924,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
   internal class RangeState(
     val range: com.intellij.diff.util.Range,
     val changelistId: String,
-    val excludedFromCommit: Boolean? = null // should not be persisted
+    val excludedFromCommit: RangeExclusionState? = null // should not be persisted
   )
 
   private data class ChangeListMarker(val changelistId: String) {
@@ -911,7 +934,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   private data class BlockData(var innerRanges: List<Range.InnerRange>? = null,
                                var marker: ChangeListMarker? = null,
-                               var excludedFromCommit: Boolean = true)
+                               var excludedFromCommit: RangeExclusionState = RangeExclusionState.Excluded)
 
   private val Block.ourData: BlockData
     get() {
@@ -938,7 +961,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       this.ourData.marker = value
     }
 
-  private var Block.excludedFromCommit: Boolean
+  private var Block.excludedFromCommit: RangeExclusionState
     get() = this.ourData.excludedFromCommit
     set(value) {
       this.ourData.excludedFromCommit = value

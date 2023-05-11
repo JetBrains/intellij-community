@@ -229,12 +229,12 @@ class DocumentTracker(
 
 
   @RequiresEdt
-  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean) {
+  fun partiallyApplyBlocks(side: Side, condition: (Block) -> RangeExclusionState) {
     partiallyApplyBlocks(side, condition, { _, _ -> })
   }
 
   @RequiresEdt
-  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean, consumer: (Range, shift: Int) -> Unit) {
+  fun partiallyApplyBlocks(side: Side, condition: (Block) -> RangeExclusionState, consumer: (Range, shift: Int) -> Unit) {
     if (isDisposed) return
 
     val otherSide = side.other()
@@ -265,21 +265,28 @@ class DocumentTracker(
     }
   }
 
-  fun getContentWithPartiallyAppliedBlocks(side: Side, condition: (Block) -> Boolean): String? {
+  fun getContentWithPartiallyAppliedBlocks(side: Side, condition: (Block) -> RangeExclusionState): String? {
     if (isDisposed) return null
 
     val otherSide = side.other()
-    val affectedBlocks = tracker.blocks.filter(condition)
     val content = getContent(side)
     val otherContent = getContent(otherSide)
 
     val lineOffsets = content.lineOffsets
     val otherLineOffsets = otherContent.lineOffsets
 
-    val ranges = affectedBlocks.map {
-      Range(it.range.start(side), it.range.end(side),
-            it.range.start(otherSide), it.range.end(otherSide))
+    val ranges = tracker.blocks.flatMap { block ->
+      val exclusionState = condition(block)
+      return@flatMap when (exclusionState) {
+        RangeExclusionState.Included -> listOf(block.range)
+        RangeExclusionState.Excluded -> emptyList()
+        is RangeExclusionState.Partial -> TODO()
+      }
     }
+      .map { range ->
+        Range(range.start(side), range.end(side),
+              range.start(otherSide), range.end(otherSide))
+      }
 
     return DiffUtil.applyModification(content, lineOffsets, otherContent, otherLineOffsets, ranges)
   }
@@ -635,22 +642,26 @@ private class LineTracker(private val handlers: List<Handler>,
     afterBulkRangeChange(isDirty)
   }
 
-  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean): List<Range> {
+  fun partiallyApplyBlocks(side: Side, condition: (Block) -> RangeExclusionState): List<Range> {
     val newBlocks = mutableListOf<Block>()
     val appliedRanges = mutableListOf<Range>()
 
     var shift = 0
     for (block in blocks) {
-      if (condition(block)) {
-        appliedRanges.add(block.range)
+      val exclusionState = condition(block)
+      when (exclusionState) {
+        RangeExclusionState.Included -> {
+          appliedRanges.add(block.range)
 
-        shift += getRangeDelta(block.range, side)
-      }
-      else {
-        val newBlock = block.shift(side, shift)
-        onRangeShifted(block, newBlock)
+          shift += getRangeDelta(block.range, side)
+        }
+        RangeExclusionState.Excluded -> {
+          val newBlock = block.shift(side, shift)
+          onRangeShifted(block, newBlock)
 
-        newBlocks.add(newBlock)
+          newBlocks.add(newBlock)
+        }
+        is RangeExclusionState.Partial -> TODO()
       }
     }
 
@@ -1156,4 +1167,15 @@ private fun shiftRange(range: Range, shift1: Int, shift2: Int) = Range(range.sta
 private fun createRange(side: Side, start: Int, end: Int, otherStart: Int, otherEnd: Int): Range = when {
   side.isLeft -> Range(start, end, otherStart, otherEnd)
   else -> Range(otherStart, otherEnd, start, end)
+}
+
+sealed class RangeExclusionState {
+  object Included : RangeExclusionState()
+  object Excluded : RangeExclusionState()
+
+  class Partial() : RangeExclusionState() {
+    init {
+      TODO()
+    }
+  }
 }

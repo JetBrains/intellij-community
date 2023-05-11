@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
+import com.intellij.openapi.vcs.ex.RangeExclusionState
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES
@@ -28,10 +29,11 @@ class PartialCommitChangeNodeDecorator @JvmOverloads constructor(
   private fun appendPartialCommitState(change: Change, renderer: SimpleColoredComponent) {
     val changeListId = (change as? ChangeListChange)?.changeListId ?: return
     val ranges = PartialChangesUtil.getPartialTracker(project, change)?.getRanges() ?: return
-    val rangesToCommit = ranges.count { it.changelistId == changeListId && !it.isExcludedFromCommit }
+    val rangesToCommit = ranges.count { it.changelistId == changeListId && it.exclusionState != RangeExclusionState.Excluded }
 
     if (rangesToCommit != 0 && rangesToCommit != ranges.size) {
-      renderer.append(spaceAndThinSpace()).append(VcsBundle.message("ranges.to.commit.of.ranges.size.changes", rangesToCommit, ranges.size), GRAY_ITALIC_ATTRIBUTES)
+      renderer.append(spaceAndThinSpace()).append(VcsBundle.message("ranges.to.commit.of.ranges.size.changes", rangesToCommit, ranges.size),
+                                                  GRAY_ITALIC_ATTRIBUTES)
     }
   }
 
