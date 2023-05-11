@@ -2,7 +2,6 @@ package org.jetbrains.kotlin.idea.util
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.name.FqName
