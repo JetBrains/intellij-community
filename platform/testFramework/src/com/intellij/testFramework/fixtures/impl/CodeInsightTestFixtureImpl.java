@@ -199,7 +199,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private boolean myReadEditorMarkupModel;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private LibraryTableTracker  myLibraryTableTracker;
-  private ResourceBundle[] myMessageBundles = new ResourceBundle[0];
 
   public CodeInsightTestFixtureImpl(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -597,7 +596,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
       assertNotNull(document);
       ExpectedHighlightingData datum =
-        new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, false, myMessageBundles);
+        new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, false);
       datum.init();
       return new FileHighlighting(psiFile, createEditor(file), datum);
     }).toList();
@@ -643,7 +642,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       public HighlightTestInfo doTest() {
         configureByFiles(filePaths);
         ExpectedHighlightingData data =
-          new ExpectedHighlightingData(editor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, false, myMessageBundles);
+          new ExpectedHighlightingData(editor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, false);
         if (checkSymbolNames) data.checkSymbolNames();
         data.init();
         collectAndCheckHighlighting(data);
@@ -1665,7 +1664,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       throw new IllegalStateException("Fixture is not configured. Call something like configureByFile() or configureByText()");
     }
     ExpectedHighlightingData data = new ExpectedHighlightingData(
-      editor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, myMessageBundles);
+      editor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting);
     data.init();
     return collectAndCheckHighlighting(data);
   }
@@ -1723,10 +1722,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
    */
   public void setVirtualFileFilter(@Nullable VirtualFileFilter filter) {
     myVirtualFileFilter = filter;
-  }
-
-  public void setMessageBundles(ResourceBundle @NotNull ... messageBundles) {
-    myMessageBundles = messageBundles;
   }
 
   @Override

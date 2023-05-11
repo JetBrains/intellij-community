@@ -20,35 +20,12 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.lang.annotation.HighlightSeverity
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.util.*
 
 class ExpectedHighlightingDataTest {
   private val TYPES = mapOf(
     "err" to ExpectedHighlightingData.ExpectedHighlightingSet(HighlightSeverity.ERROR, false, true),
     "warn" to ExpectedHighlightingData.ExpectedHighlightingSet(HighlightSeverity.WARNING, false, true),
     "eol_err" to ExpectedHighlightingData.ExpectedHighlightingSet(HighlightSeverity.ERROR, true, true))
-
-  private val TEST_BUNDLE = object : ListResourceBundle() {
-    private val CONTENTS: Array<Array<Any>> = arrayOf(
-      arrayOf("single.value", "My text"),
-      arrayOf("one.param.start", "{0}foo"),
-      arrayOf("one.param.end", "foo{0}"),
-      arrayOf("two.params", "A {0} B {1} C"),
-      arrayOf("special.chars", "\"|'"),
-      arrayOf("expected.lbrace.or.semicolon", "expected { or ;")
-    )
-
-    override fun getContents(): Array<Array<Any>> = CONTENTS
-  }
-
-  private val TEST_BUNDLE_2 = object : ListResourceBundle() {
-    private val CONTENTS: Array<Array<Any>> = arrayOf(
-      arrayOf("single.value.2", "My text"),
-      arrayOf("another.single.value", "Another text")
-    )
-
-    override fun getContents(): Array<Array<Any>> = CONTENTS
-  }
 
   @Test fun empty() = doTest("text", emptyList(), "text")
 
@@ -122,36 +99,8 @@ class ExpectedHighlightingDataTest {
   @Test fun zeroLengthAtZeroOffset() =
     doTest("text", listOf(error(0, 0, "_")), """<err descr="_"></err>text""")
 
-  @Test fun bundleMsgNoParams() =
-    doTest("text", listOf(error(0, 4, "My text")), """<err bundleMsg="single.value">text</err>""", TEST_BUNDLE)
-
-  @Test fun bundleMsgOneParamStart() =
-    doTest("text", listOf(error(0, 4, "xfoo")), """<err bundleMsg="one.param.start|x">text</err>""", TEST_BUNDLE)
-
-  @Test fun bundleMsgOneParamEnd() =
-    doTest("text", listOf(error(0, 4, "foox")), """<err bundleMsg="one.param.end|x">text</err>""", TEST_BUNDLE)
-
-  @Test fun bundleMsgOneParamMultipleMatch() =
-    doTest("text", listOf(error(0, 4, "foo")), """<err descr="foo">text</err>""", TEST_BUNDLE)
-
-  @Test fun bundleMsgTwoParams() =
-    doTest("text", listOf(error(0, 4, "A 1 B 2 C")), """<err bundleMsg="two.params|1|2">text</err>""", TEST_BUNDLE)
-
-  @Test fun bundleMsgSpecialChars() =
-    doTest("text", listOf(error(0, 4, "\"|'")), """<err bundleMsg="special.chars">text</err>""", TEST_BUNDLE, TEST_BUNDLE_2)
-
-  @Test fun bundleMsgUniqueFromTwoBundles() =
-    doTest("text", listOf(error(0, 4, "My text")), """<err descr="My text">text</err>""", TEST_BUNDLE, TEST_BUNDLE_2)
-
-  @Test fun bundleMsgMultipleMatchFromTwoBundles() =
-    doTest("text", listOf(error(0, 4, "Another text")), """<err bundleMsg="another.single.value">text</err>""", TEST_BUNDLE, TEST_BUNDLE_2)
-
-  @Test fun bundleMessageUnclosedBrace() =
-    doTest("text", listOf(error(0, 4, "expected { or ;")), """<err bundleMsg="expected.lbrace.or.semicolon">text</err>""", TEST_BUNDLE)
-
-
-  private fun doTest(original: String, highlighting: Collection<HighlightInfo>, expected: String, vararg bundles: ResourceBundle) =
-    assertEquals(expected, ExpectedHighlightingData.composeText(TYPES, highlighting, original, *bundles))
+  private fun doTest(original: String, highlighting: Collection<HighlightInfo>, expected: String) =
+    assertEquals(expected, ExpectedHighlightingData.composeText(TYPES, highlighting, original))
 
   private fun error(start: Int, end: Int, description: String) =
     HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(start, end).descriptionAndTooltip(description).createUnconditionally()

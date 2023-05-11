@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
-import com.intellij.AbstractBundle;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -25,7 +24,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
@@ -39,8 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
-import java.text.MessageFormat;
-import java.text.ParsePosition;
 import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -49,7 +45,8 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static java.util.Comparator.comparingInt;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * Extracts the markers for the expected highlighting ranges, such as {@code <error descr="..."/>},
@@ -102,7 +99,6 @@ public class ExpectedHighlightingData {
   private final Document myDocument;
   private final String myText;
   private boolean myIgnoreExtraHighlighting;
-  private final ResourceBundle[] myMessageBundles;
 
   public ExpectedHighlightingData(@NotNull Document document, boolean checkWarnings, boolean checkInfos) {
     this(document, checkWarnings, false, checkInfos);
@@ -116,18 +112,16 @@ public class ExpectedHighlightingData {
                                   boolean checkWarnings,
                                   boolean checkWeakWarnings,
                                   boolean checkInfos,
-                                  boolean ignoreExtraHighlighting,
-                                  ResourceBundle... messageBundles) {
-    this(document, messageBundles);
+                                  boolean ignoreExtraHighlighting) {
+    this(document);
     myIgnoreExtraHighlighting = ignoreExtraHighlighting;
     if (checkWarnings) checkWarnings();
     if (checkWeakWarnings) checkWeakWarnings();
     if (checkInfos) checkInfos();
   }
 
-  public ExpectedHighlightingData(@NotNull Document document, ResourceBundle... messageBundles) {
+  public ExpectedHighlightingData(@NotNull Document document) {
     myDocument = document;
-    myMessageBundles = messageBundles;
     myText = document.getText();
 
     registerHighlightingType(ERROR_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, false, true));
@@ -258,7 +252,6 @@ public class ExpectedHighlightingData {
                           "(?:\\s+effecttype=\"([A-Z]+)\")?" +
                           "(?:\\s+fonttype=\"([0-9]+)\")?" +
                           "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
-                          "(?:\\s+bundleMsg=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
                           "(?:\\s+tooltip=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
                           "(/)?>";
 
@@ -284,7 +277,6 @@ public class ExpectedHighlightingData {
     String effectType = matcher.group(groupIdx++);
     String fontType = matcher.group(groupIdx++);
     String attrKey = matcher.group(groupIdx++);
-    String bundleMessage = matcher.group(groupIdx++);
     String tooltip = matcher.group(groupIdx++);
     boolean closed = matcher.group(groupIdx) != null;
 
@@ -367,9 +359,6 @@ public class ExpectedHighlightingData {
 
       if (forcedAttributes != null) builder.textAttributes(forcedAttributes);
       if (forcedTextAttributesKey != null) builder.textAttributes(forcedTextAttributesKey);
-      if (bundleMessage != null) {
-        descr = extractDescrFromBundleMessage(bundleMessage);
-      }
       if (descr != null) {
         builder.description(descr);
       }
@@ -382,34 +371,6 @@ public class ExpectedHighlightingData {
     }
 
     return toContinueFrom;
-  }
-
-  @NotNull
-  private String extractDescrFromBundleMessage(String bundleMessage) {
-    String descr = null;
-    List<String> split = StringUtil.split(bundleMessage, "|");
-    String key = split.get(0);
-    List<String> keySplit = StringUtil.split(key, "#");
-    ResourceBundle[] bundles = myMessageBundles;
-    if (keySplit.size() == 2) {
-      key = keySplit.get(1);
-      bundles = new ResourceBundle[]{ResourceBundle.getBundle(keySplit.get(0))};
-    }
-    else {
-      assertEquals("Format for bundleMsg attribute is: [bundleName#] bundleKey [|argument]... ", 1, keySplit.size());
-    }
-
-    assertTrue("messageBundles must be provided for bundleMsg tags in test data", bundles.length > 0);
-    Object[] params = split.stream().skip(1).toArray();
-    for (ResourceBundle bundle : bundles) {
-      String message = AbstractBundle.messageOrDefault(bundle, key, null, params);
-      if (message != null) {
-        if (descr != null) fail("Key " + key + " is not unique in bundles for expected highlighting data");
-        descr = message;
-      }
-    }
-    if (descr == null) fail("Can't find bundle message " + bundleMessage);
-    return descr;
   }
 
   protected HighlightInfoType getTypeByName(String typeString) throws Exception {
@@ -625,7 +586,7 @@ public class ExpectedHighlightingData {
   }
 
   private void compareTexts(Collection<? extends HighlightInfo> infos, String text, String failMessage, @Nullable String filePath) {
-    String actual = composeText(myHighlightingTypes, infos, text, myMessageBundles);
+    String actual = composeText(myHighlightingTypes, infos, text);
     if (filePath != null && !myText.equals(actual)) {
       // uncomment to overwrite, don't forget to revert on commit!
       //VfsTestUtil.overwriteTestData(filePath, actual);
@@ -646,8 +607,7 @@ public class ExpectedHighlightingData {
   @NotNull
   public static String composeText(@NotNull Map<String, ExpectedHighlightingSet> types,
                                    @NotNull Collection<? extends HighlightInfo> infos,
-                                   @NotNull String text,
-                                   ResourceBundle @NotNull ... messageBundles) {
+                                   @NotNull String text) {
     // filter highlighting data and map each highlighting to a tag name
     List<Pair<String, ? extends HighlightInfo>> list = infos.stream()
       .map(info -> pair(findTag(types, info), info))
@@ -685,7 +645,7 @@ public class ExpectedHighlightingData {
 
     // combine highlighting data with original text
     StringBuilder sb = new StringBuilder();
-    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, showAttributesKeys, showTooltips, messageBundles);
+    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, showAttributesKeys, showTooltips);
     sb.insert(0, text.substring(0, offsets[1]));
     return sb.toString();
   }
@@ -712,8 +672,7 @@ public class ExpectedHighlightingData {
                                    List<? extends Pair<String, ? extends HighlightInfo>> list, int index,
                                    String text, int endPos, int startPos,
                                    boolean showAttributesKeys,
-                                   boolean showTooltip,
-                                   ResourceBundle... messageBundles) {
+                                   boolean showTooltip) {
     int i = index;
     while (i < list.size()) {
       Pair<String, ? extends HighlightInfo> pair = list.get(i);
@@ -729,7 +688,7 @@ public class ExpectedHighlightingData {
       sb.insert(0, "</" + severity + '>');
       endPos = info.endOffset;
       if (prev != null && prev.endOffset > info.startOffset) {
-        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys, showTooltip, messageBundles);
+        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys, showTooltip);
         i = offsets[0] - 1;
         endPos = offsets[1];
       }
@@ -737,11 +696,7 @@ public class ExpectedHighlightingData {
 
       StringBuilder str = new StringBuilder().append('<').append(severity);
 
-      String bundleMsg = composeBundleMsg(info, messageBundles);
-      if (bundleMsg != null) {
-        str.append(" bundleMsg=\"").append(StringUtil.escapeQuotes(bundleMsg)).append('"');
-      }
-      else if (info.getSeverity() != HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY) {
+      if (info.getSeverity() != HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY) {
         String description = info.getDescription();
         String toolTip = info.getToolTip();
         str.append(" descr=\"").append(StringUtil.escapeQuotes(String.valueOf(description))).append('"');
@@ -760,44 +715,6 @@ public class ExpectedHighlightingData {
     }
 
     return new int[]{i, endPos};
-  }
-
-  private static String composeBundleMsg(HighlightInfo info, ResourceBundle... messageBundles) {
-    String bundleKey = null;
-    Object[] bundleMsgParams = null;
-    for (ResourceBundle bundle : messageBundles) {
-      Enumeration<String> keys = bundle.getKeys();
-      while (keys.hasMoreElements()) {
-        String key = keys.nextElement();
-        ParsePosition position = new ParsePosition(0);
-        String value = bundle.getString(key);
-        Object[] parse;
-        boolean matched;
-        if (value.contains("{0")) {
-          parse = new MessageFormat(value).parse(info.getDescription(), position);
-          matched = parse != null && info.getDescription() != null && position.getIndex() == info.getDescription().length() && position.getErrorIndex() == -1;
-        }
-        else {
-          parse = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-          matched = value.equals(info.getDescription());
-        }
-        if (matched) {
-          if (bundleKey != null) {
-            bundleKey = null;
-            break; // several keys matched, don't suggest bundle key
-          }
-          bundleKey = key;
-          bundleMsgParams = parse;
-        }
-      }
-    }
-    if (bundleKey == null) return null;
-
-    String bundleMsg = bundleKey;
-    if (bundleMsgParams.length > 0) {
-      bundleMsg += '|' + StringUtil.join(ContainerUtil.map(bundleMsgParams, Objects::toString), "|");
-    }
-    return bundleMsg;
   }
 
   private ThreeState expectedInfosContainsInfo(HighlightInfo info, Map<ExpectedHighlightingSet, Set<HighlightInfo>> indexed) {
