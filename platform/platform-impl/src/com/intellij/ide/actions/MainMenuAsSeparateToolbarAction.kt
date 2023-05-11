@@ -4,6 +4,7 @@ package com.intellij.ide.actions
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -26,9 +27,9 @@ class MainMenuAsSeparateToolbarAction : ToggleAction(), DumbAware {
 
     if (SystemInfoRt.isXWindow) {
       val result = Messages.showYesNoCancelDialog(
-        IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
+        IdeBundle.message("dialog.message.restarted.to.apply.changes",
                           ApplicationNamesInfo.getInstance().fullProductName),
-        IdeBundle.message("dialog.title.restart.required"),
+        ActionsBundle.message("action.MainMenuAsSeparateToolbarAction.text"),
         IdeBundle.message("ide.restart.action"),
         IdeBundle.message("ide.notnow.action"),
         CommonBundle.getCancelButtonText(),
