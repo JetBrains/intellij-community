@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -209,7 +209,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         val useCustomCheckbox = checkBox(message("checkbox.override.default.laf.fonts"))
           .gap(RightGap.SMALL)
           .bindSelected(settings::overrideLafFonts) {
-            settings.overrideLafFonts = it
+            NotRoamableUiSettings.getInstance().overrideLafFonts = it
             if (!it) {
               getDefaultFont().let { defaultFont ->
                 settings.fontFace = defaultFont.family

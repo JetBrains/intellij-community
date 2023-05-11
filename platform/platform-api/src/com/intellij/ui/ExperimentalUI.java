@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.ide.ui.NotRoamableUiSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -192,7 +193,7 @@ public abstract class ExperimentalUI {
   private static void installInterFont() {
     if (UISettings.getInstance().getOverrideLafFonts()) {
       //todo[kb] add RunOnce
-      UISettings.getInstance().setOverrideLafFonts(false);
+      NotRoamableUiSettings.Companion.getInstance().setOverrideLafFonts(false);
     }
   }
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.ide.ui.NotRoamableUiSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -23,13 +24,13 @@ public class LafManagerTest extends LightPlatformTestCase {
       int newFontSize = 17;
       uiSettings.setFontFace(newFontName);
       uiSettings.setFontSize(newFontSize);
-      uiSettings.setOverrideLafFonts(true);
+      NotRoamableUiSettings.Companion.getInstance().setOverrideLafFonts(true);
       lafManager.updateUI();
       Font font = UIManager.getFont("Label.font");
       assertEquals("Font name is not changed", newFontName, font.getName());
       assertEquals("Font size is not changed", newFontSize, font.getSize());
     } finally {
-      uiSettings.setOverrideLafFonts(false);
+      NotRoamableUiSettings.Companion.getInstance().setOverrideLafFonts(false);
       uiSettings.setFontFace(fontFace);
       uiSettings.setFontSize(fontSize);
       lafManager.updateUI();
