@@ -137,9 +137,9 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
       service<CurrentActionHolder>().runningSaveDocumentAction = false
     }
   }
+}
 
-  @Service(Service.Level.APP)
-  internal class CurrentActionHolder {
-    var runningSaveDocumentAction = false
-  }
+@Service(Service.Level.APP)
+private class CurrentActionHolder {
+  var runningSaveDocumentAction = false
 }
