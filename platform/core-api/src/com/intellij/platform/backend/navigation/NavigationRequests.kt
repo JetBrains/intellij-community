@@ -7,8 +7,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.NonExtendable
+import org.jetbrains.annotations.ApiStatus.*
 
 @Experimental
 @NonExtendable
@@ -40,6 +39,8 @@ interface NavigationRequests {
    * @return a request to execute an [arbitrary code][Navigatable.navigate],
    * or `null` if the navigation is not possible for any reason
    */
+  @Internal
+  @Deprecated("Don't call this function directly")
   @RequiresReadLock
   @RequiresBackgroundThread
   fun rawNavigationRequest(navigatable: Navigatable): NavigationRequest?

@@ -29,6 +29,7 @@ internal class NavigationRequestsImpl : NavigationRequests {
     return DirectoryNavigationRequest(directory)
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun rawNavigationRequest(navigatable: Navigatable): NavigationRequest? {
     ApplicationManager.getApplication().assertReadAccessAllowed()
     ApplicationManager.getApplication().assertIsNonDispatchThread()

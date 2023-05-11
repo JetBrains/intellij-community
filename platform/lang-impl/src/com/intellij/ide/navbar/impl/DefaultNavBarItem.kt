@@ -142,7 +142,7 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
   }
 
   override fun navigationRequest(): NavigationRequest? {
-    return (data as? Navigatable)?.let(NavigationRequests.getInstance()::rawNavigationRequest)
+    return (data as? Navigatable)?.navigationRequest()
   }
 
   override fun getIcon(): Icon? =
