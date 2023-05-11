@@ -48,6 +48,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     )
 
     private val EXCLUDED_PLUGINS = listOf(
+      "intellij.settingsSync", // Not supported yet in Studio (b/267070185).
       "intellij.android.design-plugin",
       "intellij.android.gradle.dsl",
       "intellij.android.plugin",
