@@ -6,11 +6,10 @@ import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
@@ -147,7 +146,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       Color bgColor = UIUtil.getListBackground();
       Color color = list.getForeground();
 
-      PsiElement target = NavigationItemListCellRenderer.getPsiElement(value);
+      PsiElement target = PSIRenderingUtils.getPsiElement(value);
       VirtualFile vFile = PsiUtilCore.getVirtualFile(target);
       boolean isProblemFile = false;
       if (vFile != null) {
@@ -223,22 +222,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   @Nullable
   protected TextAttributes getNavigationItemAttributes(Object value) {
-    return getNavigationItemAttributesStatic(value);
-  }
-
-  private static @Nullable TextAttributes getNavigationItemAttributesStatic(Object value) {
-    TextAttributes attributes = null;
-
-    if (value instanceof NavigationItem) {
-      TextAttributesKey attributesKey = null;
-      final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
-      if (presentation instanceof ColoredItemPresentation) attributesKey = ((ColoredItemPresentation) presentation).getTextAttributesKey();
-
-      if (attributesKey != null) {
-        attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
-      }
-    }
-    return attributes;
+    return PSIRenderingUtils.getNavigationItemAttributesStatic(value);
   }
 
   @Override
@@ -454,7 +438,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return targetPresentation(
       element,
       renderingInfo,
-      PsiElementListCellRenderer::getNavigationItemAttributesStatic,
+      PSIRenderingUtils::getNavigationItemAttributesStatic,
       PsiElementListCellRenderer::getModuleTextWithIcon,
       () -> DEFAULT_ERROR_ATTRIBUTES
     );

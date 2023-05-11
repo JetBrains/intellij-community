@@ -7,7 +7,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
-import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -21,7 +20,6 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.text.Matcher;
@@ -77,11 +75,6 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
     return this;
   }
 
-  static PsiElement getPsiElement(Object o) {
-    return o instanceof PsiElement ? (PsiElement)o :
-           o instanceof PsiElementNavigationItem ? ((PsiElementNavigationItem)o).getTargetElement() : null;
-  }
-
   private static class LeftRenderer extends ColoredListCellRenderer {
     public final boolean myRenderLocation;
     private final Matcher myMatcher;
@@ -121,7 +114,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
           isProblemFile = false;
         }
 
-        PsiElement psiElement = getPsiElement(item);
+        PsiElement psiElement = PSIRenderingUtils.getPsiElement(item);
 
         if (psiElement != null && psiElement.isValid()) {
           Project project = psiElement.getProject();
