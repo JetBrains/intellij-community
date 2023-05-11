@@ -6,12 +6,12 @@ import com.intellij.DynamicBundle.LanguageBundleEP
 import com.intellij.UtilBundle
 import com.intellij.core.CoreBundle
 import com.intellij.ui.UtilUiBundle
+import kotlinx.coroutines.CoroutineScope
 
 private class LanguageBundleListener : ApplicationInitializedListener {
-  override fun componentsInitialized() {
-    val langBundle = LanguageBundleEP.EP_NAME.findExtension(LanguageBundleEP::class.java)
-    val pluginDescriptor = langBundle?.pluginDescriptor ?: return
-    val pluginClassLoader = pluginDescriptor.pluginClassLoader
+  override suspend fun execute(asyncScope: CoroutineScope) {
+    val langBundle = LanguageBundleEP.EP_NAME.findExtension(LanguageBundleEP::class.java) ?: return
+    val pluginClassLoader = (langBundle.pluginDescriptor ?: return).pluginClassLoader
     UtilBundle.loadBundleFromPlugin(pluginClassLoader)
     UtilUiBundle.loadBundleFromPlugin(pluginClassLoader)
     DynamicBundle.loadLocale(langBundle)
