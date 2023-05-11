@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton {
@@ -116,7 +117,6 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile initialSourceRoot =
       initialTargetDirectory != null ? fileIndex.getSourceRootForFile(initialTargetDirectory.getVirtualFile()) : null;
-    final VirtualFile[] selection = new VirtualFile[]{initialSourceRoot};
     myLeaveInTheSameRoot = initialTargetDirectory == null ||
                            initialSourceRoot != null && !fileIndex.isInLibrarySource(initialSourceRoot);
     addActionListener(new ActionListener() {
@@ -148,7 +148,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         }).submit(AppExecutorUtil.getAppExecutorService());
       }
     });
-
+    final AtomicReference<VirtualFile> selection = new AtomicReference<>(initialSourceRoot);
     editorComboBox.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
@@ -157,10 +157,10 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         VirtualFile initialTargetDirectorySourceRoot = selectedItem != null && selectedItem != NULL_WRAPPER
                                                        ? fileIndex.getSourceRootForFile(selectedItem.getDirectory().getVirtualFile())
                                                        : initialSourceRoot;
-        setComboboxModel(initialTargetDirectorySourceRoot, selection[0], false);
+        setComboboxModel(initialTargetDirectorySourceRoot, selection.get(), false);
       }
     });
-    setComboboxModel(initialSourceRoot, selection[0], false);
+    setComboboxModel(initialSourceRoot, selection.get(), false);
     getComboBox().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -170,7 +170,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
           if (selectedItem instanceof DirectoryChooser.ItemWrapper && selectedItem != NULL_WRAPPER) {
             PsiDirectory directory = ((DirectoryChooser.ItemWrapper)selectedItem).getDirectory();
             if (directory != null) {
-              selection[0] = fileIndex.getSourceRootForFile(directory.getVirtualFile());
+              selection.set(fileIndex.getSourceRootForFile(directory.getVirtualFile()));
             }
           }
           String relativeSrcPath = null;
