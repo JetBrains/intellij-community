@@ -35,13 +35,11 @@ import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
-import com.intellij.util.containers.ContainerUtil.putIfNotNull
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.update.UiNotifyConnector
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.model.MavenArchetype
-import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
@@ -317,38 +315,27 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      val builder = InternalMavenModuleBuilder().apply {
-        moduleJdk = sdk
-        name = parentStep.name
-        contentEntryPath = "${parentStep.path}/${parentStep.name}"
-
-        isCreatingNewProject = context.isCreatingNewProject
-
-        parentProject = parentData
-        aggregatorProject = parentData
-        projectId = MavenId(groupId, artifactId, version)
-        isInheritGroupId = parentData?.mavenId?.groupId == groupId
-        isInheritVersion = parentData?.mavenId?.version == version
-
-        archetype = MavenArchetype(
+      linkMavenProject(project, InternalMavenModuleBuilder()) { builder ->
+        builder.archetype = MavenArchetype(
           archetypeItem.groupId,
           archetypeItem.artifactId,
           archetypeVersion,
           catalogItem.location,
           null
         )
-        propertiesToCreateByArtifact = LinkedHashMap<String, String>().apply {
+        builder.propertiesToCreateByArtifact = LinkedHashMap<String, String>().apply {
           put("groupId", groupId)
           put("artifactId", artifactId)
           put("version", version)
-          put("archetypeGroupId", archetype.groupId)
-          put("archetypeArtifactId", archetype.artifactId)
-          put("archetypeVersion", archetype.version)
-          putIfNotNull("archetypeRepository", archetype.repository, this)
+          put("archetypeGroupId", builder.archetype.groupId)
+          put("archetypeArtifactId", builder.archetype.artifactId)
+          put("archetypeVersion", builder.archetype.version)
+          builder.archetype.repository?.let { repository ->
+            put("archetypeRepository", repository)
+          }
           putAll(archetypeDescriptor)
         }
       }
-      setupProjectFromBuilder(project, builder)
     }
   }
 

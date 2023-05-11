@@ -13,14 +13,12 @@ import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.ide.wizard.setupProjectFromBuilder
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
-import org.jetbrains.idea.maven.model.MavenId
 
 class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
@@ -76,20 +74,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      val builder = InternalMavenModuleBuilder().apply {
-        moduleJdk = sdk
-        name = parentStep.name
-        contentEntryPath = "${parentStep.path}/${parentStep.name}"
-
-        isCreatingNewProject = context.isCreatingNewProject
-
-        parentProject = parentData
-        aggregatorProject = parentData
-        projectId = MavenId(groupId, artifactId, version)
-        isInheritGroupId = parentData?.mavenId?.groupId == groupId
-        isInheritVersion = parentData?.mavenId?.version == version
-      }
-      setupProjectFromBuilder(project, builder)
+      linkMavenProject(project, InternalMavenModuleBuilder())
     }
 
     init {

@@ -24,6 +24,7 @@ import org.jetbrains.idea.maven.wizards.MavenStructureWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import org.jetbrains.idea.maven.wizards.SelectPropertiesStep
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
+import org.jetbrains.plugins.groovy.config.wizard.GROOVY_SDK_FALLBACK_VERSION
 import org.jetbrains.plugins.groovy.config.wizard.createSampleGroovyCodeFile
 import java.util.*
 import kotlin.io.path.Path
@@ -32,9 +33,10 @@ import kotlin.io.path.createDirectories
 /**
  * Currently used only for new project wizard, thus the functionality is rather limited
  */
-class MavenGroovyNewProjectBuilder(private val groovySdkVersion: String) : AbstractMavenModuleBuilder() {
+class MavenGroovyNewProjectBuilder : AbstractMavenModuleBuilder() {
 
   var createSampleCode = false
+  var groovySdkVersion = GROOVY_SDK_FALLBACK_VERSION
 
   override fun createWizardSteps(wizardContext: WizardContext, modulesProvider: ModulesProvider): Array<ModuleWizardStep> = arrayOf(
     MavenStructureWizardStep(this, wizardContext),
