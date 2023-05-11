@@ -2,18 +2,20 @@
 package com.intellij.feedback.common.dialog.uiBlocks
 
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.put
 import javax.swing.SwingConstants
 
-class SegmentedButtonBlock(private val myProperty: ObservableMutableProperty<String>,
-                           @NlsContexts.Label private val myMainLabel: String?,
-                           private val myItems: List<String>) : BaseFeedbackBlock() {
+class SegmentedButtonBlock(@NlsContexts.Label private val myMainLabel: String?,
+                           private val myItems: List<String>,
+                           private val myJsonElementName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
 
+  private var myProperty: String = ""
   private var myLeftBottomLabel: String? = null
   private var myMiddleBottomLabel: String? = null
   private var myRightBottomLabel: String? = null
@@ -23,15 +25,15 @@ class SegmentedButtonBlock(private val myProperty: ObservableMutableProperty<Str
       if (myMainLabel != null) {
         row {
           label(myMainLabel)
-            .customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+            .customize(UnscaledGaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
         }.bottomGap(BottomGap.SMALL)
       }
       row {
         segmentedButton(myItems) { it }
           .apply {
             maxButtonsCount(myItems.size)
-          }.customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
-          .whenItemSelected { myProperty.set(it) }
+          }.customize(UnscaledGaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+          .whenItemSelected { myProperty = it }
           .align(Align.FILL)
           .validation {
             addApplyRule(CommonFeedbackBundle.message("dialog.feedback.segmentedButton.required")) { it.selectedItem == null }
@@ -82,22 +84,28 @@ class SegmentedButtonBlock(private val myProperty: ObservableMutableProperty<Str
   override fun collectBlockTextDescription(stringBuilder: StringBuilder) {
     stringBuilder.apply {
       appendLine(myMainLabel)
-      appendLine(myProperty.get())
+      appendLine(myProperty)
       appendLine()
     }
   }
 
-  fun addLeftBottomLabel(leftBottomLabel: String): SegmentedButtonBlock {
+  override fun collectBlockDataToJson(jsonObjectBuilder: JsonObjectBuilder) {
+    jsonObjectBuilder.apply {
+      put(myJsonElementName, myProperty)
+    }
+  }
+
+  fun addLeftBottomLabel(@NlsContexts.Label leftBottomLabel: String): SegmentedButtonBlock {
     myLeftBottomLabel = leftBottomLabel
     return this
   }
 
-  fun addMiddleBottomLabel(middleBottomLabel: String): SegmentedButtonBlock {
+  fun addMiddleBottomLabel(@NlsContexts.Label middleBottomLabel: String): SegmentedButtonBlock {
     myMiddleBottomLabel = middleBottomLabel
     return this
   }
 
-  fun addRightBottomLabel(rightBottomLabel: String): SegmentedButtonBlock {
+  fun addRightBottomLabel(@NlsContexts.Label rightBottomLabel: String): SegmentedButtonBlock {
     myRightBottomLabel = rightBottomLabel
     return this
   }

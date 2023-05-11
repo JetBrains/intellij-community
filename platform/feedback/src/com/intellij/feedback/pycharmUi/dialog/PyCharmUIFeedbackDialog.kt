@@ -48,14 +48,15 @@ class PyCharmUIFeedbackDialog(
 
   private val jsonConverter = Json { prettyPrint = true }
 
-  private val blocks: List<BaseFeedbackBlock> = listOf(
+  private val blocks: List<FeedbackBlock> = listOf(
     TopLabelBlock(PyCharmUIFeedbackBundle.message("dialog.title")),
     DescriptionBlock(PyCharmUIFeedbackBundle.message("dialog.description")),
-    RatingBlock(ratingOverallImpressionProperty, PyCharmUIFeedbackBundle.message("dialog.rating.overall.impression.label")),
-    RatingBlock(ratingUIImpressionProperty, PyCharmUIFeedbackBundle.message("dialog.rating.ui.impression.label")),
-    TextAreaBlock(textAreaLikeMostProperty, PyCharmUIFeedbackBundle.message("dialog.like_most.textarea.label")),
-    TextAreaBlock(textAreaDislikeProperty, PyCharmUIFeedbackBundle.message("dialog.dislike.textarea.label")),
-    EmailBlock(textFieldEmailProperty, myProject) { showPyCharmFeedbackSystemInfoDialog(myProject, systemInfoData.value) }
+    RatingBlock(PyCharmUIFeedbackBundle.message("dialog.rating.overall.impression.label"), "overall_impression"),
+    RatingBlock(PyCharmUIFeedbackBundle.message("dialog.rating.ui.impression.label"),
+                "ui_impression"),
+    TextAreaBlock(PyCharmUIFeedbackBundle.message("dialog.like_most.textarea.label"), "like_most"),
+    TextAreaBlock(PyCharmUIFeedbackBundle.message("dialog.dislike.textarea.label"), "dislike_most"),
+    EmailBlock(myProject) { showPyCharmFeedbackSystemInfoDialog(myProject, systemInfoData.value) }
   )
 
   init {

@@ -45,13 +45,13 @@ class AquaOldUserFeedbackDialog(
 
   private val jsonConverter = Json { prettyPrint = true }
 
-  private val blocks: List<BaseFeedbackBlock> = listOf(
+  private val blocks: List<FeedbackBlock> = listOf(
     TopLabelBlock(AquaFeedbackBundle.message("old.user.dialog.title")),
     DescriptionBlock(AquaFeedbackBundle.message("old.user.dialog.description")),
-    RatingBlock(satisfactionRating, AquaFeedbackBundle.message("old.user.dialog.satisfaction.label")),
-    TextAreaBlock(likeMost, AquaFeedbackBundle.message("old.user.dialog.like_most.label")),
-    TextAreaBlock(problemsOrMissingFeatures, AquaFeedbackBundle.message("old.user.dialog.problems.label")),
-    EmailBlock(textFieldEmailProperty, myProject) { showFeedbackSystemInfoDialog(myProject, systemInfoData.value) }
+    RatingBlock(AquaFeedbackBundle.message("old.user.dialog.satisfaction.label"), "satisfaction"),
+    TextAreaBlock(AquaFeedbackBundle.message("old.user.dialog.like_most.label"), "like_most"),
+    TextAreaBlock(AquaFeedbackBundle.message("old.user.dialog.problems.label"), "problems_or_missing_features"),
+    EmailBlock(myProject) { showFeedbackSystemInfoDialog(myProject, systemInfoData.value) }
   )
 
   init {

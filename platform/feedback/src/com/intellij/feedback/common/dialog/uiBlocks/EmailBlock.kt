@@ -5,8 +5,8 @@ import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.dialog.EMAIL_REGEX
 import com.intellij.feedback.common.dialog.TEXT_FIELD_EMAIL_COLUMN_SIZE
 import com.intellij.feedback.common.feedbackAgreement
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
+import com.intellij.ui.LicensingFacade
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.TextComponentEmptyText
@@ -16,25 +16,23 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import java.util.function.Predicate
 
-class EmailBlock(private val myProperty: ObservableMutableProperty<String>,
-                 private val myProject: Project?,
-                 private val showFeedbackSystemInfoDialog: () -> Unit) : BaseFeedbackBlock() {
-
+class EmailBlock(private val myProject: Project?,
+                 private val showFeedbackSystemInfoDialog: () -> Unit) : FeedbackBlock {
+  private var myProperty: String = LicensingFacade.INSTANCE?.getLicenseeEmail().orEmpty()
   private var checkBoxEmail: JBCheckBox? = null
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
-      panel {
-        row {
-          checkBox(CommonFeedbackBundle.message("dialog.feedback.email.checkbox.label"))
-            .applyToComponent {
-              checkBoxEmail = this
-            }
-        }
+      row {
+        checkBox(CommonFeedbackBundle.message("dialog.feedback.email.checkbox.label"))
+          .applyToComponent {
+            checkBoxEmail = this
+          }
+      }
 
         indent {
           row {
-            textField().bindText(myProperty).columns(TEXT_FIELD_EMAIL_COLUMN_SIZE).applyToComponent {
+            textField().bindText(::myProperty).columns(TEXT_FIELD_EMAIL_COLUMN_SIZE).applyToComponent {
               emptyText.text = CommonFeedbackBundle.message("dialog.feedback.email.textfield.placeholder")
               isEnabled = checkBoxEmail?.isSelected ?: false
 
@@ -51,12 +49,19 @@ class EmailBlock(private val myProperty: ObservableMutableProperty<String>,
           }.bottomGap(BottomGap.MEDIUM)
         }
 
-        row {
-          feedbackAgreement(myProject, CommonFeedbackBundle.message("dialog.feedback.consent.withEmail")) {
-            showFeedbackSystemInfoDialog()
-          }
-        }.bottomGap(BottomGap.SMALL)
-      }
+      row {
+        feedbackAgreement(myProject, CommonFeedbackBundle.message("dialog.feedback.consent.withEmail")) {
+          showFeedbackSystemInfoDialog()
+        }
+      }.bottomGap(BottomGap.SMALL)
     }
+  }
+
+  fun getEmailAddressIfSpecified(): String? {
+    //TODO: What if email is empty string
+    if (checkBoxEmail?.isSelected == true) {
+      return myProperty
+    }
+    return null
   }
 }

@@ -2,15 +2,19 @@
 package com.intellij.feedback.common.dialog.uiBlocks
 
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class CheckBoxGroupBlock(
   @NlsContexts.Label private val myGroupLabel: String,
-  private val myItemsData: List<CheckBoxItemData>) : BaseFeedbackBlock() {
+  private val myItemsData: List<CheckBoxItemData>,
+  private val myJsonGroupName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
 
-  private var myOtherProperty: ObservableMutableProperty<String>? = null
+  private var myIncludeOtherTextField = false
+  private var myOtherProperty: String = ""
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
@@ -18,19 +22,23 @@ class CheckBoxGroupBlock(
       buttonsGroup(myGroupLabel) {
         myItemsData.forEachIndexed { i, itemData ->
           row {
-            checkBox(itemData.label).bindSelected(itemData.property)
+            checkBox(itemData.label).bindSelected(
+              { myItemsData[i].property },
+              { myItemsData[i].property = it }
+            )
           }.apply {
-            if (i == myItemsData.size - 1 && myOtherProperty == null) {
+            if (i == myItemsData.size - 1 && !myIncludeOtherTextField) {
               this.bottomGap(BottomGap.MEDIUM)
             }
           }
         }
 
-        if (myOtherProperty != null) {
+        if (myIncludeOtherTextField) {
           row {
             textField().applyToComponent {
               emptyText.text = CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.other.placeholder")
-            }.bindText(myOtherProperty!!).columns(COLUMNS_MEDIUM)
+            }.bindText(::myOtherProperty.toMutableProperty())
+              .columns(COLUMNS_MEDIUM)
           }.bottomGap(BottomGap.MEDIUM)
         }
       }
@@ -41,18 +49,31 @@ class CheckBoxGroupBlock(
     stringBuilder.apply {
       appendLine(myGroupLabel)
       myItemsData.forEach { itemData ->
-        appendLine(" ${itemData.label} - ${itemData.property.get()}")
+        appendLine(" ${itemData.label} - ${itemData.property}")
       }
 
-      if (myOtherProperty != null) {
-        appendLine(" Other: ${myOtherProperty!!.get()}")
+      if (myIncludeOtherTextField) {
+        appendLine(" Other: ${myOtherProperty}")
       }
       appendLine()
     }
   }
 
-  fun addOtherTextField(otherProperty: ObservableMutableProperty<String>): CheckBoxGroupBlock {
-    myOtherProperty = otherProperty
+  override fun collectBlockDataToJson(jsonObjectBuilder: JsonObjectBuilder) {
+    jsonObjectBuilder.apply {
+      put(myJsonGroupName, buildJsonObject {
+        myItemsData.forEach { itemData ->
+          put(itemData.jsonElementName, itemData.property)
+        }
+        if (myIncludeOtherTextField) {
+          put("other", myOtherProperty)
+        }
+      })
+    }
+  }
+
+  fun addOtherTextField(): CheckBoxGroupBlock {
+    myIncludeOtherTextField = true
     return this
   }
 }

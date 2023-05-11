@@ -3,14 +3,16 @@ package com.intellij.feedback.common.dialog.uiBlocks
 
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.dialog.COMBOBOX_COLUMN_SIZE
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.put
 
-class ComboBoxBlock(private val myProperty: ObservableMutableProperty<String>,
-                    @NlsContexts.Label private val myLabel: String,
-                    private val myItems: List<String>) : BaseFeedbackBlock() {
+class ComboBoxBlock(@NlsContexts.Label private val myLabel: String,
+                    private val myItems: List<String>,
+                    private val myJsonElementName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
 
+  private var myProperty: String? = ""
   private var myComment: String? = null
   private var myColumnSize: Int = COMBOBOX_COLUMN_SIZE
 
@@ -19,7 +21,7 @@ class ComboBoxBlock(private val myProperty: ObservableMutableProperty<String>,
       row {
         comboBox(myItems)
           .label(myLabel, LabelPosition.TOP)
-          .bindItem(myProperty)
+          .bindItem(::myProperty.toMutableProperty())
           .columns(myColumnSize).applyToComponent {
             selectedItem = null
           }.errorOnApply(CommonFeedbackBundle.message("dialog.feedback.combobox.required")) {
@@ -35,12 +37,18 @@ class ComboBoxBlock(private val myProperty: ObservableMutableProperty<String>,
   override fun collectBlockTextDescription(stringBuilder: StringBuilder) {
     stringBuilder.apply {
       appendLine(myLabel)
-      appendLine(myProperty.get())
+      appendLine(myProperty)
       appendLine()
     }
   }
 
-  fun addComment(comment: String): ComboBoxBlock {
+  override fun collectBlockDataToJson(jsonObjectBuilder: JsonObjectBuilder) {
+    jsonObjectBuilder.apply {
+      put(myJsonElementName, myProperty)
+    }
+  }
+
+  fun addComment(@NlsContexts.Label comment: String): ComboBoxBlock {
     myComment = comment
     return this
   }

@@ -3,11 +3,8 @@ package com.intellij.feedback.common.dialog.uiBlocks
 
 import com.intellij.ui.dsl.builder.Panel
 
-abstract class BaseFeedbackBlock {
+interface FeedbackBlock {
 
-  abstract fun addToPanel(panel: Panel)
+  fun addToPanel(panel: Panel)
 
-  open fun collectBlockTextDescription(stringBuilder: StringBuilder) {
-    // Nothing to add
-  }
 }
