@@ -3,6 +3,7 @@ package com.intellij.cce.metric
 import com.intellij.cce.actions.selectedWithoutPrefix
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
+import com.intellij.cce.metric.util.Bootstrap
 import com.intellij.cce.metric.util.Sample
 import org.apache.commons.lang.StringUtils
 
@@ -144,11 +145,16 @@ internal class MovesCountNormalised : Metric {
 internal abstract class SimilarityMetric : Metric {
   private var totalMatched: Double = 0.0
   private var totalExpected: Double = 0.0
+  private var sample: MutableList<Pair<Double, Double>> = mutableListOf()
 
   override val valueType = MetricValueType.DOUBLE
   override val showByDefault: Boolean = false
   override val value: Double
     get() = totalMatched / totalExpected
+
+  override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { values ->
+    values.sumOf { it.first } / values.sumOf { it.second }
+  }
 
   override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
     var matched = 0.0
@@ -157,7 +163,9 @@ internal abstract class SimilarityMetric : Metric {
       for (lookup in session.lookups) {
         val expectedText = session.expectedText.substring(lookup.offset)
         expected += expectedText.length
-        matched += computeSimilarity(lookup, expectedText) ?: 0.0
+        val similarity = computeSimilarity(lookup, expectedText) ?: 0.0
+        matched += similarity
+        sample.add(Pair(similarity, expectedText.length.toDouble()))
       }
     }
     totalMatched += matched
@@ -209,11 +217,13 @@ internal class PerfectLine : CompletionGolfMetric<Int>() {
 }
 
 internal class Precision : Metric {
-  private val sample = Sample()
+  private val sample = mutableListOf<Double>()
   override val name = "Precision"
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
-    get() = sample.mean()
+    get() = sample.average()
+
+  override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { it.average() }
 
   override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
     val fileSample = Sample()
@@ -234,11 +244,13 @@ internal class Precision : Metric {
 }
 
 internal open class RecallAt(private val n: Int) : Metric {
-  private val sample = Sample()
+  private val sample = mutableListOf<Double>()
   override val name = "RecallAt$n"
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
-    get() = sample.mean()
+    get() = sample.average()
+
+  override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { it.average() }
 
   override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
     val fileSample = Sample()

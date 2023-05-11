@@ -149,13 +149,14 @@ class HtmlReportGenerator(
     if (withDiff) evaluationTypes.add(diffColumnTitle)
     var rowId = 1
 
-    val errorMetrics = globalMetrics.map { MetricInfo(it.name, Double.NaN, it.evaluationType, it.valueType, it.showByDefault) }
+    val errorMetrics = globalMetrics.map { MetricInfo(it.name, Double.NaN, null, it.evaluationType, it.valueType, it.showByDefault) }
 
     fun getReportMetrics(repRef: ReferenceInfo) = globalMetrics.map { metric ->
+      val refMetric = repRef.metrics.find { it.name == metric.name && it.evaluationType == metric.evaluationType }
       MetricInfo(
         metric.name,
-        repRef.metrics.find { it.name == metric.name && it.evaluationType == metric.evaluationType }?.value
-        ?: Double.NaN,
+        refMetric?.value ?: Double.NaN,
+        refMetric?.confidenceInterval,
         metric.evaluationType,
         metric.valueType,
         metric.showByDefault
@@ -166,11 +167,11 @@ class HtmlReportGenerator(
       if (withDiff) listOf(metrics, metrics
         .groupBy({ it.name }, { Triple(it.value, it.valueType, it.showByDefault) })
         .mapValues { with(it.value) { Triple(first().first - last().first, first().second, first().third) } }
-        .map { MetricInfo(it.key, it.value.first, diffColumnTitle, it.value.second, it.value.third) }).flatten()
+        .map { MetricInfo(it.key, it.value.first, null, diffColumnTitle, it.value.second, it.value.third) }).flatten()
       else metrics
                                                            ).joinToString(",") {
         "${it.name}${it.evaluationType}:'${
-          formatMetricValue(it.value, it.valueType)
+          formatMetricValue(it.value, it.confidenceInterval, it.valueType)
         }'"
       }
 
@@ -202,12 +203,18 @@ class HtmlReportGenerator(
 
   private fun MetricInfo.visible(): Boolean = if (defaultMetrics != null) name in defaultMetrics else showByDefault
 
-  private fun formatMetricValue(value: Double, type: MetricValueType): String = when {
+  private fun formatMetricValue(value: Double, confidenceInterval: Pair<Double, Double>?, type: MetricValueType): String = when {
     value.isNaN() -> "—"
-    type == MetricValueType.INT -> "${value.toInt()}"
-    type == MetricValueType.DOUBLE -> "%.3f".format(Locale.US, value)
+    type == MetricValueType.INT -> "${value.toInt()}" + (confidenceInterval?.let {
+      " (${confidenceInterval.first.toInt()}; ${confidenceInterval.second.toInt()})"
+    } ?: "")
+    type == MetricValueType.DOUBLE -> value.format() + (confidenceInterval?.let {
+      " (${confidenceInterval.first.format()}; ${confidenceInterval.second.format()})"
+    } ?: "")
     else -> throw IllegalArgumentException("Unknown metric value type")
   }
+
+  private fun Double.format() = "%.3f".format(Locale.US, this)
 
   private fun getErrorLink(errRef: Map.Entry<String, Path>): String =
     "\"<a href='${getHtmlRelativePath(dirs.filterDir, errRef.value)}' class='errRef' target='_blank'>${
