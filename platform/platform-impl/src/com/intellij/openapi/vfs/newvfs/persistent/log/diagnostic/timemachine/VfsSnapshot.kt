@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine
 
+import com.intellij.openapi.vfs.newvfs.AttributeInputStream
+import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
@@ -28,6 +30,7 @@ interface VfsSnapshot {
     val parent: Property<VirtualFileSnapshot?>
 
     fun getContent(): DefinedState<ByteArray>
+    fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?>
 
     abstract class Property<T> {
       var state: State = State.UnknownYet
@@ -106,12 +109,12 @@ interface VfsSnapshot {
             is NotAvailable -> onNotAvailable(cause)
           }
 
-          fun <T, R> DefinedState<T>.fmap(f: (T) -> R): DefinedState<R> = when (this) {
+          inline fun <T, R> DefinedState<T>.fmap(f: (T) -> R): DefinedState<R> = when (this) {
             is NotAvailable -> this
             is Ready<T> -> Ready(f(value))
           }
 
-          fun <T, R> DefinedState<T>.bind(f: (T) -> DefinedState<R>): DefinedState<R> = when (this) {
+          inline fun <T, R> DefinedState<T>.bind(f: (T) -> DefinedState<R>): DefinedState<R> = when (this) {
             is NotAvailable -> this
             is Ready<T> -> f(value)
           }

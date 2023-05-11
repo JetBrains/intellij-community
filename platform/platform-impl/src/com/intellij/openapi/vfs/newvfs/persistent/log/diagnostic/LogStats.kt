@@ -4,6 +4,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic
 
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSTreeAccessor
 import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.ReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEachContainedOperation
@@ -15,11 +16,14 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.Vfs
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsTimeMachine
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.io.DataInputOutputUtil
+import com.intellij.util.io.SimpleStringPersistentEnumerator
 import kotlinx.coroutines.runBlocking
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.path.div
 import kotlin.math.sqrt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -170,23 +174,26 @@ private typealias Diff = Pair<List<String>, List<String>>
 @OptIn(ExperimentalTime::class)
 private fun vfsRecoveryDraft(log: VfsLog,
                              id2name: (Int) -> String?,
+                             attributeEnumerator: SimpleStringPersistentEnumerator,
                              fsRecords: FSRecordsImpl) {
   var singleOp = 0
   var vfileEvents = 0
   var vfileEventContentOps = 0
 
   // TODO: this log.query {} thing doesn't look cool
-  val payloadReadAt = log.query { payloadStorage::readAt }
+  val vfsLogContext = log.query { this }
+  val payloadReadAt = vfsLogContext.payloadStorage::readAt
   val payloadReader: (PayloadRef) -> State.DefinedState<ByteArray> = {
     val data = payloadReadAt(it)
     if (data == null) State.notAvailable(NotEnoughInformationCause("data is not available anymore"))
     else State.Ready(data)
   }
-  val fsRecordsOracle = FSRecordsOracle(fsRecords, log, payloadReader)
-  val vfsTimeMachine = VfsTimeMachine(log.query { operationLogStorage.begin() },
-                                      id2name = id2name,
+  val fsRecordsOracle = FSRecordsOracle(fsRecords, vfsLogContext, payloadReader)
+  val vfsTimeMachine = VfsTimeMachine(vfsLogContext,
+                                      id2filename = id2name,
                                       payloadReader = payloadReader,
-                                      oracle = fsRecordsOracle::getSnapshot)
+                                      oracle = fsRecordsOracle::getSnapshot,
+                                      attributeEnumerator = attributeEnumerator)
 
   fun VfsSnapshot.VirtualFileSnapshot.represent(): String =
     "file: name=$name parent=$parentId id=$fileId ts=$timestamp len=$length flags=$flags contentId=$contentRecordId attrId=$attributesRecordId"
@@ -204,6 +211,21 @@ private fun vfsRecoveryDraft(log: VfsLog,
     }
     return linesBefore to linesAfter
   }
+
+  fun VfsSnapshot.VirtualFileSnapshot.readChildAttr(): State.DefinedState<List<Int>> =
+    // copy-pasted from [com.intellij.openapi.vfs.newvfs.persistent.PersistentFSTreeAccessor] and slightly modified for testing purposes
+    readAttribute(PersistentFSTreeAccessor.CHILDREN_ATTR).fmap { input ->
+      val count = if (input == null) 0 else DataInputOutputUtil.readINT(input)
+      val children: MutableList<Int> = if (count == 0) mutableListOf()
+      else ArrayList<Int>(count)
+      var prevId: Int = fileId
+      for (i in 0 until count) {
+        val childId: Int = DataInputOutputUtil.readINT(input!!) + prevId
+        prevId = childId
+        children.add(childId)
+      }
+      children
+    }
 
   fun Diff.represent() =
     if (first.isEmpty() && second.isEmpty()) "No diff"
@@ -233,8 +255,11 @@ private fun vfsRecoveryDraft(log: VfsLog,
                 val file = snapshotBefore.getFileById(startOp.fileId)
                 println(file.represent())
                 val oldParent = snapshotBefore.getFileById(startOp.oldParentId)
+                val oldParentAfter = snapshotAfter.getFileById(startOp.oldParentId)
                 val newParent = snapshotBefore.getFileById(startOp.newParentId)
                 println("MOVE FROM PARENT ${oldParent.name} to ${newParent.name}")
+                println("old parent's children ids before: ${oldParent.readChildAttr()}")
+                println("old parent's children ids after: ${oldParentAfter.readChildAttr()}")
               }
               VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE -> {
                 val startOp =
@@ -291,11 +316,14 @@ fun main(args: Array<String>) {
 
   val fsRecords = FSRecordsImpl.connect(logPath.parent,
                                         log,
-                                        FSRecordsImpl.ErrorHandler { records, error -> ExceptionUtil.rethrow(error) })
+                                        FSRecordsImpl.ErrorHandler { records, error ->
+                                          ExceptionUtil.rethrow(error)
+                                        })
   //val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)::valueOf
   val names = { id: Int -> fsRecords.getNameByNameId(id)?.toString() }
+  val attributeEnumerator = SimpleStringPersistentEnumerator(logPath.parent / "attributes_enums.dat")
 
-  vfsRecoveryDraft(log, names, fsRecords)
+  vfsRecoveryDraft(log, names, attributeEnumerator, fsRecords)
 
   fsRecords.dispose()
 }

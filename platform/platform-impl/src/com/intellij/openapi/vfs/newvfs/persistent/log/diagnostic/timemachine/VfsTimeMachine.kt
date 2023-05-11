@@ -3,17 +3,20 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine
 
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
+import com.intellij.util.io.SimpleStringPersistentEnumerator
 import java.lang.ref.SoftReference
 
 class VfsTimeMachine(
-  zeroIterator: OperationLogStorage.Iterator,
+  private val vfsLogContext: VfsLogContext,
   private val oracle: VfsStateOracle? = null,
-  private val id2name: (Int) -> String?,
+  private val id2filename: (Int) -> String?,
+  private val attributeEnumerator: SimpleStringPersistentEnumerator,
   private val payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>
 ) {
   private val cache = sortedMapOf<Long, SoftReference<VfsSnapshot>>()
-  private val zeroLayer = NotAvailableVfsSnapshot(zeroIterator) // hard-reference so it won't be GCed from cache
+  private val zeroLayer = NotAvailableVfsSnapshot(vfsLogContext.operationLogStorage.begin()) // hard-reference so it won't be GCed from cache
 
   init {
     cache[zeroLayer.point().getPosition()] = SoftReference(zeroLayer)
@@ -21,7 +24,13 @@ class VfsTimeMachine(
 
   fun getSnapshot(point: OperationLogStorage.Iterator): VfsSnapshot = synchronized(this) {
     cache[point.getPosition()]?.get()?.let { return it }
-    val snapshot = CacheAwareVfsSnapshot(point, id2name, payloadReader, ::closestPrecedingCachedSnapshot, oracle)
+    val snapshot = CacheAwareVfsSnapshot(point,
+                                         vfsLogContext,
+                                         id2filename,
+                                         attributeEnumerator,
+                                         payloadReader,
+                                         ::closestPrecedingCachedSnapshot,
+                                         oracle)
     cache[point.getPosition()] = SoftReference(snapshot)
     return snapshot
   }

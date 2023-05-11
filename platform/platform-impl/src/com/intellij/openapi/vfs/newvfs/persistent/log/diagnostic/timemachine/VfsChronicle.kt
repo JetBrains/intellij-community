@@ -6,8 +6,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.movableIn
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.moveFiltered
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.ContentsOperation
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
@@ -23,6 +22,7 @@ object VfsChronicle {
    */
 
   // TODO: lookup methods can throw on Invalid, it should be caught and processed in usages
+  // TODO: if operation.result is an exception, it should probably be accounted, but it's not completely clear how right now
 
   inline fun lookupNameId(iterator: OperationLogStorage.Iterator,
                           fileId: Int,
@@ -146,6 +146,7 @@ object VfsChronicle {
     fun interface Set : ContentOperation {
       fun readContent(payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray>
     }
+
     fun interface Modify : ContentOperation {
       fun modifyContent(previousContent: ByteArray,
                         payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray>
@@ -225,6 +226,26 @@ object VfsChronicle {
     // no ContentOp.SetValue was found
     return State.notAvailable()
   }
+
+  /**
+   * @return `null` if attributes were deleted
+   */
+  inline fun lookupAttributeData(iterator: OperationLogStorage.Iterator,
+                                 fileId: Int,
+                                 enumeratedAttrId: Int,
+                                 direction: TraverseDirection = TraverseDirection.REWIND,
+                                 crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<PayloadRef?> =
+    traverseOperationsLogForLookup(
+      iterator, direction, condition,
+      VfsOperationTagsMask(ATTR_DELETE_ATTRS, ATTR_WRITE_ATTR),
+      onValid = { operation, detect ->
+        when (operation) {
+          is AttributesOperation.DeleteAttributes -> if (operation.fileId == fileId) detect(null)
+          is AttributesOperation.WriteAttribute ->
+            if (operation.fileId == fileId && operation.attributeIdEnumerated == enumeratedAttrId) detect(operation.attrDataPayloadRef)
+          else -> throw IllegalStateException("filtered read is broken")
+        }
+      })
 
   inline fun traverseOperationsLog(
     iterator: OperationLogStorage.Iterator,

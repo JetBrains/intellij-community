@@ -25,10 +25,8 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.PersistentHashMapValueStorage;
+import com.intellij.util.io.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
@@ -172,8 +170,8 @@ public final class FSRecordsImpl {
   }
 
   public static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
-                               @NotNull VfsLog vfsLog,
-                               @NotNull ErrorHandler errorHandler) throws UncheckedIOException {
+                                      @NotNull VfsLog vfsLog,
+                                      @NotNull ErrorHandler errorHandler) throws UncheckedIOException {
     if (IOUtil.isSharedCachesEnabled()) {
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
     }
@@ -879,6 +877,10 @@ public final class FSRecordsImpl {
     }
   }
 
+  public SimpleStringPersistentEnumerator getEnumeratedAttributes() {
+    return connection.getEnumeratedAttributes();
+  }
+
   public int getAttributeRecordId(int fileId) {
     try {
       return connection.getRecords().getAttributeRecordId(fileId);
@@ -929,7 +931,7 @@ public final class FSRecordsImpl {
 
   //========== file attributes accessors: ========================================
 
-  @Nullable AttributeInputStream readAttributeWithLock(int fileId,
+  public @Nullable AttributeInputStream readAttributeWithLock(int fileId,
                                                        @NotNull FileAttribute attribute) {
     //RC: attributeAccessor acquires lock anyway, no need for additional lock here
     try {
@@ -986,7 +988,7 @@ public final class FSRecordsImpl {
     try {
       return contentAccessor.readContent(fileId);
     }
-    catch (InterruptedIOException ie){
+    catch (InterruptedIOException ie) {
       //RC: goal is to just bypass handleError(), which likely marks VFS corrupted,
       //    but thread interruption during _read_ doesn't corrupt anything
       throw new RuntimeException(ie);
@@ -1012,7 +1014,7 @@ public final class FSRecordsImpl {
     try {
       return contentAccessor.readContentDirectly(contentId);
     }
-    catch (InterruptedIOException ie){
+    catch (InterruptedIOException ie) {
       //RC: goal is to just not go into handleError(), which likely marks VFS corrupted,
       //    but thread interruption during _read_ doesn't corrupt anything
       throw new RuntimeException(ie);

@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine
 
+import com.intellij.openapi.vfs.newvfs.AttributeInputStream
+import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.FSRecordsOracle.LogDistanceEvaluator
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsChronicle.LookupResult.Companion.toState
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property
@@ -23,10 +25,10 @@ typealias VfsStateOracle = (OperationLogStorage.Iterator) -> VfsSnapshot?
 
 class FSRecordsOracle(
   private val fsRecords: FSRecordsImpl,
-  private val vfsLog: VfsLog,
+  private val vfsLogContext: VfsLogContext,
   private val payloadReader: (PayloadRef) -> DefinedState<ByteArray>,
   private val distanceEvaluator: LogDistanceEvaluator = LogDistanceEvaluator { iterator ->
-    vfsLog.query { operationLogStorage.end().getPosition() - iterator.getPosition() } < 8_000_000 // 8mb, TODO can be smarter, like 20% or smth
+    vfsLogContext.operationLogStorage.end().getPosition() - iterator.getPosition() < 8_000_000 // 8mb, TODO can be smarter, like 20% or smth
   }
 ) {
   fun interface LogDistanceEvaluator {
@@ -105,6 +107,14 @@ class FSRecordsOracle(
         // content at point() is the same as in FSRecords
         return@bind fsRecords.readContentById(it).readAllBytes().let(State::ready)
       }.observeState()
+
+      override fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?> {
+        if (!distanceEvaluator.isWorthLookingUpFrom(point())) return State.notAvailable()
+        val attrId = vfsLogContext.stringEnumerator.enumerate(fileAttribute.id)
+        val attrData = VfsChronicle.lookupAttributeData(point(), fileId, attrId, direction = TraverseDirection.PLAY)
+        if (attrData.found) return State.notAvailable() // some operation took place in between (point(), end())
+        return fsRecords.readAttributeWithLock(fileId, fileAttribute).let(State::ready)
+      }
 
       private inner class OracledProp<T>(
         val queryLog: () -> DefinedState<T>,
