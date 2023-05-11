@@ -12,7 +12,6 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.runActivity
 import com.intellij.diagnostic.subtask
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.SplitAction
 import com.intellij.ide.lightEdit.LightEdit
@@ -27,7 +26,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -233,8 +231,7 @@ open class FileEditorManagerImpl(
         // expected in EDT
         withContext(Dispatchers.EDT) {
           kotlin.runCatching {
-            fireSelectionChanged(oldComposite = oldState?.composite,
-                                 newComposite = state?.composite,
+            fireSelectionChanged(newComposite = state?.composite,
                                  oldEditorWithProvider = oldEditorWithProvider,
                                  newEditorWithProvider = newEditorWithProvider,
                                  publisher = publisher)
@@ -363,31 +360,6 @@ open class FileEditorManagerImpl(
     private fun isFileOpenInWindow(file: VirtualFile, window: EditorWindow): Boolean {
       val shouldFileBeSelected = UISettings.getInstance().editorTabPlacement == UISettings.TABS_NONE
       return if (shouldFileBeSelected) file == window.selectedFile else window.isFileOpen(file)
-    }
-
-    @JvmStatic
-    fun getOpenMode(event: AWTEvent): OpenMode {
-      if (event is MouseEvent) {
-        val isMouseClick = event.getID() == MouseEvent.MOUSE_CLICKED || event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED
-        val modifiers = event.modifiersEx
-        if (modifiers == InputEvent.SHIFT_DOWN_MASK && isMouseClick) {
-          return OpenMode.NEW_WINDOW
-        }
-      }
-      else if (event is KeyEvent) {
-        val keymapManager = KeymapManager.getInstance()
-        if (keymapManager != null) {
-          @Suppress("DEPRECATION")
-          val strings = keymapManager.activeKeymap.getActionIds(KeyStroke.getKeyStroke(event.keyCode, event.modifiers))
-          if (strings.contains(IdeActions.ACTION_OPEN_IN_NEW_WINDOW)) {
-            return OpenMode.NEW_WINDOW
-          }
-          if (strings.contains(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT)) {
-            return OpenMode.RIGHT_SPLIT
-          }
-        }
-      }
-      return OpenMode.DEFAULT
     }
 
     @JvmStatic
@@ -737,12 +709,12 @@ open class FileEditorManagerImpl(
   @RequiresEdt
   internal fun closeFile(window: EditorWindow, composite: EditorComposite, runChecks: Boolean): Boolean {
     val file = composite.file
-    if (runChecks && !canCloseFile(file)) return false
+    if (runChecks && !canCloseFile(file)) {
+      return false
+    }
 
     openFileSetModificationCount.increment()
-    CommandProcessor.getInstance().executeCommand(project, {
-      window.closeFile(file = file, composite = composite)
-    }, IdeBundle.message("command.close.active.editor"), null)
+    window.closeFile(file = file, composite = composite)
     removeSelectionRecord(file, window)
     return true
   }
@@ -774,11 +746,9 @@ open class FileEditorManagerImpl(
   fun closeFile(file: VirtualFile, moveFocus: Boolean, closeAllCopies: Boolean) {
     if (!closeAllCopies) {
       if (ClientId.isCurrentlyUnderLocalId) {
-        CommandProcessor.getInstance().executeCommand(project, {
-          openFileSetModificationCount.increment()
-          val activeSplitters = getActiveSplitterSync()
-          runBulkTabChange(activeSplitters) { activeSplitters.closeFile(file, moveFocus) }
-        }, "", null)
+        openFileSetModificationCount.increment()
+        val activeSplitters = getActiveSplitterSync()
+        runBulkTabChange(activeSplitters) { activeSplitters.closeFile(file, moveFocus) }
       }
       else {
         clientFileEditorManager?.closeFile(file, false)
@@ -786,12 +756,10 @@ open class FileEditorManagerImpl(
     }
     else {
       ClientId.withClientId(ClientId.localId).use {
-        CommandProcessor.getInstance().executeCommand(project, {
-          openFileSetModificationCount.increment()
-          for (each in getAllSplitters()) {
-            runBulkTabChange(each) { each.closeFile(file = file, moveFocus = moveFocus) }
-          }
-        }, "", null)
+        openFileSetModificationCount.increment()
+        for (each in getAllSplitters()) {
+          runBulkTabChange(each) { each.closeFile(file = file, moveFocus = moveFocus) }
+        }
       }
       for (manager in allClientFileEditorManagers) {
         manager.closeFile(file = file, closeAllCopies = true)
@@ -802,12 +770,10 @@ open class FileEditorManagerImpl(
   private fun closeFileEditor(editor: FileEditor, moveFocus: Boolean = true) {
     val file = editor.file ?: return
     if (ClientId.isCurrentlyUnderLocalId) {
-      CommandProcessor.getInstance().executeCommand(project, {
-        openFileSetModificationCount.increment()
-        for (each in getAllSplitters()) {
-          runBulkTabChange(each) { each.closeFileEditor(file, editor, moveFocus) }
-        }
-      }, "", null)
+      openFileSetModificationCount.increment()
+      for (each in getAllSplitters()) {
+        runBulkTabChange(each) { each.closeFileEditor(file, editor, moveFocus) }
+      }
     }
     else {
       clientFileEditorManager?.closeFile(file, false) // todo pass editor inside ?
@@ -840,9 +806,8 @@ open class FileEditorManagerImpl(
         }
       }
       else if (mode == OpenMode.RIGHT_SPLIT) {
-        val result = openInRightSplit(file)
-        if (result != null) {
-          return result
+        openInRightSplit(file)?.let {
+          return it
         }
       }
     }
@@ -854,14 +819,19 @@ open class FileEditorManagerImpl(
       windowToOpenIn = getOrCreateCurrentWindow(file)
     }
 
-    // see todo in openEditorImpl
-    if (window == null && ClientId.isCurrentlyUnderLocalId) {
-      return runBlockingModal(project, EditorBundle.message("editor.open.file.progress", file.name)) {
-        openFileAsync(window = windowToOpenIn, file = getOriginalFile(file), entry = null, options = options)
+    if (ApplicationManager.getApplication().isWriteAccessAllowed) {
+      if (forbidSplitFor(file = file) && !windowToOpenIn.isFileOpen(file)) {
+        closeFile(file)
       }
+      return openFileImpl4(window = windowToOpenIn, _file = file, entry = null, options = options)
     }
     else {
-      return openFileImpl2(window = windowToOpenIn, file = file, options = options)
+      val context = ClientId.coroutineContext()
+      return runBlockingModal(project, EditorBundle.message("editor.open.file.progress", file.name)) {
+        withContext(context) {
+          openFileAsync(window = windowToOpenIn, file = getOriginalFile(file), entry = null, options = options)
+        }
+      }
     }
   }
 
@@ -955,22 +925,9 @@ open class FileEditorManagerImpl(
     }
 
     val split = active.openInRightSplit(file) ?: return null
-    var result: FileEditorComposite? = null
-    CommandProcessor.getInstance().executeCommand(project, {
-      val editorsWithProviders = split.getComposites().flatMap(EditorComposite::allEditorsWithProviders).toList()
-      val allEditors = editorsWithProviders.map { it.fileEditor }
-      val allProviders = editorsWithProviders.map { it.provider }
-      result = object : FileEditorComposite {
-        override val isPreview: Boolean
-          get() = false
-
-        override val allEditors: List<FileEditor>
-          get() = allEditors
-        override val allProviders: List<FileEditorProvider>
-          get() = allProviders
-      }
-    }, "", null)
-    return result
+    val editorsWithProviders = split.getComposites().flatMap(EditorComposite::allEditorsWithProviders).toList()
+    return FileEditorComposite.createFileEditorComposite(allEditors = editorsWithProviders.map { it.fileEditor },
+                                                         allProviders = editorsWithProviders.map { it.provider })
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
@@ -987,12 +944,7 @@ open class FileEditorManagerImpl(
     if (forbidSplitFor(file) && !window.isFileOpen(file)) {
       closeFile(file)
     }
-
-    var result: FileEditorComposite? = null
-    CommandProcessor.getInstance().executeCommand(project, {
-      result = openFileImpl4(window = window, _file = file, entry = null, options = options)
-    }, "", null)
-    return result!!
+    return openFileImpl4(window = window, _file = file, entry = null, options = options)
   }
 
   /**
@@ -1354,15 +1306,19 @@ open class FileEditorManagerImpl(
       usePreviewTab = effectiveDescriptor.isUsePreviewTab,
       requestFocus = focusEditor,
     )
-    val result = if (ClientId.isCurrentlyUnderLocalId) {
-      runBlockingModal(project, EditorBundle.message("editor.open.file.progress", file.name)) {
-        openFile(file = file, options = openOptions).allEditors
-      }
-    }
-    else {
-      // todo why timeout? run JumpToTest.test
+    val result = if (ApplicationManager.getApplication().isWriteAccessAllowed) {
+      // runBlockingModal cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
       openFile(file = file, window = null, options = openOptions).allEditors
     }
+    else {
+      val context = ClientId.coroutineContext()
+      runBlockingModal(project, EditorBundle.message("editor.open.file.progress", file.name)) {
+        withContext(context) {
+          openFile(file = file, options = openOptions).allEditors
+        }
+      }
+    }
+
     for (editor in result) {
       // try to navigate opened editor
       if (editor is NavigatableFileEditor && getSelectedEditor(effectiveDescriptor.file) === editor) {
@@ -1687,8 +1643,7 @@ open class FileEditorManagerImpl(
            ?: allClientFileEditorManagers.firstNotNullOfOrNull { it.getComposite(editor) }
   }
 
-  private fun fireSelectionChanged(oldComposite: EditorComposite?,
-                                   newComposite: EditorComposite?,
+  private fun fireSelectionChanged(newComposite: EditorComposite?,
                                    oldEditorWithProvider: FileEditorWithProvider?,
                                    newEditorWithProvider: FileEditorWithProvider?,
                                    publisher: FileEditorManagerListener) {
@@ -1704,12 +1659,7 @@ open class FileEditorManagerImpl(
       IdeDocumentHistory.getInstance(project).onSelectionChanged()
     }
 
-    if (oldComposite?.file == newComposite?.file) {
-      CommandProcessor.getInstance().executeCommand(project, task, IdeBundle.message("command.switch.active.editor"), null)
-    }
-    else {
-      task()
-    }
+    task()
 
     val newFile = newComposite?.file
     if (newFile != null) {
@@ -2018,16 +1968,14 @@ open class FileEditorManagerImpl(
 
   @RequiresEdt
   private fun closeAllFiles(repaint: Boolean) {
-    CommandProcessor.getInstance().executeCommand(project, {
-      openFileSetModificationCount.increment()
-      val splitters = getActiveSplitterSync()
-      if (repaint) {
-        runBulkTabChange(splitters, splitters::closeAllFiles)
-      }
-      else {
-        splitters.closeAllFiles(repaint = false)
-      }
-    }, "", null)
+    openFileSetModificationCount.increment()
+    val splitters = getActiveSplitterSync()
+    if (repaint) {
+      runBulkTabChange(splitters, splitters::closeAllFiles)
+    }
+    else {
+      splitters.closeAllFiles(repaint = false)
+    }
   }
 
   override fun closeOpenedEditors() {
@@ -2254,4 +2202,28 @@ private fun CoroutineScope.createBuilders(providers: List<FileEditorProvider>,
       }.getOrLogException(LOG)
     }
   }
+}
+
+internal fun getOpenMode(event: AWTEvent): FileEditorManagerImpl.OpenMode {
+  if (event is MouseEvent) {
+    val isMouseClick = event.getID() == MouseEvent.MOUSE_CLICKED || event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED
+    val modifiers = event.modifiersEx
+    if (modifiers == InputEvent.SHIFT_DOWN_MASK && isMouseClick) {
+      return FileEditorManagerImpl.OpenMode.NEW_WINDOW
+    }
+  }
+  else if (event is KeyEvent) {
+    val keymapManager = KeymapManager.getInstance()
+    if (keymapManager != null) {
+      @Suppress("DEPRECATION")
+      val strings = keymapManager.activeKeymap.getActionIds(KeyStroke.getKeyStroke(event.keyCode, event.modifiers))
+      if (strings.contains(IdeActions.ACTION_OPEN_IN_NEW_WINDOW)) {
+        return FileEditorManagerImpl.OpenMode.NEW_WINDOW
+      }
+      if (strings.contains(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT)) {
+        return FileEditorManagerImpl.OpenMode.RIGHT_SPLIT
+      }
+    }
+  }
+  return FileEditorManagerImpl.OpenMode.DEFAULT
 }

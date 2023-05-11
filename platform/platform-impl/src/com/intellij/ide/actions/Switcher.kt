@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.codeInsight.hint.HintUtil
@@ -21,21 +21,23 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.getOpenMode
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
+import com.intellij.openapi.fileEditor.impl.getOpenMode
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.LightEditActionFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
@@ -155,20 +157,14 @@ object Switcher : BaseSwitcherAction(null) {
       // register custom actions as soon as possible to block overridden actions
       registerAction({ e: InputEvent? -> navigate(e) }, "ENTER")
       if (pinned) {
-        registerAction(
-          { event: InputEvent? -> hideSpeedSearchOrPopup() }, ActionUtil.getShortcutSet(IdeActions.ACTION_EDITOR_ESCAPE))
-        registerAction(
-          { event: InputEvent? -> closeTabOrToolWindow() }, ActionUtil.getShortcutSet("DeleteRecentFiles"))
-        registerAction(
-          { e: InputEvent? -> navigate(e) }, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_NEW_WINDOW))
-        registerAction(
-          { e: InputEvent? -> navigate(e) }, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT))
+        registerAction({ hideSpeedSearchOrPopup() }, ActionUtil.getShortcutSet(IdeActions.ACTION_EDITOR_ESCAPE))
+        registerAction({ closeTabOrToolWindow() }, ActionUtil.getShortcutSet("DeleteRecentFiles"))
+        registerAction({ e: InputEvent? -> navigate(e) }, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_NEW_WINDOW))
+        registerAction({ e: InputEvent? -> navigate(e) }, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT))
       }
       else {
-        registerAction(
-          { event: InputEvent? -> hideSpeedSearchOrPopup() }, "ESCAPE")
-        registerAction(
-          { event: InputEvent? -> closeTabOrToolWindow() }, "DELETE", "BACK_SPACE")
+        registerAction({ hideSpeedSearchOrPopup() }, "ESCAPE")
+        registerAction({ closeTabOrToolWindow() }, "DELETE", "BACK_SPACE")
         registerSwingAction(ListActions.Up.ID, "KP_UP", "UP")
         registerSwingAction(ListActions.Down.ID, "KP_DOWN", "DOWN")
         registerSwingAction(ListActions.Left.ID, "KP_LEFT", "LEFT")
@@ -201,7 +197,7 @@ object Switcher : BaseSwitcherAction(null) {
         cbShowOnlyEditedFiles.isOpaque = false
         cbShowOnlyEditedFiles.isFocusable = false
         cbShowOnlyEditedFiles.isSelected = onlyEdited
-        cbShowOnlyEditedFiles.addItemListener(ItemListener { event: ItemEvent -> updateFilesByCheckBox(event) })
+        cbShowOnlyEditedFiles.addItemListener(ItemListener(::updateFilesByCheckBox))
         header.add(HorizontalLayout.RIGHT, cbShowOnlyEditedFiles)
         WindowMoveListener(header).installTo(header)
         val shortcuts = KeymapUtil.getActiveKeymapShortcuts("SwitcherRecentEditedChangedToggleCheckBox")
@@ -534,7 +530,7 @@ object Switcher : BaseSwitcherAction(null) {
     }
 
     fun navigate(e: InputEvent?) {
-      val mode = if (e != null) getOpenMode(e) else FileEditorManagerImpl.OpenMode.DEFAULT
+      val mode = if (e == null) FileEditorManagerImpl.OpenMode.DEFAULT else getOpenMode(e)
       val values: List<*> = selectedList!!.selectedValuesList
       val searchQuery = mySpeedSearch?.enteredPrefix
       cancel()
@@ -542,52 +538,48 @@ object Switcher : BaseSwitcherAction(null) {
         tryToOpenFileSearch(e, searchQuery)
       }
       else if (values[0] is SwitcherVirtualFile) {
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown({
-                                                                      val manager = FileEditorManager.getInstance(
-                                                                        project) as FileEditorManagerImpl
-                                                                      var splitWindow: EditorWindow? = null
-                                                                      for (value in values) {
-                                                                        if (value is SwitcherVirtualFile) {
-                                                                          val file: VirtualFile = value.file
-                                                                          if (mode === FileEditorManagerImpl.OpenMode.RIGHT_SPLIT) {
-                                                                            if (splitWindow == null) {
-                                                                              splitWindow = openInRightSplit(project, file, null, true)
-                                                                            }
-                                                                            else {
-                                                                              manager.openFile(file, splitWindow,
-                                                                                               FileEditorOpenOptions().withRequestFocus())
-                                                                            }
-                                                                          }
-                                                                          else if (mode === FileEditorManagerImpl.OpenMode.NEW_WINDOW) {
-                                                                            manager.openFileInNewWindow(file)
-                                                                          }
-                                                                          else if (value.window != null) {
-                                                                            val editorWindow = findAppropriateWindow(value.window)
-                                                                            if (editorWindow != null) {
-                                                                              manager.openFileImpl2(editorWindow, file,
-                                                                                                    FileEditorOpenOptions().withRequestFocus(
-                                                                                                      true))
-                                                                              manager.addSelectionRecord(file, editorWindow)
-                                                                            }
-                                                                          }
-                                                                          else {
-                                                                            val settings = UISettings.getInstance().state
-                                                                            val oldValue = settings.reuseNotModifiedTabs
-                                                                            settings.reuseNotModifiedTabs = false
-                                                                            manager.openFile(file, true, true)
-                                                                            if (LightEdit.owns(project)) {
-                                                                              LightEditFeatureUsagesUtil.logFileOpen(project,
-                                                                                                                     OpenPlace.RecentFiles)
-                                                                            }
-                                                                            if (oldValue) {
-                                                                              CommandProcessor.getInstance().executeCommand(project,
-                                                                                                                            { settings.reuseNotModifiedTabs = true },
-                                                                                                                            "", null)
-                                                                            }
-                                                                          }
-                                                                        }
-                                                                      }
-                                                                    }, ModalityState.current())
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
+          {
+            val manager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
+            var splitWindow: EditorWindow? = null
+            for (value in values) {
+              if (value is SwitcherVirtualFile) {
+                val file: VirtualFile = value.file
+                if (mode === FileEditorManagerImpl.OpenMode.RIGHT_SPLIT) {
+                  if (splitWindow == null) {
+                    splitWindow = openInRightSplit(project = project, file = file, element = null, requestFocus = true)
+                  }
+                  else {
+                    manager.openFile(file, splitWindow, FileEditorOpenOptions().withRequestFocus())
+                  }
+                }
+                else if (mode == FileEditorManagerImpl.OpenMode.NEW_WINDOW) {
+                  manager.openFileInNewWindow(file)
+                }
+                else if (value.window != null) {
+                  val editorWindow = findAppropriateWindow(value.window)
+                  if (editorWindow != null) {
+                    manager.openFileImpl2(window = editorWindow, file = file, options = FileEditorOpenOptions().withRequestFocus(true))
+                    manager.addSelectionRecord(file, editorWindow)
+                  }
+                }
+                else {
+                  val settings = UISettings.getInstance().state
+                  val oldValue = settings.reuseNotModifiedTabs
+                  settings.reuseNotModifiedTabs = false
+                  manager.openFile(file, true, true)
+                  if (LightEdit.owns(project)) {
+                    LightEditFeatureUsagesUtil.logFileOpen(project, OpenPlace.RecentFiles)
+                  }
+                  if (oldValue) {
+                    settings.reuseNotModifiedTabs = true
+                  }
+                }
+              }
+            }
+          },
+          ModalityState.current(),
+        )
       }
       else if (values[0] is SwitcherListItem) {
         val item = values[0] as SwitcherListItem
@@ -796,9 +788,9 @@ object Switcher : BaseSwitcherAction(null) {
     }
   }
 
-  private class SwitcherScrollPane internal constructor(view: Component, noBorder: Boolean) : JBScrollPane(view,
-                                                                                                           VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                                                                           if (noBorder) HORIZONTAL_SCROLLBAR_AS_NEEDED else HORIZONTAL_SCROLLBAR_NEVER) {
+  private class SwitcherScrollPane(view: Component, noBorder: Boolean) : JBScrollPane(view,
+                                                                                      VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                                                      if (noBorder) HORIZONTAL_SCROLLBAR_AS_NEEDED else HORIZONTAL_SCROLLBAR_NEVER) {
     private var width = 0
 
     init {
