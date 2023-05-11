@@ -133,7 +133,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
   private val undoStateRecordingEnabled = Registry.`is`("vcs.enable.partial.changelists.undo")
   private val redoStateRecordingEnabled = Registry.`is`("vcs.enable.partial.changelists.redo")
 
-  override val renderer: MyLineStatusMarkerRenderer = MyLineStatusMarkerRenderer(this)
+  override val renderer: LocalLineStatusMarkerRenderer = MyLineStatusMarkerRenderer(this)
 
   private var defaultMarker: ChangeListMarker
 
@@ -574,8 +574,8 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
   }
 
-  protected class MyLineStatusMarkerRenderer(override val tracker: ChangelistsLocalLineStatusTracker) :
-    LocalLineStatusTrackerImpl.LocalLineStatusMarkerRenderer(tracker) {
+  private class MyLineStatusMarkerRenderer(override val tracker: ChangelistsLocalLineStatusTracker) :
+    LocalLineStatusMarkerRenderer(tracker) {
 
     override fun paint(editor: Editor, g: Graphics) {
       val flagsProvider = MyFlagsProvider(tracker.defaultMarker.changelistId)
@@ -895,7 +895,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     val excludedFromCommit: Boolean? = null // should not be persisted
   )
 
-  protected data class ChangeListMarker(val changelistId: String) {
+  private data class ChangeListMarker(val changelistId: String) {
     constructor(changelist: LocalChangeList) : this(changelist.id)
   }
 
