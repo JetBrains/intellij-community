@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin.commands;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.intellij.util.MemoryDumpHelper;
@@ -45,13 +46,8 @@ public final class MemoryDumpCommand extends AbstractCommand {
 
   @NotNull
   public static String getMemoryDumpPath() {
-    String memoryDumpPath = System.getProperties().getProperty("memory.snapshots.path");
-    String path = "";
-    if (memoryDumpPath != null) {
-      path += memoryDumpPath + File.separator;
-    }
+    String memoryDumpPath = System.getProperties().getProperty("memory.snapshots.path", PathManager.getLogPath());
     String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-    path += Timer.instance.getActivityName() + '-' + currentTime + ".zip";
-    return path;
+    return memoryDumpPath + File.separator + (Timer.instance.getActivityName() + '-' + currentTime + ".zip");
   }
 }
