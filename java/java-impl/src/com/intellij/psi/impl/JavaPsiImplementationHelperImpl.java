@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.platform.backend.documentation.DocumentationTarget;
 import com.intellij.platform.backend.navigation.NavigationRequest;
-import com.intellij.platform.backend.navigation.NavigationRequests;
 import com.intellij.platform.backend.navigation.NavigationTarget;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.java.LanguageLevel;
@@ -418,7 +417,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
     @Override
     public @Nullable NavigationRequest navigationRequest() {
-      return NavigationRequests.getInstance().sourceNavigationRequest(myFile.getVirtualFile(), myRangeInFile.getStartOffset());
+      return NavigationRequest.sourceNavigationRequest(myFile.getVirtualFile(), myRangeInFile.getStartOffset());
     }
   }
 }
