@@ -13,7 +13,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.stream.Collectors;
 
 public class MavenFolderResolver {
@@ -32,17 +31,7 @@ public class MavenFolderResolver {
                                                                  @NotNull MavenProjectsTree tree) {
     // if we generate sources for the aggregator of a project, sources will be generated for the project too
     if (Registry.is("maven.server.generate.sources.for.aggregator.projects")) {
-      var mavenProjectsToSkip = new HashSet<MavenProject>();
-      for (var mavenProject : mavenProjects) {
-        var aggregator = mavenProject;
-        while ((aggregator = tree.findAggregator(aggregator)) != null) {
-          if (mavenProjects.contains(aggregator)) {
-            mavenProjectsToSkip.add(mavenProject);
-            break;
-          }
-        }
-      }
-      return mavenProjects.stream().filter(mavenProject -> !mavenProjectsToSkip.contains(mavenProject)).toList();
+      return tree.collectAggregators(mavenProjects);
     }
     return mavenProjects;
   }
