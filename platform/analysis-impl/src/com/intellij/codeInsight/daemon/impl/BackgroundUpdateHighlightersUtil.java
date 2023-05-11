@@ -28,6 +28,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import java.util.*;
  * Document markup manipulation methods during the highlighting, in the background thread under read action.
  * Must be used inside the highlighting process only (e.g., in your {@link HighlightingPass#collectInformation(ProgressIndicator)})
  */
+@ApiStatus.Experimental
 public final class BackgroundUpdateHighlightersUtil {
   static void addHighlighterToEditorIncrementally(@NotNull PsiFile file,
                                                   @NotNull Document document,
