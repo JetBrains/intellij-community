@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.codeInspection.options.OptionContainer;
-import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
+import com.intellij.codeInspection.ui.OptionPaneRenderer;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
@@ -350,7 +350,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
   /**
    * Old and discouraged way to create inspection options. Override {@link #getOptionsPane()} instead.
    * Calling this method will throw an exception if the inspection defines options in a modern way. 
-   * If you need to render options, use {@link InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project)}.
+   * If you need to render options, use {@link OptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project)}.
    *
    * @return {@code null} if no UI options required.
    */
@@ -360,7 +360,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     OptPane pane = getOptionsPane();
     if (pane.equals(OptPane.EMPTY)) return null;
     throw new UnsupportedOperationException(
-      "Use InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project) " +
+      "Use OptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project) " +
       "to render the inspection options");
   }
 
@@ -370,7 +370,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
    *
    * @see <a href="https://plugins.jetbrains.com/docs/intellij/inspection-options.html">Inspection Options (IntelliJ Platform Docs)</a>
    * @see OptPane#pane(OptRegularComponent...)
-   * @see InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project)
+   * @see OptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project)
    * @see #getOptionController() if you need custom logic to read/write options
    */
   public @NotNull OptPane getOptionsPane() {

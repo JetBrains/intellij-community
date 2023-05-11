@@ -177,8 +177,8 @@ public class UiDslOptPaneRendererTest {
   }
 
   private @NotNull JComponent render(InspectionProfileEntry inspection) {
-    return new UiDslOptPaneRenderer().render(inspection, inspection.getOptionsPane(), myDisposable, 
-                                             ProjectManager.getInstance().getDefaultProject());
+    return new UiDslOptPaneRenderer().render(inspection.getOptionController(), inspection.getOptionsPane(),
+                                             myDisposable, ProjectManager.getInstance().getDefaultProject());
   }
 
   private static class MyTabsInspection extends LocalInspectionTool {

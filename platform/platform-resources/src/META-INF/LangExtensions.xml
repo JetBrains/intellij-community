@@ -30,7 +30,7 @@
     <applicationService serviceInterface="com.intellij.navigation.SymbolNavigationService"
                         serviceImplementation="com.intellij.codeInsight.navigation.impl.SymbolNavigationServiceImpl"/>
     <applicationService
-      serviceInterface="com.intellij.codeInspection.ui.InspectionOptionPaneRenderer"
+      serviceInterface="com.intellij.codeInspection.ui.OptionPaneRenderer"
       serviceImplementation="com.intellij.codeInspection.ui.UiDslOptPaneRenderer"/>
 
     <psi.declarationProvider implementation="com.intellij.model.psi.impl.DefaultPsiSymbolDeclarationProvider" order="last"/>
