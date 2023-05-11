@@ -70,7 +70,7 @@ data class LinkLabelSymbol(
   }
 
   private inner class LinkNavigationTarget(file: VirtualFile, offset: Int): MarkdownSourceNavigationTarget(file, offset) {
-    override fun presentation(): TargetPresentation {
+    override fun computePresentation(): TargetPresentation {
       return this@LinkLabelSymbol.presentation()
     }
   }

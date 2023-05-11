@@ -49,7 +49,7 @@ private class UrlSymbol(
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> = listOf(this)
 
-  override fun presentation(): TargetPresentation = TargetPresentation
+  override fun computePresentation(): TargetPresentation = TargetPresentation
     .builder(url)
     .icon(AllIcons.General.Web)
     .presentation()

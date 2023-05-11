@@ -57,7 +57,7 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
     Collection<? extends NavigationTarget> targets = ((NavigatableSymbol)symbol).getNavigationTargets(myProject);
     assertEquals(1, targets.size());
     NavigationTarget target = targets.iterator().next();
-    TargetPresentation presentation = target.presentation();
+    TargetPresentation presentation = target.computePresentation();
     assertEquals("@start region=reg", presentation.getPresentableText());
     assertEquals("Test.java", presentation.getLocationText());
     NavigationRequest request = ReadAction

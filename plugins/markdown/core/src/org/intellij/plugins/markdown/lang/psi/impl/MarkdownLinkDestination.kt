@@ -52,7 +52,7 @@ class MarkdownLinkDestination(node: ASTNode): MarkdownLinkDestinationImpl(node),
     return Pointer.hardPointer(this)
   }
 
-  override fun presentation(): TargetPresentation {
+  override fun computePresentation(): TargetPresentation {
     return TargetPresentation.builder(text)
       .icon(MarkdownIcons.EditorActions.Link)
       .presentation()

@@ -436,7 +436,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
           }
 
           @Override
-          public @NotNull TargetPresentation presentation() {
+          public @NotNull TargetPresentation computePresentation() {
             return getDocumentationTarget().computePresentation();
           }
 

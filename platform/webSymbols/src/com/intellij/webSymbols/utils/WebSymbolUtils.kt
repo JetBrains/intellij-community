@@ -290,7 +290,7 @@ fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue?
 fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWithinElement: Int): Navigatable {
   val vf = element.containingFile.virtualFile
            ?: return EmptyNavigatable.INSTANCE
-  val targetPresentation = this.presentation()
+  val targetPresentation = this.computePresentation()
   val descriptor = OpenFileDescriptor(
     element.project, vf, element.textRange.startOffset + offsetWithinElement)
 
