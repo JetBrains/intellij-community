@@ -366,8 +366,7 @@ public final class ContainerUtil {
    */
   @Contract(pure = true)
   public static @NotNull <T> Set<@NotNull T> newConcurrentSet() {
-    //noinspection SSBasedInspection
-    return Collections.newSetFromMap(new ConcurrentHashMap<>());
+    return ConcurrentHashMap.newKeySet();
   }
 
   /**

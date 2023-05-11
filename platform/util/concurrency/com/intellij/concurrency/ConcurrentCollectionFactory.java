@@ -53,8 +53,7 @@ public final class ConcurrentCollectionFactory {
 
   @Contract(pure = true)
   public static @NotNull <T> Set<@NotNull T> createConcurrentSet() {
-    //noinspection SSBasedInspection
-    return Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+    return java.util.concurrent.ConcurrentHashMap.newKeySet();
   }
 
   @Contract(pure = true)
