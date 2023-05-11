@@ -239,6 +239,9 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
 
     List<RangeHighlighter> result = new ArrayList<>();
     result.add(createCheckboxToggleHighlighter(builder, toggleableLineRange));
+    if (LocalTrackerDiffUtil.shouldShowToggleAreaThumb(toggleableLineRange)) {
+      result.add(createToggleAreaThumb(builder, toggleableLineRange));
+    }
     return result;
   }
 
@@ -272,6 +275,15 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
       });
 
     return checkboxHighlighter;
+  }
+
+  @NotNull
+  private RangeHighlighter createToggleAreaThumb(@NotNull UnifiedFragmentBuilder builder,
+                                                 @NotNull ToggleableLineRange toggleableLineRange) {
+    Range lineRange = toggleableLineRange.getLineRange();
+    int line1 = builder.getConvertor1().convertApproximateInv(lineRange.getVcsLine1());
+    int line2 = builder.getConvertor2().convertApproximateInv(lineRange.getLine2());
+    return LocalTrackerDiffUtil.createToggleAreaThumb(getEditor(), line1, line2);
   }
 
   private static final class MyUnifiedDiffChange extends UnifiedDiffChange {

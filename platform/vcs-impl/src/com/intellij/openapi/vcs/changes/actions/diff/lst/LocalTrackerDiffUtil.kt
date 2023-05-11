@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.actions.diff.lst
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider
+import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Range
 import com.intellij.icons.AllIcons
@@ -18,7 +19,12 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.LineMarkerRenderer
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.text.StringUtil
@@ -32,9 +38,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
-import java.awt.BorderLayout
-import java.awt.Cursor
-import java.awt.Dimension
+import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.util.*
@@ -213,6 +217,41 @@ object LocalTrackerDiffUtil {
     tracker.setExcludedFromCommit(range, !isExcludedFromCommit)
 
     provider.viewer.rediff()
+  }
+
+  @JvmStatic
+  fun shouldShowToggleAreaThumb(toggleableLineRange: ToggleableLineRange): Boolean {
+    val lines1 = BitSet()
+    val lines2 = BitSet()
+    // do not show thumb for HighlightPolicy.BY_WORD_SPLIT mode
+    for (fragment in toggleableLineRange.fragments) {
+      lines1.set(fragment.startLine1, fragment.endLine1)
+      lines2.set(fragment.startLine2, fragment.endLine2)
+    }
+
+    val lineRange = toggleableLineRange.lineRange
+    return lines1.nextClearBit(lineRange.vcsLine1) != lineRange.vcsLine2 ||
+           lines2.nextClearBit(lineRange.line1) != lineRange.line2
+  }
+
+  @JvmStatic
+  fun createToggleAreaThumb(editor: EditorEx, line1: Int, line2: Int): RangeHighlighter {
+    val range = DiffUtil.getLinesRange(editor.document, line1, line2)
+    val checkboxHighlighter = editor.markupModel.addRangeHighlighter(null, range.startOffset, range.endOffset,
+                                                                     DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                                                     HighlighterTargetArea.LINES_IN_RANGE)
+    checkboxHighlighter.lineMarkerRenderer = ToggleAreaThumbRenderer()
+    return checkboxHighlighter
+  }
+
+  private class ToggleAreaThumbRenderer : LineMarkerRenderer {
+    override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
+      val gutter = (editor as EditorEx).gutterComponentEx
+      val width = JBUIScale.scale(3)
+      val x = gutter.whitespaceSeparatorOffset - width
+      g.color = editor.colorsScheme.getColor(EditorColors.DIFF_BLOCK_AREA_HIGHLIGHT_MARKER) ?: return
+      g.fillRect(x, r.y, width, r.height)
+    }
   }
 
   @JvmStatic

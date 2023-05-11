@@ -213,6 +213,11 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
     List<RangeHighlighter> result = new ArrayList<>();
     result.add(createCheckboxToggleHighlighter(toggleableLineRange));
+    if (LocalTrackerDiffUtil.shouldShowToggleAreaThumb(toggleableLineRange)) {
+      result.add(createToggleAreaThumb(toggleableLineRange, Side.LEFT));
+      result.add(createToggleAreaThumb(toggleableLineRange, Side.RIGHT));
+    }
+
     return result;
   }
 
@@ -241,6 +246,15 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       });
 
     return checkboxHighlighter;
+  }
+
+  @NotNull
+  private RangeHighlighter createToggleAreaThumb(@NotNull ToggleableLineRange toggleableLineRange, @NotNull Side side) {
+    EditorEx editor = getEditor(side);
+    Range lineRange = toggleableLineRange.getLineRange();
+    int line1 = side.select(lineRange.getVcsLine1(), lineRange.getLine1());
+    int line2 = side.select(lineRange.getVcsLine2(), lineRange.getLine2());
+    return LocalTrackerDiffUtil.createToggleAreaThumb(editor, line1, line2);
   }
 
   private static class MySimpleDiffChange extends SimpleDiffChange {
