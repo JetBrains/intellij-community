@@ -338,7 +338,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddNewArrayExpressionFix(@NotNull PsiArrayInitializerExpression expression) {
-    return new AddNewArrayExpressionFix(expression);
+    return new AddNewArrayExpressionFix(expression).asIntention();
   }
 
   @NotNull
