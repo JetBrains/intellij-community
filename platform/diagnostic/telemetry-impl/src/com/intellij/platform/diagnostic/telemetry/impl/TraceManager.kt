@@ -41,7 +41,7 @@ class TraceManager : TelemetryTracer {
                                                                                      enableMetricsByDefault = true)
 
   override fun init(): OpenTelemetrySdkBuilder {
-    LOG.info("Initializing telemetry tracer ${this::class.qualifiedName}")
+    LOG.info("Initializing telemetry tracer ${this::class.java.name}")
 
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
     return oTelConfigurator

@@ -92,17 +92,17 @@ interface TelemetryTracer {
         // GlobalOpenTelemetry.set(sdk) can be invoked only once
         try {
           instance = getImplementationService(TelemetryTracer::class.java).apply {
-            LOG.info("Loaded telemetry tracer service ${this::class.qualifiedName}")
+            LOG.info("Loaded telemetry tracer service ${this::class.java.name}")
             sdk = init().buildAndRegisterGlobal()
           }
           return instance
         }
         catch (e: Throwable) {
           LOG.info("Something unexpected happened during loading TelemetryTracer", e)
-          LOG.info("Falling back to loading default implementation of TelemetryTracer ${TelemetryTracerDefault::class.qualifiedName}")
+          LOG.info("Falling back to loading default implementation of TelemetryTracer ${TelemetryTracerDefault::class.java.name}")
 
           instance = TelemetryTracerDefault().apply {
-            LOG.info("Loaded telemetry tracer service ${this::class.qualifiedName}")
+            LOG.info("Loaded telemetry tracer service ${this::class.java.name}")
             sdk = init().buildAndRegisterGlobal()
           }
 
