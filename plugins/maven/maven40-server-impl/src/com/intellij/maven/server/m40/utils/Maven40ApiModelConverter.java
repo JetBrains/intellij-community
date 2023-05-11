@@ -97,7 +97,7 @@ public final class Maven40ApiModelConverter {
     return config == null ? null : xppToElement((Xpp3Dom)config);
   }
 
-  protected static Element xppToElement(Xpp3Dom xpp) {
+  private static Element xppToElement(Xpp3Dom xpp) {
     Element result;
     try {
       result = new Element(xpp.getName());
