@@ -1150,7 +1150,7 @@ abstract class ComponentManagerImpl(
       }
     }
 
-    postPreloadServices(modules, activityPrefix, syncScope, onlyIfAwait)
+    postPreloadServices(modules = modules, activityPrefix = activityPrefix, syncScope = syncScope, onlyIfAwait = onlyIfAwait)
   }
 
   protected open fun postPreloadServices(modules: List<IdeaPluginDescriptorImpl>,
