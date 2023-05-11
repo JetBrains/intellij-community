@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.tools.projectWizard.cli
 
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.div
 import org.jetbrains.kotlin.tools.projectWizard.core.service.Services

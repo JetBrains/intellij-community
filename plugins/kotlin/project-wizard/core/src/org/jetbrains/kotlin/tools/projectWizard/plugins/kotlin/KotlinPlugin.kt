@@ -12,7 +12,10 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.fold
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settingValidator
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
-import org.jetbrains.kotlin.tools.projectWizard.core.service.*
+import org.jetbrains.kotlin.tools.projectWizard.core.service.FileSystemWizardService
+import org.jetbrains.kotlin.tools.projectWizard.core.service.KotlinVersionKind
+import org.jetbrains.kotlin.tools.projectWizard.core.service.KotlinVersionProviderService
+import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildFileIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.RepositoryIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.withIrs

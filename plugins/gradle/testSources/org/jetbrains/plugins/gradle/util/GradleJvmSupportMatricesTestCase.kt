@@ -6,7 +6,7 @@ import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testFramework.replaceService
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.jvmcompat.CompatibilitySupportUpdater
+import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilitySupportUpdater
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
@@ -15,7 +15,7 @@ abstract class GradleJvmSupportMatricesTestCase : LightIdeaTestCase() {
 
   override fun setUp() {
     super.setUp()
-    ApplicationManager.getApplication().replaceService(CompatibilitySupportUpdater::class.java, object : CompatibilitySupportUpdater() {
+    ApplicationManager.getApplication().replaceService(GradleCompatibilitySupportUpdater::class.java, object : GradleCompatibilitySupportUpdater() {
       override fun checkForUpdates(): Future<*> {
         return CompletableFuture.completedFuture(null)
       }

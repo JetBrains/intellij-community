@@ -19,10 +19,12 @@ fun main(args: Array<String>) {
 fun generateJvmSupportMatrices(json: Path, kt: Path, applicationVersion: String, copyrightComment: String? = null) {
 
   val jsonData = json.toFile().readText(Charsets.UTF_8)
-  val parser = CompatibilityDataParser(applicationVersion)
-  val parsedData = parser.parseJson(jsonData) ?: throw IllegalStateException("Cannot get compatibility data")
+  val parsedData = GradleCompatibilityDataParser
+    .parseVersionedJson(jsonData, applicationVersion) ?: throw IllegalStateException("Cannot get compatibility data")
 
-  if (copyrightComment != null && copyrightComment.indexOf('\n') != -1) throw IllegalArgumentException("Copyright should be in single line")
+  if (copyrightComment != null && copyrightComment.indexOf('\n') != -1) {
+    throw IllegalArgumentException("Copyright should be in single line")
+  }
   val classFileData = ClassFileData(copyrightComment ?: createCopyrightComment(), parsedData)
 
   val fileData = getGeneratedString(classFileData);
@@ -34,7 +36,7 @@ fun createCopyrightComment(): String {
 }
 
 internal class ClassFileData(val copyrightComment: String,
-                             val parsedData: CompatibilityData)
+                             val parsedData: GradleCompatibilityState)
 
 fun readAppVersion(appInfoPath: Path): String {
   val xmlInputFactory: XMLInputFactory = XMLInputFactory.newInstance()
@@ -103,14 +105,14 @@ internal fun getGeneratedString(data: ClassFileData): String {
 package org.jetbrains.plugins.gradle.jvmcompat;
 
 import com.intellij.openapi.application.ApplicationInfo
-import org.jetbrains.plugins.gradle.jvmcompat.CompatibilityData
+import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilityState
 
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate Gradle Compatibility Matrix" configuration instead
  */
  
-internal val DEFAULT_DATA = CompatibilityData(
+internal val DEFAULT_DATA = GradleCompatibilityState(
   listOf(
     ${data.parsedData.versionMappings.printAsListData(4, VersionMapping::toConstructor)}
   ),

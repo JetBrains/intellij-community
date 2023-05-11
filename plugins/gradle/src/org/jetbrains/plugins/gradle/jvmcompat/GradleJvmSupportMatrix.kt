@@ -2,39 +2,39 @@
 package org.jetbrains.plugins.gradle.jvmcompat
 
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.util.*
+import org.jetbrains.plugins.gradle.util.Ranges
 
 @State(name = "GradleJvmSupportMatrix", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)])
-class GradleJvmSupportMatrix : PersistentStateComponent<JvmCompatibilityState?> {
+class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>(
+  parser = GradleCompatibilityDataParser,
+  defaultState = DEFAULT_DATA
+) {
   private lateinit var mySupportedGradleVersions: List<GradleVersion>
   private lateinit var mySupportedJavaVersions: List<JavaVersion>
-  private var myState: JvmCompatibilityState? = null
   private lateinit var myCompatibility: List<Pair<Ranges<JavaVersion>, Ranges<GradleVersion>>>
-  override fun getState(): JvmCompatibilityState? {
-    return myState
-  }
 
-  override fun loadState(state: JvmCompatibilityState) {
-    if (state.isDefault || state.ideVersion != ApplicationInfo.getInstance().fullVersion) {
-      myState = null
+  override fun newState(): GradleCompatibilityState = GradleCompatibilityState()
+
+  private fun getCompatibilityRanges(data: GradleCompatibilityState): List<Pair<Ranges<JavaVersion>, Ranges<GradleVersion>>> {
+    return data.versionMappings.map { entry ->
+      val gradleVersionInfo = entry.gradleVersionInfo ?: ""
+      val javaVersionInfo = entry.javaVersionInfo ?: ""
+      val gradleRange = IdeVersionedDataParser.parseRange(gradleVersionInfo.split(','), GradleVersion::version)
+      val javaRange = IdeVersionedDataParser.parseRange(javaVersionInfo.split(','), JavaVersion::parse)
+      javaRange to gradleRange
     }
-    else {
-      myState = state
-    }
   }
 
-  private fun parseMyState() {
-    val data = state?.data ?: DEFAULT_DATA
-    myCompatibility = CompatibilityDataParser(ApplicationInfo.getInstance().fullVersion).getCompatibilityRanges(data)
-    mySupportedGradleVersions = data.supportedGradleVersions.map(GradleVersion::version)
-    mySupportedJavaVersions = data.supportedJavaVersions.map(JavaVersion::parse)
-  }
-
-  override fun noStateLoaded() {
-    parseMyState()
+  override fun onStateChanged(newState: GradleCompatibilityState) {
+    myCompatibility = getCompatibilityRanges(newState)
+    mySupportedGradleVersions = newState.supportedGradleVersions.map(GradleVersion::version)
+    mySupportedJavaVersions = newState.supportedJavaVersions.map(JavaVersion::parse)
   }
 
   fun getAllSupportedGradleVersions(): List<GradleVersion> {
@@ -50,21 +50,6 @@ class GradleJvmSupportMatrix : PersistentStateComponent<JvmCompatibilityState?> 
       javaVersion in javaVersions && gradleVersion in gradleVersions
     }
   }
-
-  fun setStateAsString(json: String) {
-    val parser = CompatibilityDataParser(ApplicationInfo.getInstance().fullVersion)
-    val compatibilityData = parser.parseJson(json)
-    if (compatibilityData != null) {
-      val newState = JvmCompatibilityState()
-      newState.data = compatibilityData
-      newState.isDefault = false
-      newState.ideVersion = ApplicationInfo.getInstance().fullVersion
-      newState.lastUpdateTime = System.currentTimeMillis()
-      myState = newState
-      parseMyState()
-    }
-  }
-
 
   companion object {
     @JvmStatic

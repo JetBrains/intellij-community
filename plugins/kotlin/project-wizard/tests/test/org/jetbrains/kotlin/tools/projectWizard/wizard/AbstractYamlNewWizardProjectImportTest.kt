@@ -14,7 +14,7 @@ abstract class AbstractYamlNewWizardProjectImportTest : AbstractNewWizardProject
             yaml = yaml,
             projectPath = projectDirectory,
             createPlugins = Plugins.allPlugins,
-            servicesManager = IDE_WIZARD_TEST_SERVICES_MANAGER,
+            servicesManager = createWizardTestServiceManager(),
             isUnitTestMode = true
         )
     }

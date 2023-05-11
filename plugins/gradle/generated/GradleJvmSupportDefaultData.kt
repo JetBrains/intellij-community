@@ -3,14 +3,14 @@
 package org.jetbrains.plugins.gradle.jvmcompat;
 
 import com.intellij.openapi.application.ApplicationInfo
-import org.jetbrains.plugins.gradle.jvmcompat.CompatibilityData
+import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilityState
 
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate Gradle Compatibility Matrix" configuration instead
  */
  
-internal val DEFAULT_DATA = CompatibilityData(
+internal val DEFAULT_DATA = GradleCompatibilityState(
   listOf(
     VersionMapping("6-8", "INF-5.0", "https://docs.gradle.org/5.0/release-notes.html#potential-breaking-changes"),
     VersionMapping("8-9", "INF-5.1,7.2-INF", " Gradle older than 2.0 unofficially compatible with Java 8. Gradle from 5.1 to 7.1 and Java 8 aren't compatible: https://github.com/gradle/gradle/issues/8285"),
