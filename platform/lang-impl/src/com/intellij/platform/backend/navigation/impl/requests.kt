@@ -8,10 +8,17 @@ import com.intellij.psi.PsiDirectory
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SourceNavigationRequest internal constructor(val file: VirtualFile, val offset: Int) : NavigationRequest
+class SourceNavigationRequest internal constructor(
+  val file: VirtualFile,
+  val offset: Int,
+) : NavigationRequest
 
 @Internal
-class DirectoryNavigationRequest internal constructor(val directory: PsiDirectory) : NavigationRequest
+class DirectoryNavigationRequest internal constructor(
+  val directory: PsiDirectory,
+) : NavigationRequest
 
 @Internal
-class RawNavigationRequest internal constructor(val navigatable: Navigatable) : NavigationRequest
+class RawNavigationRequest internal constructor(
+  val navigatable: Navigatable,
+) : NavigationRequest
