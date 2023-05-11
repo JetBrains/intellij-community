@@ -505,7 +505,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   @RequiresEdt
   override fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper {
-    val toCommitCondition = createToCommitCondition(changelistIds, honorExcludedFromCommit)
+    val toCommitCondition = ToCommitCondition(changelistIds, honorExcludedFromCommit)
 
     val contentToCommit = documentTracker.writeLock {
       documentTracker.updateFrozenContentIfNeeded()
@@ -537,14 +537,14 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   @RequiresEdt
   override fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean) {
-    val toCommitCondition = createToCommitCondition(changelistsIds, honorExcludedFromCommit)
+    val toCommitCondition = ToCommitCondition(changelistsIds, honorExcludedFromCommit)
     runBulkRollback(toCommitCondition)
   }
 
   override fun getChangesToBeCommitted(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): String? {
     return documentTracker.readLock {
       if (!isValid() || documentTracker.isFrozen()) return@readLock null
-      val toCommitCondition = createToCommitCondition(changelistIds, honorExcludedFromCommit)
+      val toCommitCondition = ToCommitCondition(changelistIds, honorExcludedFromCommit)
       return@readLock documentTracker.getContentWithPartiallyAppliedBlocks(side, toCommitCondition)
                       ?: run {
                         LOG.warn("getChangesToBeCommitted - frozen tracker: $this")
@@ -557,7 +557,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     return documentTracker.readLock {
       if (!isValid()) return@readLock null
 
-      val toCommitCondition = createToCommitCondition(changelistIds, honorExcludedFromCommit)
+      val toCommitCondition = ToCommitCondition(changelistIds, honorExcludedFromCommit)
       val vcsContent = documentTracker.getContent(Side.LEFT)
       val currentContent = documentTracker.getContent(Side.RIGHT)
       val ranges = blocks.filter { !it.range.isEmpty }.filter(toCommitCondition).map { toRange(it) }
@@ -566,11 +566,20 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
   }
 
-  private fun createToCommitCondition(changelistsIds: List<String>, honorExcludedFromCommit: Boolean): (Block) -> Boolean {
-    val idsSet = changelistsIds.toSet()
-    return {
-      idsSet.contains(it.marker.changelistId) &&
-      (!honorExcludedFromCommit || !it.excludedFromCommit)
+  private inner class ToCommitCondition(changelistsIds: List<String>,
+                                        val honorExcludedFromCommit: Boolean) : (Block) -> Boolean {
+    private val idsSet = changelistsIds.toSet()
+
+    override fun invoke(block: Block): Boolean {
+      if (!idsSet.contains(block.marker.changelistId)) {
+        return false
+      }
+      if (honorExcludedFromCommit) {
+        return !block.excludedFromCommit
+      }
+      else {
+        return true
+      }
     }
   }
 
