@@ -6,17 +6,24 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
+import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
-import javax.swing.BoxLayout
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import javax.swing.JPanel
 
 internal class IntentionPreviewEditorsPanel(val editors: List<EditorEx>) : JPanel() {
   init {
-    layout = BoxLayout(this, BoxLayout.Y_AXIS)
+    layout = GridBagLayout()
+    val constraints = GridBag()
+      .setDefaultFill(GridBagConstraints.BOTH)
+      .setDefaultInsets(6, 10, 0, 10)
+
     editors.forEachIndexed { index, editor ->
-      add(editor.component)
+      if (index == 0) background = editor.backgroundColor
+      add(editor.component, constraints.nextLine())
       if (index < editors.size - 1) {
-        add(createSeparatorLine(editor.colorsScheme))
+        add(createSeparatorLine(editor.colorsScheme), constraints.nextLine().emptyInsets())
       }
     }
   }
