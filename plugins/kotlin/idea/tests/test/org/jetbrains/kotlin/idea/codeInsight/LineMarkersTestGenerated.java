@@ -230,6 +230,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backticksInName.kt")
+        public void testBackticksInName() throws Exception {
+            runTest("testData/codeInsight/lineMarker/recursiveCall/backticksInName.kt");
+        }
+
         @TestMetadata("companionInvoke.kt")
         public void testCompanionInvoke() throws Exception {
             runTest("testData/codeInsight/lineMarker/recursiveCall/companionInvoke.kt");
