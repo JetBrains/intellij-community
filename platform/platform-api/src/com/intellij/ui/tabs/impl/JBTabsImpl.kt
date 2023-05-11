@@ -34,7 +34,6 @@ import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBScrollBar
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.JBThinOverlappingScrollBar
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
@@ -318,11 +317,21 @@ open class JBTabsImpl(private var project: Project?,
 
     // This scroll pane won't be shown on screen, it is needed only to handle scrolling events and properly update a scrolling model
     val fakeScrollPane = JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS)
-    scrollBar = JBThinOverlappingScrollBar(if (isHorizontalTabs) Adjustable.HORIZONTAL else Adjustable.VERTICAL)
+    scrollBar = object : JBScrollBar(if (isHorizontalTabs) Adjustable.HORIZONTAL else Adjustable.VERTICAL) {
+      override fun updateUI() {
+        super.updateUI()
+        val fontSize = JBFont.labelFontSize()
+        setUnitIncrement(fontSize)
+        setBlockIncrement(fontSize * 10)
+      }
+
+      override fun isThin(): Boolean = true
+    }
     fakeScrollPane.verticalScrollBar = scrollBar
     fakeScrollPane.horizontalScrollBar = scrollBar
     fakeScrollPane.isVisible = true
     fakeScrollPane.setBounds(0, 0, 0, 0)
+    add(fakeScrollPane) // isShowing() should return true for this component
     add(scrollBar)
     addMouseWheelListener { event ->
       val modifiers = UIUtil.getAllModifiers(event) or if (isHorizontalTabs) InputEvent.SHIFT_DOWN_MASK else 0
