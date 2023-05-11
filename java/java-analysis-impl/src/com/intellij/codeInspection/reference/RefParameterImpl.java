@@ -5,9 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -117,6 +115,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     if (myActualValueTemplate == VALUE_IS_NOT_CONST) return;
 
     Object newTemplate = getAccessibleExpressionValue(expression, () -> accessPlace == null ? getContainingFile() : accessPlace);
+    newTemplate = convertUastToPointers(newTemplate);
     if (myActualValueTemplate == VALUE_UNDEFINED) {
       myActualValueTemplate = newTemplate;
     }
@@ -128,7 +127,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   @Nullable
   @Override
   public synchronized Object getActualConstValue() {
-    return myActualValueTemplate;
+    return convertPointersToUast(myActualValueTemplate);
   }
 
   @Override
@@ -211,6 +210,33 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
       return "'" + StringUtil.escapeCharCharacters(String.valueOf(character)) + "'";
     }
     return value;
+  }
+
+  private static Object convertUastToPointers(Object o) {
+    //noinspection rawtypes
+    if (o instanceof List list) {
+      //noinspection unchecked
+      list.replaceAll(RefParameterImpl::convertUastToPointers);
+    }
+    else if (o instanceof UField field) {
+      PsiElement psi = field.getSourcePsi();
+      return psi == null
+             ? VALUE_IS_NOT_CONST
+             : SmartPointerManager.getInstance(psi.getProject()).createSmartPsiElementPointer(psi);
+    }
+    return o;
+  }
+
+  private static Object convertPointersToUast(Object o) {
+    //noinspection rawtypes
+    if (o instanceof List list) {
+      //noinspection unchecked
+      list.replaceAll(RefParameterImpl::convertPointersToUast);
+    }
+    else if (o instanceof SmartPsiElementPointer<?> pointer) {
+      return UastContextKt.toUElement(pointer.getElement());
+    }
+    return o;
   }
 
   private static boolean isAccessible(@NotNull UField field, @NotNull PsiElement place) {
