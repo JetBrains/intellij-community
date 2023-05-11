@@ -253,8 +253,10 @@ abstract class LineStatusTrackerBase<R : Range>(
     if (!isValid()) return
 
     updateDocument(Side.RIGHT, DiffBundle.message("rollback.change.command.name")) {
-      documentTracker.partiallyApplyBlocks(Side.RIGHT, condition) { block, shift ->
-        fireLinesUnchanged(block.start + shift, block.start + shift + (block.vcsEnd - block.vcsStart))
+      documentTracker.partiallyApplyBlocks(Side.RIGHT, condition) { appliedRange, shift ->
+        val start = appliedRange.start2 + shift
+        val length = appliedRange.end1 - appliedRange.start1
+        fireLinesUnchanged(start, start + length)
       }
     }
   }

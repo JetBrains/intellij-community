@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.max
@@ -235,7 +234,7 @@ class DocumentTracker(
   }
 
   @RequiresEdt
-  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean, consumer: (Block, shift: Int) -> Unit) {
+  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean, consumer: (Range, shift: Int) -> Unit) {
     if (isDisposed) return
 
     val otherSide = side.other()
@@ -243,7 +242,7 @@ class DocumentTracker(
     val otherDocument = otherSide[document1, document2]
 
     doFrozen(side) {
-      val appliedBlocks = LOCK.write {
+      val appliedRanges = LOCK.write {
         updateFrozenContentIfNeeded()
         tracker.partiallyApplyBlocks(side, condition)
       }
@@ -251,13 +250,13 @@ class DocumentTracker(
       // We use already filtered blocks here, because conditions might have been changed from other thread.
       // The documents/blocks themselves did not change though.
       var shift = 0
-      for (block in appliedBlocks) {
-        DiffUtil.applyModification(document, block.range.start(side) + shift, block.range.end(side) + shift,
-                                   otherDocument, block.range.start(otherSide), block.range.end(otherSide))
+      for (range in appliedRanges) {
+        DiffUtil.applyModification(document, range.start(side) + shift, range.end(side) + shift,
+                                   otherDocument, range.start(otherSide), range.end(otherSide))
 
-        consumer(block, shift)
+        consumer(range, shift)
 
-        shift += getRangeDelta(block.range, side)
+        shift += getRangeDelta(range, side)
       }
 
       LOCK.write {
@@ -636,14 +635,14 @@ private class LineTracker(private val handlers: List<Handler>,
     afterBulkRangeChange(isDirty)
   }
 
-  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean): List<Block> {
+  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean): List<Range> {
     val newBlocks = mutableListOf<Block>()
-    val appliedBlocks = mutableListOf<Block>()
+    val appliedRanges = mutableListOf<Range>()
 
     var shift = 0
     for (block in blocks) {
       if (condition(block)) {
-        appliedBlocks.add(block)
+        appliedRanges.add(block.range)
 
         shift += getRangeDelta(block.range, side)
       }
@@ -659,7 +658,7 @@ private class LineTracker(private val handlers: List<Handler>,
 
     afterBulkRangeChange(isDirty)
 
-    return appliedBlocks
+    return appliedRanges
   }
 
 
