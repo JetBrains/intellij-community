@@ -6,8 +6,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionResult
 import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
@@ -19,6 +21,10 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private val EP_NAME = ExtensionPointName<ActionsOnSaveFileDocumentManagerListener.ActionOnSave>("com.intellij.actionOnSave")
 
@@ -37,7 +43,8 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
      * Implementations don't need to save modified documents. Note that the passed documents may be unsaved if already modified by some other save action.
      */
     @RequiresEdt
-    open fun processDocuments(project: Project, documents: Array<Document?>) {}
+    open fun processDocuments(project: Project, documents: Array<Document?>) {
+    }
   }
 
   /**
@@ -85,33 +92,33 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
     val processingAlreadyScheduled = !documentsToProcess.isEmpty()
     documentsToProcess.addAll(documents)
     if (!processingAlreadyScheduled) {
-      ApplicationManager.getApplication().invokeLater({ processSavedDocuments() }, ModalityState.NON_MODAL)
+      service<CurrentActionHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+        processSavedDocuments()
+      }
     }
   }
 
-  private fun processSavedDocuments() {
+  private suspend fun processSavedDocuments() {
     val documents = documentsToProcess.toArray(Document.EMPTY_ARRAY)
     documentsToProcess.clear()
 
-    // Although invokeLater() is called with ModalityState.NON_MODAL argument, somehow this might be called in modal context (for example on Commit File action)
-    // It's quite weird if save action progress appears or documents get changed in modal context, let's ignore the request.
-    if (ModalityState.current() !== ModalityState.NON_MODAL) {
-      return
-    }
-
     val manager = FileDocumentManager.getInstance()
-    val processedDocuments: MutableList<Document> = ArrayList()
+    val processedDocuments = ArrayList<Document>()
     for (project in ProjectManager.getInstance().openProjects) {
       if (project.isDisposed) {
         continue
       }
 
       val index = ProjectFileIndex.getInstance(project)
-      val projectDocuments = documents.filter { document ->
-        val file = manager.getFile(document)
-        file != null && index.isInContent(file)
+      val projectDocuments = withContext(Dispatchers.Default) {
+        readAction {
+          documents.filter { document ->
+            val file = manager.getFile(document)
+            file != null && index.isInContent(file)
+          }
+        }
       }
-      if (projectDocuments.isEmpty()) {
+      if (project.isDisposed || projectDocuments.isEmpty()) {
         continue
       }
       for (saveAction in EP_NAME.extensionList) {
@@ -125,21 +132,21 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
       manager.saveDocument(document)
     }
   }
+}
 
-  internal class CurrentActionListener : AnActionListener {
-    override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
-      if (action is SaveDocumentAction) {
-        service<CurrentActionHolder>().runningSaveDocumentAction = true
-      }
+private class CurrentActionListener() : AnActionListener {
+  override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
+    if (action is SaveDocumentAction) {
+      service<CurrentActionHolder>().runningSaveDocumentAction = true
     }
+  }
 
-    override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
-      service<CurrentActionHolder>().runningSaveDocumentAction = false
-    }
+  override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
+    service<CurrentActionHolder>().runningSaveDocumentAction = false
   }
 }
 
 @Service(Service.Level.APP)
-private class CurrentActionHolder {
+private class CurrentActionHolder(@JvmField val coroutineScope: CoroutineScope) {
   var runningSaveDocumentAction = false
 }
