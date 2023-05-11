@@ -11,8 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiFile
-import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.SmartPsiFileRange
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.intellij.plugins.markdown.MarkdownIcons
@@ -41,9 +39,7 @@ data class HtmlAnchorSymbol(
   }
 
   override fun createPointer(): Pointer<out HtmlAnchorSymbol> {
-    val project = file.project
-    val base = SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(file, range)
-    return HtmlHeaderSymbolPointer(base, anchorText)
+    return createPointer(file, range, anchorText)
   }
 
   override val maximalSearchScope: SearchScope
@@ -74,14 +70,11 @@ data class HtmlAnchorSymbol(
     }
   }
 
-  private class HtmlHeaderSymbolPointer(
-    private val base: SmartPsiFileRange,
-    private val anchorText: String
-  ): Pointer<HtmlAnchorSymbol> {
-    override fun dereference(): HtmlAnchorSymbol? {
-      val file = base.containingFile ?: return null
-      val range = base.range ?: return null
-      return HtmlAnchorSymbol(file, TextRange.create(range), anchorText)
+  companion object {
+    private fun createPointer(file: PsiFile, range: TextRange, anchorText: @NlsSafe String): Pointer<HtmlAnchorSymbol> {
+      return Pointer.fileRangePointer(file, range) { restoredFile, restoredRange ->
+        HtmlAnchorSymbol(restoredFile, restoredRange, anchorText)
+      }
     }
   }
 }

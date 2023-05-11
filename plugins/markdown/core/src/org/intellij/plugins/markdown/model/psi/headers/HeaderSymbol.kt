@@ -11,8 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiFile
-import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.SmartPsiFileRange
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.api.RenameTarget
@@ -33,21 +31,7 @@ data class HeaderSymbol(
   override val anchorText: @NlsSafe String
 ): MarkdownHeaderSymbol, SearchTarget, RenameTarget, NavigatableSymbol {
   override fun createPointer(): Pointer<out HeaderSymbol> {
-    val project = file.project
-    val base = SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(file, range)
-    return HeaderSymbolPointer(base, text, anchorText)
-  }
-
-  private class HeaderSymbolPointer(
-    private val base: SmartPsiFileRange,
-    private val text: String,
-    private val anchorText: String
-  ): Pointer<HeaderSymbol> {
-    override fun dereference(): HeaderSymbol? {
-      val file = base.containingFile ?: return null
-      val range = base.range ?: return null
-      return HeaderSymbol(file, TextRange.create(range), text, anchorText)
-    }
+    return createPointer(file, range, text, anchorText)
   }
 
   override val targetName: String
@@ -86,9 +70,13 @@ data class HeaderSymbol(
       val absoluteRange = rangeInContentHolder.shiftRight(headerContent.startOffset)
       val text = rangeInContentHolder.substring(headerContent.text)
       val file = header.containingFile
-      val project = file.project
-      val base = SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(file, absoluteRange)
-      return HeaderSymbolPointer(base, text, anchorText)
+      return createPointer(file, absoluteRange, text, anchorText)
+    }
+
+    fun createPointer(file: PsiFile, absoluteRange: TextRange, text: String, anchorText: String): Pointer<HeaderSymbol> {
+      return Pointer.fileRangePointer(file, absoluteRange) { restoredFile, restoredRange ->
+        HeaderSymbol(restoredFile, restoredRange, text, anchorText)
+      }
     }
   }
 }
