@@ -1102,7 +1102,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @Override
-  public void reset(MavenToken token) {
+  public void resetProgressIndicator(MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
       if (myCurrentIndicator != null) {

@@ -36,6 +36,8 @@ public interface MavenServerEmbedder extends Remote {
   @NotNull
   MavenServerPullProgressIndicator getProgressIndicator(MavenToken token) throws RemoteException;
 
+  void resetProgressIndicator(MavenToken token) throws RemoteException;
+
   @NotNull
   Collection<MavenServerExecutionResult> resolveProjects(
     @NotNull String longRunningTaskId,
@@ -90,8 +92,6 @@ public interface MavenServerEmbedder extends Remote {
     @NotNull List<MavenRemoteRepository> repositories,
     @Nullable String url,
     MavenToken token) throws RemoteException;
-
-  void reset(MavenToken token) throws RemoteException;
 
   void release(MavenToken token) throws RemoteException;
 

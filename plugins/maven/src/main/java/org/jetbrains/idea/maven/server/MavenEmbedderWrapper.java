@@ -269,7 +269,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     if (w == null) return;
     try {
       stopPulling();
-      w.reset(ourToken);
+      w.resetProgressIndicator(ourToken);
     }
     catch (RemoteException e) {
       handleRemoteError(e);

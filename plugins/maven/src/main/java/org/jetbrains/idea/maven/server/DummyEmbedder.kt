@@ -28,6 +28,9 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     }
   }
 
+  override fun resetProgressIndicator(token: MavenToken?) {
+  }
+
   override fun evaluateEffectivePom(file: File,
                                     activeProfiles: List<String>,
                                     inactiveProfiles: List<String>,
@@ -56,9 +59,6 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
                            goal: String,
                            token: MavenToken?): List<MavenGoalExecutionResult> {
     return emptyList()
-  }
-
-  override fun reset(token: MavenToken?) {
   }
 
   override fun release(token: MavenToken?) {

@@ -509,6 +509,21 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
+  @Override
+  public void resetProgressIndicator(MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    try {
+      if (myCurrentIndicator != null) {
+        UnicastRemoteObject.unexportObject(myCurrentIndicator, false);
+      }
+      myCurrentIndicator = null;
+      myConsoleWrapper.setWrappee(null);
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
   @Nullable
   @Override
   public String evaluateEffectivePom(@NotNull File file,
@@ -1151,21 +1166,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     MavenExecutionResult result = maven.execute(request);
     detector.check();
     return result;
-  }
-
-  @Override
-  public void reset(MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      if (myCurrentIndicator != null) {
-        UnicastRemoteObject.unexportObject(myCurrentIndicator, false);
-      }
-      myCurrentIndicator = null;
-      myConsoleWrapper.setWrappee(null);
-    }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
   }
 
   @Override
