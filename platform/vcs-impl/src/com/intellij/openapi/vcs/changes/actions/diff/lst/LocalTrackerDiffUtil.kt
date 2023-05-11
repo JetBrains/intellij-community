@@ -109,41 +109,46 @@ object LocalTrackerDiffUtil {
     }
 
     if (textDiffProvider.isHighlightingDisabled) {
-      return handler.done(isContentsEqual, texts, emptyList(), emptyList())
+      return handler.done(isContentsEqual, texts, emptyList())
     }
 
 
-    val linesRanges = ranges.map { range -> Range(range.vcsLine1, range.vcsLine2, range.line1, range.line2) }
+    val lstRanges = mutableListOf<LocalRange>()
+    val linesRanges = mutableListOf<Range>()
+    val rangesFragmentData = mutableListOf<LineFragmentData>()
+
+    for (localRange in ranges) {
+      val isExcludedFromCommit = localRange.isExcludedFromCommit
+      lstRanges += localRange
+      linesRanges += Range(localRange.vcsLine1, localRange.vcsLine2, localRange.line1, localRange.line2)
+      rangesFragmentData += LineFragmentData(activeChangelistId, isExcludedFromCommit, localRange.changelistId)
+    }
 
     val newFragments = textDiffProvider.compare(diffData.vcsText, diffData.localText, linesRanges, indicator)!!
 
-    val fragments = mutableListOf<LineFragment>()
-    val fragmentsData = mutableListOf<LineFragmentData>()
-
-    for (i in ranges.indices) {
-      val localRange = ranges[i]
-      val rangeFragments = newFragments[i]
-
-      fragments.addAll(rangeFragments)
-
-      val fragmentData = LineFragmentData(activeChangelistId, localRange.isExcludedFromCommit, localRange.changelistId)
-      repeat(rangeFragments.size) { fragmentsData.add(fragmentData) }
+    val toggleableLineRanges = mutableListOf<ToggleableLineRange>()
+    for (i in lstRanges.indices) {
+      toggleableLineRanges += ToggleableLineRange(lstRanges[i], newFragments[i], rangesFragmentData[i])
     }
-
-    return handler.done(isContentsEqual, texts, fragments, fragmentsData)
+    return handler.done(isContentsEqual, texts, toggleableLineRanges)
   }
 
   interface LocalTrackerDiffHandler {
     fun done(isContentsEqual: Boolean,
              texts: Array<CharSequence>,
-             fragments: List<LineFragment>,
-             fragmentsData: List<LineFragmentData>): Runnable
+             toggleableLineRanges: List<ToggleableLineRange>): Runnable
 
     fun retryLater(): Runnable
     fun fallback(): Runnable
     fun fallbackWithProgress(): Runnable
     fun error(): Runnable
   }
+
+  class ToggleableLineRange(
+    val lineRange: com.intellij.openapi.vcs.ex.Range,
+    val fragments: List<LineFragment>,
+    val fragmentData: LineFragmentData
+  )
 
   data class LineFragmentData(val activeChangelistId: String,
                               val isExcludedFromCommit: Boolean,

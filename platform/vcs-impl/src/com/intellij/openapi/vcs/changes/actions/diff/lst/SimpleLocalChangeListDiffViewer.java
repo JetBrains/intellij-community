@@ -20,7 +20,9 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LineFragmentData;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LocalTrackerChange;
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.ToggleableLineRange;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -113,22 +115,21 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     @Override
     public Runnable done(boolean isContentsEqual,
                          CharSequence @NotNull [] texts,
-                         @NotNull List<? extends LineFragment> fragments,
-                         @NotNull List<LocalTrackerDiffUtil.LineFragmentData> fragmentsData) {
+                         @NotNull List<ToggleableLineRange> toggleableLineRanges) {
       List<SimpleDiffChange> changes = new ArrayList<>();
 
-      for (int i = 0; i < fragments.size(); i++) {
-        LineFragment fragment = fragments.get(i);
-        LocalTrackerDiffUtil.LineFragmentData data = fragmentsData.get(i);
-
+      for (ToggleableLineRange toggleableLineRange : toggleableLineRanges) {
+        LineFragmentData data = toggleableLineRange.getFragmentData();
         boolean isExcludedFromCommit = data.isExcludedFromCommit();
         boolean isFromActiveChangelist = data.isFromActiveChangelist();
         boolean isSkipped = data.isSkipped();
         boolean isExcluded = data.isExcluded(myAllowExcludeChangesFromCommit);
 
-        changes.add(new MySimpleDiffChange(changes.size(), fragment, isExcluded, isSkipped,
-                                           data.getChangelistId(), isFromActiveChangelist,
-                                           isExcludedFromCommit));
+        for (LineFragment fragment : toggleableLineRange.getFragments()) {
+          changes.add(new MySimpleDiffChange(changes.size(), fragment, isExcluded, isSkipped,
+                                             data.getChangelistId(), isFromActiveChangelist,
+                                             isExcludedFromCommit));
+        }
       }
 
       return apply(changes, isContentsEqual);
@@ -268,8 +269,8 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         .select(MySimpleDiffChange.class)
         .map(it -> new LocalTrackerChange(it.getStartLine(Side.RIGHT),
                                           it.getEndLine(Side.RIGHT),
-                                          it.myChangelistId,
-                                          it.myIsExcludedFromCommit))
+                                          it.getChangelistId(),
+                                          it.isExcludedFromCommit()))
         .toList();
     }
   }

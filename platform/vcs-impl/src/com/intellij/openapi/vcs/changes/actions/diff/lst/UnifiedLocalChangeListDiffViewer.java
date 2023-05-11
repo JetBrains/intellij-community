@@ -20,6 +20,8 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LineFragmentData;
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.ToggleableLineRange;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
@@ -116,8 +119,16 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     @Override
     public Runnable done(boolean isContentsEqual,
                          CharSequence @NotNull [] texts,
-                         @NotNull List<? extends LineFragment> fragments,
-                         @NotNull List<LocalTrackerDiffUtil.LineFragmentData> fragmentsData) {
+                         @NotNull List<ToggleableLineRange> toggleableLineRanges) {
+      @NotNull List<LineFragment> fragments = new ArrayList<>();
+      @NotNull List<LineFragmentData> fragmentsData = new ArrayList<>();
+
+      for (ToggleableLineRange range : toggleableLineRanges) {
+        List<LineFragment> rangeFragments = range.getFragments();
+        fragments.addAll(rangeFragments);
+        fragmentsData.addAll(Collections.nCopies(rangeFragments.size(), range.getFragmentData()));
+      }
+
       UnifiedFragmentBuilder builder = ReadAction.compute(() -> {
         myIndicator.checkCanceled();
         return new MyUnifiedFragmentBuilder(fragments, fragmentsData, myDocument1, myDocument2).exec();
@@ -157,10 +168,10 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
   }
 
   private class MyUnifiedFragmentBuilder extends UnifiedFragmentBuilder {
-    @NotNull private final List<LocalTrackerDiffUtil.LineFragmentData> myFragmentsData;
+    @NotNull private final List<LineFragmentData> myFragmentsData;
 
     MyUnifiedFragmentBuilder(@NotNull List<? extends LineFragment> fragments,
-                             @NotNull List<LocalTrackerDiffUtil.LineFragmentData> fragmentsData,
+                             @NotNull List<LineFragmentData> fragmentsData,
                              @NotNull Document document1,
                              @NotNull Document document2) {
       super(fragments, document1, document2, myMasterSide);
@@ -174,7 +185,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
                                                  int blockEnd,
                                                  int fragmentIndex) {
       LineFragment fragment = myFragments.get(fragmentIndex);
-      LocalTrackerDiffUtil.LineFragmentData data = myFragmentsData.get(fragmentIndex);
+      LineFragmentData data = myFragmentsData.get(fragmentIndex);
       boolean isSkipped = data.isSkipped();
       boolean isExcluded = data.isExcluded(myAllowExcludeChangesFromCommit);
       return new MyUnifiedDiffChange(blockStart, insertedStart, blockEnd, fragment, isExcluded, isSkipped,
@@ -285,8 +296,8 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
         .select(MyUnifiedDiffChange.class)
         .map(it -> new LocalTrackerDiffUtil.LocalTrackerChange(myViewer.transferLineFromOneside(Side.RIGHT, it.getLine1()),
                                                                myViewer.transferLineFromOneside(Side.RIGHT, it.getLine2()),
-                                                               it.myChangelistId,
-                                                               it.myIsExcludedFromCommit))
+                                                               it.getChangelistId(),
+                                                               it.isExcludedFromCommit()))
         .toList();
     }
   }
