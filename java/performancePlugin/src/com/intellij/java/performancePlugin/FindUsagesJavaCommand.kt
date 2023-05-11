@@ -40,12 +40,14 @@ class FindUsagesJavaCommand(text: String, line: Int) : AbstractCommand(text, lin
 
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     val actionCallback = ActionCallbackProfilerStopper()
-    val arguments = text.split(" ".toRegex(), 3).toTypedArray()
-    val position = arguments[1]
-    val elementName = arguments[2]
-    val result = GoToNamedElementCommand(GoToNamedElementCommand.PREFIX + " $position $elementName", -1).execute(context)
-    result.onError {
-      actionCallback.reject("fail to go to element $elementName")
+    val arguments = text.split(" ".toRegex()).toTypedArray()
+    val position = if (arguments.size == 2) arguments[1] else null
+    val elementName = if (arguments.size == 3) arguments[2] else arguments[1]
+    if (position != null) {
+      val result = GoToNamedElementCommand(GoToNamedElementCommand.PREFIX + " $position $elementName", -1).execute(context)
+      result.onError {
+        actionCallback.reject("fail to go to element $elementName")
+      }
     }
     val findUsagesFinished = CountDownLatch(1)
     val allUsages: List<Usage> = ArrayList()
