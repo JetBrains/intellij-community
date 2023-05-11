@@ -11,9 +11,11 @@ import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel.forDocument
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.EdtInvocationManager
 import java.lang.ref.WeakReference
+import java.util.concurrent.ConcurrentHashMap
 
 internal class HighlightingWatcher(
   private val provider: ProblemsProvider,
@@ -23,7 +25,7 @@ internal class HighlightingWatcher(
   : MarkupModelListener, Disposable {
 
   private var disposed: Boolean = false
-  private val problems = mutableMapOf<RangeHighlighterEx, Problem>()
+  private val problems:MutableMap<RangeHighlighter, Problem> = ConcurrentHashMap()
   private var reference: WeakReference<MarkupModelEx>? = null
 
   init {
@@ -48,7 +50,6 @@ internal class HighlightingWatcher(
         }
       }
     }
-    problem?.let {  }
   }
 
   override fun beforeRemoved(highlighter: RangeHighlighterEx) {
@@ -75,29 +76,21 @@ internal class HighlightingWatcher(
 
   fun update() {
     val model = reference?.get() ?: getMarkupModel() ?: return
-    val highlighters = arrayListOf<RangeHighlighterEx>()
-    model.processRangeHighlightersOverlappingWith(0, model.document.textLength) { highlighter: RangeHighlighterEx ->
-      highlighters.add(highlighter)
-      true
-    }
-    highlighters.forEach { afterAdded(it) }
+    val highlighters = model.allHighlighters
+    highlighters.forEach { afterAdded(it as RangeHighlighterEx) }
   }
 
-  fun getProblems(): Collection<Problem> = synchronized(problems) { problems.values.toList() }
+  fun findProblem(highlighter: RangeHighlighter): Problem? = problems[highlighter]
 
-  fun findProblem(highlighter: RangeHighlighterEx): Problem? = synchronized(problems) { problems[highlighter] }
-
-  private fun getHighlightingProblem(highlighter: RangeHighlighterEx): HighlightingProblem
+  private fun getHighlightingProblem(highlighter: RangeHighlighter): HighlightingProblem
     = HighlightingProblem(provider, file, highlighter)
 
-  private fun getProblem(highlighter: RangeHighlighterEx): Problem? = when {
+  private fun getProblem(highlighter: RangeHighlighter): Problem? = when {
     !isValid(highlighter) -> null
-    else -> synchronized(problems) {
-      problems.computeIfAbsent(highlighter) { getHighlightingProblem(highlighter) }
-    }
+    else -> problems.computeIfAbsent(highlighter) { getHighlightingProblem(highlighter) }
   }
 
-  private fun isValid(highlighter: RangeHighlighterEx): Boolean {
+  private fun isValid(highlighter: RangeHighlighter): Boolean {
     val info = highlighter.errorStripeTooltip as? HighlightInfo ?: return false
     return info.description != null && info.severity.myVal >= level
   }

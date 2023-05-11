@@ -25,30 +25,29 @@ internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualF
     Disposer.register(provider, watcher)
   }
 
-  fun findProblem(highlighter: RangeHighlighterEx) = watcher.findProblem(highlighter)
+  fun findProblem(highlighter: RangeHighlighterEx): Problem? = watcher.findProblem(highlighter)
 
-  override fun getProblemCount() = synchronized(problems) { problems.count(filter) }
+  override fun getProblemCount(): Int = synchronized(problems) { problems.count(filter) }
 
-  override fun getProblemFiles() = when (getProblemCount() > 0) {
+  override fun getProblemFiles(): List<VirtualFile> = when (getProblemCount() > 0) {
     true -> listOf(file)
     else -> emptyList()
   }
 
-  override fun getFileProblemCount(file: VirtualFile) = when (this.file == file) {
+  override fun getFileProblemCount(file: VirtualFile): Int = when (this.file == file) {
     true -> getProblemCount()
     else -> 0
   }
 
-  override fun getFileProblems(file: VirtualFile) = when (this.file == file) {
+  override fun getFileProblems(file: VirtualFile): List<HighlightingProblem> = when (this.file == file) {
     true -> synchronized(problems) { problems.filter(filter) }
     else -> emptyList()
   }
 
-  private fun createWatcher(provider: ProblemsProvider,
-                            file: VirtualFile): HighlightingWatcher =
+  private fun createWatcher(provider: ProblemsProvider, file: VirtualFile): HighlightingWatcher =
     HighlightingWatcher(provider, this, file, HighlightSeverity.TEXT_ATTRIBUTES.myVal + 1)
 
-  override fun getOtherProblemCount() = 0
+  override fun getOtherProblemCount(): Int = 0
 
   override fun getOtherProblems(): Collection<Problem> = emptyList()
 
@@ -62,20 +61,24 @@ internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualF
   }
 
   override fun problemDisappeared(problem: Problem) {
-    if (problem !is HighlightingProblem || problem.file != file) return
-    notify(problem, synchronized(problems) { SetUpdateState.remove(problem, problems) })
+    if (problem is HighlightingProblem && problem.file == file) {
+      notify(problem, synchronized(problems) { SetUpdateState.remove(problem, problems) })
+    }
   }
 
   override fun problemUpdated(problem: Problem) {
-    if (problem !is HighlightingProblem || problem.file != file) return
-    notify(problem, synchronized(problems) { SetUpdateState.update(problem, problems) })
+    if (problem is HighlightingProblem && problem.file == file) {
+      notify(problem, synchronized(problems) { SetUpdateState.update(problem, problems) })
+    }
   }
 
-  private fun notify(problem: Problem, state: SetUpdateState) = when (state) {
-    SetUpdateState.ADDED -> super.problemAppeared(problem)
-    SetUpdateState.REMOVED -> super.problemDisappeared(problem)
-    SetUpdateState.UPDATED -> super.problemUpdated(problem)
-    SetUpdateState.IGNORED -> {
+  private fun notify(problem: Problem, state: SetUpdateState) {
+    when (state) {
+      SetUpdateState.ADDED -> super.problemAppeared(problem)
+      SetUpdateState.REMOVED -> super.problemDisappeared(problem)
+      SetUpdateState.UPDATED -> super.problemUpdated(problem)
+      SetUpdateState.IGNORED -> {
+      }
     }
   }
 

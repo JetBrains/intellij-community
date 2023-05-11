@@ -15,10 +15,10 @@ import com.intellij.problems.WolfTheProblemSolver
 open class HighlightingErrorsProvider(final override val project: Project) : HighlightingErrorsProviderBase {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.getService(HighlightingErrorsProvider::class.java)!!
+    fun getInstance(project: Project): HighlightingErrorsProvider = project.getService(HighlightingErrorsProvider::class.java)!!
   }
 
-  private val watchers = mutableMapOf<VirtualFile, HighlightingWatcher>()
+  private val watchers: MutableMap<VirtualFile, HighlightingWatcher> = mutableMapOf()
 
   init {
     project.messageBus.connect(this).subscribe(ProblemListener.TOPIC, this)

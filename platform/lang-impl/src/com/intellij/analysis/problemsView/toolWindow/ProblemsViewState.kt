@@ -10,21 +10,21 @@ import com.intellij.util.xmlb.annotations.XCollection
 open class ProblemsViewState : BaseState() {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.getService(ProblemsViewStateManager::class.java).state
+    fun getInstance(project: Project): ProblemsViewState = project.getService(ProblemsViewStateManager::class.java).state
   }
 
-  var selectedTabId by string("")
+  var selectedTabId: String? by string("")
   
-  var proportion by property(0.5f)
+  var proportion: Float by property(0.5f)
 
-  var autoscrollToSource by property(false)
-  var showPreview by property(false)
-  var showToolbar by property(true)
+  var autoscrollToSource: Boolean by property(false)
+  var showPreview: Boolean by property(false)
+  var showToolbar: Boolean by property(true)
 
-  var groupByToolId by property(false)
-  var sortFoldersFirst by property(true)
-  var sortBySeverity by property(true)
-  var sortByName by property(false)
+  var groupByToolId: Boolean by property(false)
+  var sortFoldersFirst: Boolean by property(true)
+  var sortBySeverity: Boolean by property(true)
+  var sortByName: Boolean by property(false)
 
   @get:XCollection(style = XCollection.Style.v2)
   val hideBySeverity: MutableSet<Int> by property(ConcurrentCollectionFactory.createConcurrentSet()) { it.isEmpty() }

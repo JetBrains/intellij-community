@@ -29,7 +29,7 @@ import java.awt.event.MouseEvent
 
 internal class ShowQuickFixesAction : AnAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
     val node = event.getData(SELECTED_ITEM) as? ProblemNode
@@ -113,7 +113,7 @@ internal class ShowQuickFixesAction : AnAction() {
     if (!UIUtil.isShowing(panel)) return null
     val editor = panel.preview ?: getEditor(psi, showEditor) ?: return null
     val info = ShowIntentionsPass.IntentionsInfo()
-    problem.info?.findRegisteredQuickFix { desc, range ->
+    problem.info?.findRegisteredQuickFix { desc, _ ->
       info.intentionsToShow.add(desc)
       null
     }

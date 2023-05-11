@@ -27,16 +27,16 @@ class ProblemNode(parent: Node, val file: VirtualFile, val problem: Problem) : N
   var severity: Int = 0
     private set
 
-  override val descriptor
+  override val descriptor: OpenFileDescriptor?
     get() = project?.let { OpenFileDescriptor(it, file, line, column) }
 
-  override fun getLeafState() = LeafState.ALWAYS
+  override fun getLeafState(): LeafState = LeafState.ALWAYS
 
-  override fun getName() = text
+  override fun getName(): String = text
 
-  override fun getVirtualFile() = file
+  override fun getVirtualFile(): VirtualFile = file
 
-  override fun getNavigatable() = problem as? Navigatable ?: descriptor
+  override fun getNavigatable(): Navigatable? = problem as? Navigatable ?: descriptor
 
   override fun update(project: Project, presentation: PresentationData) {
     // update values before comparison because of general contract
@@ -50,7 +50,7 @@ class ProblemNode(parent: Node, val file: VirtualFile, val problem: Problem) : N
     if (line >= 0) presentation.addText(" :${line + 1}", GRAYED_ATTRIBUTES)
   }
 
-  override fun hashCode() = hash(project, problem)
+  override fun hashCode(): Int = hash(project, problem)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

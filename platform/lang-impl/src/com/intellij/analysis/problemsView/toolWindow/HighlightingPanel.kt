@@ -26,10 +26,10 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     FileEditorManagerListener, PowerSaveMode.Listener {
 
   companion object {
-    const val ID = "CurrentFile"
+    const val ID: String = "CurrentFile"
   }
 
-  private val statusUpdateAlarm = SingleAlarm({ updateStatus() }, 200, this, ThreadToUse.POOLED_THREAD)
+  private val statusUpdateAlarm: SingleAlarm = SingleAlarm({ updateStatus() }, 200, this, ThreadToUse.POOLED_THREAD)
   @Volatile
   private var previousStatus: Status? = null
 
@@ -69,9 +69,15 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     updateToolWindowContent()
   }
 
-  override fun fileOpened(manager: FileEditorManager, file: VirtualFile) = updateCurrentFileIfLocalId()
-  override fun fileClosed(manager: FileEditorManager, file: VirtualFile) = updateCurrentFileIfLocalId()
-  override fun selectionChanged(event: FileEditorManagerEvent) = updateCurrentFileIfLocalId()
+  override fun fileOpened(manager: FileEditorManager, file: VirtualFile) {
+    updateCurrentFileIfLocalId()
+  }
+  override fun fileClosed(manager: FileEditorManager, file: VirtualFile) {
+    updateCurrentFileIfLocalId()
+  }
+  override fun selectionChanged(event: FileEditorManagerEvent) {
+    updateCurrentFileIfLocalId()
+  }
 
   /**
    * CWM-768: If a new editor is selected from a CodeWithMe client,
@@ -87,10 +93,10 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     currentFile = ClientId.withClientId(myClientId) { findCurrentFile() }
   }
 
-  internal val currentRoot
+  internal val currentRoot: HighlightingFileRoot?
     get() = treeModel.root as? HighlightingFileRoot
 
-  var currentFile
+  var currentFile: VirtualFile?
     get() = currentRoot?.file
     set(file) {
       if (file == null) {
@@ -99,13 +105,13 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
       }
       else {
         if (currentRoot?.file == file) return
-        treeModel.root = getRoot(file)
+        treeModel.root = createRoot(file)
         TreeUtil.promiseSelectFirstLeaf(tree)
       }
       powerSaveStateChanged()
     }
 
-  internal fun getRoot(file: VirtualFile): HighlightingFileRoot = HighlightingFileRoot(this, file)
+  internal fun createRoot(file: VirtualFile): HighlightingFileRoot = HighlightingFileRoot(this, file)
 
   fun selectHighlighter(highlighter: RangeHighlighterEx) {
     val problem = currentRoot?.findProblem(highlighter) ?: return
@@ -115,12 +121,12 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
   private fun findCurrentFile(): VirtualFile? {
     if (project.isDisposed) return null
     val fileEditor = FileEditorManager.getInstance(project)?.selectedEditor ?: return null
-    val file = if (fileEditor is TextEditor) {
+    val virtualFile = if (fileEditor is TextEditor) {
       fileEditor.editor.virtualFile
     } else {
       fileEditor.file
     }
-    if (file != null) return file
+    if (virtualFile != null) return virtualFile
     val textEditor = fileEditor as? TextEditor ?: return null
     return FileDocumentManager.getInstance().getFile(textEditor.editor.document)
   }
