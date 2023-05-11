@@ -29,10 +29,22 @@ class PartialCommitChangeNodeDecorator @JvmOverloads constructor(
   private fun appendPartialCommitState(change: Change, renderer: SimpleColoredComponent) {
     val changeListId = (change as? ChangeListChange)?.changeListId ?: return
     val ranges = PartialChangesUtil.getPartialTracker(project, change)?.getRanges() ?: return
-    val rangesToCommit = ranges.count { it.changelistId == changeListId && it.exclusionState != RangeExclusionState.Excluded }
-
-    if (rangesToCommit != 0 && rangesToCommit != ranges.size) {
-      renderer.append(spaceAndThinSpace()).append(VcsBundle.message("ranges.to.commit.of.ranges.size.changes", rangesToCommit, ranges.size),
+    val rangesToCommit = ranges.filter { it.changelistId == changeListId }.sumOf {
+      when (val exclusionState = it.exclusionState) {
+        RangeExclusionState.Excluded -> 0
+        RangeExclusionState.Included -> 1
+        is RangeExclusionState.Partial -> exclusionState.includedDeletionsCount + exclusionState.includedAdditionsCount
+      }
+    }
+    val totalRanges = ranges.sumOf {
+      when (val exclusionState = it.exclusionState) {
+        RangeExclusionState.Excluded -> 1
+        RangeExclusionState.Included -> 1
+        is RangeExclusionState.Partial -> exclusionState.deletionsCount + exclusionState.additionsCount
+      }
+    }
+    if (rangesToCommit != 0 && rangesToCommit != totalRanges) {
+      renderer.append(spaceAndThinSpace()).append(VcsBundle.message("ranges.to.commit.of.ranges.size.changes", rangesToCommit, totalRanges),
                                                   GRAY_ITALIC_ATTRIBUTES)
     }
   }

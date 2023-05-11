@@ -24,6 +24,9 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.max
@@ -280,7 +283,7 @@ class DocumentTracker(
       return@flatMap when (exclusionState) {
         RangeExclusionState.Included -> listOf(block.range)
         RangeExclusionState.Excluded -> emptyList()
-        is RangeExclusionState.Partial -> TODO()
+        is RangeExclusionState.Partial -> toIncludedRanges(block.range, exclusionState)
       }
     }
       .map { range ->
@@ -289,6 +292,19 @@ class DocumentTracker(
       }
 
     return DiffUtil.applyModification(content, lineOffsets, otherContent, otherLineOffsets, ranges)
+  }
+
+  private fun toIncludedRanges(range: Range, exclusionState: RangeExclusionState.Partial): List<Range> {
+    val result = mutableListOf<Range>()
+
+    exclusionState.iterateIncludedDeletionRanges(range) { deletedRange ->
+      result += deletedRange
+    }
+    exclusionState.iterateIncludedAdditionRanges(range) { addedRange ->
+      result += addedRange
+    }
+
+    return result
   }
 
   fun setFrozenState(content1: CharSequence, content2: CharSequence, lineRanges: List<Range>): Boolean {
@@ -661,7 +677,38 @@ private class LineTracker(private val handlers: List<Handler>,
 
           newBlocks.add(newBlock)
         }
-        is RangeExclusionState.Partial -> TODO()
+        is RangeExclusionState.Partial -> {
+          var deletedCount = 0
+          var addedCount = 0
+
+          var partialShift = 0
+          exclusionState.iterateIncludedDeletionRanges(block.range) { deletedRange ->
+            appliedRanges += deletedRange
+            deletedCount += deletedRange.end1 - deletedRange.start1
+            partialShift += getRangeDelta(deletedRange, side)
+          }
+          exclusionState.iterateIncludedAdditionRanges(block.range) { addedRange ->
+            appliedRanges += addedRange
+            addedCount += addedRange.end2 - addedRange.start2
+            partialShift += getRangeDelta(addedRange, side)
+          }
+
+          val newRange = if (side.isLeft) {
+            Range(block.range.start1 + shift, block.range.end1 + shift + addedCount - deletedCount,
+                  block.range.start2, block.range.end2)
+          }
+          else {
+            Range(block.range.start1, block.range.end1,
+                  block.range.start2 + shift, block.range.end2 + shift + deletedCount - addedCount)
+          }
+
+          val newBlock = Block(newRange, true, false)
+          shift += partialShift
+
+          onRangesChanged(listOf(block), newBlock)
+          newBlocks += newBlock
+          isDirty = true
+        }
       }
     }
 
@@ -1170,12 +1217,113 @@ private fun createRange(side: Side, start: Int, end: Int, otherStart: Int, other
 }
 
 sealed class RangeExclusionState {
-  object Included : RangeExclusionState()
-  object Excluded : RangeExclusionState()
+  abstract val isFullyExcluded: Boolean
+  abstract val isFullyIncluded: Boolean
 
-  class Partial() : RangeExclusionState() {
+  object Included : RangeExclusionState() {
+    override val isFullyExcluded: Boolean = false
+    override val isFullyIncluded: Boolean = true
+  }
+
+  object Excluded : RangeExclusionState() {
+    override val isFullyExcluded: Boolean = true
+    override val isFullyIncluded: Boolean = false
+  }
+
+  @Experimental
+  class Partial(
+    val deletionsCount: Int,
+    val additionsCount: Int,
+    private val includedDeletions: BitSet,
+    private val includedAdditions: BitSet
+  ) : RangeExclusionState() {
     init {
-      TODO()
+      if (includedAdditions.length() > additionsCount || includedDeletions.length() > deletionsCount) {
+        logger<DocumentTracker>().error(
+          "Invalid exclusion state: [$includedDeletions - $deletionsCount] [$includedAdditions - $additionsCount]")
+      }
+    }
+
+    override val isFullyExcluded: Boolean
+      get() {
+        return includedDeletions.isEmpty && includedAdditions.isEmpty
+      }
+
+    override val isFullyIncluded: Boolean
+      get() {
+        return includedDeletionsCount == deletionsCount && includedAdditionsCount == additionsCount
+      }
+
+    val includedDeletionsCount: Int get() = includedDeletions.cardinality()
+    val includedAdditionsCount: Int get() = includedAdditions.cardinality()
+
+    fun iterateIncludedDeletionRanges(blockRange: Range, consumer: (range: Range) -> Unit) {
+      iterateIncludedRanges(includedDeletions) { start, end ->
+        consumer(Range(blockRange.start1 + start, blockRange.start1 + end, blockRange.start2, blockRange.start2))
+      }
+    }
+
+    fun iterateIncludedAdditionRanges(blockRange: Range, consumer: (range: Range) -> Unit) {
+      iterateIncludedRanges(includedAdditions) { start, end ->
+        consumer(Range(blockRange.end1, blockRange.end1, blockRange.start2 + start, blockRange.start2 + end))
+      }
+    }
+
+    fun iterateAdditionOffsets(consumer: (start: Int, end: Int, isIncluded: Boolean) -> Unit) {
+      iterateOffsets(includedAdditions, additionsCount, consumer)
+    }
+
+    fun iterateDeletionOffsets(consumer: (start: Int, end: Int, isIncluded: Boolean) -> Unit) {
+      iterateOffsets(includedDeletions, deletionsCount, consumer)
+    }
+
+    @Internal
+    fun copyIncludedInto(includedDeletions: BitSet, includedAdditions: BitSet) {
+      includedDeletions.or(this.includedDeletions)
+      includedAdditions.or(this.includedAdditions)
+    }
+
+    private fun iterateIncludedRanges(set: BitSet, consumer: (start: Int, end: Int) -> Unit) {
+      var index = 0
+      while (true) {
+        val nextStart = set.nextSetBit(index)
+        if (nextStart == -1) break
+        val nextEnd = set.nextClearBit(nextStart)
+        consumer(nextStart, nextEnd)
+        index = nextEnd
+      }
+    }
+
+    private fun iterateOffsets(set: BitSet, count: Int, consumer: (start: Int, end: Int, isIncluded: Boolean) -> Unit) {
+      var index = 0
+      while (true) {
+        val nextStart = set.nextSetBit(index)
+        if (nextStart == -1) break
+
+        if (index < nextStart) {
+          consumer(index, nextStart, false)
+        }
+
+        val nextEnd = set.nextClearBit(nextStart)
+        consumer(nextStart, nextEnd, true)
+
+        index = nextEnd
+      }
+
+      if (index < count) {
+        consumer(index, count, false)
+      }
+    }
+
+    override fun toString(): String {
+      return "RangeExclusionState.Partial($includedDeletions - $includedAdditions)"
+    }
+
+    fun validate(deletionsCount: Int, additionsCount: Int) {
+      if (this.deletionsCount != deletionsCount || this.additionsCount != additionsCount) {
+        logger<DocumentTracker>().error(
+          "Invalid exclusion state: [${this.deletionsCount} - ${this.deletionsCount}] [${deletionsCount} - ${additionsCount}]")
+      }
     }
   }
 }
