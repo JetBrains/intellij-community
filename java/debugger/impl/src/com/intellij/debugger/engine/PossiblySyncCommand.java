@@ -31,7 +31,7 @@ public abstract class PossiblySyncCommand extends SuspendContextCommandImpl {
 
   private boolean rescheduleIfNotIdle(@NotNull SuspendContextImpl suspendContext) {
     int delay = ApplicationManager.getApplication().isUnitTestMode() ? -1 : Registry.intValue("debugger.sync.commands.reschedule.delay");
-    if (delay < 0 || --myRetries <= 0) {
+    if (delay < 0 || myRetries-- <= 0) {
       return false;
     }
     DebugProcess process = suspendContext.getDebugProcess();
