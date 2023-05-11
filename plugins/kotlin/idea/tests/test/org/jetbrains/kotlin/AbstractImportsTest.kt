@@ -62,7 +62,8 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
             }
 
             InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// CLASS_IMPORT_FILTER_VETO_REGEX:").forEach {
-                val filterExtension = ClassImportFilter { classInfo, _ -> !classInfo.fqName.asString().matches(Regex(it.trim())) }
+                val regex = Regex(".*${it.trim()}.*")
+                val filterExtension = ClassImportFilter { classInfo, _ -> !classInfo.fqName.asString().matches(regex) }
                 ClassImportFilter.EP_NAME.point.registerExtension(filterExtension, testRootDisposable)
             }
 
