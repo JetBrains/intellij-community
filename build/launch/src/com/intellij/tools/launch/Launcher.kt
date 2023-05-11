@@ -30,9 +30,6 @@ object Launcher {
              classPathArgFile: File,
              options: LauncherOptions): Process {
 
-    // We should create config folder to avoid import settings dialog.
-    Files.createDirectories(paths.configFolder.toPath())
-
     val cmd = mutableListOf(
       paths.javaExecutable.canonicalPath,
       "-ea",
