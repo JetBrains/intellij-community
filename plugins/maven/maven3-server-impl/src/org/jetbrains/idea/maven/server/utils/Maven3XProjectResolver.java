@@ -51,7 +51,7 @@ import static org.jetbrains.idea.maven.server.MavenServerEmbedder.MAVEN_EMBEDDER
 
 public class Maven3XProjectResolver {
   @NotNull private final Maven3XServerEmbedder myEmbedder;
-  private final boolean myAlwaysUpdateSnapshots;
+  private final boolean myUpdateSnapshots;
   @NotNull private final Maven3ImporterSpy myImporterSpy;
   @NotNull private final MavenServerProgressIndicatorWrapper myCurrentIndicator;
   @Nullable private final MavenWorkspaceMap myWorkspaceMap;
@@ -60,7 +60,7 @@ public class Maven3XProjectResolver {
   @NotNull private final ArtifactRepository myLocalRepository;
 
   public Maven3XProjectResolver(@NotNull Maven3XServerEmbedder embedder,
-                                boolean alwaysUpdateSnapshots,
+                                boolean updateSnapshots,
                                 @NotNull Maven3ImporterSpy importerSpy,
                                 @NotNull MavenServerProgressIndicatorWrapper currentIndicator,
                                 @Nullable MavenWorkspaceMap workspaceMap,
@@ -68,7 +68,7 @@ public class Maven3XProjectResolver {
                                 @NotNull Maven3ServerConsoleLogger consoleWrapper,
                                 @NotNull ArtifactRepository localRepository) {
     myEmbedder = embedder;
-    myAlwaysUpdateSnapshots = alwaysUpdateSnapshots;
+    myUpdateSnapshots = updateSnapshots;
     myImporterSpy = importerSpy;
     myCurrentIndicator = currentIndicator;
     myWorkspaceMap = workspaceMap;
@@ -109,7 +109,7 @@ public class Maven3XProjectResolver {
     File file = !files.isEmpty() ? files.iterator().next() : null;
     MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles);
 
-    request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
+    request.setUpdateSnapshots(myUpdateSnapshots);
 
     Collection<Maven3ExecutionResult> executionResults = new ArrayList<>();
     Map<ProjectBuildingResult, List<Exception>> buildingResultsToResolveDependencies = new HashMap<>();

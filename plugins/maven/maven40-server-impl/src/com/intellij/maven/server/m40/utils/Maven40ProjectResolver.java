@@ -39,20 +39,20 @@ import java.util.*;
 
 public class Maven40ProjectResolver {
   @NotNull private final Maven40ServerEmbedderImpl myEmbedder;
-  private final boolean myAlwaysUpdateSnapshots;
+  private final boolean myUpdateSnapshots;
   @NotNull private final Maven40ImporterSpy myImporterSpy;
   @NotNull private final MavenServerProgressIndicatorWrapper myCurrentIndicator;
   @Nullable private final MavenWorkspaceMap myWorkspaceMap;
   @NotNull private final File myLocalRepositoryFile;
 
   public Maven40ProjectResolver(@NotNull Maven40ServerEmbedderImpl embedder,
-                                boolean alwaysUpdateSnapshots,
+                                boolean updateSnapshots,
                                 @NotNull Maven40ImporterSpy importerSpy,
                                 @NotNull MavenServerProgressIndicatorWrapper currentIndicator,
                                 @Nullable MavenWorkspaceMap workspaceMap,
                                 @NotNull File localRepositoryFile) {
     myEmbedder = embedder;
-    myAlwaysUpdateSnapshots = alwaysUpdateSnapshots;
+    myUpdateSnapshots = updateSnapshots;
     myImporterSpy = importerSpy;
     myCurrentIndicator = currentIndicator;
     myWorkspaceMap = workspaceMap;
@@ -87,7 +87,7 @@ public class Maven40ProjectResolver {
     File file = !files.isEmpty() ? files.iterator().next() : null;
     MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles);
 
-    request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
+    request.setUpdateSnapshots(myUpdateSnapshots);
 
     Collection<Maven40ExecutionResult> executionResults = new ArrayList<>();
     Map<ProjectBuildingResult, List<Exception>> buildingResultsToResolveDependencies = new HashMap<>();

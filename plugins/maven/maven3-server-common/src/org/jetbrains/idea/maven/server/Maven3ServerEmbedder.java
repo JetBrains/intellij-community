@@ -203,7 +203,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
   protected abstract List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException;
 
   @NotNull
-  protected List<ArtifactRepository> map2ArtifactRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
+  protected List<ArtifactRepository> map2ArtifactRepositories(List<MavenRemoteRepository> repositories) {
     PlexusContainer container = getContainer();
     List<ArtifactRepository> result = new ArrayList<>();
     for (MavenRemoteRepository each : repositories) {

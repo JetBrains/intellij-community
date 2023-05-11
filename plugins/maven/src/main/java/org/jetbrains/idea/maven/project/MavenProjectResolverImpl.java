@@ -12,9 +12,11 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenConfigBuildIssue;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
@@ -54,9 +56,9 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
         for (MavenProject mavenProject : mavenProjectsInBaseDir) {
           mavenProject.setConfigFileError(null);
         }
-        embedder.customizeForResolve(updateSnapshots, tree.getWorkspaceMap());
         embedder.startPullingProgress(console, process);
-        var projectsWithUnresolvedPluginsChunk = doResolve(mavenProjectsInBaseDir, tree, generalSettings, embedder, process);
+        var projectsWithUnresolvedPluginsChunk =
+          doResolve(mavenProjectsInBaseDir, tree, generalSettings, embedder, process, tree.getWorkspaceMap(), updateSnapshots);
         projectsWithUnresolvedPlugins.put(baseDir, projectsWithUnresolvedPluginsChunk);
       }
       catch (Throwable t) {
@@ -105,7 +107,9 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
                                                        @NotNull MavenProjectsTree tree,
                                                        @NotNull MavenGeneralSettings generalSettings,
                                                        @NotNull MavenEmbedderWrapper embedder,
-                                                       @NotNull MavenProgressIndicator process)
+                                                       @NotNull MavenProgressIndicator process,
+                                                       @Nullable MavenWorkspaceMap workspaceMap,
+                                                       boolean updateSnapshots)
     throws MavenProcessCanceledException {
     if (mavenProjects.isEmpty()) return List.of();
 
@@ -117,8 +121,15 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
 
     MavenExplicitProfiles explicitProfiles = tree.getExplicitProfiles();
     Collection<VirtualFile> files = ContainerUtil.map(mavenProjects, p -> p.getFile());
-    Collection<MavenProjectReaderResult> results = new MavenProjectReader(myProject)
-      .resolveProject(generalSettings, embedder, files, explicitProfiles, tree.getProjectLocator(), process);
+    Collection<MavenProjectReaderResult> results = new MavenProjectReader(myProject).resolveProject(
+      generalSettings,
+      embedder,
+      files,
+      explicitProfiles,
+      tree.getProjectLocator(),
+      process,
+      workspaceMap,
+      updateSnapshots);
 
     MavenResolveResultProblemProcessor.MavenResolveProblemHolder problems = MavenResolveResultProblemProcessor.getProblems(results);
     MavenResolveResultProblemProcessor.notifySyncForProblem(myProject, problems);

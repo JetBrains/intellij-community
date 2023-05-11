@@ -86,9 +86,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   private volatile MavenServerProgressIndicatorWrapper myCurrentIndicator;
 
-  private MavenWorkspaceMap myWorkspaceMap;
-
-  private boolean myAlwaysUpdateSnapshots;
+  private final boolean myAlwaysUpdateSnapshots;
 
   @NotNull private final RepositorySystem myRepositorySystem;
 
@@ -163,9 +161,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       if (mavenEmbedderCliOptions != null) {
         commandLineOptions.addAll(StringUtilRt.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
       }
-      if (commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots")) {
-        myAlwaysUpdateSnapshots = true;
-      }
+      myAlwaysUpdateSnapshots = commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots");
 
       Constructor<?> constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
       constructor.setAccessible(true);
@@ -242,16 +238,24 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     List<File> files = request.getPomFiles();
     List<String> activeProfiles = request.getActiveProfiles();
     List<String> inactiveProfiles = request.getInactiveProfiles();
+    MavenWorkspaceMap workspaceMap = request.getWorkspaceMap();
+    boolean updateSnapshots = myAlwaysUpdateSnapshots || request.updateSnapshots();
     Maven40ProjectResolver projectResolver = new Maven40ProjectResolver(
       this,
-      myAlwaysUpdateSnapshots,
+      updateSnapshots,
       myImporterSpy,
       myCurrentIndicator,
-      myWorkspaceMap,
+      workspaceMap,
       getLocalRepositoryFile()
     );
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, files.size())) {
-      return projectResolver.resolveProjects(task, files, activeProfiles, inactiveProfiles);
+      try {
+        customize(workspaceMap);
+        return projectResolver.resolveProjects(task, files, activeProfiles, inactiveProfiles);
+      }
+      finally {
+        reset(token);
+      }
     }
   }
 
@@ -1088,16 +1092,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
 
-  @Override
-  public void customize(@Nullable MavenWorkspaceMap workspaceMap, boolean alwaysUpdateSnapshots, MavenToken token) {
-    MavenServerUtil.checkToken(token);
-
+  private void customize(@Nullable MavenWorkspaceMap workspaceMap) {
     try {
       // TODO: implement
       //customizeComponents(workspaceMap);
-
-      myWorkspaceMap = workspaceMap;
-      myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);

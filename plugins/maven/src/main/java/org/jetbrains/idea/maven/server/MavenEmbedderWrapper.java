@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenConsole;
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory.Transformer;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -27,7 +26,6 @@ import java.util.stream.Collectors;
 
 public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<MavenServerEmbedder> {
   private Customization myCustomization;
-  private ResolveCustomization myResolveCustomization; // TODO: remove
   private final Project myProject;
   private ScheduledFuture<?> myProgressPullingFuture;
   private AtomicInteger myFails = new AtomicInteger(0);
@@ -42,24 +40,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     super.onWrappeeCreated();
     if (myCustomization != null) {
       MavenServerEmbedder embedder = getOrCreateWrappee();
-      embedder.customize(myResolveCustomization.workspaceMap, myResolveCustomization.alwaysUpdateSnapshot, ourToken);
       startPullingProgress(embedder, myCustomization.console, myCustomization.indicator);
     }
-  }
-
-  public void customizeForResolve(boolean forceUpdateSnapshots,
-                                  @Nullable MavenWorkspaceMap workspaceMap) {
-    boolean alwaysUpdateSnapshots =
-      forceUpdateSnapshots
-      ? forceUpdateSnapshots
-      : MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().isAlwaysUpdateSnapshots();
-    MavenWorkspaceMap serverWorkspaceMap = convertWorkspaceMap(workspaceMap);
-    myResolveCustomization = new ResolveCustomization(serverWorkspaceMap, alwaysUpdateSnapshots);
-    perform(() -> {
-      MavenServerEmbedder embedder = getOrCreateWrappee();
-      embedder.customize(myResolveCustomization.workspaceMap, myResolveCustomization.alwaysUpdateSnapshot, ourToken);
-      return null;
-    });
   }
 
   public void startPullingProgress(MavenConsole console,
@@ -133,13 +115,22 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   @NotNull
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<VirtualFile> files,
                                                                @NotNull MavenExplicitProfiles explicitProfiles,
-                                                               @Nullable MavenProgressIndicator progressIndicator)
+                                                               @Nullable MavenProgressIndicator progressIndicator,
+                                                               @Nullable MavenWorkspaceMap workspaceMap,
+                                                               boolean updateSnapshots)
     throws MavenProcessCanceledException {
     Transformer transformer = files.isEmpty() ?
                               Transformer.ID :
                               RemotePathTransformerFactory.createForProject(myProject);
     List<File> ioFiles = ContainerUtil.map(files, file -> new File(transformer.toRemotePath(file.getPath())));
-    var request = new ProjectResolutionRequest(ioFiles, explicitProfiles.getEnabledProfiles(), explicitProfiles.getDisabledProfiles());
+    MavenWorkspaceMap serverWorkspaceMap = convertWorkspaceMap(workspaceMap);
+    var request = new ProjectResolutionRequest(
+      ioFiles,
+      explicitProfiles.getEnabledProfiles(),
+      explicitProfiles.getDisabledProfiles(),
+      serverWorkspaceMap,
+      updateSnapshots
+    );
 
     var results = runLongRunningTask((embedder, taskId) -> embedder.resolveProjects(taskId, request, ourToken), progressIndicator);
 
@@ -331,14 +322,4 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     }
   }
 
-  private static final class ResolveCustomization {
-    private final MavenWorkspaceMap workspaceMap;
-    private final boolean alwaysUpdateSnapshot;
-
-    private ResolveCustomization(MavenWorkspaceMap workspaceMap,
-                                 boolean alwaysUpdateSnapshot) {
-      this.workspaceMap = workspaceMap;
-      this.alwaysUpdateSnapshot = alwaysUpdateSnapshot;
-    }
-  }
 }

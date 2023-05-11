@@ -108,9 +108,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   private volatile MavenServerProgressIndicatorWrapper myCurrentIndicator;
 
-  private MavenWorkspaceMap myWorkspaceMap;
-
-  private boolean myAlwaysUpdateSnapshots;
+  private final boolean myAlwaysUpdateSnapshots;
 
   @NotNull private final RepositorySystem myRepositorySystem;
 
@@ -165,9 +163,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       if (mavenEmbedderCliOptions != null) {
         commandLineOptions.addAll(StringUtilRt.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
       }
-      if (commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots")) {
-        myAlwaysUpdateSnapshots = true;
-      }
+      myAlwaysUpdateSnapshots = commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots");
 
       Constructor<?> constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
       constructor.setAccessible(true);
@@ -434,11 +430,9 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
-  @Override
-  public void customize(@Nullable MavenWorkspaceMap workspaceMap, boolean alwaysUpdateSnapshots, MavenToken token) {
-    MavenServerUtil.checkToken(token);
+  private void customize(@Nullable MavenWorkspaceMap workspaceMap) {
     try {
-      customizeComponents(token);
+      customizeComponents();
 
       ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
       if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
@@ -446,10 +440,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       }
       ((CustomMaven30ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, false);
       ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
-
-      myWorkspaceMap = workspaceMap;
-
-      myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -478,8 +468,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
-  private void customizeComponents(MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
+  private void customizeComponents() throws RemoteException {
     // replace some plexus components
     myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
     myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
@@ -557,25 +546,37 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     List<File> files = request.getPomFiles();
     List<String> activeProfiles = request.getActiveProfiles();
     List<String> inactiveProfiles = request.getInactiveProfiles();
+    MavenWorkspaceMap workspaceMap = request.getWorkspaceMap();
+    boolean updateSnapshots = myAlwaysUpdateSnapshots || request.updateSnapshots();
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, files.size())) {
-      return resolveProjects(task, files, activeProfiles, inactiveProfiles);
+      try {
+        customize(workspaceMap);
+        return resolveProjects(task, files, activeProfiles, inactiveProfiles, workspaceMap, updateSnapshots);
+      }
+      finally {
+        reset(token);
+      }
     }
   }
 
   @NotNull
   private Collection<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
                                                                  @NotNull Collection<File> files,
-                                                                 @NotNull Collection<String> activeProfiles,
-                                                                 @NotNull Collection<String> inactiveProfiles)
+                                                                 @NotNull List<String> activeProfiles,
+                                                                 @NotNull List<String> inactiveProfiles,
+                                                                 @Nullable MavenWorkspaceMap workspaceMap,
+                                                                 boolean updateSnapshots)
     throws RemoteException {
     DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 
     Collection<Maven3ExecutionResult> results = doResolveProject(
       task,
       files,
-      new ArrayList<>(activeProfiles),
-      new ArrayList<>(inactiveProfiles),
-      Collections.singletonList(listener));
+      activeProfiles,
+      inactiveProfiles,
+      Collections.singletonList(listener),
+      workspaceMap,
+      updateSnapshots);
 
     return ContainerUtilRt.map2List(results, result -> {
       try {
@@ -592,13 +593,15 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                                                              @NotNull Collection<File> files,
                                                              @NotNull List<String> activeProfiles,
                                                              @NotNull List<String> inactiveProfiles,
-                                                             final List<ResolutionListener> listeners) throws RemoteException {
+                                                             List<ResolutionListener> listeners,
+                                                             @Nullable MavenWorkspaceMap workspaceMap,
+                                                             boolean updateSnapshots) throws RemoteException {
     File file = files.size() == 1 ? files.iterator().next() : null;
     MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles);
 
-    request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
+    request.setUpdateSnapshots(updateSnapshots);
 
-    Collection<Maven3ExecutionResult> executionResults = new ArrayList<Maven3ExecutionResult>();
+    Collection<Maven3ExecutionResult> executionResults = new ArrayList<>();
 
     executeWithMavenSession(request, () -> {
       try {
@@ -607,8 +610,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
           ((DefaultRepositorySystemSession)repositorySession)
             .setTransferListener(new Maven30TransferListenerAdapter(myCurrentIndicator));
 
-          if (myWorkspaceMap != null) {
-            ((DefaultRepositorySystemSession)repositorySession).setWorkspaceReader(new Maven30WorkspaceReader(myWorkspaceMap));
+          if (workspaceMap != null) {
+            ((DefaultRepositorySystemSession)repositorySession).setWorkspaceReader(new Maven30WorkspaceReader(workspaceMap));
           }
         }
 
@@ -621,7 +624,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
           MavenProject project = buildingResult.getProject();
 
           if (project == null) {
-            List<Exception> exceptions = new ArrayList<Exception>();
+            List<Exception> exceptions = new ArrayList<>();
             for (ModelProblem problem : buildingResult.getProblems()) {
               exceptions.add(problem.getException());
             }
@@ -630,7 +633,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
             continue;
           }
 
-          List<Exception> exceptions = new ArrayList<Exception>();
+          List<Exception> exceptions = new ArrayList<>();
           loadExtensions(project, exceptions);
 
           //Artifact projectArtifact = project.getArtifact();
@@ -646,13 +649,13 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
             DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
             List<Dependency> dependencies = dependencyResolutionResult.getDependencies();
 
-            Set<Artifact> artifacts = new LinkedHashSet<Artifact>(dependencies.size());
+            Set<Artifact> artifacts = new LinkedHashSet<>(dependencies.size());
             for (Dependency dependency : dependencies) {
               Artifact artifact = RepositoryUtils.toArtifact(dependency.getArtifact());
               artifact.setScope(dependency.getScope());
               artifact.setOptional(dependency.isOptional());
               artifacts.add(artifact);
-              resolveAsModule(artifact);
+              resolveAsModule(artifact, workspaceMap);
             }
 
             project.setArtifacts(artifacts);
@@ -670,11 +673,10 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     return executionResults;
   }
 
-  private boolean resolveAsModule(Artifact a) {
-    MavenWorkspaceMap map = myWorkspaceMap;
-    if (map == null) return false;
+  private boolean resolveAsModule(Artifact a, @Nullable MavenWorkspaceMap workspaceMap) {
+    if (workspaceMap == null) return false;
 
-    MavenWorkspaceMap.Data resolved = map.findFileAndOriginalId(Maven3ModelConverter.createMavenId(a));
+    MavenWorkspaceMap.Data resolved = workspaceMap.findFileAndOriginalId(Maven3ModelConverter.createMavenId(a));
     if (resolved == null) return false;
 
     a.setResolved(true);
