@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.util.ClassImportFilter
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
@@ -58,6 +59,11 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
 
             InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// PACKAGES_TO_USE_STAR_IMPORTS:").forEach {
                 codeStyleSettings.PACKAGES_TO_USE_STAR_IMPORTS.addEntry(KotlinPackageEntry(it.trim(), true))
+            }
+
+            InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// CLASS_IMPORT_FILTER_VETO_REGEX:").forEach {
+                val filterExtension = ClassImportFilter { descriptor, _ -> !descriptor.name.asString().matches(Regex(it.trim())) }
+                ClassImportFilter.EP_NAME.point.registerExtension(filterExtension, testRootDisposable)
             }
 
             val log = if (runTestInWriteCommand) {

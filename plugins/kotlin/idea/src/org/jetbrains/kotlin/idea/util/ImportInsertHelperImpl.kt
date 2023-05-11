@@ -57,12 +57,18 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
         return when (descriptor.getImportableDescriptor()) {
             is PackageViewDescriptor -> false // now package cannot be imported
 
-            is ClassDescriptor -> {
-                descriptor.getImportableDescriptor().containingDeclaration is PackageFragmentDescriptor || getCodeStyleSettings(contextFile).IMPORT_NESTED_CLASSES
-            }
+            is ClassDescriptor -> allowClassImport(descriptor, contextFile)
 
             else -> descriptor.getImportableDescriptor().containingDeclaration is PackageFragmentDescriptor // do not import members (e.g. java static members)
         }
+    }
+
+    private fun allowClassImport(descriptor: DeclarationDescriptor, contextFile: KtFile): Boolean {
+        val nested = descriptor.getImportableDescriptor().containingDeclaration !is PackageFragmentDescriptor
+        // If inner classes are blanket prohibited from being imported, don't import any
+        if (nested && !getCodeStyleSettings(contextFile).IMPORT_NESTED_CLASSES) return false
+        // Otherwise, import unless any extension objects.
+        return ClassImportFilter.allowClassImport(descriptor, contextFile)
     }
 
     override fun importDescriptor(
