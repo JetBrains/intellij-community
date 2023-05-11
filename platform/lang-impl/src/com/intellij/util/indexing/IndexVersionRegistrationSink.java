@@ -66,11 +66,14 @@ public final class IndexVersionRegistrationSink {
 
         StringBuilder diagnostics = new StringBuilder();
         Path versionFile = IndexInfrastructure.getVersionFile(javaNullId);
-        diagnostics.append("IDEA-317780 additional diagnostics data. " +
-                           "Please enable debug logs for 2 categories:\n\n" +
-                           "#com.intellij.util.indexing.FileBasedIndexImpl\n" +
-                           "com.intellij.util.indexing.FileBasedIndexImpl\n\n" +
-                           "and attach the logs to IDEA-317780 ticket when you observe this message next time.\n");
+        diagnostics.append("""
+                             IDEA-317780 additional diagnostics data. Please enable debug logs for 2 categories:
+
+                             #com.intellij.util.indexing.FileBasedIndexImpl
+                             com.intellij.util.indexing.FileBasedIndexImpl
+
+                             and attach the logs to IDEA-317780 ticket when you observe this message next time.
+                             """);
         diagnostics.append("Version diff: ").append(javaNullVersion.getLogText()).append("\n");
         diagnostics.append("Version file: ").append(versionFile);
         BasicFileAttributes attr = Files.readAttributes(versionFile, BasicFileAttributes.class);
