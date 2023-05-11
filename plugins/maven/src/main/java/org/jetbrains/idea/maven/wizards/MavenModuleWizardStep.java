@@ -42,6 +42,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+/**
+ * @deprecated use {@link MavenNewProjectWizardStep} instead
+ */
+@Deprecated
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class MavenModuleWizardStep extends ModuleWizardStep {
   private static final Icon WIZARD_ICON = null;
 
@@ -94,10 +99,6 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     loadSettings();
   }
 
-  /**
-   * @deprecated use {@link MavenModuleWizardStep#MavenModuleWizardStep(AbstractMavenModuleBuilder, WizardContext, boolean)} instead
-   */
-  @Deprecated(forRemoval = true)
   public MavenModuleWizardStep(MavenModuleBuilder builder, WizardContext context, boolean includeArtifacts) {
     this((AbstractMavenModuleBuilder)builder, context, includeArtifacts);
   }

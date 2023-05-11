@@ -352,7 +352,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     project: Project,
     configureBuildScript: GradleBuildScriptBuilder<*>.() -> Unit
   ): Module? {
-    val builder = InternalGradleModuleBuilder()
+    val builder = GradleJavaModuleBuilder()
 
     builder.moduleJdk = sdk
     builder.name = parentStep.name

@@ -34,7 +34,7 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder;
-import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder;
+import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -54,7 +54,7 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myBuilder = new InternalMavenModuleBuilder();
+    myBuilder = new MavenJavaModuleBuilder();
 
     createJdk();
     setModuleNameAndRoot("module", getProjectPath());

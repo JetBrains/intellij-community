@@ -40,7 +40,7 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.model.MavenArchetype
-import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder
+import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import org.jetbrains.idea.maven.wizards.archetype.MavenArchetypeNewProjectWizardBackend.ArchetypeItem
@@ -315,7 +315,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      linkMavenProject(project, InternalMavenModuleBuilder()) { builder ->
+      linkMavenProject(project, MavenJavaModuleBuilder()) { builder ->
         builder.archetype = MavenArchetype(
           archetypeItem.groupId,
           archetypeItem.artifactId,

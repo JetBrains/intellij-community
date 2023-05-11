@@ -74,7 +74,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      linkMavenProject(project, InternalMavenModuleBuilder())
+      linkMavenProject(project, MavenJavaModuleBuilder())
     }
 
     init {
