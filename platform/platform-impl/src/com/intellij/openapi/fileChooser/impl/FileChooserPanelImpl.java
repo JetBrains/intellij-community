@@ -281,20 +281,21 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         myPathBarActive = false;
       }
     });
-    myList.addMouseListener(new MouseAdapter() {
+    new ClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
           var idx = myList.rowAtPoint(e.getPoint());
           if (idx >= 0) {
             myList.setRowSelectionInterval(idx, idx);
             var action = myList.getActionMap().get(OPEN);
             if (action != null) action.actionPerformed(null);
-            e.consume();
+            return true;
           }
         }
+        return false;
       }
-    });
+    }.installOn(myList, true);
     myList.getActionMap().put(OPEN, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
