@@ -2,6 +2,7 @@
 @file:JvmName("ApplicationLoader")
 @file:Internal
 @file:Suppress("RAW_RUN_BLOCKING")
+
 package com.intellij.idea
 
 import com.intellij.diagnostic.*
@@ -21,13 +22,13 @@ import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
@@ -87,23 +88,20 @@ private suspend fun doInitApplication(rawArgs: List<String>,
                            listenerCallbacks = null)
   }
 
-  val loadIconMapping = if (app.isHeadlessEnvironment) null else app.coroutineScope.launchAndMeasure("icon mapping loading") {
-    try {
-      service<IconMapLoader>().preloadIconMapping()
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-    }
-  }
-
-  withContext(Dispatchers.IO) {
-    initConfigurationStore(app)
-  }
-
   coroutineScope {
+    val loadIconMapping = if (app.isHeadlessEnvironment) {
+      null
+    }
+    else {
+      launch(CoroutineName("icon mapping loading") + Dispatchers.Default) {
+        runCatching {
+          service<IconMapLoader>().preloadIconMapping()
+        }.getOrLogException(LOG)
+      }
+    }
+
+    initConfigurationStore(app)
+
     // LaF must be initialized before app init because icons maybe requested and, as a result,
     // a scale must be already initialized (especially important for Linux)
     runActivity("init laf waiting") {
@@ -162,7 +160,7 @@ private suspend fun initApplicationImpl(args: List<String>,
       StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
     }
 
-    runActivity("app init listener preload") {
+    subtask("app init listener preload", Dispatchers.IO) {
       getAppInitializedListeners(app)
     }
   }
@@ -393,18 +391,15 @@ fun findStarter(key: String): ApplicationStarter? {
   return ApplicationStarter.EP_NAME.findByIdOrFromInstance(key) { it.commandName }
 }
 
-fun initConfigurationStore(app: ApplicationImpl) {
+suspend fun initConfigurationStore(app: ApplicationImpl) {
   var activity = StartUpMeasurer.startActivity("beforeApplicationLoaded")
   val configPath = PathManager.getConfigDir()
+
   for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
-    try {
-      (listener ?: break).beforeApplicationLoaded(app, configPath)
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
+    withContext(Dispatchers.IO) {
+      runCatching {
+        listener.beforeApplicationLoaded(app, configPath)
+      }.getOrLogException(LOG)
     }
   }
 
