@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.registry.Registry;
@@ -20,6 +21,8 @@ class MoveCaretUpOrDownHandler extends EditorActionHandler.ForEachCaret {
 
   @Override
   public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    ScrollingModel scrollingModel = editor.getScrollingModel();
+    scrollingModel.disableAnimation();
     if (caret.hasSelection() && (!(editor instanceof EditorEx) || !((EditorEx)editor).isStickySelection()) &&
         !Registry.is("editor.action.caretMovement.UpDownIgnoreSelectionBoundaries", false)) {
       int targetOffset = myDirection == Direction.DOWN ? caret.getSelectionEnd()
@@ -30,6 +33,7 @@ class MoveCaretUpOrDownHandler extends EditorActionHandler.ForEachCaret {
     int lineShift = myDirection == MoveCaretUpOrDownHandler.Direction.DOWN ? 1 : -1;
     caret.moveCaretRelatively(0, lineShift, false,
                               caret == editor.getCaretModel().getPrimaryCaret());
+    scrollingModel.enableAnimation();
   }
 
   @Override
