@@ -1,157 +1,145 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.actionsOnSave.impl;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.actionsOnSave.impl
 
-import com.intellij.ide.actions.SaveDocumentAction;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.AnActionResult;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.actions.SaveDocumentAction
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionResult
+import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 
-import java.util.*;
+private val EP_NAME = ExtensionPointName<ActionsOnSaveFileDocumentManagerListener.ActionOnSave>("com.intellij.actionOnSave")
 
-public final class ActionsOnSaveFileDocumentManagerListener implements FileDocumentManagerListener {
-  private static final ExtensionPointName<ActionOnSave> EP_NAME = new ExtensionPointName<>("com.intellij.actionOnSave");
-
-  public abstract static class ActionOnSave {
+class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
+  abstract class ActionOnSave {
     /**
-     * Invoked in EDT, maybe inside write action. Should be fast. It's ok to return <code>true</code> and then do nothing in {@link #processDocuments}
+     * Invoked in EDT, maybe inside write action. Should be fast. It's ok to return `true` and then do nothing in [.processDocuments]
      *
      * @param project it's initialized, open, not disposed, and not the default one; no need to double-check in implementations
      */
-    public boolean isEnabledForProject(@NotNull Project project) { return false; }
+    @RequiresWriteLock
+    open fun isEnabledForProject(project: Project): Boolean = false
 
     /**
      * Invoked in EDT, not inside write action. Potentially long implementations should run with modal progress synchronously.
      * Implementations don't need to save modified documents. Note that the passed documents may be unsaved if already modified by some other save action.
      */
-    public void processDocuments(@NotNull Project project, @NotNull Document @NotNull [] documents) { }
+    @RequiresEdt
+    open fun processDocuments(project: Project, documents: Array<Document?>) {}
   }
 
   /**
    * Not empty state of this set means that processing has been scheduled (invokeLater(...)) but bot yet performed.
    */
-  private final Set<Document> myDocumentsToProcess = new HashSet<>();
+  private val documentsToProcess = HashSet<Document>()
 
-  @Override
-  public void beforeDocumentSaving(@NotNull Document document) {
-    if (!CurrentActionHolder.getInstance().myRunningSaveDocumentAction) {
+  override fun beforeDocumentSaving(document: Document) {
+    if (!service<CurrentActionHolder>().runningSaveDocumentAction) {
       // There are hundreds of places in IntelliJ codebase where saveDocument() is called. IDE and plugins may decide to save some specific
       // document at any time. Sometimes a document is saved on typing (com.intellij.openapi.vcs.ex.LineStatusTrackerKt.saveDocumentWhenUnchanged).
       // Running Actions on Save on each document save might be unexpected and frustrating (Actions on Save might take noticeable time to run, they may
       // update the document in the editor). So the Platform won't run Actions on Save when an individual file is being saved, unless this
       // is caused by an explicit 'Save document' action.
-      return;
+      return
     }
 
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      for (ActionOnSave saveAction : EP_NAME.getExtensionList()) {
+    for (project in ProjectManager.getInstance().openProjects) {
+      for (saveAction in EP_NAME.extensionList) {
         if (saveAction.isEnabledForProject(project)) {
-          scheduleDocumentsProcessing(new Document[]{document});
-          return;
+          scheduleDocumentsProcessing(arrayOf(document))
+          return
         }
       }
     }
   }
 
-  @Override
-  public void beforeAllDocumentsSaving() {
-    Document[] documents = FileDocumentManager.getInstance().getUnsavedDocuments();
-    if (documents.length == 0) {
-      return;
+  override fun beforeAllDocumentsSaving() {
+    val documents = FileDocumentManager.getInstance().unsavedDocuments
+    if (documents.isEmpty()) {
+      return
     }
 
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      for (ActionOnSave saveAction : EP_NAME.getExtensionList()) {
+    for (project in ProjectManager.getInstance().openProjects) {
+      for (saveAction in EP_NAME.extensionList) {
         if (saveAction.isEnabledForProject(project)) {
-          scheduleDocumentsProcessing(documents);
-          return;
+          scheduleDocumentsProcessing(documents)
+          return
         }
       }
     }
   }
 
-  private void scheduleDocumentsProcessing(Document[] documents) {
-    boolean processingAlreadyScheduled = !myDocumentsToProcess.isEmpty();
-
-    myDocumentsToProcess.addAll(Arrays.asList(documents));
-
+  private fun scheduleDocumentsProcessing(documents: Array<Document>) {
+    val processingAlreadyScheduled = !documentsToProcess.isEmpty()
+    documentsToProcess.addAll(documents)
     if (!processingAlreadyScheduled) {
-      ApplicationManager.getApplication().invokeLater(() -> processSavedDocuments(), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater({ processSavedDocuments() }, ModalityState.NON_MODAL)
     }
   }
 
-  private void processSavedDocuments() {
-    Document[] documents = myDocumentsToProcess.toArray(Document.EMPTY_ARRAY);
-    myDocumentsToProcess.clear();
+  private fun processSavedDocuments() {
+    val documents = documentsToProcess.toArray(Document.EMPTY_ARRAY)
+    documentsToProcess.clear()
 
     // Although invokeLater() is called with ModalityState.NON_MODAL argument, somehow this might be called in modal context (for example on Commit File action)
     // It's quite weird if save action progress appears or documents get changed in modal context, let's ignore the request.
-    if (ModalityState.current() != ModalityState.NON_MODAL) return;
+    if (ModalityState.current() !== ModalityState.NON_MODAL) {
+      return
+    }
 
-    FileDocumentManager manager = FileDocumentManager.getInstance();
-
-    List<Document> processedDocuments = new ArrayList<>();
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (project.isDisposed()) continue;
-
-      ProjectFileIndex index = ProjectFileIndex.getInstance(project);
-      List<Document> projectDocuments = ContainerUtil.filter(documents, document -> {
-        VirtualFile file = manager.getFile(document);
-        return file != null && index.isInContent(file);
-      });
-
-      if (projectDocuments.isEmpty()) {
-        continue;
+    val manager = FileDocumentManager.getInstance()
+    val processedDocuments: MutableList<Document> = ArrayList()
+    for (project in ProjectManager.getInstance().openProjects) {
+      if (project.isDisposed) {
+        continue
       }
 
-      for (ActionOnSave saveAction : EP_NAME.getExtensionList()) {
+      val index = ProjectFileIndex.getInstance(project)
+      val projectDocuments = documents.filter { document ->
+        val file = manager.getFile(document)
+        file != null && index.isInContent(file)
+      }
+      if (projectDocuments.isEmpty()) {
+        continue
+      }
+      for (saveAction in EP_NAME.extensionList) {
         if (saveAction.isEnabledForProject(project)) {
-          processedDocuments.addAll(projectDocuments);
-          saveAction.processDocuments(project, projectDocuments.toArray(Document.EMPTY_ARRAY));
+          processedDocuments.addAll(projectDocuments)
+          saveAction.processDocuments(project, projectDocuments.toTypedArray())
         }
       }
     }
-
-    for (Document document : processedDocuments) {
-      manager.saveDocument(document);
+    for (document in processedDocuments) {
+      manager.saveDocument(document)
     }
   }
 
-
-  public static class CurrentActionListener implements AnActionListener {
-    @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-      if (action instanceof SaveDocumentAction) {
-        CurrentActionHolder.getInstance().myRunningSaveDocumentAction = true;
+  internal class CurrentActionListener : AnActionListener {
+    override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
+      if (action is SaveDocumentAction) {
+        service<CurrentActionHolder>().runningSaveDocumentAction = true
       }
     }
 
-    @Override
-    public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
-      CurrentActionHolder.getInstance().myRunningSaveDocumentAction = false;
+    override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
+      service<CurrentActionHolder>().runningSaveDocumentAction = false
     }
   }
 
-
-  @Service
-  public static final class CurrentActionHolder {
-    public static CurrentActionHolder getInstance() {
-      return ApplicationManager.getApplication().getService(CurrentActionHolder.class);
-    }
-
-    private boolean myRunningSaveDocumentAction;
+  @Service(Service.Level.APP)
+  internal class CurrentActionHolder {
+    var runningSaveDocumentAction = false
   }
 }
