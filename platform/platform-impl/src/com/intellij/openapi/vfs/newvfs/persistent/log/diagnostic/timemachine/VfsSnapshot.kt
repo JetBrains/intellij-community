@@ -86,9 +86,9 @@ interface VfsSnapshot {
          * (though the process went normal). Throw [VfsRecoveryException] if an exception occurs during the recovery process and it is
          * considered not normal.
          */
-        class NotAvailable<T>(
+        class NotAvailable(
           val cause: NotEnoughInformationCause
-        ) : DefinedState<T> {
+        ) : DefinedState<Nothing> {
           override fun toString(): String = "N/A (cause=$cause)"
         }
 
@@ -97,7 +97,7 @@ interface VfsSnapshot {
         }
 
         companion object {
-          fun <T> notAvailable(cause: NotEnoughInformationCause = UnspecifiedNotAvailableException) = NotAvailable<T>(cause)
+          fun notAvailable(cause: NotEnoughInformationCause = UnspecifiedNotAvailableException) = NotAvailable(cause)
           fun <T> ready(value: T) = Ready(value)
 
 
@@ -106,15 +106,13 @@ interface VfsSnapshot {
             is NotAvailable -> onNotAvailable(cause)
           }
 
-          @Suppress("UNCHECKED_CAST")
           fun <T, R> DefinedState<T>.fmap(f: (T) -> R): DefinedState<R> = when (this) {
-            is NotAvailable -> this as NotAvailable<R>
+            is NotAvailable -> this
             is Ready<T> -> Ready(f(value))
           }
 
-          @Suppress("UNCHECKED_CAST")
           fun <T, R> DefinedState<T>.bind(f: (T) -> DefinedState<R>): DefinedState<R> = when (this) {
-            is NotAvailable -> this as NotAvailable<R>
+            is NotAvailable -> this
             is Ready<T> -> f(value)
           }
 
