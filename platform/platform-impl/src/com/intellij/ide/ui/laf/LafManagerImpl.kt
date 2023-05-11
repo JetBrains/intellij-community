@@ -1271,7 +1271,8 @@ private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory
           DialogWrapper.cleanupWindowListeners(window)
         }
       })
-      if (IdeaPopupMenuUI.isUnderPopup(contents) && WindowRoundedCornersManager.isAvailable()) {
+      if ((IdeaPopupMenuUI.isUnderPopup(contents) || (SystemInfoRt.isWindows || IdeaPopupMenuUI.isUnderMainMenu(contents)))
+          && WindowRoundedCornersManager.isAvailable()) {
         if ((SystemInfoRt.isMac && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
           WindowRoundedCornersManager.setRoundedCorners(window, JBUI.CurrentTheme.Popup.borderColor(true))
         }
