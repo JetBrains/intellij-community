@@ -3,10 +3,7 @@ package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.tools.fragmented.UnifiedDiffChange;
-import com.intellij.diff.tools.fragmented.UnifiedDiffChangeUi;
-import com.intellij.diff.tools.fragmented.UnifiedDiffViewer;
-import com.intellij.diff.tools.fragmented.UnifiedFragmentBuilder;
+import com.intellij.diff.tools.fragmented.*;
 import com.intellij.diff.util.DiffGutterOperation;
 import com.intellij.diff.util.DiffGutterRenderer;
 import com.intellij.diff.util.DiffUtil;
@@ -18,10 +15,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LineFragmentData;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.ToggleableLineRange;
+import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -41,6 +44,8 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
 
   private final LocalTrackerDiffUtil.LocalTrackerActionProvider myTrackerActionProvider;
   private final LocalTrackerDiffUtil.ExcludeAllCheckboxPanel myExcludeAllCheckboxPanel;
+
+  private final @NotNull List<RangeHighlighter> myToggleExclusionsHighlighters = new ArrayList<>();
 
   public UnifiedLocalChangeListDiffViewer(@NotNull DiffContext context,
                                           @NotNull LocalChangeListDiffRequest localRequest) {
@@ -134,7 +139,13 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
         return new MyUnifiedFragmentBuilder(fragments, fragmentsData, myDocument1, myDocument2).exec();
       });
 
-      return apply(builder, texts, myIndicator);
+      Runnable applyChanges = apply(builder, texts, myIndicator);
+      Runnable applyGutterExcludeOperations = applyGutterOperations(builder, toggleableLineRanges);
+
+      return () -> {
+        applyChanges.run();
+        applyGutterExcludeOperations.run();
+      };
     }
 
     @NotNull
@@ -199,6 +210,70 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     myExcludeAllCheckboxPanel.refresh();
   }
 
+  @Override
+  protected void clearDiffPresentation() {
+    super.clearDiffPresentation();
+
+    for (RangeHighlighter operation : myToggleExclusionsHighlighters) {
+      operation.dispose();
+    }
+    myToggleExclusionsHighlighters.clear();
+  }
+
+  private @NotNull Runnable applyGutterOperations(@NotNull UnifiedFragmentBuilder builder,
+                                                  @NotNull List<ToggleableLineRange> toggleableLineRanges) {
+    if (!myAllowExcludeChangesFromCommit) return EmptyRunnable.INSTANCE;
+
+    return () -> {
+      for (ToggleableLineRange toggleableLineRange : toggleableLineRanges) {
+        myToggleExclusionsHighlighters.addAll(createGutterToggleRenderers(builder, toggleableLineRange));
+      }
+      getEditor().getGutterComponentEx().revalidateMarkup();
+    };
+  }
+
+  private @NotNull List<RangeHighlighter> createGutterToggleRenderers(@NotNull UnifiedFragmentBuilder builder,
+                                                                      @NotNull ToggleableLineRange toggleableLineRange) {
+    LineFragmentData fragmentData = toggleableLineRange.getFragmentData();
+    if (!fragmentData.isFromActiveChangelist()) return Collections.emptyList();
+
+    List<RangeHighlighter> result = new ArrayList<>();
+    result.add(createCheckboxToggleHighlighter(builder, toggleableLineRange));
+    return result;
+  }
+
+  @NotNull
+  private RangeHighlighter createCheckboxToggleHighlighter(@NotNull UnifiedFragmentBuilder builder,
+                                                           @NotNull ToggleableLineRange toggleableLineRange) {
+    Range lineRange = toggleableLineRange.getLineRange();
+    LineFragmentData fragmentData = toggleableLineRange.getFragmentData();
+    LineFragment firstFragment = ContainerUtil.getFirstItem(toggleableLineRange.getFragments());
+
+    Side side = getMasterSide();
+    EditorEx editor = getEditor();
+    int line = firstFragment != null ? side.getStartLine(firstFragment)
+                                     : side.select(lineRange.getVcsLine1(), lineRange.getLine1());
+    LineNumberConvertor lineConvertor = side.select(builder.getConvertor1(), builder.getConvertor2());
+    int editorLine = lineConvertor.convertApproximateInv(line);
+    int offset = DiffGutterOperation.lineToOffset(editor, editorLine);
+
+    Icon icon = fragmentData.isExcludedFromCommit() ? AllIcons.Diff.GutterCheckBox : AllIcons.Diff.GutterCheckBoxSelected;
+    RangeHighlighter checkboxHighlighter = editor.getMarkupModel().addRangeHighlighter(null, offset, offset,
+                                                                                       HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                                                       HighlighterTargetArea.LINES_IN_RANGE);
+    checkboxHighlighter.setGutterIconRenderer(
+      new DiffGutterRenderer(icon, DiffBundle.message("action.presentation.diff.include.into.commit.text")) {
+        @Override
+        protected void handleMouseClick() {
+          if (!isContentGood()) return;
+
+          LocalTrackerDiffUtil.toggleRangeAtLine(myTrackerActionProvider, line, fragmentData.isExcludedFromCommit());
+        }
+      });
+
+    return checkboxHighlighter;
+  }
+
   private static final class MyUnifiedDiffChange extends UnifiedDiffChange {
     @NotNull private final String myChangelistId;
     private final boolean myIsFromActiveChangelist;
@@ -247,33 +322,6 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     @NotNull
     private MyUnifiedDiffChange getChange() {
       return ((MyUnifiedDiffChange)myChange);
-    }
-
-    @Override
-    protected void doInstallActionHighlighters() {
-      if (getViewer().myAllowExcludeChangesFromCommit) {
-        ContainerUtil.addIfNotNull(myOperations, createExcludeOperation());
-      }
-      super.doInstallActionHighlighters();
-    }
-
-    @Nullable
-    private DiffGutterOperation createExcludeOperation() {
-      if (!getChange().isFromActiveChangelist()) return null;
-
-      return createOperation(() -> {
-        final boolean isExcludedFromCommit = getChange().isExcludedFromCommit();
-        Icon icon = isExcludedFromCommit ? AllIcons.Diff.GutterCheckBox : AllIcons.Diff.GutterCheckBoxSelected;
-        return new DiffGutterRenderer(icon, DiffBundle.message("action.presentation.diff.include.into.commit.text")) {
-          @Override
-          protected void handleMouseClick() {
-            if (!getViewer().isContentGood()) return;
-
-            int line = myViewer.transferLineFromOneside(Side.RIGHT, myChange.getLine1());
-            LocalTrackerDiffUtil.toggleRangeAtLine(getViewer().myTrackerActionProvider, line, isExcludedFromCommit);
-          }
-        };
-      });
     }
   }
 

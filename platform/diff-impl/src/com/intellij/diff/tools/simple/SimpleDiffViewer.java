@@ -262,7 +262,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     };
   }
 
-  private void clearDiffPresentation() {
+  protected void clearDiffPresentation() {
     myModel.clear();
 
     myPanel.resetNotifications();
