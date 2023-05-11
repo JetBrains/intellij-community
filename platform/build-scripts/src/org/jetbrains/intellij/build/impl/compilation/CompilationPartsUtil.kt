@@ -6,6 +6,7 @@ package org.jetbrains.intellij.build.impl.compilation
 import com.intellij.platform.diagnostic.telemetry.impl.forkJoinTask
 import com.intellij.platform.diagnostic.telemetry.impl.use
 import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.util.containers.ContainerUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -244,7 +245,7 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
     items.sortBy { it.name }
 
     var verifyTime = 0L
-    val upToDate = Collections.newSetFromMap<String>(ConcurrentHashMap())
+    val upToDate = ContainerUtil.newConcurrentSet<String>()
     spanBuilder("check previously unpacked directories").useWithScope { span ->
       verifyTime += checkPreviouslyUnpackedDirectories(items = items,
                                                        span = span,
