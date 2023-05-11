@@ -173,7 +173,7 @@ internal class LoadedGitLabMergeRequest(
       val updatedMergeRequest = api.mergeRequestAccept(glProject,
                                                        mergeRequest,
                                                        commitMessage,
-                                                       mergeRequest.commits.last().sha,
+                                                       mergeRequest.commits.first().sha, // First from the list -- last commit from review
                                                        withSquash = false).getResultOrThrow()
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
@@ -186,7 +186,7 @@ internal class LoadedGitLabMergeRequest(
       val updatedMergeRequest = api.mergeRequestAccept(glProject,
                                                        mergeRequest,
                                                        commitMessage,
-                                                       mergeRequest.commits.last().sha,
+                                                       mergeRequest.commits.first().sha, // First from the list -- last commit from review
                                                        withSquash = true).getResultOrThrow()
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
