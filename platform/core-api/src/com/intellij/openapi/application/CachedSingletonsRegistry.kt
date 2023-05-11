@@ -1,45 +1,36 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.application;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.application
 
-import com.intellij.util.concurrency.SynchronizedClearableLazy;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Supplier;
+import com.intellij.util.concurrency.SynchronizedClearableLazy
+import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.function.Supplier
 
 @ApiStatus.Internal
-public final class CachedSingletonsRegistry {
-  @SuppressWarnings("InstantiationOfUtilityClass")
-  private static final Object LOCK = new CachedSingletonsRegistry();
+object CachedSingletonsRegistry {
+  private val registeredLazyValues = CopyOnWriteArrayList<SynchronizedClearableLazy<*>>()
 
-  private static final List<SynchronizedClearableLazy<?>> ourRegisteredLazyValues = new ArrayList<>();
-
-  private CachedSingletonsRegistry() {}
-
-  public static @NotNull <T> Supplier<T> lazy(@NotNull Supplier<? extends T> supplier) {
-    SynchronizedClearableLazy<T> result = new SynchronizedClearableLazy<>(supplier::get);
-    synchronized (LOCK) {
-      ourRegisteredLazyValues.add(result);
+  @JvmStatic
+  fun <T> lazy(supplier: Supplier<T>): Supplier<T> {
+    val lazy = SynchronizedClearableLazy { supplier.get() }
+    registeredLazyValues.add(lazy)
+    return Supplier {
+      val result: T? = lazy.get()
+      result ?: supplier.get()
     }
-    return result;
   }
 
-  /**
-   * @deprecated Do not use.
-   */
-  @Deprecated
-  public static @Nullable <T> T markCachedField(@SuppressWarnings("unused") @NotNull Class<T> klass) {
-    return null;
+  @Deprecated("Do not use.")
+  @JvmStatic
+  fun <T> markCachedField(@Suppress("unused") klass: Class<T>): T? {
+    return null
   }
 
-  public static void cleanupCachedFields() {
-    synchronized (LOCK) {
-      for (SynchronizedClearableLazy<?> value : ourRegisteredLazyValues) {
-        value.drop();
-      }
+  @JvmStatic
+  fun cleanupCachedFields() {
+    val iterator = registeredLazyValues.iterator()
+    while (iterator.hasNext()) {
+      iterator.next().drop()
     }
   }
 }
