@@ -37,7 +37,7 @@ public interface MavenServerEmbedder extends Remote {
                  boolean alwaysUpdateSnapshots,
                  MavenToken token) throws RemoteException;
 
-  @Nullable
+  @NotNull
   MavenServerPullProgressIndicator getProgressIndicator(MavenToken token) throws RemoteException;
 
   @NotNull
