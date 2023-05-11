@@ -120,17 +120,15 @@ public class MavenEmbeddersManager {
   }
 
   public void execute(@NotNull MavenProject mavenProject,
-                      @NotNull MavenProjectsTree tree,
                       @NotNull Key embedderKind,
                       @NotNull MavenConsole console,
                       @NotNull MavenProgressIndicator process,
                       @NotNull MavenEmbeddersManager.EmbedderTask task) throws MavenProcessCanceledException {
     var baseDir = MavenUtil.getBaseDir(mavenProject.getDirectoryFile()).toString();
-    execute(baseDir, tree, embedderKind, console, process, task);
+    execute(baseDir, embedderKind, console, process, task);
   }
 
   public void execute(@NotNull String baseDir,
-                      @NotNull MavenProjectsTree tree,
                       @NotNull Key embedderKind,
                       @NotNull MavenConsole console,
                       @NotNull MavenProgressIndicator process,

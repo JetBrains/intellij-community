@@ -94,7 +94,6 @@ public class MavenFolderResolver {
 
     embeddersManager.execute(
       baseDir,
-      tree,
       MavenEmbeddersManager.FOR_FOLDERS_RESOLVE,
       console,
       process,

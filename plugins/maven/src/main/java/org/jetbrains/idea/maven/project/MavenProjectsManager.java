@@ -1133,7 +1133,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
         getEmbeddersManager().execute(
           mavenProject,
-          myProjectsTree,
           MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE,
           console,
           indicator,
