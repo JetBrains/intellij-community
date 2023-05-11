@@ -33,12 +33,13 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
   val reviewers: StateFlow<List<GitLabUserDTO>>
   val role: Flow<ReviewRole>
   val reviewRequestState: Flow<ReviewRequestState>
+  val isMergeable: Flow<Boolean>
   val isApproved: StateFlow<Boolean>
   val reviewState: Flow<ReviewState>
 
   val userCanApproveReviewer: Flow<Boolean>
   val userCanManageReview: Flow<Boolean>
-  val userCanMergeReviewer: Flow<Boolean>
+  val userCanMergeReview: Flow<Boolean>
 
   fun merge()
 
@@ -88,7 +89,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   }
 
   override val reviewRequestState: Flow<ReviewRequestState> = mergeRequest.reviewRequestState
-
+  override val isMergeable: Flow<Boolean> = mergeRequest.isMergeable
   override val isApproved: StateFlow<Boolean> = approvedBy
     .map { it.isNotEmpty() }
     .stateIn(scope, SharingStarted.Lazily, false)
@@ -108,7 +109,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override val userCanApproveReviewer: Flow<Boolean> = mergeRequest.userPermissions.map { it.canApprove }
   override val userCanManageReview: Flow<Boolean> = mergeRequest.userPermissions.map { it.updateMergeRequest }
-  override val userCanMergeReviewer: Flow<Boolean> = mergeRequest.userPermissions.map { it.canMerge }
+  override val userCanMergeReview: Flow<Boolean> = mergeRequest.userPermissions.map { it.canMerge }
 
   override fun merge() = runAction {
     val title = mergeRequest.title.stateIn(scope).value

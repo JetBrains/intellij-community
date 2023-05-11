@@ -24,6 +24,7 @@ class GitLabMergeRequestDTO(
   val conflicts: Boolean,
   val headPipeline: GitLabPipelineDTO?,
   val mergeStatusEnum: GitLabMergeStatus,
+  val mergeable: Boolean,
   val state: GitLabMergeRequestState,
   val draft: Boolean,
   val author: GitLabUserDTO,

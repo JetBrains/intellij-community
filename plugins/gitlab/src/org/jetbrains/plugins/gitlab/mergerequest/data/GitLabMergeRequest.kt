@@ -41,6 +41,7 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val hasConflicts: Flow<Boolean>
   val isDraft: Flow<Boolean>
   val reviewRequestState: Flow<ReviewRequestState>
+  val isMergeable: Flow<Boolean>
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: Flow<List<GitLabUserDTO>>
   val pipeline: Flow<GitLabPipelineDTO?>
@@ -115,6 +116,7 @@ internal class LoadedGitLabMergeRequest(
         else -> ReviewRequestState.OPENED // to avoid null state
       }
     }
+  override val isMergeable: Flow<Boolean> = mergeRequestDetailsState.map { it.isMergeable }
   override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.approvedBy }
   override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.reviewers }
   override val pipeline: Flow<GitLabPipelineDTO?> = mergeRequestDetailsState.map { it.headPipeline }
