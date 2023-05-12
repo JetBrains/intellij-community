@@ -513,7 +513,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       var result = cachedInstance
       if (result == null) {
         LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
-        result = ApplicationManager.getApplication().getService(UISettings::class.java)!!
+        result = ApplicationManager.getApplication().service<UISettings>()
         cachedInstance = result
       }
       return result

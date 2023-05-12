@@ -2,7 +2,6 @@
 package com.intellij.diagnostic
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import java.util.logging.Level
@@ -13,7 +12,6 @@ import java.util.logging.Logger
  * which can be turned on by user via the [com.intellij.ide.actions.DebugLogConfigureAction].
  * Applies these custom categories on startup.
  */
-@Service(Service.Level.APP)
 class DebugLogManager {
   enum class DebugLogLevel { DEBUG, TRACE, ALL }
 
