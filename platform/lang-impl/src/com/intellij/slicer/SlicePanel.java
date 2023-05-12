@@ -216,7 +216,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
     tree.setSelectionPath(new TreePath(root.getPath()));
     EditSourceOnDoubleClickHandler.install(tree);
 
-    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
+    new TreeSpeedSearch(tree);
     TreeUtil.installActions(tree);
     ToolTipManager.sharedInstance().registerComponent(tree);
 

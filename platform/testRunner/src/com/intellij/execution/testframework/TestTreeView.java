@@ -186,7 +186,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     EditSourceOnDoubleClickHandler.install(this);
     EditSourceOnEnterKeyHandler.install(this);
     boolean canExpand = Registry.is("tests.view.node.expanding.search");
-    TreeSpeedSearch.installOn(this, canExpand, path -> {
+    new TreeSpeedSearch(this, canExpand, path -> {
       final AbstractTestProxy testProxy = getSelectedTest(path);
       if (testProxy == null) return null;
       return getPresentableName(testProxy);

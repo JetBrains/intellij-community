@@ -38,7 +38,7 @@ public class ColorOptionsTree extends Tree {
     setRootVisible(false);
     getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myCategoryName = categoryName;
-    TreeSpeedSearch.installOn(this, true, TreeSpeedSearch.NODE_PRESENTATION_FUNCTION);
+    new TreeSpeedSearch(this, true, TreeSpeedSearch.NODE_PRESENTATION_FUNCTION);
   }
 
   public void fillOptions(@NotNull ColorAndFontOptions options) {

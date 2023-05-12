@@ -177,7 +177,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     myTree.setCellRenderer(new TodoCompositeRenderer());
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
-    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
+    new TreeSpeedSearch(myTree);
 
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));

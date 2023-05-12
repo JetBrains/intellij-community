@@ -52,7 +52,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     mySuitesTree = new CheckboxTree(new SuitesRenderer(), myRootNode) {
       @Override
       protected void installSpeedSearch() {
-        TreeSpeedSearch.installOn(this, false, path -> {
+        new TreeSpeedSearch(this, false, path -> {
           final DefaultMutableTreeNode component = (DefaultMutableTreeNode)path.getLastPathComponent();
           final Object userObject = component.getUserObject();
           if (userObject instanceof CoverageSuite) {

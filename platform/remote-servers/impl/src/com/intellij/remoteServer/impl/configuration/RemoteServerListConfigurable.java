@@ -144,7 +144,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   protected void initTree() {
     super.initTree();
-    TreeSpeedSearch.installOn(myTree, true, treePath -> ((MyNode)treePath.getLastPathComponent()).getDisplayName());
+    new TreeSpeedSearch(myTree, true, treePath -> ((MyNode)treePath.getLastPathComponent()).getDisplayName());
   }
 
   @Override

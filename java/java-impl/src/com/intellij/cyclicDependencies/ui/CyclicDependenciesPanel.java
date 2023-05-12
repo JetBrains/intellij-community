@@ -204,7 +204,7 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
     EditSourceOnDoubleClickHandler.install(tree);
-    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
+    new TreeSpeedSearch(tree);
 
     PopupHandler.installPopupMenu(tree, createTreePopupActions(), "CyclicDependenciesPopup");
   }

@@ -93,10 +93,10 @@ public class FileSystemTreeImpl implements FileSystemTree {
     });
 
     if (speedSearchConverter != null) {
-      TreeSpeedSearch.installOn(myTree, false, speedSearchConverter.asFunction());
+      new TreeSpeedSearch(myTree, false, speedSearchConverter.asFunction());
     }
     else {
-      TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
+      new TreeSpeedSearch(myTree);
     }
     TreeUtil.installActions(myTree);
 

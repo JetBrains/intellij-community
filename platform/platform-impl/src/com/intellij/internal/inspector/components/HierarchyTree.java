@@ -47,7 +47,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     setModel(buildModel(c));
     setCellRenderer(new ComponentTreeCellRenderer(c));
     getSelectionModel().addTreeSelectionListener(this);
-    TreeUIHelper.getInstance().installTreeSpeedSearch(this);
+    new TreeSpeedSearch(this);
     if (c instanceof JComponent && ClientProperty.get(c, UiInspectorAction.CLICK_INFO) != null) {
       SwingUtilities.invokeLater(() -> getSelectionModel().setSelectionPath(getPathForRow(getLeadSelectionRow() + 1)));
     }

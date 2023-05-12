@@ -100,7 +100,7 @@ public final class MavenSelectProjectPopup {
           }
         });
 
-        TreeSpeedSearch.installOn(projectTree, false, o -> {
+        new TreeSpeedSearch(projectTree, false, o -> {
           Object lastPathComponent = o.getLastPathComponent();
           if (!(lastPathComponent instanceof DefaultMutableTreeNode)) return null;
 

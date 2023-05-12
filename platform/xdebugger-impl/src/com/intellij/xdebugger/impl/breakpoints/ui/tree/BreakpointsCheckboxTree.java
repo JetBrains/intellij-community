@@ -58,7 +58,7 @@ public class BreakpointsCheckboxTree extends CheckboxTree {
 
   @Override
   protected void installSpeedSearch() {
-    TreeSpeedSearch.installOn(this, true, path -> {
+    new TreeSpeedSearch(this, true, path -> {
       Object node = path.getLastPathComponent();
       if (node instanceof BreakpointItemNode) {
         return ((BreakpointItemNode)node).getBreakpointItem().speedSearchText();

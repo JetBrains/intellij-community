@@ -67,7 +67,7 @@ final class AssociationsEditor implements Disposable {
 
     myTree.setModel(new AsyncTreeModel(myModel, this));
     myTree.setCellRenderer(new MyNodeRenderer(myManager));
-    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
+    new TreeSpeedSearch(myTree);
 
     if (!project.isDefault()) {
       SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> {

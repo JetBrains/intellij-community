@@ -57,7 +57,7 @@ class DependencyExclusionEditor {
     }, myRootNode, policy) {
       @Override
       protected void installSpeedSearch() {
-        TreeSpeedSearch.installOn(this, false, treePath -> {
+        new TreeSpeedSearch(this, false, treePath -> {
           Object node = treePath.getLastPathComponent();
           if (!(node instanceof CheckedTreeNode)) return "";
           Object data = ((CheckedTreeNode)node).getUserObject();

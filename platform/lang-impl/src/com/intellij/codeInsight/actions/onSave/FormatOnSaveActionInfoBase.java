@@ -145,7 +145,7 @@ public abstract class FormatOnSaveActionInfoBase<Options extends FormatOnSaveOpt
     CheckboxTree tree = new CheckboxTree(createFileTypesRenderer(), root) {
       @Override
       protected void installSpeedSearch() {
-        TreeSpeedSearch.installOn(this, false, path -> {
+        new TreeSpeedSearch(this, false, path -> {
           final CheckedTreeNode node = (CheckedTreeNode)path.getLastPathComponent();
           final Object userObject = node.getUserObject();
           if (userObject instanceof FileType) {

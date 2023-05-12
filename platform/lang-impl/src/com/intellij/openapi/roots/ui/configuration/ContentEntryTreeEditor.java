@@ -27,7 +27,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeUIHelper;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.Tree;
@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -72,7 +72,7 @@ public class ContentEntryTreeEditor {
     myEditingActionsGroup = new DefaultActionGroup();
 
     TreeUtil.installActions(myTree);
-    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
+    new TreeSpeedSearch(myTree);
 
     JPanel excludePatternsPanel = new JPanel(new GridBagLayout());
     excludePatternsPanel.setBorder(JBUI.Borders.empty(5));

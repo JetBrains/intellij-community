@@ -13,7 +13,7 @@ import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.ui.TreeUIHelper;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -262,7 +262,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     tree.setToggleClickCount(-1);
     tree.setCellRenderer(new HierarchyNodeRenderer());
-    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
+    new TreeSpeedSearch(tree);
     TreeUtil.installActions(tree);
     myAutoScrollToSourceHandler.install(tree);
   }

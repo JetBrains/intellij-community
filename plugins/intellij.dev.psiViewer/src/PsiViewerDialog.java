@@ -425,7 +425,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     tree.updateUI();
     ToolTipManager.sharedInstance().registerComponent(tree);
     TreeUtil.installActions(tree);
-    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
+    new TreeSpeedSearch(tree);
   }
 
   @Override

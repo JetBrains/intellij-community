@@ -63,7 +63,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       }
       return "";
     };
-    TreeSpeedSearch.installOn(this, true, f);
+    new TreeSpeedSearch(this, true, f);
   }
 
   private List<PackagingElementNode<?>> getNodesToDrag() {

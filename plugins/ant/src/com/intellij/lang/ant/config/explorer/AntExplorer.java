@@ -136,7 +136,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     });
 
     TreeUtil.installActions(myTree);
-    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
+    new TreeSpeedSearch(myTree);
     myTree.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(final Component comp, final int x, final int y) {

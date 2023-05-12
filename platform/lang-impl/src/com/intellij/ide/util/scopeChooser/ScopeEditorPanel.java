@@ -504,7 +504,7 @@ public final class ScopeEditorPanel implements Disposable {
 
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
-    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
+    new TreeSpeedSearch(tree);
     tree.addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
       public void treeWillExpand(TreeExpansionEvent event) {

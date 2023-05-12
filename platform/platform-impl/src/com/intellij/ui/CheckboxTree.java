@@ -47,6 +47,6 @@ public class CheckboxTree extends CheckboxTreeBase {
   }
 
   protected void installSpeedSearch() {
-    TreeUIHelper.getInstance().installTreeSpeedSearch(this);
+    new TreeSpeedSearch(this);
   }
 }

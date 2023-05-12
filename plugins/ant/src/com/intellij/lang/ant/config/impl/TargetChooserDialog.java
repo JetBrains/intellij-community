@@ -91,7 +91,7 @@ public class TargetChooserDialog extends DialogWrapper {
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     TreeUtil.installActions(tree);
-    TreeSpeedSearch.installOn(tree, false, path -> {
+    new TreeSpeedSearch(tree, false, path -> {
       final Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
       if (userObject instanceof AntTargetNodeDescriptor) {
         final AntBuildTarget target = ((AntTargetNodeDescriptor)userObject).getAntTarget();

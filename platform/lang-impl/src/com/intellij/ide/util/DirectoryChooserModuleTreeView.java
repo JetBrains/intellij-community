@@ -77,7 +77,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new MyTreeCellRenderer());
-    TreeSpeedSearch.installOn(myTree, true, o -> {
+    new TreeSpeedSearch(myTree, true, o -> {
       final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
       if (userObject instanceof Module) {
         return ((Module)userObject).getName();

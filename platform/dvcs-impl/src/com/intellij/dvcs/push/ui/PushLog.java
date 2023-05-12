@@ -146,7 +146,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
 
       @Override
       protected void installSpeedSearch() {
-        TreeSpeedSearch.installOn(this, false, path -> {
+        new TreeSpeedSearch(this, false, path -> {
           Object pathComponent = path.getLastPathComponent();
           if (pathComponent instanceof RepositoryNode) {
             return ((RepositoryNode)pathComponent).getRepositoryName();

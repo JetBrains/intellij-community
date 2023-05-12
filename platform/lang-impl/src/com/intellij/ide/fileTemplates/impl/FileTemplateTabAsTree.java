@@ -6,7 +6,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.TreeUIHelper;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -43,7 +43,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
         onTemplateSelected();
       }
     });
-    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
+    new TreeSpeedSearch(myTree);
   }
 
   protected abstract FileTemplateNode initModel();
