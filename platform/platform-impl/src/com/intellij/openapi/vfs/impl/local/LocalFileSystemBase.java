@@ -37,6 +37,7 @@ import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Dmitry Avdeev
@@ -488,12 +489,17 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return loadFileContent(path, length);
   }
 
-  protected static byte @NotNull [] loadFileContent(@NotNull Path path, int length) throws IOException {
+  protected byte @NotNull [] loadFileContent(@NotNull Path path, int length) throws IOException {
     if (0 == length) return new byte[0];
-    try (InputStream stream = Files.newInputStream(path)) {
-      // io_util.c#readBytes allocates custom native stack buffer for io operation with malloc if io request > 8K
-      // so let's do buffered requests with buffer size 8192 that will use stack allocated buffer
-      return loadBytes(length <= 8192 ? stream : new BufferedInputStream(stream), length);
+    try {
+      return myNioContentGetter.accessDiskWithCheckCanceled(new ContentRequest(path, length));
+    }
+    catch (RuntimeException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw (IOException)cause;
+      }
+      throw e;
     }
   }
 
@@ -759,6 +765,24 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   private final DiskQueryRelay<VirtualFile, FileAttributes> myAttrGetter = new DiskQueryRelay<>(LocalFileSystemBase::getAttributesWithCustomTimestamp);
   private final DiskQueryRelay<Path, String[]> myNioChildrenGetter = new DiskQueryRelay<>(LocalFileSystemBase::listPathChildren);
+  private final DiskQueryRelay<ContentRequest, byte[]> myNioContentGetter = new DiskQueryRelay<>(new Function<ContentRequest, byte[]>() {
+    @Override
+    public byte[] apply(ContentRequest request) {
+      Path path = request.path();
+      int length = request.length();
+      try (InputStream stream = Files.newInputStream(path)) {
+        // io_util.c#readBytes allocates custom native stack buffer for io operation with malloc if io request > 8K
+        // so let's do buffered requests with buffer size 8192 that will use stack allocated buffer
+        return loadBytes(length <= 8192 ? stream : new BufferedInputStream(stream), length);
+      }
+      catch (IOException ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+  });
+
+  private record ContentRequest(Path path, int length) {
+  }
 
   @Override
   public void refresh(boolean asynchronous) {
