@@ -217,13 +217,16 @@ ${dumpCoroutines(stripDump = false)}
     }
   }
 
-  loadSystemLibsAndLogInfoAndInitMacApp(logDeferred, appInfoDeferred, initLafJob, args)
+  loadSystemLibsAndLogInfoAndInitMacApp(logDeferred = logDeferred,
+                                        appInfoDeferred = appInfoDeferred,
+                                        initUiDeferred = initLafJob,
+                                        args = args)
 
   // async - handle error separately
-  val telemetryInitJob = async {
+  val telemetryInitJob = launch {
     lockSystemDirsJob.join()
     appInfoDeferred.join()
-    runActivity("opentelemetry configuration") {
+    subtask("opentelemetry configuration") {
       TelemetryTracer.getInstance()
     }
   }
@@ -240,18 +243,18 @@ ${dumpCoroutines(stripDump = false)}
     }
   }
 
+  val rwLockHolderDeferred = async {
+    // preload class by creating before waiting for EDT thread
+    val rwLockHolder = RwLockHolder()
+
+    // configure EDT thread
+    initAwtToolkitAndEventQueueJob.join()
+
+    rwLockHolder.initialize(EDT.getEventDispatchThread())
+    rwLockHolder
+  }
+
   val appDeferred = async {
-    val rwLockHolderDeferred = async {
-      // preload class by creating before waiting for EDT thread
-      val rwLockHolder = RwLockHolder()
-
-      // configure EDT thread
-      initAwtToolkitAndEventQueueJob.join()
-
-      rwLockHolder.initialize(EDT.getEventDispatchThread())
-      rwLockHolder
-    }
-
     // logging must be initialized before creating the application
     val log = logDeferred.await()
     if (!configImportNeededDeferred.await()) {
@@ -259,8 +262,8 @@ ${dumpCoroutines(stripDump = false)}
     }
 
     val rwLockHolder = rwLockHolderDeferred.await()
-    val app = runActivity("app instantiation") {
-      // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the Job
+    val app = subtask("app instantiation") {
+      // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the job
       val mainJob = mainScope.coroutineContext.job
       val app = ApplicationImpl(CoroutineScope(mainJob).namedChildScope(ApplicationImpl::class.java.name),
                                 isInternal,
@@ -278,9 +281,9 @@ ${dumpCoroutines(stripDump = false)}
       app
     }
 
-    runActivity("telemetry waiting") {
+    subtask("telemetry waiting") {
       try {
-        telemetryInitJob.await()
+        telemetryInitJob.join()
       }
       catch (e: CancellationException) {
         throw e
@@ -299,7 +302,7 @@ ${dumpCoroutines(stripDump = false)}
     // required for appStarter.prepareStart
     appInfoDeferred.join()
 
-    val appStarter = runActivity("main class loading waiting") {
+    val appStarter = subtask("main class loading waiting") {
       appStarterDeferred.await()
     }
     appStarter.prepareStart(args)
@@ -356,20 +359,18 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
     // this must happen after locking system dirs
     val log = logDeferred.await()
 
-    runActivity("system libs setup") {
+    subtask("system libs setup") {
       if (SystemInfoRt.isWindows && System.getProperty("winp.folder.preferred") == null) {
         System.setProperty("winp.folder.preferred", PathManager.getTempPath())
       }
     }
 
-    withContext(Dispatchers.IO) {
-      runActivity("system libs loading") {
-        JnaLoader.load(log)
-      }
+    subtask("system libs loading", Dispatchers.IO) {
+      JnaLoader.load(log)
     }
 
     val appInfo = appInfoDeferred.await()
-    launch(CoroutineName("essential IDE info logging") + Dispatchers.IO) {
+    launch(CoroutineName("essential IDE info logging")) {
       logEssentialInfoAboutIde(log, appInfo, args)
     }
 
@@ -506,7 +507,8 @@ private suspend fun initUi(preloadLafClassesJob: Job) {
     }
     runActivity("graphics environment checking") {
       if (env.isHeadlessInstance) {
-          StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
+        StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"),
+                                         BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
         exitProcess(AppExitCodes.NO_GRAPHICS)
       }
     }
@@ -806,17 +808,17 @@ private suspend fun lockSystemDirs(args: List<String>) {
   }
   catch (e: CannotActivateException) {
     if (args.isEmpty()) {
-          StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), e.message, true)
+      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), e.message, true)
     }
     else {
-          println(e.message)
+      println(e.message)
     }
     exitProcess(AppExitCodes.INSTANCE_CHECK_FAILED)
   }
-      catch (t: Throwable) {
-        StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), t)
-        exitProcess(AppExitCodes.STARTUP_EXCEPTION)
-      }
+  catch (t: Throwable) {
+    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), t)
+    exitProcess(AppExitCodes.STARTUP_EXCEPTION)
+  }
 }
 
 private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob: Job): Deferred<Logger> {
