@@ -175,24 +175,6 @@ public final class PluginDownloader {
     return myShownErrors;
   }
 
-  /**
-   * @deprecated Please use {@link PluginDownloader#withErrorsConsumer(Consumer)} to set the errors' consumer,
-   * and {@link PluginDownloader#getDescriptor()} to get the actual descriptor instance.
-   */
-  @Deprecated(forRemoval = true)
-  @RequiresBackgroundThread
-  public @Nullable IdeaPluginDescriptorImpl prepareToInstallAndLoadDescriptor(@NotNull ProgressIndicator indicator,
-                                                                              boolean showMessageOnError) throws IOException {
-    PluginDownloader downloader = showMessageOnError ?
-                                  this :
-                                  withErrorsConsumer(__ -> {
-                                  });
-
-    return downloader.prepareToInstall(indicator) ?
-           (IdeaPluginDescriptorImpl)downloader.myDescriptor :
-           null;
-  }
-
   @RequiresBackgroundThread
   public boolean prepareToInstall(@NotNull ProgressIndicator indicator) throws IOException {
     myShownErrors = false;

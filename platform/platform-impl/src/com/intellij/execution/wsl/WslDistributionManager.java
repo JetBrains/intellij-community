@@ -116,14 +116,6 @@ public abstract class WslDistributionManager implements Disposable {
     return d;
   }
 
-  /**
-   * @deprecated use {@link WslPath#isWslUncPath(String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isWslPath(@NotNull String path) {
-    return WslPath.isWslUncPath(path);
-  }
-
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {
     if (!isWslExeSupported()) {
       //noinspection deprecation

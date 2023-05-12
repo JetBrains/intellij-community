@@ -5,11 +5,6 @@ import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.ApiStatus
 
 @Deprecated("Use transformations from PropertyOperationUtil",
-            ReplaceWith("transform(transform, { it })", "com.intellij.openapi.observable.util.transform"))
-@ApiStatus.ScheduledForRemoval
-fun <T> GraphProperty<T>.map(transform: (T) -> T) = transform(transform, { it })
-
-@Deprecated("Use transformations from PropertyOperationUtil",
             ReplaceWith("transform(map, comap)", "com.intellij.openapi.observable.util.transform"))
 @ApiStatus.ScheduledForRemoval
 fun <S, T> GraphProperty<S>.transform(map: (S) -> T, comap: (T) -> S): GraphProperty<T> =

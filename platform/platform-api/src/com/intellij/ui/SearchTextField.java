@@ -454,13 +454,6 @@ public class SearchTextField extends JPanel {
     return false;
   }
 
-  /**
-   * @deprecated unused
-   */
-  @Deprecated(forRemoval = true)
-  public void setSearchIcon(final Icon icon) {
-  }
-
   public static final class FindAction extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {

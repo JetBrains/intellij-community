@@ -574,20 +574,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     dispatcher.addListener(listener)
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR,
-              replaceWith = ReplaceWith("project.messageBus.connect(parentDisposable).subscribe(ToolWindowManagerListener.TOPIC, listener)",
-                                                    "com.intellij.openapi.wm.ex.ToolWindowManagerListener"))
-  override fun addToolWindowManagerListener(listener: ToolWindowManagerListener, parentDisposable: Disposable) {
-    project.messageBus.connect(parentDisposable).subscribe(ToolWindowManagerListener.TOPIC, listener)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
-  override fun removeToolWindowManagerListener(listener: ToolWindowManagerListener) {
-    dispatcher.removeListener(listener)
-  }
-
   override fun activateEditorComponent() {
     EditorsSplitters.focusDefaultComponentInSplittersIfPresent(project)
   }

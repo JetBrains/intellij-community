@@ -209,19 +209,6 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   /**
-   * Does nothing.
-   *
-   * @deprecated  Use {@link #setButtonComparator(String...)} instead
-   * @param buttonComparator ignored
-   * @return this ToolbarDecorator
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public ToolbarDecorator setButtonComparator(Comparator<? super AnActionButton> buttonComparator) {
-    return this;
-  }
-
-  /**
    * Sorts actions according to the given order.
    * <p>
    * Must be called before {@link #createPanel()}.

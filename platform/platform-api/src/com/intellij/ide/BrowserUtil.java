@@ -127,11 +127,6 @@ public final class BrowserUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated the result is a pain to deal with; please use {@link #getOpenBrowserCommand(String, String, List, boolean)} instead */
-  @Deprecated(forRemoval = true)
-  public static @NotNull List<String> getOpenBrowserCommand(@NotNull String browserPathOrName, boolean newWindowIfPossible) {
-    return getOpenBrowserCommand(browserPathOrName, null, List.of(), newWindowIfPossible);
-  }
 
   /** @deprecated Use {@link #browse(String)} */
   @Deprecated(forRemoval = true)

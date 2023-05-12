@@ -1,50 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.util.Key;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.mac.touchbar.Touchbar;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import javax.swing.*;
 
 /** @deprecated Use com.intellij.ui.mac.touchbar.Touchbar.setActions instead */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface TouchbarDataKeys {
-  Key<ActionDesc> ACTIONS_DESCRIPTOR_KEY = Key.create("TouchBarActions.Descriptor");
-  Key<DlgButtonDesc> DIALOG_BUTTON_DESCRIPTOR_KEY = Key.create("TouchBar.Dialog.SouthPanel.Button.Descriptor");
-
-  /** @deprecated Use com.intellij.ui.mac.touchbar.Touchbar.setActions instead */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  static ActionDesc putActionDescriptor(@NotNull AnAction action) {
-    return action.getTemplatePresentation().getClientProperty(ACTIONS_DESCRIPTOR_KEY);
-  }
-
-  /** @deprecated Use com.intellij.ui.mac.touchbar.Touchbar.setActions instead */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  static DlgButtonDesc putDialogButtonDescriptor(@NotNull JButton button, int orderIndex) {
-    return putDialogButtonDescriptor(button, orderIndex, false);
-  }
-
-  /** @deprecated Use com.intellij.ui.mac.touchbar.Touchbar.setActions instead */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  static DlgButtonDesc putDialogButtonDescriptor(@NotNull JButton button, int orderIndex, boolean isMainGroup) {
-    DlgButtonDesc result = ComponentUtil.getClientProperty(button, DIALOG_BUTTON_DESCRIPTOR_KEY);
-    if (result == null) {
-      TouchbarDataKeys.DlgButtonDesc value = result = new DlgButtonDesc(orderIndex);
-      ComponentUtil.putClientProperty(button, DIALOG_BUTTON_DESCRIPTOR_KEY, value);
-    }
-    result.setMainGroup(isMainGroup);
-    JRootPane rootPane = button.getRootPane();
-    if (rootPane != null)
-      Touchbar.addButtonAction(rootPane, button);
-    return result;
-  }
 
   /** @deprecated Use com.intellij.ui.mac.touchbar.Touchbar.setActions instead */
   @Deprecated
@@ -64,7 +25,7 @@ public interface TouchbarDataKeys {
   }
 
   /** @deprecated Use com.intellij.ui.mac.touchbar.Touchbar.setActions instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   class ActionDesc {
     private boolean myShowText = false;
     private boolean myShowImage = true;

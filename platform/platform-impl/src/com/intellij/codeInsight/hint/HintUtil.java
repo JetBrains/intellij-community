@@ -40,15 +40,11 @@ public final class HintUtil {
   /** @deprecated use HINT_BORDER_COLOR_KEY */
   @Deprecated(forRemoval = true)
   public static final Color INFORMATION_BORDER_COLOR = JBColor.namedColor("InformationHint.borderColor", new JBColor(0xE0E0E0, 0x5C5E61));
-  /** @deprecated use getErrorColor() */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public static final Color ERROR_COLOR = new JBColor(0xffdcdc, 0x781732);
 
   public static final ColorKey INFORMATION_COLOR_KEY = ColorKey.createColorKey("INFORMATION_HINT", INFORMATION_COLOR);
   public static final ColorKey QUESTION_COLOR_KEY = ColorKey.createColorKey("QUESTION_HINT", new JBColor(0xb5d0fb, 0x376c89));
   public static final ColorKey WARNING_COLOR_KEY = ColorKey.createColorKey("WARNING_HINT", new JBColor(0xfff8dc, 0x665014));
-  public static final ColorKey ERROR_COLOR_KEY = ColorKey.createColorKey("ERROR_HINT", ERROR_COLOR);
+  public static final ColorKey ERROR_COLOR_KEY = ColorKey.createColorKey("ERROR_HINT", new JBColor(0xffdcdc, 0x781732));
   /**
    * Border color for tooltips with {@link #INFORMATION_COLOR_KEY}, {@link #QUESTION_COLOR_KEY}, {@link #WARNING_COLOR_KEY} and {@link #ERROR_COLOR_KEY}
    */

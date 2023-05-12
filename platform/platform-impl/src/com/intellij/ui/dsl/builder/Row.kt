@@ -306,10 +306,6 @@ interface Row {
    */
   fun browserLink(@NlsContexts.LinkLabel text: String, url: String): Cell<BrowserLink>
 
-  @Deprecated("Use overloaded method and Cell.onChange")
-  @ApiStatus.ScheduledForRemoval
-  fun <T> dropDownLink(item: T, items: List<T>, onSelected: ((T) -> Unit)? = null, updateText: Boolean = true): Cell<DropDownLink<T>>
-
   /**
    * Use [Cell.onChanged] to listen selection changes
    *

@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -138,9 +137,6 @@ public class ShowFilePathAction extends DumbAwareAction {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link RevealFileAction#FILE_SELECTING_LISTENER} */
-  @Deprecated(forRemoval = true)
-  public static final NotificationListener FILE_SELECTING_LISTENER = RevealFileAction.FILE_SELECTING_LISTENER;
 
   /** @deprecated use {@link RevealFileAction#getFileManagerName} */
   @Deprecated(forRemoval = true)
@@ -152,12 +148,6 @@ public class ShowFilePathAction extends DumbAwareAction {
   @Deprecated(forRemoval = true)
   public static void openFile(@NotNull File file) {
     RevealFileAction.openFile(file);
-  }
-
-  /** @deprecated use {@link RevealFileAction#openDirectory}  */
-  @Deprecated(forRemoval = true)
-  public static void openDirectory(@NotNull File directory) {
-    RevealFileAction.openDirectory(directory);
   }
 
   /** @deprecated use {@link RevealFileAction#findLocalFile} */
