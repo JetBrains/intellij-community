@@ -4,7 +4,9 @@ package com.intellij.compiler.impl;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -15,7 +17,9 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.FileCollectionFactory;
+import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +28,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 /**
@@ -37,6 +43,8 @@ import java.util.function.Consumer;
  * 2. corresponding source file has been deleted
  */
 public final class TranslatingCompilerFilesMonitor implements AsyncFileListener {
+  private final Executor myNotificationQueue = AppExecutorUtil.createBoundedApplicationPoolExecutor("CompilerFileMonitor Notification Queue", 1);
+
   public static TranslatingCompilerFilesMonitor getInstance() {
     return ApplicationManager.getApplication().getComponent(TranslatingCompilerFilesMonitor.class);
   }
@@ -117,19 +125,63 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     };
   }
 
-  private static void after(@NotNull List<? extends VFileEvent> events, Set<File> filesDeleted, Set<File> filesChanged) {
+  private void after(@NotNull List<? extends VFileEvent> events, Set<File> filesDeleted, Set<File> filesChanged) {
+    var collector = new Consumer<VirtualFile>() {
+      private final Set<VirtualFile> dirsToTraverse = new SmartHashSet<>();
+      
+      @Override
+      public void accept(VirtualFile file) {
+        if (file != null) {
+          if (file.isDirectory()) {
+            // need to traverse directories on IDE side, because JPS build
+            // has less knowledge to efficiently traverse the directory up-down according to the project layout
+            dirsToTraverse.add(file);
+          }
+          else {
+            collectPaths(file, filesChanged, false);
+          }
+        }
+      }
+
+      public boolean traverseDirs() throws ProcessCanceledException{
+        Set<VirtualFile> processed = new SmartHashSet<>();
+        boolean allValid = true;
+        try {
+          for (VirtualFile root : dirsToTraverse) {
+            if (root.isValid()) {
+              collectPaths(root, filesChanged, true);
+              processed.add(root);
+            }
+            else {
+              allValid = false;
+              break;
+            }
+          }
+        }
+        finally {
+          dirsToTraverse.removeAll(processed);
+        }
+        return allValid;
+      }
+
+      public void notifyBuildManager() {
+        notifyFilesDeleted(filesDeleted);
+        notifyFilesChanged(filesChanged);
+      }
+    };
+
     for (VFileEvent event : events) {
       if (!isToProcess(event.getFileSystem())) {
         continue;
       }
       if (event instanceof VFileMoveEvent || event instanceof VFileCreateEvent) {
-        collectPaths(event.getFile(), filesChanged, false);
+        collector.accept(event.getFile());
       }
       else if (event instanceof VFileCopyEvent copyEvent) {
-        collectPaths(copyEvent.findCreatedFile(), filesChanged, false);
+        collector.accept(copyEvent.findCreatedFile());
       }
       else {
-        handleFileRename(event, e -> collectPaths(e.getFile(), filesChanged, false));
+        handleFileRename(event, e -> collector.accept(e.getFile()));
       }
     }
 
@@ -137,8 +189,23 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     // In this situation filesDeleted and filesChanged sets will contain paths which are different only in case.
     // Thus, the order in which BuildManager is notified, is important:
     // first deleted paths notification and only then changed paths notification
-    notifyFilesDeleted(filesDeleted);
-    notifyFilesChanged(filesChanged);
+
+    if (collector.dirsToTraverse.isEmpty()) {
+      collector.notifyBuildManager();
+    }
+    else {
+      // traversing dirs may take time and block UI thread, so traversing them in a non-blocking read-action in background
+      ReadAction.nonBlocking((Callable<Void>)() -> {
+        if (collector.traverseDirs()) {
+          collector.notifyBuildManager();
+        }
+        else {
+          // force FS rescan on the next build, because information from event may be incomplete
+          BuildManager.getInstance().clearState();
+        }
+        return null;
+      }).submit(myNotificationQueue);
+    }
   }
 
   private static void handleFileRename(@NotNull VFileEvent e, Consumer<VFilePropertyChangeEvent> action) {
@@ -194,13 +261,12 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     }
   }
 
-  private static void collectPaths(@Nullable VirtualFile file, @NotNull Collection<? super File> outFiles, boolean recursive) {
+  private static void collectPaths(@Nullable VirtualFile file, @NotNull Collection<? super File> outFiles, boolean recursive) throws ProcessCanceledException {
     if (file != null && !isIgnoredOrUnderIgnoredDirectory(file)) {
       if (recursive) {
         processRecursively(file, !isInContentOfOpenedProject(file), f -> outFiles.add(new File(f.getPath())));
       }
       else {
-        ProgressManager.checkCanceled();
         outFiles.add(new File(file.getPath()));
       }
     }
