@@ -180,7 +180,11 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
 
     private fun getEditorConfigValue(accessor: CodeStylePropertyAccessor<*>): String? {
       val value = accessor.asString
-      return if (value.isNullOrEmpty()) "" else value
+      return if (value.isNullOrEmpty() &&
+                 (CodeStylePropertiesUtil.isAccessorAllowingEmptyList(accessor) || accessor is StringAccessor))
+        ""
+      else
+        value
     }
 
     private fun getPropertyKind(ecName: String): EditorConfigPropertyKind {
