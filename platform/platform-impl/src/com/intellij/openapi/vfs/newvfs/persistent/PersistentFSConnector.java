@@ -127,10 +127,50 @@ final class PersistentFSConnector {
 
   @VisibleForTesting
   static @NotNull PersistentFSConnection tryInit(@NotNull Path cachesDir,
-                                                 int expectedVersion,
+                                                 int currentImplVersion,
                                                  boolean useContentHashes,
                                                  @NotNull InvertedNameIndex invertedNameIndexToFill,
                                                  List<ConnectionInterceptor> interceptors) throws IOException {
+    //RC: Mental model behind VFS initialization:
+    //   VFS consists of few different storages: records, attributes, content... Each storage has its own on-disk
+    //   data format. Each storage also has a writeable header field .version, which is (must be) 0 by default.
+    //   VFS as a whole defines 'implementation version' (currentImplVersion) which is the overall on-disk data
+    //   format known to current VFS code.
+    //
+    //   When VFS is initialized from scratch, this 'VFS impl version' is stamped into each storage .version header field.
+    //   When VFS is loaded (from already existing on-disk representation), we load each storage from apt file(s), collect
+    //   all the storage.versions and check them against currentImplVersion -- and if all the versions are equal to
+    //   currentImplVersion => VFS is OK and ready to use ('success path')
+    //
+    //   If not all versions are equal to currentImplVersion => we assume VFS is outdated, drop all the VFS files, and throw
+    //   exception, which most likely triggers VFS rebuild from 0 somewhere above.
+    //   Now, versions could be != currentImplVersion for different reasons:
+    //   1) On-disk VFS are of an ancient version -- the most obvious reason
+    //   2) Some of the VFS storages are missed on disk, and initialized from 0, thus having their .version=0
+    //   3) Some of the VFS storages have an unrecognizable on-disk format (e.g. corrupted) -- in this case
+    //      specific storage implementation could either
+    //      a) re-create storage from 0 => will have .version=0, see branch #2
+    //      b) throw an exception => will be caught, and VFS files will be all dropped,
+    //                               and likely lead to VFS rebuild from 0 somewhere upper the callstack
+    //   So the simple condition (all storages .version must be == currentImplVersion) actually covers a set of different cases
+    //   which is convenient.
+    //
+    //MAYBE RC: Current model has important drawback: it is all-or-nothing, i.e. even a minor change in VFS on-disk format requires
+    //          full VFS rebuild. VFS rebuild itself is not so costly -- but it invalidates all fileIds, which causes Indexes rebuild,
+    //          which IS costly.
+    //          It would be nicer if VFS be able to just 'upgrade' a minor change in format to a newer version, without full rebuild
+    //          -- but with current approach such functionality it is hard to plug in.
+    //          Sketch of a better implementation:
+    //          1) VFS currentImplVersion is stored in a single dedicated place, in 'version.txt' file (human-readable)
+    //          2) Each VFS storage manages its own on-disk-format-version -- i.e. each storage has its own CURRENT_IMPL_VERSION,
+    //             which it stores somewhere in a file(s) header. And each storage is responsible for detecting on-disk version,
+    //             and either read the known format, or read-and-silently-upgrade known but slightly outdated format, or throw
+    //             an error if it can't deal with on-disk data at all.
+    //          VFS.currentImplVersion is changed only on a major format changes, there implement 'upgrade' is too costly, and full
+    //          rebuild is the way to go. Another reason for full rebuild is if any of storages is completely confused by on-disk
+    //          data (=likely corruption or too old data format). In other cases VFS could be upgraded 'under the carpet' without
+    //          invalidating fileId, hence Indexes don't need to be rebuild.
+
     AbstractAttributesStorage attributesStorage = null;
     RefCountingContentStorage contentsStorage = null;
     PersistentFSRecordsStorage recordsStorage = null;
@@ -187,11 +227,11 @@ final class PersistentFSConnector {
 
       recordsStorage = PersistentFSRecordsStorageFactory.createStorage(recordsFile);
 
-      LOG.info("VFS: impl (expected) version=" + expectedVersion +
+      LOG.info("VFS: impl (expected) version=" + currentImplVersion +
                ", " + recordsStorage.recordsCount() + " file records" +
                ", " + contentsStorage.getRecordsCount() + " content blobs");
 
-      ensureConsistentVersion(expectedVersion, attributesStorage, contentsStorage, recordsStorage);
+      ensureConsistentVersion(currentImplVersion, attributesStorage, contentsStorage, recordsStorage);
 
       final boolean needInitialization = (recordsStorage.recordsCount() == 0);
 

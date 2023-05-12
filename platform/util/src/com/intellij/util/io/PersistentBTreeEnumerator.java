@@ -444,6 +444,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     return super.getValue(keyId, processingKey);
   }
 
+  //FIXME RC: use of shared myResultBuf requires exclusive lock -- prevents get rid of getReadLock()
   private final int[] myResultBuf = new int[1];
 
   long getNonNegativeValue(Data key) throws IOException {
@@ -457,6 +458,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           return NULL_ID;
         }
 
+        //FIXME RC: use of shared myResultBuf -- prevents get rid of getReadLock() here
         return keyIdToNonNegativeOffset(myResultBuf[0]);
       }
       finally {
@@ -541,6 +543,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         if (IntToIntBtree.doDump) System.out.println(value);
         final int valueHC = myDataDescriptor.getHashCode(value);
 
+        //FIXME RC: use of shared myResultBuf -- prevents get rid of getReadLock() here
         final boolean hasMapping = myBTree.get(valueHC, myResultBuf);
         if (!hasMapping && onlyCheckForExisting) {
           return NULL_ID;
@@ -590,6 +593,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
         assert !onlyCheckForExisting;
         int newValueId = writeData(value, valueHC);
+        //FIXME RC: use of myValuesCount -- prevents get rid of getReadLock() here
         ++myValuesCount;
         if (myWal != null) {
           myWal.enumerate(value, newValueId);

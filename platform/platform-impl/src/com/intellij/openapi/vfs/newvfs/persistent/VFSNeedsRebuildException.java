@@ -5,9 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * FIXME type something meaningful here
- */
+/** Carries rebuildCause so different causes frequencies be monitored */
 public class VFSNeedsRebuildException extends IOException {
   private final @NotNull RebuildCause rebuildCause;
 
