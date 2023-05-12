@@ -51,7 +51,7 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
         val receiverTypeRef = (declaration as? KtCallableDeclaration)?.receiverTypeReference
         return when {
             receiverTypeRef != null -> {
-                getPresentationTextForReceiver(receiverTypeRef.text, containerText)
+                getPresentationTextForReceiver(receiverTypeRef.getTypeText(), containerText)
             }
             parent is KtFile -> getPresentationText(containerText)
             else -> getPresentationInContainer(containerText)
@@ -87,7 +87,7 @@ open class KotlinFunctionPresentation(
 
             append("(")
             append(function.valueParameters.joinToString {
-                (if (it.isVarArg) "vararg " else "") + (it.typeReference?.text ?: "")
+                (if (it.isVarArg) "vararg " else "") + (it.typeReference?.getTypeText() ?: "")
             })
             append(")")
         }
