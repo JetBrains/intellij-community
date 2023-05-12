@@ -28,7 +28,7 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
         val containingClass = method.containingClass ?: return true
         val annotation = containingClass.getAnnotation(Service::class.java.canonicalName) ?: return true
         val elementToReport = (annotation as? PsiAnnotation)?.nameReferenceElement ?: return true
-        val levelType = ServiceUtil.getLevelType(annotation, sourceElement.language.id == "kotlin")
+        val levelType = getLevelType(annotation, sourceElement.language.id == "kotlin")
         if (!levelType.isProject() && isProjectParamCtor(method)) {
           registerProblemProjectLevelRequired(annotation, elementToReport, file)
         }
