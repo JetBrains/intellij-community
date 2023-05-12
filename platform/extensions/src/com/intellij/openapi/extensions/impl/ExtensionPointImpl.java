@@ -806,18 +806,6 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   }
 
   @Override
-  public final void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener,
-                                              boolean invokeForLoadedExtensions,
-                                              @Nullable Disposable parentDisposable) {
-    addExtensionPointListener(new ExtensionPointAdapter<T>() {
-      @Override
-      public void extensionListChanged() {
-        listener.extensionListChanged();
-      }
-    }, invokeForLoadedExtensions, parentDisposable);
-  }
-
-  @Override
   public synchronized final void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable) {
     ExtensionPointAdapter<T> listenerAdapter = new ExtensionPointAdapter<T>() {
       @Override
