@@ -19,7 +19,7 @@ public final class PluginPathManager {
   private PluginPathManager() {
   }
 
-  private static class SubrepoHolder {
+  private static class SubRepoHolder {
     @NonNls private static final List<String> ROOT_NAMES =
       List.of(
         "android",
@@ -32,11 +32,11 @@ public final class PluginPathManager {
         "../ultimate/community/android",
         "../ultimate/contrib",
         "../ultimate/CIDR");
-    private static final List<File> subrepos = findSubrepos();
+    private static final List<File> subRepos = findSubRepos();
 
-    private static List<File> findSubrepos() {
+    private static List<File> findSubRepos() {
       List<File> result = new ArrayList<>();
-      File[] gitRoots = getSortedSubreposRoots(new File(PathManager.getHomePath()));
+      File[] gitRoots = getSortedSubReposRoots(new File(PathManager.getHomePath()));
       for (File subdir : gitRoots) {
         //noinspection IdentifierGrammar
         File pluginsDir = new File(subdir, "plugins");
@@ -46,12 +46,12 @@ public final class PluginPathManager {
         else {
           result.add(subdir);
         }
-        result.addAll(Arrays.asList(getSortedSubreposRoots(subdir)));
+        result.addAll(Arrays.asList(getSortedSubReposRoots(subdir)));
       }
       return result;
     }
 
-    private static File @NotNull [] getSortedSubreposRoots(@NotNull File dir) {
+    private static File @NotNull [] getSortedSubReposRoots(@NotNull File dir) {
       ArrayList<File> result = new ArrayList<>();
       for (String root : ROOT_NAMES) {
         var subRepo = new File(dir, root);
@@ -67,16 +67,16 @@ public final class PluginPathManager {
   }
 
   public static File getPluginHome(@NonNls String pluginName) {
-    File subrepo = findSubrepo(pluginName);
-    if (subrepo != null) {
-      return subrepo;
+    File subRepo = findSubRepo(pluginName);
+    if (subRepo != null) {
+      return subRepo;
     }
     return new File(PathManager.getHomePath(), "plugins/" + pluginName);
   }
 
-  private static File findSubrepo(String pluginName) {
-    for (File subrepo : SubrepoHolder.subrepos) {
-      File candidate = new File(subrepo, pluginName);
+  private static File findSubRepo(String pluginName) {
+    for (File subRepo : SubRepoHolder.subRepos) {
+      File candidate = new File(subRepo, pluginName);
       if (candidate.isDirectory()) {
         return candidate;
       }
@@ -89,10 +89,10 @@ public final class PluginPathManager {
   }
 
   public static String getPluginHomePathRelative(String pluginName) {
-    File subrepo = findSubrepo(pluginName);
-    if (subrepo != null) {
+    File subRepo = findSubRepo(pluginName);
+    if (subRepo != null) {
       String homePath = FileUtil.toSystemIndependentName(PathManager.getHomePath());
-      return "/" + FileUtil.getRelativePath(homePath, FileUtil.toSystemIndependentName(subrepo.getPath()), '/');
+      return "/" + FileUtil.getRelativePath(homePath, FileUtil.toSystemIndependentName(subRepo.getPath()), '/');
     }
     return "/plugins/" + pluginName;
   }
