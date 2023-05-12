@@ -432,6 +432,7 @@ open class ProjectFrameHelper internal constructor(
   internal val isTabbedWindow: Boolean
     get() = frameDecorator?.isTabbedWindow ?: false
 
+  internal fun getDecorator() = frameDecorator
 
   open fun windowClosing(project: Project) {
     CloseProjectWindowHelper().windowClosing(project)

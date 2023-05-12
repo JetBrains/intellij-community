@@ -183,6 +183,10 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     }, parentDisposable);
   }
 
+  public @NotNull EventDispatcher<FSListener> getDispatcher() {
+    return myDispatcher;
+  }
+
   private void enterFullScreen() {
     myInFullScreen = true;
     storeFullScreenStateIfNeeded();
@@ -337,9 +341,9 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     return MergeAllWindowsAction.isTabbedWindow(frame);
   }
 
-  private interface FSListener extends FullScreenListener, EventListener {
+  public interface FSListener extends FullScreenListener, EventListener {
   }
 
-  private static class FSAdapter extends FullScreenAdapter implements FSListener {
+  public static class FSAdapter extends FullScreenAdapter implements FSListener {
   }
 }

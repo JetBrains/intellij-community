@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit
 
+import com.apple.eawt.event.FullScreenEvent
 import com.intellij.diagnostic.IdeMessagePanel
 import com.intellij.ide.lightEdit.menuBar.LightEditMainMenuHelper
 import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
@@ -26,6 +27,8 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.adaptV2Widget
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.ui.mac.MacFullScreenControlsManager
+import com.intellij.ui.mac.MacMainFrameDecorator
+import com.intellij.ui.mac.MacMainFrameDecorator.FSAdapter
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,10 +78,6 @@ internal class LightEditFrameWrapper(
         return frameHelper
       }
 
-      if (SystemInfoRt.isMac) {
-        MacFullScreenControlsManager.configureForLightEdit()
-      }
-
       val frame = projectFrameHelperFactory(null)
       frame.init()
       var frameInfo: FrameInfo? = null
@@ -97,6 +96,21 @@ internal class LightEditFrameWrapper(
         }
         frameInfo.bounds?.let {
           applyBoundsOrDefault(frame.frame, FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it)?.first)
+        }
+      }
+
+      if (SystemInfoRt.isMac) {
+        val decorator = frame.getDecorator()
+        if (decorator is MacMainFrameDecorator) {
+          decorator.dispatcher.addListener(object : FSAdapter() {
+            override fun windowEnteringFullScreen(e: FullScreenEvent?) {
+              MacFullScreenControlsManager.configureForLightEdit(true)
+            }
+
+            override fun windowExitedFullScreen(e: FullScreenEvent?) {
+              MacFullScreenControlsManager.configureForLightEdit(false)
+            }
+          })
         }
       }
 

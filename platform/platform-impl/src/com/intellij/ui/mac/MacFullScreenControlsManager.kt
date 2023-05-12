@@ -76,20 +76,24 @@ object MacFullScreenControlsManager {
     }
   }
 
-  fun configureForLightEdit() {
+  fun configureForLightEdit(enterFullScreen: Boolean) {
     if (enabled()) {
+      configureForDistractionFreeMode(enterFullScreen)
+    }
+  }
+
+  private fun configureForDistractionFreeMode(enter: Boolean) {
+    if (enter) {
       System.setProperty("apple.awt.distraction.free.mode", "true")
+    }
+    else {
+      System.clearProperty("apple.awt.distraction.free.mode")
     }
   }
 
   fun updateForDistractionFreeMode(enter: Boolean) {
     if (enabled()) {
-      if (enter) {
-        System.setProperty("apple.awt.distraction.free.mode", "true")
-      }
-      else {
-        System.clearProperty("apple.awt.distraction.free.mode")
-      }
+      configureForDistractionFreeMode(enter)
 
       ApplicationManager.getApplication().invokeLater {
         val frames = getAllFrameWindows()
