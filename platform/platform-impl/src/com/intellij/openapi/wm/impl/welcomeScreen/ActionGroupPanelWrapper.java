@@ -243,7 +243,7 @@ public final class ActionGroupPanelWrapper {
   }
 
   public static void installQuickSearch(JBList<? extends AnAction> list) {
-    ListSpeedSearch.installOn(list, o -> {
+    new ListSpeedSearch<>(list, o -> {
       if (o instanceof AbstractActionWithPanel) { //to avoid dependency mess with ProjectSettingsStepBase
         return o.getTemplatePresentation().getText();
       }

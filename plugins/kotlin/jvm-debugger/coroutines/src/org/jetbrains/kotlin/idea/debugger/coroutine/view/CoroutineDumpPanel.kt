@@ -116,7 +116,7 @@ class CoroutineDumpPanel(
         }
         add(splitter, BorderLayout.CENTER)
 
-        ListSpeedSearch.installOn(coroutinesList).comparator = SpeedSearchComparator(false, true)
+        ListSpeedSearch(coroutinesList).comparator = SpeedSearchComparator(false, true)
 
         updateCoroutinesList()
 

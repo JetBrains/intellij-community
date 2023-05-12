@@ -70,7 +70,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       shouldMatchCamelCase: Boolean = true,
       converter: ((Any?) -> String?)? = null
     ): T where T : JList<*> {
-      val search = if (converter != null) ListSpeedSearch.installOn(this, converter) else ListSpeedSearch.installOn(this)
+      val search = if (converter != null) ListSpeedSearch(this, converter) else ListSpeedSearch(this)
       search.comparator = SpeedSearchComparator(shouldMatchFromTheBeginning, shouldMatchCamelCase)
       return this
     }

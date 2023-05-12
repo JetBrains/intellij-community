@@ -349,7 +349,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   private void installSpeedSearch(JBList list) {
     //noinspection unchecked
-    final ListSpeedSearch search = ListSpeedSearch.installOn(list, o -> getItemText((T)o));
+    final ListSpeedSearch search = new ListSpeedSearch(list, o -> getItemText((T)o));
     search.setComparator(new SpeedSearchComparator(false));
   }
 

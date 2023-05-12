@@ -28,8 +28,7 @@ import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
 
 /**
- * To install the speed search on a {@link JTree} component,
- * use {@link TreeUIHelper#installTreeSpeedSearch} or one of the {@link TreeSpeedSearch#installOn} static methods
+ * To install the speed search on a {@link JTree} component, pass the tree component to one of the constructors.
  */
 public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   protected boolean myCanExpand;

@@ -24,7 +24,7 @@ import javax.swing.ListSelectionModel
 class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : ConfigurableUi<NotificationsConfigurationImpl> {
   private val ui: DialogPanel
   private val notificationsList = createNotificationsList()
-  private val speedSearch = object : ListSpeedSearch<NotificationSettingsWrapper>(notificationsList, null, null) {
+  private val speedSearch = object : ListSpeedSearch<NotificationSettingsWrapper>(notificationsList) {
     override fun isMatchingElement(element: Any?, pattern: String?): Boolean {
       if (super.isMatchingElement(element, pattern)) {
         return true
@@ -41,7 +41,6 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
   private val myDoNotAskConfigurableUi = DoNotAskConfigurableUi()
 
   init {
-    speedSearch.setupListeners()
     ui = panel {
       row {
         useBalloonNotifications = checkBox(IdeBundle.message("notifications.configurable.display.balloon.notifications"))

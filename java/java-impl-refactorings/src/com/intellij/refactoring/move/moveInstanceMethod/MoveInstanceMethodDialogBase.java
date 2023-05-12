@@ -83,7 +83,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
         updateOnChanged(list);
       }
     });
-    ListSpeedSearch.installOn(list);
+    new ListSpeedSearch<>(list);
     return list;
   }
 

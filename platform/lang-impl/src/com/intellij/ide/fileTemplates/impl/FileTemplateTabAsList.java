@@ -34,7 +34,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
       }
     }));
     myList.addListSelectionListener(__ -> onTemplateSelected());
-    ListSpeedSearch.installOn(myList, FileTemplate::getName);
+    new ListSpeedSearch<>(myList, FileTemplate::getName);
   }
 
   @Override

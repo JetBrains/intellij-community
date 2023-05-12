@@ -81,7 +81,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     final Splitter splitter = new Splitter(false, 0.25f);
     CollectionListModel<Module> listDataModel = new CollectionListModel<>(modules);
     final JBList<Module> moduleList = new JBList<>(listDataModel);
-    ListSpeedSearch.installOn(moduleList, o -> o == null ? getProjectConfigurableItemName() : o.getName());
+    new ListSpeedSearch<>(moduleList, o -> o == null ? getProjectConfigurableItemName() : o.getName());
     moduleList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     moduleList.setCellRenderer(new ModuleListCellRenderer() {
       @Override

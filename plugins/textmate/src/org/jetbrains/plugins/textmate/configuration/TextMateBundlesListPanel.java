@@ -53,7 +53,7 @@ public class TextMateBundlesListPanel implements Disposable {
       }
     });
     myBundlesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    ListSpeedSearch.installOn(myBundlesList, box -> box.getText());
+    new ListSpeedSearch<>(myBundlesList, box -> box.getText());
   }
 
   private static boolean isBuiltin(BundleConfigBean bean) {

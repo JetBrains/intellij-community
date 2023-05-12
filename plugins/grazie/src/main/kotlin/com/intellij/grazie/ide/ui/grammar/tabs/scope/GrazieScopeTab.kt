@@ -41,7 +41,7 @@ class GrazieScopeTab : GrazieUIComponent {
         (if (enabledByDefault) myDisabledLanguageIds else myEnabledLanguageIds).add(language.id)
       }
     })
-    ListSpeedSearch.installOn(languageList) { it.text }
+    ListSpeedSearch(languageList) { it.text }
   }
 
   override fun isModified(state: GrazieConfig.State): Boolean {
