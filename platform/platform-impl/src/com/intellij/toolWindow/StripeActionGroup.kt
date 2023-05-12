@@ -76,9 +76,14 @@ class StripeActionGroup: ActionGroup(), DumbAware {
   private fun createAction(tw: ToolWindowImpl) = MyButtonAction(tw)
 
   private class MyButtonAction(tw: ToolWindowImpl): SquareAnActionButton(tw), CustomComponentAction {
+    override fun isSelected(e: AnActionEvent): Boolean = super.isSelected(e).apply {
+      e.presentation.isEnabledAndVisible = ToolWindowManager.getInstance(window.project).isStripeButtonShow(window)
+    }
+
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
       return object : SquareStripeButton(this@MyButtonAction, window) {
         override fun isFocused(): Boolean = false
+
         override fun addNotify() {
           super.addNotify()
           window.project.service<ButtonsRepaintService>().trackButton(this)
