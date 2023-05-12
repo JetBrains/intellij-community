@@ -10,6 +10,7 @@ project.consumer.commonMain
 
 project.consumer.commonTest
     transitive.commonMain (TEST)
+    transitive.iosMain (TEST)
 
 project.consumer.iosArm64Main
     transitive.commonMain (COMPILE)

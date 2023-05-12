@@ -9,6 +9,7 @@ project.consumer.commonMain
 
 project.consumer.commonTest
     org.jetbrains.kotlin.mpp.tests:transitive:commonMain:1.0 (TEST)
+    org.jetbrains.kotlin.mpp.tests:transitive:iosMain:1.0 (TEST)
 
 project.consumer.iosArm64Main
     org.jetbrains.kotlin.mpp.tests:transitive-iosarm64:klib:1.0 (COMPILE)
