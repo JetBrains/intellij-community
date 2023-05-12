@@ -55,9 +55,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    */
   public abstract boolean isMajorEAP();
 
-  /**
-   * Returns {@code true} for preview builds of stable (i.e. non-EAP) releases.
-   */
+  @ApiStatus.Experimental
   public abstract boolean isPreview();
 
   public abstract @Nullable UpdateUrls getUpdateUrls();
