@@ -31,16 +31,7 @@ class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSett
   var autoscrollToSource: Boolean = false
   var openDirectoriesWithSingleClick: Boolean = false
   var foldersAlwaysOnTop: Boolean = true
-
-  @Deprecated(
-    "More sorting options are available now, use sortKey instead",
-    replaceWith = ReplaceWith("sortKey == NodeSortKey.MANUAL")
-  )
-  var manualOrder: Boolean
-    get() = sortKey == NodeSortKey.MANUAL
-    set(value) {
-      sortKey = if (value) NodeSortKey.MANUAL else NodeSortKey.BY_NAME
-    }
+  var manualOrder: Boolean = false
 
   override fun getState(): ProjectViewSharedSettings {
     return this

@@ -39,7 +39,7 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
 
     if (descriptor1 instanceof ProjectViewNode<?> node1 && descriptor2 instanceof ProjectViewNode<?> node2) {
 
-      NodeSortSettings settings = NodeSortSettings.of(getSortKey(), isFoldersAlwaysOnTop());
+      NodeSortSettings settings = NodeSortSettings.of(isManualOrder(), getSortKey(), isFoldersAlwaysOnTop());
       int sortResult = node1.getSortOrder(settings).compareTo(node2.getSortOrder(settings));
       if (sortResult != 0) return sortResult;
 
@@ -65,7 +65,6 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
       }
 
       switch (settings.getSortKey()) {
-        case MANUAL -> { }
         case BY_NAME -> {
           final Comparable<?> sortKey1 = node1.getSortKey();
           final Comparable<?> sortKey2 = node2.getSortKey();
@@ -123,6 +122,13 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
       return myForceSortByType ? NodeSortKey.BY_TYPE : NodeSortKey.BY_NAME;
     }
     return ProjectView.getInstance(project).getSortKey(myPaneId);
+  }
+
+  protected boolean isManualOrder() {
+    if (project == null) {
+      return true;
+    }
+    return ProjectView.getInstance(project).isManualOrder(myPaneId);
   }
 
   protected boolean isAbbreviateQualifiedNames() {

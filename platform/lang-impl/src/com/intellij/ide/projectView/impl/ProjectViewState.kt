@@ -30,6 +30,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
   var flattenPackages = ProjectViewSettings.Immutable.DEFAULT.isFlattenPackages
   var foldersAlwaysOnTop = ProjectViewSettings.Immutable.DEFAULT.isFoldersAlwaysOnTop
   var hideEmptyMiddlePackages = ProjectViewSettings.Immutable.DEFAULT.isHideEmptyMiddlePackages
+  var manualOrder = false
   var showExcludedFiles = ProjectViewSettings.Immutable.DEFAULT.isShowExcludedFiles
   var showLibraryContents = ProjectViewSettings.Immutable.DEFAULT.isShowLibraryContents
   var showMembers = ProjectViewSettings.Immutable.DEFAULT.isShowMembers
@@ -63,6 +64,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
     flattenPackages = ProjectViewSharedSettings.instance.flattenPackages
     foldersAlwaysOnTop = ProjectViewSharedSettings.instance.foldersAlwaysOnTop
     hideEmptyMiddlePackages = ProjectViewSharedSettings.instance.hideEmptyPackages
+    manualOrder = ProjectViewSharedSettings.instance.manualOrder
     showExcludedFiles = ProjectViewSharedSettings.instance.showExcludedFiles
     showLibraryContents = ProjectViewSharedSettings.instance.showLibraryContents
     showMembers = ProjectViewSharedSettings.instance.showMembers

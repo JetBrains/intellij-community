@@ -1032,7 +1032,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @ApiStatus.Internal
   public final boolean supportsSortKey(@NotNull NodeSortKey sortKey) {
     return switch (sortKey) {
-      case MANUAL -> supportsManualOrder();
       case BY_NAME -> true;
       case BY_TYPE -> supportsSortByType();
       case BY_TIME_DESCENDING, BY_TIME_ASCENDING -> supportsSortByTime();

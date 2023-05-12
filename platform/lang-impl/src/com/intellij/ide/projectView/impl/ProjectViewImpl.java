@@ -96,7 +96,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -116,7 +115,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NotNull private final Project myProject;
 
   private final ProjectViewState myCurrentState;
-  private final AtomicReference<NodeSortKey> mySortKey = new AtomicReference<>();
   // + options
   private final Option myAbbreviatePackageNames = new Option() {
     @Override
@@ -351,6 +349,37 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       getDefaultState().setHideEmptyMiddlePackages(selected);
       getGlobalOptions().setHideEmptyPackages(selected);
       if (updated) updatePanes(false);
+    }
+  };
+
+  private final Option myManualOrder = new Option() {
+    @NotNull
+    @Override
+    public String getName() {
+      AbstractProjectViewPane pane = getCurrentProjectViewPane();
+      return pane != null
+             ? pane.getManualOrderOptionText()
+             : IdeBundle.message("action.manual.order");
+    }
+
+    @Override
+    public boolean isEnabled(@NotNull AbstractProjectViewPane pane) {
+      return pane.supportsManualOrder();
+    }
+
+    @Override
+    public boolean isSelected() {
+      return myCurrentState.getManualOrder();
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+      if (myProject.isDisposed()) return;
+      boolean updated = selected != isSelected();
+      myCurrentState.setManualOrder(selected);
+      getDefaultState().setManualOrder(selected);
+      getGlobalOptions().setManualOrder(selected);
+      if (updated) updatePanes(true);
     }
   };
 
@@ -1759,12 +1788,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public boolean isManualOrder(String paneId) {
-    return getSortKey(paneId) == NodeSortKey.MANUAL;
+    return myManualOrder.isSelected() && myManualOrder.isEnabled(paneId);
   }
 
   @Override
   public void setManualOrder(@NotNull String paneId, final boolean enabled) {
-    setSortKey(paneId, enabled ? NodeSortKey.MANUAL : ProjectViewSettings.Immutable.DEFAULT.getSortKey());
+    if (myManualOrder.isEnabled(paneId)) myManualOrder.setSelected(enabled);
   }
 
   @Override
@@ -1951,6 +1980,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
+    static final class ManualOrder extends Action {
+      ManualOrder() {
+        super(view -> view.myManualOrder);
+      }
+    }
+
     static final class ShowExcludedFiles extends Action {
       ShowExcludedFiles() {
         super(view -> view.myShowExcludedFiles);
@@ -2033,23 +2068,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         Project project = event.getProject();
         ProjectView view = project == null || project.isDisposed() ? null : getInstance(project);
         return view instanceof ProjectViewImpl ? (ProjectViewImpl) view : null;
-      }
-    }
-
-    static final class ManualOrder extends SortKeyAction {
-      ManualOrder() {
-        super(NodeSortKey.MANUAL);
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        super.update(e);
-        var pane = getCurrentProjectViewPane(e);
-        if (pane == null) {
-          e.getPresentation().setText(IdeBundle.message("action.manual.order"));
-          return;
-        }
-        e.getPresentation().setText(pane.getManualOrderOptionText());
       }
     }
 
