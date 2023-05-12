@@ -7,12 +7,15 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl.ErrorHandler
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsOracle.LogDistanceEvaluator
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
+import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsChronicle
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsChronicle.LookupResult.Companion.toState
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.bind
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.mapCases
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsStateOracle
 import org.jetbrains.annotations.ApiStatus
@@ -51,79 +54,78 @@ class FSRecordsOracle(
     }
 
     inner class OracledVirtualFileSnapshot(override val fileId: Int) : VfsSnapshot.VirtualFileSnapshot {
-      override val nameId: VfsSnapshot.VirtualFileSnapshot.Property<Int> = OracledProp(
+      override val nameId: Property<Int> = OracledProp(
         queryLog = {
-          VfsChronicle.lookupNameId(point(), fileId, direction = OperationLogStorage.TraverseDirection.PLAY).toState()
+          VfsChronicle.lookupNameId(point(), fileId, direction = TraverseDirection.PLAY).toState()
         },
         queryFsRecords = { fsRecords.getNameIdByFileId(fileId) }
       )
-      override val name: VfsSnapshot.VirtualFileSnapshot.Property<String> = nameId.fmap { fsRecords.getNameByNameId(it).toString() }
+      override val name: Property<String> = nameId.fmap { fsRecords.getNameByNameId(it).toString() }
 
-      override val parentId: VfsSnapshot.VirtualFileSnapshot.Property<Int> = OracledProp(
+      override val parentId: Property<Int> = OracledProp(
         queryLog = {
-          VfsChronicle.lookupParentId(point(), fileId, direction = OperationLogStorage.TraverseDirection.PLAY).toState()
+          VfsChronicle.lookupParentId(point(), fileId, direction = TraverseDirection.PLAY).toState()
         },
         queryFsRecords = { fsRecords.getParent(fileId) }
       )
-      override val parent: VfsSnapshot.VirtualFileSnapshot.Property<VfsSnapshot.VirtualFileSnapshot?> = parentId.fmap {
+      override val parent: Property<VfsSnapshot.VirtualFileSnapshot?> = parentId.fmap {
         if (it == 0) null else getFileById(it)
       }
 
-      override val length: VfsSnapshot.VirtualFileSnapshot.Property<Long> = OracledProp(
+      override val length: Property<Long> = OracledProp(
         queryLog = {
-          VfsChronicle.lookupLength(point(), fileId, direction = OperationLogStorage.TraverseDirection.PLAY).toState()
+          VfsChronicle.lookupLength(point(), fileId, direction = TraverseDirection.PLAY).toState()
         },
         queryFsRecords = { fsRecords.getLength(fileId) }
       )
-      override val timestamp: VfsSnapshot.VirtualFileSnapshot.Property<Long> = OracledProp(
+      override val timestamp: Property<Long> = OracledProp(
         queryLog = {
-          VfsChronicle.lookupTimestamp(point(), fileId, direction = OperationLogStorage.TraverseDirection.PLAY).toState()
+          VfsChronicle.lookupTimestamp(point(), fileId, direction = TraverseDirection.PLAY).toState()
         },
         queryFsRecords = { fsRecords.getTimestamp(fileId) }
       )
-      override val flags: VfsSnapshot.VirtualFileSnapshot.Property<Int> = OracledProp(
+      override val flags: Property<Int> = OracledProp(
         queryLog = {
-          VfsChronicle.lookupFlags(point(), fileId, direction = OperationLogStorage.TraverseDirection.PLAY).toState()
+          VfsChronicle.lookupFlags(point(), fileId, direction = TraverseDirection.PLAY).toState()
         },
         queryFsRecords = { fsRecords.getFlags(fileId) }
       )
-      override val contentRecordId: VfsSnapshot.VirtualFileSnapshot.Property<Int> = OracledProp(
+      override val contentRecordId: Property<Int> = OracledProp(
         queryLog = {
-          VfsChronicle.lookupContentRecordId(point(), fileId, direction = OperationLogStorage.TraverseDirection.PLAY).toState()
+          VfsChronicle.lookupContentRecordId(point(), fileId, direction = TraverseDirection.PLAY).toState()
         },
         queryFsRecords = { fsRecords.getContentRecordId(fileId) }
       )
-      override val attributesRecordId: VfsSnapshot.VirtualFileSnapshot.Property<Int> = OracledProp(
+      override val attributesRecordId: Property<Int> = OracledProp(
         queryLog = {
-          VfsChronicle.lookupAttributeRecordId(point(), fileId, direction = OperationLogStorage.TraverseDirection.PLAY).toState()
+          VfsChronicle.lookupAttributeRecordId(point(), fileId, direction = TraverseDirection.PLAY).toState()
         },
         queryFsRecords = { fsRecords.getAttributeRecordId(fileId) }
       )
 
-      override fun getContent(): VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState<ByteArray> = contentRecordId.bind {
-        if (it == 0) return@bind VfsSnapshot.VirtualFileSnapshot.Property.State.notAvailable(
-          VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause("VFS didn't cache file's content"))
-        if (!distanceEvaluator.isWorthLookingUpFrom(point())) return@bind VfsSnapshot.VirtualFileSnapshot.Property.State.notAvailable()
-        val lookup = VfsChronicle.lookupContentOperation(point(), it, OperationLogStorage.TraverseDirection.PLAY)
+      override fun getContent(): State.DefinedState<ByteArray> = contentRecordId.bind {
+        if (it == 0) return@bind State.notAvailable()
+        if (!distanceEvaluator.isWorthLookingUpFrom(point())) return@bind State.notAvailable()
+        val lookup = VfsChronicle.lookupContentOperation(point(), it, TraverseDirection.PLAY)
         if (lookup.found) { // some operation took place in between (point(), end()) so FSRecords may not contain value as at point()
-          return@bind VfsSnapshot.VirtualFileSnapshot.Property.State.notAvailable()
+          return@bind State.notAvailable()
         }
         // content at point() is the same as in FSRecords
-        return@bind fsRecords.readContentById(it).readAllBytes().let(VfsSnapshot.VirtualFileSnapshot.Property.State::ready)
+        return@bind fsRecords.readContentById(it).readAllBytes().let(State::ready)
       }.observeState()
 
-      override fun readAttribute(fileAttribute: FileAttribute): VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState<AttributeInputStream?> {
-        if (!distanceEvaluator.isWorthLookingUpFrom(point())) return VfsSnapshot.VirtualFileSnapshot.Property.State.notAvailable()
+      override fun readAttribute(fileAttribute: FileAttribute): State.DefinedState<AttributeInputStream?> {
+        if (!distanceEvaluator.isWorthLookingUpFrom(point())) return State.notAvailable()
         val attrId = vfsLogContext.stringEnumerator.enumerate(fileAttribute.id)
-        val attrData = VfsChronicle.lookupAttributeData(point(), fileId, attrId, direction = OperationLogStorage.TraverseDirection.PLAY)
-        if (attrData.found) return VfsSnapshot.VirtualFileSnapshot.Property.State.notAvailable() // some operation took place in between (point(), end())
-        return fsRecords.readAttributeWithLock(fileId, fileAttribute).let(VfsSnapshot.VirtualFileSnapshot.Property.State::ready)
+        val attrData = VfsChronicle.lookupAttributeData(point(), fileId, attrId, direction = TraverseDirection.PLAY)
+        if (attrData.found) return State.notAvailable() // some operation took place in between (point(), end())
+        return fsRecords.readAttributeWithLock(fileId, fileAttribute).let(State::ready)
       }
 
       private inner class OracledProp<T>(
         val queryLog: () -> State.DefinedState<T>,
         val queryFsRecords: () -> T,
-      ) : VfsSnapshot.VirtualFileSnapshot.Property<T>() {
+      ) : Property<T>() {
         override fun compute(): State.DefinedState<T> {
           if (!distanceEvaluator.isWorthLookingUpFrom(point())) return State.notAvailable()
           /* tricky: we must return the value at point(), so if queryLog() returns Ready, then the property has been changed in
