@@ -1432,7 +1432,6 @@
     <registryKey key="new.project.wizard.modal.plugin.install" description="Enables modal lanungage plugins installing"
                  defaultValue="false"/>
     <searchEverywhereContributor implementation="com.intellij.find.impl.TextSearchContributor$Companion$Factory"/>
-    <postStartupActivity implementation="com.intellij.find.impl.TextSearchContributor$Companion$TextSearchActivity"/>
 
     <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.persistent.FsRootDataLoader"
                         serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.EmptyFsRootDataLoader"/>
