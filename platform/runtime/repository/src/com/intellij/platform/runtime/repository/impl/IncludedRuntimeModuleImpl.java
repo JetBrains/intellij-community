@@ -15,10 +15,10 @@ public final class IncludedRuntimeModuleImpl implements IncludedRuntimeModule {
   private final Set<RuntimeModuleScope> myScopes;
 
   public IncludedRuntimeModuleImpl(@NotNull RuntimeModuleDescriptor moduleDescriptor,
-                                   @NotNull ModuleImportance loadingRule,
+                                   @NotNull ModuleImportance importance,
                                    @NotNull Set<RuntimeModuleScope> scopes) {
     myModuleDescriptor = moduleDescriptor;
-    myLoadingRule = loadingRule;
+    myLoadingRule = importance;
     myScopes = scopes;
   }
 

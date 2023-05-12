@@ -11,12 +11,13 @@ import java.util.List;
  */
 public interface ProductModules {
   /**
-   * Returns modules which together with their dependencies constitute the platform part of the product.
+   * Returns description of the main module group. Modules from this group are always enabled.
    */
-  @NotNull List<@NotNull IncludedRuntimeModule> getRootPlatformModules();
+  @NotNull RuntimeModuleGroup getMainModuleGroup();
 
   /**
-   * Returns main modules (containing META-INF/plugin.xml file) of bundled plugins. 
+   * Returns description of module groups corresponding to the bundled plugins. Modules from these groups may be disabled if the corresponding
+   * plugin is disabled by the user.
    */
-  @NotNull List<@NotNull RuntimeModuleDescriptor> getBundledPluginMainModules();
+  @NotNull List<@NotNull RuntimeModuleGroup> getBundledPluginModuleGroups();
 }

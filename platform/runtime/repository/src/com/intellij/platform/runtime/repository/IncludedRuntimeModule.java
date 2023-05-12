@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 /**
- * Describes a module included into the platform or a plugin.
+ * Describes a module included in the product as part of some {@link RuntimeModuleGroup}.
  */
 public interface IncludedRuntimeModule {
   @NotNull RuntimeModuleDescriptor getModuleDescriptor();

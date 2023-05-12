@@ -44,8 +44,8 @@ public final class Loader {
     ProductModules productModules = RuntimeModuleRepositorySerialization.loadProductModules(moduleGroupStream, productModulesPath, repository);
     String bootstrapModuleName = System.getProperty("intellij.platform.bootstrap.module", "intellij.platform.bootstrap");
     Set<Path> classpath = new LinkedHashSet<>(repository.getModule(RuntimeModuleId.module(bootstrapModuleName)).getModuleClasspath());
-    for (IncludedRuntimeModule item : productModules.getRootPlatformModules()) {
-      classpath.addAll(repository.getModule(item.getModuleDescriptor().getModuleId()).getModuleClasspath());
+    for (IncludedRuntimeModule item : productModules.getMainModuleGroup().getIncludedModules()) {
+      classpath.addAll(item.getModuleDescriptor().getResourceRootPaths());
     }
     PathClassLoader classLoader = new PathClassLoader(UrlClassLoader.build().files(new ArrayList<>(classpath)).parent(Loader.class.getClassLoader()));
 

@@ -20,10 +20,9 @@ class JetBrainsClientModuleFilterImpl(clientMainModuleName: String, context: Bui
     val moduleOutputDir = context.getModuleOutputDir(context.findRequiredModule(clientMainModuleName))
     val productModules = RuntimeModuleRepositorySerialization.loadProductModules(
       moduleOutputDir.resolve("META-INF/$clientMainModuleName/product-modules.xml"), repository)
-    includedModules = (productModules.rootPlatformModules.map { it.moduleDescriptor } + productModules.bundledPluginMainModules).flatMapTo(
-      HashSet()) {
-      repository.collectDependencies(it)
-    }
+    includedModules = (sequenceOf(productModules.mainModuleGroup) + productModules.bundledPluginModuleGroups.asSequence())
+       .flatMap { it.includedModules.asSequence() } 
+       .mapTo(HashSet()) { it.moduleDescriptor.moduleId }
   }
 
   override fun isModuleIncluded(moduleName: String): Boolean {
