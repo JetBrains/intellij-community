@@ -116,10 +116,10 @@ public class EditorGutterLayout {
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize)
         .as(EditorMouseEventArea.LINE_MARKERS_AREA),
 
-      area(LEFT_FREE_PAINTERS_AREA, myEditorGutter::getLeftFreePaintersAreaWidth).showIf(this::isLineNumbersShown),
+      area(LEFT_FREE_PAINTERS_AREA, myEditorGutter::getLeftFreePaintersAreaWidth).showIf(() -> myEditorGutter.isLineMarkersShown()),
       area(ICONS_AREA, myEditorGutter::getIconsAreaWidth).showIf(() -> myEditorGutter.isLineMarkersShown()),
       area(GAP_AFTER_ICONS_AREA, myEditorGutter::getGapAfterIconsArea).showIf(() -> myEditorGutter.isLineMarkersShown()),
-      area(RIGHT_FREE_PAINTERS_AREA, myEditorGutter::getRightFreePaintersAreaWidth).showIf(this::isLineNumbersShown),
+      area(RIGHT_FREE_PAINTERS_AREA, myEditorGutter::getRightFreePaintersAreaWidth).showIf(() -> myEditorGutter.isLineMarkersShown()),
 
       area(FOLDING_AREA, myEditorGutter::getFoldingAreaWidth)
     );
