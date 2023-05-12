@@ -626,7 +626,9 @@ final class ActionUpdater {
     for (int i = 0; i < visible.size(); i++) {
       AnAction child = visible.get(i);
       if (child instanceof Separator &&
-          (result.isEmpty() || i == visible.size() - 1 || visible.get(i + 1) instanceof Separator)) {
+          (i == visible.size() - 1 ||
+           visible.get(i + 1) instanceof Separator ||
+           result.isEmpty() && StringUtil.isEmpty(((Separator)child).getText()))) {
         continue;
       }
       result.add(child);
