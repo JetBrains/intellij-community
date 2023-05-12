@@ -153,14 +153,7 @@ public final class NavigationUtil {
   }
 
   public static boolean openFileWithPsiElement(PsiElement element, boolean searchForOpen, boolean requestFocus) {
-    boolean openAsNative = false;
-    if (element instanceof PsiFile) {
-      VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
-      if (virtualFile != null) {
-        FileType type = virtualFile.getFileType();
-        openAsNative = type instanceof INativeFileType || type instanceof UnknownFileType;
-      }
-    }
+    boolean openAsNative = shouldOpenAsNative(element);
 
     if (searchForOpen) {
       element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
@@ -188,6 +181,22 @@ public final class NavigationUtil {
 
     element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
     return false;
+  }
+
+  private static boolean shouldOpenAsNative(PsiElement element) {
+    if (!(element instanceof PsiFile file)) {
+      return false;
+    }
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) {
+      return false;
+    }
+    return shouldOpenAsNative(virtualFile);
+  }
+
+  private static boolean shouldOpenAsNative(@NotNull VirtualFile virtualFile) {
+    FileType type = virtualFile.getFileType();
+    return type instanceof INativeFileType || type instanceof UnknownFileType;
   }
 
   private static boolean activatePsiElementIfOpen(@NotNull PsiElement element, boolean searchForOpen, boolean requestFocus) {
