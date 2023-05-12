@@ -439,27 +439,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @Override
-  public <P extends XBreakpointProperties> Comparator<XLineBreakpoint<P>> getDefaultLineBreakpointComparator() {
-    return Comparator.comparing(XLineBreakpoint<P>::getFileUrl).thenComparingInt(XLineBreakpoint::getLine);
-  }
-
-  /**
-   * @deprecated use {@link XDebugProcess#getEvaluator()}
-   */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  public static XDebuggerEvaluator getEvaluator(final XSuspendContext suspendContext) {
-    XExecutionStack executionStack = suspendContext.getActiveExecutionStack();
-    if (executionStack != null) {
-      XStackFrame stackFrame = executionStack.getTopFrame();
-      if (stackFrame != null) {
-        return stackFrame.getEvaluator();
-      }
-    }
-    return null;
-  }
-
-  @Override
   public void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<? super PsiElement> processor) {
     int lineStart;
     int lineEnd;
