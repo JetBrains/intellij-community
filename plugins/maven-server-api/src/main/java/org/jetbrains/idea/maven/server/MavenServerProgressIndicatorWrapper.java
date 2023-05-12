@@ -6,8 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject
-  implements MavenServerPullProgressIndicator, MavenServerConsole {
+public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject implements MavenServerConsoleIndicator {
 
   private final ConcurrentLinkedQueue<MavenArtifactDownloadServerProgressEvent> myPullingQueue
     = new ConcurrentLinkedQueue<MavenArtifactDownloadServerProgressEvent>();
@@ -47,6 +46,11 @@ public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject
     return myCancelled;
   }
 
+  @Override
+  public void cancel() {
+    myCancelled = true;
+  }
+
   @Nullable
   @Override
   public List<MavenArtifactDownloadServerProgressEvent> pullDownloadEvents() {
@@ -59,7 +63,6 @@ public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject
     return MavenRemotePullUtil.pull(myConsoleEventsQueue);
   }
 
-  @Override
   public void printMessage(int level, String message, Throwable throwable) {
     myConsoleEventsQueue.add(new MavenServerConsoleEvent(level, message, throwable));
   }
@@ -69,23 +72,18 @@ public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject
   }
 
   public void debug(String message) {
-    printMessage(MavenServerConsole.LEVEL_DEBUG, message);
+    printMessage(MavenServerConsoleIndicator.LEVEL_DEBUG, message);
   }
 
   public void info(String message) {
-    printMessage(MavenServerConsole.LEVEL_INFO, message);
+    printMessage(MavenServerConsoleIndicator.LEVEL_INFO, message);
   }
 
   public void warn(String message) {
-    printMessage(MavenServerConsole.LEVEL_WARN, message);
+    printMessage(MavenServerConsoleIndicator.LEVEL_WARN, message);
   }
 
   public void error(String message) {
-    printMessage(MavenServerConsole.LEVEL_ERROR, message);
-  }
-
-  @Override
-  public void cancel() {
-    myCancelled = true;
+    printMessage(MavenServerConsoleIndicator.LEVEL_ERROR, message);
   }
 }

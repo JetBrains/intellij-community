@@ -144,11 +144,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         commandLineOptions.add("-D" + each.getKey() + "=" + each.getValue());
       }
 
-      if (serverSettings.getLoggingLevel() == MavenServerConsole.LEVEL_DEBUG) {
+      if (serverSettings.getLoggingLevel() == MavenServerConsoleIndicator.LEVEL_DEBUG) {
         commandLineOptions.add("-X");
         commandLineOptions.add("-e");
       }
-      else if (serverSettings.getLoggingLevel() == MavenServerConsole.LEVEL_DISABLED) {
+      else if (serverSettings.getLoggingLevel() == MavenServerConsoleIndicator.LEVEL_DISABLED) {
         commandLineOptions.add("-q");
       }
 
@@ -1085,7 +1085,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @NotNull
   @Override
-  public MavenServerPullProgressIndicator getProgressIndicator(MavenToken token) {
+  public MavenServerConsoleIndicator getProgressIndicator(MavenToken token) {
     MavenServerUtil.checkToken(token);
 
     try {

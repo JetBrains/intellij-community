@@ -23,9 +23,9 @@ import java.util.Properties;
 
 public class MavenServerSettings implements Serializable, Cloneable {
   /**
-   * do not use debug level {@link MavenServerConsole#LEVEL_DEBUG} by default, it can pollute logs
+   * do not use debug level {@link MavenServerConsoleIndicator#LEVEL_DEBUG} by default, it can pollute logs
    */
-  private int myLoggingLevel = MavenServerConsole.LEVEL_INFO;
+  private int myLoggingLevel = MavenServerConsoleIndicator.LEVEL_INFO;
   @Nullable private String myMavenHome;
   @Nullable private String myUserSettingsFile;
   @Nullable private String myGlobalSettingsFile;

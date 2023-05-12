@@ -3,15 +3,13 @@ package com.intellij.maven.server.m40.utils;
 
 import org.codehaus.plexus.logging.Logger;
 import org.jetbrains.idea.maven.server.MavenRemoteObject;
-import org.jetbrains.idea.maven.server.MavenServerConsole;
-import org.jetbrains.idea.maven.server.RuntimeRemoteException;
-
-import java.rmi.RemoteException;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
+import org.jetbrains.idea.maven.server.MavenServerProgressIndicatorWrapper;
 
 public class Maven40ServerConsoleLogger extends MavenRemoteObject implements Logger {
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
-  private MavenServerConsole myWrappee;
+  private MavenServerProgressIndicatorWrapper myWrappee;
   private int myThreshold;
 
   void doPrint(int level, String message, Throwable throwable) {
@@ -22,42 +20,37 @@ public class Maven40ServerConsoleLogger extends MavenRemoteObject implements Log
     }
 
     if (myWrappee != null) {
-      try {
-        myWrappee.printMessage(level, message, wrapException(throwable));
-      }
-      catch (RemoteException e) {
-        throw new RuntimeRemoteException(e);
-      }
+      myWrappee.printMessage(level, message, wrapException(throwable));
     }
   }
 
-  public void setWrappee(MavenServerConsole wrappee) {
+  public void setWrappee(MavenServerProgressIndicatorWrapper wrappee) {
     myWrappee = wrappee;
   }
 
   @Override
   public void debug(String string, Throwable throwable) {
-    doPrint(MavenServerConsole.LEVEL_DEBUG, string, throwable);
+    doPrint(MavenServerConsoleIndicator.LEVEL_DEBUG, string, throwable);
   }
 
   @Override
   public void info(String string, Throwable throwable) {
-    doPrint(MavenServerConsole.LEVEL_INFO, string, throwable);
+    doPrint(MavenServerConsoleIndicator.LEVEL_INFO, string, throwable);
   }
 
   @Override
   public void warn(String string, Throwable throwable) {
-    doPrint(MavenServerConsole.LEVEL_WARN, string, throwable);
+    doPrint(MavenServerConsoleIndicator.LEVEL_WARN, string, throwable);
   }
 
   @Override
   public void error(String string, Throwable throwable) {
-    doPrint(MavenServerConsole.LEVEL_ERROR, string, throwable);
+    doPrint(MavenServerConsoleIndicator.LEVEL_ERROR, string, throwable);
   }
 
   @Override
   public void fatalError(String string, Throwable throwable) {
-    doPrint(MavenServerConsole.LEVEL_FATAL, string, throwable);
+    doPrint(MavenServerConsoleIndicator.LEVEL_FATAL, string, throwable);
   }
 
   @Override
@@ -67,7 +60,7 @@ public class Maven40ServerConsoleLogger extends MavenRemoteObject implements Log
 
   @Override
   public boolean isDebugEnabled() {
-    return getThreshold() <= MavenServerConsole.LEVEL_DEBUG;
+    return getThreshold() <= MavenServerConsoleIndicator.LEVEL_DEBUG;
   }
 
   @Override
@@ -77,7 +70,7 @@ public class Maven40ServerConsoleLogger extends MavenRemoteObject implements Log
 
   @Override
   public boolean isInfoEnabled() {
-    return getThreshold() <= MavenServerConsole.LEVEL_INFO;
+    return getThreshold() <= MavenServerConsoleIndicator.LEVEL_INFO;
   }
 
   @Override
@@ -87,7 +80,7 @@ public class Maven40ServerConsoleLogger extends MavenRemoteObject implements Log
 
   @Override
   public boolean isWarnEnabled() {
-    return getThreshold() <= MavenServerConsole.LEVEL_WARN;
+    return getThreshold() <= MavenServerConsoleIndicator.LEVEL_WARN;
   }
 
   @Override
@@ -97,7 +90,7 @@ public class Maven40ServerConsoleLogger extends MavenRemoteObject implements Log
 
   @Override
   public boolean isErrorEnabled() {
-    return getThreshold() <= MavenServerConsole.LEVEL_ERROR;
+    return getThreshold() <= MavenServerConsoleIndicator.LEVEL_ERROR;
   }
 
   @Override
@@ -107,7 +100,7 @@ public class Maven40ServerConsoleLogger extends MavenRemoteObject implements Log
 
   @Override
   public boolean isFatalErrorEnabled() {
-    return getThreshold() <= MavenServerConsole.LEVEL_FATAL;
+    return getThreshold() <= MavenServerConsoleIndicator.LEVEL_FATAL;
   }
 
   @Override

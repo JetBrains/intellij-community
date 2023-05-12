@@ -11,13 +11,13 @@ public class MavenArtifactDownloadServerProgressEvent implements Serializable {
     DOWNLOAD_FAILED
   }
 
-  private final MavenServerPullProgressIndicator.ResolveType myResolveType;
+  private final MavenServerConsoleIndicator.ResolveType myResolveType;
   private final ArtifactEventType myArtifactEventType;
   private final String myDependencyId;
   private final String myErrorMessage;
   private final String myStackTrace;
 
-  public MavenArtifactDownloadServerProgressEvent(MavenServerPullProgressIndicator.ResolveType type,
+  public MavenArtifactDownloadServerProgressEvent(MavenServerConsoleIndicator.ResolveType type,
                                                   ArtifactEventType eventType,
                                                   String id,
                                                   String message,
@@ -29,7 +29,7 @@ public class MavenArtifactDownloadServerProgressEvent implements Serializable {
     myStackTrace = trace;
   }
 
-  public MavenServerPullProgressIndicator.ResolveType getResolveType() {
+  public MavenServerConsoleIndicator.ResolveType getResolveType() {
     return myResolveType;
   }
 

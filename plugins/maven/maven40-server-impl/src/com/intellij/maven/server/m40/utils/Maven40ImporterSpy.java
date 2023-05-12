@@ -5,7 +5,7 @@ import com.intellij.util.ExceptionUtilRt;
 import org.apache.maven.eventspy.AbstractEventSpy;
 import org.eclipse.aether.RepositoryEvent;
 import org.eclipse.aether.artifact.Artifact;
-import org.jetbrains.idea.maven.server.MavenServerPullProgressIndicator;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class Maven40ImporterSpy extends AbstractEventSpy {
 
-  private volatile MavenServerPullProgressIndicator myIndicator;
+  private volatile MavenServerConsoleIndicator myIndicator;
   private final Set<String> downloadedArtifacts = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   @Override
@@ -29,14 +29,14 @@ public class Maven40ImporterSpy extends AbstractEventSpy {
       return;
     }
 
-    MavenServerPullProgressIndicator indicator = myIndicator;
+    MavenServerConsoleIndicator indicator = myIndicator;
     if (indicator == null) {
       return;
     }
 
     if (event.getType() == RepositoryEvent.EventType.ARTIFACT_DOWNLOADING) {
       String dependencyId = toString(event.getArtifact());
-      indicator.startedDownload(MavenServerPullProgressIndicator.ResolveType.DEPENDENCY, dependencyId);
+      indicator.startedDownload(MavenServerConsoleIndicator.ResolveType.DEPENDENCY, dependencyId);
       downloadedArtifacts.add(dependencyId);
     }
     else if (event.getType() == RepositoryEvent.EventType.ARTIFACT_RESOLVED) {
@@ -47,7 +47,7 @@ public class Maven40ImporterSpy extends AbstractEventSpy {
     }
   }
 
-  private static void processResolvedArtifact(RepositoryEvent event, MavenServerPullProgressIndicator indicator, String dependencyId)
+  private static void processResolvedArtifact(RepositoryEvent event, MavenServerConsoleIndicator indicator, String dependencyId)
     throws RemoteException {
     if (event.getExceptions() != null && !event.getExceptions().isEmpty()) {
       StringBuilder builder = new StringBuilder();
@@ -56,11 +56,11 @@ public class Maven40ImporterSpy extends AbstractEventSpy {
         builder.append(stackTrace).append("\n");
       }
       indicator
-        .failedDownload(MavenServerPullProgressIndicator.ResolveType.DEPENDENCY, dependencyId, event.getException().getMessage(),
+        .failedDownload(MavenServerConsoleIndicator.ResolveType.DEPENDENCY, dependencyId, event.getException().getMessage(),
                         builder.toString());
     }
     else {
-      indicator.completedDownload(MavenServerPullProgressIndicator.ResolveType.DEPENDENCY, dependencyId);
+      indicator.completedDownload(MavenServerConsoleIndicator.ResolveType.DEPENDENCY, dependencyId);
     }
   }
 
@@ -73,7 +73,7 @@ public class Maven40ImporterSpy extends AbstractEventSpy {
     return artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getClassifier() + ":" + artifact.getVersion();
   }
 
-  public void setIndicator(MavenServerPullProgressIndicator indicator) {
+  public void setIndicator(MavenServerConsoleIndicator indicator) {
     myIndicator = indicator;
   }
 }

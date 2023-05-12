@@ -65,7 +65,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   private void startPullingProgress(MavenServerEmbedder embedder,
                                     MavenConsole console,
                                     MavenProgressIndicator indicator) throws RemoteException {
-    MavenServerPullProgressIndicator serverPullProgressIndicator = embedder.getProgressIndicator(ourToken);
+    MavenServerConsoleIndicator serverPullProgressIndicator = embedder.getProgressIndicator(ourToken);
     ScheduledFuture<?> future = myProgressPullingFuture;
     if (future != null && !future.isCancelled()) {
       future.cancel(true);

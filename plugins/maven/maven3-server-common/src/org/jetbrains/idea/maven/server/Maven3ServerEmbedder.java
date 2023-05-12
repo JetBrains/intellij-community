@@ -83,17 +83,17 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
 
   private static Level toJavaUtilLoggingLevel(int level) {
     switch (level) {
-      case MavenServerConsole.LEVEL_DEBUG:
+      case MavenServerConsoleIndicator.LEVEL_DEBUG:
         return Level.ALL;
-      case MavenServerConsole.LEVEL_ERROR:
+      case MavenServerConsoleIndicator.LEVEL_ERROR:
         return Level.SEVERE;
-      case MavenServerConsole.LEVEL_FATAL:
+      case MavenServerConsoleIndicator.LEVEL_FATAL:
         return Level.SEVERE;
-      case MavenServerConsole.LEVEL_DISABLED:
+      case MavenServerConsoleIndicator.LEVEL_DISABLED:
         return Level.OFF;
-      case MavenServerConsole.LEVEL_INFO:
+      case MavenServerConsoleIndicator.LEVEL_INFO:
         return Level.INFO;
-      case MavenServerConsole.LEVEL_WARN:
+      case MavenServerConsoleIndicator.LEVEL_WARN:
         return Level.WARNING;
     }
     return Level.INFO;

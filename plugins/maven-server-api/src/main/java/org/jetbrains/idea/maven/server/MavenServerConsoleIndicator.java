@@ -7,7 +7,15 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
 
-public interface MavenServerPullProgressIndicator extends Remote {
+public interface MavenServerConsoleIndicator extends Remote {
+  // must be same as in org.codehaus.plexus.logging.Logger
+  int LEVEL_DEBUG = 0;
+  int LEVEL_INFO = 1;
+  int LEVEL_WARN = 2;
+  int LEVEL_ERROR = 3;
+  int LEVEL_FATAL = 4;
+  int LEVEL_DISABLED = 5;
+
   enum ResolveType {
     DEPENDENCY,
     PLUGIN

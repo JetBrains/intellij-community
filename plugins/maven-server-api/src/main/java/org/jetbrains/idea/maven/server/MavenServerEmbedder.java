@@ -34,7 +34,7 @@ public interface MavenServerEmbedder extends Remote {
   String MAVEN_EXT_CLASS_PATH = "maven.ext.class.path";
 
   @NotNull
-  MavenServerPullProgressIndicator getProgressIndicator(MavenToken token) throws RemoteException;
+  MavenServerConsoleIndicator getProgressIndicator(MavenToken token) throws RemoteException;
 
   void resetProgressIndicator(MavenToken token) throws RemoteException;
 

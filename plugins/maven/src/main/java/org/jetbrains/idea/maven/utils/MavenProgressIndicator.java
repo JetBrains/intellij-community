@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
-import org.jetbrains.idea.maven.server.MavenServerPullProgressIndicator;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -108,20 +108,20 @@ public class MavenProgressIndicator {
     if (isCanceled()) throw new MavenProcessCanceledException();
   }
 
-  public void startedDownload(MavenServerPullProgressIndicator.ResolveType type, String id) {
+  public void startedDownload(MavenServerConsoleIndicator.ResolveType type, String id) {
 
     if (mySyncSupplier != null) {
       mySyncSupplier.get().getListener(type).downloadStarted(id);
     }
   }
 
-  public void completedDownload(MavenServerPullProgressIndicator.ResolveType type, String id) {
+  public void completedDownload(MavenServerConsoleIndicator.ResolveType type, String id) {
     if (mySyncSupplier != null) {
       mySyncSupplier.get().getListener(type).downloadCompleted(id);
     }
   }
 
-  public void failedDownload(MavenServerPullProgressIndicator.ResolveType type,
+  public void failedDownload(MavenServerConsoleIndicator.ResolveType type,
                              String id,
                              String message,
                              String trace) {

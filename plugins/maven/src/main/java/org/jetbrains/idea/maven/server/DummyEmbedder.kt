@@ -12,15 +12,15 @@ import org.jetbrains.idea.maven.server.security.MavenToken
 import java.io.File
 
 abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
-  override fun getProgressIndicator(token: MavenToken?): MavenServerPullProgressIndicator {
-    return object : MavenServerPullProgressIndicator {
-      override fun startedDownload(type: MavenServerPullProgressIndicator.ResolveType?, dependencyId: String?) {
+  override fun getProgressIndicator(token: MavenToken?): MavenServerConsoleIndicator {
+    return object : MavenServerConsoleIndicator {
+      override fun startedDownload(type: MavenServerConsoleIndicator.ResolveType?, dependencyId: String?) {
       }
 
-      override fun completedDownload(type: MavenServerPullProgressIndicator.ResolveType?, dependencyId: String?) {
+      override fun completedDownload(type: MavenServerConsoleIndicator.ResolveType?, dependencyId: String?) {
       }
 
-      override fun failedDownload(type: MavenServerPullProgressIndicator.ResolveType?,
+      override fun failedDownload(type: MavenServerConsoleIndicator.ResolveType?,
                                   dependencyId: String?,
                                   errorMessage: String?,
                                   stackTrace: String?) {

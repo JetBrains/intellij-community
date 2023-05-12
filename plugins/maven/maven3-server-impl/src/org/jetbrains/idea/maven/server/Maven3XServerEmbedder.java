@@ -174,11 +174,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         commandLineOptions.add("-D" + each.getKey() + "=" + each.getValue());
       }
 
-      if (serverSettings.getLoggingLevel() == MavenServerConsole.LEVEL_DEBUG) {
+      if (serverSettings.getLoggingLevel() == MavenServerConsoleIndicator.LEVEL_DEBUG) {
         commandLineOptions.add("-X");
         commandLineOptions.add("-e");
       }
-      else if (serverSettings.getLoggingLevel() == MavenServerConsole.LEVEL_DISABLED) {
+      else if (serverSettings.getLoggingLevel() == MavenServerConsoleIndicator.LEVEL_DISABLED) {
         commandLineOptions.add("-q");
       }
 
@@ -422,7 +422,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @Override
   public @NotNull
-  MavenServerPullProgressIndicator getProgressIndicator(MavenToken token) {
+  MavenServerConsoleIndicator getProgressIndicator(MavenToken token) {
     MavenServerUtil.checkToken(token);
 
     try {
