@@ -46,6 +46,8 @@
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider"/>
     <extensionClassModifiersCheckerProvider language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ExtensionClassShouldBeFinalAndInternalModifiersChecker"/>
+    <serviceLevelExtractor language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ServiceLevelExtractorForKotlin"/>
   </extensions>
 
 </idea-plugin>

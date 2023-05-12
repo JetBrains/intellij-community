@@ -4,9 +4,9 @@
 
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.lang.Language
 import com.intellij.lang.jvm.JvmAnnotation
 import com.intellij.lang.jvm.annotation.JvmAnnotationArrayValue
-import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue
 import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
@@ -29,9 +29,12 @@ internal enum class LevelType {
   }
 }
 
-internal fun getLevelType(annotation: JvmAnnotation, isKotlin: Boolean): LevelType {
+internal fun getLevelType(annotation: JvmAnnotation, language: Language): LevelType {
   val levels = when (val attributeValue = annotation.findAttribute(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)?.attributeValue) {
-    is JvmAnnotationArrayValue -> getLevels(attributeValue, isKotlin)
+    is JvmAnnotationArrayValue -> {
+      val serviceLevelExtractor = ServiceLevelExtractors.forLanguage(language) ?: return LevelType.NOT_SPECIFIED
+      serviceLevelExtractor.extractLevels(attributeValue)
+    }
     is JvmAnnotationEnumFieldValue -> getLevels(attributeValue)
     else -> emptySet()
   }
@@ -58,26 +61,7 @@ internal fun getLevelType(uClass: UClass, project: Project): LevelType {
   return toLevelType(levels)
 }
 
-private fun getLevels(attributeValue: JvmAnnotationArrayValue, isKotlin: Boolean): Collection<Service.Level> {
-  return if (isKotlin) {
-    val levelAsClassIdString = Service.Level::class.java.name.replace('.', '/').replace('$', '.')
-    attributeValue.values
-      .asSequence()
-      .filterIsInstance<JvmAnnotationConstantValue>()
-      .map { it.constantValue }
-      .filterIsInstance<Pair<*, *>>()
-      .filter { (classId, _) -> classId.toString() == levelAsClassIdString }
-      .mapNotNull { (_, name) -> toLevel(name.toString()) }
-      .toList()
-  }
-  else {
-    attributeValue.values
-      .filterIsInstance<JvmAnnotationEnumFieldValue>()
-      .flatMap { getLevels(it) }
-  }
-}
-
-private fun getLevels(attributeValue: JvmAnnotationEnumFieldValue): Collection<Service.Level> {
+internal fun getLevels(attributeValue: JvmAnnotationEnumFieldValue): Collection<Service.Level> {
   if (attributeValue.containingClassName != Service.Level::class.java.canonicalName) return emptySet()
   val fieldName = attributeValue.fieldName ?: return emptySet()
   val level = toLevel(fieldName) ?: return emptySet()
@@ -118,7 +102,7 @@ private fun toLevelType(levels: Collection<Service.Level>): LevelType {
   }
 }
 
-private fun toLevel(name: String): Service.Level? {
+fun toLevel(name: String): Service.Level? {
   return try {
     Service.Level.valueOf(name)
   }

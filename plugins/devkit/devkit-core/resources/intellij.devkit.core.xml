@@ -513,6 +513,8 @@
       implementationClass="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProviderForJava"/>
     <extensionClassModifiersCheckerProvider language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalAndPackagePrivateInspection$ExtensionClassModifiersCheckerProviderForJava"/>
+    <serviceLevelExtractor language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJava"/>
   </extensions>
 
   <extensionPoints>
@@ -535,6 +537,11 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements=" org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalAndPackagePrivateInspection$ExtensionClassModifiersCheckerProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.serviceLevelExtractor"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractor"/>
     </extensionPoint>
   </extensionPoints>
 
