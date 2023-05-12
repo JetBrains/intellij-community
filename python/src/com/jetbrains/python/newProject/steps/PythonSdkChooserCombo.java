@@ -30,11 +30,6 @@ import java.util.List;
 public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   private final List<ActionListener> myChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance(PythonSdkChooserCombo.class);
-  /**
-   * @deprecated the value of the field is not used anywhere internally
-   */
-  @Deprecated
-  @Nullable private String myNewProjectPath;
 
   public PythonSdkChooserCombo(@Nullable final Project project,
                                @Nullable final Module module,
@@ -48,14 +43,16 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
    * {@link #PythonSdkChooserCombo(Project, Module, List, Condition)} instead.
    */
   @SuppressWarnings("unchecked")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PythonSdkChooserCombo(@Nullable final Project project,
                                @Nullable final Module module,
                                @NotNull List<? extends Sdk> sdks,
                                @Nullable String newProjectPath,
                                @NotNull final Condition<? super Sdk> acceptableSdkCondition) {
     super(new ComboBox<>());
-    myNewProjectPath = newProjectPath;
+    /**
+     * @deprecated the value of the field is not used anywhere internally
+     */
     final Sdk initialSelection = ContainerUtil.find(sdks, acceptableSdkCondition);
     final JComboBox comboBox = getComboBox();
     comboBox.setModel(new CollectionComboBoxModel(sdks, initialSelection));
@@ -119,13 +116,5 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   @SuppressWarnings("UnusedDeclaration")
   public void addChangedListener(ActionListener listener) {
     myChangedListeners.add(listener);
-  }
-
-  /**
-   * @deprecated the value of the corresponding field is not used anywhere internally
-   */
-  @Deprecated(forRemoval = true)
-  public void setNewProjectPath(@Nullable String newProjectPath) {
-    myNewProjectPath = newProjectPath;
   }
 }
