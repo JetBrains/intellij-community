@@ -59,6 +59,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Companion.asKtClass
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.idea.util.WasExperimentalOptInsNecessityCheckerFe10
 import org.jetbrains.kotlin.resolve.descriptorUtil.*
 
 class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
@@ -282,36 +283,9 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
                 foundMarkers += annotationFqName
             }
 
-            val wasExperimental = annotations.findAnnotation(OptInNames.WAS_EXPERIMENTAL_FQ_NAME)  ?: continue
-            val sinceKotlin = annotations.findAnnotation(SINCE_KOTLIN_FQ_NAME) ?: continue
-
-            // If there are both `@SinceKotlin` and `@WasExperimental` annotations,
-            // and Kotlin API version of the module is less than the version specified by `@SinceKotlin`,
-            // then the `@OptIn` for `@WasExperimental` marker is necessary and should be added
-            // to the set of found markers.
-            //
-            // For example, consider a function
-            // ```
-            // @SinceKotlin("1.6")
-            // @WasExperimental(Marker::class)
-            // fun foo() { ... }
-            // ```
-            // This combination of annotations means that `foo` was experimental before Kotlin 1.6
-            // and required `@OptIn(Marker::class) or `@Marker` annotation. When the client code
-            // is compiled as Kotlin 1.6 code, there are no problems, and the `@OptIn(Marker::class)`
-            // annotation would not be necessary. At the same time, when the code is compiled with
-            // `apiVersion = 1.5`, the non-experimental declaration of `foo` will be hidden
-            // from the resolver, so `@OptIn` is necessary for the code to compile.
-            val sinceKotlinApiVersion = sinceKotlin.allValueArguments[VERSION_ARGUMENT]
-                ?.safeAs<StringValue>()?.value?.let {
-                    ApiVersion.parse(it)
-                }
-
-            if (sinceKotlinApiVersion != null && moduleApiVersion < sinceKotlinApiVersion) {
-                wasExperimental.allValueArguments[OptInNames.WAS_EXPERIMENTAL_ANNOTATION_CLASS]?.safeAs<ArrayValue>()?.value
-                    ?.mapNotNull { it.safeAs<KClassValue>()?.getArgumentType(module)?.fqName }
-                    ?.forEach { foundMarkers.add(it) }
-            }
+            WasExperimentalOptInsNecessityCheckerFe10
+                .getNecessaryOptInsFromWasExperimental(annotations, module, moduleApiVersion)
+                .forEach { foundMarkers.add(it) }
         }
     }
 
