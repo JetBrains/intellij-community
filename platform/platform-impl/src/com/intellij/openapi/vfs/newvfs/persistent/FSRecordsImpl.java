@@ -525,7 +525,6 @@ public final class FSRecordsImpl {
         }
         checkNotDisposed();
         connection.markRecordAsModified(parentId);
-        connection.markDirty();
         updateSymlinksForNewChildren(parent, children, toSave);
         treeAccessor.doSaveChildren(parentId, toSave);
       }
@@ -569,8 +568,6 @@ public final class FSRecordsImpl {
 
           connection.markRecordAsModified(fromParentId);
           treeAccessor.doSaveChildren(fromParentId, new ListResult(Collections.emptyList(), fromParentId));
-
-          connection.markDirty();
         }
         catch (ProcessCanceledException e) {
           // NewVirtualFileSystem.list methods can be interrupted now
@@ -915,6 +912,7 @@ public final class FSRecordsImpl {
 
   @Nullable AttributeInputStream readAttributeWithLock(int fileId,
                                                        @NotNull FileAttribute attribute) {
+    //RC: attributeAccessor acquires lock anyway, no need for additional lock here
     try {
       return readAttribute(fileId, attribute);
     }
@@ -946,6 +944,7 @@ public final class FSRecordsImpl {
   <R> @Nullable R readAttributeRawWithLock(int fileId,
                                            @NotNull FileAttribute attribute,
                                            ByteBufferReader<R> reader) {
+    //RC: attributeAccessor acquires lock anyway, no need for additional lock here
     try {
       return attributeAccessor.readAttributeRaw(fileId, attribute, reader);
     }
@@ -969,8 +968,8 @@ public final class FSRecordsImpl {
       return contentAccessor.readContent(fileId);
     }
     catch (InterruptedIOException ie){
-      //RC: goal is to just bypass handleError(), which likely mark VFS corrupted
-      //    but thread interruption doesn't lead to VFS corruption
+      //RC: goal is to just bypass handleError(), which likely marks VFS corrupted,
+      //    but thread interruption during _read_ doesn't corrupt anything
       throw new RuntimeException(ie);
     }
     catch (OutOfMemoryError oom) {
@@ -995,8 +994,8 @@ public final class FSRecordsImpl {
       return contentAccessor.readContentDirectly(contentId);
     }
     catch (InterruptedIOException ie){
-      //RC: goal is to just not go into handleError(), which likely mark VFS corrupted
-      //    but thread interruption doesn't lead to VFS corruption
+      //RC: goal is to just not go into handleError(), which likely marks VFS corrupted,
+      //    but thread interruption during _read_ doesn't corrupt anything
       throw new RuntimeException(ie);
     }
     catch (OutOfMemoryError oom) {
