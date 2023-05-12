@@ -116,8 +116,8 @@ class TestEventLogger {
 
   // org.opentest4j.AssertionFailedError
   private static def logJunit5ComparisonFailure(MarkupBuilder xml, Throwable exception) {
-    def expected = escapeCdata(exception.expected.stringRepresentation)
-    def actual = escapeCdata(exception.actual.stringRepresentation)
+    def expected = escapeCdata(exception.expected?.stringRepresentation)
+    def actual = escapeCdata(exception.actual?.stringRepresentation)
 
     xml.failureType('comparison')
     xml.mkp.yieldUnescaped("<expected>$expected</expected>")

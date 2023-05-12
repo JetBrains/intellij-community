@@ -668,6 +668,55 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
     }
   }
 
+  @ParameterizedTest
+  @TargetVersions("4.7+")
+  @AllGradleVersionsSource
+  fun `test not null assertion Junit5`(gradleVersion: GradleVersion) {
+    testJunit5Project(gradleVersion) {
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |
+        |import org.junit.jupiter.api.Test;
+        |import org.junit.jupiter.api.Assertions;
+        |
+        |public class TestCase {
+        |
+        |  @Test
+        |  public void test_assert_null() {
+        |    Assertions.assertNull("Actual text.");
+        |  }
+        |
+        |  @Test
+        |  public void test_assert_not_null() {
+        |    Assertions.assertNotNull(null);
+        |  }
+        |}
+      """.trimMargin())
+
+      executeTasks(":test")
+      assertTestTreeView {
+        assertNode("TestCase") {
+          assertNode("test_assert_null") {
+            assertTestConsoleContains("""
+              |
+              |Expected :null
+              |Actual   :Actual text.
+              |<Click to see difference>
+              |
+              |org.opentest4j.AssertionFailedError: expected: <null> but was: <Actual text.>
+            """.trimMargin())
+          }
+          assertNode("test_assert_not_null") {
+            assertTestConsoleContains("""
+              |
+              |org.opentest4j.AssertionFailedError: expected: not <null>
+            """.trimMargin())
+          }
+        }
+      }
+    }
+  }
+
   companion object {
 
     private val JAVA_JUNIT5_TESTS = """
