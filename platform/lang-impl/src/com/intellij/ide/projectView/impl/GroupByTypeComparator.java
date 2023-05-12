@@ -80,10 +80,12 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
           int result = compare(typeSortKey1, typeSortKey2);
           if (result != 0) return result;
         }
-        case BY_TIME -> {
+        case BY_TIME_DESCENDING, BY_TIME_ASCENDING -> {
           final Comparable<?> timeSortKey1 = node1.getTimeSortKey();
           final Comparable<?> timeSortKey2 = node2.getTimeSortKey();
-          int result = compare(timeSortKey1, timeSortKey2);
+          int result = settings.getSortKey() == NodeSortKey.BY_TIME_ASCENDING
+                       ? compare(timeSortKey1, timeSortKey2)
+                       : compare(timeSortKey2, timeSortKey1);
           if (result != 0) return result;
         }
       }

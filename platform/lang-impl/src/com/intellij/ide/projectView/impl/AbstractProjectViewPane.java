@@ -1035,7 +1035,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       case MANUAL -> supportsManualOrder();
       case BY_NAME -> true;
       case BY_TYPE -> supportsSortByType();
-      case BY_TIME -> supportsSortByTime();
+      case BY_TIME_DESCENDING, BY_TIME_ASCENDING -> supportsSortByTime();
     };
   }
 

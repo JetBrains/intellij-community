@@ -1786,9 +1786,19 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public void setSortKey(@NotNull String paneId, @NotNull NodeSortKey sortKey) {
-    var pane = getProjectViewPaneById(paneId);
-    if (pane != null && pane.supportsSortKey(sortKey)) {
-      myCurrentState.setSortKey(sortKey);
+    setSortKey(this, getProjectViewPaneById(paneId), sortKey);
+  }
+
+  private static void setSortKey(@Nullable ProjectViewImpl view, @Nullable AbstractProjectViewPane pane, @NotNull NodeSortKey sortKey) {
+    getDefaultState().setSortKey(sortKey);
+    getGlobalOptions().setSortKey(sortKey);
+    if (view == null || (pane != null && !pane.supportsSortKey(sortKey))) {
+      return;
+    }
+    boolean updated = view.myCurrentState.getSortKey() != sortKey;
+    view.myCurrentState.setSortKey(sortKey);
+    if (updated) {
+      view.updatePanes(true);
     }
   }
 
@@ -1988,16 +1998,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean selected) {
         var view = getProjectView(e);
-        boolean updated = false;
-        if (view != null) {
-          updated = view.myCurrentState.getSortKey() != mySortKey;
-          view.myCurrentState.setSortKey(mySortKey);
-        }
-        getDefaultState().setSortKey(mySortKey);
-        getGlobalOptions().setSortKey(mySortKey);
-        if (updated) {
-          view.updatePanes(true);
-        }
+        setSortKey(view, null, mySortKey);
       }
 
       @Override
@@ -2064,9 +2065,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    static final class SortByTime extends SortKeyAction {
-      SortByTime() {
-        super(NodeSortKey.BY_TIME);
+    static final class SortByTimeDescending extends SortKeyAction {
+      SortByTimeDescending() {
+        super(NodeSortKey.BY_TIME_DESCENDING);
+      }
+    }
+
+    static final class SortByTimeAscending extends SortKeyAction {
+      SortByTimeAscending() {
+        super(NodeSortKey.BY_TIME_ASCENDING);
       }
     }
   }

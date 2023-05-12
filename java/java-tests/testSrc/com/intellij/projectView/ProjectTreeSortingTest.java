@@ -115,14 +115,24 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                   b.txt
                  """);
 
-    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME);
-    myStructure.setSortKey(NodeSortKey.BY_TIME);
+    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_ASCENDING);
+    myStructure.setSortKey(NodeSortKey.BY_TIME_ASCENDING);
     assertTree("""
                  -sortByTime
                   b.txt
                   b.java
                   a.java
                   a.txt
+                 """);
+
+    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_DESCENDING);
+    myStructure.setSortKey(NodeSortKey.BY_TIME_DESCENDING);
+    assertTree("""
+                 -sortByTime
+                  a.txt
+                  a.java
+                  b.java
+                  b.txt
                  """);
   }
 

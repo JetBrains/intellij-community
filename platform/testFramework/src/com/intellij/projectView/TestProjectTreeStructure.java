@@ -21,7 +21,7 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
   protected boolean myHideEmptyMiddlePackages;
   protected boolean myFlattenPackages;
   private boolean myFlattenModules;
-  private NodeSortKey mySortKey;
+  private NodeSortKey mySortKey = NodeSortKey.BY_NAME;
   protected boolean myShowLibraryContents = true;
 
   public TestProjectTreeStructure(@NotNull Project project, Disposable parentDisposable) {

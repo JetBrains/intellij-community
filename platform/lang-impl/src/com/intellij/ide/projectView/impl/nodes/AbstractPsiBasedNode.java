@@ -215,7 +215,8 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   private void updateTimestamp() {
     if (
       getSettings() instanceof ProjectViewSettings projectViewSettings &&
-      projectViewSettings.getSortKey() != NodeSortKey.BY_TIME
+      projectViewSettings.getSortKey() != NodeSortKey.BY_TIME_DESCENDING &&
+      projectViewSettings.getSortKey() != NodeSortKey.BY_TIME_ASCENDING
     ) {
       timestamp = 0; // skip for performance reasons
       return;

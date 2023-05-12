@@ -7,7 +7,8 @@ enum class NodeSortKey {
   MANUAL,
   BY_NAME,
   BY_TYPE,
-  BY_TIME,
+  BY_TIME_ASCENDING,
+  BY_TIME_DESCENDING,
 }
 
 @ApiStatus.Experimental
