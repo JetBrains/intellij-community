@@ -1,11 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiField
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.classMembers.MemberInfoBase
 import com.intellij.refactoring.util.classMembers.MemberInfo
@@ -13,14 +9,9 @@ import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 class KotlinMemberInfo @JvmOverloads constructor(
@@ -28,16 +19,8 @@ class KotlinMemberInfo @JvmOverloads constructor(
     val isSuperClass: Boolean = false,
     val isCompanionMember: Boolean = false
 ) : MemberInfoBase<KtNamedDeclaration>(member) {
-    companion object {
-        private val RENDERER = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.withOptions {
-            modifiers = setOf(DescriptorRendererModifier.INNER)
-        }
-    }
-
     init {
-        val memberDescriptor = member.resolveToDescriptorWrapperAware()
         isStatic = member.parent is KtFile
-
         if ((member is KtClass || member is KtPsiClassWrapper) && isSuperClass) {
             if (member.isInterfaceClass()) {
                 displayName = RefactoringBundle.message("member.info.implements.0", member.name)
@@ -47,19 +30,22 @@ class KotlinMemberInfo @JvmOverloads constructor(
                 overrides = true
             }
         } else {
-            displayName = RENDERER.render(memberDescriptor)
+            displayName = member.presentation?.presentableText
             if (member.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
                 displayName = KotlinBundle.message("member.info.abstract.0", displayName)
             }
             if (isCompanionMember) {
                 displayName = KotlinBundle.message("member.info.companion.0", displayName)
             }
-
-            val overriddenDescriptors = (memberDescriptor as? CallableMemberDescriptor)?.overriddenDescriptors ?: emptySet()
-            if (overriddenDescriptors.isNotEmpty()) {
-                overrides = overriddenDescriptors.any { it.modality != Modality.ABSTRACT }
-            }
+            overrides = KotlinMemberInfoSupport.getInstance().getOverrides(member)
         }
+    }
+
+    private fun PsiNamedElement.isInterfaceClass(): Boolean = when (this) {
+        is KtClass -> isInterface()
+        is PsiClass -> isInterface
+        is KtPsiClassWrapper -> psiClass.isInterface
+        else -> false
     }
 }
 
@@ -68,7 +54,7 @@ fun lightElementForMemberInfo(declaration: KtNamedDeclaration?): PsiMember? {
         is KtNamedFunction -> declaration.getRepresentativeLightMethod()
         is KtProperty, is KtParameter -> declaration.toLightElements().let {
             it.firstIsInstanceOrNull<PsiMethod>() ?: it.firstIsInstanceOrNull<PsiField>()
-        } as PsiMember?
+        }
         is KtClassOrObject -> declaration.toLightClass()
         is KtPsiClassWrapper -> declaration.psiClass
         else -> null
@@ -84,6 +70,7 @@ fun MemberInfoBase<out KtNamedDeclaration>.toJavaMemberInfo(): MemberInfo? {
     return info
 }
 
+@Suppress("unused") // used in third-party plugins
 fun MemberInfo.toKotlinMemberInfo(): KotlinMemberInfo? {
     val declaration = member.unwrapped as? KtNamedDeclaration ?: return null
     return KotlinMemberInfo(declaration, declaration is KtClass && overrides != null).apply {
