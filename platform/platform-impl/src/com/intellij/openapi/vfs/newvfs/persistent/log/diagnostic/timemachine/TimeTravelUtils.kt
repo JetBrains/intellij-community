@@ -21,10 +21,11 @@ fun VfsTimeMachine.withOracle(oracle: VfsStateOracle): VfsTimeMachine = object :
 
 /**
  * Like [withOracle], but check that [VfsStateOracle] and [VfsTimeMachine] doesn't contradict each other is enforced
+ * @param deepEquals may modify the passed objects
  */
 fun VfsTimeMachine.withContradictionCheck(
   oracle: VfsStateOracle,
-  equals: (lhs: Any, rhs: Any) -> Boolean = defaultDeepEquals
+  deepEquals: (lhs: Any, rhs: Any) -> Boolean = defaultDeepEquals
 ): VfsTimeMachine = object : DualSourceTimeMachine(
   this, oracle) {
   override fun <R> alternative(originalState: () -> DefinedState<R>, oracledState: () -> DefinedState<R>?): DefinedState<R> {
@@ -32,7 +33,8 @@ fun VfsTimeMachine.withContradictionCheck(
     val oracled = oracledState() ?: return original
     if (oracled is State.Ready && original is State.Ready) {
       if (original.value != null && oracled.value != null) {
-        check(equals(original.value, oracled.value)) { "contradiction detected" }
+        check(deepEquals(original.value, oracled.value)) { "contradiction detected" }
+        return oracledState()!! // deepEquals may have modified the values
       }
       else {
         check((original.value == null) == (oracled.value == null)) { "contradiction detected" }
@@ -48,11 +50,8 @@ private val defaultDeepEquals = { lhs: Any, rhs: Any ->
     is VirtualFileSnapshot -> lhs.fileId == (rhs as VirtualFileSnapshot).fileId
     is AttributeInputStream -> {
       rhs as AttributeInputStream
-      // relies on the fact that underneath it is BufferExposingByteArrayInputStream
       val lhsBytes = lhs.readAllBytes()
       val rhsBytes = rhs.readAllBytes()
-      lhs.reset()
-      rhs.reset()
       lhsBytes.contentEquals(rhsBytes)
     }
     else -> lhs == rhs
