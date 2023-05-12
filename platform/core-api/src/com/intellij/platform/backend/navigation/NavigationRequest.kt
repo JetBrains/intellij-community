@@ -30,7 +30,7 @@ interface NavigationRequest {
     @RequiresBackgroundThread
     @JvmStatic
     fun sourceNavigationRequest(project: Project, file: VirtualFile, offset: Int): NavigationRequest? {
-      return NavigationRequests.getInstance().sourceNavigationRequest(project, file, offset)
+      return NavigationRequests.getInstance().sourceNavigationRequest(project, file, offset, elementRange = null)
     }
 
     /**
@@ -42,7 +42,12 @@ interface NavigationRequest {
     @JvmStatic
     fun sourceNavigationRequest(file: PsiFile, elementRange: TextRange): NavigationRequest? {
       val virtualFile = file.virtualFile ?: return null
-      return NavigationRequests.getInstance().sourceNavigationRequest(file.project, virtualFile, offset = elementRange.startOffset)
+      return NavigationRequests.getInstance().sourceNavigationRequest(
+        file.project,
+        virtualFile,
+        offset = elementRange.startOffset,
+        elementRange,
+      )
     }
 
     /**

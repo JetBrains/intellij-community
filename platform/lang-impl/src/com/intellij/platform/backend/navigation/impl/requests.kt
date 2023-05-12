@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 class SourceNavigationRequest internal constructor(
   val file: VirtualFile,
   val offsetMarker: RangeMarker?,
+  val elementRangeMarker: RangeMarker?,
 ) : NavigationRequest
 
 @Internal

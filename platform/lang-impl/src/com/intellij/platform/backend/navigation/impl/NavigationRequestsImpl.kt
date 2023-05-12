@@ -5,7 +5,9 @@ import com.intellij.codeInsight.navigation.NavigationUtil.shouldOpenAsNative
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.LazyRangeMarkerFactory
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationRequests
@@ -18,7 +20,7 @@ import com.intellij.psi.util.PsiUtilCore
 
 internal class NavigationRequestsImpl : NavigationRequests {
 
-  override fun sourceNavigationRequest(project: Project, file: VirtualFile, offset: Int): NavigationRequest? {
+  override fun sourceNavigationRequest(project: Project, file: VirtualFile, offset: Int, elementRange: TextRange?): NavigationRequest? {
     ApplicationManager.getApplication().assertReadAccessAllowed()
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     if (!file.isValid) {
@@ -31,7 +33,13 @@ internal class NavigationRequestsImpl : NavigationRequests {
     else {
       null
     }
-    return SourceNavigationRequest(file, offsetMarker)
+    val elementRangeMarker = if (elementRange != null) {
+      FileDocumentManager.getInstance().getDocument(file, project)?.createRangeMarker(elementRange)
+    }
+    else {
+      null
+    }
+    return SourceNavigationRequest(file, offsetMarker, elementRangeMarker)
   }
 
   override fun directoryNavigationRequest(directory: PsiDirectory): NavigationRequest? {
@@ -77,6 +85,7 @@ internal class NavigationRequestsImpl : NavigationRequests {
           navigationElement.project,
           virtualFile,
           navigationElement.textOffset, // this triggers decompiler if [virtualFile] corresponds to a .class file
+          navigationElement.textRange,
         )
       }
     }
