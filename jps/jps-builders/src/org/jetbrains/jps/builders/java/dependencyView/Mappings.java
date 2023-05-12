@@ -225,29 +225,13 @@ public class Mappings {
     }
   }
 
-  @Nullable
-  private ClassFileRepr getReprByName(@NotNull File source, int qName) {
-    final Collection<ClassFileRepr> reprs = myRelativeSourceFilePathToClasses.get(toRelative(source));
-    if (reprs != null) {
-      for (ClassFileRepr repr : reprs) {
-        if (repr.name == qName) {
-          return repr;
-        }
-      }
-    }
-    return null;
-  }
-
   @NotNull
-  private Iterable<ClassRepr> getClassReprsByName(final int qName) {
-    return Iterators.filter(Iterators.map(getReprsByName(qName), repr -> repr instanceof ClassRepr? (ClassRepr)repr : null), Iterators.notNullFilter());
-  }
-
-  @NotNull
-  private Iterable<ClassFileRepr> getReprsByName(int qName) {
+   private <T extends ClassFileRepr> Iterable<T> getReprsByName(int qName, Class<T> selector) {
     return Iterators.unique(Iterators.filter(
-      Iterators.flat(Iterators.map(myClassToRelativeSourceFilePath.get(qName), src -> myRelativeSourceFilePathToClasses.get(src))),
-      repr -> repr.name == qName
+      Iterators.map(
+        Iterators.flat(Iterators.map(myClassToRelativeSourceFilePath.get(qName), src -> myRelativeSourceFilePathToClasses.get(src))),
+        repr -> repr.name == qName && selector.isInstance(repr)? selector.cast(repr) : null
+      ), Iterators.notNullFilter()
     ));
   }
 
@@ -339,7 +323,7 @@ public class Mappings {
       if (acc.contains(reflcass)) {
         return acc; // SOE prevention
       }
-      final Iterable<ClassRepr> reprs = classReprsByName(reflcass);
+      final Iterable<ClassRepr> reprs = reprsByName(reflcass, ClassRepr.class);
       if (!Iterators.isEmpty(reprs)) {
         if (!root) {
 
@@ -415,7 +399,7 @@ public class Mappings {
       }
       final IntSet _visitedClasses = visitedClasses;
       subClasses.forEach(subClassName -> {
-        Iterable<ClassRepr> reprs = classReprsByName(subClassName);
+        Iterable<ClassRepr> reprs = reprsByName(subClassName, ClassRepr.class);
         if (!Iterators.isEmpty(reprs)) {
           Iterable<Pair<MethodRepr, ClassRepr>> overriding = Iterators.filter(Iterators.map(reprs, r -> {
             for (MethodRepr mm : r.findMethods(predicate)) {
@@ -471,7 +455,7 @@ public class Mappings {
         if (!visitedClasses.add(superName.className) || superName.className == myObjectClassName) {
           continue;
         }
-        for (ClassRepr superClass : classReprsByName(superName.className)) {
+        for (ClassRepr superClass : reprsByName(superName.className, ClassRepr.class)) {
           for (MethodRepr mm : superClass.findMethods(predicate)) {
             if (isVisibleIn(superClass, mm, fromClass)) {
               return true;
@@ -494,7 +478,7 @@ public class Mappings {
         if (!visitedClasses.add(superName.className) || superName.className == myObjectClassName) {
           continue;
         }
-        Iterable<ClassRepr> superClasses = classReprsByName(superName.className);
+        Iterable<ClassRepr> superClasses = reprsByName(superName.className, ClassRepr.class);
         if (Iterators.isEmpty(superClasses)) {
           return true;
         }
@@ -516,7 +500,7 @@ public class Mappings {
         if (!visitedClasses.add(superName.className) || superName.className == myObjectClassName) {
           continue;  // prevent SOE
         }
-        Iterable<ClassRepr> superClasses = classReprsByName(superName.className);
+        Iterable<ClassRepr> superClasses = reprsByName(superName.className, ClassRepr.class);
         if (!Iterators.isEmpty(superClasses)) {
           Iterable<Pair<MethodRepr, ClassRepr>> pairs = Iterators.filter(Iterators.map(superClasses, superClass -> {
             for (MethodRepr mm : superClass.findMethods(predicate)) {
@@ -558,7 +542,7 @@ public class Mappings {
         if (!visitedClasses.add(supername.className) || supername.className == myObjectClassName) {
           continue;
         }
-        for (ClassRepr superClass : classReprsByName(supername.className)) {
+        for (ClassRepr superClass : reprsByName(supername.className, ClassRepr.class)) {
           final FieldRepr ff = superClass.findField(f.name);
           if (ff != null && isVisibleIn(superClass, ff, fromClass)) {
             container.add(Pair.create(ff, superClass));
@@ -579,7 +563,7 @@ public class Mappings {
         if (!visitedClasses.add(supername.className) || supername.className == myObjectClassName) {
           continue;
         }
-        for (ClassRepr superClass : classReprsByName(supername.className)) {
+        for (ClassRepr superClass : reprsByName(supername.className, ClassRepr.class)) {
           final FieldRepr ff = superClass.findField(f.name);
           if (ff != null && isVisibleIn(superClass, ff, fromClass)) {
             return true;
@@ -594,7 +578,7 @@ public class Mappings {
 
     // test if a ClassRepr is a SAM interface
     boolean isLambdaTarget(int name) {
-      for (ClassRepr cls : classReprsByName(name)) {
+      for (ClassRepr cls : reprsByName(name, ClassRepr.class)) {
         if (cls.isInterface()) {
           int amFound = 0;
           for (MethodRepr method : allMethodsRecursively(cls)) {
@@ -623,7 +607,7 @@ public class Mappings {
       return Iterators.flat(Iterators.flat(
         collectRecursively(cls, converter),
         Iterators.map(
-          Iterators.flat(Iterators.map(getAllSubclasses(cls.name), subName -> subName != cls.name? classReprsByName(subName) : Collections.emptyList())),
+          Iterators.flat(Iterators.map(getAllSubclasses(cls.name), subName -> subName != cls.name? reprsByName(subName, ClassRepr.class) : Collections.emptyList())),
           repr -> converter.apply(repr)
         )
       ));
@@ -631,29 +615,19 @@ public class Mappings {
 
     private <T> Iterable<T> collectRecursively(ClassRepr cls, Function<? super ClassRepr, ? extends T> mapper) {
       return Iterators.flat(Iterators.asIterable(mapper.apply(cls)), Iterators.flat(Iterators.map(cls.getSuperTypes(), st -> {
-        return Iterators.flat(Iterators.map(classReprsByName(st.className), cr -> collectRecursively(cr, mapper)));
+        return Iterators.flat(Iterators.map(reprsByName(st.className, ClassRepr.class), cr -> collectRecursively(cr, mapper)));
       })));
     }
 
     @NotNull
-    Iterable<ClassRepr> classReprsByName(final int name) {
-      return Iterators.filter(Iterators.map(reprsByName(name), r -> r instanceof ClassRepr? (ClassRepr)r : null), Iterators.notNullFilter());
-    }
-
-    @NotNull
-    Iterable<ModuleRepr> moduleReprsByName(final int name) {
-      return Iterators.filter(Iterators.map(reprsByName(name), r -> r instanceof ModuleRepr? (ModuleRepr)r : null), Iterators.notNullFilter());
-    }
-
-    @NotNull
-    Iterable<ClassFileRepr> reprsByName(final int name) {
+    <T extends ClassFileRepr> Iterable<T> reprsByName(final int name, Class<T> selector) {
       if (myMappings != null) {
-        Iterable<ClassFileRepr> r = myMappings.getReprsByName(name);
+        Iterable<T> r = myMappings.getReprsByName(name, selector);
         if (!Iterators.isEmpty(r)) {
           return r;
         }
       }
-      return getReprsByName(name);
+      return getReprsByName(name, selector);
     }
 
     @Nullable
@@ -662,7 +636,7 @@ public class Mappings {
         return Boolean.TRUE;
       }
 
-      for (ClassRepr repr : classReprsByName(who)) {
+      for (ClassRepr repr : reprsByName(who, ClassRepr.class)) {
         if (visitedClasses == null) {
           visitedClasses = new IntOpenHashSet();
           visitedClasses.add(who);
@@ -716,7 +690,7 @@ public class Mappings {
     }
 
     boolean isFieldVisible(final int className, final FieldRepr field) {
-      final Iterable<ClassRepr> reprs = classReprsByName(className);
+      final Iterable<ClassRepr> reprs = reprsByName(className, ClassRepr.class);
       if (Iterators.isEmpty(reprs)) {
         return true;
       }
@@ -732,7 +706,7 @@ public class Mappings {
     }
 
     void collectSupersRecursively(final int className, @NotNull final IntSet container) {
-      for (ClassRepr classRepr : classReprsByName(className)) {
+      for (ClassRepr classRepr : reprsByName(className, ClassRepr.class)) {
         final Iterable<TypeRepr.ClassType> supers = classRepr.getSuperTypes();
         boolean added = false;
         for (TypeRepr.ClassType aSuper : supers) {
@@ -772,7 +746,7 @@ public class Mappings {
       if (usages) {
         debug("Class usages affection requested");
 
-        for (ClassRepr classRepr : classReprsByName(className)) {
+        for (ClassRepr classRepr : reprsByName(className, ClassRepr.class)) {
           debug("Added class usage for ", classRepr.name);
           affectedUsages.add(classRepr.createUsage());
           break;
@@ -886,7 +860,7 @@ public class Mappings {
             }
             depNames.forEach(depName -> {
               if (visited.add(depName)) {
-                for (ModuleRepr depRepr : moduleReprsByName(depName)) {
+                for (ModuleRepr depRepr : reprsByName(depName, ModuleRepr.class)) {
                   state.myDependants.add(depName);
                   if (checkTransitive && depRepr.requiresTransitevely(modName)) {
                     next.add(depName);
@@ -1336,13 +1310,13 @@ public class Mappings {
           }
 
           getAllSubclasses(it.name).forEach(subClass -> {
-            Iterable<ClassRepr> reprs = myFuture.classReprsByName(subClass);
+            Iterable<ClassRepr> reprs = myFuture.reprsByName(subClass, ClassRepr.class);
             if (Iterators.isEmpty(reprs)) {
               return;
             }
             final Iterable<File> sourceFileNames = classToSourceFileGet(subClass);
             if (sourceFileNames != null && !containsAll(myCompiledFiles, sourceFileNames)) {
-              for (ClassRepr outerClassRepr : Iterators.flat(Iterators.map(reprs, r -> isEmpty(r.getOuterClassName())? Collections.emptyList() : myFuture.classReprsByName(r.getOuterClassName())))) {
+              for (ClassRepr outerClassRepr : Iterators.flat(Iterators.map(reprs, r -> isEmpty(r.getOuterClassName())? Collections.emptyList() : myFuture.reprsByName(r.getOuterClassName(), ClassRepr.class)))) {
                 if (myFuture.isMethodVisible(outerClassRepr, addedMethod) || myFuture.extendsLibraryClass(outerClassRepr, null)) {
                   ContainerUtil.addAll(myAffectedFiles, sourceFileNames);
                   for (File sourceFileName : sourceFileNames) {
@@ -1422,7 +1396,7 @@ public class Mappings {
         if (!m.isAbstract() && !m.isStatic()) {
           propagated.get().forEach(p -> {
             if (p != it.name) {
-              for (ClassRepr s : myFuture.classReprsByName(p)) {
+              for (ClassRepr s : myFuture.reprsByName(p, ClassRepr.class)) {
                 final Collection<Pair<MethodRepr, ClassRepr>> overridenInS = myFuture.findOverriddenMethods(m, s);
 
                 overridenInS.addAll(overriddenMethods);
@@ -1705,7 +1679,7 @@ public class Mappings {
         state.myAffectedUsages.add(usage);
         // only mark synthetic classes used to implement switch statements: this will limit the number of recompiled classes to those where switch statements on changed enum are used
         state.myUsageConstraints.put(usage, residence -> {
-          for (ClassRepr candidate : myPresent.classReprsByName(residence)) {
+          for (ClassRepr candidate : myPresent.reprsByName(residence, ClassRepr.class)) {
             if (candidate.isSynthetic()) {
               return true;
             }
@@ -1719,7 +1693,7 @@ public class Mappings {
 
         if (!f.isPrivate()) {
           getAllSubclasses(classRepr.name).forEach(subClass -> {
-            final Iterable<ClassRepr> reprs = myFuture.classReprsByName(subClass);
+            final Iterable<ClassRepr> reprs = myFuture.reprsByName(subClass, ClassRepr.class);
             if (!Iterators.isEmpty(reprs)) {
               final Iterable<File> sourceFileNames = classToSourceFileGet(subClass);
               if (sourceFileNames != null && !containsAll(myCompiledFiles, sourceFileNames)) {
@@ -1994,7 +1968,7 @@ public class Mappings {
           if (superClassChanged) {
             myDelta.registerRemovedSuperClass(changedClass.name, changedClass.getSuperClass().className);
 
-            for (ClassRepr newClass : myDelta.getClassReprsByName(changedClass.name)) {
+            for (ClassRepr newClass : myDelta.getReprsByName(changedClass.name, ClassRepr.class)) {
               myDelta.registerAddedSuperClass(changedClass.name, newClass.getSuperClass().className);
             }
           }
@@ -2031,7 +2005,7 @@ public class Mappings {
             if (extendsChanged && directDeps != null) {
               final TypeRepr.ClassType excClass = TypeRepr.createClassType(myContext, changedClass.name);
               directDeps.forEach(depClass -> {
-                for (ClassRepr depClassRepr : myPresent.classReprsByName(depClass)) {
+                for (ClassRepr depClassRepr : myPresent.reprsByName(depClass, ClassRepr.class)) {
                   myPresent.affectMethodUsagesThrowing(depClassRepr, excClass, state.myAffectedUsages, state.myDependants);
                 }
               });
@@ -2567,7 +2541,7 @@ public class Mappings {
           myPresent.affectDependentModules(state, moduleRepr.name, new UsageConstraint() {
             @Override
             public boolean checkResidence(int dep) {
-              for (ModuleRequiresRepr requires : Iterators.flat(Iterators.map(myPresent.moduleReprsByName(dep), depModule -> depModule.getRequires()))) {
+              for (ModuleRequiresRepr requires : Iterators.flat(Iterators.map(myPresent.reprsByName(dep, ModuleRepr.class), depModule -> depModule.getRequires()))) {
                 if (requires.name == moduleRepr.name && requires.getVersion() == version) {
                   return true;
                 }
@@ -2669,7 +2643,7 @@ public class Mappings {
 
   private void cleanupBackDependency(final int className, @Nullable Iterable<? extends UsageRepr.Usage> usages, final IntIntMultiMaplet buffer) {
     if (usages == null) {
-      usages = Iterators.flat(Iterators.map(getReprsByName(className), repr -> repr.getUsages()));
+      usages = Iterators.flat(Iterators.map(getReprsByName(className, ClassFileRepr.class), repr -> repr.getUsages()));
     }
     for (Integer owner : Iterators.unique(Iterators.map(usages, usage -> usage.getOwner()))) {
       if (owner != className) {
