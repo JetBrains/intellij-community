@@ -300,8 +300,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   protected boolean shouldPaintFadeout() {
-    return !Registry.is("ui.no.bangs.and.whistles", false)
-           && myTabs.isSingleRow() && !isHovered() && !isSelected();
+    return !Registry.is("ui.no.bangs.and.whistles", false) && myTabs.isSingleRow();
   }
 
   protected void paintFadeout(final Graphics g) {
