@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,7 +24,7 @@ import java.util.Map;
  * @see com.intellij.openapi.components.PathMacroManager
  */
 public final class ReplacePathToMacroMap extends PathMacroMap {
-  private List<String> myPathsIndex = null;
+  private List<String> pathIndex = null;
   private final Map<String, String> myMacroMap = new LinkedHashMap<>();
 
   public static final String[] PROTOCOLS;
@@ -70,7 +70,7 @@ public final class ReplacePathToMacroMap extends PathMacroMap {
 
   @Override
   public @NotNull String substitute(@NotNull String text, boolean caseSensitive) {
-    for (final String path : getPathIndex()) {
+    for (String path : getPathIndex()) {
       text = replacePathMacro(text, path, caseSensitive);
     }
     return text;
@@ -86,7 +86,7 @@ public final class ReplacePathToMacroMap extends PathMacroMap {
     }
 
     //check that this is complete path (ends with "/" or "!/")
-    // do not collapse partial paths, i.e. do not substitute "/a/b/cd" in paths like "/a/b/cdeFgh"
+    // do not collapse partial paths, i.e., do not substitute "/a/b/cd" in paths like "/a/b/cdeFgh"
     int endOfOccurrence = path.length();
     final boolean isWindowsRoot = path.endsWith(":/");
     if (!isWindowsRoot &&
@@ -146,7 +146,7 @@ public final class ReplacePathToMacroMap extends PathMacroMap {
         }
       }
       if (occurrenceOfPath < 0) {
-        if (newText.length() == 0) {
+        if (newText.isEmpty()) {
           return text;
         }
         newText.append(text, i, text.length());
@@ -185,8 +185,8 @@ public final class ReplacePathToMacroMap extends PathMacroMap {
   }
 
   private @NotNull List<String> getPathIndex() {
-    if (myPathsIndex != null && myPathsIndex.size() == myMacroMap.size()) {
-      return myPathsIndex;
+    if (pathIndex != null && pathIndex.size() == myMacroMap.size()) {
+      return pathIndex;
     }
 
     List<Map.Entry<String, String>> entries = new ArrayList<>(myMacroMap.entrySet());
@@ -197,8 +197,8 @@ public final class ReplacePathToMacroMap extends PathMacroMap {
     }
 
     entries.sort((o1, o2) -> weights.getInt(o2.getKey()) - weights.getInt(o1.getKey()));
-    myPathsIndex = ContainerUtil.map(entries, entry -> entry.getKey());
-    return myPathsIndex;
+    pathIndex = ContainerUtil.map(entries, entry -> entry.getKey());
+    return pathIndex;
   }
 
   public boolean equals(Object obj) {
@@ -217,6 +217,6 @@ public final class ReplacePathToMacroMap extends PathMacroMap {
 
   @Override
   public String toString() {
-    return "macroMap: " + myMacroMap + "\n\npathsIndex: " + StringUtil.join(myPathsIndex, "\n");
+    return "macroMap: " + myMacroMap + "\n\npathsIndex: " + StringUtil.join(pathIndex, "\n");
   }
 }
