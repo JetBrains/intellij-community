@@ -488,11 +488,6 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     val MutableEntityStorage.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
       get() = getMutableExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
-    @JvmStatic
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use ModuleBridgeUtils#findModuleEntity instead")
-    fun EntityStorage.findModuleEntity(module: ModuleBridge) = moduleMap.getFirstEntity(module) as ModuleEntity?
-
     fun fireModulesAdded(project: Project, modules: List<Module>) {
       project.messageBus.syncPublisher(ProjectTopics.MODULES).modulesAdded(project, modules)
     }
