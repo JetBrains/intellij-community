@@ -8,20 +8,31 @@ import org.jetbrains.kotlin.analysis.project.structure.KtNotUnderContentRootModu
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService
+import org.jetbrains.uast.kotlin.internal.util.ReadActionSingleValueCache
 import org.jetbrains.uast.kotlin.unwrapFakeFileForLightClass
 
 class FirIdeaKotlinUastResolveProviderService : FirKotlinUastResolveProviderService {
+    /**
+     * A [ReadActionSingleValueCache] is appropriate for UAST conversions because elements from the same file are checked together. The
+     * read-action cache allows us to avoid cache invalidation after module or target platform changes, and also to use the [KtFile] as a
+     * key without worrying about smart pointers.
+     */
+    private val supportedFileCache = ReadActionSingleValueCache(::isSupportedFile)
+
     override fun isSupportedElement(psiElement: PsiElement): Boolean {
-        if (!psiElement.isJvmElement) {
+        val file = psiElement.containingFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
+        return supportedFileCache.getCachedOrEvaluate(file)
+    }
+
+    private fun isSupportedFile(file: KtFile): Boolean {
+        if (!file.isJvmElement) {
             return false
         }
 
-        val containingFile = psiElement.containingFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
-
-        // `getKtModule` can be slow (KTIJ-25470). Since most files will be in a module or library, we can optimize this hot path using
-        // `ProjectFileIndex`.
-        val project = containingFile.project
-        val virtualFile = containingFile.virtualFile
+        // Since most files will be in a module or library, we can optimize this hot path using `ProjectFileIndex`, instead of using the
+        // more expensive `getKtModule`.
+        val project = file.project
+        val virtualFile = file.virtualFile
         if (virtualFile != null) {
             val fileIndex = ProjectRootManager.getInstance(project).fileIndex
             if (fileIndex.isInSourceContent(virtualFile) || fileIndex.isInLibrary(virtualFile)) {
@@ -30,6 +41,6 @@ class FirIdeaKotlinUastResolveProviderService : FirKotlinUastResolveProviderServ
         }
 
         // The checks above might not work in all possible situations (e.g. scripts) and `getKtModule` is able to give a definitive answer.
-        return containingFile.getKtModule(project) !is KtNotUnderContentRootModule
+        return file.getKtModule(project) !is KtNotUnderContentRootModule
     }
 }
