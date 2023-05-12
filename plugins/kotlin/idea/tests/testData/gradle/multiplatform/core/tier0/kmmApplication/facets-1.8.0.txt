@@ -7,7 +7,7 @@ project.androidTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonTest
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 project.commonMain
     externalProjectId = project
@@ -79,7 +79,7 @@ project.main
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonMain
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 project.unitTest
     externalProjectId = project
@@ -87,4 +87,4 @@ project.unitTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonTest
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
