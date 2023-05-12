@@ -105,6 +105,7 @@
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.ContextSimilarityFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.RecentPlacesFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.codeInsight.completion.ml.VcsFeatureProvider"/>
+    <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.templates.LiveTemplateUsageFeatureProvider"/>
 
     <lookup.usageDetails implementation="com.intellij.completion.ml.features.MLRankingLookupUsageDescriptor"/>
     <statistics.collectorExtension implementation="com.intellij.completion.ml.features.MLRankingLookupUsageDescriptor$MLRankingCompletionCollectorExtension"/>
