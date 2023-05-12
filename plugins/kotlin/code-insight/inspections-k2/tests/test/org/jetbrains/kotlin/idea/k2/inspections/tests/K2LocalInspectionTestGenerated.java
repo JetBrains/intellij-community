@@ -332,9 +332,24 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/callInsideEnumWithoutCast.kt");
         }
 
+        @TestMetadata("callOnImportAlias.kt")
+        public void testCallOnImportAlias() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/callOnImportAlias.kt");
+        }
+
+        @TestMetadata("callOnTypealias.kt")
+        public void testCallOnTypealias() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/callOnTypealias.kt");
+        }
+
         @TestMetadata("callWithQualifiedClassName.kt")
         public void testCallWithQualifiedClassName() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/callWithQualifiedClassName.kt");
+        }
+
+        @TestMetadata("customValuesFunction.kt")
+        public void testCustomValuesFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/customValuesFunction.kt");
         }
 
         @TestMetadata("equalsCheck.kt")
@@ -412,9 +427,9 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/methodReferenceSuitableForList.kt");
         }
 
-        @TestMetadata("noOptIn.kt")
-        public void testNoOptIn() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/noOptIn.kt");
+        @TestMetadata("notEnum.kt")
+        public void testNotEnum() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/notEnum.kt");
         }
 
         @TestMetadata("objectMethod.kt")
