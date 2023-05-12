@@ -26,7 +26,7 @@ public interface FileDocumentManagerListener extends EventListener {
   ExtensionPointName<FileDocumentManagerListener> EP_NAME = new ExtensionPointName<>("com.intellij.fileDocumentManagerListener");
 
   /**
-   * Fired before processing FileDocumentManager.saveAllDocuments(). Can be used by plugins
+   * Fired before processing {@link FileDocumentManager#saveAllDocuments()}. Can be used by plugins
    * which need to perform additional save operations when documents, rather than settings,
    * are saved.
    */
@@ -34,7 +34,7 @@ public interface FileDocumentManagerListener extends EventListener {
   }
 
   /**
-   * Fired before processing FileDocumentManager.saveDocument(document).
+   * Fired before processing {@link FileDocumentManager#saveDocument(Document)}.
    * Fired even document is unchanged.
    */
   default void beforeAnyDocumentSaving(@NotNull Document document, boolean explicit) {
