@@ -110,7 +110,7 @@ private suspend fun doInitApplication(rawArgs: List<String>,
 
     euaTaskDeferred?.await()?.invoke()
 
-    // executed in the main scope
+    // executed in the main scope with a sequential dispatcher
     launch {
       loadIconMapping?.join()
       val lafManagerDeferred = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
