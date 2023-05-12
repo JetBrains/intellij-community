@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.util.ReadActionCache
 import com.intellij.util.ProcessingContext
 
-class ReadActionCacheIml : ReadActionCache {
+class ReadActionCacheImpl : ReadActionCache {
 
   private val threadProcessingContext: ThreadLocal<ProcessingContext> = ThreadLocal()
 
