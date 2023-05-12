@@ -258,44 +258,6 @@ public final class VcsUtil {
     return fileType.getIcon();
   }
 
-  /**
-   * @return Return true if the "Change" object is created for "Rename" operation:
-   * in this case name of files for "before" and "after" revisions must not coincide.
-   * @deprecated See {@link Change#getType()}
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isRenameChange(Change change) {
-    boolean isRenamed = false;
-    ContentRevision before = change.getBeforeRevision();
-    ContentRevision after = change.getAfterRevision();
-    if (before != null && after != null) {
-      String prevFile = getCanonicalLocalPath(before.getFile().getPath());
-      String newFile = getCanonicalLocalPath(after.getFile().getPath());
-      isRenamed = !prevFile.equals(newFile);
-    }
-    return isRenamed;
-  }
-
-  /**
-   * @return Return true if the "Change" object is created for "New" operation:
-   * "before" revision is NULL, while "after" revision is NOT NULL.
-   * @deprecated See {@link Change#getType()}
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isChangeForNew(Change change) {
-    return change.getBeforeRevision() == null && change.getAfterRevision() != null;
-  }
-
-  /**
-   * @return Return true if the "Change" object is created for "Delete" operation:
-   * "before" revision is NOT NULL, while "after" revision is NULL.
-   * @deprecated See {@link Change#getType()}
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isChangeForDeleted(Change change) {
-    return change.getBeforeRevision() != null && change.getAfterRevision() == null;
-  }
-
   public static boolean isChangeForFolder(Change change) {
     ContentRevision revB = change.getBeforeRevision();
     ContentRevision revA = change.getAfterRevision();

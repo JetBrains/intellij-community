@@ -29,8 +29,7 @@ public abstract class AbstractVcsAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    //noinspection deprecation - required for compatibility with external plugins.
-    performUpdate(e.getPresentation(), VcsContextWrapper.createInstanceOn(e));
+    update(VcsContextWrapper.createInstanceOn(e), e.getPresentation());
   }
 
   @Override
@@ -41,22 +40,4 @@ public abstract class AbstractVcsAction extends DumbAwareAction {
   protected abstract void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation);
 
   protected abstract void actionPerformed(@NotNull VcsContext e);
-
-  /**
-   * @deprecated Only sync update is currently supported by {@link AbstractVcsAction}.
-   */
-  @SuppressWarnings("unused") // Required for compatibility with external plugins.
-  @Deprecated(forRemoval = true)
-  protected boolean forceSyncUpdate(@NotNull AnActionEvent e) {
-    return true;
-  }
-
-
-  /**
-   * @deprecated Use {@link AbstractVcsAction#update(VcsContext, Presentation)}.
-   */
-  @Deprecated(forRemoval = true)
-  protected void performUpdate(@NotNull Presentation presentation, @NotNull VcsContext vcsContext) {
-    update(vcsContext, presentation);
-  }
 }

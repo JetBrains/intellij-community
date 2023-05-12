@@ -237,14 +237,6 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * @deprecated dead code
-   */
-  @Deprecated(forRemoval = true)
-  public boolean markExternalChangesAsUpToDate() {
-    return false;
-  }
-
-  /**
    * Returns the interface for performing checkin / commit / submit operations.
    *
    * @return the checkin interface, or null if checkins are not supported by the VCS.
