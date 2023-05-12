@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+EnumEntries -opt-in=kotlin.ExperimentalStdlibApi
+// WITH_STDLIB
+package com.example
+
+import com.example.EnumClass
+import com.example.EnumClass as EnumClassImportAlias
+
+enum class EnumClass
+
+fun foo() {
+    // Preserving original import alias after quick fix is not supported
+    EnumClass.entries
+}
