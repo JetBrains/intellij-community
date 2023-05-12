@@ -147,16 +147,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
     val pluginSet = loadedModuleFuture.asCompletableFuture().get(40, TimeUnit.SECONDS)
     app.registerComponents(modules = pluginSet.getEnabledModules(), app = app, precomputedExtensionModel = null, listenerCallbacks = null)
 
-    if (EDT.isCurrentThreadEdt()) {
-      runBlockingModalWithRawProgressReporter(ModalTaskOwner.guess(), "") {
-        initConfigurationStore(app)
-      }
-    }
-    else {
-      runBlocking(Dispatchers.Default) {
-        initConfigurationStore(app)
-      }
-    }
+    initConfigurationStore(app)
 
     addKeysFromPlugins()
     Registry.markAsLoaded()

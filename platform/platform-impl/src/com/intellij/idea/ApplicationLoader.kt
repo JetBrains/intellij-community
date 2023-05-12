@@ -230,12 +230,10 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
   }
 }
 
-suspend fun getAppInitializedListeners(app: Application): List<ApplicationInitializedListener> {
+fun getAppInitializedListeners(app: Application): List<ApplicationInitializedListener> {
   val extensionArea = app.extensionArea as ExtensionsAreaImpl
   val point = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
-  val result = withContext(Dispatchers.IO) {
-    point.extensionList
-  }
+  val result = point.extensionList
   point.reset()
   return result
 }
@@ -392,16 +390,14 @@ fun findStarter(key: String): ApplicationStarter? {
   return ApplicationStarter.EP_NAME.findByIdOrFromInstance(key) { it.commandName }
 }
 
-suspend fun initConfigurationStore(app: ApplicationImpl) {
+fun initConfigurationStore(app: ApplicationImpl) {
   var activity = StartUpMeasurer.startActivity("beforeApplicationLoaded")
   val configPath = PathManager.getConfigDir()
 
   for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
-    withContext(Dispatchers.IO) {
-      runCatching {
-        listener.beforeApplicationLoaded(app, configPath)
-      }.getOrLogException(LOG)
-    }
+    runCatching {
+      listener.beforeApplicationLoaded(app, configPath)
+    }.getOrLogException(LOG)
   }
 
   activity = activity.endAndStart("init app store")
