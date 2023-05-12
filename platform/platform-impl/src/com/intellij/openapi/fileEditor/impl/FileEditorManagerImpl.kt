@@ -848,15 +848,6 @@ open class FileEditorManagerImpl(
         closeFile(file)
       }
     }
-
-    if (!ClientId.isCurrentlyUnderLocalId) {
-      val result = (clientFileEditorManager ?: return FileEditorComposite.EMPTY).openFileAsync(file = file, forceCreate = false,
-                                                                                               requestFocus = options.requestFocus)
-      return FileEditorComposite.createFileEditorComposite(allEditors = result.map { it.fileEditor },
-                                                           allProviders = result.map { it.provider },
-                                                           isPreview = options.usePreviewTab)
-    }
-
     return openFileAsync(window = windowToOpenIn, file = getOriginalFile(file), entry = null, options = options)
   }
 
@@ -1054,6 +1045,15 @@ open class FileEditorManagerImpl(
                                     file: VirtualFile,
                                     entry: HistoryEntry?,
                                     options: FileEditorOpenOptions): FileEditorComposite {
+    if (!ClientId.isCurrentlyUnderLocalId) {
+      val result = (clientFileEditorManager ?: return FileEditorComposite.EMPTY).openFileAsync(file = file,
+                                                                                               forceCreate = false,
+                                                                                               requestFocus = options.requestFocus)
+      return FileEditorComposite.createFileEditorComposite(allEditors = result.map { it.fileEditor },
+                                                           allProviders = result.map { it.provider },
+                                                           isPreview = options.usePreviewTab)
+    }
+
     val existingComposite = withContext(Dispatchers.EDT) { window.getComposite(file) }
     return coroutineScope {
       val providers: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>
