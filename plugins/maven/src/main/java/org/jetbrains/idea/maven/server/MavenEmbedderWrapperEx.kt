@@ -9,7 +9,7 @@ import java.util.*
 
 abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(project) {
   @Throws(MavenProcessCanceledException::class)
-  override fun <R> runLongRunningTask(task: LongRunningTask<R>,
+  override fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
                                       progressIndicator: MavenProgressIndicator?): R =
     runBlocking {
       val longRunningTaskId = UUID.randomUUID().toString()

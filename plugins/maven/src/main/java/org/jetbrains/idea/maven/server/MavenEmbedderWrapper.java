@@ -296,11 +296,11 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     myCustomization = null;
   }
 
-  protected abstract <R> R runLongRunningTask(@NotNull LongRunningTask<R> task,
+  protected abstract <R> R runLongRunningTask(@NotNull LongRunningEmbedderTask<R> task,
                                               @Nullable MavenProgressIndicator progressIndicator) throws MavenProcessCanceledException;
 
   @FunctionalInterface
-  protected interface LongRunningTask<R> {
+  protected interface LongRunningEmbedderTask<R> {
     R run(MavenServerEmbedder embedder, String longRunningTaskId) throws RemoteException, MavenServerProcessCanceledException;
   }
 
