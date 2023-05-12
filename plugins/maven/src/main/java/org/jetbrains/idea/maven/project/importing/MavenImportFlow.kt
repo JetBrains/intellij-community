@@ -222,8 +222,7 @@ class MavenImportFlow {
       embeddersManager,
       consoleToBeRemoved,
       context.initialContext.indicator,
-      false,
-      projectManager.forceUpdateSnapshots)
+      false)
 
     return MavenPluginResolvedContext(context.project, context)
   }

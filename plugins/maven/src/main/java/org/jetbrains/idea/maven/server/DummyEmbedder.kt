@@ -50,7 +50,9 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     return MavenArtifactResolveResult(emptyList(), null)
   }
 
-  override fun resolvePlugins(pluginResolutionRequests: Collection<PluginResolutionRequest>, token: MavenToken?): List<PluginResolutionResponse> {
+  override fun resolvePlugins(longRunningTaskId: String,
+                              pluginResolutionRequests: Collection<PluginResolutionRequest>,
+                              token: MavenToken?): List<PluginResolutionResponse> {
     return emptyList()
   }
 

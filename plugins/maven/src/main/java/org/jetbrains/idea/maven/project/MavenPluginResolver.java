@@ -34,8 +34,7 @@ public class MavenPluginResolver {
                              @NotNull MavenEmbeddersManager embeddersManager,
                              @NotNull MavenConsole console,
                              @NotNull MavenProgressIndicator process,
-                             boolean reportUnresolvedToSyncConsole,
-                             boolean forceUpdateSnapshots) throws MavenProcessCanceledException {
+                             boolean reportUnresolvedToSyncConsole) throws MavenProcessCanceledException {
     if (mavenProjects.isEmpty()) return;
 
     var firstProject = sortAndGetFirst(mavenProjects).mavenProject();
@@ -50,7 +49,7 @@ public class MavenPluginResolver {
 
     try {
       var mavenPluginIdsToResolve = collectMavenPluginIdsToResolve(mavenProjects);
-      var resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve);
+      var resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve, process);
       var artifacts = resolutionResults.stream()
         .flatMap(resolutionResult -> resolutionResult.getArtifacts().stream())
         .collect(Collectors.toSet());

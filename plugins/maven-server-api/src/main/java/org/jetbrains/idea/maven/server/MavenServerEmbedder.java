@@ -45,6 +45,7 @@ public interface MavenServerEmbedder extends Remote {
     MavenToken token) throws RemoteException;
 
   List<PluginResolutionResponse> resolvePlugins(
+    @NotNull String longRunningTaskId,
     @NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
     MavenToken token) throws RemoteException;
 

@@ -580,7 +580,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
 
   @Override
-  public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
+  public List<PluginResolutionResponse> resolvePlugins(@NotNull String longRunningTaskId,
+                                                       @NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
                                                        MavenToken token) {
     MavenServerUtil.checkToken(token);
 
@@ -612,12 +613,12 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
 
     boolean runInParallel = false;//canResolveDependenciesInParallel();
-    List<PluginResolutionResponse> results =
-      MavenServerParallelRunner.execute(runInParallel, resolutions, resolution ->
-        resolvePlugin(resolution.mavenPluginId, resolution.pluginDependencies, resolution.remoteRepos, session)
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, resolutions.size())) {
+      List<PluginResolutionResponse> results = MavenServerParallelRunner.execute(runInParallel, resolutions, resolution ->
+        resolvePlugin(task, resolution.mavenPluginId, resolution.pluginDependencies, resolution.remoteRepos, session)
       );
-
-    return results;
+      return results;
+    }
   }
 
   private static class PluginResolutionData {
@@ -635,11 +636,13 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @NotNull
-  private PluginResolutionResponse resolvePlugin(MavenId mavenPluginId,
+  private PluginResolutionResponse resolvePlugin(LongRunningTask task,
+                                                 MavenId mavenPluginId,
                                                  List<Dependency> pluginDependencies,
                                                  List<RemoteRepository> remoteRepos,
                                                  RepositorySystemSession session) {
     List<MavenArtifact> artifacts = new ArrayList<>();
+    if (task.isCanceled()) return new PluginResolutionResponse(mavenPluginId, false, artifacts);
 
     try {
       Plugin plugin = new Plugin();
@@ -667,6 +670,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         }
       }
 
+      task.incrementFinishedRequests();
       return new PluginResolutionResponse(mavenPluginId, true, artifacts);
     }
     catch (Exception e) {

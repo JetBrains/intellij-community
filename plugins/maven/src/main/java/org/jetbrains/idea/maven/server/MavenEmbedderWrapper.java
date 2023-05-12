@@ -197,7 +197,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     return performCancelable(() -> getOrCreateWrappee().resolveArtifactsTransitively(artifacts, remoteRepositories, ourToken));
   }
 
-  public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<Pair<MavenId, NativeMavenProjectHolder>> mavenPluginRequests)
+  public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<Pair<MavenId, NativeMavenProjectHolder>> mavenPluginRequests,
+                                                       @Nullable MavenProgressIndicator progressIndicator)
     throws MavenProcessCanceledException {
     var pluginResolutionRequests = new ArrayList<PluginResolutionRequest>();
     for (var mavenPluginRequest : mavenPluginRequests) {
@@ -212,21 +213,13 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
       }
     }
 
-    try {
-      return getOrCreateWrappee().resolvePlugins(pluginResolutionRequests, ourToken);
-    }
-    catch (RemoteException e) {
-      // do not try to reconnect here since we have lost NativeMavenProjectHolder anyway.
-      handleRemoteError(e);
-      return ContainerUtil.map(mavenPluginRequests, request -> new PluginResolutionResponse(request.first, false, List.of()));
-    }
+    return runLongRunningTask((embedder, taskId) -> embedder.resolvePlugins(taskId, pluginResolutionRequests, ourToken), progressIndicator);
   }
 
-  public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin,
-                                                 @NotNull final NativeMavenProjectHolder nativeMavenProject)
+  public Collection<MavenArtifact> resolvePlugin(@NotNull MavenPlugin plugin, @NotNull NativeMavenProjectHolder nativeMavenProject)
     throws MavenProcessCanceledException {
     MavenId mavenId = plugin.getMavenId();
-    return resolvePlugins(List.of(Pair.create(mavenId, nativeMavenProject))).stream()
+    return resolvePlugins(List.of(Pair.create(mavenId, nativeMavenProject)), null).stream()
       .flatMap(resolutionResult -> resolutionResult.getArtifacts().stream())
       .collect(Collectors.toSet());
   }

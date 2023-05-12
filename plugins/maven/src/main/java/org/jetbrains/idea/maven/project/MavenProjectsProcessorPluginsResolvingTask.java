@@ -34,6 +34,6 @@ public class MavenProjectsProcessorPluginsResolvingTask implements MavenProjects
   @Override
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myResolver.resolvePlugins(myMavenProjects, embeddersManager, console, indicator, true, false);
+    myResolver.resolvePlugins(myMavenProjects, embeddersManager, console, indicator, true);
   }
 }

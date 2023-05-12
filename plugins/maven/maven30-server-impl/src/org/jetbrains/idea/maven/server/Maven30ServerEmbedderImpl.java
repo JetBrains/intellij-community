@@ -994,28 +994,32 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @Override
-  public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
+  public List<PluginResolutionResponse> resolvePlugins(@NotNull String longRunningTaskId,
+                                                       @NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
                                                        MavenToken token) {
     MavenServerUtil.checkToken(token);
     List<PluginResolutionResponse> resolvedPlugins = new ArrayList<>();
-    for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
-      MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
-      resolvedPlugins.add(resolvePlugin(mavenPluginId, pluginResolutionRequest.getNativeMavenProjectId()));
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pluginResolutionRequests.size())) {
+      for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
+        MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
+        resolvedPlugins.add(resolvePlugin(task, mavenPluginId, pluginResolutionRequest.getNativeMavenProjectId()));
+      }
+      return resolvedPlugins;
     }
-    return resolvedPlugins;
   }
 
-  private PluginResolutionResponse resolvePlugin(@NotNull final MavenId pluginId, int nativeMavenProjectId) {
-    List<MavenArtifact> artifacts = new ArrayList<MavenArtifact>();
+  private PluginResolutionResponse resolvePlugin(LongRunningTask task, @NotNull MavenId mavenPluginId, int nativeMavenProjectId) {
+    List<MavenArtifact> artifacts = new ArrayList<>();
+    if (task.isCanceled()) return new PluginResolutionResponse(mavenPluginId, false, artifacts);
 
     try {
       Plugin mavenPlugin = new Plugin();
-      mavenPlugin.setGroupId(pluginId.getGroupId());
-      mavenPlugin.setArtifactId(pluginId.getArtifactId());
-      mavenPlugin.setVersion(pluginId.getVersion());
+      mavenPlugin.setGroupId(mavenPluginId.getGroupId());
+      mavenPlugin.setArtifactId(mavenPluginId.getArtifactId());
+      mavenPlugin.setVersion(mavenPluginId.getVersion());
       MavenProject project = RemoteNativeMaven3ProjectHolder.findProjectById(nativeMavenProjectId);
 
-      Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(pluginId.getGroupId() + ':' + pluginId.getArtifactId());
+      Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(mavenPluginId.getGroupId() + ':' + mavenPluginId.getArtifactId());
       if (pluginFromProject != null) {
         mavenPlugin.setDependencies(pluginFromProject.getDependencies());
       }
@@ -1037,17 +1041,18 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       node.accept(nlg);
 
       for (org.sonatype.aether.artifact.Artifact artifact : nlg.getArtifacts(true)) {
-        if (!Objects.equals(artifact.getArtifactId(), pluginId.getArtifactId()) ||
-            !Objects.equals(artifact.getGroupId(), pluginId.getGroupId())) {
+        if (!Objects.equals(artifact.getArtifactId(), mavenPluginId.getArtifactId()) ||
+            !Objects.equals(artifact.getGroupId(), mavenPluginId.getGroupId())) {
           artifacts.add(Maven3ModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
         }
       }
 
-      return new PluginResolutionResponse(pluginId, true, artifacts);
+      task.incrementFinishedRequests();
+      return new PluginResolutionResponse(mavenPluginId, true, artifacts);
     }
     catch (Exception e) {
       MavenServerGlobals.getLogger().info(e);
-      return new PluginResolutionResponse(pluginId, false, artifacts);
+      return new PluginResolutionResponse(mavenPluginId, false, artifacts);
     }
   }
 
