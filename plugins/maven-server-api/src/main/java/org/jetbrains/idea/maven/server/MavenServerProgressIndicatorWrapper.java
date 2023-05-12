@@ -1,18 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject implements MavenServerConsoleIndicator {
 
-  private final ConcurrentLinkedQueue<MavenArtifactDownloadServerProgressEvent> myPullingQueue
-    = new ConcurrentLinkedQueue<MavenArtifactDownloadServerProgressEvent>();
+  private final ConcurrentLinkedQueue<MavenArtifactDownloadServerProgressEvent> myPullingQueue = new ConcurrentLinkedQueue<>();
 
-  private final ConcurrentLinkedQueue<MavenServerConsoleEvent> myConsoleEventsQueue
-    = new ConcurrentLinkedQueue<MavenServerConsoleEvent>();
+  private final ConcurrentLinkedQueue<MavenServerConsoleEvent> myConsoleEventsQueue = new ConcurrentLinkedQueue<>();
 
   private boolean myCancelled = false;
 
@@ -51,13 +49,13 @@ public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject imple
     myCancelled = true;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public List<MavenArtifactDownloadServerProgressEvent> pullDownloadEvents() {
     return MavenRemotePullUtil.pull(myPullingQueue);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public List<MavenServerConsoleEvent> pullConsoleEvents() {
     return MavenRemotePullUtil.pull(myConsoleEventsQueue);

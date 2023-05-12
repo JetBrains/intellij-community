@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.ExceptionUtilRt;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -26,7 +26,7 @@ public class MavenServerLoggerWrapper extends MavenRemoteObject implements Maven
     myPullingQueue.add(new ServerLogEvent(ServerLogEvent.Type.PRINT, o));
   }
 
-  @Nullable
+  @NotNull
   @Override
   public List<ServerLogEvent> pull() {
     return MavenRemotePullUtil.pull(myPullingQueue);

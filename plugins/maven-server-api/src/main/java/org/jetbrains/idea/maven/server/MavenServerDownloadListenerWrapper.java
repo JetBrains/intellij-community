@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.server;
 
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
@@ -18,7 +18,7 @@ public class MavenServerDownloadListenerWrapper extends MavenRemoteObject
   }
 
   @Override
-  @Nullable
+  @NotNull
   public List<DownloadArtifactEvent> pull() {
     return MavenRemotePullUtil.pull(myPullingQueue);
   }

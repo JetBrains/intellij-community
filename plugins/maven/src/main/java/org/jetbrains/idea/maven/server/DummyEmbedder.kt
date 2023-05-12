@@ -28,12 +28,12 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
 
       override fun isCanceled(): Boolean = false
 
-      override fun pullDownloadEvents(): MutableList<MavenArtifactDownloadServerProgressEvent>? {
-        return null
+      override fun pullDownloadEvents(): MutableList<MavenArtifactDownloadServerProgressEvent> {
+        return mutableListOf()
       }
 
-      override fun pullConsoleEvents(): MutableList<MavenServerConsoleEvent>? {
-        return null
+      override fun pullConsoleEvents(): MutableList<MavenServerConsoleEvent> {
+        return mutableListOf()
       }
 
       override fun cancel() {
