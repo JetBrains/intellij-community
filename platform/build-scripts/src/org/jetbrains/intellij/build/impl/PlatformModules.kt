@@ -17,7 +17,6 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
-import org.jetbrains.intellij.build.impl.PlatformJarNames.RUNTIME_MODULE_REPOSITORY_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.tasks.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.tasks.UTIL_8_JAR
@@ -208,6 +207,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
     "intellij.platform.util.classLoader",
     "intellij.platform.util.zip",
     "intellij.platform.boot",
+    "intellij.platform.runtime.repository",
     "intellij.platform.runtime.loader",
   ), productLayout = productLayout, layout = layout)
   addModule(UTIL_JAR, listOf(
@@ -226,7 +226,6 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   if (!productLayout.excludedModuleNames.contains("intellij.java.guiForms.rt")) {
     layout.withModule("intellij.java.guiForms.rt", "forms_rt.jar")
   }
-  addModule(RUNTIME_MODULE_REPOSITORY_JAR, listOf("intellij.platform.runtime.repository"), productLayout = productLayout, layout = layout)
   addModule("jps-model.jar", listOf(
     "intellij.platform.jps.model",
     "intellij.platform.jps.model.serialization",

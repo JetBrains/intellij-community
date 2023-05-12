@@ -51,9 +51,4 @@ object PlatformJarNames {
    * production classpath. 
    */
   const val TEST_FRAMEWORK_JAR: String = "testFramework.jar"
-  
-  /**
-   * Used for `intellij.platform.runtime.repository` module which is added to the initial classpath when the new modular loader is used.  
-   */
-  internal const val RUNTIME_MODULE_REPOSITORY_JAR: String = "platform-runtime-repository.jar"
 }

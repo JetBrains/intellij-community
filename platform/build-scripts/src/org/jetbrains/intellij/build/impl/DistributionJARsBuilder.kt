@@ -30,7 +30,6 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_CLIENT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
-import org.jetbrains.intellij.build.impl.PlatformJarNames.RUNTIME_MODULE_REPOSITORY_JAR
 import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
@@ -119,7 +118,7 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
           }
         }
         context.bootClassPathJarNames =
-          if (context.useModularLoader) persistentListOf(PLATFORM_LOADER_JAR, RUNTIME_MODULE_REPOSITORY_JAR)
+          if (context.useModularLoader) persistentListOf(PLATFORM_LOADER_JAR)
           else generateClasspath(homeDir = distAllDir, libDir = libDir, antTargetFile = antTargetFile)
         result
       }
