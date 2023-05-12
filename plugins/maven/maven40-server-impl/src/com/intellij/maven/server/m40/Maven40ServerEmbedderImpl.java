@@ -23,6 +23,7 @@ import org.apache.maven.cli.internal.extension.model.CoreExtension;
 import org.apache.maven.execution.*;
 import org.apache.maven.internal.impl.DefaultSession;
 import org.apache.maven.internal.impl.DefaultSessionFactory;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Repository;
@@ -603,7 +604,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       List<RemoteRepository> remoteRepos = project.getRemotePluginRepositories();
 
       Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(groupId + ':' + artifactId);
-      List<org.apache.maven.model.Dependency> pluginDependencies =
+      List<Dependency> pluginDependencies =
         null == pluginFromProject ? Collections.emptyList() : pluginFromProject.getDependencies();
 
       PluginResolutionData resolution = new PluginResolutionData(mavenPluginId, pluginDependencies, remoteRepos);
@@ -621,11 +622,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   private static class PluginResolutionData {
     MavenId mavenPluginId;
-    List<org.apache.maven.model.Dependency> pluginDependencies;
+    List<Dependency> pluginDependencies;
     List<RemoteRepository> remoteRepos;
 
     private PluginResolutionData(MavenId mavenPluginId,
-                                 List<org.apache.maven.model.Dependency> pluginDependencies,
+                                 List<Dependency> pluginDependencies,
                                  List<RemoteRepository> remoteRepos) {
       this.mavenPluginId = mavenPluginId;
       this.pluginDependencies = pluginDependencies;
@@ -635,7 +636,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @NotNull
   private PluginResolutionResponse resolvePlugin(MavenId mavenPluginId,
-                                                 List<org.apache.maven.model.Dependency> pluginDependencies,
+                                                 List<Dependency> pluginDependencies,
                                                  List<RemoteRepository> remoteRepos,
                                                  RepositorySystemSession session) {
     List<MavenArtifact> artifacts = new ArrayList<>();
