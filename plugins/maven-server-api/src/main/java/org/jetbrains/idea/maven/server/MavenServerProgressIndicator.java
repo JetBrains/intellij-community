@@ -19,23 +19,9 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface MavenServerProgressIndicator extends Remote {
-  enum ResolveType {
-    DEPENDENCY,
-    PLUGIN
-  }
-
   void setText(String text) throws RemoteException;
   void setText2(String text) throws RemoteException;
-
-  void startedDownload(ResolveType type, String dependencyId) throws RemoteException;
-
-  void completedDownload(ResolveType type, String dependencyId) throws RemoteException;
-
-  void failedDownload(ResolveType type, String dependencyId, String errorMessage, String stackTrace) throws RemoteException;
-
   boolean isCanceled() throws RemoteException;
-
   void setIndeterminate(boolean value) throws RemoteException;
-
   void setFraction(double fraction) throws RemoteException;
 }

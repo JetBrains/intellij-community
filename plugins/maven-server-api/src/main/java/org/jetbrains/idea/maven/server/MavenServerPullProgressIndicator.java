@@ -8,7 +8,19 @@ import java.rmi.RemoteException;
 import java.util.List;
 
 public interface MavenServerPullProgressIndicator extends Remote {
+  enum ResolveType {
+    DEPENDENCY,
+    PLUGIN
+  }
+  
+  void startedDownload(ResolveType type, String dependencyId) throws RemoteException;
 
+  void completedDownload(ResolveType type, String dependencyId) throws RemoteException;
+
+  void failedDownload(ResolveType type, String dependencyId, String errorMessage, String stackTrace) throws RemoteException;
+
+  boolean isCanceled() throws RemoteException;
+  
   @Nullable
   List<MavenArtifactDownloadServerProgressEvent> pullDownloadEvents() throws RemoteException;
 

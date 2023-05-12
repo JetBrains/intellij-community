@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class Maven3ImporterSpy extends AbstractEventSpy {
 
-  private volatile MavenServerProgressIndicator myIndicator;
+  private volatile MavenServerPullProgressIndicator myIndicator;
   private final Set<String> downloadedArtifacts = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   @Override
@@ -28,14 +28,14 @@ public class Maven3ImporterSpy extends AbstractEventSpy {
       return;
     }
 
-    MavenServerProgressIndicator indicator = myIndicator;
+    MavenServerPullProgressIndicator indicator = myIndicator;
     if (indicator == null) {
       return;
     }
 
     if (event.getType() == RepositoryEvent.EventType.ARTIFACT_DOWNLOADING) {
       String dependencyId = toString(event.getArtifact());
-      indicator.startedDownload(MavenServerProgressIndicator.ResolveType.DEPENDENCY, dependencyId);
+      indicator.startedDownload(MavenServerPullProgressIndicator.ResolveType.DEPENDENCY, dependencyId);
       downloadedArtifacts.add(dependencyId);
     }
     else if (event.getType() == RepositoryEvent.EventType.ARTIFACT_RESOLVED) {
@@ -46,7 +46,7 @@ public class Maven3ImporterSpy extends AbstractEventSpy {
     }
   }
 
-  private static void processResolvedArtifact(RepositoryEvent event, MavenServerProgressIndicator indicator, String dependencyId)
+  private static void processResolvedArtifact(RepositoryEvent event, MavenServerPullProgressIndicator indicator, String dependencyId)
     throws RemoteException {
     if (event.getExceptions() != null && !event.getExceptions().isEmpty()) {
       StringBuilder builder = new StringBuilder();
@@ -55,11 +55,11 @@ public class Maven3ImporterSpy extends AbstractEventSpy {
         builder.append(stackTrace).append("\n");
       }
       indicator
-        .failedDownload(MavenServerProgressIndicator.ResolveType.DEPENDENCY, dependencyId, event.getException().getMessage(),
+        .failedDownload(MavenServerPullProgressIndicator.ResolveType.DEPENDENCY, dependencyId, event.getException().getMessage(),
                         builder.toString());
     }
     else {
-      indicator.completedDownload(MavenServerProgressIndicator.ResolveType.DEPENDENCY, dependencyId);
+      indicator.completedDownload(MavenServerPullProgressIndicator.ResolveType.DEPENDENCY, dependencyId);
     }
   }
 
@@ -72,7 +72,7 @@ public class Maven3ImporterSpy extends AbstractEventSpy {
     return artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getClassifier() + ":" + artifact.getVersion();
   }
 
-  public void setIndicator(MavenServerProgressIndicator indicator) {
+  public void setIndicator(MavenServerPullProgressIndicator indicator) {
     myIndicator = indicator;
   }
 }

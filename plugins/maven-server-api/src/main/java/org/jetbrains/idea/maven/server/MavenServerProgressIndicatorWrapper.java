@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject
-  implements MavenServerProgressIndicator, MavenServerPullProgressIndicator, MavenServerConsole {
+  implements MavenServerPullProgressIndicator, MavenServerConsole {
 
   private final ConcurrentLinkedQueue<MavenArtifactDownloadServerProgressEvent> myPullingQueue
     = new ConcurrentLinkedQueue<MavenArtifactDownloadServerProgressEvent>();
@@ -16,15 +16,6 @@ public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject
     = new ConcurrentLinkedQueue<MavenServerConsoleEvent>();
 
   private boolean myCancelled = false;
-
-
-  @Override
-  public void setText(String text) {
-  }
-
-  @Override
-  public void setText2(String text) {
-  }
 
   @Override
   public void startedDownload(ResolveType type, String dependencyId) {
@@ -56,14 +47,6 @@ public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject
     return myCancelled;
   }
 
-  @Override
-  public void setIndeterminate(boolean value) {
-  }
-
-  @Override
-  public void setFraction(double fraction) {
-  }
-
   @Nullable
   @Override
   public List<MavenArtifactDownloadServerProgressEvent> pullDownloadEvents() {
@@ -79,6 +62,26 @@ public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject
   @Override
   public void printMessage(int level, String message, Throwable throwable) {
     myConsoleEventsQueue.add(new MavenServerConsoleEvent(level, message, throwable));
+  }
+
+  private void printMessage(int level, String message) {
+    printMessage(level, message, null);
+  }
+
+  public void debug(String message) {
+    printMessage(MavenServerConsole.LEVEL_DEBUG, message);
+  }
+
+  public void info(String message) {
+    printMessage(MavenServerConsole.LEVEL_INFO, message);
+  }
+
+  public void warn(String message) {
+    printMessage(MavenServerConsole.LEVEL_WARN, message);
+  }
+
+  public void error(String message) {
+    printMessage(MavenServerConsole.LEVEL_ERROR, message);
   }
 
   @Override

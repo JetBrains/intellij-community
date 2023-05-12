@@ -10,7 +10,7 @@ import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.RepositoryBlockedSyncIssue;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
+import org.jetbrains.idea.maven.server.MavenServerPullProgressIndicator;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -29,13 +29,13 @@ public final class MavenResolveResultProblemProcessor {
     for (MavenProjectProblem projectProblem : problem.repositoryBlockedProblems) {
       if (projectProblem.getDescription() == null) continue;
       BuildIssue buildIssue = RepositoryBlockedSyncIssue.getIssue(project, projectProblem.getDescription());
-      syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
+      syncConsole.getListener(MavenServerPullProgressIndicator.ResolveType.DEPENDENCY)
         .showBuildIssue(buildIssue.getTitle(), buildIssue);
     }
 
     for (MavenProjectProblem projectProblem : problem.unresolvedArtifactProblems) {
       if (projectProblem.getMavenArtifact() == null || projectProblem.getDescription() == null) continue;
-      syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
+      syncConsole.getListener(MavenServerPullProgressIndicator.ResolveType.DEPENDENCY)
         .showArtifactBuildIssue(projectProblem.getMavenArtifact().getMavenId().getKey(), projectProblem.getDescription());
     }
   }
@@ -47,7 +47,7 @@ public final class MavenResolveResultProblemProcessor {
 
     if (message.contains(BLOCKED_MIRROR_FOR_REPOSITORIES)) {
       BuildIssue buildIssue = RepositoryBlockedSyncIssue.getIssue(project, problem.getDescription());
-      syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
+      syncConsole.getListener(MavenServerPullProgressIndicator.ResolveType.DEPENDENCY)
         .showBuildIssue(buildIssue.getTitle(), buildIssue);
     } else if (problem.getMavenArtifact() == null) {
       MavenProjectsManager.getInstance(project).getSyncConsole()
@@ -55,7 +55,7 @@ public final class MavenResolveResultProblemProcessor {
     }
 
     if (problem.getMavenArtifact() != null) {
-      syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
+      syncConsole.getListener(MavenServerPullProgressIndicator.ResolveType.DEPENDENCY)
         .showArtifactBuildIssue(problem.getMavenArtifact().getMavenId().getKey(), message);
     }
   }

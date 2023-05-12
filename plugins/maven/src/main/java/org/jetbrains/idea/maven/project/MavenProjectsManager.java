@@ -68,7 +68,7 @@ import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.project.importing.MavenProjectManagerListenerToBusBridge;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
+import org.jetbrains.idea.maven.server.MavenServerPullProgressIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
@@ -466,12 +466,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myProjectsTreeDispatcher.addListener(new MavenProjectsTree.Listener() {
       @Override
       public void pluginsResolved(@NotNull MavenProject project) {
-        getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN).finish();
+        getSyncConsole().getListener(MavenServerPullProgressIndicator.ResolveType.PLUGIN).finish();
       }
 
       @Override
       public void artifactsDownloaded(@NotNull MavenProject project) {
-        getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY).finish();
+        getSyncConsole().getListener(MavenServerPullProgressIndicator.ResolveType.DEPENDENCY).finish();
       }
     });
   }

@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
+import org.jetbrains.idea.maven.server.MavenServerPullProgressIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -120,7 +120,7 @@ public class MavenPluginResolver {
     if (!unresolvedPluginIds.isEmpty()) {
       for (var mavenPluginId : unresolvedPluginIds) {
         MavenProjectsManager.getInstance(myProject)
-          .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN)
+          .getSyncConsole().getListener(MavenServerPullProgressIndicator.ResolveType.PLUGIN)
           .showArtifactBuildIssue(mavenPluginId.getKey(), null);
       }
     }

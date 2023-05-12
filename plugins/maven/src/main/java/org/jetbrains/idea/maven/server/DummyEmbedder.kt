@@ -14,6 +14,20 @@ import java.io.File
 abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
   override fun getProgressIndicator(token: MavenToken?): MavenServerPullProgressIndicator {
     return object : MavenServerPullProgressIndicator {
+      override fun startedDownload(type: MavenServerPullProgressIndicator.ResolveType?, dependencyId: String?) {
+      }
+
+      override fun completedDownload(type: MavenServerPullProgressIndicator.ResolveType?, dependencyId: String?) {
+      }
+
+      override fun failedDownload(type: MavenServerPullProgressIndicator.ResolveType?,
+                                  dependencyId: String?,
+                                  errorMessage: String?,
+                                  stackTrace: String?) {
+      }
+
+      override fun isCanceled(): Boolean = false
+
       override fun pullDownloadEvents(): MutableList<MavenArtifactDownloadServerProgressEvent>? {
         return null
       }
