@@ -111,13 +111,6 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   }
 
   @Override
-  public Annotation createWeakWarningAnnotation(@NotNull ASTNode node, @NlsContexts.DetailedDescription @Nullable String message) {
-    assertMyFile(node.getPsi());
-    Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
-    return doCreateAnnotation(HighlightSeverity.WEAK_WARNING, node.getTextRange(), message, wrapXml(message), callerClass, "createWeakWarningAnnotation");
-  }
-
-  @Override
   public Annotation createWeakWarningAnnotation(@NotNull TextRange range, @NlsContexts.DetailedDescription String message) {
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.WEAK_WARNING, range, message, wrapXml(message), callerClass, "createWeakWarningAnnotation");
