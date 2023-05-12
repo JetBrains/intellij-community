@@ -90,7 +90,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         catch (ProcessCanceledException | IndexNotReadyException ex) {
           // index corruption detected, ignore
         }
-        catch (Exception ex) {
+        catch (Throwable ex) {
           LOG.error(ex);
         }
         return true;
@@ -240,7 +240,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     catch (ProcessCanceledException ex) {
       // index corruption detected, ignore
     }
-    catch (Exception ex) {
+    catch (Throwable ex) {
       LOG.error(ex);
     }
     return true;
