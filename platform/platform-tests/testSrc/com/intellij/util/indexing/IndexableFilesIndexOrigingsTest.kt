@@ -3,65 +3,21 @@ package com.intellij.util.indexing
 
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.RootsChangeRescanningInfo
-import com.intellij.openapi.roots.*
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.impl.indexing.*
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.*
-import com.intellij.testFramework.UsefulTestCase.assertSize
-import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
-import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
-import com.intellij.util.indexing.roots.SdkIndexableFilesIteratorImpl
-import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
+import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import org.junit.Test
-import java.util.*
-import kotlin.test.assertEquals
 
 @RunsInEdt
-class IndexableFilesIndexOriginsTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
-  @Rule
-  @JvmField
-  val edtRule = EdtRule()
-
-  @Rule
-  @JvmField
-  val projectModelRule = ProjectModelRule()
-
-  @Rule
-  @JvmField
-  val disposableRule = DisposableRule()
-
-  @Rule
-  @JvmField
-  val tempDirectory = TempDirectory()
-
-  val project: Project get() = projectModelRule.project
-
-  @Before
-  fun setUp() {
-    runWriteAction {
-      (IndexableSetContributor.EP_NAME.point as ExtensionPointImpl<*>).unregisterExtensions({ _, _ -> false }, false)
-      (AdditionalLibraryRootsProvider.EP_NAME.point as ExtensionPointImpl<*>).unregisterExtensions({ _, _ -> false }, false)
-    }
-  }
-
+class IndexableFilesIndexBasicOriginsTest : IndexableFilesIndexOriginsTestBase() {
   @Test
   fun `origins of files from a module content root`() {
     lateinit var contentFile: FileSpec
@@ -91,12 +47,11 @@ class IndexableFilesIndexOriginsTest {
         }
       }
     }
-    assertOrigin(contentFile, createModuleContentOrigin(contentRoot, module))
-    assertOrigin(sourceFile, createModuleContentOrigin(sourceRoot, module))
-    assertOrigin(testFile, createModuleContentOrigin(testRoot, module))
-    assertOrigin(testResourceFile, createModuleContentOrigin(testResourceRoot, module))
-    assertOrigin(resourceFile, createModuleContentOrigin(resourceRoot, module))
-    assertOrigin(contentRoot, createModuleContentOrigin(contentRoot, module))
+    assertEveryFileOrigin(createModuleContentOrigin(contentRoot, module), contentFile, contentRoot)
+    assertOrigin(createModuleContentOrigin(sourceRoot, module), sourceFile)
+    assertOrigin(createModuleContentOrigin(testRoot, module), testFile)
+    assertOrigin(createModuleContentOrigin(testResourceRoot, module), testResourceFile)
+    assertOrigin(createModuleContentOrigin(resourceRoot, module), resourceFile)
   }
 
   @Test
@@ -139,12 +94,9 @@ class IndexableFilesIndexOriginsTest {
     val module = projectModelRule.createModule()
     runWriteAction { OrderEntryUtil.addLibraryToRoots(module, library, DependencyScope.RUNTIME, false) }
     val libraryOrigin = createLibraryOrigin(library)
-    assertOrigin(classesDir, libraryOrigin)
-    assertOrigin(classFile, libraryOrigin)
-    assertOrigin(sourcesDir, libraryOrigin)
-    assertOrigin(sourceFile, libraryOrigin)
+    assertEveryFileOrigin(libraryOrigin, classesDir, classFile, sourcesDir, sourceFile)
     assertNoOrigin(excludedClassesDir, excludedClassFile, excludedSourcesDir, excludedSourceFile)
-    assertOrigins(listOf(classFile, classesDir, sourceFile, sourcesDir), listOf(libraryOrigin))
+    assertOrigins(listOf(libraryOrigin), listOf(classFile, classesDir, sourceFile, sourcesDir))
   }
 
   @Test
@@ -177,12 +129,9 @@ class IndexableFilesIndexOriginsTest {
     val module = projectModelRule.createModule()
     ModuleRootModificationUtil.setModuleSdk(module, sdk)
 
-    val sdkOrigin = SdkIndexableFilesIteratorImpl.createIterator(sdk).origin
-    assertOrigin(classesDir, sdkOrigin)
-    assertOrigin(classFile, sdkOrigin)
-    assertOrigin(sourcesDir, sdkOrigin)
-    assertOrigin(sourceFile, sdkOrigin)
-    assertOrigins(listOf(classFile, classesDir, sourcesDir, sourceFile), listOf(sdkOrigin))
+    val sdkOrigin = createSdkOrigin(sdk)
+    assertEveryFileOrigin(sdkOrigin, classesDir, classFile, sourcesDir, sourceFile)
+    assertOrigins(listOf(sdkOrigin), listOf(classFile, classesDir, sourcesDir, sourceFile))
   }
 
   @Test
@@ -214,16 +163,10 @@ class IndexableFilesIndexOriginsTest {
       override fun getAdditionalRootsToIndex(): Set<VirtualFile> =
         setOf(additionalRootsFile)
     }
-    runWriteAction {
-      ExtensionTestUtil.maskExtensions(IndexableSetContributor.EP_NAME, listOf(contributor), disposableRule.disposable)
-      fireRootsChanged()
-    }
-    val appOrigin = createIndexableSetOrigin(contributor, null)
-    assertOrigin(additionalRoots, appOrigin)
-    assertOrigin(additionalRootJava, appOrigin)
-    val projectOrigin = createIndexableSetOrigin(contributor, project)
-    assertOrigin(additionalProjectRoots, projectOrigin)
-    assertOrigin(additionalProjectRootJava, projectOrigin)
+    maskIndexableSetContributors(contributor)
+
+    assertEveryFileOrigin(createIndexableSetOrigin(contributor, null), additionalRoots, additionalRootJava)
+    assertEveryFileOrigin(createIndexableSetOrigin(contributor, project), additionalProjectRoots, additionalProjectRootJava)
   }
 
   @Test
@@ -276,85 +219,58 @@ class IndexableFilesIndexOriginsTest {
       }
     }
     val excludedFile = sourceFileExcludedByCondition.file              // load VFS synchronously outside read action
-    val sourcesDirFile = sourcesDir.file                               // load VFS synchronously outside read action
-    val moduleExcludedSourcesDirFile = moduleExcludedSourcesDir.file   // load VFS synchronously outside read action
-    val binariesDirFile = binariesDir.file                             // load VFS synchronously outside read action
-    val moduleExcludedBinariesDirFile = moduleExcludedBinariesDir.file // load VFS synchronously outside read action
-    val sourcesExcludedDirFile = sourcesExcludedDir.file               // load VFS synchronously outside read action
-    val binariesExcludedDirFile = binariesExcludedDir.file             // load VFS synchronously outside read action
-    val syntheticLibrary = SyntheticLibrary.newImmutableLibrary(
-      listOf(sourcesDirFile, moduleExcludedSourcesDirFile),
-      listOf(binariesDirFile, moduleExcludedBinariesDirFile),
-      setOf(sourcesExcludedDirFile, binariesExcludedDirFile)
+    val syntheticLibrary = createAndSetAdditionalLibraryRootProviderWithSingleLibrary(
+      listOf(sourcesDir.file, moduleExcludedSourcesDir.file),
+      listOf(binariesDir.file, moduleExcludedBinariesDir.file),
+      setOf(sourcesExcludedDir.file, binariesExcludedDir.file)
     ) { file -> file == excludedFile }
-    val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
-      override fun getAdditionalProjectLibraries(project: Project): List<SyntheticLibrary> = listOf(syntheticLibrary)
-    }
-    runWriteAction {
-      ExtensionTestUtil.maskExtensions(AdditionalLibraryRootsProvider.EP_NAME, listOf(additionalLibraryRootsProvider),
-                                       disposableRule.disposable)
-      fireRootsChanged()
-    }
 
     val libraryOrigin = createSyntheticLibraryOrigin(syntheticLibrary)
-    assertOrigin(sourceFile, libraryOrigin)
-    assertOrigin(sourcesDir, libraryOrigin)
-    assertOrigin(binariesDir, libraryOrigin)
-    assertOrigin(binaryFile, libraryOrigin)
+    assertEveryFileOrigin(libraryOrigin, sourceFile, sourcesDir, binariesDir, binaryFile,
+                          reIncludedSource, moduleExcludedSourcesDir, reIncludedBinary, moduleExcludedBinariesDir)
     assertNoOrigin(sourceFileExcludedByCondition, sourcesExcludedDir, binariesExcludedDir)
-    assertOrigin(reIncludedSource, libraryOrigin)
-    assertOrigin(moduleExcludedSourcesDir, libraryOrigin)
-    assertOrigin(reIncludedBinary, libraryOrigin)
-    assertOrigin(moduleExcludedBinariesDir, libraryOrigin)
     assertOrigins(
+      listOf(libraryOrigin),
       listOf(
         sourceFile, sourcesDir, binariesDir, binaryFile, sourceFileExcludedByCondition, sourcesExcludedDir, binariesExcludedDir,
         reIncludedSource, moduleExcludedSourcesDir, reIncludedBinary, moduleExcludedBinariesDir
-      ),
-      listOf(libraryOrigin))
+      ))
   }
 
-  private fun createModuleContentOrigin(fileSpec: ContentSpec, module: com.intellij.openapi.module.Module): IndexableSetOrigin =
-    IndexableEntityProviderMethods.createIterators(module, listOf(fileSpec.file)).first().origin
-
-  private fun createLibraryOrigin(library: Library): IndexableSetOrigin =
-    LibraryIndexableFilesIteratorImpl.createIteratorList(library).also { assertSize(1, it) }.first().origin
-
-  private fun createIndexableSetOrigin(contributor: IndexableSetContributor,
-                                       project: Project?): IndexableSetOrigin =
-    IndexableEntityProviderMethods.createForIndexableSetContributor(contributor,
-                                                                    project != null,
-                                                                    project?.let { contributor.getAdditionalProjectRootsToIndex(project) }
-                                                                    ?: contributor.additionalRootsToIndex).also {
-      assertSize(1, it)
-    }.first().origin
-
-  private fun createSyntheticLibraryOrigin(syntheticLibrary: SyntheticLibrary): IndexableSetOrigin =
-    IndexableEntityProviderMethods.createForSyntheticLibrary(syntheticLibrary, syntheticLibrary.allRoots).also {
-      assertSize(1, it)
-    }.first().origin
-
-  private fun assertOrigin(fileSpec: ContentSpec, origin: IndexableSetOrigin) {
-    val origins = IndexableFilesIndex.getInstance(project).getOrigins(Collections.singleton(fileSpec.file))
-    assertEquals(1, origins.size, "Wrong number of origins: $origins")
-    assertEquals(origin, origins.first())
-  }
-
-  private fun assertOrigins(fileSpecs: Collection<ContentSpec>, expectedOrigins: Collection<IndexableSetOrigin>) {
-    val actualOrigins = IndexableFilesIndex.getInstance(project).getOrigins(fileSpecs.map { spec -> spec.file })
-    assertEquals(expectedOrigins, actualOrigins)
-  }
-
-  private fun assertNoOrigin(vararg fileSpecs: ContentSpec) {
-    for (spec in fileSpecs) {
-      val origins = IndexableFilesIndex.getInstance(project).getOrigins(Collections.singleton(spec.file))
-      assert(origins.isEmpty()) { "Found unexpected origins $origins for ${spec.file}" }
+  @Test
+  fun `origins of files from unloaded modules`() {
+    lateinit var contentFileToUnload: FileSpec
+    lateinit var contentRootToUnload: ModuleRootSpec
+    lateinit var contentFileToRetain: FileSpec
+    lateinit var contentRootToRetain: ModuleRootSpec
+    val moduleToUnload = projectModelRule.createJavaModule("moduleToUnload") {
+      contentRootToUnload = content("contentRoot") {
+        contentFileToUnload = file("ContentFileToUnload.java", "class ContentFileToUnload {}")
+      }
     }
-  }
+    val moduleToRetain = projectModelRule.createJavaModule("moduleToRetail") {
+      contentRootToRetain = content("contentRoot") {
+        contentFileToRetain = file("contentFileToRetain.java", "class contentFileToRetain {}")
+      }
+    }
+    val originToRetain = createModuleContentOrigin(contentRootToRetain, moduleToRetain)
+    val originToUnload = createModuleContentOrigin(contentRootToUnload, moduleToUnload)
+    assertOrigins(listOf(originToRetain, originToUnload), listOf(contentFileToUnload, contentFileToRetain))
 
-  private fun fireRootsChanged() {
-    ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.TOTAL_RESCAN)
-  }
+    runBlockingModal(project, "") {
+      ModuleManager.getInstance(project).setUnloadedModules(listOf("moduleToUnload"))
+    }
 
-  private val ContentSpec.file: VirtualFile get() = resolveVirtualFile()
+    assertOrigin(originToRetain, contentFileToRetain)
+    assertNoOrigin(contentFileToUnload, contentRootToUnload)
+
+    runBlockingModal(project, "") {
+      ModuleManager.getInstance(project).setUnloadedModules(emptyList())
+    }
+
+    val newModuleToUnload = projectModelRule.moduleManager.findModuleByName("moduleToUnload")
+    assertThat(newModuleToUnload).isNotNull
+    assertOrigins(listOf(originToRetain, createModuleContentOrigin(contentRootToUnload, newModuleToUnload!!)),
+                  listOf(contentFileToUnload, contentFileToRetain))
+  }
 }
