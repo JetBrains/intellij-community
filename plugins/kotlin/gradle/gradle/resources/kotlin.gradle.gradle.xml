@@ -72,6 +72,9 @@
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.diagnostic.KotlinGradleBuildErrorsChecker"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSCollector"/>
+
+    <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.gradle.GradleKtsVersionCatalogGotoDeclarationHandler"/>
+
   </extensions>
 
   <actions>
