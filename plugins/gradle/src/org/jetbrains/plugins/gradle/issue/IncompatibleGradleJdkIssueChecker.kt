@@ -65,20 +65,15 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
       }
     }
 
-    var isJavaGroovyCompatibilityIssue = false
-    var isJavaByteCodeCompatibilityIssue = false
-    if (javaVersionUsed != null && gradleVersionUsed != null && !isSupported(gradleVersionUsed, javaVersionUsed)) {
-      isJavaGroovyCompatibilityIssue = isJavaGroovyCompatibilityIssue(rootCauseText)
-      isJavaByteCodeCompatibilityIssue = isJavaByteCodeCompatibilityIssue(rootCauseText)
-    }
+    val isUnsupportedJavaVersionForGradle =
+      javaVersionUsed != null && gradleVersionUsed != null && !isSupported(gradleVersionUsed, javaVersionUsed)
 
-    if (!isUnsupportedClassVersionErrorIssue &&
+    if (!isUnsupportedJavaVersionForGradle &&
+        !isUnsupportedClassVersionErrorIssue &&
         !isUnsupportedJavaRuntimeIssue &&
         !isRemovedUnsafeDefineClassMethodInJDK11Issue &&
         !unableToStartDaemonProcessForJDK11 &&
-        !unableToStartDaemonProcessForJDK9 &&
-        !isJavaGroovyCompatibilityIssue &&
-        !isJavaByteCodeCompatibilityIssue) {
+        !unableToStartDaemonProcessForJDK9) {
       return null
     }
 
@@ -101,7 +96,7 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
           .append("Unsupported Java. \n") // title
           .append("Your build is currently configured to use $incompatibleJavaVersion. You need to use at least Java 7.")
       }
-      isJavaGroovyCompatibilityIssue || isJavaByteCodeCompatibilityIssue -> {
+      isUnsupportedJavaVersionForGradle -> {
         issueDescription
           .append("Unsupported Java. \n") // title
           .append("Your build is currently configured to use Java $javaVersionUsed and Gradle ${gradleVersionUsed!!.version}.")
@@ -167,14 +162,6 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
       override val quickFixes = quickFixes
       override fun getNavigatable(project: Project): Navigatable? = null
     }
-  }
-
-  private fun isJavaGroovyCompatibilityIssue(rootCauseText: String): Boolean {
-    return rootCauseText.startsWith("java.lang.NoClassDefFoundError: Could not initialize class org.codehaus.groovy.")
-  }
-
-  private fun isJavaByteCodeCompatibilityIssue(rootCauseText: String): Boolean {
-    return rootCauseText.contains("Unsupported class file major version")
   }
 
   override fun consumeBuildOutputFailureMessage(message: String,
