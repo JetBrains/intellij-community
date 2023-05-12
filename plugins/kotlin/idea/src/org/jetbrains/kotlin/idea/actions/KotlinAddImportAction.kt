@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.completion.ImportableFqNameClassifier
+import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.completion.KotlinStatisticsInfo
 import org.jetbrains.kotlin.idea.completion.isDeprecatedAtCallSite
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress

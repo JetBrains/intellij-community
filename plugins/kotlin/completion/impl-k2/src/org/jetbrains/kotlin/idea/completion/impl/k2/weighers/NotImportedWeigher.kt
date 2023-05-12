@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.idea.completion.ImportableFqNameClassifier
+import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
 import org.jetbrains.kotlin.psi.UserDataProperty
 
 internal object NotImportedWeigher {
