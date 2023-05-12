@@ -67,13 +67,10 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     widget.toolTipText = presentation.description
     val customizer = ProjectWindowCustomizerService.getInstance()
     if (customizer.isActive()) {
-      val projectBasePath = presentation.getClientProperty(projectKey)?.basePath
-      if (projectBasePath != null) {
-        widget.leftIcons = listOf(RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectBasePath, true))
-      }
-      if (customizer.shouldShowGotIt()) {
-        val project = presentation.getClientProperty(projectKey)
-        if (project != null) {
+      val project = presentation.getClientProperty(projectKey)
+      if (project != null) {
+        widget.leftIcons = listOf(customizer.getProjectIcon(project))
+        if (customizer.shouldShowGotIt()) {
           customizer.showGotIt(project, widget)
         }
       }

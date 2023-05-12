@@ -7,6 +7,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -21,6 +22,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.ColorPalette
 import java.awt.*
 import java.awt.geom.Rectangle2D
+import javax.swing.Icon
 import javax.swing.JComponent
 
 @Service
@@ -47,6 +49,24 @@ class ProjectWindowCustomizerService : Disposable {
       JBColor.namedColor("RecentProject.Color8.MainToolbarGradientStart", JBColor(0x954294, 0xC840B9)),
       JBColor.namedColor("RecentProject.Color9.MainToolbarGradientStart", JBColor(0xE75371, 0xD75370))
     )
+
+  fun getProjectIcon(project: Project): Icon {
+    val path = getProjectPath(project)
+    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path, true)
+  }
+
+  private fun getProjectPath(project: Project): String {
+    val recentProjectManager = RecentProjectsManagerBase.getInstanceEx()
+    return recentProjectManager.getProjectPath(project) ?: project.basePath ?: run {
+      thisLogger().warn("Impossible: no path for project $project")
+      ""
+    }
+  }
+
+  private fun getProjectNameForIcon(project: Project): String {
+    val path = getProjectPath(project)
+    return RecentProjectIconHelper.getProjectName(path)
+  }
 
   internal fun update(newValue: Boolean) {
     if (newValue != ourSettingsValue) {
@@ -117,7 +137,7 @@ class ProjectWindowCustomizerService : Disposable {
    */
   fun paint(project: Project, parent: JComponent, g: Graphics): Boolean {
     if (!isActive()) return false
-    val projectPath = project.basePath?.let { RecentProjectIconHelper.getProjectName(it) } ?: return false
+    val projectPath = getProjectNameForIcon(project)
 
     val g2 = g as Graphics2D
     g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
