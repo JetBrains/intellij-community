@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl.nodes;
 
@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.navigation.NavigationRequest;
 import com.intellij.pom.StatePreservingNavigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -37,6 +38,8 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -286,6 +289,17 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   public NavigationItem getNavigationItem() {
     final PsiElement psiElement = extractPsiFromValue();
     return psiElement instanceof NavigationItem ? (NavigationItem) psiElement : null;
+  }
+
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  @Override
+  public @Nullable NavigationRequest navigationRequest() {
+    PsiElement element = extractPsiFromValue();
+    if (element == null) {
+      return null;
+    }
+    return ((NavigationItem)element).navigationRequest();
   }
 
   @Override

@@ -246,6 +246,8 @@
 
     <applicationService serviceInterface="com.intellij.platform.backend.navigation.NavigationRequests"
                         serviceImplementation="com.intellij.platform.backend.navigation.impl.NavigationRequestsImpl"/>
+    <projectService serviceInterface="com.intellij.platform.ide.navigation.NavigationService"
+                    serviceImplementation="com.intellij.platform.ide.navigation.impl.IdeNavigationService"/>
     <applicationService serviceInterface="com.intellij.ide.util.PsiNavigationSupport"
                         serviceImplementation="com.intellij.ide.util.PsiNavigationSupportImpl"/>
 

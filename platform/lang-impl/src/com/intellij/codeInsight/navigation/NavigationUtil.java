@@ -48,6 +48,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
 import com.intellij.util.TextWithIcon;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -222,13 +223,15 @@ public final class NavigationUtil {
     return activateFileIfOpen(project, vFile, element.getTextRange(), searchForOpen, requestFocus);
   }
 
-  private static boolean activateFileIfOpen(
+  @Internal
+  public static boolean activateFileIfOpen(
     @NotNull Project project,
     @NotNull VirtualFile vFile,
     @Nullable TextRange range,
     boolean searchForOpen,
     boolean requestFocus
   ) {
+    EDT.assertIsEdt();
     if (!EditorHistoryManager.getInstance(project).hasBeenOpen(vFile)) {
       return false;
     }

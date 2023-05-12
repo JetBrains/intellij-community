@@ -8,6 +8,12 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
 import org.jetbrains.annotations.ApiStatus.Internal
 
+/**
+ * @param offsetMarker desired caret position, or `null` to keep the position unchanged
+ * @param elementRangeMarker marker of a range, where the existing caret should remain unchanged
+ * if [com.intellij.platform.ide.navigation.NavigationOptions.preserveCaret] is set,
+ * or `null` to change the caret position according to [offsetMarker]
+ */
 @Internal
 class SourceNavigationRequest internal constructor(
   val file: VirtualFile,

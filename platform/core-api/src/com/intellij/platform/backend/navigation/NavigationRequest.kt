@@ -34,6 +34,8 @@ interface NavigationRequest {
     }
 
     /**
+     * @param elementRange is used to determine whether
+     * to preserve the caret if [preserveCaret][com.intellij.platform.ide.navigation.NavigationOptions.preserveCaret] is set
      * @return a request for the navigation to the [start offset][TextRange.getStartOffset] of [elementRange],
      * or `null` if the navigation is not possible for any reason
      */
