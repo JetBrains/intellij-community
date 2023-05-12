@@ -184,7 +184,7 @@ private fun calcTabName(cm: ContentManager, roots: List<VirtualFile>): String {
 private fun getGitRootsFromUser(project: Project): List<VirtualFile> {
   val descriptor = FileChooserDescriptor(false, true, false, true, false, true)
   val virtualFiles = FileChooser.chooseFiles(descriptor, project, null)
-  return virtualFiles.filter { GitUtil.isGitRoot(File(it.path)) }
+  return virtualFiles.filter { GitUtil.isGitRoot(it.toNioPath()) }
 }
 
 private fun selectProjectLog(project: Project,
