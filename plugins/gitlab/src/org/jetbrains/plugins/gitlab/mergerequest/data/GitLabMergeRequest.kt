@@ -217,7 +217,10 @@ internal class LoadedGitLabMergeRequest(
         throw HttpStatusErrorException("Unable to approve Merge Request", statusCode, mergeRequest.toString())
       }
 
-      mergeRequestDetailsState.value = mergeRequestDetailsState.value.copy(approvedBy = mergeRequest.approvedBy)
+      mergeRequestDetailsState.update {
+        it.copy(approvedBy = mergeRequest.approvedBy,
+                userPermissions = it.userPermissions.copy(canApprove = false))
+      }
     }
     discussionsContainer.checkUpdates()
   }
@@ -231,7 +234,10 @@ internal class LoadedGitLabMergeRequest(
         throw HttpStatusErrorException("Unable to unapprove Merge Request", statusCode, mergeRequest.toString())
       }
 
-      mergeRequestDetailsState.value = mergeRequestDetailsState.value.copy(approvedBy = mergeRequest.approvedBy)
+      mergeRequestDetailsState.update {
+        it.copy(approvedBy = mergeRequest.approvedBy,
+                userPermissions = it.userPermissions.copy(canApprove = true))
+      }
     }
     discussionsContainer.checkUpdates()
   }
