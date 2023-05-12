@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -25,6 +26,15 @@ interface NavigationRequests {
   @RequiresReadLock
   @RequiresBackgroundThread
   fun directoryNavigationRequest(directory: PsiDirectory): NavigationRequest?
+
+  /**
+   * Adapted version of [com.intellij.ide.util.EditSourceUtil.getDescriptor].
+   */
+  @Internal
+  @Deprecated("Do not call this function by hand")
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  fun psiNavigationRequest(element: PsiElement): NavigationRequest?
 
   /**
    * @return a request to execute an [arbitrary code][Navigatable.navigate],

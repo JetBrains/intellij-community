@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
@@ -16,6 +16,7 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,8 @@ public final class EditSourceUtil {
     return desc;
   }
 
-  private static PsiElement getNavigatableOriginalElement(@NotNull PsiElement element) {
+  @Internal
+  public static PsiElement getNavigatableOriginalElement(@NotNull PsiElement element) {
     return processAllOriginalElements(element, original -> canNavigate(original) ? original : null);
   }
 

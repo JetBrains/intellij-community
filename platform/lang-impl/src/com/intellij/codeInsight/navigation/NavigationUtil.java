@@ -49,6 +49,7 @@ import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
 import com.intellij.util.TextWithIcon;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,7 +195,8 @@ public final class NavigationUtil {
     return shouldOpenAsNative(virtualFile);
   }
 
-  private static boolean shouldOpenAsNative(@NotNull VirtualFile virtualFile) {
+  @Internal
+  public static boolean shouldOpenAsNative(@NotNull VirtualFile virtualFile) {
     FileType type = virtualFile.getFileType();
     return type instanceof INativeFileType || type instanceof UnknownFileType;
   }
