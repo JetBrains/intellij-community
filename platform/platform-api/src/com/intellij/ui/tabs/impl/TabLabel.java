@@ -312,6 +312,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       int width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200));
 
       Rectangle myRect = getBounds();
+      myRect.height -= borderThickness + (isSelected() ? myTabs.getTabPainter().getTabTheme().getUnderlineHeight() : borderThickness);
       // Fadeout for left part (needed only in top and bottom placements)
       if (myRect.x < 0) {
         Rectangle leftRect = new Rectangle(-myRect.x, borderThickness, width, myRect.height - 2 * borderThickness);
@@ -686,8 +687,10 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   protected @NotNull Color getEffectiveBackground() {
-    return myTabs.getTabPainter().getEffectiveBackground(getInfo().getTabColor(), isSelected(),
-                                                         myTabs.isActiveTabs(getInfo()), isHovered());
+    Color bg = myTabs.getTabPainter().getBackgroundColor();
+    Color customBg = myTabs.getTabPainter().getCustomBackground(getInfo().getTabColor(), isSelected(),
+                                                                myTabs.isActiveTabs(getInfo()), isHovered());
+    return customBg != null ? ColorUtil.alphaBlending(customBg, bg) : bg;
   }
 
   @Override

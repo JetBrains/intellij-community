@@ -21,8 +21,8 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
 
   override fun getBackgroundColor(): Color = theme.background ?: theme.borderColor
 
-  override fun getEffectiveBackground(tabColor: Color?, selected: Boolean, active: Boolean, hovered: Boolean): Color {
-    var bg = getBackgroundColor()
+  override fun getCustomBackground(tabColor: Color?, selected: Boolean, active: Boolean, hovered: Boolean): Color? {
+    var bg: Color? = null
     if (!selected) {
       if (tabColor != null) {
         bg = theme.inactiveColoredTabBackground?.let { inactive ->
@@ -31,16 +31,16 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
       }
 
       if (hovered) {
-        (if (active) theme.hoverBackground else theme.hoverInactiveBackground)?.let {
-          bg = ColorUtil.alphaBlending(it, bg)
+        (if (active) theme.hoverBackground else theme.hoverInactiveBackground)?.let { hover ->
+          bg = bg?.let { ColorUtil.alphaBlending(hover, it) } ?: hover
         }
       }
     }
     else {
-      bg = (tabColor ?: if (active) theme.underlinedTabBackground else theme.underlinedTabInactiveBackground) ?: getBackgroundColor()
+      bg = (tabColor ?: if (active) theme.underlinedTabBackground else theme.underlinedTabInactiveBackground) ?: theme.background
       if (hovered) {
-        (if (active) theme.hoverSelectedBackground else theme.hoverSelectedInactiveBackground).let {
-          bg = ColorUtil.alphaBlending(it, bg)
+        (if (active) theme.hoverSelectedBackground else theme.hoverSelectedInactiveBackground).let { hover ->
+          bg = bg?.let { ColorUtil.alphaBlending(hover, it) } ?: hover
         }
       }
     }
@@ -54,13 +54,15 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
   }
 
   override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
-    val bg = getEffectiveBackground(tabColor, selected = false, active, hovered)
-    g.fill2DRect(rect, bg)
+    getCustomBackground(tabColor, selected = false, active, hovered)?.let {
+      g.fill2DRect(rect, it)
+    }
   }
 
   override fun paintSelectedTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
-    val bg = getEffectiveBackground(tabColor, selected = true, active, hovered)
-    g.fill2DRect(rect, bg)
+    getCustomBackground(tabColor, selected = true, active, hovered)?.let {
+      g.fill2DRect(rect, it)
+    }
 
     //this code smells. Remove when animation is default for all tabs
     if (!JBEditorTabsBorder.hasAnimation() || this !is JBEditorTabPainter) {
