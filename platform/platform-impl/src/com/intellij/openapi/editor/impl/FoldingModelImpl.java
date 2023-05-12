@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.IntPair;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -584,12 +585,13 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   /**
-   * Returns an array of two values. Assuming provided offset is at the start of a visual line, the first value gives adjustment to Y
+   * Returns (prevAdjustment, curAdjustment) pair.
+   * Assuming the provided offset is at the start of a visual line, the first value gives adjustment to Y
    * coordinate of that visual line due to custom fold regions located before (above) that line. The second value gives adjustment to the
-   * height of that particular visual line (due to custom fold region it contains, if it does).
+   * height of that particular visual line (due to the custom fold region it contains (if it does)).
    */
   @ApiStatus.Internal
-  public int[] getCustomRegionsYAdjustment(int offset, int prevFoldRegionIndex) {
+  public @NotNull IntPair getCustomRegionsYAdjustment(int offset, int prevFoldRegionIndex) {
     return myFoldTree.getCustomRegionsYAdjustment(offset, prevFoldRegionIndex);
   }
 

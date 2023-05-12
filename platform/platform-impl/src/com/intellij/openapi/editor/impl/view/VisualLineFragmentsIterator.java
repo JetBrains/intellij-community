@@ -351,8 +351,8 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     }
 
     // returns array of two elements
-    // - first one is visual column,
-    // - second one is 1 if target location is closer to larger columns and 0 otherwise
+    // - first one is a visual column,
+    // - second one is 1 if the target location is closer to larger columns, and 0 otherwise
     int[] xToVisualColumn(float x) {
       if (myDelegate != null) {
         return myDelegate.xToVisualColumn(x);
