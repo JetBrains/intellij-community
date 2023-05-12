@@ -109,6 +109,8 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     myStructure.setSortKey(NodeSortKey.BY_NAME);
     assertTree("""
                  -sortByTime
+                  +dir1
+                  +dir2
                   a.java
                   a.txt
                   b.java
@@ -119,6 +121,8 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     myStructure.setSortKey(NodeSortKey.BY_TIME_ASCENDING);
     assertTree("""
                  -sortByTime
+                  +dir1
+                  +dir2
                   b.txt
                   b.java
                   a.java
@@ -129,6 +133,36 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     myStructure.setSortKey(NodeSortKey.BY_TIME_DESCENDING);
     assertTree("""
                  -sortByTime
+                  +dir1
+                  +dir2
+                  a.txt
+                  a.java
+                  b.java
+                  b.txt
+                 """);
+
+    ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false);
+
+    // Check that folders are still on top because they are considered to have no timestamps:
+
+    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_ASCENDING);
+    myStructure.setSortKey(NodeSortKey.BY_TIME_ASCENDING);
+    assertTree("""
+                 -sortByTime
+                  +dir1
+                  +dir2
+                  b.txt
+                  b.java
+                  a.java
+                  a.txt
+                 """);
+
+    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_DESCENDING);
+    myStructure.setSortKey(NodeSortKey.BY_TIME_DESCENDING);
+    assertTree("""
+                 -sortByTime
+                  +dir1
+                  +dir2
                   a.txt
                   a.java
                   b.java

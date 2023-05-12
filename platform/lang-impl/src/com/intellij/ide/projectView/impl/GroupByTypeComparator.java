@@ -83,8 +83,8 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
           final Comparable<?> timeSortKey1 = node1.getTimeSortKey();
           final Comparable<?> timeSortKey2 = node2.getTimeSortKey();
           int result = settings.getSortKey() == NodeSortKey.BY_TIME_ASCENDING
-                       ? compare(timeSortKey1, timeSortKey2)
-                       : compare(timeSortKey2, timeSortKey1);
+                       ? compare(timeSortKey1, timeSortKey2, false)
+                       : compare(timeSortKey2, timeSortKey1, true);
           if (result != 0) return result;
         }
       }
@@ -140,9 +140,13 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
   }
 
   private static int compare(Comparable<?> key1, Comparable<?> key2) {
+    return compare(key1, key2, true);
+  }
+
+  private static int compare(Comparable<?> key1, Comparable<?> key2, boolean nullsLast) {
     if (key1 == null && key2 == null) return 0;
-    if (key1 == null) return 1;
-    if (key2 == null) return -1;
+    if (key1 == null) return nullsLast ? 1 : -1;
+    if (key2 == null) return nullsLast ? -1 : 1;
     if (key1 instanceof String && key2 instanceof String) {
       return naturalCompare((String)key1, (String)key2);
     }
