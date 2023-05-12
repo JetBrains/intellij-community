@@ -40,11 +40,12 @@ public abstract class VisibleHighlightingPassFactory {
     Point viewPositionStart = editor.logicalPositionToXY(editor.offsetToLogicalPosition(range.getStartOffset()));
     Point viewPositionEnd = editor.logicalPositionToXY(editor.offsetToLogicalPosition(range.getEndOffset()));
     JScrollPane scrollPane = ComponentUtil.getScrollPane(editor.getContentComponent());
-    scrollPane.getViewport().setSize(editor.getContentComponent().getWidth(), Math.max(100, viewPositionEnd.y-viewPositionStart.y));
-
-    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    scrollPane.getViewport().setViewPosition(viewPositionStart);
-    scrollPane.getViewport().setExtentSize(new Dimension(editor.getContentComponent().getWidth(), Math.max(100, viewPositionEnd.y-viewPositionStart.y)));
-    UIUtil.markAsFocused(editor.getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
+    if (scrollPane != null) {
+      scrollPane.getViewport().setSize(editor.getContentComponent().getWidth(), Math.max(100, viewPositionEnd.y - viewPositionStart.y));
+      editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      scrollPane.getViewport().setViewPosition(viewPositionStart);
+      scrollPane.getViewport().setExtentSize(new Dimension(editor.getContentComponent().getWidth(), Math.max(100, viewPositionEnd.y - viewPositionStart.y)));
+      UIUtil.markAsFocused(editor.getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
+    }
   }
 }
