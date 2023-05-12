@@ -80,6 +80,7 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     mini_logger::init(level).expect("Cannot initialize the logger");
     debug!("Executable: {exe_path:?}");
     debug!("Mode: {}", if remote_dev { "remote-dev" } else { "standard" });
+    debug!("Current directory: {:?}", env::current_dir());
 
     debug!("** Preparing launch configuration");
     let configuration = get_configuration(remote_dev, &exe_path.strip_ns_prefix()?).context("Cannot detect a launch configuration")?;
