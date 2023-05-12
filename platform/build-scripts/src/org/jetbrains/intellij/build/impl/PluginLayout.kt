@@ -256,11 +256,6 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
       layout.pluginXmlPatcher = { text, _ -> pluginXmlPatcher.apply(text) }
     }
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated(message = "localizable resources are always put to the module JAR, so there is no need to call this method anymore")
-    fun doNotCreateSeparateJarForLocalizableResources() {
-    }
-
     /**
      * This plugin will be compatible only with exactly the same IDE version.
      * See [org.jetbrains.intellij.build.CompatibleBuildRange.EXACT]
