@@ -55,22 +55,6 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
   }
 
   /**
-   * @deprecated May block UI thread, use {@link ParameterHintsPass#asyncUpdate(PsiElement, Editor)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static void syncUpdate(@NotNull PsiElement element, @NotNull Editor editor) {
-    MethodInfoExcludeListFilter filter = MethodInfoExcludeListFilter.forLanguage(element.getLanguage());
-    ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);
-    try {
-      pass.doCollectInformation(new ProgressIndicatorBase());
-    }
-    catch (IndexNotReadyException e) {
-      return; // cannot update synchronously, hints will be updated after indexing ends by the complete pass
-    }
-    pass.applyInformationToEditor();
-  }
-
-  /**
    * Updates inlays recursively for a given element.
    * Use {@link NonBlockingReadActionImpl#waitForAsyncTaskCompletion() } in tests to wait for the results.
    * <p>

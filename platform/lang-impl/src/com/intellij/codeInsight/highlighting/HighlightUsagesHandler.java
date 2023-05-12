@@ -271,18 +271,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     return null;
   }
 
-  /**
-   * @deprecated Use the overload with TextAttributesKey
-   */
-  @Deprecated(forRemoval = true)
-  public static void highlightRanges(@NotNull HighlightManager highlightManager,
-                                     @NotNull Editor editor,
-                                     @NotNull TextAttributes attributes,
-                                     boolean clearHighlights,
-                                     @NotNull List<? extends TextRange> textRanges) {
-    highlightRanges(highlightManager, editor, attributes, null, clearHighlights, textRanges);
-  }
-
   public static void highlightRanges(@NotNull HighlightManager highlightManager,
                                      @NotNull Editor editor,
                                      @NotNull TextAttributesKey attributesKey,

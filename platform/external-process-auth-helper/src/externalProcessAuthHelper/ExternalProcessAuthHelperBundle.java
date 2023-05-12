@@ -22,12 +22,4 @@ public final class ExternalProcessAuthHelperBundle {
   public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
-
-  /**
-   * @deprecated prefer {@link #message(String, Object...)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull @Nls String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
-    return message(key);
-  }
 }

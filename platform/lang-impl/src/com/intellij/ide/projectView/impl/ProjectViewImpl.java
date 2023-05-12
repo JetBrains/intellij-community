@@ -1261,11 +1261,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
-  public void changeView() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void changeView(@NotNull String viewId) {
     changeView(viewId, null);
   }

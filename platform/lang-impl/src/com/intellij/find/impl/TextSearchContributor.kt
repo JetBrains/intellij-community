@@ -215,7 +215,7 @@ internal class TextSearchContributor(
     private fun enabled() = AdvancedSettings.getBoolean(ADVANCED_OPTION_ID)
 
     class Factory : SearchEverywhereContributorFactory<SearchEverywhereItem> {
-      override fun isAvailable() = enabled()
+      override fun isAvailable(project: Project) = enabled()
       override fun createContributor(event: AnActionEvent) = TextSearchContributor(event)
     }
 
