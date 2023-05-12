@@ -315,7 +315,8 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Right = load("expui/general/right.svg", -1463967493, 2);
     /** 16x16 */ public static final @NotNull Icon RunAnything = load("expui/general/runAnything.svg", 112619201, 2);
     /** 16x16 */ public static final @NotNull Icon Save = load("expui/general/save.svg", 29183196, 2);
-    /** 16x16 */ public static final @NotNull Icon ScrollDown = load("expui/general/scrollDown.svg", -2051028392, 2);
+    /** 16x16 */ public static final @NotNull Icon ScrollDown = load("expui/general/scrollDown.svg", -1547349094, 2);
+    /** 16x16 */ public static final @NotNull Icon ScrollUp = load("expui/general/scrollUp.svg", 194125394, 2);
     /** 16x16 */ public static final @NotNull Icon Search = load("expui/general/search.svg", 253832439, 2);
     /** 20x20 */ public static final @NotNull Icon Search_20x20 = load("expui/general/search@20x20.svg", 677725643, 2);
     /** 16x16 */ public static final @NotNull Icon SeparatorHorizontal = load("expui/general/separatorHorizontal.svg", -1075959730, 2);

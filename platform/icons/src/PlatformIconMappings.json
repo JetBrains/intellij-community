@@ -362,6 +362,7 @@
       "projectWideAnalysisOn.svg": "actions/projectWideAnalysisOn.svg",
       "softWrap.svg": "actions/toggleSoftWrap.svg",
       "scrollDown.svg": "runConfigurations/scroll_down.svg",
+      "scrollUp.svg": "runConfigurations/scroll_up.svg",
       "projectStructure.svg": "general/projectStructure.svg",
       "successDialog.svg": "general/successDialog.svg",
       "successLogin.svg": "general/successLogin.svg",
