@@ -154,7 +154,6 @@ public class MavenServerConnectorImpl extends MavenServerConnectorBase {
       () -> {
         try {
           List<ServerLogEvent> logEvents = logger.pull();
-          if (logEvents == null) return;
           for (ServerLogEvent e : logEvents) {
             switch (e.getType()) {
               case PRINT, INFO -> MavenLog.LOG.info(e.getMessage());
