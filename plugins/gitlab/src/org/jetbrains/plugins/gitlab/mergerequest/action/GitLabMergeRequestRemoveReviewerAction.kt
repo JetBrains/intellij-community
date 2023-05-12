@@ -17,7 +17,7 @@ internal class GitLabMergeRequestRemoveReviewerAction(
 ) : AbstractAction(CollaborationToolsBundle.message("review.details.action.remove.reviewer", reviewer.username)) {
   init {
     scope.launch {
-      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.userCanManageReview) { isBusy, userCanManageReview ->
+      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.userCanManage) { isBusy, userCanManageReview ->
         isEnabled = !isBusy && userCanManageReview
       }
     }

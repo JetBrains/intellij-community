@@ -19,7 +19,7 @@ internal class GitLabMergeRequestReopenAction(
       combineAndCollect(
         reviewFlowVm.isBusy,
         reviewFlowVm.reviewRequestState,
-        reviewFlowVm.userCanManageReview
+        reviewFlowVm.userCanManage
       ) { isBusy, reviewRequestState, userCanManageReview ->
         isEnabled = !isBusy && reviewRequestState == ReviewRequestState.CLOSED && userCanManageReview
       }

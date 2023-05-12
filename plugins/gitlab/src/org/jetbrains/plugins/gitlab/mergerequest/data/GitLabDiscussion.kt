@@ -104,7 +104,7 @@ class LoadedGitLabDiscussion(
       }
       .modelFlow(cs, LOG)
 
-  override val canAddNotes: Boolean = mr.userPermissions.value.createNote
+  override val canAddNotes: Boolean = mr.userPermissions.value.canComment
 
   // a little cheat that greatly simplifies the implementation
   override val resolvable: Boolean = discussionData.notes.first().resolvable

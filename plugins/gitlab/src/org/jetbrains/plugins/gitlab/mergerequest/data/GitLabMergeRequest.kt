@@ -45,7 +45,6 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: Flow<List<GitLabUserDTO>>
   val pipeline: Flow<GitLabPipelineDTO?>
-  val userPermissions: StateFlow<GitLabMergeRequestPermissionsDTO>
   val changes: Flow<GitLabMergeRequestChanges>
 
   val isLoading: Flow<Boolean>
@@ -53,6 +52,8 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val labelEvents: Flow<List<GitLabResourceLabelEventDTO>>
   val stateEvents: Flow<List<GitLabResourceStateEventDTO>>
   val milestoneEvents: Flow<List<GitLabResourceMilestoneEventDTO>>
+
+  val userPermissions: StateFlow<CurrentUserPermissions>
 
   fun refreshData()
 
@@ -71,6 +72,13 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   suspend fun postReview()
 
   suspend fun setReviewers(reviewers: List<GitLabUserDTO>)
+
+  data class CurrentUserPermissions(
+    val canApprove: Boolean,
+    val canMerge: Boolean,
+    val canComment: Boolean,
+    val canUpdate: Boolean
+  )
 }
 
 internal class LoadedGitLabMergeRequest(
@@ -120,7 +128,6 @@ internal class LoadedGitLabMergeRequest(
   override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.approvedBy }
   override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.reviewers }
   override val pipeline: Flow<GitLabPipelineDTO?> = mergeRequestDetailsState.map { it.headPipeline }
-  override val userPermissions: StateFlow<GitLabMergeRequestPermissionsDTO> = mergeRequestDetailsState.mapState(cs) { it.userPermissions }
   override val changes: Flow<GitLabMergeRequestChanges> = mergeRequestDetailsState
     .distinctUntilChangedBy(GitLabMergeRequestFullDetails::diffRefs).map {
       GitLabMergeRequestChangesImpl(project, cs, api, projectMapping, it)
@@ -143,6 +150,12 @@ internal class LoadedGitLabMergeRequest(
 
   private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
   override val isLoading: Flow<Boolean> = _isLoading.asSharedFlow()
+
+  override val userPermissions: StateFlow<GitLabMergeRequest.CurrentUserPermissions> = mergeRequestDetailsState.mapState(cs) {
+    with(it.userPermissions) {
+      GitLabMergeRequest.CurrentUserPermissions(canApprove, canMerge, createNote, updateMergeRequest)
+    }
+  }
 
   init {
     cs.launch(Dispatchers.IO) {
