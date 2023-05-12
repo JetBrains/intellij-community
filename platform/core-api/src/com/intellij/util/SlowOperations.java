@@ -32,7 +32,6 @@ public final class SlowOperations {
 
   public static final String ACTION_UPDATE = "action.update";     // action update in menus, toolbars and popups
   public static final String ACTION_PERFORM = "action.perform";   // user triggered actions
-  public static final String RENDERING = "rendering";             // UI rendering
   public static final String KNOWN_ISSUE = "known-issues";        // known YT issue
   public static final String GENERIC = "generic";                 // generic activity
 
@@ -61,7 +60,7 @@ public final class SlowOperations {
    * To temporarily mute the assertion in cases when it's difficult to rework the code timely,
    * the computation can be wrapped in a named section {@link #startSection}.
    * The assertion inside named sections is turned on/off separately via Registry keys {@code ide.slow.operations.assertion.<sectionName>}
-   * (sections {@link #GENERIC}, {@link #ACTION_PERFORM}, {@link #RENDERING}, ...).
+   * (sections {@link #GENERIC}, {@link #ACTION_PERFORM}, ...).
    * <p/>
    * Action Subsystem<br><br>
    * <l>

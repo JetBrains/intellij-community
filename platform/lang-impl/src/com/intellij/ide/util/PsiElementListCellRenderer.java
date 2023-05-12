@@ -6,7 +6,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,7 +34,10 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.list.TargetPopup;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.*;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.TextWithIcon;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
@@ -253,10 +255,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     removeAll();
     myRightComponentWidth = 0;
 
-    final TextWithIcon itemLocation;
-    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
-      itemLocation = getItemLocation(value);
-    }
+    TextWithIcon itemLocation = getItemLocation(value);
     final JLabel locationComponent;
     final JPanel spacer;
     if (itemLocation == null) {
@@ -278,10 +277,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     }
 
     ListCellRenderer<Object> leftRenderer = createLeftRenderer(list, value);
-    Component result;
-    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
-      result = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    }
+    Component result = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     final Component leftCellRendererComponent = result;
     add(leftCellRendererComponent, LEFT);
     final Color bg = isSelected ? UIUtil.getListSelectionBackground(true) : leftCellRendererComponent.getBackground();
