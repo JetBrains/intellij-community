@@ -2,10 +2,10 @@ package org.jetbrains.idea.maven.server;
 
 import org.codehaus.plexus.logging.Logger;
 
-public class Maven3ServerConsoleLogger extends MavenRemoteObject implements Logger {
+public class Maven3ServerConsoleLogger extends MavenRemoteObject implements Logger, MavenServerConsoleIndicatorWrapper {
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
-  private MavenServerProgressIndicatorWrapper myWrappee;
+  private MavenServerConsoleIndicatorImpl myWrappee;
   private int myThreshold;
 
   void doPrint(int level, String message, Throwable throwable) {
@@ -20,7 +20,8 @@ public class Maven3ServerConsoleLogger extends MavenRemoteObject implements Logg
     }
   }
 
-  public void setWrappee(MavenServerProgressIndicatorWrapper wrappee) {
+  @Override
+  public void setWrappee(MavenServerConsoleIndicatorImpl wrappee) {
     myWrappee = wrappee;
   }
 

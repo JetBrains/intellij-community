@@ -33,9 +33,9 @@ public final class MavenArtifactDownloader {
                                         boolean downloadSources,
                                         boolean downloadDocs,
                                         MavenEmbedderWrapper embedder,
-                                        MavenProgressIndicator p) throws MavenProcessCanceledException {
-    return new MavenArtifactDownloader(project, projectsTree, artifacts, p)
-      .download(mavenProjects, embedder, downloadSources, downloadDocs);
+                                        MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+    return new MavenArtifactDownloader(project, projectsTree, artifacts, indicator)
+      .download(mavenProjects, embedder, downloadSources, downloadDocs, null);
   }
 
   public MavenArtifactDownloader(@NotNull Project project,
@@ -61,8 +61,7 @@ public final class MavenArtifactDownloader {
       var mavenProjectsForBaseDir = entry.getValue();
       var embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir);
       try {
-        embedder.startPullingProgress(console, myProgress);
-        var chunk = download(mavenProjectsForBaseDir, embedder, downloadSources, downloadDocs);
+        var chunk = download(mavenProjectsForBaseDir, embedder, downloadSources, downloadDocs, console);
 
         for (MavenProject each : mavenProjectsForBaseDir) {
           myProjectsTree.fireArtifactsDownloaded(each);
@@ -83,7 +82,8 @@ public final class MavenArtifactDownloader {
   private DownloadResult download(Collection<MavenProject> mavenProjects,
                                   MavenEmbedderWrapper embedder,
                                   boolean downloadSources,
-                                  boolean downloadDocs)
+                                  boolean downloadDocs,
+                                  MavenConsole console)
     throws MavenProcessCanceledException {
     Collection<File> downloadedFiles = new ConcurrentLinkedQueue<>();
     try {
@@ -98,8 +98,8 @@ public final class MavenArtifactDownloader {
                           : MavenProjectBundle.message("maven.downloading.docs"));
       myProgress.setText(caption);
 
-      Map<MavenId, DownloadData> artifacts = collectArtifactsToDownload(mavenProjects, types);
-      return download(embedder, artifacts, downloadedFiles);
+      Map<MavenId, DownloadData> artifacts = collectArtifactsToDownload(mavenProjects, types, console);
+      return download(embedder, artifacts, downloadedFiles, console);
     }
     finally {
       boolean isAsync = !MavenUtil.isMavenUnitTestModeEnabled();
@@ -116,7 +116,8 @@ public final class MavenArtifactDownloader {
   }
 
   private Map<MavenId, DownloadData> collectArtifactsToDownload(Collection<MavenProject> mavenProjects,
-                                                                List<MavenExtraArtifactType> types) {
+                                                                List<MavenExtraArtifactType> types,
+                                                                MavenConsole console) {
     Map<MavenId, DownloadData> result = new HashMap<>();
 
     Set<String> dependencyTypesFromSettings = new HashSet<>();
@@ -165,7 +166,8 @@ public final class MavenArtifactDownloader {
 
   private DownloadResult download(MavenEmbedderWrapper embedder,
                                   Map<MavenId, DownloadData> toDownload,
-                                  Collection<File> downloadedFiles) throws MavenProcessCanceledException {
+                                  Collection<File> downloadedFiles,
+                                  MavenConsole console) throws MavenProcessCanceledException {
     DownloadResult result = new DownloadResult();
     result.unresolvedSources.addAll(toDownload.keySet());
     result.unresolvedDocs.addAll(toDownload.keySet());
@@ -184,7 +186,7 @@ public final class MavenArtifactDownloader {
       }
     }
 
-    var artifacts = embedder.resolveArtifacts(requests, myProgress);
+    var artifacts = embedder.resolveArtifacts(requests, myProgress, console);
     for (var artifact : artifacts) {
       File file = artifact.getFile();
       if (file.exists()) {

@@ -42,14 +42,13 @@ public class MavenPluginResolver {
     process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", firstProject.getDisplayName()));
 
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_PLUGINS_RESOLVE, baseDir);
-    embedder.startPullingProgress(console, process);
 
     Set<MavenId> unresolvedPluginIds;
     Set<Path> filesToRefresh = new HashSet<>();
 
     try {
       var mavenPluginIdsToResolve = collectMavenPluginIdsToResolve(mavenProjects);
-      var resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve, process);
+      var resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve, process, console);
       var artifacts = resolutionResults.stream()
         .flatMap(resolutionResult -> resolutionResult.getArtifacts().stream())
         .collect(Collectors.toSet());

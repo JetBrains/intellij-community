@@ -12,39 +12,6 @@ import org.jetbrains.idea.maven.server.security.MavenToken
 import java.io.File
 
 abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
-  override fun getProgressIndicator(token: MavenToken?): MavenServerConsoleIndicator {
-    return object : MavenServerConsoleIndicator {
-      override fun startedDownload(type: MavenServerConsoleIndicator.ResolveType?, dependencyId: String?) {
-      }
-
-      override fun completedDownload(type: MavenServerConsoleIndicator.ResolveType?, dependencyId: String?) {
-      }
-
-      override fun failedDownload(type: MavenServerConsoleIndicator.ResolveType?,
-                                  dependencyId: String?,
-                                  errorMessage: String?,
-                                  stackTrace: String?) {
-      }
-
-      override fun isCanceled(): Boolean = false
-
-      override fun pullDownloadEvents(): MutableList<MavenArtifactDownloadServerProgressEvent> {
-        return mutableListOf()
-      }
-
-      override fun pullConsoleEvents(): MutableList<MavenServerConsoleEvent> {
-        return mutableListOf()
-      }
-
-      override fun cancel() {
-      }
-
-    }
-  }
-
-  override fun resetProgressIndicator(token: MavenToken?) {
-  }
-
   override fun evaluateEffectivePom(file: File,
                                     activeProfiles: List<String>,
                                     inactiveProfiles: List<String>,
@@ -103,7 +70,7 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     return mutableMapOf()
   }
 
-  override fun getLongRunningTaskStatus(longRunningTaskId: String, token: MavenToken?): LongRunningTaskStatus = LongRunningTaskStatus(0, 0)
+  override fun getLongRunningTaskStatus(longRunningTaskId: String, token: MavenToken?): LongRunningTaskStatus = LongRunningTaskStatus.EMPTY
 
   override fun cancelLongRunningTask(longRunningTaskId: String, token: MavenToken?) = true
 }

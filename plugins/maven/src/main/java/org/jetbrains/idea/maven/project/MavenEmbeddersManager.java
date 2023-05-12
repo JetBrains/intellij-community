@@ -85,7 +85,6 @@ public class MavenEmbeddersManager {
       return;
     }
 
-    embedder.resetProgressIndicator();
     myEmbeddersInUse.remove(embedder);
   }
 
@@ -134,7 +133,6 @@ public class MavenEmbeddersManager {
                       @NotNull MavenProgressIndicator process,
                       @NotNull MavenEmbeddersManager.EmbedderTask task) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = getEmbedder(embedderKind, baseDir);
-    embedder.startPullingProgress(console, process);
     try {
       task.run(embedder);
     }

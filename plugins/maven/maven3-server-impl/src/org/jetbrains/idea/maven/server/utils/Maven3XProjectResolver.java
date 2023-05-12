@@ -53,7 +53,7 @@ public class Maven3XProjectResolver {
   @NotNull private final Maven3XServerEmbedder myEmbedder;
   private final boolean myUpdateSnapshots;
   @NotNull private final Maven3ImporterSpy myImporterSpy;
-  @NotNull private final MavenServerProgressIndicatorWrapper myCurrentIndicator;
+  @NotNull private final MavenServerConsoleIndicatorImpl myCurrentIndicator;
   @Nullable private final MavenWorkspaceMap myWorkspaceMap;
   @NotNull private final MavenEmbedderSettings myEmbedderSettings;
   @NotNull private final Maven3ServerConsoleLogger myConsoleWrapper;
@@ -62,7 +62,7 @@ public class Maven3XProjectResolver {
   public Maven3XProjectResolver(@NotNull Maven3XServerEmbedder embedder,
                                 boolean updateSnapshots,
                                 @NotNull Maven3ImporterSpy importerSpy,
-                                @NotNull MavenServerProgressIndicatorWrapper currentIndicator,
+                                @NotNull MavenServerConsoleIndicatorImpl currentIndicator,
                                 @Nullable MavenWorkspaceMap workspaceMap,
                                 @NotNull MavenEmbedderSettings embedderSettings,
                                 @NotNull Maven3ServerConsoleLogger consoleWrapper,

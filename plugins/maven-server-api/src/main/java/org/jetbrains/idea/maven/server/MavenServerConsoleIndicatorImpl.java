@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject implements MavenServerConsoleIndicator {
+public class MavenServerConsoleIndicatorImpl extends MavenRemoteObject implements MavenServerConsoleIndicator {
 
   private final ConcurrentLinkedQueue<MavenArtifactDownloadServerProgressEvent> myPullingQueue = new ConcurrentLinkedQueue<>();
 

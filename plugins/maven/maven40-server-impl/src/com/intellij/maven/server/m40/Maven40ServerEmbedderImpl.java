@@ -68,8 +68,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -82,8 +80,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   private final Maven40ServerConsoleLogger myConsoleWrapper;
 
   private final Properties mySystemProperties;
-
-  private volatile MavenServerProgressIndicatorWrapper myCurrentIndicator;
 
   private final boolean myAlwaysUpdateSnapshots;
 
@@ -235,15 +231,15 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     List<String> inactiveProfiles = request.getInactiveProfiles();
     MavenWorkspaceMap workspaceMap = request.getWorkspaceMap();
     boolean updateSnapshots = myAlwaysUpdateSnapshots || request.updateSnapshots();
-    Maven40ProjectResolver projectResolver = new Maven40ProjectResolver(
-      this,
-      updateSnapshots,
-      myImporterSpy,
-      myCurrentIndicator,
-      workspaceMap,
-      getLocalRepositoryFile()
-    );
-    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, files.size())) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, files.size(), myConsoleWrapper)) {
+      Maven40ProjectResolver projectResolver = new Maven40ProjectResolver(
+        this,
+        updateSnapshots,
+        myImporterSpy,
+        task.getIndicator(),
+        workspaceMap,
+        getLocalRepositoryFile()
+      );
       try {
         customizeComponents(workspaceMap);
         return projectResolver.resolveProjects(task, files, activeProfiles, inactiveProfiles);
@@ -585,35 +581,34 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                        MavenToken token) {
     MavenServerUtil.checkToken(token);
 
-    MavenExecutionRequest request = createRequest(null, null, null);
-    request.setTransferListener(new Maven40TransferListenerAdapter(myCurrentIndicator));
-
-    DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
-    RepositorySystemSession session = maven.newRepositorySession(request);
-    myImporterSpy.setIndicator(myCurrentIndicator);
-
-    List<PluginResolutionData> resolutions = new ArrayList<>();
-
-    for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
-      MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
-      int nativeMavenProjectId = pluginResolutionRequest.getNativeMavenProjectId();
-
-      String groupId = mavenPluginId.getGroupId();
-      String artifactId = mavenPluginId.getArtifactId();
-
-      MavenProject project = RemoteNativeMaven40ProjectHolder.findProjectById(nativeMavenProjectId);
-      List<RemoteRepository> remoteRepos = project.getRemotePluginRepositories();
-
-      Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(groupId + ':' + artifactId);
-      List<Dependency> pluginDependencies =
-        null == pluginFromProject ? Collections.emptyList() : pluginFromProject.getDependencies();
-
-      PluginResolutionData resolution = new PluginResolutionData(mavenPluginId, pluginDependencies, remoteRepos);
-      resolutions.add(resolution);
-    }
-
     boolean runInParallel = false;//canResolveDependenciesInParallel();
-    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, resolutions.size())) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pluginResolutionRequests.size(), myConsoleWrapper)) {
+      MavenExecutionRequest request = createRequest(null, null, null);
+      request.setTransferListener(new Maven40TransferListenerAdapter(task.getIndicator()));
+
+      DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
+      RepositorySystemSession session = maven.newRepositorySession(request);
+      myImporterSpy.setIndicator(task.getIndicator());
+
+      List<PluginResolutionData> resolutions = new ArrayList<>();
+
+      for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
+        MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
+        int nativeMavenProjectId = pluginResolutionRequest.getNativeMavenProjectId();
+
+        String groupId = mavenPluginId.getGroupId();
+        String artifactId = mavenPluginId.getArtifactId();
+
+        MavenProject project = RemoteNativeMaven40ProjectHolder.findProjectById(nativeMavenProjectId);
+        List<RemoteRepository> remoteRepos = project.getRemotePluginRepositories();
+
+        Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(groupId + ':' + artifactId);
+        List<Dependency> pluginDependencies =
+          null == pluginFromProject ? Collections.emptyList() : pluginFromProject.getDependencies();
+
+        PluginResolutionData resolution = new PluginResolutionData(mavenPluginId, pluginDependencies, remoteRepos);
+        resolutions.add(resolution);
+      }
       List<PluginResolutionResponse> results = MavenServerParallelRunner.execute(runInParallel, resolutions, resolution ->
         resolvePlugin(task, resolution.mavenPluginId, resolution.pluginDependencies, resolution.remoteRepos, session)
       );
@@ -703,7 +698,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                     @NotNull String goal,
                                                     MavenToken token) {
     MavenServerUtil.checkToken(token);
-    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size())) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size(), myConsoleWrapper)) {
       return executeGoal(task, requests, goal);
     }
   }
@@ -836,7 +831,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                               @NotNull Collection<MavenArtifactResolutionRequest> requests,
                                               MavenToken token) {
     MavenServerUtil.checkToken(token);
-    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size())) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size(), myConsoleWrapper)) {
       return doResolveArtifacts(task, requests);
     }
   }
@@ -1077,44 +1072,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   private void resetComponents() {
     try {
       // TODO: implement
-    }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @NotNull
-  @Override
-  public MavenServerConsoleIndicator getProgressIndicator(MavenToken token) {
-    MavenServerUtil.checkToken(token);
-
-    try {
-      myCurrentIndicator = new MavenServerProgressIndicatorWrapper();
-
-      myConsoleWrapper.setWrappee(myCurrentIndicator);
-      try {
-        UnicastRemoteObject.exportObject(myCurrentIndicator, 0);
-      }
-      catch (RemoteException e) {
-        throw new RuntimeException(e);
-      }
-
-      return myCurrentIndicator;
-    }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
-  public void resetProgressIndicator(MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      if (myCurrentIndicator != null) {
-        UnicastRemoteObject.unexportObject(myCurrentIndicator, false);
-      }
-      myCurrentIndicator = null;
-      myConsoleWrapper.setWrappee(null);
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);

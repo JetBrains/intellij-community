@@ -106,8 +106,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   private final Properties mySystemProperties;
 
-  private volatile MavenServerProgressIndicatorWrapper myCurrentIndicator;
-
   private final boolean myAlwaysUpdateSnapshots;
 
   @NotNull private final RepositorySystem myRepositorySystem;
@@ -487,43 +485,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
-  @NotNull
-  @Override
-  public MavenServerConsoleIndicator getProgressIndicator(MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      myCurrentIndicator = new MavenServerProgressIndicatorWrapper();
-      myConsoleWrapper.setWrappee(myCurrentIndicator);
-
-      try {
-        UnicastRemoteObject.exportObject(myCurrentIndicator, 0);
-      }
-      catch (RemoteException e) {
-        throw new RuntimeException(e);
-      }
-
-      return myCurrentIndicator;
-    }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
-  public void resetProgressIndicator(MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      if (myCurrentIndicator != null) {
-        UnicastRemoteObject.unexportObject(myCurrentIndicator, false);
-      }
-      myCurrentIndicator = null;
-      myConsoleWrapper.setWrappee(null);
-    }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
   @Nullable
   @Override
   public String evaluateEffectivePom(@NotNull File file,
@@ -576,7 +537,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     List<String> inactiveProfiles = request.getInactiveProfiles();
     MavenWorkspaceMap workspaceMap = request.getWorkspaceMap();
     boolean updateSnapshots = myAlwaysUpdateSnapshots || request.updateSnapshots();
-    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, files.size())) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, files.size(), myConsoleWrapper)) {
       try {
         customizeComponents(workspaceMap);
         return resolveProjects(task, files, activeProfiles, inactiveProfiles, workspaceMap, updateSnapshots);
@@ -628,7 +589,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
         RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
         if (repositorySession instanceof DefaultRepositorySystemSession) {
           ((DefaultRepositorySystemSession)repositorySession)
-            .setTransferListener(new Maven30TransferListenerAdapter(myCurrentIndicator));
+            .setTransferListener(new Maven30TransferListenerAdapter(task.getIndicator()));
 
           if (workspaceMap != null) {
             ((DefaultRepositorySystemSession)repositorySession).setWorkspaceReader(new Maven30WorkspaceReader(workspaceMap));
@@ -999,7 +960,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                                                        MavenToken token) {
     MavenServerUtil.checkToken(token);
     List<PluginResolutionResponse> resolvedPlugins = new ArrayList<>();
-    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pluginResolutionRequests.size())) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pluginResolutionRequests.size(), myConsoleWrapper)) {
       for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
         MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
         resolvedPlugins.add(resolvePlugin(task, mavenPluginId, pluginResolutionRequest.getNativeMavenProjectId()));
@@ -1060,7 +1021,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   @Override
   public List<MavenArtifact> resolveArtifacts(@NotNull String longRunningTaskId, @NotNull Collection<MavenArtifactResolutionRequest> requests, MavenToken token) {
     MavenServerUtil.checkToken(token);
-    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size())) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size(), myConsoleWrapper)) {
       return resolve(task, requests);
     }
   }
@@ -1133,7 +1094,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                                                     @NotNull String goal,
                                                     MavenToken token) {
     MavenServerUtil.checkToken(token);
-    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size())) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size(), myConsoleWrapper)) {
       return executeGoal(task, requests, goal);
     }
   }

@@ -28,9 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.LongRunningTask;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
 import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
 import org.jetbrains.idea.maven.server.MavenServerParallelRunner;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicatorWrapper;
 
 import java.io.File;
 import java.rmi.RemoteException;
@@ -41,14 +41,14 @@ public class Maven40ProjectResolver {
   @NotNull private final Maven40ServerEmbedderImpl myEmbedder;
   private final boolean myUpdateSnapshots;
   @NotNull private final Maven40ImporterSpy myImporterSpy;
-  @NotNull private final MavenServerProgressIndicatorWrapper myCurrentIndicator;
+  @NotNull private final MavenServerConsoleIndicatorImpl myCurrentIndicator;
   @Nullable private final MavenWorkspaceMap myWorkspaceMap;
   @NotNull private final File myLocalRepositoryFile;
 
   public Maven40ProjectResolver(@NotNull Maven40ServerEmbedderImpl embedder,
                                 boolean updateSnapshots,
                                 @NotNull Maven40ImporterSpy importerSpy,
-                                @NotNull MavenServerProgressIndicatorWrapper currentIndicator,
+                                @NotNull MavenServerConsoleIndicatorImpl currentIndicator,
                                 @Nullable MavenWorkspaceMap workspaceMap,
                                 @NotNull File localRepositoryFile) {
     myEmbedder = embedder;

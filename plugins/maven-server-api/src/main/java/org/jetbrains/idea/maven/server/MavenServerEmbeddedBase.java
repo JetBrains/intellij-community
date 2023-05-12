@@ -11,18 +11,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implements MavenServerEmbedder {
-  private final Map<String, LongRunningTask> myLongRunningTasks = new ConcurrentHashMap<>();
+  private final Map<String, LongRunningTaskImpl> myLongRunningTasks = new ConcurrentHashMap<>();
 
   @NotNull
   @Override
   public LongRunningTaskStatus getLongRunningTaskStatus(@NotNull String longRunningTaskId, MavenToken token) {
     MavenServerUtil.checkToken(token);
 
-    LongRunningTask task = myLongRunningTasks.get(longRunningTaskId);
+    LongRunningTaskImpl task = myLongRunningTasks.get(longRunningTaskId);
 
-    if (null == task) return new LongRunningTaskStatus(0, 0);
+    if (null == task) return LongRunningTaskStatus.EMPTY;
 
-    return new LongRunningTaskStatus(task.getTotalRequests(), task.getFinishedRequests());
+    return new LongRunningTaskStatus(
+      task.getTotalRequests(),
+      task.getFinishedRequests(),
+      task.getIndicator().pullConsoleEvents(),
+      task.getIndicator().pullDownloadEvents()
+    );
   }
 
   @Override
@@ -38,8 +43,10 @@ public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implemen
   }
 
   @NotNull
-  protected LongRunningTask newLongRunningTask(@NotNull String id, int totalRequests) {
-    return new LongRunningTaskImpl(id, totalRequests);
+  protected LongRunningTask newLongRunningTask(@NotNull String id,
+                                               int totalRequests,
+                                               @NotNull MavenServerConsoleIndicatorWrapper indicatorWrapper) {
+    return new LongRunningTaskImpl(id, totalRequests, indicatorWrapper);
   }
 
   protected class LongRunningTaskImpl implements LongRunningTask {
@@ -48,9 +55,18 @@ public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implemen
     private final AtomicInteger myTotalRequests;
     private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
-    public LongRunningTaskImpl(@NotNull String id, int totalRequests) {
+    @NotNull private final MavenServerConsoleIndicatorImpl myIndicator;
+
+    @NotNull private final MavenServerConsoleIndicatorWrapper myIndicatorWrapper;
+
+    public LongRunningTaskImpl(@NotNull String id, int totalRequests, @NotNull MavenServerConsoleIndicatorWrapper indicatorWrapper) {
       myId = id;
       myTotalRequests = new AtomicInteger(totalRequests);
+
+      myIndicator = new MavenServerConsoleIndicatorImpl();
+
+      myIndicatorWrapper = indicatorWrapper;
+      myIndicatorWrapper.setWrappee(myIndicator);
 
       myLongRunningTasks.put(myId, this);
     }
@@ -88,6 +104,12 @@ public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implemen
     @Override
     public void close() {
       myLongRunningTasks.remove(myId);
+      myIndicatorWrapper.setWrappee(null);
+    }
+
+    @Override
+    public MavenServerConsoleIndicatorImpl getIndicator() {
+      return myIndicator;
     }
   }
 }

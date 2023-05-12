@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,40 +18,14 @@ import java.io.File;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<MavenServerEmbedder> {
-  private Customization myCustomization;
   private final Project myProject;
-  private ScheduledFuture<?> myProgressPullingFuture;
-  private AtomicInteger myFails = new AtomicInteger(0);
 
   MavenEmbedderWrapper(@NotNull Project project) {
     super(null);
     myProject = project;
-  }
-
-  @Override
-  protected synchronized void onWrappeeCreated() throws RemoteException {
-    super.onWrappeeCreated();
-    if (myCustomization != null) {
-      MavenServerEmbedder embedder = getOrCreateWrappee();
-      startPullingProgress(embedder, myCustomization.console, myCustomization.indicator);
-    }
-  }
-
-  public void startPullingProgress(MavenConsole console,
-                                   MavenProgressIndicator indicator) {
-    stopPulling();
-    myCustomization = new Customization(console, indicator);
-    perform(() -> {
-      MavenServerEmbedder embedder = getOrCreateWrappee();
-      startPullingProgress(embedder, myCustomization.console, myCustomization.indicator);
-      return null;
-    });
   }
 
   private MavenWorkspaceMap convertWorkspaceMap(@Nullable MavenWorkspaceMap map) {
@@ -62,60 +35,11 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     return MavenWorkspaceMap.copy(map, transformer::toRemotePath);
   }
 
-  private void startPullingProgress(MavenServerEmbedder embedder,
-                                    MavenConsole console,
-                                    MavenProgressIndicator indicator) throws RemoteException {
-    MavenServerConsoleIndicator serverPullProgressIndicator = embedder.getProgressIndicator(ourToken);
-    ScheduledFuture<?> future = myProgressPullingFuture;
-    if (future != null && !future.isCancelled()) {
-      future.cancel(true);
-    }
-    myProgressPullingFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
-      try {
-        if (indicator.isCanceled()) serverPullProgressIndicator.cancel();
-
-        List<MavenArtifactDownloadServerProgressEvent> artifactEvents = serverPullProgressIndicator.pullDownloadEvents();
-        if (artifactEvents != null) {
-          for (MavenArtifactDownloadServerProgressEvent e : artifactEvents) {
-            switch (e.getArtifactEventType()) {
-              case DOWNLOAD_STARTED -> indicator.startedDownload(e.getResolveType(), e.getDependencyId());
-              case DOWNLOAD_COMPLETED -> indicator.completedDownload(e.getResolveType(), e.getDependencyId());
-              case DOWNLOAD_FAILED ->
-                indicator.failedDownload(e.getResolveType(), e.getDependencyId(), e.getErrorMessage(), e.getStackTrace());
-            }
-          }
-        }
-
-        List<MavenServerConsoleEvent> consoleEvents = serverPullProgressIndicator.pullConsoleEvents();
-        if (consoleEvents != null) {
-          for (MavenServerConsoleEvent e : consoleEvents) {
-            console.printMessage(e.getLevel(), e.getMessage(), e.getThrowable());
-          }
-        }
-        myFails.set(0);
-      }
-      catch (RemoteException e) {
-        if (!Thread.currentThread().isInterrupted()) {
-          myFails.incrementAndGet();
-        }
-      }
-    }, 500, 500, TimeUnit.MILLISECONDS);
-  }
-
-  @Override
-  protected synchronized void cleanup() {
-    if (myProgressPullingFuture != null) myProgressPullingFuture.cancel(true);
-    int count = myFails.get();
-    if (count != 0) {
-       MavenLog.LOG.warn("Maven embedder download listener failed: " + count + " times");
-    }
-    super.cleanup();
-  }
-
   @NotNull
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<VirtualFile> files,
                                                                @NotNull MavenExplicitProfiles explicitProfiles,
                                                                @Nullable MavenProgressIndicator progressIndicator,
+                                                               @Nullable MavenConsole console,
                                                                @Nullable MavenWorkspaceMap workspaceMap,
                                                                boolean updateSnapshots)
     throws MavenProcessCanceledException {
@@ -132,7 +56,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
       updateSnapshots
     );
 
-    var results = runLongRunningTask((embedder, taskId) -> embedder.resolveProjects(taskId, request, ourToken), progressIndicator);
+    var results = runLongRunningTask((embedder, taskId) -> embedder.resolveProjects(taskId, request, ourToken), progressIndicator, console);
 
     if (transformer != Transformer.ID) {
       for (MavenServerExecutionResult result : results) {
@@ -166,14 +90,15 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   @NotNull
   public MavenArtifact resolve(@NotNull MavenArtifactInfo info,
                                @NotNull List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
-    return resolveArtifacts(List.of(new MavenArtifactResolutionRequest(info, remoteRepositories)), null).get(0);
+    return resolveArtifacts(List.of(new MavenArtifactResolutionRequest(info, remoteRepositories)), null, null).get(0);
   }
 
   @NotNull
   public List<MavenArtifact> resolveArtifacts(@NotNull Collection<MavenArtifactResolutionRequest> requests,
-                                              @Nullable MavenProgressIndicator progressIndicator) throws MavenProcessCanceledException {
+                                              @Nullable MavenProgressIndicator progressIndicator,
+                                              @Nullable MavenConsole console) throws MavenProcessCanceledException {
     return runLongRunningTask(
-      (embedder, longRunningTaskId) -> embedder.resolveArtifacts(longRunningTaskId, requests, ourToken), progressIndicator
+      (embedder, longRunningTaskId) -> embedder.resolveArtifacts(longRunningTaskId, requests, ourToken), progressIndicator, console
     );
   }
 
@@ -198,7 +123,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<Pair<MavenId, NativeMavenProjectHolder>> mavenPluginRequests,
-                                                       @Nullable MavenProgressIndicator progressIndicator)
+                                                       @Nullable MavenProgressIndicator progressIndicator,
+                                                       @Nullable MavenConsole console)
     throws MavenProcessCanceledException {
     var pluginResolutionRequests = new ArrayList<PluginResolutionRequest>();
     for (var mavenPluginRequest : mavenPluginRequests) {
@@ -213,13 +139,14 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
       }
     }
 
-    return runLongRunningTask((embedder, taskId) -> embedder.resolvePlugins(taskId, pluginResolutionRequests, ourToken), progressIndicator);
+    return runLongRunningTask(
+      (embedder, taskId) -> embedder.resolvePlugins(taskId, pluginResolutionRequests, ourToken), progressIndicator, console);
   }
 
   public Collection<MavenArtifact> resolvePlugin(@NotNull MavenPlugin plugin, @NotNull NativeMavenProjectHolder nativeMavenProject)
     throws MavenProcessCanceledException {
     MavenId mavenId = plugin.getMavenId();
-    return resolvePlugins(List.of(Pair.create(mavenId, nativeMavenProject)), null).stream()
+    return resolvePlugins(List.of(Pair.create(mavenId, nativeMavenProject)), null, null).stream()
       .flatMap(resolutionResult -> resolutionResult.getArtifacts().stream())
       .collect(Collectors.toSet());
   }
@@ -231,10 +158,11 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   @NotNull
   public List<MavenGoalExecutionResult> executeGoal(@NotNull Collection<MavenGoalExecutionRequest> requests,
                                                     @NotNull String goal,
-                                                    @Nullable MavenProgressIndicator progressIndicator)
+                                                    @Nullable MavenProgressIndicator progressIndicator,
+                                                    @Nullable MavenConsole console)
     throws MavenProcessCanceledException {
     return runLongRunningTask(
-      (embedder, longRunningTaskId) -> embedder.executeGoal(longRunningTaskId, requests, goal, ourToken), progressIndicator);
+      (embedder, longRunningTaskId) -> embedder.executeGoal(longRunningTaskId, requests, goal, ourToken), progressIndicator, console);
   }
 
   @NotNull
@@ -257,23 +185,10 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     return perform(() -> getOrCreateWrappee().resolveAndGetArchetypeDescriptor(groupId, artifactId, version, repositories, url, ourToken));
   }
 
-  public void resetProgressIndicator() {
-    MavenServerEmbedder w = getWrappee();
-    if (w == null) return;
-    try {
-      stopPulling();
-      w.resetProgressIndicator(ourToken);
-    }
-    catch (RemoteException e) {
-      handleRemoteError(e);
-    }
-  }
-
   public void release() {
     MavenServerEmbedder w = getWrappee();
     if (w == null) return;
     try {
-      stopPulling();
       w.release(ourToken);
     }
     catch (RemoteException e) {
@@ -289,30 +204,13 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   public void clearCachesFor(MavenId projectId) {
   }
 
-  private synchronized void stopPulling() {
-    if (myProgressPullingFuture != null) {
-      myProgressPullingFuture.cancel(true);
-    }
-    myCustomization = null;
-  }
-
   protected abstract <R> R runLongRunningTask(@NotNull LongRunningEmbedderTask<R> task,
-                                              @Nullable MavenProgressIndicator progressIndicator) throws MavenProcessCanceledException;
+                                              @Nullable MavenProgressIndicator progressIndicator,
+                                              @Nullable MavenConsole console) throws MavenProcessCanceledException;
 
   @FunctionalInterface
   protected interface LongRunningEmbedderTask<R> {
     R run(MavenServerEmbedder embedder, String longRunningTaskId) throws RemoteException, MavenServerProcessCanceledException;
-  }
-
-  private static final class Customization {
-    private final MavenConsole console;
-    private final MavenProgressIndicator indicator;
-
-    private Customization(MavenConsole console,
-                          MavenProgressIndicator indicator) {
-      this.console = console;
-      this.indicator = indicator;
-    }
   }
 
 }

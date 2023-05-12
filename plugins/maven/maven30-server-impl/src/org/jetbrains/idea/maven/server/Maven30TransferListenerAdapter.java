@@ -25,9 +25,9 @@ import java.io.File;
 
 public class Maven30TransferListenerAdapter implements TransferListener {
 
-  protected final MavenServerProgressIndicatorWrapper myIndicator;
+  protected final MavenServerConsoleIndicatorImpl myIndicator;
 
-  public Maven30TransferListenerAdapter(MavenServerProgressIndicatorWrapper indicator) {
+  public Maven30TransferListenerAdapter(MavenServerConsoleIndicatorImpl indicator) {
     myIndicator = indicator;
   }
 

@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.server
 
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
+import org.jetbrains.idea.maven.project.MavenConsole
+import org.jetbrains.idea.maven.server.MavenArtifactDownloadServerProgressEvent.ArtifactEventType
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.util.*
@@ -10,18 +12,31 @@ import java.util.*
 abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(project) {
   @Throws(MavenProcessCanceledException::class)
   override fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
-                                      progressIndicator: MavenProgressIndicator?): R =
+                                      indicator: MavenProgressIndicator?,
+                                      console: MavenConsole?): R =
     runBlocking {
       val longRunningTaskId = UUID.randomUUID().toString()
       val embedder = getOrCreateWrappee()
 
       val progressIndication = launch {
-        if (null != progressIndicator) {
+        if (null != indicator) {
           while (isActive) {
-            delay(1000)
+            delay(500)
             val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
-            progressIndicator.setFraction(status.fraction())
-            if (progressIndicator.isCanceled) {
+            indicator.setFraction(status.fraction())
+            for (e in status.downloadEvents()) {
+              when (e.artifactEventType) {
+                ArtifactEventType.DOWNLOAD_STARTED -> indicator.startedDownload(e.resolveType, e.dependencyId)
+                ArtifactEventType.DOWNLOAD_COMPLETED -> indicator.completedDownload(e.resolveType, e.dependencyId)
+                ArtifactEventType.DOWNLOAD_FAILED -> indicator.failedDownload(e.resolveType, e.dependencyId, e.errorMessage, e.stackTrace)
+              }
+            }
+            if (null != console) {
+              for (e in status.consoleEvents()) {
+                console.printMessage(e.level, e.message, e.throwable)
+              }
+            }
+            if (indicator.isCanceled) {
               if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
                 break
               }

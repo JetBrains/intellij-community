@@ -520,7 +520,7 @@ public final class MavenProjectReader {
                                                              MavenExplicitProfiles explicitProfiles,
                                                              MavenProjectReaderProjectLocator locator)
     throws MavenProcessCanceledException {
-    return resolveProject(generalSettings, embedder, files, explicitProfiles, locator, null, null, false);
+    return resolveProject(generalSettings, embedder, files, explicitProfiles, locator, null, null, null, false);
   }
 
   public Collection<MavenProjectReaderResult> resolveProject(MavenGeneralSettings generalSettings,
@@ -529,12 +529,13 @@ public final class MavenProjectReader {
                                                              MavenExplicitProfiles explicitProfiles,
                                                              MavenProjectReaderProjectLocator locator,
                                                              @Nullable MavenProgressIndicator process,
+                                                             @Nullable MavenConsole console,
                                                              @Nullable MavenWorkspaceMap workspaceMap,
                                                              boolean updateSnapshots)
     throws MavenProcessCanceledException {
     try {
       Collection<MavenServerExecutionResult> executionResults =
-        embedder.resolveProject(files, explicitProfiles, process, workspaceMap, updateSnapshots);
+        embedder.resolveProject(files, explicitProfiles, process, console, workspaceMap, updateSnapshots);
       Map<String, VirtualFile> filesMap = CollectionFactory.createFilePathMap();
       filesMap.putAll(files.stream().collect(toMap(VirtualFile::getPath, Function.identity())));
 

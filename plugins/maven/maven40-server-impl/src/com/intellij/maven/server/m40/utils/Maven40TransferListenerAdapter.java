@@ -7,16 +7,16 @@ import org.eclipse.aether.transfer.TransferEvent;
 import org.eclipse.aether.transfer.TransferListener;
 import org.eclipse.aether.transfer.TransferResource;
 import org.jetbrains.idea.maven.server.MavenProcessCanceledRuntimeException;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
 import org.jetbrains.idea.maven.server.MavenServerGlobals;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicatorWrapper;
 
 import java.io.File;
 
 public class Maven40TransferListenerAdapter implements TransferListener {
 
-  protected final MavenServerProgressIndicatorWrapper myIndicator;
+  protected final MavenServerConsoleIndicatorImpl myIndicator;
 
-  public Maven40TransferListenerAdapter(MavenServerProgressIndicatorWrapper indicator) {
+  public Maven40TransferListenerAdapter(MavenServerConsoleIndicatorImpl indicator) {
     myIndicator = indicator;
   }
 

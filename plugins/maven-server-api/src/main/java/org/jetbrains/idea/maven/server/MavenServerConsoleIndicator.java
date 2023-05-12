@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -29,10 +29,10 @@ public interface MavenServerConsoleIndicator extends Remote {
 
   boolean isCanceled() throws RemoteException;
   
-  @Nullable
+  @NotNull
   List<MavenArtifactDownloadServerProgressEvent> pullDownloadEvents() throws RemoteException;
 
-  @Nullable
+  @NotNull
   List<MavenServerConsoleEvent> pullConsoleEvents() throws RemoteException;
 
    void cancel() throws RemoteException;

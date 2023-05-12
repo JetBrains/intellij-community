@@ -2,15 +2,26 @@
 package org.jetbrains.idea.maven.server;
 
 import java.io.Serializable;
-import java.util.Objects;
+import java.util.Collections;
+import java.util.List;
 
 public final class LongRunningTaskStatus implements Serializable {
+  public static final LongRunningTaskStatus EMPTY = new LongRunningTaskStatus(
+    0, 0, Collections.emptyList(), Collections.emptyList());
+
   private final int total;
   private final int finished;
+  private final List<MavenServerConsoleEvent> consoleEvents;
+  private final List<MavenArtifactDownloadServerProgressEvent> downloadEvents;
 
-  public LongRunningTaskStatus(int total, int finished) {
+  public LongRunningTaskStatus(int total,
+                               int finished,
+                               List<MavenServerConsoleEvent> consoleEvents,
+                               List<MavenArtifactDownloadServerProgressEvent> downloadEvents) {
     this.total = total;
     this.finished = finished;
+    this.consoleEvents = consoleEvents;
+    this.downloadEvents = downloadEvents;
   }
 
   public int total() { return total; }
@@ -24,18 +35,12 @@ public final class LongRunningTaskStatus implements Serializable {
     return ((double)f) / t;
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == this) return true;
-    if (obj == null || obj.getClass() != this.getClass()) return false;
-    LongRunningTaskStatus that = (LongRunningTaskStatus)obj;
-    return this.total == that.total &&
-           this.finished == that.finished;
+  public List<MavenServerConsoleEvent> consoleEvents() {
+    return consoleEvents;
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(total, finished);
+  public List<MavenArtifactDownloadServerProgressEvent> downloadEvents() {
+    return downloadEvents;
   }
 
   @Override

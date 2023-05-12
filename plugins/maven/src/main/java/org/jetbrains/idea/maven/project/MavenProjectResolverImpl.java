@@ -56,9 +56,8 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
         for (MavenProject mavenProject : mavenProjectsInBaseDir) {
           mavenProject.setConfigFileError(null);
         }
-        embedder.startPullingProgress(console, process);
         var projectsWithUnresolvedPluginsChunk =
-          doResolve(mavenProjectsInBaseDir, tree, generalSettings, embedder, process, tree.getWorkspaceMap(), updateSnapshots);
+          doResolve(mavenProjectsInBaseDir, tree, generalSettings, embedder, process, console, tree.getWorkspaceMap(), updateSnapshots);
         projectsWithUnresolvedPlugins.put(baseDir, projectsWithUnresolvedPluginsChunk);
       }
       catch (Throwable t) {
@@ -108,6 +107,7 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
                                                        @NotNull MavenGeneralSettings generalSettings,
                                                        @NotNull MavenEmbedderWrapper embedder,
                                                        @NotNull MavenProgressIndicator process,
+                                                       @NotNull MavenConsole console,
                                                        @Nullable MavenWorkspaceMap workspaceMap,
                                                        boolean updateSnapshots)
     throws MavenProcessCanceledException {
@@ -128,6 +128,7 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
       explicitProfiles,
       tree.getProjectLocator(),
       process,
+      console,
       workspaceMap,
       updateSnapshots);
 
