@@ -1001,6 +1001,22 @@
       "hoverBackground": "grey13",
       "separatorColor": "grey09",
       "borderColor": "grey09"
+    },
+    "LineProfiler" : {
+      "Line" : {
+        "labelBackground" : "#DFDFDF",
+        "foreground" : "#808080",
+        "hoverBackground" : "#D1D1D1"
+      },
+      "HotLine" : {
+        "labelBackground" : "#FFE0E0",
+        "foreground" : "#C7222D",
+        "hoverBackground" : "#FFCCCC"
+      },
+      "IgnoredLine" : {
+        "labelBackground" : "#DFDFDF",
+        "foreground" : "#B0B0B0"
+      }
     }
   }
 }

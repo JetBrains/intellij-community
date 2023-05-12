@@ -799,7 +799,24 @@
       "borderColor": "Grey3"
     },
 
-    "MainWindow.FullScreeControl.Background": "#7A7B80"
+    "MainWindow.FullScreeControl.Background": "#7A7B80",
+
+    "LineProfiler" : {
+      "Line" : {
+        "labelBackground" : "#F1F2F4",
+        "foreground" : "Grey3",
+        "hoverBackground" : "Grey12"
+      },
+      "HotLine" : {
+        "labelBackground" : "Red10",
+        "foreground" : "Red3",
+        "hoverBackground" : "Red9"
+      },
+      "IgnoredLine" : {
+        "labelBackground" : "Grey12",
+        "foreground" : "Grey8"
+      }
+    }
   },
 
   "icons": {
