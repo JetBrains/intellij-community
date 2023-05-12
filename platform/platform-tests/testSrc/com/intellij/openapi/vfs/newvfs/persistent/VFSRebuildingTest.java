@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.testFramework.TemporaryDirectory;
 import com.intellij.util.io.PageCacheUtils;
 import org.junit.After;
@@ -206,10 +205,7 @@ public class VFSRebuildingTest {
       for (RecordsStorageKind kindAfter : allKinds) {
         final Path cachesDir = temporaryDirectory.createDir();
         PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(kindBefore);
-        final FSRecordsImpl records = FSRecordsImpl.connect(
-          cachesDir,
-          new VfsLog(cachesDir.resolve("vfslog"), /*readOnly*/true)
-        );
+        final FSRecordsImpl records = FSRecordsImpl.connect(cachesDir, Collections.emptyList());
 
         final long firstVfsCreationTimestamp = records.getCreationTimestamp();
 
@@ -220,7 +216,8 @@ public class VFSRebuildingTest {
         PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(kindAfter);
         final FSRecordsImpl reopenedRecords = FSRecordsImpl.connect(
           cachesDir,
-          new VfsLog(cachesDir.resolve("vfslog"), /*readOnly*/true), FSRecordsImpl.ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD
+          Collections.emptyList(),
+          FSRecordsImpl.ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD
         );
         final long reopenedVfsCreationTimestamp = reopenedRecords.getCreationTimestamp();
 

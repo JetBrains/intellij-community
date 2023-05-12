@@ -63,7 +63,6 @@ class CacheAwareVfsSnapshot(
   private val attributeEnumerator: SimpleStringPersistentEnumerator,
   private val payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>,
   private val getPrecedingCachedSnapshot: (point: OperationLogStorage.Iterator) -> VfsSnapshot?,
-  private val oracle: VfsStateOracle? = null
 ) : VfsSnapshot {
   override val point: () -> OperationLogStorage.Iterator = point.constCopier()
 
@@ -85,8 +84,6 @@ class CacheAwareVfsSnapshot(
   }
 
   inner class CacheAwareVirtualFileSnapshot(override val fileId: Int) : VirtualFileSnapshot {
-    // TODO VfsChronicle.lookup* might throw on Invalid, gotta catch
-
     override val nameId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::nameId) { stopIter, iter ->
       VfsChronicle.lookupNameId(iter, fileId, condition = { iter != stopIter }).toState()
     }
@@ -137,11 +134,6 @@ class CacheAwareVfsSnapshot(
       private val queryLog: (stopIter: OperationLogStorage.Iterator?, iter: OperationLogStorage.Iterator) -> State.DefinedState<T>
     ) : Property<T>() {
       override fun compute(): State.DefinedState<T> {
-        if (oracle != null) {
-          val oracleSnapshot = oracle.invoke(point()) // kotlin analysis is bugged, have to use .invoke, KTJ-25463
-          oracleSnapshot?.getFileById(fileId)?.accessProp()
-            ?.observe(onNotAvailable = { /* no value from oracle */ }) { return State.Ready(it) }
-        }
         val precedingSnapshot = precedingSnapshot
         if (precedingSnapshot != null) {
           return when (val partialLookup = queryLog(precedingSnapshot.point(), point())) {

@@ -3,18 +3,21 @@
 
 package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic
 
+import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsOracle
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSTreeAccessor
 import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.ReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEachContainedOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.FSRecordsOracle
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsTimeMachine
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsTimeMachineImpl
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.withContradictionCheck
+import com.intellij.util.BitUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.SimpleStringPersistentEnumerator
@@ -60,7 +63,7 @@ private fun calcStats(log: VfsLog): Stats {
   val stats = Stats()
   stats.elapsedTime = measureTime {
     runBlocking {
-      log.query {
+      log.context.run {
         stats.operationsStorageSize = operationLogStorage.size()
         stats.payloadStorageSize = payloadStorage.size()
         //val attrCount: MutableMap<String, Int> = mutableMapOf<String, Int>()
@@ -173,27 +176,26 @@ private typealias Diff = Pair<List<String>, List<String>>
 
 @OptIn(ExperimentalTime::class)
 private fun vfsRecoveryDraft(log: VfsLog,
-                             id2name: (Int) -> String?,
                              attributeEnumerator: SimpleStringPersistentEnumerator,
-                             fsRecords: FSRecordsImpl) {
+                             fsRecordsOracle: FSRecordsOracle) {
   var singleOp = 0
   var vfileEvents = 0
   var vfileEventContentOps = 0
 
-  // TODO: this log.query {} thing doesn't look cool
-  val vfsLogContext = log.query { this }
-  val payloadReadAt = vfsLogContext.payloadStorage::readAt
+  val payloadReadAt = log.context.payloadStorage::readAt
   val payloadReader: (PayloadRef) -> State.DefinedState<ByteArray> = {
     val data = payloadReadAt(it)
     if (data == null) State.notAvailable(NotEnoughInformationCause("data is not available anymore"))
     else State.Ready(data)
   }
-  val fsRecordsOracle = FSRecordsOracle(fsRecords, vfsLogContext, payloadReader)
-  val vfsTimeMachine = VfsTimeMachine(vfsLogContext,
-                                      id2filename = id2name,
-                                      payloadReader = payloadReader,
-                                      oracle = fsRecordsOracle::getSnapshot,
-                                      attributeEnumerator = attributeEnumerator)
+  val vfsTimeMachine = VfsTimeMachineImpl(
+    log.context,
+    id2filename = fsRecordsOracle::getNameByNameId,
+    payloadReader = payloadReader,
+    attributeEnumerator = attributeEnumerator
+  )
+    //.withOracle(fsRecordsOracle)
+    .withContradictionCheck(fsRecordsOracle)
 
   fun VfsSnapshot.VirtualFileSnapshot.represent(): String =
     "file: name=$name parent=$parentId id=$fileId ts=$timestamp len=$length flags=$flags contentId=$contentRecordId attrId=$attributesRecordId"
@@ -227,12 +229,43 @@ private fun vfsRecoveryDraft(log: VfsLog,
       children
     }
 
+  // from com.intellij.psi.stubs.StubTreeLoaderImpl
+  val INDEXED_STAMP = FileAttribute("stubIndexStamp", 3, true)
+
+  data class StubIndexStampData(val fileStamp: Long, val byteLength: Long, val charLength: Int, val isBinary: Boolean)
+
+  fun VfsSnapshot.VirtualFileSnapshot.readStubIndexStampAttr(): State.DefinedState<StubIndexStampData?> =
+    readAttribute(INDEXED_STAMP).fmap { stream ->
+      if (stream == null || stream.available() <= 0) {
+        return@fmap null
+      }
+      val stamp: Long = DataInputOutputUtil.readTIME(stream)
+      val byteLength = DataInputOutputUtil.readLONG(stream)
+
+      val flags: Byte = stream.readByte()
+      val isBinary = BitUtil.isSet(flags, 1)
+      val readOnlyOneLength = BitUtil.isSet(flags, 2)
+
+      val charLength: Int
+      if (isBinary) {
+        charLength = -1
+      }
+      else if (readOnlyOneLength) {
+        charLength = byteLength.toInt()
+      }
+      else {
+        charLength = DataInputOutputUtil.readINT(stream)
+      }
+      check(stream.available() == 0)
+      StubIndexStampData(stamp, byteLength, charLength, isBinary)
+    }
+
   fun Diff.represent() =
     if (first.isEmpty() && second.isEmpty()) "No diff"
     else "Diff:\n" + first.joinToString("\n", postfix = "\n") { "- $it" } + second.joinToString("\n") { "+ $it" }
 
   val time = measureTime {
-    log.query {
+    log.context.run {
       val iter = IteratorUtils.VFileEventBasedIterator(operationLogStorage.begin())
       while (iter.hasNext()) {
         val rec = iter.next()
@@ -254,6 +287,7 @@ private fun vfsRecoveryDraft(log: VfsLog,
                   (rec.begin().next() as OperationReadResult.Valid).operation as VfsOperation.VFileEventOperation.EventStart.Move
                 val file = snapshotBefore.getFileById(startOp.fileId)
                 println(file.represent())
+                println("stub index stamp data: ${file.readStubIndexStampAttr()}")
                 val oldParent = snapshotBefore.getFileById(startOp.oldParentId)
                 val oldParentAfter = snapshotAfter.getFileById(startOp.oldParentId)
                 val newParent = snapshotBefore.getFileById(startOp.newParentId)
@@ -267,6 +301,7 @@ private fun vfsRecoveryDraft(log: VfsLog,
                 val fileBefore = snapshotBefore.getFileById(startOp.fileId)
                 val fileAfter = snapshotAfter.getFileById(startOp.fileId)
                 println(fileBefore.represent())
+                println("stub index stamp data: ${fileBefore.readStubIndexStampAttr()}")
                 val contentBefore = fileBefore.getContent().fmap { it.toString(StandardCharsets.UTF_8) }
                 val contentAfter = fileAfter.getContent().fmap { it.toString(StandardCharsets.UTF_8) }
                 if (contentBefore is State.Ready && contentAfter is State.Ready) {
@@ -314,16 +349,15 @@ fun main(args: Array<String>) {
   //benchmark(log, 30)
   //return
 
-  val fsRecords = FSRecordsImpl.connect(logPath.parent,
-                                        log,
+  val fsRecordsOracle = FSRecordsOracle(logPath.parent,
                                         FSRecordsImpl.ErrorHandler { records, error ->
                                           ExceptionUtil.rethrow(error)
-                                        })
+                                        },
+                                        log.context)
   //val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)::valueOf
-  val names = { id: Int -> fsRecords.getNameByNameId(id)?.toString() }
   val attributeEnumerator = SimpleStringPersistentEnumerator(logPath.parent / "attributes_enums.dat")
 
-  vfsRecoveryDraft(log, names, attributeEnumerator, fsRecords)
+  vfsRecoveryDraft(log, attributeEnumerator, fsRecordsOracle)
 
-  fsRecords.dispose()
+  fsRecordsOracle.disposeConnection()
 }

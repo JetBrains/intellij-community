@@ -8,13 +8,16 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.Vfs
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import java.lang.ref.SoftReference
 
-class VfsTimeMachine(
+interface VfsTimeMachine: VfsStateOracle {
+  override fun getSnapshot(point: OperationLogStorage.Iterator): VfsSnapshot
+}
+
+class VfsTimeMachineImpl(
   private val vfsLogContext: VfsLogContext,
-  private val oracle: VfsStateOracle? = null,
   private val id2filename: (Int) -> String?,
   private val attributeEnumerator: SimpleStringPersistentEnumerator,
   private val payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>
-) {
+): VfsTimeMachine {
   private val cache = sortedMapOf<Long, SoftReference<VfsSnapshot>>()
   private val zeroLayer = NotAvailableVfsSnapshot(vfsLogContext.operationLogStorage.begin()) // hard-reference so it won't be GCed from cache
 
@@ -22,15 +25,14 @@ class VfsTimeMachine(
     cache[zeroLayer.point().getPosition()] = SoftReference(zeroLayer)
   }
 
-  fun getSnapshot(point: OperationLogStorage.Iterator): VfsSnapshot = synchronized(this) {
+  override fun getSnapshot(point: OperationLogStorage.Iterator): VfsSnapshot = synchronized(this) {
     cache[point.getPosition()]?.get()?.let { return it }
     val snapshot = CacheAwareVfsSnapshot(point,
                                          vfsLogContext,
                                          id2filename,
                                          attributeEnumerator,
                                          payloadReader,
-                                         ::closestPrecedingCachedSnapshot,
-                                         oracle)
+                                         ::closestPrecedingCachedSnapshot)
     cache[point.getPosition()] = SoftReference(snapshot)
     return snapshot
   }

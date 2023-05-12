@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
@@ -87,13 +87,13 @@ public final class FSRecords {
 
   //========== lifecycle: =====================================================
 
-  static synchronized void connect(@NotNull VfsLog vfsLog) throws UncheckedIOException {
-    connect(vfsLog, FSRecordsImpl.ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD);
+  static synchronized void connect(@NotNull List<ConnectionInterceptor> connectionInterceptors) throws UncheckedIOException {
+    connect(connectionInterceptors, FSRecordsImpl.ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD);
   }
 
-  static synchronized void connect(@NotNull VfsLog vfsLog,
+  static synchronized void connect(@NotNull List<ConnectionInterceptor> connectionInterceptors,
                                    @NotNull FSRecordsImpl.ErrorHandler errorHandler) throws UncheckedIOException {
-    impl = FSRecordsImpl.connect(Path.of(getCachesDir()), vfsLog, errorHandler);
+    impl = FSRecordsImpl.connect(Path.of(getCachesDir()), connectionInterceptors, errorHandler);
   }
 
   static synchronized void dispose() {

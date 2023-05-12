@@ -19,7 +19,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
@@ -165,13 +165,13 @@ public final class FSRecordsImpl {
    * @param storagesDirectoryPath directory there to put all FS-records files ('caches' directory)
    */
   static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
-                               @NotNull VfsLog vfsLog) {
-    return connect(storagesDirectoryPath, vfsLog, ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD);
+                               @NotNull List<ConnectionInterceptor> connectionInterceptors) throws UncheckedIOException {
+    return connect(storagesDirectoryPath, connectionInterceptors, ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD);
   }
 
-  public static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
-                                      @NotNull VfsLog vfsLog,
-                                      @NotNull ErrorHandler errorHandler) throws UncheckedIOException {
+  static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
+                               @NotNull List<ConnectionInterceptor> connectionInterceptors,
+                               @NotNull ErrorHandler errorHandler) throws UncheckedIOException {
     if (IOUtil.isSharedCachesEnabled()) {
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
     }
@@ -183,7 +183,7 @@ public final class FSRecordsImpl {
         currentVersion,
         USE_CONTENT_HASHES,
         invertedNameIndex,
-        vfsLog.getConnectionInterceptors()
+        connectionInterceptors
       );
       PersistentFSConnection connection = initializationResult.connection;
       PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(USE_CONTENT_HASHES, connection);
@@ -238,7 +238,7 @@ public final class FSRecordsImpl {
 
   //========== lifecycle: ========================================
 
-  public synchronized void dispose() {
+  synchronized void dispose() {
     if (!disposed) {
       try {
         PersistentFSConnector.disconnect(connection);
@@ -678,7 +678,7 @@ public final class FSRecordsImpl {
 
   //========== file record fields accessors: ========================================
 
-  public @PersistentFS.Attributes int getFlags(int fileId) {
+  @PersistentFS.Attributes int getFlags(int fileId) {
     try {
       checkNotDisposed();
       return connection.getRecords().getFlags(fileId);
@@ -708,7 +708,7 @@ public final class FSRecordsImpl {
   }
 
 
-  public int getParent(int fileId) {
+  int getParent(int fileId) {
     try {
       checkNotDisposed();
       int parentId = connection.getRecords().getParent(fileId);
@@ -772,7 +772,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  public int getNameIdByFileId(int fileId) {
+  int getNameIdByFileId(int fileId) {
     try {
       checkNotDisposed();
       return connection.getRecords().getNameId(fileId);
@@ -782,7 +782,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  public CharSequence getNameByNameId(int nameId) {
+  CharSequence getNameByNameId(int nameId) {
     assert nameId >= NULL_NAME_ID : "nameId(=" + nameId + ") must be positive";
     try {
       checkNotDisposed();
@@ -822,7 +822,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  public long getLength(int fileId) {
+  long getLength(int fileId) {
     try {
       checkNotDisposed();
       return connection.getRecords().getLength(fileId);
@@ -845,7 +845,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  public long getTimestamp(int fileId) {
+  long getTimestamp(int fileId) {
     try {
       checkNotDisposed();
       return connection.getRecords().getTimestamp(fileId);
@@ -868,7 +868,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  public int getContentRecordId(int fileId) {
+  int getContentRecordId(int fileId) {
     try {
       return connection.getRecords().getContentRecordId(fileId);
     }
@@ -877,11 +877,11 @@ public final class FSRecordsImpl {
     }
   }
 
-  public SimpleStringPersistentEnumerator getEnumeratedAttributes() {
+  SimpleStringPersistentEnumerator getEnumeratedAttributes() {
     return connection.getEnumeratedAttributes();
   }
 
-  public int getAttributeRecordId(int fileId) {
+  int getAttributeRecordId(int fileId) {
     try {
       return connection.getRecords().getAttributeRecordId(fileId);
     }
@@ -931,7 +931,7 @@ public final class FSRecordsImpl {
 
   //========== file attributes accessors: ========================================
 
-  public @Nullable AttributeInputStream readAttributeWithLock(int fileId,
+  @Nullable AttributeInputStream readAttributeWithLock(int fileId,
                                                        @NotNull FileAttribute attribute) {
     //RC: attributeAccessor acquires lock anyway, no need for additional lock here
     try {
@@ -1010,7 +1010,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  public @NotNull DataInputStream readContentById(int contentId) {
+  @NotNull DataInputStream readContentById(int contentId) {
     try {
       return contentAccessor.readContentDirectly(contentId);
     }

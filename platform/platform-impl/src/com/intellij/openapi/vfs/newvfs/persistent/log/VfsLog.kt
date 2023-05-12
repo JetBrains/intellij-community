@@ -41,7 +41,7 @@ class VfsLog(
     }
   }
 
-  private val context = object : VfsLogContext {
+  private inner class ContextImpl: VfsLogContext {
     @OptIn(ExperimentalCoroutinesApi::class)
     override val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(WORKER_THREADS_COUNT))
 
@@ -70,19 +70,21 @@ class VfsLog(
     }
   }
 
+  private val _context = ContextImpl()
+  val context: VfsLogContext
+    get() = _context
+
   init {
     if (!readOnly) {
-      context.coroutineScope.launch {
-        context.flusher()
+      _context.coroutineScope.launch {
+        _context.flusher()
       }
     }
   }
 
-  fun <R> query(body: VfsLogContext.() -> R): R = context.body()
-
   fun dispose() {
     LOG.debug("VfsLog disposing")
-    context.dispose()
+    _context.dispose()
     LOG.debug("VfsLog disposed")
   }
 
@@ -112,7 +114,7 @@ class VfsLog(
   companion object {
     private val LOG = Logger.getInstance(VfsLog::class.java)
 
-    const val VERSION = -44
+    const val VERSION = -48
 
     @JvmField
     val LOG_VFS_OPERATIONS_ENABLED = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)
