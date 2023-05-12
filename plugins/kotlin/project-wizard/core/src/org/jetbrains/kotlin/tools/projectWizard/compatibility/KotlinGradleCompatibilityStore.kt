@@ -14,15 +14,22 @@ import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataState
 import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataStorage
 import org.jetbrains.plugins.gradle.util.Ranges
 
-class KotlinGradleVersionMapping(
-    kotlin: String,
-    gradle: String,
-    comment: String? = null
-): BaseState() {
-    var kotlin by string(kotlin)
-    var gradle by string(gradle)
-    var comment by string(comment)
+class KotlinGradleVersionMapping() : BaseState() {
+    constructor(
+        kotlin: String,
+        gradle: String,
+        comment: String? = null
+    ) : this() {
+        this.kotlin = kotlin
+        this.gradle = gradle
+        this.comment = comment
+    }
+
+    var kotlin by string()
+    var gradle by string()
+    var comment by string()
 }
+
 class KotlinGradleCompatibilityState() : IdeVersionedDataState() {
     constructor(kotlinVersions: List<String>, compatibility: List<KotlinGradleVersionMapping>) : this() {
         this.kotlinVersions.addAll(kotlinVersions)
@@ -33,7 +40,7 @@ class KotlinGradleCompatibilityState() : IdeVersionedDataState() {
     var compatibility by list<KotlinGradleVersionMapping>()
 }
 
-internal object KotlinGradleCompatibilityParser: IdeVersionedDataParser<KotlinGradleCompatibilityState>() {
+internal object KotlinGradleCompatibilityParser : IdeVersionedDataParser<KotlinGradleCompatibilityState>() {
     override fun parseJson(data: JsonObject): KotlinGradleCompatibilityState? {
         val kotlinVersionsArr = data["kotlinVersions"]?.takeIf { it.isJsonArray }?.asJsonArray ?: return null
         val kotlinVersions = kotlinVersionsArr.mapNotNull { entry ->
