@@ -30,6 +30,7 @@ interface NavigationRequests {
    * @return a request to execute an [arbitrary code][Navigatable.navigate],
    * or `null` if the navigation is not possible for any reason
    */
+  @Internal
   @Deprecated("Don't call this function directly")
   @RequiresReadLock
   @RequiresBackgroundThread
