@@ -28,6 +28,20 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     myProject = project;
   }
 
+  @Override
+  @NotNull
+  protected synchronized MavenServerEmbedder getOrCreateWrappee() throws RemoteException {
+    var embedder = super.getOrCreateWrappee();
+    try {
+      embedder.ping(ourToken);
+    }
+    catch (RemoteException e) {
+      onError();
+      embedder = super.getOrCreateWrappee();
+    }
+    return embedder;
+  }
+
   private MavenWorkspaceMap convertWorkspaceMap(@Nullable MavenWorkspaceMap map) {
     if (null == map) return null;
     Transformer transformer = RemotePathTransformerFactory.createForProject(myProject);

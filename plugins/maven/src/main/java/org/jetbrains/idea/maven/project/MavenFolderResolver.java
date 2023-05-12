@@ -92,12 +92,6 @@ public class MavenFolderResolver {
       }
     };
 
-    embeddersManager.execute(
-      baseDir,
-      MavenEmbeddersManager.FOR_FOLDERS_RESOLVE,
-      console,
-      process,
-      task
-    );
+    embeddersManager.execute(baseDir, MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, task);
   }
 }

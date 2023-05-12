@@ -12,7 +12,6 @@ import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.HashSet;
@@ -120,17 +119,13 @@ public class MavenEmbeddersManager {
 
   public void execute(@NotNull MavenProject mavenProject,
                       @NotNull Key embedderKind,
-                      @NotNull MavenConsole console,
-                      @NotNull MavenProgressIndicator process,
                       @NotNull MavenEmbeddersManager.EmbedderTask task) throws MavenProcessCanceledException {
     var baseDir = MavenUtil.getBaseDir(mavenProject.getDirectoryFile()).toString();
-    execute(baseDir, embedderKind, console, process, task);
+    execute(baseDir, embedderKind, task);
   }
 
   public void execute(@NotNull String baseDir,
                       @NotNull Key embedderKind,
-                      @NotNull MavenConsole console,
-                      @NotNull MavenProgressIndicator process,
                       @NotNull MavenEmbeddersManager.EmbedderTask task) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = getEmbedder(embedderKind, baseDir);
     try {

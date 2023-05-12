@@ -73,6 +73,8 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
   override fun getLongRunningTaskStatus(longRunningTaskId: String, token: MavenToken?): LongRunningTaskStatus = LongRunningTaskStatus.EMPTY
 
   override fun cancelLongRunningTask(longRunningTaskId: String, token: MavenToken?) = true
+
+  override fun ping(token: MavenToken?) = true
 }
 
 class UntrustedDummyEmbedder(myProject: Project) : DummyEmbedder(myProject) {

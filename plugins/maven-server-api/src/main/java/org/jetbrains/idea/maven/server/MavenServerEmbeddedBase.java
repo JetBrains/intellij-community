@@ -112,4 +112,10 @@ public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implemen
       return myIndicator;
     }
   }
+
+  @Override
+  public boolean ping(MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    return true;
+  }
 }

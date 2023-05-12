@@ -95,4 +95,6 @@ public interface MavenServerEmbedder extends Remote {
   LongRunningTaskStatus getLongRunningTaskStatus(@NotNull String longRunningTaskId, MavenToken token) throws RemoteException;
 
   boolean cancelLongRunningTask(@NotNull String longRunningTaskId, MavenToken token) throws RemoteException;
+
+  boolean ping(MavenToken token) throws RemoteException;
 }

@@ -1131,12 +1131,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           }
         };
 
-        getEmbeddersManager().execute(
-          mavenProject,
-          MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE,
-          console,
-          indicator,
-          task);
+        getEmbeddersManager().execute(mavenProject, MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, task);
       }
     }));
   }
