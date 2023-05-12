@@ -13,8 +13,9 @@ object NewProjectWizardConstants {
     const val RUBY = "Ruby"
     const val GO = "Go"
     const val SCALA = "Scala"
+    const val RUST = "Rust"
 
-    val ALL = listOf(JAVA, KOTLIN, GROOVY, JAVASCRIPT, HTML, PYTHON, PHP, RUBY, GO, SCALA)
+    val ALL = listOf(JAVA, KOTLIN, GROOVY, JAVASCRIPT, HTML, PYTHON, PHP, RUBY, GO, SCALA, RUST)
   }
 
   object BuildSystem {

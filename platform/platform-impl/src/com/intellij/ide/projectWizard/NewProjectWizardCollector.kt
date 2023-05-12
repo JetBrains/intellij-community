@@ -30,7 +30,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
 
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 19)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 20)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = EventFields.Int("screen")
