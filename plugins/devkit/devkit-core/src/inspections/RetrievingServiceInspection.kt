@@ -46,15 +46,15 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
         }
         return true
       }
-
-      private fun isServiceRetrievedCorrectly(serviceLevel: LevelType, howServiceRetrieved: Level): Boolean {
-        return serviceLevel == LevelType.NOT_SPECIFIED ||
-               when (howServiceRetrieved) {
-                 Level.APP -> serviceLevel.isApp()
-                 Level.PROJECT -> serviceLevel.isProject()
-               }
-      }
     }, arrayOf(UCallExpression::class.java))
+  }
+
+  private fun isServiceRetrievedCorrectly(serviceLevel: LevelType, howServiceRetrieved: Level): Boolean {
+    return serviceLevel == LevelType.NOT_SPECIFIED ||
+           when (howServiceRetrieved) {
+             Level.APP -> serviceLevel.isApp()
+             Level.PROJECT -> serviceLevel.isProject()
+           }
   }
 
   private fun howServiceRetrieved(getServiceCandidate: UCallExpression): Level? {
