@@ -30,10 +30,8 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   private String myDurationText;
   private Color myDurationColor;
   private int myDurationWidth;
-  /**
-   * An empty area before duration the text
-   */
   private int myDurationLeftInset;
+  private int myDurationRightInset;
 
   private @Nullable Computable<String> myAccessibleStatus = null;
 
@@ -53,6 +51,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     myDurationColor = null;
     myDurationWidth = 0;
     myDurationLeftInset = 0;
+    myDurationRightInset = 0;
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
     final Object userObj = node.getUserObject();
     if (userObj instanceof SMTRunnerNodeDescriptor desc) {
@@ -77,6 +76,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
           FontMetrics metrics = getFontMetrics(RelativeFont.SMALL.derive(getFont()));
           myDurationWidth = metrics.stringWidth(myDurationText);
           myDurationLeftInset = metrics.getHeight() / 4;
+          myDurationRightInset = ExperimentalUI.isNewUI() ? tree.getInsets().right + JBUI.scale(4) : myDurationLeftInset;
           myDurationColor = selected ? UIUtil.getTreeSelectionForeground(hasFocus) : SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor();
         }
       }
@@ -93,9 +93,10 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   @NotNull
   @Override
   public Dimension getPreferredSize() {
-    final Dimension preferredSize = super.getPreferredSize();
-    preferredSize.width += getRightInset();
-    if (myDurationWidth > 0) preferredSize.width += myDurationWidth + myDurationLeftInset;
+    Dimension preferredSize = super.getPreferredSize();
+    if (myDurationWidth > 0) {
+      preferredSize.width += myDurationWidth + myDurationLeftInset + myDurationRightInset;
+    }
     return preferredSize;
   }
 
@@ -115,7 +116,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   protected void paintComponent(Graphics g) {
     UISettings.setupAntialiasing(g);
     Shape clip = null;
-    int width = getWidth() - getRightInset();
+    int width = getWidth();
     int height = getHeight();
     if (isOpaque()) {
       // paint background for expanded row
@@ -123,7 +124,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
       g.fillRect(0, 0, width, height);
     }
     if (myDurationWidth > 0) {
-      width -= myDurationWidth + myDurationLeftInset;
+      width -= myDurationWidth + myDurationLeftInset + myDurationRightInset;
       if (width > 0 && height > 0) {
         g.setColor(myDurationColor);
         g.setFont(RelativeFont.SMALL.derive(getFont()));
@@ -148,9 +149,5 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   @ApiStatus.Experimental
   public void setAccessibleStatus(@Nullable Computable<String> accessibleStatus) {
     myAccessibleStatus = accessibleStatus;
-  }
-
-  private static int getRightInset() {
-    return JBUI.scale(ExperimentalUI.isNewUI() ? 16 : 0);
   }
 }

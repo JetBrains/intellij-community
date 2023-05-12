@@ -1246,10 +1246,8 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     private String myDurationText;
     private Color myDurationColor;
     private int myDurationWidth;
-    /**
-     * An empty area before duration the text
-     */
     private int myDurationLeftInset;
+    private int myDurationRightInset;
 
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
@@ -1264,6 +1262,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       myDurationColor = null;
       myDurationWidth = 0;
       myDurationLeftInset = 0;
+      myDurationRightInset = 0;
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
       final Object userObj = node.getUserObject();
       if (userObj instanceof ExecutionNode) {
@@ -1272,6 +1271,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
           FontMetrics metrics = getFontMetrics(RelativeFont.SMALL.derive(getFont()));
           myDurationWidth = metrics.stringWidth(myDurationText);
           myDurationLeftInset = metrics.getHeight() / 4;
+          myDurationRightInset = ExperimentalUI.isNewUI() ? tree.getInsets().right + JBUI.scale(4) : myDurationLeftInset;
           myDurationColor = selected ? getTreeSelectionForeground(hasFocus) : GRAYED_ATTRIBUTES.getFgColor();
         }
       }
@@ -1281,7 +1281,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     protected void paintComponent(Graphics g) {
       UISettings.setupAntialiasing(g);
       Shape clip = null;
-      int width = getWidth() - getRightInset();
+      int width = getWidth();
       int height = getHeight();
       if (isOpaque()) {
         // paint background for expanded row
@@ -1289,7 +1289,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
         g.fillRect(0, 0, width, height);
       }
       if (myDurationWidth > 0) {
-        width -= myDurationWidth + myDurationLeftInset;
+        width -= myDurationWidth + myDurationLeftInset + myDurationRightInset;
         if (width > 0 && height > 0) {
           g.setColor(myDurationColor);
           g.setFont(RelativeFont.SMALL.derive(getFont()));
@@ -1304,8 +1304,13 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       if (clip != null) g.setClip(clip);
     }
 
-    private static int getRightInset() {
-      return JBUI.scale(ExperimentalUI.isNewUI() ? 16 : 0);
+    @Override
+    public @NotNull Dimension getPreferredSize() {
+      Dimension preferredSize = super.getPreferredSize();
+      if (myDurationWidth > 0) {
+        preferredSize.width += myDurationWidth + myDurationLeftInset + myDurationRightInset;
+      }
+      return preferredSize;
     }
   }
 
