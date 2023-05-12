@@ -437,6 +437,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Override
+  public void resetHints() {
+    myRegisteredIndexes.resetHints();
+  }
+
+  @Override
   public void waitUntilIndicesAreInitialized() {
     if (myRegisteredIndexes == null) {
       // interrupt all calculation while plugin reload

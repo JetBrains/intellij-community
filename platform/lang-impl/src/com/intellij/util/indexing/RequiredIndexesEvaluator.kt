@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.util.ThreeState
+import com.intellij.util.indexing.hints.FileTypeIndexingHint
+import com.intellij.util.indexing.hints.IndexingHint
 import com.jetbrains.rd.util.concurrentMapOf
 import java.util.function.Predicate
 
@@ -12,8 +16,14 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
     override fun test(t: IndexedFile): Boolean = true
   }
 
-  private fun combinePredicates(p1: IndexedFilePredicate, p2: IndexedFilePredicate): IndexedFilePredicate {
-    if (p1 == truePredicate) return p2
+  private val falsePredicate = object : IndexedFilePredicate {
+    override fun test(t: IndexedFile): Boolean = false
+  }
+
+  private fun andPredicates(p1: IndexedFilePredicate, p2: IndexedFilePredicate): IndexedFilePredicate {
+    if (p1 == falsePredicate) return p1
+    else if (p2 == falsePredicate) return p2
+    else if (p1 == truePredicate) return p2
     else if (p2 == truePredicate) return p1
     else return object : IndexedFilePredicate {
       override fun test(t: IndexedFile): Boolean = p1.test(t) && p2.test(t)
@@ -28,21 +38,21 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
       FileBasedIndexImpl.LOG.assertTrue(registeredIndexes.isInitialized, "RegisteredIndexes are not initialized")
     }
 
-    constructor(unsureIndexIds: Collection<ID<*, *>>) {
-      val sure: MutableList<ID<*, *>> = mutableListOf<ID<*, *>>()
+    constructor(indexIds: Collection<ID<*, *>>, fileType: FileType? = null) {
+      val sure: MutableList<ID<*, *>> = mutableListOf()
       val unsure: MutableList<Pair<ID<*, *>, IndexedFilePredicate>> = mutableListOf()
       this.sureIndexIds = sure
       this.unsureIndexIds = unsure
-
-      for (unsureIndexId in unsureIndexIds) {
-        val predicate = acceptsInput(unsureIndexId)
-        if (predicate == truePredicate) sure.add(unsureIndexId)
-        else unsure.add(Pair(unsureIndexId, predicate))
+      for (indexId in indexIds) {
+        val predicate = acceptsInput(indexId, fileType)
+        if (predicate == truePredicate) sure.add(indexId)
+        else if (predicate != falsePredicate) unsure.add(Pair(indexId, predicate))
       }
+      LOG.debug("fileType: $fileType, slow scanning path via indexes: ${unsure.map { it.first.name }.toList()}")
     }
 
     fun getRequiredIndexes(indexedFile: IndexedFile): List<ID<*, *>> {
-      if (unsureIndexIds.isEmpty()) return sureIndexIds;
+      if (unsureIndexIds.isEmpty()) return sureIndexIds
 
       FileBasedIndexImpl.LOG.assertTrue(indexedFile.project != null, "Should not index files from unknown project")
       val acceptedCandidates: MutableList<ID<*, *>> = ArrayList(sureIndexIds)
@@ -61,22 +71,47 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
   private fun getState(): IndexConfiguration = registeredIndexes.configurationState
   private fun getInputFilter(indexId: ID<*, *>): FileBasedIndex.InputFilter = getState().getInputFilter(indexId)
 
-  private fun acceptsInput(indexId: ID<*, *>): IndexedFilePredicate {
-    val indexAccepts = getIndexerFilter(indexId)
-    val globalAccepts = getGlobalFilter(indexId)
-    return combinePredicates(indexAccepts, globalAccepts)
+  private fun acceptsInput(indexId: ID<*, *>, fileType: FileType?): IndexedFilePredicate {
+    val hint = toHint(getInputFilter(indexId))
+    val globalHint = getGlobalHint(indexId)
+
+    val indexerHintPredicate = applyHints(hint, fileType)
+    val globalHintPredicate = applyHints(globalHint, fileType)
+
+    return andPredicates(indexerHintPredicate, globalHintPredicate)
   }
 
-  private fun getIndexerFilter(indexId: ID<*, *>) = object : IndexedFilePredicate {
-    override fun test(indexedFile: IndexedFile): Boolean {
-      val filter: FileBasedIndex.InputFilter = getInputFilter(indexId)
-      return FileBasedIndexEx.acceptsInput(filter, indexedFile)
+  private fun toHint(filter: FileBasedIndex.InputFilter): IndexingHint {
+    return (filter as? IndexingHint) ?: object : IndexingHint {
+      override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
+        return FileBasedIndexEx.acceptsInput(filter, file)
+      }
     }
   }
 
-  private fun getGlobalFilter(indexId: ID<*, *>) = object : IndexedFilePredicate {
-    override fun test(indexedFile: IndexedFile): Boolean {
-      return !GlobalIndexFilter.isExcludedFromIndexViaFilters(indexedFile.file, indexId, indexedFile.project)
+  private fun getGlobalHint(indexId: ID<*, *>): IndexingHint = object : IndexingHint {
+    override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
+      return !GlobalIndexFilter.isExcludedFromIndexViaFilters(file.file, indexId, file.project)
+    }
+  }
+
+  private fun applyHints(indexingHint: IndexingHint, fileType: FileType?): IndexedFilePredicate {
+    val hint = applyFileTypeHint(indexingHint, fileType)
+    return when (hint) {
+      ThreeState.YES -> truePredicate
+      ThreeState.NO -> falsePredicate
+      ThreeState.UNSURE -> object : IndexedFilePredicate {
+        override fun test(indexedFile: IndexedFile): Boolean = indexingHint.whenAllOtherHintsUnsure(indexedFile)
+      }
+    }
+  }
+
+  private fun applyFileTypeHint(indexingHint: IndexingHint, fileType: FileType?): ThreeState {
+    if (fileType != null && indexingHint is FileTypeIndexingHint) {
+      return indexingHint.hintAcceptFileType(fileType)
+    }
+    else {
+      return ThreeState.UNSURE
     }
   }
 
@@ -102,7 +137,7 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
       var filteredResults = indexesForFileType[fileType]
       if (filteredResults != null) return filteredResults.getRequiredIndexes(indexedFile)
 
-      filteredResults = HintAwareIndexList(getState().getFileTypesForIndex(fileType))
+      filteredResults = HintAwareIndexList(getState().getFileTypesForIndex(fileType), fileType)
       indexesForFileType[fileType] = filteredResults
       return filteredResults.getRequiredIndexes(indexedFile)
     }
@@ -115,5 +150,9 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
     else {
       return indexesForDirectories.getRequiredIndexes(indexedFile)
     }
+  }
+
+  companion object {
+    private val LOG = logger<RequiredIndexesEvaluator>()
   }
 }

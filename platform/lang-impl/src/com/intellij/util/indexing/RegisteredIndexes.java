@@ -100,6 +100,10 @@ public final class RegisteredIndexes {
     myRequiredIndexesEvaluator = new RequiredIndexesEvaluator(this);
   }
 
+  void resetHints() {
+    myRequiredIndexesEvaluator = new RequiredIndexesEvaluator(this);
+  }
+
   void ensureLoadedIndexesUpToDate() {
     myAllIndicesInitializedFuture = IndexDataInitializer.submitGenesisTask(() -> {
       if (!myShutdownPerformed.get()) {
