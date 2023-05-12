@@ -417,7 +417,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
     @Override
     public @Nullable NavigationRequest navigationRequest() {
-      return NavigationRequest.sourceNavigationRequest(myFile.getVirtualFile(), myRangeInFile.getStartOffset());
+      return NavigationRequest.sourceNavigationRequest(myFile, myRangeInFile);
     }
   }
 }
