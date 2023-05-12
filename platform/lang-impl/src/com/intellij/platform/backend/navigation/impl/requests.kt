@@ -23,4 +23,5 @@ class DirectoryNavigationRequest internal constructor(
 @Internal
 class RawNavigationRequest internal constructor(
   val navigatable: Navigatable,
+  val canNavigateToSource: Boolean,
 ) : NavigationRequest

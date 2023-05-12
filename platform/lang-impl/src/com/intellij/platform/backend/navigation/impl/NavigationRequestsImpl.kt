@@ -95,9 +95,9 @@ internal class NavigationRequestsImpl : NavigationRequests {
   override fun rawNavigationRequest(navigatable: Navigatable): NavigationRequest? {
     ApplicationManager.getApplication().assertReadAccessAllowed()
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    if (!navigatable.canNavigateToSource() && !navigatable.canNavigate()) {
+    if (!navigatable.canNavigate()) {
       return null
     }
-    return RawNavigationRequest(navigatable)
+    return RawNavigationRequest(navigatable, navigatable.canNavigateToSource())
   }
 }
