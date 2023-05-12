@@ -405,22 +405,6 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated use {@link ClientProperty#get(Component, Object)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static Object getWindowClientProperty(Window window, @NotNull Object key) {
-    return ClientProperty.get(window, key);
-  }
-
-  /**
-   * @deprecated use {@link ClientProperty#put(Window, Object, Object)}  instead
-   */
-  @Deprecated(forRemoval = true)
-  public static void putWindowClientProperty(Window window, @NotNull Object key, Object value) {
-    ClientProperty.put(window, key, value);
-  }
-
-  /**
    * @param component a Swing component that may hold a client property value
    * @param key       the client property key
    * @return {@code true} if the property of the specified component is set to {@code true}
@@ -1769,14 +1753,6 @@ public final class UIUtil {
 
   public static @Nullable Component findNearestOpaque(Component c) {
     return ComponentUtil.findParentByCondition(c, Component::isOpaque);
-  }
-
-  /**
-   * @deprecated use {@link ComponentUtil#findParentByCondition(Component, java.util.function.Predicate)}
-   */
-  @Deprecated(forRemoval = true)
-  public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<? super Component> condition) {
-    return ComponentUtil.findParentByCondition(c, it -> condition.value(it));
   }
 
   //x and y should be from {0, 0} to {parent.getWidth(), parent.getHeight()}
