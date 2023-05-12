@@ -18,24 +18,22 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.WeighingService
 import com.intellij.psi.statistics.StatisticsManager
-import com.intellij.psi.util.ProximityLocation
-import com.intellij.psi.util.proximity.PsiProximityComparator
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.completion.KotlinStatisticsInfo
 import org.jetbrains.kotlin.idea.completion.isDeprecatedAtCallSite
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.imports.importableFqName
+import org.jetbrains.kotlin.idea.quickfix.ImportComparablePriority
+import org.jetbrains.kotlin.idea.quickfix.ImportPrioritizer
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
@@ -46,7 +44,9 @@ import org.jetbrains.kotlin.idea.util.application.underModalProgressOrUnderWrite
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.isOneSegmentFQN
 import org.jetbrains.kotlin.name.parentOrNull
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -64,10 +64,12 @@ internal fun createSingleImportAction(
     fqNames: Collection<FqName>
 ): KotlinAddImportAction {
     val file = element.containingKtFile
-    val prioritizer = Prioritizer(file, element)
+    val prioritizer = createPrioritizerForFile(file)
+    val expressionWeigher = ExpressionWeigher.createWeigher(element)
+
     val variants = fqNames.asSequence().mapNotNull { fqName ->
         val sameFqNameDescriptors = file.resolveImportReference(fqName)
-        createVariantWithPriority(fqName, sameFqNameDescriptors, file, prioritizer, project)
+        createVariantWithPriority(fqName, sameFqNameDescriptors, prioritizer, expressionWeigher, project)
     }.sortedWith(compareBy({ it.priority }, { it.variant.hint }))
 
     return KotlinAddImportAction(project, editor, element, variants)
@@ -80,12 +82,14 @@ internal fun createSingleImportActionForConstructor(
     fqNames: Collection<FqName>
 ): KotlinAddImportAction {
     val file = element.containingKtFile
-    val prioritizer = Prioritizer(file)
+    val prioritizer = createPrioritizerForFile(file)
+    val expressionWeigher = ExpressionWeigher.createWeigher(element)
+
     val variants = fqNames.asSequence().mapNotNull { fqName ->
         val sameFqNameDescriptors = file.resolveImportReference(fqName.parent())
             .filterIsInstance<ClassDescriptor>()
             .flatMap { it.constructors }
-        createVariantWithPriority(fqName, sameFqNameDescriptors, file, prioritizer, project)
+        createVariantWithPriority(fqName, sameFqNameDescriptors, prioritizer, expressionWeigher, project)
     }
 
     return KotlinAddImportAction(project, editor, element, variants)
@@ -94,12 +98,12 @@ internal fun createSingleImportActionForConstructor(
 private fun createVariantWithPriority(
     fqName: FqName,
     sameFqNameDescriptors: Collection<DeclarationDescriptor>,
-    file: KtFile,
-    prioritizer: Prioritizer,
+    prioritizer: ImportPrioritizer,
+    expressionWeigher: ExpressionWeigher,
     project: Project
 ): VariantWithPriority? {
     val descriptorsWithPriority =
-        sameFqNameDescriptors.map { it to prioritizer.priority(it, file.languageVersionSettings) }.sortedBy { it.second }
+        sameFqNameDescriptors.map { it to createDescriptorPriority(prioritizer, expressionWeigher, it) }.sortedBy { it.second }
     val priority = descriptorsWithPriority.firstOrNull()?.second ?: return null
 
     return VariantWithPriority(SingleImportVariant(fqName, descriptorsWithPriority.map { it.first }, project), priority)
@@ -113,7 +117,9 @@ internal fun createGroupedImportsAction(
     fqNames: Collection<FqName>
 ): KotlinAddImportAction {
     val file = element.containingKtFile
-    val prioritizer = DescriptorGroupPrioritizer(file)
+    val prioritizer = createPrioritizerForFile(file)
+    val expressionWeigher = ExpressionWeigher.createWeigher(element)
+
     val variants = fqNames.groupBy { it.parentOrNull() ?: FqName.ROOT }.asSequence().map {
         val samePackageFqNames = it.value
         val descriptors = samePackageFqNames.flatMap { fqName -> file.resolveImportReference(fqName) }
@@ -123,7 +129,7 @@ internal fun createGroupedImportsAction(
             SingleImportVariant(samePackageFqNames.first(), descriptors, project)
         }
 
-        val priority = prioritizer.priority(descriptors, file.languageVersionSettings)
+        val priority = createDescriptorGroupPriority(prioritizer, expressionWeigher, descriptors)
         VariantWithPriority(variant, priority)
     }
 
@@ -312,93 +318,37 @@ class KotlinAddImportAction internal constructor(
     }
 }
 
-internal interface ComparablePriority : Comparable<ComparablePriority>
+internal data class VariantWithPriority(val variant: AutoImportVariant, val priority: ImportComparablePriority)
 
-internal data class VariantWithPriority(val variant: AutoImportVariant, val priority: ComparablePriority)
-
-
-internal class Prioritizer(
-    private val file: KtFile,
-    element: PsiElement? = null,
-    private val compareNames: Boolean = true
-) {
-    private val classifier = ImportableFqNameClassifier(file) {
-        ImportInsertHelper.getInstance(file.project).isImportedWithDefault(ImportPath(it, false), file)
+internal fun createPrioritizerForFile(file: KtFile, compareNames: Boolean = true): ImportPrioritizer {
+    val isImportedByDefault = { fqName: FqName ->
+        ImportInsertHelper.getInstance(file.project).isImportedWithDefault(ImportPath(fqName, isAllUnder = false), file)
     }
-    private val statsManager = StatisticsManager.getInstance()
-    private val proximityLocation = ProximityLocation(file, file.module)
-    private val expressionWeigher = ExpressionWeigher.createWeigher(element)
-
-    inner class Priority(descriptor: DeclarationDescriptor, languageVersionSettings: LanguageVersionSettings) : ComparablePriority {
-        private val isDeprecated = isDeprecatedAtCallSite(descriptor) { languageVersionSettings }
-        private val fqName = descriptor.importableFqName!!
-        private val classification = classifier.classify(fqName, false)
-        private val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(file.project, descriptor)
-        private val lastUseRecency = statsManager.getLastUseRecency(KotlinStatisticsInfo.forDescriptor(descriptor))
-        private val proximityWeight = WeighingService.weigh(PsiProximityComparator.WEIGHER_KEY, declaration, proximityLocation)
-        private val callExpressionWeigh = expressionWeigher.weigh(descriptor)
-
-        override fun compareTo(other: ComparablePriority): Int {
-            other as Priority
-
-            if (isDeprecated != other.isDeprecated) {
-                return if (isDeprecated) +1 else -1
-            }
-
-            val c1 = callExpressionWeigh.compareTo(other.callExpressionWeigh)
-            if (c1 != 0) {
-                // callExpressionWeigh is non-negative number
-                // Comparator contract says that if `a.compareTo(b)` returns -1 then `a` appears earlier than `b`
-                return -c1
-            }
-
-            val c2 = classification.compareTo(other.classification)
-            if (c2 != 0) return c2
-
-            val c3 = lastUseRecency.compareTo(other.lastUseRecency)
-            if (c3 != 0) return c3
-
-            val c4 = proximityWeight.compareTo(other.proximityWeight)
-            if (c4 != 0) return -c4 // n.b. reversed
-
-            return if (compareNames) {
-                fqName.asString().compareTo(other.fqName.asString())
-            } else {
-                0
-            }
-        }
-    }
-
-    fun priority(
-        descriptor: DeclarationDescriptor,
-        languageVersionSettings: LanguageVersionSettings,
-    ) = Priority(descriptor, languageVersionSettings)
+    return ImportPrioritizer(file, isImportedByDefault, compareNames)
 }
 
-private class DescriptorGroupPrioritizer(file: KtFile) {
-    private val prioritizer = Prioritizer(file, compareNames = false)
+internal fun createDescriptorPriority(
+    prioritizer: ImportPrioritizer,
+    expressionWeigher: ExpressionWeigher,
+    descriptor: DeclarationDescriptor
+): ImportPrioritizer.Priority {
+    val languageVersionSettings = prioritizer.file.languageVersionSettings
 
-    inner class Priority(
-        val descriptors: List<DeclarationDescriptor>,
-        languageVersionSettings: LanguageVersionSettings
-    ) : ComparablePriority {
-        val ownDescriptorsPriority = descriptors.maxOf { prioritizer.priority(it, languageVersionSettings) }
-
-        override fun compareTo(other: ComparablePriority): Int {
-            other as Priority
-
-            val c1 = ownDescriptorsPriority.compareTo(other.ownDescriptorsPriority)
-            if (c1 != 0) return c1
-
-            return other.descriptors.size - descriptors.size
-        }
-    }
-
-    fun priority(
-        descriptors: List<DeclarationDescriptor>,
-        languageVersionSettings: LanguageVersionSettings
-    ) = Priority(descriptors, languageVersionSettings)
+    return prioritizer.Priority(
+        declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(prioritizer.file.project, descriptor),
+        statisticsInfo = KotlinStatisticsInfo.forDescriptor(descriptor),
+        isDeprecated = isDeprecatedAtCallSite(descriptor) { languageVersionSettings },
+        fqName = descriptor.importableFqName ?: error("Unexpected null for fully-qualified name of importable declaration"),
+        expressionWeight = expressionWeigher.weigh(descriptor),
+    )
 }
+
+internal fun createDescriptorGroupPriority(
+    prioritizer: ImportPrioritizer,
+    expressionWeigher: ExpressionWeigher,
+    descriptors: List<DeclarationDescriptor>
+): ImportPrioritizer.GroupPriority =
+    prioritizer.GroupPriority(descriptors.map { createDescriptorPriority(prioritizer, expressionWeigher, it) })
 
 internal abstract class AutoImportVariant(
     val descriptorsToImport: Collection<DeclarationDescriptor>,

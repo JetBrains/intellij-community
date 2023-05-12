@@ -139,8 +139,8 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
             suggestionDescriptors.mapTo(hashSetOf()) { it.original }.takeIf { it.isNotEmpty() } ?: return ""
 
         val ktFile = element?.containingKtFile ?: return KotlinBundle.message("fix.import")
-        val languageVersionSettings = ktFile.languageVersionSettings
-        val prioritizer = Prioritizer(ktFile, element)
+        val prioritizer = createPrioritizerForFile(ktFile)
+        val expressionWeigher = ExpressionWeigher.createWeigher(element)
 
         val importInfos = descriptors.mapNotNull { descriptor ->
             val kind = when {
@@ -174,7 +174,9 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
                     append(it.asString())
                 }
             }
-            ImportFixHelper.ImportInfo(kind, name, prioritizer.priority(descriptor, languageVersionSettings))
+            val priority = createDescriptorPriority(prioritizer, expressionWeigher, descriptor)
+
+            ImportFixHelper.ImportInfo(kind, name, priority)
         }
         return ImportFixHelper.calculateTextForFix(importInfos, suggestions)
     }
