@@ -3,6 +3,7 @@
 package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 public class WalkingState<T> {
   public interface TreeGuide<T> {
@@ -15,6 +16,8 @@ public class WalkingState<T> {
   protected boolean startedWalking;
   private final TreeGuide<T> myWalker;
   private boolean stopped;
+
+  private static boolean isUnitTestMode = false;
 
   public void elementFinished(@NotNull T element) {}
 
@@ -43,11 +46,15 @@ public class WalkingState<T> {
   private void walkChildren(@NotNull T root) {
     for (T element = next(root, root, isDown); element != null && !stopped; element = next(element, root, isDown)) {
       isDown = false; // if client visitor did not call default visitElement it means skip subtree
-      T parent = myWalker.getParent(element);
-      T next = myWalker.getNextSibling(element);
-      visit(element);
-      assert myWalker.getNextSibling(element) == next : "Next sibling of the element '"+element+"' changed. Was: "+next+"; Now:"+myWalker.getNextSibling(element)+"; Root:"+root;
-      assert myWalker.getParent(element) == parent : "Parent of the element '"+element+"' changed. Was: "+parent+"; Now:"+myWalker.getParent(element)+"; Root:"+root;
+      if (isUnitTestMode) {
+        T parent = myWalker.getParent(element);
+        T next = myWalker.getNextSibling(element);
+        visit(element);
+        assert myWalker.getNextSibling(element) == next : "Next sibling of the element '"+element+"' changed. Was: "+next+"; Now:"+myWalker.getNextSibling(element)+"; Root:"+root;
+        assert myWalker.getParent(element) == parent : "Parent of the element '"+element+"' changed. Was: "+parent+"; Now:"+myWalker.getParent(element)+"; Root:"+root;
+      } else {
+        visit(element);
+      }
     }
   }
 
@@ -108,5 +115,10 @@ public class WalkingState<T> {
       }
     }.visit(root);
     return result[0];
+  }
+
+  @TestOnly
+  public static void setUnitTestMode() {
+    isUnitTestMode = true;
   }
 }

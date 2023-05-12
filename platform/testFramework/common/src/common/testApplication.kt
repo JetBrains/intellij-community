@@ -56,6 +56,7 @@ import com.intellij.testFramework.UITestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.SystemProperties
+import com.intellij.util.WalkingState
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
@@ -133,6 +134,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   AWTExceptionHandler.register()
   Disposer.setDebugMode(true)
   Logger.setUnitTestMode()
+  WalkingState.setUnitTestMode()
 
   Disposer.register(app) {
     AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
