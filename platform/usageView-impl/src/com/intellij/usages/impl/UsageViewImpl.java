@@ -2276,35 +2276,6 @@ public class UsageViewImpl implements UsageViewEx {
     return myTargets;
   }
 
-  /**
-   * @deprecated store origin usage elsewhere
-   */
-  @Deprecated private Usage myOriginUsage;
-
-  /**
-   * The element the "find usages" action was invoked on.
-   * E.g., if the "find usages" was invoked on the reference "getName(2)" pointing to the method "getName()" then the origin usage is this reference.
-   *
-   * @deprecated store origin usage elsewhere
-   */
-  @Deprecated(forRemoval = true)
-  public void setOriginUsage(@NotNull Usage usage) {
-    myOriginUsage = usage;
-  }
-
-  /**
-   * true if the {@param usage} points to the element the "find usages" action was invoked on
-   *
-   * @deprecated store origin usage elsewhere
-   */
-  @Deprecated(forRemoval = true)
-  public boolean isOriginUsage(@NotNull Usage usage) {
-    return
-      myOriginUsage instanceof UsageInfo2UsageAdapter &&
-      usage instanceof UsageInfo2UsageAdapter &&
-      ((UsageInfo2UsageAdapter)usage).getUsageInfo().equals(((UsageInfo2UsageAdapter)myOriginUsage).getUsageInfo());
-  }
-
   private boolean isFilterDuplicateLines() {
     return myPresentation.isMergeDupLinesAvailable() && getUsageViewSettings().isFilterDuplicatedLine();
   }
