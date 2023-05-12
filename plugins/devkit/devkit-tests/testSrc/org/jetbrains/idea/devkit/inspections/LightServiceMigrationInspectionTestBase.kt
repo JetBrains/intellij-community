@@ -7,20 +7,16 @@ abstract class LightServiceMigrationInspectionTestBase : LightDevKitInspectionFi
 
   override fun setUp() {
     super.setUp()
-    //language=java
     myFixture.addClass("""
       package com.intellij.openapi.components;
       public interface PersistentStateComponent<T> { }
     """)
     myFixture.addClass("""
-      //language=java
       package com.intellij.util.xmlb.annotations;
       
       public @interface Attribute { String value() default ""; }
     """)
-    myFixture.addClass(
-      //language=java
-      """
+    myFixture.addClass("""
       package com.intellij.openapi.components;
       
       import com.intellij.util.xmlb.annotations.Attribute;
@@ -38,9 +34,7 @@ abstract class LightServiceMigrationInspectionTestBase : LightDevKitInspectionFi
         public enum PreloadMode {}
       }
     """)
-    myFixture.addClass(
-      //language=java
-      """
+    myFixture.addClass("""
         package com.intellij.openapi.components;
         public @interface Service {}
       """
