@@ -123,7 +123,7 @@ class IndexableFilesIndexOriginsExcludedDirectoryTest : IndexableFilesIndexOrigi
     assertNoOrigin(excluded)
   }
 
- /* @Test
+  @Test
   fun `files of IndexableSetContributor beneath module excluded directory`() {
     lateinit var additionalRoots: DirectorySpec
     lateinit var additionalProjectRoots: DirectorySpec
@@ -157,7 +157,7 @@ class IndexableFilesIndexOriginsExcludedDirectoryTest : IndexableFilesIndexOrigi
     maskIndexableSetContributors(contributor)
     assertNoOrigin(additionalRoots, additionalProjectRoots, projectFile, appFile)
   }
-*/
+
   @Test
   fun `nested content root's excluded file should be indexed after nested content root removal`() {
     val parentContentRootFileName = "ParentContentRootFile.txt"

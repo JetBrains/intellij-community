@@ -9,6 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetRecognizer;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.EntityReference;
@@ -35,7 +37,7 @@ class OriginClassifier {
   static OriginClassifier classify(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
     return ReadAction.nonBlocking(() -> {
       OriginClassifier classifier = new OriginClassifier(project);
-      WorkspaceFileIndex index = WorkspaceFileIndex.getInstance(project);
+      WorkspaceFileIndexEx index = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
       for (VirtualFile file : files) {
         classifier.doClassify(index, file);
       }
@@ -43,8 +45,14 @@ class OriginClassifier {
     }).executeSynchronously();
   }
 
-  private void doClassify(@NotNull WorkspaceFileIndex workspaceFileIndex, @NotNull VirtualFile file) {
-    WorkspaceFileSet fileSet = workspaceFileIndex.findFileSet(file, true, true, true, true);
+  private void doClassify(@NotNull WorkspaceFileIndexEx workspaceFileIndex, @NotNull VirtualFile file) {
+    WorkspaceFileInternalInfo fileInfo =
+      workspaceFileIndex.getFileInfo(file, true, true, true, true);
+    if (fileInfo == WorkspaceFileInternalInfo.NonWorkspace.IGNORED || fileInfo == WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED) {
+      //excluded files should be ignored by indexableSetContributors
+      return;
+    }
+    WorkspaceFileSet fileSet = fileInfo.findFileSet((data -> true));
     if (fileSet == null) {
       filesFromIndexableSetContributors.add(file);
       return;
