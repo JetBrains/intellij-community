@@ -548,7 +548,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public boolean isPreview() {
-    return !myEAP && ("Preview".equalsIgnoreCase(myVersionSuffix) || myVersionSuffix.startsWith("RC"));
+    String versionSuffix = myVersionSuffix;
+    return !myEAP && ("Preview".equalsIgnoreCase(versionSuffix) || (versionSuffix != null && versionSuffix.startsWith("RC")));
   }
 
   @Override
