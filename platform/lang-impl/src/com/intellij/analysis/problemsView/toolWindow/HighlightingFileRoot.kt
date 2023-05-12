@@ -4,12 +4,13 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 
-internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualFile) : Root(panel) {
+internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualFile, val document: Document) : Root(panel) {
 
   private val problems = mutableSetOf<HighlightingProblem>()
   private val filter = ProblemFilter(panel.state)
@@ -18,11 +19,10 @@ internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualF
     override val project = panel.project
   }
 
-  private val watcher: HighlightingWatcher = createWatcher(provider, file)
+  private val watcher: HighlightingWatcher = createWatcher(provider, file, document)
 
   init {
     Disposer.register(this, provider)
-    Disposer.register(provider, watcher)
   }
 
   fun findProblem(highlighter: RangeHighlighterEx): Problem? = watcher.findProblem(highlighter)
@@ -44,8 +44,8 @@ internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualF
     else -> emptyList()
   }
 
-  private fun createWatcher(provider: ProblemsProvider, file: VirtualFile): HighlightingWatcher =
-    HighlightingWatcher(provider, this, file, HighlightSeverity.TEXT_ATTRIBUTES.myVal + 1)
+  private fun createWatcher(provider: ProblemsProvider, file: VirtualFile, document: Document): HighlightingWatcher =
+    HighlightingWatcher(provider, this, file, document, HighlightSeverity.TEXT_ATTRIBUTES.myVal + 1)
 
   override fun getOtherProblemCount(): Int = 0
 

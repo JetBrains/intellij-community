@@ -109,7 +109,7 @@ internal class HighlightingProblem(
 
   private fun computePosition(offset: Int): CachedPosition? {
     if (offset < 0) return null
-    val document = ProblemsView.getDocument(provider.project, file) ?: return null
+    val document = highlighter.document
     if (offset > document.textLength) return null
     val line = document.getLineNumber(offset)
     return CachedPosition(offset, line, offset - document.getLineStartOffset(line))

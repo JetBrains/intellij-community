@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -18,8 +19,10 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.concurrency.CancellablePromise
 
 class HighlightingPanel(project: Project, state: ProblemsViewState)
   : ProblemsViewPanel(project, ID, state, ProblemsViewBundle.messagePointer("problems.view.highlighting")),
@@ -42,16 +45,11 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
       .subscribe(PowerSaveMode.TOPIC, this)
   }
 
-  fun initInBGT() {
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
-    updateCurrentFile()
-  }
-
   override fun getSortFoldersFirst(): Option? = null
   override fun getTreeExpander(): TreeExpander? = null
 
   override fun getData(dataId: String): Any? {
-    if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) return currentFile
+    if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) return getCurrentFile()
     return super.getData(dataId)
   }
 
@@ -61,7 +59,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
 
   override fun selectionChangedTo(selected: Boolean) {
     super.selectionChangedTo(selected)
-    if (selected) updateCurrentFile()
+    if (selected) updateSelectedFile()
   }
 
   override fun powerSaveStateChanged() {
@@ -85,50 +83,66 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
    */
   private fun updateCurrentFileIfLocalId() {
     if (ClientId.current == myClientId) {
-      updateCurrentFile()
+      updateSelectedFile()
     }
   }
   
-  private fun updateCurrentFile() {
-    currentFile = ClientId.withClientId(myClientId) { findCurrentFile() }
+  fun updateSelectedFile(): CancellablePromise<Void> {
+    return ReadAction.nonBlocking {
+      if (!myDisposed) {
+        ClientId.withClientId(myClientId) {
+          ApplicationManager.getApplication().assertIsNonDispatchThread()
+          ApplicationManager.getApplication().assertReadAccessAllowed()
+          setCurrentFile(findSelectedFile())
+        }
+      }
+    }.submit(AppExecutorUtil.getAppExecutorService())
   }
 
   internal val currentRoot: HighlightingFileRoot?
     get() = treeModel.root as? HighlightingFileRoot
 
-  var currentFile: VirtualFile?
-    get() = currentRoot?.file
-    set(file) {
-      if (file == null) {
-        if (currentRoot == null) return
-        treeModel.root = null
-      }
-      else {
-        if (currentRoot?.file == file) return
-        treeModel.root = createRoot(file)
-        TreeUtil.promiseSelectFirstLeaf(tree)
-      }
-      powerSaveStateChanged()
-    }
+  private fun getCurrentDocument(): Document? = currentRoot?.document
 
-  internal fun createRoot(file: VirtualFile): HighlightingFileRoot = HighlightingFileRoot(this, file)
+  fun setCurrentFile(pair: Pair<VirtualFile, Document>?) {
+    if (pair == null) {
+      if (treeModel.root == null) return
+      treeModel.root = null
+    }
+    else {
+      val (file, document) = pair
+      if (currentRoot?.file == file) return
+      treeModel.root = HighlightingFileRoot(this, file, document)
+      TreeUtil.promiseSelectFirstLeaf(tree)
+    }
+    powerSaveStateChanged()
+  }
+  fun getCurrentFile(): VirtualFile? = currentRoot?.file
 
   fun selectHighlighter(highlighter: RangeHighlighterEx) {
     val problem = currentRoot?.findProblem(highlighter) ?: return
     TreeUtil.promiseSelect(tree, ProblemNodeFinder(problem))
   }
 
-  private fun findCurrentFile(): VirtualFile? {
+  private fun findSelectedFile(): Pair<VirtualFile, Document>? {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    ApplicationManager.getApplication().assertReadAccessAllowed()
     if (project.isDisposed) return null
     val fileEditor = FileEditorManager.getInstance(project)?.selectedEditor ?: return null
-    val virtualFile = if (fileEditor is TextEditor) {
-      fileEditor.editor.virtualFile
+    var virtualFile: VirtualFile?
+    val document: Document?
+    if (fileEditor is TextEditor) {
+      document = fileEditor.editor.document
+      virtualFile = fileEditor.editor.virtualFile
+      if (virtualFile == null) {
+        virtualFile = FileDocumentManager.getInstance().getFile(document)
+      }
     } else {
-      fileEditor.file
+      virtualFile = fileEditor.file
+      document = if (virtualFile == null) null else FileDocumentManager.getInstance().getDocument(virtualFile)
     }
-    if (virtualFile != null) return virtualFile
-    val textEditor = fileEditor as? TextEditor ?: return null
-    return FileDocumentManager.getInstance().getFile(textEditor.editor.document)
+    if (virtualFile != null && document != null) return Pair(virtualFile, document)
+    return null
   }
 
   private fun updateStatus() {
@@ -143,14 +157,16 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
         }
       }
     }
-    if (status.request) statusUpdateAlarm.cancelAndRequest()
+    if (status.request) {
+      statusUpdateAlarm.cancelAndRequest()
+    }
   }
 
   private fun getCurrentStatus(): Status {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    val file = currentFile ?: return Status(ProblemsViewBundle.message("problems.view.highlighting.no.selected.file"))
+    val file = getCurrentFile() ?: return Status(ProblemsViewBundle.message("problems.view.highlighting.no.selected.file"))
     if (PowerSaveMode.isEnabled()) return Status(ProblemsViewBundle.message("problems.view.highlighting.power.save.mode"))
-    val document = ProblemsView.getDocument(project, file) ?: return statusAnalyzing(file)
+    val document = getCurrentDocument() ?: return statusAnalyzing(file)
     val editor = EditorFactory.getInstance().editors(document, project).findFirst().orElse(null) ?: return statusAnalyzing(file)
     val model = editor.markupModel as? EditorMarkupModel ?: return statusAnalyzing(file)
     val status = model.errorStripeRenderer?.status ?: return statusComplete(file)

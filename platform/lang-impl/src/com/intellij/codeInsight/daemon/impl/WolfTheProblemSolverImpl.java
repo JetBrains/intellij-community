@@ -276,6 +276,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
 
   @Override
   public void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<? extends Problem> problems) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (problems.isEmpty()) return;
     ProblemFileInfo storedProblems = myProblems.computeIfAbsent(virtualFile, __ -> new ProblemFileInfo());
     boolean fireListener = storedProblems.problems.isEmpty();
@@ -292,6 +293,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   private void fireProblemsAppeared(@NotNull VirtualFile file) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     myProject.getMessageBus().syncPublisher(com.intellij.problems.ProblemListener.TOPIC).problemsAppeared(file);
   }
 

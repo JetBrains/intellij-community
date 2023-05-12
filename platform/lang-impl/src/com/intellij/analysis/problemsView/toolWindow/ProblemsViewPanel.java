@@ -124,7 +124,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     @Override
     public boolean isEnabled() {
       VirtualFile file = getSelectedFile();
-      return file != null && null != ProblemsView.getDocument(getProject(), file);
+      return file != null && ProblemsView.getDocument(getProject(), file) != null;
     }
 
     @Override

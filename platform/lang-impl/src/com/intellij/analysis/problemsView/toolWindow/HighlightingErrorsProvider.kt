@@ -4,6 +4,7 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl
 import com.intellij.lang.annotation.HighlightSeverity.ERROR
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -31,11 +32,11 @@ open class HighlightingErrorsProvider(final override val project: Project) : Hig
   override fun problemsAppeared(file: VirtualFile) {
     if (!file.isValid || FileTypeRegistry.getInstance().isFileIgnored(file)) return
     if (project.isDisposed || ProjectFileIndex.getInstance(project).isExcluded(file)) return
+    val document = FileDocumentManager.getInstance().getDocument(file)
+    if (document == null) return
     synchronized(watchers) {
       watchers.computeIfAbsent(file) { file ->
-        HighlightingWatcher(this, ProblemsCollector.getInstance(project), file, ERROR.myVal).also { watcher ->
-          Disposer.register(this, watcher)
-        }
+        HighlightingWatcher(this, ProblemsCollector.getInstance(project), file, document, ERROR.myVal)
       }
     }
   }

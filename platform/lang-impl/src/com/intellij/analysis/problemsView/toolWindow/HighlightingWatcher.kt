@@ -6,30 +6,34 @@ import com.intellij.analysis.problemsView.ProblemsListener
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
-import com.intellij.openapi.editor.impl.DocumentMarkupModel.forDocument
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.EdtInvocationManager
-import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentHashMap
 
 internal class HighlightingWatcher(
   private val provider: ProblemsProvider,
   private val listener: ProblemsListener,
   private val file: VirtualFile,
+  document: Document,
   private val level: Int)
   : MarkupModelListener, Disposable {
 
   private var disposed: Boolean = false
   private val problems:MutableMap<RangeHighlighter, Problem> = ConcurrentHashMap()
-  private var reference: WeakReference<MarkupModelEx>? = null
 
   init {
-    ApplicationManager.getApplication().runReadAction { update() }
+    val markupModel = DocumentMarkupModel.forDocument(document, provider.project, true) as MarkupModelEx
+    markupModel.addMarkupModelListener(this, this)
+    val highlighters = markupModel.allHighlighters
+    highlighters.forEach { afterAdded(it as RangeHighlighterEx) }
+    Disposer.register(provider, this)
   }
 
   override fun dispose() {
@@ -74,12 +78,6 @@ internal class HighlightingWatcher(
     }
   }
 
-  fun update() {
-    val model = reference?.get() ?: getMarkupModel() ?: return
-    val highlighters = model.allHighlighters
-    highlighters.forEach { afterAdded(it as RangeHighlighterEx) }
-  }
-
   fun findProblem(highlighter: RangeHighlighter): Problem? = problems[highlighter]
 
   private fun getHighlightingProblem(highlighter: RangeHighlighter): HighlightingProblem
@@ -95,11 +93,4 @@ internal class HighlightingWatcher(
     return info.description != null && info.severity.myVal >= level
   }
 
-  private fun getMarkupModel(): MarkupModelEx? {
-    val document = ProblemsView.getDocument(provider.project, file) ?: return null
-    val model = forDocument(document, provider.project, true) as? MarkupModelEx ?: return null
-    model.addMarkupModelListener(this, this)
-    reference = WeakReference(model)
-    return model
-  }
 }
