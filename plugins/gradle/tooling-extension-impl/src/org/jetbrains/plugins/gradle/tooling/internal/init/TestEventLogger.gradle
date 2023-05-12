@@ -133,7 +133,7 @@ class TestEventLogger {
       ? escapeCdata(exception.actualFilePath)
       : escapeCdata(null)
 
-    xml.failureType('comparison')
+    xml.failureType('file-comparison')
     xml.mkp.yieldUnescaped("<expected>$expected</expected>")
     xml.mkp.yieldUnescaped("<actual>$actual</actual>")
     xml.mkp.yieldUnescaped("<filePath>$filePath</filePath>")

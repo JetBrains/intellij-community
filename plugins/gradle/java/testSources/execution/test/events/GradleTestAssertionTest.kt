@@ -707,6 +707,11 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             """.trimMargin())
           }
           assertNode("test_assert_not_null") {
+            assertTestConsoleDoesNotContain("""
+              |Expected :
+              |Actual   :
+              |<Click to see difference>
+            """.trimMargin())
             assertTestConsoleContains("""
               |
               |org.opentest4j.AssertionFailedError: expected: not <null>
