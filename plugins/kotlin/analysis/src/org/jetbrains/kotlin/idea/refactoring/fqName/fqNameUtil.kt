@@ -2,14 +2,11 @@
 package org.jetbrains.kotlin.idea.refactoring.fqName
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.types.AbbreviatedType
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.idea.base.utils.fqname.isImported as _isImported
 
 val KotlinType.fqName: FqName?
     get() = when (this) {
@@ -22,11 +19,3 @@ val KotlinType.fqName: FqName?
     replaceWith = ReplaceWith("kotlinFqName", "org.jetbrains.kotlin.idea.base.psi.kotlinFqName"),
 )
 fun PsiElement.getKotlinFqName(): FqName? = this.kotlinFqName
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "For binary compatibility",
-    replaceWith = ReplaceWith("this.isImported(importPath, skipAliasedImports)", "org.jetbrains.kotlin.idea.base.utils.fqname.isImported"),
-)
-fun FqName.isImported(importPath: ImportPath, skipAliasedImports: Boolean = true): Boolean =
-    _isImported(importPath, skipAliasedImports)
