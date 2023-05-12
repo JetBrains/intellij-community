@@ -155,14 +155,15 @@ object Switcher : BaseSwitcherAction(null) {
         updateMnemonics(windows, showMnemonics)
       }
       // register custom actions as soon as possible to block overridden actions
-      registerAction({ e: InputEvent? -> navigate(e) }, "ENTER")
       if (pinned) {
+        registerAction({ e: InputEvent? -> navigate(e) }, ActionUtil.getShortcutSet("PopupMenu-return"))
         registerAction({ hideSpeedSearchOrPopup() }, ActionUtil.getShortcutSet(IdeActions.ACTION_EDITOR_ESCAPE))
         registerAction({ closeTabOrToolWindow() }, ActionUtil.getShortcutSet("DeleteRecentFiles"))
         registerAction({ e: InputEvent? -> navigate(e) }, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_NEW_WINDOW))
         registerAction({ e: InputEvent? -> navigate(e) }, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT))
       }
       else {
+        registerAction({ e: InputEvent? -> navigate(e) }, "ENTER")
         registerAction({ hideSpeedSearchOrPopup() }, "ESCAPE")
         registerAction({ closeTabOrToolWindow() }, "DELETE", "BACK_SPACE")
         registerSwingAction(ListActions.Up.ID, "KP_UP", "UP")
