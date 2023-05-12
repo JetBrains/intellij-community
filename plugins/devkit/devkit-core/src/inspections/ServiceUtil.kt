@@ -62,11 +62,13 @@ private fun getLevels(attributeValue: JvmAnnotationArrayValue, isKotlin: Boolean
   return if (isKotlin) {
     val levelAsClassIdString = Service.Level::class.java.name.replace('.', '/').replace('$', '.')
     attributeValue.values
+      .asSequence()
       .filterIsInstance<JvmAnnotationConstantValue>()
       .map { it.constantValue }
       .filterIsInstance<Pair<*, *>>()
       .filter { (classId, _) -> classId.toString() == levelAsClassIdString }
       .mapNotNull { (_, name) -> toLevel(name.toString()) }
+      .toList()
   }
   else {
     attributeValue.values
