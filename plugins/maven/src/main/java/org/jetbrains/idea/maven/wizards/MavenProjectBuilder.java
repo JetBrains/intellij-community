@@ -327,17 +327,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     });
   }
 
-  @Deprecated(forRemoval = true)
-  public boolean setSelectedProfiles(MavenExplicitProfiles profiles) {
-    return runConfigurationProcess(MavenProjectBundle.message("maven.scanning.projects"), new MavenTask() {
-      @Override
-      public void run(MavenProgressIndicator indicator) {
-        readMavenProjectTree(indicator);
-        indicator.setText2("");
-      }
-    });
-  }
-
   private static boolean runConfigurationProcess(@NlsContexts.DialogTitle String message, MavenTask p) {
     try {
       MavenUtil.run(null, message, p);
