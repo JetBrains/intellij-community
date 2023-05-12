@@ -494,14 +494,6 @@ public final class RefactoringUtil {
   }
 
   /**
-   * @deprecated use CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static PsiCodeBlock expandExpressionLambdaToCodeBlock(@NotNull PsiLambdaExpression lambdaExpression) {
-    return CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
-  }
-
-  /**
    * @deprecated use CommonJavaRefactoringUtil.findPackageDirectoryInSourceRoot instead.
    */
   @Deprecated

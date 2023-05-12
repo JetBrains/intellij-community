@@ -232,7 +232,7 @@ public final class BuildManager implements Disposable {
       return;
     }
 
-    Collection<File> systemDirs = Collections.singleton(getBuildSystemDirectory().toFile());
+    Collection<File> systemDirs = Collections.singleton(LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory().toFile());
     if (Boolean.parseBoolean(System.getProperty("compiler.build.data.clean.unused.wsl"))) {
       final List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
       if (!distributions.isEmpty()) {
@@ -1663,13 +1663,6 @@ public final class BuildManager implements Disposable {
       return JavaCompilers.ECLIPSE_ID.equals(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equals(compilerId);
     }
     return true;
-  }
-
-  /** @deprecated use {@link #getBuildSystemDirectory(Project)} */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public @NotNull Path getBuildSystemDirectory() {
-    return LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory();
   }
 
   public @NotNull Path getBuildSystemDirectory(Project project) {

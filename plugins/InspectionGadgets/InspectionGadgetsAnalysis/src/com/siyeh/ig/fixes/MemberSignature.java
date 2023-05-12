@@ -102,14 +102,6 @@ public class MemberSignature implements Comparable<MemberSignature> {
     return signature.compareTo(other.signature);
   }
 
-  /**
-   * @deprecated use {@link ClassUtil#getBinaryPresentation(PsiType)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static String createTypeSignature(PsiType type) {
-    return ClassUtil.getBinaryPresentation(type);
-  }
-
   public boolean equals(Object object) {
     try {
       final MemberSignature other = (MemberSignature)object;
