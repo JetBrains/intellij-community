@@ -24,6 +24,11 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
       override fun visitMethod(method: JvmMethod): Boolean {
         if (!method.isConstructor) return true
         val clazz = method.containingClass ?: return true
+        if (clazz.classKind != JvmClassKind.CLASS ||
+            clazz.hasModifier(JvmModifier.ABSTRACT) ||
+            clazz.isLocalOrAnonymous()) {
+          return true
+        }
         val annotation = clazz.getAnnotation(Service::class.java.canonicalName) ?: return true
         val sourceElement = method.sourceElement ?: return true
         val file = sourceElement.containingFile ?: return true
@@ -36,6 +41,10 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
           registerProblemApplicationLevelRequired(method, file)
         }
         return true
+      }
+
+      private fun JvmClass.isLocalOrAnonymous(): Boolean {
+        return this.qualifiedName == null
       }
 
       private fun hasAppLevelServiceCtor(clazz: JvmClass): Boolean {
