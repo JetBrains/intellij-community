@@ -9,7 +9,7 @@ project.consumer.androidTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :consumer:commonTest
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 project.consumer.commonMain
     externalProjectId = :consumer
@@ -40,7 +40,7 @@ project.consumer.jvmMain
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :consumer:commonMain, :consumer:jvmAndAndroidMain
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 project.consumer.jvmTest
     externalProjectId = :consumer
@@ -48,7 +48,7 @@ project.consumer.jvmTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :consumer:commonTest
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 project.consumer.main
     externalProjectId = :consumer
@@ -56,7 +56,7 @@ project.consumer.main
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :consumer:commonMain, :consumer:jvmAndAndroidMain
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 project.consumer.unitTest
     externalProjectId = :consumer
@@ -64,7 +64,7 @@ project.consumer.unitTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :consumer:commonTest
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 project.producer
 
@@ -74,7 +74,7 @@ project.producer.androidTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :producer:commonTest
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 project.producer.commonMain
     externalProjectId = :producer
@@ -105,7 +105,7 @@ project.producer.jvmMain
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :producer:commonMain, :producer:jvmAndAndroidMain
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 project.producer.jvmTest
     externalProjectId = :producer
@@ -113,7 +113,7 @@ project.producer.jvmTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :producer:commonTest
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 project.producer.main
     externalProjectId = :producer
@@ -121,7 +121,7 @@ project.producer.main
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :producer:commonMain, :producer:jvmAndAndroidMain
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 project.producer.unitTest
     externalProjectId = :producer
@@ -129,4 +129,4 @@ project.producer.unitTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :producer:commonTest
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
