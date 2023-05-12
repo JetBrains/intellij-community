@@ -48,7 +48,7 @@ class EnableSettingsSyncCommand(text: @NonNls String, line: Int) : PlaybackComma
               }
               SettingsSyncSettings.getInstance().syncEnabled = true
             }
-            is UpdateResult.NoFileOnServer -> {
+            is UpdateResult.NoFileOnServer, UpdateResult.FileDeletedFromServer -> {
               when (enableSyncOptions) {
                 EnableSettingSyncOptions.GET, EnableSettingSyncOptions.PUSH -> {
                   throw Exception("Settings Sync is not initialized ${EnableSettingSyncOptions.NONE} should be used")
