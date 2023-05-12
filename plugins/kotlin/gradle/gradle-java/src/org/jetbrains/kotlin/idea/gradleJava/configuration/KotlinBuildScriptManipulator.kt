@@ -59,10 +59,15 @@ class KotlinBuildScriptManipulator(
         return originalText != scriptFile.text
     }
 
+    override fun isKotlinConfiguredInBuildScript(): Boolean {
+        return scriptFile.getKotlinVersion() != null
+    }
+
     override fun configureModuleBuildScript(
         kotlinPluginName: String,
         kotlinPluginExpression: String,
         stdlibArtifactName: String,
+        addVersion: Boolean,
         version: IdeKotlinVersion,
         jvmTarget: String?
     ): Boolean {
@@ -70,7 +75,7 @@ class KotlinBuildScriptManipulator(
         val useNewSyntax = useNewSyntax(kotlinPluginName, gradleVersion)
         scriptFile.apply {
             if (useNewSyntax) {
-                createPluginInPluginsGroupIfMissing(kotlinPluginExpression, version)
+                createPluginInPluginsGroupIfMissing(kotlinPluginExpression, addVersion, version)
                 getDependenciesBlock()?.addNoVersionCompileStdlibIfMissing(stdlibArtifactName)
                 getRepositoriesBlock()?.apply {
                     val repository = getRepositoryForVersion(version)
@@ -367,10 +372,18 @@ class KotlinBuildScriptManipulator(
 
     private fun KtFile.getPluginsBlock(): KtBlockExpression? = findOrCreateScriptInitializer("plugins", true)
 
-    private fun KtFile.createPluginInPluginsGroupIfMissing(pluginName: String, version: IdeKotlinVersion): KtCallExpression? =
+    private fun KtFile.createPluginInPluginsGroupIfMissing(
+        pluginName: String,
+        addVersion: Boolean,
+        version: IdeKotlinVersion
+    ): KtCallExpression? =
         getPluginsBlock()?.let {
             it.findPluginInPluginsGroup(pluginName)
-                ?: it.addExpressionIfMissing("$pluginName version \"${version.artifactVersion}\"") as? KtCallExpression
+                ?: it.addExpressionIfMissing(
+                    if (addVersion) {
+                        "$pluginName version \"${version.artifactVersion}\""
+                    } else pluginName
+                ) as? KtCallExpression
         }
 
     private fun KtFile.createApplyBlock(): KtBlockExpression? {
@@ -411,11 +424,7 @@ class KotlinBuildScriptManipulator(
                 ?.addExpressionIfMissing("languageSettings.enableLanguageFeature(\"${feature.name}\")")
         }
 
-        val pluginsBlock = findScriptInitializer("plugins")?.getBlock()
-        val rawKotlinVersion = pluginsBlock?.findPluginVersionInPluginGroup("kotlin")
-            ?: pluginsBlock?.findPluginVersionInPluginGroup("org.jetbrains.kotlin.jvm")
-            ?: findScriptInitializer("buildscript")?.getBlock()?.findBlock("dependencies")?.findClassPathDependencyVersion("org.jetbrains.kotlin:kotlin-gradle-plugin")
-        val kotlinVersion = rawKotlinVersion?.let(IdeKotlinVersion::opt)
+        val kotlinVersion = getKotlinVersion()
         val featureArgumentString = feature.buildArgumentString(state, kotlinVersion)
         val parameterName = "freeCompilerArgs"
         return addOrReplaceKotlinTaskParameter(
@@ -432,6 +441,15 @@ class KotlinBuildScriptManipulator(
             )
             replace(psiFactory.createExpression(newText))
         }
+    }
+
+    private fun KtFile.getKotlinVersion(): IdeKotlinVersion? {
+        val pluginsBlock = findScriptInitializer("plugins")?.getBlock()
+        val rawKotlinVersion = pluginsBlock?.findPluginVersionInPluginGroup("kotlin")
+            ?: pluginsBlock?.findPluginVersionInPluginGroup("org.jetbrains.kotlin.jvm")
+            ?: findScriptInitializer("buildscript")?.getBlock()?.findBlock("dependencies")
+                ?.findClassPathDependencyVersion("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        return rawKotlinVersion?.let(IdeKotlinVersion::opt)
     }
 
     private fun KtFile.addOrReplaceKotlinTaskParameter(

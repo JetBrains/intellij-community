@@ -122,18 +122,27 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         collector: NotificationMessageCollector
     ): HashSet<PsiFile> {
         val filesToOpen = HashSet<PsiFile>()
-        val buildScript = project.getTopLevelBuildScriptPsiFile()
-        if (buildScript != null && canConfigureFile(buildScript)) {
-            val isModified = configureBuildScript(buildScript, true, kotlinVersion, collector)
-            if (isModified) {
-                filesToOpen.add(buildScript)
+        val topLevelBuildScript = project.getTopLevelBuildScriptPsiFile()
+        var addVersionToModuleBuildScript = true
+        if (topLevelBuildScript != null) {
+            if (canConfigureFile(topLevelBuildScript)) {
+                val isModified = configureBuildScript(topLevelBuildScript, true, kotlinVersion, collector)
+                if (isModified) {
+                    filesToOpen.add(topLevelBuildScript)
+                }
             }
+            addVersionToModuleBuildScript = !GradleBuildScriptSupport.getManipulator(topLevelBuildScript).isKotlinConfiguredInBuildScript()
         }
 
         for (module in modulesToConfigure) {
             val file = module.getBuildScriptPsiFile()
             if (file != null && canConfigureFile(file)) {
-                configureModule(module, file, false, kotlinVersion, collector, filesToOpen)
+                if (file == topLevelBuildScript) {
+                    configureModule(module, file, false, kotlinVersion, collector, filesToOpen, true)
+                    addVersionToModuleBuildScript = false // Just added to root script, no need to add to other scripts
+                } else {
+                    configureModule(module, file, false, kotlinVersion, collector, filesToOpen, addVersionToModuleBuildScript)
+                }
             } else {
                 showErrorMessage(
                     project,
@@ -150,21 +159,23 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         isTopLevelProjectFile: Boolean,
         version: IdeKotlinVersion,
         collector: NotificationMessageCollector,
-        filesToOpen: MutableCollection<PsiFile>
+        filesToOpen: MutableCollection<PsiFile>,
+        addVersion: Boolean = true
     ) {
-        val isModified = configureBuildScript(file, isTopLevelProjectFile, version, collector)
+        val isModified = configureBuildScript(file, isTopLevelProjectFile, version, collector, addVersion)
         if (isModified) {
             filesToOpen.add(file)
         }
     }
 
-    private fun configureModuleBuildScript(file: PsiFile, version: IdeKotlinVersion): Boolean {
+    private fun configureModuleBuildScript(file: PsiFile, addVersion: Boolean, version: IdeKotlinVersion): Boolean {
         val sdk = ModuleUtil.findModuleForPsiElement(file)?.let { ModuleRootManager.getInstance(it).sdk }
         val jvmTarget = getJvmTarget(sdk, version)
         return GradleBuildScriptSupport.getManipulator(file).configureModuleBuildScript(
             kotlinPluginName,
             getKotlinPluginExpression(file.isKtDsl()),
             getStdlibArtifactName(sdk, version),
+            addVersion,
             version,
             jvmTarget
         )
@@ -180,11 +191,12 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     protected open fun addElementsToFile(
         file: PsiFile,
         isTopLevelProjectFile: Boolean,
-        version: IdeKotlinVersion
+        version: IdeKotlinVersion,
+        addVersion: Boolean = true
     ): Boolean {
         if (!isTopLevelProjectFile) {
             var wasModified = GradleBuildScriptSupport.getManipulator(file).configureProjectBuildScript(kotlinPluginName, version)
-            wasModified = wasModified or configureModuleBuildScript(file, version)
+            wasModified = wasModified or configureModuleBuildScript(file, addVersion, version)
             return wasModified
         }
         return false
@@ -194,10 +206,11 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         file: PsiFile,
         isTopLevelProjectFile: Boolean,
         version: IdeKotlinVersion,
-        collector: NotificationMessageCollector
+        collector: NotificationMessageCollector,
+        addVersion: Boolean = true
     ): Boolean {
         val isModified = file.project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", file.name), null) {
-            val isModified = addElementsToFile(file, isTopLevelProjectFile, version)
+            val isModified = addElementsToFile(file, isTopLevelProjectFile, version, addVersion)
 
             CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(file)
             isModified

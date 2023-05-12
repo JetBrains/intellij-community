@@ -47,9 +47,10 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
         isTopLevelProjectFile: Boolean,
         version: IdeKotlinVersion,
         collector: NotificationMessageCollector,
-        filesToOpen: MutableCollection<PsiFile>
+        filesToOpen: MutableCollection<PsiFile>,
+        addVersion: Boolean
     ) {
-        super.configureModule(module, file, isTopLevelProjectFile, version, collector, filesToOpen)
+        super.configureModule(module, file, isTopLevelProjectFile, version, collector, filesToOpen, addVersion)
 
         val moduleGroup = module.getWholeModuleGroup()
         for (sourceModule in moduleGroup.allModules()) {
