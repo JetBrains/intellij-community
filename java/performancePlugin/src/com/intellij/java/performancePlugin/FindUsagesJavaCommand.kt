@@ -41,7 +41,7 @@ class FindUsagesJavaCommand(text: String, line: Int) : AbstractCommand(text, lin
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     val actionCallback = ActionCallbackProfilerStopper()
     val arguments = text.split(" ".toRegex()).toTypedArray()
-    val position = if (arguments.size == 2) arguments[1] else null
+    val position = if (arguments.size == 3) arguments[1] else null
     val elementName = if (arguments.size == 3) arguments[2] else arguments[1]
     if (position != null) {
       val result = GoToNamedElementCommand(GoToNamedElementCommand.PREFIX + " $position $elementName", -1).execute(context)
