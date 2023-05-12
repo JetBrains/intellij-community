@@ -36,13 +36,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   private BitSet fileIds;
   private boolean frozen;
 
-  /**
-   * @deprecated Use {@link VfsUtilCore#createCompactVirtualFileSet()} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @ApiStatus.Internal
-  public CompactVirtualFileSet() {
+  CompactVirtualFileSet() {
   }
 
   /**

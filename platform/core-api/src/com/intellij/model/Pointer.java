@@ -8,7 +8,6 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -122,21 +121,6 @@ public interface Pointer<T> {
   }
 
   /**
-   * Creates a pointer which holds the strong reference to the {@code value}.
-   * The pointer is always de-referenced into the passed {@code value}.
-   * Hard pointers should be used only for values that cannot be invalidated.
-   *
-   * @deprecated use {@link #hardPointer(Object)}.
-   * See deprecation notice on {@link #delegatingPointer(Pointer, Object, Function)}.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @Contract(value = "_ -> new", pure = true)
-  static <T> @NotNull Pointer<T> hardPointerWithEquality(@NotNull T value) {
-    return new HardPointerEq<>(value);
-  }
-
-  /**
    * Creates a pointer which uses {@code underlyingPointer} value to restore its value with {@code restoration} function.
    * <p/>
    * Equality of {@code restoration} function is unreliable, because it might be a lambda.
@@ -153,21 +137,5 @@ public interface Pointer<T> {
                                                       @NotNull Object key,
                                                       @NotNull Function<? super U, ? extends T> restoration) {
     return new DelegatingPointerEq.ByValue<>(underlyingPointer, key, restoration);
-  }
-
-  /**
-   * Creates the same pointer as {@link #delegatingPointer}, which additionally passes itself
-   * into the {@code restoration} function to allow caching the pointer in the restored value.
-   *
-   * @deprecated use {@link #uroborosPointer(Pointer, BiFunction)}.
-   * See deprecation notice on {@link #delegatingPointer(Pointer, Object, Function)}.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @Contract(value = "_, _, _ -> new", pure = true)
-  static <T, U> @NotNull Pointer<T> uroborosPointer(@NotNull Pointer<? extends U> underlyingPointer,
-                                                    @NotNull Object key,
-                                                    @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends T> restoration) {
-    return new DelegatingPointerEq.ByValueAndPointer<>(underlyingPointer, key, restoration);
   }
 }

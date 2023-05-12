@@ -383,29 +383,6 @@ fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend Cor
   return indicatorRunBlockingCancellable(indicator, action)
 }
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  message = "Method was renamed",
-  replaceWith = ReplaceWith("runBlockingCancellable(action)"),
-  level = DeprecationLevel.ERROR,
-)
-@RequiresBlockingContext
-fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
-  return runBlockingCancellable(action)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  message = "Method was renamed",
-  replaceWith = ReplaceWith("runBlockingCancellable(indicator, action)"),
-  level = DeprecationLevel.ERROR,
-)
-@RequiresBlockingContext
-fun <T> runSuspendingAction(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
-  @Suppress("DEPRECATION")
-  return indicatorRunBlockingCancellable(indicator, action)
-}
-
 @Deprecated(
   message = "Method was renamed",
   replaceWith = ReplaceWith("coroutineToIndicator(action)"),

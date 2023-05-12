@@ -186,13 +186,6 @@ public final class PlatformUtils {
     return is(GOIDE_PREFIX);
   }
 
-  /**
-   * @deprecated Code With Me Guest is an old name for JetBrains Client
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static boolean isCodeWithMeGuest() { return is(CWM_GUEST_PREFIX); }
-
   public static boolean isJetBrainsClient() { return is(JETBRAINS_CLIENT_PREFIX); }
 
   public static boolean isGateway() { return is(GATEWAY_PREFIX); }
