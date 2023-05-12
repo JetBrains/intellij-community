@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.Vfs
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.withContradictionCheck
 import com.intellij.util.BitUtil
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import kotlinx.coroutines.runBlocking
@@ -360,4 +361,5 @@ fun main(args: Array<String>) {
   vfsRecoveryDraft(log, attributeEnumerator, fsRecordsOracle)
 
   fsRecordsOracle.disposeConnection()
+  AppExecutorUtil.shutdownApplicationScheduledExecutorService()
 }
