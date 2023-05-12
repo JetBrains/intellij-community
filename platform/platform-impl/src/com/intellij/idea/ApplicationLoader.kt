@@ -168,7 +168,8 @@ private suspend fun initApplicationImpl(args: List<String>,
   }
 
   subtask("app initialized callback") {
-    callAppInitialized(appInitializedListeners, asyncScope)
+    // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
+    callAppInitialized(listeners = appInitializedListeners, asyncScope = app.coroutineScope)
   }
 
   // doesn't block app start-up
