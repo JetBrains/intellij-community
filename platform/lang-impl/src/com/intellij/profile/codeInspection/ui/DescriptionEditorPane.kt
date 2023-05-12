@@ -41,6 +41,12 @@ open class DescriptionEditorPane : JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML) {
 
 }
 
+/**
+ * Parses the input HTML [text] and displays its content.
+ *
+ * @param text The HTML content as a [String] to be displayed in the [JEditorPane].
+ * @throws RuntimeException if an exception occurs while parsing or displaying the HTML content.
+ */
 fun JEditorPane.readHTML(text: String) {
   val document = Jsoup.parse(text)
 
@@ -57,7 +63,14 @@ fun JEditorPane.readHTML(text: String) {
 }
 
 /**
- * Similar to [readHTML], buteports duplicate entries (patterns) code in `<pre><code>` will be highlighted.
+ * Parses the input HTML [text] and displays its content.
+ * Adds highlighting for code fragments wrapped in `<pre><code>` elements.
+ * Specify the `lang` parameter on `code` elements to override the default language.
+ * If the language is not provided or unrecognized, it will default to plain text.
+ *
+ * @param text The HTML content as a [String] to be displayed in the [JEditorPane].
+ * @param language The optional ID of the programming language to be used in code fragments.
+ * @throws RuntimeException if an exception occurs while parsing or displaying the HTML content.
  */
 fun JEditorPane.readHTMLWithCodeHighlighting(text: String, language: String?) {
   var lang = Language.findLanguageByID(language) ?: PlainTextLanguage.INSTANCE
