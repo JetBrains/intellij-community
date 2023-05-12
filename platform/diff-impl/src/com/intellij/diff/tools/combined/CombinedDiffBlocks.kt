@@ -5,6 +5,7 @@ import com.intellij.diff.FrameDiffTool
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -26,6 +27,7 @@ import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import java.awt.Dimension
 import java.awt.FlowLayout
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -114,7 +116,9 @@ private class CombinedSimpleDiffHeader(project: Project,
 
     var selected: Boolean
       get() = checkBox.isSelected
-      set(value) { checkBox.isSelected = value }
+      set(value) {
+        checkBox.isSelected = value
+      }
 
     fun setSelectable(selectable: Boolean) {
       checkBox.isVisible = selectable
@@ -177,6 +181,8 @@ private class CombinedSimpleDiffBlock(project: Project,
   override val stickyHeader: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false)
   override val body: Wrapper = Wrapper(initialContent)
 
+  private var editors: List<EditorEx> = emptyList()
+
   init {
     add(header)
     add(body)
@@ -184,8 +190,24 @@ private class CombinedSimpleDiffBlock(project: Project,
 
   override fun updateBlockContent(newContent: CombinedDiffBlockContent) {
     val viewer = newContent.viewer
+    editors = viewer.editors
     body.setContent(viewer.component)
     header.setContent(if (viewer is CombinedDiffLoadingBlock) pathOnlyHeader else headerWithToolbar)
+  }
+
+  override fun getPreferredSize(): Dimension {
+    val preferredSize = super.getPreferredSize()
+    if (editors.isEmpty()) return preferredSize
+
+    // TODO: investigate why sometimes the size of the editor's viewport is calculated incorrectly
+    var someError = 0
+    editors.forEach { e ->
+      someError = maxOf(e.gutterComponentEx.preferredSize.height - body.targetComponent.preferredSize.height, someError)
+    }
+    if (someError > 0) {
+      preferredSize.height = preferredSize.height + someError
+    }
+    return preferredSize
   }
 
   override val component = this
