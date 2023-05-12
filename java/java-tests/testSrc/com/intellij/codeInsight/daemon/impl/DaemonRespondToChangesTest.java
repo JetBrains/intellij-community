@@ -1402,25 +1402,17 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Top level element is not completed", info.getDescription());
   }
 
+  @NotNull
   public static ProperTextRange makeEditorWindowVisible(@NotNull Point viewPosition, @NotNull Editor editor) {
-    EditorImpl impl = (EditorImpl)editor;
-    impl.getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
-
-    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    impl.getScrollPane().getViewport().setViewPosition(viewPosition);
-    impl.getScrollPane().getViewport().setExtentSize(new Dimension(100, impl.getPreferredHeight() - viewPosition.y));
-    UIUtil.markAsFocused(impl.getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
-
+    int offset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(viewPosition));
+    VisibleHighlightingPassFactory.setVisibleRangeForHeadlessMode(editor, new ProperTextRange(offset, offset));
     return VisibleHighlightingPassFactory.calculateVisibleRange(editor);
   }
 
   static void makeWholeEditorWindowVisible(@NotNull EditorImpl editor) {
-    editor.getScrollPane().getViewport().setSize(1000, editor.getPreferredHeight());
-
-    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    editor.getScrollPane().getViewport().setViewPosition(new Point(0, 0));
-    editor.getScrollPane().getViewport().setExtentSize(new Dimension(100, editor.getPreferredHeight()));
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+    VisibleHighlightingPassFactory.setVisibleRangeForHeadlessMode(editor, new ProperTextRange(0, editor.getDocument().getTextLength()));
   }
 
 
