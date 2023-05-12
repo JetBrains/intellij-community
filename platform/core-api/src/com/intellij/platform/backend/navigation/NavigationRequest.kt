@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.navigation
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -28,6 +30,18 @@ interface NavigationRequest {
     @JvmStatic
     fun sourceNavigationRequest(file: VirtualFile, offset: Int): NavigationRequest? {
       return NavigationRequests.getInstance().sourceNavigationRequest(file, offset)
+    }
+
+    /**
+     * @return a request for the navigation to the [start offset][TextRange.getStartOffset] of [elementRange],
+     * or `null` if the navigation is not possible for any reason
+     */
+    @RequiresReadLock
+    @RequiresBackgroundThread
+    @JvmStatic
+    fun sourceNavigationRequest(file: PsiFile, elementRange: TextRange): NavigationRequest? {
+      val virtualFile = file.virtualFile ?: return null
+      return NavigationRequests.getInstance().sourceNavigationRequest(virtualFile, offset = elementRange.startOffset)
     }
 
     /**
