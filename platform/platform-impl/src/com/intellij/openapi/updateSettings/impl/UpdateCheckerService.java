@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -101,9 +101,9 @@ final class UpdateCheckerService {
       return;
     }
 
-    boolean eap = ApplicationInfoEx.getInstanceEx().isMajorEAP();
+    var appInfo = ApplicationInfoEx.getInstanceEx();
 
-    if (eap && current != ChannelStatus.EAP && customization.forceEapUpdateChannelForEapBuilds()) {
+    if (appInfo.isMajorEAP() && current != ChannelStatus.EAP && customization.forceEapUpdateChannelForEapBuilds()) {
       settings.setSelectedChannelStatus(ChannelStatus.EAP);
       LOG.info("channel forced to 'eap'");
       if (!ConfigImportHelper.isFirstSession()) {
@@ -116,7 +116,7 @@ final class UpdateCheckerService {
       }
     }
 
-    if (!eap && current == ChannelStatus.EAP && ConfigImportHelper.isConfigImported()) {
+    if (!appInfo.isEAP() && !appInfo.isPreview() && current == ChannelStatus.EAP && ConfigImportHelper.isConfigImported()) {
       settings.setSelectedChannelStatus(ChannelStatus.RELEASE);
       LOG.info("channel set to 'release'");
     }
