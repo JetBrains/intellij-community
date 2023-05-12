@@ -286,27 +286,16 @@ public final class IntToIntBtreeLockFree extends AbstractIntToIntBtree {
     }
   }
 
-  @NotNull BTreeStatistics getStatistics() throws IOException {
-    int leafPages = height == 3 ? pagesCount - (1 + root.getNodeView().getChildrenCount() + 1) : height == 2 ? pagesCount - 1 : 1;
-    return new BTreeStatistics(
-      pagesCount,
-      count,
-      height,
-      movedMembersCount,
-      leafPages,
-      maxStepsSearchedInHash,
-      hashSearchRequests,
-      totalHashStepsSearched,
-      pageSize,
-      storage.length()
-    );
-  }
-
   @Override
-  public void doClose() throws IOException, InterruptedException {
+  public void doClose() throws IOException {
     final BtreeIndexNodeView rootNode = root.nodeView;
     rootNode.disposePage();
-    storage.close();
+    try {
+      storage.close();
+    }
+    catch (InterruptedException e) {
+      throw new IOException(e);
+    }
   }
 
   @Override
@@ -1128,6 +1117,23 @@ public final class IntToIntBtreeLockFree extends AbstractIntToIntBtree {
     root.syncWithStore();
 
     return processLeafPages(root.getNodeView(), processor);
+  }
+
+  @Override
+  public @NotNull BTreeStatistics getStatistics() throws IOException  {
+    int leafPages = height == 3 ? pagesCount - (1 + root.getNodeView().getChildrenCount() + 1) : height == 2 ? pagesCount - 1 : 1;
+    return new BTreeStatistics(
+      pagesCount,
+      count,
+      height,
+      movedMembersCount,
+      leafPages,
+      maxStepsSearchedInHash,
+      hashSearchRequests,
+      totalHashStepsSearched,
+      pageSize,
+      storage.length()
+    );
   }
 
   private boolean processLeafPages(@NotNull BtreeIndexNodeView node,
