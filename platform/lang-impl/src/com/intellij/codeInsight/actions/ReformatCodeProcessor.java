@@ -123,7 +123,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   {
     PsiFile fileToProcess = ReadAction.compute(() -> ensureValid(file));
     if (fileToProcess == null) return new FutureTask<>(() -> false);
-    boolean doNotKeepLineBreaks = ReadAction.compute(() -> confirmSecondReformat(file));
+    boolean doNotKeepLineBreaks = confirmSecondReformat(file);
     return new FutureTask<>(() -> {
       Ref<Boolean> result = new Ref<>();
       CodeStyle.doWithTemporarySettings(myProject, CodeStyle.getSettings(fileToProcess), (settings) -> {
@@ -141,7 +141,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   private boolean confirmSecondReformat(@NotNull PsiFile file) {
-    boolean doNotKeepLineBreaks = isDoNotKeepLineBreaks(file);
+    boolean doNotKeepLineBreaks = ReadAction.compute(() -> isDoNotKeepLineBreaks(file));
     if (!doNotKeepLineBreaks || isSecondReformatDisabled()) return false;
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (!settings.ENABLE_SECOND_REFORMAT) {
