@@ -9,10 +9,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.idea.intentions.receiverType
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType
-import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
+import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.RANGE_UNTIL
+import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.UNTIL
+import org.jetbrains.kotlin.idea.util.WasExperimentalOptInsNecessityCheckerFe10
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
@@ -68,7 +71,13 @@ class ReplaceUntilWithRangeUntilInspection : AbstractRangeInspection() {
         private fun KtElement.isOtpInRequiredForRangeUntil(annotationFqName: FqName, context: BindingContext): Boolean {
             val rangeUntilFunctionDescriptor = findRangeUntilFunctionDescriptor(context)
                 ?: return false
-            return rangeUntilFunctionDescriptor.annotations.hasAnnotation(annotationFqName)
+            if (rangeUntilFunctionDescriptor.annotations.hasAnnotation(annotationFqName)) {
+                return true
+            }
+            val necessaryOptIns = WasExperimentalOptInsNecessityCheckerFe10.getNecessaryOptInsFromWasExperimental(
+                rangeUntilFunctionDescriptor.annotations, findModuleDescriptor(), languageVersionSettings.apiVersion
+            )
+            return annotationFqName in necessaryOptIns
         }
 
         private fun KtElement.findRangeUntilFunctionDescriptor(context: BindingContext): CallableDescriptor? {
