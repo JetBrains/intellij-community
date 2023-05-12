@@ -60,7 +60,9 @@ class FSRecordsOracle(
         },
         queryFsRecords = { fsRecords.getNameIdByFileId(fileId) }
       )
-      override val name: Property<String> = nameId.fmap { fsRecords.getNameByNameId(it).toString() }
+      override val name: Property<String> = nameId.bind {
+        fsRecords.getNameByNameId(it)?.toString()?.let(State::ready) ?: State.notAvailable()
+      }
 
       override val parentId: Property<Int> = OracledProp(
         queryLog = {
