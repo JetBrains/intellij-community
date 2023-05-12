@@ -1,8 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.util
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.setHtmlBody
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.update.Activatable
@@ -147,6 +152,33 @@ fun Action.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       putValue(Action.NAME, it)
+    }
+  }
+}
+
+fun Document.bindTextIn(cs: CoroutineScope, textFlow: MutableStateFlow<String>) {
+  cs.launchNow(CoroutineName("Downstream text binding for $this")) {
+    val listener = object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        textFlow.value = text
+      }
+    }
+    addDocumentListener(listener)
+    try {
+      awaitCancellation()
+    }
+    finally {
+      removeDocumentListener(listener)
+    }
+  }
+
+  cs.launchNow(CoroutineName("Upstream text binding for $this")) {
+    textFlow.collect {
+      if (text != it) {
+        writeAction {
+          setText(it)
+        }
+      }
     }
   }
 }

@@ -36,6 +36,8 @@ interface GitLabMergeRequestDiscussionsContainer {
 
   // not a great idea to pass a dto, but otherwise it's a pain in the neck to calc positions
   suspend fun addNote(position: GitLabDiffPositionInput, body: String)
+
+  suspend fun submitDraftNotes()
 }
 
 private val LOG = logger<GitLabMergeRequestDiscussionsContainer>()
@@ -193,6 +195,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
             when (e) {
               is GitLabNoteEvent.Added -> draftNotes[e.note.id.toString()] = e.note
               is GitLabNoteEvent.Deleted -> draftNotes.remove(e.noteId)
+              is GitLabNoteEvent.AllDeleted -> draftNotes.clear()
               else -> Unit
             }
             emit(draftNotes.values.map { DraftNoteWithAuthor(it, currentUser) })
@@ -241,6 +244,18 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         withContext(NonCancellable) {
           discussionEvents.emit(GitLabDiscussionEvent.Added(it))
         }
+      }
+    }
+  }
+
+  override suspend fun submitDraftNotes() {
+    withContext(cs.coroutineContext) {
+      withContext(Dispatchers.IO) {
+        api.submitDraftNotes(project, mr.id)
+      }
+      withContext(NonCancellable) {
+        draftNotesEvents.emit(GitLabNoteEvent.AllDeleted())
+        reloadRequests.emit(Unit)
       }
     }
   }

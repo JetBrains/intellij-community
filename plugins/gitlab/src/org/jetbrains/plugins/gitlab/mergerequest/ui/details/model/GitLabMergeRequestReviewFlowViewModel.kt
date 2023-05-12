@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
@@ -11,15 +12,14 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.childScope
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModelImpl
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
@@ -40,6 +40,14 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
   val userCanApprove: Flow<Boolean>
   val userCanManage: Flow<Boolean>
   val userCanMerge: Flow<Boolean>
+
+  val submittableReview: Flow<SubmittableReview?>
+  var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)?
+
+  /**
+   * Request the start of a submission process
+   */
+  fun submitReview()
 
   fun merge()
 
@@ -63,6 +71,8 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
 
   //TODO: extract reviewers update VM
   suspend fun getPotentialReviewers(): List<GitLabUserDTO>
+
+  data class SubmittableReview(val draftComments: Int)
 }
 
 internal class GitLabMergeRequestReviewFlowViewModelImpl(
@@ -110,6 +120,26 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   override val userCanApprove: Flow<Boolean> = mergeRequest.userPermissions.map { it.canApprove }
   override val userCanManage: Flow<Boolean> = mergeRequest.userPermissions.map { it.canMerge }
   override val userCanMerge: Flow<Boolean> = mergeRequest.userPermissions.map { it.canMerge }
+
+  override val submittableReview: Flow<GitLabMergeRequestReviewFlowViewModel.SubmittableReview?> =
+    combine(mergeRequest.draftNotes, mergeRequest.userPermissions, mergeRequest.approvedBy) { draftNotes, permissions, approvals ->
+      val draftComments = draftNotes.count()
+      val canChangeApproval = permissions.canApprove || approvals.any { it.id == currentUser.id }
+      if (draftComments > 0 || canChangeApproval) GitLabMergeRequestReviewFlowViewModel.SubmittableReview(draftComments)
+      else null
+    }
+  override var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)? = null
+
+  override fun submitReview() {
+    scope.launchNow {
+      check(submittableReview.first() != null)
+      val ctx = currentCoroutineContext()
+      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, mergeRequest, currentUser) {
+        ctx.cancel()
+      }
+      submitReviewInputHandler?.invoke(vm)
+    }
+  }
 
   override fun merge() = runAction {
     val title = mergeRequest.title.stateIn(scope).value

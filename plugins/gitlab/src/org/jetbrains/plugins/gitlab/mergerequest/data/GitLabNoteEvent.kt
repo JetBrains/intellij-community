@@ -5,4 +5,5 @@ sealed interface GitLabNoteEvent<N> {
   class Added<N>(val note: N) : GitLabNoteEvent<N>
   class Changed<N>(val notes: List<N>) : GitLabNoteEvent<N>
   class Deleted<N>(val noteId: String) : GitLabNoteEvent<N>
+  class AllDeleted<N> : GitLabNoteEvent<N>
 }

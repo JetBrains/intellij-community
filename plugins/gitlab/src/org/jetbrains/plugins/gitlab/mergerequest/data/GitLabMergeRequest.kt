@@ -288,6 +288,8 @@ internal class LoadedGitLabMergeRequest(
   override suspend fun addNote(body: String) = discussionsContainer.addNote(body)
 
   override suspend fun addNote(position: GitLabDiffPositionInput, body: String) = discussionsContainer.addNote(position, body)
+
+  override suspend fun submitDraftNotes()  = discussionsContainer.submitDraftNotes()
 }
 
 private fun <T> Flow<List<T>>.collectBatches(): Flow<List<T>> =

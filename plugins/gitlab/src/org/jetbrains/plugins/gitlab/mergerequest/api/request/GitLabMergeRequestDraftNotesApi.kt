@@ -9,6 +9,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.restApiUri
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import java.net.URI
+import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
 import java.net.http.HttpResponse.BodyHandlers
 
@@ -37,5 +38,12 @@ suspend fun GitLabApi.deleteDraftNote(project: GitLabProjectCoordinates, mr: Git
   : HttpResponse<out Unit> {
   val uri = getMergeRequestDraftNotesUri(project, mr).resolveRelative(noteId.toString())
   val request = request(uri).DELETE().build()
+  return sendAndAwaitCancellable(request, BodyHandlers.replacing(Unit))
+}
+
+suspend fun GitLabApi.submitDraftNotes(project: GitLabProjectCoordinates, mr: GitLabMergeRequestId)
+  : HttpResponse<out Unit> {
+  val uri = getMergeRequestDraftNotesUri(project, mr).resolveRelative("bulk_publish")
+  val request = request(uri).POST(BodyPublishers.noBody()).build()
   return sendAndAwaitCancellable(request, BodyHandlers.replacing(Unit))
 }

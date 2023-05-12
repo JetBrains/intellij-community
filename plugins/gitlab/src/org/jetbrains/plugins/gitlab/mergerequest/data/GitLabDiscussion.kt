@@ -78,6 +78,7 @@ class LoadedGitLabDiscussion(
               notesData.clear()
               notesData.addAll(event.notes)
             }
+            is GitLabNoteEvent.AllDeleted -> notesData.clear()
           }
 
           if (notesData.isEmpty()) {
