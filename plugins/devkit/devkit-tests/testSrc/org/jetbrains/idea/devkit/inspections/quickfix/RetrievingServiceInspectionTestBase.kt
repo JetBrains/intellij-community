@@ -9,7 +9,6 @@ abstract class RetrievingServiceInspectionTestBase : LightDevKitInspectionFixTes
     super.setUp()
     myFixture.enableInspections(RetrievingServiceInspection())
     myFixture.addClass(
-      //language=java
       """
       package com.intellij.openapi.components;
 
@@ -20,7 +19,6 @@ abstract class RetrievingServiceInspectionTestBase : LightDevKitInspectionFixTes
       }
       """)
     myFixture.addClass(
-      //language=java
       """
       package com.intellij.openapi.components;
 
@@ -29,7 +27,6 @@ abstract class RetrievingServiceInspectionTestBase : LightDevKitInspectionFixTes
       }
       """)
     myFixture.addClass(
-      //language=java
       """
       package com.intellij.openapi.project;
 
@@ -38,14 +35,12 @@ abstract class RetrievingServiceInspectionTestBase : LightDevKitInspectionFixTes
       public interface Project extends ComponentManager {}
       """)
     myFixture.addClass(
-      //language=java
       """
       package kotlinx.coroutines;
 
       public interface CoroutineScope {}
       """)
     myFixture.addClass(
-      //language=java
       """
       package com.intellij.openapi.application;
 
@@ -58,7 +53,6 @@ abstract class RetrievingServiceInspectionTestBase : LightDevKitInspectionFixTes
       }
       """)
     myFixture.addClass(
-      //language=java
       """
       package com.intellij.openapi.application;
 
@@ -67,7 +61,6 @@ abstract class RetrievingServiceInspectionTestBase : LightDevKitInspectionFixTes
       public interface Application extends ComponentManager {}
       """)
     myFixture.addClass(
-      //language=java
       """
       package kotlin.reflect;
 

@@ -9,7 +9,6 @@ abstract class LightServiceMustBeFinalInspectionTestBase : LightDevKitInspection
     super.setUp()
     myFixture.enableInspections(LightServiceMustBeFinalInspection())
     myFixture.addClass(
-      //language=java
       """
       package com.intellij.openapi.components;
 
