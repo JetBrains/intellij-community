@@ -257,7 +257,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     return perform(() -> getOrCreateWrappee().resolveAndGetArchetypeDescriptor(groupId, artifactId, version, repositories, url, ourToken));
   }
 
-  public void reset() {
+  public void resetProgressIndicator() {
     MavenServerEmbedder w = getWrappee();
     if (w == null) return;
     try {

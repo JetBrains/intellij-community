@@ -85,7 +85,7 @@ public class MavenEmbeddersManager {
       return;
     }
 
-    embedder.reset();
+    embedder.resetProgressIndicator();
     myEmbeddersInUse.remove(embedder);
   }
 
