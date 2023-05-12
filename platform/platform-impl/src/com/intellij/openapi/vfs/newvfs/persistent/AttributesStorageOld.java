@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -76,7 +77,9 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
   public @Nullable AttributeInputStream readAttribute(final @NotNull PersistentFSConnection connection,
                                                       final int fileId,
                                                       final @NotNull FileAttribute attribute) throws IOException {
-    ProgressIndicatorUtils.awaitWithCheckCanceled(lock.readLock());
+    final Lock readLock = lock.readLock();
+    ProgressIndicatorUtils.awaitWithCheckCanceled(readLock);
+    //readLock.lock();
     try {
       PersistentFSConnection.ensureIdIsValid(fileId);
 
@@ -126,7 +129,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
       return stream;
     }
     finally {
-      lock.readLock().unlock();
+      readLock.unlock();
     }
   }
 
