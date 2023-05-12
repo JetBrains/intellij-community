@@ -6,9 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class MavenServerConsoleIndicatorImpl extends MavenRemoteObject implements MavenServerConsoleIndicator {
+public class MavenServerConsoleIndicatorImpl implements MavenServerConsoleIndicator {
 
-  private final ConcurrentLinkedQueue<MavenArtifactDownloadServerProgressEvent> myPullingQueue = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<MavenArtifactEvent> myPullingQueue = new ConcurrentLinkedQueue<>();
 
   private final ConcurrentLinkedQueue<MavenServerConsoleEvent> myConsoleEventsQueue = new ConcurrentLinkedQueue<>();
 
@@ -16,27 +16,27 @@ public class MavenServerConsoleIndicatorImpl extends MavenRemoteObject implement
 
   @Override
   public void startedDownload(ResolveType type, String dependencyId) {
-    myPullingQueue.add(new MavenArtifactDownloadServerProgressEvent(type,
-                                                                    MavenArtifactDownloadServerProgressEvent.ArtifactEventType.DOWNLOAD_STARTED,
-                                                                    dependencyId,
-                                                                    null,
-                                                                    null));
+    myPullingQueue.add(new MavenArtifactEvent(type,
+                                              MavenArtifactEvent.ArtifactEventType.DOWNLOAD_STARTED,
+                                              dependencyId,
+                                              null,
+                                              null));
   }
 
   @Override
   public void completedDownload(ResolveType type, String dependencyId) {
-    myPullingQueue.add(new MavenArtifactDownloadServerProgressEvent(type,
-                                                                    MavenArtifactDownloadServerProgressEvent.ArtifactEventType.DOWNLOAD_COMPLETED,
-                                                                    dependencyId,
-                                                                    null, null));
+    myPullingQueue.add(new MavenArtifactEvent(type,
+                                              MavenArtifactEvent.ArtifactEventType.DOWNLOAD_COMPLETED,
+                                              dependencyId,
+                                              null, null));
   }
 
   @Override
   public void failedDownload(ResolveType type, String dependencyId, String errorMessage, String stackTrace) {
-    myPullingQueue.add(new MavenArtifactDownloadServerProgressEvent(type,
-                                                                    MavenArtifactDownloadServerProgressEvent.ArtifactEventType.DOWNLOAD_FAILED,
-                                                                    dependencyId,
-                                                                    errorMessage, stackTrace));
+    myPullingQueue.add(new MavenArtifactEvent(type,
+                                              MavenArtifactEvent.ArtifactEventType.DOWNLOAD_FAILED,
+                                              dependencyId,
+                                              errorMessage, stackTrace));
   }
 
   @Override
@@ -51,7 +51,7 @@ public class MavenServerConsoleIndicatorImpl extends MavenRemoteObject implement
 
   @NotNull
   @Override
-  public List<MavenArtifactDownloadServerProgressEvent> pullDownloadEvents() {
+  public List<MavenArtifactEvent> pullDownloadEvents() {
     return MavenRemotePullUtil.pull(myPullingQueue);
   }
 

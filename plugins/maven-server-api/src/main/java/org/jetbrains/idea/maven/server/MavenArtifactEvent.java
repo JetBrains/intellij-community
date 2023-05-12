@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.server;
 
 import java.io.Serializable;
 
-public class MavenArtifactDownloadServerProgressEvent implements Serializable {
+public class MavenArtifactEvent implements Serializable {
 
   public enum ArtifactEventType {
     DOWNLOAD_STARTED,
@@ -17,11 +17,11 @@ public class MavenArtifactDownloadServerProgressEvent implements Serializable {
   private final String myErrorMessage;
   private final String myStackTrace;
 
-  public MavenArtifactDownloadServerProgressEvent(MavenServerConsoleIndicator.ResolveType type,
-                                                  ArtifactEventType eventType,
-                                                  String id,
-                                                  String message,
-                                                  String trace) {
+  public MavenArtifactEvent(MavenServerConsoleIndicator.ResolveType type,
+                            ArtifactEventType eventType,
+                            String id,
+                            String message,
+                            String trace) {
     myResolveType = type;
     myArtifactEventType = eventType;
     myDependencyId = id;

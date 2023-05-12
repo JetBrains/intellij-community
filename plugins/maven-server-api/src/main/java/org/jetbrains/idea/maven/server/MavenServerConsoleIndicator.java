@@ -3,11 +3,9 @@ package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.rmi.Remote;
-import java.rmi.RemoteException;
 import java.util.List;
 
-public interface MavenServerConsoleIndicator extends Remote {
+public interface MavenServerConsoleIndicator {
   // must be same as in org.codehaus.plexus.logging.Logger
   int LEVEL_DEBUG = 0;
   int LEVEL_INFO = 1;
@@ -20,20 +18,20 @@ public interface MavenServerConsoleIndicator extends Remote {
     DEPENDENCY,
     PLUGIN
   }
-  
-  void startedDownload(ResolveType type, String dependencyId) throws RemoteException;
 
-  void completedDownload(ResolveType type, String dependencyId) throws RemoteException;
+  void startedDownload(ResolveType type, String dependencyId);
 
-  void failedDownload(ResolveType type, String dependencyId, String errorMessage, String stackTrace) throws RemoteException;
+  void completedDownload(ResolveType type, String dependencyId);
 
-  boolean isCanceled() throws RemoteException;
+  void failedDownload(ResolveType type, String dependencyId, String errorMessage, String stackTrace);
+
+  boolean isCanceled();
   
   @NotNull
-  List<MavenArtifactDownloadServerProgressEvent> pullDownloadEvents() throws RemoteException;
+  List<MavenArtifactEvent> pullDownloadEvents();
 
   @NotNull
-  List<MavenServerConsoleEvent> pullConsoleEvents() throws RemoteException;
+  List<MavenServerConsoleEvent> pullConsoleEvents();
 
-   void cancel() throws RemoteException;
+   void cancel();
 }

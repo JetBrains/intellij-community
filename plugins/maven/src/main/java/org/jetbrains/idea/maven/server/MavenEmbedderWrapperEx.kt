@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.server
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
 import org.jetbrains.idea.maven.project.MavenConsole
-import org.jetbrains.idea.maven.server.MavenArtifactDownloadServerProgressEvent.ArtifactEventType
+import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.util.*

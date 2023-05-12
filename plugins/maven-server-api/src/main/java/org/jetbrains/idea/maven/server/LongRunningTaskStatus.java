@@ -12,12 +12,12 @@ public final class LongRunningTaskStatus implements Serializable {
   private final int total;
   private final int finished;
   private final List<MavenServerConsoleEvent> consoleEvents;
-  private final List<MavenArtifactDownloadServerProgressEvent> downloadEvents;
+  private final List<MavenArtifactEvent> downloadEvents;
 
   public LongRunningTaskStatus(int total,
                                int finished,
                                List<MavenServerConsoleEvent> consoleEvents,
-                               List<MavenArtifactDownloadServerProgressEvent> downloadEvents) {
+                               List<MavenArtifactEvent> downloadEvents) {
     this.total = total;
     this.finished = finished;
     this.consoleEvents = consoleEvents;
@@ -39,7 +39,7 @@ public final class LongRunningTaskStatus implements Serializable {
     return consoleEvents;
   }
 
-  public List<MavenArtifactDownloadServerProgressEvent> downloadEvents() {
+  public List<MavenArtifactEvent> downloadEvents() {
     return downloadEvents;
   }
 
