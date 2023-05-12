@@ -196,6 +196,8 @@ internal class LightEditFrameWrapper(
                                         parentDisposable: Disposable) : IdeRootPane(frame = frame,
                                                                                     parentDisposable = parentDisposable,
                                                                                     loadingState = null), LightEditCompatible {
+    override val isLightEdit: Boolean get() = true
+
     override fun createCenterComponent(frame: JFrame, parentDisposable: Disposable): Component {
       val panel = LightEditPanel(LightEditUtil.requireProject())
       editPanel = panel

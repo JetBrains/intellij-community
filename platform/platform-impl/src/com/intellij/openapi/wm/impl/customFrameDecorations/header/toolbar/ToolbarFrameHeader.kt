@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -43,7 +42,7 @@ private enum class ShowMode {
   MENU, TOOLBAR
 }
 
-internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
+internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val myMenuBar = IdeMenuBar.createMenuBar()
   private val menuBarHeaderTitle = SimpleCustomDecorationPath(frame, true).apply {
     isOpaque = false
@@ -88,9 +87,10 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     }
   }
 
-  private var mode = ShowMode.MENU
-  private val isCompact: Boolean
-    get() = ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()
+  private val mode: ShowMode
+    get() = if (isToolbarInHeader(UISettings.shadowInstance)) ShowMode.TOOLBAR else ShowMode.MENU
+  private val isCompact: Boolean get() = (root as? IdeRootPane)?.isCompactHeader == true
+
   private fun toolbarCardName(isCompact: Boolean = this.isCompact): String =
     if (isCompact) "PATH" else "TOOLBAR"
 
@@ -99,8 +99,6 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     layout = GridBagLayout()
     val gb = GridBag().anchor(WEST)
 
-    updateLayout(UISettings.getInstance())
-
     productIcon.border = JBUI.Borders.empty(V, 0, V, 0)
     add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(H))
     add(myHeaderContent, gb.next().fillCell().anchor(CENTER).weightx(1.0).weighty(1.0))
@@ -108,12 +106,13 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     add(buttonsView, gb.next().anchor(EAST))
 
     setCustomFrameTopBorder({ false }, {true})
-    updateToolbarAppearanceFromMode()
 
     customizer.addListener(this, true) {
       isOpaque = !it
       revalidate()
     }
+
+    updateToolbar()
   }
 
   private fun wrap(comp: JComponent) = object : NonOpaquePanel(comp) {
@@ -126,7 +125,14 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
   }
 
   override fun updateToolbar() {
-    doUpdateToolbar(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
+    updateLayout()
+
+    when (mode) {
+      ShowMode.TOOLBAR -> doUpdateToolbar(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
+      ShowMode.MENU -> removeToolbar()
+    }
+
+    updateToolbarAppearanceFromMode()
   }
 
   override fun paint(g: Graphics?) {
@@ -194,14 +200,13 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
   override fun getComponent(): JComponent = this
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    updateLayout(uiSettings)
-    updateToolbarFromMode()
+    updateToolbar()
   }
 
   override fun updateUI() {
     super.updateUI()
     if (parent != null) {
-      updateToolbarFromMode()
+      updateToolbar()
       updateMenuBar()
     }
   }
@@ -211,15 +216,6 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
       myMenuBar.border = null
       setMenuColor(myMenuBar, myHeaderContent.background)
     }
-  }
-
-  private fun updateToolbarFromMode() {
-    when (mode) {
-      ShowMode.TOOLBAR -> updateToolbar()
-      ShowMode.MENU -> removeToolbar()
-    }
-
-    updateToolbarAppearanceFromMode()
   }
 
   private fun updateToolbarAppearanceFromMode() {
@@ -286,8 +282,7 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     return result
   }
 
-  private fun updateLayout(settings: UISettings) {
-    mode = if (isToolbarInHeader(settings)) ShowMode.TOOLBAR else ShowMode.MENU
+  private fun updateLayout() {
     val layout = myHeaderContent.layout as CardLayout
     layout.show(myHeaderContent, mode.name)
   }

@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
@@ -130,7 +131,7 @@ internal class MainMenuButton {
     }
   }
 
-  private inner class ShowMenuAction : DumbAwareAction(
+  private inner class ShowMenuAction : LightEditCompatible, DumbAwareAction (
     IdeBundle.messagePointer("main.toolbar.menu.button"),
     ExpUiIcons.General.WindowsMenu_20x20) {
 
