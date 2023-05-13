@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 
 public class MavenArtifactEvent implements Serializable {
@@ -12,13 +14,13 @@ public class MavenArtifactEvent implements Serializable {
   }
 
   private final MavenServerConsoleIndicator.ResolveType myResolveType;
-  private final ArtifactEventType myArtifactEventType;
+  @NotNull private final ArtifactEventType myArtifactEventType;
   private final String myDependencyId;
   private final String myErrorMessage;
   private final String myStackTrace;
 
   public MavenArtifactEvent(MavenServerConsoleIndicator.ResolveType type,
-                            ArtifactEventType eventType,
+                            @NotNull ArtifactEventType eventType,
                             String id,
                             String message,
                             String trace) {
@@ -33,6 +35,7 @@ public class MavenArtifactEvent implements Serializable {
     return myResolveType;
   }
 
+  @NotNull
   public ArtifactEventType getArtifactEventType() {
     return myArtifactEventType;
   }
