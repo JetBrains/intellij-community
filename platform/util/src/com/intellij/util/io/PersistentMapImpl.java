@@ -462,7 +462,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       else {
         final int id = enumerate(key);
         if (myIntMapping) {
-          myEnumerator.myStorage.putInt(id + myParentValueRefOffset, (Integer)value);
+          myEnumerator.myCollisionResolutionStorage.putInt(id + myParentValueRefOffset, (Integer)value);
           return;
         }
 
@@ -660,7 +660,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
         if (myIntMapping) {
           //noinspection unchecked
-          return (Value)(Integer)myEnumerator.myStorage.getInt(id + myParentValueRefOffset);
+          return (Value)(Integer)myEnumerator.myCollisionResolutionStorage.getInt(id + myParentValueRefOffset);
         }
 
         valueOffset = readValueId(id);
@@ -1052,8 +1052,8 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
              (int)fragments + ", new fragments:" + (fragments >> 32));
 
     started = System.currentTimeMillis();
+    myEnumerator.lockStorageWrite();
     try {
-      myEnumerator.lockStorageWrite();
 
       for (CompactionRecordInfo info : infos) {
         updateValueId(info.address, info.newValueAddress, info.valueAddress, null, info.key);
@@ -1070,7 +1070,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     if (myDirectlyStoreLongFileOffsetMode) {
       return ((PersistentBTreeEnumerator<Key>)myEnumerator).keyIdToNonNegativeOffset(keyId);
     }
-    long address = myEnumerator.myStorage.getInt(keyId + myParentValueRefOffset);
+    long address = myEnumerator.myCollisionResolutionStorage.getInt(keyId + myParentValueRefOffset);
     if (address == 0 || address == -POSITIVE_VALUE_SHIFT) {
       return NULL_ADDR;
     }
@@ -1079,7 +1079,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       address = -address - POSITIVE_VALUE_SHIFT;
     }
     else {
-      long value = myEnumerator.myStorage.getInt(keyId + myParentValueRefOffset + 4) & 0xFFFFFFFFL;
+      long value = myEnumerator.myCollisionResolutionStorage.getInt(keyId + myParentValueRefOffset + 4) & 0xFFFFFFFFL;
       address = ((address << 32) + value) & ~USED_LONG_VALUE_MASK;
     }
 
@@ -1104,7 +1104,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     if (myCanReEnumerate) {
       if (canUseIntAddressForNewRecord(value)) {
         defaultSizeInfo = false;
-        myEnumerator.myStorage.putInt(keyId + myParentValueRefOffset, -(int)(value + POSITIVE_VALUE_SHIFT));
+        myEnumerator.myCollisionResolutionStorage.putInt(keyId + myParentValueRefOffset, -(int)(value + POSITIVE_VALUE_SHIFT));
         if (newKey) ++smallKeys;
       }
       else if ((keyId < myLargeIndexWatermarkId || myLargeIndexWatermarkId == 0) && (newKey || canUseIntAddressForNewRecord(oldValue))) {
@@ -1121,8 +1121,8 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     if (defaultSizeInfo) {
       value |= USED_LONG_VALUE_MASK;
 
-      myEnumerator.myStorage.putInt(keyId + myParentValueRefOffset, (int)(value >>> 32));
-      myEnumerator.myStorage.putInt(keyId + myParentValueRefOffset + 4, (int)value);
+      myEnumerator.myCollisionResolutionStorage.putInt(keyId + myParentValueRefOffset, (int)(value >>> 32));
+      myEnumerator.myCollisionResolutionStorage.putInt(keyId + myParentValueRefOffset + 4, (int)value);
 
       if (newKey) ++largeKeys;
     }

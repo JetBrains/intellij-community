@@ -12,4 +12,6 @@ public class CorruptedException extends IOException {
   protected CorruptedException(String message) {
     super(message);
   }
+
+  //MAYBE RC: why there is no ctor with 'cause'?
 }
