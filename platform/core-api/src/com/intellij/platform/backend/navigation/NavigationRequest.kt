@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.navigation
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
@@ -28,8 +29,8 @@ interface NavigationRequest {
     @RequiresReadLock
     @RequiresBackgroundThread
     @JvmStatic
-    fun sourceNavigationRequest(file: VirtualFile, offset: Int): NavigationRequest? {
-      return NavigationRequests.getInstance().sourceNavigationRequest(file, offset)
+    fun sourceNavigationRequest(project: Project, file: VirtualFile, offset: Int): NavigationRequest? {
+      return NavigationRequests.getInstance().sourceNavigationRequest(project, file, offset)
     }
 
     /**
@@ -41,7 +42,7 @@ interface NavigationRequest {
     @JvmStatic
     fun sourceNavigationRequest(file: PsiFile, elementRange: TextRange): NavigationRequest? {
       val virtualFile = file.virtualFile ?: return null
-      return NavigationRequests.getInstance().sourceNavigationRequest(virtualFile, offset = elementRange.startOffset)
+      return NavigationRequests.getInstance().sourceNavigationRequest(file.project, virtualFile, offset = elementRange.startOffset)
     }
 
     /**

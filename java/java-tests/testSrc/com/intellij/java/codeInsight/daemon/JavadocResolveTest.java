@@ -65,7 +65,7 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
     VirtualFile file = snr.getFile();
     assertEquals(file.getName(), "Test.java");
     PsiFile snippetFile = PsiManager.getInstance(myProject).findFile(file);
-    assertTrue(snippetFile.getText().startsWith("@start region=reg", snr.getOffset()));
+    assertTrue(snippetFile.getText().startsWith("@start region=reg", snr.getOffsetMarker().getStartOffset()));
   }
 
   private void doTest() {

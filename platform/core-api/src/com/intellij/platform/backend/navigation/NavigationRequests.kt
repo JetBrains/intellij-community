@@ -2,6 +2,7 @@
 package com.intellij.platform.backend.navigation
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
@@ -21,7 +22,7 @@ interface NavigationRequests {
 
   @RequiresReadLock
   @RequiresBackgroundThread
-  fun sourceNavigationRequest(file: VirtualFile, offset: Int): NavigationRequest?
+  fun sourceNavigationRequest(project: Project, file: VirtualFile, offset: Int): NavigationRequest?
 
   @RequiresReadLock
   @RequiresBackgroundThread

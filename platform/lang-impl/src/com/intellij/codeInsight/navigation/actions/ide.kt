@@ -64,7 +64,8 @@ fun navigateRequest(project: Project, request: NavigationRequest) {
   when (request) {
     is SourceNavigationRequest -> {
       // TODO support pure source request without OpenFileDescriptor
-      val openFileDescriptor = OpenFileDescriptor(project, request.file, request.offset)
+      val offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1
+      val openFileDescriptor = OpenFileDescriptor(project, request.file, offset)
       if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
         openFileDescriptor.isUsePreviewTab = true
       }
