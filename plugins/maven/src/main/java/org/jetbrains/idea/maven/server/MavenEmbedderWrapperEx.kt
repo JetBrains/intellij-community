@@ -13,11 +13,19 @@ abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(p
   @Throws(MavenProcessCanceledException::class)
   override fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
                                       indicator: MavenProgressIndicator?,
-                                      console: MavenConsole?): R =
-    runBlocking {
-      val longRunningTaskId = UUID.randomUUID().toString()
-      val embedder = getOrCreateWrappee()
+                                      console: MavenConsole?): R {
+    return runBlocking {
+      return@runBlocking runLongRunningTaskAsync<R>(indicator, console, task)
+    }
+  }
 
+  private suspend fun <R> runLongRunningTaskAsync(indicator: MavenProgressIndicator?,
+                                                  console: MavenConsole?,
+                                                  task: LongRunningEmbedderTask<R>): R {
+    val longRunningTaskId = UUID.randomUUID().toString()
+    val embedder = getOrCreateWrappee()
+
+    return coroutineScope {
       val progressIndication = launch {
         if (null != indicator) {
           while (isActive) {
@@ -58,7 +66,7 @@ abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(p
           progressIndication.cancel()
         }
       }
-
-      return@runBlocking result.await()
+      return@coroutineScope result.await()
     }
+  }
 }
