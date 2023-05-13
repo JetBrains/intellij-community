@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -213,8 +214,18 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(containingFile);
     if (builder != null) {
-      final FormattingModel model = CoreFormatterUtil.buildModel(builder, containingFile, getSettings(containingFile), FormattingMode.REFORMAT);
-      FormatterEx.getInstanceEx().formatAroundRange(model, getSettings(containingFile), containingFile, textRange);
+      TextRange range = textRange;
+      FormatterTagHandler formatterTagHandler = new FormatterTagHandler(CodeStyle.getSettings(myProject));
+      // Could be disabled by @formatter:off and @formatter:on comments
+      boolean formattingEnabled =
+        ContainerUtil.exists(
+          formatterTagHandler.getEnabledRanges(containingFile.getNode(), containingFile.getTextRange()),
+          it -> it.contains(range)
+        );
+      if (formattingEnabled) {
+        final FormattingModel model = CoreFormatterUtil.buildModel(builder, containingFile, getSettings(containingFile), FormattingMode.REFORMAT);
+        FormatterEx.getInstanceEx().formatAroundRange(model, getSettings(containingFile), containingFile, textRange);
+      }
     }
 
     adjustLineIndent(containingFile, textRange);

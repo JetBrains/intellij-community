@@ -2359,7 +2359,7 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
                      }
                  }""");
   }
-  
+
   public void testEnter_BetweenAlignedChainedMethodCalls() throws IOException {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -3054,5 +3054,77 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
           }
         }"""
     );
+  }
+
+  public void testIdea279487_JavaDocExpanded_EmptyLinesRemoved() {
+    doTextTest(
+      "java",
+      """
+        public class X {
+            int x;
+
+
+
+
+
+
+
+
+            /**<caret>
+            int y;
+        }
+        """,
+      """
+        public class X {
+            int x;
+
+
+            /**
+             * <caret>
+             */
+            int y;
+        }
+        """);
+  }
+
+  public void testIdea279487_JavaDocExpandedFormatterOff_EmptyLinesKept() {
+    doTextTest(
+      "java",
+      """
+        public class X {
+            int x;
+            // @formatter:off
+
+
+
+
+
+
+
+
+            /**<caret>
+            int y;
+            // @formatter:on
+        }
+        """,
+      """
+        public class X {
+            int x;
+            // @formatter:off
+
+
+
+
+
+
+
+
+            /**
+             * <caret>
+             */
+            int y;
+            // @formatter:on
+        }
+        """);
   }
 }
