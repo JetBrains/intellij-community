@@ -144,7 +144,7 @@ class BatchSpanProcessor(
               spanExporter.shutdown()
             }
             catch (e: Throwable) {
-              LOG.error("Failed to shutdown", e)
+              logger<BatchSpanProcessor>().error("Failed to shutdown", e)
             }
           }
         }
@@ -166,7 +166,7 @@ class BatchSpanProcessor(
       }
       else {
         result.fail()
-        LOG.error("Failed to flush", error)
+        logger<BatchSpanProcessor>().error("Failed to flush", error)
       }
     })
     return result
@@ -261,14 +261,10 @@ class BatchSpanProcessor(
       throw e
     }
     catch (e: Throwable) {
-      LOG.error("Failed to export", e)
+      logger<BatchSpanProcessor>().error("Failed to export", e)
     }
     finally {
       batch.clear()
     }
-  }
-
-  companion object {
-    val LOG = logger<BatchSpanProcessor>()
   }
 }
