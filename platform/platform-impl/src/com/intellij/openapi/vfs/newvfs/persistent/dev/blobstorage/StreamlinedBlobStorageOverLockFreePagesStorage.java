@@ -1,10 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.PagedFileStorageLockFree;
 import com.intellij.util.io.pagecache.Page;
@@ -23,9 +22,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storage;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage.RecordLayout.ActualRecords.*;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage.RecordLayout.OFFSET_BUCKET;
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storage;
 
 /**
  * Implements {@link StreamlinedBlobStorage} blobs over {@link PagedFileStorageLockFree} storage.
@@ -1256,12 +1255,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
 
     //MAYBE RC: it shouldn't be this class's responsibility to close pagedStorage, since not this class creates it?
     //          Better whoever creates it -- is responsible for closing it?
-    try {
-      pagedStorage.close();
-    }
-    catch (InterruptedException e) {
-      ExceptionUtil.rethrow(e);
-    }
+    pagedStorage.close();
   }
 
   @Override
