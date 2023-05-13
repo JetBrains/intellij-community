@@ -84,7 +84,6 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
   }
 
   private static boolean isInContentOfOpenedProject(@NotNull final VirtualFile file) {
-    // probably need a read action to ensure that the project was not disposed during the iteration over the project list
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       if (!project.isInitialized() || !BuildManager.getInstance().isProjectWatched(project)) {
         continue;
@@ -145,23 +144,19 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
 
       public boolean traverseDirs() throws ProcessCanceledException{
         Set<VirtualFile> processed = new SmartHashSet<>();
-        boolean allValid = true;
         try {
           for (VirtualFile root : dirsToTraverse) {
-            if (root.isValid()) {
-              collectPaths(root, filesChanged, true);
-              processed.add(root);
+            if (!root.isValid()) {
+              return false;
             }
-            else {
-              allValid = false;
-              break;
-            }
+            collectPaths(root, filesChanged, true);
+            processed.add(root);
           }
         }
         finally {
           dirsToTraverse.removeAll(processed);
         }
-        return allValid;
+        return true;
       }
 
       public void notifyBuildManager() {
