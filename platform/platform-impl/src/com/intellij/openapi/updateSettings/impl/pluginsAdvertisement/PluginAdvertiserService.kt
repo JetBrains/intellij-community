@@ -419,7 +419,6 @@ open class PluginAdvertiserServiceImpl(
           IdeBundle.message(
             "plugins.advertiser.missing.feature.dependency",
             pluginsNumber,
-            feature.value.joinToString(),
             pluginNames
           )
         }
@@ -427,7 +426,6 @@ open class PluginAdvertiserServiceImpl(
           IdeBundle.message(
             "plugins.advertiser.missing.features.dependency",
             pluginsNumber,
-            feature.value.joinToString(),
             pluginNames
           )
         }
@@ -438,7 +436,6 @@ open class PluginAdvertiserServiceImpl(
         IdeBundle.message(
           "plugins.advertiser.missing.features.dependency",
           pluginsNumber,
-          entries.joinToString(separator = "; ") { it.value.joinToString(prefix = it.key + ": ") },
           pluginNames
         )
       }
