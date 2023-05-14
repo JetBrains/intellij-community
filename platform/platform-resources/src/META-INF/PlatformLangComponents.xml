@@ -73,7 +73,7 @@
                         headlessImplementation="com.intellij.openapi.wm.impl.IdeFocusManagerHeadless" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionManager"
-                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl" preload="notHeadless"/>
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.ide.DataManager"
                         serviceImplementation="com.intellij.ide.impl.DataManagerImpl"
                         testServiceImplementation="com.intellij.ide.impl.HeadlessDataManager"/>

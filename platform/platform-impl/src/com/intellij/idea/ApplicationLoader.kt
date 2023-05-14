@@ -14,12 +14,16 @@ import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -205,6 +209,17 @@ private suspend fun initApplicationImpl(args: List<String>,
 }
 
 fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
+  if (!app.isHeadlessEnvironment) {
+    launch {
+      // preload FUS classes (IDEA-301206)
+      ActionsEventLogGroup.GROUP.id
+    }
+    launch {
+      app.serviceAsync<UISettings>().join()
+      app.serviceAsync<ActionManager>().join()
+    }
+  }
+
   launch {
     // LocalHistory wants ManagingFS.
     // It should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner.

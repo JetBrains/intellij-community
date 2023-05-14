@@ -23,7 +23,6 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.onActionLoadedFromXml
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.onAfterActionInvoked
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.onBeforeActionInvoked
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
@@ -126,11 +125,6 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                              actionToId.keys.forEach(Consumer(::updateHandlers))
                            }
                          }, this)
-
-    // preload FUS classes (IDEA-301206)
-    if (!app.isDispatchThread) {
-      ActionsEventLogGroup.GROUP.id
-    }
   }
 
   companion object {
