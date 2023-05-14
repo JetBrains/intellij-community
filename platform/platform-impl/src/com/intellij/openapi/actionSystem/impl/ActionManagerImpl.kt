@@ -550,7 +550,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                           classLoader = classLoader)
       }
       // don't override value which was set in API with empty value from xml descriptor
-      if (presentation.text == null || !text.get().isNullOrEmpty()) {
+      if (!presentation.hasText() || !text.get().isNullOrEmpty()) {
         presentation.setText(text)
       }
 

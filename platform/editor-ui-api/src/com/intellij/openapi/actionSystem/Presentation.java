@@ -12,10 +12,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -130,7 +127,8 @@ public final class Presentation implements Cloneable {
   }
 
   public Presentation(@NotNull @ActionText String text) {
-    myTextWithMnemonicSupplier = () -> TextWithMnemonic.fromPlainText(text);
+    TextWithMnemonic textWithMnemonic = TextWithMnemonic.fromPlainText(text);
+    myTextWithMnemonicSupplier = () -> textWithMnemonic;
   }
 
   public Presentation(@NotNull Supplier<@ActionText String> dynamicText) {
@@ -171,6 +169,11 @@ public final class Presentation implements Cloneable {
   public @ActionText String getText(boolean withSuffix) {
     TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
     return textWithMnemonic == null ? null : textWithMnemonic.getText(withSuffix);
+  }
+
+  @ApiStatus.Internal
+  public boolean hasText() {
+    return myTextWithMnemonicSupplier.get() != null;
   }
 
   /**
