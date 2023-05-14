@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.RemoteDesktopService;
@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -24,6 +23,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.animation.Animations;
 import com.intellij.util.animation.Easing;
 import com.intellij.util.animation.JBAnimator;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +38,7 @@ import java.util.List;
 public final class ScrollingModelImpl implements ScrollingModelEx {
   private static final Logger LOG = Logger.getInstance(ScrollingModelImpl.class);
 
-  @NotNull private final ScrollingModel.Supplier mySupplier;
+  private final @NotNull ScrollingModel.Supplier mySupplier;
   private final List<VisibleAreaListener> myVisibleAreaListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<ScrollRequestListener> myScrollRequestListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -96,17 +96,15 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     return false;
   }
 
-  @NotNull
   @Override
-  public Rectangle getVisibleArea() {
-    assertIsDispatchThread();
+  @RequiresEdt
+  public @NotNull Rectangle getVisibleArea() {
     return mySupplier.getScrollPane().getViewport().getViewRect();
   }
 
-  @NotNull
   @Override
-  public Rectangle getVisibleAreaOnScrollingFinished() {
-    assertIsDispatchThread();
+  @RequiresEdt
+  public @NotNull Rectangle getVisibleAreaOnScrollingFinished() {
     if (EditorCoreUtil.isTrueSmoothScrollingEnabled()) {
       Rectangle viewRect = mySupplier.getScrollPane().getViewport().getViewRect();
       return new Rectangle(getOffset(getHorizontalScrollBar()), getOffset(getVerticalScrollBar()), viewRect.width, viewRect.height);
@@ -118,11 +116,11 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   @Override
+  @RequiresEdt
   public void scrollToCaret(@NotNull ScrollType scrollType) {
     if (LOG.isTraceEnabled()) {
       LOG.trace(new Throwable());
     }
-    assertIsDispatchThread();
 
     Editor editor = mySupplier.getEditor();
     AsyncEditorLoader.performWhenLoaded(editor, () -> scrollTo(editor.getCaretModel().getVisualPosition(), scrollType));
@@ -145,8 +143,8 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   @Override
+  @RequiresEdt
   public void scrollTo(@NotNull LogicalPosition pos, @NotNull ScrollType scrollType) {
-    assertIsDispatchThread();
     Editor editor = mySupplier.getEditor();
     AsyncEditorLoader.performWhenLoaded(editor, () -> {
       for (ScrollRequestListener listener : myScrollRequestListeners) {
@@ -156,14 +154,9 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     });
   }
 
-  private static void assertIsDispatchThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-  }
-
   @Override
+  @RequiresEdt
   public void runActionOnScrollingFinished(@NotNull Runnable action) {
-    assertIsDispatchThread();
-
     if (myCurrentAnimationRequest != null) {
       myCurrentAnimationRequest.addPostRunnable(action);
       return;
@@ -187,19 +180,18 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   private @NotNull Point calcOffsetsToScroll(@NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect) {
-    return ApplicationManager.getApplication().getService(ScrollPositionCalculator.class).calcOffsetsToScroll(mySupplier.getEditor(), targetLocation, scrollType, viewRect, mySupplier.getScrollPane());
+    return ApplicationManager.getApplication().getService(ScrollPositionCalculator.class)
+      .calcOffsetsToScroll(mySupplier.getEditor(), targetLocation, scrollType, viewRect, mySupplier.getScrollPane());
   }
 
-  @Nullable
-  public JScrollBar getVerticalScrollBar() {
-    assertIsDispatchThread();
+  @RequiresEdt
+  public @Nullable JScrollBar getVerticalScrollBar() {
     JScrollPane scrollPane = mySupplier.getScrollPane();
     return scrollPane.getVerticalScrollBar();
   }
 
-  @Nullable
-  public JScrollBar getHorizontalScrollBar() {
-    assertIsDispatchThread();
+  @RequiresEdt
+  public @Nullable JScrollBar getHorizontalScrollBar() {
     return mySupplier.getScrollPane().getHorizontalScrollBar();
   }
 
@@ -223,9 +215,8 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     scroll(getHorizontalScrollOffset(), scrollOffset);
   }
 
+  @RequiresEdt
   private void _scrollVertically(int scrollOffset) {
-    assertIsDispatchThread();
-
     JScrollBar scrollbar = mySupplier.getScrollPane().getVerticalScrollBar();
 
     scrollbar.setValue(scrollOffset);
@@ -236,9 +227,8 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     scroll(scrollOffset, getVerticalScrollOffset());
   }
 
+  @RequiresEdt
   private void _scrollHorizontally(int scrollOffset) {
-    assertIsDispatchThread();
-
     JScrollBar scrollbar = mySupplier.getScrollPane().getHorizontalScrollBar();
     scrollbar.setValue(scrollOffset);
   }
@@ -310,8 +300,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     cancelAnimatedScrolling(true);
   }
 
-  @Nullable
-  private AnimatedScrollingRunnable cancelAnimatedScrolling(boolean scrollToTarget) {
+  private @Nullable AnimatedScrollingRunnable cancelAnimatedScrolling(boolean scrollToTarget) {
     AnimatedScrollingRunnable request = myCurrentAnimationRequest;
     myCurrentAnimationRequest = null;
     if (request != null) {
@@ -417,8 +406,8 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
       return new Rectangle(myEndHOffset, myEndVOffset, viewRect.width, viewRect.height);
     }
 
+    @RequiresEdt
     public void cancel(boolean scrollToTarget) {
-      assertIsDispatchThread();
       finish(scrollToTarget);
     }
 
