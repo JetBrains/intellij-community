@@ -26,6 +26,8 @@ public final class KotlinStructureViewFactory implements PsiStructureViewFactory
             return null;
         }
 
+        boolean isSingleClassFile = KotlinIconProvider.Companion.isSingleClassFile(file);
+
       return new TreeBasedStructureViewBuilder() {
             @Override
             public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
@@ -39,7 +41,7 @@ public final class KotlinStructureViewFactory implements PsiStructureViewFactory
 
             @Override
             public boolean isRootNodeShown() {
-                return !KotlinIconProvider.Companion.isSingleClassFile(file);
+                return !isSingleClassFile;
             }
         };
     }
