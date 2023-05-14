@@ -68,11 +68,11 @@ class AquaOldUserFeedbackDialog(
                                                              DEFAULT_FEEDBACK_CONSENT_ID,
                                                              FEEDBACK_TYPE_ZENDESK,
                                                              createCollectedDataJsonString())
-    submitFeedback(myProject, feedbackData,
+    submitFeedback(feedbackData,
                    { }, { },
-                   if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST,
-                   ThanksForFeedbackNotification(description = AquaFeedbackBundle.message(
-                     "old.user.notification.thanks.feedback.content")))
+                   if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST)
+    ThanksForFeedbackNotification(description = AquaFeedbackBundle.message(
+      "old.user.notification.thanks.feedback.content")).notify(myProject)
   }
 
 

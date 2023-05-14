@@ -8,10 +8,8 @@ import com.intellij.feedback.common.dialog.uiBlocks.FeedbackBlock
 import com.intellij.feedback.common.dialog.uiBlocks.JsonDataProvider
 import com.intellij.feedback.common.dialog.uiBlocks.NoEmailAgreementBlock
 import com.intellij.feedback.common.submitFeedback
-import com.intellij.feedback.new_ui.CancelFeedbackNotification
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBEmptyBorder
@@ -23,25 +21,33 @@ import kotlinx.serialization.json.encodeToJsonElement
 import javax.swing.Action
 import javax.swing.JComponent
 
-abstract class BlockBasedFeedbackDialog(@NlsContexts.DialogTitle private val myTitle: String,
-                                        protected val myBlocks: List<FeedbackBlock>,
-                                        protected val myProject: Project?,
-                                        protected val forTest: Boolean) : DialogWrapper(myProject) {
+abstract class BlockBasedFeedbackDialog(protected val myProject: Project?,
+                                        protected val myForTest: Boolean) : DialogWrapper(myProject) {
 
   /** Increase the additional number when feedback format is changed */
-  protected abstract val feedbackJsonVersion: Int
-  protected abstract val feedbackReportId: String
-  protected abstract val systemInfoData: CommonFeedbackSystemInfoData
+  protected abstract val myFeedbackJsonVersion: Int
+  protected abstract val myFeedbackReportId: String
 
-  protected val myJsonConverter = Json { prettyPrint = true }
+  protected abstract val myTitle: String
+  protected abstract val myBlocks: List<FeedbackBlock>
 
-  protected val systemInfoJsonName: String = "system_info"
+  protected abstract val mySystemInfoData: CommonFeedbackSystemInfoData
 
-  private val noEmailAgreementBlock = NoEmailAgreementBlock(myProject) { showFeedbackSystemInfoDialog(myProject, systemInfoData) }
+  private val myJsonConverter = Json { prettyPrint = true }
+
+  private val mySystemInfoJsonName: String = "system_info"
+
+  private val myNoEmailAgreementBlock: NoEmailAgreementBlock = NoEmailAgreementBlock(myProject) {
+    showFeedbackSystemInfoDialog(myProject, mySystemInfoData)
+  }
 
   init {
-    title = myTitle
+    setTitle()
     isResizable = false
+  }
+
+  fun setTitle() {
+    title = myTitle
   }
 
   override fun createCenterPanel(): JComponent {
@@ -55,14 +61,28 @@ abstract class BlockBasedFeedbackDialog(@NlsContexts.DialogTitle private val myT
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
     }
     return mainPanel
-    //TODO: Make it scrollable
-    //return JBScrollPane(mainPanel, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER).apply {
+
+    //TODO: Add scroll to dialog for small displays. Fix problem with overlapping scroll bar and bottom agreement
+    //val scrollablePane = JBScrollPane(
+    //  mainPanel,
+    //  JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+    //  JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+    //).apply {
     //  border = JBUI.Borders.empty()
+    //  setViewportView(mainPanel)
+    //}
+    //
+    //return panel {
+    //  row {
+    //    cell(scrollablePane)
+    //  }.resizableRow()
+    //}.apply {
+    //  registerIntegratedPanel(mainPanel)
     //}
   }
 
   protected open fun addFooterToPanel(panel: Panel) {
-    noEmailAgreementBlock.addToPanel(panel)
+    myNoEmailAgreementBlock.addToPanel(panel)
   }
 
   override fun doOKAction() {
@@ -73,16 +93,14 @@ abstract class BlockBasedFeedbackDialog(@NlsContexts.DialogTitle private val myT
   protected open fun sendFeedbackData() {
     //TODO: Add updating settings, maybe to IdleFeedbackTypes
     //AquaNewUserFeedbackService.getInstance().state.feedbackSent = true
-    val feedbackData = FeedbackRequestData(feedbackReportId, createCollectedDataJsonObject())
-    //TODO: Add parameter to send thank you notification
-    submitFeedback(myProject,
-                   feedbackData,
+    val feedbackData = FeedbackRequestData(myFeedbackReportId, collectDataToJsonObject())
+    submitFeedback(feedbackData,
                    { },
                    { },
-                   if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST)
+                   if (myForTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST)
   }
 
-  protected fun createCollectedDataJsonObject(): JsonObject {
+  protected fun collectDataToJsonObject(): JsonObject {
     return buildJsonObject {
       for (block in myBlocks) {
         if (block is JsonDataProvider) {
@@ -90,7 +108,7 @@ abstract class BlockBasedFeedbackDialog(@NlsContexts.DialogTitle private val myT
         }
       }
 
-      put(systemInfoJsonName, myJsonConverter.encodeToJsonElement(systemInfoData))
+      put(mySystemInfoJsonName, myJsonConverter.encodeToJsonElement(mySystemInfoData))
     }
   }
 
@@ -111,10 +129,4 @@ abstract class BlockBasedFeedbackDialog(@NlsContexts.DialogTitle private val myT
     cancelAction.putValue(Action.NAME, CommonFeedbackBundle.message("dialog.feedback.cancel.label"))
     return cancelAction
   }
-
-  override fun doCancelAction() {
-    super.doCancelAction()
-    CancelFeedbackNotification().notify(myProject)
-  }
-
 }

@@ -108,12 +108,13 @@ class LocalizationFeedbackDialog(
   override fun doOKAction() {
     super.doOKAction()
     val feedbackData = FeedbackRequestData(feedbackReportId, createCollectedDataJsonString())
-    submitFeedback(myProject, feedbackData,
+    submitFeedback(feedbackData,
                    { }, { },
                    if (forTest || System.getProperty(
                        "ide.feedback.localization.test")?.toBoolean() == true) FeedbackRequestType.TEST_REQUEST
-                   else FeedbackRequestType.PRODUCTION_REQUEST,
-                   ThanksForFeedbackNotification(description = LocalizationFeedbackBundle.message("notification.thanks.feedback.content")))
+                   else FeedbackRequestType.PRODUCTION_REQUEST)
+    ThanksForFeedbackNotification(description = LocalizationFeedbackBundle.message("notification.thanks.feedback.content")).notify(
+      myProject)
   }
 
   private fun createCollectedDataJsonString(): JsonObject {

@@ -73,11 +73,12 @@ class PyCharmUIFeedbackDialog(
                                                              DEFAULT_FEEDBACK_CONSENT_ID,
                                                              FEEDBACK_TYPE_ZENDESK,
                                                              createCollectedDataJsonString())
-    submitFeedback(myProject, feedbackData,
+    submitFeedback(feedbackData,
                    { }, { },
-                   if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST,
-                   ThanksForFeedbackNotification(description = PyCharmUIFeedbackBundle.message(
-                     "notification.thanks.feedback.content")))
+                   if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST)
+
+    ThanksForFeedbackNotification(description = PyCharmUIFeedbackBundle.message(
+      "notification.thanks.feedback.content")).notify(myProject)
   }
 
   private fun createCollectedDataJsonString(): JsonObject {
