@@ -25,7 +25,10 @@ import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cache.loader.JpsOutputLoaderManager;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.MessageHandler;
+import org.jetbrains.jps.incremental.RebuildRequestedException;
+import org.jetbrains.jps.incremental.TargetTypeRegistry;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
@@ -487,21 +490,19 @@ final class BuildSession implements Runnable, CanceledStatus {
         buildRootIndex.findAllParentDescriptors(file, null, null), d -> !d.isGenerated()
       );
       if (!descriptors.isEmpty()) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Applying dirty path from fs event: " + file.getPath());
+        }
         for (BuildRootDescriptor descriptor : descriptors) {
-          FSOperations.traverseRecursively(buildRootIndex, descriptor, file, (f, attrs) -> {
+          StampsStorage.Stamp stamp = stampsStorage.getPreviousStamp(file, descriptor.getTarget());
+          if (stampsStorage.isDirtyStamp(stamp, file)) {
+            pd.fsState.markDirty(null, file, descriptor, stampsStorage, saveEventStamp);
+          }
+          else {
             if (LOG.isDebugEnabled()) {
-              LOG.debug("Applying dirty path from fs event: " + f.getPath());
+              LOG.debug(descriptor.getTarget() + ": Path considered up-to-date: " + file.getPath() + "; stamp= " + stamp);
             }
-            StampsStorage.Stamp stamp = stampsStorage.getPreviousStamp(f, descriptor.getTarget());
-            if (attrs != null? stampsStorage.isDirtyStamp(stamp, f, attrs) : stampsStorage.isDirtyStamp(stamp, f)) {
-              pd.fsState.markDirty(null, f, descriptor, stampsStorage, saveEventStamp);
-            }
-            else {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug(descriptor.getTarget() + ": Path considered up-to-date: " + f.getPath() + "; stamp= " + stamp);
-              }
-            }
-          });
+          }
         }
       }
       else {
