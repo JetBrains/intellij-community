@@ -3,10 +3,7 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.NonBlockingReadAction
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -25,7 +22,8 @@ import com.intellij.psi.codeStyle.CodeStyleConstraints
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.util.PatternUtil
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.cancelOnDispose
+import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import kotlin.math.max
@@ -89,8 +87,6 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   private var showingSpecialCharacters: Boolean? = null
   private val myComputableSettings = ArrayList<CacheableBackgroundComputable<*>>()
 
-  private val myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("EditorSettings", 3)
-
   private val softMargins: CacheableBackgroundComputable<List<Int>> = object : CacheableBackgroundComputable<List<Int>>(emptyList()) {
     override fun computeValue(project: Project?): List<Int> {
       return if (editor == null) emptyList() else CodeStyle.getSettings(editor).getSoftMargins(language)
@@ -100,11 +96,11 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   private val rightMargin = object : CacheableBackgroundComputable<Int>(
     CodeStyleSettings.getDefaults().RIGHT_MARGIN) {
     override fun computeValue(project: Project?): Int {
-       if (editor != null) {
-         return CodeStyle.getSettings(editor).getRightMargin(language)
+      if (editor != null) {
+        return CodeStyle.getSettings(editor).getRightMargin(language)
       }
       else {
-         return CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(language)
+        return CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(language)
       }
     }
   }
@@ -383,11 +379,15 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
       computeIndentOptions(project, file).associateWithDocument(document)
     }
     else {
-      ReadAction.nonBlocking<CommonCodeStyleSettings.IndentOptions> {
-        computeIndentOptions(project, file)
-      }.expireWhen { editor.isDisposed || project.isDisposed }.finishOnUiThread(
-        ModalityState.any()
-      ) { result -> result.associateWithDocument(document) }.submit(myExecutor)
+      @Suppress("DEPRECATION")
+      project.coroutineScope.launch {
+        val result = readAction {
+          computeIndentOptions(project, file)
+        }
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          result.associateWithDocument(document)
+        }
+      }.cancelOnDispose(editor.disposable)
     }
   }
 
@@ -739,7 +739,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     private var overwrittenValue: T? = null
     private var cachedValue: T? = null
     private var defaultValue: T
-    private val currentReadActionRef = AtomicReference<NonBlockingReadAction<T>?>()
+    private val currentReadActionRef = AtomicReference<Job?>()
 
     init {
       @Suppress("LeakingThis")
@@ -771,19 +771,22 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     }
 
     protected abstract fun computeValue(project: Project?): T
+
     private fun getDefaultAndCompute(project: Project?): T {
       if (ApplicationManager.getApplication().isUnitTestMode) {
-        runCatching {
+        return runCatching {
           computeValue(project)
-        }.getOrLogException(LOG)
+        }.getOrLogException(LOG) ?: defaultValue
       }
-      else {
-        if (currentReadActionRef.get() == null) {
-          val readAction = ReadAction
-            .nonBlocking<T> { computeValue(project) }
-            .finishOnUiThread(
-              ModalityState.any()
-            ) { result: T ->
+
+      if (currentReadActionRef.get() == null) {
+        @Suppress("DEPRECATION")
+        val readJob = (project?.coroutineScope ?: ApplicationManager.getApplication().coroutineScope)
+          .launch(start = CoroutineStart.LAZY) {
+            val result = readAction {
+              computeValue(project)
+            }
+            withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
               currentReadActionRef.set(null)
               synchronized(VALUE_LOCK) {
                 cachedValue = result
@@ -791,10 +794,13 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
               }
               fireEditorRefresh(false)
             }
-            .expireWhen { editor != null && editor.isDisposed || project != null && project.isDisposed }
-          if (currentReadActionRef.compareAndSet(null, readAction)) {
-            readAction.submit(myExecutor)
           }
+
+        if (currentReadActionRef.compareAndSet(null, readJob)) {
+          if (editor != null) {
+            readJob.cancelOnDispose(editor.disposable)
+          }
+          readJob.start()
         }
       }
       return defaultValue
