@@ -26,6 +26,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
+import org.jetbrains.idea.maven.server.MavenServerConsoleEvent;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
 import java.text.MessageFormat;
@@ -106,6 +107,12 @@ public abstract class MavenConsole {
 
   public void systemMessage(int level, String string, Throwable throwable) {
     printMessage(level, string, throwable);
+  }
+
+  public void handleConsoleEvents(@NotNull List<MavenServerConsoleEvent> consoleEvents) {
+    for (var e : consoleEvents) {
+      printMessage(e.getLevel(), e.getMessage(), e.getThrowable());
+    }
   }
 
   public void printMessage(int level, String string, Throwable throwable) {

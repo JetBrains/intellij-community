@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
 import org.jetbrains.idea.maven.project.MavenConsole
-import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.util.*
@@ -46,19 +45,9 @@ abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(p
         while (isActive) {
           delay(500)
           val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
+          console?.handleConsoleEvents(status.consoleEvents())
           indicator.setFraction(status.fraction())
-          for (e in status.downloadEvents()) {
-            when (e.artifactEventType) {
-              ArtifactEventType.DOWNLOAD_STARTED -> indicator.startedDownload(e.resolveType, e.dependencyId)
-              ArtifactEventType.DOWNLOAD_COMPLETED -> indicator.completedDownload(e.resolveType, e.dependencyId)
-              ArtifactEventType.DOWNLOAD_FAILED -> indicator.failedDownload(e.resolveType, e.dependencyId, e.errorMessage, e.stackTrace)
-            }
-          }
-          if (null != console) {
-            for (e in status.consoleEvents()) {
-              console.printMessage(e.level, e.message, e.throwable)
-            }
-          }
+          indicator.handleDownloadEvents(status.downloadEvents())
           if (indicator.isCanceled) {
             if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
               break

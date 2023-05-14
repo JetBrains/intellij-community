@@ -13,9 +13,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
+import org.jetbrains.idea.maven.server.MavenArtifactEvent;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
 import java.util.*;
@@ -127,6 +129,16 @@ public class MavenProgressIndicator {
                              String trace) {
     if (mySyncSupplier != null) {
       mySyncSupplier.get().getListener(type).downloadFailed(id, message, trace);
+    }
+  }
+
+  public void handleDownloadEvents(@NotNull List<MavenArtifactEvent> downloadEvents) {
+    for (var e : downloadEvents) {
+      switch (e.getArtifactEventType()) {
+        case DOWNLOAD_STARTED -> startedDownload(e.getResolveType(), e.getDependencyId());
+        case DOWNLOAD_COMPLETED -> completedDownload(e.getResolveType(), e.getDependencyId());
+        case DOWNLOAD_FAILED -> failedDownload(e.getResolveType(), e.getDependencyId(), e.getErrorMessage(), e.getStackTrace());
+      }
     }
   }
 
