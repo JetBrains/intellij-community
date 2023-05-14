@@ -53,9 +53,7 @@ import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.xml.dom.XmlElement
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -78,13 +76,14 @@ import javax.swing.Timer
 
 open class ActionManagerImpl protected constructor() : ActionManagerEx(), Disposable {
   private val lock = Any()
-  private val idToAction = CollectionFactory.createSmallMemoryFootprintMap<String, AnAction>()
-  private val pluginToId = MultiMap<PluginId, String>()
+  @Suppress("SSBasedInspection")
+  private val idToAction = Object2ObjectOpenHashMap<String, AnAction>()
+  private val pluginToId = HashMap<PluginId, MutableList<String>>()
   private val idToIndex = Object2IntOpenHashMap<String>()
   private val prohibitedActionIds = HashSet<String>()
   @Suppress("SSBasedInspection")
   private val actionToId = Object2ObjectOpenHashMap<Any, String>()
-  private val idToGroupId = MultiMap<String, String>()
+  private val idToGroupId = HashMap<String, MutableList<String>>()
   private val notRegisteredInternalActionIds = ArrayList<String>()
   private val actionListeners = ContainerUtil.createLockFreeCopyOnWriteList<AnActionListener>()
   private val actionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList<ActionPopupMenuListener>()
@@ -738,8 +737,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       val actionId = if (action is ActionStub) action.id else actionToId.get(action)
       val actionGroup = group as DefaultActionGroup
       if (module != null && actionGroup.containsAction(action)) {
-        reportActionError(module, "Cannot add an action twice: " + actionId + " (" +
-                                  (if (action is ActionStub) action.className else action.javaClass.name) + ")")
+        reportActionError(module, "Cannot add an action twice: $actionId " +
+                                  "(${if (action is ActionStub) action.className else action.javaClass.name})")
         return
       }
 
@@ -875,10 +874,11 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
             if (name != ADD_TO_GROUP_ELEMENT_NAME) {
               continue
             }
-            val groupId = attributes[GROUP_ID_ATTR_NAME]
+
+            val groupId = attributes.get(GROUP_ID_ATTR_NAME)
             val parentGroup = getParentGroup(groupId = groupId, actionName = actionId, module = module) ?: return
             parentGroup.remove(action)
-            idToGroupId.remove(actionId, groupId)
+            idToGroupId.get(actionId)?.remove(groupId)
           }
         }
         else -> {
@@ -947,7 +947,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       idToIndex.put(actionId, registeredActionCount++)
       actionToId.put(action, actionId)
       if (pluginId != null) {
-        pluginToId.putValue(pluginId, actionId)
+        pluginToId.computeIfAbsent(pluginId) { mutableListOf() }.add(actionId)
       }
       notifyCustomActionsSchema(actionId)
       updateHandlers(action)
@@ -969,7 +969,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   private fun reportActionIdCollision(actionId: String, action: AnAction, pluginId: PluginId?) {
-    val oldPluginInfo = pluginToId.entrySet()
+    val oldPluginInfo = pluginToId
       .asSequence()
       .filter { it.value.contains(actionId) }
       .map { it.key }
@@ -1011,13 +1011,13 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       val actionToRemove = idToAction.remove(actionId)
       actionToId.remove(actionToRemove)
       idToIndex.removeInt(actionId)
-      for ((_, value) in pluginToId.entrySet()) {
+      for (value in pluginToId.values) {
         value.remove(actionId)
       }
 
       if (removeFromGroups) {
         val customActionSchema = ApplicationManager.getApplication().serviceIfCreated<CustomActionsSchema>()
-        for (groupId in idToGroupId.get(actionId)) {
+        for (groupId in (idToGroupId.get(actionId) ?: emptyList())) {
           customActionSchema?.invalidateCustomizedActionGroup(groupId)
           val group = getActionOrStub(groupId) as DefaultActionGroup?
           if (group == null) {
@@ -1028,12 +1028,13 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
           group.remove(actionToRemove!!, actionId)
           if (group !is ActionGroupStub) {
             // group can be used as a stub in other actions
-            for (parentOfGroup in idToGroupId[groupId]) {
+            for (parentOfGroup in (idToGroupId.get(groupId) ?: emptyList())) {
               val parentOfGroupAction = getActionOrStub(parentOfGroup) as DefaultActionGroup?
               if (parentOfGroupAction == null) {
                 LOG.error("Trying to remove action $actionId from non-existing group $parentOfGroup")
                 continue
               }
+
               for (stub in parentOfGroupAction.childActionsOrStubs) {
                 if (stub is ActionGroupStub && groupId == stub.id) {
                   stub.remove(actionToRemove, actionId)
@@ -1045,7 +1046,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       }
 
       if (actionToRemove is ActionGroup) {
-        for ((_, value) in idToGroupId.entrySet()) {
+        for (value in idToGroupId.values) {
           value.remove(actionId)
         }
       }
@@ -1075,9 +1076,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   override val registrationOrderComparator: Comparator<String>
     get() = Comparator.comparingInt { key -> idToIndex.getInt(key) }
 
-  override fun getPluginActions(pluginId: PluginId): Array<String> {
-    return ArrayUtilRt.toStringArray(pluginToId.get(pluginId))
-  }
+  override fun getPluginActions(pluginId: PluginId): Array<String> = ArrayUtilRt.toStringArray(pluginToId.get(pluginId))
 
   fun addActionPopup(menu: Any) {
     popups.add(menu)
@@ -1128,7 +1127,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         "cannot replace a group with an action and vice versa: $actionId"
       }
 
-      for (groupId in idToGroupId.get(actionId)) {
+      for (groupId in (idToGroupId.get(actionId) ?: emptyList())) {
         val group = getActionOrStub(groupId) as DefaultActionGroup?
                     ?: throw IllegalStateException("Trying to replace action which has been added to a non-existing group $groupId")
         group.replaceAction(oldAction, newAction)
@@ -1150,7 +1149,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     return baseActions.get(id)
   }
 
-  fun getParentGroupIds(actionId: String?): Collection<String?> = idToGroupId.get(actionId)
+  fun getParentGroupIds(actionId: String?): Collection<String?> = idToGroupId.get(actionId) ?: emptyList()
 
   @Suppress("removal", "OVERRIDE_DEPRECATION")
   override fun addAnActionListener(listener: AnActionListener) {
