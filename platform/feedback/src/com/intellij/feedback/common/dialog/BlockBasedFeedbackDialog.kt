@@ -107,6 +107,10 @@ abstract class BlockBasedFeedbackDialog<T : JsonSerializable>(
                    if (myForTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST)
   }
 
+  protected open fun showThanksNotification() {
+
+  }
+
   protected fun collectDataToJsonObject(): JsonObject {
     return buildJsonObject {
       put(FEEDBACK_REPORT_ID_KEY, myFeedbackReportId)
