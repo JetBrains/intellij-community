@@ -10,25 +10,20 @@ import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.util.*
-import java.util.concurrent.atomic.AtomicReference
 
 abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(project) {
   @Throws(MavenProcessCanceledException::class)
   override fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
                                       indicator: MavenProgressIndicator?,
                                       console: MavenConsole?): R {
-    val progress = indicator?.indicator
     val longRunningTaskId = UUID.randomUUID().toString()
     val embedder = getOrCreateWrappee()
-    if (null == progress) {
-      return task.run(embedder, longRunningTaskId)
-    }
-    else {
-      val result = AtomicReference<R>();
-      val process: () -> Unit = { result.set(doRunLongRunningTask(embedder, longRunningTaskId, task, indicator, console)) }
-      ProgressManager.getInstance().executeProcessUnderProgress(process, progress)
-      return result.get();
-    }
+
+    val progress = indicator?.indicator
+    if (null == progress) return task.run(embedder, longRunningTaskId)
+
+    return ProgressManager.getInstance().computeResultUnderProgress(
+      { doRunLongRunningTask(embedder, longRunningTaskId, task, indicator, console) }, progress)
   }
 
   private fun <R> doRunLongRunningTask(embedder: MavenServerEmbedder,

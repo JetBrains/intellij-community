@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
@@ -235,6 +236,16 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param progress an indicator to use, {@code null} means reuse current progress
    */
   public abstract void executeProcessUnderProgress(@NotNull Runnable process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
+
+  /**
+   * @param progress an indicator to use, {@code null} means reuse current progress
+   */
+  @ApiStatus.Experimental
+  public <T> T computeResultUnderProgress(@NotNull Supplier<T> supplier, @Nullable ProgressIndicator progress) throws ProcessCanceledException {
+    AtomicReference<T> result = new AtomicReference<T>();
+    executeProcessUnderProgress(() -> result.set(supplier.get()), progress);
+    return result.get();
+  }
 
   public static void assertNotCircular(@NotNull ProgressIndicator original) {
     Set<ProgressIndicator> wrappedParents = null;
