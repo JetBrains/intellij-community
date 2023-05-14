@@ -18,56 +18,55 @@ abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(p
                                       indicator: MavenProgressIndicator?,
                                       console: MavenConsole?): R {
     val progress = indicator?.indicator
+    val longRunningTaskId = UUID.randomUUID().toString()
+    val embedder = getOrCreateWrappee()
     if (null == progress) {
-      val longRunningTaskId = UUID.randomUUID().toString()
-      val embedder = getOrCreateWrappee()
       return task.run(embedder, longRunningTaskId)
     }
     else {
       val result = AtomicReference<R>();
-      val process: () -> Unit = { result.set(doRunLongRunningTask(task, indicator, console)) }
+      val process: () -> Unit = { result.set(doRunLongRunningTask(embedder, longRunningTaskId, task, indicator, console)) }
       ProgressManager.getInstance().executeProcessUnderProgress(process, progress)
       return result.get();
     }
   }
 
-  private fun <R> doRunLongRunningTask(task: LongRunningEmbedderTask<R>,
-                                       indicator: MavenProgressIndicator?,
+  private fun <R> doRunLongRunningTask(embedder: MavenServerEmbedder,
+                                       longRunningTaskId: String,
+                                       task: LongRunningEmbedderTask<R>,
+                                       indicator: MavenProgressIndicator,
                                        console: MavenConsole?): R {
     return runBlockingCancellable {
-      return@runBlockingCancellable runLongRunningTaskAsync(indicator, console, task)
+      return@runBlockingCancellable runLongRunningTaskAsync(embedder, longRunningTaskId, indicator, console, task)
     }
   }
 
-  private suspend fun <R> runLongRunningTaskAsync(indicator: MavenProgressIndicator?,
+  private suspend fun <R> runLongRunningTaskAsync(embedder: MavenServerEmbedder,
+                                                  longRunningTaskId: String,
+                                                  indicator: MavenProgressIndicator,
                                                   console: MavenConsole?,
                                                   task: LongRunningEmbedderTask<R>): R {
-    val longRunningTaskId = UUID.randomUUID().toString()
-    val embedder = getOrCreateWrappee()
-
     return coroutineScope {
       val progressIndication = launch {
-        if (null != indicator) {
-          while (isActive) {
-            delay(500)
-            val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
-            indicator.setFraction(status.fraction())
-            for (e in status.downloadEvents()) {
-              when (e.artifactEventType) {
-                ArtifactEventType.DOWNLOAD_STARTED -> indicator.startedDownload(e.resolveType, e.dependencyId)
-                ArtifactEventType.DOWNLOAD_COMPLETED -> indicator.completedDownload(e.resolveType, e.dependencyId)
-                ArtifactEventType.DOWNLOAD_FAILED -> indicator.failedDownload(e.resolveType, e.dependencyId, e.errorMessage, e.stackTrace)
-              }
+        while (isActive) {
+          delay(500)
+          val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
+          indicator.setFraction(status.fraction())
+          for (e in status.downloadEvents()) {
+            when (e.artifactEventType) {
+              ArtifactEventType.DOWNLOAD_STARTED -> indicator.startedDownload(e.resolveType, e.dependencyId)
+              ArtifactEventType.DOWNLOAD_COMPLETED -> indicator.completedDownload(e.resolveType, e.dependencyId)
+              ArtifactEventType.DOWNLOAD_FAILED -> indicator.failedDownload(e.resolveType, e.dependencyId, e.errorMessage, e.stackTrace)
             }
-            if (null != console) {
-              for (e in status.consoleEvents()) {
-                console.printMessage(e.level, e.message, e.throwable)
-              }
+          }
+          if (null != console) {
+            for (e in status.consoleEvents()) {
+              console.printMessage(e.level, e.message, e.throwable)
             }
-            if (indicator.isCanceled) {
-              if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
-                break
-              }
+          }
+          if (indicator.isCanceled) {
+            if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
+              break
             }
           }
         }
