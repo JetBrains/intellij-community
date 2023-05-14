@@ -1,912 +1,637 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.actionSystem.impl;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
-import com.intellij.AbstractBundle;
-import com.intellij.BundleBase;
-import com.intellij.DynamicBundle;
-import com.intellij.codeWithMe.ClientId;
-import com.intellij.diagnostic.PluginException;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.ActivityTracker;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.ide.plugins.*;
-import com.intellij.ide.plugins.RawPluginDescriptor.ActionDescriptorAction;
-import com.intellij.ide.ui.customization.ActionUrl;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.idea.IdeaLogger;
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.extensions.*;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.keymap.impl.DefaultKeymap;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.ProjectType;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.serviceContainer.PrecomputedExtensionModelKt;
-import com.intellij.ui.icons.IconLoadMeasurer;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.DefaultBundleService;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.xml.dom.XmlElement;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+package com.intellij.openapi.actionSystem.impl
 
-import javax.swing.Timer;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.WindowEvent;
-import java.util.List;
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import com.intellij.AbstractBundle
+import com.intellij.BundleBase.message
+import com.intellij.DynamicBundle
+import com.intellij.codeWithMe.ClientId.Companion.current
+import com.intellij.codeWithMe.ClientId.Companion.withClientId
+import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.icons.AllIcons
+import com.intellij.ide.ActivityTracker
+import com.intellij.ide.DataManager
+import com.intellij.ide.ProhibitAWTEvents
+import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.RawPluginDescriptor.ActionDescriptorAction
+import com.intellij.ide.plugins.RawPluginDescriptor.ActionDescriptorGroup
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.idea.IdeaLogger
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.onActionLoadedFromXml
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.onAfterActionInvoked
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.onBeforeActionInvoked
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.application.*
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.actionSystem.EditorAction
+import com.intellij.openapi.extensions.*
+import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.keymap.ex.KeymapManagerEx
+import com.intellij.openapi.keymap.impl.DefaultKeymap.Companion.isBundledKeymapHidden
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.ProjectType
+import com.intellij.openapi.util.*
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.util.text.Strings
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.serviceContainer.executeRegisterTaskForOldContent
+import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.util.ArrayUtilRt
+import com.intellij.util.DefaultBundleService
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.ui.StartupUiUtil.addAwtListener
+import com.intellij.util.xml.dom.XmlElement
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.awt.AWTEvent
+import java.awt.Component
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
+import java.awt.event.InputEvent
+import java.awt.event.WindowEvent
+import java.util.*
+import java.util.concurrent.CancellationException
+import java.util.function.Consumer
+import java.util.function.Function
+import java.util.function.Supplier
+import javax.swing.*
+import javax.swing.Timer
 
-@SuppressWarnings("removal")
-public class ActionManagerImpl extends ActionManagerEx implements Disposable {
-  private static final ExtensionPointName<ActionConfigurationCustomizer> EP =
-    new ExtensionPointName<>("com.intellij.actionConfigurationCustomizer");
-  private static final ExtensionPointName<DynamicActionConfigurationCustomizer> DYNAMIC_EP_NAME =
-    new ExtensionPointName<>("com.intellij.dynamicActionConfigurationCustomizer");
+open class ActionManagerImpl protected constructor() : ActionManagerEx(), Disposable {
+  private val myLock = Any()
+  private val idToAction = CollectionFactory.createSmallMemoryFootprintMap<String, AnAction>()
+  private val pluginToId = MultiMap<PluginId, String>()
+  private val idToIndex = Object2IntOpenHashMap<String>()
+  private val myProhibitedActionIds = HashSet<String>()
+  @Suppress("SSBasedInspection")
+  private val actionToId = Object2ObjectOpenHashMap<Any, String>()
+  private val idToGroupId = MultiMap<String, String>()
+  private val myNotRegisteredInternalActionIds = ArrayList<String>()
+  private val myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList<AnActionListener>()
+  private val myActionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList<ActionPopupMenuListener>()
+  private val myPopups = ArrayList<Any>()
+  private var myTimer: MyTimer? = null
+  private var myRegisteredActionsCount = 0
 
-  private static final String ACTION_ELEMENT_NAME = "action";
-  private static final String GROUP_ELEMENT_NAME = "group";
-  private static final String CLASS_ATTR_NAME = "class";
-  private static final String ID_ATTR_NAME = "id";
-  private static final String INTERNAL_ATTR_NAME = "internal";
-  private static final String ICON_ATTR_NAME = "icon";
-  private static final String ADD_TO_GROUP_ELEMENT_NAME = "add-to-group";
-  private static final String DESCRIPTION = "description";
-  private static final String TEXT_ATTR_NAME = "text";
-  private static final String KEY_ATTR_NAME = "key";
-  private static final String SEPARATOR_ELEMENT_NAME = "separator";
-  private static final String REFERENCE_ELEMENT_NAME = "reference";
-  private static final String GROUP_ID_ATTR_NAME = "group-id";
-  private static final String KEYMAP_ATTR_NAME = "keymap";
-  private static final String REF_ATTR_NAME = "ref";
-  private static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
-  private static final String PROJECT_TYPE = "project-type";
-  private static final String OVERRIDE_TEXT_ELEMENT_NAME = "override-text";
-  private static final String SYNONYM_ELEMENT_NAME = "synonym";
-  private static final String OVERRIDES_ATTR_NAME = "overrides";
+  override var lastPreformedActionId: String? = null
 
-  private static final Logger LOG = Logger.getInstance(ActionManagerImpl.class);
-  private static final int DEACTIVATED_TIMER_DELAY = 5000;
-  private static final int TIMER_DELAY = 500;
-  private static final int UPDATE_DELAY_AFTER_TYPING = 500;
+  override var prevPreformedActionId: String? = null
 
-  private final Object myLock = new Object();
-  private final Map<String, AnAction> idToAction = CollectionFactory.createSmallMemoryFootprintMap();
-  private final MultiMap<PluginId, String> pluginToId = new MultiMap<>();
-  private final Object2IntMap<String> idToIndex = new Object2IntOpenHashMap<>();
-  private final Set<String> myProhibitedActionIds = new HashSet<>();
-  private final Map<Object, String> actionToId = CollectionFactory.createSmallMemoryFootprintMap();
-  private final MultiMap<String, String> idToGroupId = new MultiMap<>();
-  private final List<String> myNotRegisteredInternalActionIds = new ArrayList<>();
-  private final List<AnActionListener> myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<ActionPopupMenuListener> myActionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<Object/*ActionPopupMenuImpl|JBPopup*/> myPopups = new ArrayList<>();
-  private MyTimer myTimer;
-  private int myRegisteredActionsCount;
-  private String myLastPreformedActionId;
-  private String myPrevPerformedActionId;
-  private long myLastTimeEditorWasTypedIn;
-  private final Map<String, AnAction> myBaseActions = new HashMap<>();
-  private int myAnonymousGroupIdCounter;
+  private var myLastTimeEditorWasTypedIn: Long = 0
+  private val myBaseActions: MutableMap<String, AnAction> = HashMap()
+  private var myAnonymousGroupIdCounter = 0
 
-  protected ActionManagerImpl() {
-    Application app = ApplicationManager.getApplication();
-    if (!app.isUnitTestMode() && !app.isHeadlessEnvironment() && !app.isCommandLine()) {
-      ApplicationManager.getApplication().assertIsNonDispatchThread();
+  init {
+    val app = ApplicationManager.getApplication()
+    if (!app.isUnitTestMode && !app.isHeadlessEnvironment && !app.isCommandLine) {
+      ApplicationManager.getApplication().assertIsNonDispatchThread()
     }
-
-    registerActions(PluginManagerCore.getPluginSet().getEnabledModules());
-
-    EP.forEachExtensionSafe(customizer -> customizer.customize(this));
-    DYNAMIC_EP_NAME.forEachExtensionSafe(customizer -> customizer.registerActions(this));
-    DYNAMIC_EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(@NotNull DynamicActionConfigurationCustomizer extension, @NotNull PluginDescriptor pluginDescriptor) {
-        extension.registerActions(ActionManagerImpl.this);
+    registerActions(PluginManagerCore.getPluginSet().getEnabledModules())
+    EP.forEachExtensionSafe { customizer: ActionConfigurationCustomizer -> customizer.customize(this) }
+    DYNAMIC_EP_NAME.forEachExtensionSafe { customizer: DynamicActionConfigurationCustomizer -> customizer.registerActions(this) }
+    DYNAMIC_EP_NAME.addExtensionPointListener(object : ExtensionPointListener<DynamicActionConfigurationCustomizer> {
+      override fun extensionAdded(extension: DynamicActionConfigurationCustomizer, pluginDescriptor: PluginDescriptor) {
+        extension.registerActions(this@ActionManagerImpl)
       }
 
-      @Override
-      public void extensionRemoved(@NotNull DynamicActionConfigurationCustomizer extension, @NotNull PluginDescriptor pluginDescriptor) {
-        extension.unregisterActions(ActionManagerImpl.this);
+      override fun extensionRemoved(extension: DynamicActionConfigurationCustomizer, pluginDescriptor: PluginDescriptor) {
+        extension.unregisterActions(this@ActionManagerImpl)
       }
-    }, this);
-    app.getExtensionArea().getExtensionPoint("com.intellij.editorActionHandler")
-      .addChangeListener(() -> {
-        synchronized (myLock) {
-          actionToId.keySet().forEach(ActionManagerImpl::updateHandlers);
-        }
-      }, this);
+    }, this)
+    app.extensionArea.getExtensionPoint<Any>("com.intellij.editorActionHandler")
+      .addChangeListener({
+                           synchronized(myLock) {
+                             actionToId.keys.forEach(
+                               Consumer { action: Any? -> updateHandlers(action) })
+                           }
+                         }, this)
 
     // Preload FUS classes (IDEA-301206)
-    if (!app.isDispatchThread()) {
-      ActionsEventLogGroup.GROUP.getId();
+    if (!app.isDispatchThread) {
+      ActionsEventLogGroup.GROUP.id
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    fun convertStub(stub: ActionStub): AnAction? {
+      val anAction = instantiate(stub.className, stub.plugin, AnAction::class.java) ?: return null
+      stub.initAction(anAction)
+      updateIconFromStub(stub, anAction)
+      return anAction
+    }
+
+    @JvmStatic
+    @ApiStatus.Internal
+    fun checkUnloadActions(module: IdeaPluginDescriptorImpl): String? {
+      for (descriptor in module.actions) {
+        val element = descriptor.element
+        val elementName = descriptor.name
+        if (elementName !== ActionDescriptorName.action &&
+            !(elementName === ActionDescriptorName.group && canUnloadGroup(element)) && elementName !== ActionDescriptorName.reference) {
+          return "Plugin $module is not unload-safe because of action element $elementName"
+        }
+      }
+      return null
     }
   }
 
   @ApiStatus.Internal
-  public void registerActions(@NotNull Iterable<IdeaPluginDescriptorImpl> modules) {
-    KeymapManagerEx keymapManager = Objects.requireNonNull(KeymapManagerEx.getInstanceEx());
-
-    for (IdeaPluginDescriptorImpl module : modules) {
-      registerPluginActions(module, keymapManager);
-      PrecomputedExtensionModelKt.executeRegisterTaskForOldContent(module, it -> {
-        registerPluginActions(it, keymapManager);
-        return Unit.INSTANCE;
-      });
+  fun registerActions(modules: Iterable<IdeaPluginDescriptorImpl>) {
+    val keymapManager = Objects.requireNonNull(KeymapManagerEx.getInstanceEx())
+    for (module in modules) {
+      registerPluginActions(module, keymapManager)
+      executeRegisterTaskForOldContent(module) { it: IdeaPluginDescriptorImpl ->
+        registerPluginActions(it, keymapManager)
+        Unit
+      }
     }
   }
 
-  private static @NotNull AnActionListener publisher() {
-    return ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
-  }
-
-  private static @NotNull ActionManagerListener managerPublisher() {
-    return ApplicationManager.getApplication().getMessageBus().syncPublisher(ActionManagerListener.TOPIC);
-  }
-
-  static @Nullable AnAction convertStub(@NotNull ActionStub stub) {
-    AnAction anAction = instantiate(stub.getClassName(), stub.getPlugin(), AnAction.class);
-    if (anAction == null) {
-      return null;
-    }
-
-    stub.initAction(anAction);
-    updateIconFromStub(stub, anAction);
-    return anAction;
-  }
-
-  private static @Nullable <T> T instantiate(@NotNull String stubClassName,
-                                             @NotNull PluginDescriptor pluginDescriptor,
-                                             @NotNull Class<T> expectedClass) {
-    Object obj;
-    try {
-      obj = ApplicationManager.getApplication().instantiateClass(stubClassName, pluginDescriptor);
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (ExtensionNotApplicableException e) {
-      return null;
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-      return null;
-    }
-
-    if (expectedClass.isInstance(obj)) {
-      //noinspection unchecked
-      return (T)obj;
-    }
-
-    LOG.error(new PluginException("class with name '" + stubClassName + "' must be an instance of '" + expectedClass.getName() + "'; " +
-                                  "got " + obj, pluginDescriptor.getPluginId()));
-    return null;
-  }
-
-  private static void updateIconFromStub(@NotNull ActionStubBase stub, @NotNull AnAction anAction) {
-    String iconPath = stub.getIconPath();
-    if (iconPath != null) {
-      Icon icon = loadIcon(stub.getPlugin(), iconPath, anAction.getClass().getName());
-      anAction.getTemplatePresentation().setIcon(icon);
-    }
-    CustomActionsSchema customActionsSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
-    if (customActionsSchema != null && StringUtil.isNotEmpty(customActionsSchema.getIconPath(stub.getId()))) {
-      RecursionManager.doPreventingRecursion(stub.getId(), false, () -> {
-        customActionsSchema.initActionIcon(anAction, stub.getId(), ActionManager.getInstance());
-        return null;
-      });
-    }
-  }
-
-  private static @Nullable ActionGroup convertGroupStub(@NotNull ActionGroupStub stub, @NotNull ActionManager actionManager) {
-    IdeaPluginDescriptor plugin = stub.getPlugin();
-    ActionGroup group = instantiate(stub.getActionClass(), plugin, ActionGroup.class);
-    if (group == null) {
-      return null;
-    }
-
-    stub.initGroup(group, actionManager);
-    updateIconFromStub(stub, group);
-    return group;
-  }
-
-  private static void processAbbreviationNode(@NotNull XmlElement e, @NotNull String id) {
-    String abbr = e.attributes.get("value");
-    if (!Strings.isEmpty(abbr)) {
-      AbbreviationManagerImpl abbreviationManager = (AbbreviationManagerImpl)AbbreviationManager.getInstance();
-      abbreviationManager.register(abbr, id, true);
-    }
-  }
-
-  private static boolean isSecondary(XmlElement element) {
-    return "true".equalsIgnoreCase(element.attributes.get("secondary"));
-  }
-
-  private static @NotNull Icon loadIcon(@NotNull PluginDescriptor module,
-                                        @NotNull String iconPath,
-                                        @Nullable String requestor) {
-    long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-    Icon icon = IconLoader.findIcon(iconPath, module.getClassLoader());
-    if (icon == null) {
-      reportActionError(module, "Icon cannot be found in '" + iconPath + "', action '" + requestor + "'");
-      icon = AllIcons.Nodes.Unknown;
-    }
-    IconLoadMeasurer.actionIcon.end(start);
-    return icon;
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  private static @NlsActions.ActionDescription String computeDescription(@Nullable ResourceBundle bundle,
-                                                                         String id,
-                                                                         String elementType,
-                                                                         String descriptionValue,
-                                                                         @NotNull ClassLoader classLoader) {
-    if (bundle != null && DefaultBundleService.isDefaultBundle()) {
-      bundle = DynamicBundle.getResourceBundle(classLoader, bundle.getBaseBundleName());
-    }
-    return AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + DESCRIPTION, Strings.notNullize(descriptionValue));
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  private static @NlsActions.ActionText String computeActionText(@Nullable ResourceBundle bundle,
-                                                                 String id,
-                                                                 String elementType,
-                                                                 @Nullable String textValue,
-                                                                 @NotNull ClassLoader classLoader) {
-    String defaultValue = Strings.notNullize(textValue);
-    if (bundle != null && DefaultBundleService.isDefaultBundle()) {
-      bundle = DynamicBundle.getResourceBundle(classLoader, bundle.getBaseBundleName());
-    }
-    return bundle == null ? defaultValue : AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, defaultValue);
-  }
-
-  private static @Nullable Anchor parseAnchor(String anchorStr, @Nullable String actionName, @NotNull IdeaPluginDescriptor module) {
-    if (anchorStr == null) {
-      return Anchor.LAST;
-    }
-
-    if ("first".equalsIgnoreCase(anchorStr)) {
-      return Anchor.FIRST;
-    }
-    else if ("last".equalsIgnoreCase(anchorStr)) {
-      return Anchor.LAST;
-    }
-    else if ("before".equalsIgnoreCase(anchorStr)) {
-      return Anchor.BEFORE;
-    }
-    else if ("after".equalsIgnoreCase(anchorStr)) {
-      return Anchor.AFTER;
-    }
-    else {
-      reportActionError(module,
-                        actionName + ": anchor should be one of the following constants: \"first\", \"last\", \"before\" or \"after\"");
-      return null;
-    }
-  }
-
-  private static void processMouseShortcutNode(@NotNull XmlElement element,
-                                               String actionId,
-                                               @NotNull IdeaPluginDescriptor module,
-                                               @NotNull KeymapManager keymapManager) {
-    String keystrokeString = element.attributes.get("keystroke");
-    if (keystrokeString == null || keystrokeString.trim().isEmpty()) {
-      reportActionError(module, "\"keystroke\" attribute must be specified for action with id=" + actionId);
-      return;
-    }
-    MouseShortcut shortcut;
-    try {
-      shortcut = KeymapUtil.parseMouseShortcut(keystrokeString);
-    }
-    catch (Exception ex) {
-      reportActionError(module, "\"keystroke\" attribute has invalid value for action with id=" + actionId);
-      return;
-    }
-
-    String keymapName = element.attributes.get(KEYMAP_ATTR_NAME);
-    if (keymapName == null || keymapName.isEmpty()) {
-      reportActionError(module, "attribute \"keymap\" should be defined");
-      return;
-    }
-    Keymap keymap = keymapManager.getKeymap(keymapName);
-    if (keymap == null) {
-      reportKeymapNotFoundWarning(module, keymapName);
-      return;
-    }
-    processRemoveAndReplace(element, actionId, keymap, shortcut);
-  }
-
-  private static void reportActionError(@NotNull PluginDescriptor module, @NotNull String message) {
-    reportActionError(module, message, null);
-  }
-
-  private static void reportActionError(@NotNull PluginDescriptor module, @NotNull String message, @Nullable Throwable cause) {
-    LOG.error(new PluginException(message + " (module=" + module + ")", cause, module.getPluginId()));
-  }
-
-  private static void reportKeymapNotFoundWarning(@NotNull PluginDescriptor module, @NotNull String keymapName) {
-    Application app = ApplicationManager.getApplication();
-    if (
-      !app.isHeadlessEnvironment() &&
-      !app.isCommandLine() &&
-      !DefaultKeymap.Companion.isBundledKeymapHidden(keymapName)
-    ) {
-      LOG.warn("keymap \"" + keymapName + "\" not found" + " " + module);
-    }
-  }
-
-  private static @NotNull String getPluginInfo(@Nullable PluginId id) {
-    IdeaPluginDescriptor plugin = id == null ? null : PluginManagerCore.getPlugin(id);
-    if (plugin == null) {
-      return "";
-    }
-
-    String name = plugin.getName();
-    if (name == null) {
-      name = id.getIdString();
-    }
-    return " (Plugin: " + name + ")";
-  }
-
-  private static @NotNull DataContext getContextBy(Component contextComponent) {
-    DataManager dataManager = DataManager.getInstance();
-    //noinspection deprecation
-    return contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
-  }
-
-  private static @NotNull ActionToolbarImpl createActionToolbarImpl(@NotNull String place,
-                                                                    @NotNull ActionGroup group,
-                                                                    boolean horizontal,
-                                                                    boolean decorateButtons,
-                                                                    boolean customizable) {
-    ActionToolbarImpl toolbar = new ActionToolbarImpl(place, group, horizontal, decorateButtons, customizable);
-    managerPublisher().toolbarCreated(place, group, horizontal, toolbar);
-    return toolbar;
-  }
-
-  @Override
-  public void dispose() {
+  override fun dispose() {
     if (myTimer != null) {
-      myTimer.stop();
-      myTimer = null;
+      myTimer!!.stop()
+      myTimer = null
     }
   }
 
-  @Override
-  public void addTimerListener(final @NotNull TimerListener listener) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
+  override fun addTimerListener(listener: TimerListener) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
     }
     if (myTimer == null) {
-      myTimer = new MyTimer();
-      myTimer.start();
+      myTimer = MyTimer()
+      myTimer!!.start()
     }
-
-    myTimer.listeners.add(listener);
+    myTimer!!.listeners.add(listener)
   }
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  public void reinitializeTimer() {
+  fun reinitializeTimer() {
     if (myTimer != null) {
-      var oldListeners = myTimer.listeners;
-
-      myTimer.stop();
-      myTimer = null;
-
-      for (var listener: oldListeners)
-        addTimerListener(listener);
+      val oldListeners = myTimer!!.listeners
+      myTimer!!.stop()
+      myTimer = null
+      for (listener in oldListeners) addTimerListener(listener)
     }
   }
 
-  @Override
-  public void removeTimerListener(@NotNull TimerListener listener) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+  override fun removeTimerListener(listener: TimerListener) {
+    if (ApplicationManager.getApplication().isUnitTestMode) return
     if (LOG.assertTrue(myTimer != null)) {
-      myTimer.listeners.remove(listener);
+      myTimer!!.listeners.remove(listener)
     }
   }
 
-  public @NotNull ActionPopupMenu createActionPopupMenu(@NotNull String place, @NotNull ActionGroup group, @Nullable PresentationFactory presentationFactory) {
-    return new ActionPopupMenuImpl(place, group, this, presentationFactory);
+  open fun createActionPopupMenu(place: String, group: ActionGroup, presentationFactory: PresentationFactory?): ActionPopupMenu {
+    return ActionPopupMenuImpl(place, group, this, presentationFactory)
   }
 
-  @Override
-  public @NotNull ActionPopupMenu createActionPopupMenu(@NotNull String place, @NotNull ActionGroup group) {
-    return new ActionPopupMenuImpl(place, group, this, null);
+  override fun createActionPopupMenu(place: String, group: ActionGroup): ActionPopupMenu {
+    return ActionPopupMenuImpl(place, group, this, null)
   }
 
-  @Override
-  public @NotNull ActionToolbar createActionToolbar(final @NotNull String place, final @NotNull ActionGroup group, final boolean horizontal) {
-    return createActionToolbar(place, group, horizontal, false, true);
+  override fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean): ActionToolbar {
+    return createActionToolbar(place, group, horizontal, false, true)
   }
 
-  @Override
-  public @NotNull ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons) {
-    return createActionToolbarImpl(place, group, horizontal, decorateButtons, false);
+  override fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, decorateButtons: Boolean): ActionToolbar {
+    return createActionToolbarImpl(place, group, horizontal, decorateButtons, false)
   }
 
-  @Override
-  public @NotNull ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons, boolean customizable) {
-    return createActionToolbarImpl(place, group, horizontal, decorateButtons, customizable);
+  override fun createActionToolbar(place: String,
+                                   group: ActionGroup,
+                                   horizontal: Boolean,
+                                   decorateButtons: Boolean,
+                                   customizable: Boolean): ActionToolbar {
+    return createActionToolbarImpl(place, group, horizontal, decorateButtons, customizable)
   }
 
-  @Override
-  public @NotNull ActionToolbar createActionToolbar(@NotNull String place,
-                                                    @NotNull ActionGroup group,
-                                                    boolean horizontal,
-                                                    @NotNull Function<? super String, ? extends Component> separatorCreator) {
-    ActionToolbarImpl toolbar = createActionToolbarImpl(place, group, horizontal, false, true);
-    toolbar.setSeparatorCreator(separatorCreator);
-    return toolbar;
+  override fun createActionToolbar(place: String,
+                                   group: ActionGroup,
+                                   horizontal: Boolean,
+                                   separatorCreator: Function<in String, out Component>): ActionToolbar {
+    val toolbar = createActionToolbarImpl(place, group, horizontal, false, true)
+    toolbar.setSeparatorCreator(separatorCreator)
+    return toolbar
   }
 
-  private void registerPluginActions(@NotNull IdeaPluginDescriptorImpl module, @NotNull KeymapManagerEx keymapManager) {
-    List<RawPluginDescriptor.ActionDescriptor> elements = module.actions;
+  private fun registerPluginActions(module: IdeaPluginDescriptorImpl, keymapManager: KeymapManagerEx) {
+    val elements = module.actions
     if (elements.isEmpty()) {
-      return;
+      return
     }
-
-    long startTime = StartUpMeasurer.getCurrentTime();
-
-    String lastBundleName = null;
-    ResourceBundle lastBundle = null;
-    for (RawPluginDescriptor.ActionDescriptor descriptor : elements) {
-      String bundleName = descriptor.resourceBundle;
+    val startTime = StartUpMeasurer.getCurrentTime()
+    var lastBundleName: String? = null
+    var lastBundle: ResourceBundle? = null
+    for (descriptor in elements) {
+      var bundleName = descriptor.resourceBundle
       if (bundleName == null) {
-        bundleName = PluginManagerCore.CORE_ID.equals(module.getPluginId()) ? "messages.ActionsBundle" : module.getResourceBundleBaseName();
+        bundleName = if (PluginManagerCore.CORE_ID == module.pluginId) "messages.ActionsBundle" else module.resourceBundleBaseName
       }
-
-      XmlElement element = descriptor.element;
-
-      ResourceBundle bundle;
+      val element = descriptor.element
+      var bundle: ResourceBundle?
       if (bundleName == null) {
-        bundle = null;
+        bundle = null
       }
-      else if (bundleName.equals(lastBundleName)) {
-        bundle = lastBundle;
+      else if (bundleName == lastBundleName) {
+        bundle = lastBundle
       }
       else {
         try {
-          bundle = DynamicBundle.getResourceBundle(module.getClassLoader(), bundleName);
-          lastBundle = bundle;
-          lastBundleName = bundleName;
+          bundle = DynamicBundle.getResourceBundle(module.classLoader, bundleName)
+          lastBundle = bundle
+          lastBundleName = bundleName
         }
-        catch (MissingResourceException e) {
-          LOG.error(new PluginException("Cannot resolve resource bundle " + bundleName + " for action " + element, e, module.getPluginId()));
-          bundle = null;
+        catch (e: MissingResourceException) {
+          LOG.error(PluginException(
+            "Cannot resolve resource bundle $bundleName for action $element", e, module.pluginId))
+          bundle = null
         }
       }
-
-      if (descriptor instanceof ActionDescriptorAction d) {
-        processActionElement(d.className, element, module, bundle, keymapManager, module.getClassLoader());
-      }
-      else if (descriptor instanceof RawPluginDescriptor.ActionDescriptorGroup d) {
-        processGroupElement(d.className, d.id, element, module, bundle, keymapManager, module.getClassLoader());
-      }
-      else {
-        switch (descriptor.name) {
-          case separator -> processSeparatorNode(null, element, module, bundle);
-          case reference -> processReferenceNode(element, module, bundle);
-          case unregister -> processUnregisterNode(element, module);
-          case prohibit -> processProhibitNode(element, module);
+      when (descriptor) {
+        is ActionDescriptorAction -> {
+          processActionElement(descriptor.className, element, module, bundle, keymapManager, module.classLoader)
+        }
+        is ActionDescriptorGroup -> {
+          processGroupElement(descriptor.className, descriptor.id, element, module, bundle, keymapManager, module.classLoader)
+        }
+        else -> {
+          when (descriptor.name) {
+            ActionDescriptorName.separator -> processSeparatorNode(null, element, module, bundle)
+            ActionDescriptorName.reference -> processReferenceNode(element, module, bundle)
+            ActionDescriptorName.unregister -> processUnregisterNode(element, module)
+            ActionDescriptorName.prohibit -> processProhibitNode(element, module)
+            else -> LOG.error("${descriptor.name} is unknown")
+          }
         }
       }
     }
-    StartUpMeasurer.addPluginCost(module.getPluginId().getIdString(), "Actions", StartUpMeasurer.getCurrentTime() - startTime);
+    StartUpMeasurer.addPluginCost(module.pluginId.idString, "Actions", StartUpMeasurer.getCurrentTime() - startTime)
   }
 
-  @Override
-  public @Nullable AnAction getAction(@NotNull String id) {
-    return getActionImpl(id, false);
-  }
+  override fun getAction(id: String): AnAction? = getActionImpl(id = id, canReturnStub = false)
 
-  private @Nullable AnAction getActionImpl(@NotNull String id, boolean canReturnStub) {
-    AnAction action;
-    synchronized (myLock) {
-      action = idToAction.get(id);
-      if (canReturnStub || !(action instanceof ActionStubBase)) {
-        return action;
+  private fun getActionImpl(id: String, canReturnStub: Boolean): AnAction? {
+    var action: AnAction?
+    synchronized(myLock) {
+      action = idToAction[id]
+      if (canReturnStub || action !is ActionStubBase) {
+        return action
       }
     }
-    AnAction converted = action instanceof ActionStub ? convertStub((ActionStub)action) : convertGroupStub((ActionGroupStub)action, this);
+    val converted = if (action is ActionStub) convertStub(action as ActionStub)
+    else convertGroupStub(
+      (action as ActionGroupStub?)!!, this)
     if (converted == null) {
-      unregisterAction(id);
-      return null;
+      unregisterAction(id)
+      return null
     }
-
-    synchronized (myLock) {
-      action = idToAction.get(id);
-      if (action instanceof ActionStubBase) {
-        action = replaceStub((ActionStubBase)action, converted);
+    synchronized(myLock) {
+      action = idToAction[id]
+      if (action is ActionStubBase) {
+        action = replaceStub(action as ActionStubBase, converted)
       }
-      return action;
+      return action
     }
   }
 
-  private @Nullable AnAction replaceStub(@NotNull ActionStubBase stub, @NotNull AnAction anAction) {
-    LOG.assertTrue(actionToId.containsKey(stub));
-    actionToId.remove(stub);
-
-    LOG.assertTrue(idToAction.containsKey(stub.getId()));
-
-    AnAction action = idToAction.remove(stub.getId());
-    LOG.assertTrue(action != null);
-    LOG.assertTrue(action.equals(stub));
-
-    actionToId.put(anAction, stub.getId());
-    updateHandlers(anAction);
-
-    AnAction result = addToMap(stub.getId(),
-                               anAction,
-                               stub instanceof ActionStub ? ((ActionStub)stub).getProjectType() : null);
+  private fun replaceStub(stub: ActionStubBase, anAction: AnAction): AnAction? {
+    LOG.assertTrue(actionToId.containsKey(stub))
+    actionToId.remove(stub)
+    LOG.assertTrue(idToAction.containsKey(stub.id))
+    val action = idToAction.remove(stub.id)
+    LOG.assertTrue(action != null)
+    LOG.assertTrue(action == stub)
+    actionToId[anAction] = stub.id
+    updateHandlers(anAction)
+    val result = addToMap(stub.id,
+                          anAction,
+                          if (stub is ActionStub) stub.projectType else null)
     if (result == null) {
-      reportActionIdCollision(stub.getId(), action, stub.getPlugin().getPluginId());
+      reportActionIdCollision(stub.id, action!!, stub.plugin.pluginId)
     }
-    return result;
+    return result
   }
 
-  @Override
-  public String getId(@NotNull AnAction action) {
-    if (action instanceof ActionStubBase) {
-      return ((ActionStubBase)action).getId();
+  override fun getId(action: AnAction): String {
+    if (action is ActionStubBase) {
+      return (action as ActionStubBase).id
     }
-    synchronized (myLock) {
-      return actionToId.get(action);
-    }
+    synchronized(myLock) { return actionToId[action]!! }
   }
 
-  @Override
-  public @NotNull List<String> getActionIdList(@NotNull String idPrefix) {
-    List<String> result = new ArrayList<>();
-    synchronized (myLock) {
-      for (String id : idToAction.keySet()) {
+  override fun getActionIdList(idPrefix: String): List<String> {
+    val result: MutableList<String> = ArrayList()
+    synchronized(myLock) {
+      for (id in idToAction.keys) {
         if (id.startsWith(idPrefix)) {
-          result.add(id);
+          result.add(id)
         }
       }
     }
-    return result;
+    return result
   }
 
-  @Override
-  public String @NotNull [] getActionIds(@NotNull String idPrefix) {
-    return ArrayUtilRt.toStringArray(getActionIdList(idPrefix));
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun getActionIds(idPrefix: String): Array<String> {
+    return ArrayUtilRt.toStringArray(getActionIdList(idPrefix))
   }
 
-  @Override
-  public boolean isGroup(@NotNull String actionId) {
-    return getActionImpl(actionId, true) instanceof ActionGroup;
+  override fun isGroup(actionId: String): Boolean {
+    return getActionImpl(id = actionId, canReturnStub = true) is ActionGroup
   }
 
-  @Override
-  public @NotNull JComponent createButtonToolbar(final @NotNull String actionPlace, final @NotNull ActionGroup messageActionGroup) {
-    return new ButtonToolbarImpl(actionPlace, messageActionGroup);
+  @Suppress("removal", "OVERRIDE_DEPRECATION")
+  override fun createButtonToolbar(actionPlace: String, messageActionGroup: ActionGroup): JComponent {
+    @Suppress("removal")
+    return ButtonToolbarImpl(actionPlace, messageActionGroup)
   }
 
-  @Override
-  public AnAction getActionOrStub(@NotNull String id) {
-    return getActionImpl(id, true);
+  override fun getActionOrStub(id: String): AnAction? {
+    return getActionImpl(id = id, canReturnStub = true)
   }
 
   /**
-   * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of {@code AnAction}.
+   * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of `AnAction`.
    */
-  private @Nullable AnAction processActionElement(@NotNull String className,
-                                                  @NotNull XmlElement element,
-                                                  @NotNull IdeaPluginDescriptorImpl module,
-                                                  @Nullable ResourceBundle bundle,
-                                                  @NotNull KeymapManager keymapManager,
-                                                  @NotNull ClassLoader classLoader) {
+  private fun processActionElement(className: String,
+                                   element: XmlElement,
+                                   module: IdeaPluginDescriptorImpl,
+                                   bundle: ResourceBundle?,
+                                   keymapManager: KeymapManager,
+                                   classLoader: ClassLoader): AnAction? {
     // read ID and register a loaded action
-    String id = obtainActionId(element, className);
-    synchronized (myLock) {
+    val id = obtainActionId(element, className)
+    synchronized(myLock) {
       if (myProhibitedActionIds.contains(id)) {
-        return null;
+        return null
       }
     }
-    if (Boolean.parseBoolean(element.attributes.get(INTERNAL_ATTR_NAME)) &&
-        !ApplicationManager.getApplication().isInternal()) {
-      myNotRegisteredInternalActionIds.add(id);
-      return null;
+    if (element.attributes[INTERNAL_ATTR_NAME].toBoolean() &&
+        !ApplicationManager.getApplication().isInternal) {
+      myNotRegisteredInternalActionIds.add(id)
+      return null
     }
-
-    String iconPath = element.attributes.get(ICON_ATTR_NAME);
-    String projectType = element.attributes.get(PROJECT_TYPE);
-
-    String textValue = element.attributes.get(TEXT_ATTR_NAME);
-    //noinspection HardCodedStringLiteral
-    String descriptionValue = element.attributes.get(DESCRIPTION);
-
-    ActionStub stub = new ActionStub(className, id, module, iconPath, ProjectType.create(projectType), () -> {
-      Supplier<String> text = () -> computeActionText(bundle, id, ACTION_ELEMENT_NAME, textValue, classLoader);
+    val iconPath = element.attributes[ICON_ATTR_NAME]
+    val projectType = element.attributes[PROJECT_TYPE]
+    val textValue = element.attributes[TEXT_ATTR_NAME]
+    val descriptionValue = element.attributes[DESCRIPTION]
+    val stub = ActionStub(className, id, module, iconPath, ProjectType.create(projectType)) {
+      val text = Supplier { computeActionText(bundle, id, ACTION_ELEMENT_NAME, textValue, classLoader) }
       if (text.get() == null) {
-        LOG.error(new PluginException("'text' attribute is mandatory (actionId=" + id + ", module=" + " " + module + ")",
-                                      module.getPluginId()));
+        LOG.error(PluginException(
+          "'text' attribute is mandatory (actionId=$id, module= $module)",
+          module.pluginId))
       }
-
-      Presentation presentation = Presentation.newTemplatePresentation();
-      presentation.setText(text);
+      val presentation = Presentation.newTemplatePresentation()
+      presentation.setText(text)
       if (bundle == null) {
-        presentation.setDescription(descriptionValue);
+        presentation.description = descriptionValue
       }
       else {
-        presentation.setDescription(() -> computeDescription(bundle, id, ACTION_ELEMENT_NAME, descriptionValue, classLoader));
+        presentation.setDescription { computeDescription(bundle, id, ACTION_ELEMENT_NAME, descriptionValue, classLoader) }
       }
-      return presentation;
-    });
+      presentation
+    }
 
     // process all links and key bindings if any
-    for (XmlElement e : element.children) {
-      switch (e.name) {
-        case ADD_TO_GROUP_ELEMENT_NAME -> processAddToGroupNode(stub, e, module, isSecondary(e));
-        case "keyboard-shortcut" -> processKeyboardShortcutNode(e, id, module, keymapManager);
-        case "mouse-shortcut" -> processMouseShortcutNode(e, id, module, keymapManager);
-        case "abbreviation" -> processAbbreviationNode(e, id);
-        case OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(stub, stub.getId(), e, module, bundle);
-        case SYNONYM_ELEMENT_NAME -> processSynonymNode(stub, e, module, bundle);
-        default -> {
-          reportActionError(module, "unexpected name of element \"" + e.name + "\"");
-          return null;
+    for (e in element.children) {
+      when (e.name) {
+        ADD_TO_GROUP_ELEMENT_NAME -> processAddToGroupNode(stub, e, module, isSecondary(e))
+        "keyboard-shortcut" -> processKeyboardShortcutNode(e, id, module, keymapManager)
+        "mouse-shortcut" -> processMouseShortcutNode(e, id, module, keymapManager)
+        "abbreviation" -> processAbbreviationNode(e, id)
+        OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(stub, stub.id, e, module, bundle)
+        SYNONYM_ELEMENT_NAME -> processSynonymNode(stub, e, module, bundle)
+        else -> {
+          reportActionError(module, "unexpected name of element \"" + e.name + "\"")
+          return null
         }
       }
     }
-
-    String shortcutOfActionId = element.attributes.get(USE_SHORTCUT_OF_ATTR_NAME);
+    val shortcutOfActionId = element.attributes[USE_SHORTCUT_OF_ATTR_NAME]
     if (shortcutOfActionId != null) {
-      keymapManager.bindShortcuts(shortcutOfActionId, id);
+      keymapManager.bindShortcuts(shortcutOfActionId, id)
     }
-
-    registerOrReplaceActionInner(element, id, stub, module);
-    return stub;
+    registerOrReplaceActionInner(element, id, stub, module)
+    return stub
   }
 
-  private static String obtainActionId(XmlElement element, String className) {
-    String id = element.attributes.get(ID_ATTR_NAME);
-    return Strings.isEmpty(id) ? StringUtilRt.getShortName(className) : id;
-  }
-
-  private void registerOrReplaceActionInner(@NotNull XmlElement element,
-                                            @NotNull String id,
-                                            @NotNull AnAction action,
-                                            @NotNull IdeaPluginDescriptor plugin) {
-    synchronized (myLock) {
+  private fun registerOrReplaceActionInner(element: XmlElement,
+                                           id: String,
+                                           action: AnAction,
+                                           plugin: IdeaPluginDescriptor) {
+    synchronized(myLock) {
       if (myProhibitedActionIds.contains(id)) {
-        return;
+        return
       }
-      if (Boolean.parseBoolean(element.attributes.get(OVERRIDES_ATTR_NAME))) {
+      if (element.attributes[OVERRIDES_ATTR_NAME].toBoolean()) {
         if (getActionOrStub(id) == null) {
-          LOG.error(element + " '" + id + "' doesn't override anything");
-          return;
+          LOG.error("$element '$id' doesn't override anything")
+          return
         }
-        AnAction prev = replaceAction(id, action, plugin.getPluginId());
-        if (action instanceof DefaultActionGroup && prev instanceof DefaultActionGroup) {
-          if (Boolean.parseBoolean(element.attributes.get("keep-content"))) {
-            ((DefaultActionGroup)action).copyFromGroup((DefaultActionGroup)prev);
+        val prev = replaceAction(id, action, plugin.pluginId)
+        if (action is DefaultActionGroup && prev is DefaultActionGroup) {
+          if (element.attributes["keep-content"].toBoolean()) {
+            action.copyFromGroup((prev as DefaultActionGroup?)!!)
           }
         }
       }
       else {
-        registerAction(id, action, plugin.getPluginId(), element.attributes.get(PROJECT_TYPE));
+        registerAction(id, action, plugin.pluginId, element.attributes[PROJECT_TYPE])
       }
-      ActionsCollectorImpl.onActionLoadedFromXml(action, id, plugin);
+      onActionLoadedFromXml(action, id, plugin)
     }
   }
 
-  private AnAction processGroupElement(@NotNull String className,
-                                       @Nullable String id,
-                                       @NotNull XmlElement element,
-                                       @NotNull IdeaPluginDescriptorImpl module,
-                                       @Nullable ResourceBundle bundle,
-                                       @NotNull KeymapManagerEx keymapManager,
-                                       @NotNull ClassLoader classLoader) {
+  private fun processGroupElement(className: String,
+                                  id: String?,
+                                  element: XmlElement,
+                                  module: IdeaPluginDescriptorImpl,
+                                  bundle: ResourceBundle?,
+                                  keymapManager: KeymapManagerEx,
+                                  classLoader: ClassLoader): AnAction? {
+    var id = id
     try {
-      synchronized (myLock) {
+      synchronized(myLock) {
         if (myProhibitedActionIds.contains(id)) {
-          return null;
+          return null
         }
       }
-
-      ActionGroup group;
-      boolean customClass = false;
-      if (DefaultActionGroup.class.getName().equals(className)) {
-        group = new DefaultActionGroup();
+      val group: ActionGroup
+      var customClass = false
+      if (DefaultActionGroup::class.java.name == className) {
+        group = DefaultActionGroup()
       }
-      else if (DefaultCompactActionGroup.class.getName().equals(className)) {
-        group = new DefaultCompactActionGroup();
+      else if (DefaultCompactActionGroup::class.java.name == className) {
+        group = DefaultCompactActionGroup()
       }
       else if (id == null) {
-        Object obj = ApplicationManager.getApplication().instantiateClass(className, module);
-        if (!(obj instanceof ActionGroup)) {
-          reportActionError(module, "class with name \"" + className + "\" should be instance of " + ActionGroup.class.getName());
-          return null;
+        val obj = ApplicationManager.getApplication().instantiateClass<Any>(className, module)
+        if (obj !is ActionGroup) {
+          reportActionError(module, "class with name \"" + className + "\" should be instance of " + ActionGroup::class.java.name)
+          return null
         }
-        if (element.children.size() != element.count(ADD_TO_GROUP_ELEMENT_NAME)) {
-          if (!(obj instanceof DefaultActionGroup)) {
-            reportActionError(module, "class with name \"" + className + "\" should be instance of " + DefaultActionGroup.class.getName() +
-                                        " because there are children specified");
-            return null;
+        if (element.children.size != element.count(ADD_TO_GROUP_ELEMENT_NAME)) {
+          if (obj !is DefaultActionGroup) {
+            reportActionError(module, "class with name \"" + className + "\" should be instance of " + DefaultActionGroup::class.java.name +
+                                      " because there are children specified")
+            return null
           }
         }
-        customClass = true;
-        group = (ActionGroup)obj;
+        customClass = true
+        group = obj
       }
       else {
-        group = new ActionGroupStub(id, className, module);
-        customClass = true;
+        group = ActionGroupStub(id, className, module)
+        customClass = true
       }
       // read ID and register loaded group
-      if (Boolean.parseBoolean(element.attributes.get(INTERNAL_ATTR_NAME)) && !ApplicationManager.getApplication().isInternal()) {
-        myNotRegisteredInternalActionIds.add(id);
-        return null;
+      if (element.attributes.get(INTERNAL_ATTR_NAME).toBoolean() && !ApplicationManager.getApplication().isInternal) {
+        myNotRegisteredInternalActionIds.add(id!!)
+        return null
       }
-
       if (id == null) {
-        id = "<anonymous-group-" + myAnonymousGroupIdCounter++ + ">";
+        id = "<anonymous-group-" + myAnonymousGroupIdCounter++ + ">"
       }
-
-      registerOrReplaceActionInner(element, id, group, module);
-      Presentation presentation = group.getTemplatePresentation();
-      String finalId = id;
+      registerOrReplaceActionInner(element, id, group, module)
+      val presentation = group.templatePresentation
+      val finalId: String = id
 
       // text
-      Supplier<String> text = () -> computeActionText(bundle, finalId, GROUP_ELEMENT_NAME, element.attributes.get(TEXT_ATTR_NAME), classLoader);
+      val text = Supplier { computeActionText(bundle, finalId, GROUP_ELEMENT_NAME, element.attributes[TEXT_ATTR_NAME], classLoader) }
       // don't override value which was set in API with empty value from xml descriptor
-      if (!Strings.isEmpty(text.get()) || presentation.getText() == null) {
-        presentation.setText(text);
+      if (!Strings.isEmpty(text.get()) || presentation.text == null) {
+        presentation.setText(text)
       }
 
       // description
-      String description = element.attributes.get(DESCRIPTION); //NON-NLS
+      val description = element.attributes[DESCRIPTION] //NON-NLS
       if (bundle == null) {
         // don't override value which was set in API with empty value from xml descriptor
-        if (!Strings.isEmpty(description) || presentation.getDescription() == null) {
-          presentation.setDescription(description);
+        if (!Strings.isEmpty(description) || presentation.description == null) {
+          presentation.description = description
         }
       }
       else {
-        Supplier<String> descriptionSupplier = () -> computeDescription(bundle, finalId, GROUP_ELEMENT_NAME, description, classLoader);
+        val descriptionSupplier = Supplier { computeDescription(bundle, finalId, GROUP_ELEMENT_NAME, description, classLoader) }
         // don't override value which was set in API with empty value from xml descriptor
-        if (!Strings.isEmpty(descriptionSupplier.get()) || presentation.getDescription() == null) {
-          presentation.setDescription(descriptionSupplier);
+        if (!Strings.isEmpty(descriptionSupplier.get()) || presentation.description == null) {
+          presentation.setDescription(descriptionSupplier)
         }
       }
 
       // icon
-      String iconPath = element.attributes.get(ICON_ATTR_NAME);
-      if (group instanceof ActionGroupStub) {
-        ((ActionGroupStub)group).setIconPath(iconPath);
+      val iconPath = element.attributes[ICON_ATTR_NAME]
+      if (group is ActionGroupStub) {
+        group.iconPath = iconPath
       }
       else if (iconPath != null) {
-        presentation.setIcon(loadIcon(module, iconPath, className));
+        presentation.icon = loadIcon(module, iconPath, className)
       }
 
       // popup
-      String popup = element.attributes.get("popup");
+      val popup = element.attributes["popup"]
       if (popup != null) {
-        group.setPopup(Boolean.parseBoolean(popup));
-        if (group instanceof ActionGroupStub) {
-          ((ActionGroupStub)group).setPopupDefinedInXml(true);
+        group.isPopup = popup.toBoolean()
+        if (group is ActionGroupStub) {
+          group.popupDefinedInXml = true
         }
       }
-
-      String searchable = element.attributes.get("searchable");
+      val searchable = element.attributes["searchable"]
       if (searchable != null) {
-        group.setSearchable(Boolean.parseBoolean(searchable));
+        group.isSearchable = searchable.toBoolean()
       }
-
-      String shortcutOfActionId = element.attributes.get(USE_SHORTCUT_OF_ATTR_NAME);
+      val shortcutOfActionId = element.attributes[USE_SHORTCUT_OF_ATTR_NAME]
       if (customClass && shortcutOfActionId != null) {
-        keymapManager.bindShortcuts(shortcutOfActionId, id);
+        keymapManager.bindShortcuts(shortcutOfActionId, id)
       }
 
       // process all group's children. There are other groups, actions, references and links
-      for (XmlElement child : element.children) {
-        switch (child.name) {
-          case ACTION_ELEMENT_NAME -> {
-            String childClassName = child.attributes.get(CLASS_ATTR_NAME);
+      for (child in element.children) {
+        when (child.name) {
+          ACTION_ELEMENT_NAME -> {
+            val childClassName = child.attributes[CLASS_ATTR_NAME]
             if (childClassName == null || className.isEmpty()) {
-              reportActionError(module, "action element should have specified \"class\" attribute");
+              reportActionError(module, "action element should have specified \"class\" attribute")
             }
             else {
-              AnAction action = processActionElement(childClassName, child, module, bundle, keymapManager, classLoader);
+              val action = processActionElement(childClassName, child, module, bundle, keymapManager, classLoader)
               if (action != null) {
-                addToGroupInner(group, action, Constraints.LAST, module, isSecondary(child));
+                addToGroupInner(group, action, Constraints.LAST, module, isSecondary(child))
               }
             }
           }
-          case SEPARATOR_ELEMENT_NAME -> processSeparatorNode((DefaultActionGroup)group, child, module, bundle);
-          case GROUP_ELEMENT_NAME -> {
-            String childClassName = child.attributes.get(CLASS_ATTR_NAME);
+          SEPARATOR_ELEMENT_NAME -> processSeparatorNode(group as DefaultActionGroup, child, module, bundle)
+          GROUP_ELEMENT_NAME -> {
+            var childClassName = child.attributes[CLASS_ATTR_NAME]
             if (childClassName == null) {
               // use a default group if class isn't specified
-              childClassName = "true".equals(child.attributes.get("compact"))
-                               ? DefaultCompactActionGroup.class.getName()
-                               : DefaultActionGroup.class.getName();
+              childClassName = if ("true" == child.attributes["compact"]) DefaultCompactActionGroup::class.java.name else DefaultActionGroup::class.java.name
             }
-
-            String childId = child.attributes.get(ID_ATTR_NAME);
+            val childId = child.attributes[ID_ATTR_NAME]
             if (childId != null && childId.isEmpty()) {
-              reportActionError(module, "ID of the group cannot be an empty string");
+              reportActionError(module, "ID of the group cannot be an empty string")
             }
             else {
-              AnAction action = processGroupElement(childClassName, childId, child, module, bundle, keymapManager, classLoader);
+              val action = processGroupElement(childClassName!!, childId, child, module, bundle, keymapManager, classLoader)
               if (action != null) {
-                addToGroupInner(group, action, Constraints.LAST, module, false);
+                addToGroupInner(group, action, Constraints.LAST, module, false)
               }
             }
           }
-          case ADD_TO_GROUP_ELEMENT_NAME -> processAddToGroupNode(group, child, module, isSecondary(child));
-          case REFERENCE_ELEMENT_NAME -> {
-            AnAction action = processReferenceElement(child, module);
+          ADD_TO_GROUP_ELEMENT_NAME -> processAddToGroupNode(group, child, module, isSecondary(child))
+          REFERENCE_ELEMENT_NAME -> {
+            val action = processReferenceElement(child, module)
             if (action != null) {
-              addToGroupInner(group, action, Constraints.LAST, module, isSecondary(child));
+              addToGroupInner(group, action, Constraints.LAST, module, isSecondary(child))
             }
           }
-          case OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(group, id, child, module, bundle);
-          default -> {
-            reportActionError(module, "unexpected name of element \"" + child.name + "\n");
-            return null;
+          OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(group, id, child, module, bundle)
+          else -> {
+            reportActionError(module, "unexpected name of element \"" + child.name + "\n")
+            return null
           }
         }
       }
-      return group;
+      return group
     }
-    catch (Exception e) {
-      String message = "cannot create class \"" + className + "\"";
-      reportActionError(module, message, e);
-      return null;
+    catch (e: Exception) {
+      reportActionError(module = module, message = "cannot create class \"$className\"", cause = e)
+      return null
     }
   }
 
-  private void processReferenceNode(@NotNull XmlElement element, @NotNull IdeaPluginDescriptor module, @Nullable ResourceBundle bundle) {
-    AnAction action = processReferenceElement(element, module);
-    if (action == null) {
-      return;
-    }
-
-    for (XmlElement child : element.children) {
-      if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.name)) {
-        processAddToGroupNode(action, child, module, isSecondary(child));
+  private fun processReferenceNode(element: XmlElement, module: IdeaPluginDescriptor, bundle: ResourceBundle?) {
+    val action = processReferenceElement(element, module) ?: return
+    for (child in element.children) {
+      if (ADD_TO_GROUP_ELEMENT_NAME == child.name) {
+        processAddToGroupNode(action, child, module, isSecondary(child))
       }
-      else if (SYNONYM_ELEMENT_NAME.equals(child.name)) {
-        processSynonymNode(action, child, module, bundle);
+      else if (SYNONYM_ELEMENT_NAME == child.name) {
+        processSynonymNode(action, child, module, bundle)
       }
     }
   }
@@ -914,505 +639,328 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   /**
    * @param element description of a link
    */
-  private void processAddToGroupNode(AnAction action, XmlElement element, @NotNull IdeaPluginDescriptor module, boolean secondary) {
-    String name = action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName();
-    String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionToId.get(action);
-    String actionName = name + " (" + id + ")";
+  private fun processAddToGroupNode(action: AnAction, element: XmlElement, module: IdeaPluginDescriptor, secondary: Boolean) {
+    val name = if (action is ActionStub) action.className else action.javaClass.name
+    val id = if (action is ActionStub) action.id else actionToId[action]!!
+    val actionName = "$name ($id)"
 
     // parent group
-    final AnAction parentGroup = getParentGroup(element.attributes.get(GROUP_ID_ATTR_NAME), actionName, module);
-    if (parentGroup == null) {
-      return;
-    }
+    val parentGroup = getParentGroup(element.attributes[GROUP_ID_ATTR_NAME], actionName, module)
+                      ?: return
 
     // anchor attribute
-    final Anchor anchor = parseAnchor(element.attributes.get("anchor"), actionName, module);
-    if (anchor == null) {
-      return;
-    }
-
-    final String relativeToActionId = element.attributes.get("relative-to-action");
+    val anchor = parseAnchor(element.attributes["anchor"], actionName, module) ?: return
+    val relativeToActionId = element.attributes["relative-to-action"]
     if ((Anchor.BEFORE == anchor || Anchor.AFTER == anchor) && relativeToActionId == null) {
-      reportActionError(module, actionName + ": \"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
-      return;
+      reportActionError(module, "$actionName: \"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"")
+      return
     }
-    addToGroupInner(parentGroup, action, new Constraints(anchor, relativeToActionId), module, secondary);
+    addToGroupInner(parentGroup, action, Constraints(anchor, relativeToActionId), module, secondary)
   }
 
-  private void addToGroupInner(@NotNull AnAction group, @NotNull AnAction action, @NotNull Constraints constraints,
-                               @Nullable IdeaPluginDescriptor module, boolean secondary) {
+  private fun addToGroupInner(group: AnAction, action: AnAction, constraints: Constraints,
+                              module: IdeaPluginDescriptor?, secondary: Boolean) {
     try {
-      String actionId = action instanceof ActionStub ? ((ActionStub)action).getId() : actionToId.get(action);
-      DefaultActionGroup actionGroup = (DefaultActionGroup)group;
+      val actionId = if (action is ActionStub) action.id else actionToId[action]!!
+      val actionGroup = group as DefaultActionGroup
       if (module != null && actionGroup.containsAction(action)) {
         reportActionError(module, "Cannot add an action twice: " + actionId + " (" +
-                                  (action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName()) + ")");
-        return;
+                                  (if (action is ActionStub) action.className else action.javaClass.name) + ")")
+        return
       }
-      actionGroup.addAction(action, constraints, this).setAsSecondary(secondary);
-      idToGroupId.putValue(actionId, actionToId.get(group));
+      actionGroup.addAction(action, constraints, this).setAsSecondary(secondary)
+      idToGroupId.putValue(actionId, actionToId[group])
     }
-    catch (IllegalArgumentException e) {
-      if (module != null) reportActionError(module, e.getMessage(), e);
-      else throw e;
+    catch (e: IllegalArgumentException) {
+      if (module != null) {
+        reportActionError(module, e.message!!, e)
+      }
+      else {
+        throw e
+      }
     }
   }
 
-  public void addToGroup(@NotNull DefaultActionGroup group, @NotNull AnAction action, @NotNull Constraints constraints) {
-    addToGroupInner(group, action, constraints, null, false);
+  fun addToGroup(group: DefaultActionGroup, action: AnAction, constraints: Constraints) {
+    addToGroupInner(group, action, constraints, null, false)
   }
 
-  public @Nullable DefaultActionGroup getParentGroup(String groupId,
-                                                     @Nullable String actionName,
-                                                     @NotNull IdeaPluginDescriptor module) {
-    if (groupId == null || groupId.isEmpty()) {
-      reportActionError(module, actionName + ": attribute \"group-id\" should be defined");
-      return null;
+  fun getParentGroup(groupId: String?,
+                     actionName: String?,
+                     module: IdeaPluginDescriptor): DefaultActionGroup? {
+    if (groupId.isNullOrEmpty()) {
+      reportActionError(module, "$actionName: attribute \"group-id\" should be defined")
+      return null
     }
-    AnAction parentGroup = getActionImpl(groupId, true);
+    var parentGroup = getActionImpl(groupId, true)
     if (parentGroup == null) {
-      reportActionError(module, actionName + ": group with id \"" + groupId + "\" isn't registered; action will be added to the \"Other\" group", null);
-      parentGroup = getActionImpl(IdeActions.GROUP_OTHER_MENU, true);
+      reportActionError(module, "$actionName: group with id \"$groupId\" isn't registered; action will be added to the \"Other\" group",
+                        null)
+      parentGroup = getActionImpl(IdeActions.GROUP_OTHER_MENU, true)
     }
-    if (!(parentGroup instanceof DefaultActionGroup)) {
-      reportActionError(module, actionName + ": group with id \"" + groupId + "\" should be instance of " + DefaultActionGroup.class.getName() +
-                                  " but was " + (parentGroup != null ? parentGroup.getClass() : "[null]"));
-      return null;
+    if (parentGroup !is DefaultActionGroup) {
+      reportActionError(module,
+                        actionName + ": group with id \"" + groupId + "\" should be instance of " + DefaultActionGroup::class.java.name +
+                        " but was " + (parentGroup?.javaClass ?: "[null]"))
+      return null
     }
-    return (DefaultActionGroup)parentGroup;
-  }
-
-  private static void processOverrideTextNode(AnAction action,
-                                              String id,
-                                              XmlElement element,
-                                              @NotNull IdeaPluginDescriptor module,
-                                              @Nullable ResourceBundle bundle) {
-    String place = element.attributes.get("place");
-    if (place == null) {
-      reportActionError(module, id + ": override-text specified without place");
-      return;
-    }
-    String useTextOfPlace = element.attributes.get("use-text-of-place");
-    if (useTextOfPlace != null) {
-      action.copyActionTextOverride(useTextOfPlace, place, id);
-    }
-    else {
-      String text = element.attributes.get(TEXT_ATTR_NAME);
-      if ((text == null || text.isEmpty()) && bundle != null) {
-        String prefix = action instanceof ActionGroup ? "group" : "action";
-        String key = prefix + "." + id + "." + place + ".text";
-        action.addTextOverride(place, () -> BundleBase.message(bundle, key));
-      }
-      else {
-        action.addTextOverride(place, () -> text);
-      }
-    }
-  }
-
-  private static void processSynonymNode(AnAction action,
-                                         XmlElement element,
-                                         @NotNull IdeaPluginDescriptor module,
-                                         @Nullable ResourceBundle bundle) {
-    @SuppressWarnings("HardCodedStringLiteral")
-    String text = element.attributes.get(TEXT_ATTR_NAME);
-    if (text != null && !text.isEmpty()) {
-      action.addSynonym(() -> text);
-    }
-    else {
-      String key = element.attributes.get(KEY_ATTR_NAME);
-      if (key != null && bundle != null) {
-        action.addSynonym(() -> BundleBase.message(bundle, key));
-      }
-      else {
-        reportActionError(module, "Can't process synonym: neither text nor resource bundle key is specified");
-      }
-    }
+    return parentGroup
   }
 
   /**
-   * @param parentGroup group which is the parent of the separator. It can be {@code null} in that
-   *                    case separator will be added to a group described in the <add-to-group ....> sub element.
+   * @param parentGroup group which is the parent of the separator. It can be `null` in that
+   * case separator will be added to a group described in the <add-to-group ....> sub element.
    * @param element     XML element which represent separator.
-   */
-  private void processSeparatorNode(@Nullable DefaultActionGroup parentGroup,
-                                    @NotNull XmlElement element,
-                                    @NotNull IdeaPluginDescriptor module,
-                                    @Nullable ResourceBundle bundle) {
-    //noinspection HardCodedStringLiteral
-    String text = element.attributes.get(TEXT_ATTR_NAME);
-    String key = element.attributes.get(KEY_ATTR_NAME);
-    Separator separator =
-      text != null ? new Separator(text) : key != null ? createSeparator(bundle, key) : Separator.getInstance();
-    if (parentGroup != null) {
-      parentGroup.add(separator, this);
-    }
+  </add-to-group> */
+  private fun processSeparatorNode(parentGroup: DefaultActionGroup?,
+                                   element: XmlElement,
+                                   module: IdeaPluginDescriptor,
+                                   bundle: ResourceBundle?) {
+    val text = element.attributes[TEXT_ATTR_NAME]
+    val key = element.attributes[KEY_ATTR_NAME]
+    val separator = if (text != null) Separator(text) else if (key != null) createSeparator(bundle, key) else Separator.getInstance()
+    parentGroup?.add(separator, this)
     // try to find inner <add-to-parent...> tag
-    for (XmlElement child : element.children) {
-      if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.name)) {
-        processAddToGroupNode(separator, child, module, isSecondary(child));
+    for (child in element.children) {
+      if (ADD_TO_GROUP_ELEMENT_NAME == child.name) {
+        processAddToGroupNode(separator, child, module, isSecondary(child))
       }
     }
   }
 
-  private static @NotNull Separator createSeparator(@Nullable ResourceBundle bundle, @NotNull String key) {
-    String text = bundle != null ? AbstractBundle.messageOrNull(bundle, key) : null;
-    return text != null ? new Separator(text) : Separator.getInstance();
+  private fun processProhibitNode(element: XmlElement, module: IdeaPluginDescriptor) {
+    val id = element.attributes[ID_ATTR_NAME]
+    if (id == null) {
+      reportActionError(module, "'id' attribute is required for 'unregister' elements")
+      return
+    }
+    prohibitAction(id)
   }
 
-  private void processProhibitNode(XmlElement element, @NotNull IdeaPluginDescriptor module) {
-    String id = element.attributes.get(ID_ATTR_NAME);
+  private fun processUnregisterNode(element: XmlElement, module: IdeaPluginDescriptor) {
+    val id = element.attributes[ID_ATTR_NAME]
     if (id == null) {
-      reportActionError(module, "'id' attribute is required for 'unregister' elements");
-      return;
+      reportActionError(module, "'id' attribute is required for 'unregister' elements")
+      return
     }
-
-    prohibitAction(id);
-  }
-
-  private void processUnregisterNode(XmlElement element, @NotNull IdeaPluginDescriptor module) {
-    String id = element.attributes.get(ID_ATTR_NAME);
-    if (id == null) {
-      reportActionError(module, "'id' attribute is required for 'unregister' elements");
-      return;
-    }
-    AnAction action = getAction(id);
+    val action = getAction(id)
     if (action == null) {
-      reportActionError(module, "Trying to unregister non-existing action " + id);
-      return;
+      reportActionError(module, "Trying to unregister non-existing action $id")
+      return
     }
-
-    AbbreviationManager.getInstance().removeAllAbbreviations(id);
-    unregisterAction(id);
+    AbbreviationManager.getInstance().removeAllAbbreviations(id)
+    unregisterAction(id)
   }
 
-  private static void processKeyboardShortcutNode(XmlElement element,
-                                                  String actionId,
-                                                  @NotNull PluginDescriptor module,
-                                                  @NotNull KeymapManager keymapManager) {
-    String firstStrokeString = element.attributes.get("first-keystroke");
-    if (firstStrokeString == null) {
-      reportActionError(module, "\"first-keystroke\" attribute must be specified for action with id=" + actionId);
-      return;
+  private fun processReferenceElement(element: XmlElement, module: IdeaPluginDescriptor): AnAction? {
+    val ref = getReferenceActionId(element)
+    if (ref.isNullOrEmpty()) {
+      reportActionError(module, "ID of reference element should be defined", null)
+      return null
     }
-    KeyStroke firstKeyStroke = getKeyStroke(firstStrokeString);
-    if (firstKeyStroke == null) {
-      reportActionError(module, "\"first-keystroke\" attribute has invalid value for action with id=" + actionId);
-      return;
-    }
-
-    KeyStroke secondKeyStroke = null;
-    String secondStrokeString = element.attributes.get("second-keystroke");
-    if (secondStrokeString != null) {
-      secondKeyStroke = getKeyStroke(secondStrokeString);
-      if (secondKeyStroke == null) {
-        reportActionError(module, "\"second-keystroke\" attribute has invalid value for action with id=" + actionId);
-        return;
-      }
-    }
-
-    String keymapName = element.attributes.get(KEYMAP_ATTR_NAME);
-    if (keymapName == null || keymapName.trim().isEmpty()) {
-      reportActionError(module, "attribute \"keymap\" should be defined");
-      return;
-    }
-    Keymap keymap = keymapManager.getKeymap(keymapName);
-    if (keymap == null) {
-      reportKeymapNotFoundWarning(module, keymapName);
-      return;
-    }
-    processRemoveAndReplace(element, actionId, keymap, new KeyboardShortcut(firstKeyStroke, secondKeyStroke));
-  }
-
-  private static void processRemoveAndReplace(@NotNull XmlElement element, String actionId, @NotNull Keymap keymap, @NotNull Shortcut shortcut) {
-    boolean remove = Boolean.parseBoolean(element.attributes.get("remove"));
-    boolean replace = Boolean.parseBoolean(element.attributes.get("replace-all"));
-    if (remove) {
-      keymap.removeShortcut(actionId, shortcut);
-    }
-    if (replace) {
-      keymap.removeAllActionShortcuts(actionId);
-    }
-    if (!remove) {
-      keymap.addShortcut(actionId, shortcut);
-    }
-  }
-
-  private @Nullable AnAction processReferenceElement(@NotNull XmlElement element, @NotNull IdeaPluginDescriptor module) {
-    String ref = getReferenceActionId(element);
-    if (ref == null || ref.isEmpty()) {
-      reportActionError(module, "ID of reference element should be defined", null);
-      return null;
-    }
-
-    synchronized (myLock) {
+    synchronized(myLock) {
       if (myProhibitedActionIds.contains(ref)) {
-        return null;
+        return null
       }
     }
-
-    AnAction action = getActionImpl(ref, true);
+    val action = getActionImpl(ref, true)
     if (action == null) {
       if (!myNotRegisteredInternalActionIds.contains(ref)) {
-        reportActionError(module, "action specified by reference isn't registered (ID=" + ref + ")", null);
+        reportActionError(module, "action specified by reference isn't registered (ID=$ref)", null)
       }
-      return null;
+      return null
     }
-    return action;
+    return action
   }
 
-  private static String getReferenceActionId(@NotNull XmlElement element) {
-    String ref = element.attributes.get(REF_ATTR_NAME);
-    if (ref == null) {
-      // support old style references by id
-      ref = element.attributes.get(ID_ATTR_NAME);
-    }
-    return ref;
-  }
-
-  @ApiStatus.Internal
-  public static @Nullable String checkUnloadActions(@NotNull IdeaPluginDescriptorImpl module) {
-    for (RawPluginDescriptor.ActionDescriptor descriptor : module.actions) {
-      XmlElement element = descriptor.element;
-      var elementName = descriptor.name;
-      if (elementName != ActionDescriptorName.action &&
-          !(elementName == ActionDescriptorName.group && canUnloadGroup(element)) &&
-          elementName != ActionDescriptorName.reference) {
-        return "Plugin " + module + " is not unload-safe because of action element " + elementName;
-      }
-    }
-    return null;
-  }
-
-  private static boolean canUnloadGroup(@NotNull XmlElement element) {
-    if (element.attributes.get(ID_ATTR_NAME) == null) {
-      return false;
-    }
-    for (XmlElement child : element.children) {
-      if (child.name.equals(GROUP_ELEMENT_NAME) && !canUnloadGroup(child)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  public void unloadActions(@NotNull IdeaPluginDescriptorImpl module) {
-    List<RawPluginDescriptor.ActionDescriptor> descriptors = module.actions;
-    for (int i = descriptors.size() - 1; i >= 0; i--) {
-      RawPluginDescriptor.ActionDescriptor descriptor = descriptors.get(i);
-      XmlElement element = descriptor.element;
-      switch (descriptor.name) {
-        case action -> unloadActionElement(element);
-        case group -> unloadGroupElement(element);
-        case reference -> {
-          AnAction action = processReferenceElement(element, module);
-          if (action == null) {
-            return;
-          }
-
-          String actionId = getReferenceActionId(element);
-
-          for (XmlElement child : element.children) {
-            if (!child.name.equals(ADD_TO_GROUP_ELEMENT_NAME)) {
-              continue;
+  fun unloadActions(module: IdeaPluginDescriptorImpl) {
+    val descriptors = module.actions
+    for (i in descriptors.indices.reversed()) {
+      val descriptor = descriptors[i]
+      val element = descriptor.element
+      when (descriptor.name) {
+        ActionDescriptorName.action -> unloadActionElement(element)
+        ActionDescriptorName.group -> unloadGroupElement(element)
+        ActionDescriptorName.reference -> {
+          val action = processReferenceElement(element, module) ?: return
+          val actionId = getReferenceActionId(element)
+          for ((name, attributes) in element.children) {
+            if (name != ADD_TO_GROUP_ELEMENT_NAME) {
+              continue
             }
-
-            String groupId = child.attributes.get(GROUP_ID_ATTR_NAME);
-            DefaultActionGroup parentGroup = getParentGroup(groupId, actionId, module);
-            if (parentGroup == null) {
-              return;
-            }
-            parentGroup.remove(action);
-            idToGroupId.remove(actionId, groupId);
+            val groupId = attributes[GROUP_ID_ATTR_NAME]
+            val parentGroup = getParentGroup(groupId, actionId, module) ?: return
+            parentGroup.remove(action)
+            idToGroupId.remove(actionId, groupId)
           }
+        }
+        else -> {
         }
       }
     }
   }
 
-  private void unloadGroupElement(XmlElement element) {
-    String id = element.attributes.get(ID_ATTR_NAME);
-    if (id == null) {
-      throw new IllegalStateException("Cannot unload groups with no ID");
-    }
-    for (XmlElement groupChild : element.children) {
-      if (groupChild.name.equals(ACTION_ELEMENT_NAME)) {
-        unloadActionElement(groupChild);
+  private fun unloadGroupElement(element: XmlElement) {
+    val id = element.attributes[ID_ATTR_NAME]
+             ?: throw IllegalStateException("Cannot unload groups with no ID")
+    for (groupChild in element.children) {
+      if (groupChild.name == ACTION_ELEMENT_NAME) {
+        unloadActionElement(groupChild)
       }
-      else if (groupChild.name.equals(GROUP_ELEMENT_NAME)) {
-        unloadGroupElement(groupChild);
+      else if (groupChild.name == GROUP_ELEMENT_NAME) {
+        unloadGroupElement(groupChild)
       }
     }
-    unregisterAction(id);
+    unregisterAction(id)
   }
 
-  private void unloadActionElement(@NotNull XmlElement element) {
-    String className = element.attributes.get(CLASS_ATTR_NAME);
-    boolean overrides = Boolean.parseBoolean(element.attributes.get(OVERRIDES_ATTR_NAME));
-    String id = obtainActionId(element, className);
+  private fun unloadActionElement(element: XmlElement) {
+    val className = element.attributes[CLASS_ATTR_NAME]
+    val overrides = element.attributes[OVERRIDES_ATTR_NAME].toBoolean()
+    val id = obtainActionId(element, className)
     if (overrides) {
-      AnAction baseAction = myBaseActions.get(id);
+      val baseAction = myBaseActions[id]
       if (baseAction != null) {
-        replaceAction(id, baseAction);
-        myBaseActions.remove(id);
-        return;
+        replaceAction(id, baseAction)
+        myBaseActions.remove(id)
+        return
       }
     }
-
-    unregisterAction(id);
+    unregisterAction(id)
   }
 
-  @Override
-  public void registerAction(@NotNull String actionId, @NotNull AnAction action, @Nullable PluginId pluginId) {
-    registerAction(actionId, action, pluginId, null);
+  override fun registerAction(actionId: String, action: AnAction, pluginId: PluginId?) {
+    registerAction(actionId, action, pluginId, null)
   }
 
-  private void registerAction(@NotNull String actionId,
-                              @NotNull AnAction action,
-                              @Nullable PluginId pluginId,
-                              @Nullable String projectType) {
-    synchronized (myLock) {
+  private fun registerAction(actionId: String,
+                             action: AnAction,
+                             pluginId: PluginId?,
+                             projectType: String?) {
+    synchronized(myLock) {
       if (myProhibitedActionIds.contains(actionId)) {
-        return;
+        return
       }
-
       if (addToMap(actionId, action, ProjectType.create(projectType)) == null) {
-        reportActionIdCollision(actionId, action, pluginId);
-        return;
+        reportActionIdCollision(actionId, action, pluginId)
+        return
       }
-
       if (actionToId.containsKey(action)) {
-        IdeaPluginDescriptorImpl module = pluginId == null ? null : PluginManagerCore.getPluginSet().findEnabledPlugin(pluginId);
-        String message = "ID '" + actionToId.get(action) + "' is already taken by action '" + action + "' (" + action.getClass()+"). " +
-                         "ID '" + actionId + "' cannot be registered for the same action";
+        val module = if (pluginId == null) null else PluginManagerCore.getPluginSet().findEnabledPlugin(pluginId)
+        val message = "ID '" + actionToId[action] + "' is already taken by action '" + action + "' (" + action.javaClass + "). " +
+                      "ID '" + actionId + "' cannot be registered for the same action"
         if (module == null) {
-          LOG.error(new PluginException(message + " " + pluginId, null, pluginId));
+          LOG.error(PluginException("$message $pluginId", null, pluginId))
         }
         else {
-          reportActionError(module, message);
+          reportActionError(module, message)
         }
-        return;
+        return
       }
-
-      action.registerCustomShortcutSet(new ProxyShortcutSet(actionId), null);
-      idToIndex.put(actionId, myRegisteredActionsCount++);
-      actionToId.put(action, actionId);
+      action.registerCustomShortcutSet(ProxyShortcutSet(actionId), null)
+      idToIndex.put(actionId, myRegisteredActionsCount++)
+      actionToId[action] = actionId
       if (pluginId != null) {
-        pluginToId.putValue(pluginId, actionId);
+        pluginToId.putValue(pluginId, actionId)
       }
-      notifyCustomActionsSchema(actionId);
-      updateHandlers(action);
+      notifyCustomActionsSchema(actionId)
+      updateHandlers(action)
     }
   }
 
-  private static void notifyCustomActionsSchema(@NotNull String registeredID) {
-    CustomActionsSchema schema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
-    if (schema == null) return;
-    for (ActionUrl url : schema.getActions()) {
-      if (registeredID.equals(url.getComponent())) {
-        schema.incrementModificationStamp();
-        break;
-      }
+  private fun addToMap(actionId: String, action: AnAction, projectType: ProjectType?): AnAction? {
+    val chameleonAction = idToAction.computeIfPresent(actionId) { _, old ->
+      old as? ChameleonAction ?: ChameleonAction(old, projectType)
     }
-  }
-
-  private @Nullable AnAction addToMap(@NotNull String actionId, @NotNull AnAction action, @Nullable ProjectType projectType) {
-    AnAction chameleonAction = idToAction.computeIfPresent(actionId, (__, old) -> old instanceof ChameleonAction ? old : new ChameleonAction(old, projectType));
-    if (chameleonAction == null) {
-      AnAction result = projectType == null ? action : new ChameleonAction(action, projectType);
-      idToAction.put(actionId, result);
-      return result;
+    return if (chameleonAction == null) {
+      val result = projectType?.let { ChameleonAction(action, it) } ?: action
+      idToAction.put(actionId, result)
+      result
     }
     else {
-      return ((ChameleonAction)chameleonAction).addAction(action, projectType);
+      (chameleonAction as ChameleonAction).addAction(action, projectType)
     }
   }
 
-  private void reportActionIdCollision(@NotNull String actionId, @NotNull AnAction action, @Nullable PluginId pluginId) {
-    String oldPluginInfo = pluginToId.entrySet()
-      .stream()
-      .filter(entry -> entry.getValue().contains(actionId))
-      .map(Map.Entry::getKey)
-      .map(ActionManagerImpl::getPluginInfo)
-      .collect(Collectors.joining(","));
-
-    AnAction oldAction = idToAction.get(actionId);
-    String message = "ID '" + actionId + "' is already taken by action '" + oldAction + "' ("+oldAction.getClass()+") " + oldPluginInfo + ". " +
-                     "Action '" + action + "' (" + action.getClass() + ") cannot use the same ID " + pluginId;
+  private fun reportActionIdCollision(actionId: String, action: AnAction, pluginId: PluginId?) {
+    val oldPluginInfo = pluginToId.entrySet()
+      .asSequence()
+      .filter { it.value.contains(actionId) }
+      .map { it.key }
+      .map { getPluginInfo(it) }
+      .joinToString(separator = ",")
+    val oldAction = idToAction.get(actionId)
+    val message = "ID '$actionId' is already taken by action '$oldAction' (${oldAction!!.javaClass}) $oldPluginInfo. " +
+                  "Action '$action' (${action.javaClass}) cannot use the same ID $pluginId"
     if (pluginId == null) {
-      LOG.error(message);
+      LOG.error(message)
     }
     else {
-      LOG.error(new PluginException(message, null, pluginId));
+      LOG.error(PluginException(message, null, pluginId))
     }
   }
 
-  @Override
-  public void registerAction(@NotNull String actionId, @NotNull AnAction action) {
-    registerAction(actionId, action, null, null);
+  override fun registerAction(actionId: String, action: AnAction) {
+    registerAction(actionId, action, null, null)
   }
 
-  @Override
-  public void unregisterAction(@NotNull String actionId) {
-    unregisterAction(actionId, true);
+  override fun unregisterAction(actionId: String) {
+    unregisterAction(actionId, true)
   }
 
-  private void unregisterAction(@NotNull String actionId, boolean removeFromGroups) {
-    synchronized (myLock) {
+  private fun unregisterAction(actionId: String, removeFromGroups: Boolean) {
+    synchronized(myLock) {
       if (!idToAction.containsKey(actionId)) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("action with ID " + actionId + " wasn't registered");
+        if (LOG.isDebugEnabled) {
+          LOG.debug("action with ID $actionId wasn't registered")
         }
-        return;
+        return
       }
 
       // diagnostics for IDEA-283781
-      if (actionId.equals("CommentByLineComment")) {
-        LOG.info("Unregistering line comment action", new Throwable());
+      if (actionId == "CommentByLineComment") {
+        LOG.info("Unregistering line comment action", Throwable())
       }
-
-      AnAction actionToRemove = idToAction.remove(actionId);
-      actionToId.remove(actionToRemove);
-      idToIndex.removeInt(actionId);
-
-      for (Map.Entry<PluginId, Collection<String>> entry : pluginToId.entrySet()) {
-        entry.getValue().remove(actionId);
+      val actionToRemove = idToAction.remove(actionId)
+      actionToId.remove(actionToRemove)
+      idToIndex.removeInt(actionId)
+      for ((_, value) in pluginToId.entrySet()) {
+        value.remove(actionId)
       }
-
       if (removeFromGroups) {
-        CustomActionsSchema customActionSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
-        for (String groupId : idToGroupId.get(actionId)) {
-          if (customActionSchema != null) {
-            customActionSchema.invalidateCustomizedActionGroup(groupId);
-          }
-          DefaultActionGroup group = (DefaultActionGroup)getActionOrStub(groupId);
+        val customActionSchema = ApplicationManager.getApplication().serviceIfCreated<CustomActionsSchema>()
+        for (groupId in idToGroupId.get(actionId)) {
+          customActionSchema?.invalidateCustomizedActionGroup(groupId)
+          val group = getActionOrStub(groupId) as DefaultActionGroup?
           if (group == null) {
-            LOG.error("Trying to remove action " + actionId + " from non-existing group " + groupId);
-            continue;
+            LOG.error("Trying to remove action $actionId from non-existing group $groupId")
+            continue
           }
-          group.remove(actionToRemove, actionId);
-          if (!(group instanceof ActionGroupStub)) {
+          group.remove(actionToRemove!!, actionId)
+          if (group !is ActionGroupStub) {
             //group can be used as a stub in other actions
-            for (String parentOfGroup : idToGroupId.get(groupId)) {
-              DefaultActionGroup parentOfGroupAction = (DefaultActionGroup) getActionOrStub(parentOfGroup);
+            for (parentOfGroup in idToGroupId[groupId]) {
+              val parentOfGroupAction = getActionOrStub(parentOfGroup) as DefaultActionGroup?
               if (parentOfGroupAction == null) {
-                LOG.error("Trying to remove action " + actionId + " from non-existing group " + parentOfGroup);
-                continue;
+                LOG.error(
+                  "Trying to remove action $actionId from non-existing group $parentOfGroup")
+                continue
               }
-              for (AnAction stub : parentOfGroupAction.getChildActionsOrStubs()) {
-                if (stub instanceof ActionGroupStub && groupId.equals(((ActionGroupStub)stub).getId())) {
-                  ((ActionGroupStub)stub).remove(actionToRemove, actionId);
+              for (stub in parentOfGroupAction.childActionsOrStubs) {
+                if (stub is ActionGroupStub && groupId == stub.id) {
+                  stub.remove(actionToRemove, actionId)
                 }
               }
             }
           }
         }
       }
-      if (actionToRemove instanceof ActionGroup) {
-        for (Map.Entry<String, Collection<String>> entry : idToGroupId.entrySet()) {
-          entry.getValue().remove(actionId);
+      if (actionToRemove is ActionGroup) {
+        for ((_, value) in idToGroupId.entrySet()) {
+          value.remove(actionId)
         }
       }
-      updateHandlers(actionToRemove);
+      updateHandlers(actionToRemove)
     }
   }
 
@@ -1421,356 +969,651 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
    * Should be used only in IDE configuration
    */
   @ApiStatus.Internal
-  public void prohibitAction(@NotNull String actionId) {
-    synchronized (myLock) {
-      myProhibitedActionIds.add(actionId);
-    }
-    AnAction action = getAction(actionId);
+  fun prohibitAction(actionId: String) {
+    synchronized(myLock) { myProhibitedActionIds.add(actionId) }
+    val action = getAction(actionId)
     if (action != null) {
-      AbbreviationManager.getInstance().removeAllAbbreviations(actionId);
-      unregisterAction(actionId);
+      AbbreviationManager.getInstance().removeAllAbbreviations(actionId)
+      unregisterAction(actionId)
     }
   }
 
   @TestOnly
-  public void resetProhibitedActions() {
-    synchronized (myLock) {
-      myProhibitedActionIds.clear();
-    }
+  fun resetProhibitedActions() {
+    synchronized(myLock) { myProhibitedActionIds.clear() }
   }
 
-  @Override
-  public @NotNull Comparator<String> getRegistrationOrderComparator() {
-    return Comparator.comparingInt(idToIndex::getInt);
+  override val registrationOrderComparator: Comparator<String>
+    get() = Comparator.comparingInt { key: String? -> idToIndex.getInt(key) }
+
+  override fun getPluginActions(pluginName: PluginId): Array<String> {
+    return ArrayUtilRt.toStringArray(pluginToId[pluginName])
   }
 
-  @Override
-  public String @NotNull [] getPluginActions(@NotNull PluginId pluginName) {
-    return ArrayUtilRt.toStringArray(pluginToId.get(pluginName));
-  }
-
-  public void addActionPopup(@NotNull Object menu) {
-    myPopups.add(menu);
-    if (menu instanceof ActionPopupMenu) {
-      for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
-        listener.actionPopupMenuCreated((ActionPopupMenu)menu);
+  fun addActionPopup(menu: Any) {
+    myPopups.add(menu)
+    if (menu is ActionPopupMenu) {
+      for (listener in myActionPopupMenuListeners) {
+        listener.actionPopupMenuCreated(menu)
       }
     }
   }
 
-  void removeActionPopup(@NotNull Object menu) {
-    final boolean removed = myPopups.remove(menu);
-    if (removed && menu instanceof ActionPopupMenu) {
-      for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
-        listener.actionPopupMenuReleased((ActionPopupMenu)menu);
+  fun removeActionPopup(menu: Any) {
+    val removed = myPopups.remove(menu)
+    if (removed && menu is ActionPopupMenu) {
+      for (listener in myActionPopupMenuListeners) {
+        listener.actionPopupMenuReleased(menu)
       }
     }
   }
 
-  @Override
-  public boolean isActionPopupStackEmpty() {
-    return myPopups.isEmpty();
+  override val isActionPopupStackEmpty: Boolean
+    get() = myPopups.isEmpty()
+
+  override fun addActionPopupMenuListener(listener: ActionPopupMenuListener, parentDisposable: Disposable) {
+    myActionPopupMenuListeners.add(listener)
+    Disposer.register(parentDisposable) { myActionPopupMenuListeners.remove(listener) }
   }
 
-  @Override
-  public void addActionPopupMenuListener(@NotNull ActionPopupMenuListener listener, @NotNull Disposable parentDisposable) {
-    myActionPopupMenuListeners.add(listener);
-    Disposer.register(parentDisposable, () -> myActionPopupMenuListeners.remove(listener));
+  override fun replaceAction(actionId: String, newAction: AnAction) {
+    val callerClass = ReflectionUtil.getGrandCallerClass()
+    val plugin = if (callerClass == null) null else PluginManager.getPluginByClass(callerClass)
+    replaceAction(actionId, newAction, plugin?.pluginId)
   }
 
-  @Override
-  public void replaceAction(@NotNull String actionId, @NotNull AnAction newAction) {
-    Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
-    PluginDescriptor plugin = callerClass == null ? null : PluginManager.getPluginByClass(callerClass);
-    replaceAction(actionId, newAction, plugin == null ? null : plugin.getPluginId());
-  }
-
-  private AnAction replaceAction(@NotNull String actionId, @NotNull AnAction newAction, @Nullable PluginId pluginId) {
-    synchronized (myLock) {
+  private fun replaceAction(actionId: String, newAction: AnAction, pluginId: PluginId?): AnAction? {
+    synchronized(myLock) {
       if (myProhibitedActionIds.contains(actionId)) {
-        return null;
+        return null
       }
     }
 
-    AnAction oldAction = newAction instanceof OverridingAction ? getAction(actionId) : getActionOrStub(actionId);
-    int oldIndex = idToIndex.getOrDefault(actionId, -1);  // Valid indices >= 0
+    val oldAction = if (newAction is OverridingAction) getAction(actionId) else getActionOrStub(actionId)
+    val oldIndex = idToIndex.getOrDefault<Any, Int>(actionId, -1) // Valid indices >= 0
     if (oldAction != null) {
-      myBaseActions.put(actionId, oldAction);
-      boolean isGroup = oldAction instanceof ActionGroup;
-      if (isGroup != newAction instanceof ActionGroup) {
-        throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
+      myBaseActions.put(actionId, oldAction)
+      val isGroup = oldAction is ActionGroup
+      check(isGroup == newAction is ActionGroup) {
+        "cannot replace a group with an action and vice versa: $actionId"
       }
-      for (String groupId : idToGroupId.get(actionId)) {
-        DefaultActionGroup group = (DefaultActionGroup)getActionOrStub(groupId);
-        if (group == null) {
-          throw new IllegalStateException("Trying to replace action which has been added to a non-existing group " + groupId);
-        }
-        group.replaceAction(oldAction, newAction);
+      for (groupId in idToGroupId[actionId]) {
+        val group = getActionOrStub(groupId) as DefaultActionGroup?
+                    ?: throw IllegalStateException("Trying to replace action which has been added to a non-existing group $groupId")
+        group.replaceAction(oldAction, newAction)
       }
-      unregisterAction(actionId, false);
+      unregisterAction(actionId, false)
     }
-    registerAction(actionId, newAction, pluginId);
+    registerAction(actionId, newAction, pluginId)
     if (oldIndex >= 0) {
-      idToIndex.put(actionId, oldIndex);
+      idToIndex.put(actionId, oldIndex)
     }
-    return oldAction;
+    return oldAction
   }
 
   /**
    * Returns the action overridden by the specified overriding action (with overrides="true" in plugin.xml).
    */
-  public AnAction getBaseAction(OverridingAction overridingAction) {
-    String id = getId((AnAction) overridingAction);
-    return id == null ? null : myBaseActions.get(id);
+  fun getBaseAction(overridingAction: OverridingAction): AnAction? {
+    val id = getId(overridingAction as AnAction) ?: return null
+    return myBaseActions.get(id)
   }
 
-  public Collection<String> getParentGroupIds(String actionId) {
-    return idToGroupId.get(actionId);
+  fun getParentGroupIds(actionId: String?): Collection<String?> = idToGroupId.get(actionId)
+
+  @Suppress("removal")
+  override fun addAnActionListener(listener: AnActionListener) {
+    myActionListeners.add(listener)
   }
 
-  @Override
-  public void addAnActionListener(AnActionListener listener) {
-    myActionListeners.add(listener);
+  @Suppress("removal")
+  override fun removeAnActionListener(listener: AnActionListener) {
+    myActionListeners.remove(listener)
   }
 
-  @Override
-  public void removeAnActionListener(AnActionListener listener) {
-    myActionListeners.remove(listener);
-  }
-
-  @Override
-  public void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-    myPrevPerformedActionId = myLastPreformedActionId;
-    myLastPreformedActionId = getId(action);
-    if (myLastPreformedActionId == null && action instanceof ActionIdProvider) {
-      myLastPreformedActionId = ((ActionIdProvider)action).getId();
+  override fun fireBeforeActionPerformed(action: AnAction, event: AnActionEvent) {
+    prevPreformedActionId = lastPreformedActionId
+    lastPreformedActionId = getId(action)
+    if (lastPreformedActionId == null && action is ActionIdProvider) {
+      lastPreformedActionId = (action as ActionIdProvider).id
     }
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    IdeaLogger.ourLastActionId = myLastPreformedActionId;
-    try (AccessToken ignore = ProhibitAWTEvents.start("fireBeforeActionPerformed")) {
-      for (AnActionListener listener : myActionListeners) {
-        listener.beforeActionPerformed(action, event);
+    IdeaLogger.ourLastActionId = lastPreformedActionId
+    ProhibitAWTEvents.start("fireBeforeActionPerformed").use { ignore ->
+      for (listener in myActionListeners) {
+        listener.beforeActionPerformed(action, event)
       }
-      publisher().beforeActionPerformed(action, event);
-      ActionsCollectorImpl.onBeforeActionInvoked(action, event);
+      publisher().beforeActionPerformed(action, event)
+      onBeforeActionInvoked(action, event)
     }
   }
 
-  @Override
-  public void fireAfterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
-    myPrevPerformedActionId = myLastPreformedActionId;
-    myLastPreformedActionId = getId(action);
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    IdeaLogger.ourLastActionId = myLastPreformedActionId;
-    try (AccessToken ignore = ProhibitAWTEvents.start("fireAfterActionPerformed")) {
-      ActionsCollectorImpl.onAfterActionInvoked(action, event, result);
-      for (AnActionListener listener : myActionListeners) {
-        listener.afterActionPerformed(action, event, result);
+  override fun fireAfterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
+    prevPreformedActionId = lastPreformedActionId
+    lastPreformedActionId = getId(action)
+    IdeaLogger.ourLastActionId = lastPreformedActionId
+    ProhibitAWTEvents.start("fireAfterActionPerformed").use { ignore ->
+      onAfterActionInvoked(action, event, result)
+      for (listener in myActionListeners) {
+        listener.afterActionPerformed(action, event, result)
       }
-      publisher().afterActionPerformed(action, event, result);
+      publisher().afterActionPerformed(action, event, result)
     }
   }
 
-  @Override
-  public KeyboardShortcut getKeyboardShortcut(@NotNull String actionId) {
-    AnAction action = ActionManager.getInstance().getAction(actionId);
-    if (action == null) {
-      return null;
-    }
-
-    ShortcutSet shortcutSet = action.getShortcutSet();
-    Shortcut[] shortcuts = shortcutSet.getShortcuts();
-    for (Shortcut shortcut : shortcuts) {
+  override fun getKeyboardShortcut(actionId: String): KeyboardShortcut? {
+    val action = getInstance().getAction(actionId) ?: return null
+    val shortcutSet = action.shortcutSet
+    val shortcuts = shortcutSet.shortcuts
+    for (shortcut in shortcuts) {
       // Shortcut can be a MouseShortcut here.
       // For example, `IdeaVIM` often assigns them
-      if (shortcut instanceof KeyboardShortcut kb) {
-        if (kb.getSecondKeyStroke() == null) {
-          return (KeyboardShortcut)shortcut;
+      if (shortcut is KeyboardShortcut) {
+        if (shortcut.secondKeyStroke == null) {
+          return shortcut
         }
       }
     }
-
-    return null;
+    return null
   }
 
-  @Override
-  public void fireBeforeEditorTyping(char c, @NotNull DataContext dataContext) {
-    myLastTimeEditorWasTypedIn = System.currentTimeMillis();
-    for (AnActionListener listener : myActionListeners) {
-      listener.beforeEditorTyping(c, dataContext);
+  override fun fireBeforeEditorTyping(c: Char, dataContext: DataContext) {
+    myLastTimeEditorWasTypedIn = System.currentTimeMillis()
+    for (listener in myActionListeners) {
+      listener.beforeEditorTyping(c, dataContext)
     }
-    publisher().beforeEditorTyping(c, dataContext);
+    publisher().beforeEditorTyping(c, dataContext)
   }
 
-  @Override
-  public void fireAfterEditorTyping(char c, @NotNull DataContext dataContext) {
-    for (AnActionListener listener : myActionListeners) {
-      listener.afterEditorTyping(c, dataContext);
+  override fun fireAfterEditorTyping(c: Char, dataContext: DataContext) {
+    for (listener in myActionListeners) {
+      listener.afterEditorTyping(c, dataContext)
     }
-    publisher().afterEditorTyping(c, dataContext);
+    publisher().afterEditorTyping(c, dataContext)
   }
 
-  @Override
-  public String getLastPreformedActionId() {
-    return myLastPreformedActionId;
-  }
-
-  @Override
-  public String getPrevPreformedActionId() {
-    return myPrevPerformedActionId;
-  }
-
-  public @NotNull Set<String> getActionIds() {
-    synchronized (myLock) {
-      return new HashSet<>(idToAction.keySet());
+  val actionIds: Set<String>
+    get() {
+      synchronized(myLock) { return HashSet(idToAction.keys) }
     }
-  }
 
-  public void preloadActions(@NotNull ProgressIndicator indicator) {
-    List<String> ids;
-    synchronized (myLock) {
-      ids = new ArrayList<>(idToAction.keySet());
-    }
-    for (String id : ids) {
-      indicator.checkCanceled();
-      getActionImpl(id, false);
+  fun preloadActions(indicator: ProgressIndicator) {
+    var ids: List<String>
+    synchronized(myLock) { ids = ArrayList(idToAction.keys) }
+    for (id in ids) {
+      indicator.checkCanceled()
+      getActionImpl(id, false)
       // don't preload ActionGroup.getChildren() because that would un-stub child actions
       // and make it impossible to replace the corresponding actions later
       // (via unregisterAction+registerAction, as some app components do)
     }
   }
 
-  @Override
-  public @NotNull ActionCallback tryToExecute(@NotNull AnAction action,
-                                              @Nullable InputEvent inputEvent,
-                                              @Nullable Component contextComponent,
-                                              @Nullable String place,
-                                              boolean now) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    ActionCallback result = new ActionCallback();
-    Runnable doRunnable = () -> tryToExecuteNow(action, inputEvent, contextComponent, place, result);
+  override fun tryToExecute(action: AnAction,
+                            inputEvent: InputEvent?,
+                            contextComponent: Component?,
+                            place: String?,
+                            now: Boolean): ActionCallback {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val result = ActionCallback()
+    val doRunnable = Runnable { tryToExecuteNow(action, inputEvent, contextComponent, place, result) }
     if (now) {
-      doRunnable.run();
+      doRunnable.run()
     }
     else {
-      SwingUtilities.invokeLater(doRunnable);
+      SwingUtilities.invokeLater(doRunnable)
     }
-
-    return result;
+    return result
   }
 
-  private void tryToExecuteNow(@NotNull AnAction action, @Nullable InputEvent inputEvent, @Nullable Component contextComponent, String place, ActionCallback result) {
-    Presentation presentation = action.getTemplatePresentation().clone();
-    IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(() -> {
-      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
-        DataContext context = getContextBy(contextComponent);
-
-        @SuppressWarnings("MagicConstant")
-        AnActionEvent event = new AnActionEvent(
-          inputEvent, context,
-          place != null ? place : ActionPlaces.UNKNOWN,
-          presentation, this,
-          inputEvent == null ? 0 : inputEvent.getModifiersEx()
-        );
-
-        ActionUtil.lastUpdateAndCheckDumb(action, event, false);
-        if (!event.getPresentation().isEnabled()) {
-          result.setRejected();
-          return;
-        }
-        StartupUiUtil.addAwtListener(event1 -> {
-              if (event1.getID() == WindowEvent.WINDOW_OPENED || event1.getID() == WindowEvent.WINDOW_ACTIVATED) {
-                if (!result.isProcessed()) {
-                  final WindowEvent we = (WindowEvent)event1;
-                  IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(
-                    result.createSetDoneRunnable(), ModalityState.defaultModalityState());
+  private fun tryToExecuteNow(action: AnAction,
+                              inputEvent: InputEvent?,
+                              contextComponent: Component?,
+                              place: String?,
+                              result: ActionCallback) {
+    val presentation = action.templatePresentation.clone()
+    IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(
+      {
+        (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+          val context = getContextBy(contextComponent)
+          val event = AnActionEvent(
+            inputEvent, context,
+            place ?: ActionPlaces.UNKNOWN,
+            presentation, this,
+            inputEvent?.modifiersEx ?: 0
+          )
+          ActionUtil.lastUpdateAndCheckDumb(action, event, false)
+          if (!event.presentation.isEnabled) {
+            result.setRejected()
+            return@performUserActivity
+          }
+          addAwtListener(
+            { event1: AWTEvent ->
+              if (event1.id == WindowEvent.WINDOW_OPENED || event1.id == WindowEvent.WINDOW_ACTIVATED) {
+                if (!result.isProcessed) {
+                  val we = event1 as WindowEvent
+                  IdeFocusManager.findInstanceByComponent(we.window).doWhenFocusSettlesDown(
+                    result.createSetDoneRunnable(), ModalityState.defaultModalityState())
                 }
               }
-            }, AWTEvent.WINDOW_EVENT_MASK, result);
-        try {
-          ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+            }, AWTEvent.WINDOW_EVENT_MASK, result)
+          try {
+            ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+          }
+          finally {
+            result.setDone()
+          }
         }
-        finally {
-          result.setDone();
-        }
-      });
-    }, ModalityState.defaultModalityState());
+      }, ModalityState.defaultModalityState())
   }
 
-  private static void updateHandlers(Object action) {
-    if (action instanceof EditorAction) {
-      ((EditorAction)action).clearDynamicHandlersCache();
-    }
-  }
+  private inner class MyTimer() : Timer(TIMER_DELAY, null), ActionListener {
+    val listeners = ContainerUtil.createLockFreeCopyOnWriteList<TimerListener>()
 
-  private final class MyTimer extends Timer implements ActionListener {
-    final List<TimerListener> listeners = ContainerUtil.createLockFreeCopyOnWriteList();
-    private int myLastTimePerformed;
-    private final ClientId myClientId = ClientId.getCurrent();
+    private var lastTimePerformed = 0
+    private val myClientId = current
 
-    private MyTimer() {
-      super(TIMER_DELAY, null);
-
-      addActionListener(this);
-      setRepeats(true);
-      var connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
-      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
-        @Override
-        public void applicationActivated(@NotNull IdeFrame ideFrame) {
-          setDelay(TIMER_DELAY);
-          restart();
+    init {
+      addActionListener(this)
+      isRepeats = true
+      val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
+      connection.subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
+        override fun applicationActivated(ideFrame: IdeFrame) {
+          delay = TIMER_DELAY
+          restart()
         }
 
-        @Override
-        public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
-          setDelay(DEACTIVATED_TIMER_DELAY);
+        override fun applicationDeactivated(ideFrame: IdeFrame) {
+          delay = DEACTIVATED_TIMER_DELAY
         }
-      });
+      })
     }
 
-    @Override
-    public String toString() {
-      return "Action manager timer";
+    override fun toString(): String {
+      return "Action manager timer"
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
+    override fun actionPerformed(e: ActionEvent) {
       if (myLastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis()) {
-        return;
+        return
       }
-
-      final int lastEventCount = myLastTimePerformed;
-      myLastTimePerformed = ActivityTracker.getInstance().getCount();
-
-      if (myLastTimePerformed == lastEventCount) {
-        return;
+      val lastEventCount = lastTimePerformed
+      lastTimePerformed = ActivityTracker.getInstance().count
+      if (lastTimePerformed == lastEventCount) {
+        return
       }
-      try (AccessToken ignored = ClientId.withClientId(myClientId)) {
-        for (TimerListener listener : listeners) {
-          runListenerAction(listener);
+      withClientId(myClientId).use {
+        for (listener in listeners) {
+          runListenerAction(listener)
         }
       }
     }
+  }
+}
 
-    private static void runListenerAction(@NotNull TimerListener listener) {
-      ModalityState modalityState = listener.getModalityState();
-      if (modalityState == null) {
-        return;
-      }
+private fun runListenerAction(listener: TimerListener) {
+  val modalityState = listener.modalityState ?: return
+  LOG.debug("notify ", listener)
+  if (!ModalityState.current().dominates(modalityState)) {
+    runCatching {
+      listener.run()
+    }.getOrLogException(LOG)
+  }
+}
 
-      LOG.debug("notify ", listener);
-      if (!ModalityState.current().dominates(modalityState)) {
-        try {
-          listener.run();
-        }
-        catch (ProcessCanceledException ex) {
-          // ignore
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-      }
+private val EP = ExtensionPointName<ActionConfigurationCustomizer>("com.intellij.actionConfigurationCustomizer")
+private val DYNAMIC_EP_NAME = ExtensionPointName<DynamicActionConfigurationCustomizer>("com.intellij.dynamicActionConfigurationCustomizer")
+
+private val LOG = logger<ActionManagerImpl>()
+
+private const val ACTION_ELEMENT_NAME = "action"
+private const val GROUP_ELEMENT_NAME = "group"
+private const val CLASS_ATTR_NAME = "class"
+private const val ID_ATTR_NAME = "id"
+private const val INTERNAL_ATTR_NAME = "internal"
+private const val ICON_ATTR_NAME = "icon"
+private const val ADD_TO_GROUP_ELEMENT_NAME = "add-to-group"
+private const val DESCRIPTION = "description"
+private const val TEXT_ATTR_NAME = "text"
+private const val KEY_ATTR_NAME = "key"
+private const val SEPARATOR_ELEMENT_NAME = "separator"
+private const val REFERENCE_ELEMENT_NAME = "reference"
+private const val GROUP_ID_ATTR_NAME = "group-id"
+private const val KEYMAP_ATTR_NAME = "keymap"
+private const val REF_ATTR_NAME = "ref"
+private const val USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of"
+private const val PROJECT_TYPE = "project-type"
+private const val OVERRIDE_TEXT_ELEMENT_NAME = "override-text"
+private const val SYNONYM_ELEMENT_NAME = "synonym"
+private const val OVERRIDES_ATTR_NAME = "overrides"
+private const val DEACTIVATED_TIMER_DELAY = 5000
+private const val TIMER_DELAY = 500
+private const val UPDATE_DELAY_AFTER_TYPING = 500
+
+private fun publisher(): AnActionListener {
+  return ApplicationManager.getApplication().messageBus.syncPublisher(AnActionListener.TOPIC)
+}
+
+private fun managerPublisher(): ActionManagerListener {
+  return ApplicationManager.getApplication().messageBus.syncPublisher(ActionManagerListener.TOPIC)
+}
+
+private fun <T> instantiate(stubClassName: String, pluginDescriptor: PluginDescriptor, expectedClass: Class<T>): T? {
+  val obj = try {
+    ApplicationManager.getApplication().instantiateClass<Any>(stubClassName, pluginDescriptor)
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: ProcessCanceledException) {
+    throw e
+  }
+  catch (e: ExtensionNotApplicableException) {
+    return null
+  }
+  catch (e: Throwable) {
+    LOG.error(e)
+    return null
+  }
+
+  if (expectedClass.isInstance(obj)) {
+    @Suppress("UNCHECKED_CAST")
+    return obj as T
+  }
+  LOG.error(PluginException("class with name '$stubClassName' must be an instance of '${expectedClass.name}'; " +
+                            "got $obj", pluginDescriptor.pluginId))
+  return null
+}
+
+private fun updateIconFromStub(stub: ActionStubBase, anAction: AnAction) {
+  val iconPath = stub.iconPath
+  if (iconPath != null) {
+    val icon = loadIcon(stub.plugin, iconPath, anAction.javaClass.name)
+    anAction.templatePresentation.icon = icon
+  }
+  val customActionsSchema = ApplicationManager.getApplication().serviceIfCreated<CustomActionsSchema>()
+  if (customActionsSchema != null && !customActionsSchema.getIconPath(stub.id).isEmpty()) {
+    RecursionManager.doPreventingRecursion<Any?>(stub.id, false) {
+      customActionsSchema.initActionIcon(anAction, stub.id, ActionManager.getInstance())
+      null
     }
+  }
+}
+
+private fun convertGroupStub(stub: ActionGroupStub, actionManager: ActionManager): ActionGroup? {
+  val group = instantiate(stubClassName = stub.actionClass, pluginDescriptor = stub.plugin, expectedClass = ActionGroup::class.java)
+              ?: return null
+  stub.initGroup(group, actionManager)
+  updateIconFromStub(stub = stub, anAction = group)
+  return group
+}
+
+private fun processAbbreviationNode(e: XmlElement, id: String) {
+  val abbr = e.attributes.get("value")
+  if (!abbr.isNullOrEmpty()) {
+    val abbreviationManager = AbbreviationManager.getInstance() as AbbreviationManagerImpl
+    abbreviationManager.register(abbr, id, true)
+  }
+}
+
+private fun isSecondary(element: XmlElement): Boolean = element.attributes.get("secondary").toBoolean()
+
+private fun loadIcon(module: PluginDescriptor, iconPath: String, requestor: String?): Icon {
+  val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+  var icon = findIconUsingNewImplementation(path = iconPath, classLoader = module.classLoader)
+  if (icon == null) {
+    reportActionError(module, "Icon cannot be found in '$iconPath', action '$requestor'")
+    icon = AllIcons.Nodes.Unknown
+  }
+  IconLoadMeasurer.actionIcon.end(start)
+  return icon
+}
+
+@Suppress("HardCodedStringLiteral")
+private fun computeDescription(bundle: ResourceBundle?,
+                               id: String,
+                               elementType: String,
+                               descriptionValue: String?,
+                               classLoader: ClassLoader): @NlsActions.ActionDescription String? {
+  var effectiveBundle = bundle
+  if (effectiveBundle != null && DefaultBundleService.isDefaultBundle()) {
+    effectiveBundle = DynamicBundle.getResourceBundle(classLoader, effectiveBundle.baseBundleName)
+  }
+  return AbstractBundle.messageOrDefault(effectiveBundle, "$elementType.$id.$DESCRIPTION", Strings.notNullize(descriptionValue))
+}
+
+@Suppress("HardCodedStringLiteral")
+private fun computeActionText(bundle: ResourceBundle?,
+                              id: String,
+                              elementType: String,
+                              textValue: String?,
+                              classLoader: ClassLoader): @NlsActions.ActionText String? {
+  var effectiveBundle = bundle
+  val defaultValue = textValue ?: ""
+  if (effectiveBundle != null && DefaultBundleService.isDefaultBundle()) {
+    effectiveBundle = DynamicBundle.getResourceBundle(classLoader, effectiveBundle.baseBundleName)
+  }
+  if (effectiveBundle == null) {
+    return defaultValue
+  }
+  else {
+    return AbstractBundle.messageOrDefault(effectiveBundle, "$elementType.$id.$TEXT_ATTR_NAME", defaultValue)
+  }
+}
+
+private fun parseAnchor(anchorStr: String?, actionName: String?, module: IdeaPluginDescriptor): Anchor? {
+  return when {
+    anchorStr == null -> Anchor.LAST
+    "first".equals(anchorStr, ignoreCase = true) -> Anchor.FIRST
+    "last".equals(anchorStr, ignoreCase = true) -> Anchor.LAST
+    "before".equals(anchorStr, ignoreCase = true) -> Anchor.BEFORE
+    "after".equals(anchorStr, ignoreCase = true) -> Anchor.AFTER
+    else -> {
+      reportActionError(module,
+                        "$actionName: anchor should be one of the following constants: \"first\", \"last\", \"before\" or \"after\"")
+      null
+    }
+  }
+}
+
+private fun processMouseShortcutNode(element: XmlElement, actionId: String, module: IdeaPluginDescriptor, keymapManager: KeymapManager) {
+  val keystrokeString = element.attributes.get("keystroke")
+  if (keystrokeString.isNullOrBlank()) {
+    reportActionError(module, "\"keystroke\" attribute must be specified for action with id=$actionId")
+    return
+  }
+
+  val shortcut = try {
+    KeymapUtil.parseMouseShortcut(keystrokeString)
+  }
+  catch (ex: Exception) {
+    reportActionError(module, "\"keystroke\" attribute has invalid value for action with id=$actionId")
+    return
+  }
+
+  val keymapName = element.attributes.get(KEYMAP_ATTR_NAME)
+  if (keymapName.isNullOrEmpty()) {
+    reportActionError(module, "attribute \"keymap\" should be defined")
+    return
+  }
+
+  val keymap = keymapManager.getKeymap(keymapName)
+  if (keymap == null) {
+    reportKeymapNotFoundWarning(module, keymapName)
+    return
+  }
+
+  processRemoveAndReplace(element = element, actionId = actionId, keymap = keymap, shortcut = shortcut)
+}
+
+private fun reportActionError(module: PluginDescriptor, message: String, cause: Throwable? = null) {
+  LOG.error(PluginException("$message (module=$module)", cause, module.pluginId))
+}
+
+private fun reportKeymapNotFoundWarning(module: PluginDescriptor, keymapName: String) {
+  val app = ApplicationManager.getApplication()
+  if (!app.isHeadlessEnvironment && !app.isCommandLine && !isBundledKeymapHidden(keymapName)) {
+    LOG.warn("keymap \"$keymapName\" not found $module")
+  }
+}
+
+private fun getPluginInfo(id: PluginId?): String {
+  val plugin = (if (id == null) null else PluginManagerCore.getPlugin(id)) ?: return ""
+  return " (Plugin: ${plugin.name ?: id!!.idString})"
+}
+
+private fun getContextBy(contextComponent: Component?): DataContext {
+  val dataManager = DataManager.getInstance()
+  @Suppress("DEPRECATION")
+  return if (contextComponent == null) dataManager.dataContext else dataManager.getDataContext(contextComponent)
+}
+
+private fun createActionToolbarImpl(place: String,
+                                    group: ActionGroup,
+                                    horizontal: Boolean,
+                                    decorateButtons: Boolean,
+                                    customizable: Boolean): ActionToolbarImpl {
+  val toolbar = ActionToolbarImpl(place, group, horizontal, decorateButtons, customizable)
+  managerPublisher().toolbarCreated(place, group, horizontal, toolbar)
+  return toolbar
+}
+
+private fun obtainActionId(element: XmlElement, className: String?): String {
+  val id = element.attributes.get(ID_ATTR_NAME)
+  return if (id.isNullOrEmpty()) StringUtilRt.getShortName(className!!) else id
+}
+
+private fun processOverrideTextNode(action: AnAction,
+                                    id: String,
+                                    element: XmlElement,
+                                    module: IdeaPluginDescriptor, bundle: ResourceBundle?) {
+  val place = element.attributes.get("place")
+  if (place == null) {
+    reportActionError(module, "$id: override-text specified without place")
+    return
+  }
+
+  val useTextOfPlace = element.attributes.get("use-text-of-place")
+  if (useTextOfPlace != null) {
+    action.copyActionTextOverride(useTextOfPlace, place, id)
+  }
+  else {
+    val text = element.attributes.get(TEXT_ATTR_NAME)
+    if (text.isNullOrEmpty() && bundle != null) {
+      val prefix = if (action is ActionGroup) "group" else "action"
+      val key = "$prefix.$id.$place.text"
+      action.addTextOverride(place) { message(bundle, key) }
+    }
+    else {
+      action.addTextOverride(place) { text }
+    }
+  }
+}
+
+private fun processSynonymNode(action: AnAction, element: XmlElement, module: IdeaPluginDescriptor, bundle: ResourceBundle?) {
+  val text = element.attributes.get(TEXT_ATTR_NAME)
+  if (!text.isNullOrEmpty()) {
+    action.addSynonym { text }
+  }
+  else {
+    val key = element.attributes.get(KEY_ATTR_NAME)
+    if (key != null && bundle != null) {
+      action.addSynonym { message(bundle, key) }
+    }
+    else {
+      reportActionError(module, "Can't process synonym: neither text nor resource bundle key is specified")
+    }
+  }
+}
+
+private fun createSeparator(bundle: ResourceBundle?, key: String): Separator {
+  val text = if (bundle == null) null else AbstractBundle.messageOrNull(bundle, key)
+  return if (text == null) Separator.getInstance() else Separator(text)
+}
+
+private fun processKeyboardShortcutNode(element: XmlElement, actionId: String, module: PluginDescriptor, keymapManager: KeymapManager) {
+  val firstStrokeString = element.attributes.get("first-keystroke")
+  if (firstStrokeString == null) {
+    reportActionError(module, "\"first-keystroke\" attribute must be specified for action with id=$actionId")
+    return
+  }
+
+  val firstKeyStroke = ActionManagerEx.getKeyStroke(firstStrokeString)
+  if (firstKeyStroke == null) {
+    reportActionError(module = module, message = "\"first-keystroke\" attribute has invalid value for action with id=$actionId")
+    return
+  }
+
+  var secondKeyStroke: KeyStroke? = null
+  val secondStrokeString = element.attributes.get("second-keystroke")
+  if (secondStrokeString != null) {
+    secondKeyStroke = ActionManagerEx.getKeyStroke(secondStrokeString)
+    if (secondKeyStroke == null) {
+      reportActionError(module = module, message = "\"second-keystroke\" attribute has invalid value for action with id=$actionId")
+      return
+    }
+  }
+
+  val keymapName = element.attributes.get(KEYMAP_ATTR_NAME)
+  if (keymapName.isNullOrBlank()) {
+    reportActionError(module = module, message = "attribute \"keymap\" should be defined")
+    return
+  }
+
+  val keymap = keymapManager.getKeymap(keymapName)
+  if (keymap == null) {
+    reportKeymapNotFoundWarning(module, keymapName)
+    return
+  }
+
+  processRemoveAndReplace(element = element,
+                          actionId = actionId,
+                          keymap = keymap,
+                          shortcut = KeyboardShortcut(firstKeyStroke, secondKeyStroke))
+}
+
+private fun processRemoveAndReplace(element: XmlElement, actionId: String, keymap: Keymap, shortcut: Shortcut) {
+  val remove = element.attributes.get("remove").toBoolean()
+  val replace = element.attributes.get("replace-all").toBoolean()
+  if (remove) {
+    keymap.removeShortcut(actionId, shortcut)
+  }
+  if (replace) {
+    keymap.removeAllActionShortcuts(actionId)
+  }
+  if (!remove) {
+    keymap.addShortcut(actionId, shortcut)
+  }
+}
+
+private fun getReferenceActionId(element: XmlElement): String? {
+  // support old style references by id
+  return element.attributes.get(REF_ATTR_NAME) ?: element.attributes.get(ID_ATTR_NAME)
+}
+
+private fun canUnloadGroup(element: XmlElement): Boolean {
+  if (element.attributes[ID_ATTR_NAME] == null) {
+    return false
+  }
+  for (child in element.children) {
+    if (child.name == GROUP_ELEMENT_NAME && !canUnloadGroup(child)) {
+      return false
+    }
+  }
+  return true
+}
+
+private fun notifyCustomActionsSchema(registeredID: String) {
+  val schema = ApplicationManager.getApplication().serviceIfCreated<CustomActionsSchema>() ?: return
+  for (url in schema.getActions()) {
+    if (registeredID == url.component) {
+      schema.incrementModificationStamp()
+      break
+    }
+  }
+}
+
+private fun updateHandlers(action: Any?) {
+  if (action is EditorAction) {
+    action.clearDynamicHandlersCache()
   }
 }

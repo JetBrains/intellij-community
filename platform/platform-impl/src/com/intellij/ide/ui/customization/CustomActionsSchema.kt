@@ -373,9 +373,7 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
     iconCustomizations.put(actionId, if (iconPath == null) null else FileUtil.toSystemIndependentName(iconPath))
   }
 
-  fun getIconPath(actionId: String): String {
-    return iconCustomizations.get(actionId) ?: ""
-  }
+  fun getIconPath(actionId: String): String = iconCustomizations.get(actionId) ?: ""
 
   fun getIconCustomizations(): Map<String, String?> {
     return Collections.unmodifiableMap(iconCustomizations)
