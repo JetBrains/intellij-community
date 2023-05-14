@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -81,7 +81,7 @@ public class EditorFactoryImpl extends EditorFactory {
       public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
         if (id.equals(EditorGutterComponentImpl.DISTRACTION_FREE_MARGIN) ||
             id.equals(EditorPainter.EDITOR_TAB_PAINTING) ||
-            id.equals(SettingsImpl.EDITOR_SHOW_SPECIAL_CHARS)) {
+            id.equals(SettingsImplKt.EDITOR_SHOW_SPECIAL_CHARS)) {
           refreshAllEditors();
         }
       }
