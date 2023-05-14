@@ -78,28 +78,28 @@ import javax.swing.*
 import javax.swing.Timer
 
 open class ActionManagerImpl protected constructor() : ActionManagerEx(), Disposable {
-  private val myLock = Any()
+  private val lock = Any()
   private val idToAction = CollectionFactory.createSmallMemoryFootprintMap<String, AnAction>()
   private val pluginToId = MultiMap<PluginId, String>()
   private val idToIndex = Object2IntOpenHashMap<String>()
-  private val myProhibitedActionIds = HashSet<String>()
+  private val prohibitedActionIds = HashSet<String>()
   @Suppress("SSBasedInspection")
   private val actionToId = Object2ObjectOpenHashMap<Any, String>()
   private val idToGroupId = MultiMap<String, String>()
-  private val myNotRegisteredInternalActionIds = ArrayList<String>()
-  private val myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList<AnActionListener>()
-  private val myActionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList<ActionPopupMenuListener>()
-  private val myPopups = ArrayList<Any>()
-  private var myTimer: MyTimer? = null
-  private var myRegisteredActionsCount = 0
+  private val notRegisteredInternalActionIds = ArrayList<String>()
+  private val actionListeners = ContainerUtil.createLockFreeCopyOnWriteList<AnActionListener>()
+  private val actionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList<ActionPopupMenuListener>()
+  private val popups = ArrayList<Any>()
+  private var timer: MyTimer? = null
+  private var registeredActionCount = 0
 
   override var lastPreformedActionId: String? = null
 
   override var prevPreformedActionId: String? = null
 
-  private var myLastTimeEditorWasTypedIn: Long = 0
-  private val myBaseActions: MutableMap<String, AnAction> = HashMap()
-  private var myAnonymousGroupIdCounter = 0
+  private var lastTimeEditorWasTypedIn: Long = 0
+  private val baseActions = HashMap<String, AnAction>()
+  private var anonymousGroupIdCounter = 0
 
   init {
     val app = ApplicationManager.getApplication()
@@ -107,8 +107,9 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       ApplicationManager.getApplication().assertIsNonDispatchThread()
     }
     registerActions(PluginManagerCore.getPluginSet().getEnabledModules())
-    EP.forEachExtensionSafe { customizer: ActionConfigurationCustomizer -> customizer.customize(this) }
-    DYNAMIC_EP_NAME.forEachExtensionSafe { customizer: DynamicActionConfigurationCustomizer -> customizer.registerActions(this) }
+    EP.forEachExtensionSafe { customizer -> customizer.customize(this) }
+    DYNAMIC_EP_NAME.forEachExtensionSafe { customizer -> customizer.registerActions(this) }
+    @Suppress("LeakingThis")
     DYNAMIC_EP_NAME.addExtensionPointListener(object : ExtensionPointListener<DynamicActionConfigurationCustomizer> {
       override fun extensionAdded(extension: DynamicActionConfigurationCustomizer, pluginDescriptor: PluginDescriptor) {
         extension.registerActions(this@ActionManagerImpl)
@@ -118,15 +119,15 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         extension.unregisterActions(this@ActionManagerImpl)
       }
     }, this)
+    @Suppress("LeakingThis")
     app.extensionArea.getExtensionPoint<Any>("com.intellij.editorActionHandler")
       .addChangeListener({
-                           synchronized(myLock) {
-                             actionToId.keys.forEach(
-                               Consumer { action: Any? -> updateHandlers(action) })
+                           synchronized(lock) {
+                             actionToId.keys.forEach(Consumer(::updateHandlers))
                            }
                          }, this)
 
-    // Preload FUS classes (IDEA-301206)
+    // preload FUS classes (IDEA-301206)
     if (!app.isDispatchThread) {
       ActionsEventLogGroup.GROUP.id
     }
@@ -169,9 +170,9 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   override fun dispose() {
-    if (myTimer != null) {
-      myTimer!!.stop()
-      myTimer = null
+    if (timer != null) {
+      timer!!.stop()
+      timer = null
     }
   }
 
@@ -179,28 +180,32 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
-    if (myTimer == null) {
-      myTimer = MyTimer()
-      myTimer!!.start()
+    if (timer == null) {
+      timer = MyTimer()
+      timer!!.start()
     }
-    myTimer!!.listeners.add(listener)
+    timer!!.listeners.add(listener)
   }
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
   fun reinitializeTimer() {
-    if (myTimer != null) {
-      val oldListeners = myTimer!!.listeners
-      myTimer!!.stop()
-      myTimer = null
-      for (listener in oldListeners) addTimerListener(listener)
+    if (timer != null) {
+      val oldListeners = timer!!.listeners
+      timer!!.stop()
+      timer = null
+      for (listener in oldListeners) {
+        addTimerListener(listener)
+      }
     }
   }
 
   override fun removeTimerListener(listener: TimerListener) {
-    if (ApplicationManager.getApplication().isUnitTestMode) return
-    if (LOG.assertTrue(myTimer != null)) {
-      myTimer!!.listeners.remove(listener)
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
+    if (LOG.assertTrue(timer != null)) {
+      timer!!.listeners.remove(listener)
     }
   }
 
@@ -225,14 +230,22 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                                    horizontal: Boolean,
                                    decorateButtons: Boolean,
                                    customizable: Boolean): ActionToolbar {
-    return createActionToolbarImpl(place, group, horizontal, decorateButtons, customizable)
+    return createActionToolbarImpl(place = place,
+                                   group = group,
+                                   horizontal = horizontal,
+                                   decorateButtons = decorateButtons,
+                                   customizable = customizable)
   }
 
   override fun createActionToolbar(place: String,
                                    group: ActionGroup,
                                    horizontal: Boolean,
                                    separatorCreator: Function<in String, out Component>): ActionToolbar {
-    val toolbar = createActionToolbarImpl(place, group, horizontal, false, true)
+    val toolbar = createActionToolbarImpl(place = place,
+                                          group = group,
+                                          horizontal = horizontal,
+                                          decorateButtons = false,
+                                          customizable = true)
     toolbar.setSeparatorCreator(separatorCreator)
     return toolbar
   }
@@ -242,6 +255,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     if (elements.isEmpty()) {
       return
     }
+
     val startTime = StartUpMeasurer.getCurrentTime()
     var lastBundleName: String? = null
     var lastBundle: ResourceBundle? = null
@@ -295,7 +309,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
 
   private fun getActionImpl(id: String, canReturnStub: Boolean): AnAction? {
     var action: AnAction?
-    synchronized(myLock) {
+    synchronized(lock) {
       action = idToAction[id]
       if (canReturnStub || action !is ActionStubBase) {
         return action
@@ -308,7 +322,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       unregisterAction(id)
       return null
     }
-    synchronized(myLock) {
+    synchronized(lock) {
       action = idToAction[id]
       if (action is ActionStubBase) {
         action = replaceStub(action as ActionStubBase, converted)
@@ -339,12 +353,12 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     if (action is ActionStubBase) {
       return (action as ActionStubBase).id
     }
-    synchronized(myLock) { return actionToId[action]!! }
+    synchronized(lock) { return actionToId[action]!! }
   }
 
   override fun getActionIdList(idPrefix: String): List<String> {
     val result: MutableList<String> = ArrayList()
-    synchronized(myLock) {
+    synchronized(lock) {
       for (id in idToAction.keys) {
         if (id.startsWith(idPrefix)) {
           result.add(id)
@@ -384,14 +398,14 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                                    classLoader: ClassLoader): AnAction? {
     // read ID and register a loaded action
     val id = obtainActionId(element, className)
-    synchronized(myLock) {
-      if (myProhibitedActionIds.contains(id)) {
+    synchronized(lock) {
+      if (prohibitedActionIds.contains(id)) {
         return null
       }
     }
     if (element.attributes[INTERNAL_ATTR_NAME].toBoolean() &&
         !ApplicationManager.getApplication().isInternal) {
-      myNotRegisteredInternalActionIds.add(id)
+      notRegisteredInternalActionIds.add(id)
       return null
     }
     val iconPath = element.attributes[ICON_ATTR_NAME]
@@ -443,8 +457,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                                            id: String,
                                            action: AnAction,
                                            plugin: IdeaPluginDescriptor) {
-    synchronized(myLock) {
-      if (myProhibitedActionIds.contains(id)) {
+    synchronized(lock) {
+      if (prohibitedActionIds.contains(id)) {
         return
       }
       if (element.attributes[OVERRIDES_ATTR_NAME].toBoolean()) {
@@ -475,8 +489,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                                   classLoader: ClassLoader): AnAction? {
     var id = id
     try {
-      synchronized(myLock) {
-        if (myProhibitedActionIds.contains(id)) {
+      synchronized(lock) {
+        if (prohibitedActionIds.contains(id)) {
           return null
         }
       }
@@ -510,11 +524,11 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       }
       // read ID and register loaded group
       if (element.attributes.get(INTERNAL_ATTR_NAME).toBoolean() && !ApplicationManager.getApplication().isInternal) {
-        myNotRegisteredInternalActionIds.add(id!!)
+        notRegisteredInternalActionIds.add(id!!)
         return null
       }
       if (id == null) {
-        id = "<anonymous-group-" + myAnonymousGroupIdCounter++ + ">"
+        id = "<anonymous-group-" + anonymousGroupIdCounter++ + ">"
       }
       registerOrReplaceActionInner(element, id, group, module)
       val presentation = group.templatePresentation
@@ -758,14 +772,14 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       reportActionError(module, "ID of reference element should be defined", null)
       return null
     }
-    synchronized(myLock) {
-      if (myProhibitedActionIds.contains(ref)) {
+    synchronized(lock) {
+      if (prohibitedActionIds.contains(ref)) {
         return null
       }
     }
     val action = getActionImpl(ref, true)
     if (action == null) {
-      if (!myNotRegisteredInternalActionIds.contains(ref)) {
+      if (!notRegisteredInternalActionIds.contains(ref)) {
         reportActionError(module, "action specified by reference isn't registered (ID=$ref)", null)
       }
       return null
@@ -819,10 +833,10 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     val overrides = element.attributes[OVERRIDES_ATTR_NAME].toBoolean()
     val id = obtainActionId(element, className)
     if (overrides) {
-      val baseAction = myBaseActions[id]
+      val baseAction = baseActions[id]
       if (baseAction != null) {
         replaceAction(id, baseAction)
-        myBaseActions.remove(id)
+        baseActions.remove(id)
         return
       }
     }
@@ -837,8 +851,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                              action: AnAction,
                              pluginId: PluginId?,
                              projectType: String?) {
-    synchronized(myLock) {
-      if (myProhibitedActionIds.contains(actionId)) {
+    synchronized(lock) {
+      if (prohibitedActionIds.contains(actionId)) {
         return
       }
       if (addToMap(actionId, action, ProjectType.create(projectType)) == null) {
@@ -858,7 +872,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         return
       }
       action.registerCustomShortcutSet(ProxyShortcutSet(actionId), null)
-      idToIndex.put(actionId, myRegisteredActionsCount++)
+      idToIndex.put(actionId, registeredActionCount++)
       actionToId[action] = actionId
       if (pluginId != null) {
         pluginToId.putValue(pluginId, actionId)
@@ -909,7 +923,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   private fun unregisterAction(actionId: String, removeFromGroups: Boolean) {
-    synchronized(myLock) {
+    synchronized(lock) {
       if (!idToAction.containsKey(actionId)) {
         if (LOG.isDebugEnabled) {
           LOG.debug("action with ID $actionId wasn't registered")
@@ -970,7 +984,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
    */
   @ApiStatus.Internal
   fun prohibitAction(actionId: String) {
-    synchronized(myLock) { myProhibitedActionIds.add(actionId) }
+    synchronized(lock) { prohibitedActionIds.add(actionId) }
     val action = getAction(actionId)
     if (action != null) {
       AbbreviationManager.getInstance().removeAllAbbreviations(actionId)
@@ -980,7 +994,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
 
   @TestOnly
   fun resetProhibitedActions() {
-    synchronized(myLock) { myProhibitedActionIds.clear() }
+    synchronized(lock) { prohibitedActionIds.clear() }
   }
 
   override val registrationOrderComparator: Comparator<String>
@@ -991,29 +1005,29 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   fun addActionPopup(menu: Any) {
-    myPopups.add(menu)
+    popups.add(menu)
     if (menu is ActionPopupMenu) {
-      for (listener in myActionPopupMenuListeners) {
+      for (listener in actionPopupMenuListeners) {
         listener.actionPopupMenuCreated(menu)
       }
     }
   }
 
   fun removeActionPopup(menu: Any) {
-    val removed = myPopups.remove(menu)
+    val removed = popups.remove(menu)
     if (removed && menu is ActionPopupMenu) {
-      for (listener in myActionPopupMenuListeners) {
+      for (listener in actionPopupMenuListeners) {
         listener.actionPopupMenuReleased(menu)
       }
     }
   }
 
   override val isActionPopupStackEmpty: Boolean
-    get() = myPopups.isEmpty()
+    get() = popups.isEmpty()
 
   override fun addActionPopupMenuListener(listener: ActionPopupMenuListener, parentDisposable: Disposable) {
-    myActionPopupMenuListeners.add(listener)
-    Disposer.register(parentDisposable) { myActionPopupMenuListeners.remove(listener) }
+    actionPopupMenuListeners.add(listener)
+    Disposer.register(parentDisposable) { actionPopupMenuListeners.remove(listener) }
   }
 
   override fun replaceAction(actionId: String, newAction: AnAction) {
@@ -1023,8 +1037,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   private fun replaceAction(actionId: String, newAction: AnAction, pluginId: PluginId?): AnAction? {
-    synchronized(myLock) {
-      if (myProhibitedActionIds.contains(actionId)) {
+    synchronized(lock) {
+      if (prohibitedActionIds.contains(actionId)) {
         return null
       }
     }
@@ -1032,7 +1046,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     val oldAction = if (newAction is OverridingAction) getAction(actionId) else getActionOrStub(actionId)
     val oldIndex = idToIndex.getOrDefault<Any, Int>(actionId, -1) // Valid indices >= 0
     if (oldAction != null) {
-      myBaseActions.put(actionId, oldAction)
+      baseActions.put(actionId, oldAction)
       val isGroup = oldAction is ActionGroup
       check(isGroup == newAction is ActionGroup) {
         "cannot replace a group with an action and vice versa: $actionId"
@@ -1056,19 +1070,19 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
    */
   fun getBaseAction(overridingAction: OverridingAction): AnAction? {
     val id = getId(overridingAction as AnAction) ?: return null
-    return myBaseActions.get(id)
+    return baseActions.get(id)
   }
 
   fun getParentGroupIds(actionId: String?): Collection<String?> = idToGroupId.get(actionId)
 
   @Suppress("removal")
   override fun addAnActionListener(listener: AnActionListener) {
-    myActionListeners.add(listener)
+    actionListeners.add(listener)
   }
 
   @Suppress("removal")
   override fun removeAnActionListener(listener: AnActionListener) {
-    myActionListeners.remove(listener)
+    actionListeners.remove(listener)
   }
 
   override fun fireBeforeActionPerformed(action: AnAction, event: AnActionEvent) {
@@ -1079,7 +1093,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     }
     IdeaLogger.ourLastActionId = lastPreformedActionId
     ProhibitAWTEvents.start("fireBeforeActionPerformed").use { ignore ->
-      for (listener in myActionListeners) {
+      for (listener in actionListeners) {
         listener.beforeActionPerformed(action, event)
       }
       publisher().beforeActionPerformed(action, event)
@@ -1093,7 +1107,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     IdeaLogger.ourLastActionId = lastPreformedActionId
     ProhibitAWTEvents.start("fireAfterActionPerformed").use { ignore ->
       onAfterActionInvoked(action, event, result)
-      for (listener in myActionListeners) {
+      for (listener in actionListeners) {
         listener.afterActionPerformed(action, event, result)
       }
       publisher().afterActionPerformed(action, event, result)
@@ -1117,15 +1131,15 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   override fun fireBeforeEditorTyping(c: Char, dataContext: DataContext) {
-    myLastTimeEditorWasTypedIn = System.currentTimeMillis()
-    for (listener in myActionListeners) {
+    lastTimeEditorWasTypedIn = System.currentTimeMillis()
+    for (listener in actionListeners) {
       listener.beforeEditorTyping(c, dataContext)
     }
     publisher().beforeEditorTyping(c, dataContext)
   }
 
   override fun fireAfterEditorTyping(c: Char, dataContext: DataContext) {
-    for (listener in myActionListeners) {
+    for (listener in actionListeners) {
       listener.afterEditorTyping(c, dataContext)
     }
     publisher().afterEditorTyping(c, dataContext)
@@ -1133,15 +1147,14 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
 
   val actionIds: Set<String>
     get() {
-      synchronized(myLock) { return HashSet(idToAction.keys) }
+      synchronized(lock) { return HashSet(idToAction.keys) }
     }
 
   fun preloadActions(indicator: ProgressIndicator) {
-    var ids: List<String>
-    synchronized(myLock) { ids = ArrayList(idToAction.keys) }
+    val ids = synchronized(lock) { ArrayList(idToAction.keys) }
     for (id in ids) {
       indicator.checkCanceled()
-      getActionImpl(id, false)
+      getActionImpl(id = id, canReturnStub = false)
       // don't preload ActionGroup.getChildren() because that would un-stub child actions
       // and make it impossible to replace the corresponding actions later
       // (via unregisterAction+registerAction, as some app components do)
@@ -1155,9 +1168,11 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                             now: Boolean): ActionCallback {
     ApplicationManager.getApplication().assertIsDispatchThread()
     val result = ActionCallback()
-    val doRunnable = Runnable { tryToExecuteNow(action, inputEvent, contextComponent, place, result) }
+    val doRunnable = {
+      tryToExecuteNow(action = action, inputEvent = inputEvent, contextComponent = contextComponent, place = place, result = result)
+    }
     if (now) {
-      doRunnable.run()
+      doRunnable()
     }
     else {
       SwingUtilities.invokeLater(doRunnable)
@@ -1187,7 +1202,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
             return@performUserActivity
           }
           addAwtListener(
-            { event1: AWTEvent ->
+            { event1 ->
               if (event1.id == WindowEvent.WINDOW_OPENED || event1.id == WindowEvent.WINDOW_ACTIVATED) {
                 if (!result.isProcessed) {
                   val we = event1 as WindowEvent
@@ -1207,7 +1222,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   private inner class MyTimer() : Timer(TIMER_DELAY, null), ActionListener {
-    val listeners = ContainerUtil.createLockFreeCopyOnWriteList<TimerListener>()
+    @JvmField
+    val listeners: MutableList<TimerListener> = ContainerUtil.createLockFreeCopyOnWriteList<TimerListener>()
 
     private var lastTimePerformed = 0
     private val myClientId = current
@@ -1228,19 +1244,19 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       })
     }
 
-    override fun toString(): String {
-      return "Action manager timer"
-    }
+    override fun toString(): String = "Action manager timer"
 
     override fun actionPerformed(e: ActionEvent) {
-      if (myLastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis()) {
+      if (lastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis()) {
         return
       }
+
       val lastEventCount = lastTimePerformed
       lastTimePerformed = ActivityTracker.getInstance().count
       if (lastTimePerformed == lastEventCount) {
         return
       }
+
       withClientId(myClientId).use {
         for (listener in listeners) {
           runListenerAction(listener)
