@@ -226,6 +226,11 @@ public final class Presentation implements Cloneable {
    * @param textWithMnemonicSupplier text with mnemonic to set
    */
   public void setTextWithMnemonic(@NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier) {
+    if (myChangeSupport == null) {
+      myTextWithMnemonicSupplier = textWithMnemonicSupplier;
+      return;
+    }
+
     String oldText = getText();
     String oldTextWithSuffix = getText(true);
     int oldMnemonic = getMnemonic();
