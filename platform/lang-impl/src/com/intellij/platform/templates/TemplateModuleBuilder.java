@@ -356,7 +356,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         properties.putAll(field.getValues());
       }
       if (projectName != null) {
-        properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
+        properties.setProperty(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
       }
       String merged = FileTemplateUtil.mergeTemplate(properties, content, true, exceptionConsumer);
       patchedContent = merged.replace("\\$", "$").replace("\\#", "#");
