@@ -123,34 +123,32 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     }
 
     Editor editor = mySupplier.getEditor();
-    AsyncEditorLoader.performWhenLoaded(editor, () -> scrollTo(editor.getCaretModel().getVisualPosition(), scrollType));
-  }
-
-  private void scrollTo(@NotNull VisualPosition pos, @NotNull ScrollType scrollType) {
-    Editor editor = mySupplier.getEditor();
-    for (ScrollRequestListener listener : myScrollRequestListeners) {
-      listener.scrollRequested(editor.visualToLogicalPosition(pos), scrollType);
-    }
-    Point targetLocation = mySupplier.getScrollingHelper().calculateScrollingLocation(editor, pos);
-    scrollTo(targetLocation, scrollType);
+    VisualPosition visualPosition = editor.getCaretModel().getVisualPosition();
+    AsyncEditorLoader.performWhenLoaded(editor, () -> {
+      LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
+      for (ScrollRequestListener listener : myScrollRequestListeners) {
+        listener.scrollRequested(logicalPosition, scrollType);
+      }
+      scrollTo(mySupplier.getScrollingHelper().calculateScrollingLocation(editor, visualPosition), scrollType);
+    });
   }
 
   private void scrollTo(@NotNull Point targetLocation, @NotNull ScrollType scrollType) {
     AnimatedScrollingRunnable canceledThread = cancelAnimatedScrolling(false);
-    Rectangle viewRect = canceledThread != null ? canceledThread.getTargetVisibleArea() : getVisibleArea();
+    Rectangle viewRect = canceledThread == null ? getVisibleArea() : canceledThread.getTargetVisibleArea();
     Point p = calcOffsetsToScroll(targetLocation, scrollType, viewRect);
     scroll(p.x, p.y);
   }
 
   @Override
   @RequiresEdt
-  public void scrollTo(@NotNull LogicalPosition pos, @NotNull ScrollType scrollType) {
+  public void scrollTo(@NotNull LogicalPosition logicalPosition, @NotNull ScrollType scrollType) {
     Editor editor = mySupplier.getEditor();
     AsyncEditorLoader.performWhenLoaded(editor, () -> {
       for (ScrollRequestListener listener : myScrollRequestListeners) {
-        listener.scrollRequested(pos, scrollType);
+        listener.scrollRequested(logicalPosition, scrollType);
       }
-      scrollTo(mySupplier.getScrollingHelper().calculateScrollingLocation(editor, pos), scrollType);
+      scrollTo(mySupplier.getScrollingHelper().calculateScrollingLocation(editor, logicalPosition), scrollType);
     });
   }
 
