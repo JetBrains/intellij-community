@@ -10,24 +10,26 @@ import com.intellij.feedback.common.submitFeedback
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Panel
 
-abstract class BlockBasedFeedbackDialogWithEmail(myProject: Project?,
-                                                 forTest: Boolean) : BlockBasedFeedbackDialog(myProject, forTest) {
+/** This number should be increased when [BlockBasedFeedbackDialogWithEmail] fields changing */
+const val BLOCK_BASED_FEEDBACK_WITH_EMAIL_VERSION = 1
 
+abstract class BlockBasedFeedbackDialogWithEmail<T : JsonSerializable>(myProject: Project?,
+                                                                       forTest: Boolean) : BlockBasedFeedbackDialog<T>(myProject, forTest) {
+
+  override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + BLOCK_BASED_FEEDBACK_WITH_EMAIL_VERSION
   abstract val zendeskTicketTitle: String
   abstract val zendeskFeedbackType: String
 
-  //TODO: Make this lambda generic
-  private val emailBlockWithAgreement = EmailBlock(myProject) { showFeedbackSystemInfoDialog(myProject, mySystemInfoData) }
+  private val emailBlockWithAgreement = EmailBlock(myProject) { myShowFeedbackSystemInfoDialog() }
   override fun sendFeedbackData() {
-    //TODO: Add updating settings, maybe to IdleFeedbackTypes
-    //AquaNewUserFeedbackService.getInstance().state.feedbackSent = true
-    //TODO: What if email address is empty?
-    val feedbackData = FeedbackRequestDataWithDetailedAnswer(""/*emailBlockWithAgreement.getEmailAddressIfSpecified()*/,
-                                                             zendeskTicketTitle,
-                                                             collectDataToPlainText(),
-                                                             DEFAULT_FEEDBACK_CONSENT_ID,
-                                                             zendeskFeedbackType,
-                                                             collectDataToJsonObject())
+    val feedbackData = FeedbackRequestDataWithDetailedAnswer(
+      emailBlockWithAgreement.getEmailAddressIfSpecified(),
+      zendeskTicketTitle,
+      collectDataToPlainText(),
+      DEFAULT_FEEDBACK_CONSENT_ID,
+      zendeskFeedbackType,
+      collectDataToJsonObject()
+    )
     submitFeedback(feedbackData,
                    { }, { },
                    if (myForTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST)

@@ -19,10 +19,6 @@ import com.intellij.feedback.new_ui.bundle.NewUIFeedbackBundle
 import com.intellij.feedback.new_ui.dialog.NewUIFeedbackDialog
 import com.intellij.feedback.new_ui.state.NewUIInfoService
 import com.intellij.feedback.new_ui.state.NewUIInfoState
-import com.intellij.feedback.productivityMetric.bundle.ProductivityFeedbackBundle
-import com.intellij.feedback.productivityMetric.dialog.ProductivityFeedbackDialog
-import com.intellij.feedback.productivityMetric.state.ProductivityMetricFeedbackInfoService
-import com.intellij.feedback.productivityMetric.state.ProductivityMetricInfoState
 import com.intellij.feedback.pycharmUi.bundle.PyCharmUIFeedbackBundle
 import com.intellij.feedback.pycharmUi.dialog.PyCharmUIFeedbackDialog
 import com.intellij.feedback.pycharmUi.state.PyCharmUIInfoService
@@ -98,6 +94,10 @@ enum class IdleFeedbackTypes {
       NewUIInfoService.getInstance().state.numberNotificationShowed += 1
     }
 
+    override fun updateStateAfterDialogClosedOk() {
+      NewUIInfoService.getInstance().state.feedbackSent = true
+    }
+
     override fun getGiveFeedbackNotificationLabel(): String {
       return NewUIFeedbackBundle.getMessage("notification.request.feedback.give_feedback")
     }
@@ -108,56 +108,6 @@ enum class IdleFeedbackTypes {
 
     override fun getNotificationOnCancelAction(project: Project?): () -> Unit {
       return { CancelFeedbackNotification().notify(project) }
-    }
-  },
-  PRODUCTIVITY_METRIC_FEEDBACK {
-    override val fusFeedbackId: String = "productivity_metric_feedback"
-    override val suitableIdeVersion: String = "2023.1"
-    private val lastDayCollectFeedback = LocalDate(2023, 2, 28)
-    private val maxNumberNotificationShowed = 1
-
-    override fun isSuitable(): Boolean {
-      val infoState = ProductivityMetricFeedbackInfoService.getInstance().state
-
-      return isIdeEAP() &&
-             checkIdeIsSuitable() &&
-             checkIsNoDeadline() &&
-             checkIdeVersionIsSuitable() &&
-             checkFeedbackNotSent(infoState) &&
-             checkNotificationNumberNotExceeded(infoState)
-    }
-
-    private fun checkIdeIsSuitable(): Boolean {
-      return PlatformUtils.isPhpStorm() || PlatformUtils.isWebStorm() || PlatformUtils.isGoIde() ||
-             PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharm() ||
-             PlatformUtils.isCLion()
-    }
-
-    private fun checkIsNoDeadline(): Boolean {
-      return Clock.System.todayIn(TimeZone.currentSystemDefault()) < lastDayCollectFeedback
-    }
-
-    private fun checkFeedbackNotSent(state: ProductivityMetricInfoState): Boolean {
-      return !state.feedbackSent
-    }
-
-    private fun checkNotificationNumberNotExceeded(state: ProductivityMetricInfoState): Boolean {
-      return state.numberNotificationShowed < maxNumberNotificationShowed
-    }
-
-    override fun createNotification(forTest: Boolean): Notification {
-      return RequestFeedbackNotification(
-        "Feedback In IDE",
-        ProductivityFeedbackBundle.message("notification.request.feedback.title"),
-        ProductivityFeedbackBundle.message("notification.request.feedback.content"))
-    }
-
-    override fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper {
-      return ProductivityFeedbackDialog(project, forTest)
-    }
-
-    override fun updateStateAfterNotificationShowed() {
-      ProductivityMetricFeedbackInfoService.getInstance().state.numberNotificationShowed += 1
     }
   },
   PYCHARM_UI_FEEDBACK {
@@ -191,6 +141,10 @@ enum class IdleFeedbackTypes {
 
     override fun updateStateAfterNotificationShowed() {
       PyCharmUIInfoService.getInstance().state.numberNotificationShowed += 1
+    }
+
+    override fun updateStateAfterDialogClosedOk() {
+      PyCharmUIInfoService.getInstance().state.feedbackSent = true
     }
 
     private fun checkIdeIsSuitable(): Boolean {
@@ -247,6 +201,10 @@ enum class IdleFeedbackTypes {
 
     override fun updateStateAfterNotificationShowed() {
       AquaNewUserFeedbackService.getInstance().state.numberNotificationShowed += 1
+    }
+
+    override fun updateStateAfterDialogClosedOk() {
+      AquaNewUserFeedbackService.getInstance().state.feedbackSent = true
     }
 
     private fun checkIdeIsSuitable(): Boolean {
@@ -310,6 +268,10 @@ enum class IdleFeedbackTypes {
       AquaOldUserFeedbackService.getInstance().state.numberNotificationShowed += 1
     }
 
+    override fun updateStateAfterDialogClosedOk() {
+      AquaOldUserFeedbackService.getInstance().state.feedbackSent = true
+    }
+
     private fun checkIdeIsSuitable(): Boolean {
       return PlatformUtils.isAqua()
     }
@@ -366,6 +328,8 @@ enum class IdleFeedbackTypes {
 
   protected abstract fun updateStateAfterNotificationShowed()
 
+  protected abstract fun updateStateAfterDialogClosedOk()
+
   @NlsSafe
   protected open fun getGiveFeedbackNotificationLabel(): String {
     return CommonFeedbackBundle.message("notification.request.feedback.action.respond.text")
@@ -388,7 +352,10 @@ enum class IdleFeedbackTypes {
           logRespondNotificationActionInvoked(this)
         }
         val dialog = createFeedbackDialog(project, forTest)
-        dialog.show()
+        val isOk = dialog.showAndGet()
+        if (isOk) {
+          updateStateAfterDialogClosedOk()
+        }
       }
     )
     notification.addAction(

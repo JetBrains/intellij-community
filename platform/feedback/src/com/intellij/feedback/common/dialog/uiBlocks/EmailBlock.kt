@@ -57,11 +57,10 @@ class EmailBlock(private val myProject: Project?,
     }
   }
 
-  fun getEmailAddressIfSpecified(): String? {
-    //TODO: What if email is empty string
+  fun getEmailAddressIfSpecified(): String {
     if (checkBoxEmail?.isSelected == true) {
       return myProperty
     }
-    return null
+    return ""
   }
 }

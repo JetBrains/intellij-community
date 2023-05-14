@@ -2,12 +2,12 @@
 package com.intellij.feedback.localization.dialog
 
 import com.intellij.feedback.common.*
+import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.dialog.*
 import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
 import com.intellij.feedback.localization.bundle.LocalizationFeedbackBundle
 import com.intellij.feedback.localization.service.LocalizationFeedbackNotificationService
 import com.intellij.feedback.localization.service.LocalizationFeedbackService
-import com.intellij.feedback.new_ui.bundle.NewUIFeedbackBundle
 import com.intellij.ide.feedback.RatingComponent
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -72,7 +72,7 @@ class LocalizationFeedbackDialog(
           .label(LocalizationFeedbackBundle.message("dialog.rating.label"), LabelPosition.TOP)
       }
 
-      missingRatingTooltip = label(NewUIFeedbackBundle.message("dialog.rating.required")).applyToComponent {
+      missingRatingTooltip = label(CommonFeedbackBundle.message("dialog.feedback.rating.required")).applyToComponent {
         border = JBUI.Borders.compound(PopupBorder.Factory.createColored(JBUI.CurrentTheme.Validator.errorBorderColor()),
                                        JBUI.Borders.empty(JBUI.scale(4), JBUI.scale(8)))
         background = JBUI.CurrentTheme.Validator.errorBackgroundColor()

@@ -2,7 +2,6 @@
 package com.intellij.feedback.aqua.dialog
 
 import com.intellij.feedback.aqua.bundle.AquaFeedbackBundle
-import com.intellij.feedback.aqua.state.AquaNewUserFeedbackService
 import com.intellij.feedback.common.*
 import com.intellij.feedback.common.dialog.BaseFeedbackDialog
 import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
@@ -91,7 +90,6 @@ class AquaNewUserFeedbackDialog(
 
   override fun doOKAction() {
     super.doOKAction()
-    AquaNewUserFeedbackService.getInstance().state.feedbackSent = true
     val feedbackData = FeedbackRequestDataWithDetailedAnswer(textFieldEmailProperty.get(),
                                                              TICKET_TITLE_ZENDESK,
                                                              createRequestDescription(),

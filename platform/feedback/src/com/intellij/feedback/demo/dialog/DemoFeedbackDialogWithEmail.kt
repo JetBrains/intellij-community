@@ -1,21 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.demo.dialog
 
-import com.intellij.feedback.common.dialog.BlockBasedFeedbackDialog
+import com.intellij.feedback.common.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.dialog.uiBlocks.*
 import com.intellij.feedback.demo.bundle.DemoFeedbackBundle
 import com.intellij.openapi.project.Project
 
-class DemoFeedbackDialog(
+class DemoFeedbackDialogWithEmail(
   project: Project?,
   forTest: Boolean,
-) : BlockBasedFeedbackDialog<CommonFeedbackSystemInfoData>(project, forTest) {
+) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemInfoData>(project, forTest) {
 
   /** Increase the additional number when feedback format is changed */
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
-  override val myFeedbackReportId: String = "demo_feedback"
+  override val myFeedbackReportId: String = "demo_feedback_with_email"
+
+  override val zendeskFeedbackType: String = "demo_feedback_with_email"
+  override val zendeskTicketTitle: String = "Demo Feedback Survey"
 
   override val mySystemInfoData: CommonFeedbackSystemInfoData by lazy {
     CommonFeedbackSystemInfoData.getCurrentData()
@@ -47,7 +50,7 @@ class DemoFeedbackDialog(
                                           "checkbox_${it}")
                        }, "checkbox_group")
       .addOtherTextField(),
-    TextAreaBlock(DemoFeedbackBundle.message("dialog.textarea.label"), "textarea")
+    //TextAreaBlock(DemoFeedbackBundle.message("dialog.textarea.label"), "textarea")
   )
 
   init {

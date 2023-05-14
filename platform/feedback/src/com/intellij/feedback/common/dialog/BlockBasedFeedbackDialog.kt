@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.common.dialog
 
+import com.intellij.feedback.common.FEEDBACK_REPORT_ID_KEY
 import com.intellij.feedback.common.FeedbackRequestData
 import com.intellij.feedback.common.FeedbackRequestType
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
@@ -17,28 +18,36 @@ import com.intellij.util.ui.JBUI
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.put
 import javax.swing.Action
 import javax.swing.JComponent
 
-abstract class BlockBasedFeedbackDialog(protected val myProject: Project?,
-                                        protected val myForTest: Boolean) : DialogWrapper(myProject) {
+/** This number should be increased when [BlockBasedFeedbackDialog] fields changing */
+const val BLOCK_BASED_FEEDBACK_VERSION = 1
+
+abstract class BlockBasedFeedbackDialog<T : JsonSerializable>(
+  protected val myProject: Project?,
+  protected val myForTest: Boolean
+) : DialogWrapper(myProject) {
+
+  private val myFeedbackJsonVersionKey: String = "format_version"
 
   /** Increase the additional number when feedback format is changed */
-  protected abstract val myFeedbackJsonVersion: Int
+  protected open val myFeedbackJsonVersion: Int = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + BLOCK_BASED_FEEDBACK_VERSION
   protected abstract val myFeedbackReportId: String
 
   protected abstract val myTitle: String
   protected abstract val myBlocks: List<FeedbackBlock>
 
-  protected abstract val mySystemInfoData: CommonFeedbackSystemInfoData
+  protected abstract val mySystemInfoData: T
+  protected abstract val myShowFeedbackSystemInfoDialog: () -> Unit
 
-  private val myJsonConverter = Json { prettyPrint = true }
+  protected val myJsonConverter = Json { prettyPrint = true }
 
-  private val mySystemInfoJsonName: String = "system_info"
+  protected val mySystemInfoJsonName: String = "system_info"
 
   private val myNoEmailAgreementBlock: NoEmailAgreementBlock = NoEmailAgreementBlock(myProject) {
-    showFeedbackSystemInfoDialog(myProject, mySystemInfoData)
+    myShowFeedbackSystemInfoDialog()
   }
 
   init {
@@ -91,8 +100,6 @@ abstract class BlockBasedFeedbackDialog(protected val myProject: Project?,
   }
 
   protected open fun sendFeedbackData() {
-    //TODO: Add updating settings, maybe to IdleFeedbackTypes
-    //AquaNewUserFeedbackService.getInstance().state.feedbackSent = true
     val feedbackData = FeedbackRequestData(myFeedbackReportId, collectDataToJsonObject())
     submitFeedback(feedbackData,
                    { },
@@ -102,13 +109,16 @@ abstract class BlockBasedFeedbackDialog(protected val myProject: Project?,
 
   protected fun collectDataToJsonObject(): JsonObject {
     return buildJsonObject {
+      put(FEEDBACK_REPORT_ID_KEY, myFeedbackReportId)
+      put(myFeedbackJsonVersionKey, myFeedbackJsonVersion)
+
       for (block in myBlocks) {
         if (block is JsonDataProvider) {
           block.collectBlockDataToJson(this)
         }
       }
 
-      put(mySystemInfoJsonName, myJsonConverter.encodeToJsonElement(mySystemInfoData))
+      put(mySystemInfoJsonName, mySystemInfoData.serializeToJson(myJsonConverter))
     }
   }
 

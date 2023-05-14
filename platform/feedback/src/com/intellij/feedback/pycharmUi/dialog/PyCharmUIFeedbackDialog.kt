@@ -9,7 +9,6 @@ import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.dialog.uiBlocks.*
 import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
 import com.intellij.feedback.pycharmUi.bundle.PyCharmUIFeedbackBundle
-import com.intellij.feedback.pycharmUi.state.PyCharmUIInfoService
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.ui.LicensingFacade
@@ -66,7 +65,6 @@ class PyCharmUIFeedbackDialog(
 
   override fun doOKAction() {
     super.doOKAction()
-    PyCharmUIInfoService.getInstance().state.feedbackSent = true
     val feedbackData = FeedbackRequestDataWithDetailedAnswer(textFieldEmailProperty.get(),
                                                              TICKET_TITLE_ZENDESK,
                                                              createRequestDescription(),
