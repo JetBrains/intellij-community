@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.IdeBundle;
@@ -21,6 +21,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -197,6 +199,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
     editor.putUserData(TEXT_EDITOR_KEY, textEditor);
   }
 
+  @RequiresReadLock
   protected @NotNull TextEditorState getStateImpl(@Nullable Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level) {
     TextEditorState state = new TextEditorState();
     CaretModel caretModel = editor.getCaretModel();
@@ -244,6 +247,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
     return pos == null ? 0 : pos.column;
   }
 
+  @RequiresEdt
   protected void setStateImpl(@Nullable Project project, @NotNull Editor editor, @NotNull TextEditorState state, boolean exactState) {
     TextEditorState.CaretState[] carets = state.CARETS;
     if (carets.length > 0) {
@@ -259,8 +263,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
 
     int relativeCaretPosition = state.RELATIVE_CARET_POSITION;
     AsyncEditorLoader.performWhenLoaded(editor, () -> {
-      // not safe to optimize doWhenFirstShown and execute runnable right away if `isShowing() == true`,
-      // let's check only here for now
+      // not safe to optimize doWhenFirstShown and execute runnable right away if `isShowing() == true`, let's check only here for now
       if (ApplicationManager.getApplication().isUnitTestMode() || editor.getContentComponent().isShowing()) {
         scrollToCaret(editor, exactState, relativeCaretPosition);
       }

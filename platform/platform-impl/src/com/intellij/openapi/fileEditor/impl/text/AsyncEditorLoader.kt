@@ -99,44 +99,40 @@ class AsyncEditorLoader internal constructor(private val project: Project,
       coroutineScope.launch(modality) {
         val continuation = continuationDeferred.await()
         editorComponent.loadingDecorator.stopLoading(scope = this, indicatorJob = indicatorJob)
-        loaded(continuation = continuation, editor = editor)
+        withContext(Dispatchers.EDT) {
+          loaded(continuation = continuation, editor = editor)
+        }
         EditorNotifications.getInstance(project).updateNotifications(textEditor.file)
       }
     }
   }
 
-  private suspend fun loaded(continuation: Runnable, editor: Editor) {
-    withContext(Dispatchers.EDT) {
-      editor.putUserData(ASYNC_LOADER, null)
+  @RequiresEdt
+  private fun loaded(continuation: Runnable, editor: Editor) {
+    editor.putUserData(ASYNC_LOADER, null)
 
-      runCatching {
-        continuation.run()
-      }.getOrLogException(LOG)
+    runCatching {
+      continuation.run()
+    }.getOrLogException(LOG)
 
-      ensureActive()
+    // should be before executing delayed actions - editor state restoration maybe a delayed action, and it uses `doWhenFirstShown`,
+    // for performance reasons better to avoid
+    editor.component.isVisible = true
 
-      // should be before executing delayed actions - editor state restoration maybe a delayed action, and it uses `doWhenFirstShown`,
-      // for performance reasons better to avoid
-      editor.component.isVisible = true
-
-      editor.scrollingModel.disableAnimation()
-      while (true) {
-        (delayedActions.pollFirst() ?: break).run()
-        ensureActive()
-      }
-      editor.scrollingModel.enableAnimation()
+    editor.scrollingModel.disableAnimation()
+    while (true) {
+      (delayedActions.pollFirst() ?: break).run()
     }
+    editor.scrollingModel.enableAnimation()
   }
 
   @RequiresReadLock
   fun getEditorState(level: FileEditorStateLevel, editor: Editor): TextEditorState {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
     return provider.getStateImpl(project, editor, level)
   }
 
   @RequiresEdt
   fun setEditorState(state: TextEditorState, exactState: Boolean, editor: Editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
     provider.setStateImpl(project, editor, state, exactState)
   }
 
