@@ -6,7 +6,7 @@ package com.intellij.openapi.actionSystem.impl
 import com.intellij.AbstractBundle
 import com.intellij.BundleBase.message
 import com.intellij.DynamicBundle
-import com.intellij.codeWithMe.ClientId.Companion.current
+import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
@@ -45,7 +45,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectType
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
@@ -489,8 +488,6 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                                   bundle: ResourceBundle?,
                                   keymapManager: KeymapManagerEx,
                                   classLoader: ClassLoader): AnAction? {
-    @Suppress("NAME_SHADOWING")
-    var id = id
     try {
       synchronized(lock) {
         if (prohibitedActionIds.contains(id)) {
@@ -534,8 +531,10 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         return null
       }
 
+      @Suppress("NAME_SHADOWING")
+      var id = id
       if (id == null) {
-        id = "<anonymous-group-" + anonymousGroupIdCounter++ + ">"
+        id = "<anonymous-group-${anonymousGroupIdCounter++}>"
       }
       registerOrReplaceActionInner(element = element, id = id, action = group, plugin = module)
 
@@ -551,7 +550,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                           classLoader = classLoader)
       }
       // don't override value which was set in API with empty value from xml descriptor
-      if (!Strings.isEmpty(text.get()) || presentation.text == null) {
+      if (presentation.text == null || !text.get().isNullOrEmpty()) {
         presentation.setText(text)
       }
 
@@ -1301,7 +1300,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     val listeners: MutableList<TimerListener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
     private var lastTimePerformed = 0
-    private val myClientId = current
+    private val clientId = ClientId.current
 
     init {
       addActionListener(this)
@@ -1332,7 +1331,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         return
       }
 
-      withClientId(myClientId).use {
+      withClientId(clientId).use {
         for (listener in listeners) {
           runListenerAction(listener)
         }
@@ -1469,7 +1468,7 @@ private fun computeDescription(bundle: ResourceBundle?,
   if (effectiveBundle != null && DefaultBundleService.isDefaultBundle()) {
     effectiveBundle = DynamicBundle.getResourceBundle(classLoader, effectiveBundle.baseBundleName)
   }
-  return AbstractBundle.messageOrDefault(effectiveBundle, "$elementType.$id.$DESCRIPTION", Strings.notNullize(descriptionValue))
+  return AbstractBundle.messageOrDefault(effectiveBundle, "$elementType.$id.$DESCRIPTION", descriptionValue ?: "")
 }
 
 @Suppress("HardCodedStringLiteral")
