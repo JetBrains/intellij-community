@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
 import com.intellij.openapi.actionSystem.*
@@ -182,8 +182,9 @@ open class SegmentedActionToolbarComponent(place: String,
   private fun update(forced: Boolean, newVisibleActions: List<AnAction>) {
     val filtered = newVisibleActions.filter { isSuitableAction(it) }
 
-    val ides = newVisibleActions.map { ActionManager.getInstance().getId(it) }.toList()
-    val filteredIds = filtered.map { ActionManager.getInstance().getId(it) }.toList()
+    val actionManager = ActionManager.getInstance()
+    val ides = newVisibleActions.map { actionManager.getId(it)!! }
+    val filteredIds = filtered.map { actionManager.getId(it)!! }
 
     traceState(lastIds, filteredIds, ides)
 

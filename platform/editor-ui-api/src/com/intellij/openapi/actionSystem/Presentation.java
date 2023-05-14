@@ -180,8 +180,7 @@ public final class Presentation implements Cloneable {
    * @param mayContainMnemonic if true, the text has {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format, otherwise
    *                           it's a plain text and no mnemonic will be used.
    */
-  public void setText(@NotNull @Nls(capitalization = Nls.Capitalization.Title) Supplier<String> text,
-                      boolean mayContainMnemonic) {
+  public void setText(@NotNull @Nls(capitalization = Nls.Capitalization.Title) Supplier<String> text, boolean mayContainMnemonic) {
     setTextWithMnemonic(getTextWithMnemonic(text, mayContainMnemonic));
   }
 
@@ -201,7 +200,9 @@ public final class Presentation implements Cloneable {
     if (mayContainMnemonic) {
       return () -> {
         String s = text.get();
-        if (s == null) return null;
+        if (s == null) {
+          return null;
+        }
         TextWithMnemonic parsed = TextWithMnemonic.parse(s);
         UISettings uiSettings = UISettings.getInstanceOrNull();
         boolean mnemonicsDisabled = uiSettings != null && uiSettings.getDisableMnemonicsInControls();

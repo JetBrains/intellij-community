@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceGetOrSet")
 
 package com.intellij.openapi.extensions
@@ -46,7 +46,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    * Invokes the given consumer for each extension registered in this extension point. Logs exceptions thrown by the consumer.
    */
   fun forEachExtensionSafe(consumer: Consumer<in T>) {
-    forEachExtensionSafe(getPointImpl(null), consumer)
+    forEachExtensionSafe(iterable = getPointImpl(areaInstance = null), extensionConsumer = consumer)
   }
 
   fun findFirstSafe(predicate: Predicate<in T>): T? {

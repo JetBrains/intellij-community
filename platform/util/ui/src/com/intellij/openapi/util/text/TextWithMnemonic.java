@@ -259,7 +259,9 @@ public final class TextWithMnemonic {
   @Contract(pure = true)
   public static TextWithMnemonic parse(@NotNull @Nls String text) {
     TextWithMnemonic mnemonic = text.isEmpty() ? EMPTY : fromMnemonicText(text);
-    if (mnemonic != null) return mnemonic;
+    if (mnemonic != null) {
+      return mnemonic;
+    }
 
     if (text.contains("_") || text.contains("&")) {
       @Nls StringBuilder plainText = new StringBuilder();
