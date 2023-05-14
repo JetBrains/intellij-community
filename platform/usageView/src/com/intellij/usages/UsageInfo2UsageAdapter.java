@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.SimpleTextAttributes;
@@ -53,16 +54,33 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   private @NotNull Object myMergedUsageInfos; // contains all merged infos, including myUsageInfo. Either UsageInfo or UsageInfo[]
   private final int myLineNumber;
   private final int myOffset;
+  @Nullable private final VirtualFile myVirtualFile;
+  private final int myOffsetToCompareUsages;
   // allow to be gced and recreated on-demand because it requires a lot of memory
   private volatile Reference<UsageNodePresentation> myCachedPresentation;
   private volatile UsageType myUsageType;
+
+  private static class ComputedData {
+    public final int offset;
+    public final int lineNumber;
+    public final VirtualFile virtualFile;
+    public final int offsetToCompareUsages;
+
+    private ComputedData(int offset, int lineNumber, VirtualFile virtualFile, int offsetToCompareUsages) {
+      this.offset = offset;
+      this.lineNumber = lineNumber;
+      this.virtualFile = virtualFile;
+      this.offsetToCompareUsages = offsetToCompareUsages;
+    }
+  }
 
   public UsageInfo2UsageAdapter(@NotNull UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
     myMergedUsageInfos = usageInfo;
 
-    Point data =
+    ComputedData data =
     ReadAction.compute(() -> {
+      VirtualFile virtualFile = usageInfo.getVirtualFile();
       PsiElement element = getElement();
       PsiFile psiFile = usageInfo.getFile();
       boolean isNullOrBinary = psiFile == null || psiFile.getFileType().isBinary();
@@ -71,26 +89,30 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
       int offset;
       int lineNumber;
+      int offsetToCompareUsages;
       if (document == null) {
         // element over light virtual file
-        offset = element == null || isNullOrBinary ? 0 : element.getTextOffset();
+        offsetToCompareUsages = offset = element == null || isNullOrBinary ? 0 : element.getTextOffset();
         lineNumber = -1;
       }
       else {
         int startOffset = myUsageInfo.getNavigationOffset();
         if (startOffset == -1) {
-          offset = element == null ? 0 : element.getTextOffset();
+          offsetToCompareUsages = offset = element == null ? 0 : element.getTextOffset();
           lineNumber = -1;
         }
         else {
           offset = -1;
+          offsetToCompareUsages = startOffset;
           lineNumber = getLineNumber(document, startOffset);
         }
       }
-      return new Point(offset, lineNumber);
+      return new ComputedData(offset, lineNumber, virtualFile, offsetToCompareUsages);
     });
-    myOffset = data.x;
-    myLineNumber = data.y;
+    myOffset = data.offset;
+    myLineNumber = data.lineNumber;
+    myVirtualFile = data.virtualFile;
+    myOffsetToCompareUsages = data.offsetToCompareUsages;
     myModificationStamp = getCurrentModificationStamp();
   }
 
@@ -241,7 +263,10 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   }
 
   public Editor openTextEditor(boolean focus) {
-    return FileEditorManager.getInstance(getProject()).openTextEditor(getDescriptor(), focus);
+    OpenFileDescriptor descriptor = getDescriptor();
+    if (descriptor == null) return null;
+
+    return FileEditorManager.getInstance(getProject()).openTextEditor(descriptor, focus);
   }
 
   @Override
@@ -373,7 +398,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   @Override
   public VirtualFile getFile() {
-    return getUsageInfo().getVirtualFile();
+    return myVirtualFile;
   }
   private PsiFile getPsiFile() {
     return getUsageInfo().getFile();
@@ -381,7 +406,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   @Override
   public @NotNull String getPath() {
-    return getFile().getPath();
+    VirtualFile file = getFile();
+    return file != null ? file.getPath() : "";
   }
 
   @Override
@@ -425,7 +451,12 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   // by start offset
   public final int compareTo(@NotNull UsageInfo2UsageAdapter o) {
-    return getUsageInfo().compareToByStartOffset(o.getUsageInfo());
+    int byPath = VfsUtilCore.compareByPath(myVirtualFile, o.myVirtualFile);
+    if (byPath != 0) {
+      return byPath;
+    }
+
+    return Integer.compare(myOffsetToCompareUsages, o.myOffsetToCompareUsages);
   }
 
   @Override
