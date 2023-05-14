@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
+import kotlinx.coroutines.Deferred
 import java.util.concurrent.CancellationException
 
 private val LOG = logger<PsiAwareTextEditorImpl>()
@@ -49,11 +50,11 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
                        asyncLoader: AsyncEditorLoader,
                        editor: EditorImpl) : super(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
 
-  override suspend fun loadEditorInBackground(highlighterSupplier: suspend () -> EditorHighlighter): Runnable {
-    val baseResult = super.loadEditorInBackground(highlighterSupplier)
+  override suspend fun loadEditorInBackground(highlighterDeferred: Deferred<EditorHighlighter>): Runnable {
+    val highlighter = highlighterDeferred.await()
+    val editor = editor
     return readAction {
       val psiFile = PsiManager.getInstance(project).findFile(file)
-      val editor = editor
       val document = editor.document
       val foldingState = if (project.isDefault || !PsiDocumentManager.getInstance(project).isCommitted(document)) {
         null
@@ -75,8 +76,10 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
       val placeholders = catchingExceptions {
         CodeVisionInitializer.getInstance(project).getCodeVisionHost().collectPlaceholders(editor, psiFile)
       }
+
       Runnable {
-        baseResult.run()
+        setupEditor(editor, highlighter)
+
         foldingState?.setToEditor(editor)
         if (focusZones != null) {
           FocusModePassFactory.setToEditor(focusZones, editor)

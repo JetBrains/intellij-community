@@ -31,19 +31,20 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
   }
 
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
+    val asyncLoader = createAsyncEditorLoader(provider = this, project = project)
+
     val fileDocumentManager = FileDocumentManager.getInstance()
     val document = fileDocumentManager.getCachedDocument(file) ?: readAction {
       fileDocumentManager.getDocument(file, project)!!
     }
 
     val factory = EditorFactory.getInstance() as EditorFactoryImpl
-    val asyncLoader = createAsyncEditorLoader(provider = this, project = project)
     val highlighter = asyncLoader.createHighlighterAsync(document, file)
     return object : AsyncFileEditorProvider.Builder() {
       override fun build(): FileEditor {
         val editor = factory.createMainEditor(document, project, file)
         val textEditor = PsiAwareTextEditorImpl(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
-        asyncLoader.start(textEditor = textEditor, highlighterSupplier = { highlighter.await() })
+        asyncLoader.start(textEditor = textEditor, highlighterDeferred = highlighter)
         return textEditor
       }
     }

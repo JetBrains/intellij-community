@@ -1,15 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
@@ -58,19 +57,25 @@ class AsyncEditorLoader internal constructor(private val project: Project,
 
   fun createHighlighterAsync(document: Document, file: VirtualFile): Deferred<EditorHighlighter> {
     return coroutineScope.async {
-      TextEditorImpl.createHighlighter(document = document, file = file, project = project)
+      val scheme = EditorColorsManager.getInstance().globalScheme
+      val editorHighlighterFactory = EditorHighlighterFactory.getInstance()
+      readAction {
+        val highlighter = editorHighlighterFactory.createEditorHighlighter(file, scheme, project)
+        highlighter.setText(document.immutableCharSequence)
+        highlighter
+      }
     }
   }
 
   @Internal
   @RequiresEdt
-  fun start(textEditor: TextEditorImpl, highlighterSupplier: suspend () -> EditorHighlighter) {
+  fun start(textEditor: TextEditorImpl, highlighterDeferred: Deferred<EditorHighlighter>) {
     val editor = textEditor.editor
     editor.putUserData(ASYNC_LOADER, this)
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
       val continuation = runBlockingModal(project, "") {
-        textEditor.loadEditorInBackground(highlighterSupplier)
+        textEditor.loadEditorInBackground(highlighterDeferred)
       }
       editor.putUserData(ASYNC_LOADER, null)
       continuation.run()
@@ -80,7 +85,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     }
     else {
       val continuationDeferred = coroutineScope.async {
-        textEditor.loadEditorInBackground(highlighterSupplier)
+        textEditor.loadEditorInBackground(highlighterDeferred)
       }
 
       // do not show half-ready editor (not highlighted)
