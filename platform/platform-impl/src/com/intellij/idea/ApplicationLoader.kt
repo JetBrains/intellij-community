@@ -33,6 +33,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
@@ -209,6 +210,11 @@ private suspend fun initApplicationImpl(args: List<String>,
 }
 
 fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
+  launch {
+    // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
+    app.serviceAsync<PathMacros>()
+  }
+
   if (!app.isHeadlessEnvironment) {
     launch {
       // preload FUS classes (IDEA-301206)
@@ -216,6 +222,7 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
     }
     launch {
       app.serviceAsync<UISettings>().join()
+      app.serviceAsync<KeymapManager>().join()
       app.serviceAsync<ActionManager>().join()
     }
   }
