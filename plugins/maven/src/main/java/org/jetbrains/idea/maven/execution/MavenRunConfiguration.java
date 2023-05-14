@@ -145,7 +145,14 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new MavenRunConfigurationSettingsEditor(this);
+    return LazyEditorFactory.create(this);
+  }
+
+  // MavenRunConfigurationSettingsEditor is a huge class, so we wrap its call here to not let bytecode verifier to load it eagerly from disk
+  private static final class LazyEditorFactory {
+    static @NotNull SettingsEditor<? extends RunConfiguration> create(@NotNull MavenRunConfiguration configuration) {
+      return new MavenRunConfigurationSettingsEditor(configuration);
+    }
   }
 
   @ApiStatus.Internal
