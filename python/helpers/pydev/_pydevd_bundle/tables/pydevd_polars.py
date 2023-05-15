@@ -1,6 +1,7 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import polars as pl
 
+TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 
 def get_type(table):
     # type: (str) -> str
@@ -22,7 +23,7 @@ def get_column_types(table):
     if type(table).__name__ == 'Series':
         return str(table.dtype)
     else:
-        return ' '.join([str(t) for t in table.dtypes])
+        return TABLE_TYPE_NEXT_VALUE_SEPARATOR.join([str(t) for t in table.dtypes])
 
 
 # used by pydevd, isDisplaySupported equals false

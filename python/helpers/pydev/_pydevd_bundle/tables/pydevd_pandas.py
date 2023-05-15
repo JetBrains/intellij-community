@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 
+TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 
 def get_type(table):
     # type: (str) -> str
@@ -24,7 +25,8 @@ def get_head(table, max_cols):
 def get_column_types(table):
     # type: (Union[pd.DataFrame, pd.Series, np.ndarray]) -> str
     table = __convert_to_df(table)
-    return str(table.index.dtype) + ' ' + ' '.join([str(t) for t in table.dtypes])
+    return str(table.index.dtype) + TABLE_TYPE_NEXT_VALUE_SEPARATOR + \
+        TABLE_TYPE_NEXT_VALUE_SEPARATOR.join([str(t) for t in table.dtypes])
 
 # used by pydevd
 # noinspection PyUnresolvedReferences
