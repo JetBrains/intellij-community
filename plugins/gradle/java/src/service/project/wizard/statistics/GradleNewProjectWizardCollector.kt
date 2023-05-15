@@ -22,7 +22,7 @@ class GradleNewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
 
-    private val GROUP = EventLogGroup("new.project.wizard.interactions.gradle", 1)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions.gradle", 2)
 
     private val gradleDslField = EventFields.Enum<GradleDsl>("gradle_dsl")
     private val gradleDistributionField = EventFields.Enum<DistributionType>("gradle_distribution")
