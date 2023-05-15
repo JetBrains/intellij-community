@@ -40,7 +40,6 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.ObjIntConsumer
 import kotlin.io.path.name
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -69,12 +68,12 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   private var sampleJob: Job? = null
   private var currentEdtEventChecker: FreezeCheckerTask? = null
   private val jitWatcher = JitWatcher()
-  private val unresponsiveInterval: RegistryValue
+  private val _unresponsiveInterval: RegistryValue
 
   init {
     val registryManager = RegistryManager.getInstance()
     val unresponsiveInterval = registryManager.get("performance.watcher.unresponsive.interval.ms")
-    this.unresponsiveInterval = unresponsiveInterval
+    this._unresponsiveInterval = unresponsiveInterval
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       val cancelingListener = object : RegistryValueListener {
         override fun afterValueChanged(value: RegistryValue) {
@@ -121,9 +120,11 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     }
   }
 
-  override fun processUnfinishedFreeze(consumer: ObjIntConsumer<Path>) {
+  override suspend fun processUnfinishedFreeze(consumer: suspend (Path, Int) -> Unit) {
     val files = try {
-      Files.newDirectoryStream(logDir) { it.fileName.toString().startsWith(THREAD_DUMPS_PREFIX) }.use { it.sorted() }
+      withContext(Dispatchers.IO) {
+        Files.newDirectoryStream(logDir) { it.fileName.toString().startsWith(THREAD_DUMPS_PREFIX) }.use { it.sorted() }
+      }
     }
     catch (ignore: NoSuchFileException) {
       return
@@ -135,7 +136,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
         try {
           val s = Files.readString(marker)
           Files.deleteIfExists(marker)
-          consumer.accept(file, s.toInt())
+          consumer(file, s.toInt())
         }
         catch (ignored: Exception) {
         }
@@ -168,16 +169,21 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   }
 
   /** for dump files on disk and in EA reports (ms)  */
-  override fun getDumpInterval(): Int = 5000.coerceIn(500, getUnresponsiveInterval())
-
-  /** defines the freeze (ms)  */
-  override fun getUnresponsiveInterval(): Int {
-    val value = unresponsiveInterval.asInteger()
-    return if (value <= 0) 0 else value.coerceIn(500, 20000)
-  }
+  override val dumpInterval: Int
+    get() = 5000.coerceIn(500, unresponsiveInterval)
 
   /** to limit the number of dumps and the size of performance snapshot  */
-  override fun getMaxDumpDuration(): Int = (dumpInterval * 20).coerceIn(0, 40000) // 20 files max
+  override val maxDumpDuration: Int
+    get() = (dumpInterval * 20).coerceIn(0, 40000) // 20 files max
+  override val jitProblem: String?
+    get() = jitWatcher.jitProblem
+
+  /** defines the freeze (ms)  */
+  override val unresponsiveInterval: Int
+    get() {
+      val value = _unresponsiveInterval.asInteger()
+      return if (value <= 0) 0 else value.coerceIn(500, 20000)
+    }
 
   @ApiStatus.Internal
   override fun edtEventStarted() {
@@ -261,8 +267,6 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     return diagnosticInfo
   }
 
-  override fun getJitProblem(): String? = jitWatcher.jitProblem
-
   override fun clearFreezeStacktraces() {
     currentEdtEventChecker?.stopDumping()
   }
@@ -284,7 +288,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
 
     init {
       job = coroutineScope.launch(limitedDispatcher) {
-        delay(getUnresponsiveInterval().toLong())
+        delay(unresponsiveInterval.toLong())
         edtFrozen()
       }
     }
