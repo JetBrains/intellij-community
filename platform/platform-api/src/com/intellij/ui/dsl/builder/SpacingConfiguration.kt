@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.toUnscaled
 
 /**
  * List of all configurable spacings for building Kotlin UI DSL panels. All returned values are unscaled
@@ -66,7 +68,14 @@ interface SpacingConfiguration {
   /**
    * Gaps between dialog content and its content
    */
-  val dialogGap: UnscaledGaps
+  @Deprecated("Use dialogUnscaledGaps instead",
+              ReplaceWith("dialogUnscaledGaps", "com.intellij.ui.dsl.gridLayout.UnscaledGaps"))
+  val dialogGap: Gaps get() = Gaps.EMPTY
+
+  /**
+   * Unscaled gaps between dialog content and its content
+   */
+  val dialogUnscaledGaps: UnscaledGaps get() = dialogGap.toUnscaled()
 }
 
 open class EmptySpacingConfiguration : SpacingConfiguration {
@@ -81,7 +90,7 @@ open class EmptySpacingConfiguration : SpacingConfiguration {
   override val buttonGroupHeaderBottomGap = 0
   override val segmentedButtonVerticalGap = 0
   override val segmentedButtonHorizontalGap = 0
-  override val dialogGap = UnscaledGaps.EMPTY
+  override val dialogUnscaledGaps = UnscaledGaps.EMPTY
 }
 
 open class IntelliJSpacingConfiguration : SpacingConfiguration {
@@ -96,5 +105,5 @@ open class IntelliJSpacingConfiguration : SpacingConfiguration {
   override val buttonGroupHeaderBottomGap = 2
   override val segmentedButtonVerticalGap = 3
   override val segmentedButtonHorizontalGap = 12
-  override val dialogGap = UnscaledGaps(10, 12, 10, 12)
+  override val dialogUnscaledGaps = UnscaledGaps(10, 12, 10, 12)
 }

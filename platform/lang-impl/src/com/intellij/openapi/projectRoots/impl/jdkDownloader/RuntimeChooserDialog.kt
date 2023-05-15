@@ -225,7 +225,7 @@ class RuntimeChooserDialog(
         jdkCombobox.addItemListener { updateLocation() }
       }
     }.apply {
-      border = IntelliJSpacingConfiguration().dialogGap.toJBEmptyBorder()
+      border = IntelliJSpacingConfiguration().dialogUnscaledGaps.toJBEmptyBorder()
       putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
     }
   }
