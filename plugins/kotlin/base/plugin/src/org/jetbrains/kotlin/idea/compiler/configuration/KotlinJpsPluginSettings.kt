@@ -160,7 +160,11 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
         fun importKotlinJpsVersionFromExternalBuildSystem(project: Project, rawVersion: String, isDelegatedToExtBuild: Boolean) {
             val instance = getInstance(project)
             if (rawVersion == rawBundledVersion) {
-                instance.setVersion(rawVersion)
+                runInEdt {
+                    runWriteAction {
+                        instance.setVersion(rawVersion)
+                    }
+                }
                 return
             }
 
