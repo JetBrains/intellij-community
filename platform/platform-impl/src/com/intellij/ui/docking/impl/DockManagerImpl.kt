@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ui.docking.impl
@@ -60,7 +60,7 @@ import java.awt.event.WindowEvent
 import java.util.function.Predicate
 import javax.swing.*
 
-@State(name = "DockManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
+@State(name = "DockManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], getStateRequiresEdt = true)
 class DockManagerImpl(private val project: Project) : DockManager(), PersistentStateComponent<Element?> {
   private val factories = HashMap<String, DockContainerFactory>()
   private val containers = HashSet<DockContainer>()
