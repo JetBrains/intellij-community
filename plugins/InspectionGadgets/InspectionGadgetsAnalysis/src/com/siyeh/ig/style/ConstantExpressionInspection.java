@@ -79,11 +79,8 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
         }
       }
 
-      private static boolean hasReferences(PsiExpression expression) {
-        if (PsiTreeUtil.getChildOfAnyType(expression, PsiReferenceExpression.class) != null) {
-          return true;
-        }
-        return false;
+      private static boolean hasReferences(@NotNull PsiExpression expression) {
+        return PsiTreeUtil.getChildOfAnyType(expression, PsiReferenceExpression.class) != null;
       }
     };
   }
