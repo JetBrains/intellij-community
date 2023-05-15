@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.actions.searcheverywhere.ml
+package com.intellij.searchEverywhereMl.common
 
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
@@ -7,11 +6,9 @@ import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContribut
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.util.registry.Registry
-import java.util.*
 
-internal class SearchEverywhereMlExperiment {
+class SearchEverywhereMlExperiment {
   companion object {
     private const val NUMBER_OF_GROUPS = 4
   }
@@ -19,31 +16,31 @@ internal class SearchEverywhereMlExperiment {
   private val isExperimentalMode: Boolean = StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP
 
   private val tabsWithEnabledLogging = setOf(
-    SearchEverywhereTabWithMl.ACTION.tabId,
-    SearchEverywhereTabWithMl.FILES.tabId,
+    SearchEverywhereTabWithMlRanking.ACTION.tabId,
+    SearchEverywhereTabWithMlRanking.FILES.tabId,
     ClassSearchEverywhereContributor::class.java.simpleName,
     SymbolSearchEverywhereContributor::class.java.simpleName,
     SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
   )
 
   private val tabExperiments = hashMapOf(
-    SearchEverywhereTabWithMl.ACTION to Experiment(
+    SearchEverywhereTabWithMlRanking.ACTION to Experiment(
       1 to ExperimentType.NO_ML,
       2 to ExperimentType.USE_EXPERIMENTAL_MODEL
     ),
 
-    SearchEverywhereTabWithMl.FILES to Experiment(
+    SearchEverywhereTabWithMlRanking.FILES to Experiment(
       2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
       3 to ExperimentType.NO_ML
     ),
 
-    SearchEverywhereTabWithMl.CLASSES to Experiment(
+    SearchEverywhereTabWithMlRanking.CLASSES to Experiment(
       2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
       3 to ExperimentType.NO_ML,
       4 to ExperimentType.NO_ML_FEATURES
     ),
 
-    SearchEverywhereTabWithMl.ALL to Experiment(
+    SearchEverywhereTabWithMlRanking.ALL to Experiment(
       2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
     )
   )
@@ -63,17 +60,17 @@ internal class SearchEverywhereMlExperiment {
 
   fun isLoggingEnabledForTab(tabId: String) = tabsWithEnabledLogging.contains(tabId)
 
-  private fun isDisableExperiments(tab: SearchEverywhereTabWithMl): Boolean {
+  private fun isDisableExperiments(tab: SearchEverywhereTabWithMlRanking): Boolean {
     val key = "search.everywhere.force.disable.experiment.${tab.name.lowercase()}.ml"
     return Registry.`is`(key)
   }
 
-  fun getExperimentForTab(tab: SearchEverywhereTabWithMl): ExperimentType {
+  fun getExperimentForTab(tab: SearchEverywhereTabWithMlRanking): ExperimentType {
     if (!isAllowed || isDisableExperiments(tab)) return ExperimentType.NO_EXPERIMENT
     return tabExperiments[tab]?.getExperimentByGroup(experimentGroup) ?: ExperimentType.NO_EXPERIMENT
   }
 
-  internal enum class ExperimentType {
+  enum class ExperimentType {
     NO_EXPERIMENT, NO_ML, USE_EXPERIMENTAL_MODEL, NO_ML_FEATURES
   }
 
@@ -86,20 +83,4 @@ internal class SearchEverywhereMlExperiment {
 
     fun getExperimentByGroup(group: Int) = tabExperiments.getOrDefault(group, ExperimentType.NO_EXPERIMENT)
   }
-}
-
-internal class FeaturesLoggingRandomisation {
-  private val thresholdsByTab = hashMapOf(
-    SearchEverywhereTabWithMl.ACTION.tabId to 1.0,
-    SearchEverywhereTabWithMl.FILES.tabId to 0.5,
-    ClassSearchEverywhereContributor::class.java.simpleName to 0.5,
-    SymbolSearchEverywhereContributor::class.java.simpleName to 1.0,
-    SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID to 0.5
-  )
-
-  private val seed: Double = Random().nextDouble()
-
-  private fun isInTestMode(): Boolean = ApplicationManagerEx.isInIntegrationTest() || ApplicationManagerEx.getApplication().isUnitTestMode
-
-  fun shouldLogFeatures(tabId: String): Boolean = isInTestMode() || (seed < (thresholdsByTab[tabId] ?: 1.0))
 }

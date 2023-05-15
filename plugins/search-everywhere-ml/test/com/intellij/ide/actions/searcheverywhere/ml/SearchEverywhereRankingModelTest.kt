@@ -13,10 +13,11 @@ import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
 
 internal abstract class SearchEverywhereRankingModelTest
   : HeavyFeaturesProviderTestCase<SearchEverywhereFileFeaturesProvider>(SearchEverywhereFileFeaturesProvider::class.java) {
-  abstract val tab: SearchEverywhereTabWithMl
+  abstract val tab: SearchEverywhereTabWithMlRanking
   private val featuresProviders by lazy { SearchEverywhereElementFeaturesProvider.getFeatureProviders() }
   protected val model by lazy { SearchEverywhereRankingModel(SearchEverywhereModelProvider().getModel(tab.tabId)) }
   protected val mockProgressIndicator by lazy { MockProgressIndicator() }

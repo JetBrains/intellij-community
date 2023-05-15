@@ -7,6 +7,8 @@ import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.searchEverywhereMl.common.SearchEverywhereMlExperiment
+import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
 import com.intellij.ui.components.JBList
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
@@ -33,7 +35,7 @@ class SearchEverywhereMlServiceImpl : SearchEverywhereMlService() {
   }
 
   internal fun shouldUseExperimentalModel(tabId: String): Boolean {
-    val tab = SearchEverywhereTabWithMl.findById(tabId) ?: return false
+    val tab = SearchEverywhereTabWithMlRanking.findById(tabId) ?: return false
     return experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
   }
 
@@ -62,7 +64,7 @@ class SearchEverywhereMlServiceImpl : SearchEverywhereMlService() {
     val session = getCurrentSession() ?: return foundElementInfoWithoutMl
     val state = session.getCurrentSearchState() ?: return foundElementInfoWithoutMl
 
-    val tab = SearchEverywhereTabWithMl.findById(state.tabId)
+    val tab = SearchEverywhereTabWithMlRanking.findById(state.tabId)
     tab?.let {
       if (experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.NO_ML_FEATURES)
         return foundElementInfoWithoutMl
@@ -100,7 +102,7 @@ class SearchEverywhereMlServiceImpl : SearchEverywhereMlService() {
   }
 
   private fun shouldOrderByMlInTab(tabId: String, searchQuery: String): Boolean {
-    val tab = SearchEverywhereTabWithMl.findById(tabId) ?: return false // Tab does not support ML ordering
+    val tab = SearchEverywhereTabWithMlRanking.findById(tabId) ?: return false // Tab does not support ML ordering
     val settings = service<SearchEverywhereMlSettings>()
 
     if (tabId == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID && searchQuery.isEmpty()) return false

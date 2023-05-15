@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.searchEverywhereMl.common.SearchEverywhereMlExperiment
 import com.intellij.util.concurrency.NonUrgentExecutor
 import java.util.concurrent.atomic.AtomicReference
 

@@ -287,6 +287,7 @@ object CommunityRepositoryModules {
     },
     plugin(listOf(
       "intellij.searchEverywhereMl",
+      "intellij.searchEverywhereMl.common",
       "intellij.searchEverywhereMl.yaml",
       "intellij.searchEverywhereMl.vcs",
       "intellij.searchEverywhereMl.typos"

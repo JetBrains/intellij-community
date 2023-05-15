@@ -1,11 +1,11 @@
-package com.intellij.ide.actions.searcheverywhere.ml
+package com.intellij.searchEverywhereMl.common
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
 
-internal enum class SearchEverywhereTabWithMl(val tabId: String) {
+enum class SearchEverywhereTabWithMlRanking(val tabId: String) {
   // Define only tabs for which sorting by ML can be turned on or off in the advanced settings
   ACTION(ActionSearchEverywhereContributor::class.java.simpleName),
   FILES(FileSearchEverywhereContributor::class.java.simpleName),

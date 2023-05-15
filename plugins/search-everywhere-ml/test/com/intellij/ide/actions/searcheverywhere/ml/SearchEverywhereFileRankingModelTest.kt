@@ -5,9 +5,10 @@ import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
 
 internal class SearchEverywhereFileRankingModelTest : SearchEverywhereRankingModelTest() {
-  override val tab = SearchEverywhereTabWithMl.FILES
+  override val tab = SearchEverywhereTabWithMlRanking.FILES
   private val gotoFileModel by lazy { GotoFileModel(project) }
   private val gotoFileModelProvider: GotoFileItemProvider by lazy { gotoFileModel.getItemProvider(null) as GotoFileItemProvider }
   private val viewModel by lazy { StubChooseByNameViewModel(gotoFileModel) }
