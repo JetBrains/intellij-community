@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.editor.Editor;
@@ -195,10 +195,14 @@ public final class LineStatusMarkerDrawUtil {
   @NotNull
   public static IntPair getGutterArea(@NotNull Editor editor) {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
-    int x = gutter.getLineMarkerFreePaintersAreaOffset() + 1; // leave 1px for brace highlighters
+    int x = 1; // leave 1px for brace highlighters
     if (ExperimentalUI.isNewUI()) {
+      x += gutter.getExtraLineMarkerFreePaintersAreaOffset();
       x += 2; //IDEA-286352
       return new IntPair(x, x + (int)(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 4) * getEditorScale(editor))));
+    }
+    else {
+      x += gutter.getLineMarkerFreePaintersAreaOffset();
     }
     int endX = gutter.getWhitespaceSeparatorOffset();
     return new IntPair(x, endX);

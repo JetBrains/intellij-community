@@ -92,6 +92,9 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract @Nullable Runnable setLoadingIconForCurrentGutterMark();
 
   @ApiStatus.Internal
+  public abstract int getExtraLineMarkerFreePaintersAreaOffset();
+
+  @ApiStatus.Internal
   public abstract boolean isInsideMarkerArea(@NotNull MouseEvent e);
 
   @ApiStatus.Internal

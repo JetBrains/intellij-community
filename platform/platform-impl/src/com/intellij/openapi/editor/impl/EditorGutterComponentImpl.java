@@ -148,6 +148,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private static final JBValueGroup JBVG = new JBValueGroup();
   private static final JBValue START_ICON_AREA_WIDTH = JBVG.value(17);
+  private static final JBValue FREE_PAINTERS_EXTRA_LEFT_AREA_WIDTH = JBVG.value(8); // to the left of the line numbers in the new UI
   private static final JBValue FREE_PAINTERS_LEFT_AREA_WIDTH = JBVG.value(8);
   private static final JBValue FREE_PAINTERS_RIGHT_AREA_WIDTH = JBVG.value(5);
   private static final JBValue GAP_BETWEEN_ICONS = JBVG.value(3);
@@ -1267,8 +1268,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   public boolean isInsideMarkerArea(@NotNull MouseEvent e) {
     if (ExperimentalUI.isNewUI()) {
       int x = e.getX();
-      int offset = getLineMarkerFreePaintersAreaOffset();
-      int width = myLayout.getAreaWidth(EditorGutterLayout.RIGHT_FREE_PAINTERS_AREA);
+      int offset = getExtraLineMarkerFreePaintersAreaOffset();
+      int width = getExtraLeftFreePaintersAreaWidth();
       return offset < x && x <= offset + width;
     }
     return e.getX() > getLineMarkerFreePaintersAreaOffset();
@@ -1801,6 +1802,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return myLayout.getLineMarkerFreePaintersAreaOffset();
   }
 
+  @Override
+  public int getExtraLineMarkerFreePaintersAreaOffset() {
+    return myLayout.getExtraLeftFreePaintersAreaOffset();
+  }
+
+  int getExtraLeftFreePaintersAreaWidth() {
+    return (int)scale(FREE_PAINTERS_EXTRA_LEFT_AREA_WIDTH.get());
+  }
+
   int getLeftFreePaintersAreaWidth() {
     if (!myLeftFreePaintersAreaShown) return 0;
     if (myForcedLeftFreePaintersAreaWidth >= 0) return myForcedLeftFreePaintersAreaWidth;
@@ -1942,8 +1952,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     int x = convertX(point.x);
 
     int hoveredLine;
-    if (x >= getLineMarkerAreaOffset() &&
-        x <= getLineMarkerAreaOffset() + getLeftFreePaintersAreaWidth() + getRightFreePaintersAreaWidth()) {
+    if (x >= getExtraLineMarkerFreePaintersAreaOffset() && x <= getExtraLineMarkerFreePaintersAreaOffset() + getExtraLeftFreePaintersAreaWidth()) {
       hoveredLine = getEditor().xyToLogicalPosition(point).line;
     }
     else {
