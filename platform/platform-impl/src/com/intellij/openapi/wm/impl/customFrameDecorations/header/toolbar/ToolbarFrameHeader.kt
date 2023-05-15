@@ -5,8 +5,10 @@ import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ToolbarHolder
@@ -57,6 +59,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     isOpaque = false
   }
   private val customizer get() = ProjectWindowCustomizerService.getInstance()
+  private var customizerServiceDisposable: Disposable? = null
 
   init {
     updateMenuBar()
@@ -184,12 +187,20 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     super.installListeners()
     mainMenuButton.rootPane = frame.rootPane
     myMenuBar.addComponentListener(contentResizeListener)
+    customizerServiceDisposable = Disposer.newDisposable()
+    ProjectWindowCustomizerService.getInstance().addListener(customizerServiceDisposable!!, true) {
+      myMenuBar.updateMenuSelectionBackground()
+    }
   }
 
   override fun uninstallListeners() {
     super.uninstallListeners()
     myMenuBar.removeComponentListener(contentResizeListener)
     toolbar?.removeComponentListener(contentResizeListener)
+    customizerServiceDisposable?.let {
+      Disposer.dispose(it)
+      customizerServiceDisposable = null
+    }
   }
 
   override fun updateMenuActions(forceRebuild: Boolean) {
@@ -212,6 +223,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
   }
 
   private fun updateMenuBar() {
+    myMenuBar.updateMenuSelectionBackground()
     if (IdeRootPane.hideNativeLinuxTitle) {
       myMenuBar.border = null
       setMenuColor(myMenuBar, myHeaderContent.background)

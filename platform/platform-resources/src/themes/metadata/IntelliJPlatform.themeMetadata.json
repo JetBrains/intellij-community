@@ -765,6 +765,11 @@
       "description": "Light-colored links. Used in the Variables tab of the Debugger tool window. Can be seen when a tree line is long, does not fit into the tab's width, and its popup on hover goes beyond the right monitor side."
     },
     {
+      "key": "MainMenu.transparentSelectionBackground",
+      "description": "Selection background in colorful header mode",
+      "since": "2023.2"
+    },
+    {
       "key": "MemoryIndicator.usedBackground",
       "description": "Memory indicator color for used memory rectangle",
       "since": "2019.2"

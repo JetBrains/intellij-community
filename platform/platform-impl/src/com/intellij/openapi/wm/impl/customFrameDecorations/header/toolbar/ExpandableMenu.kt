@@ -4,6 +4,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.icons.ExpUiIcons
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -16,6 +17,9 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -29,6 +33,7 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
 
   val ideMenu = IdeMenuBar.createMenuBar()
   private var expandedMenuBar: JPanel? = null
+  private var headerColorfulPanel: HeaderColorfulPanel? = null
   private val shadowComponent = ShadowComponent()
   private val rootPane: JRootPane?
     get() = SwingUtilities.getRootPane(headerContent)
@@ -51,6 +56,13 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
       }
     }
 
+    // ideMenu can be populated after switchState invocation
+    ideMenu.addContainerListener(object : ContainerAdapter() {
+      override fun componentAdded(e: ContainerEvent?) {
+        ideMenu.updateMenuSelectionBackground()
+      }
+    })
+
     headerContent.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
         updateBounds()
@@ -68,6 +80,7 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
 
   private fun updateUI() {
     IJSwingUtilities.updateComponentTreeUI(ideMenu)
+    ideMenu.updateMenuSelectionBackground()
     ideMenu.border = null
   }
 
@@ -86,13 +99,15 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
           val closeButton = createMenuButton(CloseExpandedMenuAction()).apply {
             setMinimumButtonSize(JBDimension(JBUI.unscale(buttonSize.width), JBUI.unscale(buttonSize.height)))
           }
-
-          cell(wrapComponent(closeButton))
-          cell(wrapComponent(ideMenu)).align(AlignY.FILL)
+          headerColorfulPanel = cell(HeaderColorfulPanel(listOf(closeButton, ideMenu)))
+            .align(AlignY.FILL)
+            .component
           cell(shadowComponent).align(Align.FILL)
         }
       }
     }.apply { isOpaque = false }
+
+    ideMenu.updateMenuActions(true)
 
     // Menu wasn't a part of components tree, updateUI is needed
     updateUI()
@@ -155,25 +170,23 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
     if (IdeRootPane.hideNativeLinuxTitle) {
       setMenuColor(ideMenu, color)
     }
-    expandedMenuBar?.background = color
+    headerColorfulPanel?.background = color
     @Suppress("UseJBColor")
     shadowComponent.background = Color(color.red, color.green, color.blue, ALPHA)
   }
 
-  private fun wrapComponent(component: JComponent): JPanel {
-    return JPanel(BorderLayout()).apply {
-      add(component, BorderLayout.CENTER)
-      background = null
-    }
-  }
-
   private fun updateBounds() {
-    expandedMenuBar?.let {
+    val location = SwingUtilities.convertPoint(headerContent, 0, 0, rootPane ?: return)
+    if (location == null) {
+      headerColorfulPanel?.horizontalOffset = 0
+    } else {
       val insets = headerContent.insets
-      val location = SwingUtilities.convertPoint(headerContent, Point(insets.left, insets.top), rootPane ?: return)
-      it.bounds = Rectangle(location.x, location.y,
-                            headerContent.width - insets.left - insets.right,
-                            headerContent.height - insets.top - insets.bottom)
+      headerColorfulPanel?.horizontalOffset = location.x + insets.left
+      expandedMenuBar?.let {
+        it.bounds = Rectangle(location.x + insets.left, location.y + insets.top,
+                              headerContent.width - insets.left - insets.right,
+                              headerContent.height - insets.top - insets.bottom)
+      }
     }
   }
 
@@ -181,9 +194,38 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
     if (isShowing()) {
       rootPane?.layeredPane?.remove(expandedMenuBar)
       expandedMenuBar = null
+      headerColorfulPanel = null
       uninstallHoverListeners()
 
       rootPane?.repaint()
+    }
+  }
+
+  private class HeaderColorfulPanel(components: List<JComponent>): JPanel() {
+
+    var horizontalOffset = 0
+
+    init {
+      // Deny background painting by super.paint()
+      isOpaque = false
+      layout = GridLayout()
+      val builder = RowsGridBuilder(this)
+      for (component in components) {
+        builder.cell(component, verticalAlign = VerticalAlign.FILL)
+      }
+    }
+
+    override fun paint(g: Graphics?) {
+      g as Graphics2D
+      g.translate(-horizontalOffset, 0)
+      val root = SwingUtilities.getRoot(this) as? Window
+      val painted = if (root == null) false else ProjectWindowCustomizerService.getInstance().paint(root, this, g)
+      g.translate(horizontalOffset, 0)
+      if (!painted) {
+        g.color = background
+        g.fillRect(0, 0, width, height)
+      }
+      super.paint(g)
     }
   }
 

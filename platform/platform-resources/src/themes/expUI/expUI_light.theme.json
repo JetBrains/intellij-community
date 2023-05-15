@@ -317,7 +317,8 @@
       "background": "Grey2",
       "foreground": "Grey12",
       "selectionForeground": "Grey12",
-      "selectionBackground": "Grey3"
+      "selectionBackground": "Grey3",
+      "transparentSelectionBackground": "#FFFFFF1A"
     },
 
     "MemoryIndicator": {

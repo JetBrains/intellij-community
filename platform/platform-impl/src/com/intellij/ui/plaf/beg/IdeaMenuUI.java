@@ -87,7 +87,7 @@ public class IdeaMenuUI extends BasicMenuUI {
       myMaxGutterIconWidth2 = myMaxGutterIconWidth = integer.intValue();
     }
 
-    selectionBackground = JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
+    selectionBackground = getDefaultSelectionBackground();
     if (isHeaderMenu()) {
       menuItem.setBackground(getMenuBackgroundColor());
       menuItem.setForeground(JBColor.namedColor("MainMenu.foreground", UIManager.getColor("Menu.foreground")));
@@ -97,12 +97,22 @@ public class IdeaMenuUI extends BasicMenuUI {
   }
 
   @ApiStatus.Internal
+  public static Color getDefaultSelectionBackground() {
+    return JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
+  }
+
+  @ApiStatus.Internal
+  public void setSelectionBackground(Color selectionBackground) {
+    this.selectionBackground = selectionBackground;
+  }
+
+  @ApiStatus.Internal
   static public @NotNull Color getMenuBackgroundColor() {
     return JBColor.namedColor("MainMenu.background", UIManager.getColor("Menu.background"));
   }
 
   private boolean isHeaderMenu() {
-    return menuItem instanceof ActionMenu && ((ActionMenu)menuItem).isHeaderMenuItem();
+    return menuItem instanceof ActionMenu actionMenu && actionMenu.isHeaderMenuItem();
   }
 
   private void checkEmptyIcon(JComponent comp) {

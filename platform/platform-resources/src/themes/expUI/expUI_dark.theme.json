@@ -303,7 +303,8 @@
 
     "MainMenu": {
       "selectionForeground": "Grey12",
-      "selectionBackground": "Grey3"
+      "selectionBackground": "Grey3",
+      "transparentSelectionBackground": "#FFFFFF1A"
     },
 
     "MemoryIndicator": {

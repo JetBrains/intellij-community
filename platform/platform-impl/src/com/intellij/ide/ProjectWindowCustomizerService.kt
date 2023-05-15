@@ -9,7 +9,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
@@ -21,7 +20,6 @@ import com.intellij.ui.JBColor
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.ColorPalette
 import java.awt.*
-import java.awt.geom.Rectangle2D
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -88,7 +86,7 @@ class ProjectWindowCustomizerService : Disposable {
     g ?: return false
     val project = ProjectFrameHelper.getFrameHelper(window)?.project ?: return false
 
-    return paint(project, parent, g)
+    return paint(project, parent, g as Graphics2D)
   }
 
   fun enableIfNeeded() {
@@ -135,20 +133,19 @@ class ProjectWindowCustomizerService : Disposable {
   /**
    * @return true if method painted something
    */
-  fun paint(project: Project, parent: JComponent, g: Graphics): Boolean {
+  fun paint(project: Project, parent: JComponent, g: Graphics2D): Boolean {
     if (!isActive()) return false
     val projectPath = getProjectNameForIcon(project)
 
-    val g2 = g as Graphics2D
-    g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
 
-    g2.color = parent.background
-    g2.fill(Rectangle2D.Double(0.0, 0.0, parent.width.toDouble(), parent.height.toDouble()))
+    g.color = parent.background
+    g.fillRect(0, 0, parent.width, parent.height)
 
     val color = computeOrGetColor(projectPath, project)
 
-    g2.paint = GradientPaint(parent.x.toFloat(), parent.y.toFloat(), color, 400f, parent.y.toFloat(), parent.background)
-    g2.fill(Rectangle2D.Double(0.0, 0.0, 400.0, parent.height.toDouble()))
+    g.paint = GradientPaint(parent.x.toFloat(), parent.y.toFloat(), color, 400f, parent.y.toFloat(), parent.background)
+    g.fillRect(0, 0, 400, parent.height)
 
     return true
   }
