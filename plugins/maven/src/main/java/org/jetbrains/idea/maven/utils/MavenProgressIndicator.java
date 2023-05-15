@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.components.Service.Level.PROJECT;
 
 public class MavenProgressIndicator {
-  private ProgressIndicator myIndicator;
+  private @NotNull ProgressIndicator myIndicator;
   private final List<Condition<MavenProgressIndicator>> myCancelConditions = new ArrayList<>();
   private @Nullable final Supplier<MavenSyncConsole> mySyncSupplier;
   private @Nullable final Project myProject;
@@ -37,7 +37,7 @@ public class MavenProgressIndicator {
   }
 
   public MavenProgressIndicator(@Nullable Project project,
-                                ProgressIndicator i,
+                                @NotNull ProgressIndicator i,
                                 @Nullable Supplier<MavenSyncConsole> syncSupplier) {
     myProject = project;
     myIndicator = i;
@@ -45,7 +45,7 @@ public class MavenProgressIndicator {
     maybeTrackIndicator(i);
   }
 
-  public synchronized void setIndicator(ProgressIndicator i) {
+  public synchronized void setIndicator(@NotNull ProgressIndicator i) {
     maybeTrackIndicator(i);
     //setIndicatorStatus(i);
     i.setText(myIndicator.getText());
@@ -57,6 +57,7 @@ public class MavenProgressIndicator {
     myIndicator = i;
   }
 
+  @NotNull
   public synchronized ProgressIndicator getIndicator() {
     return myIndicator;
   }
