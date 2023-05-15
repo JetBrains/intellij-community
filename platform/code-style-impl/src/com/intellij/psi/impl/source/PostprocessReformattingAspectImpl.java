@@ -104,7 +104,8 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
 
       @Override
       public void writeActionFinished(@NotNull Object action) {
-        CommandProcessor processor = ApplicationManager.getApplication().getServiceIfCreated(CommandProcessor.class);
+        Application app = ApplicationManager.getApplication();
+        CommandProcessor processor = app == null ? null : app.getServiceIfCreated(CommandProcessor.class);
         if (processor != null && processor.getCurrentCommandProject() == myProject) {
           decrementPostponedCounter();
         }
