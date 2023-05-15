@@ -27,29 +27,26 @@ import kotlin.coroutines.cancellation.CancellationException
 private typealias DiscussionsFlow = Flow<Collection<GitLabMergeRequestDiffDiscussionViewModel>>
 private typealias NewDiscussionsFlow = Flow<Map<DiffLineLocation, NewGitLabNoteViewModel>>
 
-interface GitLabMergeRequestDiffChangeViewModel {
+internal interface GitLabMergeRequestDiffChangeViewModel {
   val discussions: DiscussionsFlow
   val draftDiscussions: DiscussionsFlow
   val newDiscussions: NewDiscussionsFlow
 
-  val discussionsViewOption: StateFlow<DiscussionsViewOption>
-
   fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean)
   fun cancelNewDiscussion(location: DiffLineLocation)
-
-  fun setDiscussionsViewOption(viewOption: DiscussionsViewOption)
 }
 
 private val LOG = logger<GitLabMergeRequestDiffChangeViewModel>()
 
-class GitLabMergeRequestDiffChangeViewModelImpl(
+internal class GitLabMergeRequestDiffChangeViewModelImpl(
   parentCs: CoroutineScope,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
-  private val diffData: GitTextFilePatchWithHistory
+  private val diffData: GitTextFilePatchWithHistory,
+  discussionsViewOption: Flow<DiscussionsViewOption>
 ) : GitLabMergeRequestDiffChangeViewModel {
 
-  private val cs = parentCs.childScope(Dispatchers.Default)
+  private val cs = parentCs.childScope(Dispatchers.Default + CoroutineName("GitLab Merge Request Review Diff Change"))
 
   override val discussions: DiscussionsFlow = mergeRequest.discussions
     .mapCaching(
@@ -69,8 +66,6 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
   private val _newDiscussions = MutableStateFlow<Map<DiffLineLocation, NewGitLabNoteViewModel>>(emptyMap())
   override val newDiscussions: NewDiscussionsFlow = _newDiscussions.asStateFlow()
 
-  private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
-  override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()
 
   override fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean) {
     _newDiscussions.updateAndGet {
@@ -130,10 +125,6 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
       }
       newMap
     }
-  }
-
-  override fun setDiscussionsViewOption(viewOption: DiscussionsViewOption) {
-    _discussionsViewOption.value = viewOption
   }
 
   suspend fun destroy() {

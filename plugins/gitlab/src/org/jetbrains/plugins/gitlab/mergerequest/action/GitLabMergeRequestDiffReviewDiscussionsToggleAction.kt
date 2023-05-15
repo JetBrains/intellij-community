@@ -4,14 +4,13 @@ package org.jetbrains.plugins.gitlab.mergerequest.action
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.toActionName
 import com.intellij.openapi.actionSystem.*
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffChangeViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModel
 
 internal class GitLabMergeRequestDiffReviewDiscussionsToggleAction : ActionGroup() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val vm: GitLabMergeRequestDiffChangeViewModel? = e.getData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY)
+    val vm: GitLabMergeRequestDiffReviewViewModel? = e.getData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY)
     e.presentation.isEnabledAndVisible = vm != null
   }
 
@@ -23,12 +22,12 @@ internal class GitLabMergeRequestDiffReviewDiscussionsToggleAction : ActionGroup
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun isSelected(e: AnActionEvent): Boolean {
-      val vm: GitLabMergeRequestDiffChangeViewModel = e.getRequiredData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY)
+      val vm: GitLabMergeRequestDiffReviewViewModel = e.getRequiredData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY)
       return vm.discussionsViewOption.value == viewOption
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      val vm: GitLabMergeRequestDiffChangeViewModel = e.getRequiredData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY)
+      val vm: GitLabMergeRequestDiffReviewViewModel = e.getRequiredData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY)
       vm.setDiscussionsViewOption(viewOption)
     }
   }

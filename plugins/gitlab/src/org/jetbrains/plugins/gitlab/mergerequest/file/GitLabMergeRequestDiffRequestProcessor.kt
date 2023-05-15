@@ -2,6 +2,7 @@
 
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
 import com.intellij.collaboration.ui.icon.IconsProvider
@@ -22,7 +23,6 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.history.VcsDiffUtil
 import com.intellij.util.cancelOnDispose
-import com.intellij.util.childScope
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.getDiffComputer
 import kotlinx.coroutines.*
@@ -30,11 +30,11 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.diff.*
 
-@OptIn(ExperimentalCoroutinesApi::class)
 fun createMergeRequestDiffRequestProcessor(project: Project,
                                            currentUser: GitLabUserDTO,
                                            projectData: GitLabLazyProject,
@@ -42,29 +42,29 @@ fun createMergeRequestDiffRequestProcessor(project: Project,
                                            avatarIconsProvider: IconsProvider<GitLabUserDTO>,
                                            mergeRequestId: GitLabMergeRequestId): DiffRequestProcessor {
   val job = SupervisorJob()
-  val cs = CoroutineScope(job)
-
-  val reviewVm = GitLabMergeRequestDiffReviewViewModelImpl(cs, currentUser, projectData, avatarIconsProvider, mergeRequestId)
-
-  val uiCs = cs.childScope(Dispatchers.Main.immediate)
-  val processor = MutableDiffRequestChainProcessor(project, SimpleDiffRequestChain(LoadingDiffRequest())).apply {
-    putContextUserData(GitLabMergeRequestDiffReviewViewModel.KEY, reviewVm)
-  }
-
+  val uiCs = CoroutineScope(job + Dispatchers.Main.immediate + CoroutineName("GitLab Merge Request Review Diff UI"))
+  val processor = MutableDiffRequestChainProcessor(project, SimpleDiffRequestChain(LoadingDiffRequest()))
   job.cancelOnDispose(processor)
 
-  uiCs.launch(start = CoroutineStart.UNDISPATCHED) {
-    projectData.mergeRequests.getShared(mergeRequestId).flatMapLatest { res ->
-      res.fold(
-        onSuccess = { diffBridge.displayedChanges.mapToDiffChain(project, uiCs, reviewVm, it.changes) },
-        onFailure = { flowOf(SimpleDiffRequestChain(ErrorDiffRequest(it))) }
-      )
-    }.collectLatest {
-      processor.chain = it
-    }
+  uiCs.launchNow {
+    projectData.mergeRequests.getShared(mergeRequestId)
+      .mapNotNull(Result<GitLabMergeRequest>::getOrNull)
+      .collectLatest { mr ->
+        coroutineScope {
+          val vm = GitLabMergeRequestDiffReviewViewModelImpl(this, currentUser, mr, avatarIconsProvider)
+          processor.putContextUserData(GitLabMergeRequestDiffReviewViewModel.KEY, vm)
+
+          launchNow {
+            diffBridge.displayedChanges.mapToDiffChain(project, vm, mr.changes).collectLatest {
+              processor.chain = it
+            }
+          }
+          awaitCancellation()
+        }
+      }
   }
 
-  uiCs.launch(start = CoroutineStart.UNDISPATCHED) {
+  uiCs.launchNow {
     callbackFlow {
       val listener = MutableDiffRequestChainProcessor.SelectionListener { producer ->
         trySend((producer as? ChangeDiffRequestProducer)?.change)
@@ -83,7 +83,6 @@ fun createMergeRequestDiffRequestProcessor(project: Project,
 
 private fun Flow<ChangesSelection>.mapToDiffChain(
   project: Project,
-  uiCs: CoroutineScope,
   reviewVm: GitLabMergeRequestDiffReviewViewModel,
   changesFlow: Flow<GitLabMergeRequestChanges>
 ): Flow<DiffRequestChain?> =
@@ -104,8 +103,9 @@ private fun Flow<ChangesSelection>.mapToDiffChain(
       return@combineTransformLatest
     }
 
+
     val producers = selection.toProducersSelection { change, location ->
-      val changeDataKeys = uiCs.createData(reviewVm, changesBundle, change, location)
+      val changeDataKeys = createData(reviewVm, changesBundle, change, location)
       ChangeDiffRequestProducer.create(project, change, changeDataKeys)
     }
 
@@ -120,7 +120,7 @@ private suspend fun loadRevisionsAndParseChanges(changes: GitLabMergeRequestChan
     changes.getParsedChanges()
   }
 
-private fun CoroutineScope.createData(
+private fun createData(
   reviewVm: GitLabMergeRequestDiffReviewViewModel,
   parsedChanges: GitBranchComparisonResult,
   change: Change,
@@ -129,15 +129,9 @@ private fun CoroutineScope.createData(
   val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
 
   VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
-  val diffChangeVm: Flow<GitLabMergeRequestDiffChangeViewModel?> = reviewVm.getViewModelFor(change)
   val dataProvider = GenericDataProvider()
   requestDataKeys[DiffUserDataKeys.DATA_PROVIDER] = dataProvider
-
-  launch {
-    diffChangeVm.collect {
-      dataProvider.putData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY, it)
-    }
-  }
+  dataProvider.putData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY, reviewVm)
 
   val diffComputer = parsedChanges.patchesByChange[change]?.getDiffComputer()
   if (diffComputer != null) {
