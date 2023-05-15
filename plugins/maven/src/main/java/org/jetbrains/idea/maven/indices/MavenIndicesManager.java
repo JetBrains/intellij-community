@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -197,21 +198,27 @@ public final class MavenIndicesManager implements Disposable {
    *
    */
   public boolean scheduleArtifactIndexing(@Nullable MavenId mavenId, @NotNull File artifactFile) {
+
     if (myMavenIndices.isNotInit()) return false;
-    MavenIndex localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
-    if (localIndex == null) {
-      return false;
-    }
-    if (mavenId != null) {
-      if (mavenId.getGroupId() == null || mavenId.getArtifactId() == null || mavenId.getVersion() == null) {
+    try {
+      MavenIndex localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
+      if (localIndex == null) {
         return false;
       }
-      if (localIndex.hasVersion(mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion())) return false;
-    }
+      if (mavenId != null) {
+        if (mavenId.getGroupId() == null || mavenId.getArtifactId() == null || mavenId.getVersion() == null) {
+          return false;
+        }
+        if (localIndex.hasVersion(mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion())) return false;
+      }
 
-    AppExecutorUtil.getAppExecutorService().execute(() -> {
-      myIndexFixer.fixIndex(artifactFile);
-    });
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        myIndexFixer.fixIndex(artifactFile);
+      });
+    }
+    catch (AlreadyDisposedException ignore) {
+      return false;
+    }
     return true;
   }
 
@@ -232,6 +239,7 @@ public final class MavenIndicesManager implements Disposable {
 
   /**
    * Schedule update indices list {@link MavenIndices} async.
+   *
    *
    * @param consumer - consumer for new indices.
    */
