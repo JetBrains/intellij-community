@@ -34,11 +34,13 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
+import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import javax.swing.ListCellRenderer
 
-internal class TextSearchContributor(
+@ApiStatus.Internal
+class TextSearchContributor(
   val event: AnActionEvent
 ) : WeightedSearchEverywhereContributor<SearchEverywhereItem>,
     SearchFieldActionsContributor,
