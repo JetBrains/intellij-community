@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.Vfs
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.VfsRecoveryException
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.RecoveredChildrenIds
 
 object VfsChronicle {
 
@@ -28,8 +29,7 @@ object VfsChronicle {
                           direction: TraverseDirection = TraverseDirection.REWIND,
                           crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
     traverseOperationsLogForLookup(
-      iterator, direction, condition,
-      VfsOperationTagsMask(REC_ALLOC, REC_SET_NAME_ID, REC_FILL_RECORD, REC_CLEAN_RECORD),
+      iterator, direction, VfsOperationTagsMask(REC_ALLOC, REC_SET_NAME_ID, REC_FILL_RECORD, REC_CLEAN_RECORD), condition,
       onValid = { operation, detect ->
         when (operation) {
           is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
@@ -45,8 +45,7 @@ object VfsChronicle {
                             direction: TraverseDirection = TraverseDirection.REWIND,
                             crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
     traverseOperationsLogForLookup(
-      iterator, direction, condition,
-      VfsOperationTagsMask(REC_ALLOC, REC_SET_PARENT, REC_FILL_RECORD, REC_CLEAN_RECORD),
+      iterator, direction, VfsOperationTagsMask(REC_ALLOC, REC_SET_PARENT, REC_FILL_RECORD, REC_CLEAN_RECORD), condition,
       onValid = { operation, detect ->
         when (operation) {
           is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
@@ -62,8 +61,7 @@ object VfsChronicle {
                           direction: TraverseDirection = TraverseDirection.REWIND,
                           crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Long> =
     traverseOperationsLogForLookup(
-      iterator, direction, condition,
-      VfsOperationTagsMask(REC_ALLOC, REC_SET_LENGTH, REC_FILL_RECORD, REC_CLEAN_RECORD),
+      iterator, direction, VfsOperationTagsMask(REC_ALLOC, REC_SET_LENGTH, REC_FILL_RECORD, REC_CLEAN_RECORD), condition,
       onValid = { operation, detect ->
         when (operation) {
           is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0L)
@@ -79,8 +77,7 @@ object VfsChronicle {
                              direction: TraverseDirection = TraverseDirection.REWIND,
                              crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Long> =
     traverseOperationsLogForLookup(
-      iterator, direction, condition,
-      VfsOperationTagsMask(REC_ALLOC, REC_SET_TIMESTAMP, REC_FILL_RECORD, REC_CLEAN_RECORD),
+      iterator, direction, VfsOperationTagsMask(REC_ALLOC, REC_SET_TIMESTAMP, REC_FILL_RECORD, REC_CLEAN_RECORD), condition,
       onValid = { operation, detect ->
         when (operation) {
           is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0L)
@@ -96,8 +93,7 @@ object VfsChronicle {
                          direction: TraverseDirection = TraverseDirection.REWIND,
                          crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
     traverseOperationsLogForLookup(
-      iterator, direction, condition,
-      VfsOperationTagsMask(REC_ALLOC, REC_SET_FLAGS, REC_FILL_RECORD, REC_CLEAN_RECORD),
+      iterator, direction, VfsOperationTagsMask(REC_ALLOC, REC_SET_FLAGS, REC_FILL_RECORD, REC_CLEAN_RECORD), condition,
       onValid = { operation, detect ->
         when (operation) {
           is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
@@ -113,8 +109,7 @@ object VfsChronicle {
                                    direction: TraverseDirection = TraverseDirection.REWIND,
                                    crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
     traverseOperationsLogForLookup(
-      iterator, direction, condition,
-      VfsOperationTagsMask(REC_ALLOC, REC_SET_CONTENT_RECORD_ID, REC_CLEAN_RECORD),
+      iterator, direction, VfsOperationTagsMask(REC_ALLOC, REC_SET_CONTENT_RECORD_ID, REC_CLEAN_RECORD), condition,
       onValid = { operation, detect ->
         when (operation) {
           is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
@@ -129,8 +124,7 @@ object VfsChronicle {
                                      direction: TraverseDirection = TraverseDirection.REWIND,
                                      crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
     traverseOperationsLogForLookup(
-      iterator, direction, condition,
-      VfsOperationTagsMask(REC_ALLOC, REC_SET_ATTR_REC_ID, REC_FILL_RECORD, REC_CLEAN_RECORD),
+      iterator, direction, VfsOperationTagsMask(REC_ALLOC, REC_SET_ATTR_REC_ID, REC_FILL_RECORD, REC_CLEAN_RECORD), condition,
       onValid = { operation, detect ->
         when (operation) {
           is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
@@ -161,15 +155,16 @@ object VfsChronicle {
       else null
     }
     return traverseOperationsLogForLookup(
-      iterator, direction, condition,
+      iterator, direction,
       VfsOperationTagsMask(CONTENT_ACQUIRE_NEW_RECORD, CONTENT_WRITE_BYTES,
                            CONTENT_WRITE_STREAM, CONTENT_WRITE_STREAM_2,
                            CONTENT_REPLACE_BYTES, CONTENT_APPEND_STREAM),
+      condition,
       onValid = { operation, detect ->
         when (operation) {
           is ContentsOperation.AcquireNewRecord ->
             if (operation.result.hasValue && operation.result.value == contentRecordId) {
-              detect(ContentOperation.Set { ByteArray(0).let(State::ready) })
+              detect(ContentOperation.Set { ByteArray(0).let(State::Ready) })
             }
           is ContentsOperation.WriteBytes -> rewriteContentCase(operation.recordId, operation.dataPayloadRef)?.let(detect)
           is ContentsOperation.WriteStream -> rewriteContentCase(operation.recordId, operation.dataPayloadRef)?.let(detect)
@@ -212,7 +207,7 @@ object VfsChronicle {
     while (iterator.hasPrevious() && condition(iterator)) {
       val lookup =
         lookupContentOperation(iterator, contentRecordId, TraverseDirection.REWIND, condition)
-      if (!lookup.found) return State.notAvailable() // didn't find any relevant content op
+      if (!lookup.found) return State.NotAvailable() // didn't find any relevant content op
       when (val op = lookup.value) {
         is ContentOperation.Modify -> restoreStack.add(op)
         is ContentOperation.Set -> {
@@ -223,7 +218,7 @@ object VfsChronicle {
       }
     }
     // no ContentOp.SetValue was found
-    return State.notAvailable()
+    return State.NotAvailable()
   }
 
   /**
@@ -235,8 +230,7 @@ object VfsChronicle {
                                  direction: TraverseDirection = TraverseDirection.REWIND,
                                  crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<PayloadRef?> =
     traverseOperationsLogForLookup(
-      iterator, direction, condition,
-      VfsOperationTagsMask(ATTR_DELETE_ATTRS, ATTR_WRITE_ATTR),
+      iterator, direction, VfsOperationTagsMask(ATTR_DELETE_ATTRS, ATTR_WRITE_ATTR), condition,
       onValid = { operation, detect ->
         when (operation) {
           is AttributesOperation.DeleteAttributes -> if (operation.fileId == fileId) detect(null)
@@ -246,11 +240,55 @@ object VfsChronicle {
         }
       })
 
+  private class RecoveredChildrenIdsImpl(val ids: List<Int>, override val isComplete: Boolean): RecoveredChildrenIds, List<Int> by ids
+
+  fun restoreChildrenIds(iterator: OperationLogStorage.Iterator, fileId: Int): RecoveredChildrenIds {
+    val childrenIds = mutableSetOf<Int>()
+    val seenDifferentSetParent = mutableSetOf<Int>()
+    traverseOperationsLog(
+      iterator, TraverseDirection.REWIND, VfsOperationTagsMask(REC_ALLOC, REC_SET_PARENT, REC_FILL_RECORD, REC_CLEAN_RECORD)
+    ) {
+      when (it) {
+        is RecordsOperation.AllocateRecord -> {
+          if (it.result.hasValue) {
+            val id = it.result.value
+            if (fileId == id) return RecoveredChildrenIdsImpl(childrenIds.toList(), true)
+            seenDifferentSetParent.add(id)
+          }
+        }
+        is RecordsOperation.SetParent -> {
+          if (it.parentId == fileId && !seenDifferentSetParent.contains(it.fileId)) {
+            childrenIds.add(it.fileId)
+          } else {
+            seenDifferentSetParent.add(it.fileId)
+          }
+        }
+        is RecordsOperation.FillRecord -> {
+          if (it.parentId == fileId && !seenDifferentSetParent.contains(it.fileId)) {
+            childrenIds.add(it.fileId)
+          } else {
+            seenDifferentSetParent.add(it.fileId)
+          }
+        }
+        is RecordsOperation.CleanRecord -> {
+          seenDifferentSetParent.add(it.fileId)
+        }
+        else -> throw IllegalStateException("filtered read is broken")
+      }
+    }
+    return RecoveredChildrenIdsImpl(childrenIds.toList(), false)
+  }
+
+  /**
+   * @see [restoreChildrenIds]
+   */
+  fun restoreRootIds(iterator: OperationLogStorage.Iterator): List<Int> = restoreChildrenIds(iterator, 1) // ROOT_FILE_ID
+
   inline fun traverseOperationsLog(
     iterator: OperationLogStorage.Iterator,
     direction: TraverseDirection,
-    crossinline continueCondition: (OperationLogStorage.Iterator) -> Boolean = { true },
     toReadMask: VfsOperationTagsMask,
+    crossinline continueCondition: (OperationLogStorage.Iterator) -> Boolean = { true },
     onInvalid: (cause: Throwable) -> Unit = { throw it },
     onIncomplete: (tag: VfsOperationTag) -> Unit = {},
     onValid: (operation: VfsOperation<*>) -> Unit
@@ -281,7 +319,7 @@ object VfsChronicle {
 
       inline fun <T> LookupResult<T>.toState(
         notFoundCause: () -> NotEnoughInformationCause = { State.Companion.UnspecifiedNotAvailableException }
-      ): State.DefinedState<T> = mapCases({ State.notAvailable(notFoundCause()) }, State::ready)
+      ): State.DefinedState<T> = mapCases({ State.NotAvailable(notFoundCause()) }, State::Ready)
     }
   }
 
@@ -310,14 +348,14 @@ object VfsChronicle {
   inline fun <T> traverseOperationsLogForLookup(
     iterator: OperationLogStorage.Iterator,
     direction: TraverseDirection,
-    crossinline continueCondition: (OperationLogStorage.Iterator) -> Boolean = { true },
     toReadMask: VfsOperationTagsMask,
+    crossinline continueCondition: (OperationLogStorage.Iterator) -> Boolean = { true },
     onInvalid: (cause: Throwable) -> Unit = { throw it },
     onIncomplete: (tag: VfsOperationTag) -> Unit = {},
     onValid: (operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit
   ): LookupResult<T> {
     val result = LookupResultImpl<T>()
-    traverseOperationsLog(iterator, direction, { !result.found && continueCondition(it) }, toReadMask, onInvalid, onIncomplete) {
+    traverseOperationsLog(iterator, direction, toReadMask, { !result.found && continueCondition(it) }, onInvalid, onIncomplete) {
       onValid(it, result::detect)
     }
     return result

@@ -38,11 +38,12 @@ class NotAvailableVfsSnapshot(point: OperationLogStorage.Iterator) : VfsSnapshot
     override val attributesRecordId: Property<Int> = NotAvailableProp()
     override val name: Property<String> = NotAvailableProp()
     override val parent: Property<VirtualFileSnapshot?> = NotAvailableProp()
-    override fun getContent(): State.DefinedState<ByteArray> = State.notAvailable()
-    override fun readAttribute(fileAttribute: FileAttribute): State.DefinedState<AttributeInputStream?> = State.notAvailable()
+    override fun getContent(): State.DefinedState<ByteArray> = State.NotAvailable()
+    override fun readAttribute(fileAttribute: FileAttribute): State.DefinedState<AttributeInputStream?> = State.NotAvailable()
+    override fun getRecoverableChildrenIds(): State.DefinedState<VirtualFileSnapshot.RecoveredChildrenIds> = State.NotAvailable()
 
     class NotAvailableProp<T> : Property<T>() {
-      override fun compute(): State.DefinedState<T> = State.notAvailable()
+      override fun compute(): State.DefinedState<T> = State.NotAvailable()
     }
   }
 }
@@ -87,7 +88,7 @@ class CacheAwareVfsSnapshot(
     override val nameId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::nameId) { stopIter, iter ->
       VfsChronicle.lookupNameId(iter, fileId, condition = { iter != stopIter }).toState()
     }
-    override val name: Property<String> = nameId.bind { id2filename(it)?.let(State::ready) ?: State.notAvailable() }
+    override val name: Property<String> = nameId.bind { id2filename(it)?.let(State::Ready) ?: State.NotAvailable() }
 
     override val parentId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::parentId) { stopIter, iter ->
       VfsChronicle.lookupParentId(iter, fileId, condition = { iter != stopIter }).toState()
@@ -118,7 +119,7 @@ class CacheAwareVfsSnapshot(
     override fun readAttribute(fileAttribute: FileAttribute): State.DefinedState<AttributeInputStream?> {
       val attrId = logContext.stringEnumerator.enumerate(fileAttribute.id)
       val attrData = VfsChronicle.lookupAttributeData(point(), fileId, attrId)
-      if (!attrData.found) return State.notAvailable()
+      if (!attrData.found) return State.NotAvailable()
       val payloadRef = attrData.value
       if (payloadRef == null) return State.Ready(null)
       return payloadReader(payloadRef).fmap {
@@ -127,6 +128,10 @@ class CacheAwareVfsSnapshot(
           AttributeInputStream(UnsyncByteArrayInputStream(it), attributeEnumerator)
         )
       }
+    }
+
+    override fun getRecoverableChildrenIds(): State.DefinedState<VirtualFileSnapshot.RecoveredChildrenIds> {
+      return VfsChronicle.restoreChildrenIds(point(), fileId).let(State::Ready)
     }
 
     private inner class CacheAwareProp<T>(

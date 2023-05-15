@@ -54,6 +54,13 @@ private val defaultDeepEquals = { lhs: Any, rhs: Any ->
       val rhsBytes = rhs.readAllBytes()
       lhsBytes.contentEquals(rhsBytes)
     }
+    is VirtualFileSnapshot.RecoveredChildrenIds -> {
+      rhs as VirtualFileSnapshot.RecoveredChildrenIds
+      var ok = true
+      if (lhs.isComplete) ok = ok and lhs.containsAll(rhs)
+      if (rhs.isComplete) ok = ok and rhs.containsAll(lhs)
+      ok
+    }
     else -> lhs == rhs
   }
 }
@@ -101,6 +108,9 @@ abstract class DualSourceTimeMachine(val original: VfsTimeMachine, val oracle: V
       override fun getContent(): DefinedState<ByteArray> = alternativeState { getContent() }
       override fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?> = alternativeState {
         readAttribute(fileAttribute)
+      }
+      override fun getRecoverableChildrenIds(): DefinedState<VirtualFileSnapshot.RecoveredChildrenIds> = alternativeState {
+        getRecoverableChildrenIds()
       }
     }
   }

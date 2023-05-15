@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.newvfs.AttributeInputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.mapCases
@@ -31,6 +32,20 @@ interface VfsSnapshot {
 
     fun getContent(): DefinedState<ByteArray>
     fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?>
+
+    /**
+     * @return [State.NotAvailable] if recovery is not possible at all, [State.Ready] if an attempt to recover children ids was made,
+     * but be cautious that the result may be incomplete in any case: some children ids may get lost if log was truncated from the start.
+     */
+    fun getRecoverableChildrenIds(): DefinedState<RecoveredChildrenIds>
+
+    interface RecoveredChildrenIds: List<Int> {
+      /**
+       * `false` in case there is no evidence that the list contains all children ids (some ids may get lost, but it cannot contain ids
+       * which are not actually children).
+       */
+      val isComplete: Boolean
+    }
 
     abstract class Property<T> {
       var state: State = State.UnknownYet
@@ -90,7 +105,7 @@ interface VfsSnapshot {
          * considered not normal.
          */
         class NotAvailable(
-          val cause: NotEnoughInformationCause
+          val cause: NotEnoughInformationCause = UnspecifiedNotAvailableException
         ) : DefinedState<Nothing> {
           override fun toString(): String = "N/A ($cause)"
         }
@@ -100,10 +115,6 @@ interface VfsSnapshot {
         }
 
         companion object {
-          fun notAvailable(cause: NotEnoughInformationCause = UnspecifiedNotAvailableException) = NotAvailable(cause)
-          fun <T> ready(value: T) = Ready(value)
-
-
           inline fun <T, R> DefinedState<T>.mapCases(onNotAvailable: (cause: Throwable) -> R, onReady: (value: T) -> R) = when (this) {
             is Ready<T> -> onReady(value)
             is NotAvailable -> onNotAvailable(cause)

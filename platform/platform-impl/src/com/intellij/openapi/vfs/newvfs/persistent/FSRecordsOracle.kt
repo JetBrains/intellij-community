@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.Vfs
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.fmap
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.mapCases
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.RecoveredChildrenIds
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsStateOracle
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -61,7 +62,7 @@ class FSRecordsOracle(
         queryFsRecords = { fsRecords.getNameIdByFileId(fileId) }
       )
       override val name: Property<String> = nameId.bind {
-        fsRecords.getNameByNameId(it)?.toString()?.let(State::ready) ?: State.notAvailable()
+        fsRecords.getNameByNameId(it)?.toString()?.let(State::Ready) ?: State.NotAvailable()
       }
 
       override val parentId: Property<Int> = OracledProp(
@@ -106,22 +107,33 @@ class FSRecordsOracle(
       )
 
       override fun getContent(): State.DefinedState<ByteArray> = contentRecordId.bind {
-        if (it == 0) return@bind State.notAvailable()
-        if (!distanceEvaluator.isWorthLookingUpFrom(point())) return@bind State.notAvailable()
+        if (it == 0) return@bind State.NotAvailable()
+        if (!distanceEvaluator.isWorthLookingUpFrom(point())) return@bind State.NotAvailable()
         val lookup = VfsChronicle.lookupContentOperation(point(), it, TraverseDirection.PLAY)
         if (lookup.found) { // some operation took place in between (point(), end()) so FSRecords may not contain value as at point()
-          return@bind State.notAvailable()
+          return@bind State.NotAvailable()
         }
         // content at point() is the same as in FSRecords
-        return@bind fsRecords.readContentById(it).readAllBytes().let(State::ready)
+        return@bind fsRecords.readContentById(it).readAllBytes().let(State::Ready)
       }.observeState()
 
       override fun readAttribute(fileAttribute: FileAttribute): State.DefinedState<AttributeInputStream?> {
-        if (!distanceEvaluator.isWorthLookingUpFrom(point())) return State.notAvailable()
+        if (!distanceEvaluator.isWorthLookingUpFrom(point())) return State.NotAvailable()
         val attrId = vfsLogContext.stringEnumerator.enumerate(fileAttribute.id)
         val attrData = VfsChronicle.lookupAttributeData(point(), fileId, attrId, direction = TraverseDirection.PLAY)
-        if (attrData.found) return State.notAvailable() // some operation took place in between (point(), end())
-        return fsRecords.readAttributeWithLock(fileId, fileAttribute).let(State::ready)
+        if (attrData.found) return State.NotAvailable() // some operation took place in between (point(), end())
+        return fsRecords.readAttributeWithLock(fileId, fileAttribute).let(State::Ready)
+      }
+
+      override fun getRecoverableChildrenIds(): State.DefinedState<RecoveredChildrenIds> {
+        if (point() == vfsLogContext.operationLogStorage.end()) {
+          val childrenIds = fsRecords.listIds(fileId).toList()
+          return object : RecoveredChildrenIds, List<Int> by childrenIds {
+            override val isComplete: Boolean = true
+          }.let(State::Ready)
+        }
+        // it's not clear how to easily check that events in (point(), end()) don't mutate children ids of fileId
+        return State.NotAvailable()
       }
 
       private inner class OracledProp<T>(
@@ -129,10 +141,10 @@ class FSRecordsOracle(
         val queryFsRecords: () -> T,
       ) : Property<T>() {
         override fun compute(): State.DefinedState<T> {
-          if (!distanceEvaluator.isWorthLookingUpFrom(point())) return State.notAvailable()
+          if (!distanceEvaluator.isWorthLookingUpFrom(point())) return State.NotAvailable()
           /* tricky: we must return the value at point(), so if queryLog() returns Ready, then the property has been changed in
              between (point(), end()) of log, so value at point() may not be the same as it is in FSRecords */
-          return queryLog().mapCases(onNotAvailable = { State.ready(queryFsRecords()) }) { State.notAvailable() }
+          return queryLog().mapCases(onNotAvailable = { State.Ready(queryFsRecords()) }) { State.NotAvailable() }
         }
       }
     }

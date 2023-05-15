@@ -184,7 +184,7 @@ private fun vfsRecoveryDraft(log: VfsLog,
   val payloadReadAt = log.context.payloadStorage::readAt
   val payloadReader: (PayloadRef) -> State.DefinedState<ByteArray> = {
     val data = payloadReadAt(it)
-    if (data == null) State.notAvailable(NotEnoughInformationCause("data is not available anymore"))
+    if (data == null) State.NotAvailable(NotEnoughInformationCause("data is not available anymore"))
     else State.Ready(data)
   }
   val vfsTimeMachine = VfsTimeMachineImpl(
@@ -298,6 +298,8 @@ private fun vfsRecoveryDraft(log: VfsLog,
                 println("MOVE FROM PARENT ${oldParent.name} to ${newParent.name}")
                 //println("old parent's children ids before: ${oldParent.readChildAttr()}")
                 //println("old parent's children ids after: ${oldParentAfter.readChildAttr()}")
+                println("old parent's children ids before: ${oldParent.getRecoverableChildrenIds().fmap { it.map { snapshotBefore.getFileById(it).name } }}")
+                println("old parent's children ids after: ${oldParentAfter.getRecoverableChildrenIds().fmap { it.map { snapshotAfter.getFileById(it).name } }}")
               }
               VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE -> {
                 val startOp =
