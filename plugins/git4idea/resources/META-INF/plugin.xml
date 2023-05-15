@@ -463,12 +463,12 @@
 
     <group id="MainToolbarVCSGroup">
       <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction" />
-      <add-to-group group-id="MainToolbarLeft"/>
+      <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
     </group>
 
     <group id="GitMainToolbarQuickActions" searchable="false" popup="false">
       <add-to-group group-id="MainToolbarQuickActions" relative-to-action="addQuickAction.Profile" anchor="after"/>
-      <separator/>
+      <separator key="MainToolbarQuickActions.vcs.separator"/>
       <action id="addQuickAction.Git.Update" class="git4idea.ui.toolbar.UpdateQuickAction" icon="AllIcons.Actions.CheckOut"/>
       <action id="addQuickAction.Git.Commit" class="git4idea.ui.toolbar.CommitQuickAction" icon="AllIcons.Vcs.CommitNode"/>
       <action id="addQuickAction.Git.Push" class="git4idea.ui.toolbar.PushQuickAction" icon="AllIcons.Vcs.Push"/>

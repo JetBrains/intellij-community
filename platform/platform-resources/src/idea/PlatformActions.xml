@@ -943,6 +943,9 @@
     <group id="MainToolbarNewUI" >
       <group id="MainToolbarLeft" searchable="false">
         <action id="main.toolbar.Project" class="com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction"/>
+        <group id="MainToolbarGeneralActionsGroup" searchable="false">
+          <separator/>
+        </group>
       </group>
       <group id="MainToolbarCenter" searchable="false">
         <!--suppress PluginXmlCapitalization -->
@@ -1607,10 +1610,11 @@
     <action id="TopStripeEnableAction" class="com.intellij.toolWindow.EnableStripeGroup"/>
 
     <group id="MainToolbarQuickActions" class="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarQuickActionsGroup" searchable="false" popup="true">
+      <separator key="MainToolbarQuickActions.run.separator"/>
       <action id="addQuickAction.Build" class="com.intellij.openapi.wm.impl.headertoolbar.BuildQuickAction" icon="AllIcons.Actions.Compile"/>
       <action id="addQuickAction.Coverage" class="com.intellij.openapi.wm.impl.headertoolbar.CoverageQuickAction" icon="AllIcons.General.RunWithCoverage"/>
       <action id="addQuickAction.Profile" class="com.intellij.openapi.wm.impl.headertoolbar.ProfilerQuickAction" icon="AllIcons.Actions.Profile"/>
-      <separator/>
+      <separator key="MainToolbarQuickActions.General.separator"/>
       <action id="addQuickAction.OpenFile" class="com.intellij.openapi.wm.impl.headertoolbar.OpenFileQuickAction" icon="AllIcons.Actions.MenuOpen"/>
       <action id="addQuickAction.SaveAll" class="com.intellij.openapi.wm.impl.headertoolbar.SaveAllQuickAction" icon="AllIcons.Actions.MenuSaveall"/>
       <action id="addQuickAction.Synchronize" class="com.intellij.openapi.wm.impl.headertoolbar.SynchronizeQuickAction" icon="AllIcons.Actions.Refresh"/>

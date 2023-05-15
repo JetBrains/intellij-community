@@ -5,7 +5,7 @@ import com.intellij.ide.ui.customization.GroupEnd
 import com.intellij.ide.ui.customization.GroupStart
 import com.intellij.ide.ui.customization.ToolbarAddQuickActionsAction
 
-private val generalActionsStrategy = GroupEnd("MainToolbarNewUI", "MainToolbarLeft")
+private val generalActionsStrategy = GroupEnd("MainToolbarNewUI", "MainToolbarGeneralActionsGroup")
 private val runActionsStrategy = GroupStart("MainToolbarNewUI", "MainToolbarRight")
 
 class OpenFileQuickAction: ToolbarAddQuickActionsAction(listOf("OpenFile"), "MainToolbarNewUI", generalActionsStrategy) {}
