@@ -801,6 +801,11 @@
 
     "MainWindow.FullScreeControl.Background": "#7A7B80",
 
+    "FlameGraph.Tooltip": {
+      "scaleBackground": "#EBECF0",
+      "scaleColor": "#C2D6FC",
+      "foreground": "#000000"
+    },
     "LineProfiler" : {
       "Line" : {
         "labelBackground" : "#F1F2F4",

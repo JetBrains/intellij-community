@@ -773,6 +773,11 @@
 
     "MainWindow.FullScreeControl.Background": "#575A5C",
 
+    "FlameGraph.Tooltip": {
+      "scaleBackground": "#43454A",
+      "scaleColor": "#375FAD",
+      "foreground": "#DFE1E5"
+    },
     "LineProfiler" : {
       "Line" : {
         "labelBackground" : "Grey2",

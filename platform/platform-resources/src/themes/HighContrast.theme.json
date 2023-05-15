@@ -521,6 +521,12 @@
       "pressedBackground": "#00000028",
       "separatorColor": "#FFFFFF40"
     },
+
+    "FlameGraph.Tooltip": {
+      "scaleBackground": "#555454",
+      "scaleColor": "#402FF6",
+      "foreground": "#FFFFFF"
+    },
     "LineProfiler" : {
       "Line" : {
         "labelBackground" : "#43474A",
