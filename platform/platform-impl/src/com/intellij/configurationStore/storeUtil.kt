@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.CommonBundle
@@ -30,6 +30,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CalledInAny
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
 
 private val LOG: Logger
   get() = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
@@ -98,6 +99,9 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
   }
   catch (e: UnresolvedReadOnlyFilesException) {
     LOG.info(e)
+  }
+  catch (e: CancellationException) {
+    throw e
   }
   catch (e: Throwable) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
