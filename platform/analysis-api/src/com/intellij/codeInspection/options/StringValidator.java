@@ -24,7 +24,14 @@ public interface StringValidator {
    * @return an error message describing why the string is not valid; null if it's valid
    */
   @Nullable @NlsContexts.HintText String getErrorMessage(@Nullable Project project, @NotNull String string);
-  
+
+  /**
+   * Creates a validator from lambda function 
+   * @param validatorId a globally unique identifier of validator kind
+   * @param fn function to apply to the string value that returns the error message 
+   *           describing why the string is not valid; or returns null if it's valid
+   * @return the validator that applies the supplied function.
+   */
   static @NotNull StringValidator of(@NotNull String validatorId,
                                      @NotNull Function<@NotNull String, @NlsContexts.HintText @Nullable String> fn) {
     return new StringValidator() {
