@@ -1664,22 +1664,11 @@
       <add-to-group group-id="MainToolbarRight" anchor="first"/>
     </action>
 
-    <action id="StopWithDropDown" class="com.intellij.execution.ui.StopWithDropDownAction">
-      <add-to-group group-id="MainToolbarRight" relative-to-action="NewUiRunWidget" anchor="after"/>
-    </action>
-
-    <group id="ContrastRunToolbarMainActionGroup">
-      <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
-      <separator/>
-      <group id="RunToolbarTopLevelExecutorActionGroup" class="com.intellij.execution.ui.RunToolbarTopLevelExecutorActionGroup" />
-      <action id="MoreRunToolbarActions" class="com.intellij.execution.ui.MoreRunToolbarActions" />
-    </group>
-
     <group id="RunToolbarMainActionGroup">
-      <reference ref="RedesignedRunConfigurationSelector"/>
-      <reference ref="RunToolbarTopLevelExecutorActionGroup"/>
+      <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
+      <group id="RunToolbarTopLevelExecutorActionGroup" class="com.intellij.execution.ui.RunToolbarTopLevelExecutorActionGroup" />
       <reference ref="Stop"/>
-      <reference ref="MoreRunToolbarActions"/>
+      <action id="MoreRunToolbarActions" class="com.intellij.execution.ui.MoreRunToolbarActions" />
       <action id="InactiveStopActionPlaceholder" class="com.intellij.execution.ui.InactiveStopActionPlaceholder" />
     </group>
 

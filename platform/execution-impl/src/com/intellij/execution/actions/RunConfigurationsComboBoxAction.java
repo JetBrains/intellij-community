@@ -142,10 +142,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
       presentation.setText(name, false);
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        boolean withLiveIndicator = !(ExperimentalUI.isNewUI() &&
-                                      RedesignedRunWidgetKt.isContrastRunWidget() &&
-                                      actionPlace.equals(ActionPlaces.MAIN_TOOLBAR));
-        setConfigurationIcon(presentation, settings, project, withLiveIndicator);
+        setConfigurationIcon(presentation, settings, project, true);
       }
     }
     else {

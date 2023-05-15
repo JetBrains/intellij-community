@@ -12,10 +12,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.components.*
@@ -28,25 +25,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBList
-import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.popup.PopupFactoryImpl
-import com.intellij.ui.popup.PopupState
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupModel
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -55,23 +45,13 @@ import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
-import java.awt.event.MouseEvent
-import java.awt.geom.Area
-import java.awt.geom.Line2D
-import java.awt.geom.Rectangle2D
-import java.awt.geom.RoundRectangle2D
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
 import javax.swing.*
-import javax.swing.plaf.ButtonUI
-import javax.swing.plaf.basic.BasicButtonListener
-import javax.swing.plaf.basic.BasicButtonUI
-import javax.swing.plaf.basic.BasicGraphicsUtils
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.math.max
-import kotlin.properties.Delegates
 
 private const val RUN: String = DefaultRunExecutor.EXECUTOR_ID
 private const val DEBUG: String = ToolWindowId.DEBUG
@@ -296,77 +276,6 @@ internal class SelectCurrentFileWithInlineActions(private val actions: List<AnAc
   override fun getInlineActions(): List<AnAction> = actions
 }
 
-
-class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
-
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-  override fun actionPerformed(e: AnActionEvent) {
-    stopAll(e)
-  }
-
-  override fun update(e: AnActionEvent) {
-    if (!isContrastRunWidget) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-    val project = e.project ?: return
-    val manager = ExecutionManagerImpl.getInstance(project)
-    val running = getStoppableDescriptors(project).map { it.first }
-    val activeProcesses = running.size
-    e.presentation.putClientProperty(ACTIVE_PROCESSES, activeProcesses)
-    e.presentation.isEnabled = activeProcesses > 0
-    // presentations should be visible because it has to take some fixed space
-    //e.presentation.isVisible = activeProcesses > 0
-    e.presentation.icon = toStrokeIcon(AllIcons.Actions.Suspend, JBUI.CurrentTheme.RunWidget.FOREGROUND)
-    if (activeProcesses == 1) {
-      val first = running.first()
-      getConfigurations(manager, first)
-        ?.shortenName()
-        ?.let {
-          e.presentation.putClientProperty(SINGLE_RUNNING_NAME, it)
-        }
-    }
-  }
-
-  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return RunDropDownButton(icon = AllIcons.Actions.Suspend).apply {
-      addActionListener {
-        ActionUtil.performActionDumbAwareWithCallbacks(
-          this@StopWithDropDownAction, AnActionEvent.createFromDataContext(
-          place, presentation, DataManager.getInstance().getDataContext(this)))
-      }
-      isPaintEnable = false
-      isCombined = true
-    }.let { DynamicBorderWrapper(it) {
-      JBUI.Borders.empty(JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 6)
-    } }
-  }
-
-  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    val processes = presentation.getClientProperty(ACTIVE_PROCESSES) ?: 0
-    val wrapper = component as Wrapper
-    val button = wrapper.targetComponent as RunDropDownButton
-    RunButtonColors.RED.updateColors(button)
-    button.isPaintEnable = processes > 0
-    button.isEnabled = presentation.isEnabled
-    button.dropDownPopup = if (processes == 1) null else { context ->
-      context.getData(PlatformDataKeys.PROJECT)?. let { createStopPopup(context, it) }
-    }
-    button.toolTipText = when {
-      processes == 1 -> ExecutionBundle.message("run.toolbar.widget.stop.description", presentation.getClientProperty(SINGLE_RUNNING_NAME))
-      processes > 1 -> ExecutionBundle.message("run.toolbar.widget.stop.multiple.description")
-      else -> null
-    }
-    button.icon = presentation.icon
-  }
-
-  companion object {
-    private val ACTIVE_PROCESSES: Key<Int> = Key.create("ACTIVE_PROCESSES")
-    private val SINGLE_RUNNING_NAME: Key<String> = Key.create("SINGLE_RUNNING_NAME")
-  }
-}
-
 private fun stopAll(e: AnActionEvent) {
   val project = e.project ?: return
   getStoppableDescriptors(project).map { it.first }
@@ -442,284 +351,6 @@ private class StopConfigurationInlineAction(val executor: Executor, val settings
     }
 
     return null
-  }
-}
-
-private enum class RunButtonColors {
-  RED {
-    override fun updateColors(button: RunDropDownButton) {
-      button.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
-      button.background = getColor("RunWidget.StopButton.background") { ColorUtil.fromHex("#EB7171") }
-      button.hoverBackground = getColor("RunWidget.StopButton.leftHoverBackground") { ColorUtil.fromHex("#E35252") }
-      button.pressedBackground = getColor("RunWidget.StopButton.leftPressedBackground") { ColorUtil.fromHex("#C94F4F") }
-    }
-  };
-
-  abstract fun updateColors(button: RunDropDownButton)
-
-  companion object {
-    private fun getColor(propertyName: String, defaultColor: () -> Color): JBColor {
-      return JBColor.lazy {
-        UIManager.getColor(propertyName) ?: let {
-          defaultColor().also {
-            UIManager.put(propertyName, it)
-          }
-        }
-      }
-    }
-  }
-}
-
-private open class RunDropDownButton(
-  @Nls text: String? = null,
-  icon: Icon? = null
-) : JButton(text, icon) {
-
-  var dropDownPopup: ((DataContext) -> JBPopup?)? by Delegates.observable(null) { prop, oldValue, newValue ->
-    firePropertyChange(prop.name, oldValue, newValue)
-    if (oldValue != newValue) {
-      revalidate()
-      repaint()
-    }
-  }
-  var separatorColor: Color? = null
-  var hoverBackground: Color? = null
-  var pressedBackground: Color? = null
-  var roundSize: Int = 8
-
-  /**
-   * When false the button isn't painted but still takes space in the UI.
-   */
-  var isPaintEnable by Delegates.observable(true) { prop, oldValue, newValue ->
-    firePropertyChange(prop.name, oldValue, newValue)
-    if (oldValue != newValue) {
-      repaint()
-    }
-  }
-
-  /**
-   * When true there's no left/right parts.
-   *
-   * If [dropDownPopup] is set then it is shown instead of firing [actionListener].
-   */
-  var isCombined by Delegates.observable(false) { prop, oldValue, newValue ->
-    firePropertyChange(prop.name, oldValue, newValue)
-    if (oldValue != newValue) {
-      revalidate()
-      repaint()
-    }
-  }
-
-  override fun setUI(ui: ButtonUI?) {
-    super.setUI(RunDropDownButtonUI())
-  }
-}
-
-private class RunDropDownButtonUI : BasicButtonUI() {
-
-  private var point: Point? = null
-  private val viewRect = Rectangle()
-  private val textRect = Rectangle()
-  private val iconRect = Rectangle()
-
-  override fun installDefaults(b: AbstractButton?) {
-    super.installDefaults(b)
-    b as RunDropDownButton
-    b.border = JBUI.Borders.empty(0, 7)
-    b.isOpaque = false
-    b.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
-    b.background = ColorUtil.fromHex("#3574F0")
-    b.hoverBackground = ColorUtil.fromHex("#3369D6")
-    b.pressedBackground = ColorUtil.fromHex("#315FBD")
-    b.horizontalAlignment = SwingConstants.LEFT
-    b.margin = JBInsets.emptyInsets()
-  }
-
-  override fun createButtonListener(b: AbstractButton?): BasicButtonListener {
-    return MyHoverListener(b as RunDropDownButton)
-  }
-
-  override fun getPreferredSize(c: JComponent?): Dimension? {
-    c as RunDropDownButton
-    val prefSize = BasicGraphicsUtils.getPreferredButtonSize(c, c.iconTextGap)
-    return prefSize?.apply {
-      width = maxOf(width, if (c.isCombined) 0 else 72)
-      height = JBUIScale.scale(JBUI.CurrentTheme.RunWidget.toolbarHeight())
-      /**
-       * If combined view is enabled the button should not draw a separate line
-       * and reserve a place if dropdown is not enabled. Therefore, add only a half
-       * of arrow icon width (the same as height, 'cause it's square).
-       */
-      if (c.isCombined) {
-        width += height / 2
-      }
-      /**
-       * If it is not a combined view then check if dropdown required and add its width (= height).
-       */
-      else if (c.dropDownPopup != null) {
-        width += height
-      }
-    }
-  }
-
-  override fun paint(g: Graphics, c: JComponent) {
-    val b = c as RunDropDownButton
-    if (!b.isPaintEnable) return
-    val bounds = g.clipBounds
-    val popupWidth = if (b.dropDownPopup != null) bounds.height else 0
-
-    val g2d = g.create(bounds.x, bounds.y, bounds.width, bounds.height) as Graphics2D
-
-    val text = layout(b, b.getFontMetrics(g2d.font), b.width - popupWidth, b.height)
-
-    try {
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-
-      g2d.color = c.background
-      val buttonRectangle: Shape = RoundRectangle2D.Double(
-        bounds.x.toDouble(),
-        bounds.y.toDouble(),
-        bounds.width.toDouble() - if (b.isCombined && b.dropDownPopup == null) bounds.height / 2 else 0,
-        bounds.height.toDouble(),
-        JBUIScale.scale(c.roundSize).toDouble(),
-        JBUIScale.scale(c.roundSize).toDouble()
-      )
-
-      g2d.fill(buttonRectangle)
-
-      val popupBounds = Rectangle(viewRect.x + viewRect.width + c.insets.right, bounds.y, bounds.height, bounds.height)
-
-      point?.let { p ->
-        g2d.color = if (b.model.isArmed && b.model.isPressed) c.pressedBackground else c.hoverBackground
-        val highlighted = Area(buttonRectangle)
-        if (!b.isCombined) {
-          if (popupBounds.contains(p)) {
-            highlighted.subtract(Area(Rectangle2D.Double(
-              bounds.x.toDouble(),
-              bounds.y.toDouble(),
-              bounds.width.toDouble() - popupBounds.width,
-              bounds.height.toDouble()
-            )))
-          }
-          else {
-            highlighted.subtract(Area(Rectangle2D.Double(
-              popupBounds.x.toDouble(),
-              popupBounds.y.toDouble(),
-              popupBounds.width.toDouble(),
-              popupBounds.height.toDouble()
-            )))
-          }
-        }
-        g2d.fill(highlighted)
-      }
-
-      if (popupWidth > 0) {
-        g2d.color = b.separatorColor
-        if (!b.isCombined) {
-          val gap = popupBounds.height / 5
-          g2d.drawLine(popupBounds.x, popupBounds.y + gap, popupBounds.x, popupBounds.y + popupBounds.height - gap)
-        }
-        g2d.color = b.foreground
-        paintArrow(c, g2d, popupBounds)
-      }
-
-      paintIcon(g2d, c, iconRect)
-      paintText(g2d, c, textRect, text)
-    }
-    finally {
-      g2d.dispose()
-    }
-  }
-
-  private fun paintArrow(c: Component, g: Graphics2D, r: Rectangle) {
-    JBInsets.removeFrom(r, JBUI.insets(1, 0, 1, 1))
-
-    val tW = JBUIScale.scale(8f)
-    val tH = JBUIScale.scale(tW / 2)
-
-    val xU = (r.getWidth() - tW) / 2 + r.x
-    val yU = (r.getHeight() - tH) / 2 + r.y
-
-    val leftLine = Line2D.Double(xU, yU, xU + tW / 2f, yU + tH)
-    val rightLine = Line2D.Double(xU + tW / 2f, yU + tH, xU + tW, yU)
-
-    g.color = c.foreground
-    g.stroke = BasicStroke(1f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER)
-    g.draw(leftLine)
-    g.draw(rightLine)
-  }
-
-  private fun layout(b: AbstractButton, fm: FontMetrics, width: Int, height: Int): String? {
-    val i = b.insets
-    viewRect.x = i.left
-    viewRect.y = i.top
-    viewRect.width = width - (i.right + viewRect.x)
-    viewRect.height = height - (i.bottom + viewRect.y)
-    textRect.height = 0
-    textRect.width = textRect.height
-    textRect.y = textRect.width
-    textRect.x = textRect.y
-    iconRect.height = 0
-    iconRect.width = iconRect.height
-    iconRect.y = iconRect.width
-    iconRect.x = iconRect.y
-
-    // layout the text and icon
-    return SwingUtilities.layoutCompoundLabel(
-      b, fm, b.text, b.icon,
-      b.verticalAlignment, b.horizontalAlignment,
-      b.verticalTextPosition, b.horizontalTextPosition,
-      viewRect, iconRect, textRect,
-      if (b.text == null) 0 else b.iconTextGap)
-  }
-
-  private inner class MyHoverListener(val button: RunDropDownButton) : BasicButtonListener(button) {
-    private val popupState = PopupState.forPopup()
-
-    override fun mouseEntered(e: MouseEvent) {
-      if (popupState.isShowing) return
-      super.mouseEntered(e)
-      point = e.point
-      e.component.repaint()
-    }
-
-    override fun mouseExited(e: MouseEvent) {
-      if (popupState.isShowing) return
-      super.mouseExited(e)
-      point = null
-      e.component.repaint()
-    }
-
-    override fun mouseMoved(e: MouseEvent) {
-      if (popupState.isShowing) return
-      super.mouseMoved(e)
-      point = e.point
-      e.component.repaint()
-    }
-
-    override fun mousePressed(e: MouseEvent) {
-      if (popupState.isShowing || popupState.isRecentlyHidden) return
-      val b = e.source as? RunDropDownButton
-      if (b?.dropDownPopup != null && b.isEnabled) {
-        if (b.isCombined || b.width - b.height < e.x) {
-          b.dropDownPopup?.invoke(DataManager.getInstance().getDataContext(e.component))
-            ?.also {
-              popupState.prepareToShow(it)
-              it.addListener(object : JBPopupListener {
-                override fun onClosed(event: LightweightWindowEvent) {
-                  point = null
-                  button.repaint()
-                }
-              })
-            }
-            ?.showUnderneathOf(e.component)
-          return
-        }
-      }
-
-      super.mousePressed(e)
-    }
   }
 }
 
@@ -854,10 +485,6 @@ private fun getPersistedConfiguration(configuration: RunnerAndConfigurationSetti
   var conf: RunProfile = (configuration ?: return null).configuration
   conf = ExecutionManagerImpl.getDelegatedRunProfile(conf) ?: conf
   return RunManager.getInstance(configuration.configuration.project).allSettings.find { it.configuration == conf }
-}
-
-private fun getConfigurations(manager: ExecutionManagerImpl, descriptor: RunContentDescriptor): RunnerAndConfigurationSettings? {
-  return manager.getConfigurations(descriptor).firstOrNull()?.let(::getPersistedConfiguration)
 }
 
 @Nls

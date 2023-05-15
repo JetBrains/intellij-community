@@ -982,13 +982,10 @@
     "RunWidget" : {
       "foreground": "black",
       "runIconColor": "#5fad65",
-      "disabledForeground": "#FFFFFF66",
-      "background": "#3369d6",
       "runningBackground": "#599e5e",
       "stopBackground": "#c94f4f",
       "hoverBackground": "#00000019",
-      "pressedBackground": "#00000028",
-      "separatorColor": "#FFFFFF40"
+      "pressedBackground": "#00000028"
     },
 
     "MainWindow.Tab" : {

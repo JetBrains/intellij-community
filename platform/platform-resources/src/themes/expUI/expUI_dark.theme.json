@@ -750,13 +750,10 @@
     "RunWidget" : {
       "foreground": "Grey12",
       "iconColor": "Grey12",
-      "disabledForeground": "#FFFFFF66",
-      "background": "Blue5",
       "runningBackground": "Green5",
       "runningIconColor": "Grey12",
       "hoverBackground": "#00000019",
-      "pressedBackground": "#00000028",
-      "separatorColor": "#FFFFFF40"
+      "pressedBackground": "#00000028"
     },
 
     "MainWindow.Tab" : {

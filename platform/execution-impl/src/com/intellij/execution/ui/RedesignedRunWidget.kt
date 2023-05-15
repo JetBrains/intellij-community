@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.lightThemeDarkHeaderDisableFilter
@@ -42,19 +41,14 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
 import java.awt.*
 import java.awt.event.InputEvent
-import java.awt.geom.Area
-import java.awt.geom.Rectangle2D
-import java.awt.geom.RoundRectangle2D
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
 const val CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH = 25
 
-val isContrastRunWidget: Boolean get() = Registry.`is`("ide.experimental.ui.contrast.run.widget")
-
 private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
-  val toolbarId = if (isContrastRunWidget) "ContrastRunToolbarMainActionGroup" else "RunToolbarMainActionGroup"
+  val toolbarId = "RunToolbarMainActionGroup"
   return ActionManager.getInstance().createActionToolbar(
     ActionPlaces.NEW_UI_RUN_TOOLBAR,
     ActionManager.getInstance().getAction(toolbarId) as ActionGroup,
@@ -66,15 +60,9 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
     if (this is ActionToolbarImpl) {
       isOpaque = false
       setMinimumButtonSize {
-        JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(isContrastRunWidget), JBUI.CurrentTheme.RunWidget.toolbarHeight())
+        JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
       }
-      if (isContrastRunWidget) {
-        setSeparatorCreator { RunToolbarSeparator(isCurrentConfigurationRunning) }
-        setActionButtonBorder(JBUI.Borders.empty())
-      }
-      else {
-        setActionButtonBorder(2, JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
-      }
+      setActionButtonBorder(2, JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
       setCustomButtonLook(RunWidgetButtonLook(isCurrentConfigurationRunning))
       border = null
     }
@@ -83,25 +71,16 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
 
 private val runToolbarDataKey = Key.create<Boolean>("run-toolbar-data")
 
-private val contrastModeEnabled = Key.create<Boolean>("contrast-run-widget")
-
 private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent): Unit = error("Should not be invoked")
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    presentation.putClientProperty(contrastModeEnabled, isContrastRunWidget)
     val toolbar = createRunActionToolbar {
       presentation.getClientProperty(runToolbarDataKey) ?: false
     }
-    toolbar.component.border = if (isContrastRunWidget) {
-      JBUI.Borders.empty(JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 12,
-                         JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 2)
-    }
-    else {
-      JBUI.Borders.emptyRight(16)
-    }
+    toolbar.component.border = JBUI.Borders.emptyRight(16)
     return toolbar.component
   }
 
@@ -135,10 +114,6 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    if (presentation.getClientProperty(contrastModeEnabled) != isContrastRunWidget) {
-      (component.parent as? ActionToolbarImpl)?.clearPresentationCache()
-      return
-    }
     val data = presentation.getClientProperty(runToolbarDataKey) ?: return
     val dataPropertyName = "old-run-toolbar-data"
     val oldData = component.getClientProperty(dataPropertyName) as? Boolean
@@ -184,14 +159,14 @@ private class PreparedIcon(private val width: Int, private val height: Int, priv
 private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () -> Boolean) : IdeaActionButtonLook() {
   override fun getStateBackground(component: JComponent, state: Int): Color? {
     val isStopButton = isStopButton(component)
-    if (!isContrastRunWidget && !isStopButton) {
-      if (!buttonIsRunning(component)) {
+    if (!isStopButton) {
+      if (!buttonIsRunning(component) || !isCurrentConfigurationRunning()) {
         return getHeaderBackgroundColor(component, state)
       }
     }
 
-    val color = if (!isContrastRunWidget && isStopButton) JBUI.CurrentTheme.RunWidget.STOP_BACKGROUND
-    else getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
+    val color = if (isStopButton) JBUI.CurrentTheme.RunWidget.STOP_BACKGROUND
+    else JBUI.CurrentTheme.RunWidget.RUNNING_BACKGROUND
 
     return when (state) {
       ActionButtonComponent.NORMAL -> color
@@ -200,53 +175,8 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     }
   }
 
-  override fun paintBackground(g: Graphics, component: JComponent, @ActionButtonComponent.ButtonState state: Int) {
-    if (!isContrastRunWidget) {
-      super.paintBackground(g, component, state)
-      return
-    }
-    val rect = Rectangle(component.size)
-    val color = getStateBackground(component, state)
-
-    val g2 = g.create() as Graphics2D
-
-    try {
-      GraphicsUtil.setupAAPainting(g2)
-      g2.color = color
-      val arc = buttonArc.float
-      val width = rect.width
-      val height = rect.height
-
-      val shape = when (component) {
-        component.parent?.components?.lastOrNull() -> {
-          val shape1 = RoundRectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), width.toFloat(), height.toFloat(), arc, arc)
-          val shape2 = Rectangle2D.Float(rect.x.toFloat() - 1, rect.y.toFloat(), arc, height.toFloat())
-          Area(shape1).also { it.add(Area(shape2)) }
-        }
-        component.parent?.components?.get(0) -> {
-          val shape1 = RoundRectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), width.toFloat(), height.toFloat(), arc, arc)
-          val shape2 = Rectangle2D.Float((rect.x + width).toFloat() - arc, rect.y.toFloat(), arc, height.toFloat())
-          Area(shape1).also { it.add(Area(shape2)) }
-        }
-        else -> {
-          Rectangle2D.Float(rect.x.toFloat() - 1, rect.y.toFloat(), width.toFloat() + 2, height.toFloat())
-        }
-      }
-
-      g2.fill(shape)
-    }
-    finally {
-      g2.dispose()
-    }
-  }
-
   override fun getDisabledIcon(icon: Icon): Icon {
-    if (!isContrastRunWidget) {
-      return IconLoader.getDisabledIcon(icon, lightThemeDarkHeaderDisableFilter)
-    }
-    return PreparedIcon(icon.iconWidth, icon.iconHeight) {
-      toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND)
-    }
+    return IconLoader.getDisabledIcon(icon, lightThemeDarkHeaderDisableFilter)
   }
 
   override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {
@@ -254,7 +184,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
       return
     }
 
-    if (!isContrastRunWidget && actionButton is ActionButton && actionButton.action is RedesignedRunConfigurationSelector) {
+    if (actionButton is ActionButton && actionButton.action is RedesignedRunConfigurationSelector) {
       super.paintIcon(g, actionButton, icon, x, y)
       return
     }
@@ -278,7 +208,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     if (resultIcon !is PreparedIcon) {
       val executionAction = (actionButton as? ActionButton)?.action is ExecutorRegistryImpl.ExecutorAction
       val iconWithBackground = executionAction && buttonIsRunning(actionButton) || isStopButton(actionButton)
-      val resultColor = if (!isContrastRunWidget && iconWithBackground) {
+      val resultColor = if (iconWithBackground) {
         JBUI.CurrentTheme.RunWidget.RUNNING_ICON_COLOR
       }
       else {
@@ -403,11 +333,9 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
     val action = ActionManager.getInstance().getAction("RunConfiguration")
     val runConfigAction = action as? RunConfigurationsComboBoxAction ?: return
     runConfigAction.update(e)
-    if (!isContrastRunWidget) {
-      val icon = e.presentation.icon
-      if (icon != null) {
-        e.presentation.icon = adjustIconForHeader(icon)
-      }
+    val icon = e.presentation.icon
+    if (icon != null) {
+      e.presentation.icon = adjustIconForHeader(icon)
     }
     val configurationName = e.project?.let { RunManager.getInstance(it) }?.selectedConfiguration?.name
     if (configurationName?.length?.let { it > CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH } == true) {
@@ -427,16 +355,12 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return object : ActionButtonWithText(this, presentation, place, {
-      if (isContrastRunWidget)
-        JBUI.size(JBUI.CurrentTheme.RunWidget.configurationSelectorWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
-      else JBUI.size(16, JBUI.CurrentTheme.RunWidget.toolbarHeight())
+      JBUI.size(16, JBUI.CurrentTheme.RunWidget.toolbarHeight())
     }) {
 
       override fun getMargins(): Insets = JBInsets.create(0, 8)
       override fun iconTextSpace(): Int = ToolbarComboWidgetUiSizes.gapAfterLeftIcons
       override fun shallPaintDownArrow() = true
-      override fun getInactiveTextColor() = if (isContrastRunWidget) JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND
-      else super.getInactiveTextColor()
       override fun getDownArrowIcon(): Icon = PreparedIcon(super.getDownArrowIcon())
 
       override fun updateUI() {
@@ -455,33 +379,6 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
     }
   }
 }
-
-
-private class RunToolbarSeparator(private val isCurrentConfigurationRunning: () -> Boolean) : JComponent() {
-  override fun paint(g: Graphics) {
-    super.paint(g)
-    val g2 = g.create() as Graphics2D
-    try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-      g2.color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
-      g2.fillRect(-1, 0, size.width + 1, size.height)
-      g2.color = JBUI.CurrentTheme.RunWidget.SEPARATOR
-      g2.stroke = BasicStroke(JBUI.pixScale(this))
-      g2.drawLine(0, JBUI.scale(5), 0, JBUI.scale(25))
-    }
-    finally {
-      g2.dispose()
-    }
-  }
-
-  override fun getPreferredSize(): Dimension = Dimension(JBUI.scale(1), JBUI.scale(JBUI.CurrentTheme.RunWidget.toolbarHeight()))
-}
-
-private fun getRunWidgetBackgroundColor(isRunning: Boolean): Color = if (isRunning)
-  JBUI.CurrentTheme.RunWidget.RUNNING_BACKGROUND
-else
-  JBUI.CurrentTheme.RunWidget.BACKGROUND
 
 private fun buttonIsRunning(component: Any): Boolean =
   (component as? ActionButton)?.presentation?.getClientProperty(ExecutorRegistryImpl.EXECUTOR_ACTION_STATUS) ==

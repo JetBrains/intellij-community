@@ -2031,11 +2031,11 @@ public final class JBUI {
     public final static class RunWidget {
       public static final Color FOREGROUND = JBColor.namedColor("RunWidget.foreground", Color.WHITE);
       public static final Color ICON_COLOR = JBColor.namedColor("RunWidget.iconColor", Color.WHITE);
-      public static final Color DISABLED_FOREGROUND = JBColor.namedColor("RunWidget.disabledForeground", new Color(0x66FFFFFF, true));
       public static final Color RUN_ICON_COLOR = JBColor.namedColor("RunWidget.runIconColor", new Color(0x5FAD65));
-      public static final Color BACKGROUND = JBColor.namedColor("RunWidget.background", 0x3369D6);
       public static final Color RUNNING_BACKGROUND = JBColor.namedColor("RunWidget.runningBackground", 0x599E5E);
       public static final Color RUNNING_ICON_COLOR = JBColor.namedColor("RunWidget.runningIconColor", Color.WHITE);
+      /** @deprecated The separator key was used in the contrast run widget implementation, and now it is now needed any more */
+      @Deprecated(forRemoval = true)
       public static final Color SEPARATOR = JBColor.namedColor("RunWidget.separatorColor", new Color(255, 255, 255, 64));
       public static final Color STOP_BACKGROUND = JBColor.namedColor("RunWidget.stopBackground", new Color(0xC94F4F));
 
@@ -2069,30 +2069,13 @@ public final class JBUI {
         return 5;
       }
 
-      public static int actionButtonWidth(boolean isContrastWidget) {
-        return getInt(actionButtonWidthKey(), defaultActionButtonWidth(isContrastWidget));
+      public static int actionButtonWidth() {
+        return getInt(actionButtonWidthKey(), 30);
       }
 
       @NotNull
       public static String actionButtonWidthKey() {
         return "RunWidget.actionButtonWidth";
-      }
-
-      public static int defaultActionButtonWidth(boolean isContrastWidget) {
-        return isContrastWidget ? 36 : 30;
-      }
-
-      public static int configurationSelectorWidth() {
-        return getInt(configurationSelectorWidthKey(), defaultConfigurationSelectorWidth());
-      }
-
-      @NotNull
-      public static String configurationSelectorWidthKey() {
-        return "RunWidget.configurationSelectorWidth";
-      }
-
-      public static int defaultConfigurationSelectorWidth() {
-        return 90;
       }
 
       public static Font configurationSelectorFont() {
