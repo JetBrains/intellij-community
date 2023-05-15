@@ -100,7 +100,7 @@ internal class LoadedGitLabMergeRequest(
   override val sourceProject: StateFlow<GitLabProjectDTO> = mergeRequestDetailsState.mapState(cs) { it.sourceProject }
   override val title: Flow<String> = mergeRequestDetailsState.map { it.title }
   override val description: Flow<String> = mergeRequestDetailsState.map { it.description }
-  override val descriptionHtml: Flow<String> = description.map { GitLabUIUtil.convertToHtml(it) }
+  override val descriptionHtml: Flow<String> = description.map { if(it.isNotBlank()) GitLabUIUtil.convertToHtml(it) else it }
   override val targetBranch: Flow<String> = mergeRequestDetailsState.map { it.targetBranch }
   override val sourceBranch: StateFlow<String> = mergeRequestDetailsState.mapState(cs) { it.sourceBranch }
   override val hasConflicts: Flow<Boolean> = mergeRequestDetailsState.map { it.conflicts }
