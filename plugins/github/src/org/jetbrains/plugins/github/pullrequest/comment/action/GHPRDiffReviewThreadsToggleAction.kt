@@ -4,9 +4,10 @@ package org.jetbrains.plugins.github.pullrequest.comment.action
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.toActionName
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.DumbAware
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 
-class GHPRDiffReviewThreadsToggleAction : ActionGroup() {
+class GHPRDiffReviewThreadsToggleAction : ActionGroup(), DumbAware {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

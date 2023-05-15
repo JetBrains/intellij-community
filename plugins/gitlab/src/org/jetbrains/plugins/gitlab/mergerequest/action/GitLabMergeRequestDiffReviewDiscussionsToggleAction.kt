@@ -4,9 +4,10 @@ package org.jetbrains.plugins.gitlab.mergerequest.action
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.toActionName
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.DumbAware
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModel
 
-internal class GitLabMergeRequestDiffReviewDiscussionsToggleAction : ActionGroup() {
+internal class GitLabMergeRequestDiffReviewDiscussionsToggleAction : ActionGroup(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
