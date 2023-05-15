@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
@@ -9,8 +8,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -23,12 +22,12 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
   private static final int MAX_RESULT_LENGTH_TO_DISPLAY = 40;
   private static final int MAX_EXPRESSION_LENGTH = 200;
 
-  public boolean skipIfContainsNonLiteralExpression = false;
+  public boolean skipIfContainsReferenceExpression = false;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return OptPane.pane(
-      OptPane.checkbox("skipIfContainsNonLiteralExpression",
+      OptPane.checkbox("skipIfContainsReferenceExpression",
                        InspectionGadgetsBundle.message("inspection.constant.expression.skip.non.literal")));
   }
 
@@ -62,9 +61,8 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
               String message = valueText.length() > MAX_RESULT_LENGTH_TO_DISPLAY ?
                                InspectionGadgetsBundle.message("inspection.constant.expression.display.name") :
                                InspectionGadgetsBundle.message("inspection.constant.expression.message", valueText);
-              if (getDefaultLevel() != HighlightDisplayLevel.DO_NOT_SHOW &&
-                  skipIfContainsNonLiteralExpression &&
-                  hasNonLiteralConstant(expression)) {
+              if (skipIfContainsReferenceExpression &&
+                  hasReferences(expression)) {
                 if (isOnTheFly) {
                   holder.registerProblem(expression, message, ProblemHighlightType.INFORMATION,
                                          new ComputeConstantValueFix(expression, valueText));
@@ -81,19 +79,11 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
         }
       }
 
-      private static boolean hasNonLiteralConstant(PsiExpression expression) {
-        if (expression instanceof PsiLiteralExpression) {
-          return false;
-        }
-        else if (expression instanceof PsiPolyadicExpression polyadicExpression) {
-          return ContainerUtil.exists(polyadicExpression.getOperands(), t -> hasNonLiteralConstant(t));
-        }
-        else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
-          return hasNonLiteralConstant(PsiUtil.skipParenthesizedExprDown(parenthesizedExpression));
-        }
-        else {
+      private static boolean hasReferences(PsiExpression expression) {
+        if (PsiTreeUtil.getChildOfAnyType(expression, PsiReferenceExpression.class) != null) {
           return true;
         }
+        return false;
       }
     };
   }

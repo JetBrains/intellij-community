@@ -9,7 +9,7 @@ public class ConstantExpressionInspectionWithFinalTest extends LightQuickFixPara
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     ConstantExpressionInspection inspection = new ConstantExpressionInspection();
-    inspection.skipIfContainsNonLiteralExpression = true;
+    inspection.skipIfContainsReferenceExpression = true;
     return new LocalInspectionTool[]{inspection};
   }
 
