@@ -21,9 +21,6 @@ import com.jetbrains.python.testing.TestRunnerService
 import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory
 import com.jetbrains.python.testing.isTestElement
 
-private const val CONFTEST_PY = "conftest.py"
-private const val REQUEST_FIXTURE = "request"
-
 private val decoratorNames = arrayOf("pytest.fixture", "fixture")
 
 private val PyFunction.asFixture: PyTestFixture?
@@ -122,6 +119,19 @@ private fun findRightFixture(fixtureCandidates: List<PyTestFixture>,
     }
   }
 
+  // search reserved fixture in "_pytest" dir
+  if (!fixtureCandidates.isEmpty()) {
+    fixtureCandidates.find { fixtureCandidate ->
+      fixtureCandidate.function?.containingFile?.containingDirectory?.name == _PYTEST_DIR && fixtureNamedParameter.name in reservedFixturesSet
+    }?.let { return NamedFixtureParameterLink(it, null) }
+  }
+
+  // search reserved fixture class in "_pytest" dir
+  if (fixtureNamedParameter.name in reservedFixtureClassSet) {
+    fixtureNamedParameter.name?.let {
+      return NamedFixtureParameterLink(PyTestFixture(null, null, it), null)
+    }
+  }
   return null
 }
 

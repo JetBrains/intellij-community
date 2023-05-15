@@ -5,14 +5,13 @@ import com.intellij.psi.*
 import com.jetbrains.python.fixture.PythonCommonTestCase
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
-import com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureReference
+import com.jetbrains.python.testing.pyTestFixtures.*
 import junit.framework.TestCase
 
 class PyTestFixtureOverridingTest : PyTestCase() {
 
   companion object {
     const val TESTS_SUBDIR = "/testPytestFixtureOverriding"
-    const val CONFTEST_FILE = "conftest.py"
 
     const val SIMPLE_TEST_DIR = "/testSimple"
     const val SIMPLE_TEST_CONFTEST_FIXTURE = "/test_conftest_fixture.py"
@@ -40,11 +39,12 @@ class PyTestFixtureOverridingTest : PyTestCase() {
     const val COMPLEX_STRUCTURE_TEST_NEW_CONFTEST = "/$COMPLEX_STRUCTURE_TEST_DIR_WITH_CONFTEST_NAME/test_new_conftest.py"
     const val COMPLEX_STRUCTURE_TEST_ROOT_CONFTEST = "/dir_without_conftest/test_root_conftest.py"
 
-    const val REQUEST_TEST_DIR = "/testRequest"
-    const val REQUEST_FIXTURE = "request"
+    const val RESERVED_FIXTURES_TEST_DIR = "/testReservedFixtures"
+    const val RESERVED_FIXTURES_TEST_FILE = "reserved_fixtures.py"
+
     const val REQUEST_TEST_IN_FIXTURE = "/test_request_in_fixture.py"
     const val REQUEST_TEST_IN_TEST = "/test_request_in_test.py"
-    const val REQUEST_USAGES_TEST = "${REQUEST_TEST_DIR}/test_request_usages.py"
+    const val REQUEST_USAGES_TEST = "${RESERVED_FIXTURES_TEST_DIR}/test_request_usages.py"
   }
 
   override fun getTestDataPath() = super.getTestDataPath() + TESTS_SUBDIR
@@ -53,10 +53,10 @@ class PyTestFixtureOverridingTest : PyTestCase() {
     super.setUp()
     TestRunnerService.getInstance(myFixture.module).selectedFactory =
       PythonTestConfigurationType.getInstance().pyTestFactory
+    myFixture.copyDirectoryToProject("", "")
   }
 
   private fun getCaretReference(dirName: String, fileName: String): PsiReference? {
-    myFixture.copyDirectoryToProject("", "")
     val psiFile = myFixture.configureByFile(dirName + fileName)
     return psiFile?.findReferenceAt(myFixture.caretOffset)
   }
@@ -94,8 +94,24 @@ class PyTestFixtureOverridingTest : PyTestCase() {
     TestCase.assertTrue(hasImportedFixtureStatement)
   }
 
+  private fun getReservedFixturesFiles(fixturesSet: Set<String>): Set<String> {
+    val result = mutableSetOf<String>()
+    for (fixture in fixturesSet) {
+      result.add("/test_${fixture}_fixture.py")
+    }
+    return result
+  }
+
+  private fun getReservedOverrideFixturesFiles(fixturesSet: Set<String>): Set<String> {
+    val result = mutableSetOf<String>()
+    for (fixture in fixturesSet) {
+      result.add("test_override_${fixture}_fixture.py")
+    }
+    return result
+  }
+
   fun testSimpleFixtureFromConftest() {
-    assertCorrectFile(SIMPLE_TEST_DIR, SIMPLE_TEST_CONFTEST_FIXTURE, CONFTEST_FILE)
+    assertCorrectFile(SIMPLE_TEST_DIR, SIMPLE_TEST_CONFTEST_FIXTURE, CONFTEST_PY)
   }
 
   fun testSimpleNotResolve() {
@@ -115,7 +131,7 @@ class PyTestFixtureOverridingTest : PyTestCase() {
   }
 
   fun testClassConftestFixture() {
-    assertCorrectFile(CLASS_TEST_DIR, CLASS_TEST_SUBDIR, CONFTEST_FILE)
+    assertCorrectFile(CLASS_TEST_DIR, CLASS_TEST_SUBDIR, CONFTEST_PY)
   }
 
   fun testImportFixture() {
@@ -131,26 +147,47 @@ class PyTestFixtureOverridingTest : PyTestCase() {
   }
 
   fun testComplexStructureNewConftest() {
-    assertCorrectFile(COMPLEX_STRUCTURE_TEST_DIR, COMPLEX_STRUCTURE_TEST_NEW_CONFTEST, CONFTEST_FILE, COMPLEX_STRUCTURE_TEST_DIR_WITH_CONFTEST_NAME)
+    assertCorrectFile(COMPLEX_STRUCTURE_TEST_DIR, COMPLEX_STRUCTURE_TEST_NEW_CONFTEST, CONFTEST_PY, COMPLEX_STRUCTURE_TEST_DIR_WITH_CONFTEST_NAME)
   }
 
   fun testComplexStructureRootConftest() {
-    assertCorrectFile(COMPLEX_STRUCTURE_TEST_DIR, COMPLEX_STRUCTURE_TEST_ROOT_CONFTEST, CONFTEST_FILE, COMPLEX_STRUCTURE_TEST_DIR_NAME)
+    assertCorrectFile(COMPLEX_STRUCTURE_TEST_DIR, COMPLEX_STRUCTURE_TEST_ROOT_CONFTEST, CONFTEST_PY, COMPLEX_STRUCTURE_TEST_DIR_NAME)
   }
 
   fun testRequestInFixture() {
-    val fixtureReference = getCaretReference(REQUEST_TEST_DIR, REQUEST_TEST_IN_FIXTURE) as? PyTestFixtureReference
+    val fixtureReference = getCaretReference(RESERVED_FIXTURES_TEST_DIR, REQUEST_TEST_IN_FIXTURE) as? PyTestFixtureReference
     TestCase.assertNotNull(fixtureReference)
     assertEquals(REQUEST_FIXTURE, fixtureReference?.element?.text)
   }
 
   fun testRequestInTest() {
-    val fixtureReference = getCaretReference(REQUEST_TEST_DIR, REQUEST_TEST_IN_TEST) as? PyTestFixtureReference
+    val fixtureReference = getCaretReference(RESERVED_FIXTURES_TEST_DIR, REQUEST_TEST_IN_TEST) as? PyTestFixtureReference
     TestCase.assertNull(fixtureReference)
   }
 
   fun testRequestUsages() {
     val usages = myFixture.testFindUsages(REQUEST_USAGES_TEST)
     assertEquals(0, usages.size)
+  }
+
+  fun testReservedFixtures() {
+    for (file in getReservedFixturesFiles(reservedFixturesSet)) {
+      assertCorrectFile(RESERVED_FIXTURES_TEST_DIR, "/${file}", RESERVED_FIXTURES_TEST_FILE, _PYTEST_DIR)
+    }
+  }
+
+  fun testReservedOverrideFixtures() {
+    val expectedDirName = RESERVED_FIXTURES_TEST_DIR.substring(1)
+    for (file in getReservedOverrideFixturesFiles(reservedFixturesSet + reservedFixtureClassSet)) {
+      assertCorrectFile(RESERVED_FIXTURES_TEST_DIR, "/${file}", file, expectedDirName)
+    }
+  }
+
+  fun testReservedFixtureClasses() {
+    for (fixture in reservedFixtureClassSet) {
+      val fixtureReference = getCaretReference(RESERVED_FIXTURES_TEST_DIR, "/test_${fixture}_fixture.py") as? PyTestFixtureReference
+      TestCase.assertNotNull(fixtureReference)
+      assertEquals(fixture, fixtureReference?.element?.text)
+    }
   }
 }
