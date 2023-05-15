@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * @author anna
  * @see RunManager#createConfiguration(String, ConfigurationFactory)
  */
+@ApiStatus.NonExtendable
 public interface RunnerAndConfigurationSettings {
   /**
    * Returns the type of the run configuration.
