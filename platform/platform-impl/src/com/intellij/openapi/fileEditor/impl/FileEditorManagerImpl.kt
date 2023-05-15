@@ -371,27 +371,6 @@ open class FileEditorManagerImpl(
     internal fun getOriginalFile(file: VirtualFile): VirtualFile {
       return BackedVirtualFile.getOriginFileIfBacked(if (file is VirtualFileWindow) file.delegate else file)
     }
-
-    internal fun <T> runBulkTabChange(splitters: EditorsSplitters, task: () -> T): T {
-      if (!ApplicationManager.getApplication().isDispatchThread) {
-        return task()
-      }
-      else {
-        splitters.insideChange++
-        try {
-          return task()
-        }
-        finally {
-          splitters.insideChange--
-          if (!splitters.isInsideChange) {
-            splitters.validate()
-            for (window in splitters.getWindows()) {
-              (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
-            }
-          }
-        }
-      }
-    }
   }
 
   protected open fun canOpenFile(file: VirtualFile, providers: List<FileEditorProvider>): Boolean = !providers.isEmpty()
@@ -748,7 +727,7 @@ open class FileEditorManagerImpl(
       if (ClientId.isCurrentlyUnderLocalId) {
         openFileSetModificationCount.increment()
         val activeSplitters = getActiveSplitterSync()
-        runBulkTabChange(activeSplitters) { activeSplitters.closeFile(file, moveFocus) }
+        runBulkTabChangeInEdt(activeSplitters) { activeSplitters.closeFile(file, moveFocus) }
       }
       else {
         clientFileEditorManager?.closeFile(file, false)
@@ -758,7 +737,7 @@ open class FileEditorManagerImpl(
       ClientId.withClientId(ClientId.localId).use {
         openFileSetModificationCount.increment()
         for (each in getAllSplitters()) {
-          runBulkTabChange(each) { each.closeFile(file = file, moveFocus = moveFocus) }
+          runBulkTabChangeInEdt(each) { each.closeFile(file = file, moveFocus = moveFocus) }
         }
       }
       for (manager in allClientFileEditorManagers) {
@@ -1971,7 +1950,7 @@ open class FileEditorManagerImpl(
     openFileSetModificationCount.increment()
     val splitters = getActiveSplitterSync()
     if (repaint) {
-      runBulkTabChange(splitters, splitters::closeAllFiles)
+      runBulkTabChangeInEdt(splitters, splitters::closeAllFiles)
     }
     else {
       splitters.closeAllFiles(repaint = false)
@@ -2069,8 +2048,7 @@ open class FileEditorManagerImpl(
 
       subtask("file opening in EDT", Dispatchers.EDT) {
         val splitters = window.owner
-        splitters.insideChange++
-        try {
+        runBulkTabChangeInEdt(splitters) {
           val result = doOpenInEdtImpl(existingComposite = existingComposite,
                                        window = window,
                                        file = file,
@@ -2087,9 +2065,6 @@ open class FileEditorManagerImpl(
             return@subtask result to true
           }
           result to false
-        }
-        finally {
-          splitters.insideChange--
         }
       }
     }
@@ -2226,4 +2201,29 @@ internal fun getOpenMode(event: AWTEvent): FileEditorManagerImpl.OpenMode {
     }
   }
   return FileEditorManagerImpl.OpenMode.DEFAULT
+}
+
+internal inline fun <T> runBulkTabChange(splitters: EditorsSplitters, task: () -> T): T {
+  if (!EDT.isCurrentThreadEdt()) {
+    return task()
+  }
+
+  return runBulkTabChangeInEdt(splitters, task)
+}
+
+@RequiresEdt
+internal inline fun <T> runBulkTabChangeInEdt(splitters: EditorsSplitters, task: () -> T): T {
+  splitters.insideChange++
+  try {
+    return task()
+  }
+  finally {
+    splitters.insideChange--
+    if (!splitters.isInsideChange) {
+      splitters.validate()
+      for (window in splitters.getWindows()) {
+        (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
+      }
+    }
+  }
 }
