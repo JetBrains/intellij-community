@@ -57,8 +57,6 @@ class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCorou
         )
     }
 
-    override fun getName(): String {
-        return NAME
-    }
+    override fun getName(): String = NAME
 
 }

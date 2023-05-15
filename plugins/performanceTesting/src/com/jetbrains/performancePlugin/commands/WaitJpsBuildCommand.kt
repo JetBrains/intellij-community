@@ -59,8 +59,6 @@ class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutine
     waitJpsProjectLoaded(context.project, timeout, timeunit)
   }
 
-  override fun getName(): String {
-    return NAME
-  }
+  override fun getName(): String = NAME
 
 }

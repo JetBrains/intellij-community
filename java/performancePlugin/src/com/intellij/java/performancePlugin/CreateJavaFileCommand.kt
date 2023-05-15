@@ -52,8 +52,6 @@ class CreateJavaFileCommand(text: String, line: Int) : PerformanceCommandCorouti
     )
   }
 
-  override fun getName(): String {
-    return NAME
-  }
+  override fun getName(): String = NAME
 
 }
