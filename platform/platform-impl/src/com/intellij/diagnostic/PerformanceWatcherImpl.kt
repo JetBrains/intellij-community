@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.diagnostic
@@ -424,7 +424,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
 private fun reportCrashesIfAny() {
   val systemDir = Path.of(PathManager.getSystemPath())
   try {
-    val appInfoFile = systemDir.resolve(IdeaFreezeReporter.APPINFO_FILE_NAME)
+    val appInfoFile = systemDir.resolve(APP_INFO_FILE_NAME)
     val pidFile = systemDir.resolve(PID_FILE_NAME)
     // TODO: check jre in app info, not the current
     // Only report if on JetBrains jre
