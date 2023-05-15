@@ -147,7 +147,7 @@ internal class PortableCompilationCacheDownloader(
       Decompressor.Zip(outputArchive).overwrite(true).extract(Path.of(compilationOutput.path))
     }
     catch (e: Exception) {
-      throw Exception("Unable to decompress $remoteCacheUrl/${compilationOutput.remotePath} to $compilationOutput.path", e)
+      throw Exception("Unable to decompress $remoteCacheUrl/${compilationOutput.remotePath} to ${compilationOutput.path}", e)
     }
     finally {
       if (outputArchive != null) {

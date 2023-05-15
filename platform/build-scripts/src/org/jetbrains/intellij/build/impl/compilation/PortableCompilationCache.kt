@@ -239,6 +239,9 @@ class PortableCompilationCache(private val context: CompilationContext) {
         downloader.download()
       }
       catch (e: Exception) {
+        if (downloader.availableForHeadCommit && jpsCaches.downloadCompilationOutputsOnly) {
+          throw e
+        }
         e.printStackTrace()
         context.messages.warning("Failed to download Compilation Cache. Re-trying without any caches.")
         forceRebuild = true
