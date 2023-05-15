@@ -40,6 +40,24 @@ public interface IndexableFilesIndex {
   @RequiresBackgroundThread
   boolean shouldBeIndexed(@NotNull VirtualFile file);
 
+  /**
+   * This method is significantly more expensive than {@link IndexableFilesIndex#shouldBeIndexed(VirtualFile)}
+   * Consider using this method if it's enough.
+   * <br/>
+   * Most of {@link IndexableSetOrigin} contain roots. In this case they contain registered roots of corresponding workspace entity or
+   * other indexable unit, like {@link com.intellij.openapi.roots.SyntheticLibrary} or {@link IndexableSetContributor}.
+   * Consider structure `contentRoot/dir/file`. {@code getOrigins(file).singleOrError().getRoots()} is `contentRoot`.
+   * Why this is important: some alike APIs are written for incremental reindexing, and work with minimal necessary roots. For example,
+   * {@link ReincludedRootsUtil}.
+   * <br/>
+   * Batch handling is introduced for the sake of performance.
+   * <br/>
+   * Just like `WorkspaceFileIndex`, `IndexableFilesIndex` doesn't detect cases when a file gets under some `IndexableSetOrigin`
+   * due to a symlink on it or its parent.
+   * In case `rootOfOrigin1/targetFile` and `rootOfOrigin2/symlinkToTargetFile` only `Origin1` would be returned by `getOrigins(targetFile)`.
+   * See more in {@link IndexableFilesIndexSymlinkedOriginsTest}
+   */
+  @RequiresBackgroundThread
   @NotNull
   Collection<? extends IndexableSetOrigin> getOrigins(@NotNull Collection<VirtualFile> files);
 
