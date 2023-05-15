@@ -107,7 +107,9 @@ object NotificationsAnnouncer {
     constructor():this(null)
 
     override fun notify(notification: Notification) {
-      doNotify(notification, project)
+      UIUtil.invokeLaterIfNeeded {
+        doNotify(notification, project)
+      }
     }
   }
 
