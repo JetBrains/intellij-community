@@ -88,12 +88,7 @@ public class CancellableLockBenchmark {
 
   @Benchmark
   public void noLock_baseline(LockContext context) {
-    try {
-      Blackhole.consumeCPU(TASK_SIZE_UNDER_LOCK);
-    }
-    finally {
-      //nothing
-    }
+    Blackhole.consumeCPU(TASK_SIZE_UNDER_LOCK);
   }
 
   @Benchmark
