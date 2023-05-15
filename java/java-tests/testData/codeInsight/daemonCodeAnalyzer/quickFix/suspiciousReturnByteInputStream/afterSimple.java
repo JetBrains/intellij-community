@@ -1,9 +1,6 @@
 // "Fix all 'Suspicious returning byte value from 'InputStream.read()'' problems in file" "true"
-package java.io;
 
-public abstract class InputStream {
-  public abstract int read();
-}
+import java.io.InputStream;
 
 class MyInputStream extends InputStream {
   Byte x = 0;
