@@ -4952,6 +4952,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/callWithQualifiedClassName.kt");
         }
 
+        @TestMetadata("enumFromStdlib.kt")
+        public void testEnumFromStdlib() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/enumFromStdlib.kt");
+        }
+
         @TestMetadata("equalsCheck.kt")
         public void testEqualsCheck() throws Exception {
             runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/equalsCheck.kt");

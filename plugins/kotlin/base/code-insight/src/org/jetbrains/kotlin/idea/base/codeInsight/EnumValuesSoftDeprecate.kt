@@ -4,10 +4,7 @@ package org.jetbrains.kotlin.idea.base.codeInsight
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -28,7 +25,7 @@ fun isSoftDeprecatedEnumValuesMethod(
     return KtClassKind.ENUM_CLASS == enumClassSymbol.classKind &&
             StandardNames.ENUM_VALUES == valuesMethodSymbol.callableIdIfNonLocal?.callableName &&
             // Don't touch user-declared methods with the name "values"
-            valuesMethodSymbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
+            valuesMethodSymbol is KtFunctionLikeSymbol && valuesMethodSymbol.valueParameters.isEmpty()
 }
 
 @ApiStatus.Internal
