@@ -101,7 +101,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         }
 
         if (isShellIntegrationAvailable(shellPath)) { //fish shell works only for virtualenv and not for conda
-          //for bash we pass activate script to jediterm shell integration (see jediterm-bash.in) to source it there
+          //for bash we pass activate script to shell integration (see bash-integration.bash) to source it there
           //TODO: fix conda for fish [also in fleet.language.python.PythonVirtualEnvTerminalPreprocessor#preprocess]
 
           findActivateScript(sdkHomePath.path, shellPath)?.let { activate ->

@@ -92,7 +92,7 @@ function configureCommandHistory {
 configureCommandHistory
 
 JETBRAINS_INTELLIJ_BASH_DIR="$(dirname "${BASH_SOURCE[0]}")"
-if [ -r "${JETBRAINS_INTELLIJ_BASH_DIR}/hooks.bash" ]; then
-  source "${JETBRAINS_INTELLIJ_BASH_DIR}/hooks.bash"
+if [ -r "${JETBRAINS_INTELLIJ_BASH_DIR}/command-block-support.bash" ]; then
+  source "${JETBRAINS_INTELLIJ_BASH_DIR}/command-block-support.bash"
 fi
 unset JETBRAINS_INTELLIJ_BASH_DIR

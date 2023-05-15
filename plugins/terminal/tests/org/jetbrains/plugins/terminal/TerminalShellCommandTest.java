@@ -33,10 +33,10 @@ public class TerminalShellCommandTest extends TestCase {
 
   public void testAddRcConfig() {
     if (SystemInfo.isUnix) {
-      hasRcConfig("bash -i", "bash/jediterm-bash.in", Maps.newHashMap());
-      hasRcConfig("bash --login", "bash/jediterm-bash.in", Maps.newHashMap());
+      hasRcConfig("bash -i", "bash/bash-integration.bash", Maps.newHashMap());
+      hasRcConfig("bash --login", "bash/bash-integration.bash", Maps.newHashMap());
       Map<String, String> envs = Maps.newHashMap();
-      hasRcConfig("bash --rcfile ~/.bashrc", "bash/jediterm-bash.in", envs);
+      hasRcConfig("bash --rcfile ~/.bashrc", "bash/bash-integration.bash", envs);
       assertTrue(envs.get("JEDITERM_USER_RCFILE").contains(".bashrc"));
     }
   }
