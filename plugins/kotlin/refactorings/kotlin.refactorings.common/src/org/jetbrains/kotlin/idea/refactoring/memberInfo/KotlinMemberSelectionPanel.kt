@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import java.awt.BorderLayout
 
 class KotlinMemberSelectionPanel(
-    @NlsContexts.DialogTitle title: String,
+    @NlsContexts.DialogTitle title: String? = null,
     memberInfo: List<KotlinMemberInfo>,
     @Nls abstractColumnHeader: String? = null
 ) : AbstractMemberSelectionPanel<KtNamedDeclaration, KotlinMemberInfo>() {
@@ -19,9 +19,8 @@ class KotlinMemberSelectionPanel(
 
     init {
         layout = BorderLayout()
-
         val scrollPane = ScrollPaneFactory.createScrollPane(table)
-        add(SeparatorFactory.createSeparator(title, table), BorderLayout.NORTH)
+        title?.let { add(SeparatorFactory.createSeparator(title, table), BorderLayout.NORTH) }
         add(scrollPane, BorderLayout.CENTER)
     }
 
