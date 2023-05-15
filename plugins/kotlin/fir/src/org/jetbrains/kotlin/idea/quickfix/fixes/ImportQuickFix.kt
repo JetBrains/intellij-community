@@ -146,7 +146,10 @@ class ImportQuickFix(
                 }
 
                 else -> {
-                    if (ApplicationManager.getApplication().isUnitTestMode) return false
+                    if (ApplicationManager.getApplication().isUnitTestMode) {
+                        addImport(importCandidates.first().fqName)
+                        return true
+                    }
                     createImportSelectorPopup().showInBestPositionFor(editor)
 
                     return true
