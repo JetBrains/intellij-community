@@ -322,9 +322,9 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.mnemonicForeground() : JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND;
       myMnemonicLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected ? getSelectionForeground() : foreground);
       myMnemonicLabel.setVisible(true);
+      myTextLabel.setDisplayedMnemonicIndex(-1);
     }
-
-    if (step.isMnemonicsNavigationEnabled()) {
+    else if (step.isMnemonicsNavigationEnabled()) {
       MnemonicNavigationFilter<Object> filter = step.getMnemonicNavigationFilter();
       int pos = filter == null ? -1 : filter.getMnemonicPos(value);
       if (pos != -1) {
