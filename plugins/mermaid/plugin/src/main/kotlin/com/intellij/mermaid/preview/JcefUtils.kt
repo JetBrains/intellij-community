@@ -33,8 +33,14 @@ internal class LoadErrorException(
 internal suspend fun JBCefBrowser.waitForLoad(content: JBCefBrowser.() -> Unit) {
   return suspendCancellableCoroutine { continuation ->
     val handler = object: CefLoadHandlerAdapter() {
+      @Volatile
+      private var handlerWasCalled = false
+
       override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
-        jbCefClient.removeLoadHandler(this, cefBrowser)
+        if (handlerWasCalled) {
+          return
+        }
+        handlerWasCalled = true
         continuation.resume(Unit)
       }
 
@@ -45,7 +51,10 @@ internal suspend fun JBCefBrowser.waitForLoad(content: JBCefBrowser.() -> Unit) 
         errorText: String,
         failedUrl: String
       ) {
-        jbCefClient.removeLoadHandler(this, cefBrowser)
+        if (handlerWasCalled) {
+          return
+        }
+        handlerWasCalled = true
         continuation.resumeWithException(LoadErrorException(errorCode, errorText, failedUrl))
       }
     }
