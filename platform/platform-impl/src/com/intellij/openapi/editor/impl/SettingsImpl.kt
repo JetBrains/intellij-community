@@ -37,7 +37,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
 
   // This group of settings does not have a UI
   @get:Deprecated("use {@link EditorKind}")
-  var softWrapAppliancePlace: SoftWrapAppliancePlaces? = null
+  var softWrapAppliancePlace: SoftWrapAppliancePlaces
   private var myAdditionalLinesCount = Registry.intValue("editor.virtual.lines", 5)
   private var myAdditionalColumnsCount = 3
   private var myLineCursorWidth = EditorUtil.getDefaultCaretWidth()
@@ -148,7 +148,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     myIsRightMarginShown?.let {
       return it
     }
-    if (editor != null && getRightMargin(editor.project!!) == CodeStyleConstraints.MAX_RIGHT_MARGIN) {
+    if (editor != null && getRightMargin(editor.project) == CodeStyleConstraints.MAX_RIGHT_MARGIN) {
       return false
     }
     else {
@@ -625,7 +625,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
       return it
     }
 
-    val softWrapsEnabled = EditorSettingsExternalizable.getInstance().isUseSoftWraps(softWrapAppliancePlace!!)
+    val softWrapsEnabled = EditorSettingsExternalizable.getInstance().isUseSoftWraps(softWrapAppliancePlace)
     if (!softWrapsEnabled || softWrapAppliancePlace != SoftWrapAppliancePlaces.MAIN_EDITOR || editor == null) {
       return softWrapsEnabled
     }
