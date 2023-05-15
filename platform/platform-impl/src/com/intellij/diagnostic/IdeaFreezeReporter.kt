@@ -21,7 +21,6 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.SmartList
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
@@ -65,23 +64,24 @@ internal class IdeaFreezeReporter : IdePerformanceListener {
   }
 
   companion object {
-    fun setAppInfo(event: IdeaLoggingEvent, appInfo: String?) {
+    internal fun setAppInfo(event: IdeaLoggingEvent, appInfo: String?) {
       val data = event.data
       if (data is AbstractMessage) {
         data.appInfo = appInfo
       }
     }
 
-    fun saveAppInfo(appInfoFile: Path, overwrite: Boolean) {
+    internal fun saveAppInfo(appInfoFile: Path, overwrite: Boolean) {
       if (overwrite || !Files.exists(appInfoFile)) {
         Files.createDirectories(appInfoFile.parent)
         Files.writeString(appInfoFile, appInfoString)
       }
     }
 
-    fun report(event: IdeaLoggingEvent?) {
+    internal fun report(event: IdeaLoggingEvent?) {
       if (event != null) {
-        val t = event.throwable // only report to JB
+        val t = event.throwable
+        // only report to JB
         if (getSubmitter(t, PluginUtil.getInstance().findPluginId(t)) is ITNReporter) {
           MessagePool.getInstance().addIdeFatalMessage(event)
         }
@@ -203,7 +203,7 @@ internal class IdeaFreezeReporter : IdePerformanceListener {
                           jitProblem: String?,
                           finished: Boolean): IdeaLoggingEvent? {
     val allInEdt = causeThreads.all { ThreadDumper.isEDT(it) }
-    val root = CallTreeNode.buildTree(causeThreads, dumpInterval)
+    val root = buildTree(threadInfos = causeThreads, time = dumpInterval)
     val classLoadingRatio = countClassLoading(causeThreads) * 100 / causeThreads.size
     val commonStackNode = root.findDominantCommonStack((causeThreads.size * dumpInterval * COMMON_SUB_STACK_WEIGHT).toLong())
     var commonStack = commonStackNode?.getStack()
@@ -253,35 +253,18 @@ ${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}S
         message += "\n\nThe stack is from the thread that was blocking EDT"
       }
       val report = createReportAttachment(durationInSeconds, reportText)
-      return LogMessage.eventOf(Freeze(commonStack), message, ContainerUtil.append(attachments, report))
+      return LogMessage.eventOf(Freeze(commonStack), message, attachments + report)
     }
     return null
   }
 }
 
-private class CallTreeNode private constructor(private val stackTraceElement: StackTraceElement?,
-                                               private val parent: CallTreeNode?,
-                                               private var time: Long,
-                                               val threadInfo: ThreadInfo?) {
+private class CallTreeNode(private val stackTraceElement: StackTraceElement?,
+                           private val parent: CallTreeNode?,
+                           @JvmField var time: Long,
+                           @JvmField val threadInfo: ThreadInfo?) {
   private val children = SmartList<CallTreeNode>()
   private val depth: Int = if (parent == null) 0 else parent.depth + 1
-
-  companion object {
-    @JvmField
-    val TIME_COMPARATOR: Comparator<CallTreeNode> = Comparator.comparingLong<CallTreeNode> { it.time }.reversed()
-
-    fun buildTree(threadInfos: List<ThreadInfo>, time: Long): CallTreeNode {
-      val root = CallTreeNode(null, null, 0, null)
-      for (thread in threadInfos) {
-        var node = root
-        val stack = thread.stackTrace
-        for (i in stack.indices.reversed()) {
-          node = node.addCallee(stack[i], time, thread)
-        }
-      }
-      return root
-    }
-  }
 
   fun addCallee(e: StackTraceElement?, time: Long, threadInfo: ThreadInfo?): CallTreeNode {
     for (child in children) {
@@ -310,7 +293,7 @@ private class CallTreeNode private constructor(private val stackTraceElement: St
   fun appendIndentedString(builder: StringBuilder) {
     repeat(depth) { builder.append(' ') }
     builder.append(stackTraceElement!!.className).append(".").append(stackTraceElement.methodName).append(" ").append(time).append(
-        "ms").append('\n')
+      "ms").append('\n')
   }
 
   fun dump(): String {
@@ -349,6 +332,19 @@ private class CallTreeNode private constructor(private val stackTraceElement: St
   }
 }
 
+private val TIME_COMPARATOR: Comparator<CallTreeNode> = Comparator.comparingLong<CallTreeNode> { it.time }.reversed()
+
+private fun buildTree(threadInfos: List<ThreadInfo>, time: Long): CallTreeNode {
+  val root = CallTreeNode(null, null, 0, null)
+  for (thread in threadInfos) {
+    var node = root
+    val stack = thread.stackTrace
+    for (i in stack.indices.reversed()) {
+      node = node.addCallee(stack[i], time, thread)
+    }
+  }
+  return root
+}
 
 private val EP_NAME = ExtensionPointName<FreezeProfiler>("com.intellij.diagnostic.freezeProfiler")
 
