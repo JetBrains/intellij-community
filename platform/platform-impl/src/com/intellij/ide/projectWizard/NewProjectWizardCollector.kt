@@ -32,23 +32,42 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
     private val GROUP = EventLogGroup("new.project.wizard.interactions", 20)
 
+    private val LANGUAGES = listOf(
+      NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
+      NewProjectWizardConstants.Language.GROOVY, NewProjectWizardConstants.Language.JAVASCRIPT,
+      NewProjectWizardConstants.Language.HTML, NewProjectWizardConstants.Language.PYTHON,
+      NewProjectWizardConstants.Language.PHP, NewProjectWizardConstants.Language.RUBY,
+      NewProjectWizardConstants.Language.GO, NewProjectWizardConstants.Language.SCALA,
+      NewProjectWizardConstants.Language.RUST
+    )
+
+    private val BUILD_SYSTEMS = listOf(
+      NewProjectWizardConstants.BuildSystem.INTELLIJ, NewProjectWizardConstants.BuildSystem.GRADLE,
+      NewProjectWizardConstants.BuildSystem.MAVEN, NewProjectWizardConstants.BuildSystem.SBT
+    )
+
+    private val GROOVY_SDKS = listOf(
+      NewProjectWizardConstants.GroovySdk.MAVEN, NewProjectWizardConstants.GroovySdk.LOCAL,
+      NewProjectWizardConstants.GroovySdk.NONE
+    )
+
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = EventFields.Int("screen")
     private val typedCharField = IntEventField("typed_chars")
     private val hitField = IntEventField("hits")
     private val generatorTypeField = GeneratorEventField("generator")
-    private val languageField = EventFields.String("language", NewProjectWizardConstants.Language.ALL)
+    private val languageField = EventFields.String("language", LANGUAGES)
     private val gitField = EventFields.Boolean("git")
     private val isSucceededField = EventFields.Boolean("project_created")
     private val inputMaskField = EventFields.Long("input_mask")
     private val addSampleCodeField = EventFields.Boolean("add_sample_code")
     private val addSampleOnboardingTipsField = EventFields.Boolean("add_sample_onboarding_tips")
-    private val buildSystemField = EventFields.String("build_system", NewProjectWizardConstants.BuildSystem.ALL)
+    private val buildSystemField = EventFields.String("build_system", BUILD_SYSTEMS)
     private val buildSystemSdkField = EventFields.Int("build_system_sdk_version")
     private val buildSystemParentField = EventFields.Boolean("build_system_parent")
     private val groovyVersionField = EventFields.Version
-    private val groovySourceTypeField = EventFields.String("groovy_sdk_type", NewProjectWizardConstants.GroovySdk.ALL)
-    private val pluginField = EventFields.String("plugin_selected", NewProjectWizardConstants.Language.ALL)
+    private val groovySourceTypeField = EventFields.String("groovy_sdk_type", GROOVY_SDKS)
+    private val pluginField = EventFields.String("plugin_selected", LANGUAGES)
 
     private val baseFields = arrayOf(sessionIdField, screenNumField)
     private val languageFields = arrayOf(*baseFields, languageField)

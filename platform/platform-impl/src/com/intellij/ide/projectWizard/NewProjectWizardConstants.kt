@@ -14,17 +14,13 @@ object NewProjectWizardConstants {
     const val GO = "Go"
     const val SCALA = "Scala"
     const val RUST = "Rust"
-
-    val ALL = listOf(JAVA, KOTLIN, GROOVY, JAVASCRIPT, HTML, PYTHON, PHP, RUBY, GO, SCALA, RUST)
   }
 
   object BuildSystem {
     const val INTELLIJ = "IntelliJ"
     const val GRADLE = "Gradle"
     const val MAVEN = "Maven"
-    private const val SBT = "SBT"
-
-    val ALL = listOf(INTELLIJ, GRADLE, MAVEN, SBT)
+    const val SBT = "SBT"
   }
 
   object Generators {
@@ -38,8 +34,6 @@ object NewProjectWizardConstants {
     const val MAVEN = "Maven"
     const val LOCAL = "Local"
     const val NONE = "None"
-
-    val ALL = listOf(MAVEN, LOCAL, NONE)
   }
 
   const val OTHER = "other"
