@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -15,7 +15,10 @@ import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
@@ -665,7 +668,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   @Override
   protected Patch createPatch() throws IOException {
     assertFalse(myFile.exists());
-    Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);
+    Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI, null);
     assertTrue(myFile.exists());
     return patch;
   }
