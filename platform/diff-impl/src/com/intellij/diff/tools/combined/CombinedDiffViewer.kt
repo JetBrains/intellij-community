@@ -33,7 +33,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ListenerUtil
 import com.intellij.ui.components.JBLayeredPane
-import com.intellij.ui.components.JBScrollBar
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.Alarm
@@ -366,7 +365,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     val headerHeightInViewport = min(block.component.bounds.maxY.toInt() - viewRect.bounds.minY.toInt(), headerHeight)
     val stickyHeaderY = headerHeightInViewport - headerHeight
 
-    scrollPane.verticalScrollBar.add(JBScrollBar.LEADING, stickyHeader)
+    //scrollPane.verticalScrollBar.add(JBScrollBar.LEADING, stickyHeader)
 
     stickyHeaderPanel.setContent(stickyHeader)
     stickyHeaderPanel.setBounds(0, stickyHeaderY, block.component.width, headerHeight)
