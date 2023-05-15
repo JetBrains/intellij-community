@@ -263,12 +263,7 @@ class MavenImportFlow {
   fun resolveFolders(projects: Collection<MavenProject>, project: Project, indicator: MavenProgressIndicator): Collection<MavenProject> {
     assertNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(project)
-    val embeddersManager = projectManager.embeddersManager
     val projectTree = loadOrCreateProjectTree(projectManager)
-    val generalSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings()
-    val importingSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getImportingSettings()
-    val consoleToBeRemoved = BTWMavenConsole(project, generalSettings.outputLevel,
-                                             generalSettings.isPrintErrorStackTraces)
     val d = Disposer.newDisposable("MavenImportFlow:resolveFolders:treeListener")
     val projectsFoldersResolved = Collections.synchronizedList(ArrayList<MavenProject>())
     Disposer.register(MavenDisposable.getInstance(project), d)
@@ -280,7 +275,7 @@ class MavenImportFlow {
       }
     }, d)
     val folderResolver = MavenFolderResolver(project)
-    folderResolver.resolveFolders(projects, projectTree, importingSettings, embeddersManager, consoleToBeRemoved, indicator)
+    folderResolver.resolveFoldersBlocking(projects, projectTree)
 
     Disposer.dispose(d)
     return projectsFoldersResolved

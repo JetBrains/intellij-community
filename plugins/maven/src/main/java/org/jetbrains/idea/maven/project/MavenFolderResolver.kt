@@ -20,9 +20,7 @@ import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
-import java.util.function.Function
 import java.util.function.Supplier
-import java.util.stream.Collectors
 
 @ApiStatus.Internal
 class MavenFolderResolver(private val project: Project) {
@@ -47,17 +45,7 @@ class MavenFolderResolver(private val project: Project) {
       return
     }
 
-    val syncConsoleSupplier = Supplier { projectsManager.syncConsole }
-    val indicator = MavenProgressIndicator(project, syncConsoleSupplier)
-
-    resolveFolders(
-      projects,
-      projectsManager.projectsTree,
-      projectsManager.importingSettings,
-      projectsManager.embeddersManager,
-      mavenConsole,
-      indicator
-    )
+    resolveFoldersBlocking(projects, projectsManager.projectsTree)
 
     //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
     MavenUtil.restartMavenConnectors(project, false) { c: MavenServerConnector ->
@@ -73,71 +61,27 @@ class MavenFolderResolver(private val project: Project) {
     }
   }
 
-  private val mavenConsole: MavenConsole
-    get() {
-      val mavenGeneralSettings = projectsManager.generalSettings
-      return BTWMavenConsole(project, mavenGeneralSettings.outputLevel, mavenGeneralSettings.isPrintErrorStackTraces)
-    }
-
-  fun resolveFolders(mavenProjects: Collection<MavenProject>,
-                     tree: MavenProjectsTree,
-                     importingSettings: MavenImportingSettings,
-                     embeddersManager: MavenEmbeddersManager,
-                     console: MavenConsole,
-                     process: MavenProgressIndicator) {
+  fun resolveFoldersBlocking(mavenProjects: Collection<MavenProject>, tree: MavenProjectsTree) {
     val mavenProjectsToResolve = collectMavenProjectsToResolve(mavenProjects, tree)
-    doResolveFolders(mavenProjectsToResolve, tree, importingSettings, embeddersManager, console, process)
-  }
-
-  private fun collectMavenProjectsToResolve(mavenProjects: Collection<MavenProject>,
-                                            tree: MavenProjectsTree): Collection<MavenProject> {
-    // if we generate sources for the aggregator of a project, sources will be generated for the project too
-    return if (Registry.`is`("maven.server.generate.sources.for.aggregator.projects")) {
-      tree.collectAggregators(mavenProjects)
-    }
-    else mavenProjects
-  }
-
-  private fun doResolveFolders(mavenProjects: Collection<MavenProject>,
-                               tree: MavenProjectsTree,
-                               importingSettings: MavenImportingSettings,
-                               embeddersManager: MavenEmbeddersManager,
-                               console: MavenConsole,
-                               process: MavenProgressIndicator) {
-    val projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, tree)
+    val projectMultiMap = MavenUtil.groupByBasedir(mavenProjectsToResolve, tree)
     for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
-      resolveFolders(baseDir,
-                     mavenProjectsForBaseDir,
-                     tree,
-                     importingSettings,
-                     embeddersManager,
-                     console,
-                     process)
+      resolveFoldersBlocking(baseDir, mavenProjectsForBaseDir, tree)
     }
   }
 
-  private fun resolveFolders(baseDir: String,
-                             mavenProjects: Collection<MavenProject>,
-                             tree: MavenProjectsTree,
-                             importingSettings: MavenImportingSettings,
-                             embeddersManager: MavenEmbeddersManager,
-                             console: MavenConsole,
-                             process: MavenProgressIndicator) {
-    val goal = importingSettings.updateFoldersOnImportPhase
+  private fun resolveFoldersBlocking(baseDir: String, mavenProjects: Collection<MavenProject>, tree: MavenProjectsTree) {
+    val syncConsoleSupplier = Supplier { projectsManager.syncConsole }
+    val indicator = MavenProgressIndicator(project, syncConsoleSupplier)
+    val goal = projectsManager.importingSettings.updateFoldersOnImportPhase
     val task = EmbedderTask { embedder ->
-      process.checkCanceled()
-      process.setText(MavenProjectBundle.message("maven.updating.folders"))
-      process.setText2("")
-      val fileToProject = mavenProjects.stream()
-        .collect(Collectors.toMap(
-          Function { mavenProject: MavenProject ->
-            File(mavenProject.file.path)
-          },
-          Function { mavenProject: MavenProject? -> mavenProject }))
-      val requests = fileToProject.entries.map { (key, value): Map.Entry<File, MavenProject?> ->
-        MavenGoalExecutionRequest(key, value!!.activatedProfilesIds)
+      indicator.checkCanceled()
+      indicator.setText(MavenProjectBundle.message("maven.updating.folders"))
+      indicator.setText2("")
+      val fileToProject = mavenProjects.associateBy({ File(it.file.path) }, { it })
+      val requests = fileToProject.entries.map { (key, value): Map.Entry<File, MavenProject> ->
+        MavenGoalExecutionRequest(key, value.activatedProfilesIds)
       }
-      val results = embedder.executeGoal(requests, goal, process, console)
+      val results = embedder.executeGoal(requests, goal, indicator, mavenConsole)
       for (result in results) {
         val mavenProject = fileToProject.getOrDefault(result.file, null)
         if (null != mavenProject && MavenUtil.shouldResetDependenciesAndFolders(result.problems)) {
@@ -146,6 +90,20 @@ class MavenFolderResolver(private val project: Project) {
         }
       }
     }
-    embeddersManager.execute(baseDir, MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, task)
+    projectsManager.embeddersManager.execute(baseDir, MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, task)
   }
+
+  private fun collectMavenProjectsToResolve(mavenProjects: Collection<MavenProject>, tree: MavenProjectsTree): Collection<MavenProject> {
+    // if we generate sources for the aggregator of a project, sources will be generated for the project too
+    return if (Registry.`is`("maven.server.generate.sources.for.aggregator.projects")) {
+      tree.collectAggregators(mavenProjects)
+    }
+    else mavenProjects
+  }
+
+  private val mavenConsole: MavenConsole
+    get() {
+      val mavenGeneralSettings = projectsManager.generalSettings
+      return BTWMavenConsole(project, mavenGeneralSettings.outputLevel, mavenGeneralSettings.isPrintErrorStackTraces)
+    }
 }

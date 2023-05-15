@@ -788,12 +788,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                     false);
 
       var folderResolver = new MavenFolderResolver(myProject);
-      folderResolver.resolveFolders(List.of(parentProject),
-                                    myTree,
-                                    getMavenImporterSettings(),
-                                    embeddersManager,
-                                    NULL_MAVEN_CONSOLE,
-                                    getMavenProgressIndicator());
+      folderResolver.resolveFoldersBlocking(List.of(parentProject), myTree);
     }
     finally {
       embeddersManager.releaseInTests();
