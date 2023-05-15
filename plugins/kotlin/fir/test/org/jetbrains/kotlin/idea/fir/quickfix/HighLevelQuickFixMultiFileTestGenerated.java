@@ -300,6 +300,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/functionImport.before.Main.kt");
         }
 
+        @TestMetadata("functionPreferNotDeprecated.test")
+        public void testFunctionPreferNotDeprecated() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/functionPreferNotDeprecated.test");
+        }
+
         @TestMetadata("importAliasClassAlreadyExists.before.Main.kt")
         public void testImportAliasClassAlreadyExists() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/importAliasClassAlreadyExists.before.Main.kt");
