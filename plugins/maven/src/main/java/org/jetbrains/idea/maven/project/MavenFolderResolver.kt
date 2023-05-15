@@ -45,7 +45,7 @@ class MavenFolderResolver(private val project: Project) {
       return
     }
 
-    resolveFoldersBlocking(projects, projectsManager.projectsTree)
+    resolveFoldersBlocking(projects)
 
     //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
     MavenUtil.restartMavenConnectors(project, false) { c: MavenServerConnector ->
@@ -61,7 +61,8 @@ class MavenFolderResolver(private val project: Project) {
     }
   }
 
-  fun resolveFoldersBlocking(mavenProjects: Collection<MavenProject>, tree: MavenProjectsTree) {
+  fun resolveFoldersBlocking(mavenProjects: Collection<MavenProject>) {
+    val tree = projectsManager.projectsTree
     val mavenProjectsToResolve = collectMavenProjectsToResolve(mavenProjects, tree)
     val projectMultiMap = MavenUtil.groupByBasedir(mavenProjectsToResolve, tree)
     for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {

@@ -275,7 +275,7 @@ class MavenImportFlow {
       }
     }, d)
     val folderResolver = MavenFolderResolver(project)
-    folderResolver.resolveFoldersBlocking(projects, projectTree)
+    folderResolver.resolveFoldersBlocking(projects)
 
     Disposer.dispose(d)
     return projectsFoldersResolved
