@@ -5,12 +5,14 @@ import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.lang.JavaVersion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager
+import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.function.Supplier
@@ -37,22 +39,32 @@ class MavenFolderManager(private val project: Project) {
       MavenImportingManager.getInstance(project).resolveFolders(projects)
       return
     }
-    val onCompletion = Runnable {
-      if (projectsManager.hasScheduledProjects()) {
-        projectsManager.importProjects()
-        //myProjectsManager.fireProjectImportCompleted()
-      }
-    }
 
-    val task = MavenProjectsProcessorFoldersResolvingTask(
-      projects,
-      projectsManager.importingSettings,
-      projectsManager.projectsTree,
-      onCompletion
-    )
     val syncConsoleSupplier = Supplier { projectsManager.syncConsole }
     val indicator = MavenProgressIndicator(project, syncConsoleSupplier)
-    task.perform(project, projectsManager.embeddersManager, mavenConsole, indicator)
+
+    val resolver = MavenFolderResolver()
+    resolver.resolveFolders(
+      projects,
+      projectsManager.projectsTree,
+      projectsManager.importingSettings,
+      projectsManager.embeddersManager,
+      mavenConsole,
+      indicator
+    )
+
+    //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
+    MavenUtil.restartMavenConnectors(project, false) { c: MavenServerConnector ->
+      val sdk = c.jdk
+      val version = sdk.versionString ?: return@restartMavenConnectors false
+      if (JavaVersion.parse(version).isAtLeast(17)) return@restartMavenConnectors true
+      false
+    }
+
+    if (projectsManager.hasScheduledProjects()) {
+      projectsManager.importProjects()
+      //myProjectsManager.fireProjectImportCompleted()
+    }
   }
 
   private val mavenConsole: MavenConsole
