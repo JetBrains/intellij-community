@@ -15,6 +15,9 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -25,6 +28,8 @@ import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class SynchronizationOnLocalVariableOrMethodParameterInspection extends BaseInspection {
 
@@ -73,7 +78,9 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       boolean localVariable = false;
       final PsiElement target = referenceExpression.resolve();
       if (target instanceof PsiLocalVariable variable) {
-        if (!reportLocalVariables || isSynchronizedCollection(variable, referenceExpression) || isReferencedToField(variable, referenceExpression)) {
+        if (!reportLocalVariables ||
+            isSynchronizedCollection(variable, referenceExpression) ||
+            canBeEscaped(variable, referenceExpression)) {
           return;
         }
         localVariable = true;
@@ -103,16 +110,16 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       registerError(referenceExpression, Boolean.valueOf(localVariable));
     }
 
-    private static boolean isReferencedToField(PsiLocalVariable variable, PsiReferenceExpression referenceExpression) {
+    private static boolean canBeEscaped(PsiLocalVariable variable, PsiReferenceExpression referenceExpression) {
       PsiElement parent = PsiTreeUtil.findCommonParent(variable, referenceExpression);
       if (parent == null) {
         return false;
       }
       PsiExpression initializer = variable.getInitializer();
-      if (initializer != null && !isField(initializer)) {
+      if (initializer != null && !(isField(initializer) || assignedFromMethodCall(initializer))) {
         return false;
       }
-      return !VariableAccessUtils.variableIsAssigned(variable, t -> isField(t), parent);
+      return !VariableAccessUtils.variableIsAssigned(variable, t -> isField(t) || assignedFromMethodCall(t), parent);
     }
 
     private static boolean isField(PsiExpression expression) {
@@ -121,6 +128,25 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       }
       if (expression instanceof PsiReferenceExpression referenceExpression) {
         return referenceExpression.resolve() instanceof PsiField;
+      }
+      return false;
+    }
+
+    private static boolean assignedFromMethodCall(PsiExpression expression) {
+      if (expression instanceof PsiAssignmentExpression assignmentExpression) {
+        return assignedFromMethodCall(assignmentExpression.getRExpression());
+      }
+      if (expression instanceof PsiNewExpression) {
+        return false;
+      }
+      if (expression instanceof PsiMethodCallExpression methodCallExpression) {
+        List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(methodCallExpression);
+        for (MethodContract contract : contracts) {
+          if (contract.getReturnValue() == ContractReturnValue.returnNew()) {
+            return false;
+          }
+        }
+        return true;
       }
       return false;
     }
