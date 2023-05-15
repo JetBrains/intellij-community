@@ -102,6 +102,7 @@ public class TypeMigrationLabeler {
 
     for (Pair<SmartPsiElementPointer<PsiElement>, PsiType> p : myFailedConversions.keySet()) {
       final PsiElement element = p.getFirst().getElement();
+      LOG.assertTrue(element != null);
       if (element instanceof PsiExpression expression) {
         final PsiType type = expression.getType();
         report[j++] = JavaBundle.message("type.migration.cannot.convert.message",
@@ -110,7 +111,8 @@ public class TypeMigrationLabeler {
                                          StringUtil.escapeXmlEntities(p.getSecond().getCanonicalText()),
                                          type == null ? 0 : 1);
       }
-      else if (element != null) {
+      else {
+        LOG.assertTrue(element instanceof PsiExpressionList);
         report[j++] = JavaBundle.message("type.migration.cannot.convert.vararg.message",
                                          StringUtil.escapeXmlEntities(element.getParent().getText()));
       }
