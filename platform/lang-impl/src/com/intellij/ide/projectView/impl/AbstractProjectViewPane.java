@@ -31,7 +31,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
@@ -247,23 +246,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   public JComponent getComponentToFocus() {
     return myTree;
-  }
-
-  public void expand(final Object @Nullable [] path, final boolean requestFocus){
-    if (getTreeBuilder() == null || path == null) return;
-    AbstractTreeUi ui = getTreeBuilder().getUi();
-    if (ui != null) ui.buildNodeForPath(path);
-
-    DefaultMutableTreeNode node = ui == null ? null : ui.getNodeForPath(path);
-    if (node == null) {
-      return;
-    }
-    TreePath treePath = new TreePath(node.getPath());
-    myTree.expandPath(treePath);
-    if (requestFocus) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
-    }
-    TreeUtil.selectPath(myTree, treePath);
   }
 
   @Override
