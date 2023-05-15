@@ -369,7 +369,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   public <T> T getComponent(Class<T> clazz) {
     try {
       return (T)myContainer.lookup(clazz.getName());
@@ -926,9 +926,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     ArtifactRepository repository = repositorySystem.buildArtifactRepository(repo);
 
     if (session != null) {
-      repositorySystem.injectMirror(session, Arrays.asList(repository));
-      repositorySystem.injectProxy(session, Arrays.asList(repository));
-      repositorySystem.injectAuthentication(session, Arrays.asList(repository));
+      repositorySystem.injectMirror(session, Collections.singletonList(repository));
+      repositorySystem.injectProxy(session, Collections.singletonList(repository));
+      repositorySystem.injectAuthentication(session, Collections.singletonList(repository));
     }
 
     return repository;
@@ -1061,6 +1061,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
 
   private void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) {
+    //noinspection EmptyTryBlock
     try {
       // TODO: implement
     }
@@ -1070,6 +1071,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   private void resetComponents() {
+    //noinspection EmptyTryBlock
     try {
       // TODO: implement
     }

@@ -1974,12 +1974,12 @@ public class Mappings {
           }
 
           if (interfacesChanged) {
-            for (final TypeRepr.AbstractType typ : diff.interfaces().removed()) {
-              myDelta.registerRemovedSuperClass(changedClass.name, ((TypeRepr.ClassType)typ).className);
+            for (final TypeRepr.ClassType typ : diff.interfaces().removed()) {
+              myDelta.registerRemovedSuperClass(changedClass.name, typ.className);
             }
 
-            for (final TypeRepr.AbstractType typ : diff.interfaces().added()) {
-              myDelta.registerAddedSuperClass(changedClass.name, ((TypeRepr.ClassType)typ).className);
+            for (final TypeRepr.ClassType typ : diff.interfaces().added()) {
+              myDelta.registerAddedSuperClass(changedClass.name, typ.className);
             }
           }
 

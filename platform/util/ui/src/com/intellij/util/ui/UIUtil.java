@@ -1143,9 +1143,9 @@ public final class UIUtil {
   }
 
   /**
-   * @param c1
-   * @param c2
-   * @param factor impact of color specified in @param c2
+   * @param c1 first color to mix
+   * @param c2 second color to mix
+   * @param factor impact of color specified in {@code c2}
    * @return Mixed color
    */
   public static @NotNull Color mix(@NotNull Color c1, final Color c2, final double factor) {
