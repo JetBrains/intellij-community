@@ -26,7 +26,8 @@ class SearchEverywhereMlExperiment {
   private val tabExperiments = hashMapOf(
     SearchEverywhereTabWithMlRanking.ACTION to Experiment(
       1 to ExperimentType.NO_ML,
-      2 to ExperimentType.USE_EXPERIMENTAL_MODEL
+      2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
+      3 to ExperimentType.ENABLE_TYPOS,
     ),
 
     SearchEverywhereTabWithMlRanking.FILES to Experiment(
@@ -71,7 +72,7 @@ class SearchEverywhereMlExperiment {
   }
 
   enum class ExperimentType {
-    NO_EXPERIMENT, NO_ML, USE_EXPERIMENTAL_MODEL, NO_ML_FEATURES
+    NO_EXPERIMENT, NO_ML, USE_EXPERIMENTAL_MODEL, NO_ML_FEATURES, ENABLE_TYPOS
   }
 
   private class Experiment(vararg experiments: Pair<Int, ExperimentType>) {
