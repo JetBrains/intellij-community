@@ -10,7 +10,7 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager
-import git4idea.remote.hosting.http.HostedGitHttpAuthDataProvider
+import git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -20,9 +20,9 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 
-private val LOG = logger<GHHttpAuthDataProvider>()
+private val LOG = logger<GHSilentHttpAuthDataProvider>()
 
-internal class GHHttpAuthDataProvider : HostedGitHttpAuthDataProvider<GithubAccount>() {
+internal class GHSilentHttpAuthDataProvider : SilentHostedGitHttpAuthDataProvider<GithubAccount>() {
   override val providerId: String = "GitHub Plugin"
 
   override val accountManager: AccountManager<GithubAccount, String>

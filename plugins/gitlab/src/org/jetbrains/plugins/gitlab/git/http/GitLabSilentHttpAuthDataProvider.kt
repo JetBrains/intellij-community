@@ -8,16 +8,16 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager
-import git4idea.remote.hosting.http.HostedGitHttpAuthDataProvider
+import git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProvider
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 
-private val LOG = logger<GitLabGitHttpAuthDataProvider>()
+private val LOG = logger<GitLabSilentHttpAuthDataProvider>()
 
-internal class GitLabGitHttpAuthDataProvider : HostedGitHttpAuthDataProvider<GitLabAccount>() {
+internal class GitLabSilentHttpAuthDataProvider : SilentHostedGitHttpAuthDataProvider<GitLabAccount>() {
   override val providerId: String = "GitLab Plugin"
 
   override val accountManager: AccountManager<GitLabAccount, String>

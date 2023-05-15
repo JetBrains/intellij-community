@@ -16,6 +16,8 @@ import org.jetbrains.annotations.ApiStatus
  * Base class that provides a business logic part of [GitHttpAuthDataProvider] interface,
  * that can be extended by git hosting providers such as Space, GitHub, GitLab, BitBucket, etc.
  *
+ * Will do no user interaction
+ *
  * This logic can be described as: if user is logged in plugin (so their account is stored in [accountManager])
  * then their token will be passed as password for http remote operations.
  *
@@ -28,7 +30,7 @@ import org.jetbrains.annotations.ApiStatus
  * Clients' auth data providers should be registered in plugin.xml with "Git4Idea.GitHttpAuthDataProvider" extension.
  */
 @ApiStatus.Experimental
-abstract class HostedGitHttpAuthDataProvider<A : ServerAccount> : GitHttpAuthDataProvider {
+abstract class SilentHostedGitHttpAuthDataProvider<A : ServerAccount> : GitHttpAuthDataProvider {
   abstract val providerId: String
 
   /**
