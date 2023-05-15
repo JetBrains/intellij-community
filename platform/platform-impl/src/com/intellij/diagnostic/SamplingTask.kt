@@ -1,14 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
-import com.intellij.diagnostic.PerformanceWatcher.Companion.getInstance
 import com.sun.management.OperatingSystemMXBean
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.lang.management.ManagementFactory
 import java.lang.management.ThreadInfo
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
 
-internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDurationMs: Int) {
+internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDurationMs: Int, coroutineScope: CoroutineScope) {
   private val maxDumps: Int
   private val myThreadInfos = ArrayList<Array<ThreadInfo>>()
   private val job: Job
@@ -32,10 +35,17 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
     gcStartTime = currentGcTime()
     gcCurrentTime = gcStartTime
     processCpuLoad = (ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean).processCpuLoad
-    job = getInstance().scheduleWithFixedDelay({ dumpThreads() }, dumpInterval.toLong())
+
+    job = coroutineScope.launch {
+      val delayDuration = dumpInterval.milliseconds
+      while (true) {
+        dumpThreads()
+        delay(delayDuration)
+      }
+    }
   }
 
-  private fun dumpThreads() {
+  private suspend fun dumpThreads() {
     currentTime = System.nanoTime()
     gcCurrentTime = currentGcTime()
     val infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false)
@@ -48,14 +58,14 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
     }
   }
 
-  protected open fun dumpedThreads(threadDump: ThreadDump) {}
+  protected open suspend fun dumpedThreads(threadDump: ThreadDump) {}
 
   fun isValid(dumpingDuration: Long): Boolean {
     return myThreadInfos.size >= 10L.coerceAtLeast(maxDumps.toLong().coerceAtMost(dumpingDuration / dumpInterval / 2))
   }
 
   open fun stop() {
-    job.cancel(null)
+    job.cancel()
   }
 }
 

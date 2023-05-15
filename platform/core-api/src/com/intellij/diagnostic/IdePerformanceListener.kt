@@ -7,6 +7,12 @@ import java.nio.file.Path
 
 @ApiStatus.Internal
 interface IdePerformanceListener {
+  companion object {
+    @Topic.AppLevel
+    @JvmField
+    val TOPIC: Topic<IdePerformanceListener> = Topic(IdePerformanceListener::class.java, Topic.BroadcastDirection.NONE, true)
+  }
+
   /**
    * Invoked after thread state has been dumped to a file.
    */
@@ -15,7 +21,7 @@ interface IdePerformanceListener {
   /**
    * Invoked when IDE has detected that the UI hasn't responded for some time (5 seconds by default)
    *
-   * @param reportDir folder where all freeze report data is collected (may be temporary,
+   * @param reportDir folder where all freeze report data is collected (maybe temporary,
    * the final folder will be provided in [.uiFreezeRecorded])
    */
   fun uiFreezeStarted(reportDir: Path) {}
@@ -24,29 +30,8 @@ interface IdePerformanceListener {
    * Invoked after the UI has become responsive again following a [.uiFreezeStarted] event.
    *
    * @param durationMs freeze duration in milliseconds
-   * @param reportDir  folder where all freeze report data is collected (may be temporary,
+   * @param reportDir  folder where all freeze report data is collected (maybe temporary,
    * the final folder will be provided in [.uiFreezeRecorded])
    */
   fun uiFreezeFinished(durationMs: Long, reportDir: Path?) {}
-
-  /**
-   * Invoked after the UI has become responsive again and all data is saved into the final report folder location
-   *
-   * @param durationMs freeze duration in milliseconds
-   * @param reportDir  folder where all freeze report data is collected
-   */
-  fun uiFreezeRecorded(durationMs: Long, reportDir: Path?) {}
-
-  /**
-   * Invoked on each UI response sampled every `performance.watcher.sampling.interval.ms` set in the Registry.
-   * Executed not in EDT.
-   * @param latencyMs time between scheduling a UI event and executing it, in milliseconds
-   */
-  fun uiResponded(latencyMs: Long) {}
-
-  companion object {
-    @Topic.AppLevel
-    val TOPIC = Topic(
-      IdePerformanceListener::class.java, Topic.BroadcastDirection.NONE, true)
-  }
 }

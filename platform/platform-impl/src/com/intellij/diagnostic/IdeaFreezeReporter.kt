@@ -21,10 +21,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.SmartList
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
@@ -36,7 +33,7 @@ import kotlin.coroutines.coroutineContext
 import kotlin.math.max
 import kotlin.math.min
 
-internal class IdeaFreezeReporter : IdePerformanceListener {
+internal class IdeaFreezeReporter : PerformanceListener {
   private var dumpTask: SamplingTask? = null
   private val currentDumps = ArrayList<ThreadDump>()
   private var stacktraceCommonPart: List<StackTraceElement>? = null
@@ -46,7 +43,12 @@ internal class IdeaFreezeReporter : IdePerformanceListener {
 
   init {
     val app = ApplicationManager.getApplication()
-    @Suppress("DEPRECATION") app.coroutineScope.launch {
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
+    }
+
+    @Suppress("DEPRECATION")
+    app.coroutineScope.launch {
       app.messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
         override fun appWillBeClosed(isRestart: Boolean) {
           appClosing = true
@@ -89,7 +91,7 @@ internal class IdeaFreezeReporter : IdePerformanceListener {
     }
   }
 
-  override fun uiFreezeStarted(reportDir: Path) {
+  override fun uiFreezeStarted(reportDir: Path, coroutineScope: CoroutineScope) {
     if (DEBUG || !DebugAttachDetector.isAttached()) {
       dumpTask?.stop()
 
@@ -100,7 +102,7 @@ internal class IdeaFreezeReporter : IdePerformanceListener {
         return
       }
 
-      dumpTask = object : SamplingTask(100, maxDumpDuration) {
+      dumpTask = object : SamplingTask(100, maxDumpDuration, coroutineScope) {
         override fun stop() {
           super.stop()
           EP_NAME.forEachExtensionSafe(FreezeProfiler::stop)
@@ -143,7 +145,7 @@ internal class IdeaFreezeReporter : IdePerformanceListener {
 
   override fun uiFreezeFinished(durationMs: Long, reportDir: Path?) {
     (dumpTask ?: return).stop()
-    reportDir?.let(::cleanup)
+    reportDir?.let { cleanup(it) }
   }
 
   override fun uiFreezeRecorded(durationMs: Long, reportDir: Path?) {

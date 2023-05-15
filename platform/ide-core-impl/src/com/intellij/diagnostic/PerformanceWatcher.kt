@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CachedSingletonsRegistry
 import com.intellij.openapi.components.service
-import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
@@ -57,8 +56,6 @@ abstract class PerformanceWatcher : Disposable {
       System.err.println(ThreadDumper.dumpThreadsToString())
     }
   }
-
-  abstract fun scheduleWithFixedDelay(task: Runnable, delayInMs: Long): Job
 
   protected abstract fun newSnapshot(): Snapshot
 

@@ -149,7 +149,7 @@ class IdeEventQueue private constructor() : EventQueue() {
    *
    * @apiNote be careful with this method. It may run `runnable` synchronously in the context of the current thread, or may queue
    * runnable until the focus events queue is empty. In the latter case, runnable is going to be run while processing the last focus
-   * event from the queue, without any context, e.g. outside the write-safe context. Consider using safer [IdeFocusManager.doWhenFocusSettlesDown]
+   * event from the queue, without any context, e.g., outside the write-safe context. Consider using safer [IdeFocusManager.doWhenFocusSettlesDown]
    */
   fun executeWhenAllFocusEventsLeftTheQueue(runnable: Runnable) {
     ifFocusEventsInTheQueue(
@@ -802,7 +802,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       }
     }
     if (event is InvocationEvent && !isCurrentlyUnderLocalId) {
-      // only do wrapping trickery with non-local events to preserve correct behaviour -
+      // only do wrapping trickery with non-local events to preserve correct behavior -
       // local events will get dispatched under local ID anyway
       val clientId = current
       super.postEvent(InvocationEvent(event.getSource()) { withClientId(clientId).use { dispatchEvent(event) } })

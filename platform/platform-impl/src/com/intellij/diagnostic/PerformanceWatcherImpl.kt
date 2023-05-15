@@ -15,6 +15,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
@@ -51,6 +52,8 @@ private const val DURATION_FILE_NAME = ".duration"
 private const val PID_FILE_NAME = ".pid"
 private val ideStartTime = ZonedDateTime.now()
 
+private val EP_NAME = ExtensionPointName<PerformanceListener>("com.intellij.idePerformanceListener")
+
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope) : PerformanceWatcher() {
   private val logDir = PathManager.getLogDir()
@@ -86,10 +89,9 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
           }
           else {
             coroutineScope.launch(limitedDispatcher) {
-              val publisher = ApplicationManager.getApplication().messageBus.syncPublisher(IdePerformanceListener.TOPIC)
               while (true) {
                 delay(samplingIntervalMs)
-                samplePerformance(samplingIntervalMs, publisher)
+                samplePerformance(samplingIntervalMs)
               }
             }
           }
@@ -155,7 +157,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   }
 
   @Suppress("SameParameterValue")
-  private suspend fun samplePerformance(samplingIntervalMs: Long, publisher: IdePerformanceListener) {
+  private suspend fun samplePerformance(samplingIntervalMs: Long) {
     val current = System.nanoTime()
     var diffMs = TimeUnit.NANOSECONDS.toMillis(current - lastSampling) - samplingIntervalMs
     lastSampling = current
@@ -171,7 +173,10 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - current)
     }
     swingApdex = swingApdex.withEvent(TOLERABLE_LATENCY, latencyMs)
-    publisher.uiResponded(latencyMs)
+
+    for (listener in EP_NAME.extensionList) {
+      listener.uiResponded(latencyMs)
+    }
   }
 
   /** for dump files on disk and in EA reports (ms)  */
@@ -274,13 +279,8 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   }
 
   override fun clearFreezeStacktraces() {
-    currentEdtEventChecker?.stopDumping()
-  }
-
-  override fun scheduleWithFixedDelay(task: Runnable, delayInMs: Long): Job {
-    return coroutineScope.launch(limitedDispatcher) {
-      delay(delayInMs)
-      task.run()
+    coroutineScope.launch {
+      currentEdtEventChecker?.stopDumping()
     }
   }
 
@@ -313,10 +313,18 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
           coroutineScope.launch(limitedDispatcher) {
             stopDumping()
             val durationMs = getDuration(taskStop, TimeUnit.MILLISECONDS)
-            val publisher = publisher
-            publisher?.uiFreezeFinished(durationMs, logDir.resolve(freezeFolder!!))
+
+            val freezeDir = logDir.resolve(freezeFolder!!)
+            for (listener in EP_NAME.extensionList) {
+              listener.uiFreezeFinished(durationMs, freezeDir)
+            }
+            publisher?.uiFreezeFinished(durationMs, freezeDir)
+
             val reportDir = postProcessReportFolder(durationMs)
-            publisher?.uiFreezeRecorded(durationMs, reportDir)
+
+            for (listener in EP_NAME.extensionList) {
+              listener.uiFreezeRecorded(durationMs, reportDir)
+            }
           }.asCompletableFuture().join()
         }
         catch (e: Exception) {
@@ -325,7 +333,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       }
     }
 
-    private fun edtFrozen() {
+    private suspend fun edtFrozen() {
       freezeFolder = "${THREAD_DUMPS_PREFIX}freeze-${formatTime(ZonedDateTime.now())}-${buildName()}"
       if (!state.compareAndSet(CheckerState.CHECKING, CheckerState.FREEZE)) {
         return
@@ -335,10 +343,14 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       //myFreezeDuringStartup = !LoadingState.INDEXING_FINISHED.isOccurred();
       val reportDir = logDir.resolve(freezeFolder!!)
       Files.createDirectories(reportDir)
-      val publisher = publisher ?: return
-      publisher.uiFreezeStarted(reportDir)
-      dumpTask = object : SamplingTask(dumpInterval, maxDumpDuration) {
-        override fun dumpedThreads(threadDump: ThreadDump) {
+
+      for (listener in EP_NAME.extensionList) {
+        listener.uiFreezeStarted(reportDir, coroutineScope)
+      }
+      publisher?.uiFreezeStarted(reportDir)
+
+      dumpTask = object : SamplingTask(dumpInterval = dumpInterval, maxDurationMs = maxDumpDuration, coroutineScope = coroutineScope) {
+        override suspend fun dumpedThreads(threadDump: ThreadDump) {
           if (state.get() == CheckerState.FINISHED) {
             stop()
           }
@@ -347,9 +359,15 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
                        ?: return
             try {
               val duration = getDuration(System.nanoTime(), TimeUnit.SECONDS)
-              Files.createDirectories(file.parent)
-              Files.writeString(file.parent.resolve(DURATION_FILE_NAME), duration.toString())
-              publisher.dumpedThreads(file, threadDump)
+              withContext(Dispatchers.IO) {
+                Files.createDirectories(file.parent)
+                Files.writeString(file.parent.resolve(DURATION_FILE_NAME), duration.toString())
+              }
+
+              for (listener in EP_NAME.extensionList) {
+                listener.dumpedThreads(file, threadDump)
+              }
+              publisher?.dumpedThreads(file, threadDump)
             }
             catch (e: IOException) {
               LOG.info("Failed to write the duration file", e)
@@ -542,7 +560,7 @@ private fun ageInDays(file: Path): Long {
   return (System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis()).toDuration(DurationUnit.MILLISECONDS).inWholeDays
 }
 
-/** for [IdePerformanceListener.uiResponded] events (ms)  */
+/** for [PerformanceListener.uiResponded] events (ms)  */
 @Suppress("ConstPropertyName")
 private const val samplingInterval = 1000L
 

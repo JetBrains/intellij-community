@@ -1472,6 +1472,8 @@
     <registryKey key="llm.empty.intention.generation"
                  defaultValue="false"
                  description="Provides AI generated code for inspections without quick-fixes"/>
+
+    <idePerformanceListener implementation="com.intellij.diagnostic.FusFreezeReporter"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
@@ -1521,8 +1523,6 @@
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ide.FrameStateManagerAppListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    <listener class="com.intellij.diagnostic.FusFreezeReporter"
-              topic="com.intellij.diagnostic.IdePerformanceListener"/>
     <listener class="com.intellij.openapi.keymap.impl.KeymapFlagsStorageListener"
               topic="com.intellij.openapi.keymap.KeymapManagerListener"/>
     <listener class="com.intellij.ide.plugins.advertiser.OnDemandDependencyFeatureCollector"

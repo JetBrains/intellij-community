@@ -10,7 +10,7 @@ private val isDebugEnabled = DebugAttachDetector.isDebugEnabled()
 private const val TOLERABLE_UI_LATENCY = 100
 private const val UI_RESPONSE_LOGGING_INTERVAL_MS = 100000
 
-private class FusFreezeReporter : IdePerformanceListener {
+private class FusFreezeReporter : PerformanceListener {
   @Volatile
   private var previousLoggedUiResponse: Long = 0
 

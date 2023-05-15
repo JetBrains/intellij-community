@@ -135,6 +135,7 @@
 
     <projectService serviceImplementation="com.intellij.ide.navigationToolbar.experimental.NewToolbarRootPaneManager"/>
 
+    <idePerformanceListener implementation="com.intellij.diagnostic.IdeaFreezeReporter"/>
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->
@@ -167,8 +168,6 @@
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.openapi.editor.impl.EditorLastActionTracker$MyAnActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
-    <listener class="com.intellij.diagnostic.IdeaFreezeReporter" topic="com.intellij.diagnostic.IdePerformanceListener"
-              activeInTestMode="false" activeInHeadlessMode="false"/>
 
     <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
               topic="com.intellij.notification.Notifications"/>
