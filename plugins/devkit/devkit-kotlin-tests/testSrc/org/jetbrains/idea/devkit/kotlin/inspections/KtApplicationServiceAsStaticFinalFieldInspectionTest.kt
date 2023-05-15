@@ -10,23 +10,21 @@ class KtApplicationServiceAsStaticFinalFieldInspectionTest : ApplicationServiceA
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/applicationServiceAsStaticFinalField"
 
-  override val fileType: String
-    get() = "kt"
+  override fun getFileExtension(): String = "kt"
 
   fun testNonServices() {
-    doTest()
+    doHighlightTest()
   }
 
   fun testRegisteredServices() {
-    doTest()
+    doHighlightTest()
   }
 
   fun testExplicitConstructorCall() {
-    doTest()
+    doHighlightTest()
   }
 
   fun testLightServices() {
-    doTest()
+    doHighlightTest()
   }
-
 }

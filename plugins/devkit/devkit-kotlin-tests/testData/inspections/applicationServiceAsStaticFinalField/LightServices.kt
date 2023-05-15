@@ -6,8 +6,6 @@ val <warning descr="Application service must not be assigned to a static final f
 
 val <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = LightServiceAppLevelAnnotation.getInstance()
 
-val <warning descr="Application service must not be assigned to a static final field">myAppService3</warning> = LightServiceDefaultAnnotation.getInstance()
-
 val <warning descr="Application service must not be assigned to a static final field">myAppService4</warning> = LightServiceEmptyAnnotation.getInstance()
 
 // non final
@@ -29,8 +27,6 @@ class MyClass(val appService: LightServiceAppLevelAnnotation) {
 
     val <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = LightServiceAppLevelAnnotation.getInstance()
 
-    val <warning descr="Application service must not be assigned to a static final field">myAppService3</warning> = LightServiceDefaultAnnotation.getInstance()
-
     val <warning descr="Application service must not be assigned to a static final field">myAppService4</warning> = LightServiceEmptyAnnotation.getInstance()
 
     // non final
@@ -48,8 +44,6 @@ object MyObject {
   val <warning descr="Application service must not be assigned to a static final field">myAppService1</warning> = LightServiceAppAndProjectLevelAnnotation.getInstance()
 
   val <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = LightServiceAppLevelAnnotation.getInstance()
-
-  val <warning descr="Application service must not be assigned to a static final field">myAppService3</warning> = LightServiceDefaultAnnotation.getInstance()
 
   val <warning descr="Application service must not be assigned to a static final field">myAppService4</warning> = LightServiceEmptyAnnotation.getInstance()
 

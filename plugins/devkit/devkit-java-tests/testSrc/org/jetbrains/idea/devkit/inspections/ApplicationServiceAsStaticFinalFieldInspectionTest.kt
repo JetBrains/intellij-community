@@ -10,23 +10,21 @@ class ApplicationServiceAsStaticFinalFieldInspectionTest : ApplicationServiceAsS
 
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/applicationServiceAsStaticFinalField"
 
-  override val fileType: String
-    get() = "java"
+  override fun getFileExtension(): String = "java"
 
   fun testNonServicesInFields() {
-    doTest()
+    doHighlightTest()
   }
 
   fun testRegisteredServicesInFields() {
-    doTest()
+    doHighlightTest()
  }
 
   fun testExplicitConstructorCallInFields() {
-    doTest()
+    doHighlightTest()
   }
 
   fun testLightServicesInFields() {
-    doTest()
+    doHighlightTest()
   }
-
 }

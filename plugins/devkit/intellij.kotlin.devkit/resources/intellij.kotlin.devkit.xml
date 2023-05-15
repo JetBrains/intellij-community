@@ -52,6 +52,8 @@
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ServiceLevelExtractorForKotlin"/>
     <lightServiceMustBeFinalErrorMessageProvider language="kotlin"
      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.LightServiceMustNotBeOpenErrorMessageProvider"/>
+    <appServiceAsStaticFinalFieldQuickFixProvider language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtAppServiceAsStaticFinalFieldFixProvider"/>
   </extensions>
 
 </idea-plugin>

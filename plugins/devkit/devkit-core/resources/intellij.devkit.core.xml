@@ -519,6 +519,9 @@
       implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJava"/>
     <lightServiceMustBeFinalErrorMessageProvider language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalErrorMessageProvider"/>
+    <appServiceAsStaticFinalFieldQuickFixProvider
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAppServiceAsStaticFinalFieldFixProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -556,6 +559,11 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalErrorMessageProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.appServiceAsStaticFinalFieldQuickFixProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldFixProvider"/>
     </extensionPoint>
   </extensionPoints>
 

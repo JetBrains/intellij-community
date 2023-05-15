@@ -4,8 +4,10 @@ Reports assignments of application services to static final fields/properties.
 <p>
   Such assignments contribute to global state and make it impossible to tear down an application and set up another one in tests,
   therefore, repeated tests in the same process may fail.
-
   The only exception is an explicit constructor call to store dummy/default instances.
+</p>
+<p>
+  The recommended way to avoid storing services is to retrieve a service locally or to wrap it in <code>java.util.function.Supplier</code>.
 </p>
 <p><b>Example:</b></p>
 <pre><code lang="java">
