@@ -1,41 +1,33 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.diagnostic;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.diagnostic
 
-import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
-import java.io.File;
-import java.nio.file.Path;
-
-public interface IdePerformanceListener {
-  @Topic.AppLevel
-  Topic<IdePerformanceListener> TOPIC = new Topic<>(IdePerformanceListener.class, Topic.BroadcastDirection.NONE, true);
-
+@ApiStatus.Internal
+interface IdePerformanceListener {
   /**
    * Invoked after thread state has been dumped to a file.
    */
-  default void dumpedThreads(@NotNull Path toFile, @NotNull ThreadDump dump) {
-  }
+  fun dumpedThreads(toFile: Path, dump: ThreadDump) {}
 
   /**
    * Invoked when IDE has detected that the UI hasn't responded for some time (5 seconds by default)
    *
    * @param reportDir folder where all freeze report data is collected (may be temporary,
-   *                  the final folder will be provided in {@link #uiFreezeRecorded(long, File)})
+   * the final folder will be provided in [.uiFreezeRecorded])
    */
-  default void uiFreezeStarted(@NotNull Path reportDir) {
-  }
+  fun uiFreezeStarted(reportDir: Path) {}
 
   /**
-   * Invoked after the UI has become responsive again following a {@link #uiFreezeStarted(File)} event.
+   * Invoked after the UI has become responsive again following a [.uiFreezeStarted] event.
    *
    * @param durationMs freeze duration in milliseconds
    * @param reportDir  folder where all freeze report data is collected (may be temporary,
-   *                   the final folder will be provided in {@link #uiFreezeRecorded(long, File)})
+   * the final folder will be provided in [.uiFreezeRecorded])
    */
-  default void uiFreezeFinished(long durationMs, @Nullable Path reportDir) {
-  }
+  fun uiFreezeFinished(durationMs: Long, reportDir: Path?) {}
 
   /**
    * Invoked after the UI has become responsive again and all data is saved into the final report folder location
@@ -43,14 +35,18 @@ public interface IdePerformanceListener {
    * @param durationMs freeze duration in milliseconds
    * @param reportDir  folder where all freeze report data is collected
    */
-  default void uiFreezeRecorded(long durationMs, @Nullable Path reportDir) {
-  }
+  fun uiFreezeRecorded(durationMs: Long, reportDir: Path?) {}
 
   /**
-   * Invoked on each UI response sampled every <code>performance.watcher.sampling.interval.ms</code> set in the Registry.
+   * Invoked on each UI response sampled every `performance.watcher.sampling.interval.ms` set in the Registry.
    * Executed not in EDT.
    * @param latencyMs time between scheduling a UI event and executing it, in milliseconds
    */
-  default void uiResponded(long latencyMs) {
+  fun uiResponded(latencyMs: Long) {}
+
+  companion object {
+    @Topic.AppLevel
+    val TOPIC = Topic(
+      IdePerformanceListener::class.java, Topic.BroadcastDirection.NONE, true)
   }
 }
