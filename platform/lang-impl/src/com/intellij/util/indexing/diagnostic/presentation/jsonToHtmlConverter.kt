@@ -1327,6 +1327,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               }
               tr { td("Scanning time for refreshed files"); td(times.refreshedFilesScanTime.presentableDuration()) }
               tr { td("Content loading time"); td(times.contentLoadingVisibleTime.presentableDuration()) }
+              tr { td("Read lock waiting time"); td(times.readLockWaitingVisibleTime.presentableDuration()) }
               tr {
                 td("Index writing time")
                 td(if (times.isAppliedAllValuesSeparately)
@@ -1357,13 +1358,14 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
             thead {
               tr {
                 th("$SECTION_SLOW_FILES_TITLE (> ${IndexingFileSetStatistics.SLOW_FILE_PROCESSING_THRESHOLD_MS} ms)") {
-                  colSpan = "5"
+                  colSpan = "6"
                 }
               }
               tr {
                 th("Provider name")
                 th("File")
                 th("Content loading time")
+                th("Waiting for read lock time")
                 th("Indexes values evaluation time")
                 th("Total processing time")
               }
@@ -1376,6 +1378,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                     td(if (index == 0) providerStatistic.providerName else "^")
                     td(slowFile.fileName)
                     td(slowFile.contentLoadingTime.presentableDuration())
+                    td(slowFile.readLockWaitingTime.presentableDuration())
                     td(slowFile.evaluationOfIndexValueChangerTime.presentableDuration())
                     td(slowFile.processingTime.presentableDuration())
                   }
@@ -1489,6 +1492,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                 th("Provider name")
                 th("Total processing time")
                 th("Content loading time")
+                th("Waiting for read lock time")
                 th("Number of indexed files")
                 th("Number of files indexed by $INDEX_INFRA_EXTENSIONS")
                 th("Number of too large for indexing files")
@@ -1504,6 +1508,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                   td(providerStats.providerName)
                   td(providerStats.totalIndexingVisibleTime.presentableDuration())
                   td(providerStats.contentLoadingVisibleTime.presentableDuration())
+                  td(providerStats.readActionWaitingVisibleTime.presentableDuration())
                   td(providerStats.totalNumberOfIndexedFiles.toString())
                   td(providerStats.totalNumberOfFilesFullyIndexedByExtensions.toString())
                   td(providerStats.numberOfTooLargeForIndexingFiles.toString())

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -17,6 +17,7 @@ data class JsonFileProviderIndexStatistics(
    */
   val totalIndexingVisibleTime: JsonDuration = JsonDuration(0),
   val contentLoadingVisibleTime: JsonDuration = JsonDuration(0),
+  val readActionWaitingVisibleTime: JsonDuration = JsonDuration(0),
   val numberOfTooLargeForIndexingFiles: Int = 0,
   val slowIndexedFiles: List<JsonSlowIndexedFile> = emptyList(),
   val filesFullyIndexedByExtensions: List<String> = emptyList(),
@@ -35,7 +36,8 @@ data class JsonFileProviderIndexStatistics(
     val fileName: String = "",
     val processingTime: JsonDuration = JsonDuration(0),
     val evaluationOfIndexValueChangerTime: JsonDuration = JsonDuration(0),
-    val contentLoadingTime: JsonDuration = JsonDuration(0)
+    val contentLoadingTime: JsonDuration = JsonDuration(0),
+    val readLockWaitingTime: JsonDuration = JsonDuration(0)
   )
 
   @JsonIgnoreProperties(ignoreUnknown = true)

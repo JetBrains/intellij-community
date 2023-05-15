@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.project.Project
@@ -22,6 +22,8 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
   var processingTimeInAllThreads: TimeNano = 0
 
   var contentLoadingTimeInAllThreads: TimeNano = 0
+
+  var readActionWaitingTimeInAllThreads: TimeNano = 0
 
   var numberOfIndexedFiles: Int = 0
 
@@ -63,6 +65,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     fileStatistics: FileIndexingStatistics,
     processingTime: TimeNano,
     contentLoadingTime: TimeNano,
+    readActionWaitingTime: Long,
     fileSize: BytesNumber,
     valuesAppliedSeparately: Boolean,
     separateApplicationTime: TimeNano
@@ -76,6 +79,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     }
     processingTimeInAllThreads += processingTime
     contentLoadingTimeInAllThreads += contentLoadingTime
+    readActionWaitingTimeInAllThreads += readActionWaitingTime
     val perIndexerEvaluationOfValueChangerTimes = fileStatistics.perIndexerEvaluateIndexValueTimes.toMutableMap()
     fileStatistics.perIndexerEvaluatingIndexValueRemoversTimes.forEach { (indexId, time) ->
       perIndexerEvaluationOfValueChangerTimes[indexId] = time + perIndexerEvaluationOfValueChangerTimes.getOrDefault(indexId, 0)
@@ -104,7 +108,8 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
       indexedFiles += IndexedFile(getIndexedFilePath(file), fileStatistics.wasFullyIndexedByExtensions)
     }
     if (processingTime > SLOW_FILE_PROCESSING_THRESHOLD_MS * 1_000_000) {
-      slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime, evaluationOfIndexValueChangerTime, contentLoadingTime))
+      slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime,
+                                                  evaluationOfIndexValueChangerTime, contentLoadingTime, readActionWaitingTime))
     }
     allValuesAppliedSeparately = allValuesAppliedSeparately && valuesAppliedSeparately
     allSeparateApplicationTimeInAllThreads += separateApplicationTime
