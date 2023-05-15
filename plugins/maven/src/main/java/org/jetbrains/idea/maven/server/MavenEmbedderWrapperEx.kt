@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server
 
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
 import org.jetbrains.idea.maven.project.MavenConsole
@@ -17,11 +15,9 @@ abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(p
                                       console: MavenConsole?): R {
     val longRunningTaskId = UUID.randomUUID().toString()
     val embedder = getOrCreateWrappee()
-
     val mavenIndicator = indicator ?: MavenProgressIndicator(null, null)
 
-    return ProgressManager.getInstance().computeResultUnderProgress(
-      { runLongRunningTask(embedder, longRunningTaskId, task, mavenIndicator, console) }, mavenIndicator.indicator)
+    return runLongRunningTask(embedder, longRunningTaskId, task, mavenIndicator, console)
   }
 
   private fun <R> runLongRunningTask(embedder: MavenServerEmbedder,
@@ -29,8 +25,9 @@ abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(p
                                      task: LongRunningEmbedderTask<R>,
                                      indicator: MavenProgressIndicator,
                                      console: MavenConsole?): R {
-    return runBlockingCancellable {
-      return@runBlockingCancellable runLongRunningTaskAsync(embedder, longRunningTaskId, indicator, console, task)
+    @Suppress("RAW_RUN_BLOCKING")
+    return runBlocking {
+      return@runBlocking runLongRunningTaskAsync(embedder, longRunningTaskId, indicator, console, task)
     }
   }
 
