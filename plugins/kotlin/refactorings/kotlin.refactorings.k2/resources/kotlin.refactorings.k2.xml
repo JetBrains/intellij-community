@@ -7,6 +7,8 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringsSettings"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.K2CommonRefactoringSettings"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.memberInfo.K2MemberInfoSupport"
+                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport"/>
     <lang.refactoringSupport language="kotlin" 
                              implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringSupportProvider"/>
     <refactoring.safeDeleteProcessor
