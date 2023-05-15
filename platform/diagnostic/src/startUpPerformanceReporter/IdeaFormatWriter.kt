@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -18,6 +18,8 @@ import java.nio.CharBuffer
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.DurationUnit
 
 internal abstract class IdeaFormatWriter(private val activities: Map<String, MutableList<ActivityImpl>>,
                                          private val threadNameManager: ThreadNameManager,
@@ -76,7 +78,7 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
     for (name in serviceActivities.keys.sorted()) {
       val list = serviceActivities.getValue(name).sortedWith(comparator)
       val ownDurations = computeOwnTime(list, threadNameManager)
-      writeActivities(list, startTime, writer, name, ownDurations, 0, TimeUnit.MICROSECONDS)
+      writeActivities(list, startTime, writer, name, ownDurations, 0, DurationUnit.MICROSECONDS)
     }
   }
 
@@ -102,7 +104,7 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
                       fieldName = activityNameToJsonFieldName(name),
                       ownDurations = ownDurations,
                       measureThreshold = measureThreshold,
-                      timeUnit = TimeUnit.MILLISECONDS)
+                      timeUnit = DurationUnit.MILLISECONDS)
     }
   }
 
@@ -111,7 +113,7 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
                               fieldName: String,
                               ownDurations: Object2LongMap<ActivityImpl>,
                               measureThreshold: Long,
-                              timeUnit: TimeUnit) {
+                              timeUnit: DurationUnit) {
     if (activities.isEmpty()) {
       return
     }
@@ -129,14 +131,19 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
           continue
         }
 
+        val convertedDuration = (item.end - item.start).nanoseconds.toLong(timeUnit)
+        if (convertedDuration == 0L && (item.name.endsWith(": completing") || item.name.endsWith(": scheduled"))) {
+          continue
+        }
+
         writer.obj {
           writer.writeStringField("n", compactName(item.name))
-          writer.writeNumberField("s", timeUnit.convert(item.start - startTime, TimeUnit.NANOSECONDS))
-          writer.writeNumberField("d", timeUnit.convert(item.end - item.start, TimeUnit.NANOSECONDS))
+          writer.writeNumberField("s", (item.start - startTime).nanoseconds.toLong(timeUnit))
+          writer.writeNumberField("d", convertedDuration)
           if (ownDuration != -1L) {
-            writer.writeNumberField("od", timeUnit.convert(ownDuration, TimeUnit.NANOSECONDS))
+            writer.writeNumberField("od", ownDuration.nanoseconds.toLong(timeUnit))
           }
-          // Do not write an end to reduce the size of the report. `end` can be computed using `start + duration`
+          // Do not write an end to reduce the size of the report. An `end` can be computed using `start + duration`
           writer.writeStringField("t", threadNameManager.getThreadName(item))
           if (item.pluginId != null) {
             writer.writeStringField("p", item.pluginId)
@@ -147,8 +154,8 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
       if (skippedDuration > 0) {
         writer.obj {
           writer.writeStringField("n", "Other")
-          writer.writeNumberField("d", timeUnit.convert(skippedDuration, TimeUnit.NANOSECONDS))
-          writer.writeNumberField("s", timeUnit.convert(activities.last().start - startTime, TimeUnit.NANOSECONDS))
+          writer.writeNumberField("d", skippedDuration.nanoseconds.toLong(timeUnit))
+          writer.writeNumberField("s", (activities.last().start - startTime).nanoseconds.toLong(timeUnit))
         }
       }
     }
