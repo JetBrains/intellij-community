@@ -22,15 +22,14 @@ import java.util.List;
 public class ThreadLocalConversionRule extends TypeConversionRule {
   private static final Logger LOG = Logger.getInstance(ThreadLocalConversionRule.class);
 
-
   @Override
   public TypeConversionDescriptorBase findConversion(PsiType from,
                                                      PsiType to,
                                                      PsiMember member,
                                                      PsiExpression context,
                                                      TypeMigrationLabeler labeler) {
-    if (to instanceof PsiClassType && isThreadLocalTypeMigration(from, (PsiClassType)to, context)) {
-      return findDirectConversion(context, to, from, labeler);
+    if (to instanceof PsiClassType toClassType && isThreadLocalTypeMigration(from, toClassType, context)) {
+      return findDirectConversion(context, toClassType, from, labeler);
     }
     return null;
   }
@@ -64,13 +63,17 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
   }
 
   @Nullable
-  private static TypeConversionDescriptor findDirectConversion(PsiElement context, PsiType to, PsiType from, TypeMigrationLabeler labeler) {
-    final PsiClass toTypeClass = PsiUtil.resolveClassInType(to);
+  private static TypeConversionDescriptor findDirectConversion(PsiElement context,
+                                                               PsiClassType to,
+                                                               PsiType from,
+                                                               TypeMigrationLabeler labeler) {
+    final PsiClass toTypeClass = to.resolve();
     LOG.assertTrue(toTypeClass != null);
 
     final PsiElement parent = context.getParent();
-    if (parent instanceof PsiVariable && ((PsiVariable)parent).getInitializer() == context) {
-      return wrapWithNewExpression(to, from, (PsiExpression)context);
+    if (parent.equals(labeler.getCurrentRoot().getElement()) && ((PsiVariable)parent).getInitializer() == context) {
+
+      return wrapWithNewExpression(from, to, (PsiExpression)context);
     }
     if (context instanceof PsiArrayAccessExpression) {
       return new TypeConversionDescriptor("$qualifier$[$val$]", "$qualifier$.get()[$val$]");
@@ -78,8 +81,10 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     if (parent instanceof PsiAssignmentExpression) {
       final IElementType operationSign = ((PsiAssignmentExpression)parent).getOperationTokenType();
       if (operationSign == JavaTokenType.EQ) {
-        boolean rightInfected = ((PsiAssignmentExpression)parent).getLExpression() == context;
-        String replacement = rightInfected ? "$qualifier$ = $val$.get()" : "$qualifier$.set(" + toBoxed("$val$", from, context) + ")";
+        final boolean rightInfected = ((PsiAssignmentExpression)parent).getLExpression() == context;
+        final String replacement = rightInfected
+                                   ? "$qualifier$ = $val$.get()"
+                                   : "$qualifier$.set(" + coerceType("$val$", from, to, context) + ")";
         return new TypeConversionDescriptor("$qualifier$ = $val$", replacement, (PsiAssignmentExpression)parent);
       }
     }
@@ -135,11 +140,11 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
           if (lExpression instanceof PsiReferenceExpression) {
             final PsiElement element = ((PsiReferenceExpression)lExpression).resolve();
             if (element instanceof PsiVariable && ((PsiVariable)element).hasModifierProperty(PsiModifier.FINAL)) {
-              return wrapWithNewExpression(to, from, ((PsiAssignmentExpression)context).getRExpression());
+              return wrapWithNewExpression(from, to, ((PsiAssignmentExpression)context).getRExpression());
             }
           }
           return new TypeConversionDescriptor("$qualifier$ = $val$",
-                                              "$qualifier$.set(" + toBoxed("$val$", from, context) + ")");
+                                              "$qualifier$.set(" + coerceType("$val$", from, to, context) + ")");
         }
         else {
           final PsiExpression rExpression = assignmentExpression.getRExpression();
@@ -155,39 +160,32 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     return null;
   }
 
-  private static TypeConversionDescriptor wrapWithNewExpression(PsiType to, PsiType from, PsiExpression initializer) {
+  private static TypeConversionDescriptor wrapWithNewExpression(PsiType from, PsiClassType to, PsiExpression initializer) {
     List<PsiVariable> toMakeFinal = TypeConversionRuleUtil.getVariablesToMakeFinal(initializer);
     if (toMakeFinal == null) return null;
     return new WrappingWithInnerClassOrLambdaDescriptor("$qualifier$",
-                                                        createThreadLocalInitializerReplacement(to, from, initializer),
+                                                        createThreadLocalInitializerReplacement(from, to, initializer),
                                                         initializer,
                                                         toMakeFinal);
   }
 
-  private static @NonNls String createThreadLocalInitializerReplacement(PsiType to, PsiType from, PsiElement context) {
+  private static @NonNls String createThreadLocalInitializerReplacement(PsiType from, PsiClassType to, PsiElement context) {
     if (PsiUtil.isLanguageLevel8OrHigher(context)) {
-      if (from instanceof PsiPrimitiveType) {
-        PsiType parameterType = ((PsiClassType)to).getParameters()[0];
-        PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(parameterType);
-        if (unboxed != null && !from.equals(unboxed)) {
-          return "java.lang.ThreadLocal.withInitial(() -> (" + unboxed.getCanonicalText() + ")$qualifier$)";
-        }
-      }
-      return "java.lang.ThreadLocal.withInitial(() -> $qualifier$)";
+      return "java.lang.ThreadLocal.withInitial(() -> " + coerceType("$qualifier$", from, to, context) + ")";
     }
-    final String boxedTypeName =
-      from instanceof PsiPrimitiveType ? ((PsiPrimitiveType)from).getBoxedTypeName() : from.getCanonicalText();
-    return ("""
-            new %s() {
-              @Override
-              protected %s initialValue() {
-                return %s;
-              }
-            }""").formatted(to.getCanonicalText(),
-                            boxedTypeName,
-                            from instanceof PsiPrimitiveType && !PsiUtil.isLanguageLevel5OrHigher(context)
-                            ? "new " + ((PsiPrimitiveType)from).getBoxedTypeName() + "($qualifier$)"
-                            : "$qualifier$");
+    final StringBuilder result = new StringBuilder("new ");
+    result.append(to.getCanonicalText()).append("() {\n");
+    if (PsiUtil.isLanguageLevel5OrHigher(context)) {
+      result.append("  @java.lang.Override\n");
+    }
+    result.append("  protected ")
+      .append(PsiUtil.isLanguageLevel5OrHigher(context) ? to.getParameters()[0].getCanonicalText() : "java.lang.Object")
+      .append(" initialValue() {\n")
+      .append("    return ")
+      .append(coerceType("$qualifier$", from, to, context)).append(";\n")
+      .append("  }\n")
+      .append("}");
+    return result.toString();
   }
 
   private static @NonNls String toPrimitive(@NonNls String replaceByArg, PsiType from, PsiElement context) {
@@ -199,8 +197,16 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
            : "((" + from.getCanonicalText() + ")" + replaceByArg + ")";
   }
 
-  private static @NonNls String toBoxed(@NonNls String replaceByArg, PsiType from, PsiElement context) {
+  private static @NonNls String coerceType(@NonNls String replaceByArg, PsiType from, PsiClassType to, PsiElement context) {
     if (PsiUtil.isLanguageLevel5OrHigher(context)) {
+      if (from instanceof PsiPrimitiveType) {
+        final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(to.getParameters()[0]);
+        if (unboxed != null && !from.equals(unboxed)) {
+          return context instanceof PsiLiteralExpression && PsiTypes.longType().equals(unboxed)
+                 ? replaceByArg + "L"
+                 : "(" + unboxed.getCanonicalText() + ")" + replaceByArg;
+        }
+      }
       return replaceByArg;
     }
     return from instanceof PsiPrimitiveType
@@ -209,7 +215,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
   }
 
   private static @NonNls String getBoxedWrapper(PsiType from,
-                                                PsiType to,
+                                                PsiClassType to,
                                                 @NotNull @NonNls String arg,
                                                 TypeMigrationLabeler labeler,
                                                 PsiElement context,
@@ -227,14 +233,14 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
             final PsiType exprType = labeler.getTypeEvaluator().evaluateType(
               JavaPsiFacade.getElementFactory(threadLocalClass.getProject()).createExpressionFromText(tryType, context));
             if (exprType != null && unboxedInitialType.isAssignableFrom(exprType)) {
-              return toBoxed(arg, from, context);
+              return coerceType(arg, from, to, context);
             }
           }
           return "new " + initial.getCanonicalText() + "((" + unboxedInitialType.getCanonicalText() + ")(" + arg + "))";
         }
       }
     }
-    return toBoxed(arg, from, context);
+    return coerceType(arg, from, to, context);
   }
 
   private static final class WrappingWithInnerClassOrLambdaDescriptor extends ArrayInitializerAwareConversionDescriptor {

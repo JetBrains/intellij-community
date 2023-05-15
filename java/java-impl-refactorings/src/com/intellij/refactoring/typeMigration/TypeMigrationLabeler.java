@@ -1083,7 +1083,7 @@ public class TypeMigrationLabeler {
     return myRootsTree;
   }
 
-  TypeMigrationUsageInfo getCurrentRoot() {
+  public TypeMigrationUsageInfo getCurrentRoot() {
     return myCurrentRoot;
   }
 
