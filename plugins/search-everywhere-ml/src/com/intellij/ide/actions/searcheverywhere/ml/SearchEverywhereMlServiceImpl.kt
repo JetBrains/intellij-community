@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService.Companion.EP_NAME
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -17,7 +18,7 @@ import javax.swing.ListCellRenderer
 
 
 @ApiStatus.Internal
-class SearchEverywhereMlServiceImpl : SearchEverywhereMlService() {
+class SearchEverywhereMlServiceImpl : SearchEverywhereMlService {
   companion object {
     internal const val RECORDER_CODE = "MLSE"
 
