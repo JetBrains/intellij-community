@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -462,7 +462,8 @@ public class RefManagerImpl extends RefManager {
     if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
       return;
     }
-    final int threadsCount = Math.min(6, Runtime.getRuntime().availableProcessors() - 1);
+    final int setting = Registry.get("batch.inspections.number.of.threads").asInteger();
+    final int threadsCount = (setting > 0) ? setting : Runtime.getRuntime().availableProcessors() - 1;
     if (threadsCount == 0) {
       // need more than 1 core for parallel processing
       return;
@@ -474,7 +475,7 @@ public class RefManagerImpl extends RefManager {
     final Application application = ApplicationManager.getApplication();
     final ProgressManager progressManager = ProgressManager.getInstance();
     final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
-    for (int i = 0; i < (threadsCount > 0 ? threadsCount : 4) ; i++) {
+    for (int i = 0; i < threadsCount; i++) {
       final Future<?> future = application.executeOnPooledThread(() -> {
         while (myFutures != null || !myTasks.isEmpty()) {
           try {
