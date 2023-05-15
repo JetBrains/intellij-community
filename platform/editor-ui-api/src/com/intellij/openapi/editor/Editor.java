@@ -415,7 +415,8 @@ public interface Editor extends UserDataHolder {
   }
 
   /**
-   * Computes an area which is visible on screen.
+   * Computes a range which is visible on screen, i.e., a pair of character offsets first visible/last visible onscreen.
+   * When the entire editor window is visible, returns {@code (0-getDocument().getTextLength())} range.
    * By default, it retrieves the visible area from the scrolling pane attached to the editor component.
    * Can only be called from the EDT.
    */
