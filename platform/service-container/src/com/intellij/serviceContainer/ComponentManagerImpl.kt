@@ -1452,7 +1452,7 @@ abstract class ComponentManagerImpl(
    */
   private val pluginScopes = AtomicReference<PersistentMap<CoroutineScope, CoroutineScope>>(persistentHashMapOf())
 
-  internal fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope {
+  fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope {
     val pluginClassloader = pluginClass.classLoader
     val intersectionScope = if (pluginClassloader is PluginAwareClassLoader) {
       val pluginScope = pluginClassloader.pluginCoroutineScope
