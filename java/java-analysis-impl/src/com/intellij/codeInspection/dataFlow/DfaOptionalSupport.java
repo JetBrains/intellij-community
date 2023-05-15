@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -52,7 +52,7 @@ public final class DfaOptionalSupport {
   }
 
   @Nullable
-  static LocalQuickFix createReplaceOptionalOfNullableWithEmptyFix(@NotNull PsiElement anchor) {
+  public static LocalQuickFix createReplaceOptionalOfNullableWithEmptyFix(@NotNull PsiElement anchor) {
     final PsiMethodCallExpression parent = findCallExpression(anchor);
     if (parent == null) return null;
     boolean jdkOptional = OptionalUtil.JDK_OPTIONAL_OF_NULLABLE.test(parent);
@@ -60,7 +60,7 @@ public final class DfaOptionalSupport {
   }
 
   @Nullable
-  static LocalQuickFix createReplaceOptionalOfNullableWithOfFix(@NotNull PsiElement anchor) {
+  public static LocalQuickFix createReplaceOptionalOfNullableWithOfFix(@NotNull PsiElement anchor) {
     final PsiMethodCallExpression parent = findCallExpression(anchor);
     if (parent == null) return null;
     return new ReplaceOptionalCallFix("of", false);
