@@ -147,7 +147,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
-  private static final Key<Boolean> INITIALIZED = Key.create("editor.is.fully.initialized");
   private final @NotNull DocumentEx myDocument;
 
   private final JPanel myPanel;
@@ -519,7 +518,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }, myCaretModel);
 
-    setFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
+    myScheme.setEditorFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
 
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
@@ -552,7 +551,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
-    putUserData(INITIALIZED, Boolean.TRUE);
   }
 
   public void applyFocusMode() {

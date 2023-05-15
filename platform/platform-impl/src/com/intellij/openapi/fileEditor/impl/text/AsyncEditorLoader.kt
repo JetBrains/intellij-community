@@ -88,9 +88,6 @@ class AsyncEditorLoader internal constructor(private val project: Project,
         textEditor.loadEditorInBackground(highlighterDeferred)
       }
 
-      // do not show half-ready editor (not highlighted)
-      editor.component.isVisible = false
-
       val editorComponent = textEditor.component
       // `openEditorImpl` uses runBlockingModal, but an async editor load is performed in the background, out of the `openEditorImpl` call
       val modality = ModalityState.any().asContextElement()
@@ -101,30 +98,30 @@ class AsyncEditorLoader internal constructor(private val project: Project,
         val continuation = continuationDeferred.await()
         editorComponent.loadingDecorator.stopLoading(scope = this, indicatorJob = indicatorJob)
         withContext(Dispatchers.EDT) {
-          loaded(continuation = continuation, editor = editor)
+          loaded(continuation = continuation, editor = editor, editorComponent = editorComponent)
         }
         EditorNotifications.getInstance(project).updateNotifications(textEditor.file)
       }
     }
   }
 
-  @RequiresEdt
-  private fun loaded(continuation: Runnable, editor: Editor) {
+  private fun loaded(continuation: Runnable, editor: Editor, editorComponent: TextEditorComponent) {
     editor.putUserData(ASYNC_LOADER, null)
 
     runCatching {
       continuation.run()
     }.getOrLogException(LOG)
 
-    // should be before executing delayed actions - editor state restoration maybe a delayed action, and it uses `doWhenFirstShown`,
-    // for performance reasons better to avoid
-    editor.component.isVisible = true
-
     editor.scrollingModel.disableAnimation()
-    while (true) {
-      (delayedActions.pollFirst() ?: break).run()
+    try {
+      while (true) {
+        (delayedActions.pollFirst() ?: break).run()
+      }
     }
-    editor.scrollingModel.enableAnimation()
+    finally {
+      editorComponent.loadingFinished()
+      editor.scrollingModel.enableAnimation()
+    }
   }
 
   @RequiresReadLock

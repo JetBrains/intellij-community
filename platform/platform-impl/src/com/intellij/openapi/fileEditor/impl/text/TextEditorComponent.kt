@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LeakingThis")
 
 package com.intellij.openapi.fileEditor.impl.text
@@ -32,12 +32,14 @@ import com.intellij.openapi.vfs.VirtualFileEvent
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent
 import com.intellij.util.FileContentUtilCore
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBSwingUtilities
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
+import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<TextEditorComponent>()
@@ -68,6 +70,8 @@ open class TextEditorComponent(
   var isDisposed = false
     private set
 
+  private var coverComponent: JComponent?
+
   init {
     layout = GridBagLayout()
     // to be able to set background for JLayeredPane
@@ -85,6 +89,18 @@ open class TextEditorComponent(
     // don't show yet another loading indicator on project open - use 3-second delay
     loadingDecorator = AsyncLoadingDecorator(if (EditorsSplitters.isOpenedInBulk(file)) 3_000.milliseconds else 300.milliseconds)
     super.add(editor.component, GridBagConstraints().also {
+      it.gridx = 0
+      it.gridy = 0
+      it.weightx = 1.0
+      it.weighty = 1.0
+      it.fill = GridBagConstraints.BOTH
+    })
+
+    val coverComponent = JPanel()
+    coverComponent.background = editor.backgroundColor
+    this.coverComponent = coverComponent
+    putLayer(coverComponent, DRAG_LAYER - 1)
+    super.add(coverComponent, GridBagConstraints().also {
       it.gridx = 0
       it.gridy = 0
       it.weightx = 1.0
@@ -124,6 +140,14 @@ open class TextEditorComponent(
       it.gridy = 0
       it.anchor = GridBagConstraints.CENTER
     })
+  }
+
+  @RequiresEdt
+  internal fun loadingFinished() {
+    if (coverComponent != null) {
+      super.remove(coverComponent)
+      coverComponent = null
+    }
   }
 
   /**
