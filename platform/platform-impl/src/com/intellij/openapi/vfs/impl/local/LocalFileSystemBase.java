@@ -495,7 +495,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       return myNioContentGetter.accessDiskWithCheckCanceled(new ContentRequest(path, length));
     }
     catch (RuntimeException e) {
-      Throwable cause = e.getCause();
+      Throwable cause = ExceptionUtil.getRootCause(e);
       if (cause instanceof IOException) {
         throw (IOException)cause;
       }
