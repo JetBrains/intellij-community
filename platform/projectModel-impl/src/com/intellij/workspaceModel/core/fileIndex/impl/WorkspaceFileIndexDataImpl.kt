@@ -202,7 +202,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
                                                                                           event: VersionedStorageChange,
                                                                                           removedEntities: MutableSet<E>,
                                                                                           addedEntities: MutableSet<E>) {
-    event.getChanges(dependency.parentClass).asSequence().filterIsInstance<EntityChange.Replaced<P>>().forEach { change ->
+    event.getChanges(dependency.parentClass).filterIsInstance<EntityChange.Replaced<P>>().forEach { change ->
       dependency.childrenGetter(change.oldEntity).toCollection(removedEntities)
       dependency.childrenGetter(change.newEntity).toCollection(addedEntities)
     }
@@ -212,7 +212,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
                                                                                          event: VersionedStorageChange,
                                                                                          removedEntities: LinkedHashSet<E>,
                                                                                          addedEntities: LinkedHashSet<E>) {
-    event.getChanges(dependency.childClass).asSequence().forEach { change ->
+    event.getChanges(dependency.childClass).forEach { change ->
       change.oldEntity?.let {
         removedEntities.add(dependency.parentGetter(it))
       }

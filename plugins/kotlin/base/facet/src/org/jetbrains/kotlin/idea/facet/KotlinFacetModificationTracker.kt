@@ -23,7 +23,7 @@ class KotlinFacetModificationTracker(project: Project) :
     override fun changed(event: VersionedStorageChange) {
         val moduleChanges = event.getChanges(ModuleEntity::class.java)
         val facetChanges = event.getChanges(FacetEntity::class.java)
-        if (moduleChanges.isEmpty() && facetChanges.isEmpty()) return
+        if (moduleChanges.none() && facetChanges.none()) return
 
         for (facetChange in facetChanges) {
             val kotlinFacetEntity = facetChange.oldEntity()?.takeIf { it.isKotlinFacet() } ?: facetChange.newEntity()

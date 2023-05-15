@@ -74,8 +74,8 @@ class IgnoredToExcludedSynchronizer(project: Project, cs: CoroutineScope) : File
     cs.launch {
       WorkspaceModel.getInstance(project).changesEventFlow.collect { event ->
         // listen content roots, source roots, excluded roots
-        if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() ||
-            event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
+        if (event.getChanges(ContentRootEntity::class.java).any() ||
+            event.getChanges(SourceRootEntity::class.java).any()) {
           updateNotificationState()
         }
       }

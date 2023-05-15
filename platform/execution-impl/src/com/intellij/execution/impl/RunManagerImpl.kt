@@ -238,7 +238,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     val messageBusConnection = project.messageBus.connect()
     messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
-        if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() || event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
+        if (event.getChanges(ContentRootEntity::class.java).any() || event.getChanges(SourceRootEntity::class.java).any()) {
           clearSelectedConfigurationIcon()
 
           deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()

@@ -14,7 +14,7 @@ class GroovyMacroModuleListener : WorkspaceModelChangeListener {
 
   override fun changed(event: VersionedStorageChange) {
     val moduleChanges = event.getChanges(ModuleEntity::class.java)
-    if (moduleChanges.isEmpty()) {
+    if (moduleChanges.none()) {
       return
     }
     for (moduleEntity in moduleChanges) {

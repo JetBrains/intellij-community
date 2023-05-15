@@ -53,7 +53,7 @@ abstract class VersionedStorageChange(versionedStorage: VersionedEntityStorage) 
    *
    * There is no order in this set of changes. You can sort them using [orderToRemoveReplaceAdd] function or manually, if needed.
    */
-  abstract fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>>
+  abstract fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): Sequence<EntityChange<T>>
 
   abstract fun getAllChanges(): Sequence<EntityChange<*>>
 }
@@ -61,7 +61,7 @@ abstract class VersionedStorageChange(versionedStorage: VersionedEntityStorage) 
 /**
  * Function to sort change events to removed -> replaced -> added.
  */
-fun <T : WorkspaceEntity, K : EntityChange<out T>> Collection<K>.orderToRemoveReplaceAdd(): List<K> {
+fun <T : WorkspaceEntity, K : EntityChange<out T>> Sequence<K>.orderToRemoveReplaceAdd(): Sequence<K> {
   return this.sortedBy {
     when (it) {
       is EntityChange.Removed<*> -> 0

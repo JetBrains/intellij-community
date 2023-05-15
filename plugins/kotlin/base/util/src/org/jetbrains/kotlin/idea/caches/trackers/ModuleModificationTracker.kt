@@ -18,7 +18,7 @@ class ModuleModificationTracker(project: Project) :
     }
 
     override fun changed(event: VersionedStorageChange) {
-        event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+        event.getChanges(ModuleEntity::class.java).also { if (it.none()) return }
         incModificationCount()
     }
 

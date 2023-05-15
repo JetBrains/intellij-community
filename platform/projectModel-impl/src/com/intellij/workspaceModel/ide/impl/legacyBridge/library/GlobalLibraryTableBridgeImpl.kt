@@ -37,7 +37,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
 
     @Suppress("UNCHECKED_CAST")
     val libraryChanges = (changes[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList()
-    val addChanges = libraryChanges.filterGlobalLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
+    val addChanges = libraryChanges.asSequence().filterGlobalLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
 
     for (addChange in addChanges) {
       // Will initialize the bridge if missing
@@ -109,7 +109,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
 
     val removeChanges = event.getChanges(LibraryEntity::class.java).filterGlobalLibraryChanges()
       .filterIsInstance<EntityChange.Removed<LibraryEntity>>()
-    if (removeChanges.isEmpty()) return
+    if (removeChanges.none()) return
 
     for (change in removeChanges) {
       val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
@@ -128,7 +128,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
       .filterGlobalLibraryChanges()
       // Since the listener is not deprecated, it will be better to keep the order of events as remove -> replace -> add
       .orderToRemoveReplaceAdd()
-    if (changes.isEmpty()) return
+    if (changes.none()) return
 
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage
     for (change in changes) {
@@ -255,7 +255,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   override fun removeListener(listener: LibraryTable.Listener) = dispatcher.removeListener(listener)
 
   companion object {
-    private fun List<EntityChange<LibraryEntity>>.filterGlobalLibraryChanges(): List<EntityChange<LibraryEntity>> {
+    private fun Sequence<EntityChange<LibraryEntity>>.filterGlobalLibraryChanges(): Sequence<EntityChange<LibraryEntity>> {
       return filter {
         when (it) {
           is EntityChange.Added -> it.entity.tableId is LibraryTableId.GlobalLibraryTableId

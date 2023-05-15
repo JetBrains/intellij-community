@@ -94,6 +94,7 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
 
     // Initialize module libraries
     val moduleLibraryChanges = ((event[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList())
+      .asSequence()
       .filterModuleLibraryChanges()
     for (change in moduleLibraryChanges) {
       initializeModuleLibraryBridge(change, builder)

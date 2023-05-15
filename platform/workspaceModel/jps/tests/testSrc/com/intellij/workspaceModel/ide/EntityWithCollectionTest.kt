@@ -36,7 +36,7 @@ class EntityWithCollectionTest {
     var events: List<EntityChange<CollectionFieldEntity>> = emptyList()
     projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun beforeChanged(event: VersionedStorageChange) {
-        events = event.getChanges(CollectionFieldEntity::class.java)
+        events = event.getChanges(CollectionFieldEntity::class.java).toList()
       }
     })
 

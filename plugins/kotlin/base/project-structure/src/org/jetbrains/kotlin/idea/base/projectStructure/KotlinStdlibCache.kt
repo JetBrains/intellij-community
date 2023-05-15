@@ -280,7 +280,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             }
 
             override fun changed(event: VersionedStorageChange) {
-                event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+                event.getChanges(ModuleEntity::class.java).also { if (it.none()) return }
 
                 invalidate(writeAccessRequired = true)
             }
