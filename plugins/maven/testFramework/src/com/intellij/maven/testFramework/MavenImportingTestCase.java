@@ -627,7 +627,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void resolveFoldersAndImport() {
-    new MavenFolderResolver(myProjectsManager.getProject()).resolveFoldersBlocking(myProjectsManager.getProjects());
+    new MavenFolderResolver(myProjectsManager.getProject()).resolveFoldersAndImportBlocking(myProjectsManager.getProjects());
     if (isNewImportingProcess) {
       importProject();
     }

@@ -20,6 +20,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class UpdateFoldersAction : MavenProjectsManagerAction() {
   override fun perform(manager: MavenProjectsManager) {
-    MavenFolderResolver(manager.project).resolveFoldersForAllProjects()
+    MavenFolderResolver(manager.project).resolveFoldersAndImport()
   }
 }
