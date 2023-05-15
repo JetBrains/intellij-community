@@ -22,6 +22,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigur
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
+import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.jetbrains.plugins.gradle.testFramework.util.tree.assertion.TreeAssertion
 import org.jetbrains.plugins.gradle.testFramework.util.tree.buildTree
 import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyExecution
@@ -79,7 +80,7 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
   override fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
     super.test(gradleVersion, fixtureBuilder) {
-      executionOutputFixture.printExecutionOutputIfFailed(test)
+      ExternalSystemExecutionTracer.printExecutionOutputOnException(test)
     }
   }
 

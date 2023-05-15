@@ -70,38 +70,10 @@ class GradleExecutionOutputFixture(
       .isEmpty()
   }
 
-  fun <R> printExecutionOutputIfFailed(action: () -> R): R {
-    try {
-      return action()
-    }
-    catch (ex: Throwable) {
-      printExecutionOutput()
-      throw ex
-    }
-  }
-
-  private fun printExecutionOutput() {
-    println("STDOUT START")
-    for ((isStdOut, text) in output.text) {
-      if (isStdOut) {
-        print(text)
-      }
-    }
-    println("STDOUT END")
-    println("STDERR START")
-    for ((isStdOut, text) in output.text) {
-      if (!isStdOut) {
-        print(text)
-      }
-    }
-    println("STDERR END")
-  }
-
   private fun installGradleEventsListener() {
     val listener = object : ExternalSystemTaskNotificationListenerAdapter() {
 
       override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-        output.text.add(stdOut to text)
         output.testDescriptors.addAll(
           extractTestOperationDescriptors(text)
         )
@@ -149,8 +121,6 @@ class GradleExecutionOutputFixture(
   }
 
   private class Output {
-
-    val text: MutableList<Pair<Boolean, String>> = ArrayList()
 
     val testDescriptors: MutableList<TestOperationDescriptor> = ArrayList()
   }

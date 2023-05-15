@@ -139,7 +139,7 @@ private fun whenExternalSystemTaskStarted(
     }, parentDisposable)
 }
 
-private fun whenExternalSystemTaskFinished(
+fun whenExternalSystemTaskFinished(
   parentDisposable: Disposable,
   action: (ExternalSystemTaskId, OperationExecutionStatus) -> Unit
 ) {
@@ -157,6 +157,19 @@ private fun whenExternalSystemTaskFinished(
         action(id, OperationExecutionStatus.Cancel)
       }
     }, parentDisposable)
+}
+
+fun whenExternalSystemTaskOutputAdded(
+  parentDisposable: Disposable,
+  action: (ExternalSystemTaskId, String, Boolean) -> Unit
+) {
+  val listener = object : ExternalSystemTaskNotificationListenerAdapter() {
+    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+      action(id, text, stdOut)
+    }
+  }
+  ExternalSystemProgressNotificationManager.getInstance()
+    .addNotificationListener(listener, parentDisposable)
 }
 
 private fun whenProjectDataLoadFinished(
