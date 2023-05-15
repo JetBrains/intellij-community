@@ -20,19 +20,19 @@ abstract class PerformanceWatcher : Disposable {
   companion object {
     const val DUMP_PREFIX = "threadDump-"
 
-    private val instance = CachedSingletonsRegistry.lazy {
+    private val instance = CachedSingletonsRegistry.lazyWithNullProtection {
       ApplicationManager.getApplication().service<PerformanceWatcher>()
     }
 
     @ApiStatus.Internal
-    fun getInstanceOrNull(): PerformanceWatcher? {
-      return if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) instance.get() else null
+    fun getInstanceIfCreated(): PerformanceWatcher? {
+      return if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) instance(false) else null
     }
 
     @JvmStatic
     fun getInstance(): PerformanceWatcher {
       LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
-      return instance.get()
+      return instance(true)!!
     }
 
     @JvmStatic
@@ -80,9 +80,10 @@ abstract class PerformanceWatcher : Disposable {
   @ApiStatus.Internal
   abstract fun edtEventFinished()
 
-  @Deprecated("use {@link #dumpThreads(String, boolean, boolean)} instead")
+  @Deprecated("use {@link #dumpThreads(String, boolean, boolean)} instead",
+              ReplaceWith("dumpThreads(pathPrefix = pathPrefix, appendMillisecondsToFileName = appendMillisecondsToFileName, stripDump = false)"))
   fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean): Path? {
-    return dumpThreads(pathPrefix, appendMillisecondsToFileName, false)
+    return dumpThreads(pathPrefix = pathPrefix, appendMillisecondsToFileName = appendMillisecondsToFileName, stripDump = false)
   }
 
   /**
@@ -90,7 +91,7 @@ abstract class PerformanceWatcher : Disposable {
    * might be omitted. This should significantly reduce the size of the dump.
    *
    *
-   * For example, some stackframes that correspond to `kotlinx.coroutines`
+   * For example, some stack frames that correspond to `kotlinx.coroutines`
    * library internals might be omitted.
    */
   abstract fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, stripDump: Boolean): Path?

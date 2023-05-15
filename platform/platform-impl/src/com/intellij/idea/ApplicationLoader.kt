@@ -110,7 +110,7 @@ private suspend fun doInitApplication(rawArgs: List<String>,
 
     // LaF must be initialized before app init because icons maybe requested and, as a result,
     // a scale must be already initialized (especially important for Linux)
-    runActivity("init laf waiting") {
+    subtask("init laf waiting") {
       initLafJob.join()
     }
 
@@ -243,6 +243,9 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
       // wants RegistryManager
       if (!app.isHeadlessEnvironment) {
         app.serviceAsync<PerformanceWatcher>().join()
+        // cache it (CachedSingletonsRegistry is used,
+        // and IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready)
+        PerformanceWatcher.getInstance()
       }
     }
 

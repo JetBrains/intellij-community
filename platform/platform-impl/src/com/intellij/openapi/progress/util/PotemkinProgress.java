@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 public final class PotemkinProgress extends ProgressWindow implements PingProgress {
   private final Application myApp = ApplicationManager.getApplication();
   private final EventStealer myEventStealer;
-  private final PerformanceWatcher myWatcher = PerformanceWatcher.Companion.getInstanceOrNull();
+  private final PerformanceWatcher myWatcher = PerformanceWatcher.Companion.getInstanceIfCreated();
   private long myLastUiUpdate = System.currentTimeMillis();
   private long myLastInteraction = myLastUiUpdate;
   private long myLastWatcherPing = myLastUiUpdate;

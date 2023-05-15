@@ -270,7 +270,7 @@ class IdeEventQueue private constructor() : EventQueue() {
 
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     val startedAt = System.currentTimeMillis()
-    val performanceWatcher = PerformanceWatcher.getInstanceOrNull()
+    val performanceWatcher = PerformanceWatcher.getInstanceIfCreated()
     val eventWatcher = EventWatcher.getInstanceOrNull()
     try {
       performanceWatcher?.edtEventStarted()
