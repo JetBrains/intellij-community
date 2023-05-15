@@ -374,7 +374,7 @@ class BuildOptions(
    * to allow starting JetBrains Client directly from the IDE's distribution. 
    */
   @ApiStatus.Experimental
-  var enableEmbeddedJetBrainsClient = SystemProperties.getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", false)
+  var enableEmbeddedJetBrainsClient = SystemProperties.getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true)
 
   /**
    * Specifies a prefix to use when looking for an artifact of a [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] to be bundled with distributions.
