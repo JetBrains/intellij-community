@@ -92,7 +92,8 @@ class AsyncEditorLoader internal constructor(private val project: Project,
       editor.component.isVisible = false
 
       val editorComponent = textEditor.component
-      val modality = ModalityState.current().asContextElement()
+      // `openEditorImpl` uses runBlockingModal, but an async editor load is performed in the background, out of the `openEditorImpl` call
+      val modality = ModalityState.any().asContextElement()
       val indicatorJob = editorComponent.loadingDecorator.startLoading(scope = coroutineScope + modality,
                                                                        addUi = editorComponent::addLoadingDecoratorUi)
 
