@@ -3,6 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.psi.search.FileTypeIndex
 import com.intellij.util.ThreeState
 import com.intellij.util.indexing.hints.FileTypeIndexingHint
 import com.intellij.util.indexing.hints.IndexingHint
@@ -67,7 +68,6 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
 
   private val indexesForFileType: MutableMap<FileType, HintAwareIndexList> = concurrentMapOf()
   private val indexesForDirectories: HintAwareIndexList = HintAwareIndexList(registeredIndexes.indicesForDirectories)
-  private val contentlessIndexes: HintAwareIndexList = HintAwareIndexList(registeredIndexes.notRequiringContentIndices)
   private fun getState(): IndexConfiguration = registeredIndexes.configurationState
   private fun getInputFilter(indexId: ID<*, *>): FileBasedIndex.InputFilter = getState().getInputFilter(indexId)
 
@@ -152,7 +152,7 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
     }
 
     if (FileBasedIndexImpl.isProjectOrWorkspaceFile(indexedFile.file, fileType)) {
-      return contentlessIndexes.getRequiredIndexes(indexedFile)
+      return listOf(FileTypeIndex.NAME) // probably, we don't even need the filetype index
     }
     else {
       var filteredResults = indexesForFileType[fileType]
