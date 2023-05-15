@@ -22,6 +22,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class UpdateFoldersForProjectAction : MavenProjectsAction() {
   override fun perform(manager: MavenProjectsManager, mavenProjects: List<MavenProject>, e: AnActionEvent) {
-    MavenFolderManager(manager.project).scheduleFoldersResolve(mavenProjects)
+    MavenFolderManager(manager.project).resolveFolders(mavenProjects)
   }
 }

@@ -19,20 +19,20 @@ import java.util.function.Supplier
 class MavenFolderManager(private val project: Project) {
   private val projectsManager: MavenProjectsManager = MavenProjectsManager.getInstance(project)
 
-  fun scheduleFoldersResolveForAllProjects() = scheduleFoldersResolve(projectsManager.projects)
+  fun resolveFoldersForAllProjects() = resolveFolders(projectsManager.projects)
 
-  fun scheduleFoldersResolve(projects: Collection<MavenProject>) {
+  fun resolveFolders(projects: Collection<MavenProject>) {
     val cs = CoroutineScope(SupervisorJob())
     cs.launch {
       val taskCancellation = TaskCancellation.cancellable()
       withBackgroundProgress(project, MavenProjectBundle.message("maven.updating.folders"), taskCancellation) {
-        scheduleFoldersResolveSync(projects)
+        resolveFoldersBlocking(projects)
       }
     }
   }
 
   @RequiresBlockingContext
-  fun scheduleFoldersResolveSync(projects: Collection<MavenProject>) {
+  fun resolveFoldersBlocking(projects: Collection<MavenProject>) {
     if (MavenUtil.isLinearImportEnabled()) {
       MavenImportingManager.getInstance(project).resolveFolders(projects)
       return
