@@ -249,7 +249,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     fireEditorRefresh()
   }
 
-  override fun getRightMargin(project: Project): Int = rightMargin.getValue(project)
+  override fun getRightMargin(project: Project?): Int = rightMargin.getValue(project)
 
   override fun isWrapWhenTypingReachesRightMargin(project: Project): Boolean {
     myWrapWhenTypingReachesRightMargin?.let {

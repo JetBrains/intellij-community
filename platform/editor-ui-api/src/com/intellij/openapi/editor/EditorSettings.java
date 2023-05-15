@@ -28,7 +28,7 @@ public interface EditorSettings {
   boolean isSelectionWhitespaceShown();
   void setSelectionWhitespaceShown(boolean val);
 
-  int getRightMargin(Project project);
+  int getRightMargin(@Nullable Project project);
   void setRightMargin(int myRightMargin);
 
   /**
