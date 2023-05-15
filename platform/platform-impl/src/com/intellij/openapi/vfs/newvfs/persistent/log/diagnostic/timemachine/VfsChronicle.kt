@@ -21,7 +21,6 @@ object VfsChronicle {
    * that a property was set to a contained value in that range (first such event in traversal order)
    */
 
-  // TODO: lookup methods can throw on Invalid, it should be caught and processed in usages
   // TODO: if operation.result is an exception, it should probably be accounted, but it's not completely clear how right now
 
   inline fun lookupNameId(iterator: OperationLogStorage.Iterator,

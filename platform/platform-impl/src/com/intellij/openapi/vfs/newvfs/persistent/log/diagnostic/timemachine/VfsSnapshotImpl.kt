@@ -122,7 +122,7 @@ class CacheAwareVfsSnapshot(
       val payloadRef = attrData.value
       if (payloadRef == null) return State.Ready(null)
       return payloadReader(payloadRef).fmap {
-        PersistentFSAttributeAccessor.readAttributeImpl(
+        PersistentFSAttributeAccessor.validateAttributeVersion(
           fileAttribute,
           AttributeInputStream(UnsyncByteArrayInputStream(it), attributeEnumerator)
         )

@@ -3,10 +3,8 @@
 
 package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic
 
-import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsOracle
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSTreeAccessor
 import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.ReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEachContainedOperation
@@ -16,11 +14,9 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.Vfs
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
 import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsTimeMachineImpl
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.withContradictionCheck
-import com.intellij.util.BitUtil
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.withOracle
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import kotlinx.coroutines.runBlocking
 import java.nio.charset.StandardCharsets
@@ -34,6 +30,8 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
+
+// TODO move this code to tests
 
 private data class Stats(
   var operationsStorageSize: Long = 0,
@@ -195,8 +193,8 @@ private fun vfsRecoveryDraft(log: VfsLog,
     payloadReader = payloadReader,
     attributeEnumerator = attributeEnumerator
   )
-    //.withOracle(fsRecordsOracle)
-    .withContradictionCheck(fsRecordsOracle)
+    .withOracle(fsRecordsOracle)
+    //.withContradictionCheck(fsRecordsOracle)
 
   fun VfsSnapshot.VirtualFileSnapshot.represent(): String =
     "file: name=$name parent=$parentId id=$fileId ts=$timestamp len=$length flags=$flags contentId=$contentRecordId attrId=$attributesRecordId"
@@ -215,8 +213,12 @@ private fun vfsRecoveryDraft(log: VfsLog,
     return linesBefore to linesAfter
   }
 
+  /*
+  // TODO move this to tests
+  // attributes can only be read from inside the Application as storages require access to ProgressManager. But it works if there are no locks:
+
+  // copy-pasted from [com.intellij.openapi.vfs.newvfs.persistent.PersistentFSTreeAccessor] and slightly modified for testing purposes
   fun VfsSnapshot.VirtualFileSnapshot.readChildAttr(): State.DefinedState<List<Int>> =
-    // copy-pasted from [com.intellij.openapi.vfs.newvfs.persistent.PersistentFSTreeAccessor] and slightly modified for testing purposes
     readAttribute(PersistentFSTreeAccessor.CHILDREN_ATTR).fmap { input ->
       val count = if (input == null) 0 else DataInputOutputUtil.readINT(input)
       val children: MutableList<Int> = if (count == 0) mutableListOf()
@@ -260,6 +262,7 @@ private fun vfsRecoveryDraft(log: VfsLog,
       check(stream.available() == 0)
       StubIndexStampData(stamp, byteLength, charLength, isBinary)
     }
+  */
 
   fun Diff.represent() =
     if (first.isEmpty() && second.isEmpty()) "No diff"
@@ -288,13 +291,13 @@ private fun vfsRecoveryDraft(log: VfsLog,
                   (rec.begin().next() as OperationReadResult.Valid).operation as VfsOperation.VFileEventOperation.EventStart.Move
                 val file = snapshotBefore.getFileById(startOp.fileId)
                 println(file.represent())
-                println("stub index stamp data: ${file.readStubIndexStampAttr()}")
+                //println("stub index stamp data: ${file.readStubIndexStampAttr()}")
                 val oldParent = snapshotBefore.getFileById(startOp.oldParentId)
                 val oldParentAfter = snapshotAfter.getFileById(startOp.oldParentId)
                 val newParent = snapshotBefore.getFileById(startOp.newParentId)
                 println("MOVE FROM PARENT ${oldParent.name} to ${newParent.name}")
-                println("old parent's children ids before: ${oldParent.readChildAttr()}")
-                println("old parent's children ids after: ${oldParentAfter.readChildAttr()}")
+                //println("old parent's children ids before: ${oldParent.readChildAttr()}")
+                //println("old parent's children ids after: ${oldParentAfter.readChildAttr()}")
               }
               VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE -> {
                 val startOp =
@@ -302,7 +305,7 @@ private fun vfsRecoveryDraft(log: VfsLog,
                 val fileBefore = snapshotBefore.getFileById(startOp.fileId)
                 val fileAfter = snapshotAfter.getFileById(startOp.fileId)
                 println(fileBefore.represent())
-                println("stub index stamp data: ${fileBefore.readStubIndexStampAttr()}")
+                //println("stub index stamp data: ${fileBefore.readStubIndexStampAttr()}")
                 val contentBefore = fileBefore.getContent().fmap { it.toString(StandardCharsets.UTF_8) }
                 val contentAfter = fileAfter.getContent().fmap { it.toString(StandardCharsets.UTF_8) }
                 if (contentBefore is State.Ready && contentAfter is State.Ready) {

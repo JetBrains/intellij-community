@@ -36,13 +36,13 @@ public final class PersistentFSAttributeAccessor {
   public AttributeInputStream readAttribute(final int fileId,
                                             final @NotNull FileAttribute attribute) throws IOException {
     final AttributeInputStream attributeStream = attributesStorage.readAttribute(connection, fileId, attribute);
-    return readAttributeImpl(attribute, attributeStream);
+    return validateAttributeVersion(attribute, attributeStream);
   }
 
   @ApiStatus.Internal
   @Nullable
-  public static AttributeInputStream readAttributeImpl(final @NotNull FileAttribute attribute,
-                                                       final AttributeInputStream attributeStream) {
+  public static AttributeInputStream validateAttributeVersion(final @NotNull FileAttribute attribute,
+                                                              final AttributeInputStream attributeStream) {
     if (attributeStream != null && attribute.isVersioned()) {
       try {
         final int actualVersion = DataInputOutputUtil.readINT(attributeStream);
