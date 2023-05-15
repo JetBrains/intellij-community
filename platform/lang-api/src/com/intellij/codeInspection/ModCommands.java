@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Utility methods to create commands
@@ -59,6 +61,26 @@ public final class ModCommands {
     }
     VirtualFile file = psiFile.getVirtualFile();
     return new ModNavigate(file, range.getStartOffset(), range.getEndOffset(), range.getStartOffset());
+  }
+
+  /**
+   * @param elements list of elements. If list contains no elements, nothing will be executed.
+   *                 If list contains only one element, the subsequent step will be executed
+   *                 right away assuming that the only element is selected.
+   * @param nextStep next step generator that accepts the selected element
+   * @param title    user-visible title for the element selection list
+   * @param <T>      type of elements
+   * @return a command that displays UI, so user can select one of the PSI elements,
+   * and subsequent step will be invoked after that.
+   */
+  public static <T extends PsiElement> @NotNull ModCommand chooser(@NotNull List<ModChooseTarget.@NotNull ListItem<@NotNull T>> elements,
+                                                                   @NotNull Function<? super @NotNull T, ? extends @NotNull ModCommand> nextStep,
+                                                                   @NotNull @NlsContexts.PopupTitle String title) {
+    if (elements.isEmpty()) return nop();
+    if (elements.size() == 1) {
+      return nextStep.apply(elements.get(0).element());
+    }
+    return new ModChooseTarget<>(elements, nextStep, title, 0);
   }
 
   /**

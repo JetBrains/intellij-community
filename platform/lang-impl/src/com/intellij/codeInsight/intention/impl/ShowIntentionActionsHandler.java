@@ -288,7 +288,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
         Project project = context.project();
         IntentionsCollector.record(project, commandAction, context.file().getLanguage());
         CommandProcessor.getInstance().executeCommand(project, () -> {
-          if (contextAndCommand.command().prepare() != ModStatus.SUCCESS) return;
           contextAndCommand.command().execute(project);
         }, commandName, null);
       })

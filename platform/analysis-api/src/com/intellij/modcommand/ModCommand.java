@@ -22,7 +22,7 @@ import java.util.Set;
  * <p>
  * All inheritors are records, so the whole state is declarative and readable.
  */
-public sealed interface ModCommand permits ModCompositeCommand, ModNavigate, ModNothing, ModUpdatePsiFile {
+public sealed interface ModCommand permits ModChooseTarget, ModCompositeCommand, ModNavigate, ModNothing, ModUpdatePsiFile {
   /**
    * Executes the command
    * 
@@ -31,6 +31,8 @@ public sealed interface ModCommand permits ModCompositeCommand, ModNavigate, Mod
    */
   @RequiresEdt
   default @NotNull ModStatus execute(@NotNull Project project) {
+    ModStatus modStatus = prepare();
+    if (modStatus != ModStatus.SUCCESS) return modStatus;
     return ApplicationManager.getApplication().getService(ModCommandService.class).execute(project, this);
   }
 

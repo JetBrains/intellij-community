@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.analysis.impl.modcommand;
+package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.FileModifier;
@@ -66,7 +66,6 @@ import java.util.Objects;
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     ModCommand command = myAction.perform(ModCommandAction.ActionContext.from(editor, file));
-    if (command.prepare() != ModStatus.SUCCESS) return;
     command.execute(project);
   }
 

@@ -697,6 +697,8 @@
     <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension" id="defaultNavbar" order="last"/>
     <applicationService serviceInterface="com.intellij.ide.navigationToolbar.NavBarModelBuilder"
                         serviceImplementation="com.intellij.ide.navigationToolbar.NavBarModelBuilderImpl"/>
+    <applicationService serviceInterface="com.intellij.modcommand.ModCommandService"
+                        serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandServiceImpl"/>
 
     <navbar.item.provider implementation="com.intellij.ide.navbar.impl.DefaultNavBarItemProvider" order="last"/>
 
