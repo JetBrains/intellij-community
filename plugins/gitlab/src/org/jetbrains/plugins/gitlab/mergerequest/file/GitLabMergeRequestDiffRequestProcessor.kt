@@ -15,6 +15,7 @@ import com.intellij.diff.requests.LoadingDiffRequest
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.ListSelection
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -132,6 +133,8 @@ private fun createData(
   val dataProvider = GenericDataProvider()
   requestDataKeys[DiffUserDataKeys.DATA_PROVIDER] = dataProvider
   dataProvider.putData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY, reviewVm)
+  requestDataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] =
+    listOf(ActionManager.getInstance().getAction("GitLab.MergeRequest.Review.Submit"))
 
   val diffComputer = parsedChanges.patchesByChange[change]?.getDiffComputer()
   if (diffComputer != null) {

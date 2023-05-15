@@ -92,5 +92,7 @@
                     relative-to-action="Vcs.Diff.ToggleDiffAligningMode"
                     anchor="before"/>
     </group>
+    <action id="GitLab.MergeRequest.Review.Submit"
+            class="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestDiffSubmitReviewAction"/>
   </actions>
 </idea-plugin>

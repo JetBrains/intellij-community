@@ -5,12 +5,10 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModel.SubmittableReview
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
 internal interface GitLabMergeRequestSubmitReviewViewModel {
@@ -41,7 +39,17 @@ internal interface GitLabMergeRequestSubmitReviewViewModel {
    * Cancel the submission
    */
   fun cancel()
+
+  data class SubmittableReview(val draftComments: Int)
 }
+
+internal fun GitLabMergeRequest.getSubmittableReview(currentUser: GitLabUserDTO): Flow<SubmittableReview?> =
+  combine(draftNotes, userPermissions, approvedBy) { draftNotes, permissions, approvals ->
+    val draftComments = draftNotes.count()
+    val canChangeApproval = permissions.canApprove || approvals.any { it.id == currentUser.id }
+    if (draftComments > 0 || canChangeApproval) SubmittableReview(draftComments)
+    else null
+  }
 
 class GitLabMergeRequestSubmitReviewViewModelImpl(
   parentCs: CoroutineScope,

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
@@ -9,6 +10,7 @@ import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewFlowViewModel
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.childScope
@@ -19,7 +21,9 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModel.SubmittableReview
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.getSubmittableReview
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
@@ -71,9 +75,9 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
 
   //TODO: extract reviewers update VM
   suspend fun getPotentialReviewers(): List<GitLabUserDTO>
-
-  data class SubmittableReview(val draftComments: Int)
 }
+
+private val LOG = logger<GitLabMergeRequestReviewFlowViewModel>()
 
 internal class GitLabMergeRequestReviewFlowViewModelImpl(
   private val project: Project,
@@ -121,13 +125,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   override val userCanManage: Flow<Boolean> = mergeRequest.userPermissions.map { it.canMerge }
   override val userCanMerge: Flow<Boolean> = mergeRequest.userPermissions.map { it.canMerge }
 
-  override val submittableReview: Flow<GitLabMergeRequestReviewFlowViewModel.SubmittableReview?> =
-    combine(mergeRequest.draftNotes, mergeRequest.userPermissions, mergeRequest.approvedBy) { draftNotes, permissions, approvals ->
-      val draftComments = draftNotes.count()
-      val canChangeApproval = permissions.canApprove || approvals.any { it.id == currentUser.id }
-      if (draftComments > 0 || canChangeApproval) GitLabMergeRequestReviewFlowViewModel.SubmittableReview(draftComments)
-      else null
-    }
+  override val submittableReview: Flow<SubmittableReview?> = mergeRequest.getSubmittableReview(currentUser).modelFlow(scope, LOG)
   override var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)? = null
 
   override fun submitReview() {
