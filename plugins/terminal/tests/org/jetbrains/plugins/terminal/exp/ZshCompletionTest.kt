@@ -15,6 +15,7 @@ import com.intellij.testFramework.utils.io.createFile
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.util.SHELL_TYPE_KEY
 import org.junit.Assume
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,6 +45,7 @@ class ZshCompletionTest : BasePlatformTestCase() {
     myFixture.configureByText(FileTypes.PLAIN_TEXT, "")
     myFixture.editor.putUserData(TerminalSession.KEY, session)
     myFixture.editor.putUserData(TerminalCompletionManager.KEY, completionManager)
+    myFixture.file.putUserData(SHELL_TYPE_KEY, session.shellIntegration?.shellType)
 
     testDirectory = createTempDirectory(prefix = "zsh_completion")
 
