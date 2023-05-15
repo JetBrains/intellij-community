@@ -27,6 +27,8 @@ import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -225,6 +227,10 @@ open class IdeErrorsDialog internal constructor(private val myMessagePool: Messa
     }
     myAttachmentList.selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
     myAttachmentArea = JTextArea()
+    val attachmentFont = EditorColorsManager.getInstance()?.globalScheme?.getFont(EditorFontType.PLAIN)
+    if (attachmentFont != null) {
+      myAttachmentArea.font = attachmentFont
+    }
     myAttachmentArea.margin = JBUI.insets(2)
     myAttachmentArea.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
