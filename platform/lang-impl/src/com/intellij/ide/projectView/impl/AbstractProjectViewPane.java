@@ -1243,13 +1243,15 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @Nullable
   public static TreeVisitor createVisitor(@NotNull Object object) {
-    if (object instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)object;
+    if (object instanceof AbstractTreeNode<?> node) {
+      if (node.getEqualityObject() instanceof SmartPsiElementPointer<?> ptr) {
+        return new ProjectViewNodeVisitor(ptr);
+      }
       object = node.getValue();
     }
-    if (object instanceof ProjectFileNode) {
+    else if (object instanceof ProjectFileNode) {
       ProjectFileNode node = (ProjectFileNode)object;
-      object = node.getVirtualFile();
+      return createVisitor(node.getVirtualFile());
     }
     if (object instanceof VirtualFile) return createVisitor((VirtualFile)object);
     if (object instanceof PsiElement) return createVisitor((PsiElement)object);
