@@ -46,7 +46,7 @@ abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(p
           indicator.handleDownloadEvents(status.downloadEvents())
           if (indicator.isCanceled) {
             if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
-              break
+              throw MavenProcessCanceledException()
             }
           }
         }
