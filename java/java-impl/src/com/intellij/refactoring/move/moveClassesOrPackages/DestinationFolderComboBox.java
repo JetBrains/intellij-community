@@ -29,6 +29,7 @@ import com.intellij.refactoring.util.CommonMoveClassesOrPackagesUtil;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,29 +121,32 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        record NonBlockingResult(@NotNull VirtualFile root, @Nullable DirectoryChooser.ItemWrapper item) { }
+        final ComboBoxModel<DirectoryChooser.ItemWrapper> model = getComboBox().getModel();
         ReadAction.nonBlocking(() -> {
-          final ComboBoxModel<DirectoryChooser.ItemWrapper> model = getComboBox().getModel();
-          VirtualFile root = CommonMoveClassesOrPackagesUtil.chooseSourceRoot(
+          return CommonMoveClassesOrPackagesUtil.chooseSourceRoot(
             new PackageWrapper(PsiManager.getInstance(project), getTargetPackage()),
             mySourceRoots,
             initialTargetDirectory
           );
-          if (root == null) return null;
+        }).finishOnUiThread(ModalityState.current(), root -> {
+          if (root == null) return;
+          List<DirectoryChooser.ItemWrapper> items = new ArrayList<>(model.getSize());
           for (int i = 0; i < model.getSize(); i++) {
-            DirectoryChooser.ItemWrapper item = model.getElementAt(i);
-            if (item != DirectoryChooser.ItemWrapper.NULL && Comparing.equal(fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()), root)) {
-              return new NonBlockingResult(root, item);
+            items.add(model.getElementAt(i));
+          }
+          record NonBlockingResult(@NotNull VirtualFile root, @Nullable DirectoryChooser.ItemWrapper item) { }
+          ReadAction.nonBlocking(() -> {
+            return new NonBlockingResult(root, ContainerUtil.find(items, item ->
+              item != DirectoryChooser.ItemWrapper.NULL
+              && Comparing.equal(fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()), root)
+            ));
+          }).finishOnUiThread(ModalityState.current(), result -> {
+            if (result.item != null) {
+              getComboBox().setSelectedItem(result.item);
+              getComboBox().repaint();
             }
-          }
-          return new NonBlockingResult(root, null);
-        }).finishOnUiThread(ModalityState.current(), result -> {
-          if (result == null) return;
-          if (result.item != null) {
-            getComboBox().setSelectedItem(result.item);
-            getComboBox().repaint();
-          }
-          setComboboxModel(result.root, result.root, true);
+            setComboboxModel(result.root, result.root, true);
+          }).submit(AppExecutorUtil.getAppExecutorService());
         }).submit(AppExecutorUtil.getAppExecutorService());
       }
     });
