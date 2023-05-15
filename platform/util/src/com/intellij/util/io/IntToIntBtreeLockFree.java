@@ -290,12 +290,7 @@ public final class IntToIntBtreeLockFree extends AbstractIntToIntBtree {
   public void doClose() throws IOException {
     final BtreeIndexNodeView rootNode = root.nodeView;
     rootNode.disposePage();
-    try {
-      storage.close();
-    }
-    catch (InterruptedException e) {
-      throw new IOException(e);
-    }
+    storage.close();
   }
 
   @Override

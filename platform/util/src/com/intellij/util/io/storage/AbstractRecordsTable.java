@@ -76,8 +76,8 @@ public abstract class AbstractRecordsTable implements AutoCloseable, Forceable {
         try {
           myStorage.close();
         }
-        catch (InterruptedException ite) {
-          ioError.addSuppressed(ite);
+        catch (IOException ioe) {
+          ioError.addSuppressed(ioe);
         }
         throw ioError;
       }

@@ -58,8 +58,8 @@ final class DataTable implements AutoCloseable, Forceable {
       try {
         myFile.close();
       }
-      catch (InterruptedException ite) {
-        ioError.addSuppressed(ite);
+      catch (IOException ioe) {
+        ioError.addSuppressed(ioe);
       }
       throw ioError;
     }

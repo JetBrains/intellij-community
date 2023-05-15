@@ -65,11 +65,7 @@ public class PagesTable {
   }
 
   public @NotNull PageImpl lookupOrCreate(final int pageIndex,
-                                          final @NotNull IntFunction<PageImpl> uninitializedPageFactory,
-                                          final @NotNull PageContentLoader pageContentLoader) throws IOException {
-  @NotNull
-  public PageImpl lookupOrCreate(final int pageIndex,
-                                 final @NotNull IntFunction<PageImpl> uninitializedPageFactory) throws IOException {
+                                          final @NotNull IntFunction<PageImpl> uninitializedPageFactory) throws IOException {
     final PageImpl page = findPageOrInsertionIndex(this.pages, pageIndex, /*insertionIndexRef: */null);
     if (page != null) {
       return page;
@@ -129,9 +125,8 @@ public class PagesTable {
   }
 
 
-
   private @NotNull PageImpl insertNewPage(final int pageIndex,
-                                          final IntFunction<PageImpl> uninitializedPageFactory) throws IOException {
+                                          final IntFunction<PageImpl> uninitializedPageFactory) {
 
     //Don't try to be lock-free on updates, just avoid holding the _global_ lock during IO:
     // 1) put blankPage under the pagesLock,
@@ -263,7 +258,7 @@ public class PagesTable {
       if (insertionIndex < 0) {
         if (pagesCopied == targetPages.length()) {
           //either targetPages is too small to fit, or code bug in hashing logic
-          throw new NoFreeSpaceException("Not enought space in targetPages(length: " + targetPages.length() + "): " +
+          throw new NoFreeSpaceException("Not enough space in targetPages(length: " + targetPages.length() + "): " +
                                          "sourcePages(length: " + sourcePages.length() + ") contains > " + pagesCopied +
                                          " !tombstone pages. \nsource: " + sourcePages + "\ntarget: " + targetPages);
         }
@@ -388,6 +383,6 @@ public class PagesTable {
   }
 
   private static class NoFreeSpaceException extends IllegalStateException {
-    public NoFreeSpaceException(final String message) { }
+    private NoFreeSpaceException(final String message) { super(message); }
   }
 }
