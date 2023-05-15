@@ -563,7 +563,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         return ExecutionUtil.getLiveIndicator(myExecutor.getIcon());
       }
       else {
-        return IconUtil.addText(myExecutor.getIcon(), RunToolbarWidgetKt.runCounterToString(e, runningDescriptors.size()));
+        return IconUtil.addText(myExecutor.getIcon(), RunToolbarPopupKt.runCounterToString(e, runningDescriptors.size()));
       }
     }
 
