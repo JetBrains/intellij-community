@@ -69,9 +69,21 @@ class ExternalSystemExecutionTracer {
           action()
         }
       }
-      catch (ex: Exception) {
+      catch (ex: Throwable) {
         tracer.printExecutionOutput()
         throw ex
+      }
+    }
+
+    inline fun <R> printExecutionOutput(action: () -> R): R {
+      val tracer = ExternalSystemExecutionTracer()
+      try {
+        return tracer.traceExecution {
+          action()
+        }
+      }
+      finally {
+        tracer.printExecutionOutput()
       }
     }
   }
