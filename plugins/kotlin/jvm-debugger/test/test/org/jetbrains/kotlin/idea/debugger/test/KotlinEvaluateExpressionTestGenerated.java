@@ -708,6 +708,34 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/singleBreakpoint/funWithDefaultParam")
+        public static class FunWithDefaultParam extends AbstractKotlinEvaluateExpressionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_WITH_OLD_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("classWithExtensionFun.kt")
+            public void testClassWithExtensionFun() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/funWithDefaultParam/classWithExtensionFun.kt");
+            }
+
+            @TestMetadata("classWithExtensionFun2.kt")
+            public void testClassWithExtensionFun2() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/funWithDefaultParam/classWithExtensionFun2.kt");
+            }
+
+            @TestMetadata("methodInClass.kt")
+            public void testMethodInClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/funWithDefaultParam/methodInClass.kt");
+            }
+
+            @TestMetadata("methodInClass2.kt")
+            public void testMethodInClass2() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/funWithDefaultParam/methodInClass2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/javaContext")
         public static class JavaContext extends AbstractKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {

@@ -708,6 +708,34 @@ public abstract class IndyLambdaKotlinEvaluateExpressionTestGenerated extends Ab
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/singleBreakpoint/funWithDefaultParam")
+        public static class FunWithDefaultParam extends AbstractIndyLambdaKotlinEvaluateExpressionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("classWithExtensionFun.kt")
+            public void testClassWithExtensionFun() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/funWithDefaultParam/classWithExtensionFun.kt");
+            }
+
+            @TestMetadata("classWithExtensionFun2.kt")
+            public void testClassWithExtensionFun2() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/funWithDefaultParam/classWithExtensionFun2.kt");
+            }
+
+            @TestMetadata("methodInClass.kt")
+            public void testMethodInClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/funWithDefaultParam/methodInClass.kt");
+            }
+
+            @TestMetadata("methodInClass2.kt")
+            public void testMethodInClass2() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/funWithDefaultParam/methodInClass2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/javaContext")
         public static class JavaContext extends AbstractIndyLambdaKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
