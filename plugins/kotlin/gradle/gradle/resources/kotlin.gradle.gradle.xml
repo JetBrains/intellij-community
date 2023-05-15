@@ -74,6 +74,9 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSCollector"/>
 
     <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.gradle.GradleKtsVersionCatalogGotoDeclarationHandler"/>
+    <referencesSearch implementation="org.jetbrains.kotlin.idea.gradle.GradleKtsVersionCatalogReferencesSearcher"/>
+    <lang.elementManipulator forClass="org.jetbrains.kotlin.psi.KtNameReferenceExpression"
+                             implementationClass="org.jetbrains.kotlin.idea.gradle.KotlinRefManipulator"/>
 
   </extensions>
 

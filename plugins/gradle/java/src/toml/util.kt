@@ -24,7 +24,7 @@ internal fun getVersions(context: PsiElement) : List<TomlKeySegment> {
 }
 
 
-internal fun String.getVersionCatalogParts() : List<String> = split("_", "-")
+fun String.getVersionCatalogParts() : List<String> = split("_", "-")
 
 internal fun findTomlFile(context: PsiElement, name: String) : TomlFile? {
   val file = getVersionCatalogFiles(context.project)[name] ?: return null
