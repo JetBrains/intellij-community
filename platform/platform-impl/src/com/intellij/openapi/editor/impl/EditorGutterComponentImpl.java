@@ -709,7 +709,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private Font getFontForLineNumbers() {
     Font editorFont = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
     float editorFontSize = editorFont.getSize2D();
-    float delta = (float) Registry.get("editor.gutter.line-number.font.size.delta").asDouble();
+    float delta = (float) AdvancedSettings.getInt("editor.gutter.linenumber.font.size.delta");
     return editorFont.deriveFont(Math.max(1f, editorFontSize + delta));
   }
 

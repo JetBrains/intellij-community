@@ -1399,6 +1399,7 @@
     <advancedSetting id="ide.settings.move.mouse.on.default.button" default="false" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="editor.tab.painting" enumClass="com.intellij.openapi.editor.impl.TabCharacterPaintMode" default="HORIZONTAL_LINE" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="editor.distraction.free.margin" default="-1" groupKey="group.advanced.settings.editor"/>
+    <advancedSetting id="editor.gutter.linenumber.font.size.delta" default="-1" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="editor.soft.wrap.force.limit" default="100000" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="editor.selection.expand-whitespaces" default="true" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="editor.open.inactive.splitter" default="true" groupKey="group.advanced.settings.editor.tabs"/>
