@@ -461,9 +461,10 @@
       <add-to-group group-id="Vcs.Log.Internal"/>
     </group>
 
-    <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction" >
+    <group id="MainToolbarVCSGroup">
+      <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction" />
       <add-to-group group-id="MainToolbarLeft"/>
-    </action>
+    </group>
 
     <group id="GitMainToolbarQuickActions" searchable="false" popup="false">
       <add-to-group group-id="MainToolbarQuickActions" relative-to-action="addQuickAction.Profile" anchor="after"/>

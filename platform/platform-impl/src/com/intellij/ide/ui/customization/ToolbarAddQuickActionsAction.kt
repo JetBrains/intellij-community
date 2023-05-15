@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.customization
 
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.SystemInfo
@@ -27,4 +28,6 @@ abstract class ToolbarAddQuickActionsAction(protected val actionIds: List<String
     val schema = CustomActionsSchema.getInstance()
     e.presentation.isEnabledAndVisible = actionIds.none { id -> groupContainsAction(rootGroupID, id, schema)}
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
