@@ -18,18 +18,17 @@ abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(p
     val longRunningTaskId = UUID.randomUUID().toString()
     val embedder = getOrCreateWrappee()
 
-    val progress = indicator?.indicator
-    if (null == progress) return task.run(embedder, longRunningTaskId)
+    val mavenIndicator = indicator ?: MavenProgressIndicator(null, null)
 
     return ProgressManager.getInstance().computeResultUnderProgress(
-      { doRunLongRunningTask(embedder, longRunningTaskId, task, indicator, console) }, progress)
+      { runLongRunningTask(embedder, longRunningTaskId, task, mavenIndicator, console) }, mavenIndicator.indicator)
   }
 
-  private fun <R> doRunLongRunningTask(embedder: MavenServerEmbedder,
-                                       longRunningTaskId: String,
-                                       task: LongRunningEmbedderTask<R>,
-                                       indicator: MavenProgressIndicator,
-                                       console: MavenConsole?): R {
+  private fun <R> runLongRunningTask(embedder: MavenServerEmbedder,
+                                     longRunningTaskId: String,
+                                     task: LongRunningEmbedderTask<R>,
+                                     indicator: MavenProgressIndicator,
+                                     console: MavenConsole?): R {
     return runBlockingCancellable {
       return@runBlockingCancellable runLongRunningTaskAsync(embedder, longRunningTaskId, indicator, console, task)
     }
