@@ -101,7 +101,9 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                        @NotNull DaemonProgressIndicator progressIndicator) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     TextRange fileRange = psiFile.getTextRange();
-    ProperTextRange visibleRange = editor == null ? ProperTextRange.create(ObjectUtils.notNull(fileRange, TextRange.EMPTY_RANGE)) : VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    ProperTextRange visibleRange;
+    visibleRange =
+      editor == null ? ProperTextRange.create(ObjectUtils.notNull(fileRange, TextRange.EMPTY_RANGE)) : editor.calculateVisibleRange();
     CanISilentlyChange.Result canChangeFileSilently = CanISilentlyChange.thisFile(psiFile);
     return (HighlightingSessionImpl)createHighlightingSession(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently);
   }

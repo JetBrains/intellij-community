@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.ui.ComponentUtil;
@@ -15,20 +14,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class VisibleHighlightingPassFactory {
-  @NotNull
-  public static ProperTextRange calculateVisibleRange(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    Rectangle rect = editor.getScrollingModel().getVisibleArea();
-    LogicalPosition startPosition = editor.xyToLogicalPosition(new Point(rect.x, rect.y));
-
-    int visibleStart = editor.logicalPositionToOffset(startPosition);
-    LogicalPosition endPosition = editor.xyToLogicalPosition(new Point(rect.x + rect.width, rect.y + rect.height));
-
-    int visibleEnd = editor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
-
-    return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
-  }
 
   @ApiStatus.Internal
   public static void setVisibleRangeForHeadlessMode(@NotNull Editor editor, @NotNull ProperTextRange range) {
@@ -40,12 +25,10 @@ public abstract class VisibleHighlightingPassFactory {
     Point viewPositionStart = editor.logicalPositionToXY(editor.offsetToLogicalPosition(range.getStartOffset()));
     Point viewPositionEnd = editor.logicalPositionToXY(editor.offsetToLogicalPosition(range.getEndOffset()));
     JScrollPane scrollPane = ComponentUtil.getScrollPane(editor.getContentComponent());
-    if (scrollPane != null) {
-      scrollPane.getViewport().setSize(editor.getContentComponent().getWidth(), Math.max(100, viewPositionEnd.y - viewPositionStart.y));
-      editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-      scrollPane.getViewport().setViewPosition(viewPositionStart);
-      scrollPane.getViewport().setExtentSize(new Dimension(editor.getContentComponent().getWidth(), Math.max(100, viewPositionEnd.y - viewPositionStart.y)));
-      UIUtil.markAsFocused(editor.getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
-    }
+    scrollPane.getViewport().setSize(editor.getContentComponent().getWidth(), Math.max(100, viewPositionEnd.y - viewPositionStart.y));
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    scrollPane.getViewport().setViewPosition(viewPositionStart);
+    scrollPane.getViewport().setExtentSize(new Dimension(editor.getContentComponent().getWidth(), Math.max(100, viewPositionEnd.y - viewPositionStart.y)));
+    UIUtil.markAsFocused(editor.getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
   }
 }

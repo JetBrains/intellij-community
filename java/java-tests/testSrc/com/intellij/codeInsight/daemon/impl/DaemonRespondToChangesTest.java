@@ -1407,7 +1407,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
     int offset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(viewPosition));
     VisibleHighlightingPassFactory.setVisibleRangeForHeadlessMode(editor, new ProperTextRange(offset, offset));
-    return VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    return editor.calculateVisibleRange();
   }
 
   static void makeWholeEditorWindowVisible(@NotNull EditorImpl editor) {
@@ -1631,7 +1631,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     ((EditorImpl)myEditor).getScrollPane().getViewport().setViewPosition(new Point(0, 0));
     ((EditorImpl)myEditor).getScrollPane().getViewport().setExtentSize(new Dimension(100, 100000));
-    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(getEditor());
+    @NotNull Editor editor = getEditor();
+    ProperTextRange visibleRange = editor.calculateVisibleRange();
     assertTrue(visibleRange.getLength() > 0);
     Document document = myEditor.getDocument();
     assertTrue(visibleRange.getLength() < document.getTextLength());
@@ -2376,7 +2377,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         """;
       configureByText(JavaFileType.INSTANCE, text1);
       ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
-      assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
+      @NotNull Editor editor = getEditor();
+      assertEquals(getFile().getTextRange(), editor.calculateVisibleRange());
 
       assertEquals("XXX", assertOneElement(doHighlighting(HighlightSeverity.WARNING)).getDescription());
 
@@ -2724,7 +2726,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       """;
     configureByText(JavaFileType.INSTANCE, text);
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
-    assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
+    @NotNull Editor editor = getEditor();
+    assertEquals(getFile().getTextRange(), editor.calculateVisibleRange());
 
     toSleepMs.set(1_000_000);
 
@@ -2932,7 +2935,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
             String text = "class X {\n}";
             configureByText(JavaFileType.INSTANCE, text);
             ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
-            assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
+      @NotNull Editor editor = getEditor();
+      assertEquals(getFile().getTextRange(), editor.calculateVisibleRange());
             CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
             doHighlighting();
             MyRecordingAnnotator.clearAll();
@@ -3157,7 +3161,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Point2D visualPoint = editor.offsetToPoint2D(editor.getCaretModel().getOffset());
     editor.getScrollPane().getViewport().setViewPosition(new Point((int)visualPoint.getX(), (int)visualPoint.getY()));
     editor.getScrollPane().getViewport().setExtentSize(new Dimension(100, editor.getPreferredHeight() - (int)visualPoint.getY()));
-    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    ProperTextRange visibleRange = editor.calculateVisibleRange();
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 0);
     useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new MiddleOfTextAnnotator()}, ()->{
       MiddleOfTextAnnotator.doAnnotate = true;
@@ -3193,7 +3197,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Point2D caretVisualPoint = editor.offsetToPoint2D(editor.getCaretModel().getOffset());
     editor.getScrollPane().getViewport().setViewPosition(new Point((int)caretVisualPoint.getX(), (int)caretVisualPoint.getY()));
     editor.getScrollPane().getViewport().setExtentSize(new Dimension(100, editor.getPreferredHeight() - (int)caretVisualPoint.getY()));
-    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    ProperTextRange visibleRange = editor.calculateVisibleRange();
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 0);
     myDaemonCodeAnalyzer.restart();
     expectedVisibleRange = visibleRange;
@@ -3228,7 +3232,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Point2D caretVisualPoint = editor.offsetToPoint2D(editor.getCaretModel().getOffset());
     editor.getScrollPane().getViewport().setViewPosition(new Point((int)caretVisualPoint.getX(), (int)caretVisualPoint.getY()));
     editor.getScrollPane().getViewport().setExtentSize(new Dimension(100, editor.getPreferredHeight() - (int)caretVisualPoint.getY()));
-    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    ProperTextRange visibleRange = editor.calculateVisibleRange();
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 0);
     myDaemonCodeAnalyzer.restart();
     expectedVisibleRange = visibleRange;

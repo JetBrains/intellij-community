@@ -4,7 +4,6 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
-import com.intellij.codeInsight.daemon.impl.VisibleHighlightingPassFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.EditorSearchSession;
 import com.intellij.injected.editor.EditorWindow;
@@ -94,7 +93,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   @Nullable
   public static <T extends PsiElement> HighlightUsagesHandlerBase<T> createCustomHandler(@NotNull Editor editor, @NotNull PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    ProperTextRange visibleRange = editor.calculateVisibleRange();
     return createCustomHandler(editor, file, visibleRange);
   }
 

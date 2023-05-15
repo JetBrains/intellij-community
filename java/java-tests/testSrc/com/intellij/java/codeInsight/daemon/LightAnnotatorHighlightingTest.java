@@ -127,7 +127,8 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       """;
     configureFromFileText("x.java", text);
     ((EditorImpl)getEditor()).getScrollPane().getViewport().setSize(1000, 1000);
-    assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
+    @NotNull Editor editor = getEditor();
+    assertEquals(getFile().getTextRange(), editor.calculateVisibleRange());
 
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
