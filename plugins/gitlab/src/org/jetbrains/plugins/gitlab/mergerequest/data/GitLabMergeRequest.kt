@@ -55,6 +55,9 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
 
   val userPermissions: StateFlow<CurrentUserPermissions>
 
+  // NOT a great place for it, but placing it in VM layer is a pain in the neck
+  val draftReviewText: MutableStateFlow<String>
+
   fun refreshData()
 
   suspend fun merge(commitMessage: String)
@@ -156,6 +159,8 @@ internal class LoadedGitLabMergeRequest(
       GitLabMergeRequest.CurrentUserPermissions(canApprove, canMerge, createNote, updateMergeRequest)
     }
   }
+
+  override val draftReviewText: MutableStateFlow<String> = MutableStateFlow("")
 
   init {
     cs.launch(Dispatchers.IO) {

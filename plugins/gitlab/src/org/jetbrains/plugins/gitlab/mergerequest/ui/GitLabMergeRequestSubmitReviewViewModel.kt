@@ -66,7 +66,7 @@ class GitLabMergeRequestSubmitReviewViewModelImpl(
 
   override val draftCommentsCount: Flow<Int> = mergeRequest.draftNotes.map { it.count() }
   override val isApproved: Flow<Boolean> = mergeRequest.approvedBy.map { it.any { user -> user.id == currentUser.id } }
-  override val text: MutableStateFlow<String> = MutableStateFlow("")
+  override val text: MutableStateFlow<String> = mergeRequest.draftReviewText
 
 
   override fun approve() {
