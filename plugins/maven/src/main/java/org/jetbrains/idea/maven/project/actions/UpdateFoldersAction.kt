@@ -15,11 +15,11 @@
  */
 package org.jetbrains.idea.maven.project.actions
 
-import org.jetbrains.idea.maven.project.MavenFolderManager
+import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class UpdateFoldersAction : MavenProjectsManagerAction() {
   override fun perform(manager: MavenProjectsManager) {
-    MavenFolderManager(manager.project).resolveFoldersForAllProjects()
+    MavenFolderResolver(manager.project).resolveFoldersForAllProjects()
   }
 }

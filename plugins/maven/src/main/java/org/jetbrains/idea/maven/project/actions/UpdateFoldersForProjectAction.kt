@@ -16,12 +16,12 @@
 package org.jetbrains.idea.maven.project.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.jetbrains.idea.maven.project.MavenFolderManager
+import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class UpdateFoldersForProjectAction : MavenProjectsAction() {
   override fun perform(manager: MavenProjectsManager, mavenProjects: List<MavenProject>, e: AnActionEvent) {
-    MavenFolderManager(manager.project).resolveFolders(mavenProjects)
+    MavenFolderResolver(manager.project).resolveFolders(mavenProjects)
   }
 }
