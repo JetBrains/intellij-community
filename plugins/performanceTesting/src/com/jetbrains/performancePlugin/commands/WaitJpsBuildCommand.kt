@@ -8,6 +8,7 @@ import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener.Companion.LOADED
 import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl
+import com.jetbrains.performancePlugin.utils.TimeArgumentHelper
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.time.withTimeoutOrNull
 import java.time.Duration
@@ -25,16 +26,10 @@ class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutine
   companion object {
     const val NAME = "waitJpsBuild"
     const val PREFIX = CMD_PREFIX + NAME
-    val ARGS_PATTERN = Regex("^([0-9]*)(ms|s|m)\$")
-    val POSSIBLE_VALUES = mapOf(
-      Pair("ms", ChronoUnit.MILLIS),
-      Pair("s", ChronoUnit.SECONDS),
-      Pair("m", ChronoUnit.MINUTES)
-    )
   }
 
   @Suppress("TestOnlyProblems")
-  private suspend fun waitJpsProjectLoaded(project: Project, waitTimeout: Int, chronoUnit: ChronoUnit) {
+  private suspend fun waitJpsProjectLoaded(project: Project, waitTimeout: Long, chronoUnit: ChronoUnit) {
     val jpsLoadingManager = JpsProjectLoadingManager.Companion.getInstance(project)
     if (jpsLoadingManager is JpsProjectLoadingManagerImpl) {
       if (!jpsLoadingManager.isProjectLoaded()) {
@@ -48,7 +43,7 @@ class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutine
             }
           })
 
-          withTimeoutOrNull(Duration.of(waitTimeout.toLong(), chronoUnit)) {
+          withTimeoutOrNull(Duration.of(waitTimeout, chronoUnit)) {
             return@withTimeoutOrNull completableDeferred.await()
           } ?: throw RuntimeException("Jps project wasn't loaded in $waitTimeout ${chronoUnit.name}")
         }
@@ -60,10 +55,8 @@ class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutine
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val (_, timeout, timeunit) = ARGS_PATTERN.find(extractCommandArgument(PREFIX))?.groupValues
-                                 ?: throw RuntimeException("Wrong command format\nExample of usage '%waitJpsBuild 4ms'")
-    waitJpsProjectLoaded(context.project, timeout.toInt(), POSSIBLE_VALUES[timeunit]
-                                                           ?: throw RuntimeException("Following timeunit supported - 'ms','s','m'"))
+    val (timeout, timeunit) = TimeArgumentHelper.parse(extractCommandArgument(PREFIX))
+    waitJpsProjectLoaded(context.project, timeout, timeunit)
   }
 
   override fun getName(): String {

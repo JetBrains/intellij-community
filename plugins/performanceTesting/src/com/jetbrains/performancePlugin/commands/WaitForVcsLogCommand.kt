@@ -1,25 +1,69 @@
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.ui.playback.commands.AbstractCommand
-import com.intellij.vcs.log.impl.VcsProjectLog
-import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.toPromise
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
+import com.intellij.vcs.log.data.index.isIndexingPaused
+import com.intellij.vcs.log.data.index.needIndexing
+import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getInstance
+import com.jetbrains.performancePlugin.utils.TimeArgumentHelper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.time.withTimeoutOrNull
+import java.time.Duration
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
-class WaitForVcsLogCommand(text: String, line: Int) : AbstractCommand(text, line) {
+/**
+ * Command for waiting finishing of git log indexing process
+ * Example - %waitForGitLogIndexing 5s
+ */
+class WaitForVcsLogCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
-    const val PREFIX = CMD_PREFIX + "waitForGitLogIndexing"
+    const val NAME = "waitForGitLogIndexing"
+    const val PREFIX = CMD_PREFIX + NAME
   }
 
-  override fun _execute(context: PlaybackContext): Promise<Any?> {
-    val actionCallback = ActionCallbackProfilerStopper()
+  override suspend fun doExecute(context: PlaybackContext) {
     DumbService.getInstance(context.project).waitForSmartMode()
-    VcsProjectLog.getInstance(context.project).logManager?.dataManager?.index?.addListener { root ->
-      context.message("indexing for $root finished", line)
-      actionCallback.setDone()
+
+    val logManager = getInstance(context.project).logManager ?: return
+    val dataManager = logManager.dataManager
+    val modifiableIndex = dataManager.index as VcsLogModifiableIndex
+
+    val (timeout, timeunit) = TimeArgumentHelper.parse(extractCommandArgument(PREFIX))
+    var pauseVerifier: ScheduledFuture<*>? = null
+    try {
+      //Schedule a task that will check if indexing was paused and trying to resume it
+      pauseVerifier = AppExecutorUtil
+        .getAppScheduledExecutorService()
+        .scheduleWithFixedDelay(
+          {
+            if (modifiableIndex.needIndexing() && modifiableIndex.isIndexingPaused()) {
+              CoroutineScope(Dispatchers.EDT).launch {
+                //modifiableIndex.toggleIndexing()
+              }
+            }
+          },
+          0, 2, TimeUnit.MILLISECONDS
+        )
+
+      val isIndexingCompleted = CompletableDeferred<Boolean>()
+      modifiableIndex.addListener { _ -> isIndexingCompleted.complete(true) }
+
+      withTimeoutOrNull(Duration.of(timeout, timeunit)) { isIndexingCompleted.await() }
+      ?: throw RuntimeException("Git log indexing project wasn't finished in $timeout $timeunit")
     }
-    return actionCallback.toPromise()
+    finally {
+      pauseVerifier?.cancel(true)
+    }
+  }
+
+  override fun getName(): String {
+    return PREFIX
   }
 }
