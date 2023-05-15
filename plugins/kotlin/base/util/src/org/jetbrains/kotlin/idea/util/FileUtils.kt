@@ -2,6 +2,7 @@
 @file:JvmName("FileUtils")
 package org.jetbrains.kotlin.idea.util
 
+import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -9,8 +10,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import org.jetbrains.kotlin.idea.KotlinFileType
 
-fun VirtualFile.isKotlinFileType(): Boolean =
-    extension == KotlinFileType.EXTENSION || FileTypeRegistry.getInstance().isFileOfType(this, KotlinFileType.INSTANCE)
+fun VirtualFile.isKotlinFileType(): Boolean {
+    val extension = extension
+    if (extension == KotlinFileType.EXTENSION) return true
+    if (extension == JavaFileType.INSTANCE.defaultExtension ||
+            extension == JavaClassFileType.INSTANCE.defaultExtension) return false
+
+    return FileTypeRegistry.getInstance().isFileOfType(this, KotlinFileType.INSTANCE)
+}
 
 fun VirtualFile.isJavaFileType(): Boolean =
     extension == JavaFileType.DEFAULT_EXTENSION || FileTypeRegistry.getInstance().isFileOfType(this, JavaFileType.INSTANCE)
