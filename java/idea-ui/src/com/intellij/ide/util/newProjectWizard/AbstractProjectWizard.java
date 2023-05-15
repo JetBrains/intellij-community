@@ -51,12 +51,6 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     myWizardContext.putUserData(AbstractWizard.KEY, this);
   }
 
-  public AbstractProjectWizard(@NlsContexts.DialogTitle String title, @Nullable Project project) {
-    super(title, project);
-    myWizardContext = initContext(project, null, getDisposable());
-    myWizardContext.putUserData(AbstractWizard.KEY, this);
-  }
-
   @Override
   protected String addStepComponent(@NotNull Component component) {
     if (component instanceof JComponent) {
