@@ -19,6 +19,7 @@ object VcsUIUtil {
         val location = Point(popup.locationOnScreen).apply { y = northWest.screenPoint.y - popup.size.height }
 
         popup.setLocation(location)
+        popup.removeListener(this)
       }
     })
     popup.show(northWest)
