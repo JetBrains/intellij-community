@@ -191,14 +191,16 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
   }
 }
 
-private class VersionedStorageChangeImpl(entityStorage: VersionedEntityStorage,
-                                         override val storageBefore: EntityStorageSnapshot,
-                                         override val storageAfter: EntityStorageSnapshot,
-                                         private val changes: Map<Class<*>, List<EntityChange<*>>>) : VersionedStorageChange(
-  entityStorage) {
+private class VersionedStorageChangeImpl(
+  entityStorage: VersionedEntityStorage,
+  override val storageBefore: EntityStorageSnapshot,
+  override val storageAfter: EntityStorageSnapshot,
+  private val changes: Map<Class<*>, List<EntityChange<*>>>
+) : VersionedStorageChange(entityStorage) {
   @Suppress("UNCHECKED_CAST")
-  override fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>> =
-    (changes[entityClass] as? List<EntityChange<T>>) ?: emptyList()
+  override fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>> {
+    return (changes[entityClass] as? List<EntityChange<T>>) ?: emptyList()
+  }
 
   override fun getAllChanges(): Sequence<EntityChange<*>> = changes.values.asSequence().flatten()
 }
