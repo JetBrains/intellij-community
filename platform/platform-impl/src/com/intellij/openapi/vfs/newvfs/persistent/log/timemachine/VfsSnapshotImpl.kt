@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine
+package com.intellij.openapi.vfs.newvfs.persistent.log.timemachine
 
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
@@ -8,13 +8,13 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogContext
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsChronicle.LookupResult.Companion.toState
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.bind
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.fmap
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsChronicle.LookupResult.Companion.toState
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.bind
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import com.intellij.util.io.UnsyncByteArrayInputStream
 import java.lang.ref.SoftReference

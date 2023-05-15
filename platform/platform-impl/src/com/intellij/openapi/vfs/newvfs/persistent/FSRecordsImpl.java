@@ -164,6 +164,10 @@ public final class FSRecordsImpl {
    *
    * @param storagesDirectoryPath directory there to put all FS-records files ('caches' directory)
    */
+  static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath) throws UncheckedIOException {
+    return connect(storagesDirectoryPath, Collections.emptyList());
+  }
+
   static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
                                @NotNull List<ConnectionInterceptor> connectionInterceptors) throws UncheckedIOException {
     return connect(storagesDirectoryPath, connectionInterceptors, ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD);

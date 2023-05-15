@@ -1,7 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("RAW_RUN_BLOCKING")
-
-package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vfs.newvfs.persistent.vfslog
 
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsOracle
@@ -9,12 +7,12 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.ReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEachContainedOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsTimeMachineImpl
-import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.withOracle
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsTimeMachineImpl
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.withOracle
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.SimpleStringPersistentEnumerator
@@ -31,7 +29,7 @@ import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-// TODO move this code to tests
+// TODO this code is to be refactored into proper tests soon
 
 private data class Stats(
   var operationsStorageSize: Long = 0,
@@ -77,14 +75,14 @@ private fun calcStats(log: VfsLog): Stats {
               stats.operationsCount.incrementAndGet()
               if (!it.operation.result.hasValue) stats.exceptionResultCount.incrementAndGet()
               stats.tagsCount.compute(it.operation.tag, ::incStat)
-              when (it.operation) {
+              when (val op = it.operation) {
                 is VfsOperation.AttributesOperation.WriteAttribute -> {
-                  val attributeId = stringEnumerator.valueOf(it.operation.attributeIdEnumerated)
+                  val attributeId = stringEnumerator.valueOf(op.attributeIdEnumerated)
                   if (attributeId == null) stats.nullEnumeratedString.incrementAndGet()
                   //else {
                   //  attrCount[attributeId] = attrCount.getOrDefault(attributeId, 0) + 1
                   //}
-                  val data = payloadStorage.readAt(it.operation.attrDataPayloadRef)
+                  val data = payloadStorage.readAt(op.attrDataPayloadRef)
                   if (data == null) {
                     stats.nullPayloads.incrementAndGet()
                   }
@@ -93,7 +91,7 @@ private fun calcStats(log: VfsLog): Stats {
                   }
                 }
                 is VfsOperation.ContentsOperation.WriteBytes -> {
-                  val data = payloadStorage.readAt(it.operation.dataPayloadRef)
+                  val data = payloadStorage.readAt(op.dataPayloadRef)
                   if (data == null) {
                     stats.nullPayloads.incrementAndGet()
                   }
@@ -110,6 +108,7 @@ private fun calcStats(log: VfsLog): Stats {
             is OperationReadResult.Invalid -> {
               throw it.cause
             }
+            else -> throw IllegalStateException("shouldn't happen") // smart cast of public api from different module is not permitted
           }
           true
         }
@@ -334,6 +333,7 @@ private fun vfsRecoveryDraft(log: VfsLog,
               vfileEventContentOps++
             }
           }
+          else -> throw IllegalStateException("shouldn't happen") // smart cast of public api from different module is not permitted
         }
       }
     }

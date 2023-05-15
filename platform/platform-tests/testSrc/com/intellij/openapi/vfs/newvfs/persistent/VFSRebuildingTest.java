@@ -205,7 +205,7 @@ public class VFSRebuildingTest {
       for (RecordsStorageKind kindAfter : allKinds) {
         final Path cachesDir = temporaryDirectory.createDir();
         PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(kindBefore);
-        final FSRecordsImpl records = FSRecordsImpl.connect(cachesDir, Collections.emptyList());
+        final FSRecordsImpl records = FSRecordsImpl.connect(cachesDir);
 
         final long firstVfsCreationTimestamp = records.getCreationTimestamp();
 
@@ -214,11 +214,7 @@ public class VFSRebuildingTest {
 
         //reopen:
         PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(kindAfter);
-        final FSRecordsImpl reopenedRecords = FSRecordsImpl.connect(
-          cachesDir,
-          Collections.emptyList(),
-          FSRecordsImpl.ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD
-        );
+        final FSRecordsImpl reopenedRecords = FSRecordsImpl.connect(cachesDir);
         final long reopenedVfsCreationTimestamp = reopenedRecords.getCreationTimestamp();
 
 
@@ -255,13 +251,9 @@ public class VFSRebuildingTest {
       int vfsFilesCount = 1;
       for (int i = 0; i < vfsFilesCount; i++) {
         final Path cachesDir = temporaryDirectory.createDir();
-        final Path vfsLogDir = cachesDir.resolve("vfslog");
         PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(storageKind);
 
-        final FSRecordsImpl records = FSRecordsImpl.connect(
-          cachesDir,
-          new VfsLog(vfsLogDir, /*readOnly*/true)
-        );
+        final FSRecordsImpl records = FSRecordsImpl.connect(cachesDir);
         final long firstVfsCreationTimestamp = records.getCreationTimestamp();
 
         final int id = records.createRecord();
@@ -286,10 +278,7 @@ public class VFSRebuildingTest {
 
         //reopen:
         PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(storageKind);
-        final FSRecordsImpl reopenedRecords = FSRecordsImpl.connect(
-          cachesDir,
-          new VfsLog(vfsLogDir, /*readOnly*/true)
-        );
+        final FSRecordsImpl reopenedRecords = FSRecordsImpl.connect(cachesDir);
         final long reopenedVfsCreationTimestamp = reopenedRecords.getCreationTimestamp();
         if (reopenedVfsCreationTimestamp == firstVfsCreationTimestamp) {
           filesNotLeadingToVFSRebuild.add(fileToDelete.getFileName().toString());
