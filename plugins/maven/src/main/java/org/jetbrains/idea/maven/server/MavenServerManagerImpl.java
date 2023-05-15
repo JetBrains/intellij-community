@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
@@ -71,6 +72,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
   }
 
   @Override
+  @RequiresBlockingContext
   public void restartMavenConnectors(Project project, boolean wait, Predicate<MavenServerConnector> condition) {
     List<MavenServerConnector> connectorsToShutDown = new ArrayList<>();
     synchronized (myMultimoduleDirToConnectorMap) {

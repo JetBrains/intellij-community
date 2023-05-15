@@ -103,7 +103,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenProjectsProcessor myReadingProcessor;
   private MavenProjectsProcessor myResolvingProcessor;
   private MavenProjectsProcessor myPluginsResolvingProcessor;
-  private MavenProjectsProcessor myFoldersResolvingProcessor;
   private MavenProjectsProcessor myArtifactsDownloadingProcessor;
   private MavenProjectsProcessor myPostProcessor;
 
@@ -427,8 +426,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myResolvingProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.resolving"), true, myEmbeddersManager);
     myPluginsResolvingProcessor =
       new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true, myEmbeddersManager);
-    myFoldersResolvingProcessor =
-      new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.updating.folders"), true, myEmbeddersManager);
     myArtifactsDownloadingProcessor =
       new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.downloading"), true, myEmbeddersManager);
     myPostProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.post.processing"), true, myEmbeddersManager);
@@ -613,7 +610,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       myReadingProcessor.stop();
       myResolvingProcessor.stop();
       myPluginsResolvingProcessor.stop();
-      myFoldersResolvingProcessor.stop();
       myArtifactsDownloadingProcessor.stop();
       myPostProcessor.stop();
       mySaveQueue.flush();
@@ -1041,9 +1037,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       if (myArtifactsDownloadingProcessor != null) {
         myArtifactsDownloadingProcessor.waitForCompletion();
       }
-      if (myFoldersResolvingProcessor != null) {
-        myFoldersResolvingProcessor.waitForCompletion();
-      }
       if (myPluginsResolvingProcessor != null) {
         myPluginsResolvingProcessor.waitForCompletion();
       }
@@ -1147,24 +1140,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     scheduleResolveInTests(getProjects());
   }
 
-  public Promise<?> scheduleFoldersResolve(@NotNull Collection<MavenProject> projects) {
-    if (MavenUtil.isLinearImportEnabled()) {
-      return MavenImportingManager.getInstance(myProject).resolveFolders(projects);
-    }
-    AsyncPromise<Void> result = new AsyncPromise<>();
-    runWhenFullyOpen(() -> {
-      Runnable onCompletion = () -> {
-        result.setResult(null);
-        if (hasScheduledProjects()) scheduleImportChangedProjects();
-      };
-      myFoldersResolvingProcessor.scheduleTask(
-        new MavenProjectsProcessorFoldersResolvingTask(projects, getImportingSettings(), myProjectsTree, onCompletion));
-    });
-    return result;
-  }
-
+  // used in third-party plugins
   public void scheduleFoldersResolveForAllProjects() {
-    scheduleFoldersResolve(getProjects());
+    new MavenFolderManager(myProject).scheduleFoldersResolveForAllProjects();
   }
 
   public void scheduleArtifactsDownloading(final Collection<MavenProject> projects,
@@ -1321,10 +1299,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public void waitForResolvingCompletion() {
     waitForTasksCompletion(myResolvingProcessor);
-  }
-
-  public void waitForFoldersResolvingCompletion() {
-    waitForTasksCompletion(myFoldersResolvingProcessor);
   }
 
   public void waitForPluginsResolvingCompletion() {

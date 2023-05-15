@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.project.actions;
+package org.jetbrains.idea.maven.project.actions
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenFolderManager
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 
-public class UpdateFoldersAction extends MavenProjectsManagerAction {
-  @Override
-  protected void perform(@NotNull MavenProjectsManager manager) {
-    manager.scheduleFoldersResolveForAllProjects();
+class UpdateFoldersAction : MavenProjectsManagerAction() {
+  override fun perform(manager: MavenProjectsManager) {
+    MavenFolderManager(manager.project).scheduleFoldersResolveForAllProjects()
   }
 }
