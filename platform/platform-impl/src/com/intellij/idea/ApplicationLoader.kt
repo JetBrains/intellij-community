@@ -38,6 +38,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
@@ -154,7 +155,22 @@ private suspend fun initApplicationImpl(args: List<String>,
   val appInitializedListeners = coroutineScope {
     preloadCriticalServices(app)
 
+    if (!app.isHeadlessEnvironment) {
+      asyncScope.launch {
+        subtask("UISettings preloading") { app.serviceAsync<UISettings>().join() }
+        subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>().join() }
+        subtask("ActionManager preloading") { app.serviceAsync<ActionManager>().join() }
+      }
+    }
+
     app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this, asyncScope = asyncScope)
+
+    if (!app.isHeadlessEnvironment) {
+      asyncScope.launch(CoroutineName("FUS class preloading")) {
+        // preload FUS classes (IDEA-301206)
+        ActionsEventLogGroup.GROUP.id
+      }
+    }
 
     launch {
       initAppActivity.runChild("old component init task creating", app::createInitOldComponentsTask)?.let { loadComponentInEdtTask ->
@@ -211,23 +227,6 @@ private suspend fun initApplicationImpl(args: List<String>,
 
 fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
   launch {
-    // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
-    app.serviceAsync<PathMacros>()
-  }
-
-  if (!app.isHeadlessEnvironment) {
-    launch {
-      // preload FUS classes (IDEA-301206)
-      ActionsEventLogGroup.GROUP.id
-    }
-    launch {
-      app.serviceAsync<UISettings>().join()
-      app.serviceAsync<KeymapManager>().join()
-      app.serviceAsync<ActionManager>().join()
-    }
-  }
-
-  launch {
     // LocalHistory wants ManagingFS.
     // It should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner.
     app.getServiceAsync(ManagingFS::class.java).join()
@@ -236,6 +235,17 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
     launch { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
   }
   launch {
+    // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
+    app.serviceAsync<PathMacros>().join()
+
+    launch {
+      app.serviceAsync<RegistryManager>().join()
+      // wants RegistryManager
+      if (!app.isHeadlessEnvironment) {
+        app.serviceAsync<PerformanceWatcher>().join()
+      }
+    }
+
     // required for indexing tasks (see JavaSourceModuleNameIndex for example)
     // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
     app.getServiceAsync(PropertiesComponent::class.java).join()

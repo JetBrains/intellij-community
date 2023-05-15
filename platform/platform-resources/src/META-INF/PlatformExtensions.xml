@@ -83,7 +83,7 @@
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.util.registry.RegistryManager"
-                        serviceImplementation="com.intellij.openapi.util.registry.RegistryManagerImpl" preload="true"/>
+                        serviceImplementation="com.intellij.openapi.util.registry.RegistryManagerImpl"/>
 
     <!-- requested by FileBasedIndexImpl, so, to make start-up more flat, also preload -->
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.FileDocumentManager" preload="true"
@@ -1440,7 +1440,7 @@
                         serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.EmptyFsRootDataLoader"/>
 
     <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
-                        serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl" preload="notHeadless"/>
+                        serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.headertoolbar.OpenProjectSelectionPredicateSupplier"
                         serviceImplementation="com.intellij.openapi.wm.impl.headertoolbar.DefaultOpenProjectSelectionPredicateSupplier"/>
