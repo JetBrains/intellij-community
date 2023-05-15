@@ -1,11 +1,11 @@
-package com.intellij.ide.actions.searcheverywhere.ml.settings
+package com.intellij.searchEverywhereMl.common.settings
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
 
 @Service(Service.Level.APP)
-internal class SearchEverywhereMlSettings {
+class SearchEverywhereMlSettings {
   fun isSortingByMlEnabledInAnyTab(): Boolean {
     return SearchEverywhereTabWithMlRanking.values().any {
       isSortingByMlEnabled(it)
