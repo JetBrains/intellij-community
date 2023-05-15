@@ -18,19 +18,4 @@ import org.jetbrains.annotations.NotNull;
  * @param caret caret position; -1 if caret position should not be changed
  */
 public record ModNavigate(@NotNull VirtualFile file, int selectionStart, int selectionEnd, int caret) implements ModCommand {
-  @Override
-  public @NotNull ModStatus execute(@NotNull Project project) {
-    FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
-    if (fileEditor instanceof TextEditor textEditor) {
-      Editor editor = textEditor.getEditor();
-      if (selectionStart != -1 && selectionEnd != -1) {
-        editor.getSelectionModel().setSelection(selectionStart, selectionEnd);
-      }
-      if (caret != -1) {
-        editor.getCaretModel().moveToOffset(caret);
-      }
-      return ModStatus.SUCCESS;
-    }
-    return ModStatus.ABORT;
-  }
 }

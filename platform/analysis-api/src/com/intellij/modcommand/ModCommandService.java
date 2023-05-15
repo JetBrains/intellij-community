@@ -2,6 +2,7 @@
 package com.intellij.modcommand;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,4 +10,6 @@ public interface ModCommandService {
   @NotNull IntentionAction wrap(@NotNull ModCommandAction action);
   
   @Nullable ModCommandAction unwrap(@NotNull IntentionAction action);
+
+  @NotNull ModStatus execute(@NotNull Project project, @NotNull ModCommand command);
 }
