@@ -6,6 +6,7 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SortedComboBoxModel
 import com.intellij.ui.dsl.builder.bindItem
@@ -16,7 +17,6 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import java.util.function.Function
 import javax.swing.Icon
-import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
@@ -36,7 +36,7 @@ class MavenStructureWizardStep(
 
   var parent by parentProperty
 
-  override fun getComponent(): JComponent {
+  override fun getComponent(): DialogPanel {
     return panel {
       row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.parent.label")) {
         val presentationName = Function<DataView<MavenProject>, String> { it.presentationName }
