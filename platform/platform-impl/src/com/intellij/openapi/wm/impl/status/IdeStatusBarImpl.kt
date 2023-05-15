@@ -57,6 +57,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.MouseEvent
+import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.accessibility.Accessible
@@ -99,6 +100,7 @@ open class IdeStatusBarImpl internal constructor(
 
   private val children = LinkedHashSet<IdeStatusBarImpl>()
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
+  private val progressListeners = EventDispatcher.create(VisibleProgressListener::class.java)
 
   companion object {
     internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create("HOVERED_WIDGET_ID")
@@ -426,7 +428,45 @@ open class IdeStatusBarImpl internal constructor(
   override fun getInfo(): @NlsContexts.StatusBarText String? = info
 
   override fun addProgress(indicator: ProgressIndicatorEx, info: TaskInfo) {
+    notifyListeners(indicator, info)
     infoAndProgressPanel.addProgress(indicator, info)
+  }
+
+  private fun notifyListeners(indicator: ProgressIndicatorEx, info: TaskInfo) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+
+    progressListeners.multicaster.progressStarted(indicator, info)
+    var finished = false
+    val reportFinished = {
+      if (!finished) {
+        finished = true
+        progressListeners.multicaster.progressFinished(indicator, info)
+      }
+    }
+    indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
+      override fun finish(task: TaskInfo) {
+        super.finish(task)
+        if (task == info) {
+          UIUtil.invokeLaterIfNeeded(reportFinished)
+        }
+      }
+    })
+    if (indicator.isFinished(info)) {
+      reportFinished()
+    }
+  }
+
+  fun addProgressListener(listener: VisibleProgressListener, parentDisposable: Disposable) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+
+    progressListeners.addListener(listener, parentDisposable)
+    backgroundProcesses.forEach {
+      val taskInfo = it.first
+      val indicator = it.second as ProgressIndicatorEx
+      if (!indicator.isFinished(taskInfo)) {
+        listener.progressStarted(indicator, taskInfo)
+      }
+    }
   }
 
   override fun getBackgroundProcesses(): List<Pair<TaskInfo, ProgressIndicator>> = infoAndProgressPanel.backgroundProcesses
@@ -943,4 +983,9 @@ private class StatusBarPanel(layout: LayoutManager) : JPanel(layout) {
     font = JBUI.CurrentTheme.StatusBar.font()
   }
 
+}
+
+interface VisibleProgressListener : EventListener {
+  fun progressStarted(indicator: ProgressIndicatorEx, task: TaskInfo)
+  fun progressFinished(indicator: ProgressIndicatorEx, task: TaskInfo)
 }
