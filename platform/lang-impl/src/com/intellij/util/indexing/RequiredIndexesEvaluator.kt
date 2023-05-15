@@ -82,9 +82,30 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
   }
 
   private fun toHint(filter: FileBasedIndex.InputFilter): IndexingHint {
-    return (filter as? IndexingHint) ?: object : IndexingHint {
-      override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
-        return FileBasedIndexEx.acceptsInput(filter, file)
+    return if (filter is IndexingHint) {
+      filter
+    }
+    else if (filter is DefaultFileTypeSpecificInputFilter &&
+             // yes, we want to check exact class.
+             // Optimization does not work for DefaultFileTypeSpecificInputFilter subtypes because subtypes can override acceptInput
+             filter.javaClass == DefaultFileTypeSpecificInputFilter::class.java) {
+      object : FileTypeIndexingHint {
+        override fun hintAcceptFileType(fileType: FileType): ThreeState {
+          var matches = false
+          filter.registerFileTypesUsedForIndexing { matches = (matches || it == fileType) }
+          return ThreeState.fromBoolean(matches)
+        }
+
+        override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
+          throw AssertionError("Should not be invoked, because hintAcceptFileType for filetype never returns UNSURE");
+        }
+      }
+    }
+    else {
+      object : IndexingHint {
+        override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
+          return FileBasedIndexEx.acceptsInput(filter, file)
+        }
       }
     }
   }
