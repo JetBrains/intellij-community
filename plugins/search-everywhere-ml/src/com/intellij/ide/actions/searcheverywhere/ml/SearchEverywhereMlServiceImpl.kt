@@ -118,8 +118,9 @@ class SearchEverywhereMlServiceImpl : SearchEverywhereMlService() {
     }
   }
 
-  override fun onItemSelected(project: Project?, indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
-                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+  override fun onItemSelected(project: Project?, tabId: String, indexes: IntArray, selectedItems: List<Any>,
+                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+                              closePopup: Boolean) {
     getCurrentSession()?.onItemSelected(project, experiment, indexes, selectedItems, closePopup, mapElementsProvider(elementsProvider))
   }
 

@@ -49,8 +49,10 @@ abstract class SearchEverywhereMlService {
                                previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                                searchScope: ScopeDescriptor?, isSearchEverywhere: Boolean)
 
-  abstract fun onItemSelected(project: Project?, indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
-                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
+  abstract fun onItemSelected(project: Project?, tabId: String,
+                              indexes: IntArray, selectedItems: List<Any>,
+                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+                              closePopup: Boolean)
 
   abstract fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
 
