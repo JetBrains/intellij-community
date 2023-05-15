@@ -132,14 +132,20 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
 
     for (file in files) {
       val marker = file.resolve(DURATION_FILE_NAME)
-      if (Files.exists(marker)) {
-        try {
-          val s = Files.readString(marker)
-          Files.deleteIfExists(marker)
-          consumer(file, s.toInt())
-        }
-        catch (ignored: Exception) {
-        }
+      try {
+        val duration = withContext(Dispatchers.IO) {
+          if (Files.exists(marker)) {
+            val duration = Files.readString(marker).toIntOrNull()
+            Files.deleteIfExists(marker)
+            duration
+          }
+          else {
+            null
+          }
+        } ?: continue
+        consumer(file, duration)
+      }
+      catch (ignored: Exception) {
       }
     }
   }
