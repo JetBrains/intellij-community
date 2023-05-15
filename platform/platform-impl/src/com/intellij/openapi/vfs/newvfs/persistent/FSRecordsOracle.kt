@@ -32,7 +32,7 @@ class FSRecordsOracle(
     vfsLogContext.operationLogStorage.end().getPosition() - iterator.getPosition() < 8_000_000 // 8mb, TODO can be smarter, like 20% or smth
   }
 ) : VfsStateOracle {
-  val fsRecords = FSRecordsImpl.connect(cacheDir, emptyList(), errorHandler)
+  private val fsRecords: FSRecordsImpl = FSRecordsImpl.connect(cacheDir, emptyList(), errorHandler)
 
   fun interface LogDistanceEvaluator {
     fun isWorthLookingUpFrom(iterator: OperationLogStorage.Iterator): Boolean
