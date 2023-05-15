@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -42,6 +43,7 @@ import java.util.*;
  */
 @ApiStatus.Experimental
 public final class BackgroundUpdateHighlightersUtil {
+  private static final Logger LOG = Logger.getInstance(BackgroundUpdateHighlightersUtil.class);
   static void addHighlighterToEditorIncrementally(@NotNull PsiFile file,
                                                   @NotNull Document document,
                                                   @NotNull TextRange restrictRange,
@@ -330,10 +332,16 @@ public final class BackgroundUpdateHighlightersUtil {
     }
 
     if (infoAttributes != null) {
-      boolean attributesSet = Comparing.equal(infoAttributes, highlighter.getTextAttributes(colorsScheme));
-      assert attributesSet : "Info: " + infoAttributes +
-                             "; colorsScheme: " + (colorsScheme == null ? "[global]" : colorsScheme.getName()) +
-                             "; highlighter:" + highlighter.getTextAttributes(colorsScheme);
+      TextAttributes actualAttributes = highlighter.getTextAttributes(colorsScheme);
+      boolean attributesSet = Comparing.equal(infoAttributes, actualAttributes);
+      if (!attributesSet) {
+        highlighter.setTextAttributes(infoAttributes);
+        TextAttributes afterSet = highlighter.getTextAttributes(colorsScheme);
+        LOG.error("Expected to set " + infoAttributes + " but actual attributes are: "+actualAttributes+
+                  "; colorsScheme: '" + (colorsScheme == null ? "[global]" : colorsScheme.getName()) + "'" +
+                  "; highlighter:" + highlighter +" ("+highlighter.getClass()+")" +
+                  "; attributes after the second .setAttributes(): "+afterSet);
+      }
     }
   }
 }
