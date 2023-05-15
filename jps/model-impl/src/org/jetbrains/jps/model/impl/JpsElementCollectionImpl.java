@@ -67,10 +67,6 @@ public final class JpsElementCollectionImpl<E extends JpsElement> extends JpsEle
   public <X extends E> X addChild(X element) {
     myElements.add(element);
     setParent(element, this);
-    final JpsEventDispatcher eventDispatcher = getEventDispatcher();
-    if (eventDispatcher != null) {
-      eventDispatcher.fireElementAdded(element, myChildRole);
-    }
     return element;
   }
 
@@ -78,10 +74,6 @@ public final class JpsElementCollectionImpl<E extends JpsElement> extends JpsEle
   public void removeChild(@NotNull E element) {
     final boolean removed = myElements.remove(element);
     if (removed) {
-      final JpsEventDispatcher eventDispatcher = getEventDispatcher();
-      if (eventDispatcher != null) {
-        eventDispatcher.fireElementRemoved(element, myChildRole);
-      }
       setParent(element, null);
     }
   }

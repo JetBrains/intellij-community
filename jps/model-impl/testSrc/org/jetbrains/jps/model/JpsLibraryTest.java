@@ -38,19 +38,6 @@ public class JpsLibraryTest extends JpsModelTestCase {
     assertEquals("file://my-url", assertOneElement(library.getRoots(JpsOrderRootType.COMPILED)).getUrl());
   }
 
-  public void testModifiableCopy() {
-    myProject.addLibrary("a", JpsJavaLibraryType.INSTANCE);
-
-    final JpsModel modifiableModel = myModel.createModifiableModel(new TestJpsEventDispatcher());
-    final JpsLibrary modifiable = assertOneElement(modifiableModel.getProject().getLibraryCollection().getLibraries());
-    modifiable.addRoot("file://my-url", JpsOrderRootType.COMPILED);
-    modifiableModel.commit();
-
-    final JpsLibrary library = assertOneElement(myProject.getLibraryCollection().getLibraries());
-    assertEquals("file://my-url", assertOneElement(library.getRoots(JpsOrderRootType.COMPILED)).getUrl());
-    assertEmpty(library.getRoots(JpsOrderRootType.SOURCES));
-  }
-
   public void testCreateReferenceByLibrary() {
     final JpsLibrary library = myProject.addLibrary("l", JpsJavaLibraryType.INSTANCE);
     final JpsLibraryReference reference = library.createReference().asExternal(myModel);
