@@ -41,6 +41,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.coroutineContext
 import kotlin.io.path.name
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -365,8 +366,10 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
               }
 
               for (listener in EP_NAME.extensionList) {
+                coroutineContext.ensureActive()
                 listener.dumpedThreads(file, threadDump)
               }
+              coroutineContext.ensureActive()
               publisher?.dumpedThreads(file, threadDump)
             }
             catch (e: IOException) {

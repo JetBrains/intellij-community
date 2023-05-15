@@ -2,19 +2,17 @@
 package com.intellij.diagnostic
 
 import com.sun.management.OperatingSystemMXBean
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.lang.management.ManagementFactory
 import java.lang.management.ThreadInfo
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 
 internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDurationMs: Int, coroutineScope: CoroutineScope) {
   private val maxDumps: Int
   private val myThreadInfos = ArrayList<Array<ThreadInfo>>()
-  private val job: Job
+  private val job: Job?
   private val startTime: Long
   private var currentTime: Long
   private val gcStartTime: Long
@@ -49,13 +47,14 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
     currentTime = System.nanoTime()
     gcCurrentTime = currentGcTime()
     val infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false)
-    if (!job.isCancelled) {
-      myThreadInfos.add(infos)
-      if (myThreadInfos.size >= maxDumps) {
-        stop()
-      }
-      dumpedThreads(ThreadDumper.getThreadDumpInfo(infos, true))
+    coroutineContext.ensureActive()
+    myThreadInfos.add(infos)
+    if (myThreadInfos.size >= maxDumps) {
+      stop()
     }
+
+    coroutineContext.ensureActive()
+    dumpedThreads(ThreadDumper.getThreadDumpInfo(infos, true))
   }
 
   protected open suspend fun dumpedThreads(threadDump: ThreadDump) {}
@@ -65,7 +64,7 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
   }
 
   open fun stop() {
-    job.cancel()
+    job?.cancel()
   }
 }
 
