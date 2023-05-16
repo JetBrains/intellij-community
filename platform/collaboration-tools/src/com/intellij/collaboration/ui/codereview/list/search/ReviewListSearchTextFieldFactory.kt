@@ -25,7 +25,7 @@ class ReviewListSearchTextFieldFactory(private val searchState: MutableStateFlow
 
   fun create(viewScope: CoroutineScope, chooseFromHistory: suspend (RelativePoint) -> Unit): JTextField {
     val searchField = ExtendableTextField()
-    DarculaTextFieldProperties.makeTextFiledRounded(searchField)
+    DarculaTextFieldProperties.makeTextFieldRounded(searchField)
     searchField.addActionListener {
       val text = searchField.text.nullize()
       searchState.update { text }
