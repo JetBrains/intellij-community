@@ -41,7 +41,7 @@ internal fun getLevelType(annotation: JvmAnnotation, language: Language): LevelT
   return toLevelType(levels)
 }
 
-internal fun getLevelType(uClass: UClass, project: Project): LevelType {
+internal fun getLevelType(project: Project, uClass: UClass): LevelType {
   val serviceAnnotation = uClass.findAnnotation(Service::class.java.canonicalName)
   if (serviceAnnotation != null) return getLevelType(serviceAnnotation)
   val javaPsi = uClass.javaPsi

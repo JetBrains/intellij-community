@@ -36,7 +36,7 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
         if (!COMPONENT_MANAGER_GET_SERVICE.uCallMatches(node)) return true
         val howServiceRetrieved = howServiceRetrieved(node) ?: return true
         val serviceClass = serviceType.resolve()?.toUElement(UClass::class.java) ?: return true
-        val serviceLevel = getLevelType(serviceClass, holder.project)
+        val serviceLevel = getLevelType(holder.project, serviceClass)
         if (isServiceRetrievedCorrectly(serviceLevel, howServiceRetrieved)) {
           checkIfCanBeReplacedWithGetInstance(retrievingExpression, howServiceRetrieved, serviceClass, holder)
         }
