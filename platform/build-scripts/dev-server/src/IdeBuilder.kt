@@ -126,8 +126,12 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
 
       val platformClassPathConsumer = request.platformClassPathConsumer
 
-      // PathManager.getBinPath() is used as a working dir for maven
-      Files.createDirectories(runDir.resolve("bin"))
+      withContext(Dispatchers.IO) {
+        // PathManager.getBinPath() is used as a working dir for maven
+        Files.createDirectories(runDir.resolve("bin"))
+
+        Files.writeString(runDir.resolve("build.txt"), context.fullBuildNumber)
+      }
 
       if (platformClassPathConsumer == null) {
         withContext(Dispatchers.IO) {
