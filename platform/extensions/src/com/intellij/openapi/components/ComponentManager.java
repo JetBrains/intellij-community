@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -69,14 +68,6 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * (see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html#readwrite-lock">more details on read actions</a>)
    */
   boolean isDisposed();
-
-  /**
-   * @deprecated Use {@link ExtensionPointName#getExtensionList(AreaInstance)}
-   */
-  @Deprecated
-  default <T> T @NotNull [] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
-    return getExtensionArea().getExtensionPoint(extensionPointName).getExtensions();
-  }
 
   /**
    * @return condition for this component being disposed.
