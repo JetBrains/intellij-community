@@ -564,6 +564,9 @@
                  description="Persist branches panel tree state between restarts"/>
     <registryKey key="git.do.not.swap.merge.conflict.sides" defaultValue="false"
                  description="Do not inverse 'ours' and 'theirs' conflict sides during rebase"/>
+    <registryKey key="git.recent.checkout.branches.reflog.entries.max.count" defaultValue="5"
+                 restartRequired="true"
+                 description="Amount of entry to process from Git reflog to parse recently checkout branches"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
