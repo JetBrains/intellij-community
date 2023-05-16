@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
@@ -189,17 +188,16 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
       collector.notifyBuildManager();
     }
     else {
-      // traversing dirs may take time and block UI thread, so traversing them in a non-blocking read-action in background
-      ReadAction.nonBlocking((Callable<Void>)() -> {
-        if (collector.traverseDirs()) {
+      myNotificationQueue.execute(() -> {
+        // traversing dirs may take time and block UI thread, so traversing them in a non-blocking read-action in background
+        if (ReadAction.nonBlocking(collector::traverseDirs).executeSynchronously()) {
           collector.notifyBuildManager();
         }
         else {
           // force FS rescan on the next build, because information from event may be incomplete
           BuildManager.getInstance().clearState();
         }
-        return null;
-      }).submit(myNotificationQueue);
+      });
     }
   }
 
