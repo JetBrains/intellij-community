@@ -1,5 +1,4 @@
-// "Fix all 'Suspicious returning byte value from 'InputStream.read()'' problems in file" "true"
-
+// "Fix all 'Suspicious byte value returned from 'InputStream.read()'' problems in file" "true"
 import java.io.InputStream;
 
 class MyInputStream extends InputStream {

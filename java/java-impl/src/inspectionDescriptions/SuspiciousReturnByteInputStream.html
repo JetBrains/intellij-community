@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports suspicious return expressions, which return the <code>byte</code> type from the <code>InputStream.read()</code> method.
+Reports expressions of <code>byte</code> type returned from a method implementing the <code>InputStream.read()</code> method.
 <p>
-  This is suspicious because it is expected that <code>InputStream.read()</code> returns the range from 0 to 255.
-  At the same time, byte contains numbers from -128 to 127.
-  A quickfix converts a return value into an unsigned byte, applying the bitmask <code>0xFF</code>.
+  This is suspicious because <code>InputStream.read()</code> should return a value in the range from <code>0</code> to <code>255</code>,
+  while an expression of byte type contains a value from <code>-128</code> to <code>127</code>.
+  The quick-fix converts the expression into an unsigned <code>byte</code> by applying the bitmask <code>0xFF</code>.
 </p>
 <p><b>Example:</b></p>
 <pre><code lang="java">
@@ -21,7 +21,7 @@ class MyInputStream extends InputStream {
     if (pos == data.length) {
       return -1;
     }
-    return data[pos++]; // it will be reported
+    return data[pos++]; // problem
   }
 }
 </code></pre>
