@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.searchEverywhereMl.common.SE_TABS
 import com.intellij.util.concurrency.NonUrgentExecutor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting

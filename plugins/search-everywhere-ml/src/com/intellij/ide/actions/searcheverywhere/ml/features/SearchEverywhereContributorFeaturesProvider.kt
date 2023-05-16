@@ -6,20 +6,10 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.Search
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.searchEverywhereMl.common.SE_TABS
 
 internal class SearchEverywhereContributorFeaturesProvider {
   companion object {
-    internal val SE_TABS = listOf(
-      "SearchEverywhereContributor.All", "ClassSearchEverywhereContributor",
-      "FileSearchEverywhereContributor", "RecentFilesSEContributor",
-      "SymbolSearchEverywhereContributor", "ActionSearchEverywhereContributor",
-      "RunConfigurationsSEContributor", "CommandsContributor",
-      "TopHitSEContributor", "com.intellij.ide.actions.searcheverywhere.CalculatorSEContributor",
-      "TmsSearchEverywhereContributor", "YAMLKeysSearchEverywhereContributor",
-      "UrlSearchEverywhereContributor", "Vcs.Git", "AutocompletionContributor",
-      "TextSearchContributor", "DbSETablesContributor", "third.party"
-    )
-
     internal val CONTRIBUTOR_INFO_ID = EventFields.String("contributorId", SE_TABS)
     internal val CONTRIBUTOR_PRIORITY = EventFields.Int("contributorPriority")
     internal val CONTRIBUTOR_WEIGHT = EventFields.Int("contributorWeight")
