@@ -38,7 +38,8 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
         val fileSeparator = command.targetPlatform.await().platform.fileSeparator
         info.envs.distinctBy { it.trim().lowercase(Locale.getDefault()) }.map { envPath ->
           // Env name is the basename for envs inside of default location
-          val envName = if (info.envs_dirs.any { envPath.startsWith(it) }) envPath.split(fileSeparator).last() else null
+          // envPath should be direct child of envs_dirs to be a NamedEnv
+          val envName = if (info.envs_dirs.any { Path.of(it).equals(Path.of(envPath).parent) }) envPath.split(fileSeparator).last() else null
           val base = envPath.equals(info.conda_prefix, ignoreCase = true)
           PyCondaEnv(envName?.let { PyCondaEnvIdentity.NamedEnv(it) } ?: PyCondaEnvIdentity.UnnamedEnv(envPath, base),
                      fullCondaPathOnTarget)
