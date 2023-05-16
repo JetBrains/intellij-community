@@ -43,6 +43,10 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     useSplash = true
     buildCrossPlatformDistribution = true
 
+    /* main module for JetBrains Client isn't available in the intellij-community project, 
+       so this property is set only when IDEA CE is built from the intellij-ultimate project. */
+    embeddedJetBrainsClientMainModule = null
+
     productLayout.productImplementationModules = listOf("intellij.platform.main", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS
       .add("intellij.javaFX.community")
