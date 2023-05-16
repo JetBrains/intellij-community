@@ -3,8 +3,9 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.patterns.PlatformPatterns
+import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
+import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -17,13 +18,22 @@ import org.jetbrains.kotlin.idea.completion.context.FirPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
+import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinFirCompletionContributor : CompletionContributor() {
     init {
-        extend(CompletionType.BASIC, PlatformPatterns.psiElement(), KotlinFirCompletionProvider)
+        extend(CompletionType.BASIC, psiElement(), KotlinFirCompletionProvider)
+
+        // add tag completion in KDoc
+        extend(
+            CompletionType.BASIC,
+            psiElement().afterLeaf(StandardPatterns.or(psiElement(KDocTokens.LEADING_ASTERISK), psiElement(KDocTokens.START))),
+            KDocTagCompletionProvider
+        )
+        extend(CompletionType.BASIC, psiElement(KDocTokens.TAG_NAME), KDocTagCompletionProvider)
     }
 
     override fun beforeCompletion(context: CompletionInitializationContext) {

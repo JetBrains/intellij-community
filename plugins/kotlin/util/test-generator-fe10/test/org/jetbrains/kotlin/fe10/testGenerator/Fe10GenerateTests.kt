@@ -1206,7 +1206,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractJvmBasicCompletionTest>("org.jetbrains.kotlin.idea.completion.test.KDocCompletionTestGenerated") {
-            model("kdoc")
+            model("kdoc", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
 
         testClass<AbstractJava8BasicCompletionTest> {

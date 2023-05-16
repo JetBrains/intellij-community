@@ -61,4 +61,10 @@ internal class FirCompletionContributorFactory(private val basicContext: FirBasi
 
     fun variableOrParameterNameWithTypeContributor(priority: Int) =
         FirVariableOrParameterNameWithTypeCompletionContributor(basicContext, priority)
+
+    fun kDocParameterNameContributor(priority: Int) =
+        FirKDocParameterNameContributor(basicContext, priority)
+
+    fun kDocCallableContributor(priority: Int) =
+        FirKDocCallableCompletionContributor(basicContext, priority)
 }

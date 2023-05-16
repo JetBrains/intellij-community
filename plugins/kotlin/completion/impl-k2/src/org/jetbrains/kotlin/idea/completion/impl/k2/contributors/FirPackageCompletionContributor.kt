@@ -28,7 +28,7 @@ internal class FirPackageCompletionContributor(
         val rootSymbol = if (positionContext !is FirNameReferencePositionContext || positionContext.explicitReceiver == null) {
             ROOT_PACKAGE_SYMBOL
         } else {
-            positionContext.explicitReceiver?.reference()?.resolveToSymbol() as? KtPackageSymbol
+            positionContext.explicitReceiver?.reference()?.resolveToSymbols()?.filterIsInstance<KtPackageSymbol>()?.singleOrNull()
         } ?: return
 
         val symbolOrigin = CompletionSymbolOrigin.Scope(KtScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))

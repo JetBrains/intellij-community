@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 
 /**
  * 0<caret>

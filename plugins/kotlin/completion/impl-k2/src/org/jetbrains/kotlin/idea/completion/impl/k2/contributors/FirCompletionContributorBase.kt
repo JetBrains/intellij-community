@@ -181,7 +181,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         }
     }
 
-    protected fun KtExpression.reference() = when (this) {
+    protected fun KtElement.reference() = when (this) {
         is KtDotQualifiedExpression -> selectorExpression?.mainReference
         else -> mainReference
     }

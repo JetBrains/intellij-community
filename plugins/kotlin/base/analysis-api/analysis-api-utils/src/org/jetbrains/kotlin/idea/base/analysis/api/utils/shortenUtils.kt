@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption
@@ -14,10 +13,13 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 
 /**
  * Shorten references in the given [element]. See [shortenReferencesInRange] for more details.
@@ -83,10 +85,21 @@ fun ShortenCommand.invokeShortening(): List<KtElement> {
         val call = callPointer.element ?: continue
         call.deleteQualifier()?.let { shorteningResults.add(it) }
     }
+
+    for (kDocNamePointer in kDocQualifiersToShorten) {
+        val kDocName = kDocNamePointer.element ?: continue
+        kDocName.deleteQualifier()
+        shorteningResults.add(kDocName)
+    }
     //        }
     return shorteningResults
 }
 private fun KtDotQualifiedExpression.deleteQualifier(): KtExpression? {
     val selectorExpression = selectorExpression ?: return null
     return this.replace(selectorExpression) as KtExpression
+}
+
+private fun KDocName.deleteQualifier() {
+    val identifier = lastChild.takeIf { it.node.elementType == KtTokens.IDENTIFIER } ?: return
+    allChildren.takeWhile { it != identifier }.forEach { it.delete() }
 }

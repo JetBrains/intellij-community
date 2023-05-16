@@ -21,14 +21,14 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbo
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWeigher
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
 
 internal class WeighingContext private constructor(
     override val token: KtLifetimeToken,
     val languageVersionSettings: LanguageVersionSettings,
-    val explicitReceiver: KtExpression?,
+    val explicitReceiver: KtElement?,
     private val myExpectedType: KtType?,
     private val myImplicitReceivers: List<KtImplicitReceiver>,
     val importableFqNameClassifier: ImportableFqNameClassifier,
@@ -51,7 +51,7 @@ internal class WeighingContext private constructor(
     companion object {
         context(KtAnalysisSession)
         fun createWeighingContext(
-            receiver: KtExpression?,
+            receiver: KtElement?,
             expectedType: KtType?,
             implicitReceivers: List<KtImplicitReceiver>,
             fakeCompletionFile: KtFile,

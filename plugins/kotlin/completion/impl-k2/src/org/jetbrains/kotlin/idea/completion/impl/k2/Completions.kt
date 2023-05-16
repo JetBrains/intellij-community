@@ -116,6 +116,16 @@ internal object Completions {
                 complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
                 complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext, weighingContext, sessionParameters)
             }
+
+            is FirKDocParameterNamePositionContext -> {
+                complete(factory.kDocParameterNameContributor(0), positionContext, weighingContext, sessionParameters)
+            }
+
+            is FirKDocLinkNamePositionContext -> {
+                complete(factory.kDocCallableContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.classifierContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.packageCompletionContributor(1), positionContext, weighingContext, sessionParameters)
+            }
         }
     }
 

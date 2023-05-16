@@ -98,7 +98,7 @@ internal class ImportAllMembersIntention :
     }
 
     private fun removeExistingImportsWhichWillBecomeRedundantAfterAddingStarImports(
-        starImportsToAdd: List<FqName>,
+        starImportsToAdd: Set<FqName>,
         ktFile: KtFile
     ) {
         for (starImportFqName in starImportsToAdd) {

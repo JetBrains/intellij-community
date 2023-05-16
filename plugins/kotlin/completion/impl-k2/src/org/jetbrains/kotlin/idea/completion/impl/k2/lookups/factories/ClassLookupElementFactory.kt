@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -63,6 +64,8 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
             val token = context.file.findElementAt(context.startOffset)
 
             val (temporaryPrefix, temporarySuffix) = when {
+                token?.parent is KDocName -> "" to ""
+
                 // add temporary suffix for type in the receiver type position, in order for it to be resolved and shortened correctly
                 token?.isCallableDeclarationIdentifier() == true -> "" to ".f"
 

@@ -477,6 +477,34 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../completion/testData/handlers/basic/kdoc")
+    public static class Kdoc extends AbstractPerformanceBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ClassFqName.kt")
+        public void testClassFqName() throws Exception {
+            runTest("../completion/testData/handlers/basic/kdoc/ClassFqName.kt");
+        }
+
+        @TestMetadata("ClassShortName.kt")
+        public void testClassShortName() throws Exception {
+            runTest("../completion/testData/handlers/basic/kdoc/ClassShortName.kt");
+        }
+
+        @TestMetadata("FunctionFqName.kt")
+        public void testFunctionFqName() throws Exception {
+            runTest("../completion/testData/handlers/basic/kdoc/FunctionFqName.kt");
+        }
+
+        @TestMetadata("FunctionShortName.kt")
+        public void testFunctionShortName() throws Exception {
+            runTest("../completion/testData/handlers/basic/kdoc/FunctionShortName.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../completion/testData/handlers/basic/override")
     public static class Override extends AbstractPerformanceBasicCompletionHandlerTest {
         private void runTest(String testDataFilePath) throws Exception {

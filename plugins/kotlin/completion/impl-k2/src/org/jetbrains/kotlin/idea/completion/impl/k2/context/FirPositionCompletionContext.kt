@@ -9,10 +9,16 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeInDependedAnalysisSession
+import org.jetbrains.kotlin.idea.references.KDocReference
+import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal sealed class FirRawPositionCompletionContext {
     abstract val position: PsiElement
@@ -51,9 +57,9 @@ internal class FirTypeConstraintNameInWhereClausePositionContext(
 ) : FirRawPositionCompletionContext()
 
 internal sealed class FirNameReferencePositionContext : FirRawPositionCompletionContext() {
-    abstract val reference: KtSimpleNameReference
-    abstract val nameExpression: KtSimpleNameExpression
-    abstract val explicitReceiver: KtExpression?
+    abstract val reference: KtReference
+    abstract val nameExpression: KtElement
+    abstract val explicitReceiver: KtElement?
 }
 
 internal class FirImportDirectivePositionContext(
@@ -172,6 +178,22 @@ internal class FirMemberDeclarationExpectedPositionContext(
     val classBody: KtClassBody
 ) : FirRawPositionCompletionContext()
 
+internal sealed class FirKDocNameReferencePositionContext : FirNameReferencePositionContext()
+
+internal class FirKDocParameterNamePositionContext(
+    override val position: PsiElement,
+    override val reference: KDocReference,
+    override val nameExpression: KDocName,
+    override val explicitReceiver: KDocName?,
+) : FirKDocNameReferencePositionContext()
+
+internal class FirKDocLinkNamePositionContext(
+    override val position: PsiElement,
+    override val reference: KDocReference,
+    override val nameExpression: KDocName,
+    override val explicitReceiver: KDocName?,
+) : FirKDocNameReferencePositionContext()
+
 internal class FirUnknownPositionContext(
     override val position: PsiElement
 ) : FirRawPositionCompletionContext()
@@ -179,7 +201,8 @@ internal class FirUnknownPositionContext(
 internal object FirPositionCompletionContextDetector {
     fun detect(basicContext: FirBasicCompletionContext): FirRawPositionCompletionContext {
         val position = basicContext.parameters.position
-        return detectForPositionWithReference(position)
+        return detectForPositionWithSimpleNameReference(position)
+            ?: detectForPositionWithKDocReference(position)
             ?: detectForPositionWithoutReference(position)
             ?: FirUnknownPositionContext(position)
     }
@@ -208,7 +231,7 @@ internal object FirPositionCompletionContextDetector {
         }
     }
 
-    private fun detectForPositionWithReference(position: PsiElement): FirRawPositionCompletionContext? {
+    private fun detectForPositionWithSimpleNameReference(position: PsiElement): FirRawPositionCompletionContext? {
         val reference = (position.parent as? KtSimpleNameExpression)?.mainReference
             ?: return null
         val nameExpression = reference.expression.takeIf { it !is KtLabelReferenceExpression }
@@ -220,11 +243,13 @@ internal object FirPositionCompletionContextDetector {
             parent is KtUserType -> {
                 detectForTypeContext(parent, position, reference, nameExpression, explicitReceiver)
             }
+
             parent is KtCallableReferenceExpression -> {
                 FirCallableReferencePositionContext(
                     position, reference, nameExpression, parent.receiverExpression
                 )
             }
+
             parent is KtWhenCondition && parent.isConditionOnWhenWithSubject() -> {
                 FirWithSubjectEntryPositionContext(
                     position,
@@ -233,6 +258,7 @@ internal object FirPositionCompletionContextDetector {
                     explicitReceiver, parent
                 )
             }
+
             nameExpression.isReferenceExpressionInImportDirective() -> {
                 FirImportDirectivePositionContext(
                     position,
@@ -250,15 +276,18 @@ internal object FirPositionCompletionContextDetector {
                     explicitReceiver,
                 )
             }
+
             parent is KtTypeConstraint -> FirTypeConstraintNameInWhereClausePositionContext(
                 position,
                 position.parentOfType()!!,
             )
+
             parent is KtBinaryExpression && parent.operationReference == nameExpression -> {
                 FirInfixCallPositionContext(
                     position, reference, nameExpression, explicitReceiver
                 )
             }
+
             explicitReceiver is KtSuperExpression -> FirSuperReceiverNameReferencePositionContext(
                 position,
                 reference,
@@ -266,9 +295,22 @@ internal object FirPositionCompletionContextDetector {
                 explicitReceiver,
                 explicitReceiver
             )
+
             else -> {
                 FirExpressionNameReferencePositionContext(position, reference, nameExpression, explicitReceiver)
             }
+        }
+    }
+
+    private fun detectForPositionWithKDocReference(position: PsiElement): FirNameReferencePositionContext? {
+        val kDocName = position.getStrictParentOfType<KDocName>() ?: return null
+        val kDocLink = kDocName.getStrictParentOfType<KDocLink>() ?: return null
+        val kDocReference = kDocName.mainReference
+        val kDocNameQualifier = kDocName.getQualifier()
+
+        return when (kDocLink.getTagIfSubject()?.knownTag) {
+            KDocKnownTag.PARAM -> FirKDocParameterNamePositionContext(position, kDocReference, kDocName, kDocNameQualifier)
+            else -> FirKDocLinkNamePositionContext(position, kDocReference, kDocName, kDocNameQualifier)
         }
     }
 
@@ -284,6 +326,7 @@ internal object FirPositionCompletionContextDetector {
             val importDirective = parent.parent as? KtImportDirective
             importDirective?.importedReference == parent
         }
+
         else -> false
     }
 
@@ -293,6 +336,7 @@ internal object FirPositionCompletionContextDetector {
             val packageDirective = parent.parent as? KtPackageDirective
             packageDirective?.packageNameExpression == parent
         }
+
         else -> false
     }
 
@@ -313,15 +357,18 @@ internal object FirPositionCompletionContextDetector {
                     FirAnnotationTypeNameReferencePositionContext(position, reference, nameExpression, explicitReceiver, it)
                 }
             }
+
             typeReferenceOwner is KtSuperExpression -> {
                 val superTypeCallEntry = typeReferenceOwner.takeIf { it.superTypeQualifier == typeReference }
                 superTypeCallEntry?.let {
                     FirSuperTypeCallNameReferencePositionContext(position, reference, nameExpression, explicitReceiver, it)
                 }
             }
+
             typeReferenceOwner is KtTypeConstraint && typeReferenceOwner.children.any { it is PsiErrorElement } -> {
                 FirIncorrectPositionContext(position)
             }
+
             else -> null
         } ?: FirTypeNameReferencePositionContext(position, reference, nameExpression, explicitReceiver, typeReference)
     }
@@ -336,7 +383,8 @@ internal object FirPositionCompletionContextDetector {
             is FirImportDirectivePositionContext,
             is FirPackageDirectivePositionContext,
             is FirTypeConstraintNameInWhereClausePositionContext,
-            is FirIncorrectPositionContext -> {
+            is FirIncorrectPositionContext,
+            is FirKDocNameReferencePositionContext -> {
                 analyze(basicContext.originalKtFile, action = action)
             }
 
@@ -373,7 +421,7 @@ internal object FirPositionCompletionContextDetector {
             )
         }
     }
-    
+
     private fun KtAnalysisSession.recordOriginalDeclaration(originalFile: KtFile, declaration: KtDeclaration) {
         try {
             declaration.recordOriginalDeclaration(PsiTreeUtil.findSameElementInCopy(declaration, originalFile))

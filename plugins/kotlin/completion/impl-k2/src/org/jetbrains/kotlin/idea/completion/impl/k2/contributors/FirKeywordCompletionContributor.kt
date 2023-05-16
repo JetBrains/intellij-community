@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHan
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtContainerNode
@@ -45,12 +46,14 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
         sessionParameters: FirCompletionSessionParameters,
     ) {
         val expression = when (positionContext) {
-            is FirNameReferencePositionContext -> positionContext.reference.expression.let {
+            is FirNameReferencePositionContext -> (positionContext.reference as? KtSimpleNameReference)?.expression?.let {
                 it.parentsWithSelf.match(KtLabelReferenceExpression::class, KtContainerNode::class, last = KtExpressionWithLabel::class)
                     ?: it
             }
+
             is FirTypeConstraintNameInWhereClausePositionContext, is FirIncorrectPositionContext, is FirClassifierNamePositionContext ->
                 error("keyword completion should not be called for ${positionContext::class.simpleName}")
+
             is FirValueParameterPositionContext,
             is FirMemberDeclarationExpectedPositionContext,
             is FirUnknownPositionContext -> null
