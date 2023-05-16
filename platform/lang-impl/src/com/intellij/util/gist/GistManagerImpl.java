@@ -15,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -27,19 +28,27 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 public final class GistManagerImpl extends GistManager {
   private static final Logger LOG = Logger.getInstance(GistManagerImpl.class);
-  private static final Map<String, VirtualFileGist<?>> ourGists = ContainerUtil.createConcurrentWeakValueMap();
-  private static final String ourPropertyName = "file.gist.reindex.count";
+
+  private static final String GIST_REINDEX_COUNT_PROPERTY_NAME = "file.gist.reindex.count";
   private static final Key<AtomicInteger> GIST_INVALIDATION_COUNT_KEY = Key.create("virtual.file.gist.invalidation.count");
-  private final AtomicInteger myReindexCount = new AtomicInteger(PropertiesComponent.getInstance().getInt(ourPropertyName, 0));
-  private final MergingUpdateQueue myDropCachesQueue = new MergingUpdateQueue("gist-manager-drop-caches", 500, true, null).setRestartTimerOnAdd(true);
+
+  private static final Map<String, VirtualFileGist<?>> ourGists = ContainerUtil.createConcurrentWeakValueMap();
+
+  private final AtomicInteger myReindexCount =
+    new AtomicInteger(PropertiesComponent.getInstance().getInt(GIST_REINDEX_COUNT_PROPERTY_NAME, 0));
+
+  private final MergingUpdateQueue myDropCachesQueue = new MergingUpdateQueue("gist-manager-drop-caches", 500, true, null)
+    .setRestartTimerOnAdd(true);
   private final AtomicInteger myMergingDropCachesRequestors = new AtomicInteger();
 
   static final class MyBulkFileListener implements BulkFileListener {
     @Override
     public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-      if (events.stream().anyMatch(MyBulkFileListener::shouldDropCache)) {
+      if (ContainerUtil.exists(events, MyBulkFileListener::shouldDropCache)) {
         ((GistManagerImpl)GistManager.getInstance()).invalidateGists();
       }
     }
@@ -50,6 +59,15 @@ public final class GistManagerImpl extends GistManager {
       String propertyName = ((VFilePropertyChangeEvent)e).getPropertyName();
       return propertyName.equals(VirtualFile.PROP_NAME) || propertyName.equals(VirtualFile.PROP_ENCODING);
     }
+  }
+
+  public GistManagerImpl() {
+    //Setup cleanup task for old Gists:
+    // remove <caches>/huge-gists/<fsrecords-timestamp> dirs there <fsrecords-timestamp> != FSRecords.getCreatedTimestamp()
+    AppExecutorUtil.getAppScheduledExecutorService().schedule(
+      (Runnable)VirtualFileGistImpl::cleanupAncientGistsDirs,
+      15, SECONDS
+    );
   }
 
   @NotNull
@@ -100,7 +118,7 @@ public final class GistManagerImpl extends GistManager {
     }
     // Clear all cache at once to simplify and speedup this operation.
     // It can be made per-file if cache recalculation ever becomes an issue.
-    PropertiesComponent.getInstance().setValue(ourPropertyName, myReindexCount.incrementAndGet(), 0);
+    PropertiesComponent.getInstance().setValue(GIST_REINDEX_COUNT_PROPERTY_NAME, myReindexCount.incrementAndGet(), 0);
   }
 
   private void invalidateDependentCaches() {
@@ -129,7 +147,7 @@ public final class GistManagerImpl extends GistManager {
     }
   }
 
-  public static int getGistStamp(@NotNull VirtualFile file) {
+  static int getGistStamp(@NotNull VirtualFile file) {
     AtomicInteger invalidationCount = file.getUserData(GIST_INVALIDATION_COUNT_KEY);
     return Objects.hash(file.getModificationCount(),
                         ((GistManagerImpl)getInstance()).getReindexCount(),
@@ -143,7 +161,8 @@ public final class GistManagerImpl extends GistManager {
 
   @TestOnly
   public void resetReindexCount() {
+    //this changes getGistStamp() thus invalidating .stamps of all currently cached Gists
     myReindexCount.set(0);
-    PropertiesComponent.getInstance().unsetValue(ourPropertyName);
+    PropertiesComponent.getInstance().unsetValue(GIST_REINDEX_COUNT_PROPERTY_NAME);
   }
 }
