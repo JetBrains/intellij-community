@@ -3,15 +3,13 @@ package org.jetbrains.plugins.gitlab.api
 
 import com.intellij.collaboration.api.HttpApiHelper
 import com.intellij.collaboration.api.graphql.GraphQLApiHelper
-import com.intellij.collaboration.api.httpclient.AuthorizationConfigurer
-import com.intellij.collaboration.api.httpclient.CommonHeadersConfigurer
-import com.intellij.collaboration.api.httpclient.CompoundRequestConfigurer
-import com.intellij.collaboration.api.httpclient.RequestTimeoutConfigurer
+import com.intellij.collaboration.api.httpclient.*
 import com.intellij.collaboration.api.json.JsonHttpApiHelper
 import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
+import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
 interface GitLabApi : HttpApiHelper, JsonHttpApiHelper, GraphQLApiHelper
@@ -39,18 +37,25 @@ class GitLabApiImpl private constructor(httpHelper: HttpApiHelper)
         override val authorizationHeaderValue: String
           get() = HttpSecurityUtil.createBearerAuthHeaderValue(tokenSupplier())
       }
-      val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(),
-                                                        CommonHeadersConfigurer(),
-                                                        authConfigurer)
+      val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer, authConfigurer)
       return HttpApiHelper(logger = logger<GitLabApi>(),
                            requestConfigurer = requestConfigurer)
     }
 
     private fun httpHelper(): HttpApiHelper {
-      val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(),
-                                                        CommonHeadersConfigurer())
+      val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer)
       return HttpApiHelper(logger = logger<GitLabApi>(),
                            requestConfigurer = requestConfigurer)
+    }
+
+    private const val PLUGIN_USER_AGENT_NAME = "IntelliJ-GitLab-Plugin"
+
+    private object GitLabHeadersConfigurer : HttpRequestConfigurer {
+      override fun configure(builder: HttpRequest.Builder): HttpRequest.Builder =
+        builder.apply {
+          header(HttpClientUtil.ACCEPT_ENCODING_HEADER, HttpClientUtil.CONTENT_ENCODING_GZIP)
+          header(HttpClientUtil.USER_AGENT_HEADER, HttpClientUtil.getUserAgentValue(PLUGIN_USER_AGENT_NAME))
+        }
     }
   }
 }
