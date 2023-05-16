@@ -2,18 +2,13 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.ProgressDetails;
 import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
-import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,17 +16,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
-  private final static Function1<Boolean, ProgressManager> ourInstance = CachedSingletonsRegistry.INSTANCE.lazyWithNullProtection(() -> {
-    return ApplicationManager.getApplication().getService(ProgressManager.class);
-  });
+  private final static @NotNull ClearableLazyValue<ProgressManager> ourInstance = ClearableLazyValue.create(() -> ApplicationManager.getApplication().getService(ProgressManager.class));
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static @NotNull ProgressManager getInstance() {
-    return ourInstance.invoke(true);
+    return ourInstance.getValue();
   }
 
   /**
@@ -39,7 +31,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @ApiStatus.Internal
   public static @Nullable ProgressManager getInstanceOrNull() {
-    return ourInstance.invoke(false);
+    return ourInstance.isCached() ? ourInstance.getValue() : null;
   }
 
   public abstract boolean hasProgressIndicator();
@@ -236,16 +228,6 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param progress an indicator to use, {@code null} means reuse current progress
    */
   public abstract void executeProcessUnderProgress(@NotNull Runnable process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
-
-  /**
-   * @param progress an indicator to use, {@code null} means reuse current progress
-   */
-  @ApiStatus.Experimental
-  public <T> T computeResultUnderProgress(@NotNull Supplier<T> supplier, @Nullable ProgressIndicator progress) throws ProcessCanceledException {
-    AtomicReference<T> result = new AtomicReference<T>();
-    executeProcessUnderProgress(() -> result.set(supplier.get()), progress);
-    return result.get();
-  }
 
   public static void assertNotCircular(@NotNull ProgressIndicator original) {
     Set<ProgressIndicator> wrappedParents = null;
