@@ -77,7 +77,7 @@ class CondaPackageCache : PythonPackageCache<String> {
         .filterNot { it.size < 2 }
         .filterNot { it[0].startsWith("r-") } // todo[akniazev]: make sure it's the best way to get rid of R packages
         .groupBy({ it[0] }, { it[1] })
-        .mapValues { it.value.sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()) }
+        .mapValues { it.value.distinct().sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()) }
         .toSortedMap(PythonRankingAwarePackageNameComparator())
 
       cache = packages
