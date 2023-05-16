@@ -49,6 +49,12 @@ internal open class FirCallableCompletionContributor(
 ) : FirCompletionContributorBase<FirNameReferencePositionContext>(basicContext, priority) {
     private val typeNamesProvider = TypeNamesProvider(indexHelper)
 
+    protected open fun KtAnalysisSession.getImportStrategy(signature: KtCallableSignature<*>, noImportRequired: Boolean): ImportStrategy =
+        when {
+            noImportRequired -> ImportStrategy.DoNothing
+            else -> importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol)
+        }
+
     protected open fun KtAnalysisSession.getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy =
         when (signature) {
             is KtFunctionLikeSignature<*> -> CallableInsertionStrategy.AsCall
@@ -67,13 +73,8 @@ internal open class FirCallableCompletionContributor(
     protected fun KtAnalysisSession.getOptions(
         signature: KtCallableSignature<*>,
         noImportRequired: Boolean = false
-    ): CallableInsertionOptions {
-        val importStrategy = when {
-            noImportRequired -> ImportStrategy.DoNothing
-            else -> importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol)
-        }
-        return CallableInsertionOptions(importStrategy, getInsertionStrategy(signature))
-    }
+    ): CallableInsertionOptions = CallableInsertionOptions(getImportStrategy(signature, noImportRequired), getInsertionStrategy(signature))
+
 
     private fun KtAnalysisSession.getExtensionOptions(
         signature: KtCallableSignature<*>,
@@ -598,6 +599,8 @@ internal class FirCallableReferenceCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
 ) : FirCallableCompletionContributor(basicContext, priority) {
+    override fun KtAnalysisSession.getImportStrategy(signature: KtCallableSignature<*>, noImportRequired: Boolean): ImportStrategy =
+        ImportStrategy.DoNothing
 
     override fun KtAnalysisSession.getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy =
         CallableInsertionStrategy.AsIdentifier

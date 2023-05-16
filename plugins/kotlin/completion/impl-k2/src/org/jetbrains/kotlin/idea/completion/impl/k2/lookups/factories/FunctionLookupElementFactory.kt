@@ -63,7 +63,7 @@ internal class FunctionLookupElementFactory {
     ): LookupElementBuilder {
         return when (insertionStrategy) {
             CallableInsertionStrategy.AsCall -> builder.withInsertHandler(FunctionInsertionHandler)
-            CallableInsertionStrategy.AsIdentifier -> builder.withInsertHandler(QuotedNamesAwareInsertionHandler())
+            CallableInsertionStrategy.AsIdentifier -> builder.withInsertHandler(CallableIdentifierInsertionHandler())
             is CallableInsertionStrategy.AsIdentifierCustom -> builder.withInsertHandler(object : QuotedNamesAwareInsertionHandler() {
                 override fun handleInsert(context: InsertionContext, item: LookupElement) {
                     super.handleInsert(context, item)
