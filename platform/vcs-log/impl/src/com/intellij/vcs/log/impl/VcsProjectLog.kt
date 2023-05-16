@@ -132,7 +132,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     return tabManager.openAnotherLogTab(manager = logManager, filters = filters, location = location)
   }
 
-  @CalledInAny
+  @RequiresBackgroundThread
   private suspend fun disposeLog(recreate: Boolean, beforeCreateLog: (suspend () -> Unit)? = null) {
     disposeLog()
 
