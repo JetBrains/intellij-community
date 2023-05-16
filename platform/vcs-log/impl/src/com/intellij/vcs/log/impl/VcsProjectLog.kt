@@ -109,9 +109,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   }
 
   private suspend fun shutDown(useRawSwingDispatcher: Boolean) {
-    if (!disposeStarted.compareAndSet(false, true)) {
-      return
-    }
+    if (!disposeStarted.compareAndSet(false, true)) return
 
     try {
       withTimeout(CLOSE_LOG_TIMEOUT) {
@@ -138,9 +136,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   private suspend fun disposeLog(recreate: Boolean, beforeCreateLog: (suspend () -> Unit)? = null) {
     disposeLog()
 
-    if (!recreate || isDisposing) {
-      return
-    }
+    if (!recreate || isDisposing) return
 
     try {
       beforeCreateLog?.invoke()
@@ -167,13 +163,9 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
 
     mutex.withLock {
       val logManager = withContext(if (useRawSwingDispatcher) RawSwingDispatcher else (Dispatchers.EDT + modality())) {
-        val manager = lazyVcsLogManager.dropValue()
-        manager?.disposeUi()
-        manager
+        lazyVcsLogManager.dropValue()?.also { it.disposeUi() }
       }
-      if (logManager != null) {
-        Disposer.dispose(logManager)
-      }
+      if (logManager != null) Disposer.dispose(logManager)
     }
   }
 
@@ -195,20 +187,14 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   }
 
   private suspend fun createLog(forceInit: Boolean): VcsLogManager? {
-    if (isDisposing) {
-      return null
-    }
+    if (isDisposing) return null
 
     mutex.withLock {
-      if (isDisposing) {
-        return null
-      }
+      if (isDisposing) return null
 
       val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>()
       val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
-      if (logProviders.isEmpty()) {
-        return null
-      }
+      if (logProviders.isEmpty()) return null
 
       val logManager = lazyVcsLogManager.getValue(logProviders)
       initialize(logManager = logManager, force = forceInit)
@@ -310,20 +296,20 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
      */
     @RequiresEdt
     fun runWhenLogIsReady(project: Project, action: (VcsLogManager) -> Unit) {
-      val log = getInstance(project)
-      val manager = log.logManager
+      val projectLog = getInstance(project)
+      val manager = projectLog.logManager
       if (manager != null) {
         action(manager)
         return
       }
 
       // schedule showing the log, wait its initialization, and then open the tab
-      log.coroutineScope.launch {
+      projectLog.coroutineScope.launch {
         withBackgroundProgress(project, VcsLogBundle.message("vcs.log.creating.process")) {
-          log.createLog(forceInit = true)
+          projectLog.createLog(forceInit = true)
 
           withContext(Dispatchers.EDT) {
-            log.logManager?.let {
+            projectLog.logManager?.let {
               action(it)
             }
           }
@@ -332,8 +318,9 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     }
 
     suspend fun waitWhenLogIsReady(project: Project): Boolean {
-      val log = getInstance(project)
-      return if (log.logManager == null) log.createLog(true) != null else true
+      val projectLog = getInstance(project)
+      if (projectLog.logManager != null) return true
+      return projectLog.createLog(true) != null
     }
 
     @ApiStatus.Internal
@@ -352,12 +339,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
 // when "disposeLog" is queued as "invokeAndWait"
 // (used there in order to ensure sequential execution) will the app freeze when modal progress is displayed.
 private suspend fun modality(): CoroutineContext {
-  return if (coroutineContext.contextModality() == null) {
-    ModalityState.any().asContextElement()
-  }
-  else {
-    EmptyCoroutineContext
-  }
+  return if (coroutineContext.contextModality() == null) ModalityState.any().asContextElement() else EmptyCoroutineContext
 }
 
 private suspend fun initialize(logManager: VcsLogManager, force: Boolean) {
