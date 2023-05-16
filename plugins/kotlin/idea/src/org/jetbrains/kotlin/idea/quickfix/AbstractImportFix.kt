@@ -980,11 +980,7 @@ private fun KotlinIndicesHelper.getClassesByName(expressionForPlatform: KtExpres
     }
 
 private fun CallTypeAndReceiver<*, *>.toFilter() = { descriptor: DeclarationDescriptor ->
-    val kindFilter = callType.descriptorKindFilter
-    kindFilter.accepts(descriptor) || ((descriptor as? AbstractTypeAliasDescriptor)?.let {
-        val containingDeclaration = descriptor.containingDeclaration
-        kindFilter.accepts(containingDeclaration)
-    } ?: false)
+    callType.descriptorKindFilter.accepts(descriptor)
 }
 
 object AbstractImportFixInfo {
