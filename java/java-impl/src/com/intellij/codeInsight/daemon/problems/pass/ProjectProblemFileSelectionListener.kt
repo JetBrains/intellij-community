@@ -1,237 +1,218 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.daemon.problems.pass;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.daemon.problems.pass
 
-import com.intellij.codeInsight.daemon.problems.FileStateCache;
-import com.intellij.codeInsight.daemon.problems.FileStateUpdater;
-import com.intellij.codeInsight.hints.InlayHintsPassFactory;
-import com.intellij.codeInsight.hints.InlayHintsSettings;
-import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.refactoring.listeners.RefactoringEventData;
-import com.intellij.refactoring.listeners.RefactoringEventListener;
-import com.intellij.testFramework.TestModeFlags;
-import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-
-import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemCodeVisionProvider.hintsEnabled;
-import static com.intellij.util.ObjectUtils.tryCast;
+import com.intellij.codeInsight.daemon.problems.FileStateCache.Companion.getInstance
+import com.intellij.codeInsight.daemon.problems.FileStateUpdater.Companion.removeState
+import com.intellij.codeInsight.daemon.problems.FileStateUpdater.Companion.setPreviousState
+import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemCodeVisionProvider.Companion.hintsEnabled
+import com.intellij.codeInsight.hints.InlayHintsPassFactory.Companion.restartDaemonUpdatingHints
+import com.intellij.codeInsight.hints.InlayHintsSettings
+import com.intellij.codeInsight.hints.InlayHintsSettings.Companion.INLAY_SETTINGS_CHANGED
+import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.psi.*
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.refactoring.listeners.RefactoringEventData
+import com.intellij.refactoring.listeners.RefactoringEventListener
+import com.intellij.testFramework.TestModeFlags
 
 /**
  * Listener that reacts to user initiated changes and updates current problems state.
- * <p>
- * Events that are handled by this listener:<br>
- * 1. selection change (user opened different file) -> store current timestamp for closed file and restores state for new file<br>
- * 2. VFS changes -> remove states for deleted files, remove problems for updated files (in order to recalculate them later)<br>
- * 3. hints settings change -> rollback file state, so that there are no reported problems yet (but they can be found using a rolled-back state)<br>
- * 4. refactoring done for member -> rollback member file state<br>
- * 5. PSI tree changed -> rollback file state for all the editors with this file<br>
+ *
+ *
+ * Events that are handled by this listener:<br></br>
+ * 1. selection change (user opened different file) -> store current timestamp for closed file and restores state for new file<br></br>
+ * 2. VFS changes -> remove states for deleted files, remove problems for updated files (in order to recalculate them later)<br></br>
+ * 3. hints settings change -> rollback file state, so that there are no reported problems yet (but they can be found using a rolled-back state)<br></br>
+ * 4. refactoring done for member -> rollback member file state<br></br>
+ * 5. PSI tree changed -> rollback file state for all the editors with this file<br></br>
  */
-final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter implements FileEditorManagerListener,
-                                                                                        InlayHintsSettings.SettingsListener,
-                                                                                        BulkFileListener,
-                                                                                        RefactoringEventListener {
-  private final Project myProject;
+internal class ProjectProblemFileSelectionListener(private val project: Project)
+  : PsiTreeChangeAdapter(), FileEditorManagerListener, InlayHintsSettings.SettingsListener, BulkFileListener, RefactoringEventListener {
+  override fun selectionChanged(event: FileEditorManagerEvent) {
+    if (!hintsEnabled(project)) {
+      return
+    }
 
-  private ProjectProblemFileSelectionListener(@NotNull Project project) {
-    myProject = project;
-  }
-
-  @Override
-  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-    if (!hintsEnabled(myProject)) return;
-
-    PsiJavaFile oldJavaFile = getJavaFile(myProject, event.getOldFile());
+    val oldJavaFile = getJavaFile(project, event.oldFile)
     if (oldJavaFile != null) {
-      Editor oldEditor = getEditor(event.getOldEditor());
-      if (oldEditor != null) ProjectProblemUtils.updateTimestamp(oldJavaFile, oldEditor);
+      val oldEditor = getEditor(event.oldEditor)
+      if (oldEditor != null) {
+        ProjectProblemUtils.updateTimestamp(oldJavaFile, oldEditor)
+      }
     }
 
-    PsiJavaFile newJavaFile = getJavaFile(myProject, event.getNewFile());
-    if (newJavaFile == null || oldJavaFile == newJavaFile) return;
-    Editor newEditor = getEditor(event.getNewEditor());
-    if (newEditor == null || !ProjectProblemUtils.isProjectUpdated(newJavaFile, newEditor)) return;
-    FileStateUpdater.setPreviousState(newJavaFile);
-    boolean isInSplitEditorMode = FileEditorManager.getInstance(myProject).getSelectedEditors().length > 1;
+    val newJavaFile = getJavaFile(project, event.newFile)
+    if (newJavaFile == null || oldJavaFile === newJavaFile) {
+      return
+    }
+
+    val newEditor = getEditor(event.newEditor)
+    if (newEditor == null || !ProjectProblemUtils.isProjectUpdated(newJavaFile, newEditor)) {
+      return
+    }
+
+    setPreviousState(newJavaFile)
+    val isInSplitEditorMode = FileEditorManager.getInstance(project).selectedEditors.size > 1
     if (isInSplitEditorMode) {
-      InlayHintsPassFactory.Companion.restartDaemonUpdatingHints(myProject);
+      restartDaemonUpdatingHints(project)
     }
   }
 
-  @Override
-  public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    for (VFileEvent e : events) {
-      if (e instanceof VFileDeleteEvent) {
-        VirtualFile changedFile = e.getFile();
-        if (!fileIndex.isInContent(changedFile)) continue;
-        PsiJavaFile removedJavaFile = getJavaFile(myProject, changedFile);
-        if (removedJavaFile == null) continue;
-        FileStateUpdater.removeState(removedJavaFile);
+  override fun before(events: List<VFileEvent>) {
+    val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+    for (e in events) {
+      if (e is VFileDeleteEvent) {
+        val changedFile = e.file
+        if (!fileIndex.isInContent(changedFile)) {
+          continue
+        }
+        val removedJavaFile = getJavaFile(project, changedFile) ?: continue
+        removeState(removedJavaFile)
       }
-      if (e instanceof VFileContentChangeEvent || e instanceof VFileDeleteEvent) {
-        VirtualFile selectedFile = getSelectedFile();
-        if (selectedFile == null || e.getFile().equals(selectedFile)) continue;
-        PsiJavaFile selectedJavaFile = getJavaFile(myProject, selectedFile);
-        if (selectedJavaFile == null) continue;
-        FileStateUpdater.setPreviousState(selectedJavaFile);
+
+      if (e is VFileContentChangeEvent || e is VFileDeleteEvent) {
+        val selectedFile = selectedFile
+        if (selectedFile == null || e.file == selectedFile) {
+          continue
+        }
+        val selectedJavaFile = getJavaFile(project, selectedFile) ?: continue
+        setPreviousState(selectedJavaFile)
       }
     }
   }
 
-  @Nullable
-  private VirtualFile getSelectedFile() {
-    TextEditor editor = tryCast(FileEditorManager.getInstance(myProject).getSelectedEditor(), TextEditor.class);
-    return editor == null ? null : editor.getFile();
-  }
+  private val selectedFile: VirtualFile?
+    get() = (FileEditorManager.getInstance(project).selectedEditor as? TextEditor)?.file
 
-  @Override
-  public void settingsChanged() {
-    if (!hintsEnabled(myProject)) onHintsDisabled();
-  }
-
-  @Override
-  public void languageStatusChanged() {
-    if (!hintsEnabled(myProject)) onHintsDisabled();
-  }
-
-  @Override
-  public void globalEnabledStatusChanged(boolean newEnabled) {
-    if (!hintsEnabled(myProject)) onHintsDisabled();
-  }
-
-  private void onHintsDisabled() {
-    FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-    for (FileEditor selectedEditor : editorManager.getSelectedEditors()) {
-      VirtualFile virtualFile = selectedEditor.getFile();
-      if (virtualFile == null) continue;
-      PsiJavaFile psiJavaFile = getJavaFile(myProject, virtualFile);
-      if (psiJavaFile == null) continue;
-      FileStateUpdater.setPreviousState(psiJavaFile);
+  override fun settingsChanged() {
+    if (!hintsEnabled(project)) {
+      onHintsDisabled()
     }
   }
 
-  @Override
-  public void refactoringStarted(@NotNull String refactoringId, @Nullable RefactoringEventData beforeData) {
+  override fun languageStatusChanged() {
+    if (!hintsEnabled(project)) {
+      onHintsDisabled()
+    }
   }
 
-  @Override
-  public void refactoringDone(@NotNull String refactoringId, @Nullable RefactoringEventData afterData) {
-    if (afterData == null) return;
-    PsiMember member = tryCast(afterData.getUserData(RefactoringEventData.PSI_ELEMENT_KEY), PsiMember.class);
-    if (member == null) return;
-    PsiJavaFile psiJavaFile = tryCast(member.getContainingFile(), PsiJavaFile.class);
-    if (psiJavaFile == null) return;
-    FileStateUpdater.setPreviousState(psiJavaFile);
+  override fun globalEnabledStatusChanged(newEnabled: Boolean) {
+    if (!hintsEnabled(project)) {
+      onHintsDisabled()
+    }
   }
 
-  @Override
-  public void conflictsDetected(@NotNull String refactoringId, @NotNull RefactoringEventData conflictsData) {
+  private fun onHintsDisabled() {
+    val editorManager = FileEditorManager.getInstance(project)
+    for (selectedEditor in editorManager.selectedEditors) {
+      val virtualFile = selectedEditor.file ?: continue
+      val psiJavaFile = getJavaFile(project, virtualFile) ?: continue
+      setPreviousState(psiJavaFile)
+    }
   }
 
-  @Override
-  public void undoRefactoring(@NotNull String refactoringId) {
-    VirtualFile selectedFile = getSelectedFile();
-    if (selectedFile == null) return;
-    PsiJavaFile psiJavaFile = getJavaFile(myProject, selectedFile);
-    if (psiJavaFile == null) return;
-    FileStateUpdater.setPreviousState(psiJavaFile);
+  override fun refactoringStarted(refactoringId: String, beforeData: RefactoringEventData?) {}
+
+  override fun refactoringDone(refactoringId: String, afterData: RefactoringEventData?) {
+    val psiJavaFile = (afterData?.getUserData(RefactoringEventData.PSI_ELEMENT_KEY) as? PsiMember)?.containingFile as? PsiJavaFile
+                      ?: return
+    setPreviousState(psiJavaFile)
   }
 
-  @Override
-  public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {
-    updateFileState(event.getFile());
+  override fun conflictsDetected(refactoringId: String, conflictsData: RefactoringEventData) {}
+
+  override fun undoRefactoring(refactoringId: String) {
+    val selectedFile = selectedFile ?: return
+    val psiJavaFile = getJavaFile(project, selectedFile) ?: return
+    setPreviousState(psiJavaFile)
   }
 
-  @Override
-  public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
-    updateFileState(event.getFile());
+  override fun beforeChildAddition(event: PsiTreeChangeEvent) {
+    updateFileState(event.file)
   }
 
-  @Override
-  public void beforeChildReplacement(@NotNull PsiTreeChangeEvent event) {
-    updateFileState(event.getFile());
+  override fun beforeChildRemoval(event: PsiTreeChangeEvent) {
+    updateFileState(event.file)
   }
 
-  @Override
-  public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
-    updateFileState(event.getFile());
+  override fun beforeChildReplacement(event: PsiTreeChangeEvent) {
+    updateFileState(event.file)
   }
 
-  @Override
-  public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
-    updateFileState(event.getFile());
+  override fun beforeChildMovement(event: PsiTreeChangeEvent) {
+    updateFileState(event.file)
   }
 
-  @Override
-  public void beforePropertyChange(@NotNull PsiTreeChangeEvent event) {
-    updateFileState(event.getFile());
+  override fun beforeChildrenChange(event: PsiTreeChangeEvent) {
+    updateFileState(event.file)
   }
 
-  private void updateFileState(@Nullable PsiFile psiFile) {
-    VirtualFile changedFile = PsiUtilCore.getVirtualFile(psiFile);
-    if (changedFile == null) return;
-    Editor[] editors = EditorFactory.getInstance().getAllEditors();
-    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
-    for (Editor editor : editors) {
-      EditorImpl editorImpl = tryCast(editor, EditorImpl.class);
-      if (editorImpl == null || (!editorImpl.getContentComponent().isShowing() && !ApplicationManager.getApplication().isUnitTestMode())) continue;
-      VirtualFile editorFile = editorImpl.getVirtualFile();
+  override fun beforePropertyChange(event: PsiTreeChangeEvent) {
+    updateFileState(event.file)
+  }
+
+  private fun updateFileState(psiFile: PsiFile?) {
+    val changedFile = PsiUtilCore.getVirtualFile(psiFile) ?: return
+    val editors = EditorFactory.getInstance().allEditors
+    val fileIndex = ProjectFileIndex.getInstance(project)
+    for (editor in editors) {
+      val editorImpl = editor as? EditorImpl ?: continue
+      if (!editorImpl.contentComponent.isShowing && !ApplicationManager.getApplication().isUnitTestMode) {
+        continue
+      }
+
+      var editorFile = editorImpl.virtualFile
       if (editorFile == null) {
-        DocumentEx document = editorImpl.getDocument();
-        editorFile = FileDocumentManager.getInstance().getFile(document);
+        val document = editorImpl.document
+        editorFile = FileDocumentManager.getInstance().getFile(document)
       }
-      if (editorFile == null || changedFile.equals(editorFile) || !fileIndex.isInContent(editorFile)) continue;
-      PsiJavaFile psiJavaFile = getJavaFile(myProject, editorFile);
-      if (psiJavaFile == null) continue;
-      FileStateUpdater.setPreviousState(psiJavaFile);
+
+      if (editorFile == null || changedFile == editorFile || !fileIndex.isInContent(editorFile)) {
+        continue
+      }
+      val psiJavaFile = getJavaFile(project, editorFile) ?: continue
+      setPreviousState(psiJavaFile)
     }
   }
 
-  private static @Nullable PsiJavaFile getJavaFile(@NotNull Project project, @Nullable VirtualFile file) {
-    if (file == null || file instanceof VirtualFileWindow || !file.isValid()) return null;
-    if (!ProjectProblemUtils.containsJvmLanguage(file)) return null;
-    return tryCast(PsiManager.getInstance(project).findFile(file), PsiJavaFile.class);
-  }
-
-  private static @Nullable Editor getEditor(@Nullable FileEditor fileEditor) {
-    TextEditor textEditor = tryCast(fileEditor, TextEditor.class);
-    return textEditor == null ? null : textEditor.getEditor();
-  }
-
-  static class MyStartupActivity implements StartupActivity {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment() && !TestModeFlags.is(ProjectProblemUtils.ourTestingProjectProblems)) {
-        return;
+  internal class MyStartupActivity : StartupActivity {
+    override fun runActivity(project: Project) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment && !TestModeFlags.`is`(ProjectProblemUtils.ourTestingProjectProblems)) {
+        return
       }
 
-      ProjectProblemFileSelectionListener listener = new ProjectProblemFileSelectionListener(project);
-      MessageBusConnection connection = project.getMessageBus().connect();
-      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
-      connection.subscribe(InlayHintsSettings.getINLAY_SETTINGS_CHANGED(), listener);
-      connection.subscribe(VirtualFileManager.VFS_CHANGES, listener);
-      connection.subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, listener);
-      PsiManager.getInstance(project).addPsiTreeChangeListener(listener, FileStateCache.getInstance(project));
+      val listener = ProjectProblemFileSelectionListener(project)
+      val connection = project.messageBus.connect()
+      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener)
+      connection.subscribe(INLAY_SETTINGS_CHANGED, listener)
+      connection.subscribe(VirtualFileManager.VFS_CHANGES, listener)
+      connection.subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, listener)
+      PsiManager.getInstance(project).addPsiTreeChangeListener(listener, getInstance(project))
     }
   }
 }
+
+private fun getJavaFile(project: Project, file: VirtualFile?): PsiJavaFile? {
+  if (file == null || file is VirtualFileWindow || !file.isValid) {
+    return null
+  }
+
+  return if (ProjectProblemUtils.containsJvmLanguage(file)) PsiManager.getInstance(project).findFile(file) as? PsiJavaFile else null
+}
+
+private fun getEditor(fileEditor: FileEditor?): Editor? = (fileEditor as? TextEditor)?.editor
