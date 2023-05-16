@@ -40,7 +40,8 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   private val ideMenu: IdeMenuBar = IdeMenuBar()
   private var toolbar: MainToolbar? = null
   private val headerTitle = SimpleCustomDecorationPath(frame)
-  private val isCompact: Boolean get() = (root as? IdeRootPane)?.isCompactHeader == true
+  private var toolbarHasNoActions = false
+  private val isCompact: Boolean get() = (root as? IdeRootPane)?.isCompactHeader == true || toolbarHasNoActions
 
   private val TOOLBAR_CARD = "TOOLBAR_CARD"
   private val PATH_CARD = "PATH_CARD"
@@ -108,6 +109,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
 
   override fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
     toolbar?.init(toolbarActionGroups)
+    updateToolbarHasNoActions(toolbarActionGroups)
   }
 
   override fun updateToolbar() {
@@ -115,11 +117,17 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     remove(toolbar)
     toolbar = createToolBar()
     this.toolbar = toolbar
-    toolbar.init(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
+    val actionGroups = MainToolbar.computeActionGroups(CustomActionsSchema.getInstance())
+    toolbar.init(actionGroups)
 
     revalidate()
     updateCustomDecorationHitTestSpots()
 
+    updateToolbarHasNoActions(actionGroups)
+  }
+
+  private fun updateToolbarHasNoActions(actionGroups: List<Pair<ActionGroup, String>>) {
+    toolbarHasNoActions = actionGroups.all { it.first.getChildren(null).isEmpty() }
     updateVisibleCard()
   }
 
