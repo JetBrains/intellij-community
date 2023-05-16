@@ -10,8 +10,6 @@ import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl
 import com.jetbrains.performancePlugin.utils.TimeArgumentHelper
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.time.withTimeoutOrNull
-import java.time.Duration
 import java.time.temporal.ChronoUnit
 
 /**
@@ -43,10 +41,11 @@ class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutine
             }
           })
 
-          withTimeoutOrNull(Duration.of(waitTimeout, chronoUnit)) {
-            return@withTimeoutOrNull completableDeferred.await()
-          } ?: throw RuntimeException("Jps project wasn't loaded in $waitTimeout ${chronoUnit.name}")
+          Waiter.wait(waitTimeout, chronoUnit, "Jps project wasn't loaded in $waitTimeout ${chronoUnit.name}") {
+            completableDeferred.await()
+          }
         }
+
       }
     }
     else {

@@ -1,24 +1,47 @@
-package com.jetbrains.performancePlugin.commands;
+package com.jetbrains.performancePlugin.commands
 
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ConcurrencyUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.time.withTimeoutOrNull
+import java.time.Duration
+import java.time.temporal.TemporalUnit
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+import java.util.function.BooleanSupplier
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BooleanSupplier;
+object Waiter {
+  private const val DELAY = 100L
 
-public final class Waiter {
-  private static final long DELAY = 100L;
-
-  public static CountDownLatch checkCondition(BooleanSupplier function) {
-    CountDownLatch latch = new CountDownLatch(1);
-    ScheduledExecutorService executor = ConcurrencyUtil.newSingleScheduledThreadExecutor("Performance plugin waiter");
-    executor.scheduleWithFixedDelay(() -> {
-      if (function.getAsBoolean()) {
-        latch.countDown();
-        executor.shutdown();
-      }
-    }, 0, DELAY, TimeUnit.MILLISECONDS);
-    return latch;
+  @JvmStatic
+  fun checkCondition(function: BooleanSupplier): CountDownLatch {
+    val latch = CountDownLatch(1)
+    val executor: ScheduledExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Performance plugin waiter")
+    executor.scheduleWithFixedDelay({
+                                      if (function.asBoolean) {
+                                        latch.countDown()
+                                        executor.shutdown()
+                                      }
+                                    }, 0, DELAY, TimeUnit.MILLISECONDS)
+    return latch
   }
+
+  /**
+   * Waits for the specified time or throws exception
+   * @timeout can be any positive long, if negative waiting will be skipped
+   * @waitLogic lambda which contain yours business logic
+   * @return calculated value from waitLogic or null if negative timeout was passed
+   * @throws RuntimeException if condition of @waitLogic didn't return any value
+   */
+  @JvmStatic
+  suspend fun <T> wait(timeout: Long, timeunit: TemporalUnit, errorText: String? = null, waitLogic: suspend CoroutineScope.() -> T): T? {
+    if (timeout > 0) {
+      return withTimeoutOrNull(Duration.of(timeout, timeunit), waitLogic)
+             ?: throw RuntimeException(errorText ?: "Condition wasn't satisfied in $timeout $timeunit")
+    }
+    else {
+      return null
+    }
+  }
+
 }
