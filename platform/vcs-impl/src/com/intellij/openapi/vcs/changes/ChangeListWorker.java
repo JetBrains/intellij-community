@@ -47,7 +47,8 @@ public final class ChangeListWorker {
   private final Map<Change, ListData> myChangeMappings = new HashMap<>();
   private final Map<FilePath, PartialChangeTracker> myPartialChangeTrackers = new HashMap<>();
 
-  private final ChangeListsIndexes myIdx;
+  private final ChangeListsIndexes myIdx = new ChangeListsIndexes();
+  private @Nullable AffectedPathSet myAffectedPaths; // used only by main worker, rebuilt on myIdx changes.
 
   @Nullable private Map<ListData, Set<Change>> myReadOnlyChangesCache = null;
   private final AtomicBoolean myReadOnlyChangesCacheInvalidated = new AtomicBoolean(false);
@@ -57,8 +58,7 @@ public final class ChangeListWorker {
     myDelayedNotificator = delayedNotificator;
     myMainWorker = true;
 
-    myIdx = new ChangeListsIndexes();
-
+    myAffectedPaths = new AffectedPathSet(Collections.emptyList());
     ensureDefaultListExists();
   }
 
@@ -68,7 +68,8 @@ public final class ChangeListWorker {
     myChangeListsEnabled = worker.myChangeListsEnabled;
     myMainWorker = false;
 
-    myIdx = new ChangeListsIndexes(worker.myIdx);
+    myIdx.copyFrom(worker.myIdx);
+    myAffectedPaths = null;
 
     Map<ListData, ListData> listMapping = copyListsDataFrom(worker.myLists);
 
@@ -366,9 +367,20 @@ public final class ChangeListWorker {
     return new ArrayList<>(myIdx.getAffectedPaths());
   }
 
-  public ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
-    FilePath dir = VcsUtil.getFilePath(virtualFile);
-    return myIdx.haveChangesUnder(dir);
+  /**
+   * {@link ThreeState#NO} - there are no changed files under this directory
+   * {@link ThreeState#YES} - there are modified direct children of this directory
+   * {@link ThreeState#UNSURE} - there are modified non-direct children of this directory
+   */
+  public @NotNull ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
+    assert myMainWorker;
+    if (myAffectedPaths == null) {
+      LOG.error("Accessing non-initialized affected files set", new Throwable());
+      return ThreeState.NO;
+    }
+
+    FilePath filePath = VcsUtil.getFilePath(virtualFile);
+    return myAffectedPaths.haveChangesUnder(filePath);
   }
 
   @Nullable
@@ -609,12 +621,14 @@ public final class ChangeListWorker {
 
   public void applyChangesFromUpdate(@NotNull ChangeListWorker updatedWorker,
                                      @NotNull ChangeListDeltaListener deltaListener) {
+    assert myMainWorker;
     assert myChangeListsEnabled == updatedWorker.myChangeListsEnabled;
     HashMap<Change, ListData> oldChangeMappings = new HashMap<>(myChangeMappings);
 
     notifyPathsChanged(myIdx, updatedWorker.myIdx, deltaListener);
 
     myIdx.copyFrom(updatedWorker.myIdx);
+    myAffectedPaths = new AffectedPathSet(myIdx.getAffectedPaths());
     myChangeMappings.clear();
 
     Map<ListData, ListData> listMapping = copyListsDataFrom(updatedWorker.myLists);
@@ -648,9 +662,7 @@ public final class ChangeListWorker {
       }
     }
 
-    if (myMainWorker) {
-      myDelayedNotificator.allChangeListsMappingsChanged();
-    }
+    myDelayedNotificator.allChangeListsMappingsChanged();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("[applyChangesFromUpdate] %s", this));
@@ -745,6 +757,7 @@ public final class ChangeListWorker {
   }
 
   void setChangeLists(@NotNull Collection<LocalChangeListImpl> lists) {
+    assert myMainWorker;
     if (!myChangeListsEnabled) return;
 
     myIdx.clear();
@@ -767,9 +780,9 @@ public final class ChangeListWorker {
       }
     }
 
-    if (myMainWorker) {
-      myDelayedNotificator.allChangeListsMappingsChanged();
-    }
+    myAffectedPaths = new AffectedPathSet(myIdx.getAffectedPaths());
+
+    myDelayedNotificator.allChangeListsMappingsChanged();
   }
 
 

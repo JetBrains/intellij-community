@@ -53,23 +53,37 @@ public final class PathUtilRt {
 
   @NotNull
   public static String getParentPath(@NotNull String path) {
-    if (path.isEmpty()) return "";
+    int end = getParentPathEndOffset(path);
+    if (end == 0) return "";
+    return path.substring(0, end);
+  }
+
+  @NotNull
+  public static CharSequence getParentPathSequence(@NotNull CharSequence path) {
+    int end = getParentPathEndOffset(path);
+    if (end == 0) return "";
+    return path.subSequence(0, end);
+  }
+
+  private static int getParentPathEndOffset(@NotNull CharSequence path) {
+    //noinspection SizeReplaceableByIsEmpty
+    if (path.length() == 0) return 0;
     int end = lastSeparatorIndex(path, path.length() - 1);
     if (end == path.length() - 1 && end >= 1) {
       end = lastSeparatorIndex(path, end - 1);
     }
     if (end == -1 || end == 0) {
-      return "";
+      return 0;
     }
     if (isWindowsUNCRoot(path, end)) {
-      return "";
+      return 0;
     }
     // parent of '//host' is root
     char prev = path.charAt(end - 1);
     if (isSeparator(prev)) {
       end--;
     }
-    return path.substring(0, end);
+    return end;
   }
 
   public static boolean isWindowsUNCRoot(@NotNull CharSequence path, int lastPathSeparatorPosition) {
