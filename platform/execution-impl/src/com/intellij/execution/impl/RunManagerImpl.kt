@@ -50,7 +50,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import com.intellij.util.containers.filterSmart
 import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
 import com.intellij.util.containers.toMutableSmartList
@@ -337,7 +336,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
 
   fun getSettings(configuration: RunConfiguration) = allSettings.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
 
-  override fun getConfigurationSettingsList(type: ConfigurationType) = allSettings.filterSmart { it.type === type }
+  override fun getConfigurationSettingsList(type: ConfigurationType) = allSettings.filter { it.type === type }
 
   fun getConfigurationsGroupedByTypeAndFolder(isIncludeUnknown: Boolean): Map<ConfigurationType, Map<String?, List<RunnerAndConfigurationSettings>>> {
     val result = LinkedHashMap<ConfigurationType, MutableMap<String?, MutableList<RunnerAndConfigurationSettings>>>()
@@ -1114,7 +1113,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
   }
 
   override val tempConfigurationsList: List<RunnerAndConfigurationSettings>
-    get() = allSettings.filterSmart { it.isTemporary }
+    get() = allSettings.filter { it.isTemporary }
 
   override fun makeStable(settings: RunnerAndConfigurationSettings) {
     settings.isTemporary = false

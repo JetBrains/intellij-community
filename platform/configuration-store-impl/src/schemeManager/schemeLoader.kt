@@ -46,7 +46,7 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
 
   // or from current session, or from current state
   private fun getInfoForExistingScheme(existingScheme: T): ExternalInfo? {
-    return schemeToInfo.get(existingScheme) ?: schemeManager.schemeToInfo.get(existingScheme)
+    return schemeToInfo.get(existingScheme) ?: schemeManager.schemeListManager.getExternalInfo(existingScheme)
   }
 
   private fun isFromFileWithNewExtension(existingScheme: T, fileNameWithoutExtension: String): Boolean {
@@ -66,10 +66,8 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
       schemeManager.filesToDelete.addAll(preScheduledFilesToDelete)
     }
 
-    schemeManager.schemeToInfo.putAll(schemeToInfo)
-
     val result = schemes.subList(newSchemesOffset, schemes.size)
-    schemeManager.schemeListManager.replaceSchemeList(oldSchemes, schemes)
+    schemeManager.schemeListManager.replaceSchemeList(oldList = oldSchemes, newList = schemes, newSchemeToInfo = schemeToInfo)
     if (!isDuringLoad) {
       for (newScheme in result) {
         @Suppress("UNCHECKED_CAST")

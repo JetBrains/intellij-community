@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers
 
 import com.intellij.openapi.diagnostic.Logger
@@ -8,7 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.stream.Stream
 import kotlin.collections.ArrayDeque
-import kotlin.collections.HashSet
 
 fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
   val list = get(key)
@@ -201,7 +200,7 @@ inline fun <T, R> Collection<T>.mapSmartSet(transform: (T) -> R): Set<R> {
       Collections.singleton(transform(first()))
     }
     0 -> emptySet()
-    else -> mapTo(java.util.HashSet(size), transform)
+    else -> mapTo(HashSet(size), transform)
   }
 }
 
@@ -221,16 +220,6 @@ fun <T> List<T>.toMutableSmartList(): MutableList<T> {
     0 -> SmartList()
     else -> ArrayList(this)
   }
-}
-
-inline fun <T> Collection<T>.filterSmart(predicate: (T) -> Boolean): List<T> {
-  val result: MutableList<T> = when (size) {
-    1 -> SmartList()
-    0 -> return emptyList()
-    else -> ArrayList()
-  }
-  filterTo(result, predicate)
-  return result
 }
 
 inline fun <T> Collection<T>.filterSmartMutable(predicate: (T) -> Boolean): MutableList<T> {

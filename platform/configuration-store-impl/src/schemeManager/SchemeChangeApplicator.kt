@@ -174,7 +174,7 @@ private fun <T:Scheme, M:T>callSchemeContentChangedIfSupported(changedScheme: M?
   }
 
   // unrealistic case, but who knows
-  val externalInfo = schemeManager.schemeToInfo.get(changedScheme) ?: return false
+  val externalInfo = schemeManager.schemeListManager.getExternalInfo(changedScheme) ?: return false
   return catchAndLog({ file.path }) {
     val bytes = file.contentsToByteArray()
     lazyPreloadScheme(bytes, schemeManager.isOldSchemeNaming) { name, parser ->
