@@ -45,7 +45,10 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
     final QuickFix<?> fix = fixes[fixNumber];
     if (fix instanceof ModCommandQuickFix modCommandFix) {
-      return new ModCommandQuickFixAction(descriptor, modCommandFix).asIntention();
+      IntentionAction intention = new ModCommandQuickFixAction(descriptor, modCommandFix).asIntention();
+      PsiFile file = descriptor.getPsiElement().getContainingFile();
+      intention.isAvailable(file.getProject(), null, file); // cache presentation in wrapper
+      return intention;
     }
     return fix instanceof IntentionAction ? (IntentionAction)fix : new QuickFixWrapper(descriptor, (LocalQuickFix)fix);
   }
@@ -228,6 +231,11 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     @Override
     public @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
       return myFix.generatePreview(context.project(), myDescriptor.getDescriptorForPreview(context.file()));
+    }
+
+    @Override
+    public String toString() {
+      return "ModCommandQuickFixAction[fix=" + myFix + "]";
     }
   }
 }
