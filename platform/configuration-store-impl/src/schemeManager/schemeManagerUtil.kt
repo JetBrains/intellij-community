@@ -22,5 +22,5 @@ internal inline fun <T> catchAndLog(file: () -> String, runnable: () -> T): T? {
 }
 
 internal fun nameIsMissed(bytes: ByteArray): RuntimeException {
-  return RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
+  return RuntimeException("Name is missed:\n${bytes.decodeToString()}")
 }

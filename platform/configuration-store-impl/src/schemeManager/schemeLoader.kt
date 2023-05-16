@@ -11,7 +11,6 @@ import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
@@ -28,10 +27,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamReader
 
-internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeManager: SchemeManagerImpl<T, MUTABLE_SCHEME>,
-                                                           private val oldSchemes: List<T>,
-                                                           private val preScheduledFilesToDelete: MutableSet<String>,
-                                                           private val isDuringLoad: Boolean) {
+internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(private val schemeManager: SchemeManagerImpl<T, MUTABLE_SCHEME>,
+                                                            private val oldSchemes: List<T>,
+                                                            private val preScheduledFilesToDelete: MutableSet<String>,
+                                                            private val isDuringLoad: Boolean) {
   private val filesToDelete: MutableSet<String> = HashSet()
 
   private val schemes: MutableList<T> = oldSchemes.toMutableList()
@@ -58,12 +57,16 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
    */
   fun apply(): List<T> {
     LOG.assertTrue(isApplied.compareAndSet(false, true))
-    if (filesToDelete.isNotEmpty() || preScheduledFilesToDelete.isNotEmpty()) {
+    if (!filesToDelete.isEmpty() || !preScheduledFilesToDelete.isEmpty()) {
       LOG.debug {
         "Schedule to delete: ${filesToDelete.joinToString()} (and preScheduledFilesToDelete: ${preScheduledFilesToDelete.joinToString()})"
       }
       schemeManager.filesToDelete.addAll(filesToDelete)
       schemeManager.filesToDelete.addAll(preScheduledFilesToDelete)
+    }
+
+    if (newSchemesOffset == schemes.size) {
+      return emptyList()
     }
 
     val result = schemes.subList(newSchemesOffset, schemes.size)
@@ -161,7 +164,7 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
 
     var scheme: MUTABLE_SCHEME? = null
     if (processor is LazySchemeProcessor) {
-      val bytes = preloadedBytes ?: input!!.readBytes()
+      val bytes = preloadedBytes ?: input!!.readAllBytes()
       lazyPreloadScheme(bytes, schemeManager.isOldSchemeNaming) { name, parser ->
         val attributeProvider: (String) -> String? = {
           if (parser.eventType == XMLStreamConstants.START_ELEMENT) {
@@ -178,20 +181,24 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
           return null
         }
 
-        val externalInfo = createInfo(schemeKey, null)
-        scheme = processor.createScheme(SchemeDataHolderImpl(processor, bytes, externalInfo), schemeKey, attributeProvider)
+        val externalInfo = createInfo(schemeName = schemeKey, element = null)
+        scheme = processor.createScheme(
+          dataHolder = SchemeDataHolderImpl(processor = processor, bytes = bytes, externalInfo = externalInfo),
+          name = schemeKey,
+          attributeProvider = attributeProvider,
+        )
         schemeToInfo.put(scheme!!, externalInfo)
         retainProbablyScheduledForDeleteFile(fileName)
       }
     }
     else {
-      val element = when (preloadedBytes) {
-        null -> JDOMUtil.load(input)
-        else -> JDOMUtil.load(CharsetToolkit.inputStreamSkippingBOM(preloadedBytes.inputStream()))
-      }
+      val element = if (preloadedBytes == null) JDOMUtil.load(input) else JDOMUtil.load(preloadedBytes)
       scheme = (processor as NonLazySchemeProcessor).readScheme(element, isDuringLoad) ?: return null
       val schemeKey = processor.getSchemeKey(scheme!!)
-      if (!checkExisting(schemeKey, fileName, fileNameWithoutExtension, extension)) {
+      if (!checkExisting(schemeKey = schemeKey,
+                         fileName = fileName,
+                         fileNameWithoutExtension = fileNameWithoutExtension,
+                         extension = extension)) {
         return null
       }
 
@@ -221,7 +228,9 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
   }
 }
 
-internal inline fun lazyPreloadScheme(bytes: ByteArray, isOldSchemeNaming: Boolean, consumer: (name: String?, parser: XMLStreamReader) -> Unit) {
+internal inline fun lazyPreloadScheme(bytes: ByteArray,
+                                      isOldSchemeNaming: Boolean,
+                                      consumer: (name: String?, parser: XMLStreamReader) -> Unit) {
   val reader = createXmlStreamReader(bytes)
   consumer(preload(isOldSchemeNaming, reader), reader)
 }
@@ -304,6 +313,6 @@ internal fun createDir(ioDir: Path, requestor: StorageManagerFileWriteRequestor)
   ioDir.createDirectories()
   val parentFile = ioDir.parent
   val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile.systemIndependentPath))
-      ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
+                          ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
   return parentVirtualFile.getOrCreateChild(ioDir.fileName.toString(), requestor)
 }

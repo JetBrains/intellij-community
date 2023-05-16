@@ -18,7 +18,7 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.PathUtil
 import com.intellij.util.io.*
-import com.intellij.util.toBufferExposingByteArray
+import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Tag
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -143,7 +143,7 @@ internal class SchemeManagerTest {
   }
 
   fun TestScheme.save(file: Path) {
-    file.write(serialize(this)!!.toBufferExposingByteArray().toByteArray())
+    file.write(serialize(this)!!.toByteArray())
   }
 
   @Test fun `different extensions - old, new`() {
