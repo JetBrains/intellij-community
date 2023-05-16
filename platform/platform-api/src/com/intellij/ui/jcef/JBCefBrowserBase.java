@@ -332,9 +332,12 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
   /**
    * Loads HTML content.
+   * <p>
+   * Registers a virtual resource containing {@code html} that will be
+   * available in the browser at {@code url} and loads {@code url}.
    *
    * @param html content to load
-   * @param url  a dummy URL that may affect restriction policy applied to the content
+   * @param url  the URL
    */
   public final void loadHTML(@NotNull String html, @NotNull String url) {
     if (isCefBrowserCreated()) {
