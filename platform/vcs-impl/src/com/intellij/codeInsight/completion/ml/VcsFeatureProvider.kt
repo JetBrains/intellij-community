@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.ml
 
 import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
@@ -15,6 +16,11 @@ class VcsFeatureProvider : ElementFeatureProvider {
   override fun calculateFeatures(element: LookupElement,
                                  location: CompletionLocation,
                                  contextFeatures: ContextFeatures): Map<String, MLFeatureValue> {
+    val changesCount = contextFeatures.getUserData(changesCountKey)
+    if (changesCount == null || changesCount > MAX_CHANGES_TO_ANALYZE) {
+      return emptyMap()
+    }
+
     val features = mutableMapOf<String, MLFeatureValue>()
     val project = location.project
     val psi = element.psiElement
@@ -39,5 +45,10 @@ class VcsFeatureProvider : ElementFeatureProvider {
       }
     }
     return features
+  }
+
+  companion object {
+    private const val MAX_CHANGES_TO_ANALYZE = 1000
+    internal val changesCountKey = Key<Int>("VcsFeatureProvider.changesCount")
   }
 }
