@@ -603,7 +603,8 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     for ((fileType, fileTypeStats) in statistics.statsPerFileType) {
       val totalStats = totalStatsPerFileType.getOrPut(fileType) {
         StatsPerFileTypeImpl(0, 0, 0, 0,
-                             LimitedPriorityQueue(biggestContributorsPerFileTypeLimit, compareBy { it.processingTimeInAllThreads }))
+                             LimitedPriorityQueue(biggestContributorsPerFileTypeLimit, compareBy { it.processingTimeInAllThreads }),
+                             fileTypeStats.parentLanguages)
       }
       totalStats.totalNumberOfFiles += fileTypeStats.numberOfFiles
       totalStats.totalBytes += fileTypeStats.totalBytes
@@ -708,7 +709,8 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     override var totalBytes: BytesNumber,
     override var totalProcessingTimeInAllThreads: TimeNano,
     override var totalContentLoadingTimeInAllThreads: TimeNano,
-    val biggestFileTypeContributors: LimitedPriorityQueue<BiggestFileTypeContributorImpl>
+    val biggestFileTypeContributors: LimitedPriorityQueue<BiggestFileTypeContributorImpl>,
+    val parentLanguages: List<String>
   ) : StatsPerFileType {
     override val biggestFileTypeContributorList: List<BiggestFileTypeContributor>
       get() = biggestFileTypeContributors.biggestElements

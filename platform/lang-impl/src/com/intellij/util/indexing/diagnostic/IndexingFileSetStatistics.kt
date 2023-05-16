@@ -1,8 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.asSafely
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
 
@@ -57,8 +60,17 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     var processingTimeInAllThreads: TimeNano,
     var contentLoadingTimeInAllThreads: TimeNano,
     var numberOfFiles: Int,
-    var totalBytes: BytesNumber
-  )
+    var totalBytes: BytesNumber,
+    val parentLanguages: MutableList<String> = mutableListOf()
+  ) {
+    constructor(fileType: FileType) : this(0, 0, 0, 0) {
+      var language = fileType.asSafely<LanguageFileType>()?.language
+      while (language != null){
+        parentLanguages.add(language.id)
+        language = language.baseLanguage
+      }
+    }
+  }
 
   fun addFileStatistics(
     file: VirtualFile,
@@ -97,7 +109,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     }
     val fileTypeName = fileStatistics.fileType.name
     val stats = statsPerFileType.getOrPut(fileTypeName) {
-      StatsPerFileType(0, 0, 0, 0)
+      StatsPerFileType(fileStatistics.fileType)
     }
     stats.contentLoadingTimeInAllThreads += contentLoadingTime
     val evaluationOfIndexValueChangerTime = perIndexerEvaluationOfValueChangerTimes.values.sum()

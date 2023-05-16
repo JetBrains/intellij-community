@@ -80,6 +80,7 @@ data class JsonProjectDumbIndexingHistory(
   override val times: JsonProjectDumbIndexingHistoryTimes = JsonProjectDumbIndexingHistoryTimes(),
   override val fileCount: JsonProjectDumbIndexingFileCount = JsonProjectDumbIndexingFileCount(),
   val totalStatsPerFileType: List<JsonStatsPerFileType> = emptyList(),
+  val totalStatsPerBaseLanguage: List<JsonStatsPerParentLanguage> = emptyList(), //todo[lene] use it!
   val totalStatsPerIndexer: List<JsonStatsPerIndexer> = emptyList(),
   val scanningStatisticsOfRefreshedFiles: JsonScanningStatistics = JsonScanningStatistics(),
   val fileProviderStatistics: List<JsonFileProviderIndexStatistics> = emptyList(),
@@ -107,6 +108,19 @@ data class JsonProjectDumbIndexingHistory(
       val partOfTotalProcessingTimeOfThisFileType: JsonPercentages = JsonPercentages()
     )
   }
+
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  data class JsonStatsPerParentLanguage(
+    val language: String = "",
+    val partOfTotalProcessingTime: JsonPercentages = JsonPercentages(),
+    val partOfTotalContentLoadingTime: JsonPercentages = JsonPercentages(),
+    val totalNumberOfFiles: Int = 0,
+    val totalFilesSize: JsonFileSize = JsonFileSize(),
+    /**
+     * bytes to total (not visible) processing (not just indexing) time
+     */
+    val totalProcessingSpeed: JsonProcessingSpeed = JsonProcessingSpeed(),
+  )
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   data class JsonStatsPerIndexer(
