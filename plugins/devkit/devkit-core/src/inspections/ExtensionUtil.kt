@@ -15,15 +15,15 @@ import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 object ExtensionUtil {
 
   /**
-   * Returns `true` if the [aClass] is registered as a plugin extension and
+   * Returns `true` if the [extensionClass] is registered as a plugin extension and
    * the predicate [shouldSkip] returns `false` on this extension.
    */
-  fun isInstantiatedExtension(aClass: PsiClass, shouldSkip: (Extension) -> Boolean): Boolean {
-    for (candidate in locateExtensionsByPsiClass(aClass)) {
+  fun isInstantiatedExtension(extensionClass: PsiClass, shouldSkip: (Extension) -> Boolean): Boolean {
+    for (candidate in locateExtensionsByPsiClass(extensionClass)) {
       val extension = DomUtil.findDomElement(candidate.pointer.element, Extension::class.java, false) ?: continue
       if (shouldSkip(extension)) continue
       val classNameDomValues = extension.getClassNameDomValues()
-      if (classNameDomValues.any { getNormalizedClassName(it.stringValue) == aClass.qualifiedName }) {
+      if (classNameDomValues.any { getNormalizedClassName(it.stringValue) == extensionClass.qualifiedName }) {
         return true
       }
     }
