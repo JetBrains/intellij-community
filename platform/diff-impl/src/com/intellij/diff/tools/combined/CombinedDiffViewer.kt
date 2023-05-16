@@ -263,12 +263,6 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     }
   }
 
-  internal enum class IterationState {
-    NEXT, PREV, NONE
-  }
-
-  internal var iterationState = IterationState.NONE
-
   private fun notifyVisibleBlocksChanged() {
     val delta = CombinedDiffRegistry.getPreloadedBlocksCount()
     val viewRect = scrollPane.viewport.viewRect

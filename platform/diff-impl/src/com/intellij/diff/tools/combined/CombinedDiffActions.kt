@@ -4,7 +4,6 @@ package com.intellij.diff.tools.combined
 import com.intellij.diff.DiffContext
 import com.intellij.diff.actions.impl.*
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
-import com.intellij.diff.tools.combined.CombinedDiffViewer.IterationState
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.FoldingModelSupport
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
@@ -117,17 +116,11 @@ internal open class CombinedNextDifferenceAction(private val settings: DiffSetti
     context.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, DiffUserDataKeysEx.ScrollToPolicy.FIRST_CHANGE)
     if (iterable != null && iterable.canGoNext()) {
       iterable.goNext()
-      viewer.iterationState = IterationState.NONE
       return
     }
     if (!viewer.isNavigationEnabled() || !viewer.hasNextChange(false) || !settings.isGoToNextFileOnNextDifference) return
-    if (viewer.iterationState != IterationState.NEXT) {
-      context.getUserData(COMBINED_DIFF_MAIN_UI)?.notifyMessage(e, true)
-      viewer.iterationState = IterationState.NEXT
-      return
-    }
+
     viewer.goToNextChange(true)
-    viewer.iterationState = IterationState.NONE
   }
 }
 
@@ -166,17 +159,11 @@ internal open class CombinedPrevDifferenceAction(private val settings: DiffSetti
     context.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, DiffUserDataKeysEx.ScrollToPolicy.LAST_CHANGE)
     if (iterable != null && iterable.canGoPrev()) {
       iterable.goPrev()
-      viewer.iterationState = IterationState.NONE
       return
     }
     if (!viewer.isNavigationEnabled() || !viewer.hasPrevChange(false) || !settings.isGoToNextFileOnNextDifference) return
-    if (viewer.iterationState != IterationState.PREV) {
-      context.getUserData(COMBINED_DIFF_MAIN_UI)?.notifyMessage(e, true)
-      viewer.iterationState = IterationState.PREV
-      return
-    }
+
     viewer.goToPrevChange(true)
-    viewer.iterationState = IterationState.NONE
   }
 }
 
