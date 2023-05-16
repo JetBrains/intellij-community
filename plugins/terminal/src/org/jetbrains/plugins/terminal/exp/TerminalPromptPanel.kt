@@ -22,6 +22,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.util.SHELL_TYPE_KEY
+import org.jetbrains.plugins.terminal.util.ShellType
 import java.awt.Color
 import java.awt.Dimension
 import javax.swing.*
@@ -38,7 +39,7 @@ class TerminalPromptPanel(private val project: Project,
 
   private val promptLabel: JLabel
 
-  private val completionManager: TerminalCompletionManager
+  private val completionManager: TerminalCompletionManager?
 
   private val commandHistoryManager: CommandHistoryManager
   private val commandHistoryPresenter: CommandHistoryPresenter
@@ -52,7 +53,10 @@ class TerminalPromptPanel(private val project: Project,
     promptLabel = createPromptLabel()
     promptLabel.text = computePromptText(TerminalProjectOptionsProvider.getInstance(project).startingDirectory ?: "")
 
-    completionManager = TerminalCompletionManager(session)
+    completionManager = when (session.shellIntegration?.shellType) {
+      ShellType.ZSH -> ZshCompletionManager(session)
+      else -> null
+    }
 
     commandHistoryManager = CommandHistoryManager(session)
     commandHistoryPresenter = CommandHistoryPresenter(project, editor)

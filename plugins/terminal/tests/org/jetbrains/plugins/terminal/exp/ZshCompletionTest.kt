@@ -39,7 +39,7 @@ class ZshCompletionTest : BasePlatformTestCase() {
 
     Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, testRootDisposable)
     session = startTerminalSession(TermSize(200, 20))
-    val completionManager = TerminalCompletionManager(session)
+    val completionManager = ZshCompletionManager(session)
     val model = session.model
 
     myFixture.configureByText(FileTypes.PLAIN_TEXT, "")
