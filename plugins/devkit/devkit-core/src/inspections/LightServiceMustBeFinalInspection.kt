@@ -35,12 +35,10 @@ internal class LightServiceMustBeFinalInspection : DevKitJvmInspection() {
           holder.registerProblem(elementToReport, message, ProblemHighlightType.GENERIC_ERROR, *fixes)
         }
         else {
+          val errorMessageProvider = LightServiceMustBeFinalErrorMessageProviders.forLanguage(sourceElement.language)
+          val message = errorMessageProvider.provideErrorMessage()
           val actions = createModifierActions(sourceElement, modifierRequest(JvmModifier.FINAL, true))
           val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
-          val message = when (sourceElement.language.id) {
-            "kotlin" -> DevKitBundle.message("inspection.light.service.must.not.be.open.message")
-            else -> DevKitBundle.message("inspection.light.service.must.be.final.message")
-          }
           sink.highlight(message, ProblemHighlightType.GENERIC_ERROR, *fixes)
         }
         return true

@@ -50,6 +50,8 @@
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ExtensionClassShouldNotBeOpenErrorMessageProvider"/>
     <serviceLevelExtractor language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ServiceLevelExtractorForKotlin"/>
+    <lightServiceMustBeFinalErrorMessageProvider language="kotlin"
+     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.LightServiceMustNotBeOpenErrorMessageProvider"/>
   </extensions>
 
 </idea-plugin>

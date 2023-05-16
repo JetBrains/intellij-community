@@ -517,6 +517,8 @@
       implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalErrorMessageProvider"/>
     <serviceLevelExtractor language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJava"/>
+    <lightServiceMustBeFinalErrorMessageProvider language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalErrorMessageProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -549,6 +551,11 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractor"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.lightServiceMustBeFinalErrorMessageProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalErrorMessageProvider"/>
     </extensionPoint>
   </extensionPoints>
 
