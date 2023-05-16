@@ -66,7 +66,7 @@ private class ProjectProblemFileFileEditorManagerListener : FileEditorManagerLis
     }
 
     setPreviousState(newJavaFile)
-    val isInSplitEditorMode = FileEditorManager.getInstance(project).selectedEditors.size > 1
+    val isInSplitEditorMode = event.manager.selectedEditors.size > 1
     if (isInSplitEditorMode) {
       restartDaemonUpdatingHints(project)
     }
