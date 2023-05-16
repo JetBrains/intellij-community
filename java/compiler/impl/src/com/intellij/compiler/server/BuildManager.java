@@ -490,20 +490,36 @@ public final class BuildManager implements Disposable {
   }
 
   public void notifyFilesChanged(final Collection<? extends File> paths) {
-    doNotify(paths, false);
+    if (!paths.isEmpty()) {
+      notifyFilesChanged(() -> paths);
+    }
+  }
+
+  public void notifyFilesChanged(Supplier<Collection<? extends File>> filesProvider) {
+    doNotify(filesProvider, false);
   }
 
   public void notifyFilesDeleted(Collection<? extends File> paths) {
-    doNotify(paths, true);
+    if (!paths.isEmpty()) {
+      notifyFilesDeleted(() -> paths);
+    }
+  }
+
+  public void notifyFilesDeleted(Supplier<Collection<? extends File>> filesProvider) {
+    doNotify(filesProvider, true);
   }
 
   public void runCommand(@NotNull Runnable command) {
     myRequestsProcessor.execute(command);
   }
 
-  private void doNotify(final Collection<? extends File> paths, final boolean notifyDeletion) {
+  private void doNotify(final Supplier<Collection<? extends File>> pathsProvider, final boolean notifyDeletion) {
     // ensure events are processed in the order they arrived
     runCommand(() -> {
+      final Collection<? extends File> paths = pathsProvider.get();
+      if (paths.isEmpty()) {
+        return;
+      }
       final List<String> filtered = new ArrayList<>(paths.size());
       for (File file : paths) {
         final String path = FileUtil.toSystemIndependentName(file.getPath());

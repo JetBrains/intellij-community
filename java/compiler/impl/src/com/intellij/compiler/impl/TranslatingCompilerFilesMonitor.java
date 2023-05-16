@@ -17,18 +17,13 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.Executor;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -42,8 +37,7 @@ import java.util.function.Consumer;
  * 2. corresponding source file has been deleted
  */
 public final class TranslatingCompilerFilesMonitor implements AsyncFileListener {
-  private final Executor myNotificationQueue = AppExecutorUtil.createBoundedApplicationPoolExecutor("CompilerFileMonitor Notification Queue", 1);
-
+  
   public static TranslatingCompilerFilesMonitor getInstance() {
     return ApplicationManager.getApplication().getComponent(TranslatingCompilerFilesMonitor.class);
   }
@@ -123,8 +117,8 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     };
   }
 
-  private void after(@NotNull List<? extends VFileEvent> events, Set<File> filesDeleted, Set<File> filesChanged) {
-    var collector = new Consumer<VirtualFile>() {
+  private static void after(@NotNull List<? extends VFileEvent> events, Set<File> filesDeleted, Set<File> filesChanged) {
+    var changedFilesCollector = new Consumer<VirtualFile>() {
       private final Set<VirtualFile> dirsToTraverse = new SmartHashSet<>();
       
       @Override
@@ -158,10 +152,6 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
         return true;
       }
 
-      public void notifyBuildManager() {
-        notifyFilesDeleted(filesDeleted);
-        notifyFilesChanged(filesChanged);
-      }
     };
 
     for (VFileEvent event : events) {
@@ -169,13 +159,13 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
         continue;
       }
       if (event instanceof VFileMoveEvent || event instanceof VFileCreateEvent) {
-        collector.accept(event.getFile());
+        changedFilesCollector.accept(event.getFile());
       }
       else if (event instanceof VFileCopyEvent copyEvent) {
-        collector.accept(copyEvent.findCreatedFile());
+        changedFilesCollector.accept(copyEvent.findCreatedFile());
       }
       else {
-        handleFileRename(event, e -> collector.accept(e.getFile()));
+        handleFileRename(event, e -> changedFilesCollector.accept(e.getFile()));
       }
     }
 
@@ -183,22 +173,20 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     // In this situation filesDeleted and filesChanged sets will contain paths which are different only in case.
     // Thus, the order in which BuildManager is notified, is important:
     // first deleted paths notification and only then changed paths notification
-
-    if (collector.dirsToTraverse.isEmpty()) {
-      collector.notifyBuildManager();
-    }
-    else {
-      myNotificationQueue.execute(() -> {
-        // traversing dirs may take time and block UI thread, so traversing them in a non-blocking read-action in background
-        if (ReadAction.nonBlocking(collector::traverseDirs).executeSynchronously()) {
-          collector.notifyBuildManager();
-        }
-        else {
-          // force FS rescan on the next build, because information from event may be incomplete
-          BuildManager.getInstance().clearState();
-        }
-      });
-    }
+    BuildManager buildManager = BuildManager.getInstance();
+    buildManager.notifyFilesDeleted(filesDeleted);
+    buildManager.notifyFilesChanged(() -> {
+      // traversing dirs may take time and block UI thread, so traversing them in a non-blocking read-action in background
+      if (changedFilesCollector.dirsToTraverse.isEmpty()) {
+        return filesChanged;
+      }
+      if (ReadAction.nonBlocking(changedFilesCollector::traverseDirs).executeSynchronously()) {
+        return filesChanged;
+      }
+      // force FS rescan on the next build, because information from event may be incomplete
+      buildManager.clearState();
+      return Collections.emptyList();
+    });
   }
 
   private static void handleFileRename(@NotNull VFileEvent e, Consumer<VFilePropertyChangeEvent> action) {
@@ -285,17 +273,5 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
         FileTypeManager.getInstance().isFileIgnored(file) ||
         ProjectUtil.isProjectOrWorkspaceFile(file)        ||
         FileUtil.isAncestor(PathManager.getConfigPath(), file.getPath(), false); // is config file
-  }
-
-  private static void notifyFilesChanged(@NotNull Collection<? extends File> paths) {
-    if (!paths.isEmpty()) {
-      BuildManager.getInstance().notifyFilesChanged(paths);
-    }
-  }
-
-  private static void notifyFilesDeleted(@NotNull Collection<? extends File> paths) {
-    if (!paths.isEmpty()) {
-      BuildManager.getInstance().notifyFilesDeleted(paths);
-    }
   }
 }
