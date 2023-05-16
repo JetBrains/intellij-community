@@ -74,7 +74,7 @@ internal class IntentionPreviewModel {
       val editorFactory = EditorFactory.getInstance()
       val document = editorFactory.createDocument(text)
       val editor = (editorFactory.createEditor(document, project, fileType, false) as EditorEx)
-        .apply { setBorder(JBUI.Borders.empty()) }
+        .apply { setBorder(JBUI.Borders.empty(0, 10)) }
 
       editor.settings.apply {
         isLineNumbersShown = maxLine != -1
