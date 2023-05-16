@@ -31,6 +31,8 @@ class GitLabApiImpl private constructor(httpHelper: HttpApiHelper)
 
   constructor(tokenSupplier: () -> String) : this(httpHelper(tokenSupplier))
 
+  constructor() : this(httpHelper())
+
   companion object {
     private fun httpHelper(tokenSupplier: () -> String): HttpApiHelper {
       val authConfigurer = object : AuthorizationConfigurer() {
@@ -40,6 +42,13 @@ class GitLabApiImpl private constructor(httpHelper: HttpApiHelper)
       val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(),
                                                         CommonHeadersConfigurer(),
                                                         authConfigurer)
+      return HttpApiHelper(logger = logger<GitLabApi>(),
+                           requestConfigurer = requestConfigurer)
+    }
+
+    private fun httpHelper(): HttpApiHelper {
+      val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(),
+                                                        CommonHeadersConfigurer())
       return HttpApiHelper(logger = logger<GitLabApi>(),
                            requestConfigurer = requestConfigurer)
     }

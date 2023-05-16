@@ -4,9 +4,7 @@ package org.jetbrains.plugins.gitlab
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import git4idea.remote.hosting.HostedGitRepositoriesManager
-import git4idea.remote.hosting.gitRemotesFlow
-import git4idea.remote.hosting.mapToServers
+import git4idea.remote.hosting.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
@@ -24,7 +22,21 @@ internal class GitLabProjectsManagerImpl(project: Project, cs: CoroutineScope) :
       mutableSetOf(GitLabServerPath.DEFAULT_SERVER) + accounts.map { it.server }
     }.distinctUntilChanged()
 
-    val knownRepositoriesFlow = gitRemotesFlow.mapToServers(accountsServersFlow) { server, remote ->
+    val discoveredServersFlow = gitRemotesFlow.discoverServers(accountsServersFlow) { remote ->
+      GitHostingUrlUtil.findServerAt(LOG, remote) {
+        val server = GitLabServerPath(it.toString())
+        val isGitLabServer = service<GitLabServersManager>().checkIsGitLabServer(server)
+        if (isGitLabServer) server else null
+      }
+    }.runningFold(emptySet<GitLabServerPath>()) { accumulator, value ->
+      accumulator + value
+    }.distinctUntilChanged()
+
+    val serversFlow = accountsServersFlow.combine(discoveredServersFlow) { servers1, servers2 ->
+      servers1 + servers2
+    }
+
+    val knownRepositoriesFlow = gitRemotesFlow.mapToServers(serversFlow) { server, remote ->
       GitLabProjectMapping.create(server, remote)
     }.onEach {
       LOG.debug("New list of known repos: $it")
