@@ -58,8 +58,12 @@ public class ChangeListsIndexes {
   }
 
 
-  private void add(@NotNull FilePath file, @NotNull FileStatus status, @Nullable AbstractVcs key, @NotNull VcsRevisionNumber number) {
-    myMap.put(file, new Data(status, key, number));
+  private void add(@NotNull FilePath file,
+                   @NotNull Change change,
+                   @NotNull FileStatus status,
+                   @Nullable AbstractVcs key,
+                   @NotNull VcsRevisionNumber number) {
+    myMap.put(file, new Data(status, change, key, number));
     myAffectedPaths.add(file);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Set status " + status + " for " + file);
@@ -69,6 +73,12 @@ public class ChangeListsIndexes {
   private void remove(final FilePath file) {
     myMap.remove(file);
     myAffectedPaths.remove(file);
+  }
+
+  @Nullable
+  public Change getChange(@NotNull FilePath file) {
+    Data data = myMap.get(file);
+    return data != null ? data.change : null;
   }
 
   @Nullable
@@ -84,17 +94,17 @@ public class ChangeListsIndexes {
     ContentRevision beforeRevision = change.getBeforeRevision();
 
     if (beforeRevision != null && afterRevision != null) {
-      add(afterRevision.getFile(), change.getFileStatus(), key, beforeRevision.getRevisionNumber());
+      add(afterRevision.getFile(), change, change.getFileStatus(), key, beforeRevision.getRevisionNumber());
 
       if (!Comparing.equal(beforeRevision.getFile(), afterRevision.getFile())) {
-        add(beforeRevision.getFile(), FileStatus.DELETED, key, beforeRevision.getRevisionNumber());
+        add(beforeRevision.getFile(), change, FileStatus.DELETED, key, beforeRevision.getRevisionNumber());
       }
     }
     else if (afterRevision != null) {
-      add(afterRevision.getFile(), change.getFileStatus(), key, VcsRevisionNumber.NULL);
+      add(afterRevision.getFile(), change, change.getFileStatus(), key, VcsRevisionNumber.NULL);
     }
     else if (beforeRevision != null) {
-      add(beforeRevision.getFile(), change.getFileStatus(), key, beforeRevision.getRevisionNumber());
+      add(beforeRevision.getFile(), change, change.getFileStatus(), key, beforeRevision.getRevisionNumber());
     }
   }
 
@@ -196,11 +206,16 @@ public class ChangeListsIndexes {
 
   private static class Data {
     @NotNull public final FileStatus status;
+    @NotNull public final Change change;
     @Nullable public final AbstractVcs vcs;
     @NotNull public final VcsRevisionNumber revision;
 
-    Data(@NotNull FileStatus status, @Nullable AbstractVcs vcs, @NotNull VcsRevisionNumber revision) {
+    Data(@NotNull FileStatus status,
+         @NotNull Change change,
+         @Nullable AbstractVcs vcs,
+         @NotNull VcsRevisionNumber revision) {
       this.status = status;
+      this.change = change;
       this.vcs = vcs;
       this.revision = revision;
     }
