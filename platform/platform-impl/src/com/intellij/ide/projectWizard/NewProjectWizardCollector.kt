@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
-import com.intellij.ide.projectWizard.NewProjectWizardConstants.OTHER
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.BuildSystemNewProjectWizardData
@@ -30,7 +29,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
 
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 21)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 22)
 
     private val LANGUAGES = listOf(
       NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
@@ -38,12 +37,13 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
       NewProjectWizardConstants.Language.HTML, NewProjectWizardConstants.Language.PYTHON,
       NewProjectWizardConstants.Language.PHP, NewProjectWizardConstants.Language.RUBY,
       NewProjectWizardConstants.Language.GO, NewProjectWizardConstants.Language.SCALA,
-      NewProjectWizardConstants.Language.RUST
+      NewProjectWizardConstants.Language.RUST, NewProjectWizardConstants.OTHER
     )
 
     private val BUILD_SYSTEMS = listOf(
       NewProjectWizardConstants.BuildSystem.INTELLIJ, NewProjectWizardConstants.BuildSystem.GRADLE,
-      NewProjectWizardConstants.BuildSystem.MAVEN, NewProjectWizardConstants.BuildSystem.SBT
+      NewProjectWizardConstants.BuildSystem.MAVEN, NewProjectWizardConstants.BuildSystem.SBT,
+      NewProjectWizardConstants.OTHER
     )
 
     private val GROOVY_SDKS = listOf(
@@ -184,11 +184,11 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val NewProjectWizardStep.language: String
       get() = (this as? LanguageNewProjectWizardData)?.language
               ?: data.getUserData(LanguageNewProjectWizardData.KEY)?.language
-              ?: OTHER
+              ?: NewProjectWizardConstants.OTHER
 
     private val NewProjectWizardStep.buildSystem: String
       get() = (this as? BuildSystemNewProjectWizardData)?.buildSystem
-              ?: OTHER
+              ?: NewProjectWizardConstants.OTHER
   }
 
   object Base {
@@ -294,7 +294,8 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
     override fun addData(fuData: FeatureUsageData, value: ModuleBuilder?) {
       fuData.addPluginInfo(value?.let { getPluginInfo(it.javaClass) })
-      fuData.addData(name, value?.builderId?.removePrefix(NPW_PREFIX) ?: OTHER)
+      val builderId = value?.builderId?.removePrefix(NPW_PREFIX)
+      fuData.addData(name, builderId ?: NewProjectWizardConstants.OTHER)
     }
 
     override val validationRule: List<String>
@@ -305,7 +306,9 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     override fun getRuleId(): String = ID
 
     override fun doValidate(data: String, context: EventContext): ValidationResultType {
-      if (isThirdPartyValue(data) || OTHER == data) return ValidationResultType.ACCEPTED
+      if (isThirdPartyValue(data) || NewProjectWizardConstants.OTHER == data) {
+        return ValidationResultType.ACCEPTED
+      }
       return acceptWhenReportedByPluginFromPluginRepository(context)
     }
 
