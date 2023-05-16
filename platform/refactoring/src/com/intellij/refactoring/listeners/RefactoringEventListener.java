@@ -14,7 +14,8 @@ public interface RefactoringEventListener {
    * Entry point to attach a client listener. Events are posted on the project bus and its children so connection should be done as following
    * {@code project.getMessageBus().connect(Disposable).subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, new Listener())}
    */
-  Topic<RefactoringEventListener> REFACTORING_EVENT_TOPIC = new Topic<>("REFACTORING_EVENT_TOPIC", RefactoringEventListener.class);
+  @Topic.ProjectLevel
+  Topic<RefactoringEventListener> REFACTORING_EVENT_TOPIC = new Topic<>("REFACTORING_EVENT_TOPIC", RefactoringEventListener.class, Topic.BroadcastDirection.NONE);
 
   /**
    * Is fired when refactoring enters its write phase (find usages, conflict detection phases are passed already) 
