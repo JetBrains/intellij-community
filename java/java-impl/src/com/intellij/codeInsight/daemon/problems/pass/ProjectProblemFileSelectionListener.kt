@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.problems.FileStateUpdater.Companion.setPr
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemCodeVisionProvider.Companion.hintsEnabled
 import com.intellij.codeInsight.hints.InlayHintsPassFactory.Companion.restartDaemonUpdatingHints
 import com.intellij.codeInsight.hints.InlayHintsSettings
-import com.intellij.codeInsight.hints.InlayHintsSettings.Companion.INLAY_SETTINGS_CHANGED
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
@@ -74,6 +73,26 @@ private class ProjectProblemFileFileEditorManagerListener : FileEditorManagerLis
   }
 }
 
+private class ProjectProblemFileInlaySelectionListenerSettingsListener(private val project: Project) : InlayHintsSettings.SettingsListener {
+  override fun settingsChanged() {
+    if (!hintsEnabled(project)) {
+      onHintsDisabled(project)
+    }
+  }
+
+  override fun languageStatusChanged() {
+    if (!hintsEnabled(project)) {
+      onHintsDisabled(project)
+    }
+  }
+
+  override fun globalEnabledStatusChanged(newEnabled: Boolean) {
+    if (!hintsEnabled(project)) {
+      onHintsDisabled(project)
+    }
+  }
+}
+
 private class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment && !TestModeFlags.`is`(ProjectProblemUtils.ourTestingProjectProblems)) {
@@ -81,25 +100,6 @@ private class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivi
     }
 
     val connection = project.messageBus.simpleConnect()
-    connection.subscribe(INLAY_SETTINGS_CHANGED, object : InlayHintsSettings.SettingsListener {
-      override fun settingsChanged() {
-        if (!hintsEnabled(project)) {
-          onHintsDisabled(project)
-        }
-      }
-
-      override fun languageStatusChanged() {
-        if (!hintsEnabled(project)) {
-          onHintsDisabled(project)
-        }
-      }
-
-      override fun globalEnabledStatusChanged(newEnabled: Boolean) {
-        if (!hintsEnabled(project)) {
-          onHintsDisabled(project)
-        }
-      }
-    })
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun before(events: List<VFileEvent>) {
         val fileIndex = ProjectRootManager.getInstance(project).fileIndex

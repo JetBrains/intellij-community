@@ -2441,5 +2441,7 @@
   <projectListeners>
     <listener class="com.intellij.jarRepository.RepositoryLibraryChangeListener"
               topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
+    <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileInlaySelectionListenerSettingsListener"
+              topic="com.intellij.codeInsight.hints.InlayHintsSettings$SettingsListener"/>
   </projectListeners>
 </idea-plugin>
