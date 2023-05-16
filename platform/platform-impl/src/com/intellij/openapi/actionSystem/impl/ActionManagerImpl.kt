@@ -1528,7 +1528,7 @@ private fun processMouseShortcutNode(element: XmlElement, actionId: String, modu
 
   val keymap = keymapManager.getKeymap(keymapName)
   if (keymap == null) {
-    reportKeymapNotFoundWarning(module, keymapName)
+    reportKeymapNotFound(module, keymapName)
     return
   }
 
@@ -1539,10 +1539,10 @@ private fun reportActionError(module: PluginDescriptor, message: String, cause: 
   LOG.error(PluginException("$message (module=$module)", cause, module.pluginId))
 }
 
-private fun reportKeymapNotFoundWarning(module: PluginDescriptor, keymapName: String) {
+private fun reportKeymapNotFound(module: PluginDescriptor, keymapName: String) {
   val app = ApplicationManager.getApplication()
   if (!app.isHeadlessEnvironment && !app.isCommandLine && !isBundledKeymapHidden(keymapName)) {
-    LOG.warn("keymap \"$keymapName\" not found $module")
+    LOG.info("keymap \"$keymapName\" not found $module")
   }
 }
 
@@ -1651,7 +1651,7 @@ private fun processKeyboardShortcutNode(element: XmlElement, actionId: String, m
 
   val keymap = keymapManager.getKeymap(keymapName)
   if (keymap == null) {
-    reportKeymapNotFoundWarning(module, keymapName)
+    reportKeymapNotFound(module, keymapName)
     return
   }
 
