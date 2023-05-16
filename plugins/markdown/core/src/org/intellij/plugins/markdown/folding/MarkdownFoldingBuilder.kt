@@ -103,6 +103,8 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
     return when (node.elementType) {
       MarkdownElementTypes.LINK_DESTINATION -> settings.state.collapseLinks
       MarkdownElementTypes.FRONT_MATTER_HEADER -> settings.state.collapseFrontMatter
+      MarkdownElementTypes.TABLE -> settings.state.collapseTables
+      MarkdownElementTypes.CODE_FENCE -> settings.state.collapseCodeFences
       else -> false
     }
   }

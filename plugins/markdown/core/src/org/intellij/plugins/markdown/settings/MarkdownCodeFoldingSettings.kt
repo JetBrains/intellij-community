@@ -7,7 +7,9 @@ import com.intellij.openapi.components.*
 internal class MarkdownCodeFoldingSettings: SimplePersistentStateComponent<MarkdownCodeFoldingSettings.State>(State()) {
   data class State(
     val collapseLinks: Boolean = true,
-    val collapseFrontMatter: Boolean = true
+    val collapseFrontMatter: Boolean = true,
+    val collapseTables: Boolean = false,
+    val collapseCodeFences: Boolean = false
   ): BaseState()
 
   fun update(transform: (State) -> State) {
