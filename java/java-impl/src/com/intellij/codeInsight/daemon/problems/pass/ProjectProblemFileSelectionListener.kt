@@ -125,15 +125,11 @@ private class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivi
       }
     })
     connection.subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, object : RefactoringEventListener {
-      override fun refactoringStarted(refactoringId: String, beforeData: RefactoringEventData?) {}
-
       override fun refactoringDone(refactoringId: String, afterData: RefactoringEventData?) {
         val psiJavaFile = (afterData?.getUserData(RefactoringEventData.PSI_ELEMENT_KEY) as? PsiMember)?.containingFile as? PsiJavaFile
                           ?: return
         setPreviousState(psiJavaFile)
       }
-
-      override fun conflictsDetected(refactoringId: String, conflictsData: RefactoringEventData) {}
 
       override fun undoRefactoring(refactoringId: String) {
         val selectedFile = getSelectedFile(project) ?: return
