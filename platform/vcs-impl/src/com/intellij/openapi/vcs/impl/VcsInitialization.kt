@@ -19,10 +19,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.util.TimeoutUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Predicate
 import javax.swing.SwingUtilities
@@ -126,7 +123,10 @@ class VcsInitialization(private val project: Project, private val coroutineScope
                   pendingActivities = postActivities)
     }
     finally {
-      synchronized(lock) { status = Status.FINISHED }
+      // Dispatchers.IO due to using of synchronized
+      withContext(NonCancellable + Dispatchers.IO) {
+        synchronized(lock) { status = Status.FINISHED }
+      }
     }
   }
 
