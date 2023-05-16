@@ -33,5 +33,10 @@ internal class MarkdownCodeFoldingOptionsProvider: BeanConfigurable<MarkdownCode
       { settings.state.collapseCodeFences },
       { value -> settings.update { it.copy(collapseCodeFences = value) } }
     )
+    checkBox(
+      MarkdownBundle.message("markdown.code.folding.configurable.collapse.table.of.contents"),
+      { settings.state.collapseTableOfContents },
+      { value -> settings.update { it.copy(collapseTableOfContents = value) } }
+    )
   }
 }

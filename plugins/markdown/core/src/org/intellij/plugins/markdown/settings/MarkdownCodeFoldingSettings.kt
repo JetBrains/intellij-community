@@ -9,7 +9,8 @@ internal class MarkdownCodeFoldingSettings: SimplePersistentStateComponent<Markd
     val collapseLinks: Boolean = true,
     val collapseFrontMatter: Boolean = true,
     val collapseTables: Boolean = false,
-    val collapseCodeFences: Boolean = false
+    val collapseCodeFences: Boolean = false,
+    val collapseTableOfContents: Boolean = true
   ): BaseState()
 
   fun update(transform: (State) -> State) {

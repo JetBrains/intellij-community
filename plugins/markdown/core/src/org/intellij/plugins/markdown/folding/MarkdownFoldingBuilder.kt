@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.lang.folding.CustomFoldingBuilder
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.FoldingGroup
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
@@ -12,6 +13,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.toc.GenerateTableOfContentsAction
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
@@ -90,6 +92,26 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
     val headerVisitor = HeaderRegionsBuildingVisitor { header, range -> addDescriptors(header, range, descriptors, document) }
     root.accept(headerVisitor)
     headerVisitor.processLastHeaderIfNeeded()
+    if (root is MarkdownFile) {
+      processTableOfContents(root, document, descriptors)
+    }
+  }
+
+  private fun processTableOfContents(file: MarkdownFile, document: Document, descriptors: MutableList<FoldingDescriptor>) {
+    val ranges = GenerateTableOfContentsAction.findExistingTocs(file)
+    val group = FoldingGroup.newGroup("Table of contents")
+    val shouldCollapse = MarkdownCodeFoldingSettings.getInstance().state.collapseTableOfContents
+    for (range in ranges) {
+      val descriptor = FoldingDescriptor(
+        file.node,
+        range,
+        group,
+        MarkdownBundle.message("markdown.folding.table.of.contents.name"),
+        shouldCollapse,
+        emptySet()
+      )
+      descriptors.add(descriptor)
+    }
   }
 
   override fun getLanguagePlaceholderText(node: ASTNode, range: TextRange): String {
