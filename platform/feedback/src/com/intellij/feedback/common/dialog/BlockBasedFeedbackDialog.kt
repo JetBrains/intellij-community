@@ -11,6 +11,8 @@ import com.intellij.feedback.common.dialog.uiBlocks.NoEmailAgreementBlock
 import com.intellij.feedback.common.submitFeedback
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBEmptyBorder
@@ -69,25 +71,23 @@ abstract class BlockBasedFeedbackDialog<T : JsonSerializable>(
     }.also { dialog ->
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
     }
-    return mainPanel
 
-    //TODO: Add scroll to dialog for small displays. Fix problem with overlapping scroll bar and bottom agreement
-    //val scrollablePane = JBScrollPane(
-    //  mainPanel,
-    //  JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-    //  JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-    //).apply {
-    //  border = JBUI.Borders.empty()
-    //  setViewportView(mainPanel)
-    //}
-    //
-    //return panel {
-    //  row {
-    //    cell(scrollablePane)
-    //  }.resizableRow()
-    //}.apply {
-    //  registerIntegratedPanel(mainPanel)
-    //}
+    val scrollablePane = JBScrollPane(
+      mainPanel,
+      JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+      JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+    ).apply {
+      border = JBUI.Borders.empty()
+    }
+
+    return panel {
+      row {
+        cell(scrollablePane)
+          .align(Align.FILL)
+      }.resizableRow()
+    }.apply {
+      registerIntegratedPanel(mainPanel)
+    }
   }
 
   protected open fun addFooterToPanel(panel: Panel) {
