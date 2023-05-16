@@ -54,10 +54,10 @@ private val CLOSE_LOG_TIMEOUT = 10.seconds
 class VcsProjectLog(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val uiProperties = project.service<VcsLogProjectTabsProperties>()
   internal val tabManager: VcsLogTabsManager
+  private val errorHandler = VcsProjectLogErrorHandler(this)
 
-  private val lazyVcsLogManager = LazyVcsLogManager(project = project,
-                                                    uiProperties = uiProperties,
-                                                    errorHandler = VcsProjectLogErrorHandler(this))
+  @Volatile
+  private var cachedLogManager: VcsLogManager? = null
 
   private val disposeStarted = AtomicBoolean(false)
 
@@ -65,9 +65,9 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   private val mutex = Mutex()
 
   val logManager: VcsLogManager?
-    get() = lazyVcsLogManager.cached
+    get() = cachedLogManager
   val dataManager: VcsLogData?
-    get() = lazyVcsLogManager.cached?.dataManager
+    get() = cachedLogManager?.dataManager
   val isDisposing: Boolean
     get() = disposeStarted.get()
 
@@ -162,13 +162,11 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   }
 
   private suspend fun disposeLog(useRawSwingDispatcher: Boolean = false) {
-    if (lazyVcsLogManager.cached == null) {
-      return
-    }
+    if (cachedLogManager == null) return
 
     mutex.withLock {
       val logManager = withContext(if (useRawSwingDispatcher) RawSwingDispatcher else (Dispatchers.EDT + modality())) {
-        lazyVcsLogManager.dropValue()?.also { it.disposeUi() }
+        dropLogManager()?.also { it.disposeUi() }
       }
       if (logManager != null) Disposer.dispose(logManager)
     }
@@ -201,10 +199,37 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
       val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
       if (logProviders.isEmpty()) return null
 
-      val logManager = lazyVcsLogManager.getValue(logProviders)
+      val logManager = getOrCreateLogManager(logProviders)
       initialize(logManager = logManager, force = forceInit)
       return logManager
     }
+  }
+
+  private suspend fun getOrCreateLogManager(logProviders: Map<VirtualFile, VcsLogProvider>): VcsLogManager {
+    cachedLogManager?.let {
+      return it
+    }
+
+    LOG.debug { "Creating Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}" }
+    val result = VcsLogManager(project, uiProperties, logProviders, false) { s, t ->
+      errorHandler.recreateOnError(s, t)
+    }
+    cachedLogManager = result
+    val publisher = project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED)
+    withContext(Dispatchers.EDT + modality()) {
+      publisher.logCreated(result)
+    }
+    return result
+  }
+
+  @RequiresEdt
+  private fun dropLogManager(): VcsLogManager? {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val oldValue = cachedLogManager ?: return null
+    cachedLogManager = null
+    LOG.debug { "Disposing Vcs Log for ${VcsLogUtil.getProvidersMapText(oldValue.dataManager.logProviders)}" }
+    project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue)
+    return oldValue
   }
 
   internal class InitLogStartupActivity : ProjectActivity {
@@ -358,40 +383,5 @@ private suspend fun initialize(logManager: VcsLogManager, force: Boolean) {
     if (logManager.isLogVisible) {
       logManager.scheduleInitialization()
     }
-  }
-}
-
-private class LazyVcsLogManager(private val project: Project,
-                                private val uiProperties: VcsLogProjectTabsProperties,
-                                private val errorHandler: VcsProjectLogErrorHandler) {
-  @Volatile
-  var cached: VcsLogManager? = null
-    private set
-
-  suspend fun getValue(logProviders: Map<VirtualFile, VcsLogProvider>): VcsLogManager {
-    cached?.let {
-      return it
-    }
-
-    LOG.debug { "Creating Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}" }
-    val result = VcsLogManager(project, uiProperties, logProviders, false) { s, t ->
-      errorHandler.recreateOnError(s, t)
-    }
-    cached = result
-    val publisher = project.messageBus.syncPublisher(VcsProjectLog.VCS_PROJECT_LOG_CHANGED)
-    withContext(Dispatchers.EDT + modality()) {
-      publisher.logCreated(result)
-    }
-    return result
-  }
-
-  @RequiresEdt
-  fun dropValue(): VcsLogManager? {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    val oldValue = cached ?: return null
-    cached = null
-    LOG.debug { "Disposing Vcs Log for ${VcsLogUtil.getProvidersMapText(oldValue.dataManager.logProviders)}" }
-    project.messageBus.syncPublisher(VcsProjectLog.VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue)
-    return oldValue
   }
 }
