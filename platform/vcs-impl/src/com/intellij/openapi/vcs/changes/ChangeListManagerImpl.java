@@ -81,7 +81,7 @@ import static com.intellij.util.ui.UIUtil.BR;
 import static java.util.stream.Collectors.toSet;
 
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ChangeListManagerImpl extends ChangeListManagerEx implements PersistentStateComponent<Element>, Disposable {
+public final class ChangeListManagerImpl extends ChangeListManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(ChangeListManagerImpl.class);
 
   @Topic.ProjectLevel
@@ -1553,7 +1553,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     return myConflictTracker;
   }
 
-  private static class MyChangesDeltaForwarder implements ChangeListDeltaListener {
+  private static final class MyChangesDeltaForwarder implements ChangeListDeltaListener {
     private final RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
     private final Project myProject;
@@ -1631,7 +1631,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }
   }
 
-  static class Scheduler {
+  static final class Scheduler {
     private final ScheduledExecutorService myExecutor =
       AppExecutorUtil.createBoundedScheduledExecutorService("ChangeListManagerImpl Pool", 1);
 
@@ -1642,7 +1642,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     public void schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
       try {
         ScheduledFuture<?> future = myExecutor.schedule(new MyLoggingRunnable(command), delay, unit);
-        if (myUnitTestMode) addFuture(future);
+        if (myUnitTestMode) {
+          addFuture(future);
+        }
       }
       catch (RejectedExecutionException e) {
         LOG.warn(e);
@@ -1652,7 +1654,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     public void submit(@NotNull Runnable command) {
       try {
         Future<?> future = myExecutor.submit(new MyLoggingRunnable(command));
-        if (myUnitTestMode) addFuture(future);
+        if (myUnitTestMode) {
+          addFuture(future);
+        }
       }
       catch (RejectedExecutionException e) {
         LOG.warn(e);
@@ -1727,7 +1731,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }
   }
 
-  private static class MyLoggingRunnable implements Runnable {
+  private static final class MyLoggingRunnable implements Runnable {
     private final Runnable myDelegate;
 
     private MyLoggingRunnable(@NotNull Runnable delegate) {
