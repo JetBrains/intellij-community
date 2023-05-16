@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -51,9 +50,9 @@ private val LOG: Logger
 private val CLOSE_LOG_TIMEOUT = 10.seconds
 
 @Service(Service.Level.PROJECT)
-class VcsProjectLog(private val project: Project, private val coroutineScope: CoroutineScope) {
+class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineScope) {
   private val uiProperties = project.service<VcsLogProjectTabsProperties>()
-  internal val tabManager: VcsLogTabsManager
+  internal val tabManager = VcsLogTabsManager(project, uiProperties, coroutineScope)
   private val errorHandler = VcsProjectLogErrorHandler(this)
 
   @Volatile
@@ -75,11 +74,9 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   val mainLogUi: VcsLogUiImpl?
     get() = VcsLogContentProvider.getInstance(project)?.ui as VcsLogUiImpl?
 
-  internal val busConnection: SimpleMessageBusConnection = project.messageBus.connect(coroutineScope)
+  private val busConnection = project.messageBus.connect(coroutineScope)
 
   init {
-    tabManager = VcsLogTabsManager(project = project, uiProperties = uiProperties, busConnection = busConnection)
-
     busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
       coroutineScope.launch { disposeLog(recreate = true) }
     })
@@ -115,6 +112,8 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
 
   private suspend fun shutDown(useRawSwingDispatcher: Boolean) {
     if (!disposeStarted.compareAndSet(false, true)) return
+
+    busConnection.disconnect()
 
     try {
       withTimeout(CLOSE_LOG_TIMEOUT) {

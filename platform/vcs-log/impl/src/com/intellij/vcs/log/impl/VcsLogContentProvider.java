@@ -49,7 +49,7 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
   public VcsLogContentProvider(@NotNull Project project) {
     myProjectLog = VcsProjectLog.getInstance(project);
 
-    SimpleMessageBusConnection connection = myProjectLog.getBusConnection$intellij_platform_vcs_log_impl();
+    SimpleMessageBusConnection connection = project.getMessageBus().connect(myProjectLog.getCoroutineScope());
     connection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
       @Override
       public void logCreated(@NotNull VcsLogManager logManager) {
