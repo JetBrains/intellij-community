@@ -21,8 +21,6 @@ public interface PluginAwareClassLoader {
 
   @NotNull PluginId getPluginId();
 
-  int getInstanceId();
-
   long getEdtTime();
 
   long getBackgroundTime();

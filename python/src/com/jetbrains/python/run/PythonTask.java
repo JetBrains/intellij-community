@@ -15,7 +15,6 @@ import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -34,6 +33,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.console.PydevConsoleRunnerUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
@@ -437,10 +437,29 @@ public class PythonTask {
    * Listener is removed from process stopped to prevent leak
    */
   private void stopProcessWhenAppClosed(@NotNull ProcessHandler process) {
-    Disposable disposable = PluginManager.getInstance().createDisposable(PythonTask.class, myModule);
-    process.addProcessListener(new ProcessAdapter() {
+    Disposable disposable = Disposer.newDisposable();
+    Disposable a = new Disposable() {
       @Override
-      public void processTerminated(@NotNull final ProcessEvent event) {
+      public void dispose() {
+        Disposer.dispose(disposable);
+      }
+    };
+    Disposable b = new Disposable() {
+      @Override
+      public void dispose() {
+        Disposer.dispose(disposable);
+      }
+    };
+    //noinspection IncorrectParentDisposable
+    Disposer.register(myModule, a);
+    Disposer.register(PythonPluginDisposable.getInstance(myModule.getProject()), b);
+
+    Disposer.register(disposable, a);
+    Disposer.register(disposable, b);
+
+    process.addProcessListener(new ProcessListener() {
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
         Disposer.dispose(disposable);
       }
     }, disposable);

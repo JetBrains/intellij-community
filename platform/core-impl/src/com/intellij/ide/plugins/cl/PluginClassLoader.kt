@@ -48,7 +48,6 @@ private val EMPTY_CLASS_LOADER_ARRAY = arrayOfNulls<ClassLoader>(0)
 private val KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = computeKotlinStdlibClassesUsedInSignatures()
 
 private var logStream: Writer? = null
-private val instanceIdProducer = AtomicInteger()
 private val parentListCacheIdCounter = AtomicInteger()
 
 @ApiStatus.Internal
@@ -72,8 +71,7 @@ class PluginClassLoader(classPath: ClassPath,
   private val edtTime = AtomicLong()
   private val backgroundTime = AtomicLong()
   private val loadedClassCounter = AtomicInteger()
-  private val instanceId = instanceIdProducer.incrementAndGet()
-  private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + CoroutineName("${pluginId.idString}@$instanceId"))
+  private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + CoroutineName(pluginId.idString))
   private val _resolveScopeManager = resolveScopeManager ?: defaultResolveScopeManager
 
   companion object {
@@ -132,8 +130,6 @@ class PluginClassLoader(classPath: ClassPath,
 
     throw IllegalStateException("Unexpected state: $state")
   }
-
-  override fun getInstanceId(): Int = instanceId
 
   override fun getEdtTime(): Long = edtTime.get()
 
@@ -469,7 +465,6 @@ ${if (exception == null) "" else exception.message}""")
     return "${javaClass.simpleName}(" +
            "plugin=$pluginDescriptor, " +
            "packagePrefix=$packagePrefix, " +
-           "instanceId=$instanceId, " +
            "state=${if (state == PluginAwareClassLoader.ACTIVE) "active" else "unload in progress"}" +
            ")"
   }

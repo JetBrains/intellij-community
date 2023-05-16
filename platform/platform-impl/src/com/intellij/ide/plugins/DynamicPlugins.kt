@@ -1098,15 +1098,9 @@ private fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
 }
 
 private fun createDisposeTreePredicate(pluginDescriptor: IdeaPluginDescriptorImpl): Predicate<Disposable>? {
-  val classLoader = pluginDescriptor.pluginClassLoader as? PluginClassLoader
-                    ?: return null
+  val classLoader = pluginDescriptor.pluginClassLoader as? PluginClassLoader ?: return null
   return Predicate {
-    if (it is PluginManager.PluginAwareDisposable) {
-      it.classLoaderId == classLoader.instanceId
-    }
-    else {
-      it::class.java.classLoader === classLoader
-    }
+    it::class.java.classLoader === classLoader
   }
 }
 
