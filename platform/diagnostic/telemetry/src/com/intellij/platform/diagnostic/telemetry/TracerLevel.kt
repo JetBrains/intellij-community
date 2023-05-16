@@ -3,7 +3,7 @@ package com.intellij.platform.diagnostic.telemetry
 
 /**
  * Defines level of details for the tracing information.
- * In most cases we don't need very-deep information about all possible subsystems.
+ * In most cases, we don't need very-deep information about all possible subsystems.
  */
 enum class TracerLevel {
   DEFAULT,

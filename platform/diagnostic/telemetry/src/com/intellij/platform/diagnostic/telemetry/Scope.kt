@@ -3,8 +3,9 @@ package com.intellij.platform.diagnostic.telemetry
 
 open class Scope(val name: String, val parent: Scope? = null) {
   override fun toString(): String {
-    if (parent == null)
+    if (parent == null) {
       return name
+    }
     return "${parent.name}.$name"
   }
 }

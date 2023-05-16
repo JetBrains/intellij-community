@@ -25,12 +25,11 @@ interface TelemetryTracer {
 
   /**
    * Method creates a tracer with the scope name.
-   * Separate tracers define different scopes, and as result separate main nodes in the result data.
-   * It is expected that for different subsystems different tracers would be used, to isolate the results.
+   * Separate tracers define different scopes, and as a result, separate main nodes in the result data.
+   * It is expected that for different subsystems different tracers would be used to isolate the results.
    *
    * @param verbose provides a way to disable by default some tracers.
    *    Such tracers will be created only if additional system property "verbose" is set to true.
-   *
    */
   @ApiStatus.Obsolete
   fun getTracer(scopeName: String, verbose: Boolean = false): IJTracer
@@ -40,7 +39,7 @@ interface TelemetryTracer {
   /**
    * Java shortcut for getTracer(Scope, Boolean)
    */
-  fun getTracer(scope: Scope) = getTracer(scope, false)
+  fun getTracer(scope: Scope): IJTracer = getTracer(scope = scope, verbose = false)
 
   /**
    * This function is now obsolete. Please use type-safe alternative getMeter(Scope)
@@ -82,10 +81,14 @@ interface TelemetryTracer {
 
     @JvmStatic
     fun getInstance(): TelemetryTracer {
-      if (Companion::instance.isInitialized) return instance
+      if (Companion::instance.isInitialized) {
+        return instance
+      }
 
       synchronized(lock) {
-        if (Companion::instance.isInitialized) return instance
+        if (Companion::instance.isInitialized) {
+          return instance
+        }
 
         LOG.info("Initializing TelemetryTracer ...")
 

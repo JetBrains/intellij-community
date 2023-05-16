@@ -8,8 +8,8 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * The interface solves two problems:
  * — Isolate IJ code base from OT classes
- * — Provide a more flexible way to handle spans. In some cases we want to control how detailed OT information,
- *    and in this case the alternative signature can be used.
+ * — Provide a more flexible way to handle spans. In some cases we want to control how detailed OT information is,
+ *    and in this case, the alternative signature can be used.
  */
 @ApiStatus.Internal
 interface IJTracer : Tracer {
