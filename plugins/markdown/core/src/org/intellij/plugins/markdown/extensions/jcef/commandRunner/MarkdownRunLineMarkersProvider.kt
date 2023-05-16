@@ -20,7 +20,7 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 
-class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
+internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor() {
   override fun getInfo(element: PsiElement): Info? {
     if (!CommandRunnerExtension.isExtensionEnabled() || !element.isValid) {
       return null
