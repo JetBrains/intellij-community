@@ -3,6 +3,9 @@ package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.diff.comparison.ComparisonManager;
+import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.fragments.LineFragment;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -13,6 +16,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
@@ -157,9 +161,15 @@ public class ModCommandServiceImpl implements ModCommandService {
     String oldText = upd.oldText();
     String newText = upd.newText();
     if (!file.textMatches(oldText)) return ModStatus.ABORT;
+    List<LineFragment> fragments = ComparisonManager.getInstance().compareLines(oldText, newText, ComparisonPolicy.DEFAULT,
+                                                                                DumbProgressIndicator.INSTANCE);
     Document document = file.getViewProvider().getDocument();
     return WriteAction.compute(() -> {
-      document.replaceString(0, document.getTextLength(), newText);
+      StreamEx.ofReversed(fragments)
+          .forEach(fragment -> {
+            document.replaceString(fragment.getStartOffset1(), fragment.getEndOffset1(), 
+                                   newText.substring(fragment.getStartOffset2(), fragment.getEndOffset2()));
+          });
       PsiDocumentManager.getInstance(project).commitDocument(document);
       return ModStatus.SUCCESS;
     });
