@@ -128,8 +128,7 @@ class IndexDiagnosticDumper : Disposable {
 
     @JvmStatic
     private val shouldDumpOldDiagnostics: Boolean
-      get() = SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.old.version.of.diagnostics",
-                                                  ApplicationManagerEx.isInIntegrationTest())
+      get() = SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.old.version.of.diagnostics", false)
 
     private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
