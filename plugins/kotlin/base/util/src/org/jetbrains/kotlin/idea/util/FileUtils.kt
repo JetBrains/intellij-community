@@ -11,16 +11,17 @@ import com.intellij.openapi.vfs.VirtualFileVisitor
 import org.jetbrains.kotlin.idea.KotlinFileType
 
 fun VirtualFile.isKotlinFileType(): Boolean {
-    val extension = extension
-    if (extension == KotlinFileType.EXTENSION) return true
-    if (extension == JavaFileType.INSTANCE.defaultExtension ||
-            extension == JavaClassFileType.INSTANCE.defaultExtension) return false
+    val nameSequence = nameSequence
+    // TODO: change to  DOT_DEFAULT_EXTENSION
+    if (nameSequence.endsWith(KotlinFileType.EXTENSION)) return true
+    if (nameSequence.endsWith(JavaFileType.DOT_DEFAULT_EXTENSION) ||
+        nameSequence.endsWith(JavaClassFileType.DOT_DEFAULT_EXTENSION)) return false
 
     return FileTypeRegistry.getInstance().isFileOfType(this, KotlinFileType.INSTANCE)
 }
 
 fun VirtualFile.isJavaFileType(): Boolean =
-    extension == JavaFileType.DEFAULT_EXTENSION || FileTypeRegistry.getInstance().isFileOfType(this, JavaFileType.INSTANCE)
+    nameSequence.endsWith(JavaFileType.DOT_DEFAULT_EXTENSION) || FileTypeRegistry.getInstance().isFileOfType(this, JavaFileType.INSTANCE)
 
 fun getAllFilesRecursively(filesOrDirs: Array<VirtualFile>): Collection<VirtualFile> {
     val result = ArrayList<VirtualFile>()
