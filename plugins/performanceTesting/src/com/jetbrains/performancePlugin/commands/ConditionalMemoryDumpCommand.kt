@@ -22,7 +22,7 @@ class ConditionalMemoryDumpCommand(text: String, line: Int) : PerformanceCommand
         if (currentMessageCount == targetMessageCount) {
           val memoryDumpPath = MemoryDumpCommand.getMemoryDumpPath()
           LOG.info("Dumping memory snapshot to: $memoryDumpPath")
-          MemoryDumpHelper.captureMemoryDumpZipped(memoryDumpPath)
+          MemoryDumpHelper.captureMemoryDump(memoryDumpPath)
           Disposer.dispose(this)
         }
       }, LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC, this)
