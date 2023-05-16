@@ -58,7 +58,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.maven",
   "intellij.maven.model",
   "intellij.maven.server",
-  "intellij.packageSearch",
   "intellij.gradle",
   "intellij.gradle.dependencyUpdater",
   "intellij.android.gradle.dsl",
