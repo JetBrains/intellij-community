@@ -247,12 +247,12 @@ internal fun createPrioritizedLookupElement(lookupElement: LookupElement, ignore
   return prioritizedElement
 }
 
-fun processDataFrameColumns(dfName: String,
-                            columns: Set<String>,
+fun processDataFrameColumns(columns: Set<String>,
                             needValidatorCheck: Boolean,
                             elementOnPosition: PsiElement,
                             project: Project,
-                            ignoreML: Boolean): List<LookupElement> {
+                            ignoreML: Boolean,
+                            stringPresentation: String): List<LookupElement> {
   val validator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance())
   return columns.mapNotNull { column ->
     when {
@@ -263,7 +263,7 @@ fun processDataFrameColumns(dfName: String,
       validator.isIdentifier(column, project) -> column
       else -> null
     }?.let {
-      val lookupElement = LookupElementBuilder.create(it).withTypeText(PyBundle.message("pandas.completion.type.text", dfName))
+      val lookupElement = LookupElementBuilder.create(it).withTypeText(stringPresentation)
       createPrioritizedLookupElement(lookupElement, ignoreML)
     }
   }
@@ -325,17 +325,17 @@ fun getParentNodeByName(children: List<TreeNode>, psiName: String): XValueNodeIm
   return null
 }
 
-val typeToDelimiter = mapOf(
+private val typeToDelimiter = mapOf(
   "polars.internals.dataframe.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET),
   "polars.dataframe.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET),
-  "pandas.core.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET, PyTokenTypes.DOT)
+  "pandas.core.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET, PyTokenTypes.DOT),
+  "builtins.dict" to setOf(PyTokenTypes.LBRACKET)
 )
 
 fun checkDelimiterByType(qualifiedType: String?, delimiter: IElementType): Boolean {
   qualifiedType ?: return false
   val delimiters = typeToDelimiter[qualifiedType]
-  if (delimiters != null && delimiter !in delimiters) return true
-  return false
+  return delimiters != null && delimiter !in delimiters
 }
 
 fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?,

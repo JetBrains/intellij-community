@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.state.PyRuntime
@@ -21,8 +22,9 @@ import com.jetbrains.python.debugger.values.completePandasDataFrameColumns
 import java.util.concurrent.Callable
 
 enum class PyRuntimeCompletionType {
-  DYNAMIC_CLASS, DATA_FRAME_COLUMNS
+  DYNAMIC_CLASS, DATA_FRAME_COLUMNS, DICT_KEYS
 }
+
 
 /**
  * @param completionType - type of completion items to choose post-processing function in the future
@@ -35,13 +37,26 @@ private fun postProcessingChildren(completionResultData: CompletionResultData,
   return when (completionResultData.completionType) {
     PyRuntimeCompletionType.DATA_FRAME_COLUMNS -> {
       val project = parameters.editor.project ?: return emptyList()
-      val needValidatorCheck = (candidate.pyQualifiedExpressionList.lastOrNull()?.delimiter ?: candidate.psiName.delimiter) != PyTokenTypes.LBRACKET
-      processDataFrameColumns(candidate.psiName.pyQualifiedName,
-                              completionResultData.setOfCompletionItems,
+      val needValidatorCheck = (candidate.pyQualifiedExpressionList.lastOrNull()?.delimiter
+                                ?: candidate.psiName.delimiter) != PyTokenTypes.LBRACKET
+      processDataFrameColumns(completionResultData.setOfCompletionItems,
                               needValidatorCheck,
                               parameters.position,
                               project,
-                              true)
+                              true,
+                              PyBundle.message("pandas.completion.type.text", candidate.psiName.pyQualifiedName))
+    }
+    PyRuntimeCompletionType.DICT_KEYS -> {
+      val setOfCompletionItems = completionResultData.setOfCompletionItems.filter { it != "__len__" }.map {
+        it.removeSurrounding("\'")
+      }.toSet()
+      val project = parameters.editor.project ?: return emptyList()
+      processDataFrameColumns(setOfCompletionItems,
+                              false,
+                              parameters.position,
+                              project,
+                              true,
+                              PyBundle.message("dict.completion.type.text"))
     }
     PyRuntimeCompletionType.DYNAMIC_CLASS -> proceedPyValueChildrenNames(completionResultData.setOfCompletionItems, true)
   }
@@ -63,6 +78,10 @@ interface PyRuntimeCompletionRetrievalService {
       return CompletionResultData(dfColumns, PyRuntimeCompletionType.DATA_FRAME_COLUMNS)
     }
     computeChildrenIfNeeded(node)
+    if ((debugValue as PyDebugValue).qualifiedType == "builtins.dict") {
+      return CompletionResultData(node.loadedChildren.mapNotNull { (it as? XValueNodeImpl)?.name }.toSet(),
+                                  PyRuntimeCompletionType.DICT_KEYS)
+    }
     return CompletionResultData(node.loadedChildren.mapNotNull { (it as? XValueNodeImpl)?.name }.toSet(),
                                 PyRuntimeCompletionType.DYNAMIC_CLASS)
   }
