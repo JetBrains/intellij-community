@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.atomic.AtomicReference
 
 class KotlinPackageStatementPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
@@ -199,7 +200,8 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
     /*
      * Actually an WeakMap<Module, ConcurrentMap<ModuleSourceInfo, ConcurrentMap<FqName, Boolean>>>
      */
-    private val cache = ContainerUtil.createConcurrentWeakMap<Module, ConcurrentMap<ModuleSourceInfo, ConcurrentMap<FqName, Boolean>>>()
+    private val cacheInstance  =
+        AtomicReference<ConcurrentMap<Module, ConcurrentMap<ModuleSourceInfo, ConcurrentMap<FqName, Boolean>>>>()
     private val implicitPackagePrefixCache = ImplicitPackagePrefixCache(project)
 
     private val useStrongMapForCaching = Registry.`is`("kotlin.cache.packages.strong.map", false)
@@ -217,8 +219,19 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         synchronized(this) {
             pendingVFileChanges.clear()
             pendingKtFileChanges.clear()
-            cache.clear()
+            cacheInstance.set(null)
             implicitPackagePrefixCache.clear()
+        }
+    }
+
+    private fun cache(): ConcurrentMap<Module, ConcurrentMap<ModuleSourceInfo, ConcurrentMap<FqName, Boolean>>> {
+        cacheInstance.get()?.let { return it }
+        val map =
+            ContainerUtil.createConcurrentWeakMap<Module, ConcurrentMap<ModuleSourceInfo, ConcurrentMap<FqName, Boolean>>>()
+        return if (cacheInstance.compareAndSet(null, map)) {
+            map
+        } else {
+            cacheInstance.get()!!
         }
     }
 
@@ -232,7 +245,8 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
 
     private fun invalidateCacheForModuleSourceInfo(moduleSourceInfo: ModuleSourceInfo) {
         LOG.debugIfEnabled(project) { "Invalidated cache for $moduleSourceInfo" }
-        val perSourceInfoData = cache[moduleSourceInfo.module] ?: return
+        val cache = cacheInstance.get()
+        val perSourceInfoData = cache?.get(moduleSourceInfo.module) ?: return
         val dataForSourceInfo = perSourceInfoData[moduleSourceInfo] ?: return
         dataForSourceInfo.clear()
     }
@@ -246,13 +260,15 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
                 // When VirtualFile !isValid (deleted for example), it impossible to use getModuleInfoByVirtualFile
                 // For directory we must check both is it in some sourceRoot, and is it contains some sourceRoot
                 if (vfile.isDirectory || !vfile.isValid) {
-                    for ((module, data) in cache) {
-                        val sourceRootUrls = module.rootManager.sourceRootUrls
-                        if (sourceRootUrls.any { url ->
-                                vfile.containedInOrContains(url)
-                            }) {
-                            LOG.debugIfEnabled(project) { "Invalidated cache for $module" }
-                            data.clear()
+                    cacheInstance.get()?.let { cache ->
+                        for ((module, data) in cache) {
+                            val sourceRootUrls = module.rootManager.sourceRootUrls
+                            if (sourceRootUrls.any { url ->
+                                    vfile.containedInOrContains(url)
+                                }) {
+                                LOG.debugIfEnabled(project) { "Invalidated cache for $module" }
+                                data.clear()
+                            }
                         }
                     }
                 } else {
@@ -309,7 +325,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         val module = moduleInfo.module
         checkPendingChanges()
 
-        val perSourceInfoCache = cache.getOrPut(module) {
+        val perSourceInfoCache = cache().getOrPut(module) {
             if (useStrongMapForCaching) ConcurrentHashMap() else CollectionFactory.createConcurrentSoftMap()
         }
         val cacheForCurrentModuleInfo = perSourceInfoCache.getOrPut(moduleInfo) {
