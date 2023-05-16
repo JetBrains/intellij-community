@@ -86,23 +86,23 @@ class VcsInitialization(private val project: Project, private val coroutineScope
     synchronized(lock) {
       val activity = ProxyVcsStartupActivity(vcsInitObject, runnable)
       if (isInitActivity(activity)) {
-        return if (status == Status.PENDING) {
+        if (status == Status.PENDING) {
           initActivities.add(activity)
-          true
+          return true
         }
         else {
           LOG.warn("scheduling late initialization: $activity")
-          false
+          return false
         }
       }
       else {
-        return if (status == Status.PENDING || status == Status.RUNNING_INIT) {
+        if (status == Status.PENDING || status == Status.RUNNING_INIT) {
           postActivities.add(activity)
-          true
+          return true
         }
         else {
           LOG.debug { "scheduling late post activity: $activity" }
-          false
+          return false
         }
       }
     }
