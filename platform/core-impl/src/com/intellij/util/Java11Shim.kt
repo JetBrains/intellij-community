@@ -11,7 +11,7 @@ interface Java11Shim {
     var INSTANCE: Java11Shim = object : Java11Shim {
       override fun <K, V> copyOf(map: Map<K, V>): Map<K, V> = Collections.unmodifiableMap(map)
 
-      override fun <E> copyOf(collection: Set<E>): Set<E> = Collections.unmodifiableSet(collection)
+      override fun <E> copyOf(collection: Collection<E>): Set<E> = Collections.unmodifiableSet(HashSet(collection))
 
       override fun <E> copyOfCollection(collection: Collection<E>): List<E> = Collections.unmodifiableList(ArrayList(collection))
 
@@ -21,7 +21,7 @@ interface Java11Shim {
 
   fun <K, V : Any?> copyOf(map: Map<K, V>): Map<K, V>
 
-  fun <E> copyOf(collection: Set<E>): Set<E>
+  fun <E> copyOf(collection: Collection<E>): Set<E>
 
   fun <E> setOf(collection: Array<E>): Set<E>
 

@@ -497,7 +497,7 @@ private class DeepEnumeration(private val list: List<Enumeration<URL>>) : Enumer
 }
 
 private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
-  val result = HashSet(mutableListOf(
+  val result = mutableListOf(
     "kotlin.Function",
     "kotlin.sequences.Sequence",
     "kotlin.ranges.IntRange",
@@ -537,7 +537,7 @@ private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
     "kotlin.jvm.internal.Lambda",
     // coroutine dump is supported by core class loader
     "kotlin.coroutines.jvm.internal.DebugProbesKt",
-  ))
+  )
   System.getProperty("idea.kotlin.classes.used.in.signatures")?.let {
     result.addAll(it.splitToSequence(',').map(String::trim))
   }

@@ -950,7 +950,7 @@ interface AppStarter {
 class Java11ShimImpl : Java11Shim {
   override fun <K, V> copyOf(map: Map<K, V>): Map<K, V> = java.util.Map.copyOf(map)
 
-  override fun <E> copyOf(collection: Set<E>): Set<E> = java.util.Set.copyOf(collection)
+  override fun <E> copyOf(collection: Collection<E>): Set<E> = java.util.Set.copyOf(collection)
 
   override fun <E> copyOfCollection(collection: Collection<E>): List<E> = java.util.List.copyOf(collection)
 
