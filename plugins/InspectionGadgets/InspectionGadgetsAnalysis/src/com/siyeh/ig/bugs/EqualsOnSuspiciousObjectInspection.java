@@ -24,8 +24,8 @@ import java.util.Map;
 public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
   private final Map<String, ReplaceInfo> myClasses =
     Map.ofEntries(
-      Map.entry(CommonClassNames.JAVA_LANG_STRING_BUILDER, ReplaceInfo.available(true, "toString")),
-      Map.entry(CommonClassNames.JAVA_LANG_STRING_BUFFER, ReplaceInfo.available(true, "toString")),
+      Map.entry(CommonClassNames.JAVA_LANG_STRING_BUILDER, ReplaceInfo.stringBuilders()),
+      Map.entry(CommonClassNames.JAVA_LANG_STRING_BUFFER, ReplaceInfo.stringBuilders()),
       Map.entry("java.util.concurrent.atomic.AtomicBoolean", ReplaceInfo.available(false, "get")),
       Map.entry("java.util.concurrent.atomic.AtomicInteger", ReplaceInfo.available(false, "get")),
       Map.entry("java.util.concurrent.atomic.AtomicIntegerArray", ReplaceInfo.notAvailable()),
@@ -80,7 +80,7 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
       return null;
     }
     ReplaceInfo info = myClasses.get(qualifiedName);
-    if (info == null || !info.available) {
+    if (info == null || info instanceof ReplaceInfo.NotAvailableReplaceInfo) {
       return null;
     }
 
@@ -112,15 +112,71 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
     };
   }
 
-  private record ReplaceInfo(boolean available, boolean isObjects, @Nullable String valueMethod) {
+  private sealed interface ReplaceInfo {
+    ReplaceInfo NOT_AVAILABLE = new NotAvailableReplaceInfo();
+
+    String valueMethod();
+
     private static ReplaceInfo notAvailable() {
-      return new ReplaceInfo(false, false, null);
+      return NOT_AVAILABLE;
     }
 
-    private static ReplaceInfo available(boolean isObjects, @NotNull String valueMethod) {
-      return new ReplaceInfo(true, isObjects, valueMethod);
+    private static SimpleReplaceInfo available(boolean isObjects, @NotNull String valueMethod) {
+      return new SimpleReplaceInfo(isObjects, valueMethod);
+    }
+
+    static ReplaceInfo stringBuilders() {
+      return new ComplexReplaceInfo() {
+        private final static String COMPARE_TO = "compareTo";
+
+        private final static SimpleReplaceInfo fallback = ReplaceInfo.available(true, "toString");
+
+        @Override
+        public String valueMethod() {
+          return fallback.valueMethod();
+        }
+
+        private static boolean isApplicable(PsiElement psiElement) {
+          return PsiUtil.isLanguageLevel11OrHigher(psiElement);
+        }
+
+        @Override
+        public void fill(@NotNull PsiExpression argument,
+                         @NotNull PsiExpression qualifier,
+                         @NotNull StringBuilder builder,
+                         @NotNull CommentTracker ct) {
+          if (!isApplicable(argument)) {
+            EqualsOnSuspiciousObjectFix.fillSimple(fallback, argument, qualifier, builder, ct);
+            return;
+          }
+          builder.append(ct.text(qualifier, ParenthesesUtils.METHOD_CALL_PRECEDENCE))
+            .append(".")
+            .append(COMPARE_TO)
+            .append("(")
+            .append(ct.text(argument))
+            .append(")")
+            .append(" == 0");
+        }
+      };
+    }
+
+    final class NotAvailableReplaceInfo implements ReplaceInfo {
+      @Override
+      public String valueMethod() {
+        return "";
+      }
+    }
+
+    record SimpleReplaceInfo(boolean isObjects, @NotNull String valueMethod) implements ReplaceInfo {
+
+    }
+
+    non-sealed interface ComplexReplaceInfo extends ReplaceInfo {
+      void fill(@NotNull PsiExpression argument, @NotNull PsiExpression qualifier,
+                @NotNull StringBuilder builder, @NotNull CommentTracker ct);
     }
   }
+
 
   private static class EqualsOnSuspiciousObjectFix extends InspectionGadgetsFix {
     @SafeFieldForPreview
@@ -132,7 +188,7 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
 
     @Override
     public @NotNull String getName() {
-      return InspectionGadgetsBundle.message("equals.called.on.suspicious.object.fix.name", myInfo.valueMethod);
+      return InspectionGadgetsBundle.message("equals.called.on.suspicious.object.fix.name", myInfo.valueMethod());
     }
 
     @Override
@@ -142,6 +198,9 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
 
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      if (myInfo instanceof ReplaceInfo.NotAvailableReplaceInfo) {
+        return;
+      }
       PsiElement psiElement = descriptor.getPsiElement();
 
       if (psiElement == null || !(psiElement.getParent() instanceof PsiReferenceExpression referenceExpression)) {
@@ -163,23 +222,21 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
       if (argument == null) {
         return;
       }
-      boolean argumentIsNullable = isNullable(argument);
+
       StringBuilder builder = new StringBuilder();
       CommentTracker ct = new CommentTracker();
 
-      if (argumentIsNullable) {
-        builder.append(ct.text(argument, ParenthesesUtils.EQUALITY_PRECEDENCE))
-          .append("!=null &&");
+      if (myInfo instanceof ReplaceInfo.SimpleReplaceInfo simpleReplaceInfo) {
+        fillSimple(simpleReplaceInfo, argument, qualifierExpression, builder, ct);
+      }
+      if (myInfo instanceof ReplaceInfo.ComplexReplaceInfo complexReplaceInfo) {
+        complexReplaceInfo.fill(argument, qualifierExpression, builder, ct);
       }
 
-      String qualifierText = ct.text(qualifierExpression, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + "." + myInfo.valueMethod + "()";
-      String argumentText = ct.text(argument, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + "." + myInfo.valueMethod + "()";
-      if (myInfo.isObjects) {
-        builder.append(qualifierText).append(".equals(").append(argumentText).append(")");
+      if (builder.isEmpty()) {
+        return;
       }
-      else {
-        builder.append(qualifierText).append("==").append(argumentText);
-      }
+
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiExpression newExpression = factory.createExpressionFromText(builder.toString(), callExpression);
       PsiElement callParent = callExpression.getParent();
@@ -190,6 +247,28 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
       PsiElement replaced = ct.replaceAndRestoreComments(callExpression, newExpression);
       final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
       styleManager.reformat(replaced);
+    }
+
+    private static void fillSimple(@NotNull ReplaceInfo.SimpleReplaceInfo replaceInfo,
+                                   @NotNull PsiExpression argument,
+                                   @NotNull PsiExpression qualifierExpression,
+                                   @NotNull StringBuilder builder,
+                                   @NotNull CommentTracker ct) {
+      boolean argumentIsNullable = isNullable(argument);
+
+      if (argumentIsNullable) {
+        builder.append(ct.text(argument, ParenthesesUtils.EQUALITY_PRECEDENCE))
+          .append("!=null &&");
+      }
+
+      String qualifierText = ct.text(qualifierExpression, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + "." + replaceInfo.valueMethod + "()";
+      String argumentText = ct.text(argument, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + "." + replaceInfo.valueMethod + "()";
+      if (replaceInfo.isObjects) {
+        builder.append(qualifierText).append(".equals(").append(argumentText).append(")");
+      }
+      else {
+        builder.append(qualifierText).append("==").append(argumentText);
+      }
     }
 
     private static boolean isNullable(@NotNull PsiExpression argument) {
