@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.configurationStore.schemeManager
@@ -222,7 +222,7 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
 }
 
 internal inline fun lazyPreloadScheme(bytes: ByteArray, isOldSchemeNaming: Boolean, consumer: (name: String?, parser: XMLStreamReader) -> Unit) {
-  val reader = createXmlStreamReader(CharsetToolkit.inputStreamSkippingBOM(bytes.inputStream()))
+  val reader = createXmlStreamReader(bytes)
   consumer(preload(isOldSchemeNaming, reader), reader)
 }
 

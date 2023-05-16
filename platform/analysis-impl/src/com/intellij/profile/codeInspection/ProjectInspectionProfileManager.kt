@@ -8,11 +8,11 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.profile.ProfileChangeAdapter
 import com.intellij.project.isDirectoryBased
@@ -34,6 +34,8 @@ private val defaultSchemeDigest = hashElement(JDOMUtil.load("""<component name="
 
 const val PROFILE_DIR: String = "inspectionProfiles"
 const val PROFILES_SETTINGS: String = "profiles_settings.xml"
+
+private val LOG = logger<ProjectInspectionProfileManager>()
 
 @State(name = "InspectionProjectProfileManager", storages = [(Storage(value = "$PROFILE_DIR/profiles_settings.xml", exclusive = true))])
 open class ProjectInspectionProfileManager(final override val project: Project) : BaseInspectionProfileManager(project.messageBus),
@@ -61,7 +63,7 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
       return profile
     }
 
-    override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, PROFILES_SETTINGS)
+    override fun isSchemeFile(name: CharSequence) = name != PROFILES_SETTINGS
 
     override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: Long): Boolean {
       return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && digest == defaultSchemeDigest
@@ -125,7 +127,9 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
     }
   }
 
-  override fun getStateModificationCount() = state.modificationCount + severityRegistrar.modificationCount + (schemeManagerIprProvider?.modificationCount ?: 0)
+  override fun getStateModificationCount(): Long {
+    return state.modificationCount + severityRegistrar.modificationCount + (schemeManagerIprProvider?.modificationCount ?: 0)
+  }
 
   @TestOnly
   fun forceLoadSchemes() {

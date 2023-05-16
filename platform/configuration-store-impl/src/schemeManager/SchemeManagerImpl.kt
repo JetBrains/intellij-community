@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.configurationStore.schemeManager
@@ -14,7 +14,6 @@ import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeProcessor
@@ -53,10 +52,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
   private val fileChangeSubscriber: FileChangeSubscriber? = null,
   private val virtualFileResolver: VirtualFileResolver? = null,
   private val settingsCategory: SettingsCategory = SettingsCategory.OTHER
-) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor),
-    SafeWriteRequestor,
-    StorageManagerFileWriteRequestor {
-
+) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor, StorageManagerFileWriteRequestor {
   private val isUseVfs: Boolean
     get() = fileChangeSubscriber != null || virtualFileResolver != null
 
@@ -90,7 +86,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
     }
 
     if (isUseVfs) {
-      LOG.runAndLogException { refreshVirtualDirectory() }
+      runCatching { refreshVirtualDirectory() }.getOrLogException(LOG)
     }
   }
 
