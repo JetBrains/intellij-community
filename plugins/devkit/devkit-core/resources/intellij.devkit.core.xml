@@ -268,7 +268,7 @@
     <localInspection language="JVM" shortName="LightServiceMustBeFinal"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="ERROR"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalInspection"
                      key="inspection.light.service.must.be.final.display.name"/>
     <localInspection language="JVM" shortName="MismatchedLightServiceLevelAndCtor"
