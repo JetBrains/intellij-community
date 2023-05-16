@@ -1,4 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LazySchemeProcessor
@@ -66,8 +68,9 @@ internal class SchemeChangeApplicator<T : Scheme, M:T> (private val schemeManage
       }
 
       val fileName = file.name
-      val changedScheme:M? = findExternalizableSchemeByFileName(fileName, schemeManager) as M?
-      if (callSchemeContentChangedIfSupported<T,M>(changedScheme, fileName, file, schemeManager)) {
+      @Suppress("UNCHECKED_CAST")
+      val changedScheme: M? = findExternalizableSchemeByFileName(fileName, schemeManager) as M?
+      if (callSchemeContentChangedIfSupported(changedScheme, fileName, file, schemeManager)) {
         continue
       }
 
@@ -172,7 +175,7 @@ private fun <T:Scheme, M:T>callSchemeContentChangedIfSupported(changedScheme: M?
 
   // unrealistic case, but who knows
   val externalInfo = schemeManager.schemeToInfo.get(changedScheme) ?: return false
-  catchAndLog({ file.path }) {
+  return catchAndLog({ file.path }) {
     val bytes = file.contentsToByteArray()
     lazyPreloadScheme(bytes, schemeManager.isOldSchemeNaming) { name, parser ->
       val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
@@ -183,9 +186,9 @@ private fun <T:Scheme, M:T>callSchemeContentChangedIfSupported(changedScheme: M?
       val dataHolder = SchemeDataHolderImpl(schemeManager.processor, bytes, externalInfo)
 
       val processor: SchemeProcessor<T, M> = schemeManager.processor
+      @Suppress("UNCHECKED_CAST")
       (processor as SchemeContentChangedHandler<M>).schemeContentChanged(changedScheme, schemeName, dataHolder)
     }
-    return true
-  }
-  return false
+    true
+  } ?: false
 }

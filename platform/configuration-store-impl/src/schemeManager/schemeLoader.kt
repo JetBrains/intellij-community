@@ -59,7 +59,9 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
   fun apply(): List<T> {
     LOG.assertTrue(isApplied.compareAndSet(false, true))
     if (filesToDelete.isNotEmpty() || preScheduledFilesToDelete.isNotEmpty()) {
-      LOG.debug { "Schedule to delete: ${filesToDelete.joinToString()} (and preScheduledFilesToDelete: ${preScheduledFilesToDelete.joinToString()})" }
+      LOG.debug {
+        "Schedule to delete: ${filesToDelete.joinToString()} (and preScheduledFilesToDelete: ${preScheduledFilesToDelete.joinToString()})"
+      }
       schemeManager.filesToDelete.addAll(filesToDelete)
       schemeManager.filesToDelete.addAll(preScheduledFilesToDelete)
     }
