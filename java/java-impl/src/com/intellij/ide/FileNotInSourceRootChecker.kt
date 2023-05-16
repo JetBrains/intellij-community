@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
-import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
@@ -84,8 +83,7 @@ class FileNotInSourceRootService(val project: Project) : Disposable {
       .registerFix(moveFileFix, listOf(DismissFix(), IgnoreForThisProjectFix()), null, null, null)
       .create()
     if (info != null) {
-      BackgroundUpdateHighlightersUtil.setHighlightersToSingleEditor(project, editor, 0, editor.document.textLength, listOf(info), null,
-                                                                     GROUP)
+      DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(GROUP, info, psiFile)
     }
   }
 
