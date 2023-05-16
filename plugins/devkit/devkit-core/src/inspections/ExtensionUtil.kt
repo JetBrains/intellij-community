@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiUtil
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericDomValue
@@ -13,6 +15,13 @@ import org.jetbrains.idea.devkit.util.DevKitDomUtil
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 
 object ExtensionUtil {
+
+  fun isExtensionPointImplementationCandidate(psiClass: PsiClass): Boolean {
+    return psiClass.classKind == JvmClassKind.CLASS &&
+           !PsiUtil.isInnerClass(psiClass) &&
+           !PsiUtil.isLocalOrAnonymousClass(psiClass) &&
+           !PsiUtil.isAbstractClass(psiClass)
+  }
 
   /**
    * Returns `true` if the [extensionClass] is registered as a plugin extension and

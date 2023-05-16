@@ -19,7 +19,7 @@ internal class ExtensionClassShouldBeFinalAndNonPublicInspection : DevKitJvmInsp
     return object : DefaultJvmElementVisitor<Boolean> {
       override fun visitClass(clazz: JvmClass): Boolean {
         if (clazz !is PsiClass) return true
-        if (!PsiUtil.isExtensionPointImplementationCandidate(clazz)) {
+        if (!ExtensionUtil.isExtensionPointImplementationCandidate(clazz)) {
           return true
         }
         val sourceElement = clazz.sourceElement

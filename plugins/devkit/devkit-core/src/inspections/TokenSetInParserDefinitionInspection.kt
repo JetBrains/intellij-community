@@ -19,7 +19,7 @@ internal class TokenSetInParserDefinitionInspection : DevKitUastInspectionBase(U
 
   override fun checkClass(uClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
     val javaPsi = uClass.javaPsi
-    if (!PsiUtil.isExtensionPointImplementationCandidate(javaPsi)) return ProblemDescriptor.EMPTY_ARRAY
+    if (!ExtensionUtil.isExtensionPointImplementationCandidate(javaPsi)) return ProblemDescriptor.EMPTY_ARRAY
     if (!InheritanceUtil.isInheritor(javaPsi, ParserDefinition::class.java.name)) return ProblemDescriptor.EMPTY_ARRAY
 
     val problemsHolder = createProblemsHolder(uClass, manager, isOnTheFly)

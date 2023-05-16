@@ -22,7 +22,7 @@ class ExtensionRegisteredAsServiceOrComponentInspection : DevKitUastInspectionBa
 
   override fun checkClass(uClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor?>? {
     val psiClass = uClass.javaPsi
-    if (!PsiUtil.isExtensionPointImplementationCandidate(psiClass)) {
+    if (!ExtensionUtil.isExtensionPointImplementationCandidate(psiClass)) {
       return ProblemDescriptor.EMPTY_ARRAY
     }
 
