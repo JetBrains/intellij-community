@@ -5,7 +5,8 @@ import org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManag
 import org.jetbrains.annotations.ApiStatus
 import kotlin.io.path.exists
 
-@ApiStatus.Experimental
+@ApiStatus.Obsolete
+@ApiStatus.Internal
 interface MarkdownExtensionWithExternalFiles: MarkdownConfigurableExtension {
   val externalFiles: Iterable<String>
 

@@ -2,11 +2,14 @@
 package org.intellij.plugins.markdown.extensions
 
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Extensions that implement this interface will be added to
  * the extensions table on the markdown settings page.
  */
+@ApiStatus.Obsolete
+@ApiStatus.Internal
 interface MarkdownConfigurableExtension {
   /**
    * Name that will be displayed in the extensions table.

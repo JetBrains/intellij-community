@@ -8,7 +8,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
 
-@ApiStatus.Experimental
+@ApiStatus.Obsolete
+@ApiStatus.Internal
 abstract class ExtensionsExternalFilesPathManager {
   abstract val baseDirectory: Path
 
