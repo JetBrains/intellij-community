@@ -49,6 +49,8 @@ import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
+import static com.intellij.execution.services.ServiceViewDragHelper.getTheOnlyRootContributor;
+
 final class ServiceTreeView extends ServiceView {
   private static final String ADD_SERVICE_ACTION_ID = "ServiceView.AddService";
 
@@ -240,10 +242,25 @@ final class ServiceTreeView extends ServiceView {
 
   private void onSelectionChanged() {
     List<ServiceViewItem> selected = getSelectedItems();
-    ServiceViewItem newSelection = ContainerUtil.getOnlyItem(selected);
-    if (Comparing.equal(newSelection, myLastSelection)) return;
+
+    ServiceViewItem newSelection;
+    ServiceViewDescriptor newDescriptor;
+    if (selected.size() == 1) {
+      newSelection = selected.get(0);
+      newDescriptor = newSelection.getViewDescriptor();
+    }
+    else {
+      newSelection = null;
+      ServiceViewContributor<?> contributor = getTheOnlyRootContributor(selected);
+      newDescriptor = contributor == null ? null : contributor.getViewDescriptor(getProject());
+    }
+
+
+    if (newSelection != null && newSelection.equals(myLastSelection)) return;
 
     ServiceViewDescriptor oldDescriptor = myLastSelection == null ? null : myLastSelection.getViewDescriptor();
+    if (Comparing.equal(newDescriptor, oldDescriptor)) return;
+
     if (oldDescriptor != null && mySelected) {
       oldDescriptor.onNodeUnselected();
     }
@@ -253,9 +270,8 @@ final class ServiceTreeView extends ServiceView {
 
     if (!mySelected) return;
 
-    ServiceViewDescriptor newDescriptor = newSelection == null ? null : newSelection.getViewDescriptor();
     if (newDescriptor != null) {
-      newDescriptor.onNodeSelected();
+      newDescriptor.onNodeSelected(ContainerUtil.map(selected, ServiceViewItem::getValue));
     }
     myUi.setDetailsComponent(newDescriptor == null ? null : newDescriptor.getContentComponent());
   }

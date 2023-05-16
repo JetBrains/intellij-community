@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.StopAction;
@@ -38,7 +37,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ObjectUtils;
@@ -56,32 +54,14 @@ import java.util.*;
 public final class RunDashboardServiceViewContributor
   implements ServiceViewGroupingContributor<RunDashboardServiceViewContributor.RunConfigurationContributor, GroupingNode> {
 
-  @NonNls private static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
+  @NonNls static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
 
   private static final Key<DefaultActionGroup> MORE_ACTION_GROUP_KEY = Key.create("ServicesMoreActionGroup");
-
-  private static final ServiceViewDescriptor CONTRIBUTOR_DESCRIPTOR =
-    new SimpleServiceViewDescriptor("Run Dashboard", AllIcons.Actions.Execute) {
-      @Override
-      public ActionGroup getToolbarActions() {
-        return RunDashboardServiceViewContributor.getToolbarActions(null);
-      }
-
-      @Override
-      public ActionGroup getPopupActions() {
-        return RunDashboardServiceViewContributor.getPopupActions();
-      }
-
-      @Override
-      public DataProvider getDataProvider() {
-        return id -> PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(id) ? new RunDashboardServiceViewDeleteProvider() : null;
-      }
-    };
 
   @NotNull
   @Override
   public ServiceViewDescriptor getViewDescriptor(@NotNull Project project) {
-    return CONTRIBUTOR_DESCRIPTOR;
+    return new RunDashboardContributorViewDescriptor(project);
   }
 
   @NotNull
@@ -126,13 +106,6 @@ public final class RunDashboardServiceViewContributor
       return new RunDashboardFolderGroupViewDescriptor(node);
     }
     return new RunDashboardGroupViewDescriptor(node);
-  }
-
-  @NotNull
-  private static JComponent createEmptyContent() {
-    JPanel panel = new JBPanelWithEmptyText().withEmptyText(ExecutionBundle.message("run.dashboard.not.started.configuration.message"));
-    panel.setFocusable(true);
-    return panel;
   }
 
   private static ActionGroup getToolbarActions(@Nullable RunContentDescriptor descriptor) {
@@ -229,7 +202,7 @@ public final class RunDashboardServiceViewContributor
     public JComponent getContentComponent() {
       Content content = myNode.getContent();
       if (content == null) {
-        myWrapper.setContent(createEmptyContent());
+        myWrapper.setContent(((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getEmptyContent());
         myWrapper.setContentId(null);
       }
       else {
@@ -289,7 +262,7 @@ public final class RunDashboardServiceViewContributor
     }
 
     @Override
-    public void onNodeSelected() {
+    public void onNodeSelected(List<Object> selectedServices) {
       Content content = myNode.getContent();
       if (content == null) return;
 
@@ -492,6 +465,11 @@ public final class RunDashboardServiceViewContributor
       return null;
     }
 
+    @Override
+    public @Nullable JComponent getContentComponent() {
+      return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getEmptyContent();
+    }
+
     private static String getId(GroupingNode node) {
       AbstractTreeNode<?> parent = node.getParent();
       if (parent instanceof GroupingNode) {
@@ -633,7 +611,41 @@ public final class RunDashboardServiceViewContributor
         public Runnable getRemover() {
           return service instanceof RunDashboardNode ? ((RunDashboardNode)service).getRemover() : null;
         }
+
+        @Override
+        public @Nullable JComponent getContentComponent() {
+          return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getEmptyContent();
+        }
       };
+    }
+  }
+
+  private static class RunDashboardContributorViewDescriptor extends SimpleServiceViewDescriptor {
+    private final Project myProject;
+
+    RunDashboardContributorViewDescriptor(@NotNull Project project) {
+      super("Run Dashboard", AllIcons.Actions.Execute);
+      myProject = project;
+    }
+
+    @Override
+    public ActionGroup getToolbarActions() {
+      return RunDashboardServiceViewContributor.getToolbarActions(null);
+    }
+
+    @Override
+    public ActionGroup getPopupActions() {
+      return RunDashboardServiceViewContributor.getPopupActions();
+    }
+
+    @Override
+    public DataProvider getDataProvider() {
+      return id -> PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(id) ? new RunDashboardServiceViewDeleteProvider() : null;
+    }
+
+    @Override
+    public @Nullable JComponent getContentComponent() {
+      return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myProject)).getEmptyContent();
     }
   }
 }

@@ -89,20 +89,7 @@ class ServiceViewTreeUi implements ServiceViewUi {
     myMasterPanel.add(ScrollPaneFactory.createScrollPane(component, SideBorder.TOP), BorderLayout.CENTER);
 
     myMasterActionToolbar = actionProvider.createMasterComponentToolbar(component);
-    JComponent toolbarComponent = myMasterActionToolbar.getComponent();
-    toolbarComponent.setBorder(JBUI.Borders.empty(0, JBUI.scale(2)));
-    Wrapper toolbarWrapper = new Wrapper() {
-      @Override
-      public Dimension getPreferredSize() {
-        Dimension size = super.getPreferredSize();
-        if (size.height > 0) {
-          size.height = JBRunnerTabs.getTabLabelPreferredHeight() - JBUI.scale(1); // without bottom border
-        }
-        return size;
-      }
-    };
-    toolbarWrapper.setContent(toolbarComponent);
-    myMasterPanel.add(toolbarWrapper, BorderLayout.NORTH);
+    myMasterPanel.add(ServiceViewUIUtils.wrapServicesAligned(myMasterActionToolbar), BorderLayout.NORTH);
     myMasterPanel.updateUI();
 
     actionProvider.installPopupHandler(component);

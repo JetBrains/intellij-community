@@ -3,10 +3,13 @@ package com.intellij.execution.services;
 
 import com.intellij.execution.ui.layout.impl.JBRunnerTabs;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTabbedPaneUI;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.ContentUI;
 import com.intellij.ui.content.TabbedPaneContentUI;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,6 +50,23 @@ public final class ServiceViewUIUtils {
         return size;
       }
     };
+  }
+
+  public static @NotNull JComponent wrapServicesAligned(@NotNull ActionToolbar toolbar) {
+    JComponent toolbarComponent = toolbar.getComponent();
+    toolbarComponent.setBorder(JBUI.Borders.empty(0, JBUI.scale(2)));
+    Wrapper toolbarWrapper = new Wrapper() {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        if (size.height > 0) {
+          size.height = JBRunnerTabs.getTabLabelPreferredHeight() - JBUI.scale(1); // without bottom border
+        }
+        return size;
+      }
+    };
+    toolbarWrapper.setContent(toolbarComponent);
+    return toolbarWrapper;
   }
 
   private static class ServiceViewDetailsTabbedPaneUI extends DarculaTabbedPaneUI {
