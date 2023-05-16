@@ -30,7 +30,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
 
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 20)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 21)
 
     private val LANGUAGES = listOf(
       NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
@@ -111,8 +111,8 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val artifactIdChangedEvent = GROUP.registerVarargEvent("build.system.artifact.id.changed", *buildSystemFields)
     private val versionChangedEvent = GROUP.registerVarargEvent("build.system.version.changed", *buildSystemFields)
 
-    private val groovyLibraryChanged = GROUP.registerVarargEvent("groovy.lib.changed", *baseFields, groovySourceTypeField, groovyVersionField)
-    private val groovyLibraryFinished = GROUP.registerVarargEvent("groovy.lib.finished", *baseFields, groovySourceTypeField, groovyVersionField)
+    private val groovyLibraryChanged = GROUP.registerVarargEvent("groovy.lib.changed", *buildSystemFields, groovySourceTypeField, groovyVersionField)
+    private val groovyLibraryFinished = GROUP.registerVarargEvent("groovy.lib.finished", *buildSystemFields, groovySourceTypeField, groovyVersionField)
     // @formatter:on
 
     @JvmStatic
