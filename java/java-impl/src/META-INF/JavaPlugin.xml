@@ -2443,5 +2443,7 @@
               topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileInlaySelectionListenerSettingsListener"
               topic="com.intellij.codeInsight.hints.InlayHintsSettings$SettingsListener"/>
+    <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileRefactoringEventListener"
+              topic="com.intellij.refactoring.listeners.RefactoringEventListener"/>
   </projectListeners>
 </idea-plugin>

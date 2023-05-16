@@ -93,6 +93,20 @@ private class ProjectProblemFileInlaySelectionListenerSettingsListener(private v
   }
 }
 
+private class ProjectProblemFileRefactoringEventListener(private val project: Project) : RefactoringEventListener {
+  override fun refactoringDone(refactoringId: String, afterData: RefactoringEventData?) {
+    val psiJavaFile = (afterData?.getUserData(RefactoringEventData.PSI_ELEMENT_KEY) as? PsiMember)?.containingFile as? PsiJavaFile
+                      ?: return
+    setPreviousState(psiJavaFile)
+  }
+
+  override fun undoRefactoring(refactoringId: String) {
+    val selectedFile = getSelectedFile(project) ?: return
+    val psiJavaFile = getJavaFile(project, selectedFile) ?: return
+    setPreviousState(psiJavaFile)
+  }
+}
+
 private class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment && !TestModeFlags.`is`(ProjectProblemUtils.ourTestingProjectProblems)) {
@@ -122,19 +136,6 @@ private class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivi
             setPreviousState(selectedJavaFile)
           }
         }
-      }
-    })
-    connection.subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, object : RefactoringEventListener {
-      override fun refactoringDone(refactoringId: String, afterData: RefactoringEventData?) {
-        val psiJavaFile = (afterData?.getUserData(RefactoringEventData.PSI_ELEMENT_KEY) as? PsiMember)?.containingFile as? PsiJavaFile
-                          ?: return
-        setPreviousState(psiJavaFile)
-      }
-
-      override fun undoRefactoring(refactoringId: String) {
-        val selectedFile = getSelectedFile(project) ?: return
-        val psiJavaFile = getJavaFile(project, selectedFile) ?: return
-        setPreviousState(psiJavaFile)
       }
     })
     PsiManager.getInstance(project).addPsiTreeChangeListener(object : PsiTreeChangeAdapter() {
