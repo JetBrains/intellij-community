@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeMenuBar
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
@@ -32,6 +31,7 @@ private const val ALPHA = (255 * 0.6).toInt()
 internal class ExpandableMenu(private val headerContent: JComponent) {
 
   val ideMenu = IdeMenuBar.createMenuBar()
+  private val ideMenuHelper = IdeMenuHelper(ideMenu)
   private var expandedMenuBar: JPanel? = null
   private var headerColorfulPanel: HeaderColorfulPanel? = null
   private val shadowComponent = ShadowComponent()
@@ -56,12 +56,7 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
       }
     }
 
-    // ideMenu can be populated after switchState invocation
-    ideMenu.addContainerListener(object : ContainerAdapter() {
-      override fun componentAdded(e: ContainerEvent?) {
-        ideMenu.updateMenuSelectionBackground()
-      }
-    })
+    ideMenuHelper.installListeners()
 
     headerContent.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
@@ -80,8 +75,8 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
 
   private fun updateUI() {
     IJSwingUtilities.updateComponentTreeUI(ideMenu)
-    ideMenu.updateMenuSelectionBackground()
     ideMenu.border = null
+    ideMenuHelper.updateUI()
   }
 
   fun switchState(buttonSize: Dimension, actionToShow: AnAction? = null) {
@@ -167,9 +162,6 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
 
   fun updateColor() {
     val color = headerContent.background
-    if (IdeRootPane.hideNativeLinuxTitle) {
-      setMenuColor(ideMenu, color)
-    }
     headerColorfulPanel?.background = color
     @Suppress("UseJBColor")
     shadowComponent.background = Color(color.red, color.green, color.blue, ALPHA)

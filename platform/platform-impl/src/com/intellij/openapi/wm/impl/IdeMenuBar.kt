@@ -6,7 +6,6 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -29,7 +28,6 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
 import com.intellij.openapi.wm.impl.status.ClockPanel
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
-import com.intellij.ui.JBColor
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.mac.screenmenu.Menu
@@ -40,7 +38,6 @@ import com.intellij.util.IJSwingUtilities
 import com.intellij.util.childScope
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -224,18 +221,6 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
       }
     }
     super.menuSelectionChanged(isIncluded)
-  }
-
-  @ApiStatus.Internal
-  fun updateMenuSelectionBackground() {
-    val selectionBackground =
-      if (ProjectWindowCustomizerService.getInstance().isActive())
-        JBColor.namedColor("MainMenu.transparentSelectionBackground", IdeaMenuUI.getDefaultSelectionBackground())
-      else JBColor.namedColor("MainMenu.selectionBackground", IdeaMenuUI.getDefaultSelectionBackground())
-
-    for (i in 0..menuCount - 1) {
-      (getMenu(i).ui as? IdeaMenuUI)?.setSelectionBackground(selectionBackground)
-    }
   }
 
   private val isActivated: Boolean
@@ -463,10 +448,12 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-    paintBackground(g)
+    if (isOpaque) {
+      paintBackground(g)
+    }
   }
 
-  protected fun paintBackground(g: Graphics) {
+  private fun paintBackground(g: Graphics) {
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       val window = SwingUtilities.getWindowAncestor(this)
       if (window is IdeFrame) {
