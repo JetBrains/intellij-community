@@ -376,7 +376,7 @@ private const val COMMON_SUB_STACK_WEIGHT = 0.25
 private const val DEBUG = false
 
 private suspend fun reportUnfinishedFreezes() {
-  ApplicationManager.getApplication().serviceAsync<PerformanceWatcher>().await().processUnfinishedFreeze { dir, duration ->
+  ApplicationManager.getApplication().serviceAsync<PerformanceWatcher>().processUnfinishedFreeze { dir, duration ->
     val files = try {
       withContext(Dispatchers.IO) {
         Files.newDirectoryStream(dir).use { it.toList() }

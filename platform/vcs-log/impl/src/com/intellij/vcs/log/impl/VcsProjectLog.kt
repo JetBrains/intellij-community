@@ -204,7 +204,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
         return null
       }
 
-      val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>().await()
+      val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>()
       val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
       if (logProviders.isEmpty()) {
         return null

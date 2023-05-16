@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
@@ -65,8 +65,8 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   companion object {
     suspend fun computeActionGroups(): List<Pair<ActionGroup, String>> {
       val app = ApplicationManager.getApplication() as ComponentManagerEx
-      app.getServiceAsync(ActionManager::class.java).await()
-      val customActionSchema = app.getServiceAsync(CustomActionsSchema::class.java).await()
+      app.getServiceAsync(ActionManager::class.java)
+      val customActionSchema = app.getServiceAsync(CustomActionsSchema::class.java)
       return computeActionGroups(customActionSchema)
     }
 

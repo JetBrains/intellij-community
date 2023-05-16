@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl
 
 import com.intellij.lang.ant.AntDisposable
@@ -24,7 +24,7 @@ private class AntShortcutStartupActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     val prefix = AntConfiguration.getActionIdPrefix(project)
-    val actionManager = ApplicationManager.getApplication().serviceAsync<ActionManager>().await()
+    val actionManager = ApplicationManager.getApplication().serviceAsync<ActionManager>()
     for (keymap in KeymapManagerEx.getInstanceEx().allKeymaps) {
       for (id in keymap.actionIdList) {
         if (id.startsWith(prefix) && actionManager.getAction(id) == null) {

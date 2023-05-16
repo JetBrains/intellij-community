@@ -433,7 +433,7 @@ abstract class ComponentManagerImpl(
     }
 
     for (componentAdapter in componentAdapters.getImmutableSet()) {
-      componentAdapter.getInstanceAsync<Any>(this, keyClass = null).join()
+      componentAdapter.getInstanceAsync<Any>(this, keyClass = null)
     }
 
     activity?.end()
@@ -640,11 +640,11 @@ abstract class ComponentManagerImpl(
     return result
   }
 
-  final override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): Deferred<T> {
+  final override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
     return getServiceAsyncIfDefined(keyClass) ?: throw RuntimeException("service is not defined for $keyClass")
   }
 
-  suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): Deferred<T>? {
+  suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): T? {
     val key = keyClass.name
     val adapter = componentKeyToAdapter.get(key) ?: return null
     check(adapter is ServiceComponentAdapter) {
@@ -1136,16 +1136,8 @@ abstract class ComponentManagerImpl(
           return
         }
 
-        scope.launch {
-          val activity = StartUpMeasurer.startActivity("${service.`interface`} preloading")
-          val job = preloadService(service) ?: return@launch
-          if (scope === syncScope) {
-            job.join()
-            activity.end()
-          }
-          else {
-            job.invokeOnCompletion { activity.end() }
-          }
+        scope.launch(CoroutineName("${service.`interface`} preloading")) {
+          preloadService(service)
         }
       }
     }
@@ -1159,19 +1151,14 @@ abstract class ComponentManagerImpl(
                                          onlyIfAwait: Boolean) {
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  protected open suspend fun preloadService(service: ServiceDescriptor): Job? {
-    val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return null
-    val deferred = adapter.getInstanceAsync<Any>(componentManager = this, keyClass = null)
-    if (deferred.isCompleted) {
-      val instance = deferred.getCompleted()
-      val implClass = instance.javaClass
-      // well, we don't know the interface class, so we cannot add any service to a hot cache
-      if (Modifier.isFinal(implClass.modifiers)) {
-        serviceInstanceHotCache.putIfAbsent(implClass, instance)
-      }
+  protected open suspend fun preloadService(service: ServiceDescriptor) {
+    val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return
+    val instance = adapter.getInstanceAsync<Any>(componentManager = this, keyClass = null)
+    val implClass = instance.javaClass
+    // well, we don't know the interface class, so we cannot add any service to a hot cache
+    if (Modifier.isFinal(implClass.modifiers)) {
+      serviceInstanceHotCache.putIfAbsent(implClass, instance)
     }
-    return deferred
   }
 
   override fun isDisposed(): Boolean {

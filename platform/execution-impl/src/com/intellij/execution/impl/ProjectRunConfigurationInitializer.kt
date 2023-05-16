@@ -21,13 +21,13 @@ private class ProjectRunConfigurationInitializer : ProjectServiceContainerInitia
       // wait for module manager - may be required for module level run configurations
       // it allows us to avoid thread blocking
       // (RunManager itself cannot yet do the same, as the platform doesn't provide non-blocking load state)
-      project.serviceAsync<ModuleManager>().join()
+      project.serviceAsync<ModuleManager>()
 
       runActivity("RunManager initialization") {
         // we must not fire beginUpdate here, because message bus will fire queued parent message bus messages
         // (and, so, SOE may occur because all other projectOpened will be processed before us)
         // simply, you should not listen changes until the project opened
-        project.serviceAsync<RunManager>().join()
+        project.serviceAsync<RunManager>()
         IS_RUN_MANAGER_INITIALIZED.set(project, true)
       }
     }

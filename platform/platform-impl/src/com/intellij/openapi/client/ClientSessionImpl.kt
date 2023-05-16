@@ -62,7 +62,7 @@ abstract class ClientSessionImpl(
     assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
 
-  override suspend fun preloadService(service: ServiceDescriptor): Job? {
+  override suspend fun preloadService(service: ServiceDescriptor) {
     return ClientId.withClientId(clientId) {
       super.preloadService(service)
     }

@@ -120,7 +120,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
       launch {
         val frameHelper = deferredProjectFrameHelper.await()
         val project = rawProjectDeferred.await()
-        val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>().await() as WindowManagerImpl
+        val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>() as WindowManagerImpl
         subtask("project frame assigning", Dispatchers.EDT) {
           windowManager.assignFrame(frameHelper, project)
           frameHelper.setProject(project)
@@ -159,7 +159,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
                                          rawProjectDeferred: CompletableDeferred<Project>): FrameLoadingState {
     var frame = options.frame
     if (frame == null) {
-      val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>().await() as WindowManagerImpl
+      val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>() as WindowManagerImpl
       frame = windowManager.removeAndGetRootFrame()
     }
 
@@ -302,12 +302,12 @@ private suspend fun initFrame(rawProjectDeferred: CompletableDeferred<Project>,
 }
 
 private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>) {
-  val fileEditorManager = project.serviceAsync<FileEditorManager>().await() as? FileEditorManagerImpl ?: return
+  val fileEditorManager = project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl ?: return
   coroutineScope {
     // only after FileEditorManager.init - DaemonCodeAnalyzer uses FileEditorManager
     launch {
-      project.serviceAsync<WolfTheProblemSolver>().join()
-      project.serviceAsync<DaemonCodeAnalyzer>().join()
+      project.serviceAsync<WolfTheProblemSolver>()
+      project.serviceAsync<DaemonCodeAnalyzer>()
     }
 
     val (editorComponent, editorState) = fileEditorManager.init()
@@ -383,7 +383,7 @@ private fun CoroutineScope.initFrame(deferredProjectFrameHelper: Deferred<Projec
                                      reopeningEditorJob: Job,
                                      deferredToolbarActionGroups: Deferred<List<Pair<ActionGroup, String>>>) {
   launch(CoroutineName("tool window pane creation")) {
-    val toolWindowManager = project.serviceAsync<ToolWindowManager>().await() as? ToolWindowManagerImpl ?: return@launch
+    val toolWindowManager = project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl ?: return@launch
 
     val taskListDeferred = async(CoroutineName("toolwindow init command creation")) {
       computeToolWindowBeans(project)

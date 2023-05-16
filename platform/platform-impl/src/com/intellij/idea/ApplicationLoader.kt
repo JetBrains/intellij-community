@@ -157,9 +157,9 @@ private suspend fun initApplicationImpl(args: List<String>,
 
     if (!app.isHeadlessEnvironment) {
       asyncScope.launch {
-        subtask("UISettings preloading") { app.serviceAsync<UISettings>().join() }
-        subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>().join() }
-        subtask("ActionManager preloading") { app.serviceAsync<ActionManager>().join() }
+        subtask("UISettings preloading") { app.serviceAsync<UISettings>() }
+        subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
+        subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
       }
     }
 
@@ -229,20 +229,20 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
   launch {
     // LocalHistory wants ManagingFS.
     // It should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner.
-    app.getServiceAsync(ManagingFS::class.java).join()
+    app.serviceAsync<ManagingFS>()
     // PlatformVirtualFileManager also wants ManagingFS
-    launch { app.getServiceAsync(VirtualFileManager::class.java) }
+    launch { app.serviceAsync<VirtualFileManager>() }
     launch { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
   }
   launch {
     // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
-    app.serviceAsync<PathMacros>().join()
+    app.serviceAsync<PathMacros>()
 
     launch {
-      app.serviceAsync<RegistryManager>().join()
+      app.serviceAsync<RegistryManager>()
       // wants RegistryManager
       if (!app.isHeadlessEnvironment) {
-        app.serviceAsync<PerformanceWatcher>().join()
+        app.serviceAsync<PerformanceWatcher>()
         // cache it (CachedSingletonsRegistry is used,
         // and IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready)
         PerformanceWatcher.getInstance()
@@ -251,18 +251,18 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
 
     // required for indexing tasks (see JavaSourceModuleNameIndex for example)
     // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
-    app.getServiceAsync(PropertiesComponent::class.java).join()
-    app.getServiceAsync(FileTypeManager::class.java).join()
+    app.serviceAsync<PropertiesComponent>()
+    app.serviceAsync<FileTypeManager>()
 
     // ProjectJdkTable wants FileTypeManager
     launch {
       // and VirtualFilePointerManager
-      app.getServiceAsync(VirtualFilePointerManager::class.java).join()
-      app.getServiceAsync(ProjectJdkTable::class.java)
+      app.serviceAsync<VirtualFilePointerManager>()
+      app.serviceAsync<ProjectJdkTable>()
     }
 
     // wants PropertiesComponent
-    launch { app.getServiceAsync(DebugLogManager::class.java) }
+    launch { app.serviceAsync<DebugLogManager>() }
   }
 }
 

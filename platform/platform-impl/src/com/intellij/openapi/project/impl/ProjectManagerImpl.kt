@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -945,9 +946,7 @@ fun CoroutineScope.runInitProjectActivities(project: Project) {
     (StartupManager.getInstance(project) as StartupManagerImpl).initProject()
   }
 
-  val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
-  launchAndMeasure("projectOpened event executing", Dispatchers.EDT) {
-    waitEdtActivity.end()
+  launch(CoroutineName("projectOpened event executing") + Dispatchers.EDT) {
     tracer.spanBuilder("projectOpened event executing").useWithScope2 {
       @Suppress("DEPRECATION", "removal")
       ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
@@ -961,22 +960,13 @@ fun CoroutineScope.runInitProjectActivities(project: Project) {
     return
   }
 
-  launchAndMeasure("projectOpened component executing", Dispatchers.EDT) {
+  launch(CoroutineName("projectOpened component executing") + Dispatchers.EDT) {
     for (component in projectComponents) {
-      try {
+      runCatching {
         val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER)
         component.projectOpened()
         componentActivity.end()
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
+      }.getOrLogException(LOG)
     }
   }
 }
@@ -1196,7 +1186,7 @@ private suspend fun initProject(file: Path,
         null
       }
       else {
-        (project.serviceAsync<FileEditorManager>().await() as? FileEditorManagerImpl)?.initJob
+        (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob
       }
 
       if (preloadServices) {

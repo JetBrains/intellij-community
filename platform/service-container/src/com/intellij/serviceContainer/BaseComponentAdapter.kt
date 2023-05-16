@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.serviceContainer
@@ -133,7 +133,7 @@ internal sealed class BaseComponentAdapter(
       PluginException("Cyclic service initialization: ${toString()}", pluginId)
     }
 
-    return Cancellation.computeInNonCancelableSection<T, RuntimeException> {
+    return Cancellation.withCancelableSection().use {
       doCreateInstance(keyClass = keyClass, componentManager = componentManager, activityCategory = activityCategory)
     }
   }
@@ -176,10 +176,10 @@ internal sealed class BaseComponentAdapter(
   }
 
   @Suppress("UNCHECKED_CAST")
-  suspend fun <T : Any> getInstanceAsync(componentManager: ComponentManagerImpl, keyClass: Class<T>?): Deferred<T> {
+  suspend fun <T : Any> getInstanceAsync(componentManager: ComponentManagerImpl, keyClass: Class<T>?): T {
     return withContext(NonCancellable) {
       if (!IS_DEFERRED_PREPARED.compareAndSet(this@BaseComponentAdapter, false, true)) {
-        return@withContext deferred as Deferred<T>
+        return@withContext (deferred as Deferred<T>).await()
       }
 
       createInstance(
@@ -187,7 +187,6 @@ internal sealed class BaseComponentAdapter(
         componentManager = componentManager,
         activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null,
       )
-      deferred as Deferred<T>
     }
   }
 

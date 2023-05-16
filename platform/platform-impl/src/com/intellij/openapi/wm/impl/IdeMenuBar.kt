@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.DynamicBundle
@@ -280,8 +280,11 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
 
     coroutineScope.launch {
       val app = ApplicationManager.getApplication()
-      val actionManager = app.serviceAsync<ActionManager>().await()
-      app.serviceAsync<CustomActionsSchema>().join()
+      launch {
+        app.serviceAsync<CustomActionsSchema>()
+      }
+
+      val actionManager = app.serviceAsync<ActionManager>()
       updateActions(actionManager = actionManager, screenMenuPeer = screenMenuPeer)
     }
     activity.end()

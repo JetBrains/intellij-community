@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.concurrency.ThreadContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.util.ThrowableComputable;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -62,5 +63,19 @@ public final class Cancellation {
     catch (ProcessCanceledException e) {
       throw new RuntimeException("PCE is not expected in non-cancellable section execution", e);
     }
+  }
+
+  public static @NotNull AccessToken withCancelableSection() {
+    if (isInNonCancelableSection()) {
+      return AccessToken.EMPTY_ACCESS_TOKEN;
+    }
+
+    isInNonCancelableSection.set(Boolean.TRUE);
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        isInNonCancelableSection.remove();
+      }
+    };
   }
 }
