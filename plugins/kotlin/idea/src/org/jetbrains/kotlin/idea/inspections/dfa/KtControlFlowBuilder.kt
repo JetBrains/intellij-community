@@ -66,7 +66,9 @@ import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
 import org.jetbrains.kotlin.resolve.constants.TypedCompileTimeConstant
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
+import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -520,16 +522,20 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun processCallExpression(expr: KtCallExpression, qualifierOnStack: Boolean = false) {
         val call = expr.resolveToCall()
+        var updatedQualifier = qualifierOnStack
+        if (!qualifierOnStack && call != null) {
+            updatedQualifier = updateQualifier(call)
+        }
         var argCount: Int
         if (call != null) {
             argCount = pushResolvedCallArguments(call)
         } else {
             argCount = pushUnresolvedCallArguments(expr)
         }
-        if (inlineKnownMethod(expr, argCount, qualifierOnStack)) return
+        if (inlineKnownMethod(expr, argCount, updatedQualifier)) return
         val lambda = getInlineableLambda(expr)
         if (lambda != null) {
-            if (qualifierOnStack && inlineKnownLambdaCall(expr, lambda.lambda)) return
+            if (updatedQualifier && inlineKnownLambdaCall(expr, lambda.lambda)) return
             val kind = getLambdaOccurrenceRange(expr, lambda.descriptor.original)
             inlineLambda(lambda.lambda, kind)
         } else {
@@ -539,7 +545,26 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         }
 
-        addCall(expr, argCount, qualifierOnStack)
+        addCall(expr, argCount, updatedQualifier)
+    }
+
+    private fun updateQualifier(call: ResolvedCall<out CallableDescriptor>): Boolean {
+        val receiver = call.dispatchReceiver
+        if (receiver is ImplicitReceiver) {
+            val descriptor = receiver.declarationDescriptor
+            if (descriptor is DeclarationDescriptorWithSource) {
+                val psi = descriptor.source.getPsi()
+                if (psi is KtFunctionLiteral) {
+                    val varDescriptor = KtLambdaSpecialVariableDescriptor(
+                        psi, LambdaVariableKind.THIS,
+                        receiver.type
+                    )
+                    addInstruction(PushInstruction(factory.varFactory.createVariableValue(varDescriptor), null))
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     private fun pushUnresolvedCallArguments(expr: KtCallExpression): Int {
