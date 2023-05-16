@@ -13,7 +13,10 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import java.io.File;
 import java.util.*;
 
+import static java.util.Locale.ROOT;
+
 public final class MavenModuleNameMapper {
+
   public static void map(Collection<MavenProject> projects,
                          Map<MavenProject, Module> mavenProjectToModule,
                          Map<MavenProject, String> mavenProjectToModuleName,
@@ -45,14 +48,15 @@ public final class MavenModuleNameMapper {
 
     Arrays.sort(names);
 
-    Map<String, Integer> nameCounters = new HashMap<>();
+    Map<String, Integer> nameCountersLowerCase = new HashMap<>();
 
     for (i = 0; i < names.length; i++) {
       if (names[i].hasDuplicatedGroup) continue;
 
       for (int k = i + 1; k < names.length; k++) {
-        if (names[i].originalName.equals(names[k].originalName)) {
-          nameCounters.put(names[i].originalName, 0);
+        // IDEA-320329 check should be non case-sensitive
+        if (names[i].originalName.equalsIgnoreCase(names[k].originalName)) {
+          nameCountersLowerCase.put(names[i].originalName.toLowerCase(ROOT), 0);
 
           if (names[i].groupId.equals(names[k].groupId)) {
             names[i].hasDuplicatedGroup = true;
@@ -74,11 +78,11 @@ public final class MavenModuleNameMapper {
     for (NameItem nameItem : names) {
       if (nameItem.module == null) {
 
-        Integer c = nameCounters.get(nameItem.originalName);
+        Integer c = nameCountersLowerCase.get(nameItem.originalName.toLowerCase(ROOT));
 
         if (c != null) {
           nameItem.number = c;
-          nameCounters.put(nameItem.originalName, c + 1);
+          nameCountersLowerCase.put(nameItem.originalName.toLowerCase(ROOT), c + 1);
         }
 
         do {
@@ -86,7 +90,7 @@ public final class MavenModuleNameMapper {
           if (existingNames.add(name)) break;
 
           nameItem.number++;
-          nameCounters.put(nameItem.originalName, nameItem.number + 1);
+          nameCountersLowerCase.put(nameItem.originalName.toLowerCase(ROOT), nameItem.number + 1);
         }
         while (true);
       }
