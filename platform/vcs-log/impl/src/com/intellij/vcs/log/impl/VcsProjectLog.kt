@@ -80,6 +80,11 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   init {
     tabManager = VcsLogTabsManager(project = project, uiProperties = uiProperties, busConnection = busConnection)
 
+    busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
+      coroutineScope.launch { disposeLog(recreate = true) }
+    })
+    busConnection.subscribe(DynamicPluginListener.TOPIC, MyDynamicPluginUnloader())
+
     @Suppress("SSBasedInspection", "ObjectLiteralToLambda") val shutdownTask = object : Runnable {
       override fun run() {
         if (disposeStarted.get()) {
@@ -211,14 +216,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     }
 
     override suspend fun execute(project: Project) {
-      val projectLog = getInstance(project)
-      projectLog.busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
-        projectLog.coroutineScope.launch {
-          projectLog.disposeLog(recreate = true)
-        }
-      })
-      projectLog.busConnection.subscribe(DynamicPluginListener.TOPIC, projectLog.MyDynamicPluginUnloader())
-      projectLog.createLog(forceInit = false)
+      getInstance(project).createLog(forceInit = false)
     }
   }
 
