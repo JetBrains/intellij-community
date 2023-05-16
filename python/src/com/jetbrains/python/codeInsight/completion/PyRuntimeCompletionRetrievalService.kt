@@ -6,19 +6,27 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PlatformPatterns
+import com.intellij.psi.PsiElement
+import com.intellij.ui.IconManager
+import com.intellij.ui.PlatformIcons
 import com.intellij.util.ProcessingContext
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.state.PyRuntime
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
 import com.jetbrains.python.debugger.values.completePandasDataFrameColumns
+import com.jetbrains.python.psi.PyStringElement
 import java.util.concurrent.Callable
 
 enum class PyRuntimeCompletionType {
@@ -30,6 +38,29 @@ enum class PyRuntimeCompletionType {
  * @param completionType - type of completion items to choose post-processing function in the future
  */
 data class CompletionResultData(val setOfCompletionItems: Set<String>, val completionType: PyRuntimeCompletionType)
+
+private fun processDataFrameColumns(columns: Set<String>,
+                                    needValidatorCheck: Boolean,
+                                    elementOnPosition: PsiElement,
+                                    project: Project,
+                                    ignoreML: Boolean,
+                                    stringPresentation: String): List<LookupElement> {
+  val validator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance())
+  return columns.mapNotNull { column ->
+    when {
+      !needValidatorCheck && elementOnPosition !is PyStringElement -> {
+        "'${StringUtil.escapeStringCharacters(column.length, column, "'", false, StringBuilder())}'"
+      }
+      !needValidatorCheck -> StringUtil.escapeStringCharacters(column.length, column, "'\"", false, StringBuilder())
+      validator.isIdentifier(column, project) -> column
+      else -> null
+    }?.let {
+      val lookupElement = LookupElementBuilder.create(it).withTypeText(stringPresentation).withIcon(
+        IconManager.getInstance().getPlatformIcon(PlatformIcons.Parameter))
+      createPrioritizedLookupElement(lookupElement, ignoreML)
+    }
+  }
+}
 
 private fun postProcessingChildren(completionResultData: CompletionResultData,
                                    candidate: PyObjectCandidate,
@@ -58,7 +89,18 @@ private fun postProcessingChildren(completionResultData: CompletionResultData,
                               true,
                               PyBundle.message("dict.completion.type.text"))
     }
-    PyRuntimeCompletionType.DYNAMIC_CLASS -> proceedPyValueChildrenNames(completionResultData.setOfCompletionItems, true)
+    PyRuntimeCompletionType.DYNAMIC_CLASS -> proceedPyValueChildrenNames(completionResultData.setOfCompletionItems,
+                                                                         candidate.psiName.pyQualifiedName, true)
+  }
+}
+
+private fun proceedPyValueChildrenNames(childrenNodes: Set<String>,
+                                        stringPresentation: String,
+                                        ignoreML: Boolean = false): List<LookupElement> {
+  return childrenNodes.map {
+    val lookupElement = LookupElementBuilder.create(it).withTypeText(stringPresentation).withIcon(
+      IconManager.getInstance().getPlatformIcon(PlatformIcons.Parameter))
+    createPrioritizedLookupElement(lookupElement, ignoreML)
   }
 }
 
