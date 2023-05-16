@@ -152,7 +152,8 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
         val attributeProvider: (String) -> String? = { parser.getAttributeValue(null, it) }
         val fileName = PathUtilRt.getFileName(resourceName)
         val extension = getFileExtension(fileName, true)
-        val externalInfo = ExternalInfo(fileName.substring(0, fileName.length - extension.length), extension)
+        val externalInfo = ExternalInfo(fileNameWithoutExtension = fileName.substring(0, fileName.length - extension.length),
+                                        fileExtension = extension)
 
         val schemeKey = name
                         ?: (processor as LazySchemeProcessor).getSchemeKey(attributeProvider, externalInfo.fileNameWithoutExtension)
@@ -182,6 +183,9 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
       }
     }
     catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: CancellationException) {
       throw e
     }
     catch (e: Throwable) {
