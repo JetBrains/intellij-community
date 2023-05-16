@@ -162,8 +162,6 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   }
 
   private suspend fun disposeLog(useRawSwingDispatcher: Boolean = false) {
-    if (cachedLogManager == null) return
-
     mutex.withLock {
       val logManager = withContext(if (useRawSwingDispatcher) RawSwingDispatcher else (Dispatchers.EDT + modality())) {
         dropLogManager()?.also { it.disposeUi() }
