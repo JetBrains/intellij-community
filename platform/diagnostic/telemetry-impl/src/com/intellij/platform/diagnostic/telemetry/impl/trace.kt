@@ -10,34 +10,11 @@ import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
-import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
-import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
-import java.util.concurrent.ForkJoinTask
 import java.util.function.Consumer
 import kotlin.coroutines.CoroutineContext
-
-/**
- * Returns a new [ForkJoinTask] that performs the given function as its action within a trace, and returns
- * a null result upon [ForkJoinTask.join].
- *
- * See [Span](https://opentelemetry.io/docs/reference/specification).
- */
-inline fun <T> forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: () -> T): ForkJoinTask<T> {
-  val context = Context.current()
-  return ForkJoinTask.adapt(Callable {
-    val thread = Thread.currentThread()
-    spanBuilder
-      .setParent(context)
-      .setAttribute(SemanticAttributes.THREAD_NAME, thread.name)
-      .setAttribute(SemanticAttributes.THREAD_ID, thread.id)
-      .useWithScope {
-        operation()
-      }
-  })
-}
 
 inline fun <T> SpanBuilder.useWithScope(operation: (Span) -> T): T {
   val span = startSpan()
