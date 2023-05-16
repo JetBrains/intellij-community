@@ -304,10 +304,7 @@
       "pluginUpdate.svg": "ide/notification/pluginUpdate.svg",
       "import.svg": "toolbarDecorator/import.svg",
       "informationDialog.svg": "general/informationDialog.svg",
-      "layout.svg": [
-        "debugger/restoreLayout.svg",
-        "graph/layout.svg"
-      ],
+      "layout.svg": "debugger/restoreLayout.svg",
       "left.svg": "actions/back.svg",
       "listFiles.svg": "actions/listFiles.svg",
       "locate.svg": "general/locate.svg",
@@ -368,6 +365,9 @@
       "successLogin.svg": "general/successLogin.svg",
       "questionDialog.svg": "general/questionDialog.svg",
       "warningDialog.svg": "general/warningDialog.svg"
+    },
+    "graph": {
+      "graphLayout.svg": "graph/layout.svg"
     },
     "gutter": {
       "bookmark.svg": "gutter/bookmark.svg",

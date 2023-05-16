@@ -339,6 +339,10 @@ public final class ExpUiIcons {
     /** 20x20 */ public static final @NotNull Icon WindowsMenu_20x20 = load("expui/general/windowsMenu@20x20.svg", -1866593102, 2);
   }
 
+  public static final class Graph {
+    /** 16x16 */ public static final @NotNull Icon GraphLayout = load("expui/graph/graphLayout.svg", 1638364830, 2);
+  }
+
   public static final class Gutter {
     /** 14x14 */ public static final @NotNull Icon Bookmark = load("expui/gutter/bookmark.svg", 862964872, 2);
     /** 14x14 */ public static final @NotNull Icon Colors = load("expui/gutter/colors.svg", -523732802, 2);
