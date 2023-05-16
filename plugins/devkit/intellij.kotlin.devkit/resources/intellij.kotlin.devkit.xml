@@ -44,8 +44,10 @@
     <cancellationCheckProvider language="kotlin" implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KotlinCancellationCheckProvider"/>
     <visitorProviderForRBCInspection language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider"/>
-    <extensionClassModifiersCheckerProvider language="kotlin"
-      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ExtensionClassShouldBeFinalAndInternalModifiersChecker"/>
+    <extensionClassShouldNotBePublicProvider language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ExtensionClassShouldNotBePublicProviderForKotlin"/>
+    <extensionClassShouldBeFinalErrorMessageProvider language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ExtensionClassShouldNotBeOpenErrorMessageProvider"/>
     <serviceLevelExtractor language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ServiceLevelExtractorForKotlin"/>
   </extensions>

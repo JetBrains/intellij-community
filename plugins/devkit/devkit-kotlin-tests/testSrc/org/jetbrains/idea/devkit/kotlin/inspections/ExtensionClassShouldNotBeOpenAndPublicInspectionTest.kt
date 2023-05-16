@@ -2,13 +2,13 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.quickfix.ExtensionClassShouldBeFinalAndPackagePrivateInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.quickfix.ExtensionClassShouldBeFinalAndNonPublicInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/extensionClassShouldBeFinalAndInternal")
-class ExtensionClassShouldBeFinalAndInternalInspectionTest : ExtensionClassShouldBeFinalAndPackagePrivateInspectionTestBase() {
+@TestDataPath("\$CONTENT_ROOT/testData/inspections/extensionClassShouldNotBeOpenAndPublic")
+internal class ExtensionClassShouldNotBeOpenAndPublicInspectionTest : ExtensionClassShouldBeFinalAndNonPublicInspectionTestBase() {
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/extensionClassShouldBeFinalAndInternal/"
+  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/extensionClassShouldNotBeOpenAndPublic/"
   override fun getFileExtension(): String = "kt"
 
   override fun setUp() {

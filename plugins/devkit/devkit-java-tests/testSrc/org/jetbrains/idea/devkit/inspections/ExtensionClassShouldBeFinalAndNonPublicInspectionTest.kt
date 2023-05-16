@@ -3,12 +3,12 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
-import org.jetbrains.idea.devkit.inspections.quickfix.ExtensionClassShouldBeFinalAndPackagePrivateInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.quickfix.ExtensionClassShouldBeFinalAndNonPublicInspectionTestBase
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/extensionClassShouldBeFinalAndPackagePrivate")
-class ExtensionClassShouldBeFinalAndPackagePrivateInspectionTest : ExtensionClassShouldBeFinalAndPackagePrivateInspectionTestBase() {
+@TestDataPath("\$CONTENT_ROOT/testData/inspections/extensionClassShouldBeFinalAndNonPublic")
+internal class ExtensionClassShouldBeFinalAndNonPublicInspectionTest : ExtensionClassShouldBeFinalAndNonPublicInspectionTestBase() {
 
-  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/extensionClassShouldBeFinalAndPackagePrivate/"
+  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/extensionClassShouldBeFinalAndNonPublic/"
   override fun getFileExtension() = "java"
 
   override fun setUp() {
