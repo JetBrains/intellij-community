@@ -1,271 +1,250 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.impl;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs.impl
 
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivityCategory;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCloseListener;
-import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.QueueProcessor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.withBackgroundProgress
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.util.TimeoutUtil
+import com.intellij.util.concurrency.QueueProcessor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.TestOnly
+import java.util.function.Predicate
+import javax.swing.SwingUtilities
+import kotlin.coroutines.coroutineContext
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.concurrent.Future;
-import java.util.function.Predicate;
+private val LOG = Logger.getInstance(VcsInitialization::class.java)
+private val EP_NAME = ExtensionPointName<VcsStartupActivity>("com.intellij.vcsStartupActivity")
 
-public final class VcsInitialization {
-  private static final Logger LOG = Logger.getInstance(VcsInitialization.class);
-  private static final ExtensionPointName<VcsStartupActivity> EP_NAME = new ExtensionPointName<>("com.intellij.vcsStartupActivity");
+@Service(Service.Level.PROJECT)
+class VcsInitialization(private val project: Project, private val coroutineScope: CoroutineScope) {
+  private val lock = Any()
 
-  private final Object myLock = new Object();
-  @NotNull private final Project myProject;
-
-  private enum Status {PENDING, RUNNING_INIT, RUNNING_POST, FINISHED}
+  private enum class Status {
+    PENDING,
+    RUNNING_INIT,
+    RUNNING_POST,
+    FINISHED
+  }
 
   // guarded by myLock
-  private Status myStatus = Status.PENDING;
-  private final List<VcsStartupActivity> myInitActivities = new ArrayList<>();
-  private final List<VcsStartupActivity> myPostActivities = new ArrayList<>();
+  private var myStatus = Status.PENDING
+  private val initActivities = ArrayList<VcsStartupActivity>()
+  private val postActivities = ArrayList<VcsStartupActivity>()
 
-  private volatile Future<?> myFuture;
-  private final ProgressIndicator myIndicator = new StandardProgressIndicatorBase();
+  @Volatile
+  private var future: Job? = null
 
-  VcsInitialization(@NotNull Project project) {
-    myProject = project;
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+  init {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
       // Fix "MessageBusImpl is already disposed: (disposed temporarily)" during LightPlatformTestCase
-      Disposable disposable = ((ProjectEx)project).getEarlyDisposable();
-      Disposer.register(disposable, () -> cancelBackgroundInitialization());
+      val disposable = (project as ProjectEx).earlyDisposable
+      Disposer.register(disposable) { cancelBackgroundInitialization() }
     }
   }
 
-  public static VcsInitialization getInstance(Project project) {
-    return project.getService(VcsInitialization.class);
+  companion object {
+    fun getInstance(project: Project): VcsInitialization {
+      return project.getService(VcsInitialization::class.java)
+    }
   }
 
-  private void startInitialization() {
-    myFuture = ((CoreProgressManager)ProgressManager.getInstance())
-      .runProcessWithProgressAsynchronously(new Task.Backgroundable(myProject, VcsBundle.message("impl.vcs.initialization")) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          execute();
-        }
-      }, myIndicator, null);
+  private fun startInitialization() {
+    future = coroutineScope.launch {
+      @Suppress("DialogTitleCapitalization")
+      withBackgroundProgress(project, VcsBundle.message("impl.vcs.initialization")) {
+        execute()
+      }
+    }
   }
 
-  void add(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
-    if (myProject.isDefault()) {
-      LOG.warn("ignoring initialization activity for default project", new Throwable());
-      return;
+  fun add(vcsInitObject: VcsInitObject, runnable: Runnable) {
+    if (project.isDefault) {
+      LOG.warn("ignoring initialization activity for default project", Throwable())
+      return
     }
 
-    boolean wasScheduled = scheduleActivity(vcsInitObject, runnable);
+    val wasScheduled = scheduleActivity(vcsInitObject, runnable)
     if (!wasScheduled) {
-      BackgroundTaskUtil.submitTask(AppExecutorUtil.getAppExecutorService(), myProject, runnable);
+      coroutineScope.launch {
+        blockingContext {
+          runnable.run()
+        }
+      }
     }
   }
 
-  private boolean scheduleActivity(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
-    synchronized (myLock) {
-      ProxyVcsStartupActivity activity = new ProxyVcsStartupActivity(vcsInitObject, runnable);
-      if (isInitActivity(activity)) {
+  private fun scheduleActivity(vcsInitObject: VcsInitObject, runnable: Runnable): Boolean {
+    synchronized(lock) {
+      val activity = ProxyVcsStartupActivity(vcsInitObject, runnable)
+      return if (isInitActivity(activity)) {
         if (myStatus == Status.PENDING) {
-          myInitActivities.add(activity);
-          return true;
+          initActivities.add(activity)
+          true
         }
         else {
-          LOG.warn(String.format("scheduling late initialization: %s", activity));
-          return false;
+          LOG.warn(String.format("scheduling late initialization: %s", activity))
+          false
         }
       }
       else {
         if (myStatus == Status.PENDING || myStatus == Status.RUNNING_INIT) {
-          myPostActivities.add(activity);
-          return true;
+          postActivities.add(activity)
+          true
         }
         else {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(String.format("scheduling late post activity: %s", activity));
+          if (LOG.isDebugEnabled) {
+            LOG.debug(String.format("scheduling late post activity: %s", activity))
           }
-          return false;
+          false
         }
       }
     }
   }
 
-  private void execute() {
-    LOG.assertTrue(!myProject.isDefault());
+  private suspend fun execute() {
+    LOG.assertTrue(!project.isDefault)
     try {
-      runInitStep(Status.PENDING, Status.RUNNING_INIT, it -> isInitActivity(it), myInitActivities);
-      runInitStep(Status.RUNNING_INIT, Status.RUNNING_POST, it -> !isInitActivity(it), myPostActivities);
+      runInitStep(Status.PENDING, Status.RUNNING_INIT, { it: VcsStartupActivity -> isInitActivity(it) }, initActivities)
+      runInitStep(Status.RUNNING_INIT, Status.RUNNING_POST, { it: VcsStartupActivity -> !isInitActivity(it) }, postActivities)
     }
     finally {
-      synchronized (myLock) {
-        myStatus = Status.FINISHED;
-      }
+      synchronized(lock) { myStatus = Status.FINISHED }
     }
   }
 
-  private void runInitStep(@NotNull Status current,
-                           @NotNull Status next,
-                           @NotNull Predicate<? super VcsStartupActivity> extensionFilter,
-                           @NotNull List<? extends VcsStartupActivity> pendingActivities) {
-    List<VcsStartupActivity> activities = new ArrayList<>();
-    List<VcsStartupActivity> unfilteredActivities = EP_NAME.getExtensionList();
-    synchronized (myLock) {
-      assert myStatus == current;
-      myStatus = next;
-
-      for (VcsStartupActivity activity : unfilteredActivities) {
+  private suspend fun runInitStep(current: Status,
+                          next: Status,
+                          extensionFilter: Predicate<in VcsStartupActivity>,
+                          pendingActivities: MutableList<out VcsStartupActivity>) {
+    val activities: MutableList<VcsStartupActivity> = ArrayList()
+    val unfilteredActivities = EP_NAME.extensionList
+    synchronized(lock) {
+      assert(myStatus == current)
+      myStatus = next
+      for (activity in unfilteredActivities) {
         if (extensionFilter.test(activity)) {
-          activities.add(activity);
+          activities.add(activity)
         }
       }
-      activities.addAll(pendingActivities);
-      pendingActivities.clear();
+      activities.addAll(pendingActivities)
+      pendingActivities.clear()
     }
-
-    runActivities(activities);
+    runActivities(activities)
   }
 
-  private void runActivities(@NotNull List<? extends VcsStartupActivity> activities) {
-    Future<?> future = myFuture;
-    if (future != null && future.isCancelled()) {
-      return;
+  private suspend fun runActivities(activities: MutableList<VcsStartupActivity>) {
+    val future = future
+    if (future != null && future.isCancelled) {
+      return
     }
 
-    activities.sort(Comparator.comparingInt(VcsStartupActivity::getOrder));
-    for (VcsStartupActivity activity : activities) {
-      ProgressManager.checkCanceled();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(String.format("running activity: %s", activity));
+    activities.sortWith(Comparator.comparingInt { it.order })
+    for (activity in activities) {
+      coroutineContext.ensureActive()
+      if (LOG.isDebugEnabled) {
+        LOG.debug(String.format("running activity: %s", activity))
       }
-
-      Activity logActivity = StartUpMeasurer.startActivity("VcsInitialization (" + activity.getClass().getName() + ")",
-                                                           ActivityCategory.DEFAULT);
-      QueueProcessor.runSafely(() -> activity.runActivity(myProject));
-      logActivity.end();
+      val logActivity = StartUpMeasurer.startActivity("VcsInitialization (" + activity.javaClass.name + ")",
+                                                      ActivityCategory.DEFAULT)
+      QueueProcessor.runSafely { activity.runActivity(project) }
+      logActivity.end()
     }
   }
 
-  private void cancelBackgroundInitialization() {
-    myIndicator.cancel();
+  private fun cancelBackgroundInitialization() {
+    val future = future ?: return
+    future.cancel()
 
     // do not leave VCS initialization run in background when the project is closed
-    Future<?> future = myFuture;
-    LOG.debug(String.format("cancelBackgroundInitialization() future=%s from %s with write access=%s",
-                            future, Thread.currentThread(), ApplicationManager.getApplication().isWriteAccessAllowed()));
-    if (future != null) {
-      future.cancel(false);
-      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        // dispose happens without prior project close (most likely light project case in tests)
-        // get out of write action and wait there
-        SwingUtilities.invokeLater(this::waitNotRunning);
-      }
-      else {
-        waitNotRunning();
-      }
+    LOG.debug {
+      "cancelBackgroundInitialization() future=${future} from ${Thread.currentThread()}" +
+      " with write access=${ApplicationManager.getApplication().isWriteAccessAllowed}"
+    }
+    future.cancel()
+    if (ApplicationManager.getApplication().isWriteAccessAllowed) {
+      // dispose happens without prior project close (most likely light project case in tests)
+      // get out of write action and wait there
+      SwingUtilities.invokeLater { waitNotRunning() }
+    }
+    else {
+      waitNotRunning()
     }
   }
 
-  private void waitNotRunning() {
-    boolean success = waitFor(status -> status == Status.PENDING || status == Status.FINISHED);
+  private fun waitNotRunning() {
+    val success = waitFor { status: Status -> status == Status.PENDING || status == Status.FINISHED }
     if (!success) {
-      LOG.warn("Failed to wait for VCS initialization cancellation for project " + myProject, new Throwable());
+      LOG.warn("Failed to wait for VCS initialization cancellation for project $project", Throwable())
     }
   }
 
   @TestOnly
-  void waitFinished() {
-    boolean success = waitFor(status -> status == Status.FINISHED);
+  fun waitFinished() {
+    val success = waitFor { status: Status -> status == Status.FINISHED }
     if (!success) {
-      LOG.error("Failed to wait for VCS initialization completion for project " + myProject, new Throwable());
+      LOG.error("Failed to wait for VCS initialization completion for project $project", Throwable())
     }
   }
 
-  private boolean waitFor(@NotNull Predicate<? super Status> predicate) {
-    if (myProject.isDefault()) throw new IllegalArgumentException();
+  private fun waitFor(predicate: Predicate<in Status>): Boolean {
+    require(!project.isDefault)
     // have to wait for task completion to avoid running it in background for closed project
-    long start = System.currentTimeMillis();
+    val start = System.currentTimeMillis()
     while (System.currentTimeMillis() < start + 10000) {
-      synchronized (myLock) {
+      synchronized(lock) {
         if (predicate.test(myStatus)) {
-          return true;
+          return true
         }
       }
-      TimeoutUtil.sleep(10);
+      TimeoutUtil.sleep(10)
     }
-    return false;
+    return false
   }
 
-  private static boolean isInitActivity(@NotNull VcsStartupActivity activity) {
-    return activity.getOrder() < VcsInitObject.AFTER_COMMON.getOrder();
-  }
-
-  static final class StartUpActivity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      if (project.isDefault()) return;
-      VcsInitialization vcsInitialization = project.getService(VcsInitialization.class);
-      vcsInitialization.startInitialization();
+  internal class StartUpActivity : ProjectActivity {
+    override suspend fun execute(project: Project) {
+      getInstance(project).startInitialization()
     }
   }
 
-  static final class ShutDownProjectListener implements ProjectCloseListener {
-    @Override
-    public void projectClosing(@NotNull Project project) {
-      if (project.isDefault()) return;
-      VcsInitialization vcsInitialization = project.getServiceIfCreated(VcsInitialization.class);
-      if (vcsInitialization != null) {
-        // Wait for the task to terminate, to avoid running it in background for closed project
-        vcsInitialization.cancelBackgroundInitialization();
+  internal class ShutDownProjectListener : ProjectCloseListener {
+    override fun projectClosing(project: Project) {
+      if (project.isDefault) {
+        return
       }
+
+      project.serviceIfCreated<VcsInitialization>()?.cancelBackgroundInitialization()
     }
   }
 
-  private static final class ProxyVcsStartupActivity implements VcsStartupActivity {
-    @NotNull private final Runnable myRunnable;
-    private final int myOrder;
+  private class ProxyVcsStartupActivity(vcsInitObject: VcsInitObject, private val runnable: Runnable) : VcsStartupActivity {
+    private val order: Int = vcsInitObject.order
 
-    private ProxyVcsStartupActivity(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
-      myOrder = vcsInitObject.getOrder();
-      myRunnable = runnable;
+    override fun runActivity(project: Project) {
+      runnable.run()
     }
 
-    @Override
-    public void runActivity(@NotNull Project project) {
-      myRunnable.run();
-    }
+    override fun getOrder(): Int = order
 
-    @Override
-    public int getOrder() {
-      return myOrder;
-    }
-
-    @Override
-    public String toString() {
-      return String.format("ProxyVcsStartupActivity{runnable=%s, order=%s}", myRunnable, myOrder); //NON-NLS
-    }
+    override fun toString(): String = "ProxyVcsStartupActivity{runnable=${runnable}, order=${order}}" //NON-NLS
   }
+}
+private fun isInitActivity(activity: VcsStartupActivity): Boolean {
+  return activity.order < VcsInitObject.AFTER_COMMON.order
 }

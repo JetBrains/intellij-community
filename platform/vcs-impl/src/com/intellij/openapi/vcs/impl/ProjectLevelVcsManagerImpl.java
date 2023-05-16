@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -47,7 +47,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcs.console.VcsConsoleTabService;
-import kotlin.Pair;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -669,7 +668,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
    * @see VcsStartupActivity
    */
   public void addInitializationRequest(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
-    VcsInitialization.getInstance(myProject).add(vcsInitObject, runnable);
+    VcsInitialization.Companion.getInstance(myProject).add(vcsInitObject, runnable);
   }
 
   @Override
@@ -766,7 +765,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @TestOnly
   public void waitForInitialized() {
-    VcsInitialization.getInstance(myProject).waitFinished();
+    VcsInitialization.Companion.getInstance(myProject).waitFinished();
   }
 
   @Override

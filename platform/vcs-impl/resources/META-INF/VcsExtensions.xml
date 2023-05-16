@@ -52,7 +52,6 @@
     <projectService serviceInterface="com.intellij.vcs.console.VcsConsoleTabService"
                     serviceImplementation="com.intellij.vcs.console.VcsConsoleTabServiceImpl"
                     headlessImplementation="com.intellij.vcs.console.MockVcsConsoleTabService"/>
-    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsInitialization"/>
     <postStartupActivity implementation="com.intellij.openapi.vcs.impl.VcsInitialization$StartUpActivity"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.FileStatusManager"
