@@ -119,6 +119,46 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
   }
 
   @Test
+  fun `test project re-open with same module name in different cases`() {
+    val projectPom = createModulePom("project-name", """
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>dir1/m</module>
+                         <module>dir2/M</module>
+                       </modules>
+                       
+                       """.trimIndent())
+    createModulePom("project-name/dir1/m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      
+      """.trimIndent())
+    createModulePom("project-name/dir2/M", """
+      <groupId>test</groupId>
+      <artifactId>M</artifactId>
+      <version>1</version>
+      
+      """.trimIndent())
+
+    runBlocking {
+      val projectInfo = ProjectInfo(projectPom, "project", "m (1)", "M (2)")
+      waitForImport {
+        openProjectAsync(projectInfo.projectFile)
+      }.useProjectAsync(save = true) {
+        assertProjectState(it, projectInfo)
+      }
+      openProjectAsync(projectInfo.projectFile)
+        .useProjectAsync {
+          assertProjectState(it, projectInfo)
+        }
+    }
+  }
+
+  @Test
   fun `test project re-import deprecation`() {
     runBlocking {
       val projectInfo = generateProject("A")
