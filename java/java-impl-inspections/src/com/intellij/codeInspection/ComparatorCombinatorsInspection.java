@@ -504,7 +504,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     }
   }
 
-  static class ReplaceWithComparatorFix implements LocalQuickFix {
+  static class ReplaceWithComparatorFix extends PsiUpdateModCommandQuickFix {
     private final @Nls String myMessage;
 
     ReplaceWithComparatorFix(@Nls String message) {
@@ -526,8 +526,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiLambdaExpression lambda)) return;
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length != 2) return;

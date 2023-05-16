@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -44,7 +44,7 @@ public class SlowListContainsAllInspection extends AbstractBaseJavaLocalInspecti
     };
   }
 
-  private static class ReplaceWithHashSetContainsAllFix implements LocalQuickFix {
+  private static class ReplaceWithHashSetContainsAllFix extends PsiUpdateModCommandQuickFix {
     private final String myCollectionText;
 
     ReplaceWithHashSetContainsAllFix(String collectionText) {
@@ -66,8 +66,8 @@ public class SlowListContainsAllInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression call = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      final PsiMethodCallExpression call = ObjectUtils.tryCast(element, PsiMethodCallExpression.class);
       if (call == null) return;
       final PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return;

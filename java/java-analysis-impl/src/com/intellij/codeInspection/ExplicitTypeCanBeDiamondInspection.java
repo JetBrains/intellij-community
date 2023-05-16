@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -60,7 +60,7 @@ public class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalIns
     };
   }
 
-  private static class ReplaceWithDiamondFix implements LocalQuickFix, HighPriorityAction {
+  private static class ReplaceWithDiamondFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
     @NotNull
     @Override
     public String getFamilyName() {
@@ -68,8 +68,7 @@ public class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiNewExpression newExpression =
         PsiTreeUtil.getParentOfType(RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(element), PsiNewExpression.class);
       if (newExpression != null) {

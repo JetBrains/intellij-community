@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.*;
@@ -53,7 +53,7 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
     };
   }
 
-  private static abstract class ReplaceRedundantClassCallFix implements LocalQuickFix {
+  private static abstract class ReplaceRedundantClassCallFix extends PsiUpdateModCommandQuickFix {
     final String myReplacement;
 
     ReplaceRedundantClassCallFix(@NonNls String replacement) {
@@ -67,8 +67,8 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression arg = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
       if (arg == null) return;
