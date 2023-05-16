@@ -7,6 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrect
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrectorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.searchEverywhereMl.typos.models.ActionsLanguageModel
 
 private class SearchEverywhereSpellingCorrectorImpl(private val project: Project) : SearchEverywhereSpellingCorrector {
   override fun isAvailableInTab(tabId: String): Boolean = tabId == ActionSearchEverywhereContributor::class.java.simpleName

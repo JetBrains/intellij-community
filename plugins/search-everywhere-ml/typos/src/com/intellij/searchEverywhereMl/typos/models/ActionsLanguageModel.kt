@@ -1,4 +1,4 @@
-package com.intellij.searchEverywhereMl.typos
+package com.intellij.searchEverywhereMl.typos.models
 
 import ai.grazie.spell.lists.FrequencyMetadata
 import com.intellij.ide.actions.ShowSettingsUtilImpl
@@ -14,6 +14,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.searchEverywhereMl.typos.SearchEverywhereStringToken
+import com.intellij.searchEverywhereMl.typos.isTypoFixingEnabled
+import com.intellij.searchEverywhereMl.typos.splitText
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider
 

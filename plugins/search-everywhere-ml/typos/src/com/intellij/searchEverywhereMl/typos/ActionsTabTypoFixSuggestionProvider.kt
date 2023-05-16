@@ -7,6 +7,7 @@ import ai.grazie.spell.suggestion.ranker.SuggestionRanker
 import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.openapi.project.Project
+import com.intellij.searchEverywhereMl.typos.models.ActionsLanguageModel
 import com.intellij.spellchecker.SpellCheckerManager
 
 internal class ActionsTabTypoFixSuggestionProvider(project: Project) {

@@ -25,8 +25,8 @@
                  defaultValue="false"/>
 
     <spellchecker.dictionary.runtimeDictionaryProvider
-      implementation="com.intellij.searchEverywhereMl.typos.RuntimeActionsDictionaryProvider"/>
+      implementation="com.intellij.searchEverywhereMl.typos.models.RuntimeActionsDictionaryProvider"/>
 
-    <postStartupActivity implementation="com.intellij.searchEverywhereMl.typos.ActionsLanguageModel$ModelComputationStarter"/>
+    <postStartupActivity implementation="com.intellij.searchEverywhereMl.typos.models.ActionsLanguageModel$ModelComputationStarter"/>
   </extensions>
 </idea-plugin>
