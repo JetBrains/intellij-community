@@ -197,6 +197,9 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   ), productLayout = productLayout, layout = layout)
   // used by jdom - pack to the same JAR
   layout.withProjectLibrary(libraryName = "aalto-xml", jarName = UTIL_8_JAR)
+  // Space plugin uses it and bundled into IntelliJ IDEA, but not bundled into DataGrip, so, or Space plugin should bundle this lib,
+  // or IJ Platform. As it is a small library and consistency is important across other coroutine libs, bundle to IJ Platform.
+  layout.withProjectLibrary(libraryName = "kotlinx-coroutines-slf4j", jarName = APP_JAR)
 
   // used by intellij.database.jdbcConsole -
   // cannot be in 3rd-party-rt.jar, because this JAR must contain classes for java versions <= 7 only

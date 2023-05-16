@@ -81,7 +81,6 @@ private val libsThatUsedInJps = java.util.Set.of(
 
 private val notImportantKotlinLibs = persistentSetOf(
   "kotlinx-coroutines-guava",
-  "kotlinx-coroutines-slf4j",
   "kotlinx-datetime-jvm",
   "kotlinx-html-jvm",
 )
