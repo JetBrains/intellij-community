@@ -273,6 +273,7 @@ object KotlinPluginBuilder {
           "kotlin-ultimate.javascript.nodeJs",
           "kotlin-ultimate.ultimate-plugin",
           "kotlin-ultimate.ultimate-native",
+          "kotlin-ultimate.profiler",
         ))
       }
 
