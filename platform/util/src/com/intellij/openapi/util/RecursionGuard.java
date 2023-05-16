@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -37,24 +23,21 @@ public abstract class RecursionGuard<Key> {
    * @param computation a piece of code to compute.
    * @return the result of the computation or {@code null} if we're entering a computation with this key on this thread recursively,
    */
-  @Nullable
-  public <T> T doPreventingRecursion(@NotNull Key key, boolean memoize, @NotNull Computable<T> computation) {
+  public @Nullable <T> T doPreventingRecursion(@NotNull Key key, boolean memoize, @NotNull Computable<T> computation) {
     return computePreventingRecursion(key, memoize, computation::compute);
   }
 
   /**
    * Same as {@link #doPreventingRecursion}, but with an ability to throw a checked exception.
    */
-  @Nullable
-  public abstract <T, E extends Throwable> T computePreventingRecursion(@NotNull Key key,
+  public abstract @Nullable <T, E extends Throwable> T computePreventingRecursion(@NotNull Key key,
                                                                         boolean memoize,
                                                                         @NotNull ThrowableComputable<T, E> computation) throws E;
 
   /** @deprecated Use {@link RecursionManager#markStack()} instead */
-  @NotNull
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  public StackStamp markStack() {
+  public @NotNull StackStamp markStack() {
     return RecursionManager.markStack();
   }
 
@@ -63,8 +46,7 @@ public abstract class RecursionGuard<Key> {
    * otherwise you might cache inconsistent values.
    * @return the current thread-local stack of keys passed to {@link #doPreventingRecursion(Key, boolean, Computable)}.
    */
-  @NotNull
-  public abstract List<? extends Key> currentStack();
+  public abstract @NotNull List<? extends Key> currentStack();
 
   /**
    * Makes {@link RecursionGuard.StackStamp#mayCacheNow()} return false for all stamps created since a computation with

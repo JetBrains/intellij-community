@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.keyStorage;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -27,8 +27,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
 
   private volatile int myFileLength;
   private volatile @Nullable AppendMemoryBuffer myAppendBuffer;
-  @NotNull
-  private final DataExternalizer<Data> myDataDescriptor;
+  private final @NotNull DataExternalizer<Data> myDataDescriptor;
 
   public AppendableStorageBackedByResizableMappedFile(final Path file,
                                                       int initialSize,
@@ -184,8 +183,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
     boolean same = true;
   }
 
-  @NotNull
-  private CheckerOutputStream buildOldComparerStream(final int addr) throws IOException {
+  private @NotNull CheckerOutputStream buildOldComparerStream(final int addr) throws IOException {
     CheckerOutputStream comparer;
     final PagedFileStorage storage = getPagedFileStorage();
 

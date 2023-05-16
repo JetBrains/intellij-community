@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Key;
@@ -42,8 +42,7 @@ public class ProcessingContext {
     mySharedContext = sharedContext;
   }
 
-  @NotNull
-  public SharedProcessingContext getSharedContext() {
+  public @NotNull SharedProcessingContext getSharedContext() {
     SharedProcessingContext context = mySharedContext;
     if (context == null) {
       mySharedContext = context = new SharedProcessingContext();
@@ -51,12 +50,12 @@ public class ProcessingContext {
     return context;
   }
 
-  public Object get(@NotNull @NonNls final Object key) {
+  public Object get(final @NotNull @NonNls Object key) {
     Map<Object, Object> map = myMap;
     return map == null ? null : map.get(key);
   }
 
-  public void put(@NotNull @NonNls final Object key, @NotNull final Object value) {
+  public void put(final @NotNull @NonNls Object key, final @NotNull Object value) {
     ensureMapInitialized().put(key, value);
   }
 
@@ -68,8 +67,7 @@ public class ProcessingContext {
     return (T)get((Object)key);
   }
 
-  @NotNull
-  private Map<Object, Object> ensureMapInitialized() {
+  private @NotNull Map<Object, Object> ensureMapInitialized() {
     Map<Object, Object> map = myMap;
     if (map == null) myMap = map = new HashMap<>(1);
     return map;

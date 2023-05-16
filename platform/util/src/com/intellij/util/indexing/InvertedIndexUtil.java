@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Condition;
@@ -14,11 +14,10 @@ import java.util.Collection;
 import java.util.function.IntPredicate;
 
 public final class InvertedIndexUtil {
-  @NotNull
-  public static <K, V, I> IntSet collectInputIdsContainingAllKeys(@NotNull InvertedIndex<? super K, V, I> index,
-                                                                  @NotNull Collection<? extends K> dataKeys,
-                                                                  @Nullable Condition<? super V> valueChecker,
-                                                                  @Nullable IntPredicate idChecker)
+  public static @NotNull <K, V, I> IntSet collectInputIdsContainingAllKeys(@NotNull InvertedIndex<? super K, V, I> index,
+                                                                           @NotNull Collection<? extends K> dataKeys,
+                                                                           @Nullable Condition<? super V> valueChecker,
+                                                                           @Nullable IntPredicate idChecker)
     throws StorageException {
     IntSet mainIntersection = null;
 
@@ -66,11 +65,10 @@ public final class InvertedIndexUtil {
     return mainIntersection == null ? IntSets.EMPTY_SET : mainIntersection;
   }
 
-  @NotNull
-  public static <K, V, I> IntSet collectInputIdsContainingAnyKey(@NotNull InvertedIndex<? super K, V, I> index,
-                                                                 @NotNull Collection<? extends K> dataKeys,
-                                                                 @Nullable Condition<? super V> valueChecker,
-                                                                 @Nullable IntPredicate idChecker) throws StorageException {
+  public static @NotNull <K, V, I> IntSet collectInputIdsContainingAnyKey(@NotNull InvertedIndex<? super K, V, I> index,
+                                                                          @NotNull Collection<? extends K> dataKeys,
+                                                                          @Nullable Condition<? super V> valueChecker,
+                                                                          @Nullable IntPredicate idChecker) throws StorageException {
     IntSet result = null;
     for (K dataKey : dataKeys) {
       IOCancellationCallbackHolder.checkCancelled();

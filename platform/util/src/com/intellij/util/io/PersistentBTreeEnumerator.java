@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.ArrayUtilRt;
@@ -270,8 +270,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     return true;
   }
 
-  @NotNull
-  private static Path indexFile(@NotNull Path file) {
+  private static @NotNull Path indexFile(@NotNull Path file) {
     return file.resolveSibling(file.getFileName() + "_i");
   }
 
@@ -347,7 +346,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  public boolean processAllDataObject(@NotNull final Processor<? super Data> processor, @Nullable final DataFilter filter)
+  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor, final @Nullable DataFilter filter)
     throws IOException {
     if (myInlineKeysNoMapping) {
       return traverseAllRecords(new RecordsProcessor() {
@@ -365,7 +364,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  public boolean traverseAllRecords(@NotNull final RecordsProcessor p) throws IOException {
+  public boolean traverseAllRecords(final @NotNull RecordsProcessor p) throws IOException {
     getReadLock().lock();
     try {
       lockStorageRead();

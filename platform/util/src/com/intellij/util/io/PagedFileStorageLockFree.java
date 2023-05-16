@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -536,8 +536,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
     }
   }
 
-  @NotNull
-  private static StorageLockContext findOutAppropriateContext(final @Nullable StorageLockContext storageLockContext) {
+  private static @NotNull StorageLockContext findOutAppropriateContext(final @Nullable StorageLockContext storageLockContext) {
     final StorageLockContext threadContext = THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get();
     if (threadContext != null) {
       if (storageLockContext != null && storageLockContext != threadContext) {

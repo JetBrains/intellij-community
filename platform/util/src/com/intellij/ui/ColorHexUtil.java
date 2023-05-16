@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
@@ -7,8 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public final class ColorHexUtil {
-  @NotNull
-  public static Color fromHex(@NotNull String str) {
+  public static @NotNull Color fromHex(@NotNull String str) {
     Color color = fromHexOrNull(str);
     if (color != null) return color;
     throw new IllegalArgumentException("unsupported length:" + str);
@@ -26,8 +25,7 @@ public final class ColorHexUtil {
    * @return Color object
    */
   @SuppressWarnings("UseJBColor")
-  @Nullable
-  public static Color fromHexOrNull(@Nullable String str) {
+  public static @Nullable Color fromHexOrNull(@Nullable String str) {
     if (str == null) return null;
     int pos = str.startsWith("#") ? 1 : str.startsWith("0x") ? 2 : 0;
     int len = str.length() - pos;
@@ -38,8 +36,7 @@ public final class ColorHexUtil {
     return null;
   }
 
-  @Nullable
-  public static Color fromHex(@Nullable String str, @Nullable Color defaultValue) {
+  public static @Nullable Color fromHex(@Nullable String str, @Nullable Color defaultValue) {
     if (str == null) return defaultValue;
     try {
       return fromHex(str);

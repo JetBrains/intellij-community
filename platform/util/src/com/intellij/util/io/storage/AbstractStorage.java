@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,8 +33,8 @@ public abstract class AbstractStorage implements IStorage {
 
   protected static final Logger LOG = Logger.getInstance(AbstractStorage.class);
 
-  @NonNls public static final String INDEX_EXTENSION = ".storageRecordIndex";
-  @NonNls public static final String DATA_EXTENSION = ".storageData";
+  public static final @NonNls String INDEX_EXTENSION = ".storageRecordIndex";
+  public static final @NonNls String DATA_EXTENSION = ".storageData";
 
   protected AbstractRecordsTable myRecordsTable;
   protected DataTable myDataTable;
@@ -410,9 +410,8 @@ public abstract class AbstractStorage implements IStorage {
       return myRecordId;
     }
 
-    @NotNull
     @Override
-    public ByteArraySequence asByteArraySequence() {
+    public @NotNull ByteArraySequence asByteArraySequence() {
       return getByteStream().asByteArraySequence();
     }
   }
@@ -436,9 +435,8 @@ public abstract class AbstractStorage implements IStorage {
       return ((BufferExposingByteArrayOutputStream)out);
     }
 
-    @NotNull
     @Override
-    public ByteArraySequence asByteArraySequence() {
+    public @NotNull ByteArraySequence asByteArraySequence() {
       return getByteStream().asByteArraySequence();
     }
   }

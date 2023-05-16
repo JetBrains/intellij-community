@@ -27,8 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public final class BoundedTaskExecutor extends AbstractExecutorService {
   private volatile boolean myShutdown;
-  @NotNull
-  private final String myName;
+  private final @NotNull String myName;
   private final Executor myBackendExecutor;
   private final int myMaxThreads;
   // low 32 bits: number of tasks running (or trying to run)
@@ -92,9 +91,8 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     myShutdown = true;
   }
 
-  @NotNull
   @Override
-  public List<Runnable> shutdownNow() {
+  public @NotNull List<Runnable> shutdownNow() {
     shutdown();
     return clearAndCancelAll();
   }
@@ -311,8 +309,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     return getTasksInProgress(myStatus.get()) == 0;
   }
 
-  @NotNull
-  public List<Runnable> clearAndCancelAll() {
+  public @NotNull List<Runnable> clearAndCancelAll() {
     List<Runnable> queued = new ArrayList<>(myTaskQueue.size());
     myTaskQueue.drainTo(queued);
     for (Runnable task : queued) {

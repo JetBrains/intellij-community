@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,8 +6,7 @@ import org.jetbrains.annotations.NotNull;
 public enum ThreeState {
   YES, NO, UNSURE;
 
-  @NotNull
-  public static ThreeState fromBoolean(boolean value) {
+  public static @NotNull ThreeState fromBoolean(boolean value) {
     return value ? YES : NO;
   }
 
@@ -18,8 +17,7 @@ public enum ThreeState {
    * @param other other value to combine with this value
    * @return a result of combination of two ThreeState values
    */
-  @NotNull
-  public ThreeState merge(ThreeState other) {
+  public @NotNull ThreeState merge(ThreeState other) {
     return this == other ? this : UNSURE;
   }
 
@@ -33,8 +31,7 @@ public enum ThreeState {
   /**
    * @return {@code YES} if the given states contain {@code YES}, otherwise {@code UNSURE} if the given states contain {@code UNSURE}, otherwise {@code NO}
    */
-  @NotNull
-  public static ThreeState mostPositive(@NotNull Iterable<? extends ThreeState> states) {
+  public static @NotNull ThreeState mostPositive(@NotNull Iterable<? extends ThreeState> states) {
     ThreeState result = NO;
     for (ThreeState state : states) {
       switch (state) {
@@ -49,8 +46,7 @@ public enum ThreeState {
    * @return {@code UNSURE} if {@code states} contains different values, the single value otherwise
    * @throws IllegalArgumentException if {@code states} is empty
    */
-  @NotNull
-  public static ThreeState merge(@NotNull Iterable<? extends ThreeState> states) {
+  public static @NotNull ThreeState merge(@NotNull Iterable<? extends ThreeState> states) {
     ThreeState result = null;
     for (ThreeState state : states) {
       if (state == UNSURE) {

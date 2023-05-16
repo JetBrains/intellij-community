@@ -47,13 +47,11 @@ public final class RemoteUtil {
       return map;
     });
 
-  @NotNull
-  public static <T> T castToRemoteNotNull(Object object, Class<T> clazz) {
+  public static @NotNull <T> T castToRemoteNotNull(Object object, Class<T> clazz) {
     return Objects.requireNonNull(castToRemote(object, clazz));
   }
 
-  @Nullable
-  public static <T> T castToRemote(@Nullable Object object, @NotNull Class<T> clazz) {
+  public static @Nullable <T> T castToRemote(@Nullable Object object, @NotNull Class<T> clazz) {
     if (object == null || !Proxy.isProxyClass(object.getClass())) return null;
     if (clazz.isInstance(object)) return (T)object;
     final InvocationHandler handler = Proxy.getInvocationHandler(object);
@@ -66,8 +64,7 @@ public final class RemoteUtil {
     return null;
   }
 
-  @NotNull
-  public static <T> T castToLocal(@Nullable Object remote, @NotNull Class<T> clazz) {
+  public static @NotNull <T> T castToLocal(@Nullable Object remote, @NotNull Class<T> clazz) {
     if (clazz.isInstance(remote)) return clazz.cast(remote);
     ClassLoader loader = clazz.getClassLoader();
     return ReflectionUtil.proxy(clazz, new RemoteInvocationHandler(remote, clazz, loader));
@@ -114,8 +111,7 @@ public final class RemoteUtil {
     return result;
   }
 
-  @Nullable
-  private static Object fixArg(@Nullable Object arg, @NotNull Class<?> fieldClass) {
+  private static @Nullable Object fixArg(@Nullable Object arg, @NotNull Class<?> fieldClass) {
     if (arg == null) return null;
     if (!fieldClass.isPrimitive() && Proxy.isProxyClass(arg.getClass())) {
       InvocationHandler handler = Proxy.getInvocationHandler(arg);
@@ -126,7 +122,7 @@ public final class RemoteUtil {
     return arg;
   }
 
-  public static <T> T substituteClassLoader(@NotNull final T remote, @Nullable final ClassLoader classLoader) throws Exception {
+  public static <T> T substituteClassLoader(final @NotNull T remote, final @Nullable ClassLoader classLoader) throws Exception {
     return executeWithClassLoader(() -> {
       Object proxy = Proxy.newProxyInstance(classLoader, remote.getClass().getInterfaces(), new InvocationHandler() {
         @Override
@@ -211,8 +207,7 @@ public final class RemoteUtil {
    * @param e  exception to process
    * @return   extracted 'real exception' if any; given exception otherwise
    */
-  @NotNull
-  public static Throwable unwrap(@NotNull Throwable e) {
+  public static @NotNull Throwable unwrap(@NotNull Throwable e) {
     for (Throwable candidate = e; candidate != null; candidate = candidate.getCause()) {
       Class<? extends Throwable> clazz = candidate.getClass();
       if (clazz != InvocationTargetException.class && clazz != UndeclaredThrowableException.class) {

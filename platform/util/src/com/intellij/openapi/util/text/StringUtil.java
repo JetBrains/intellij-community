@@ -252,8 +252,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  @NlsSafe
-  public static @NotNull String getPackageName(@NotNull String fqName) {
+  public static @NlsSafe @NotNull String getPackageName(@NotNull String fqName) {
     return getPackageName(fqName, '.');
   }
 
@@ -270,8 +269,7 @@ public class StringUtil extends StringUtilRt {
    * @return the package name of the type or the declarator of the type. The empty string if the given fqName is unqualified
    */
   @Contract(pure = true)
-  @NlsSafe
-  public static @NotNull String getPackageName(@NotNull String fqName, char separator) {
+  public static @NlsSafe @NotNull String getPackageName(@NotNull String fqName, char separator) {
     int lastPointIdx = fqName.lastIndexOf(separator);
     if (lastPointIdx >= 0) {
       return fqName.substring(0, lastPointIdx);
@@ -747,8 +745,7 @@ public class StringUtil extends StringUtilRt {
   /**
    * @see <a href="https://en.cppreference.com/w/cpp/language/escape">C/C++ escaping</a>
    */
-  @NotNull
-  public static String unescapeAnsiStringCharacters(@NotNull String s) {
+  public static @NotNull String unescapeAnsiStringCharacters(@NotNull String s) {
     StringBuilder buffer = new StringBuilder();
     int length = s.length();
     int count = 0;
@@ -1267,32 +1264,27 @@ public class StringUtil extends StringUtilRt {
 
 
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<String> split(@NotNull String s, @NotNull String separator) {
+  public static @Unmodifiable @NotNull List<String> split(@NotNull String s, @NotNull String separator) {
     return split(s, separator, true);
   }
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator) {
+  public static @Unmodifiable @NotNull List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator) {
     return split(s, separator, true, true);
   }
 
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator) {
+  public static @Unmodifiable @NotNull List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator) {
     return split(s, separator, excludeSeparator, true);
   }
 
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
+  public static @Unmodifiable @NotNull List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
     //noinspection unchecked,rawtypes
     return (List)split((CharSequence)s, separator, excludeSeparator, excludeEmptyStrings);
   }
 
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
+  public static @Unmodifiable @NotNull List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
     if (separator.length() == 0) {
       return Collections.singletonList(s);
     }
@@ -3060,9 +3052,7 @@ public class StringUtil extends StringUtilRt {
    */
   @SuppressWarnings("HardCodedStringLiteral")
   @Deprecated
-  @Nls
-  @NotNull
-  public static String naturalJoin(List<String> strings) {
+  public static @Nls @NotNull String naturalJoin(List<String> strings) {
     if (strings.isEmpty()) return "";
     if (strings.size() == 1) return strings.get(0);
     String lastWord = strings.get(strings.size() - 1);

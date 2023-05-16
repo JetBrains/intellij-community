@@ -30,8 +30,7 @@ import java.util.function.Function;
 public final class Registry  {
   private static Reference<Map<String, String>> bundledRegistry;
 
-  @NonNls
-  public static final String REGISTRY_BUNDLE = "misc.registry";
+  public static final @NonNls String REGISTRY_BUNDLE = "misc.registry";
 
   private static final RegistryValueListener EMPTY_VALUE_LISTENER = new RegistryValueListener() {
   };
@@ -43,8 +42,7 @@ public final class Registry  {
   private static final Registry ourInstance = new Registry();
   private volatile boolean isLoaded;
 
-  @NotNull
-  private volatile RegistryValueListener valueChangeListener = EMPTY_VALUE_LISTENER;
+  private volatile @NotNull RegistryValueListener valueChangeListener = EMPTY_VALUE_LISTENER;
 
   public static @NotNull RegistryValue get(@NonNls @NotNull String key) {
     return getInstance().doGet(key);

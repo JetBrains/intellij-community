@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -16,8 +16,7 @@ public abstract class AtomicNotNullLazyValue<T> extends NotNullLazyValue<T> {
   protected AtomicNotNullLazyValue() { }
 
   @Override
-  @NotNull
-  public final T getValue() {
+  public final @NotNull T getValue() {
     T value = myValue;
     if (value == null) {
       //noinspection SynchronizeOnThis

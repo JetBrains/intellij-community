@@ -39,7 +39,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   private final ProcessListener myEventMulticaster;
   private final TasksRunner myAfterStartNotifiedRunner;
 
-  @Nullable private volatile Integer myExitCode;
+  private volatile @Nullable Integer myExitCode;
 
   protected ProcessHandler() {
     myEventMulticaster = createEventMulticaster();
@@ -149,8 +149,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   /**
    * @return exit code if the process has already finished, null otherwise
    */
-  @Nullable
-  public Integer getExitCode() {
+  public @Nullable Integer getExitCode() {
     return myExitCode;
   }
 
@@ -158,7 +157,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     myListeners.add(listener);
   }
 
-  public void addProcessListener(@NotNull final ProcessListener listener, @NotNull Disposable parentDisposable) {
+  public void addProcessListener(final @NotNull ProcessListener listener, @NotNull Disposable parentDisposable) {
     myListeners.add(listener);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -217,8 +216,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     myEventMulticaster.onTextAvailable(event, outputType);
   }
 
-  @Nullable
-  public abstract OutputStream getProcessInput();
+  public abstract @Nullable OutputStream getProcessInput();
 
   private void fireProcessWillTerminate(final boolean willBeDestroyed) {
     LOG.assertTrue(isStartNotified(), "All events should be fired after startNotify is called");

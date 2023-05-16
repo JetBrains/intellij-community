@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.Disposable;
@@ -27,7 +27,7 @@ public class RegistryValue {
 
   private final Registry myRegistry;
   private final String myKey;
-  @Nullable private final RegistryKeyDescriptor myKeyDescriptor;
+  private final @Nullable RegistryKeyDescriptor myKeyDescriptor;
 
   private final List<RegistryValueListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -44,13 +44,11 @@ public class RegistryValue {
     myKeyDescriptor = keyDescriptor;
   }
 
-  @NotNull
-  public @NlsSafe String getKey() {
+  public @NotNull @NlsSafe String getKey() {
     return myKey;
   }
 
-  @NotNull
-  public @NlsSafe String asString() {
+  public @NotNull @NlsSafe String asString() {
     final String value = get(myKey, null, true);
     assert value != null : myKey;
     return value;
@@ -169,8 +167,7 @@ public class RegistryValue {
     return defaultValue;
   }
 
-  @NotNull
-  public @NlsSafe String getDescription() {
+  public @NotNull @NlsSafe String getDescription() {
     if (myKeyDescriptor != null) {
       return myKeyDescriptor.getDescription();
     }
@@ -188,8 +185,7 @@ public class RegistryValue {
     return isChangedFromDefault(asString(), myRegistry);
   }
 
-  @Nullable
-  public String getPluginId() {
+  public @Nullable String getPluginId() {
     return myKeyDescriptor != null ? myKeyDescriptor.getPluginId() : null;
   }
 

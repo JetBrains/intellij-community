@@ -433,7 +433,7 @@ public final class FileSystemUtil {
   }
 
   //<editor-fold desc="Windows case sensitivity detection (NTFS-only)">
-  private volatile static boolean WINDOWS_CS_API_AVAILABLE = true;
+  private static volatile boolean WINDOWS_CS_API_AVAILABLE = true;
 
   private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(String path) {
     Kernel32 kernel32;
@@ -516,7 +516,7 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="macOS case sensitivity detection">
-  private volatile static boolean MAC_CS_API_AVAILABLE = true;
+  private static volatile boolean MAC_CS_API_AVAILABLE = true;
 
   private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(String path) {
     CoreFoundation cf;
@@ -576,7 +576,7 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="Linux case sensitivity detection">
-  private volatile static boolean LINUX_CS_API_AVAILABLE = true;
+  private static volatile boolean LINUX_CS_API_AVAILABLE = true;
 
   private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(String path) {
     LibC libC;

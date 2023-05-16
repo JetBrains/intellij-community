@@ -72,8 +72,7 @@ public final class ConcurrencyUtil {
    * @return defaultValue if there is no entry in the map (in that case, defaultValue is placed into the map),
    *         or corresponding value if entry already exists.
    */
-  @NotNull
-  public static <K, V> V cacheOrGet(@NotNull ConcurrentMap<K, V> map, @NotNull final K key, @NotNull final V defaultValue) {
+  public static @NotNull <K, V> V cacheOrGet(@NotNull ConcurrentMap<K, V> map, final @NotNull K key, final @NotNull V defaultValue) {
     V v = map.get(key);
     if (v != null) return v;
     V prev = map.putIfAbsent(key, defaultValue);
@@ -83,31 +82,26 @@ public final class ConcurrencyUtil {
   /**
    * @return defaultValue if the reference contains null (in that case defaultValue is placed there), or reference value otherwise.
    */
-  @NotNull
-  public static <T> T cacheOrGet(@NotNull AtomicReference<T> ref, @NotNull T defaultValue) {
+  public static @NotNull <T> T cacheOrGet(@NotNull AtomicReference<T> ref, @NotNull T defaultValue) {
     T value = ref.get();
     if (value != null) return value;
     return ref.updateAndGet(prev -> prev == null ? defaultValue : prev);
   }
 
-  @NotNull
-  public static ThreadPoolExecutor newSingleThreadExecutor(@NotNull @NonNls String name) {
+  public static @NotNull ThreadPoolExecutor newSingleThreadExecutor(@NotNull @NonNls String name) {
     return newSingleThreadExecutor(name, Thread.NORM_PRIORITY);
   }
 
-  @NotNull
-  public static ThreadPoolExecutor newSingleThreadExecutor(@NonNls @NotNull String name, int priority) {
+  public static @NotNull ThreadPoolExecutor newSingleThreadExecutor(@NonNls @NotNull String name, int priority) {
     return new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
                                   new LinkedBlockingQueue<>(), newNamedThreadFactory(name, true, priority));
   }
 
-  @NotNull
-  public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NotNull @NonNls String name) {
+  public static @NotNull ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NotNull @NonNls String name) {
     return newSingleScheduledThreadExecutor(name, Thread.NORM_PRIORITY);
   }
 
-  @NotNull
-  public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NonNls @NotNull String name, int priority) {
+  public static @NotNull ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NonNls @NotNull String name, int priority) {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, newNamedThreadFactory(name, true, priority));
     executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
     executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
@@ -117,13 +111,11 @@ public final class ConcurrencyUtil {
   /**
    * Service, which executes tasks synchronously, immediately after they submitted
    */
-  @NotNull
-  public static ExecutorService newSameThreadExecutorService() {
+  public static @NotNull ExecutorService newSameThreadExecutorService() {
     return new SameThreadExecutorService();
   }
 
-  @NotNull
-  public static ThreadFactory newNamedThreadFactory(@NonNls @NotNull final String name, final boolean isDaemon, final int priority) {
+  public static @NotNull ThreadFactory newNamedThreadFactory(final @NonNls @NotNull String name, final boolean isDaemon, final int priority) {
     return r -> {
       Thread thread = new Thread(r, name);
       thread.setDaemon(isDaemon);
@@ -132,8 +124,7 @@ public final class ConcurrencyUtil {
     };
   }
 
-  @NotNull
-  public static ThreadFactory newNamedThreadFactory(@NonNls @NotNull final String name) {
+  public static @NotNull ThreadFactory newNamedThreadFactory(final @NonNls @NotNull String name) {
     return r -> new Thread(r, name);
   }
 
@@ -210,13 +201,12 @@ public final class ConcurrencyUtil {
     }
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static Runnable underThreadNameRunnable(@NotNull final String name, @NotNull final Runnable runnable) {
+  public static @NotNull Runnable underThreadNameRunnable(final @NotNull String name, final @NotNull Runnable runnable) {
     return () -> runUnderThreadName(name, runnable);
   }
 
-  public static void runUnderThreadName(@NotNull final String name, @NotNull final Runnable runnable) {
+  public static void runUnderThreadName(final @NotNull String name, final @NotNull Runnable runnable) {
     Thread currentThread = Thread.currentThread();
     String oldThreadName = currentThread.getName();
     if (name.equals(oldThreadName)) {
@@ -233,8 +223,7 @@ public final class ConcurrencyUtil {
     }
   }
 
-  @NotNull
-  public static Runnable once(@NotNull final Runnable delegate) {
+  public static @NotNull Runnable once(final @NotNull Runnable delegate) {
     final AtomicBoolean done = new AtomicBoolean(false);
     return () -> {
       if (done.compareAndSet(false, true)) {

@@ -190,8 +190,7 @@ public final class IOUtil {
     return new String(buffer, 0, len, StandardCharsets.ISO_8859_1);
   }
 
-  @Nullable
-  private static String readLongString(@NotNull DataInput storage) throws IOException {
+  private static @Nullable String readLongString(@NotNull DataInput storage) throws IOException {
     String result = storage.readUTF();
     if (LONGER_THAN_64K_MARKER.equals(result)) {
       return readString(storage);
@@ -310,8 +309,7 @@ public final class IOUtil {
   /**
    * Consider to use {@link com.intellij.util.io.externalizer.StringCollectionExternalizer}.
    */
-  @NotNull
-  public static <C extends Collection<String>> C readStringCollection(@NotNull DataInput in,
+  public static @NotNull <C extends Collection<String>> C readStringCollection(@NotNull DataInput in,
                                                                       @NotNull IntFunction<? extends C> collectionGenerator)
     throws IOException {
     int size = DataInputOutputUtil.readINT(in);
@@ -325,8 +323,7 @@ public final class IOUtil {
   /**
    * Consider to use {@link com.intellij.util.io.externalizer.StringCollectionExternalizer}.
    */
-  @NotNull
-  public static List<String> readStringList(@NotNull DataInput in) throws IOException {
+  public static @NotNull List<String> readStringList(@NotNull DataInput in) throws IOException {
     return readStringCollection(in, ArrayList::new);
   }
 
@@ -395,14 +392,12 @@ public final class IOUtil {
     return Arrays.toString(bytes);
   }
 
-  @NotNull
-  public static String toHexString(final @NotNull ByteBuffer buffer) {
+  public static @NotNull String toHexString(final @NotNull ByteBuffer buffer) {
     return toHexString(buffer, /*pageSize: */ -1);
   }
 
-  @NotNull
-  public static String toHexString(final @NotNull ByteBuffer buffer,
-                                   final int pageSize) {
+  public static @NotNull String toHexString(final @NotNull ByteBuffer buffer,
+                                            final int pageSize) {
     final byte[] bytes = new byte[buffer.capacity()];
     final ByteBuffer slice = buffer.duplicate();
     slice.position(0)
@@ -411,14 +406,12 @@ public final class IOUtil {
     return toHexString(bytes, pageSize);
   }
 
-  @NotNull
-  public static String toHexString(final byte[] bytes) {
+  public static @NotNull String toHexString(final byte[] bytes) {
     return toHexString(bytes, /*pageSize: */-1);
   }
 
-  @NotNull
-  public static String toHexString(final byte[] bytes,
-                                   final int pageSize) {
+  public static @NotNull String toHexString(final byte[] bytes,
+                                            final int pageSize) {
     final StringBuilder sb = new StringBuilder(bytes.length * 3);
     for (int i = 0; i < bytes.length; i++) {
       final byte b = bytes[i];

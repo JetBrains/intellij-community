@@ -420,8 +420,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     return successfullyCleaned;
   }
 
-  @NotNull
-  private Map<Path, PagesTable> threadSafeCopyOfPagesPerStorage() {
+  private @NotNull Map<Path, PagesTable> threadSafeCopyOfPagesPerStorage() {
     synchronized (pagesPerFile) {
       return new HashMap<>(pagesPerFile);
     }
@@ -666,7 +665,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
    * RC: Class is empty, since now there is only one impl of this class, and I'm not yet sure
    * which API is worth to have in a base class.
    */
-  protected static abstract class Command {
+  protected abstract static class Command {
   }
 
   /**

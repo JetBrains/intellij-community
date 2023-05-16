@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.indexing.impl.IndexDebugProperties;
@@ -21,21 +21,18 @@ import static com.intellij.util.io.PageCacheUtils.*;
 public final class StorageLockContext {
 
   private static final FilePageCache DEFAULT_FILE_PAGE_CACHE = new FilePageCache(FILE_PAGE_CACHE_OLD_CAPACITY_BYTES);
-  @Nullable
-  private static final FilePageCacheLockFree DEFAULT_FILE_PAGE_CACHE_NEW = PageCacheUtils.LOCK_FREE_VFS_ENABLED ?
-                                                                           new FilePageCacheLockFree(FILE_PAGE_CACHE_NEW_CAPACITY_BYTES) :
-                                                                           null;
+  private static final @Nullable FilePageCacheLockFree DEFAULT_FILE_PAGE_CACHE_NEW = PageCacheUtils.LOCK_FREE_VFS_ENABLED ?
+                                                                                     new FilePageCacheLockFree(FILE_PAGE_CACHE_NEW_CAPACITY_BYTES) :
+                                                                                     null;
 
   static final StorageLockContext ourDefaultContext = new StorageLockContext(false);
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
 
-  @NotNull
-  private final FilePageCache myFilePageCache;
+  private final @NotNull FilePageCache myFilePageCache;
 
   /** In general, null if {@link PageCacheUtils#LOCK_FREE_VFS_ENABLED} is false */
-  @Nullable
-  private final FilePageCacheLockFree myFilePageCacheLockFree;
+  private final @Nullable FilePageCacheLockFree myFilePageCacheLockFree;
 
   private final boolean myUseReadWriteLock;
   private final boolean myCacheChannels;
@@ -161,8 +158,7 @@ public final class StorageLockContext {
 
   /** @throws UnsupportedOperationException if new FilePageCache implementation is absent (disabled) */
   @ApiStatus.Internal
-  @NotNull
-  public FilePageCacheLockFree pageCache() {
+  public @NotNull FilePageCacheLockFree pageCache() {
     if (myFilePageCacheLockFree == null) {
       if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
         throw new UnsupportedOperationException(

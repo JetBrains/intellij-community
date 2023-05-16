@@ -48,8 +48,7 @@ public class PastParticiple {
     return null;
   }
 
-  @Nullable
-  private static String generateHeuristicDoubledFinalConsonantPastParticiple(String verb) {
+  private static @Nullable String generateHeuristicDoubledFinalConsonantPastParticiple(String verb) {
     int length = verb.length();
     if (length < 3) return null;
     char c1 = toLowerCase(verb.charAt(length - 1));
