@@ -18,10 +18,14 @@ import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.MarkdownRecursiveElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.*
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings
 import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil.WhiteSpaces.isNewLine
 
 internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
+  private val settings
+    get() = MarkdownCodeFoldingSettings.getInstance()
+
   override fun buildLanguageFoldRegions(descriptors: MutableList<FoldingDescriptor>, root: PsiElement, document: Document, quick: Boolean) {
     if (root.language !== root.containingFile.viewProvider.baseLanguage) {
       return
@@ -96,7 +100,11 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
   }
 
   override fun isRegionCollapsedByDefault(node: ASTNode): Boolean {
-    return node.hasType(MarkdownElementTypes.LINK_DESTINATION)
+    return when (node.elementType) {
+      MarkdownElementTypes.LINK_DESTINATION -> settings.state.collapseLinks
+      MarkdownElementTypes.FRONT_MATTER_HEADER -> settings.state.collapseFrontMatter
+      else -> false
+    }
   }
 
   private class HeaderRegionsBuildingVisitor(private val regionConsumer: (PsiElement, TextRange) -> Unit): MarkdownRecursiveElementVisitor() {
