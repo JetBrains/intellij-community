@@ -75,8 +75,7 @@ class LibraryBridgeImpl(
     LibraryStateSnapshot(
       libraryEntity = storage.findLibraryEntity(this) ?: error("Cannot find entity for library with ID $entityId"),
       storage = storage,
-      libraryTable = libraryTable,
-      parentDisposable = this
+      libraryTable = libraryTable
     )
   }
 

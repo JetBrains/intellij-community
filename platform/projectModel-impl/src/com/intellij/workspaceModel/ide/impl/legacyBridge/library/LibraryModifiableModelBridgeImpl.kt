@@ -46,8 +46,7 @@ internal class LibraryModifiableModelBridgeImpl(
     val newLibrary = LibraryStateSnapshot(
       libraryEntity = storage.resolve(entityId) ?: error("Can't resolve library via $entityId"),
       storage = storage,
-      libraryTable = originalLibrarySnapshot.libraryTable,
-      parentDisposable = originalLibrary
+      libraryTable = originalLibrarySnapshot.libraryTable
     )
 
     newLibrary
