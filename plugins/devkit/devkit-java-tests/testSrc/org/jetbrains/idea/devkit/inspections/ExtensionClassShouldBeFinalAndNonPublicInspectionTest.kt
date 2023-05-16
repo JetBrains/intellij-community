@@ -20,11 +20,11 @@ internal class ExtensionClassShouldBeFinalAndNonPublicInspectionTest : Extension
     doTest("Make 'MyInspection' final")
   }
 
-  fun testMustBePackagePrivate() {
-    doTest("Make 'MyInspection' not public")
+  fun testMakeNotPublic() {
+    doTest("Make 'MakeNotPublic' not public")
   }
 
-  fun testPackagePrivateFinalExtensionClass() {
+  fun testFinalPackagePrivateExtensionClass() {
     doTest()
   }
 }

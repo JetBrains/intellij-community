@@ -28,7 +28,7 @@ private class ExtensionClassShouldNotBePublicProviderForJava : ExtensionClassSho
   }
 
   override fun provideQuickFix(clazz: JvmClass, file: PsiFile): Array<out LocalQuickFix> {
-    val actions = createModifierActions(clazz, modifierRequest(JvmModifier.PACKAGE_LOCAL, true))
+    val actions = createModifierActions(clazz, modifierRequest(JvmModifier.PUBLIC, false))
     return IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
   }
 }

@@ -6,5 +6,6 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <myEp implementation="MyInspection"/>
+    <myEp implementation="MakeNotPublic"/>
   </extensions>
 </idea-plugin>
