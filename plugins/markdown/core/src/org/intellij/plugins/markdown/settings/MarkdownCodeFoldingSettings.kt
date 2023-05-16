@@ -1,10 +1,12 @@
 package org.intellij.plugins.markdown.settings
 
 import com.intellij.openapi.components.*
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 @State(name = "MarkdownCodeFoldingSettings", storages = [Storage("editor.xml")])
-internal class MarkdownCodeFoldingSettings: SimplePersistentStateComponent<MarkdownCodeFoldingSettings.State>(State()) {
+class MarkdownCodeFoldingSettings: SimplePersistentStateComponent<MarkdownCodeFoldingSettings.State>(State()) {
   data class State(
     val collapseLinks: Boolean = true,
     val collapseFrontMatter: Boolean = true,
