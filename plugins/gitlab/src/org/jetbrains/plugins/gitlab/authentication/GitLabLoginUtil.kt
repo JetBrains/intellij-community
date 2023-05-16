@@ -5,21 +5,35 @@ import com.intellij.collaboration.auth.ui.login.LoginModel
 import com.intellij.collaboration.auth.ui.login.TokenLoginDialog
 import com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory
 import com.intellij.collaboration.auth.ui.login.TokenLoginPanelModel
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
+import org.jetbrains.plugins.gitlab.authentication.ui.GitLabChooseAccountDialog
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
+import java.awt.Component
 import javax.swing.JComponent
 
 object GitLabLoginUtil {
 
+  @RequiresEdt
   internal fun logInViaToken(
-    project: Project, parentComponent: JComponent,
+    project: Project, parentComponent: JComponent?,
     serverPath: GitLabServerPath = GitLabServerPath.DEFAULT_SERVER,
+    uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
+  ): Pair<GitLabAccount, String>? = logInViaToken(project, parentComponent, serverPath, null, uniqueAccountPredicate)
+
+  @RequiresEdt
+  internal fun logInViaToken(
+    project: Project, parentComponent: JComponent?,
+    serverPath: GitLabServerPath = GitLabServerPath.DEFAULT_SERVER, requiredUsername: String? = null,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
   ): Pair<GitLabAccount, String>? {
 
-    val model = GitLabTokenLoginPanelModel(uniqueAccountPredicate).apply {
+    val model = GitLabTokenLoginPanelModel(requiredUsername, uniqueAccountPredicate).apply {
       serverUri = serverPath.uri
     }
     val loginState = showLoginDialog(project, parentComponent, model, false)
@@ -29,9 +43,17 @@ object GitLabLoginUtil {
     return null
   }
 
+  @RequiresEdt
   internal fun updateToken(
-    project: Project, parentComponent: JComponent,
+    project: Project, parentComponent: JComponent?,
     account: GitLabAccount,
+    uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
+  ): String? = updateToken(project, parentComponent, account, null, uniqueAccountPredicate)
+
+  @RequiresEdt
+  internal fun updateToken(
+    project: Project, parentComponent: JComponent?,
+    account: GitLabAccount, requiredUsername: String? = null,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
   ): String? {
     val predicateWithoutCurrent: (GitLabServerPath, String) -> Boolean = { serverPath, username ->
@@ -39,7 +61,7 @@ object GitLabLoginUtil {
       else uniqueAccountPredicate(serverPath, username)
     }
 
-    val model = GitLabTokenLoginPanelModel(predicateWithoutCurrent).apply {
+    val model = GitLabTokenLoginPanelModel(requiredUsername, predicateWithoutCurrent).apply {
       serverUri = account.server.uri
     }
     val loginState = showLoginDialog(project, parentComponent, model, true)
@@ -51,7 +73,7 @@ object GitLabLoginUtil {
 
   private fun showLoginDialog(
     project: Project,
-    parentComponent: JComponent,
+    parentComponent: JComponent?,
     model: TokenLoginPanelModel,
     serverFieldDisabled: Boolean
   ): LoginModel.LoginState {
@@ -59,5 +81,23 @@ object GitLabLoginUtil {
       TokenLoginInputPanelFactory(model).create(serverFieldDisabled, null)
     }.showAndGet()
     return model.loginState.value
+  }
+
+  @RequiresEdt
+  internal fun chooseAccount(project: Project,
+                             parentComponent: Component?,
+                             description: @Nls String?,
+                             accounts: Collection<GitLabAccount>): GitLabAccount? {
+    val dialog = GitLabChooseAccountDialog(project, parentComponent, accounts, false, true, description = description)
+    return if (dialog.showAndGet()) {
+      val account = dialog.account
+      if (dialog.setDefault) {
+        project.service<GitLabProjectDefaultAccountHolder>().account = account
+      }
+      account
+    }
+    else {
+      null
+    }
   }
 }
