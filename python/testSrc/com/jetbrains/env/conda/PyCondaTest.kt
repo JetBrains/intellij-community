@@ -14,12 +14,9 @@ import com.jetbrains.getPythonVersion
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.target.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.sdk.add.target.conda.saveLocalPythonCondaPath
-import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.EmptyNamedEnv
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile
-import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
-import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert
 import org.junit.Before
@@ -127,6 +124,26 @@ internal class PyCondaTest {
       }
     }
     Assert.assertTrue("No base conda found", baseFound)
+  }
+
+  @Test
+  fun testCondaListUnnamedEnvs(): Unit = runTest {
+    val envsDirs = Path.of(PyCondaEnv.getEnvsDirs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow().first())
+    val childDir = envsDirs.resolve("child")
+    val childEnvPrefix = childDir.resolve("childEnv").toString()
+    val siblingDir = envsDirs.resolveSibling("${envsDirs.fileName}Sibling")
+    val siblingEnvPrefix = siblingDir.resolve("siblingEnv").toString()
+
+    PyCondaEnv.createEnv(condaRule.condaCommand, NewCondaEnvRequest.EmptyUnnamedEnv(LanguageLevel.PYTHON39, childEnvPrefix)).mapFlat { it.getResultStdout() }
+    PyCondaEnv.createEnv(condaRule.condaCommand, NewCondaEnvRequest.EmptyUnnamedEnv(LanguageLevel.PYTHON39, siblingEnvPrefix)).mapFlat { it.getResultStdout() }
+
+    // Important to check that envIdentity is UnnamedEnv as this is testing to make sure that
+    // getEnvs doesn't mistakenly return a NamedEnv for an environment that isn't a direct child of envsDirs
+    val envs = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow()
+          .map { it.envIdentity }
+          .filterIsInstance<PyCondaEnvIdentity.UnnamedEnv>()
+    Assert.assertTrue("No child $childEnvPrefix in $envs", envs.any { it.envPath == childEnvPrefix })
+    Assert.assertTrue("No sibling $siblingEnvPrefix in $envs", envs.any { it.envPath == siblingEnvPrefix })
   }
 
   private suspend fun getPythonVersion(condaEnv: PyCondaEnv): String {
