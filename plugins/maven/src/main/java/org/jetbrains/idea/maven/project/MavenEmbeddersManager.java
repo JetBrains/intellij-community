@@ -14,6 +14,8 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -50,22 +52,50 @@ public class MavenEmbeddersManager {
 
   @NotNull
   public synchronized MavenEmbedderWrapper getEmbedder(Key kind, @NotNull String multiModuleProjectDirectory) {
-    Pair<Key, String> key = Pair.create(kind, multiModuleProjectDirectory);
+    String embedderDir = guessExistingEmbedderDir(multiModuleProjectDirectory);
+
+    Pair<Key, String> key = Pair.create(kind, embedderDir);
     MavenEmbedderWrapper result = myPool.get(key);
     boolean alwaysOnline = kind == FOR_DOWNLOAD;
 
     if (result == null) {
-      result = MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, multiModuleProjectDirectory);
+      result = createEmbedder(embedderDir, alwaysOnline);
       myPool.put(key, result);
     }
 
     if (myEmbeddersInUse.contains(result)) {
       MavenLog.LOG.warn("embedder " + key + " is already used");
-      return MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, multiModuleProjectDirectory);
+      return createEmbedder(embedderDir, alwaysOnline);
     }
 
     myEmbeddersInUse.add(result);
     return result;
+  }
+
+  private String guessExistingEmbedderDir(@NotNull String multiModuleProjectDirectory) {
+    var dir = multiModuleProjectDirectory;
+    if (dir.isBlank()) {
+      MavenLog.LOG.error("Maven project directory is blank. Using project base path");
+      dir = myProject.getBasePath();
+    }
+    if (null == dir || dir.isBlank()) {
+      MavenLog.LOG.error("Maven project directory is blank. Using tmp dir");
+      dir = System.getProperty("java.io.tmpdir");
+    }
+    Path path = Path.of(dir).toAbsolutePath();
+    while (null != path && !Files.exists(path)) {
+      MavenLog.LOG.warn(String.format("Maven project %s directory does not exist. Using parent", path));
+      path = path.getParent();
+    }
+    if (null == path) {
+      throw new RuntimeException("Could not determine maven project directory: " + multiModuleProjectDirectory);
+    }
+    return path.toString();
+  }
+
+  @NotNull
+  private MavenEmbedderWrapper createEmbedder(@NotNull String multiModuleProjectDirectory, boolean alwaysOnline) {
+    return MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, multiModuleProjectDirectory);
   }
 
   /**
