@@ -18,7 +18,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-fixtures/0.11.16/remote-fixtures-0.11.16.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-fixtures/0.11.16/remote-fixtures-0.11.16-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
