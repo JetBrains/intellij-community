@@ -56,6 +56,8 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -77,6 +79,8 @@ import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -91,6 +95,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -103,6 +108,7 @@ import java.util.stream.Collectors;
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
 import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocationHint;
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
+import static com.intellij.util.FindUsagesScopeKt.FindUsagesScope;
 import static com.intellij.util.ObjectUtils.doIfNotNull;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
@@ -111,6 +117,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   private static final String DIMENSION_SERVICE_KEY = "ShowUsagesActions.dimensionServiceKey";
   private static final String SPLITTER_SERVICE_KEY = "ShowUsagesActions.splitterServiceKey";
   private static final String PREVIEW_PROPERTY_KEY = "ShowUsagesActions.previewPropertyKey";
+
+  private final static IJTracer myFindUsagesTracer = TelemetryTracer.getInstance().getTracer(FindUsagesScope);
 
   private static int ourPopupDelayTimeout = 300;
 
@@ -241,14 +249,23 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     HintManager.getInstance().hideHints(HintManager.HIDE_BY_ANY_KEY, false, false);
   }
 
-  public static void startFindUsages(@NotNull PsiElement element, @NotNull RelativePoint popupPosition, @Nullable Editor editor) {
+  @ApiStatus.Internal
+  public static Future<Collection<Usage>> startFindUsagesWithResult(@NotNull PsiElement element,
+                                                                    @NotNull RelativePoint popupPosition,
+                                                                    @Nullable Editor editor,
+                                                                    @Nullable SearchScope scope) {
     Project project = element.getProject();
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     FindUsagesHandlerBase handler = findUsagesManager.getFindUsagesHandler(element, USAGES_WITH_DEFAULT_OPTIONS);
-    if (handler == null) return;
+    if (handler == null) return null;
     //noinspection deprecation
     FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
-    showElementUsages(ShowUsagesParameters.initial(project, editor, popupPosition), createActionHandler(handler, options));
+    if (scope != null) options.searchScope = scope;
+    return showElementUsagesWithResult(ShowUsagesParameters.initial(project, editor, popupPosition), createActionHandler(handler, options));
+  }
+
+  public static void startFindUsages(@NotNull PsiElement element, @NotNull RelativePoint popupPosition, @Nullable Editor editor) {
+    startFindUsagesWithResult(element, popupPosition, editor, null);
   }
 
   private static void rulesChanged(@NotNull UsageViewImpl usageView, @NotNull PingEDT pingEDT, JBPopup popup) {
@@ -407,7 +424,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   static void showElementUsages(@NotNull ShowUsagesParameters parameters, @NotNull ShowUsagesActionHandler actionHandler) {
+    showElementUsagesWithResult(parameters, actionHandler);
+  }
+
+  static Future<Collection<Usage>> showElementUsagesWithResult(@NotNull ShowUsagesParameters parameters,
+                                                               @NotNull ShowUsagesActionHandler actionHandler) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    Span findUsageSpan = myFindUsagesTracer.spanBuilder("findUsages").startSpan();
+    Scope opentelemetryScope = findUsageSpan.makeCurrent();
+    Span popupSpan = myFindUsagesTracer.spanBuilder("findUsage_popup").startSpan();
+    Span firstUsageSpan = myFindUsagesTracer.spanBuilder("findUsages_firstUsage").startSpan();
 
     Project project = parameters.project;
     UsageViewImpl usageView = createUsageView(project, actionHandler.getTargetLanguage());
@@ -478,6 +505,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       EdtScheduledExecutorService.getInstance().schedule(() -> {
         if (!usageView.isDisposed()) {
           showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTimeRef);
+          popupSpan.end();
         }
       }, ourPopupDelayTimeout, TimeUnit.MILLISECONDS);
     }
@@ -555,6 +583,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         return true;
       }
       synchronized (usages) {
+        firstUsageSpan.end();
         if (visibleUsages.size() >= parameters.maxUsages) {
           tooManyResults.set(true);
           return false;
@@ -583,11 +612,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     UsageSearcher usageSearcher = actionHandler.createUsageSearcher();
     long searchStarted = System.nanoTime();
+    var result = new CompletableFuture<Collection<Usage>>();
     FindUsagesManager.startProcessUsages(indicator, project, usageSearcher, collect, () -> ApplicationManager.getApplication().invokeLater(
       () -> {
         showUsagesPopupData.header.disposeProcessIcon();
         pingEDT.ping(); // repaint status
         synchronized (usages) {
+          findUsageSpan.setAttribute("number", usages.size());
           if (visibleUsages.isEmpty()) {
             if (usages.isEmpty()) {
               String hint = UsageViewBundle.message("no.usages.found.in", searchScope.getDisplayName());
@@ -621,8 +652,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
               }
             }
           }
+          result.complete(usages);
         }
-
+        findUsageSpan.end();
         long current = System.nanoTime();
         UsageViewStatisticsCollector.logSearchFinished(project, usageView,
                                                        actionHandler.getTargetClass(), searchScope, actionHandler.getTargetLanguage(),
@@ -635,6 +667,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       },
       project.getDisposed()
     ));
+    opentelemetryScope.close();
+    return result;
   }
 
   private static void toggleFilters(@NotNull List<? extends ToggleAction> unselectedActions) {
