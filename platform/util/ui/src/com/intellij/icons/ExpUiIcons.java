@@ -251,7 +251,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Down = load("expui/general/down.svg", 1811331429, 2);
     /** 16x16 */ public static final @NotNull Icon Download = load("expui/general/download.svg", 616133920, 2);
     /** 16x16 */ public static final @NotNull Icon Dropdown = load("expui/general/dropdown.svg", 706458557, 2);
-    /** 13x13 */ public static final @NotNull Icon DropdownGutter = load("expui/general/dropdownGutter.svg", -1697148111, 2);
+    /** 15x15 */ public static final @NotNull Icon DropdownGutter = load("expui/general/dropdownGutter.svg", -1772670472, 2);
     /** 16x16 */ public static final @NotNull Icon Edit = load("expui/general/edit.svg", 813514731, 2);
     /** 16x16 */ public static final @NotNull Icon EditorOnly = load("expui/general/editorOnly.svg", -652267841, 2);
     /** 16x16 */ public static final @NotNull Icon EditorPreview = load("expui/general/editorPreview.svg", 9030504, 2);
