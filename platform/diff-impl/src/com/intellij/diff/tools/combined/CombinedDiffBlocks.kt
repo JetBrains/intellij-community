@@ -103,8 +103,6 @@ private class CombinedSimpleDiffHeader(project: Project,
     toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     toolbar.component.background = UIUtil.getListBackground()
     toolbar.component.border = JBEmptyBorder(UIUtil.PANEL_SMALL_INSETS)
-    toolbarGroup.add(CombinedPrevNextFileAction(blockId, toolbar.component, false))
-    toolbarGroup.add(CombinedPrevNextFileAction(blockId, toolbar.component, true))
 
     return toolbar
   }

@@ -15,22 +15,14 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.pom.Navigatable
-import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.ToggleActionButton
-import java.awt.Component
-import javax.swing.event.HyperlinkEvent
-import javax.swing.event.HyperlinkListener
 
 internal open class CombinedNextChangeAction(private val context: DiffContext) : NextChangeAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -255,68 +247,6 @@ internal class CombinedEditorSettingsAction(private val settings: TextDiffSettin
 
     return actions.toTypedArray()
   }
-}
-
-internal class CombinedPrevNextFileAction(private val blockId: CombinedPathBlockId,
-                                          private val toolbar: Component?,
-                                          private val next: Boolean) : ToolbarLabelAction(), RightAlignedToolbarAction {
-  private val text = message(if (next) "action.Combined.Diff.NextChange.text" else "action.Combined.Diff.PrevChange.text")
-
-  init {
-    ActionUtil.copyFrom(this, if (next) NextChangeAction.ID else PrevChangeAction.ID)
-    templatePresentation.icon = null
-    templatePresentation.text = HtmlBuilder().appendLink("", text).toString()
-    templatePresentation.description = null //disable label tooltip
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
-
-  override fun update(e: AnActionEvent) {
-    val combinedDiffViewer = e.getData(COMBINED_DIFF_VIEWER)
-    if (combinedDiffViewer == null) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-
-    val newPosition = if (next) combinedDiffViewer.nextBlockPosition() else combinedDiffViewer.prevBlockPosition()
-    e.presentation.isVisible = newPosition != -1
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val combinedDiffViewer = e.getData(COMBINED_DIFF_VIEWER) ?: return
-    val newPosition = if (next) combinedDiffViewer.nextBlockPosition() else combinedDiffViewer.prevBlockPosition()
-    if (newPosition != -1) {
-      combinedDiffViewer.selectDiffBlock(newPosition, ScrollPolicy.DIFF_BLOCK)
-    }
-  }
-
-  override fun createHyperlinkListener(): HyperlinkListener = object : HyperlinkAdapter() {
-
-    override fun hyperlinkActivated(e: HyperlinkEvent) {
-      val place = (toolbar as? ActionToolbarImpl)?.place ?: ActionPlaces.DIFF_TOOLBAR
-      val event = AnActionEvent.createFromAnAction(this@CombinedPrevNextFileAction, e.inputEvent, place,
-                                                   ActionToolbar.getDataContextFor(toolbar))
-      actionPerformed(event)
-    }
-  }
-
-  private fun CombinedDiffViewer.prevBlockPosition(): Int {
-    val curPosition = curBlockPosition()
-    return if (curPosition != -1 && curPosition >= 1) curPosition - 1 else -1
-  }
-
-  private fun CombinedDiffViewer.nextBlockPosition(): Int {
-    val curPosition = curBlockPosition()
-    return if (curPosition != -1 && curPosition < getDiffBlocksCount() - 1) curPosition + 1 else -1
-  }
-
-  private fun CombinedDiffViewer.curBlockPosition(): Int = getBlockIndex(blockId) ?: -1
-
-  override fun isCopyable(): Boolean = true
-
-  override fun getHyperlinkTooltip(): String = text
 }
 
 internal class CombinedOpenInEditorAction(private val path: FilePath) : OpenInEditorAction() {

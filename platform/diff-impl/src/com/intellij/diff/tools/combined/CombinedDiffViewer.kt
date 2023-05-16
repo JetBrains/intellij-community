@@ -417,10 +417,10 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     selectDiffBlock(scrollSupport.blockIterable.index, scrollPolicy)
   }
 
-  fun selectDiffBlock(index: Int = scrollSupport.blockIterable.index,
-                      scrollPolicy: ScrollPolicy,
-                      focusBlock: Boolean = true,
-                      onSelected: () -> Unit = {}) {
+  private fun selectDiffBlock(index: Int = scrollSupport.blockIterable.index,
+                              scrollPolicy: ScrollPolicy,
+                              focusBlock: Boolean = true,
+                              onSelected: () -> Unit = {}) {
     val blockId = getBlockId(index) ?: return
     val block = getBlockForId(blockId) ?: return
 
