@@ -22,10 +22,8 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.ThreeState;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,11 +69,6 @@ public class ChangeListsIndexes {
   private void remove(final FilePath file) {
     myMap.remove(file);
     myAffectedPaths.remove(file);
-  }
-
-  @Nullable
-  public FileStatus getStatus(@NotNull VirtualFile file) {
-    return getStatus(VcsUtil.getFilePath(file));
   }
 
   @Nullable

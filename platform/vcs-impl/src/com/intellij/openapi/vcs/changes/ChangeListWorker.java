@@ -386,7 +386,7 @@ public final class ChangeListWorker {
 
   @Nullable
   public FileStatus getStatus(@NotNull VirtualFile file) {
-    return myIdx.getStatus(file);
+    return myIdx.getStatus(VcsUtil.getFilePath(file));
   }
 
   @Nullable
