@@ -117,7 +117,9 @@ class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineS
 
     try {
       withTimeout(CLOSE_LOG_TIMEOUT) {
-        disposeLog(useRawSwingDispatcher = useRawSwingDispatcher)
+        mutex.withLock {
+          disposeLogInternal(useRawSwingDispatcher = useRawSwingDispatcher)
+        }
       }
     }
     catch (e: TimeoutCancellationException) {
@@ -138,35 +140,34 @@ class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineS
 
   @RequiresBackgroundThread
   private suspend fun disposeLog(recreate: Boolean, beforeCreateLog: (suspend () -> Unit)? = null) {
-    disposeLog()
+    mutex.withLock {
+      disposeLogInternal(false)
+      if (!recreate || isDisposing) return
 
-    if (!recreate || isDisposing) return
+      try {
+        beforeCreateLog?.invoke()
+      }
+      catch (e: Throwable) {
+        LOG.error("Unable to execute 'beforeCreateLog'", e)
+      }
 
-    try {
-      beforeCreateLog?.invoke()
-    }
-    catch (e: Throwable) {
-      LOG.error("Unable to execute 'beforeCreateLog'", e)
-    }
-
-    try {
-      createLog(forceInit = false)
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error("Unable to execute 'createLog'", e)
+      try {
+        createLogInternal(forceInit = false)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error("Unable to execute 'createLog'", e)
+      }
     }
   }
 
-  private suspend fun disposeLog(useRawSwingDispatcher: Boolean = false) {
-    mutex.withLock {
-      val logManager = withContext(if (useRawSwingDispatcher) RawSwingDispatcher else (Dispatchers.EDT + modality())) {
-        dropLogManager()?.also { it.disposeUi() }
-      }
-      if (logManager != null) Disposer.dispose(logManager)
+  private suspend fun disposeLogInternal(useRawSwingDispatcher: Boolean) {
+    val logManager = withContext(if (useRawSwingDispatcher) RawSwingDispatcher else (Dispatchers.EDT + modality())) {
+      dropLogManager()?.also { it.disposeUi() }
     }
+    if (logManager != null) Disposer.dispose(logManager)
   }
 
   /**
@@ -190,16 +191,20 @@ class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineS
     if (isDisposing) return null
 
     mutex.withLock {
-      if (isDisposing) return null
-
-      val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>()
-      val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
-      if (logProviders.isEmpty()) return null
-
-      val logManager = getOrCreateLogManager(logProviders)
-      initialize(logManager = logManager, force = forceInit)
-      return logManager
+      return createLogInternal(forceInit)
     }
+  }
+
+  private suspend fun createLogInternal(forceInit: Boolean): VcsLogManager? {
+    if (isDisposing) return null
+
+    val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>()
+    val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
+    if (logProviders.isEmpty()) return null
+
+    val logManager = getOrCreateLogManager(logProviders)
+    initialize(logManager = logManager, force = forceInit)
+    return logManager
   }
 
   private suspend fun getOrCreateLogManager(logProviders: Map<VirtualFile, VcsLogProvider>): VcsLogManager {
