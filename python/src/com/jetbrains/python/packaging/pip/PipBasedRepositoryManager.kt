@@ -9,16 +9,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.text.SemVer
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
-import com.jetbrains.python.packaging.common.EmptyPythonPackageDetails
+import com.jetbrains.python.packaging.common.*
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.management.packagesByRepository
-import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.repository.*
 import com.jetbrains.python.packaging.repository.withBasicAuthorization
 import org.jetbrains.annotations.ApiStatus
@@ -48,6 +46,15 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
       if (result.isFailure) thisLogger().debug("Request failed for package $it.name")
 
       buildPackageDetails(result.getOrNull(), it)
+    }
+
+  private val latestVersions = Caffeine.newBuilder()
+    .expireAfterWrite(Duration.ofDays(1))
+    .build<PythonPackageSpecification, SemVer?> {
+      val details = packageDetailsCache[it]
+      if (details is EmptyPythonPackageDetails || details.availableVersions.isEmpty()) return@build null
+
+      SemVer.parseFromText(normalizePyPISemVer(details.availableVersions.first()))
     }
 
 
@@ -122,5 +129,9 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
 
   override suspend fun getPackageDetails(pkg: PythonPackageSpecification): PythonPackageDetails {
     return packageDetailsCache[pkg]
+  }
+
+  override suspend fun getLatestVersion(spec: PythonPackageSpecification): SemVer? {
+    return latestVersions[spec]
   }
 }

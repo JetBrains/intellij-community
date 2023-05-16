@@ -13,9 +13,11 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.table.JBTable
+import com.intellij.util.text.SemVer
 import com.intellij.util.ui.*
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.packaging.common.normalizePyPISemVer
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,7 +29,6 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.font.TextAttribute
 import javax.swing.*
-import javax.swing.border.EmptyBorder
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.TableCellRenderer
 
@@ -43,7 +44,8 @@ internal class PyPackagesTable<T : DisplayablePackage>(project: Project,
     setShowGrid(false)
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
     val column = columnModel.getColumn(1)
-    column.maxWidth = 100
+    column.minWidth = 110
+    column.maxWidth = 110
     column.resizable = false
     border = SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM)
     rowHeight = 20
@@ -56,7 +58,8 @@ internal class PyPackagesTable<T : DisplayablePackage>(project: Project,
         if (column == 1) {
           table.repaint(table.getCellRect(row, column, true))
           val currentPackage = items[row]
-          if (currentPackage is InstallablePackage) {
+          if (currentPackage is InstallablePackage
+              || (currentPackage is InstalledPackage && currentPackage.canBeUpdated)) {
             cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
             return
           }
@@ -71,25 +74,30 @@ internal class PyPackagesTable<T : DisplayablePackage>(project: Project,
         if (e.clickCount != 1 || columnAtPoint(e.point) != 1) return // double click or click on package name column, nothing to be done
         val hoveredRow = TableHoverListener.getHoveredRow(this@PyPackagesTable)
         val selectedPackage = this@PyPackagesTable.items[hoveredRow]
-        if (selectedPackage is ExpandResultNode) return
-        if (selectedPackage is InstalledPackage) {
-          // todo[akniazev]: update package to the latest version stored in the InstalledPackage
-          return
-        }
 
-        controller.packagingScope.launch(Dispatchers.IO) {
-          val details = service.detailsForPackage(selectedPackage)
-          withContext(Dispatchers.Main) {
-            JBPopupFactory.getInstance().createListPopup(object : BaseListPopupStep<String>(null, details.availableVersions) {
-              override fun onChosen(selectedValue: String?, finalChoice: Boolean): PopupStep<*>? {
-                return doFinalStep {
-                  val specification = (selectedPackage as InstallablePackage).repository.createPackageSpecification(selectedPackage.name, selectedValue)
-                  controller.packagingScope.launch(Dispatchers.IO) {
-                    project.service<PyPackagingToolWindowService>().installPackage(specification)
+        if (selectedPackage is InstallablePackage) {
+          controller.packagingScope.launch(Dispatchers.IO) {
+            val details = service.detailsForPackage(selectedPackage)
+            withContext(Dispatchers.Main) {
+              JBPopupFactory.getInstance().createListPopup(object : BaseListPopupStep<String>(null, details.availableVersions) {
+                override fun onChosen(selectedValue: String?, finalChoice: Boolean): PopupStep<*>? {
+                  return doFinalStep {
+                    val specification = (selectedPackage as InstallablePackage).repository.createPackageSpecification(selectedPackage.name,
+                                                                                                                      selectedValue)
+                    controller.packagingScope.launch(Dispatchers.IO) {
+                      project.service<PyPackagingToolWindowService>().installPackage(specification)
+                    }
                   }
                 }
-              }
-            }, 8).show(RelativePoint(e))
+              }, 8).show(RelativePoint(e))
+            }
+          }
+        }
+        else if (selectedPackage is InstalledPackage && selectedPackage.canBeUpdated) {
+          controller.packagingScope.launch(Dispatchers.IO) {
+            val specification = selectedPackage.repository.createPackageSpecification(selectedPackage.name,
+                                                                                      selectedPackage.nextVersion.toString())
+            project.service<PyPackagingToolWindowService>().updatePackage(specification)
           }
         }
       }
@@ -225,7 +233,7 @@ fun headerPanel(label: JLabel, component: JComponent?) = object : JPanel() {
   init {
     background = UIUtil.getLabelBackground()
     layout = BorderLayout()
-    border = BorderFactory.createCompoundBorder(SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM), EmptyBorder(0, 5, 0, 5))
+    border = BorderFactory.createCompoundBorder(SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM), JBUI.Borders.empty(0, 5))
     preferredSize = Dimension(preferredSize.width, 25)
     minimumSize = Dimension(minimumSize.width, 25)
     maximumSize = Dimension(maximumSize.width, 25)
@@ -243,25 +251,24 @@ fun headerPanel(label: JLabel, component: JComponent?) = object : JPanel() {
 }
 
 private class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
-  private val emptyBorder = BorderFactory.createEmptyBorder(0, 12, 0, 12)
-  private val nameLabel = JLabel().apply { border = emptyBorder }
-  private val versionLabel = JLabel().apply { border = BorderFactory.createEmptyBorder() }
+  private val nameLabel = JLabel().apply { border = JBUI.Borders.empty(0, 12) }
+  private val versionLabel = JLabel().apply { border = JBUI.Borders.emptyRight(12) }
   private val linkLabel = JLabel(message("python.toolwindow.packages.install.link")).apply {
-    border = BorderFactory.createEmptyBorder()
+    border = JBUI.Borders.emptyRight(12)
     foreground = JBUI.CurrentTheme.Link.Foreground.ENABLED
   }
 
   private val namePanel = JPanel().apply {
     layout = BoxLayout(this, BoxLayout.X_AXIS)
-    border = BorderFactory.createEmptyBorder()
+    border = JBUI.Borders.empty()
     add(nameLabel)
   }
 
   private val versionPanel = boxPanel {
+    border = JBUI.Borders.emptyRight(12)
     add(versionLabel)
   }
 
-  @Suppress("UNCHECKED_CAST")
   override fun getTableCellRendererComponent(table: JTable,
                                              value: Any?,
                                              isSelected: Boolean,
@@ -290,16 +297,19 @@ private class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
       versionPanel.removeAll()
 
       if (value is InstallablePackage) {
-        val hoveredRow = TableHoverListener.getHoveredRow(table)
-        val hoveredColumn = (table as PyPackagesTable<*>).hoveredColumn
-        val underline = if (hoveredRow == row && hoveredColumn == 1) TextAttribute.UNDERLINE_ON else -1
-
-        val attributes = linkLabel.font.attributes as MutableMap<TextAttribute, Any>
-        attributes[TextAttribute.UNDERLINE] = underline
-        linkLabel.font = font.deriveFont(attributes)
-        if (hoveredRow == row || rowSelected) {
+        linkLabel.text = message("python.toolwindow.packages.install.link")
+        linkLabel.updateUnderline(table, row)
+        if (rowSelected || TableHoverListener.getHoveredRow(table) == row) {
           versionPanel.add(linkLabel)
         }
+      }
+      else if (value is InstalledPackage
+               && value.nextVersion != null
+               && value.nextVersion > SemVer.parseFromText(normalizePyPISemVer(value.instance.version)) ) {
+        @NlsSafe val updateLink = value.instance.version + " -> " + value.nextVersion.toString()
+        linkLabel.text = updateLink
+        linkLabel.updateUnderline(table, row)
+        versionPanel.add(linkLabel)
       }
       else {
         @NlsSafe val version = (value as InstalledPackage).instance.version
@@ -319,12 +329,22 @@ private class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
     nameLabel.foreground = JBUI.CurrentTheme.Label.foreground()
     return namePanel
   }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun JLabel.updateUnderline(table: JTable, currentRow: Int) {
+    val hoveredRow = TableHoverListener.getHoveredRow(table)
+    val hoveredColumn = (table as PyPackagesTable<*>).hoveredColumn
+    val underline = if (hoveredRow == currentRow && hoveredColumn == 1) TextAttribute.UNDERLINE_ON else -1
+
+    val attributes = font.attributes as MutableMap<TextAttribute, Any>
+    attributes[TextAttribute.UNDERLINE] = underline
+    font = font.deriveFont(attributes)
+  }
 }
 
 
 internal class PyPackagingTableGroup<T: DisplayablePackage>(val repository: PyPackageRepository, val table: PyPackagesTable<T>) {
   @NlsSafe val name: String = repository.name!!
-  val repoUrl = repository.repositoryUrl ?: ""
 
   private var expanded = false
   private val label = JLabel(name).apply { icon = AllIcons.General.ArrowDown }

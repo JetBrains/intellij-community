@@ -2,11 +2,19 @@
 package com.jetbrains.python.packaging.toolwindow
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.text.SemVer
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.common.normalizePyPISemVer
 
 sealed class DisplayablePackage(@NlsSafe val name: String, val repository: PyPackageRepository)
-class InstalledPackage(val instance: PythonPackage, repository: PyPackageRepository) : DisplayablePackage(instance.name, repository)
+class InstalledPackage(val instance: PythonPackage, repository: PyPackageRepository, val nextVersion: SemVer? = null) : DisplayablePackage(instance.name, repository) {
+  val canBeUpdated: Boolean
+    get() {
+      val currentVersion = SemVer.parseFromText(normalizePyPISemVer(instance.version)) ?: return false
+      return nextVersion != null && nextVersion.isGreaterOrEqualThan(currentVersion)
+    }
+}
 class InstallablePackage(name: String, repository: PyPackageRepository) : DisplayablePackage(name, repository)
 class ExpandResultNode(var more: Int, repository: PyPackageRepository) : DisplayablePackage("", repository)
 open class PyPackagesViewData(@NlsSafe val repository: PyPackageRepository, val packages: List<DisplayablePackage>, val exactMatch: Int = -1, val moreItems: Int = 0)

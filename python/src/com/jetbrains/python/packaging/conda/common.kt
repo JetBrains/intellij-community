@@ -35,6 +35,6 @@ class CondaPackageDetails(override val name: String,
 
 object CondaPackageRepository : PyPackageRepository("Conda", "", "") {
   override fun createPackageSpecification(packageName: String, version: String?): PythonPackageSpecification {
-    return CondaPackageSpecification(packageName, null)
+    return CondaPackageSpecification(packageName, version)
   }
 }
