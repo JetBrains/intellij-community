@@ -7866,6 +7866,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/kt36225.kt");
                 }
 
+                @TestMetadata("ktij-14750.kt")
+                public void testKtij_14750() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/ktij-14750.kt");
+                }
+
                 @TestMetadata("noImplicitTypeArgImportRuntime.kt")
                 public void testNoImplicitTypeArgImportRuntime() throws Exception {
                     runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/noImplicitTypeArgImportRuntime.kt");
