@@ -2,7 +2,15 @@
 package com.intellij.ide.projectView.impl.nodes
 
 import com.intellij.ide.projectView.ProjectViewNode
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
+import com.intellij.ui.tree.project.ProjectFileNode
 
 internal fun <T> ProjectViewNode<T>.getVirtualFileForNodeOrItsPSI(): VirtualFile? =
   virtualFile ?: if (this is AbstractPsiBasedNode) virtualFileForValue else null
+
+internal fun <T> AbstractTreeNode<T>.isDirectory(): Boolean {
+  val value = this.value
+  return value is PsiDirectory || (value is ProjectFileNode && value.virtualFile.isDirectory)
+}

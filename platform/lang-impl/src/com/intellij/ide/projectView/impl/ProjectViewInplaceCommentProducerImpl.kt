@@ -3,13 +3,13 @@ package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.nodes.getVirtualFileForNodeOrItsPSI
+import com.intellij.ide.projectView.impl.nodes.isDirectory
 import com.intellij.ide.util.treeView.InplaceCommentAppender
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.SimpleTextAttributes
@@ -18,7 +18,7 @@ import com.intellij.util.text.JBDateFormat
 internal fun appendInplaceComments(node: ProjectViewNode<*>, appender: InplaceCommentAppender) {
   val parentNode = node.parent
   val content = node.value
-  if (content is PsiFileSystemItem || content !is PsiElement || parentNode != null && parentNode.value is PsiDirectory) {
+  if (content is PsiFileSystemItem || content !is PsiElement || parentNode != null && parentNode.isDirectory()) {
     appendInplaceComments(appender, node.project, node.getVirtualFileForNodeOrItsPSI())
   }
 }
