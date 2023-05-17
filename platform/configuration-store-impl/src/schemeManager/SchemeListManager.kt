@@ -9,42 +9,56 @@ import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.Scheme
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.UniqueNameGenerator
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
 
+internal class SchemeCollection<T : Any>(
+  @JvmField val list: MutableList<T>,
+  // the scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
+  @JvmField val schemeToInfo: ConcurrentMap<T, ExternalInfo> = ConcurrentCollectionFactory.createConcurrentIdentityMap()
+) {
+  fun putSchemeInfo(scheme: T, externalInfo: ExternalInfo): ExternalInfo? {
+    return schemeToInfo.put(scheme, externalInfo)
+  }
+}
+
+private fun <T : Any> newSchemeCollection(): SchemeCollection<T> {
+  return SchemeCollection(list = ContainerUtil.createLockFreeCopyOnWriteList(),
+                          schemeToInfo = ConcurrentCollectionFactory.createConcurrentIdentityMap())
+}
+
+internal fun <T : Any> toSchemeCollection(list: List<T>, schemeToInfo: Map<T, ExternalInfo>): SchemeCollection<T> {
+  return SchemeCollection(list = ContainerUtil.createLockFreeCopyOnWriteList(list),
+                          schemeToInfo = ConcurrentCollectionFactory.createConcurrentIdentityMap<T, ExternalInfo>().also {
+                            it.putAll(schemeToInfo)
+                          })
+}
+
 internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeManagerImpl<T, *>) {
-  private val schemeListRef = AtomicReference(ContainerUtil.createLockFreeCopyOnWriteList<T>())
+  private val schemeListRef: AtomicReference<SchemeCollection<T>> = AtomicReference(newSchemeCollection())
 
   internal val readOnlyExternalizableSchemes = ConcurrentHashMap<String, T>()
 
-  // the scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
-  internal val schemeToInfo: ConcurrentMap<T, ExternalInfo> = ConcurrentCollectionFactory.createConcurrentIdentityMap()
-
   val schemes: MutableList<T>
+    get() = schemeListRef.get().list
+
+  val data: SchemeCollection<T>
     get() = schemeListRef.get()
 
-  fun replaceSchemeList(oldList: List<T>, newList: List<T>, newSchemeToInfo: IdentityHashMap<T, ExternalInfo>) {
-    if (!schemeListRef.compareAndSet(oldList, ContainerUtil.createLockFreeCopyOnWriteList(newList))) {
+  fun replaceSchemeList(oldList: SchemeCollection<T>, newList: SchemeCollection<T>) {
+    if (!schemeListRef.compareAndSet(oldList, newList)) {
       throw IllegalStateException("Scheme list was modified")
     }
-
-    if (!schemeToInfo.isEmpty()) {
-      val newListAsSet = ReferenceOpenHashSet(newList)
-      schemeToInfo.keys.removeIf { !newListAsSet.contains(it) }
-    }
-    schemeToInfo.putAll(newSchemeToInfo)
   }
 
-  fun getExternalInfo(scheme: T): ExternalInfo? = schemeToInfo.get(scheme)
+  fun getExternalInfo(scheme: T): ExternalInfo? = schemeListRef.get().schemeToInfo.get(scheme)
 
   fun addScheme(scheme: T, replaceExisting: Boolean) {
     var toReplace = -1
     val schemes = schemes
     val processor = schemeManager.processor
-    val schemeToInfo = schemeToInfo
+    val schemeToInfo = schemeListRef.get().schemeToInfo
     for ((index, existing) in schemes.withIndex()) {
       if (processor.getSchemeKey(existing) != processor.getSchemeKey(scheme)) {
         continue
@@ -92,29 +106,35 @@ internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeMa
   }
 
   fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: ((T) -> Boolean)?) {
-    if (schemes.isNotEmpty()) {
-      if (removeCondition == null) {
-        schemes.clear()
-      }
-      else {
-        // we must not use remove or removeAll to avoid "equals" call
-        schemeListRef.set(ContainerUtil.createConcurrentList(schemes.filter { !removeCondition(it) }))
-      }
-    }
+    val oldList = schemeListRef.get()
 
-    schemes.addAll(newSchemes)
+    // we must not use remove or removeAll to avoid "equals" call
+    val newSchemesMutable = if (removeCondition == null) {
+      ContainerUtil.createConcurrentList(newSchemes)
+    }
+    else {
+      val list = ContainerUtil.createConcurrentList<T>()
+      oldList.list.filterTo(list) { !removeCondition(it) }
+      list.addAll(newSchemes)
+      list
+    }
+    val newSchemeToInfo = ConcurrentCollectionFactory.createConcurrentIdentityMap<T, ExternalInfo>().also {
+      it.putAll(oldList.schemeToInfo)
+    }
+    schemeManager.retainExternalInfo(isScheduleToDelete = true, schemeToInfo = newSchemeToInfo, newSchemes = newSchemesMutable)
+
+    val newList = SchemeCollection(list = ContainerUtil.createConcurrentList(newSchemesMutable), schemeToInfo = newSchemeToInfo)
+    replaceSchemeList(oldList, newList)
 
     val oldCurrentScheme = schemeManager.activeScheme
-    schemeManager.retainExternalInfo(isScheduleToDelete = true)
-
     if (oldCurrentScheme != newCurrentScheme) {
       val newScheme: T?
       if (newCurrentScheme != null) {
         schemeManager.activeScheme = newCurrentScheme
         newScheme = newCurrentScheme
       }
-      else if (oldCurrentScheme != null && !schemes.contains(oldCurrentScheme)) {
-        newScheme = schemes.firstOrNull()
+      else if (oldCurrentScheme != null && !newSchemesMutable.contains(oldCurrentScheme)) {
+        newScheme = newSchemesMutable.firstOrNull()
         schemeManager.activeScheme = newScheme
       }
       else {
@@ -122,7 +142,9 @@ internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeMa
       }
 
       if (oldCurrentScheme != newScheme) {
-        schemeManager.processor.onCurrentSchemeSwitched(oldCurrentScheme, newScheme, false)
+        schemeManager.processor.onCurrentSchemeSwitched(oldScheme = oldCurrentScheme,
+                                                        newScheme = newScheme,
+                                                        processChangeSynchronously = false)
       }
     }
   }

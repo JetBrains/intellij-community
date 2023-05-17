@@ -286,8 +286,8 @@ internal class SchemeManagerTest {
       return TestScheme(name, data)
     }
 
-    var s1 = writeScheme(1, "foo")
-    var s2 = writeScheme(2, "foo")
+    var s1 = writeScheme(1, "initial data")
+    var s2 = writeScheme(2, "initial data")
 
     fun createVirtualFile(scheme: TestScheme): VirtualFile {
       val fileName = "${scheme.name}.xml"
@@ -295,12 +295,12 @@ internal class SchemeManagerTest {
       return LightVirtualFile(fileName, null, file.readText(), Charsets.UTF_8, Files.getLastModifiedTime(file).toMillis())
     }
 
-    val schemeManager: SchemeManagerImpl<TestScheme, TestScheme> = createSchemeManager(dir)
+    val schemeManager = createSchemeManager(dir)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).containsExactly(s1, s2)
 
-    s1 = writeScheme(1, "bar")
-    s2 = writeScheme(2, "bar")
+    s1 = writeScheme(1, "new data")
+    s2 = writeScheme(2, "new data")
 
     val schemeChangeApplicator = SchemeChangeApplicator(schemeManager)
     if (kind == UpdateScheme::class.java) {
@@ -597,7 +597,9 @@ internal class SchemeManagerTest {
     assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemeProcessor())}.hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
-  private fun createSchemeManager(dir: Path) = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir)
+  private fun createSchemeManager(dir: Path): SchemeManagerImpl<TestScheme, TestScheme> {
+    return SchemeManagerImpl(fileSpec = FILE_SPEC, processor = TestSchemeProcessor(), provider = null, ioDirectory = dir)
+  }
 
   private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {
     createTempFiles(testData)
@@ -660,7 +662,8 @@ private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean
 }
 
 @Tag("scheme")
-data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field:kotlin.jvm.JvmField var name: String = "", @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme, SerializableScheme {
+data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field:JvmField var name: String = "",
+                      @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme, SerializableScheme {
   override fun getName() = name
 
   override fun setName(value: String) {

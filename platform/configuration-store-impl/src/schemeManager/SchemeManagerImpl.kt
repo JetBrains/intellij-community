@@ -38,6 +38,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
 
@@ -164,7 +165,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
                                                                      name = schemeKey,
                                                                      attributeProvider = attributeProvider,
                                                                      isBundled = true)
-        val oldInfo = schemeListManager.schemeToInfo.put(scheme, externalInfo)
+        val oldInfo = schemeListManager.data.putSchemeInfo(scheme, externalInfo)
         LOG.assertTrue(oldInfo == null)
         val oldScheme = schemeListManager.readOnlyExternalizableSchemes.put(schemeKey, scheme)
         if (oldScheme != null) {
@@ -197,7 +198,10 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
     // SchemeLoader can use a retained list to bring back previously scheduled for deleting file,
     // but what if someone calls save() during a load and file will be deleted, although you should be loaded by a new load session
     // (because modified on disk)
-    return SchemeLoader(this, schemes, filesToDelete, isDuringLoad)
+    return SchemeLoader(schemeManager = this,
+                        oldList = schemeListManager.data,
+                        preScheduledFilesToDelete = filesToDelete,
+                        isDuringLoad = isDuringLoad)
   }
 
   internal fun getFileExtension(fileName: CharSequence, isAllowAny: Boolean): String {
@@ -285,7 +289,8 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
   // method is used to reflect already performed changes on disk, so, `isScheduleToDelete = false` is passed to `retainExternalInfo`
   internal fun removeExternalizableSchemesFromRuntimeState() {
     // todo check is bundled/read-only schemes correctly handled
-    val iterator = schemes.iterator()
+    val list = schemeListManager.data
+    val iterator = list.list.iterator()
     for (scheme in iterator) {
       if (((scheme as? SerializableScheme)?.schemeState ?: processor.getState(scheme)) == SchemeState.NON_PERSISTENT) {
         continue
@@ -303,7 +308,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
       @Suppress("UNCHECKED_CAST")
       processor.onSchemeDeleted(scheme as MUTABLE_SCHEME)
     }
-    retainExternalInfo(isScheduleToDelete = false)
+    retainExternalInfo(isScheduleToDelete = false, schemeToInfo = list.schemeToInfo, newSchemes = list.list)
   }
 
   internal fun getFileName(scheme: T) = schemeListManager.getExternalInfo(scheme)?.fileNameWithoutExtension
@@ -354,7 +359,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
     }
 
     if (filesToDelete.isNotEmpty()) {
-      schemeListManager.schemeToInfo.values.removeIf { filesToDelete.contains(it.fileName) }
+      schemeListManager.data.schemeToInfo.values.removeIf { filesToDelete.contains(it.fileName) }
 
       this.filesToDelete.removeAll(filesToDelete)
       deleteFiles(errors, filesToDelete)
@@ -501,7 +506,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
 
     if (externalInfo == null) {
       externalInfo = ExternalInfo(fileNameWithoutExtension, schemeExtension)
-      schemeListManager.schemeToInfo.put(scheme, externalInfo)
+      schemeListManager.data.schemeToInfo.put(scheme, externalInfo)
     }
     else {
       externalInfo.setFileNameWithoutExtension(fileNameWithoutExtension, schemeExtension)
@@ -607,19 +612,19 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
                                  removeCondition = removeCondition?.let { it::test })
   }
 
-  internal fun retainExternalInfo(isScheduleToDelete: Boolean) {
-    if (schemeListManager.schemeToInfo.isEmpty()) {
+  internal fun retainExternalInfo(isScheduleToDelete: Boolean, schemeToInfo: ConcurrentMap<T, ExternalInfo>, newSchemes: List<T>) {
+    if (schemeToInfo.isEmpty()) {
       return
     }
 
-    val iterator = schemeListManager.schemeToInfo.entries.iterator()
+    val iterator = schemeToInfo.entries.iterator()
     l@ for ((scheme, info) in iterator) {
       if (schemeListManager.readOnlyExternalizableSchemes.get(processor.getSchemeKey(scheme)) === scheme) {
         continue
       }
 
-      for (s in schemes) {
-        if (s === scheme) {
+      for (newScheme in newSchemes) {
+        if (scheme === newScheme) {
           filesToDelete.remove(info.fileName)
           continue@l
         }
@@ -660,7 +665,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
       iterator.remove()
 
       if (isScheduleToDelete && processor.isExternalizable(scheme)) {
-        schemeListManager.schemeToInfo.remove(scheme)?.scheduleDelete(filesToDelete, "requested to delete (removeFirstScheme)")
+        schemeListManager.data.schemeToInfo.remove(scheme)?.scheduleDelete(filesToDelete, "requested to delete (removeFirstScheme)")
       }
       return scheme
     }

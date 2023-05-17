@@ -28,16 +28,16 @@ import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamReader
 
 internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(private val schemeManager: SchemeManagerImpl<T, MUTABLE_SCHEME>,
-                                                            private val oldSchemes: List<T>,
+                                                            private val oldList: SchemeCollection<T>,
                                                             private val preScheduledFilesToDelete: MutableSet<String>,
                                                             private val isDuringLoad: Boolean) {
   private val filesToDelete: MutableSet<String> = HashSet()
 
-  private val schemes: MutableList<T> = oldSchemes.toMutableList()
+  private val schemes: MutableList<T> = oldList.list.toMutableList()
   private var newSchemesOffset = schemes.size
 
   // the scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
-  private val schemeToInfo = IdentityHashMap<T, ExternalInfo>()
+  private val schemeToInfo = IdentityHashMap(oldList.schemeToInfo)
 
   private val isApplied = AtomicBoolean()
 
@@ -53,7 +53,7 @@ internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(private val schemeMa
   }
 
   /**
-   * Returns list of new schemes.
+   * Returns list of newly added schemes.
    */
   fun apply(): List<T> {
     LOG.assertTrue(isApplied.compareAndSet(false, true))
@@ -65,19 +65,16 @@ internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(private val schemeMa
       schemeManager.filesToDelete.addAll(preScheduledFilesToDelete)
     }
 
-    if (newSchemesOffset == schemes.size) {
-      return emptyList()
-    }
-
-    val result = schemes.subList(newSchemesOffset, schemes.size)
-    schemeManager.schemeListManager.replaceSchemeList(oldList = oldSchemes, newList = schemes, newSchemeToInfo = schemeToInfo)
+    val newSchemes = schemes.subList(newSchemesOffset, schemes.size)
+    schemeManager.schemeListManager.replaceSchemeList(oldList = oldList,
+                                                      newList = toSchemeCollection(list = schemes, schemeToInfo = schemeToInfo))
     if (!isDuringLoad) {
-      for (newScheme in result) {
+      for (newScheme in newSchemes) {
         @Suppress("UNCHECKED_CAST")
         schemeManager.processor.onSchemeAdded(newScheme as MUTABLE_SCHEME)
       }
     }
-    return result
+    return newSchemes
   }
 
   private fun getHashStream(): HashStream64 {
