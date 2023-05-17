@@ -14,6 +14,7 @@ import com.intellij.util.io.ZipUtil
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.impl.VcsProjectLog.Companion.runOnDisposedLog
 import com.intellij.vcs.log.util.PersistentUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil

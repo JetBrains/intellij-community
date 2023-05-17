@@ -7,6 +7,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.impl.VcsProjectLog.Companion.runOnDisposedLog
 import com.intellij.vcs.log.util.StorageId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

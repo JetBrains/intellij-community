@@ -163,17 +163,6 @@ class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineS
     if (logManager != null) Disposer.dispose(logManager)
   }
 
-  /**
-   * Disposes log and performs the given `task` before recreating the log
-   */
-  @ApiStatus.Internal
-  @CalledInAny
-  fun runOnDisposedLog(task: (suspend () -> Unit)? = null): Job {
-    return coroutineScope.launch {
-      disposeLog(recreate = true, beforeCreateLog = task)
-    }
-  }
-
   fun createLogInBackground(forceInit: Boolean) {
     coroutineScope.async {
       createLog(forceInit) != null
@@ -196,7 +185,7 @@ class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineS
     if (logProviders.isEmpty()) return null
 
     val logManager = getOrCreateLogManager(logProviders)
-    initialize(logManager = logManager, force = forceInit)
+    logManager.initialize(force = forceInit)
     return logManager
   }
 
@@ -309,6 +298,17 @@ class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineS
     fun getInstance(project: Project): VcsProjectLog = project.service<VcsProjectLog>()
 
     /**
+     * Disposes log and performs the given `task` before recreating the log
+     */
+    @ApiStatus.Internal
+    @CalledInAny
+    fun VcsProjectLog.runOnDisposedLog(task: (suspend () -> Unit)? = null): Job {
+      return coroutineScope.launch {
+        disposeLog(recreate = true, beforeCreateLog = task)
+      }
+    }
+
+    /**
      * Executes the given action if the VcsProjectLog has been initialized. If not, then schedules the log initialization,
      * waits for it in a background task, and executes the action after the log is ready.
      */
@@ -360,23 +360,23 @@ private suspend fun modality(): CoroutineContext {
   return if (coroutineContext.contextModality() == null) ModalityState.any().asContextElement() else EmptyCoroutineContext
 }
 
-private suspend fun initialize(logManager: VcsLogManager, force: Boolean) {
+private suspend fun VcsLogManager.initialize(force: Boolean) {
   if (force) {
-    logManager.scheduleInitialization()
+    scheduleInitialization()
     return
   }
 
   if (PostponableLogRefresher.keepUpToDate()) {
     val invalidator = CachesInvalidator.EP_NAME.findExtensionOrFail(VcsLogCachesInvalidator::class.java)
     if (invalidator.isValid) {
-      logManager.scheduleInitialization()
+      scheduleInitialization()
       return
     }
   }
 
   withContext(Dispatchers.EDT + modality()) {
-    if (logManager.isLogVisible) {
-      logManager.scheduleInitialization()
+    if (isLogVisible) {
+      scheduleInitialization()
     }
   }
 }
