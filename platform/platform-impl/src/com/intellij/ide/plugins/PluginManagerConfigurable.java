@@ -430,8 +430,10 @@ public final class PluginManagerConfigurable
             for (String host : UpdateSettings.getInstance().getPluginHosts()) {
               List<PluginNode> allDescriptors = customRepositoriesMap.get(host);
               if (allDescriptors != null) {
+                String groupName = IdeBundle.message("plugins.configurable.repository.0", host);
+                LOG.info("Marketplace tab: '" + groupName + "' group load started");
                 addGroup(groups,
-                         IdeBundle.message("plugins.configurable.repository.0", host),
+                         groupName,
                          PluginsGroupType.CUSTOM_REPOSITORY,
                          "/repository:\"" + host + "\"",
                          allDescriptors,
@@ -1210,8 +1212,10 @@ public final class PluginManagerConfigurable
   private void addSuggestedGroup(@NotNull List<? super PluginsGroup> groups,
                                  @NotNull Project project,
                                  Map<String, @NotNull List<PluginNode>> customMap) {
+    String groupName = IdeBundle.message("plugins.configurable.suggested");
+    LOG.info("Marketplace tab: '" + groupName + "' group load started");
     List<IdeaPluginDescriptor> plugins = PluginsAdvertiserStartupActivity.getSuggestedPlugins(project, customMap);
-    addGroup(groups, IdeBundle.message("plugins.configurable.suggested"), PluginsGroupType.SUGGESTED, "", plugins, group -> false);
+    addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", plugins, group -> false);
   }
 
   private final class ComparablePluginsGroup extends PluginsGroup
@@ -1739,7 +1743,6 @@ public final class PluginManagerConfigurable
                         @NotNull String showAllQuery,
                         @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
                         @NotNull Predicate<? super PluginsGroup> showAllPredicate) {
-    LOG.info("Marketplace tab: '" + name + "' group load started");
     PluginsGroup group = new PluginsGroup(name, type);
 
     int i = 0;
@@ -1766,6 +1769,7 @@ public final class PluginManagerConfigurable
                                           @NotNull PluginsGroupType type,
                                           @NotNull @NonNls String query,
                                           @NotNull @NonNls String showAllQuery) throws IOException {
+    LOG.info("Marketplace tab: '" + name + "' group load started");
     List<PluginNode> pluginNodes = MarketplaceRequests.getInstance().searchPlugins(query, ITEMS_PER_GROUP * 2);
     addGroup(groups,
              name,
