@@ -60,6 +60,7 @@ public final class ListPluginComponent extends JPanel {
   private final boolean myMarketplace;
   private final boolean myIsAvailable;
   private @NotNull IdeaPluginDescriptor myPlugin;
+  private PluginNode myInstalledPluginMarketplaceNode;
   private final @NotNull PluginsGroup myGroup;
   private boolean myOnlyUpdateMode;
   private boolean myAfterUpdate;
@@ -1067,6 +1068,14 @@ public final class ListPluginComponent extends JPanel {
 
   public void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     myPlugin = plugin;
+  }
+
+  public synchronized @Nullable PluginNode getInstalledPluginMarketplaceNode() {
+    return myInstalledPluginMarketplaceNode;
+  }
+
+  public synchronized void setInstalledPluginMarketplaceNode(@NotNull PluginNode installedPluginMarketplaceNode) {
+    myInstalledPluginMarketplaceNode = installedPluginMarketplaceNode;
   }
 
   private @NotNull PluginEnableDisableAction getEnableDisableAction(@NotNull List<? extends ListPluginComponent> selection) {

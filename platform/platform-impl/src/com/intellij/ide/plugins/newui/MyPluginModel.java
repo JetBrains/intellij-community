@@ -603,6 +603,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       if (success) {
         appendOrUpdateDescriptor(installedDescriptor != null ? installedDescriptor : descriptor, restartRequired);
         appendDependsAfterInstall();
+        if (installedDescriptor == null && descriptor instanceof PluginNode && myDownloaded != null && myDownloaded.ui != null) {
+          ListPluginComponent component = myDownloaded.ui.findComponent(descriptor);
+          if (component != null) {
+            component.setInstalledPluginMarketplaceNode((PluginNode)descriptor);
+          }
+        }
       }
       else if (myCancelInstallCallback != null) {
         myCancelInstallCallback.accept(descriptor);
