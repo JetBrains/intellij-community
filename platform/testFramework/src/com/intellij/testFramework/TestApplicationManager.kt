@@ -154,6 +154,12 @@ class TestApplicationManager private constructor() {
       }
     }
 
+    /**
+     * Call this method after the test to check whether project instances leak.
+     * This is done automatically on CI inside {@code _LastInSuiteTest.testProjectLeak}.
+     * However, you may want to add this check to a particular test to make sure 
+     * whether it causes the leak or not.
+     */
     @JvmStatic
     fun testProjectLeak() {
       if (java.lang.Boolean.getBoolean("idea.test.guimode")) {
