@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptCheckbox;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
@@ -31,7 +28,6 @@ import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -77,15 +73,15 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    List<InspectionGadgetsFix> fixes = new SmartList<>(new TrivialIfFix());
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    List<LocalQuickFix> fixes = new SmartList<>(new TrivialIfFix());
     String turnOffOption = (String)infos[0];
     if (turnOffOption != null) {
       OptCheckbox checkbox = (OptCheckbox)Objects.requireNonNull(getOptionsPane().findControl(turnOffOption));
       String message = StringUtil.unescapeXmlEntities(checkbox.label().label());
-      fixes.add(new DelegatingFix(new SetInspectionOptionFix(this, turnOffOption, message, true)));
+      fixes.add(new SetInspectionOptionFix(this, turnOffOption, message, true));
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   private static class TrivialIfFix extends InspectionGadgetsFix {

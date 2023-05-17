@@ -24,7 +24,6 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DelegatingFixFactory;
 import com.siyeh.ig.psiutils.SerializationUtils;
@@ -61,17 +60,17 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends BaseInsp
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     PsiField field = aClass.findFieldByName(HardcodedMethodConstants.SERIAL_VERSION_UID, false);
     if (field == null) return InspectionGadgetsFix.EMPTY_ARRAY;
     boolean onTheFly = (boolean)infos[1];
-    DelegatingFix removeFieldFix = new DelegatingFix((LocalQuickFix)QuickFixFactory.getInstance().createSafeDeleteFix(field));
+    LocalQuickFix removeFieldFix = (LocalQuickFix)QuickFixFactory.getInstance().createSafeDeleteFix(field);
     if (aClass.isAnnotationType() || aClass.isInterface() || aClass instanceof PsiAnonymousClass) {
-      return onTheFly ? new InspectionGadgetsFix[]{removeFieldFix} : InspectionGadgetsFix.EMPTY_ARRAY;
+      return onTheFly ? new LocalQuickFix[]{removeFieldFix} : InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    return onTheFly ? new InspectionGadgetsFix[]{DelegatingFixFactory.createMakeSerializableFix(aClass), removeFieldFix} 
-                    : new InspectionGadgetsFix[]{DelegatingFixFactory.createMakeSerializableFix(aClass)};
+    return onTheFly ? new LocalQuickFix[]{DelegatingFixFactory.createMakeSerializableFix(aClass), removeFieldFix} 
+                    : new LocalQuickFix[]{DelegatingFixFactory.createMakeSerializableFix(aClass)};
   }
 
   @Override

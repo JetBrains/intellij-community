@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -9,8 +10,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,7 +109,7 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
   }
 
   @Override
-  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
-    return new DelegatingFix(new AddAnnotationFix(JAVA_IO_SERIAL, (PsiModifierListOwner)infos[0], PsiNameValuePair.EMPTY_ARRAY));
+  protected LocalQuickFix buildFix(Object... infos) {
+    return new AddAnnotationFix(JAVA_IO_SERIAL, (PsiModifierListOwner)infos[0], PsiNameValuePair.EMPTY_ARRAY);
   }
 }

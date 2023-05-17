@@ -17,6 +17,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ConvertSwitchToIfIntention;
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
@@ -27,7 +28,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.jdom.Element;
@@ -73,21 +73,21 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     boolean canFix = (Boolean)infos[2];
     boolean patternSwitch = (Boolean)infos[3];
-    List<InspectionGadgetsFix> fixes = new ArrayList<>();
+    List<LocalQuickFix> fixes = new ArrayList<>();
     if (canFix) {
       final Integer branchCount = (Integer)infos[0];
       fixes.add(new UnwrapSwitchStatementFix(branchCount));
     }
     if (patternSwitch) {
-      fixes.add(new DelegatingFix(new SetInspectionOptionFix(this, "ignorePatternSwitch",
-                                                             InspectionGadgetsBundle.message(
+      fixes.add(new SetInspectionOptionFix(this, "ignorePatternSwitch",
+                                           InspectionGadgetsBundle.message(
                                                                "switch.statement.with.too.few.branches.ignore.pattern.option"),
-                                                             true)));
+                                           true));
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
