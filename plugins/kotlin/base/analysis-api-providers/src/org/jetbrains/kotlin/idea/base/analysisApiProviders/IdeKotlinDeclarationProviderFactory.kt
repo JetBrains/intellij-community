@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
@@ -24,8 +25,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class IdeKotlinDeclarationProviderFactory(private val project: Project) : KotlinDeclarationProviderFactory() {
-    override fun createDeclarationProvider(searchScope: GlobalSearchScope): KotlinDeclarationProvider {
-        return IdeKotlinDeclarationProvider(project, searchScope)
+    override fun createDeclarationProvider(scope: GlobalSearchScope, contextualModule: KtModule?): KotlinDeclarationProvider {
+        return IdeKotlinDeclarationProvider(project, scope)
     }
 }
 
