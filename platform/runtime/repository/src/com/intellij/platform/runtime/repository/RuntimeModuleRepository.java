@@ -21,7 +21,7 @@ public interface RuntimeModuleRepository {
    */
   static @NotNull RuntimeModuleRepository create(@NotNull Path moduleDescriptorsJarPath) throws MalformedRepositoryException {
     Map<String, RawRuntimeModuleDescriptor> map = RuntimeModuleRepositorySerialization.loadFromJar(moduleDescriptorsJarPath);
-    return new RuntimeModuleRepositoryImpl(map, moduleDescriptorsJarPath);
+    return new RuntimeModuleRepositoryImpl(map, moduleDescriptorsJarPath.getParent());
   }
 
   /**
