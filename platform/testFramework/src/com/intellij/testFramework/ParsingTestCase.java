@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -98,6 +98,9 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
+    // This makes sure that tasks launched in the shared project are properly cancelled,
+    // so they don't leak into the mock app of ParsingTestCase.
+    LightPlatformTestCase.closeAndDeleteProject();
     MockApplication app = MockApplication.setUp(getTestRootDisposable());
     this.app = app;
     MutablePicoContainer appContainer = app.getPicoContainer();
