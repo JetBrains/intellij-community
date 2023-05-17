@@ -82,7 +82,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     super.setUp();
 
-    myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(this::getCurrentCodeStyleSettings);
+    myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(() -> getCurrentCodeStyleSettings());
 
     File settingsFile =
       MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.getEffectiveGlobalSettingsIoFile();
