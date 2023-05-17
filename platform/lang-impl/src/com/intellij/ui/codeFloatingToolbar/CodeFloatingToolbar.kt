@@ -25,6 +25,8 @@ class CodeFloatingToolbar(editor: Editor): FloatingToolbar(editor, "Floating.Cod
 
   override fun shouldSurviveDocumentChange() = false
 
+  override fun hideByOtherHints(): Boolean = true
+
   override fun getHintPosition(hint: LightweightHint): Point {
     val isOneLineSelection = isOneLineSelection(editor)
     val isAbove = isOneLineSelection

@@ -42,6 +42,8 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
     registerListeners()
   }
 
+  open fun hideByOtherHints(): Boolean = false
+
   fun isShown() = hint != null
 
   fun hideIfShown() {
@@ -84,11 +86,12 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
   }
 
   private fun showOrUpdateLocation(hint: LightweightHint) {
+    val hideByOtherHintsMask = if (hideByOtherHints()) HintManager.HIDE_BY_OTHER_HINT else 0
     HintManagerImpl.getInstanceImpl().showEditorHint(
       hint,
       editor,
       getHintPosition(hint),
-      HintManager.HIDE_BY_ESCAPE or HintManager.UPDATE_BY_SCROLLING,
+      HintManager.HIDE_BY_ESCAPE or HintManager.UPDATE_BY_SCROLLING or hideByOtherHintsMask,
       0,
       true
     )
