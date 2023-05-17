@@ -14,6 +14,8 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.ui.LicensingFacade
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
@@ -155,7 +157,23 @@ class AquaNewUserFeedbackDialog(
     }.also { dialog ->
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
     }
-    return mainPanel
+
+    val scrollablePane = JBScrollPane(
+      mainPanel,
+      JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+      JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+    ).apply {
+      border = JBUI.Borders.empty()
+    }
+
+    return panel {
+      row {
+        cell(scrollablePane)
+          .align(Align.FILL)
+      }.resizableRow()
+    }.apply {
+      registerIntegratedPanel(mainPanel)
+    }
   }
 
   override fun getOKAction(): Action {

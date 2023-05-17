@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ZenDeskForm
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.util.PlatformUtils
 import com.intellij.util.xml.dom.readXmlAsModel
@@ -70,7 +70,7 @@ fun submitGeneralFeedback(project: Project?,
 }
 
 fun Row.feedbackAgreement(project: Project?, @NlsContexts.DetailedDescription agreementText: String, systemInfo: () -> Unit) {
-  comment(agreementText, maxLineLength = MAX_LINE_LENGTH_NO_WRAP) {
+  comment(agreementText, maxLineLength = MAX_LINE_LENGTH_WORD_WRAP) {
     when (it.description) {
       "systemInfo" -> systemInfo()
       else -> it.url?.let { url ->
