@@ -798,7 +798,35 @@
     },
 
     "MainWindow.FullScreeControl.Background": "#7A7B80",
-
+    "Profiler": {
+      "ChartSlider": {
+        "foreground": "Grey1",
+        "lineColor": "Grey8"
+      },
+      "CpuChart": {
+        "background": "Green9",
+        "borderColor": "Green5",
+        "inactiveBackground": "#C5E5CC66",
+        "inactiveBorderColor": "Green8",
+        "pointBackground": "Green5",
+        "pointBorderColor": "Grey13"
+      },
+      "MemoryChart": {
+        "background": "Blue10",
+        "borderColor": "Blue5",
+        "inactiveBackground": "#C2D6FC66",
+        "inactiveBorderColor": "Blue9",
+        "pointBackground": "Blue5",
+        "pointBorderColor": "Grey13"
+      },
+      "Timer": {
+        "foreground": "Grey1",
+        "disabledForeground": "Grey8"
+      },
+      "LiveChart": {
+        "horizontalAxisColor": "Grey9"
+      }
+    },
     "FlameGraph.Tooltip": {
       "scaleBackground": "#EBECF0",
       "scaleColor": "#C2D6FC",

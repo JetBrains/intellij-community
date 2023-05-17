@@ -624,7 +624,36 @@
       "separatorColor": "#2B2D30",
       "borderColor": "#1E1F22"
     },
-
+    "Profiler": {
+      "ChartSlider": {
+        "foreground": "#FEFEFE",
+        "lineColor": "#9AA7B0"
+      },
+      "CpuChart": {
+        "background": "#6296554D",
+        "borderColor": "#629655",
+        "inactiveBackground": "#62965533",
+        "inactiveBorderColor": "#4F6A4B",
+        "pointBackground": "#629625",
+        "pointBorderColor": "#3C3F41"
+      },
+      "MemoryChart": {
+        "background": "#589DF680",
+        "borderColor": "#589DF6",
+        "inactiveBackground": "#589DF633",
+        "inactiveBorderColor": "#476589",
+        "pointBackground": "#589dF6",
+        "pointBorderColor": "#3C3F41"
+      },
+      "Timer": {
+        "foreground": "#BBBBBB",
+        "disabledForeground": "#777777",
+        "background": "#323232"
+      },
+      "LiveChart": {
+        "horizontalAxisColor": "#D1D1D1"
+      }
+    },
     "FlameGraph.Tooltip": {
       "scaleBackground": "#363839",
       "scaleColor": "#365880",
