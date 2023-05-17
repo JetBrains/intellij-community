@@ -132,7 +132,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   }
 
   @Nullable
-  private VirtualFile getVirtualFileForValue() {
+  VirtualFile getVirtualFileForValue() {
     Object value = getEqualityObject();
     if (value instanceof SmartPsiElementPointer<?> pointer) {
       return pointer.getVirtualFile(); // do not retrieve PSI element

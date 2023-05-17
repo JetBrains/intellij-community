@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.projectView.ProjectViewNode
+import com.intellij.ide.projectView.impl.nodes.getVirtualFileForNodeOrItsPSI
 import com.intellij.ide.util.treeView.InplaceCommentAppender
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
@@ -18,7 +19,7 @@ internal fun appendInplaceComments(node: ProjectViewNode<*>, appender: InplaceCo
   val parentNode = node.parent
   val content = node.value
   if (content is PsiFileSystemItem || content !is PsiElement || parentNode != null && parentNode.value is PsiDirectory) {
-    appendInplaceComments(appender, node.project, node.virtualFile)
+    appendInplaceComments(appender, node.project, node.getVirtualFileForNodeOrItsPSI())
   }
 }
 
