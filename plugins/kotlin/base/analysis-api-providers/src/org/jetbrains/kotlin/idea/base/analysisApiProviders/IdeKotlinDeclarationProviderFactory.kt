@@ -13,8 +13,10 @@ import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory
+import org.jetbrains.kotlin.analysis.providers.impl.KotlinDeclarationProviderMergerBase
 import org.jetbrains.kotlin.analysis.providers.impl.declarationProviders.CompositeKotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.impl.declarationProviders.FileBasedKotlinDeclarationProvider
+import org.jetbrains.kotlin.analysis.providers.impl.util.mergeOnly
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.getNamesInPackage
@@ -44,9 +46,19 @@ internal class IdeKotlinDeclarationProviderFactory(private val project: Project)
     }
 }
 
+internal class IdeKotlinDeclarationProviderMerger(private val project: Project) : KotlinDeclarationProviderMergerBase() {
+    override fun mergeToList(declarationProviders: List<KotlinDeclarationProvider>): List<KotlinDeclarationProvider> =
+        declarationProviders.mergeOnly<_, IdeKotlinDeclarationProvider> { providers ->
+            IdeKotlinDeclarationProvider(
+                project,
+                GlobalSearchScope.union(providers.map { it.scope }),
+            )
+        }
+}
+
 private class IdeKotlinDeclarationProvider(
     private val project: Project,
-    private val scope: GlobalSearchScope
+    val scope: GlobalSearchScope
 ) : KotlinDeclarationProvider() {
     private val stubIndex: StubIndex = StubIndex.getInstance()
     private val psiManager = PsiManager.getInstance(project)

@@ -4,6 +4,9 @@
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinDeclarationProviderFactory"/>
     <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderMerger"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinDeclarationProviderMerger"/>
+    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinAnnotationsResolverFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinAnnotationsResolverFactory"/>
     <projectService
