@@ -38,6 +38,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
@@ -296,6 +297,9 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   @RequiresBackgroundThread
   @Override
   public @Nullable NavigationRequest navigationRequest() {
+    if (ReflectionUtil.getMethodDeclaringClass(getClass(), "navigate", boolean.class) != AbstractPsiBasedNode.class) {
+      return super.navigationRequest(); // raw
+    }
     PsiElement element = extractPsiFromValue();
     if (element == null) {
       return null;
