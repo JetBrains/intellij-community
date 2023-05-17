@@ -14,6 +14,7 @@ private val javaCompiler: (PlatformLayout, BuildContext) -> Unit = { layout, _ -
     for (name in listOf(
         "intellij.java.compiler.antTasks",
         "intellij.java.guiForms.compiler",
+        "intellij.java.compiler.instrumentationUtil",
         "intellij.java.compiler.instrumentationUtil.java8"
     )) {
         layout.withModule(name, "javac2.jar")
@@ -34,7 +35,6 @@ class MPSProperties : JetBrainsProductProperties() {
         productLayout.productImplementationModules = listOf(
             "intellij.platform.main",
             "intellij.java.execution.impl",
-            "intellij.java.compiler.instrumentationUtil",
             "intellij.idea.community.resources",
             "intellij.java.ide.resources",
             "intellij.xml.dom",
