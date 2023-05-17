@@ -26,6 +26,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                         MnemonicNavigationFilter<PopupFactoryImpl.ActionItem>,
                                         SpeedSearchFilter<PopupFactoryImpl.ActionItem> {
   private static final Logger LOG = Logger.getInstance(ActionPopupStep.class);
+  public static final DataKey<AnAction> SUB_POPUP_PARENT_ACTION = DataKey.create("sub.popup.parent.action");
 
   private final @NotNull List<PopupFactoryImpl.ActionItem> myItems;
   private final @NlsContexts.PopupTitle @Nullable String myTitle;
@@ -218,8 +219,10 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     if (!item.isEnabled()) return FINAL_CHOICE;
     AnAction action = item.getAction();
     if (action instanceof ActionGroup && (!finalChoice || !item.isPerformGroup())) {
-      return getSubStep((ActionGroup)action, myContext.get(), myEnableMnemonics, true, myShowDisabledActions, null,
-                        false, false, myContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
+      DataContext dataContext = CustomizedDataContext.create(myContext.get(),
+                                                             dataId -> SUB_POPUP_PARENT_ACTION.is(dataId) ? action : null);
+      return getSubStep((ActionGroup)action, dataContext, myEnableMnemonics, true, myShowDisabledActions, null,
+                        false, false, () -> dataContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
     }
     else if (action instanceof ToggleAction && item.isKeepPopupOpen()) {
       performAction(action, inputEvent);
