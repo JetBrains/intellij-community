@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -59,6 +59,11 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   public DefaultPicoContainer getPicoContainer() {
     return picoContainer;
+  }
+
+  @Override
+  public <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
+    return ReflectionUtil.newInstance(aClass, false);
   }
 
   @Override
