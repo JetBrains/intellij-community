@@ -808,6 +808,10 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout,
     return false
   }
 
+  if (bundlingRestrictions.includeInNightlyOnly && context.buildNumber.count { it == '.' } > 1) {
+    return false
+  }
+
   if (bundlingRestrictions == PluginBundlingRestrictions.EPHEMERAL) {
     return if (withEphemeral) osFamily == null && arch == null else false
   }
