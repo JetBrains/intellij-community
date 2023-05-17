@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.Objects;
 
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getFileAttributes;
+import static com.intellij.ide.projectView.impl.nodes.ProjectViewNodeExtensionsKt.getVirtualFileForNodeOrItsPSI;
 import static com.intellij.ide.util.treeView.NodeRenderer.getSimpleTextAttributes;
 
 /**
@@ -224,7 +225,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       timestamp = 0; // skip for performance reasons
       return;
     }
-    var attributes = getFileAttributes(getVirtualFile());
+    var attributes = getFileAttributes(getVirtualFileForNodeOrItsPSI(this));
     timestamp = attributes == null ? 0 : attributes.lastModifiedTime().toMillis();
   }
 
