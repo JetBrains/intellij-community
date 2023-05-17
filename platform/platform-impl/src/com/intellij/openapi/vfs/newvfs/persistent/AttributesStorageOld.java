@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -16,6 +15,7 @@ import com.intellij.util.io.RepresentableAsByteArraySequence;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.io.storage.Storage;
+import com.intellij.util.progress.CancellationUtil;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +80,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
                                                       final int fileId,
                                                       final @NotNull FileAttribute attribute) throws IOException {
     final Lock readLock = lock.readLock();
-    ProgressIndicatorUtils.awaitWithCheckCanceled(readLock);
+    CancellationUtil.lockMaybeCancellable(readLock);
     //readLock.lock();
     try {
       PersistentFSConnection.ensureIdIsValid(fileId);
