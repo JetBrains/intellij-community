@@ -473,7 +473,7 @@ private fun Panel.createSeparatorRow(@NlsContexts.Separator title: String?): Row
 private fun Panel.createSeparatorRow(title: JBLabel?, background: Color? = null): Row {
   val separator: JComponent
   if (title == null) {
-    separator = SeparatorComponent(0, background ?: OnePixelDivider.BACKGROUND, null)
+    separator = SeparatorComponent(0, 0, background ?: OnePixelDivider.BACKGROUND, null)
   }
   else {
     separator = object : TitledSeparator(title.text) {
