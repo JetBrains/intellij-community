@@ -485,13 +485,20 @@
 
     <!-- Code -->
     <group id="Floating.CodeToolbar" popup="false">
-      <group id="Floating.CodeToolbar.Extract" popup="true" class="com.intellij.ui.codeFloatingToolbar.DropdownActionGroup"/>
-      <group id="Floating.CodeToolbar.Surround" popup="true" class="com.intellij.ui.codeFloatingToolbar.DropdownActionGroup">
+      <group id="Floating.CodeToolbar.Extract" popup="true" class="com.intellij.ui.codeFloatingToolbar.DropdownActionGroup"
+             searchable="false" />
+      <group id="Floating.CodeToolbar.Surround" popup="true" class="com.intellij.ui.codeFloatingToolbar.DropdownActionGroup"
+             searchable="false">
+        <!--suppress PluginXmlCapitalization -->
         <action id="Floating.CodeToolbar.SurroundWithTryCatch" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
-        <action id="Floating.CodeToolbar.SurroundWithTryCatchFinally" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
+        <!--suppress PluginXmlCapitalization -->
+        <action id="Floating.CodeToolbar.SurroundWithTryCatchFinally"
+                class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
+        <!--suppress PluginXmlCapitalization -->
         <action id="Floating.CodeToolbar.SurroundWithIf" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
       </group>
-      <group id="Floating.CodeToolbar.Configure" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup">
+      <group id="Floating.CodeToolbar.Configure" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup" searchable="false">
+        <action id="Floating.CodeToolbar.Customize" class="com.intellij.ui.codeFloatingToolbar.CustomizeCodeFloatingToolbarAction" />
         <action id="Floating.CodeToolbar.Disable" class="com.intellij.ui.codeFloatingToolbar.DisableCodeFloatingToolbarAction" />
       </group>
     </group>

@@ -17,12 +17,10 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ClientProperty;
@@ -505,52 +503,12 @@ public final class CustomizationUtil {
 
       final Ref<Component> popupInvoker = Ref.create();
       DefaultActionGroup customizationGroup = new DefaultActionGroup(
-        DumbAwareAction.create(IdeBundle.message("action.customizations.customize.action"),
-                               event -> {
-                                 Component src = popupInvoker.get();
-                                 AnAction targetAction = ObjectUtils.doIfCast(src, ActionButton.class, ActionButton::getAction);
-                                 ToolbarCustomizableActionsPanel panel = new ToolbarCustomizableActionsPanel(groupID, groupName);
-                                 DialogWrapper dialogWrapper = new DialogWrapper(event.getProject(), true) {
-                                   {
-                                     setTitle(IdeBundle.message("dialog.title.customize.0", groupName));
-                                     init();
-                                     setSize(600, 600);
-                                   }
-
-                                   @Override
-                                   public @Nullable JComponent getPreferredFocusedComponent() {
-                                     return panel.getPreferredFocusedComponent();
-                                   }
-
-                                   @Override
-                                   protected @Nullable JComponent createCenterPanel() {
-                                     panel.reset();
-                                     String id = ObjectUtils.doIfNotNull(targetAction, ActionManager.getInstance()::getId);
-                                     if (id != null) {
-                                       panel.selectAction(id);
-                                     }
-                                     return panel.getPanel();
-                                   }
-
-                                   @Override
-                                   protected void doOKAction() {
-                                     try {
-                                       panel.apply();
-                                     }
-                                     catch (ConfigurationException ex) {
-                                       LOG.error(ex);
-                                     }
-                                     close(OK_EXIT_CODE);
-                                   }
-
-                                   @Override
-                                   public void doCancelAction() {
-                                     panel.reset();
-                                     super.doCancelAction();
-                                   }
-                                 };
-                                 dialogWrapper.show();
-                               })
+        DumbAwareAction.create(IdeBundle.message("action.customizations.customize.action"), event -> {
+          Component src = popupInvoker.get();
+          AnAction targetAction = ObjectUtils.doIfCast(src, ActionButton.class, ActionButton::getAction);
+          DialogWrapper dialogWrapper = createCustomizeGroupDialog(event.getProject(), groupID, groupName, targetAction);
+          dialogWrapper.show();
+        })
       );
 
 
@@ -594,6 +552,50 @@ public final class CustomizationUtil {
       return popupHandler;
     }
     return null;
+  }
+
+  public static @NotNull DialogWrapper createCustomizeGroupDialog(@Nullable Project project, @NotNull String groupID,
+                                                                  @NlsContexts.DialogTitle String groupName, @Nullable AnAction targetAction) {
+    ToolbarCustomizableActionsPanel panel = new ToolbarCustomizableActionsPanel(groupID, groupName);
+    return new DialogWrapper(project, true) {
+      {
+        setTitle(IdeBundle.message("dialog.title.customize.0", groupName));
+        init();
+        setSize(600, 600);
+      }
+
+      @Override
+      public @Nullable JComponent getPreferredFocusedComponent() {
+        return panel.getPreferredFocusedComponent();
+      }
+
+      @Override
+      protected @Nullable JComponent createCenterPanel() {
+        panel.reset();
+        String id = ObjectUtils.doIfNotNull(targetAction, ActionManager.getInstance()::getId);
+        if (id != null) {
+          panel.selectAction(id);
+        }
+        return panel.getPanel();
+      }
+
+      @Override
+      protected void doOKAction() {
+        try {
+          panel.apply();
+        }
+        catch (ConfigurationException ex) {
+          LOG.error(ex);
+        }
+        close(OK_EXIT_CODE);
+      }
+
+      @Override
+      public void doCancelAction() {
+        panel.reset();
+        super.doCancelAction();
+      }
+    };
   }
 
   @Nullable
