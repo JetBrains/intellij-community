@@ -488,6 +488,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/kdoc/ClassFqName.kt");
         }
 
+        @TestMetadata("ClassNotImported.kt")
+        public void testClassNotImported() throws Exception {
+            runTest("../completion/testData/handlers/basic/kdoc/ClassNotImported.kt");
+        }
+
         @TestMetadata("ClassShortName.kt")
         public void testClassShortName() throws Exception {
             runTest("../completion/testData/handlers/basic/kdoc/ClassShortName.kt");
@@ -496,6 +501,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("FunctionFqName.kt")
         public void testFunctionFqName() throws Exception {
             runTest("../completion/testData/handlers/basic/kdoc/FunctionFqName.kt");
+        }
+
+        @TestMetadata("FunctionNotImported.kt")
+        public void testFunctionNotImported() throws Exception {
+            runTest("../completion/testData/handlers/basic/kdoc/FunctionNotImported.kt");
         }
 
         @TestMetadata("FunctionShortName.kt")
