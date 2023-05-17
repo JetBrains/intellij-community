@@ -137,7 +137,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
   /**
    * @return fix wrapped by this {@link QuickFixWrapper}
-   * @deprecated use {@link QuickFixWrapper#unwrap(IntentionAction)} instead. Avoid {@code instanceof QuickFixWrapper} checks,
+   * @deprecated use {@link QuickFixWrapper#unwrap(CommonIntentionAction)} instead. Avoid {@code instanceof QuickFixWrapper} checks,
    * as the implementation may be different in the future
    */
   @Deprecated
@@ -153,8 +153,14 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   }
 
   @TestOnly
-  public ProblemHighlightType getHighlightType() {
-    return myDescriptor.getHighlightType();
+  public static @Nullable ProblemHighlightType getHighlightType(@NotNull IntentionAction action) {
+    if (action instanceof QuickFixWrapper wrapper) {
+      return wrapper.myDescriptor.getHighlightType();
+    }
+    if (ModCommandAction.unwrap(action) instanceof ModCommandQuickFixAction qfAction) {
+      return qfAction.myDescriptor.getHighlightType();
+    }
+    return null;
   }
 
   @Nullable
