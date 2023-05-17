@@ -19,11 +19,15 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
-  private final static @NotNull ClearableLazyValue<ProgressManager> ourInstance = ClearableLazyValue.create(() -> ApplicationManager.getApplication().getService(ProgressManager.class));
+  private static ProgressManager ourInstance;
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static @NotNull ProgressManager getInstance() {
-    return ourInstance.getValue();
+    ProgressManager instance = ourInstance;
+    if (instance == null) {
+      ourInstance = instance = ApplicationManager.getApplication().getService(ProgressManager.class);
+    }
+    return instance;
   }
 
   /**
@@ -31,7 +35,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @ApiStatus.Internal
   public static @Nullable ProgressManager getInstanceOrNull() {
-    return ourInstance.isCached() ? ourInstance.getValue() : null;
+    return ourInstance;
   }
 
   public abstract boolean hasProgressIndicator();
@@ -279,4 +283,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   @ApiStatus.Internal
   public abstract @Nullable ModalityState getCurrentProgressModality();
+
+  static {
+    ApplicationManager.registerCleaner(() -> ourInstance = null);
+  }
 }
