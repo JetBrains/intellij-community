@@ -119,7 +119,7 @@ public class EditorGutterLayout {
         .as(EditorMouseEventArea.ANNOTATIONS_AREA)
         .showIf(() -> myEditorGutter.isShowGapAfterAnnotations()),
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize)
-        .as(EditorMouseEventArea.ANNOTATIONS_AREA)
+        .as(EditorMouseEventArea.LINE_MARKERS_AREA) // Distraction free mode is extended using this area, see IDEA-320495
         .showIf(() -> myEditorGutter.myTextAnnotationExtraSize != 0),
 
       area(LEFT_FREE_PAINTERS_AREA, myEditorGutter::getLeftFreePaintersAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
