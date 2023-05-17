@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
-import com.intellij.openapi.fileChooser.ex.TextFieldAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -30,7 +29,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
-import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
@@ -157,12 +155,6 @@ public class PackageChooserDialog extends PackageChooser {
   }
 
   private void setupPathComponent(final JPanel northPanel) {
-    northPanel.add(new TextFieldAction() {
-      @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        toggleShowPathComponent(northPanel, this);
-      }
-    }, BorderLayout.EAST);
     myPathEditor = new EditorTextField(JavaReferenceEditorUtil.createDocument("", myProject, false), myProject, JavaFileType.INSTANCE);
     myPathEditor.addDocumentListener(new DocumentListener() {
       @Override
@@ -173,16 +165,6 @@ public class PackageChooserDialog extends PackageChooser {
     });
     myPathEditor.setBorder(BorderFactory.createEmptyBorder(0, 0, 2, 0));
     northPanel.add(myPathEditor, BorderLayout.SOUTH);
-  }
-
-  private void toggleShowPathComponent(JPanel northPanel, TextFieldAction fieldAction) {
-    boolean toShowTextField = !isPathShowing();
-    PropertiesComponent.getInstance().setValue(FileChooserDialogImpl.FILE_CHOOSER_SHOW_PATH_PROPERTY, toShowTextField, true);
-    myPathEditor.setVisible(toShowTextField);
-    fieldAction.update();
-    northPanel.revalidate();
-    northPanel.repaint();
-    updatePathFromTree();
   }
 
   private static boolean isPathShowing() {
