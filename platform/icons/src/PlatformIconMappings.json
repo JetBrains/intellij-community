@@ -8,6 +8,7 @@
       "generated.svg": "actions/generatedFolder.svg",
       "groupByMethod.svg": "actions/groupByMethod.svg",
       "groupByModule.svg": "actions/GroupByModule.svg",
+      "groupByPackage.svg": "actions/GroupByPackage.svg",
       "groupByTestProduction.svg": "actions/groupByTestProduction.svg",
       "inSelection.svg": "actions/inSelection.svg",
       "install.svg": "actions/install.svg",
@@ -395,6 +396,7 @@
       "writeAccess.svg": "gutter/writeAccess.svg"
     },
     "ide": {
+      "configFile.svg": "ide/configFile.svg",
       "feedbackRating.svg": "ide/feedbackRating.svg",
       "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
       "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",

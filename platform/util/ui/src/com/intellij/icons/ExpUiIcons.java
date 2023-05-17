@@ -23,6 +23,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Generated = load("expui/actions/generated.svg", 284359763, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByMethod = load("expui/actions/groupByMethod.svg", 788449648, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByModule = load("expui/actions/groupByModule.svg", -245074045, 2);
+    /** 16x16 */ public static final @NotNull Icon GroupByPackage = load("expui/actions/groupByPackage.svg", 457655697, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByTestProduction = load("expui/actions/groupByTestProduction.svg", 174137220, 2);
     /** 16x16 */ public static final @NotNull Icon InSelection = load("expui/actions/inSelection.svg", -1349439138, 2);
     /** 16x16 */ public static final @NotNull Icon Install = load("expui/actions/install.svg", 1897308119, 2);
@@ -373,6 +374,7 @@ public final class ExpUiIcons {
   }
 
   public static final class Ide {
+    /** 16x16 */ public static final @NotNull Icon ConfigFile = load("expui/ide/configFile.svg", -2027985991, 2);
     /** 32x32 */ public static final @NotNull Icon FeedbackRating = load("expui/ide/feedbackRating.svg", -188817661, 2);
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingFocused = load("expui/ide/feedbackRatingFocused.svg", 1349378665, 2);
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingFocusedOn = load("expui/ide/feedbackRatingFocusedOn.svg", 1494031502, 2);
