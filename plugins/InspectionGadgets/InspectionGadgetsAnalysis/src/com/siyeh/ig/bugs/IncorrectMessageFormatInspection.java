@@ -112,7 +112,7 @@ public class IncorrectMessageFormatInspection extends AbstractBaseJavaLocalInspe
                                                                                notFoundArguments.iterator().next()));
           }
           else {
-            StringJoiner joiner = new StringJoiner(",");
+            StringJoiner joiner = new StringJoiner(", ");
             for (Integer notFoundArgument : notFoundArguments) {
               joiner.add(notFoundArgument.toString());
             }
