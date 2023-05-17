@@ -142,6 +142,10 @@ public final class TypeConversionUtil {
               return true;
             }
           }
+          if (fromTypeRank == UNKNOWN_RANK &&
+              isUnboxable((PsiPrimitiveType)toType, (PsiClassType)fromType, new HashSet<>())) {
+            return true;
+          }
         }
         return fromTypeRank == toTypeRank ||
                fromTypeRank < toTypeRank && toTypeRank <= MAX_NUMERIC_RANK;
