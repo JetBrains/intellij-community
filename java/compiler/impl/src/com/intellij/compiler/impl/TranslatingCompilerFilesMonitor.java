@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +73,8 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     });
   }
 
-  private static boolean isToProcess(@NotNull VirtualFileSystem fileSystem) {
+  private static boolean isToProcess(VFileEvent event) {
+    VirtualFileSystem fileSystem = event.getFileSystem();
     return fileSystem instanceof LocalFileSystem && !(fileSystem instanceof TempFileSystemMarker);
   }
 
@@ -95,9 +97,13 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     }
     Set<File> filesChanged = FileCollectionFactory.createCanonicalFileSet();
     Set<File> filesDeleted = FileCollectionFactory.createCanonicalFileSet();
+    List<VFileEvent> processLaterEvents = new SmartList<>();
     for (VFileEvent event : events) {
-      if (!isToProcess(event.getFileSystem())) {
+      if (!isToProcess(event)) {
         continue;
+      }
+      if (isAfterProcessEvent(event)) {
+        processLaterEvents.add(event);
       }
       if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
         collectPaths(event.getFile(), filesDeleted, true);
@@ -109,12 +115,26 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
         handleFileRename(event, e -> collectDeletedPathsOnFileRename(e, filesDeleted));
       }
     }
-    return new ChangeApplier() {
+    return processLaterEvents.isEmpty() && filesDeleted.isEmpty() && filesChanged.isEmpty()? null : new ChangeApplier() {
       @Override
       public void afterVfsChange() {
-        after(events, filesDeleted, filesChanged);
+        after(processLaterEvents, filesDeleted, filesChanged);
       }
     };
+  }
+
+  private static boolean isAfterProcessEvent(VFileEvent e) {
+    return e instanceof VFileMoveEvent || e instanceof VFileCreateEvent || e instanceof VFileCopyEvent || isRenameEvent(e);
+  }
+
+  private static boolean isRenameEvent(@NotNull VFileEvent e) {
+    if (e instanceof VFilePropertyChangeEvent propChangeEvent && VirtualFile.PROP_NAME.equals(propChangeEvent.getPropertyName())) {
+      final String oldName = (String)propChangeEvent.getOldValue();
+      final String newName = (String)propChangeEvent.getNewValue();
+      // Old and new names may actually be the same: sometimes such events are sent by VFS
+      return !Objects.equals(oldName, newName);
+    }
+    return false;
   }
 
   private static void after(@NotNull List<? extends VFileEvent> events, Set<File> filesDeleted, Set<File> filesChanged) {
@@ -152,12 +172,12 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
         return true;
       }
 
+      public boolean hasPaths() {
+        return !filesChanged.isEmpty() || !dirsToTraverse.isEmpty();
+      }
     };
 
     for (VFileEvent event : events) {
-      if (!isToProcess(event.getFileSystem())) {
-        continue;
-      }
       if (event instanceof VFileMoveEvent || event instanceof VFileCreateEvent) {
         changedFilesCollector.accept(event.getFile());
       }
@@ -175,26 +195,26 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     // first deleted paths notification and only then changed paths notification
     BuildManager buildManager = BuildManager.getInstance();
     buildManager.notifyFilesDeleted(filesDeleted);
-    buildManager.notifyFilesChanged(() -> {
-      // traversing dirs may take time and block UI thread, so traversing them in a non-blocking read-action in background
-      if (changedFilesCollector.dirsToTraverse.isEmpty()) {
-        return filesChanged;
-      }
-      if (ReadAction.nonBlocking(changedFilesCollector::traverseDirs).executeSynchronously()) {
-        return filesChanged;
-      }
-      // force FS rescan on the next build, because information from event may be incomplete
-      buildManager.clearState();
-      return Collections.emptyList();
-    });
+    if (changedFilesCollector.hasPaths()) {
+      buildManager.notifyFilesChanged(() -> {
+        // traversing dirs may take time and block UI thread, so traversing them in a non-blocking read-action in background
+        if (changedFilesCollector.dirsToTraverse.isEmpty()) {
+          return filesChanged;
+        }
+        if (ReadAction.nonBlocking(changedFilesCollector::traverseDirs).executeSynchronously()) {
+          return filesChanged;
+        }
+        // force FS rescan on the next build, because information from event may be incomplete
+        buildManager.clearState();
+        return Collections.emptyList();
+      });
+    }
   }
 
   private static void handleFileRename(@NotNull VFileEvent e, Consumer<VFilePropertyChangeEvent> action) {
-    if (e instanceof VFilePropertyChangeEvent propChangeEvent && VirtualFile.PROP_NAME.equals(propChangeEvent.getPropertyName())) {
-      final String oldName = (String)propChangeEvent.getOldValue();
-      final String newName = (String)propChangeEvent.getNewValue();
-      // Old and new names may actually be the same: sometimes such events are sent by VFS
-      if (!Objects.equals(oldName, newName) && isInContentOfOpenedProject(propChangeEvent.getFile())) {
+    if (isRenameEvent(e)) {
+      VFilePropertyChangeEvent propChangeEvent = (VFilePropertyChangeEvent)e;
+      if (isInContentOfOpenedProject(propChangeEvent.getFile())) {
         action.accept(propChangeEvent);
       }
     }
