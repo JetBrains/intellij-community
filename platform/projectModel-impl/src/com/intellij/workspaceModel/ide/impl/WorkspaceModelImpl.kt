@@ -102,7 +102,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
           previousStorage
         }
 
-        loadingFromCacheTimeMs.addAndGet(System.currentTimeMillis() - cacheLoadingStart)
+        loadingFromCacheTimeMs.addElapsedTimeMs(cacheLoadingStart)
         activity.end()
         storage to previousStorageForUnloaded
       }
