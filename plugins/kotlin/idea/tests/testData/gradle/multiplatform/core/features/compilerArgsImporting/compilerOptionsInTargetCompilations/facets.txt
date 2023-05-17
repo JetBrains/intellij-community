@@ -8,11 +8,11 @@ project.androidTest
 
 project.appleMain
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = 1.9
 
 project.appleTest
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = 1.9
 
 project.commonMain
     languageLevel = {{LATEST_STABLE}}
@@ -34,11 +34,11 @@ project.iosArm64Test
 
 project.iosMain
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = 1.9
 
 project.iosTest
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = 1.9
 
 project.iosX64Main
     languageLevel = 1.7
@@ -85,11 +85,11 @@ project.main
 
 project.nativeMain
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = 1.9
 
 project.nativeTest
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = 1.9
 
 project.unitTest
     languageLevel = 1.7
