@@ -9,6 +9,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -132,12 +133,20 @@ public class PackageChooserDialog extends PackageChooser {
     });
 
     panel.add(scrollPane, BorderLayout.CENTER);
-    DefaultActionGroup group = createActionGroup(myTree);
 
-    final JPanel northPanel = new JPanel(new BorderLayout());
+    final JPanel northPanel = new JPanel(new BorderLayout(8, 0));
+    northPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
     panel.add(northPanel, BorderLayout.NORTH);
-    ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(PackageChooserDialog.class.getSimpleName(), group, true);
-    northPanel.add(toolBar.getComponent(), BorderLayout.WEST);
+    NewPackageAction newPackageAction = new NewPackageAction();
+    newPackageAction.enableInModalConext();
+    newPackageAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_NEW_ELEMENT).getShortcutSet(), myTree);
+    ActionButton actionButton = new ActionButton(
+      newPackageAction,
+      null,
+      ActionPlaces.UNKNOWN,
+      ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
+    );
+    northPanel.add(actionButton, BorderLayout.WEST);
     setupPathComponent(northPanel);
     return panel;
   }
@@ -155,7 +164,6 @@ public class PackageChooserDialog extends PackageChooser {
         myAlarm.addRequest(() -> updateTreeFromPath(), 300);
       }
     });
-    myPathEditor.setBorder(BorderFactory.createEmptyBorder(0, 0, 2, 0));
     northPanel.add(myPathEditor, BorderLayout.CENTER);
   }
 
@@ -171,17 +179,6 @@ public class PackageChooserDialog extends PackageChooser {
 
   private void updateTreeFromPath() {
     selectPackage(myPathEditor.getText().trim());
-  }
-
-  private DefaultActionGroup createActionGroup(JComponent component) {
-    final DefaultActionGroup group = new DefaultActionGroup();
-    final DefaultActionGroup temp = new DefaultActionGroup();
-    NewPackageAction newPackageAction = new NewPackageAction();
-    newPackageAction.enableInModalConext();
-    newPackageAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_NEW_ELEMENT).getShortcutSet(), component);
-    temp.add(newPackageAction);
-    group.add(temp);
-    return group;
   }
 
   @Override
