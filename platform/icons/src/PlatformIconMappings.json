@@ -709,6 +709,7 @@
       "web.svg": "toolwindows/webToolWindow.svg"
     },
     "vcs": {
+      "branch.svg": "vcs/branch.svg",
       "changelist.svg": "vcs/changelist.svg",
       "changes.svg": "actions/listChanges.svg",
       "changesPush@12x12.svg": "icons/outgoing.svg",
@@ -734,10 +735,7 @@
         "vcs/unshelveSilent.svg"
       ],
       "update.svg": "actions/checkOut.svg",
-      "vcs.svg": [
-        "vcs/branch.svg",
-        "vcs/branchNode.svg"
-      ]
+      "vcs.svg": "vcs/branchNode.svg"
     },
     "welcome": {
       "createNewProjectTab.svg": "welcome/createNewProjectTab.svg",
