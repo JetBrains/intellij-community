@@ -347,7 +347,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     UIUtil.convertToLabel(editorPane);
     editorPane.setCaret(EmptyCaret.INSTANCE);
 
-    editorPane.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD, 18));
+    editorPane.setFont(JBFont.create(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD, 18)));
 
     @NlsSafe String text = "<html><span>Foo</span></html>";
     editorPane.setText(text);

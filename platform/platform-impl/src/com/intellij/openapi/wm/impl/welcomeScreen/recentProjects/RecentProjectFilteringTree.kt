@@ -341,6 +341,7 @@ internal class RecentProjectFilteringTree(
     private val isProjectPathValid: (String) -> Boolean,
     private val buttonViewModel: ProjectActionButtonViewModel
   ) : TreeCellRenderer {
+    private val updateScaleHelper = UpdateScaleHelper()
     private val recentProjectComponent = RecentProjectComponent()
     private val projectGroupComponent = ProjectGroupComponent()
     private val cloneableProjectComponent = CloneableProjectComponent()
@@ -350,6 +351,12 @@ internal class RecentProjectFilteringTree(
       selected: Boolean, expanded: Boolean,
       leaf: Boolean, row: Int, hasFocus: Boolean
     ): Component? {
+      updateScaleHelper.saveScaleAndRunIfChanged {
+        updateScaleHelper.updateUIForAll(recentProjectComponent)
+        updateScaleHelper.updateUIForAll(projectGroupComponent)
+        updateScaleHelper.updateUIForAll(cloneableProjectComponent)
+      }
+
       return when (val item = (value as DefaultMutableTreeNode).userObject as RecentProjectTreeItem) {
         is RecentProjectItem -> recentProjectComponent.customizeComponent(item, selected)
         is ProjectsGroupItem -> projectGroupComponent.customizeComponent(item, selected)
