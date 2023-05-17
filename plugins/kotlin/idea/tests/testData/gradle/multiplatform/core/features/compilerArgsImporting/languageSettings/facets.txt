@@ -4,7 +4,7 @@ project
 project.androidTest
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation -progressive
+    compilerSettings = -opt-in OptInAnnotation
 
 project.appleMain
     languageLevel = 1.7
@@ -59,12 +59,12 @@ project.iosX64Test
 project.jsMain
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation -progressive
+    compilerSettings = -opt-in OptInAnnotation
 
 project.jsTest
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation -progressive
+    compilerSettings = -opt-in OptInAnnotation
 
 project.jvmAndroidMain
     languageLevel = 1.7
@@ -79,17 +79,17 @@ project.jvmAndroidTest
 project.jvmMain
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation -progressive
+    compilerSettings = -opt-in OptInAnnotation
 
 project.jvmTest
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation -progressive
+    compilerSettings = -opt-in OptInAnnotation
 
 project.main
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation -progressive
+    compilerSettings = -opt-in OptInAnnotation
 
 project.nativeMain
     languageLevel = 1.7
@@ -104,7 +104,7 @@ project.nativeTest
 project.unitTest
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation -progressive
+    compilerSettings = -opt-in OptInAnnotation
 
 
 Test configuration:
