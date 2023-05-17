@@ -43,8 +43,8 @@ private fun processDataFrameColumns(columns: Set<String>,
                                     needValidatorCheck: Boolean,
                                     elementOnPosition: PsiElement,
                                     project: Project,
-                                    ignoreML: Boolean,
-                                    stringPresentation: String): List<LookupElement> {
+                                    stringPresentation: String,
+                                    ignoreML: Boolean = true): List<LookupElement> {
   val validator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance())
   return columns.mapNotNull { column ->
     when {
@@ -74,7 +74,6 @@ private fun postProcessingChildren(completionResultData: CompletionResultData,
                               needValidatorCheck,
                               parameters.position,
                               project,
-                              true,
                               PyBundle.message("pandas.completion.type.text", candidate.psiName.pyQualifiedName))
     }
     PyRuntimeCompletionType.DICT_KEYS -> {
@@ -86,17 +85,16 @@ private fun postProcessingChildren(completionResultData: CompletionResultData,
                               false,
                               parameters.position,
                               project,
-                              true,
                               PyBundle.message("dict.completion.type.text"))
     }
     PyRuntimeCompletionType.DYNAMIC_CLASS -> proceedPyValueChildrenNames(completionResultData.setOfCompletionItems,
-                                                                         candidate.psiName.pyQualifiedName, true)
+                                                                         candidate.psiName.pyQualifiedName)
   }
 }
 
 private fun proceedPyValueChildrenNames(childrenNodes: Set<String>,
                                         stringPresentation: String,
-                                        ignoreML: Boolean = false): List<LookupElement> {
+                                        ignoreML: Boolean = true): List<LookupElement> {
   return childrenNodes.map {
     val lookupElement = LookupElementBuilder.create(it).withTypeText(stringPresentation).withIcon(
       IconManager.getInstance().getPlatformIcon(PlatformIcons.Parameter))
@@ -112,13 +110,14 @@ interface PyRuntimeCompletionRetrievalService {
   fun canComplete(parameters: CompletionParameters): Boolean
 
   fun extractItemsForCompletion(result: Pair<XValueNodeImpl, List<PyQualifiedExpressionItem>>?,
-                                candidate: PyObjectCandidate): CompletionResultData? {
+                                candidate: PyObjectCandidate, completionType: CompletionType): CompletionResultData? {
     val (node, listOfCalls) = result ?: return null
     val debugValue = node.valueContainer
     if (debugValue is DataFrameDebugValue) {
       val dfColumns = completePandasDataFrameColumns(debugValue.treeColumns, listOfCalls.map { it.pyQualifiedName }) ?: return null
       return CompletionResultData(dfColumns, PyRuntimeCompletionType.DATA_FRAME_COLUMNS)
     }
+    if (completionType == CompletionType.BASIC) return null
     computeChildrenIfNeeded(node)
     if ((debugValue as PyDebugValue).qualifiedType == "builtins.dict") {
       return CompletionResultData(node.loadedChildren.mapNotNull { (it as? XValueNodeImpl)?.name }.toSet(),
@@ -132,7 +131,7 @@ interface PyRuntimeCompletionRetrievalService {
 abstract class AbstractRuntimeCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val project = parameters.editor.project ?: return
-    if (parameters.completionType != CompletionType.BASIC) return
+    if (parameters.completionType == CompletionType.CLASS_NAME) return
 
     val context = ProcessingContext()
     if (!PlatformPatterns.psiElement().accepts(parameters.position, context)) return
@@ -194,7 +193,7 @@ fun createCompletionResultSet(retrievalService: PyRuntimeCompletionRetrievalServ
 
   return ApplicationUtil.runWithCheckCanceled(Callable {
     return@Callable pyObjectCandidates.flatMap { candidate ->
-      val parentNode = getParentNodeByName(treeNodeList, candidate.psiName.pyQualifiedName)
+      val parentNode = getParentNodeByName(treeNodeList, candidate.psiName.pyQualifiedName, parameters.completionType)
       val valueContainer = parentNode?.valueContainer
       if (valueContainer is PyDebugValue) {
         /**
@@ -205,8 +204,8 @@ fun createCompletionResultSet(retrievalService: PyRuntimeCompletionRetrievalServ
         if (valueContainer.type == "module") return@flatMap emptyList()
         if (checkDelimiterByType(valueContainer.qualifiedType, candidate.psiName.delimiter)) return@flatMap emptyList()
       }
-      getSetOfChildrenByListOfCall(parentNode, candidate.pyQualifiedExpressionList)
-        .let { retrievalService.extractItemsForCompletion(it, candidate) }
+      getSetOfChildrenByListOfCall(parentNode, candidate.pyQualifiedExpressionList, parameters.completionType)
+        .let { retrievalService.extractItemsForCompletion(it, candidate, parameters.completionType) }
         ?.let { postProcessingChildren(it, candidate, parameters) }
       ?: emptyList()
     }

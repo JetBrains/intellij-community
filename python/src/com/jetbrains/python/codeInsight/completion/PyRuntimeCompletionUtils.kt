@@ -269,7 +269,7 @@ private fun extractChildByName(childrenNodes: List<TreeNode>, name: String): XVa
   return childrenNodes.firstOrNull { it is XValueNodeImpl && it.name == name } as XValueNodeImpl?
 }
 
-internal fun getParentNodeByName(children: List<TreeNode>, psiName: String): XValueNodeImpl? {
+internal fun getParentNodeByName(children: List<TreeNode>, psiName: String, completionType: CompletionType): XValueNodeImpl? {
   /**
    * For preventing an extra load of "Special variables".
    * Firstly, looking through loaded variables and if not found - load values inside the group (make a request to jupyter server).
@@ -280,6 +280,7 @@ internal fun getParentNodeByName(children: List<TreeNode>, psiName: String): XVa
       return node
     }
   }
+  if (completionType == CompletionType.BASIC) return null
   val specialVariables = children.filterIsInstance<XValueGroupNodeImpl>()
     .filter { node -> (node.valueContainer as PyXValueGroup).groupType == ProcessDebugger.GROUP_TYPE.SPECIAL }
   specialVariables.forEach { node ->
@@ -305,7 +306,8 @@ internal fun checkDelimiterByType(qualifiedType: String?, delimiter: IElementTyp
 }
 
 internal fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?,
-                                          listOfCall: List<PyQualifiedExpressionItem>): Pair<XValueNodeImpl, List<PyQualifiedExpressionItem>>? {
+                                          listOfCall: List<PyQualifiedExpressionItem>,
+                                          completionType: CompletionType): Pair<XValueNodeImpl, List<PyQualifiedExpressionItem>>? {
   var currentNode = valueNode ?: return null
 
   listOfCall.forEachIndexed { index, call ->
@@ -314,6 +316,7 @@ internal fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?,
         return Pair(currentNode, listOfCall.subList(index, listOfCall.size))
       }
       else -> {
+        if (completionType == CompletionType.BASIC) return null
         computeChildrenIfNeeded(currentNode)
         currentNode = extractChildByName(currentNode.children, call.pyQualifiedName) ?: return null
       }
