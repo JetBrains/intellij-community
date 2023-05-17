@@ -17,6 +17,7 @@ class CodeFloatingToolbar(editor: Editor): FloatingToolbar(editor, "Floating.Cod
 
   override fun hasIgnoredParent(element: PsiElement): Boolean {
     return AdvancedSettings.getBoolean("floating.codeToolbar.hide")
+           || !element.isWritable
            || TemplateManagerImpl.getInstance(element.project).getActiveTemplate(editor) != null
   }
 
