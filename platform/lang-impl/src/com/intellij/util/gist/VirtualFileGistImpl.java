@@ -214,6 +214,7 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
       if (outputStream.size() <= MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES) {
         attributeStream.writeByte(VALUE_KIND_INLINE);
         attributeStream.write(outputStream.getInternalBuffer(), 0, outputStream.size());
+
         if(wasStoredInDedicatedFileBefore){
           Path gistPath = dedicatedGistFilePath(file);
           FileUtilRt.deleteRecursively(gistPath);

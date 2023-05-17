@@ -90,6 +90,8 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
     String notHugeFileContent = "b".repeat(notHugeGistSize);
     VirtualFile file = fileWithContent("a.txt", hugeFileContent);
 
+    Path dedicatedGistFile = ((VirtualFileGistImpl<String>)gistOfFileContent).dedicatedGistFilePath(file);
+
     final int enoughTries = 8;
     for (int i = 0; i < enoughTries; i++) {
       {
@@ -108,6 +110,11 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
           "Second invocation returns _cached_ result",
           invocationsBefore,
           invocationCounter.get()
+        );
+
+        assertTrue(
+          "Dedicated gist file [" + dedicatedGistFile + "] must exists since Gist now is huge",
+          Files.exists(dedicatedGistFile)
         );
       }
       {
@@ -128,10 +135,9 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
           invocationCounter.get()
         );
 
-        Path path = ((VirtualFileGistImpl<String>)gistOfFileContent).dedicatedGistFilePath(file);
         assertFalse(
-          "Dedicated gist file [" + path + "] must be deleted since Gist now is not huge",
-          Files.exists(path)
+          "Dedicated gist file [" + dedicatedGistFile + "] must be deleted since Gist now is not huge",
+          Files.exists(dedicatedGistFile)
         );
       }
     }
