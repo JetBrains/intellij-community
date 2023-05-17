@@ -29,10 +29,10 @@ suspend fun GitLabApi.getAllProjectMembers(project: GitLabProjectCoordinates): L
     )
     val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.getProjectMembers, parameters)
     loadGQLResponse(request, ProjectMembersConnection::class.java, "project", "projectMembers").body()
-  }.map { it.nodes }.foldToList()
+  }.map { it.nodes }.foldToList().filterNotNull()
 
 private class LabelConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabLabelDTO>)
   : GraphQLConnectionDTO<GitLabLabelDTO>(pageInfo, nodes)
 
-private class ProjectMembersConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabMemberDTO>)
-  : GraphQLConnectionDTO<GitLabMemberDTO>(pageInfo, nodes)
+private class ProjectMembersConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabMemberDTO?>)
+  : GraphQLConnectionDTO<GitLabMemberDTO?>(pageInfo, nodes)
