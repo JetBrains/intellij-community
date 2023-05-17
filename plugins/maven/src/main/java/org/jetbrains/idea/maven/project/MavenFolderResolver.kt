@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.lang.JavaVersion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -38,7 +37,6 @@ class MavenFolderResolver(private val project: Project) {
     }
   }
 
-  @RequiresBlockingContext
   fun resolveFoldersAndImportBlocking(projects: Collection<MavenProject>) {
     if (MavenUtil.isLinearImportEnabled()) {
       MavenImportingManager.getInstance(project).resolveFolders(projects)
