@@ -32,7 +32,7 @@ class KotlinMppCompositeBuildImportingTest : AbstractKotlinMppGradleImportingTes
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.8.20-dev-3309+")
+    @PluginTargetVersions(pluginVersion = "1.8.20-dev-3309+", gradleVersion = "7.5+")
     fun testJvmAndAndroid() {
         doTest {
             onlyCheckers(OrderEntriesChecker)
