@@ -127,14 +127,6 @@ public class PackageChooserDialog extends PackageChooser {
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        PsiPackage selection = getTreeSelection();
-        if (selection != null) {
-          String name = selection.getQualifiedName();
-          setTitle(myTitle + " - " + (name.isEmpty() ? IdeBundle.message("node.default.package") : name));
-        }
-        else {
-          setTitle(myTitle);
-        }
         updatePathFromTree();
       }
     });
