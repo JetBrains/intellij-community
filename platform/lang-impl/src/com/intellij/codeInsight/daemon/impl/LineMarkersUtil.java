@@ -53,7 +53,7 @@ final class LineMarkersUtil {
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     HighlightersRecycler toReuse = new HighlightersRecycler();
     processLineMarkers(project, document, bounds, group, info -> {
-      RangeHighlighter highlighter = info.highlighter;
+      RangeHighlighterEx highlighter = (RangeHighlighterEx)info.highlighter;
       if (highlighter != null) {
         toReuse.recycleHighlighter(highlighter);
       }
@@ -90,7 +90,7 @@ final class LineMarkersUtil {
                                               @Nullable HighlightersRecycler toReuse) {
     LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer<?>)info.createGutterRenderer();
 
-    RangeHighlighter highlighter = toReuse == null ? null : toReuse.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX);
+    RangeHighlighterEx highlighter = toReuse == null ? null : toReuse.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX);
     boolean newHighlighter = false;
     if (highlighter == null) {
       newHighlighter = true;
@@ -120,7 +120,7 @@ final class LineMarkersUtil {
       boolean lineSeparatorPlacementChanged = !Comparing.equal(highlighter.getLineSeparatorPlacement(), info.separatorPlacement);
 
       if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged) {
-        markupModel.changeAttributesInBatch((RangeHighlighterEx)highlighter, markerEx -> {
+        markupModel.changeAttributesInBatch(highlighter, markerEx -> {
           if (rendererChanged) {
             markerEx.setGutterIconRenderer(newRenderer);
           }

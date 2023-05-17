@@ -111,7 +111,7 @@ public final class BackgroundUpdateHighlightersUtil {
 
     Processor<HighlightInfo> processor = info -> {
       if (info.getGroup() == group) {
-        RangeHighlighter highlighter = info.getHighlighter();
+        RangeHighlighterEx highlighter = info.getHighlighter();
         int hiStart = highlighter.getStartOffset();
         int hiEnd = highlighter.getEndOffset();
 
@@ -178,7 +178,7 @@ public final class BackgroundUpdateHighlightersUtil {
     Document document = session.getDocument();
     DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
       if (info.getGroup() == group) {
-        RangeHighlighter highlighter = info.getHighlighter();
+        RangeHighlighterEx highlighter = info.getHighlighter();
         int hiStart = highlighter.getStartOffset();
         int hiEnd = highlighter.getEndOffset();
         boolean willBeRemoved = range.containsRange(hiStart, hiEnd)
@@ -277,7 +277,7 @@ public final class BackgroundUpdateHighlightersUtil {
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
-    RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
+    RangeHighlighterEx highlighter = infosToRemove == null ? null : infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
     if (highlighter == null) {
       highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                                   HighlighterTargetArea.EXACT_RANGE, false, changeAttributes);
