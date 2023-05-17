@@ -335,18 +335,23 @@ public class PackageChooserDialog extends PackageChooser {
     final PsiPackage selectedPackage = getTreeSelection();
     if (selectedPackage == null) return;
 
-    final String newPackageName = Messages.showInputDialog(myProject, IdeBundle.message("prompt.enter.a.new.package.name"), IdeBundle.message("title.new.package"), Messages.getQuestionIcon(), "",
-                                                           new InputValidator() {
-                                                             @Override
-                                                             public boolean checkInput(final String inputString) {
-                                                               return inputString != null && inputString.length() > 0;
-                                                             }
+    final String newPackageName = Messages.showInputDialog(
+      myProject,
+      IdeBundle.message("prompt.enter.a.new.package.name"),
+      IdeBundle.message("title.new.package"),
+      Messages.getQuestionIcon(), "",
+      new InputValidator() {
+        @Override
+        public boolean checkInput(final String inputString) {
+          return inputString != null && !inputString.isEmpty();
+        }
 
-                                                             @Override
-                                                             public boolean canClose(final String inputString) {
-                                                               return checkInput(inputString);
-                                                             }
-                                                           });
+        @Override
+        public boolean canClose(final String inputString) {
+          return checkInput(inputString);
+        }
+      }
+    );
     if (newPackageName == null) return;
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
@@ -381,9 +386,7 @@ public class PackageChooserDialog extends PackageChooser {
         }
       };
       ApplicationManager.getApplication().runReadAction(action);
-    },
-                                                  IdeBundle.message("command.create.new.package"),
-                                                  null);
+    }, IdeBundle.message("command.create.new.package"), null);
   }
 
   @Nullable
