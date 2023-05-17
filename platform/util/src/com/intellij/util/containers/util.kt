@@ -149,15 +149,6 @@ fun <T> Stream<T>?.getIfSingle(): T? {
  */
 fun <T> concat(vararg streams: Stream<T>): Stream<T> = Stream.of(*streams).reduce(Stream.empty()) { a, b -> Stream.concat(a, b) }
 
-inline fun MutableList<Throwable>.catch(runnable: () -> Unit) {
-  try {
-    runnable()
-  }
-  catch (e: Throwable) {
-    add(e)
-  }
-}
-
 fun <T> MutableList<T>.addIfNotNull(e: T?) {
   e?.let(::add)
 }

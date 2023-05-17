@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
@@ -16,9 +16,7 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.throwIfNotEmpty
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -102,21 +100,28 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   }
 
   final override suspend fun save() {
-    val errors = SmartList<Throwable>()
-    withContext(Dispatchers.EDT) {
-      for (registeredManager in managers) {
-        try {
-          registeredManager.save(errors)
+    var error: Throwable? = null
+    for (registeredManager in managers) {
+      try {
+        withContext(Dispatchers.EDT) {
+          registeredManager.save()
         }
-        catch (e: CancellationException) {
-          throw e
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        if (error == null) {
+          error = e
         }
-        catch (e: Throwable) {
-          errors.add(e)
+        else {
+          error.addSuppressed(e)
         }
       }
     }
-    throwIfNotEmpty(errors)
+    error?.let {
+      throw it
+    }
   }
 
   @Suppress("unused")

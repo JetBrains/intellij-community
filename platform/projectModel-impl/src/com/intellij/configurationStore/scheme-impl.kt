@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.dynatrace.hash4j.hashing.HashStream64
@@ -9,9 +9,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.project.isDirectoryBased
-import com.intellij.util.SmartList
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jdom.CDATA
 import org.jdom.Element
@@ -127,12 +125,6 @@ fun wrapState(element: Element, project: Project): Element {
 class BundledSchemeEP {
   @Attribute("path")
   var path: String? = null
-}
-
-fun SchemeManager<*>.save() {
-  val errors = SmartList<Throwable>()
-  save(errors)
-  throwIfNotEmpty(errors)
 }
 
 @ApiStatus.Internal

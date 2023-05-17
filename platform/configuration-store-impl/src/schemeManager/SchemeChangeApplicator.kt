@@ -6,7 +6,6 @@ package com.intellij.configurationStore.schemeManager
 import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeContentChangedHandler
 import com.intellij.openapi.options.Scheme
-import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import java.util.function.Function
@@ -38,7 +37,7 @@ internal fun <T : Scheme, M : T> readSchemeFromFile(file: VirtualFile,
   }
 
   return catchAndLog({ file.path }) {
-    schemeLoader.loadScheme(fileName, null, file.contentsToByteArray())
+    schemeLoader.loadScheme(fileName = fileName, input = null, preloadedBytes = file.contentsToByteArray())
   }
 }
 
@@ -106,7 +105,7 @@ internal class SchemeChangeApplicator<T : Scheme, M : T>(private val schemeManag
 
     if (newActiveScheme != null) {
       schemeManager.activeScheme = newActiveScheme
-      processor.onCurrentSchemeSwitched(oldActiveScheme, newActiveScheme, false)
+      processor.onCurrentSchemeSwitched(oldScheme = oldActiveScheme, newScheme = newActiveScheme, processChangeSynchronously = false)
     }
   }
 }
@@ -185,7 +184,7 @@ private fun <T : Scheme, M : T> callSchemeContentChangedIfSupported(changedSchem
 
       val dataHolder = SchemeDataHolderImpl(schemeManager.processor, bytes, externalInfo)
 
-      val processor: SchemeProcessor<T, M> = schemeManager.processor
+      val processor = schemeManager.processor
       @Suppress("UNCHECKED_CAST")
       (processor as SchemeContentChangedHandler<M>).schemeContentChanged(changedScheme, schemeName, dataHolder)
     }
