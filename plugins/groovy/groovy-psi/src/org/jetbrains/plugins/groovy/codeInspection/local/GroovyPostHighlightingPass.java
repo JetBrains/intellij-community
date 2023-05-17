@@ -175,7 +175,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     }
     myUnusedDeclarations = unusedDeclarations;
     List<HighlightInfo> infos = convertUnusedImportsToInfos(unusedDeclarations, unusedImports);
-    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
+    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myFile, myDocument, 0, myFile.getTextLength(), infos, getId());
   }
 
   @Override

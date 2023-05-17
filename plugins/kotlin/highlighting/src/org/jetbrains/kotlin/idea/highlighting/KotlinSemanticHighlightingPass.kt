@@ -47,7 +47,7 @@ class KotlinSemanticHighlightingPass(
             }
         }
         BackgroundUpdateHighlightersUtil.setHighlightersToEditor(
-            myProject, myDocument, /* startOffset = */ 0, ktFile.textLength, infos, colorsScheme, id
+          myProject, ktFile, myDocument, /* startOffset = */ 0, ktFile.textLength, infos, id
         )
     }
 

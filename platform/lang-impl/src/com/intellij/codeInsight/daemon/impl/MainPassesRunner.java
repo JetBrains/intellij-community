@@ -143,7 +143,8 @@ public class MainPassesRunner {
       return;
     }
     ProperTextRange range = ProperTextRange.create(0, document.getTextLength());
-    HighlightingSessionImpl.createHighlightingSession(psiFile, daemonIndicator, null, range, CanISilentlyChange.Result.UH_UH);
+    HighlightingSessionImpl.createHighlightingSession(psiFile, daemonIndicator, null, range, CanISilentlyChange.Result.UH_UH,
+                                                      0);
     ProgressManager.getInstance().runProcess(() -> runMainPasses(daemonIndicator, result, psiFile, document), daemonIndicator);
   }
 

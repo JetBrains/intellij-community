@@ -20,6 +20,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -150,19 +152,22 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
 
       @Override
       public void run() {
-        if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
-          BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-            // run annotators outside the read action because they could start OSProcessHandler
-            runChangeAware(myDocument, ExternalToolPass.this::doAnnotate);
-            ReadAction.run(() -> {
-              ProgressManager.checkCanceled();
-              if (!documentChanged(modificationStampBefore)) {
-                doApply();
-                doFinish(getHighlights());
-              }
-            });
-          });
+        if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
+          return;
         }
+        // have to instantiate new indicator because the old one (progress) might have already been canceled
+        DaemonProgressIndicator indicator = new DaemonProgressIndicator();
+        BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+          // run annotators outside the read action because they could start OSProcessHandler
+          runChangeAware(myDocument, ExternalToolPass.this::doAnnotate);
+          ReadAction.run(() -> {
+            ProgressManager.checkCanceled();
+            if (!documentChanged(modificationStampBefore)) {
+              doApply();
+              doFinish(getHighlights());
+            }
+          });
+        }, indicator);
       }
     };
     ExternalAnnotatorManager.getInstance().queue(update);
@@ -235,9 +240,9 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   }
 
   private void doFinish(@NotNull List<? extends HighlightInfo> highlights) {
-    int start = myRestrictRange.getStartOffset();
-    int end = myRestrictRange.getEndOffset();
-    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, start, end, highlights, getColorsScheme(), getId());
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
+    // use the method which doesn't retrieve a HighlightingSession from the indicator, because we likely destroyed the one already
+    BackgroundUpdateHighlightersUtil.setHighlightersInRange(myRestrictRange, highlights, markupModel, getId(), myHighlightingSession);
     DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getId());
   }
 

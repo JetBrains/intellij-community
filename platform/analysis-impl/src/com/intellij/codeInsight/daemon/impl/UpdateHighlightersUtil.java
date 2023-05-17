@@ -146,7 +146,8 @@ public final class UpdateHighlightersUtil {
     }
 
     if (psiFile != null) {
-      HighlightingSession session = HighlightingSessionImpl.createHighlightingSession(psiFile, new DaemonProgressIndicator(), colorsScheme, ProperTextRange.create(startOffset, endOffset), CanISilentlyChange.Result.UH_UH);
+      HighlightingSession session = HighlightingSessionImpl.createHighlightingSession(psiFile, new DaemonProgressIndicator(), colorsScheme, ProperTextRange.create(startOffset, endOffset), CanISilentlyChange.Result.UH_UH,
+                                                                                      0);
       setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session);
     }
   }

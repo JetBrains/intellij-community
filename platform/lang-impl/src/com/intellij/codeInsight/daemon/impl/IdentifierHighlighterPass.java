@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -59,7 +60,7 @@ public class IdentifierHighlighterPass {
 
   /**
    * @param file may be injected fragment, in which case the {@code editor} must be corresponding injected editor and  {@code visibleRange} must have consistent offsets inside the injected document.
-   * In both cases, {@link #doCollectInformation()} will produce and apply HighlightInfos to the host file.
+   * In both cases, {@link #doCollectInformation(HighlightingSession)} will produce and apply HighlightInfos to the host file.
    */
   IdentifierHighlighterPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull TextRange visibleRange) {
     myFile = file;
@@ -68,7 +69,7 @@ public class IdentifierHighlighterPass {
     myVisibleRange = new ProperTextRange(visibleRange);
   }
 
-  public void doCollectInformation() {
+  public void doCollectInformation(@NotNull HighlightingSession hostSession) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     HighlightUsagesHandlerBase<PsiElement> highlightUsagesHandler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile, myVisibleRange);
@@ -101,8 +102,7 @@ public class IdentifierHighlighterPass {
       List<HighlightInfo> infos = virtSpace || isCaretOverCollapsedFoldRegion() ? Collections.emptyList() : getHighlights();
       PsiFile hostFile = InjectedLanguageManager.getInstance(myFile.getProject()).getTopLevelFile(myFile);
       Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
-      BackgroundUpdateHighlightersUtil.setHighlightersToSingleEditor(myFile.getProject(), hostEditor, 0, hostFile.getTextLength(), infos,
-                                                                     hostEditor.getColorsScheme(), getId());
+      BackgroundUpdateHighlightersUtil.setHighlightersInRange(hostFile.getTextRange(), infos, (MarkupModelEx)hostEditor.getMarkupModel(), getId(), hostSession);
     }
   }
 

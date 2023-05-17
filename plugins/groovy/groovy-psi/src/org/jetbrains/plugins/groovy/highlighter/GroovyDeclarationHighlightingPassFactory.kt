@@ -33,14 +33,14 @@ internal class GroovyDeclarationHighlightingPassFactory : TextEditorHighlighting
   }
 
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? = file.getGroovyFile()?.let {
-    GroovyDeclarationHighlightingPass(it, editor.document)
+    GroovyDeclarationHighlightingPass(file, it, editor.document)
   }
 }
 
-private class GroovyDeclarationHighlightingPass(file: GroovyFileBase, document: Document) : GroovyHighlightingPass(file, document) {
+private class GroovyDeclarationHighlightingPass(psiFile: PsiFile, groovyBaseFile: GroovyFileBase, document: Document) : GroovyHighlightingPass(psiFile, groovyBaseFile, document) {
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    myFile.accept(object : PsiRecursiveElementWalkingVisitor() {
+    myGroovyBaseFile.accept(object : PsiRecursiveElementWalkingVisitor() {
       override fun visitElement(element: PsiElement) {
         if (element is GrReferenceElement<*>) {
           getReferenceHighlightingAttribute(element)?.let {

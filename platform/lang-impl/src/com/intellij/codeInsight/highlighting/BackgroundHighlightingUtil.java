@@ -4,6 +4,7 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,6 +39,7 @@ public final class BackgroundHighlightingUtil {
                                                    @NotNull BiFunction<? super PsiFile, ? super Editor, ? extends T> backgroundProcessor,
                                                    @NotNull TriConsumer<? super PsiFile, ? super Editor, ? super T> edtProcessor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    assert !(editor instanceof EditorWindow) : editor;
     if (!isValidEditor(editor)) return;
 
     int offsetBefore = editor.getCaretModel().getOffset();

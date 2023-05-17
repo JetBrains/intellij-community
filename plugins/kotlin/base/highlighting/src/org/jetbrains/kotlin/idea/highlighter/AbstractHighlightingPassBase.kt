@@ -63,7 +63,7 @@ abstract class AbstractHighlightingPassBase(
         for (i in 0 until holder.size()) {
             result.add(holder.get(i))
         }
-        BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, file.textLength, result, colorsScheme, id)
+        BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, file, myDocument, 0, file.textLength, result, id)
     }
 
 }

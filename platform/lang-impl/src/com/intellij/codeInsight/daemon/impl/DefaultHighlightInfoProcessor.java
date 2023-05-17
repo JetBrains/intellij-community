@@ -20,7 +20,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.SlowOperations;
@@ -40,16 +39,15 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                      @NotNull TextRange restrictRange,
                                                      int groupId) {
     PsiFile psiFile = session.getPsiFile();
-    Project project = psiFile.getProject();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-    if (document == null) return;
+    Project project = session.getProject();
+    Document document = session.getDocument();
     long modificationStamp = document.getModificationStamp();
     TextRange priorityIntersection = priorityRange.intersection(restrictRange);
     List<HighlightInfo> infoCopy = new ArrayList<>(infos);
     TextEditorHighlightingPass showAutoImportPass = editor == null ? null : getOrCreateShowAutoImportPass(editor, psiFile, session.getProgressIndicator());
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     if (priorityIntersection != null) {
-      BackgroundUpdateHighlightersUtil.setHighlightersInRange(document, priorityIntersection, infoCopy, markupModel, groupId, session);
+      BackgroundUpdateHighlightersUtil.setHighlightersInRange(priorityIntersection, infoCopy, markupModel, groupId, session);
     }
     ApplicationManager.getApplication().invokeLater(() -> {
       if (editor != null && !editor.isDisposed() && modificationStamp == document.getModificationStamp()) {
@@ -105,12 +103,11 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                       @NotNull TextRange priorityRange,
                                                       @NotNull TextRange restrictedRange,
                                                       int groupId) {
-    PsiFile psiFile = session.getPsiFile();
-    Project project = psiFile.getProject();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-    if (document == null) return;
-    BackgroundUpdateHighlightersUtil.setHighlightersOutsideRange(document, infos, restrictedRange, priorityRange, groupId, session);
+    BackgroundUpdateHighlightersUtil.setHighlightersOutsideRange(infos, restrictedRange, priorityRange, groupId, session);
     if (editor != null) {
+      PsiFile psiFile = session.getPsiFile();
+      Project project = session.getProject();
+      Document document = session.getDocument();
       long modificationStamp = document.getModificationStamp();
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!project.isDisposed() && !editor.isDisposed() && modificationStamp != document.getModificationStamp()) {

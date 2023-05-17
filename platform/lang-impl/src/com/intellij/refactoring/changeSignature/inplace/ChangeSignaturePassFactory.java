@@ -73,8 +73,8 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
         builder.registerFix(action, null, null, null, null);
         info = builder.createUnconditionally();
       }
-      BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(),
-                                                               ContainerUtil.createMaybeSingletonList(info), getColorsScheme(), getId());
+      BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myFile, myDocument, 0, myFile.getTextLength(),
+                                                               ContainerUtil.createMaybeSingletonList(info), getId());
     }
 
     @Override

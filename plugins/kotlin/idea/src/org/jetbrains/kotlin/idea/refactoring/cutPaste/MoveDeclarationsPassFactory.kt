@@ -40,7 +40,7 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
         override fun doCollectInformation(progress: ProgressIndicator) {
             val info = buildHighlightingInfo()
             if (info != null) {
-                BackgroundUpdateHighlightersUtil.setHighlightersToEditor(project, myDocument, 0, file.textLength, listOf(info), colorsScheme, id)
+                BackgroundUpdateHighlightersUtil.setHighlightersToEditor(project, file, myDocument, 0, file.textLength, listOf(info), id)
             }
         }
 
