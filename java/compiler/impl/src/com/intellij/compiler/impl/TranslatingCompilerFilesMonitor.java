@@ -5,6 +5,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -38,6 +39,7 @@ import java.util.function.Consumer;
  * 2. corresponding source file has been deleted
  */
 public final class TranslatingCompilerFilesMonitor implements AsyncFileListener {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TranslatingCompilerFilesMonitor");
   
   public static TranslatingCompilerFilesMonitor getInstance() {
     return ApplicationManager.getApplication().getComponent(TranslatingCompilerFilesMonitor.class);
@@ -160,6 +162,9 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
         try {
           for (VirtualFile root : dirsToTraverse) {
             if (!root.isValid()) {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("File invalidated while processing VFS events, clearing build state: " + root.getPath());
+              }
               return false;
             }
             collectPaths(root, filesChanged, true);
