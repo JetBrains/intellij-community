@@ -4956,7 +4956,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return transferHandlerStub;
       }
     };
-    private static final MouseEvent mouseEventStub = new MouseEvent(new Component() {}, 0, 0l, 0, 0, 0, 0, false, 0);
+    private static final MouseEvent mouseEventStub = new MouseEvent(new Component() {}, 0, 0L, 0, 0, 0, 0, false, 0);
 
     private static EditorImpl getEditor(@NotNull JComponent comp) {
       EditorComponentImpl editorComponent = (EditorComponentImpl)comp;
