@@ -164,7 +164,7 @@ public class PackageChooserDialog extends PackageChooser {
       }
     });
     myPathEditor.setBorder(BorderFactory.createEmptyBorder(0, 0, 2, 0));
-    northPanel.add(myPathEditor, BorderLayout.SOUTH);
+    northPanel.add(myPathEditor, BorderLayout.CENTER);
   }
 
   private static boolean isPathShowing() {
