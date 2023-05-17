@@ -31,17 +31,14 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.EdtExecutorService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Listens for editor events and starts brace/identifier highlighting in the background
@@ -156,17 +153,7 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
   }
 
   private void submitUpdateHighlighted(@NotNull Project project, @NotNull Editor editor) {
-    boolean immediatelyHighlightAllowed = true;
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (file != null) {
-      BackgroundElementHighlighter elementHighlighter = LanguageBackgroundElementHighlighter.INSTANCE.forLanguage(file.getLanguage());
-      immediatelyHighlightAllowed = elementHighlighter == null || elementHighlighter.isImmediatelyHighlightAllowed();
-    }
-    if (immediatelyHighlightAllowed || ApplicationManager.getApplication().isUnitTestMode()) {
-      updateHighlighted(project, editor);
-    } else {
-      EdtExecutorService.getScheduledExecutorInstance().schedule(() -> updateHighlighted(project, editor), 300, TimeUnit.MILLISECONDS);
-    }
+    updateHighlighted(project, editor);
   }
 
   private void updateHighlighted(@NotNull Project project, @NotNull Editor editor) {
