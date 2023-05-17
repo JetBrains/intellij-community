@@ -354,27 +354,27 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
         override suspend fun dumpedThreads(threadDump: ThreadDump) {
           if (state.get() == CheckerState.FINISHED) {
             stop()
+            return
           }
-          else {
-            val file = dumpThreads(pathPrefix = "$freezeFolder/", appendMillisecondsToFileName = false, rawDump = threadDump.rawDump)
-                       ?: return
-            try {
-              val duration = getDuration(System.nanoTime(), TimeUnit.SECONDS)
-              withContext(Dispatchers.IO) {
-                Files.createDirectories(file.parent)
-                Files.writeString(file.parent.resolve(DURATION_FILE_NAME), duration.toString())
-              }
 
-              for (listener in EP_NAME.extensionList) {
-                coroutineContext.ensureActive()
-                listener.dumpedThreads(file, threadDump)
-              }
+          val file = dumpThreads(pathPrefix = "$freezeFolder/", appendMillisecondsToFileName = false, rawDump = threadDump.rawDump)
+                     ?: return
+          try {
+            val duration = getDuration(System.nanoTime(), TimeUnit.SECONDS)
+            withContext(Dispatchers.IO) {
+              Files.createDirectories(file.parent)
+              Files.writeString(file.parent.resolve(DURATION_FILE_NAME), duration.toString())
+            }
+
+            for (listener in EP_NAME.extensionList) {
               coroutineContext.ensureActive()
-              publisher?.dumpedThreads(file, threadDump)
+              listener.dumpedThreads(file, threadDump)
             }
-            catch (e: IOException) {
-              LOG.info("Failed to write the duration file", e)
-            }
+            coroutineContext.ensureActive()
+            publisher?.dumpedThreads(file, threadDump)
+          }
+          catch (e: IOException) {
+            LOG.info("Failed to write the duration file", e)
           }
         }
       }

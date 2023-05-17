@@ -113,9 +113,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
   }
 
   override fun dumpedThreads(toFile: Path, dump: ThreadDump) {
-    if (dumpTask == null) {
-      return
-    }
+    val dumpTask = dumpTask ?: return
 
     currentDumps.add(dump)
     val edtStack = dump.edtStackTrace
@@ -129,17 +127,19 @@ internal class IdeaFreezeReporter : PerformanceListener {
     }
     val dir = toFile.parent
     val performanceWatcher = PerformanceWatcher.getInstance()
-    val event = createEvent(duration = dumpTask!!.totalTime + performanceWatcher.unresponsiveInterval, attachments = emptyList(),
-                            reportDir = dir, performanceWatcher = performanceWatcher, finished = false)
-    if (event != null) {
-      try {
-        Files.createDirectories(dir)
-        Files.writeString(dir.resolve(MESSAGE_FILE_NAME), event.message)
-        ObjectOutputStream(Files.newOutputStream(dir.resolve(THROWABLE_FILE_NAME))).use { it.writeObject(event.throwable) }
-        saveAppInfo(dir.resolve(APP_INFO_FILE_NAME), false)
-      }
-      catch (ignored: IOException) {
-      }
+    val event = createEvent(dumpTask = dumpTask,
+                            duration = dumpTask.totalTime + performanceWatcher.unresponsiveInterval,
+                            attachments = emptyList(),
+                            reportDir = dir,
+                            performanceWatcher = performanceWatcher,
+                            finished = false) ?: return
+    try {
+      Files.createDirectories(dir)
+      Files.writeString(dir.resolve(MESSAGE_FILE_NAME), event.message)
+      ObjectOutputStream(Files.newOutputStream(dir.resolve(THROWABLE_FILE_NAME))).use { it.writeObject(event.throwable) }
+      saveAppInfo(dir.resolve(APP_INFO_FILE_NAME), false)
+    }
+    catch (ignored: IOException) {
     }
   }
 
@@ -149,29 +149,34 @@ internal class IdeaFreezeReporter : PerformanceListener {
   }
 
   override fun uiFreezeRecorded(durationMs: Long, reportDir: Path?) {
+    val dumpTask = dumpTask
     if (dumpTask == null) {
       return
     }
 
     if (Registry.`is`("freeze.reporter.enabled", false)) {
       val performanceWatcher = PerformanceWatcher.getInstance()
-      if ((durationMs / 1000).toInt() > FREEZE_THRESHOLD && !stacktraceCommonPart.isNullOrEmpty()) { // check that we have at least half of the dumps required
+      // check that we have at least half of the dumps required
+      if ((durationMs / 1000).toInt() > FREEZE_THRESHOLD && !stacktraceCommonPart.isNullOrEmpty()) {
         val dumpingDurationMs = durationMs - performanceWatcher.unresponsiveInterval
         val dumpsCount = min(performanceWatcher.maxDumpDuration.toLong(), dumpingDurationMs / 2) / performanceWatcher.dumpInterval
-        if (dumpTask!!.isValid(dumpingDurationMs) || currentDumps.size >= max(3, dumpsCount)) {
+        if (dumpTask.isValid(dumpingDurationMs) || currentDumps.size >= max(3, dumpsCount)) {
           val attachments = ArrayList<Attachment>()
           addDumpsAttachments(from = currentDumps, textMapper = { it.rawDump }, container = attachments)
           if (reportDir != null) {
             EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(reportDir)) }
           }
-          report(
-            createEvent(duration = durationMs, attachments = attachments, reportDir = reportDir, performanceWatcher = performanceWatcher,
-                        finished = true))
+          report(createEvent(dumpTask = dumpTask,
+                             duration = durationMs,
+                             attachments = attachments,
+                             reportDir = reportDir,
+                             performanceWatcher = performanceWatcher,
+                             finished = true))
         }
       }
     }
 
-    dumpTask = null
+    this.dumpTask = null
     reset()
   }
 
@@ -180,23 +185,31 @@ internal class IdeaFreezeReporter : PerformanceListener {
     stacktraceCommonPart = null
   }
 
-  private fun createEvent(duration: Long,
+  private fun createEvent(dumpTask: SamplingTask,
+                          duration: Long,
                           attachments: List<Attachment>,
                           reportDir: Path?,
                           performanceWatcher: PerformanceWatcher,
                           finished: Boolean): IdeaLoggingEvent? {
-    var infos = dumpTask!!.threadInfos
-    val dumpInterval = (if (infos.isEmpty()) performanceWatcher.dumpInterval else dumpTask!!.dumpInterval).toLong()
+    var infos = dumpTask.threadInfos
+    val dumpInterval = (if (infos.isEmpty()) performanceWatcher.dumpInterval else dumpTask.dumpInterval).toLong()
     if (infos.isEmpty()) {
       infos = currentDumps.map { it.threadInfos }
     }
 
-    return createEvent(duration = duration, dumpInterval = dumpInterval, sampledCount = infos.size,
-                       causeThreads = infos.mapNotNull { getCauseThread(it) }, attachments = attachments, reportDir = reportDir,
-                       jitProblem = performanceWatcher.jitProblem, finished = finished)
+    return createEvent(dumpTask = dumpTask,
+                       duration = duration,
+                       dumpInterval = dumpInterval,
+                       sampledCount = infos.size,
+                       causeThreads = infos.mapNotNull { getCauseThread(it) },
+                       attachments = attachments,
+                       reportDir = reportDir,
+                       jitProblem = performanceWatcher.jitProblem,
+                       finished = finished)
   }
 
-  private fun createEvent(duration: Long,
+  private fun createEvent(dumpTask: SamplingTask,
+                          duration: Long,
                           dumpInterval: Long,
                           sampledCount: Int,
                           causeThreads: List<ThreadInfo>,
@@ -211,7 +224,8 @@ internal class IdeaFreezeReporter : PerformanceListener {
     var commonStack = commonStackNode?.getStack()
     var nonEdtCause = false
 
-    if (commonStack.isNullOrEmpty()) { // fallback to simple EDT common
+    // fallback to simple EDT common
+    if (commonStack.isNullOrEmpty()) {
       commonStack = stacktraceCommonPart
     }
     else {
@@ -228,36 +242,34 @@ internal class IdeaFreezeReporter : PerformanceListener {
     catch (ignored: IOException) {
     }
 
-    if (!commonStack.isNullOrEmpty()) {
-      if (commonStack.any { skippedFrame(it) }) {
-        return null
-      }
-      val durationInSeconds = duration / 1000
-      val edtNote = if (allInEdt) "in EDT " else ""
-      var message = """Freeze ${edtNote}for $durationInSeconds seconds
-${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}Sampled time: ${sampledCount * dumpInterval}ms, sampling rate: ${dumpInterval}ms"""
-      if (jitProblem != null) {
-        message += ", $jitProblem"
-      }
-      val total = dumpTask!!.totalTime
-      val gcTime = dumpTask!!.gcTime
-      if (total > 0) {
-        message += ", GC time: ${gcTime}ms (${gcTime * 100 / total}%), Class loading: $classLoadingRatio%"
-      }
-      if (DebugAttachDetector.isDebugEnabled()) {
-        message += ", debug agent: on"
-      }
-      val processCpuLoad = dumpTask!!.processCpuLoad
-      if (processCpuLoad > 0) {
-        message += ", cpu load: " + (processCpuLoad * 100).toInt() + "%"
-      }
-      if (nonEdtCause) {
-        message += "\n\nThe stack is from the thread that was blocking EDT"
-      }
-      val report = createReportAttachment(durationInSeconds, reportText)
-      return LogMessage.eventOf(Freeze(commonStack), message, attachments + report)
+    if (commonStack.isNullOrEmpty() || commonStack.any { skippedFrame(it) }) {
+      return null
     }
-    return null
+
+    val durationInSeconds = duration / 1000
+    val edtNote = if (allInEdt) "in EDT " else ""
+    var message = """Freeze ${edtNote}for $durationInSeconds seconds
+${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}Sampled time: ${sampledCount * dumpInterval}ms, sampling rate: ${dumpInterval}ms"""
+    if (jitProblem != null) {
+      message += ", $jitProblem"
+    }
+    val total = dumpTask.totalTime
+    val gcTime = dumpTask.gcTime
+    if (total > 0) {
+      message += ", GC time: ${gcTime}ms (${gcTime * 100 / total}%), Class loading: $classLoadingRatio%"
+    }
+    if (DebugAttachDetector.isDebugEnabled()) {
+      message += ", debug agent: on"
+    }
+    val processCpuLoad = dumpTask.processCpuLoad
+    if (processCpuLoad > 0) {
+      message += ", cpu load: ${(processCpuLoad * 100).toInt()}%"
+    }
+    if (nonEdtCause) {
+      message += "\n\nThe stack is from the thread that was blocking EDT"
+    }
+    val report = createReportAttachment(durationInSeconds, reportText)
+    return LogMessage.eventOf(Freeze(commonStack), message, attachments + report)
   }
 }
 
