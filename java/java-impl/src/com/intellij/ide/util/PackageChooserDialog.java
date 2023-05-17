@@ -58,7 +58,6 @@ public class PackageChooserDialog extends PackageChooser {
   private Tree myTree;
   private DefaultTreeModel myModel;
   private final Project myProject;
-  private final @NlsContexts.DialogTitle String myTitle;
   private Module myModule;
   private EditorTextField myPathEditor;
 
@@ -67,7 +66,6 @@ public class PackageChooserDialog extends PackageChooser {
   public PackageChooserDialog(@NlsContexts.DialogTitle String title, @NotNull Module module) {
     super(module.getProject(), true);
     setTitle(title);
-    myTitle = title;
     myProject = module.getProject();
     myModule = module;
     init();
@@ -76,7 +74,6 @@ public class PackageChooserDialog extends PackageChooser {
   public PackageChooserDialog(@NlsContexts.DialogTitle String title, Project project) {
     super(project, true);
     setTitle(title);
-    myTitle = title;
     myProject = project;
     init();
   }
