@@ -177,8 +177,11 @@ fun CoroutineScope.startApplication(args: List<String>,
     withContext(RawSwingDispatcher) {
       initUi(preloadLafClassesJob)
     }
+  }
+  launch {
+    initLafJob.join()
     if (isImplicitReadOnEDTDisabled && !isAutomaticIWLOnDirtyUIDisabled) {
-      runActivity("Write Intent Lock UI class transformer loading") {
+      subtask("Write Intent Lock UI class transformer loading") {
         WriteIntentLockInstrumenter.instrument()
       }
     }
@@ -193,13 +196,13 @@ fun CoroutineScope.startApplication(args: List<String>,
   shellEnvDeferred = async(Dispatchers.IO) {
     // EnvironmentUtil wants logger
     logDeferred.join()
-    runActivity("environment loading") {
+    subtask("environment loading") {
       EnvironmentUtil.loadEnvironment(coroutineContext.job)
     }
   }
 
   if (!isHeadless) {
-    showSplashIfNeeded(initLafJob, appInfoDeferred, args)
+    showSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args)
 
     // must happen after initUi
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
