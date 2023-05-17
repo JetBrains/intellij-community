@@ -199,7 +199,6 @@ class ModuleInfoProvider(private val project: Project) {
         val orderEntries = runReadAction { fileIndex.getOrderEntriesForFile(virtualFile) }
         val visited = hashSetOf<IdeaModuleInfo>()
         for (orderEntry in orderEntries) {
-            ProgressManager.checkCanceled()
             collectByOrderEntry(virtualFile, orderEntry, isLibrarySource, visited)
         }
 
@@ -239,15 +238,18 @@ class ModuleInfoProvider(private val project: Project) {
       isLibrarySource: Boolean,
       visited: HashSet<IdeaModuleInfo>
     ) {
-        if (orderEntry is ModuleOrderEntry || !orderEntry.isValid) {
+        if (orderEntry is ModuleOrderEntry) {
             // Module-related entries are covered in 'collectModuleRelatedModuleInfosByFile()'
             return
         }
 
-        if (orderEntry is LibraryOrderEntry) {
-            val library = orderEntry.library
-            if (library != null) {
-                register {
+        register {
+            ProgressManager.checkCanceled()
+            if (!orderEntry.isValid) return@register null
+
+            if (orderEntry is LibraryOrderEntry) {
+                val library = orderEntry.library
+                if (library != null) {
                     if (!isLibrarySource && RootKindFilter.libraryClasses.matches(project, virtualFile)) {
                         for (libraryInfo in libraryInfoCache[library]) {
                             if (visited.add(libraryInfo)) {
@@ -262,19 +264,20 @@ class ModuleInfoProvider(private val project: Project) {
                             }
                         }
                     }
-                    null
+                    return@register null
                 }
             }
-        }
 
-        if (orderEntry is JdkOrderEntry) {
-            val sdk = orderEntry.jdk
-            if (sdk != null) {
-                val moduleInfo = SdkInfo(project, sdk)
-                if (visited.add(moduleInfo)) {
-                    register(moduleInfo)
+            if (orderEntry is JdkOrderEntry) {
+                val sdk = orderEntry.jdk
+                if (sdk != null) {
+                    val moduleInfo = SdkInfo(project, sdk)
+                    if (visited.add(moduleInfo)) {
+                        return@register moduleInfo
+                    }
                 }
             }
+            null
         }
     }
 
