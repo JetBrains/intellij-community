@@ -1,10 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -12,7 +10,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ConstructionUtils;
@@ -45,13 +42,13 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final boolean isEmpty = (Boolean)infos[0];
     final boolean suggestListOf = (Boolean)infos[1];
     return new ArraysAsListWithOneArgumentFix(isEmpty, suggestListOf);
   }
 
-  private static final class ArraysAsListWithOneArgumentFix extends InspectionGadgetsFix {
+  private static final class ArraysAsListWithOneArgumentFix extends PsiUpdateModCommandQuickFix {
 
     private final boolean myEmpty;
     private final boolean mySuggestListOf;
@@ -76,8 +73,8 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement().getParent().getParent();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiElement element = startElement.getParent().getParent();
       if (!(element instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }

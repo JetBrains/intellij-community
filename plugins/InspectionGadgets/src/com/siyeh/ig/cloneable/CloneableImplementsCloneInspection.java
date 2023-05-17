@@ -16,6 +16,7 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.options.OptPane;
@@ -78,8 +79,8 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new SmartList<>();
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    final List<LocalQuickFix> fixes = new SmartList<>();
     final PsiClass aClass = (PsiClass)infos[0];
     if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
       final PsiMethod[] superMethods = aClass.findMethodsByName(HardcodedMethodConstants.CLONE, true);
@@ -101,7 +102,7 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
     if (CloneUtils.isDirectlyCloneable(aClass) && !cloneCalled) {
       fixes.add(RemoveCloneableFix.create(null));
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   private static class CreateCloneMethodFix extends InspectionGadgetsFix {

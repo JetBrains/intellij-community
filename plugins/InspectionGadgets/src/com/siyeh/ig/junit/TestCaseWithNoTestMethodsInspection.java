@@ -17,8 +17,8 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -28,17 +28,16 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
 
@@ -60,7 +59,7 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
   }
 
   @Override
-  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return (Boolean)infos[0] ? new ChangeModifierFix(PsiModifier.ABSTRACT) : null;
   }
 
@@ -117,10 +116,10 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
       registerClassError(aClass, ClassInheritorsSearch.search(aClass, aClass.getUseScope(), false).findFirst() != null);
     }
 
-    private boolean hasTestMethods(@NotNull PsiClass aClass,
-                                   Set<TestFramework> selfFrameworks,
-                                   Set<TestFramework> nestedTestFrameworks,
-                                   boolean checkSuite) {
+    private static boolean hasTestMethods(@NotNull PsiClass aClass,
+                                          Set<TestFramework> selfFrameworks,
+                                          Set<TestFramework> nestedTestFrameworks,
+                                          boolean checkSuite) {
 
       PsiMethod[] methods = aClass.getMethods();
 

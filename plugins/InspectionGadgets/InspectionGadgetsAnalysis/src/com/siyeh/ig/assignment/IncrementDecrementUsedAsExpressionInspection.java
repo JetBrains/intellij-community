@@ -15,8 +15,7 @@
  */
 package com.siyeh.ig.assignment;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -74,7 +73,7 @@ public class IncrementDecrementUsedAsExpressionInspection extends BaseInspection
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     if (PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class, true, PsiMember.class) == null) {
       return null;
@@ -83,7 +82,7 @@ public class IncrementDecrementUsedAsExpressionInspection extends BaseInspection
   }
 
   private static class IncrementDecrementUsedAsExpressionFix
-    extends InspectionGadgetsFix {
+    extends PsiUpdateModCommandQuickFix {
 
     private final String elementText;
 
@@ -106,8 +105,8 @@ public class IncrementDecrementUsedAsExpressionInspection extends BaseInspection
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      extractPrefixPostfixExpressionToSeparateStatement(descriptor.getPsiElement());
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      extractPrefixPostfixExpressionToSeparateStatement(startElement);
     }
   }
 

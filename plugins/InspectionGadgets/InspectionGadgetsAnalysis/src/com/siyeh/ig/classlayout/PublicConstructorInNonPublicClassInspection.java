@@ -15,13 +15,14 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
@@ -45,18 +46,18 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
   }
 
   @Override
-  public InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new ArrayList<>();
+  public LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    final List<LocalQuickFix> fixes = new ArrayList<>();
     final PsiMethod constructor = (PsiMethod)infos[0];
     final PsiClass aClass = constructor.getContainingClass();
     if (aClass != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
       fixes.add(new MakeConstructorPrivateFix());
     }
     fixes.add(new RemoveModifierFix(PsiModifier.PUBLIC));
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  private static class MakeConstructorPrivateFix extends InspectionGadgetsFix {
+  private static class MakeConstructorPrivateFix extends PsiUpdateModCommandQuickFix {
 
     @NotNull
     @Override
@@ -65,11 +66,8 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (element != null) {
-        ((PsiModifierList)element.getParent()).setModifierProperty(PsiModifier.PRIVATE, true);
-      }
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      ((PsiModifierList)element.getParent()).setModifierProperty(PsiModifier.PRIVATE, true);
     }
   }
 

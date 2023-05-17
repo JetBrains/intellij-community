@@ -1,9 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -11,11 +10,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class AddArgumentFix extends InspectionGadgetsFix {
+public class AddArgumentFix extends PsiUpdateModCommandQuickFix {
   private final String myExpressionText;
   private final String myPresentableText;
 
@@ -25,8 +23,8 @@ public class AddArgumentFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiReferenceExpression ref = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiReferenceExpression.class);
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    PsiReferenceExpression ref = PsiTreeUtil.getParentOfType(element, PsiReferenceExpression.class);
     if (ref == null) return;
     PsiMethodCallExpression call;
     if (ref instanceof PsiMethodReferenceExpression) {

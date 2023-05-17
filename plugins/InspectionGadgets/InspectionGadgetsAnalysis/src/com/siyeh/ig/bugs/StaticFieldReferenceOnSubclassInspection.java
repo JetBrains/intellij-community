@@ -16,14 +16,15 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,11 +48,11 @@ public class StaticFieldReferenceOnSubclassInspection extends BaseInspection imp
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new StaticFieldOnSubclassFix();
   }
 
-  private static class StaticFieldOnSubclassFix extends InspectionGadgetsFix {
+  private static class StaticFieldOnSubclassFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -61,8 +62,8 @@ public class StaticFieldReferenceOnSubclassInspection extends BaseInspection imp
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiIdentifier name = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiIdentifier.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiIdentifier name = ObjectUtils.tryCast(startElement, PsiIdentifier.class);
       if (name == null) return;
       final PsiReferenceExpression expression = ObjectUtils.tryCast(name.getParent(), PsiReferenceExpression.class);
       if (expression == null) return;

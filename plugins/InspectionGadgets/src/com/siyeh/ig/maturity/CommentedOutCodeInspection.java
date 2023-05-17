@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.core.JavaPsiBundle;
@@ -62,7 +60,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     };
   }
 
-  private static class DeleteCommentedOutCodeFix extends InspectionGadgetsFix {
+  private static class DeleteCommentedOutCodeFix extends PsiUpdateModCommandQuickFix {
 
     private DeleteCommentedOutCodeFix() {}
 
@@ -73,8 +71,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiComment comment)) {
         return;
       }
@@ -89,12 +86,12 @@ public class CommentedOutCodeInspection extends BaseInspection {
         toDelete.forEach(PsiElement::delete);
       }
       else {
-        deleteElement(element);
+        element.delete();
       }
     }
   }
 
-  private static class UncommentCodeFix extends InspectionGadgetsFix {
+  private static class UncommentCodeFix extends PsiUpdateModCommandQuickFix {
 
     private UncommentCodeFix() {}
 
@@ -105,8 +102,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiComment comment)) {
         return;
       }

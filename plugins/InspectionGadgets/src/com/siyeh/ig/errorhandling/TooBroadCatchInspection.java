@@ -16,9 +16,11 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -37,10 +39,10 @@ import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.*;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class TooBroadCatchInspection extends BaseInspection {
 
@@ -52,11 +54,11 @@ public class TooBroadCatchInspection extends BaseInspection {
   public boolean ignoreThrown = false;
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiElement context = (PsiElement)infos[1];
     final SmartTypePointerManager pointerManager = SmartTypePointerManager.getInstance(context.getProject());
     final List<PsiType> maskedTypes = (List<PsiType>)infos[0];
-    final List<InspectionGadgetsFix> fixes = new ArrayList<>();
+    final List<LocalQuickFix> fixes = new ArrayList<>();
     for (PsiType thrown : maskedTypes) {
       final String typeText = thrown.getCanonicalText();
       if (CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION.equals(typeText)) {
@@ -70,7 +72,7 @@ public class TooBroadCatchInspection extends BaseInspection {
     if (fix != null) {
       fixes.add(fix);
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
@@ -111,7 +113,7 @@ public class TooBroadCatchInspection extends BaseInspection {
     return new TooBroadCatchVisitor();
   }
 
-  private static class ReplaceWithRuntimeExceptionFix extends InspectionGadgetsFix {
+  private static class ReplaceWithRuntimeExceptionFix extends PsiUpdateModCommandQuickFix {
     @NotNull
     @Override
     public String getFamilyName() {
@@ -119,8 +121,7 @@ public class TooBroadCatchInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiTypeElement typeElement)) {
         return;
       }

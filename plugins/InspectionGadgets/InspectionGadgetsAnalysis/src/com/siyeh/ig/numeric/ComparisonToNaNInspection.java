@@ -15,8 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -52,12 +51,12 @@ public class ComparisonToNaNInspection extends BaseInspection {
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     final PsiBinaryExpression comparison = (PsiBinaryExpression)infos[0];
     return ComparisonUtils.isEqualityComparison(comparison) ? new ComparisonToNaNFix() : null;
   }
 
-  private static class ComparisonToNaNFix extends InspectionGadgetsFix {
+  private static class ComparisonToNaNFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -66,8 +65,8 @@ public class ComparisonToNaNInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiReferenceExpression nanExpression = (PsiReferenceExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiReferenceExpression nanExpression = (PsiReferenceExpression)startElement;
       final PsiElement target = nanExpression.resolve();
       if (!(target instanceof PsiField field)) {
         return;

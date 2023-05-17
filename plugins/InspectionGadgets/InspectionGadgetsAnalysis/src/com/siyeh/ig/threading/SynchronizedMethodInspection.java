@@ -15,22 +15,21 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class SynchronizedMethodInspection extends BaseInspection {
 
@@ -51,7 +50,7 @@ public class SynchronizedMethodInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[0];
     if (method.getBody() == null) {
       return null;
@@ -71,7 +70,7 @@ public class SynchronizedMethodInspection extends BaseInspection {
       checkbox("ignoreSynchronizedSuperMethods", InspectionGadgetsBundle.message("synchronized.method.ignore.synchronized.super.option")));
   }
 
-  private static class SynchronizedMethodFix extends InspectionGadgetsFix {
+  private static class SynchronizedMethodFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -81,8 +80,7 @@ public class SynchronizedMethodInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement nameElement = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement nameElement, @NotNull EditorUpdater updater) {
       final PsiModifierList modifierList = (PsiModifierList)nameElement.getParent();
       assert modifierList != null;
       final PsiMethod method = (PsiMethod)modifierList.getParent();

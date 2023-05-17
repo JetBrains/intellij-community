@@ -70,13 +70,10 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     return new SuppressionAnnotationVisitor();
   }
 
-  private static class RemoveSuppressCommentFix extends InspectionGadgetsFix {
+  private static class RemoveSuppressCommentFix extends PsiUpdateModCommandQuickFix {
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement != null) {
-        psiElement.delete();
-      }
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      startElement.delete();
     }
 
     @NotNull

@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
@@ -15,7 +17,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -83,7 +84,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     if (!StringConcatenationArgumentToLogCallFix.isAvailable((PsiExpression)infos[0])) {
       return null;
     }
@@ -95,7 +96,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
     return new StringConcatenationArgumentToLogCallVisitor();
   }
 
-  private static class StringConcatenationArgumentToLogCallFix extends InspectionGadgetsFix {
+  private static class StringConcatenationArgumentToLogCallFix extends PsiUpdateModCommandQuickFix {
 
     StringConcatenationArgumentToLogCallFix() {}
 
@@ -106,8 +107,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement grandParent = element.getParent().getParent();
       if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return;

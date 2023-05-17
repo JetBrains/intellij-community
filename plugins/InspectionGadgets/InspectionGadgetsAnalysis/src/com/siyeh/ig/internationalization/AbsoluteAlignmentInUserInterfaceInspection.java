@@ -2,7 +2,9 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -12,7 +14,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,11 +64,11 @@ public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new AbsoluteAlignmentInUserInterfaceFix((String)infos[0], (String)infos[1]);
   }
 
-  private static class AbsoluteAlignmentInUserInterfaceFix extends InspectionGadgetsFix {
+  private static class AbsoluteAlignmentInUserInterfaceFix extends PsiUpdateModCommandQuickFix {
 
     private final String myClassName;
     private final String myReplacement;
@@ -91,8 +92,7 @@ public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiReferenceExpression referenceExpression)) {
         return;

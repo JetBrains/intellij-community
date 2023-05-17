@@ -15,8 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -62,16 +61,16 @@ public final class UnaryPlusInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final boolean onTheFly = (boolean)infos[0];
     final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)infos[1];
-    final InspectionGadgetsFix fix = ConvertDoubleUnaryToPrefixOperationFix.createFix(prefixExpression);
+    final LocalQuickFix fix = ConvertDoubleUnaryToPrefixOperationFix.createFix(prefixExpression);
     return onTheFly && fix != null
-           ? new InspectionGadgetsFix[]{new UnaryPlusFix(), fix}
-           : new InspectionGadgetsFix[]{new UnaryPlusFix()};
+           ? new LocalQuickFix[]{new UnaryPlusFix(), fix}
+           : new LocalQuickFix[]{new UnaryPlusFix()};
   }
 
-  private static class UnaryPlusFix extends InspectionGadgetsFix {
+  private static class UnaryPlusFix extends PsiUpdateModCommandQuickFix {
 
     @Nls
     @NotNull
@@ -81,8 +80,7 @@ public final class UnaryPlusInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiPrefixExpression prefixExpression)) {
         return;
@@ -136,7 +134,7 @@ public final class UnaryPlusInspection extends BaseInspection {
     }
   }
 
-  static class ConvertDoubleUnaryToPrefixOperationFix extends InspectionGadgetsFix {
+  static class ConvertDoubleUnaryToPrefixOperationFix extends PsiUpdateModCommandQuickFix {
     private final String myRefName;
     private final boolean myIncrement;
 
@@ -156,7 +154,7 @@ public final class UnaryPlusInspection extends BaseInspection {
     }
 
     @Nullable
-    static InspectionGadgetsFix createFix(@NotNull PsiPrefixExpression prefixExpr) {
+    static LocalQuickFix createFix(@NotNull PsiPrefixExpression prefixExpr) {
       final PsiExpression operand = prefixExpr.getOperand();
       boolean increment;
       if (isDesiredPrefixExpression(prefixExpr, true)) {
@@ -189,7 +187,7 @@ public final class UnaryPlusInspection extends BaseInspection {
     }
 
     @Nullable
-    private static InspectionGadgetsFix createFix(@NotNull PsiReferenceExpression refExpr, boolean increment) {
+    private static LocalQuickFix createFix(@NotNull PsiReferenceExpression refExpr, boolean increment) {
       final String refName = refExpr.getReferenceName();
       if (refName == null) {
         return null;
@@ -211,8 +209,8 @@ public final class UnaryPlusInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiPrefixExpression prefixExpr = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiPrefixExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiPrefixExpression prefixExpr = ObjectUtils.tryCast(startElement.getParent(), PsiPrefixExpression.class);
       if (prefixExpr == null) {
         return;
       }

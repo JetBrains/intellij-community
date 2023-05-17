@@ -17,7 +17,9 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,7 +30,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -294,7 +295,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     final String replacement = (String)infos[1];
     if (replacement.isEmpty() && infos[0] instanceof PsiAssignmentExpression) {
       return new RemovePointlessBooleanExpressionFix();
@@ -303,7 +304,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
     return new PointlessBooleanExpressionFix(hasSideEffect);
   }
 
-  private static class RemovePointlessBooleanExpressionFix extends InspectionGadgetsFix {
+  private static class RemovePointlessBooleanExpressionFix extends PsiUpdateModCommandQuickFix {
 
     @Nls
     @NotNull
@@ -313,8 +314,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiAssignmentExpression assignmentExpression)) {
         return;
       }
@@ -333,7 +333,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
     }
   }
 
-  private class PointlessBooleanExpressionFix extends InspectionGadgetsFix {
+  private class PointlessBooleanExpressionFix extends PsiUpdateModCommandQuickFix {
     private final boolean myHasSideEffect;
 
     PointlessBooleanExpressionFix(boolean hasSideEffect) {
@@ -356,8 +356,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiExpression expression)) {
         return;
       }

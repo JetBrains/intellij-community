@@ -15,8 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -64,11 +63,11 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new RemoveRedundantElseFix();
   }
 
-  private static class RemoveRedundantElseFix extends InspectionGadgetsFix {
+  private static class RemoveRedundantElseFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -77,8 +76,7 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement ifKeyword = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement ifKeyword, @NotNull EditorUpdater updater) {
       final PsiIfStatement ifStatement = (PsiIfStatement)ifKeyword.getParent();
       if (ifStatement == null) {
         return;

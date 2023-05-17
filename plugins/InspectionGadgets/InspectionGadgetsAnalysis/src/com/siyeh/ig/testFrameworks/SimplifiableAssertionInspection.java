@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -10,7 +12,6 @@ import com.intellij.psi.util.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
@@ -30,7 +31,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new SimplifyAssertFix();
   }
 
@@ -107,7 +108,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
     return !(rhsType instanceof PsiPrimitiveType);
   }
 
-  private class SimplifyAssertFix extends InspectionGadgetsFix {
+  private class SimplifyAssertFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -116,8 +117,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement methodNameIdentifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameIdentifier, @NotNull EditorUpdater updater) {
       final PsiElement parent = methodNameIdentifier.getParent();
       if (parent == null) {
         return;
@@ -158,7 +158,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
       }
     }
 
-    private void addStaticImportOrQualifier(String methodName, AssertHint assertHint, StringBuilder out) {
+    private static void addStaticImportOrQualifier(String methodName, AssertHint assertHint, StringBuilder out) {
       final PsiMethodCallExpression originalMethodCall = (PsiMethodCallExpression)assertHint.getOriginalExpression();
       final PsiReferenceExpression methodExpression = originalMethodCall.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();

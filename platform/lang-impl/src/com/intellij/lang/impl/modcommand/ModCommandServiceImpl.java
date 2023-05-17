@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 public class ModCommandServiceImpl implements ModCommandService {
@@ -161,7 +160,7 @@ public class ModCommandServiceImpl implements ModCommandService {
     String oldText = upd.oldText();
     String newText = upd.newText();
     if (!file.textMatches(oldText)) return ModStatus.ABORT;
-    List<LineFragment> fragments = ComparisonManager.getInstance().compareLines(oldText, newText, ComparisonPolicy.DEFAULT,
+    List<DiffFragment> fragments = ComparisonManager.getInstance().compareChars(oldText, newText, ComparisonPolicy.DEFAULT,
                                                                                 DumbProgressIndicator.INSTANCE);
     Document document = file.getViewProvider().getDocument();
     return WriteAction.compute(() -> {

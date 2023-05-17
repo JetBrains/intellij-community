@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,11 +27,11 @@ public class InnerClassReferencedViaSubclassInspection extends BaseInspection im
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new InnerClassReferencedViaSubclassFix();
   }
 
-  private static class InnerClassReferencedViaSubclassFix extends InspectionGadgetsFix {
+  private static class InnerClassReferencedViaSubclassFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -41,8 +40,8 @@ public class InnerClassReferencedViaSubclassInspection extends BaseInspection im
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiIdentifier name = (PsiIdentifier)startElement;
       final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)name.getParent();
       final PsiClass aClass = (PsiClass)reference.resolve();
       if (aClass == null) {

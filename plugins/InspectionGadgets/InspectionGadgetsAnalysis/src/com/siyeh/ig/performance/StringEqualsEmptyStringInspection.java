@@ -16,10 +16,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
@@ -31,7 +28,6 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
@@ -97,7 +93,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     }
   }
 
-  private static class StringEqualsEmptyStringFix extends InspectionGadgetsFix {
+  private static class StringEqualsEmptyStringFix extends PsiUpdateModCommandQuickFix {
 
     private final boolean myUseIsEmpty;
     private final boolean myAddNullCheck;
@@ -125,8 +121,8 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiReferenceExpression expression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiReferenceExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiReferenceExpression expression = PsiTreeUtil.getParentOfType(startElement, PsiReferenceExpression.class);
       if (expression == null) return;
       final PsiMethodCallExpression call = (PsiMethodCallExpression)expression.getParent();
       final PsiExpression[] arguments = call.getArgumentList().getExpressions();

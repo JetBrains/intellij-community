@@ -16,6 +16,7 @@
 package com.siyeh.ig.security;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -55,7 +56,7 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     if (CloneUtils.isDirectlyCloneable(aClass)) {
       final RemoveCloneableFix fix = RemoveCloneableFix.create(aClass);

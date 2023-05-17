@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -38,11 +38,11 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new CollapseConditionalFix();
   }
 
-  private static class CollapseConditionalFix extends InspectionGadgetsFix {
+  private static class CollapseConditionalFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -51,8 +51,8 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)startElement;
       final PsiExpression thenExpression = conditionalExpression.getThenExpression();
       if (thenExpression == null) {
         return;

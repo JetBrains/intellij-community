@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -10,12 +11,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -81,23 +80,23 @@ public class TooBroadThrowsInspection extends BaseInspection {
 
   @NotNull
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final Collection<SmartTypePointer> maskedExceptions = (Collection<SmartTypePointer>)infos[0];
     final Boolean originalNeeded = (Boolean)infos[1];
     return new AddThrowsClauseFix(maskedExceptions, originalNeeded.booleanValue());
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiElement context = (PsiElement)infos[2];
     final SuppressForTestsScopeFix suppressFix = SuppressForTestsScopeFix.build(this, context);
     if (suppressFix == null) {
-      return new InspectionGadgetsFix[] {buildFix(infos)};
+      return new LocalQuickFix[] {buildFix(infos)};
     }
-    return new InspectionGadgetsFix[] {buildFix(infos), suppressFix};
+    return new LocalQuickFix[] {buildFix(infos), suppressFix};
   }
 
-  private static class AddThrowsClauseFix extends InspectionGadgetsFix {
+  private static class AddThrowsClauseFix extends PsiUpdateModCommandQuickFix {
 
     private final Collection<? extends SmartTypePointer> types;
     private final boolean originalNeeded;
@@ -125,8 +124,7 @@ public class TooBroadThrowsInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiReferenceList referenceList)) {
         return;
@@ -142,12 +140,6 @@ public class TooBroadThrowsInspection extends BaseInspection {
           referenceList.add(referenceElement);
         }
       }
-    }
-
-    @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      // has type pointers, but in fact it's safe
-      return this;
     }
   }
 

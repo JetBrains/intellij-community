@@ -15,9 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -25,7 +23,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
@@ -48,11 +45,11 @@ public class RandomDoubleForRandomIntegerInspection extends BaseInspection imple
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new RandomDoubleForRandomIntegerFix();
   }
 
-  private static class RandomDoubleForRandomIntegerFix extends InspectionGadgetsFix {
+  private static class RandomDoubleForRandomIntegerFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -61,8 +58,8 @@ public class RandomDoubleForRandomIntegerInspection extends BaseInspection imple
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiIdentifier name = (PsiIdentifier)startElement;
       final PsiReferenceExpression expression =
         (PsiReferenceExpression)name.getParent();
       if (expression == null) {

@@ -62,6 +62,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -768,6 +769,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       String text = getIntentionPreviewText(action);
       assertNotNull(action.getText(), text);
       launchAction(action);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       assertEquals(action.getText(), getFile().getText(), text);
     }
   }

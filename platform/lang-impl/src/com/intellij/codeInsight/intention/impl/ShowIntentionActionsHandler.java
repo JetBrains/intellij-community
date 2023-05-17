@@ -29,7 +29,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModStatus;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -291,6 +290,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
           contextAndCommand.command().execute(project);
         }, commandName, null);
       })
+      .expireWhen(() -> hostFile.getProject().isDisposed())
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 

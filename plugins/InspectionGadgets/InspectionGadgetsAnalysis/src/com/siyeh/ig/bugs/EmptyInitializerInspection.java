@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.PsiCodeBlock;
@@ -43,11 +46,11 @@ public class EmptyInitializerInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new EmptyInitializerFix();
   }
 
-  private static class EmptyInitializerFix extends InspectionGadgetsFix {
+  private static class EmptyInitializerFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -57,13 +60,12 @@ public class EmptyInitializerInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement codeBlock = element.getParent();
       if (!(codeBlock instanceof PsiCodeBlock)) return;
       final PsiElement classInitializer = codeBlock.getParent();
       if (!(classInitializer instanceof PsiClassInitializer)) return;
-      deleteElement(classInitializer);
+      classInitializer.delete();
     }
   }
 

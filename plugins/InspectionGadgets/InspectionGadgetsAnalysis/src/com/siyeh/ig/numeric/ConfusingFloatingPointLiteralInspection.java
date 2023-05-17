@@ -15,16 +15,12 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypes;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -61,11 +57,11 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection impl
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new ConfusingFloatingPointLiteralFix();
   }
 
-  private static class ConfusingFloatingPointLiteralFix extends InspectionGadgetsFix {
+  private static class ConfusingFloatingPointLiteralFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -74,8 +70,8 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection impl
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiExpression literalExpression = (PsiExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiExpression literalExpression = (PsiExpression)startElement;
       final String text = literalExpression.getText();
       final String newText = getCanonicalForm(text);
       PsiReplacementUtil.replaceExpression(literalExpression, newText);

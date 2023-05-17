@@ -16,10 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ConvertSwitchToIfIntention;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,7 +25,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -197,7 +193,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
     }
   }
 
-  public static final class UnwrapSwitchStatementFix extends InspectionGadgetsFix {
+  public static final class UnwrapSwitchStatementFix extends PsiUpdateModCommandQuickFix {
     int myBranchCount;
 
     private UnwrapSwitchStatementFix(int branchCount) {
@@ -219,8 +215,8 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiSwitchBlock block = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiSwitchBlock.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      PsiSwitchBlock block = PsiTreeUtil.getParentOfType(startElement, PsiSwitchBlock.class);
       if (block instanceof PsiSwitchStatement) {
         ConvertSwitchToIfIntention.doProcessIntention((PsiSwitchStatement)block);
       } else if (block instanceof PsiSwitchExpression) {

@@ -1,7 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -34,18 +37,18 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     if (infos[0] instanceof PsiAnonymousClass) {
-      return new InspectionGadgetsFix[] {new GenerateEqualsMethodFix()};
+      return new LocalQuickFix[] {new GenerateEqualsMethodFix()};
     }
 
-    return new InspectionGadgetsFix[] {
+    return new LocalQuickFix[] {
       new GenerateEqualsMethodFix(),
       new AddNoteFix()
     };
   }
 
-  private static class GenerateEqualsMethodFix extends InspectionGadgetsFix {
+  private static class GenerateEqualsMethodFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -54,8 +57,8 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiClass aClass = (PsiClass)descriptor.getPsiElement().getParent();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiClass aClass = (PsiClass)startElement.getParent();
       final @NonNls StringBuilder methodText = new StringBuilder();
       if (PsiUtil.isLanguageLevel5OrHigher(aClass)) {
         methodText.append("@java.lang.Override ");
@@ -72,7 +75,7 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
     }
   }
 
-  private static class AddNoteFix extends InspectionGadgetsFix {
+  private static class AddNoteFix extends PsiUpdateModCommandQuickFix {
 
     private static final Pattern PARAM_PATTERN = Pattern.compile("\\*[ \t]+@");
     // Let's keep a doc comment in English. Otherwise it will be hard to suppress the warning based on the JavaDoc substring
@@ -87,8 +90,8 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiClass aClass = (PsiClass)descriptor.getPsiElement().getParent();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiClass aClass = (PsiClass)startElement.getParent();
       final PsiDocComment comment = aClass.getDocComment();
       if (comment == null) {
         final PsiDocComment newComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText("/**\n" + NOTE + "*/", aClass);

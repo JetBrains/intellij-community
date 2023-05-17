@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -11,7 +13,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
@@ -31,8 +32,8 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> result = new ArrayList<>();
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    final List<LocalQuickFix> result = new ArrayList<>();
     final PsiElement expression = (PsiElement)infos[0];
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiExpression binaryExpression) {
@@ -45,7 +46,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     if (!(expression instanceof PsiLiteralExpression) &&
         !(expression instanceof PsiParenthesizedExpression &&
           PsiUtil.skipParenthesizedExprDown((PsiExpression)expression) instanceof PsiLiteralExpression)) {
-      return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+      return result.toArray(LocalQuickFix.EMPTY_ARRAY);
     }
     while (parent instanceof PsiPolyadicExpression) {
       if (ExpressionUtils.hasStringType((PsiExpression)parent)) {
@@ -55,10 +56,10 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
       parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
     }
 
-    return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  private static class CharUsedInArithmeticContentFix extends InspectionGadgetsFix {
+  private static class CharUsedInArithmeticContentFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -67,8 +68,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiLiteralExpression literalExpression)) {
         return;
       }
@@ -81,7 +81,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     }
   }
 
-  private static class CharUsedInArithmeticContentCastFix extends InspectionGadgetsFix {
+  private static class CharUsedInArithmeticContentCastFix extends PsiUpdateModCommandQuickFix {
 
     private final String typeText;
 
@@ -102,8 +102,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiExpression expression)) {
         return;
       }

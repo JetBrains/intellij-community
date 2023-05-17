@@ -84,7 +84,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  private static class TrivialIfFix extends InspectionGadgetsFix {
+  private static class TrivialIfFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     public @NotNull String getFamilyName() {
@@ -92,8 +92,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement ifKeywordElement = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement ifKeywordElement, @NotNull EditorUpdater updater) {
       final PsiIfStatement statement = (PsiIfStatement)ifKeywordElement.getParent();
       simplify(statement);
     }

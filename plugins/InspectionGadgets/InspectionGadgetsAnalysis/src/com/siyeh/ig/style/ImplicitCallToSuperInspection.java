@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -25,7 +27,6 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +45,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new AddExplicitSuperCall();
   }
 
@@ -55,7 +56,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
         "implicit.call.to.super.ignore.option")));
   }
 
-  private static class AddExplicitSuperCall extends InspectionGadgetsFix {
+  private static class AddExplicitSuperCall extends PsiUpdateModCommandQuickFix {
 
     @Override
     public @NotNull String getFamilyName() {
@@ -64,8 +65,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement methodName = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodName, @NotNull EditorUpdater updater) {
       final PsiElement parent = methodName.getParent();
       if (!(parent instanceof PsiMethod method)) {
         return;
@@ -127,7 +127,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
       registerMethodError(method);
     }
 
-    private boolean isConstructorCall(PsiStatement statement) {
+    private static boolean isConstructorCall(PsiStatement statement) {
       if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
         return false;
       }

@@ -15,8 +15,7 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -73,11 +72,11 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new UnnecessarilyQualifiedStaticUsageFix();
   }
 
-  private static class UnnecessarilyQualifiedStaticUsageFix extends InspectionGadgetsFix {
+  private static class UnnecessarilyQualifiedStaticUsageFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -86,9 +85,8 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      element.delete();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      startElement.delete();
     }
   }
 

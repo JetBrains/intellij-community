@@ -260,10 +260,7 @@ public final class ModCommands {
     }
     
     @Override
-    public void moveTo(@NotNull PsiElement element) {
-      validate(element);
-      myManager.doPostponedOperationsAndUnblockDocument(myDocument);
-      int offset = element.getTextRange().getStartOffset();
+    public void moveTo(int offset) {
       if (myHost != null) {
         InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myCopyFile.getProject());
         PsiFile file = findInjectedFile(instance, myHost);
@@ -271,6 +268,13 @@ public final class ModCommands {
         offset = instance.injectedToHost(file, offset);
       }
       myCaretOffset = offset;
+    }
+
+    @Override
+    public void moveTo(@NotNull PsiElement element) {
+      validate(element);
+      myManager.doPostponedOperationsAndUnblockDocument(myDocument);
+      moveTo(element.getTextRange().getStartOffset());
     }
 
     private PsiFile findInjectedFile(InjectedLanguageManager instance, PsiLanguageInjectionHost host) {

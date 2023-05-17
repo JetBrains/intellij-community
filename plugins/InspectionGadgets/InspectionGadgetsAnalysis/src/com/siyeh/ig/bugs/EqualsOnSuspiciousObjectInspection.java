@@ -3,7 +3,9 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,7 +15,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
   }
 
   @Override
-  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     PsiReferenceExpression expression = (PsiReferenceExpression)infos[1];
     PsiExpression qualifierExpression = expression.getQualifierExpression();
     if (qualifierExpression == null) {
@@ -178,7 +179,7 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
   }
 
 
-  private static class EqualsOnSuspiciousObjectFix extends InspectionGadgetsFix {
+  private static class EqualsOnSuspiciousObjectFix extends PsiUpdateModCommandQuickFix {
     @SafeFieldForPreview
     private final ReplaceInfo myInfo;
 
@@ -197,13 +198,11 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement psiElement, @NotNull EditorUpdater updater) {
       if (myInfo instanceof ReplaceInfo.NotAvailableReplaceInfo) {
         return;
       }
-      PsiElement psiElement = descriptor.getPsiElement();
-
-      if (psiElement == null || !(psiElement.getParent() instanceof PsiReferenceExpression referenceExpression)) {
+      if (!(psiElement.getParent() instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
       PsiElement parent = referenceExpression.getParent();

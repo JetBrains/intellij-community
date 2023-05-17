@@ -16,7 +16,7 @@
 class C {
     {
         while (
-                <caret>true
+          <caret>      true
           )
     }
 }

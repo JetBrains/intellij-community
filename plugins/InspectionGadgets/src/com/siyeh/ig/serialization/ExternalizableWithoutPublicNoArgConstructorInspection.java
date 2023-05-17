@@ -2,8 +2,10 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddDefaultConstructorFix;
+import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -58,7 +60,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
     return null;
   }
 
-  private static class MakeConstructorPublicFix extends InspectionGadgetsFix {
+  private static class MakeConstructorPublicFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -67,8 +69,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement classNameIdentifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement classNameIdentifier, @NotNull EditorUpdater updater) {
       final PsiClass aClass = (PsiClass)classNameIdentifier.getParent();
       if (aClass == null) {
         return;

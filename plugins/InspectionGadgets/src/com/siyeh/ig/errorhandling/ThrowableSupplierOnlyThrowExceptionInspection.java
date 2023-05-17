@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -11,7 +13,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -33,8 +34,8 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
   );
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    return new InspectionGadgetsFix[]{new ThrowToReturnQuickFix()};
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    return new LocalQuickFix[]{new ThrowToReturnQuickFix()};
   }
 
   @NotNull
@@ -48,7 +49,7 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
     return new ThrowableSupplierOnlyThrowExceptionVisitor();
   }
 
-  private static class ThrowToReturnQuickFix extends InspectionGadgetsFix {
+  private static class ThrowToReturnQuickFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     public @NotNull String getFamilyName() {
@@ -56,8 +57,8 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(startElement, PsiMethodCallExpression.class);
       if (callExpression == null) {
         return;
       }

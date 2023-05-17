@@ -2,9 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -61,7 +59,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final String text = (String)infos[0];
     return new UnnecessaryCallToStringValueOfFix(text);
   }
@@ -83,7 +81,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     return '(' + expression.getText() + ')';
   }
 
-  private static class UnnecessaryCallToStringValueOfFix extends InspectionGadgetsFix {
+  private static class UnnecessaryCallToStringValueOfFix extends PsiUpdateModCommandQuickFix {
 
     private final String replacementText;
 
@@ -104,8 +102,8 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression call = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiMethodCallExpression call = ObjectUtils.tryCast(startElement, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression arg = tryUnwrapRedundantConversion(call);
       if (arg == null) return;

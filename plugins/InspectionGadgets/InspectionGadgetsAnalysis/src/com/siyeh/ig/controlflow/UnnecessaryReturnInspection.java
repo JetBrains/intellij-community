@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -66,7 +67,7 @@ public class UnnecessaryReturnInspection extends BaseInspection implements Clean
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new DeleteUnnecessaryStatementFix("return");
   }
 

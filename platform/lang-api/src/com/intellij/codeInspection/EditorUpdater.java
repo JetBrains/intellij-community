@@ -30,6 +30,13 @@ public interface EditorUpdater {
   void select(@NotNull TextRange range);
 
   /**
+   * Navigates to a given offset
+   *
+   * @param element element to navigate to
+   */
+  void moveTo(int offset);
+
+  /**
    * Navigates to a given element
    * 
    * @param element element to navigate to

@@ -1,8 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -32,11 +31,11 @@ public class DoubleNegationInspection extends BaseInspection implements CleanupL
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new DoubleNegationFix();
   }
 
-  private static class DoubleNegationFix extends InspectionGadgetsFix {
+  private static class DoubleNegationFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -45,8 +44,7 @@ public class DoubleNegationInspection extends BaseInspection implements CleanupL
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement expression = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement expression, @NotNull EditorUpdater updater) {
       CommentTracker tracker = new CommentTracker();
       if (expression instanceof PsiPrefixExpression prefixExpression) {
         final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(prefixExpression.getOperand());
