@@ -37,6 +37,8 @@ import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.svg.SvgCacheManager
+import com.intellij.ui.svg.svgCache
 import com.intellij.util.*
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.lang.ZipFilePool
@@ -76,6 +78,7 @@ import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import javax.swing.*
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.seconds
 
 internal const val IDE_STARTED = "------------------------------------------------------ IDE STARTED ------------------------------------------------------"
 private const val IDE_SHUTDOWN = "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"
@@ -178,6 +181,7 @@ fun CoroutineScope.startApplication(args: List<String>,
       initUi(preloadLafClassesJob)
     }
   }
+
   launch {
     initLafJob.join()
     if (isImplicitReadOnEDTDisabled && !isAutomaticIWLOnDirtyUIDisabled) {
@@ -193,16 +197,23 @@ fun CoroutineScope.startApplication(args: List<String>,
   // log initialization must happen only after locking the system directory
   val logDeferred = setupLogger(consoleLoggerJob, checkSystemDirJob)
 
-  shellEnvDeferred = async(Dispatchers.IO) {
+  shellEnvDeferred = async {
     // EnvironmentUtil wants logger
     logDeferred.join()
-    subtask("environment loading") {
+    subtask("environment loading", Dispatchers.IO) {
       EnvironmentUtil.loadEnvironment(coroutineContext.job)
     }
   }
 
   if (!isHeadless) {
     showSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args)
+
+    launch {
+      lockSystemDirsJob.join()
+      subtask("SvgCache creation") {
+        svgCache = createSvgCacheManager()
+      }
+    }
 
     // must happen after initUi
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
@@ -581,6 +592,31 @@ private fun blockATKWrapper() {
     logger<StartupUiUtil>().info("${ScreenReader.ATK_WRAPPER} is blocked, see IDEA-149219")
   }
   activity.end()
+}
+
+internal fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-v13.db")
+
+private suspend fun createSvgCacheManager(): SvgCacheManager? {
+  if (!java.lang.Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"))) {
+    return null
+  }
+
+  try {
+    val cacheFile = getSvgIconCacheFile()
+    return withTimeout(30.seconds) {
+      withContext(Dispatchers.IO) {
+        SvgCacheManager(cacheFile)
+      }
+    }
+  }
+  catch (e: TimeoutCancellationException) {
+    logger<SvgCacheManager>().error("Cannot create SvgCacheManager in 30 seconds", e)
+    return null
+  }
+  catch (e: Throwable) {
+    logger<SvgCacheManager>().error("Cannot create SvgCacheManager", e)
+    return null
+  }
 }
 
 private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred: Job) {

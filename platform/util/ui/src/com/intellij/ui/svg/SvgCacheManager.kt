@@ -4,12 +4,10 @@
 package com.intellij.ui.svg
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.hasher
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.seededHasher
-import com.intellij.util.SVGLoader
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.sqlite.*
@@ -34,26 +32,7 @@ value class SvgCacheClassifier(internal val key: Int) {
   constructor(scale: Float, size: Int) : this((scale + (10_000 + size)).toBits())
 }
 
-fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-v12.db")
-
 fun getSvgIconCacheInvalidMarkerFile(file: Path): Path = file.parent.resolve("${file.fileName}.invalidated")
-
-@get:ApiStatus.Internal
-val svgCache: SvgCacheManager? by lazy {
-  try {
-    if (java.lang.Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true")) &&
-        !System.getProperty("java.awt.headless", "false").toBoolean()) {
-      SvgCacheManager(getSvgIconCacheFile())
-    }
-    else {
-      null
-    }
-  }
-  catch (e: Exception) {
-    logger<SVGLoader>().error("Cannot open SVG cache", e)
-    null
-  }
-}
 
 @Suppress("SqlResolve")
 @ApiStatus.Internal
@@ -76,7 +55,7 @@ class SvgCacheManager(dbFile: Path) {
       SqliteConnection(dbFile)
     }
     catch (e: Exception) {
-      logger<SvgCacheManager>().warn(e)
+      logger<SvgCacheManager>().warn("Cannot open database, will be recreated", e)
       Files.deleteIfExists(dbFile)
       isNew = true
       SqliteConnection(dbFile)
@@ -108,9 +87,6 @@ class SvgCacheManager(dbFile: Path) {
 
     logger<SvgCacheManager>().info("SVG icon cache is closed")
     connection.close()
-  }
-
-  fun save() {
   }
 
   fun loadPrecomputedFromCache(precomputedCacheKey: Int, themeKey: Long, compoundKey: SvgCacheClassifier): BufferedImage? {

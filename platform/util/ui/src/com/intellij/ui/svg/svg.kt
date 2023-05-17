@@ -31,6 +31,11 @@ import kotlin.math.ceil
 // https://youtrack.jetbrains.com/issue/IDEA-312509/mvstore.MVStoreException-on-zoom-SVG-with-text
 private const val MAX_SCALE_TO_CACHE = 4
 
+@Volatile
+@ApiStatus.Internal
+@JvmField
+var svgCache: SvgCacheManager? = null
+
 interface SvgAttributePatcher {
   fun patchColors(attributes: MutableMap<String, String>) {
   }
