@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiEditorUtil
@@ -35,7 +36,7 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
   private var hint: LightweightHint? = null
   private var buttonSize: Int by Delegates.notNull()
   private var lastSelection: String? = null
-  private var isJustClosed = false
+  private var showToolbar = true
 
   init {
     registerListeners()
@@ -48,7 +49,7 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
   }
 
   fun showIfHidden() {
-    if (hint != null || !canBeShownAtCurrentSelection() || (!shouldReviveAfterClose() && isJustClosed)) {
+    if (hint != null || !canBeShownAtCurrentSelection() || (!shouldReviveAfterClose() && !showToolbar)) {
       return
     }
     createActionToolbar(editor.contentComponent) { toolbar ->
@@ -57,7 +58,7 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
       showOrUpdateLocation(hint)
       hint.addHintListener {
         this@FloatingToolbar.hint = null
-        isJustClosed = true
+        showToolbar = false
       }
     }
     hint = LightweightHint(JPanel(BorderLayout())).apply {
@@ -183,13 +184,17 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
       }
       if (hoverSelected) {
         showIfHidden()
+      } else {
+        if (!Registry.get("floating.codeToolbar.revive.selectionChangeOnly").asBoolean()) {
+          showToolbar = true
+        }
       }
     }
   }
 
   private inner class EditorSelectionListener : SelectionListener {
     override fun selectionChanged(e: SelectionEvent) {
-      isJustClosed = false
+      showToolbar = true
     }
   }
 
