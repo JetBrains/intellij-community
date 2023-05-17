@@ -6,7 +6,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +17,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.ex.TextFieldAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -40,8 +43,12 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
@@ -79,8 +86,6 @@ public class PackageChooserDialog extends PackageChooser {
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
-
-
     myModel = new DefaultTreeModel(new DefaultMutableTreeNode());
     createTreeModel();
     myTree = new Tree(myModel);
@@ -248,39 +253,67 @@ public class PackageChooserDialog extends PackageChooser {
     return (PsiPackage)node.getUserObject();
   }
 
-  private void createTreeModel() {
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    final FileIndex fileIndex = myModule != null ? ModuleRootManager.getInstance(myModule).getFileIndex() : ProjectRootManager.getInstance(myProject).getFileIndex();
-    fileIndex.iterateContent(
-      fileOrDir -> {
-        if (fileOrDir.isDirectory() && fileIndex.isUnderSourceRootOfType(fileOrDir, JavaModuleSourceRootTypes.SOURCES)) {
-          final PsiDirectory psiDirectory = psiManager.findDirectory(fileOrDir);
-          LOG.assertTrue(psiDirectory != null);
-          PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-          if (aPackage != null){
-            addPackage(aPackage);
-          }
-        }
-        return true;
-      }
-    );
 
+  /**
+   * A {@link PsiPackage} wrapper that eagerly calculates the package hierarchy.
+   */
+  static class PackageUpdate {
+    private final @NotNull PsiPackage myPkg;
+
+    private final @Nullable PackageUpdate myParentUpdate;
+
+    PackageUpdate(@NotNull PsiPackage pkg) {
+      myPkg = pkg;
+      PsiPackage parentPkg = pkg.getParentPackage();
+      if (parentPkg == null) myParentUpdate = null; else myParentUpdate = new PackageUpdate(parentPkg);
+    }
+
+    @NotNull PsiPackage getPkg() {
+      return myPkg;
+    }
+
+    @Nullable PackageUpdate getParentUpdate() {
+      return myParentUpdate;
+    }
+  }
+
+  void createTreeModel() {
+    List<PackageUpdate> pkgUpdates = ActionUtil.underModalProgress(
+      myProject,
+      JavaBundle.message("package.chooser.modal.progress.title"
+      ), () -> {
+        final PsiManager psiManager = PsiManager.getInstance(myProject);
+        final FileIndex fileIndex = myModule != null
+                                    ? ModuleRootManager.getInstance(myModule).getFileIndex()
+                                    : ProjectRootManager.getInstance(myProject).getFileIndex();
+        List<PackageUpdate> pkgUpdateList = new ArrayList<>();
+        fileIndex.iterateContent(fileOrDir -> {
+          if (fileOrDir.isDirectory() && fileIndex.isUnderSourceRootOfType(fileOrDir, JavaModuleSourceRootTypes.SOURCES)) {
+            final PsiDirectory psiDirectory = psiManager.findDirectory(fileOrDir);
+            ProgressManager.checkCanceled();
+            LOG.assertTrue(psiDirectory != null);
+            PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(psiDirectory);
+            if (pkg != null) pkgUpdateList.add(new PackageUpdate(pkg));
+          }
+          return true;
+        });
+        return pkgUpdateList;
+      });
+    for (PackageUpdate pkgUpdate : pkgUpdates) addPackage(pkgUpdate);
     TreeUtil.sort(myModel, (o1, o2) -> {
-      DefaultMutableTreeNode n1 = (DefaultMutableTreeNode) o1;
-      DefaultMutableTreeNode n2 = (DefaultMutableTreeNode) o2;
-      PsiNamedElement element1 = (PsiNamedElement) n1.getUserObject();
-      PsiNamedElement element2 = (PsiNamedElement) n2.getUserObject();
-      return element1.getName().compareToIgnoreCase(element2.getName());
+      PsiNamedElement element1 = (PsiNamedElement)((DefaultMutableTreeNode)o1).getUserObject();
+      PsiNamedElement element2 = (PsiNamedElement)((DefaultMutableTreeNode)o2).getUserObject();
+      return Objects.requireNonNull(element1.getName()).compareToIgnoreCase(Objects.requireNonNull(element2.getName()));
     });
   }
 
   @NotNull
-  private DefaultMutableTreeNode addPackage(PsiPackage aPackage) {
+  private DefaultMutableTreeNode addPackage(@NotNull PackageChooserDialog.PackageUpdate pkgUpdate) {
+    PsiPackage aPackage = pkgUpdate.getPkg();
     final String qualifiedPackageName = aPackage.getQualifiedName();
-    final PsiPackage parentPackage = aPackage.getParentPackage();
-    if (parentPackage == null) {
+    if (pkgUpdate.getParentUpdate() == null) {
       final DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)myModel.getRoot();
-      if (qualifiedPackageName.length() == 0) {
+      if (qualifiedPackageName.isEmpty()) {
         rootNode.setUserObject(aPackage);
         return rootNode;
       }
@@ -293,7 +326,7 @@ public class PackageChooserDialog extends PackageChooser {
       }
     }
     else {
-      final DefaultMutableTreeNode parentNode = addPackage(parentPackage);
+      final DefaultMutableTreeNode parentNode = addPackage(pkgUpdate.getParentUpdate());
       DefaultMutableTreeNode packageNode = findPackageNode(parentNode, qualifiedPackageName);
       if (packageNode != null) {
         return packageNode;
@@ -358,7 +391,7 @@ public class PackageChooserDialog extends PackageChooser {
           final PsiPackage newPackage = getPsiPackage(newQualifiedName);
 
           if (newPackage != null) {
-            DefaultMutableTreeNode newChild = addPackage(newPackage);
+            DefaultMutableTreeNode newChild = addPackage(new PackageUpdate(newPackage));
 
             DefaultTreeModel model = (DefaultTreeModel)myTree.getModel();
             model.nodeStructureChanged((TreeNode)model.getRoot());
