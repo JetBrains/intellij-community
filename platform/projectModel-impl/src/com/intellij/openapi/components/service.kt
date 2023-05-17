@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -57,7 +58,9 @@ inline fun <reified T : Any> serviceIfCreated(): T? = ApplicationManager.getAppl
  */
 @ApiStatus.Experimental
 @Deprecated("Use override accepting {@link ClientKind} for better control over kinds of clients the services are requested for")
-inline fun <reified T : Any> services(includeLocal: Boolean): List<T> = ApplicationManager.getApplication().getServices(T::class.java, includeLocal)
+inline fun <reified T : Any> services(includeLocal: Boolean): List<T> {
+  return ApplicationManager.getApplication().getServices(T::class.java, if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
+}
 
 @get:Internal
 val ComponentManager.stateStore: IComponentStore

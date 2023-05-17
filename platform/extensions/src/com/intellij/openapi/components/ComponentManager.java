@@ -91,15 +91,6 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   <T> T getService(@NotNull Class<T> serviceClass);
 
   /**
-   * @deprecated Use override accepting {@link ClientKind} for better control over kinds of clients the services are requested for.
-   */
-  @ApiStatus.Experimental
-  @Deprecated
-  default @NotNull <T> List<T> getServices(@NotNull Class<T> serviceClass, boolean includeLocal) {
-    return getServices(serviceClass, includeLocal ? ClientKind.ALL : ClientKind.REMOTE);
-  }
-
-  /**
    * Collects all services registered with matching client="..." attribute in xml.
    * Take a look at {@link com.intellij.openapi.client.ClientSession}
    */

@@ -5,7 +5,6 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.ApiStatus
 
