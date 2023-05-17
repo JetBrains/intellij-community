@@ -29,7 +29,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
 
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 22)
+    val GROUP = EventLogGroup("new.project.wizard.interactions", 23)
 
     private val LANGUAGES = listOf(
       NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
