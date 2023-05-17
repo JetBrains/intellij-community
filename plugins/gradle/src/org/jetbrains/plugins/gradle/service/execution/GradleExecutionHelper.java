@@ -513,7 +513,7 @@ public class GradleExecutionHelper {
     buildLauncher.forTasks(ArrayUtil.toStringArray(commandLine.getTasks().getTokens()));
     buildLauncher.withArguments(commandLine.getOptions().getTokens());
     if (isRunAsTest) {
-      var initScript = GradleInitScriptUtil.createTestInitScript(commandLine.getTasks());
+      var initScript = GradleInitScriptUtil.createTestInitScript();
       buildLauncher.addArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString());
     }
   }

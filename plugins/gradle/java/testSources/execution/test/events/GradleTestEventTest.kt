@@ -105,10 +105,13 @@ class GradleTestEventTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":build --rerun-tasks")
+      executeTasks(":build", isRunAsTest = true)
       assertTestEventsContain("org.example.TestCase", "test")
 
-      executeTasks(":build")
+      executeTasks(":build --rerun-tasks", isRunAsTest = false)
+      assertTestEventsWasNotReceived()
+
+      executeTasks(":build", isRunAsTest = false)
       assertTestEventsWasNotReceived()
     }
   }
