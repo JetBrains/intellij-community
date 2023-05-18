@@ -1,7 +1,7 @@
 <html>
 <body>
 Reports cases when a non-safe string is passed to a method with a parameter marked with <code>@Untainted</code> annotations, returned from
-annotated methods or assigned to annotated fields, parameters, or local variables. Kotlin `set` and `get` methods for fields are not
+annotated methods or assigned to annotated fields, parameters, or local variables. Kotlin <code>set</code> and <code>get</code> methods for fields are not
 supported as entry points.
 <p>
   A safe object is:
@@ -51,40 +51,6 @@ supported as entry points.
 <p>
   Here we have a warning since <code>s1</code> has an unknown state after <code>foo</code> call result assignment.
   <!-- tooltip end -->
-<ul>
-  <li>
-    <p>Use the <b>Untainted annotations</b> table to specify annotations, which will be used as <code>@Untainted</code> annotations during
-      the analysis.
-      The first annotation from this list will be used for propagation if it exists in the classpath.
-  </li>
-  <li>
-    <p>Use the <b>Tainted annotations</b> table to specify annotations, which will be used as <code>@Tainted</code> annotations during the
-      analysis
-  </li>
-  <li>
-    <p>If the <b>Consider external methods untainted if receivers and arguments are untainted</b> option is enabled,
-      then external methods outside the current class will be considered as safe if their receivers and arguments are safe.
-      In some cases, it is not applicable, but it can be useful for stateless classes.
-      If this option is disabled, then all external methods will be considered as unsafe.
-  </li>
-  <li>
-    <p>Use the <b>Safe classes</b> option to specify classes, expressions with this type will be considered safe
-  </li>
-  <li>
-    <p>Use the <b>Untainted methods</b> table to specify methods, which return only safe objects
-  </li>
-  <li>
-    <p>Use the <b>Untainted fields</b> table to specify fields, which contain only safe objects
-  </li>
-  <li>
-    <p>Use the <b>Report if case is too complex to check</b> option to specify if it is needed to report strings, which can not be checked
-      because of the complexity
-  </li>
-  <li>
-    <p>Use the <b>Consider parameters of private methods as safe</b> option to specify that parameters of private methods, otherwise they
-      will be considered as unknown.
-  </li>
-</ul>
 <p><small>New in 2021.2</small></p>
 </body>
 </html>
