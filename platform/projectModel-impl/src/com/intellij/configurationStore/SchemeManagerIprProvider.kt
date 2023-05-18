@@ -12,13 +12,11 @@ import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.toByteArray
 import org.jdom.Element
 import java.io.InputStream
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
+import java.util.concurrent.locks.StampedLock
 
 class SchemeManagerIprProvider(private val subStateTagName: String,
                                private val comparator: Comparator<String>? = null) : StreamProvider, SimpleModificationTracker() {
-  private val lock = ReentrantReadWriteLock()
+  private val lock = StampedLock()
   private var nameToData = LinkedHashMap<String, ByteArray>()
 
   override val isExclusive = false
@@ -133,5 +131,25 @@ class SchemeManagerIprProvider(private val subStateTagName: String,
         }
       }
     }
+  }
+}
+
+private fun StampedLock.read(task: () -> Unit) {
+  val stamp = readLock()
+  try {
+    task()
+  }
+  finally {
+    unlockRead(stamp)
+  }
+}
+
+private fun StampedLock.write(task: () -> Unit) {
+  val stamp = writeLock()
+  try {
+    task()
+  }
+  finally {
+    unlockWrite(stamp)
   }
 }
