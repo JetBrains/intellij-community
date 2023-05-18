@@ -86,26 +86,28 @@ private class RemoveRedundantWithFix : LocalQuickFix {
         val callExpression = descriptor.psiElement.parent as? KtCallExpression ?: return
         val lambdaExpression = callExpression.valueArguments.getOrNull(1)?.lambdaExpression() ?: return
         val lambdaBody = lambdaExpression.bodyExpression ?: return
-        val declaration = callExpression.getStrictParentOfType<KtDeclarationWithBody>()
-        val replaced = if (declaration?.equalsToken != null && KtPsiUtil.deparenthesize(declaration.bodyExpression) == callExpression) {
-            val singleReturnedExpression = (lambdaBody.statements.singleOrNull() as? KtReturnExpression)?.returnedExpression
-            if (singleReturnedExpression != null) {
-                callExpression.replaced(singleReturnedExpression)
+
+        val function = callExpression.getStrictParentOfType<KtFunction>()
+        val functionBody = KtPsiUtil.deparenthesize(function?.bodyExpression)
+
+        val replaced = if (function?.equalsToken != null && functionBody == callExpression) {
+            val singleStatement = lambdaBody.statements.singleOrNull()?.let {
+                (it as? KtReturnExpression)?.returnedExpression ?: it
+            }
+            if (singleStatement != null) {
+                callExpression.replaced(singleStatement)
             } else {
-                declaration.replaceBlockExpressionWithLambdaBody(lambdaBody)
-                declaration.bodyExpression
+                function.replaceBlockExpressionWithLambdaBody(lambdaBody)
+                function.bodyExpression
             }
         } else {
             val result = lambdaBody.allChildren.takeUnless { it.isEmpty }?.let { range ->
                 callExpression.parent.addRangeAfter(range.first, range.last, callExpression)
             }
-
             callExpression.delete()
             result
         }
 
-        if (replaced != null) {
-            replaced.findExistingEditor()?.moveCaret(replaced.startOffset)
-        }
+        replaced?.findExistingEditor()?.moveCaret(replaced.startOffset)
     }
 }
