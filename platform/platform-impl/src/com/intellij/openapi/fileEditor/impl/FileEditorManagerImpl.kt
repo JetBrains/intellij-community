@@ -1024,12 +1024,9 @@ open class FileEditorManagerImpl(
                                     entry: HistoryEntry?,
                                     options: FileEditorOpenOptions): FileEditorComposite {
     if (!ClientId.isCurrentlyUnderLocalId) {
-      val result = (clientFileEditorManager ?: return FileEditorComposite.EMPTY).openFileAsync(file = file,
-                                                                                               forceCreate = false,
-                                                                                               requestFocus = options.requestFocus)
-      return FileEditorComposite.createFileEditorComposite(allEditors = result.map { it.fileEditor },
-                                                           allProviders = result.map { it.provider },
-                                                           isPreview = options.usePreviewTab)
+      return clientFileEditorManager?.openFileAsync(file = file,
+                                                    forceCreate = false,
+                                                    requestFocus = options.requestFocus) ?: FileEditorComposite.EMPTY
     }
 
     val existingComposite = withContext(Dispatchers.EDT) { window.getComposite(file) }
@@ -1061,10 +1058,7 @@ open class FileEditorManagerImpl(
 
   private fun openFileUsingClient(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     val clientManager = clientFileEditorManager ?: return FileEditorComposite.EMPTY
-    val result = clientManager.openFile(file = file, forceCreate = false, requestFocus = options.requestFocus)
-    return FileEditorComposite.createFileEditorComposite(allEditors = result.map { it.fileEditor },
-                                                         allProviders = result.map { it.provider },
-                                                         isPreview = options.usePreviewTab)
+    return clientManager.openFile(file = file, forceCreate = false, requestFocus = options.requestFocus)
   }
 
   @Suppress("DuplicatedCode")

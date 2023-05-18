@@ -123,11 +123,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   private fun openFileImpl3(openFileDescriptor: FileEditorNavigatable): FileEditorComposite {
     val file = openFileDescriptor.file
     if (!isCurrentlyUnderLocalId) {
-      val clientManager = clientFileEditorManager ?: return FileEditorComposite.EMPTY
-      val result = clientManager.openFile(file, false, true)
-      val fileEditors = result.map { it.fileEditor }.toTypedArray()
-      val providers = result.map { it.provider }.toTypedArray()
-      return FileEditorComposite.fromPair(kotlin.Pair(fileEditors, providers))
+      clientFileEditorManager?.openFile(file, false, true) ?: return FileEditorComposite.EMPTY
     }
 
     val isNewEditor = !virtualFileToEditor.containsKey(file)
