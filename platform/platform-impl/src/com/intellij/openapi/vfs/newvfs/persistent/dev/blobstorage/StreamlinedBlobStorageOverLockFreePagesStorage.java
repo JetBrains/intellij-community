@@ -236,7 +236,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
     }
 
     @VisibleForTesting
-    static class ActualRecords {
+    static final class ActualRecords {
       //ACTUAL: has .length and .capacity fields in header (redirectTo is absent)
       //        header bit[2]: recordSizeType =(SMALL | LARGE)
       //        length & capacity stored differently, depending on recordSizeType

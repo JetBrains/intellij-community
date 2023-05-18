@@ -24,7 +24,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-public class FindUsagesDumper {
+public final class FindUsagesDumper {
   private static final String DUMP_FOUND_USAGES_DESTINATION_FILE = "find.usages.command.found.usages.list.file";
   private static final Logger LOG = Logger.getInstance(FindUsagesDumper.class);
 

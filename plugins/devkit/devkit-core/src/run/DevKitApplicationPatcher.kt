@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run
 
 import com.intellij.execution.RunConfigurationExtension
@@ -62,17 +62,19 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       "-XX:PrintIdealGraphLevel=3"
     )
 
+    var productClassifier = vmParameters.getPropertyValue("idea.platform.prefix")
+    productClassifier = when (productClassifier) {
+      null -> "idea"
+      PlatformUtils.IDEA_CE_PREFIX -> "idea-community"
+      else -> productClassifier
+    }
+
     if (!vmParameters.hasProperty("idea.config.path")) {
-      var productClassifier = vmParameters.getPropertyValue("idea.platform.prefix")
-      productClassifier = when (productClassifier) {
-        null -> "idea"
-        PlatformUtils.IDEA_CE_PREFIX -> "idea-community"
-        else -> productClassifier.lowercase()
-      }
+      val lowerCasedProductClassifier = productClassifier.lowercase()
       vmParameters.addProperty("idea.config.path",
-                               FileUtilRt.toSystemIndependentName("${configuration.workingDirectory}/out/dev-data/$productClassifier/config"))
+                               FileUtilRt.toSystemIndependentName("${configuration.workingDirectory}/out/dev-data/$lowerCasedProductClassifier/config"))
       vmParameters.addProperty("idea.system.path",
-                               FileUtilRt.toSystemIndependentName("${configuration.workingDirectory}/out/dev-data/$productClassifier/system"))
+                               FileUtilRt.toSystemIndependentName("${configuration.workingDirectory}/out/dev-data/$lowerCasedProductClassifier/system"))
     }
 
     vmParameters.addProperty("idea.vendor.name", "JetBrains")

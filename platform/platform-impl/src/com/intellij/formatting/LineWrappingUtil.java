@@ -31,7 +31,7 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
 @ApiStatus.Internal
-public class LineWrappingUtil {
+public final class LineWrappingUtil {
   private static final String WRAP_LINE_COMMAND_NAME = "AutoWrapLongLine";
 
   /**

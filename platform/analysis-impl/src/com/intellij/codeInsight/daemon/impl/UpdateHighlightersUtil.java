@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
@@ -75,7 +75,7 @@ public final class UpdateHighlightersUtil {
            && info.getGutterIconRenderer() == null;
   }
 
-  static class HighlightInfoPostFilters {
+  static final class HighlightInfoPostFilters {
     private final static ExtensionPointName<HighlightInfoPostFilter> EP_NAME = new ExtensionPointName<>("com.intellij.highlightInfoPostFilter");
     static boolean accept(@NotNull Project project, @NotNull HighlightInfo info) {
       for (HighlightInfoPostFilter filter : EP_NAME.getExtensions(project)) {

@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.DirectBufferWrapper;
 import com.intellij.util.io.PagedFileStorage;
@@ -22,9 +22,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storage;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeSizeStreamlinedBlobStorage.RecordLayout.ActualRecords.*;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeSizeStreamlinedBlobStorage.RecordLayout.OFFSET_BUCKET;
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storage;
 
 
 /**
@@ -239,7 +239,7 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
     }
 
     @VisibleForTesting
-    static class ActualRecords {
+    static final class ActualRecords {
       //ACTUAL: has .length and .capacity fields in header (redirectTo is absent)
       //        header bit[2]: recordSizeType =(SMALL | LARGE)
       //        length & capacity stored differently, depending on recordSizeType
