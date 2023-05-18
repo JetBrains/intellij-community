@@ -31,6 +31,7 @@ import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharSequenceSubSequence;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -1184,7 +1185,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     @Override
     @NotNull
     public CharSequence get(int i) {
-      return myText.subSequence(myLexStarts[myStart + i], myLexStarts[myStart + i + 1]);
+      return new CharSequenceSubSequence(myText, myLexStarts[myStart + i], myLexStarts[myStart + i + 1]);
     }
   }
 

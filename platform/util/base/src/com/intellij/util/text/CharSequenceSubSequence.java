@@ -3,9 +3,21 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * {@code CharSequenceSubSequence} allows to save time and memory in text processing code. It avoids
+ * creation of a new char array on every {@code subSequence(int, int)} call in contrast to {@link String#subSequence(int, int)},
+ * which actually creates a new {@link String} instance every time it's invoked.
+ * <p>
+ * {@code CharSequenceSubSequence} implements `hashCode` and `equals` in such a way that it can be compared against {@link String} map keys
+ * and set elements without creating a {@link String} instance. However, {@code CharSequenceSubSequence} should not be used
+ * as a map key or set element, since {@link CharSequence} API does not guarantee anything beside char iteration.
+ * <p>
+ * Results of text processing should always be stored as {@link String}.
+ **/
 public class CharSequenceSubSequence implements CharSequence, CharArrayExternalizable, CharSequenceWithStringHash {
   private final CharSequence myChars;
   private final int myStart;
@@ -69,5 +81,15 @@ public class CharSequenceSubSequence implements CharSequence, CharArrayExternali
       hash = h = Strings.stringHashCode(myChars, myStart, myEnd);
     }
     return h;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) return true;
+    if (obj instanceof CharSequence) {
+      return StringUtilRt.equal(this, (CharSequence) obj, true);
+    } else {
+      return false;
+    }
   }
 }
