@@ -344,7 +344,7 @@ public class PackageChooserDialog extends PackageChooser {
       myProject,
       IdeBundle.message("prompt.enter.a.new.package.name"),
       IdeBundle.message("title.new.package"),
-      Messages.getQuestionIcon(), "",
+      null, "",
       new InputValidator() {
         @Override
         public boolean checkInput(String inputString) {
