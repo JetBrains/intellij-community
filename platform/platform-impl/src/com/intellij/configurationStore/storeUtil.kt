@@ -6,20 +6,18 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
@@ -103,6 +101,9 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
   catch (e: CancellationException) {
     throw e
   }
+  catch (e: ProcessCanceledException) {
+    throw e
+  }
   catch (e: Throwable) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       LOG.error("Save settings failed", e)
@@ -118,16 +119,14 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
 
     val pluginId = PluginUtil.getInstance().findPluginId(e)
     val group = NotificationGroupManager.getInstance().getNotificationGroup("Settings Error")
-    val notification = if (pluginId == null || (ApplicationInfo.getInstance() as ApplicationInfoEx).isEssentialPlugin(pluginId)) {
+    val notification = if (pluginId == null) {
       group.createNotification(IdeBundle.message("notification.title.unable.to.save.settings"),
                                IdeBundle.message("notification.content.failed.to.save.settings", messagePostfix),
                                NotificationType.ERROR)
     }
     else {
-      PluginManagerCore.disablePlugin(pluginId)
       group.createNotification(IdeBundle.message("notification.title.unable.to.save.plugin.settings"),
-                               IdeBundle.message("notification.content.plugin.failed.to.save.settings.and.has.been.disabled",
-                                                 pluginId.idString, messagePostfix),
+                               IdeBundle.message("notification.content.plugin.failed.to.save.settings", pluginId.idString, messagePostfix),
                                NotificationType.ERROR)
     }
     notification.notify(componentManager as? Project)
