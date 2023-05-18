@@ -13914,6 +13914,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testValidSubtraction() throws Exception {
             runTest("testData/inspectionsLocal/replaceWithOperatorAssignment/validSubtraction.kt");
         }
+
+        @TestMetadata("withReceiver.kt")
+        public void testWithReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithOperatorAssignment/withReceiver.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
