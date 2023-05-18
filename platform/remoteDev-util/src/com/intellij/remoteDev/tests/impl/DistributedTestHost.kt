@@ -224,10 +224,12 @@ class DistributedTestHost {
     }
   }
 
-  private fun makeScreenshot(fileName: String): Boolean {
+  private fun makeScreenshot(actionName: String): Boolean {
     if (application.isHeadlessEnvironment) {
       error("Don't try making screenshots on application in headless mode.")
     }
+    val fileNameWithPostfix = if (actionName.endsWith(".png")) actionName else "$actionName.png"
+    val finalFileName = fileNameWithPostfix.replace("[^a-zA-Z.]".toRegex(), "_").replace("_+".toRegex(), "_")
 
     val result = CompletableFuture<Boolean>()
     ApplicationManager.getApplication().invokeLater {
@@ -238,7 +240,6 @@ class DistributedTestHost {
         component.printAll(img.createGraphics())
         ApplicationManager.getApplication().executeOnPooledThread {
           try {
-            val finalFileName = if (fileName.endsWith(".png")) fileName else "$fileName.png"
             result.complete(ImageIO.write(img, "png", File(PathManager.getLogPath()).resolve(finalFileName)))
           }
           catch (e: IOException) {
@@ -256,7 +257,7 @@ class DistributedTestHost {
 
     try {
       if (result[45, TimeUnit.SECONDS])
-        logger.info("Screenshot is saved at: $fileName")
+        logger.info("Screenshot is saved at: $finalFileName")
       else
         logger.info("No writers were found for screenshot")
     }
