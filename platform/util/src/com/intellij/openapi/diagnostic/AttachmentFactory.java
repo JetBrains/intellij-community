@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
-public class AttachmentFactory {
+public final class AttachmentFactory {
   private static final Logger LOG = Logger.getInstance(AttachmentFactory.class);
   private static final long BIG_FILE_THRESHOLD_BYTES = 50 * 1024;
 

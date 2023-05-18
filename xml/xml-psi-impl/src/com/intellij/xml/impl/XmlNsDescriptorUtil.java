@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class XmlNsDescriptorUtil {
+public final class XmlNsDescriptorUtil {
 
   private static final Logger LOG = Logger.getInstance(XmlNsDescriptorUtil.class);
   private static final Key<Boolean> AUTO_GENERATED = Key.create("auto-generated xml schema");
