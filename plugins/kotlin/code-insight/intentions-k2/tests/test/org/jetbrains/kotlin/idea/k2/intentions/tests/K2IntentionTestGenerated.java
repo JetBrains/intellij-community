@@ -1877,6 +1877,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/doesNotCorruptExistingTemplateWithBraces.kt");
         }
 
+        @TestMetadata("dollarSignBeforeLeftBrace.kt")
+        public void testDollarSignBeforeLeftBrace() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/dollarSignBeforeLeftBrace.kt");
+        }
+
+        @TestMetadata("dollarSignBeforeRightBrace.kt")
+        public void testDollarSignBeforeRightBrace() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/dollarSignBeforeRightBrace.kt");
+        }
+
         @TestMetadata("dollarSignChar.kt")
         public void testDollarSignChar() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/dollarSignChar.kt");
