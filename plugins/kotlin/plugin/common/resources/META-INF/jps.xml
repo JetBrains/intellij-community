@@ -8,6 +8,10 @@
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idePlatformKindTooling"
             interface="org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling"/>
+    <!-- IdePlatformKindResolution EP should be moved to K1 once debugger tests no longer use K1 services to compile code -->
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idePlatformKindResolution"
+            interface="org.jetbrains.kotlin.caches.resolve.IdePlatformKindResolution"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

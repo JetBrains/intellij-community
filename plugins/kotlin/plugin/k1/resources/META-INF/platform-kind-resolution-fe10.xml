@@ -1,10 +1,4 @@
 <idea-plugin>
-  <extensionPoints>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.idePlatformKindResolution"
-            interface="org.jetbrains.kotlin.caches.resolve.IdePlatformKindResolution"/>
-  </extensionPoints>
-
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <idePlatformKindResolution implementation="org.jetbrains.kotlin.caches.resolve.JvmPlatformKindResolution"/>
     <idePlatformKindResolution implementation="org.jetbrains.kotlin.caches.resolve.JsPlatformKindResolution"/>
