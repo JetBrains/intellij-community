@@ -521,6 +521,11 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
             runTest("../idea/tests/testData/intentions/convertToStringTemplate/insertBracesForSimpleNamedExpression.kt");
         }
 
+        @TestMetadata("intToString.kt")
+        public void testIntToString() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertToStringTemplate/intToString.kt");
+        }
+
         @TestMetadata("interpolate2StringConstants.kt")
         public void testInterpolate2StringConstants() throws Exception {
             runTest("../idea/tests/testData/intentions/convertToStringTemplate/interpolate2StringConstants.kt");
