@@ -35,7 +35,7 @@ class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutine
         Disposer.newDisposable("waitJpsProjectLoaded").use { disposable ->
           //disposable will help to make a disconnect on dispose
           //Example - MessageBusTest::disconnectOnDisposeForImmediateDeliveryTopic
-          project.messageBus.connect(disposable).subscribe<JpsProjectLoadedListener>(LOADED, object : JpsProjectLoadedListener {
+          project.messageBus.connect(disposable).subscribe(LOADED, object : JpsProjectLoadedListener {
             override fun loaded() {
               completableDeferred.complete(true)
             }

@@ -5,6 +5,9 @@ import com.intellij.core.JavaPsiBundle.message
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsShowConfirmationOption
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.impl.file.PsiJavaDirectoryFactory
@@ -43,13 +46,18 @@ class CreateJavaFileCommand(text: String, line: Int) : PerformanceCommandCorouti
     val templateName = POSSIBLE_FILE_TYPES[fileType.lowercase()]
     if (templateName == null) throw RuntimeException("File type must be one of '${POSSIBLE_FILE_TYPES.keys}'")
 
+    //Disable vcs dialog which appears on adding new file to the project tree
+    ProjectLevelVcsManagerEx
+      .getInstanceEx(context.project)
+      .getConfirmation(VcsConfiguration.StandardConfirmation.ADD)
+      .value = VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY
+
     ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(Runnable {
       PerformanceTestSpan.TRACER.spanBuilder(NAME).useWithScope {
-        ApplicationManager.getApplication().getService(JavaDirectoryService::class.java)
-          .createClass(directory, fileName, templateName, true)
+        JavaDirectoryService.getInstance().createClass(directory, fileName, templateName, true)
       }
-    })
-    )
+    }))
+
   }
 
   override fun getName(): String = NAME

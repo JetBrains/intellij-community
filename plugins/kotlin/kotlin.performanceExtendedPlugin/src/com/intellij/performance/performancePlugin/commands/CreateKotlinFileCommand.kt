@@ -6,6 +6,9 @@ import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsShowConfirmationOption
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vfs.findFileOrDirectory
 import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.psi.impl.PsiManagerImpl
@@ -48,13 +51,19 @@ class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCorou
         if (templateName == null) throw RuntimeException("File type must be one of '${POSSIBLE_FILE_TYPES.keys}'")
         val template = FileTemplateManager.getInstance(directory.project).getInternalTemplate(templateName)
 
+        //Disable vcs dialog which appears on adding new file to the project tree
+        ProjectLevelVcsManagerEx
+            .getInstanceEx(context.project)
+            .getConfirmation(VcsConfiguration.StandardConfirmation.ADD)
+            .value = VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY
+
         ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(Runnable {
-                PerformanceTestSpan.TRACER.spanBuilder(NAME).useWithScope {
-                    CreateFileFromTemplateAction
-                        .createFileFromTemplate(fileName, template, directory, null, true)
-                }
-            })
-        )
+            PerformanceTestSpan.TRACER.spanBuilder(NAME).useWithScope {
+                CreateFileFromTemplateAction
+                    .createFileFromTemplate(fileName, template, directory, null, true)
+            }
+        }))
+
     }
 
     override fun getName(): String = NAME
