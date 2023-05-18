@@ -58,7 +58,7 @@
     <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="cloud-config-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />

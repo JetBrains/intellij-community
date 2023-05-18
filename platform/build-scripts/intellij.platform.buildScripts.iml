@@ -73,7 +73,7 @@
     <orderEntry type="library" name="zstd-jni-windows-aarch64" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="library" name="blockmap" level="project" />
     <orderEntry type="library" name="SSHJ" level="project" />

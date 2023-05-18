@@ -45,7 +45,7 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
     <orderEntry type="library" scope="TEST" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" scope="TEST" />

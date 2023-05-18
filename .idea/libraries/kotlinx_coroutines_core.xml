@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="kotlinx-coroutines-jdk8" type="repository">
+  <library name="kotlinx-coroutines-core" type="repository">
     <properties maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.1">
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />

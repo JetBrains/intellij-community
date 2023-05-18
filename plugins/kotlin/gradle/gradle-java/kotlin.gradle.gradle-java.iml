@@ -37,7 +37,7 @@
     <orderEntry type="library" name="kotlin-tooling-core" level="project" />
     <orderEntry type="library" name="kotlin-gradle-plugin-idea-proto" level="project" />
     <orderEntry type="library" name="kotlin-gradle-plugin-idea" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="Gradle" level="project" />
     <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" />
