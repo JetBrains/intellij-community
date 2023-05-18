@@ -57,7 +57,7 @@ public final class ExceptionUtil extends ExceptionUtilRt {
   public static @NotNull Throwable makeStackTraceRelative(@NotNull Throwable th, @NotNull Throwable relativeTo) {
     StackTraceElement[] trace = th.getStackTrace();
     StackTraceElement[] rootTrace = relativeTo.getStackTrace();
-    for (int i=0, len = Math.min(trace.length, rootTrace.length); i < len; i++) {
+    for (int i = 0, len = Math.min(trace.length, rootTrace.length); i < len; i++) {
       if (trace[trace.length - i - 1].equals(rootTrace[rootTrace.length - i - 1])) continue;
       int newDepth = trace.length - i;
       th.setStackTrace(Arrays.copyOf(trace, newDepth));
@@ -117,6 +117,7 @@ public final class ExceptionUtil extends ExceptionUtilRt {
     return result;
   }
 
+  /** Throw t if it is unchecked (RuntimeException or Error), do nothing otherwise */
   public static void rethrowUnchecked(@Nullable Throwable t) throws RuntimeException, Error {
     ExceptionUtilRt.rethrowUnchecked(t);
   }
@@ -126,12 +127,21 @@ public final class ExceptionUtil extends ExceptionUtilRt {
     ExceptionUtilRt.rethrowAll(t);
   }
 
+  /**
+   * Throw throwable as-is, if it is unchecked (RuntimeException or Error), otherwise throw it
+   * wrapped in RuntimeException.
+   * BEWARE: null argument is still thrown as RuntimeException(cause: null)
+   */
   @Contract("_->fail")
   public static void rethrow(@Nullable Throwable throwable) throws RuntimeException, Error {
     rethrowUnchecked(throwable);
     throw new RuntimeException(throwable);
   }
 
+  /**
+   * Same as {@link #rethrow(Throwable)}, but t=null is just ignored, instead of throwing a
+   * RuntimeException(cause: null)
+   */
   @Contract("!null->fail")
   public static void rethrowAllAsUnchecked(@Nullable Throwable t) throws RuntimeException, Error {
     if (t != null) {
@@ -151,6 +161,46 @@ public final class ExceptionUtil extends ExceptionUtilRt {
     }
     catch (Exception e) {
       return e;
+    }
+  }
+
+  /**
+   * Runs _all_ the tasks passed in, collect the exceptions risen, and rethrow them.
+   * How exceptions are rethrown depends on their type: we try to throw exception of
+   * type E. If it is possible to re-throw the first exception caught as E -> we use
+   * it, otherwise -> we use example as a type-safe carrier.
+   * More formally:
+   * If the first exception caught is type-compatible with example exception -> the first
+   * exception is rethrown with the following exceptions, if any, attached as 'suppressed'.
+   * If the first exception caught is not type-compatible with example exception -> the
+   * example exception is thrown, with first and following exceptions attached as 'suppressed'.
+   */
+  @SuppressWarnings("unchecked")
+  public static <E extends Exception>
+  void runAllAndRethrowAllExceptions(@NotNull E example,
+                                     ThrowableRunnable<? extends Exception> @NotNull ... potentiallyFailingTasks) throws E {
+    E exception = null;
+    for (ThrowableRunnable<? extends Exception> potentiallyFailingTask : potentiallyFailingTasks) {
+      try {
+        potentiallyFailingTask.run();
+      }
+      catch (Throwable e) {
+        if (exception == null) {
+          if (example.getClass().isAssignableFrom(e.getClass())) {
+            exception = (E)e;
+          }
+          else {
+            exception = example;
+            exception.addSuppressed(e);
+          }
+        }
+        else {
+          exception.addSuppressed(e);
+        }
+      }
+    }
+    if (exception != null) {
+      throw exception;
     }
   }
 }

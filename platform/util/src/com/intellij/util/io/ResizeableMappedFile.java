@@ -98,7 +98,8 @@ public class ResizeableMappedFile implements Forceable, Closeable {
 
     if (realSize == 0) {
       suggestedSize = doRoundToFactor(Math.max(myInitialSize, max));
-    } else {
+    }
+    else {
       suggestedSize = Math.max(realSize + 1, 2); // suggestedSize should increase with int multiplication on 1.625 factor
 
       while (max > suggestedSize) {
@@ -250,20 +251,20 @@ public class ResizeableMappedFile implements Forceable, Closeable {
     return myLogicalSize;
   }
 
+  @Override
   public void close() throws IOException {
-    List<Exception> exceptions = new SmartList<>();
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> {
-      ensureLengthWritten();
-      assert myLogicalSize == myLastWrittenLogicalSize;
-      myStorage.force();
-      if (truncateOnClose && myLogicalSize < myStorage.length()) {
-        myStorage.resize(myLogicalSize);
-      }
-    }));
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> myStorage.close()));
-    if (!exceptions.isEmpty()) {
-      throw new IOException(new CompoundRuntimeException(exceptions));
-    }
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      new IOException("Failed to close ResizableMappedFile[" + getPagedFileStorage().getFile() + "]"),
+      () -> {
+        ensureLengthWritten();
+        assert myLogicalSize == myLastWrittenLogicalSize;
+        myStorage.force();
+        if (truncateOnClose && myLogicalSize < myStorage.length()) {
+          myStorage.resize(myLogicalSize);
+        }
+      },
+      myStorage::close
+    );
   }
 
   public @NotNull PagedFileStorage getPagedFileStorage() {

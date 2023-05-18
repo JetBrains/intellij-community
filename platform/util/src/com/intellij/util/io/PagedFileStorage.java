@@ -6,12 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
 import com.intellij.util.io.OpenChannelsCache.FileChannelOperation;
 import com.intellij.util.io.storage.AbstractStorage;
-import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +21,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.List;
 
 import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
 
@@ -329,19 +325,19 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
   }
 
   public void close() throws IOException {
-    List<Exception> exceptions = new SmartList<>();
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> force()));
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> {
-      unmapAll();
-      myStorageLockContext.getBufferCache().removeStorage(myStorageIndex);
-      myStorageIndex = -1;
-    }));
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> {
-      CHANNELS_CACHE.closeChannel(myFile);
-    }));
-    if (!exceptions.isEmpty()) {
-      throw new IOException(new CompoundRuntimeException(exceptions));
-    }
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      new IOException("Failed to close appendable storage[" + getFile() + "]"),
+      
+      this::force,
+      () -> {
+        unmapAll();
+        myStorageLockContext.getBufferCache().removeStorage(myStorageIndex);
+        myStorageIndex = -1;
+      },
+      () -> {
+        CHANNELS_CACHE.closeChannel(myFile);
+      }
+    );
   }
 
   private void unmapAll() {
