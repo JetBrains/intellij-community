@@ -14166,6 +14166,26 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("caretAfterLeftBrace.kt")
+        public void testCaretAfterLeftBrace() throws Exception {
+            runTest("testData/intentions/mergeIfs/caretAfterLeftBrace.kt");
+        }
+
+        @TestMetadata("caretAfterRightBrace.kt")
+        public void testCaretAfterRightBrace() throws Exception {
+            runTest("testData/intentions/mergeIfs/caretAfterRightBrace.kt");
+        }
+
+        @TestMetadata("caretOnNestedIf.kt")
+        public void testCaretOnNestedIf() throws Exception {
+            runTest("testData/intentions/mergeIfs/caretOnNestedIf.kt");
+        }
+
+        @TestMetadata("caretOnNestedIf2.kt")
+        public void testCaretOnNestedIf2() throws Exception {
+            runTest("testData/intentions/mergeIfs/caretOnNestedIf2.kt");
+        }
+
         @TestMetadata("comments.kt")
         public void testComments() throws Exception {
             runTest("testData/intentions/mergeIfs/comments.kt");
