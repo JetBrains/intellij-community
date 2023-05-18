@@ -24,7 +24,7 @@ abstract class AbstractJavaUVariable(
   abstract override val javaPsi: PsiVariable
 
   @Suppress("OverridingDeprecatedMember")
-  override val psi
+  override val psi: PsiVariable
     get() = javaPsi
 
   override val uastInitializer: UExpression? by lazyPub {

@@ -20,7 +20,7 @@ import org.jetbrains.uast.util.classSetOf
 @JvmDefaultWithCompatibility
 interface UastLanguagePlugin {
   companion object {
-    val extensionPointName = ExtensionPointName<UastLanguagePlugin>("org.jetbrains.uast.uastLanguagePlugin")
+    val extensionPointName: ExtensionPointName<UastLanguagePlugin> = ExtensionPointName<UastLanguagePlugin>("org.jetbrains.uast.uastLanguagePlugin")
 
     fun getInstances(): Collection<UastLanguagePlugin> = extensionPointName.extensionList
 
@@ -49,7 +49,7 @@ interface UastLanguagePlugin {
    *
    * Priority is useful when a language N wraps its own elements (NElement) to, for example, Java's PsiElements,
    *  and Java resolves the reference to such wrapped PsiElements, not the original NElement.
-   * In this case N implementation can handle such wrappers in UastConverter earlier than Java's converter,
+   * In this case, N implementation can handle such wrappers in UastConverter earlier than Java's converter,
    *  so N language converter will have a higher priority.
    */
   val priority: Int

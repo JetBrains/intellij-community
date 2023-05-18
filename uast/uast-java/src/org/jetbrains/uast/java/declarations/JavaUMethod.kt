@@ -17,7 +17,7 @@ open class JavaUMethod(
 ) : JavaAbstractUElement(uastParent), UMethod, JavaUElementWithComments, UAnchorOwner, PsiMethod by javaPsi {
 
   @Suppress("OverridingDeprecatedMember")
-  override val psi
+  override val psi: PsiMethod
     get() = javaPsi
 
   override val sourcePsi: PsiElement?
@@ -97,7 +97,7 @@ class JavaUAnnotationMethod(
 ) : JavaUMethod(javaPsi, containingElement), UAnnotationMethod, UDeclarationEx {
 
   @Suppress("OverridingDeprecatedMember")
-  override val psi
+  override val psi: PsiAnnotationMethod
     get() = javaPsi
 
   override val uastDefaultValue: UExpression? by lazyPub {

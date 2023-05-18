@@ -36,5 +36,5 @@ class JavaUImportStatement(
     sourcePsi.importReference?.multiResolve(false)?.asIterable() ?: emptyList()
 
   @Suppress("OverridingDeprecatedMember")
-  override val psi get() = sourcePsi
+  override val psi: PsiImportStatementBase get() = sourcePsi
 }

@@ -51,9 +51,9 @@ fun <T : UElement> capture(clazz: Class<T>): UElementPattern.Capture<T> = UEleme
 
 fun <T : UExpression> expressionCapture(clazz: Class<T>): UExpressionPattern.Capture<T> = UExpressionPattern.Capture(clazz)
 
-fun ProcessingContext.withRequestedPsi(psiElement: PsiElement) = this.apply { put(REQUESTED_PSI_ELEMENT, psiElement) }
+fun ProcessingContext.withRequestedPsi(psiElement: PsiElement): ProcessingContext = this.apply { put(REQUESTED_PSI_ELEMENT, psiElement) }
 
-fun withRequestedPsi(psiElement: PsiElement) = ProcessingContext().withRequestedPsi(psiElement)
+fun withRequestedPsi(psiElement: PsiElement): ProcessingContext = ProcessingContext().withRequestedPsi(psiElement)
 
 open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz: Class<T>) : ObjectPattern<T, Self>(clazz) {
   fun withSourcePsiCondition(pattern: PatternCondition<PsiElement>): Self =
