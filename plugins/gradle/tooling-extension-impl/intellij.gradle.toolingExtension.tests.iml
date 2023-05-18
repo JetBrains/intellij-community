@@ -37,7 +37,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.87/classgraph-4.8.87.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.87/classgraph-4.8.87-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
@@ -52,7 +54,10 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.1/objenesis-3.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jeasy/easy-random-core/4.2.0/easy-random-core-4.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.1/objenesis-3.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="ion" level="project" />

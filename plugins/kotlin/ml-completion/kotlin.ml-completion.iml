@@ -24,7 +24,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.5/completion-ranking-kotlin-0.3.5.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.5/completion-ranking-kotlin-0.3.5-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
   </component>

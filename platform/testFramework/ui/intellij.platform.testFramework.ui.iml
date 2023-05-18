@@ -57,7 +57,24 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/easytesting/fest-reflect/1.4.1/fest-reflect-1.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/robot-server-core/0.11.16/robot-server-core-0.11.16-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-robot/0.11.16/remote-robot-0.11.16-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.0/slf4j-api-2.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.7.10/kotlin-reflect-1.7.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/retrofit2/retrofit/2.9.0/retrofit-2.9.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/3.14.9/okhttp-3.14.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/1.17.2/okio-1.17.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/retrofit2/converter-gson/2.9.0/converter-gson-2.9.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/mozilla/rhino/1.7.14/rhino-1.7.14-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-swing-junit/3.17.1/assertj-swing-junit-3.17.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/junit/junit/4.12/junit-4.12-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-swing/3.17.1/assertj-swing-3.17.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-core/3.17.2/assertj-core-3.17.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/easytesting/fest-util/1.2.5/fest-util-1.2.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/easytesting/fest-reflect/1.4.1/fest-reflect-1.4.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" name="gson" level="project" />

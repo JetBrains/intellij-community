@@ -29,7 +29,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/231.0.0/find-action-model-231.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/231.0.0/find-action-model-231.0.0-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -39,7 +41,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/231.1.1/find-action-model-231.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/231.1.1/find-action-model-231.1.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -49,7 +53,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/223.1.0/find-file-model-223.1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/223.1.0/find-file-model-223.1.0-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -59,7 +65,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/231.1.1/find-file-model-231.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/231.1.1/find-file-model-231.1.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -69,7 +77,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231.0.0/find-classes-model-231.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231.0.0/find-classes-model-231.0.0-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -79,7 +89,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231.4.1/find-classes-model-231.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231.4.1/find-classes-model-231.4.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -89,7 +101,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/231.0.1/find-all-model-231.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/231.0.1/find-all-model-231.0.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.vcs" scope="RUNTIME" />

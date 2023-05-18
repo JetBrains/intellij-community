@@ -110,7 +110,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/carrotsearch/hppc/0.9.1/hppc-0.9.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/carrotsearch/hppc/0.9.1/hppc-0.9.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -188,7 +190,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/hankcs/aho-corasick-double-array-trie/1.2.3/aho-corasick-double-array-trie-1.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/hankcs/aho-corasick-double-array-trie/1.2.3/aho-corasick-double-array-trie-1.2.3-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -198,7 +202,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/vdurmont/emoji-java/5.1.1/emoji-java-5.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/vdurmont/emoji-java/5.1.1/emoji-java-5.1.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -208,7 +214,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/json/json/20170516/json-20170516.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/json/json/20170516/json-20170516-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.core.ui" />

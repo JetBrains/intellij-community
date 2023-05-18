@@ -5,6 +5,8 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.9.1/junit-vintage-engine-5.9.1.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.9.1/junit-vintage-engine-5.9.1-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

@@ -5,6 +5,8 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-slf4j/1.7.1/kotlinx-coroutines-slf4j-1.7.1.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-slf4j/1.6.4/kotlinx-coroutines-slf4j-1.6.4-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
