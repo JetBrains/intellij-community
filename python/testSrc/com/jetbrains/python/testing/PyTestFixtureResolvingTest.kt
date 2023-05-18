@@ -8,10 +8,10 @@ import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.testing.pyTestFixtures.*
 import junit.framework.TestCase
 
-class PyTestFixtureOverridingTest : PyTestCase() {
+class PyTestFixtureResolvingTest : PyTestCase() {
 
   companion object {
-    const val TESTS_SUBDIR = "/testPytestFixtureOverriding"
+    const val TESTS_SUBDIR = "/testPytestFixtureResolving"
 
     const val SIMPLE_TEST_DIR = "/testSimple"
     const val SIMPLE_TEST_CONFTEST_FIXTURE = "/test_conftest_fixture.py"
@@ -45,6 +45,12 @@ class PyTestFixtureOverridingTest : PyTestCase() {
     const val REQUEST_TEST_IN_FIXTURE = "/test_request_in_fixture.py"
     const val REQUEST_TEST_IN_TEST = "/test_request_in_test.py"
     const val REQUEST_USAGES_TEST = "${RESERVED_FIXTURES_TEST_DIR}/test_request_usages.py"
+
+    const val USE_FIXTURES_TEST_DIR_NAME = "testPytestMarkUseFixtures"
+    const val USE_FIXTURES_TEST_DIR = "/$USE_FIXTURES_TEST_DIR_NAME"
+    const val TEST_USE_FIXTURES_DECORATED_CLASS = "/test_decorator_for_class.py"
+    const val TEST_USE_FIXTURES_DECORATED_TEST = "/test_decorator_for_test.py"
+    const val TEST_USE_FIXTURES_EXPRESSION = "/test_expression.py"
   }
 
   override fun getTestDataPath() = super.getTestDataPath() + TESTS_SUBDIR
@@ -189,5 +195,17 @@ class PyTestFixtureOverridingTest : PyTestCase() {
       TestCase.assertNotNull(fixtureReference)
       assertEquals(fixture, fixtureReference?.element?.text)
     }
+  }
+
+  fun testUseFixturesDecoratedClass() {
+    assertCorrectFile(USE_FIXTURES_TEST_DIR, TEST_USE_FIXTURES_DECORATED_CLASS, CONFTEST_PY, USE_FIXTURES_TEST_DIR_NAME)
+  }
+
+  fun testUseFixturesDecoratedTest() {
+    assertCorrectFile(USE_FIXTURES_TEST_DIR, TEST_USE_FIXTURES_DECORATED_TEST, CONFTEST_PY, USE_FIXTURES_TEST_DIR_NAME)
+  }
+
+  fun testUseFixturesExpression() {
+    assertCorrectFile(USE_FIXTURES_TEST_DIR, TEST_USE_FIXTURES_EXPRESSION, CONFTEST_PY, USE_FIXTURES_TEST_DIR_NAME)
   }
 }
