@@ -67,10 +67,14 @@ abstract class AbstractKotlinAddImportActionTest : KotlinLightCodeInsightFixture
         myFixture.checkResultByFile("${fileName()}.after")
     }
 
+    private val debugRenderer = DescriptorRenderer.DEBUG_TEXT.withOptions {
+        annotationFilter = { false }
+    }
+
     private fun DeclarationDescriptor.variantName() = when(this) {
         is ClassDescriptor ->
-            fqNameOrNull()?.toString()?.let { "class $it" } ?: DescriptorRenderer.DEBUG_TEXT.render(this)
+            fqNameOrNull()?.toString()?.let { "class $it" } ?: debugRenderer.render(this)
         else ->
-            DescriptorRenderer.DEBUG_TEXT.render(this)
+            debugRenderer.render(this)
     }
 }
