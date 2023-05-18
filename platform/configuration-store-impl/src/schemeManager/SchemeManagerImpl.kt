@@ -354,6 +354,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
       catch (e: CancellationException) {
         throw e
       }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
       catch (e: Throwable) {
         errorCollector.addError(RuntimeException("Cannot save scheme $fileSpec/$scheme", e))
       }
