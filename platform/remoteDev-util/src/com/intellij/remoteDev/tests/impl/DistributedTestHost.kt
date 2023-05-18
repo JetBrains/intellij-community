@@ -127,7 +127,7 @@ class DistributedTestHost {
 
               // Execute test method
               lateinit var result: RdTask<Boolean>
-              val context = AgentContext(session.agentId, application, projectOrNull, protocol)
+              val context = AgentContext.create(session.agentId, application, projectOrNull, protocol)
               logger.info("'$actionTitle': starting action")
               val elapsedAction = measureTimeMillis {
                 result = action.action.invoke(context)
