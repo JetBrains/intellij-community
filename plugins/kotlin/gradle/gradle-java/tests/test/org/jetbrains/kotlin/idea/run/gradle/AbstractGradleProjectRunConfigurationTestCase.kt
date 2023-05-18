@@ -6,13 +6,11 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.run.getConfiguration
 import org.jetbrains.kotlin.idea.test.checkPluginIsCorrect
 import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertEquals
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleTestFixtureBuilderProvider
 
 abstract class AbstractGradleProjectRunConfigurationTestCase : GradleProjectTestCase() {
     open fun isFirPlugin(): Boolean = false
@@ -26,7 +24,7 @@ abstract class AbstractGradleProjectRunConfigurationTestCase : GradleProjectTest
     @TargetVersions("5.6.2")
     @AllGradleVersionsSource
     fun testInternalTest(gradleVersion: GradleVersion) {
-        test(gradleVersion, KOTLIN_PROJECT) {
+        test(gradleVersion, GradleTestFixtureBuilderProvider.KOTLIN_PROJECT) {
             val testFileRelativePath = "src/test/kotlin/org/example/TestCase.kt"
             val testFileText = """
                 |package org.example
@@ -45,20 +43,6 @@ abstract class AbstractGradleProjectRunConfigurationTestCase : GradleProjectTest
                 val methodConfiguration = getConfiguration(file, project, "test")
                 assertEquals("TestCase.test\$kotlin_plugin_project", methodConfiguration.configuration.name)
             }
-        }
-    }
-
-    companion object {
-        private val KOTLIN_PROJECT = GradleTestFixtureBuilder.create("kotlin-plugin-project") { gradleVersion ->
-            withSettingsFile {
-                setProjectName("kotlin-plugin-project")
-            }
-            withBuildFile(gradleVersion) {
-                withKotlinJvmPlugin()
-                withJUnit()
-            }
-            withDirectory("src/main/kotlin")
-            withDirectory("src/test/kotlin")
         }
     }
 }
