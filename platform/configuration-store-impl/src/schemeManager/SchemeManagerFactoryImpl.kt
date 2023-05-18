@@ -14,6 +14,7 @@ import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeProcessor
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.containers.ContainerUtil
@@ -23,7 +24,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import java.nio.file.Paths
 
 @NonNls const val ROOT_CONFIG = "\$ROOT_CONFIG$"
 
@@ -93,6 +93,9 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       catch (e: CancellationException) {
         throw e
       }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
       catch (e: Throwable) {
         LOG.error("Cannot reload settings for ${manager.javaClass.name}", e)
       }
@@ -103,11 +106,19 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
     var error: Throwable? = null
     for (registeredManager in managers) {
       try {
-        withContext(Dispatchers.EDT) {
+        if (registeredManager.isUseVfs) {
+          withContext(Dispatchers.EDT) {
+            registeredManager.save()
+          }
+        }
+        else {
           registeredManager.save()
         }
       }
       catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: ProcessCanceledException) {
         throw e
       }
       catch (e: Throwable) {
@@ -134,7 +145,12 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       if (path.startsWith(ROOT_CONFIG)) {
         path = path.substring(ROOT_CONFIG.length + 1)
         val message = "Path must not contains ROOT_CONFIG macro, corrected: $path"
-        if (ApplicationManager.getApplication().isUnitTestMode) throw AssertionError(message) else LOG.warn(message)
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+          throw AssertionError(message)
+        }
+        else {
+          LOG.warn(message)
+        }
       }
       return path
     }
@@ -167,17 +183,16 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
     override fun pathToFile(path: String): Path {
       if (project.isDefault) {
         // no idea how to solve this issue (run SingleInspectionProfilePanelTest) in a quick and safe way
-        return Paths.get("__not_existent_path__")
+        return Path.of("__not_existent_path__")
       }
 
       val projectStore = project.stateStore as? IProjectStore
       val projectFileDir = projectStore?.directoryStorePath
-      return if (projectFileDir == null) {
-        if (projectStore != null) projectStore.projectBasePath.resolve(".$path")
-        else Paths.get(project.basePath!!, ".$path")
+      if (projectFileDir == null) {
+        return if (projectStore != null) projectStore.projectBasePath.resolve(".$path") else Path.of(project.basePath!!, ".$path")
       }
       else {
-        projectFileDir.resolve(path)
+        return projectFileDir.resolve(path)
       }
     }
   }

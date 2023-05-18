@@ -53,7 +53,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   private val virtualFileResolver: VirtualFileResolver? = null,
   private val settingsCategory: SettingsCategory = SettingsCategory.OTHER
 ) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor, StorageManagerFileWriteRequestor {
-  private val isUseVfs: Boolean
+  internal val isUseVfs: Boolean
     get() = fileChangeSubscriber != null || virtualFileResolver != null
 
   internal val isOldSchemeNaming = schemeNameToFileName == OLD_NAME_CONVERTER
