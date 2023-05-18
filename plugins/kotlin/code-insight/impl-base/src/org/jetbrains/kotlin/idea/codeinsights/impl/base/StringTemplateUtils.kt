@@ -107,7 +107,7 @@ private fun KtExpression.dropToStringAndParenthesis(): KtExpression =
  *   this function can convert `bar` to "${bar}", `2.3f` to "2.3f", ...
  */
 context(KtAnalysisSession)
-private fun buildStringTemplateForExpression(expr: KtExpression?, forceBraces: Boolean): String {
+private fun buildStringTemplateForExpression(expr: KtExpression?, forceBraces: Boolean, nextText: String?): String {
     if (expr == null) return ""
     val expression = expr.dropToStringAndParenthesis()
 
@@ -116,7 +116,7 @@ private fun buildStringTemplateForExpression(expr: KtExpression?, forceBraces: B
     when (expression) {
         is KtConstantExpression -> return expression.buildStringTemplateForExpression(forceBraces) ?: defaultStringTemplateForExpression
 
-        is KtStringTemplateExpression -> return expression.buildStringTemplateForExpression(forceBraces)
+        is KtStringTemplateExpression -> return expression.buildStringTemplateForExpression(forceBraces, nextText)
 
         is KtNameReferenceExpression ->
             return "$" + (if (forceBraces) "{$expressionText}" else expressionText)
@@ -141,7 +141,7 @@ private fun KtConstantExpression.buildStringTemplateForExpression(forceBraces: B
     return null
 }
 
-private fun KtStringTemplateExpression.buildStringTemplateForExpression(forceBraces: Boolean): String {
+private fun KtStringTemplateExpression.buildStringTemplateForExpression(forceBraces: Boolean, nextText: String?): String {
     val base = if (text.startsWith(TRIPLE_DOUBLE_QUOTE) && text.endsWith(TRIPLE_DOUBLE_QUOTE)) {
         val unquoted =
             text.substring(TRIPLE_DOUBLE_QUOTE.length, text.length - TRIPLE_DOUBLE_QUOTE.length)
@@ -150,8 +150,11 @@ private fun KtStringTemplateExpression.buildStringTemplateForExpression(forceBra
         StringUtil.unquoteString(text)
     }
 
-    if (forceBraces) {
-        if (base.endsWith(char = '$')) {
+    val endsWithDollar = base.endsWith('$') && !base.endsWith("\\$")
+    val escapeTailDollar = endsWithDollar && nextText?.startsWith('{') == true
+
+    if (forceBraces || escapeTailDollar) {
+        if (endsWithDollar) {
             return base.dropLast(n = 1) + "\\$"
         } else {
             val lastPart = children.lastOrNull()
@@ -168,17 +171,17 @@ private fun foldOperandsOfBinaryExpression(left: KtExpression?, right: String, f
     val forceBraces = right.isNotEmpty() && right.first() != '$' && right.first().isJavaIdentifierPart()
 
     return if (left is KtBinaryExpression && isStringPlusExpressionWithoutNewLineInOperands(left)) {
-        val leftRight = buildStringTemplateForExpression(left.right, forceBraces)
+        val leftRight = buildStringTemplateForExpression(left.right, forceBraces, right)
         foldOperandsOfBinaryExpression(left.left, leftRight + right, factory)
     } else {
-        val leftText = buildStringTemplateForExpression(left, forceBraces)
+        val leftText = buildStringTemplateForExpression(left, forceBraces, right)
         factory.createExpression("\"$leftText$right\"") as KtStringTemplateExpression
     }
 }
 
 context(KtAnalysisSession)
 fun buildStringTemplateForBinaryExpression(expression: KtBinaryExpression): KtStringTemplateExpression {
-    val rightText = buildStringTemplateForExpression(expression.right, forceBraces = false)
+    val rightText = buildStringTemplateForExpression(expression.right, forceBraces = false, nextText = null)
     return foldOperandsOfBinaryExpression(expression.left, rightText, KtPsiFactory(expression))
 }
 

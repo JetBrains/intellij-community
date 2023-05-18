@@ -63,15 +63,15 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
             val forceBraces = right.isNotEmpty() && right.first() != '$' && right.first().isJavaIdentifierPart()
 
             return if (left is KtBinaryExpression && isApplicableToNoParentCheck(left)) {
-                val leftRight = buildText(left.right, forceBraces)
+                val leftRight = buildText(left.right, forceBraces, right)
                 fold(left.left, leftRight + right, factory)
             } else {
-                val leftText = buildText(left, forceBraces)
+                val leftText = buildText(left, forceBraces, right)
                 factory.createExpression("\"$leftText$right\"") as KtStringTemplateExpression
             }
         }
 
-        fun buildText(expr: KtExpression?, forceBraces: Boolean): String {
+        fun buildText(expr: KtExpression?, forceBraces: Boolean, nextText: String? = null): String {
             if (expr == null) return ""
             val expression = KtPsiUtil.safeDeparenthesize(expr).let {
                 when {
@@ -107,8 +107,11 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
                         StringUtil.unquoteString(expressionText)
                     }
 
-                    if (forceBraces) {
-                        if (base.endsWith('$')) {
+                    val endsWithDollar = base.endsWith('$') && !base.endsWith("\\$")
+                    val escapeTailDollar = endsWithDollar && nextText?.startsWith('{') == true
+
+                    if (forceBraces || escapeTailDollar) {
+                        if (endsWithDollar) {
                             return base.dropLast(1) + "\\$"
                         } else {
                             val lastPart = expression.children.lastOrNull()
