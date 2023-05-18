@@ -12743,6 +12743,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/lambdaToAnonymousFunction/suspendFunction.kt");
         }
 
+        @TestMetadata("suspendVariable.kt")
+        public void testSuspendVariable() throws Exception {
+            runTest("testData/intentions/lambdaToAnonymousFunction/suspendVariable.kt");
+        }
+
         @TestMetadata("underscoreParameter.kt")
         public void testUnderscoreParameter() throws Exception {
             runTest("testData/intentions/lambdaToAnonymousFunction/underscoreParameter.kt");
