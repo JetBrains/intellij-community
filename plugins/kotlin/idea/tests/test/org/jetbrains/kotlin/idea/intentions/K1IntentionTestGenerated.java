@@ -6344,6 +6344,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/convertLambdaToReference/object.kt");
             }
 
+            @TestMetadata("object2.kt")
+            public void testObject2() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/object2.kt");
+            }
+
+            @TestMetadata("object3.kt")
+            public void testObject3() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/object3.kt");
+            }
+
             @TestMetadata("outerClassFunction.kt")
             public void testOuterClassFunction() throws Exception {
                 runTest("testData/intentions/convertLambdaToReference/outerClassFunction.kt");

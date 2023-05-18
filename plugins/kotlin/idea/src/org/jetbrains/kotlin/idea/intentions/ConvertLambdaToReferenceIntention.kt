@@ -137,6 +137,15 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
         ) return false
 
         val explicitReceiverDescriptor = (explicitReceiver as? KtNameReferenceExpression)?.let { context[REFERENCE_TARGET, it] }
+
+        if (explicitReceiverDescriptor is ValueParameterDescriptor &&
+            explicitReceiverDescriptor in lambdaValueParameterDescriptors &&
+            explicitReceiverDescriptor.isObject()
+        ) {
+            // Avoid the problem with object's callable references: KT-33885
+            return false
+        }
+
         val lambdaParameterAsExplicitReceiver = when (noBoundReferences) {
             true -> explicitReceiver != null
             false -> explicitReceiverDescriptor != null && explicitReceiverDescriptor == lambdaValueParameterDescriptors.firstOrNull()
@@ -417,6 +426,11 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             else -> null
         }
         return memberScope?.getContributedFunctions(name, NoLookupLocation.FROM_IDE).orEmpty()
+    }
+
+    private fun ValueParameterDescriptor.isObject(): Boolean {
+        val classDescriptor = type.constructor.declarationDescriptor as? ClassDescriptor
+        return classDescriptor?.kind == ClassKind.OBJECT
     }
 
     companion object {
