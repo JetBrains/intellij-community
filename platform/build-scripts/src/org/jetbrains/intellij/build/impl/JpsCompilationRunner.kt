@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.diagnostic.telemetry.impl.use
 import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.util.containers.MultiMap
+import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -43,6 +44,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
+import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -462,7 +464,8 @@ private class JpsMessageHandler(private val context: CompilationContext) : Messa
       return
     }
 
-    Files.newBufferedWriter(context.paths.buildOutputDir.resolve("log/compilation-time.csv")).use { out ->
+    val csvPath = context.paths.logDir.resolve("compilation-time.csv").also { it.createParentDirs() }
+    Files.newBufferedWriter(csvPath).use { out ->
       compilationFinishTimeForTarget.forEach(BiConsumer { k, v ->
         val startTime = compilationStartTimeForTarget.getValue(k) - compilationStart
         val finishTime = v - compilationStart
