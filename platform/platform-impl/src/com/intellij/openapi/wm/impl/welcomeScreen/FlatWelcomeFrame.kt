@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent.Companion.getCustomContentHolder
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.DefaultFrameHeader
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.JActionLinkPanel
 import com.intellij.ui.*
@@ -50,7 +51,6 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import com.intellij.util.ui.update.UiNotifyConnector
-import com.jetbrains.JBR
 import kotlinx.coroutines.launch
 import net.miginfocom.swing.MigLayout
 import java.awt.*
@@ -214,9 +214,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
   }
 
   override fun addNotify() {
-    if (IdeFrameDecorator.isCustomDecorationActive()) {
-      JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true)
-    }
+    CustomHeader.enableCustomHeader(this)
     super.addNotify()
   }
 
