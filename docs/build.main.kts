@@ -1,6 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Repository("https://repo1.maven.org/maven2/")
-@file:DependsOn("net.sourceforge.plantuml:plantuml:1.2021.6")
+@file:DependsOn("net.sourceforge.plantuml:plantuml:1.2023.7")
 
 import net.sourceforge.plantuml.FileFormat
 import net.sourceforge.plantuml.FileFormatOption
