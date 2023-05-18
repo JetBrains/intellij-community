@@ -2,17 +2,13 @@
 package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.renderer.DescriptorRenderer
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import java.io.File
 
-abstract class AbstractKotlinAddImportActionTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractAddImportActionTestBase : KotlinLightCodeInsightFixtureTestCase() {
 
-    protected fun doTest(unused: String) {
+    protected open fun doTest(unused: String) {
         val fixture = myFixture
 
         val dependencySuffixes = listOf(".dependency.kt", ".dependency1.kt", ".dependency2.kt")
@@ -29,9 +25,9 @@ abstract class AbstractKotlinAddImportActionTest : KotlinLightCodeInsightFixture
 
         fixture.configureByFile(fileName())
 
-        var actualVariants: List<List<DeclarationDescriptor>>? = null
+        var actualVariants: List<List<String>>? = null
         val executeListener = object : KotlinAddImportActionInfo.ExecuteListener {
-            override fun onExecute(variants: List<List<DeclarationDescriptor>>) {
+            override fun onExecute(variants: List<List<String>>) {
                 assertNull(actualVariants)
                 actualVariants = variants
             }
@@ -47,7 +43,7 @@ abstract class AbstractKotlinAddImportActionTest : KotlinLightCodeInsightFixture
         val expectedAbsentVariantNames = InTextDirectivesUtils.findListWithPrefixes(fixture.file.text, "EXPECT_VARIANT_NOT_PRESENT")
 
         if (expectedVariantNames.isNotEmpty() || expectedAbsentVariantNames.isNotEmpty()) {
-            val actualVariantNames = actualVariants!!.flatten().map { it.variantName() }
+            val actualVariantNames = actualVariants!!.flatten()
 
             for (i in expectedVariantNames.indices) {
                 assertTrue(
@@ -65,16 +61,5 @@ abstract class AbstractKotlinAddImportActionTest : KotlinLightCodeInsightFixture
         }
 
         myFixture.checkResultByFile("${fileName()}.after")
-    }
-
-    private val debugRenderer = DescriptorRenderer.DEBUG_TEXT.withOptions {
-        annotationFilter = { false }
-    }
-
-    private fun DeclarationDescriptor.variantName() = when(this) {
-        is ClassDescriptor ->
-            fqNameOrNull()?.toString()?.let { "class $it" } ?: debugRenderer.render(this)
-        else ->
-            debugRenderer.render(this)
     }
 }

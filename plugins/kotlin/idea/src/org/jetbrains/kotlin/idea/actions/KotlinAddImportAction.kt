@@ -49,7 +49,9 @@ import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.ImportPath
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JPanel
@@ -180,7 +182,9 @@ class KotlinAddImportAction internal constructor(
         if (!element.isValid) return false
 
         val variantsList = variantsList()
-        KotlinAddImportActionInfo.executeListener?.onExecute(variantsList.map { it.descriptorsToImport.toList() })
+        KotlinAddImportActionInfo.executeListener?.onExecute(variantsList.map {
+            it.descriptorsToImport.map { descriptorToImport -> descriptorToImport.variantNameForDebug() }.toList()
+        })
 
         if (variantsList.isEmpty()) return false
 
@@ -290,6 +294,20 @@ class KotlinAddImportAction internal constructor(
                     ImportInsertHelper.getInstance(project).importDescriptor(file, descriptor)
                 }
             }
+        }
+    }
+
+    companion object {
+        private val debugRenderer = DescriptorRenderer.DEBUG_TEXT.withOptions {
+            annotationFilter = { false }
+        }
+
+        private fun DeclarationDescriptor.variantNameForDebug() = when (this) {
+            is ClassDescriptor ->
+                fqNameOrNull()?.toString()?.let { "class $it" } ?: debugRenderer.render(this)
+
+            else ->
+                debugRenderer.render(this)
         }
     }
 }
@@ -418,21 +436,4 @@ private class SingleImportVariant(
     project = project,
 ) {
     override val hint: String get() = excludeFqNameCheck.asString()
-}
-
-/** Test hooks allowing inspection of data used for KotlinAddImportAction. **/
-object KotlinAddImportActionInfo {
-    interface ExecuteListener {
-        fun onExecute(variants: List<List<DeclarationDescriptor>>)
-    }
-
-    @Volatile
-    internal var executeListener: ExecuteListener? = null
-
-    @TestOnly
-    fun setExecuteListener(disposable: Disposable, listener: ExecuteListener) {
-        assert(executeListener == null)
-        executeListener = listener
-        Disposer.register(disposable) { executeListener = null }
-    }
 }

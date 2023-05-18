@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.fir.uast.test.*
 import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightTests
+import org.jetbrains.kotlin.idea.fir.actions.AbstractK2AddImportActionTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractIdeKotlinAnnotationsResolverTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
@@ -88,6 +89,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
     testGroup("fir", testDataPath = "../idea/tests/testData") {
+        testClass<AbstractK2AddImportActionTest> {
+            model("idea/actions/kotlinAddImportAction", pattern = KT_WITHOUT_DOTS)
+        }
+
         testClass<AbstractFirReferenceResolveTest> {
             model("resolve/references", pattern = KT_WITHOUT_DOTS)
         }
