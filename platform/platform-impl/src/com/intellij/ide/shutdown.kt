@@ -23,8 +23,8 @@ private val LOG = Logger.getInstance("#com.intellij.ide.shutdown")
 internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
   EDT.assertIsEdt()
   LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed)
-  cancelAndJoinBlocking(application.coroutineScope, debugString = "Application $application") { job ->
-    IdeEventQueue.getInstance().pumpEventsUntilJobIsCompleted(job)
+  cancelAndJoinBlocking(application.coroutineScope, debugString = "Application $application") { containerJob ->
+    IdeEventQueue.getInstance().pumpEventsUntilJobIsCompleted(containerJob)
   }
 }
 
