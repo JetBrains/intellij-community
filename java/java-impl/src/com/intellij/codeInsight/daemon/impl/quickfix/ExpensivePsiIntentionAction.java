@@ -8,15 +8,16 @@ import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * IntentionAction which is related to some very expensive PSI computations, e.g., import java class fix.
- * Usually this action instantiated in the background and performs very expensive computations in its constructor and invalidate their results on any PSI modification.
+ * {@link IntentionAction} which performs some very expensive PSI computations, e.g., imports java class.
+ * Usually this action instantiated in the background and performs very expensive computations in its constructor
+ * and invalidates their results on any PSI modification.
  */
 public abstract class ExpensivePsiIntentionAction implements IntentionAction {
   @SuppressWarnings("ActionIsNotPreviewFriendly") protected final Project myProject;
   private final long myPsiModificationCount;
 
   protected ExpensivePsiIntentionAction(@NotNull Project project) {
-    // there is a lot of PSI computations and resolve going on here, ensure no freezes are reported
+    // there are a lot of PSI computations and resolve going on here, ensure no freezes are reported
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myProject = project;

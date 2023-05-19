@@ -16,7 +16,7 @@ import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-val EP_NAME = ExtensionPointName<EmptyIntentionProvider>("com.intellij.emptyIntentionProvider")
+val EP_NAME: ExtensionPointName<EmptyIntentionProvider> = ExtensionPointName<EmptyIntentionProvider>("com.intellij.emptyIntentionProvider")
 
 @ApiStatus.Internal
 interface EmptyIntentionProvider {
@@ -29,10 +29,10 @@ class EmptyIntentionGeneratorIntention(val name: @IntentionFamilyName String, va
     EP_NAME.extensionList.any { it.invoke(project, editor, file, template) }
   }
 
-  override fun startInWriteAction() = true
-  override fun getText() = name
-  override fun getFamilyName() = name
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = true
+  override fun startInWriteAction(): Boolean = true
+  override fun getText(): @IntentionFamilyName String = name
+  override fun getFamilyName(): @IntentionFamilyName String = name
+  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = true
 
   override fun getIcon(@IconFlags flags: Int): Icon =
     if (getBoolean("ide.experimental.ui")) EmptyIcon.ICON_0 else AllIcons.Actions.RealIntentionBulb
