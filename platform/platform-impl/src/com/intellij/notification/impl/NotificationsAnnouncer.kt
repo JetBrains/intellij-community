@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
@@ -59,6 +60,8 @@ object NotificationsAnnouncer {
   }
 
   private fun findCaller(frame: JFrame): Accessible? {
+    (frame.rootPane as? IdeRootPane)?.let { return it }
+
     var caller = callersCache.firstOrNull { it.isValid && it.frame === frame }?.accessible
     if (caller == null){
       callersCache.removeAll { !it.isValid }
@@ -76,7 +79,8 @@ object NotificationsAnnouncer {
 
   private fun announceComponents(components: List<String>, caller: Accessible, mode: Int) {
     val text = StringUtil.join(components, ". ")
-    if (LOG.isDebugEnabled) LOG.debug("Notification will be announced with mode=$mode, from caller=$caller, text=$text")
+    if (LOG.isDebugEnabled)
+      LOG.info("Notification will be announced with mode=$mode, from caller=$caller, text=$text")
 
     AccessibleAnnouncerUtil.announce(caller, text, mode != 1)
   }
@@ -119,6 +123,6 @@ object NotificationsAnnouncer {
     val frame: JFrame? get() = frameWeak.get()
     val accessible: Accessible? get() = accessibleWeak.get()
     val isValid: Boolean get() = frame != null &&
-                                 accessible?.let { it is JComponent && it.isVisible } == true
+                                 accessible?.let { it is JComponent && it.isVisible && it.isValid } == true
   }
 }
