@@ -125,7 +125,7 @@ class FSRecordsOracle(
         return fsRecords.readAttributeWithLock(fileId, fileAttribute).let(State::Ready)
       }
 
-      override fun getRecoverableChildrenIds(): State.DefinedState<RecoveredChildrenIds> {
+      override fun getChildrenIds(): State.DefinedState<RecoveredChildrenIds> {
         if (point() == vfsLogContext.operationLogStorage.end()) {
           val childrenIds = fsRecords.listIds(fileId).toList()
           return object : RecoveredChildrenIds, List<Int> by childrenIds {

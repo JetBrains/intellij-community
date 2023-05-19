@@ -40,7 +40,7 @@ class NotAvailableVfsSnapshot(point: OperationLogStorage.Iterator) : VfsSnapshot
     override val parent: Property<VirtualFileSnapshot?> = NotAvailableProp()
     override fun getContent(): State.DefinedState<ByteArray> = State.NotAvailable()
     override fun readAttribute(fileAttribute: FileAttribute): State.DefinedState<AttributeInputStream?> = State.NotAvailable()
-    override fun getRecoverableChildrenIds(): State.DefinedState<VirtualFileSnapshot.RecoveredChildrenIds> = State.NotAvailable()
+    override fun getChildrenIds(): State.DefinedState<VirtualFileSnapshot.RecoveredChildrenIds> = State.NotAvailable()
 
     class NotAvailableProp<T> : Property<T>() {
       override fun compute(): State.DefinedState<T> = State.NotAvailable()
@@ -130,7 +130,7 @@ class CacheAwareVfsSnapshot(
       }
     }
 
-    override fun getRecoverableChildrenIds(): State.DefinedState<VirtualFileSnapshot.RecoveredChildrenIds> {
+    override fun getChildrenIds(): State.DefinedState<VirtualFileSnapshot.RecoveredChildrenIds> {
       return VfsChronicle.restoreChildrenIds(point(), fileId).let(State::Ready)
     }
 

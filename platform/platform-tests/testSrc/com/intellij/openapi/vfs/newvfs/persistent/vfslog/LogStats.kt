@@ -296,8 +296,8 @@ private fun vfsRecoveryDraft(log: VfsLog,
                 println("MOVE FROM PARENT ${oldParent.name} to ${newParent.name}")
                 //println("old parent's children ids before: ${oldParent.readChildAttr()}")
                 //println("old parent's children ids after: ${oldParentAfter.readChildAttr()}")
-                println("old parent's children ids before: ${oldParent.getRecoverableChildrenIds().fmap { it.map { snapshotBefore.getFileById(it).name } }}")
-                println("old parent's children ids after: ${oldParentAfter.getRecoverableChildrenIds().fmap { it.map { snapshotAfter.getFileById(it).name } }}")
+                println("old parent's children ids before: ${oldParent.getChildrenIds().fmap { it.map { snapshotBefore.getFileById(it).name } }}")
+                println("old parent's children ids after: ${oldParentAfter.getChildrenIds().fmap { it.map { snapshotAfter.getFileById(it).name } }}")
               }
               VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE -> {
                 val startOp =

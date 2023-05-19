@@ -37,7 +37,7 @@ interface VfsSnapshot {
      * @return [State.NotAvailable] if recovery is not possible at all, [State.Ready] if an attempt to recover children ids was made,
      * but be cautious that the result may be incomplete in any case: some children ids may get lost if log was truncated from the start.
      */
-    fun getRecoverableChildrenIds(): DefinedState<RecoveredChildrenIds>
+    fun getChildrenIds(): DefinedState<RecoveredChildrenIds>
 
     interface RecoveredChildrenIds: List<Int> {
       /**
