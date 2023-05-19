@@ -70,7 +70,7 @@ object IteratorUtils {
           .onInvalid { return ReadResult.Invalid(it) } as OperationReadResult.Incomplete
         if (rec.tag.isVFileEventStartOperation) {
           // found start, validate it
-          if (prev is OperationReadResult.Valid) {
+          if (prev is OperationReadResult.Complete) {
             val op = prev.operation as VfsOperation.VFileEventOperation.EventEnd
             if (op.eventTag != rec.tag) {
               return ReadResult.Invalid(
@@ -116,7 +116,7 @@ object IteratorUtils {
           .onInvalid { return ReadResult.Invalid(it) }
         if (rec.getTag() == VfsOperationTag.VFILE_EVENT_END) {
           // found END, validate it
-          if (rec is OperationReadResult.Valid) {
+          if (rec is OperationReadResult.Complete) {
             val op = rec.operation as VfsOperation.VFileEventOperation.EventEnd
             if (op.eventTag != tag) {
               return ReadResult.Invalid(

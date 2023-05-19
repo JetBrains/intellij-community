@@ -22,13 +22,14 @@ class VfsLog(
   private val storagePath: Path,
   private val readOnly: Boolean = false
 ) {
-  private var version by PersistentVar.integer(storagePath / "version")
+  var version by PersistentVar.integer(storagePath / "version")
+    private set
 
   init {
     version.let {
       if (it != VERSION) {
         if (it != null) {
-          LOG.info("VFS Log version differs from the implementation version: log $it vs implementation $VERSION")
+          LOG.info("VfsLog storage version differs from the implementation version: log $it vs implementation $VERSION")
         }
         if (!readOnly) {
           if (it != null) {
@@ -56,8 +57,17 @@ class VfsLog(
     }
 
     fun dispose() {
+      // cancellation of writing coroutines will lead to incomplete descriptors being written instead of the actual data
+      if (operationLogStorage.size() != operationLogStorage.emergingSize()) {
+        LOG.warn("VfsLog didn't manage to write all data before disposal. Some data about the last operations will be lost: " +
+                 "size=${operationLogStorage.size()}, emergingSize=${operationLogStorage.emergingSize()}")
+      }
       coroutineScope.cancel("dispose")
       flush()
+      if (operationLogStorage.persistentSize() != operationLogStorage.emergingSize()) {
+        // If it happens, then there are active writers at disposal (VFS is still working and interceptors enqueue operations)
+        LOG.error("after cancellation: persistentSize=${operationLogStorage.persistentSize()}, emergingSize=${operationLogStorage.emergingSize()}")
+      }
       operationLogStorage.dispose()
       payloadStorage.dispose()
     }
@@ -114,7 +124,7 @@ class VfsLog(
   companion object {
     private val LOG = Logger.getInstance(VfsLog::class.java)
 
-    const val VERSION: Int = -48
+    const val VERSION = 1
 
     @JvmField
     val LOG_VFS_OPERATIONS_ENABLED: Boolean = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)

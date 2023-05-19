@@ -157,7 +157,7 @@ class OperationLogStorageImpl(
       //descrData.copyOfRange(VfsOperationTag.SIZE_BYTES, descrSize - VfsOperationTag.SIZE_BYTES),
       stringEnumerator
     )
-    return OperationReadResult.Valid(op)
+    return OperationReadResult.Complete(op)
   }
 
   private fun recoverOperationTag(position: Long, buf: ByteArray): OperationReadResult {
@@ -230,7 +230,7 @@ class OperationLogStorageImpl(
 
     private fun OperationReadResult.alsoAdvance() = this.also {
       when (this) {
-        is OperationReadResult.Valid -> position += bytesForOperationDescriptor(operation.tag)
+        is OperationReadResult.Complete -> position += bytesForOperationDescriptor(operation.tag)
         is OperationReadResult.Incomplete -> position += bytesForOperationDescriptor(tag)
         is OperationReadResult.Invalid -> invalidationFlag = true
       }
@@ -238,7 +238,7 @@ class OperationLogStorageImpl(
 
     private fun OperationReadResult.alsoRetreat() = this.also {
       when (this) {
-        is OperationReadResult.Valid -> position -= bytesForOperationDescriptor(operation.tag)
+        is OperationReadResult.Complete -> position -= bytesForOperationDescriptor(operation.tag)
         is OperationReadResult.Incomplete -> position -= bytesForOperationDescriptor(tag)
         is OperationReadResult.Invalid -> invalidationFlag = true
       }
