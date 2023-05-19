@@ -8,14 +8,19 @@ import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.title.CustomHeaderTitle
+import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI
+import com.jetbrains.CustomWindowDecoration.MENU_BAR
+import com.jetbrains.CustomWindowDecoration.OTHER_HIT_SPOT
 import net.miginfocom.swing.MigLayout
 import java.awt.Frame
+import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import javax.swing.event.ChangeListener
+import kotlin.math.roundToInt
 
 internal class MenuFrameHeader(frame: JFrame,
                                private val headerTitle: CustomHeaderTitle,
@@ -35,7 +40,7 @@ internal class MenuFrameHeader(frame: JFrame,
     add(productIcon)
 
     changeListener = ChangeListener {
-      updateCustomTitleBar()
+      updateCustomDecorationHitTestSpots()
     }
 
     headerTitle.onBoundsChanged = { windowStateChanged() }
@@ -50,12 +55,13 @@ internal class MenuFrameHeader(frame: JFrame,
     view.border = empty
 
     add(view, "left, growx, gapbottom 1")
+    add(buttonPanes.getView(), "top, wmin pref")
 
     setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})
 
     mainMenuUpdater = UISettingsListener {
       menuHolder.isVisible = UISettings.getInstance().showMainMenu
-      SwingUtilities.invokeLater { updateCustomTitleBar() }
+      SwingUtilities.invokeLater { updateCustomDecorationHitTestSpots() }
     }
 
     menuHolder.isVisible = UISettings.getInstance().showMainMenu
@@ -94,5 +100,21 @@ internal class MenuFrameHeader(frame: JFrame,
     }
 
     super.uninstallListeners()
+  }
+
+  override fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>> {
+    var hitTestSpots = super.getHitTestSpots()
+    if (menuHolder.isVisible) {
+      val menuRect = Rectangle(menuHolder.size)
+
+      val state = frame.extendedState
+      if (state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH) {
+        val topGap = (menuRect.height / 3).toFloat().roundToInt()
+        menuRect.y += topGap
+        menuRect.height -= topGap
+      }
+      hitTestSpots += Pair(RelativeRectangle(menuHolder, menuRect), MENU_BAR)
+    }
+    return hitTestSpots + headerTitle.getBoundList().asSequence().map { Pair(it, OTHER_HIT_SPOT) }
   }
 }

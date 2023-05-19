@@ -11,12 +11,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ToolbarHolder
+import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.util.ui.JBUI
+import com.jetbrains.CustomWindowDecoration
 import com.jetbrains.JBR
 import java.awt.CardLayout
 import java.awt.Component
@@ -73,11 +75,11 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
 
   private fun createToolBar(): MainToolbar {
     val toolbar = MainToolbar()
-    toolbar.layoutCallBack = { updateCustomTitleBar() }
+    toolbar.layoutCallBack = { updateCustomDecorationHitTestSpots() }
     toolbar.isOpaque = false
     toolbar.addComponentListener(object: ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
-        updateCustomTitleBar()
+        updateCustomDecorationHitTestSpots()
         super.componentResized(e)
       }
     })
@@ -119,7 +121,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     toolbar.init(actionGroups)
 
     revalidate()
-    updateCustomTitleBar()
+    updateCustomDecorationHitTestSpots()
 
     updateToolbarHasNoActions(actionGroups)
   }
@@ -146,11 +148,18 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     super.addNotify()
     updateBorders()
 
-    JBR.getWindowDecorations()?.let {
-      val bar = it.createCustomTitleBar()
-      bar.height= DEFAULT_HEADER_HEIGHT.toFloat()
-      it.setCustomTitleBar(frame, bar)
-    }
+    val decor = JBR.getCustomWindowDecoration()
+    decor.setCustomDecorationTitleBarHeight(frame, DEFAULT_HEADER_HEIGHT)
+  }
+
+  override fun createButtonsPane(): CustomFrameTitleButtons = CustomFrameTitleButtons.create(myCloseAction)
+
+  override fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>> {
+    return (toolbar ?: return emptySequence())
+      .components
+      .asSequence()
+      .filter { it.isVisible }
+      .map { Pair(getElementRect(it), CustomWindowDecoration.MENU_BAR) }
   }
 
   override fun updateMenuActions(forceRebuild: Boolean) = ideMenu.updateMenuActions(forceRebuild)

@@ -25,7 +25,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.ui.*
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.ui.ImageUtil
@@ -303,7 +302,9 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     override fun toggleFullScreen(state: Boolean): Job = CompletableDeferred(value = Unit)
 
     override fun addNotify() {
-      CustomHeader.enableCustomHeader(this)
+      if (IdeFrameDecorator.isCustomDecorationActive()) {
+        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true)
+      }
       super.addNotify()
     }
 

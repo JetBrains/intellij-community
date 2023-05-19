@@ -12,7 +12,12 @@ import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.ui.*
+import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
+import com.intellij.ui.AppUIUtil
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
+import com.intellij.ui.UIBundle
+import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
@@ -22,10 +27,10 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
-import com.jetbrains.WindowDecorations
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
+import java.util.*
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.*
@@ -50,16 +55,6 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
       val scale = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration.defaultTransform.scaleY
       floor(scale).toInt()
     }
-
-    @JvmStatic
-    fun enableCustomHeader(w: Window) {
-      JBR.getWindowDecorations()?.let {
-        val bar = it.createCustomTitleBar()
-        bar.height = 1f
-        if (w is Dialog) it.setCustomTitleBar(w, bar)
-        else if (w is Frame) it.setCustomTitleBar(w, bar)
-      }
-    }
   }
 
   private var windowListener: WindowAdapter
@@ -69,7 +64,6 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   protected var myActive = false
 
   private var customFrameTopBorder: CustomFrameTopBorder? = null
-  protected val customTitleBar: WindowDecorations.CustomTitleBar?
 
   private val icon: Icon
     get() = getFrameIcon()
@@ -87,6 +81,10 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   protected val productIcon: JComponent by lazy {
     createProductIcon()
+  }
+
+  protected val buttonPanes: CustomFrameTitleButtons by lazy {
+    createButtonsPane()
   }
 
   init {
@@ -118,13 +116,11 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
     componentListener = object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
-        SwingUtilities.invokeLater { updateCustomTitleBar() }
+        SwingUtilities.invokeLater { updateCustomDecorationHitTestSpots() }
       }
     }
 
     setCustomFrameTopBorder()
-
-    customTitleBar = JBR.getWindowDecorations()?.createCustomTitleBar()
   }
 
   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
@@ -134,8 +130,10 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     border = customFrameTopBorder
   }
 
+  abstract fun createButtonsPane(): CustomFrameTitleButtons
+
   open fun windowStateChanged() {
-    updateCustomTitleBar()
+    updateCustomDecorationHitTestSpots()
   }
 
   protected var added = false
@@ -144,7 +142,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     super.addNotify()
     added = true
     installListeners()
-    updateCustomTitleBar()
+    updateCustomDecorationHitTestSpots()
     customFrameTopBorder!!.addNotify()
   }
 
@@ -169,42 +167,41 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     window.removeComponentListener(componentListener)
   }
 
-  protected open fun updateCustomTitleBar() {
-    if (!added || customTitleBar == null) {
+  protected fun updateCustomDecorationHitTestSpots() {
+    if (!added || !JBR.isCustomWindowDecorationSupported()) {
       return
     }
-
+    val decor = JBR.getCustomWindowDecoration()
     if ((window is JDialog && window.isUndecorated) ||
         (window is JFrame && window.isUndecorated)) {
-      setCustomToolbar(null)
+      decor.setCustomDecorationHitTestSpots(window, Collections.emptyList())
+      decor.setCustomDecorationTitleBarHeight(window, 0)
     }
     else {
       if (height == 0) return
-      customTitleBar.height = (height - insets.bottom).toFloat()
-      setCustomToolbar(customTitleBar)
-    }
-
-    border = JBUI.Borders.empty(0, customTitleBar.leftInset.toInt(), 0, customTitleBar.rightInset.toInt())
-  }
-
-  private fun setCustomToolbar(toolbar: WindowDecorations.CustomTitleBar?) {
-    JBR.getWindowDecorations()?.let {
-      if (window is Dialog) it.setCustomTitleBar(window, toolbar)
-      else if (window is Frame) it.setCustomTitleBar(window, toolbar)
+      val toList = getHitTestSpots().map { java.util.Map.entry(it.first.getRectangleOn(window), it.second) }.toList()
+      decor.setCustomDecorationHitTestSpots(window, toList)
+      decor.setCustomDecorationTitleBarHeight(window, height + window.insets.top - insets.bottom)
     }
   }
+
+  /**
+   * Pairs of rectangles and integer constants from {@link com.jetbrains.CustomWindowDecoration} describing type of the spot
+   */
+  abstract fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>>
 
   private fun setActive(value: Boolean) {
     myActive = value
     updateActive()
-    updateCustomTitleBar()
+    updateCustomDecorationHitTestSpots()
   }
 
   protected open fun updateActive() {
+    buttonPanes.isSelected = myActive
+    buttonPanes.updateVisibility()
     customFrameTopBorder?.repaintBorder()
 
     background = getHeaderBackground(myActive)
-    customTitleBar?.putProperty("controls.dark", ColorUtil.isDark(background))
   }
 
   protected val myCloseAction: Action = CustomFrameAction(CommonBundle.getCloseButtonText(), AllIcons.Windows.CloseSmall) { close() }

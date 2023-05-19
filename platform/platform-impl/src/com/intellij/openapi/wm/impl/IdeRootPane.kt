@@ -26,7 +26,6 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarCentralWidgetProvider
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFloatingMenuBarSupported
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MenuFrameHeader
@@ -135,7 +134,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
     else {
       if (isDecoratedMenu) {
-        CustomHeader.enableCustomHeader(frame)
+        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(frame, true)
 
         val selectedEditorFilePath: SelectedEditorFilePath?
         val customFrameTitlePane = if (ExperimentalUI.isNewUI()) {
@@ -230,7 +229,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
       // some rootPane is required
       val rootPane = JRootPane()
       if (isDecoratedMenu && !isFloatingMenuBarSupported) {
-        CustomHeader.enableCustomHeader(frame)
+        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(frame, true)
       }
       frame.doSetRootPane(rootPane)
       if (SystemInfoRt.isMac) {

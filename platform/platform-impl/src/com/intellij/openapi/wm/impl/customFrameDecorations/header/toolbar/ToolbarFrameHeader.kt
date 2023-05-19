@@ -27,15 +27,16 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
+import com.jetbrains.CustomWindowDecoration.MENU_BAR
 import java.awt.*
-import java.awt.GridBagConstraints.CENTER
-import java.awt.GridBagConstraints.WEST
+import java.awt.GridBagConstraints.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
+import kotlin.math.roundToInt
 
 private enum class ShowMode {
   MENU, TOOLBAR
@@ -83,7 +84,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
 
   private val contentResizeListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
-      updateCustomTitleBar()
+      updateCustomDecorationHitTestSpots()
     }
   }
 
@@ -102,6 +103,8 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     productIcon.border = JBUI.Borders.empty(V, 0, V, 0)
     add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(H))
     add(myHeaderContent, gb.next().fillCell().anchor(CENTER).weightx(1.0).weighty(1.0))
+    val buttonsView = wrap(buttonPanes.getView())
+    add(buttonsView, gb.next().anchor(EAST))
 
     setCustomFrameTopBorder({ false }, {true})
 
@@ -143,7 +146,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     removeToolbar()
 
     val toolbar = MainToolbar()
-    toolbar.layoutCallBack = { updateCustomTitleBar() }
+    toolbar.layoutCallBack = { updateCustomDecorationHitTestSpots() }
     toolbar.init(toolbarActionGroups)
     toolbar.isOpaque = false
     toolbar.addComponentListener(contentResizeListener)
@@ -172,6 +175,10 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
 
   private fun updateMenuBarAppearance() {
     menuBarHeaderTitle.isVisible = (isCompact && mode == ShowMode.MENU)
+  }
+
+  private fun updateTitleButtonsMode() {
+    buttonPanes.isCompactMode = isCompact
   }
 
   override fun installListeners() {
@@ -215,8 +222,30 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
   }
 
   private fun updateToolbarAppearanceFromMode() {
+    updateTitleButtonsMode()
     updateMenuButtonMinimumSize()
     if (mode == ShowMode.MENU) updateMenuBarAppearance()
+  }
+
+  override fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>> {
+    return when (mode) {
+      ShowMode.MENU -> {
+        super.getHitTestSpots() + Pair(getElementRect(myMenuBar) { rect ->
+          val state = frame.extendedState
+          if (state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH) {
+            val topGap = (rect.height / 3).toFloat().roundToInt()
+            rect.y += topGap
+            rect.height -= topGap
+          }
+        }, MENU_BAR)
+      }
+      ShowMode.TOOLBAR -> {
+        super.getHitTestSpots() +
+        Pair(getElementRect(mainMenuButton.button), MENU_BAR) +
+        if (isCompact) emptySequence()
+        else (toolbar?.components?.asSequence()?.filter { it.isVisible }?.map { Pair(getElementRect(it), MENU_BAR) } ?: emptySequence())
+      }
+    }
   }
 
   override fun getHeaderBackground(active: Boolean) = CustomFrameDecorations.mainToolbarBackground(active)
