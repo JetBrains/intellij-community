@@ -33,6 +33,7 @@ class ProjectWindowCustomizerService : Disposable {
   private var wasGradientPainted = false
   private var ourSettingsValue = UISettings.getInstance().differentiateProjects
   private val colorCache = mutableMapOf<String, Color>()
+  private val iconCache = mutableMapOf<String, Icon>()
   private val listeners = mutableListOf<(Boolean) -> Unit>()
 
   private val colors: Array<Color>
@@ -50,7 +51,12 @@ class ProjectWindowCustomizerService : Disposable {
 
   fun getProjectIcon(project: Project): Icon {
     val path = getProjectPath(project)
-    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path, true)
+    return iconCache.getOrPut(path) {
+      Disposer.register(project) {
+        iconCache.remove(path)
+      }
+      RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path, true)
+    }
   }
 
   private fun getProjectPath(project: Project): String {
@@ -151,17 +157,10 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   private fun computeOrGetColor(projectPath: String, disposable: Disposable): Color {
-    val c = colorCache[projectPath]
-    if (c != null) {
-      return c
+    return colorCache.getOrPut(projectPath) {
+      Disposer.register(disposable) { colorCache.remove(projectPath) }
+      ColorPalette.select(colors, projectPath)
     }
-
-    val color = ColorPalette.select(colors, projectPath)
-    colorCache[projectPath] = color
-
-    Disposer.register(disposable) { colorCache.remove(projectPath) }
-
-    return color
   }
 
   override fun dispose() {}
