@@ -301,6 +301,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMigrationCodeInspection"
                      key="inspection.light.service.migration.display.name"/>
+    <localInspection language="UAST" shortName="AnActionInitializesTemplatePresentationInCtor"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.AnActionInitializesTemplatePresentationInCtorInspection"
+                     key="inspection.an.action.initializes.template.presentation.in.ctor.display.name"/>
     <localInspection language="UAST" shortName="NonDefaultConstructor"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
