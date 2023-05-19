@@ -546,17 +546,17 @@ public class MavenUtil {
     return true;
   }
 
-  public static void run(Project project, @NlsContexts.DialogTitle String title, final MavenTask task)
+  public static void run(@NlsContexts.DialogTitle String title, final MavenTask task)
     throws MavenProcessCanceledException {
     final Exception[] canceledEx = new Exception[1];
     final RuntimeException[] runtimeEx = new RuntimeException[1];
     final Error[] errorEx = new Error[1];
 
-    ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
+    ProgressManager.getInstance().run(new Task.Modal(null, title, true) {
       @Override
       public void run(@NotNull ProgressIndicator i) {
         try {
-          task.run(new MavenProgressIndicator(project, i, null));
+          task.run(new MavenProgressIndicator(null, i, null));
         }
         catch (MavenProcessCanceledException | ProcessCanceledException e) {
           canceledEx[0] = e;
@@ -577,6 +577,7 @@ public class MavenUtil {
   }
 
   @NotNull
+  // used in third-party plugins
   public static MavenTaskHandler runInBackground(@NotNull Project project,
                                                  @NotNull @NlsContexts.Command String title,
                                                  boolean cancellable,

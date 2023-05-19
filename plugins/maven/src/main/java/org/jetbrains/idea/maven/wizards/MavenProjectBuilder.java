@@ -255,10 +255,15 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     }
 
     boolean isFromUI = model != null;
+    List<Module> createdModules;
     if (isFromUI) {
-      return manager.importProjects(new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel));
+      var modelsProvider = new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel);
+      createdModules = manager.importProjects(modelsProvider);
     }
-    return manager.importProjects();
+    else {
+      createdModules = manager.importProjects();
+    }
+    return createdModules;
   }
 
   private @Nullable Module createPreviewModule(Project project, List<MavenProject> selectedProjects) {
@@ -329,7 +334,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
   private static boolean runConfigurationProcess(@NlsContexts.DialogTitle String message, MavenTask p) {
     try {
-      MavenUtil.run(null, message, p);
+      MavenUtil.run(message, p);
     }
     catch (MavenProcessCanceledException e) {
       return false;
