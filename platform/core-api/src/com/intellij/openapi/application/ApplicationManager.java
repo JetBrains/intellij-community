@@ -56,7 +56,9 @@ public class ApplicationManager {
     });
   }
 
-  private static final List<Runnable> cleaners = ContainerUtil.createLockFreeCopyOnWriteList(Collections.singletonList(()->CachedSingletonsRegistry.INSTANCE.cleanupCachedFields()));
+  private static final List<Runnable> cleaners =
+    ContainerUtil.createLockFreeCopyOnWriteList(Collections.singletonList(() -> CachedSingletonsRegistry.INSTANCE.cleanupCachedFields()));
+
   /**
    * register cleaning operation to be run when the Application instance is reset, for example, in tests
    */

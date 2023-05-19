@@ -4,10 +4,13 @@ package com.intellij.openapi.progress;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.ProgressDetails;
 import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +28,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public static @NotNull ProgressManager getInstance() {
     ProgressManager instance = ourInstance;
     if (instance == null) {
-      ourInstance = instance = ApplicationManager.getApplication().getService(ProgressManager.class);
+      instance = ApplicationManager.getApplication().getService(ProgressManager.class);
+      ourInstance = instance;
     }
     return instance;
   }

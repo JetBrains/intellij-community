@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -10,15 +9,25 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public abstract class ManagingFS implements FileSystemInterface {
-  private static final Supplier<ManagingFS> ourInstance = CachedSingletonsRegistry.lazy(() -> {
-    return ApplicationManager.getApplication().getService(ManagingFS.class);
-  });
+  private static ManagingFS ourInstance;
 
   public static ManagingFS getInstance() {
-    return ourInstance.get();
+    ManagingFS instance = ourInstance;
+    if (instance == null) {
+      instance = ApplicationManager.getApplication().getService(ManagingFS.class);
+      ourInstance = instance;
+    }
+    return instance;
+  }
+
+  public static ManagingFS getInstanceOrNull() {
+    return ourInstance;
+  }
+
+  static {
+    ApplicationManager.registerCleaner(() -> ourInstance = null);
   }
 
   @Nullable
