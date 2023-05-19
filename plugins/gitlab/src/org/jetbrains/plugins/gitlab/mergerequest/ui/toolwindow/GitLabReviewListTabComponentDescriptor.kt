@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
@@ -43,18 +44,18 @@ internal class GitLabReviewListTabComponentDescriptor(
       projectData = projectData
     )
 
+    val accountVm = GitLabAccountViewModelImpl(project, cs, ctx.account, accountManager)
+
     viewModel = GitLabMergeRequestsListViewModelImpl(
       cs,
       filterVm = filterVm,
       repository = ctx.projectName,
-      account = ctx.account,
       avatarIconsProvider = avatarIconsProvider,
-      accountManager = accountManager,
       tokenRefreshFlow = ctx.tokenRefreshFlow,
       loaderSupplier = { filtersValue -> projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
     )
 
-    component = GitLabMergeRequestsPanelFactory().create(project, cs, viewModel).also {
+    component = GitLabMergeRequestsPanelFactory().create(cs, accountVm, viewModel).also {
       DataManager.registerDataProvider(it) { dataId ->
         when {
           GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> ctx.filesController

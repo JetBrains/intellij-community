@@ -43,21 +43,21 @@ private val LOG = logger<GitLabMergeRequestTimelineViewModel>()
 class LoadAllGitLabMergeRequestTimelineViewModel(
   parentCs: CoroutineScope,
   override val currentUser: GitLabUserDTO,
-  private val project: GitLabProject,
+  project: GitLabProject,
   mrId: GitLabMergeRequestId
 ) : GitLabMergeRequestTimelineViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)
+  private val mrStore = project.mergeRequests
   private val loadingRequests = MutableSharedFlow<Unit>(1)
 
   private val mergeRequestFlow: Flow<Result<GitLabMergeRequest>> = loadingRequests.flatMapLatest {
-    project.mergeRequests.getShared(mrId)
+    mrStore.getShared(mrId)
   }.modelFlow(cs, LOG)
 
   override val timelineLoadingFlow: Flow<LoadingState> = channelFlow {
-    send(LoadingState.Loading)
-
     mergeRequestFlow.collectLatest { mrResult ->
+      send(LoadingState.Loading)
       coroutineScope {
         val result = try {
           val mr = mrResult.getOrThrow()

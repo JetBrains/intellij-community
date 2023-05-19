@@ -43,9 +43,7 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
 
     // Init a list VM with mocked loader
     GitLabMergeRequestsListViewModelImpl(parentCs = cs, filterVm = filterVm, repository = "",
-                                         account = mock(),
                                          avatarIconsProvider = mock(),
-                                         accountManager = mock(),
                                          tokenRefreshFlow = mock(),
                                          loaderSupplier = loaderSupplierMock)
     verify(loaderSupplierMock, times(1)).invoke(GitLabMergeRequestsFiltersValue.DEFAULT)
@@ -78,9 +76,7 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
 
     // Init a list VM with mocked loader
     GitLabMergeRequestsListViewModelImpl(parentCs = cs, filterVm = filterVm, repository = "",
-                                         account = mock(),
                                          avatarIconsProvider = mock(),
-                                         accountManager = mock(),
                                          tokenRefreshFlow = mock(),
                                          loaderSupplier = loaderSupplierMock)
 
@@ -106,9 +102,7 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
     val loaderSupplierMock = mock<(GitLabMergeRequestsFiltersValue) -> GitLabMergeRequestsListLoader>()
 
     GitLabMergeRequestsListViewModelImpl(parentCs = cs, filterVm = filterVm, repository = "",
-                                         account = mock(),
                                          avatarIconsProvider = mock(),
-                                         accountManager = mock(),
                                          tokenRefreshFlow = mock(),
                                          loaderSupplier = loaderSupplierMock)
 

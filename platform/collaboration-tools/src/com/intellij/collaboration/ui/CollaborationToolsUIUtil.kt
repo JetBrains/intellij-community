@@ -139,6 +139,17 @@ object CollaborationToolsUIUtil {
   }
 
   /**
+   * Wrap component with [SingleComponentCenteringLayout] to show component in a center
+   */
+  @Internal
+  fun moveToCenter(component: JComponent): JComponent {
+    return JPanel(SingleComponentCenteringLayout()).apply {
+      isOpaque = false
+      add(component)
+    }
+  }
+
+  /**
    * Adds actions to transfer focus by tab/shift-tab key for given [component].
    *
    * May be helpful for overwriting tab symbol input for text fields

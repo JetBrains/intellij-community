@@ -6,11 +6,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel.LoadingState
@@ -34,19 +32,25 @@ internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
   project: Project,
   parentScope: CoroutineScope,
   currentUser: GitLabUserDTO,
-  projectData: GitLabProject,
+  private val projectData: GitLabProject,
   private val mergeRequestId: GitLabMergeRequestId
 ) : GitLabMergeRequestDetailsLoadingViewModel {
   private val scope = parentScope.childScope(Dispatchers.Default)
 
+  private val mrStore = projectData.mergeRequests
+
   private val loadingRequests = MutableSharedFlow<Unit>(1)
 
-  override val mergeRequestLoadingFlow: Flow<LoadingState> = loadingRequests.transformLatest {
-    emit(LoadingState.Loading)
-    projectData.mergeRequests.getShared(mergeRequestId).collectLatest {
+  private val mergeRequestFlow: Flow<Result<GitLabMergeRequest>> = loadingRequests.flatMapLatest {
+    mrStore.getShared(mergeRequestId)
+  }.modelFlow(scope, LOG)
+
+  override val mergeRequestLoadingFlow: Flow<LoadingState> = channelFlow {
+    mergeRequestFlow.collectLatest { mrResult ->
+      send(LoadingState.Loading)
       coroutineScope {
         val result = try {
-          val detailsVm = GitLabMergeRequestDetailsViewModelImpl(project, scope, currentUser, projectData, it.getOrThrow())
+          val detailsVm = GitLabMergeRequestDetailsViewModelImpl(project, scope, currentUser, projectData, mrResult.getOrThrow())
           LoadingState.Result(detailsVm)
         }
         catch (ce: CancellationException) {
@@ -55,11 +59,11 @@ internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
         catch (e: Exception) {
           LoadingState.Error(e)
         }
-        emit(result)
+        send(result)
         awaitCancellation()
       }
     }
-  }.modelFlow(scope, LOG)
+  }
 
   override fun requestLoad() {
     scope.launch {

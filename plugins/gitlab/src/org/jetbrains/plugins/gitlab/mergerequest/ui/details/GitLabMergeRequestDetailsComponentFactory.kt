@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.details.*
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.emptyBorders
@@ -18,16 +19,19 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.flowOf
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangesViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -37,7 +41,8 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     project: Project,
     scope: CoroutineScope,
     detailsLoadingVm: GitLabMergeRequestDetailsLoadingViewModel,
-    avatarIconsProvider: IconsProvider<GitLabUserDTO>
+    accountVm: GitLabAccountViewModel,
+    avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   ): JComponent {
     return Wrapper().apply {
       isOpaque = false
@@ -46,7 +51,11 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       bindContentIn(scope, detailsLoadingVm.mergeRequestLoadingFlow) { loadingState ->
         when (loadingState) {
           GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Loading -> LoadingLabel()
-          is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Error -> SimpleHtmlPane(loadingState.exception.localizedMessage)
+          is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Error -> {
+            val errorPresenter = GitLabMergeRequestErrorStatusPresenter(accountVm)
+            val errorPanel = ErrorStatusPanelFactory.create(scope, flowOf(loadingState.exception), errorPresenter)
+            CollaborationToolsUIUtil.moveToCenter(errorPanel)
+          }
           is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result -> {
             val detailsVm = loadingState.detailsVm
             val detailsPanel = createDetailsComponent(project, detailsVm, avatarIconsProvider).apply {

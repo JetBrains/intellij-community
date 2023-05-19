@@ -14,8 +14,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
@@ -24,10 +22,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsList
 internal interface GitLabMergeRequestsListViewModel : ReviewListViewModel {
   val filterVm: GitLabMergeRequestsFiltersViewModel
   val avatarIconsProvider: IconsProvider<GitLabUserDTO>
-  val accountManager: GitLabAccountManager
 
   val repository: String
-  val account: GitLabAccount
 
   val listDataFlow: Flow<ListDataUpdate>
   val canLoadMoreState: StateFlow<Boolean>
@@ -49,9 +45,7 @@ internal class GitLabMergeRequestsListViewModelImpl(
   parentCs: CoroutineScope,
   override val filterVm: GitLabMergeRequestsFiltersViewModel,
   override val repository: String,
-  override val account: GitLabAccount,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-  override val accountManager: GitLabAccountManager,
   private val tokenRefreshFlow: Flow<Unit>,
   private val loaderSupplier: (GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestDetails>)
   : GitLabMergeRequestsListViewModel {

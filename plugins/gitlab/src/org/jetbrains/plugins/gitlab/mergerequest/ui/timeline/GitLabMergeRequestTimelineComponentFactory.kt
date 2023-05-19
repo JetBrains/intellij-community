@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
@@ -20,7 +21,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
@@ -29,68 +29,75 @@ import com.intellij.util.ui.StyleSheetUtil
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
-import javax.swing.JLabel
 
-object GitLabMergeRequestTimelineComponentFactory {
+internal object GitLabMergeRequestTimelineComponentFactory {
   fun create(project: Project,
              cs: CoroutineScope,
-             vm: GitLabMergeRequestTimelineViewModel,
-             avatarIconsProvider: IconsProvider<GitLabUserDTO>): JComponent {
-    val timelinePanel = Wrapper()
+             timelineVm: GitLabMergeRequestTimelineViewModel,
+             accountVm: GitLabAccountViewModel,
+             avatarIconsProvider: IconsProvider<GitLabUserDTO>
+  ): JComponent {
+    val timelineWrapper = Wrapper()
+    val timelineComponents = Wrapper()
+    val loadedTimelinePanel = VerticalListPanel(0).apply {
+      add(timelineComponents)
+      bindChildIn(cs, timelineVm.newNoteVm, null) { editVm ->
+        editVm?.let { createNewNoteField(project, avatarIconsProvider, it) }
+      }
+    }
 
     cs.launch {
-      vm.timelineLoadingFlow.mapScoped { state ->
+      timelineVm.timelineLoadingFlow.mapScoped { state ->
         when (state) {
           LoadingState.Loading -> {
-            JLabel(AnimatedIcon.Default()).apply {
+            LoadingLabel().apply {
               border = Borders.empty(ComponentType.FULL.paddingInsets)
             }
           }
           is LoadingState.Error -> {
-            SimpleHtmlPane(state.exception.localizedMessage).apply {
-              border = Borders.empty(ComponentType.FULL.paddingInsets)
-            }
+            val errorPresenter = GitLabMergeRequestErrorStatusPresenter(accountVm)
+            val errorPanel = ErrorStatusPanelFactory.create(cs, flowOf(state.exception), errorPresenter)
+            CollaborationToolsUIUtil.moveToCenter(errorPanel)
           }
           is LoadingState.Result -> {
-            createLoadedTimelineComponent(this, project, avatarIconsProvider, state)
+            val content = createLoadedTimelineComponent(this, project, avatarIconsProvider, state)
+            timelineComponents.apply {
+              setContent(content)
+              repaint()
+            }
+            loadedTimelinePanel
           }
           else -> null
         }
       }.collect {
-        timelinePanel.setContent(it)
-        timelinePanel.repaint()
+        timelineWrapper.setContent(it)
+        timelineWrapper.repaint()
       }
     }
 
-    val panel = VerticalListPanel(0).apply {
-      add(timelinePanel)
-    }
-
-    panel.bindChildIn(cs, vm.newNoteVm, null) { editVm ->
-      editVm?.let { createNewNoteField(project, avatarIconsProvider, it) }
-    }
-
-    return ScrollPaneFactory.createScrollPane(panel, true).apply {
+    return ScrollPaneFactory.createScrollPane(timelineWrapper, true).apply {
       viewport.isOpaque = false
       CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }
     }.also {
       UiNotifyConnector.doWhenFirstShown(it) {
-        vm.requestLoad()
+        timelineVm.requestLoad()
       }
     }
   }

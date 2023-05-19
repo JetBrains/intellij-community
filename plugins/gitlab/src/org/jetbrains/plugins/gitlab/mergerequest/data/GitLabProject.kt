@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
@@ -27,13 +28,14 @@ class GitLabLazyProject(
   private val project: Project,
   parentCs: CoroutineScope,
   private val api: GitLabApi,
-  override val projectMapping: GitLabProjectMapping
+  override val projectMapping: GitLabProjectMapping,
+  private val tokenRefreshFlow: Flow<Unit>
 ) : GitLabProject {
 
   private val cs = parentCs.childScope()
 
   override val mergeRequests by lazy {
-    CachingGitLabProjectMergeRequestsStore(project, cs, api, projectMapping)
+    CachingGitLabProjectMergeRequestsStore(project, cs, api, projectMapping, tokenRefreshFlow)
   }
 
   private val allLabels = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {

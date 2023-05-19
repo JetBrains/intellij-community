@@ -4,13 +4,13 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.project.Project
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabFiltersPanelFactory
@@ -21,8 +21,8 @@ import javax.swing.event.ChangeEvent
 
 internal class GitLabMergeRequestsPanelFactory {
 
-  fun create(project: Project,
-             scope: CoroutineScope,
+  fun create(scope: CoroutineScope,
+             accountVm: GitLabAccountViewModel,
              listVm: GitLabMergeRequestsListViewModel): JComponent {
 
     val listModel = collectMergeRequests(scope, listVm)
@@ -48,7 +48,7 @@ internal class GitLabMergeRequestsPanelFactory {
 
     val searchPanel = createSearchPanel(scope, listVm)
 
-    GitLabMergeRequestsListController(project, scope, listVm, listMergeRequests.emptyText, listLoaderPanel, listWrapper)
+    GitLabMergeRequestsListController(scope, accountVm, listVm, listMergeRequests.emptyText, listLoaderPanel, listWrapper)
 
     return JBUI.Panels.simplePanel(progressStripe)
       .addToTop(searchPanel)

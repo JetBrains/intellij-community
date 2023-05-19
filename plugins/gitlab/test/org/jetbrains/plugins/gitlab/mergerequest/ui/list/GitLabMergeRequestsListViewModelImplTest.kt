@@ -32,9 +32,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   fun `loading state`() = runTest {
     val cs = childScope()
     val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "",
-                                                  account = mock(),
                                                   avatarIconsProvider = mock(),
-                                                  accountManager = mock(),
                                                   tokenRefreshFlow = mock(),
                                                   loaderSupplier = delayingLoader { emptyList<GitLabMergeRequestDetails>() to true })
 
@@ -56,9 +54,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   fun `refresh while loading`() = runTest {
     val cs = childScope()
     val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "",
-                                                  account = mock(),
                                                   avatarIconsProvider = mock(),
-                                                  accountManager = mock(),
                                                   tokenRefreshFlow = mock(),
                                                   delayingLoader { emptyList<GitLabMergeRequestDetails>() to true })
 
@@ -83,9 +79,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   fun `refresh after loading`() = runTest {
     val cs = childScope()
     val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "",
-                                                  account = mock(),
                                                   avatarIconsProvider = mock(),
-                                                  accountManager = mock(),
                                                   tokenRefreshFlow = mock(),
                                                   delayingLoader { emptyList<GitLabMergeRequestDetails>() to true })
 
@@ -115,9 +109,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   fun `request processing continues after loading cancellation`() = runTest {
     val cs = childScope()
     val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "",
-                                                  account = mock(),
                                                   avatarIconsProvider = mock(),
-                                                  accountManager = mock(),
                                                   tokenRefreshFlow = mock(),
                                                   delayingLoader { throw CancellationException() })
 
@@ -138,9 +130,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   fun `error state`() = runTest {
     val cs = childScope()
     val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "",
-                                                  account = mock(),
                                                   avatarIconsProvider = mock(),
-                                                  accountManager = mock(),
                                                   tokenRefreshFlow = mock(),
                                                   delayingLoader { error("test") })
 

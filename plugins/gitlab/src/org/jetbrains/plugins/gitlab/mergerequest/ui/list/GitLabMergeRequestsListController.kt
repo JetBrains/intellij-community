@@ -4,27 +4,27 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
-import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.StatusText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class GitLabMergeRequestsListController(
-  project: Project,
   scope: CoroutineScope,
+  accountVm: GitLabAccountViewModel,
   private val listVm: GitLabMergeRequestsListViewModel,
   private val emptyText: StatusText,
   private val listPanel: JComponent,
   private val mainPanel: Wrapper,
 ) {
-  private val errorPanel: JComponent = createErrorPanel(project, scope, listVm)
+  private val errorPanel: JComponent = createErrorPanel(scope, accountVm)
 
   init {
     scope.launch {
@@ -62,8 +62,8 @@ internal class GitLabMergeRequestsListController(
     }
   }
 
-  private fun createErrorPanel(project: Project, scope: CoroutineScope, listVm: GitLabMergeRequestsListViewModel): JComponent {
-    val errorPresenter = GitLabMergeRequestErrorStatusPresenter(project, scope, listVm.account, listVm.accountManager)
+  private fun createErrorPanel(scope: CoroutineScope, accountVm: GitLabAccountViewModel): JComponent {
+    val errorPresenter = GitLabMergeRequestErrorStatusPresenter(accountVm)
     val errorPanel = ErrorStatusPanelFactory.create(scope, listVm.errorState, errorPresenter)
 
     return JPanel(SingleComponentCenteringLayout()).apply {

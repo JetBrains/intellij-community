@@ -155,6 +155,15 @@ suspend fun <T> Flow<T>.collectWithPrevious(initial: T, collector: suspend (prev
   }
 }
 
+@ApiStatus.Experimental
+fun <T> Flow<T>.channelWithInitial(initialValue: T): Flow<T> =
+  channelFlow {
+    send(initialValue)
+    collect {
+      send(it)
+    }
+  }
+
 /**
  * Lazy shared flow that logs all exceptions as errors and never throws (beside cancellation)
  */

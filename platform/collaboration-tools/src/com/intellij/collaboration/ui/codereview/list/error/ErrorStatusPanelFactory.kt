@@ -9,7 +9,7 @@ import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
@@ -26,7 +26,7 @@ object ErrorStatusPanelFactory {
 
   fun <T> create(
     scope: CoroutineScope,
-    errorState: StateFlow<T?>,
+    errorState: Flow<T?>,
     errorPresenter: ErrorStatusPresenter<T>
   ): JComponent {
     val htmlEditorPane = JEditorPane().apply {
@@ -44,7 +44,7 @@ object ErrorStatusPanelFactory {
 
   private class Controller<T>(
     scope: CoroutineScope,
-    errorState: StateFlow<T?>,
+    errorState: Flow<T?>,
     private val errorPresenter: ErrorStatusPresenter<T>,
     private val htmlEditorPane: JEditorPane
   ) {
