@@ -252,11 +252,6 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
   }
 
   private static void writeAttachmentToErrorDir(Attachment attachment, Path path) {
-    var executor = AppExecutorUtil.getAppScheduledExecutorService();
-    var counter = new AtomicInteger(0);
-    var isDone = new AtomicBoolean(false);
-
-    Path attachmentPath = Paths.get(attachment.getPath());
     try {
       Files.writeString(path, attachment.getDisplayText(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
       Files.writeString(path, System.lineSeparator(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
@@ -264,44 +259,6 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     catch (Exception e) {
       LOG.warn("Failed to write attachment `display text`", e);
     }
-
-    var task = new Runnable() {
-      @Override
-      public void run() {
-        if (isDone.get()) return;
-
-        try (FileChannel channel = FileChannel.open(attachmentPath, StandardOpenOption.READ)) {
-          channel.lock();
-
-          int bufferSize = 1024;
-          if (bufferSize > channel.size()) {
-            bufferSize = (int)channel.size();
-          }
-          ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
-
-          try (var writer = Files.newByteChannel(path)) {
-            while (channel.read(buffer) > 0) {
-              writer.write(buffer);
-              buffer.clear();
-            }
-          }
-
-          isDone.set(true);
-        }
-        catch (Exception e) {
-          LOG.warn("Failed to store attachment", e);
-        }
-        finally {
-          if (counter.getAndIncrement() >= 5) {
-            LOG.warn(String.format("Unable to store attachment %s %s to path %s",
-                                   attachment.getName(), attachment.getPath(), path.toString()));
-            isDone.set(true);
-          }
-        }
-      }
-    };
-
-    executor.scheduleWithFixedDelay(task, 0, 200, TimeUnit.MILLISECONDS);
   }
 
   @NotNull
