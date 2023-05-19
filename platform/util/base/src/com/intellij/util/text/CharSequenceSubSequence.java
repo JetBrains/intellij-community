@@ -74,6 +74,7 @@ public class CharSequenceSubSequence implements CharSequence, CharArrayExternali
   }
 
   private transient int hash;
+
   @Override
   public int hashCode() {
     int h = hash;
@@ -87,8 +88,9 @@ public class CharSequenceSubSequence implements CharSequence, CharArrayExternali
   public boolean equals(Object obj) {
     if (obj == this) return true;
     if (obj instanceof CharSequence) {
-      return StringUtilRt.equal(this, (CharSequence) obj, true);
-    } else {
+      return StringUtilRt.equal(this, (CharSequence)obj, true);
+    }
+    else {
       return false;
     }
   }
