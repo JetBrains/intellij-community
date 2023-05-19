@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
 import com.intellij.openapi.project.Project
@@ -43,8 +43,8 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
 
   internal class ModuleManagerInitProjectActivity : InitProjectActivity {
     override suspend fun run(project: Project) {
-      val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
-      var activity = StartUpMeasurer.startActivity("firing modules_added event", ActivityCategory.DEFAULT)
+      val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
+      var activity = StartUpMeasurer.startActivity("firing modules_added event")
       val modules = moduleManager.modules().toList()
       fireModulesAdded(project, modules)
 
