@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-import static com.intellij.ide.ShutdownKt.joinBlocking;
+import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 
 @ApiStatus.Internal
@@ -219,7 +219,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @TestOnly
   public void disposeContainer() {
-    joinBlocking(this);
+    cancelAndJoinBlocking(this);
     runWriteAction(() -> {
       startDispose();
       Disposer.dispose(this);

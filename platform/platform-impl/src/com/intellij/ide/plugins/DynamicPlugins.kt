@@ -14,8 +14,8 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.RevealFileAction
+import com.intellij.ide.cancelAndJoinBlocking
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.joinBlocking
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
@@ -546,7 +546,7 @@ object DynamicPlugins {
     }
     finally {
       IdeEventQueue.getInstance().flushQueue()
-      joinPluginScopes(classLoaders)
+      cancelAndJoinPluginScopes(classLoaders)
 
       // do it after IdeEventQueue.flushQueue() to ensure that Disposer.isDisposed(...) works as expected in flushed tasks.
       Disposer.clearDisposalTraces()   // ensure we don't have references to plugin classes in disposal backtraces
@@ -960,12 +960,12 @@ private fun clearNewFocusOwner() {
   }
 }
 
-private fun joinPluginScopes(classLoaders: WeakList<PluginClassLoader>) {
+private fun cancelAndJoinPluginScopes(classLoaders: WeakList<PluginClassLoader>) {
   if (!Registry.`is`("ide.await.scope.completion")) {
     return
   }
   for (classLoader in classLoaders) {
-    joinBlocking(classLoader.pluginCoroutineScope, "Plugin ${classLoader.pluginId}") { job ->
+    cancelAndJoinBlocking(classLoader.pluginCoroutineScope, "Plugin ${classLoader.pluginId}") { job ->
       while (job.isActive) {
         ProgressManager.checkCanceled()
         IdeEventQueue.getInstance().flushQueue()

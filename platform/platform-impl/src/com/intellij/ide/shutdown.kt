@@ -20,23 +20,23 @@ private val LOG = Logger.getInstance("#com.intellij.ide.shutdown")
 
 // todo convert ApplicationImpl and IdeEventQueue to kotlin
 
-internal fun joinBlocking(application: ApplicationImpl) {
+internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
   EDT.assertIsEdt()
   LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed)
-  joinBlocking(application.coroutineScope, debugString = "Application $application") { job ->
+  cancelAndJoinBlocking(application.coroutineScope, debugString = "Application $application") { job ->
     IdeEventQueue.getInstance().pumpEventsUntilJobIsCompleted(job)
   }
 }
 
-internal fun joinBlocking(project: ProjectImpl) {
-  joinBlocking(project.coroutineScope, debugString = "Project $project") { job ->
+internal fun cancelAndJoinBlocking(project: ProjectImpl) {
+  cancelAndJoinBlocking(project.coroutineScope, debugString = "Project $project") { job ->
     runBlockingModal(ModalTaskOwner.guess(), IdeBundle.message("progress.closing.project"), TaskCancellation.nonCancellable()) {
       job.join()
     }
   }
 }
 
-internal fun joinBlocking(containerScope: CoroutineScope, debugString: String, pumpEvents: (Job) -> Unit) {
+internal fun cancelAndJoinBlocking(containerScope: CoroutineScope, debugString: String, pumpEvents: (Job) -> Unit) {
   if (!Registry.`is`("ide.await.scope.completion", true)) {
     return
   }
