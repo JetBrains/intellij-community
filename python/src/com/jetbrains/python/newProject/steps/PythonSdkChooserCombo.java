@@ -50,9 +50,6 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
                                @Nullable String newProjectPath,
                                @NotNull final Condition<? super Sdk> acceptableSdkCondition) {
     super(new ComboBox<>());
-    /**
-     * @deprecated the value of the field is not used anywhere internally
-     */
     final Sdk initialSelection = ContainerUtil.find(sdks, acceptableSdkCondition);
     final JComboBox comboBox = getComboBox();
     comboBox.setModel(new CollectionComboBoxModel(sdks, initialSelection));
