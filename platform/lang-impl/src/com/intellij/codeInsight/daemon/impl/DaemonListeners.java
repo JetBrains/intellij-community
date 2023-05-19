@@ -405,9 +405,11 @@ public final class DaemonListeners implements Disposable {
     HeavyProcessLatch.INSTANCE.addListener(this, __ -> stopDaemon(true, "re-scheduled to execute after heavy processing finished"));
   }
 
-  private void removeAllHighlightersFromHighlightPasses(@NotNull Document document, @NotNull Project project) {
+  private static void removeAllHighlightersFromHighlightPasses(@NotNull Document document, @NotNull Project project) {
     MarkupModel model = DocumentMarkupModel.forDocument(document, project, false);
-    if (model == null) return;
+    if (model == null) {
+      return;
+    }
     for (RangeHighlighter highlighter : model.getAllHighlighters()) {
       Object tooltip = highlighter.getErrorStripeTooltip();
       if (tooltip instanceof HighlightInfo) {
