@@ -198,7 +198,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
   @Override
   public @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
-    return myFix.getRangesToHighlight(editor.getProject(), myDescriptor);
+    return myFix.getRangesToHighlight(file.getProject(), myDescriptor);
   }
 
   private static class ModCommandQuickFixAction implements ModCommandAction {
