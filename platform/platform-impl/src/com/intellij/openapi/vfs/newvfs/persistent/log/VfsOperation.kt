@@ -267,6 +267,23 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         }
       }
     }
+
+    companion object {
+      val <T: Any> RecordsOperation<T>.fileId: Int? get() = when (this) {
+        is AllocateRecord -> if (result.hasValue) result.value else null
+        is CleanRecord -> fileId
+        is FillRecord -> fileId
+        is MarkRecordAsModified -> fileId
+        is SetAttributeRecordId -> fileId
+        is SetContentRecordId -> fileId
+        is SetFlags -> fileId
+        is SetLength -> fileId
+        is SetNameId -> fileId
+        is SetParent -> fileId
+        is SetTimestamp -> fileId
+        is SetVersion -> null
+      }
+    }
   }
 
   sealed class AttributesOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {
@@ -294,7 +311,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
     }
 
     class DeleteAttributes(val fileId: Int, result: OperationResult<Unit>)
-      : RecordsOperation<Unit>(VfsOperationTag.ATTR_DELETE_ATTRS, result) {
+      : AttributesOperation<Unit>(VfsOperationTag.ATTR_DELETE_ATTRS, result) {
       internal companion object : Serializer<DeleteAttributes> {
         override val valueSizeBytes: Int = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): DeleteAttributes =
@@ -312,7 +329,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
     }
 
     class SetVersion(val version: Int, result: OperationResult<Unit>)
-      : RecordsOperation<Unit>(VfsOperationTag.ATTR_SET_VERSION, result) {
+      : AttributesOperation<Unit>(VfsOperationTag.ATTR_SET_VERSION, result) {
       internal companion object : Serializer<AttributesOperation.SetVersion> {
         override val valueSizeBytes: Int = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): AttributesOperation.SetVersion =

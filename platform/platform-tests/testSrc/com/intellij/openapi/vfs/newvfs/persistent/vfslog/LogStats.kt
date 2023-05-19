@@ -71,7 +71,7 @@ private fun calcStats(log: VfsLog): Stats {
               stats.operationsCount.incrementAndGet()
               stats.incompleteTagsCount.compute(it.tag, ::incStat)
             }
-            is OperationReadResult.Valid -> {
+            is OperationReadResult.Complete -> {
               stats.operationsCount.incrementAndGet()
               if (!it.operation.result.hasValue) stats.exceptionResultCount.incrementAndGet()
               stats.tagsCount.compute(it.operation.tag, ::incStat)
@@ -286,7 +286,7 @@ private fun vfsRecoveryDraft(log: VfsLog,
             when (rec.startTag) {
               VfsOperationTag.VFILE_EVENT_MOVE -> {
                 val startOp =
-                  (rec.begin().next() as OperationReadResult.Valid).operation as VfsOperation.VFileEventOperation.EventStart.Move
+                  (rec.begin().next() as OperationReadResult.Complete).operation as VfsOperation.VFileEventOperation.EventStart.Move
                 val file = snapshotBefore.getFileById(startOp.fileId)
                 println(file.represent())
                 //println("stub index stamp data: ${file.readStubIndexStampAttr()}")
@@ -301,8 +301,9 @@ private fun vfsRecoveryDraft(log: VfsLog,
               }
               VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE -> {
                 val startOp =
-                  (rec.begin().next() as OperationReadResult.Valid).operation as VfsOperation.VFileEventOperation.EventStart.ContentChange
+                  (rec.begin().next() as OperationReadResult.Complete).operation as VfsOperation.VFileEventOperation.EventStart.ContentChange
                 val fileBefore = snapshotBefore.getFileById(startOp.fileId)
+                if (fileBefore.name.getOrNull()?.endsWith(".kt") != true) continue
                 val fileAfter = snapshotAfter.getFileById(startOp.fileId)
                 println(fileBefore.represent())
                 //println("stub index stamp data: ${fileBefore.readStubIndexStampAttr()}")
@@ -324,7 +325,7 @@ private fun vfsRecoveryDraft(log: VfsLog,
             }
 
             rec.forEachContainedOperation {
-              if (it is OperationReadResult.Valid) {
+              if (it is OperationReadResult.Complete) {
                 println(it.operation)
               }
               else println(it)

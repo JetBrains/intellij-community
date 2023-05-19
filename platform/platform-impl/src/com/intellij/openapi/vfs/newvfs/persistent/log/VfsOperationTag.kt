@@ -70,6 +70,8 @@ value class VfsOperationTagsMask(val mask: Long) {
 
   fun contains(tag: VfsOperationTag): Boolean = (mask and (1L shl tag.ordinal)) != 0L
 
+  fun toList(): List<VfsOperationTag> = VfsOperationTag.values().filter { contains(it) }
+
   companion object {
     /**
      * @see [IteratorUtils.nextIncomplete]

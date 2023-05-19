@@ -82,18 +82,23 @@ interface OperationLogStorage {
   fun dispose()
 
   sealed interface OperationReadResult {
-    /** Operation was read correctly */
-    data class Valid(val operation: VfsOperation<*>) : OperationReadResult
+    /** Operation read succeeded */
+    data class Complete(val operation: VfsOperation<*>) : OperationReadResult
 
-    /** Attempt to read an operation has failed but operation tag was recovered */
+    /** Attempt to read an operation has failed but the operation tag was recovered. May happen when the operation has actually completed,
+     * but VfsLog failed to write its descriptor to storage, or when VfsLog was disposed before it has managed to write down everything it
+     * needed.
+     *
+     * Also, can be a result of [readAtFiltered], [readPrecedingFiltered].
+     */
     data class Incomplete(val tag: VfsOperationTag) : OperationReadResult
 
-    /** Couldn't retrieve any information at all */
+    /** Failed to perform a read, because of the unexpected exception or because [OperationLogStorage] is in inconsistent state */
     data class Invalid(val cause: Throwable) : OperationReadResult
 
     companion object {
       fun OperationReadResult.getTag(): VfsOperationTag = when (this) {
-        is Valid -> operation.tag
+        is Complete -> operation.tag
         is Incomplete -> tag
         is Invalid -> throw IllegalAccessException("data access on OperationReadResult.Invalid")
       }

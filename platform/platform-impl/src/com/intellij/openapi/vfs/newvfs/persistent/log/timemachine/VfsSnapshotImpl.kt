@@ -86,29 +86,29 @@ class CacheAwareVfsSnapshot(
 
   inner class CacheAwareVirtualFileSnapshot(override val fileId: Int) : VirtualFileSnapshot {
     override val nameId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::nameId) { stopIter, iter ->
-      VfsChronicle.lookupNameId(iter, fileId, condition = { iter != stopIter }).toState()
+      VfsChronicle.lookupNameId(iter, fileId, stopIf = { iter == stopIter }).toState()
     }
     override val name: Property<String> = nameId.bind { id2filename(it)?.let(State::Ready) ?: State.NotAvailable() }
 
     override val parentId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::parentId) { stopIter, iter ->
-      VfsChronicle.lookupParentId(iter, fileId, condition = { iter != stopIter }).toState()
+      VfsChronicle.lookupParentId(iter, fileId, stopIf = { iter == stopIter }).toState()
     }
     override val parent: Property<VirtualFileSnapshot?> = parentId.fmap { id -> if (id == 0) null else getFileById(id) }
 
     override val length: Property<Long> = CacheAwareProp(VirtualFileSnapshot::length) { stopIter, iter ->
-      VfsChronicle.lookupLength(iter, fileId, condition = { iter != stopIter }).toState()
+      VfsChronicle.lookupLength(iter, fileId, stopIf = { iter == stopIter }).toState()
     }
     override val timestamp: Property<Long> = CacheAwareProp(VirtualFileSnapshot::timestamp) { stopIter, iter ->
-      VfsChronicle.lookupTimestamp(iter, fileId, condition = { iter != stopIter }).toState()
+      VfsChronicle.lookupTimestamp(iter, fileId, stopIf = { iter == stopIter }).toState()
     }
     override val flags: Property<Int> = CacheAwareProp(VirtualFileSnapshot::flags) { stopIter, iter ->
-      VfsChronicle.lookupFlags(iter, fileId, condition = { iter != stopIter }).toState()
+      VfsChronicle.lookupFlags(iter, fileId, stopIf = { iter == stopIter }).toState()
     }
     override val contentRecordId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::contentRecordId) { stopIter, iter ->
-      VfsChronicle.lookupContentRecordId(iter, fileId, condition = { iter != stopIter }).toState()
+      VfsChronicle.lookupContentRecordId(iter, fileId, stopIf = { iter == stopIter }).toState()
     }
     override val attributesRecordId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::attributesRecordId) { stopIter, iter ->
-      VfsChronicle.lookupAttributeRecordId(iter, fileId, condition = { iter != stopIter }).toState()
+      VfsChronicle.lookupAttributeRecordId(iter, fileId, stopIf = { iter == stopIter }).toState()
     }
 
     override fun getContent(): State.DefinedState<ByteArray> =
