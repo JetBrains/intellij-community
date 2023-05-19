@@ -653,7 +653,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       myReviewNextPageButton.setEnabled(false);
 
       ListPluginComponent component = myShowComponent;
-      PluginNode node = (PluginNode)component.getPluginDescriptor();
+      PluginNode installedNode = getInstalledPluginMarketplaceNode();
+      PluginNode node = installedNode != null ? installedNode : (PluginNode)component.getPluginDescriptor();
       PageContainer<PluginReviewComment> reviewComments = requireNonNull(node.getReviewComments());
       int page = reviewComments.getNextPage();
 
@@ -1031,7 +1032,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       showMarketplaceData(myPlugin);
     }
     else {
-      PluginNode node = myShowComponent.getInstalledPluginMarketplaceNode();
+      PluginNode node = getInstalledPluginMarketplaceNode();
       updateMarketplaceTabsVisible(node != null);
       if (node != null) {
         showMarketplaceData(node);
@@ -1104,7 +1105,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     }
 
     if (myImagesComponent != null) {
-      PluginNode node = myShowComponent.getInstalledPluginMarketplaceNode();
+      PluginNode node = getInstalledPluginMarketplaceNode();
       myImagesComponent.show(node == null ? myPlugin : node);
     }
 
@@ -1170,6 +1171,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     }
     myTabbedPane.setEnabledAt(2, show); // review
     myTabbedPane.setEnabledAt(3, show); // additional info
+  }
+
+  private @Nullable PluginNode getInstalledPluginMarketplaceNode() {
+    return myShowComponent == null ? null : myShowComponent.getInstalledPluginMarketplaceNode();
   }
 
   private static boolean isNotPlatformModule(@NotNull PluginId pluginId) {
@@ -1572,7 +1577,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   @Nullable
   private @Nls String getDescription() {
-    PluginNode node = myShowComponent.getInstalledPluginMarketplaceNode();
+    PluginNode node = getInstalledPluginMarketplaceNode();
     if (node != null) {
       String description = node.getDescription();
       if (!Strings.isEmptyOrSpaces(description)) {
@@ -1586,7 +1591,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   @Nullable
   @NlsSafe
   private String getChangeNotes() {
-    PluginNode node = myShowComponent.getInstalledPluginMarketplaceNode();
+    PluginNode node = getInstalledPluginMarketplaceNode();
     if (node != null) {
       String changeNotes = node.getChangeNotes();
       if (!Strings.isEmptyOrSpaces(changeNotes)) {
