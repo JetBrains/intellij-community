@@ -25,7 +25,7 @@ private val LOG = Logger.getInstance("#com.intellij.ide.shutdown")
 internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
   EDT.assertIsEdt()
   LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed)
-  cancelAndJoinBlocking(application.coroutineScope, debugString = "Application $application") { containerJob ->
+  cancelAndJoinBlocking(application.coroutineScope, debugString = "Application $application") { containerJob, _ ->
     containerJob.invokeOnCompletion {
       // Unblock `getNextEvent()` in case it's blocked.
       SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
@@ -37,7 +37,7 @@ internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
 }
 
 internal fun cancelAndJoinBlocking(project: ProjectImpl) {
-  cancelAndJoinBlocking(project.coroutineScope, debugString = "Project $project") { job ->
+  cancelAndJoinBlocking(project.coroutineScope, debugString = "Project $project") { job, _ ->
     runBlockingModal(ModalTaskOwner.guess(), IdeBundle.message("progress.closing.project"), TaskCancellation.nonCancellable()) {
       job.join()
     }
@@ -47,7 +47,7 @@ internal fun cancelAndJoinBlocking(project: ProjectImpl) {
 internal fun cancelAndJoinBlocking(
   containerScope: CoroutineScope,
   debugString: String,
-  joinBlocking: (Job) -> Unit,
+  joinBlocking: (containerJob: Job, dumpJob: Job) -> Unit,
 ) {
   if (!Registry.`is`("ide.await.scope.completion", true)) {
     return
@@ -66,7 +66,7 @@ internal fun cancelAndJoinBlocking(
     LOG.warn("$debugString: scope was not completed in $delayUntilCoroutineDump.\n${dumpCoroutines(scope = containerScope)}")
   }
   try {
-    joinBlocking(containerJob)
+    joinBlocking(containerJob, dumpJob)
   }
   finally {
     dumpJob.cancel()

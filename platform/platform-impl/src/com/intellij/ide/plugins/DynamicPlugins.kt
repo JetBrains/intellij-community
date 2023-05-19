@@ -965,7 +965,7 @@ private fun cancelAndJoinPluginScopes(classLoaders: WeakList<PluginClassLoader>)
     return
   }
   for (classLoader in classLoaders) {
-    cancelAndJoinBlocking(classLoader.pluginCoroutineScope, "Plugin ${classLoader.pluginId}") { job ->
+    cancelAndJoinBlocking(classLoader.pluginCoroutineScope, "Plugin ${classLoader.pluginId}") { job, _ ->
       while (job.isActive) {
         ProgressManager.checkCanceled()
         IdeEventQueue.getInstance().flushQueue()
