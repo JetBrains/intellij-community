@@ -3,7 +3,6 @@ package com.intellij.diagnostic
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.CachedSingletonsRegistry
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -19,19 +18,26 @@ abstract class PerformanceWatcher : Disposable {
   companion object {
     const val DUMP_PREFIX = "threadDump-"
 
-    private val instance = CachedSingletonsRegistry.lazyWithNullProtection {
-      ApplicationManager.getApplication().service<PerformanceWatcher>()
-    }
+    private var instance: PerformanceWatcher? = null
 
     @ApiStatus.Internal
     fun getInstanceIfCreated(): PerformanceWatcher? {
-      return if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) instance(false) else null
+      return instance
     }
 
     @JvmStatic
     fun getInstance(): PerformanceWatcher {
       LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
-      return instance(true)!!
+      var instance = instance
+      if (instance == null) {
+        instance = ApplicationManager.getApplication().service<PerformanceWatcher>()
+        PerformanceWatcher.instance = instance
+      }
+      return instance
+    }
+
+    init {
+      ApplicationManager.registerCleaner { instance = null }
     }
 
     @JvmStatic

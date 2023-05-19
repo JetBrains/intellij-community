@@ -243,8 +243,7 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
       // wants RegistryManager
       if (!app.isHeadlessEnvironment) {
         app.serviceAsync<PerformanceWatcher>()
-        // cache it (CachedSingletonsRegistry is used,
-        // and IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready)
+        // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
         PerformanceWatcher.getInstance()
       }
     }
