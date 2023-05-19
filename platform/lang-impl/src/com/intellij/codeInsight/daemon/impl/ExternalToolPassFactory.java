@@ -25,7 +25,7 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
   @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.EXTERNAL_TOOLS) == null ? null : file.getTextRange();
+    TextRange textRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.EXTERNAL_TOOLS) == null ? null : file.getTextRange();
     if (textRange == null || !externalAnnotatorsDefined(file)) {
       return null;
     }
