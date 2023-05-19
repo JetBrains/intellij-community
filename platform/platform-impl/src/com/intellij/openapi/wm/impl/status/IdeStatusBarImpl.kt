@@ -4,6 +4,7 @@
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.HelpTooltipManager
 import com.intellij.ide.IdeEventQueue
@@ -21,6 +22,8 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.impl.ProgressState
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.BalloonHandler
@@ -50,14 +53,12 @@ import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.MouseEvent
-import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.accessibility.Accessible
@@ -100,13 +101,17 @@ open class IdeStatusBarImpl internal constructor(
 
   private val children = LinkedHashSet<IdeStatusBarImpl>()
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
-  private val progressListeners = EventDispatcher.create(VisibleProgressListener::class.java)
+
+  private val progressFlow = lazy { MutableSharedFlow<FlowItem>() }
+  private val progressFlowEmissionScope by lazy { MainScope().apply { Disposer.register(disposable) { cancel() } } }
 
   companion object {
     internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create("HOVERED_WIDGET_ID")
     internal val WIDGET_EFFECT_KEY: Key<WidgetEffect> = Key.create("TextPanel.widgetEffect")
 
     const val NAVBAR_WIDGET_KEY: String = "NavBar"
+
+    private val EMPTY_PROGRESS = ProgressState(null, null, -1.0)
   }
 
   override fun findChild(c: Component): StatusBar {
@@ -428,45 +433,87 @@ open class IdeStatusBarImpl internal constructor(
   override fun getInfo(): @NlsContexts.StatusBarText String? = info
 
   override fun addProgress(indicator: ProgressIndicatorEx, info: TaskInfo) {
-    notifyListeners(indicator, info)
     infoAndProgressPanel.addProgress(indicator, info)
+    notifyListeners(indicator, info)
   }
 
   private fun notifyListeners(indicator: ProgressIndicatorEx, info: TaskInfo) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
 
-    progressListeners.multicaster.progressStarted(indicator, info)
-    var finished = false
-    val reportFinished = {
-      if (!finished) {
-        finished = true
-        progressListeners.multicaster.progressFinished(indicator, info)
+    if (progressFlow.isInitialized()) {
+      emit(createVisibleProgress(indicator, info, ClientId.current), null)
+    }
+  }
+
+  /**
+   * Reports currently displayed progresses and the ones that will be displayed in future (never ending flow).
+   *
+   * NOTE: correct client id value is reported only for newly appearing progresses, older ones are reported with local client id.
+   * This isn't a problem for current usage, when the subscription is performed on first remote client's connection, but may need to be
+   * corrected for potential future usages.
+   */
+  @ApiStatus.Internal
+  fun getVisibleProcessFlow(): Flow<VisibleProgress> {
+    EDT.assertIsEdt()
+
+    var subscriberToken: Any? = object {}
+
+    // to get a consistent result, we emit the existing items into the same flow,
+    // accompanying them with a token designating target subscriber
+    backgroundProcesses.forEach {
+      emit(createVisibleProgress(it.second as ProgressIndicatorEx, it.first, ClientId.localId), subscriberToken)
+    }
+    emit(null, subscriberToken) // marker item, indicating the end of existing items
+
+    return progressFlow.value.filter { it.subscriberToken == subscriberToken }.mapNotNull { item ->
+      item.progress.also {
+        if (it == null) {
+          subscriberToken = null
+        }
       }
     }
+  }
+
+  private fun emit(progress: VisibleProgress?, subscriberToken: Any?) {
+    progressFlow.value.apply {
+      progressFlowEmissionScope.launch {
+        emit(FlowItem(progress, subscriberToken))
+      }
+    }
+  }
+
+  private fun createVisibleProgress(indicator: ProgressIndicatorEx, info: TaskInfo, clientId: ClientId): VisibleProgress {
+    val stateFlow = MutableStateFlow(EMPTY_PROGRESS)
+    val updater = {
+      stateFlow.value = ProgressState(indicator.text, indicator.text2, if (indicator.isIndeterminate) -1.0 else indicator.fraction)
+    }
+
+    val activeFlow = MutableStateFlow(true)
+    val finisher = { activeFlow.value = false }
+
     indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
+      override fun onProgressChange() {
+        super.onProgressChange()
+        updater.invoke()
+      }
+
       override fun finish(task: TaskInfo) {
         super.finish(task)
         if (task == info) {
-          UIUtil.invokeLaterIfNeeded(reportFinished)
+          finisher.invoke()
         }
       }
     })
     if (indicator.isFinished(info)) {
-      reportFinished()
+      finisher.invoke()
     }
-  }
-
-  fun addProgressListener(listener: VisibleProgressListener, parentDisposable: Disposable) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-
-    progressListeners.addListener(listener, parentDisposable)
-    backgroundProcesses.forEach {
-      val taskInfo = it.first
-      val indicator = it.second as ProgressIndicatorEx
-      if (!indicator.isFinished(taskInfo)) {
-        listener.progressStarted(indicator, taskInfo)
-      }
+    else {
+      updater.invoke()
     }
+    val stateFlowTillCompletion = stateFlow
+      .combine(activeFlow) { state, active -> state.takeIf { active } }
+      .takeWhile { it != null }.map { it!! }
+    return VisibleProgress(info.title, clientId, { indicator.cancel() }.takeIf { info.isCancellable }, stateFlowTillCompletion)
   }
 
   override fun getBackgroundProcesses(): List<Pair<TaskInfo, ProgressIndicator>> = infoAndProgressPanel.backgroundProcesses
@@ -985,7 +1032,14 @@ private class StatusBarPanel(layout: LayoutManager) : JPanel(layout) {
 
 }
 
-interface VisibleProgressListener : EventListener {
-  fun progressStarted(indicator: ProgressIndicatorEx, task: TaskInfo)
-  fun progressFinished(indicator: ProgressIndicatorEx, task: TaskInfo)
+@ApiStatus.Internal
+class VisibleProgress(val title: @NlsContexts.ProgressTitle String,
+                      val clientId: ClientId,
+                      val canceler: (() -> Unit)?,
+                      val state: Flow<ProgressState> /* finite */) {
+  override fun toString(): String {
+    return "VisibleProgress['$title', ${if (canceler == null) "non-" else ""}cancelable]"
+  }
 }
+
+private class FlowItem(val progress: VisibleProgress?, val subscriberToken: Any?)
