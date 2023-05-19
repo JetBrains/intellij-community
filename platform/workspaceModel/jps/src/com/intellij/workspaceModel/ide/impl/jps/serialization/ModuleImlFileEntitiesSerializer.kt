@@ -504,8 +504,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       else {
 
         (contentRoot as ContentRootEntity.Builder).apply {
-          this.sourceRoots = this.sourceRoots + sourceRoots
-          this.excludedUrls = this.excludedUrls + excludes
+          this.sourceRoots += sourceRoots
+          this.excludedUrls += excludes
         }
         // Add order of source roots
         if (sourceRootOrder != null) {

@@ -290,7 +290,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       else {
         dragMoreButtonNewSide = LEFT
       }
-      bounds.width = bounds.width / 3
+      bounds.width /= 3
       dropTargetHighlightComponent.bounds = bounds
       relocateImageDialog(event)
       return

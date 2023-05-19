@@ -1215,7 +1215,7 @@ class JavaToJKTreeBuilder(
                 }
 
                 else ->
-                    cases.lastOrNull()?.also { it.statements = it.statements + statement.toJK() } ?: run {
+                    cases.lastOrNull()?.also { it.statements += statement.toJK() } ?: run {
                         cases += JKJavaClassicLabelSwitchCase(
                             listOf(JKStubExpression()),
                             listOf(statement.toJK())

@@ -205,7 +205,7 @@ private class CombinedSimpleDiffBlock(project: Project,
       someError = maxOf(e.gutterComponentEx.preferredSize.height - body.targetComponent.preferredSize.height, someError)
     }
     if (someError > 0) {
-      preferredSize.height = preferredSize.height + someError
+      preferredSize.height += someError
     }
     return preferredSize
   }

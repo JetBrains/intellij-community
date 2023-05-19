@@ -83,6 +83,6 @@ internal class OnChangePanel {
 
   private fun log(component: JComponent, context: ChangeContext, text: String? = null) {
     val textLog = if (text == null) "" else "($text)"
-    log.text = log.text + "component = ${component::class.java.name}$textLog, binding = ${context.binding}, event: ${context.event}\n"
+    log.text += "component = ${component::class.java.name}$textLog, binding = ${context.binding}, event: ${context.event}\n"
   }
 }
