@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.internal
+package org.jetbrains.kotlin.idea.actions.bytecode
 
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.Disposable
@@ -32,6 +32,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.core.ClassFileOrigins
 import org.jetbrains.kotlin.idea.core.KotlinCompilerIde
+import org.jetbrains.kotlin.idea.internal.DecompileFailedException
+import org.jetbrains.kotlin.idea.internal.KotlinJvmDecompilerFacade
 import org.jetbrains.kotlin.idea.util.InfinitePeriodicalTask
 import org.jetbrains.kotlin.idea.util.LongRunningReadTask
 import org.jetbrains.kotlin.psi.KtFile
