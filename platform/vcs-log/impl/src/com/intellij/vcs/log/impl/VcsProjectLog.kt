@@ -14,15 +14,16 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
@@ -96,18 +97,10 @@ class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineS
     }
 
     ShutDownTracker.getInstance().registerShutdownTask(shutdownTask)
-    busConnection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-      override fun projectClosing(project: Project) {
-        if (project === this@VcsProjectLog.project) {
-          ShutDownTracker.getInstance().unregisterShutdownTask(shutdownTask)
-          runBlockingModal(owner = ModalTaskOwner.project(project),
-                           title = VcsLogBundle.message("vcs.log.closing.process"),
-                           cancellation = TaskCancellation.nonCancellable()) {
-            shutDown(useRawSwingDispatcher = false)
-          }
-        }
-      }
-    })
+    coroutineScope.awaitCancellationAndInvoke(CoroutineName("Close VCS log")) {
+      ShutDownTracker.getInstance().unregisterShutdownTask(shutdownTask)
+      shutDown(useRawSwingDispatcher = false)
+    }
   }
 
   private suspend fun shutDown(useRawSwingDispatcher: Boolean) {
@@ -164,7 +157,7 @@ class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineS
   }
 
   private suspend fun disposeLogInternal(useRawSwingDispatcher: Boolean) {
-    val logManager = withContext(if (useRawSwingDispatcher) RawSwingDispatcher else (Dispatchers.EDT + modality())) {
+    val logManager = withContext(if (useRawSwingDispatcher) RawSwingDispatcher else Dispatchers.EDT) {
       dropLogManager()?.also { it.disposeUi() }
     }
     if (logManager != null) Disposer.dispose(logManager)
