@@ -125,7 +125,7 @@
       "remove@14x14.svg": "diff/remove.svg",
       "revert@14x14.svg": "diff/revert.svg"
     },
-    "editor": {
+    "codeInsight": {
       "inlayGlobe.svg": "actions/inlayGlobe.svg",
       "inlaySecuredShield.svg": "actions/inlaySecuredShield.svg",
       "inlayRenameInComments.svg": "actions/inlayRenameInComments.svg",

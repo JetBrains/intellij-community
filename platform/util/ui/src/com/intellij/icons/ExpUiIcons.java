@@ -106,6 +106,20 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ToggleSkipTestsMode = load("expui/build/toggleSkipTestsMode.svg", 1729191088, 2);
   }
 
+  public static final class CodeInsight {
+    /** 12x12 */ public static final @NotNull Icon InlayGlobe = load("expui/codeInsight/inlayGlobe.svg", 1272747810, 2);
+    /** 12x12 */ public static final @NotNull Icon InlayRenameInComments = load("expui/codeInsight/inlayRenameInComments.svg", 1595182474, 2);
+    /** 12x12 */ public static final @NotNull Icon InlayRenameInCommentsActive = load("expui/codeInsight/inlayRenameInCommentsActive.svg", 515338830, 2);
+    /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFiles = load("expui/codeInsight/inlayRenameInNoCodeFiles.svg", -1177231620, 2);
+    /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFilesActive = load("expui/codeInsight/inlayRenameInNoCodeFilesActive.svg", -1807189813, 2);
+    /** 12x12 */ public static final @NotNull Icon InlaySecuredShield = load("expui/codeInsight/inlaySecuredShield.svg", -177800517, 2);
+    /** 12x12 */ public static final @NotNull Icon InlaySettings = load("expui/codeInsight/inlaySettings.svg", 1269425100, 2);
+    /** 16x16 */ public static final @NotNull Icon IntentionBulb = load("expui/codeInsight/intentionBulb.svg", -817361690, 2);
+    /** 16x16 */ public static final @NotNull Icon IntentionBulbGrey = load("expui/codeInsight/intentionBulbGrey.svg", 1662358059, 2);
+    /** 16x16 */ public static final @NotNull Icon QuickfixBulb = load("expui/codeInsight/quickfixBulb.svg", -1357781753, 2);
+    /** 16x16 */ public static final @NotNull Icon QuickfixOffBulb = load("expui/codeInsight/quickfixOffBulb.svg", -1807849386, 2);
+  }
+
   public static final class CodeWithMe {
     /** 16x16 */ public static final @NotNull Icon CwmAccess = load("expui/codeWithMe/cwmAccess.svg", 2108404369, 2);
     /** 20x20 */ public static final @NotNull Icon CwmAccess_20x20 = load("expui/codeWithMe/cwmAccess@20x20.svg", -1029761333, 2);
@@ -153,20 +167,6 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon MagicResolveToolbar = load("expui/diff/magicResolveToolbar.svg", -294534028, 2);
     /** 14x14 */ public static final @NotNull Icon Remove_14x14 = load("expui/diff/remove@14x14.svg", -1672195955, 2);
     /** 14x14 */ public static final @NotNull Icon Revert_14x14 = load("expui/diff/revert@14x14.svg", -170893073, 2);
-  }
-
-  public static final class Editor {
-    /** 12x12 */ public static final @NotNull Icon InlayGlobe = load("expui/editor/inlayGlobe.svg", 1272747810, 2);
-    /** 12x12 */ public static final @NotNull Icon InlayRenameInComments = load("expui/editor/inlayRenameInComments.svg", 1595182474, 2);
-    /** 12x12 */ public static final @NotNull Icon InlayRenameInCommentsActive = load("expui/editor/inlayRenameInCommentsActive.svg", 515338830, 2);
-    /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFiles = load("expui/editor/inlayRenameInNoCodeFiles.svg", -1177231620, 2);
-    /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFilesActive = load("expui/editor/inlayRenameInNoCodeFilesActive.svg", -1807189813, 2);
-    /** 12x12 */ public static final @NotNull Icon InlaySecuredShield = load("expui/editor/inlaySecuredShield.svg", -177800517, 2);
-    /** 12x12 */ public static final @NotNull Icon InlaySettings = load("expui/editor/inlaySettings.svg", 1269425100, 2);
-    /** 16x16 */ public static final @NotNull Icon IntentionBulb = load("expui/editor/intentionBulb.svg", -817361690, 2);
-    /** 16x16 */ public static final @NotNull Icon IntentionBulbGrey = load("expui/editor/intentionBulbGrey.svg", 1662358059, 2);
-    /** 16x16 */ public static final @NotNull Icon QuickfixBulb = load("expui/editor/quickfixBulb.svg", -1357781753, 2);
-    /** 16x16 */ public static final @NotNull Icon QuickfixOffBulb = load("expui/editor/quickfixOffBulb.svg", -1807849386, 2);
   }
 
   /** 16x16 */ public static final @NotNull Icon Empty = load("expui/empty.svg", -149269092, 0);
