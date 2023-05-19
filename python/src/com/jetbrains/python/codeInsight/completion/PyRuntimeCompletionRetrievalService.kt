@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.state.PyRuntime
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
@@ -34,9 +35,10 @@ private fun postProcessingChildren(completionResultData: CompletionResultData,
   return when (completionResultData.completionType) {
     PyRuntimeCompletionType.DATA_FRAME_COLUMNS -> {
       val project = parameters.editor.project ?: return emptyList()
-      processDataFrameColumns(candidate.psiName,
+      val needValidatorCheck = (candidate.pyQualifiedExpressionList.lastOrNull()?.delimiter ?: candidate.psiName.delimiter) != PyTokenTypes.LBRACKET
+      processDataFrameColumns(candidate.psiName.pyQualifiedName,
                               completionResultData.setOfCompletionItems,
-                              candidate.needValidatorCheck,
+                              needValidatorCheck,
                               parameters.position,
                               project,
                               true)
@@ -52,12 +54,12 @@ interface PyRuntimeCompletionRetrievalService {
    */
   fun canComplete(parameters: CompletionParameters): Boolean
 
-  fun extractItemsForCompletion(result: Pair<XValueNodeImpl, List<String>>?,
+  fun extractItemsForCompletion(result: Pair<XValueNodeImpl, List<PyQualifiedExpressionItem>>?,
                                 candidate: PyObjectCandidate): CompletionResultData? {
     val (node, listOfCalls) = result ?: return null
     val debugValue = node.valueContainer
     if (debugValue is DataFrameDebugValue) {
-      val dfColumns = completePandasDataFrameColumns(debugValue.treeColumns, listOfCalls) ?: return null
+      val dfColumns = completePandasDataFrameColumns(debugValue.treeColumns, listOfCalls.map { it.pyQualifiedName }) ?: return null
       return CompletionResultData(dfColumns, PyRuntimeCompletionType.DATA_FRAME_COLUMNS)
     }
     computeChildrenIfNeeded(node)
@@ -119,11 +121,10 @@ abstract class AbstractRuntimeCompletionContributor : CompletionContributor(), D
   abstract fun getCompletionRetrievalService(project: Project): PyRuntimeCompletionRetrievalService
 }
 
-private fun createCompletionResultSet(
-  retrievalService: PyRuntimeCompletionRetrievalService,
-  runtimeService: PyRuntime,
-  parameters: CompletionParameters,
-): List<LookupElement> {
+
+fun createCompletionResultSet(retrievalService: PyRuntimeCompletionRetrievalService,
+                              runtimeService: PyRuntime,
+                              parameters: CompletionParameters): List<LookupElement> {
   if (!retrievalService.canComplete(parameters)) return emptyList()
   val project = parameters.editor.project ?: return emptyList()
   val treeNodeList = runtimeService.getGlobalPythonVariables(parameters.originalFile.virtualFile, project, parameters.editor)
@@ -132,15 +133,17 @@ private fun createCompletionResultSet(
 
   return ApplicationUtil.runWithCheckCanceled(Callable {
     return@Callable pyObjectCandidates.flatMap { candidate ->
-      val parentNode = getParentNodeByName(treeNodeList, candidate.psiName)
+      val parentNode = getParentNodeByName(treeNodeList, candidate.psiName.pyQualifiedName)
       val valueContainer = parentNode?.valueContainer
-      /**
-       * Don't need to send requests to jupyter server about Python's module,
-       * because LegacyCompletionContributor provide completion items for Python's modules
-       * @see com.intellij.codeInsight.completion.LegacyCompletionContributor
-       */
-      if (valueContainer is PyDebugValue && valueContainer.type == "module") return@flatMap emptyList()
-
+      if (valueContainer is PyDebugValue) {
+        /**
+         * Don't need to send requests to jupyter server about Python's module,
+         * because LegacyCompletionContributor provide completion items for Python's modules
+         * @see com.intellij.codeInsight.completion.LegacyCompletionContributor
+         */
+        if (valueContainer.type == "module") return@flatMap emptyList()
+        if (checkDelimiterByType(valueContainer.qualifiedType, candidate.psiName.delimiter)) return@flatMap emptyList()
+      }
       getSetOfChildrenByListOfCall(parentNode, candidate.pyQualifiedExpressionList)
         .let { retrievalService.extractItemsForCompletion(it, candidate) }
         ?.let { postProcessingChildren(it, candidate, parameters) }
