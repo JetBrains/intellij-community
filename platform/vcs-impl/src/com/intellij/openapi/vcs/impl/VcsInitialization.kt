@@ -5,7 +5,6 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -13,7 +12,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
@@ -221,16 +219,6 @@ class VcsInitialization(private val project: Project, private val coroutineScope
   internal class StartUpActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
       getInstance(project).startInitialization()
-    }
-  }
-
-  internal class ShutDownProjectListener : ProjectCloseListener {
-    override fun projectClosing(project: Project) {
-      if (project.isDefault) {
-        return
-      }
-
-      project.serviceIfCreated<VcsInitialization>()?.cancelBackgroundInitialization()
     }
   }
 

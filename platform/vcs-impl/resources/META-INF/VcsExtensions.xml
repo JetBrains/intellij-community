@@ -358,8 +358,6 @@
   <applicationListeners>
     <listener class="com.intellij.openapi.vcs.changes.patch.PatchClipboardListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    <listener class="com.intellij.openapi.vcs.impl.VcsInitialization$ShutDownProjectListener"
-              topic="com.intellij.openapi.project.ProjectCloseListener"/>
     <listener class="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$TrustListener"
               topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
