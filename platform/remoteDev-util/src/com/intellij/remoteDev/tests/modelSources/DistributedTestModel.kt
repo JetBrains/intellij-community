@@ -11,9 +11,16 @@ object TestRoot : Root()
 @Suppress("unused")
 object DistributedTestModel : Ext(TestRoot) {
 
-  private val RdAgentId = structdef {
+  private val RdAgentInfo = structdef {
     field("id", string)
     field("launchNumber", int)
+    field("agentType", RdAgentType)
+  }
+
+  private val RdAgentType = enum {
+    +"HOST"
+    +"CLIENT"
+    +"GATEWAY"
   }
 
   private val RdTestSessionStackTraceElement = structdef {
@@ -37,7 +44,7 @@ object DistributedTestModel : Ext(TestRoot) {
   }
 
   private val RdTestSession = classdef {
-    field("agentId", RdAgentId)
+    field("agentInfo", RdAgentInfo)
     field("testClassName", string.nullable)
     field("testMethodName", string.nullable)
     field("traceCategories", immutableList(string))

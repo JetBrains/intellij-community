@@ -26,7 +26,8 @@ class DistributedTestModel private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
-            serializers.register(RdAgentId)
+            serializers.register(RdAgentInfo)
+            serializers.register(RdAgentType.marshaller)
             serializers.register(RdTestSessionStackTraceElement)
             serializers.register(RdTestSessionExceptionCause)
             serializers.register(RdTestSessionException)
@@ -52,7 +53,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 2087951295194916404L
+        const val serializationHash = 8072597128546658912L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -97,25 +98,28 @@ val IProtocol.distributedTestModel get() = getOrCreateExtension(DistributedTestM
 /**
  * #### Generated from [DistributedTestModel.kt]
  */
-data class RdAgentId (
+data class RdAgentInfo (
     val id: String,
-    val launchNumber: Int
+    val launchNumber: Int,
+    val agentType: RdAgentType
 ) : IPrintable {
     //companion
     
-    companion object : IMarshaller<RdAgentId> {
-        override val _type: KClass<RdAgentId> = RdAgentId::class
+    companion object : IMarshaller<RdAgentInfo> {
+        override val _type: KClass<RdAgentInfo> = RdAgentInfo::class
         
         @Suppress("UNCHECKED_CAST")
-        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdAgentId  {
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdAgentInfo  {
             val id = buffer.readString()
             val launchNumber = buffer.readInt()
-            return RdAgentId(id, launchNumber)
+            val agentType = buffer.readEnum<RdAgentType>()
+            return RdAgentInfo(id, launchNumber, agentType)
         }
         
-        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAgentId)  {
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAgentInfo)  {
             buffer.writeString(value.id)
             buffer.writeInt(value.launchNumber)
+            buffer.writeEnum(value.agentType)
         }
         
         
@@ -129,10 +133,11 @@ data class RdAgentId (
         if (this === other) return true
         if (other == null || other::class != this::class) return false
         
-        other as RdAgentId
+        other as RdAgentInfo
         
         if (id != other.id) return false
         if (launchNumber != other.launchNumber) return false
+        if (agentType != other.agentType) return false
         
         return true
     }
@@ -141,14 +146,16 @@ data class RdAgentId (
         var __r = 0
         __r = __r*31 + id.hashCode()
         __r = __r*31 + launchNumber.hashCode()
+        __r = __r*31 + agentType.hashCode()
         return __r
     }
     //pretty print
     override fun print(printer: PrettyPrinter)  {
-        printer.println("RdAgentId (")
+        printer.println("RdAgentInfo (")
         printer.indent {
             print("id = "); id.print(printer); println()
             print("launchNumber = "); launchNumber.print(printer); println()
+            print("agentType = "); agentType.print(printer); println()
         }
         printer.print(")")
     }
@@ -160,8 +167,23 @@ data class RdAgentId (
 /**
  * #### Generated from [DistributedTestModel.kt]
  */
+enum class RdAgentType {
+    HOST, 
+    CLIENT, 
+    GATEWAY;
+    
+    companion object {
+        val marshaller = FrameworkMarshallers.enum<RdAgentType>()
+        
+    }
+}
+
+
+/**
+ * #### Generated from [DistributedTestModel.kt]
+ */
 class RdTestSession private constructor(
-    val agentId: RdAgentId,
+    val agentInfo: RdAgentInfo,
     val testClassName: String?,
     val testMethodName: String?,
     val traceCategories: List<String>,
@@ -182,7 +204,7 @@ class RdTestSession private constructor(
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSession  {
             val _id = RdId.read(buffer)
-            val agentId = RdAgentId.read(ctx, buffer)
+            val agentInfo = RdAgentInfo.read(ctx, buffer)
             val testClassName = buffer.readNullable { buffer.readString() }
             val testMethodName = buffer.readNullable { buffer.readString() }
             val traceCategories = buffer.readList { buffer.readString() }
@@ -194,12 +216,12 @@ class RdTestSession private constructor(
             val _closeProjectIfOpened = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
-            return RdTestSession(agentId, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _dumpThreads, _closeProject, _closeProjectIfOpened, _runNextAction, _makeScreenshot).withId(_id)
+            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _dumpThreads, _closeProject, _closeProjectIfOpened, _runNextAction, _makeScreenshot).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
             value.rdid.write(buffer)
-            RdAgentId.write(ctx, buffer, value.agentId)
+            RdAgentInfo.write(ctx, buffer, value.agentInfo)
             buffer.writeNullable(value.testClassName) { buffer.writeString(it) }
             buffer.writeNullable(value.testMethodName) { buffer.writeString(it) }
             buffer.writeList(value.traceCategories) { v -> buffer.writeString(v) }
@@ -249,12 +271,12 @@ class RdTestSession private constructor(
     
     //secondary constructor
     constructor(
-        agentId: RdAgentId,
+        agentInfo: RdAgentInfo,
         testClassName: String?,
         testMethodName: String?,
         traceCategories: List<String>
     ) : this(
-        agentId,
+        agentInfo,
         testClassName,
         testMethodName,
         traceCategories,
@@ -274,7 +296,7 @@ class RdTestSession private constructor(
     override fun print(printer: PrettyPrinter)  {
         printer.println("RdTestSession (")
         printer.indent {
-            print("agentId = "); agentId.print(printer); println()
+            print("agentInfo = "); agentInfo.print(printer); println()
             print("testClassName = "); testClassName.print(printer); println()
             print("testMethodName = "); testMethodName.print(printer); println()
             print("traceCategories = "); traceCategories.print(printer); println()
@@ -292,7 +314,7 @@ class RdTestSession private constructor(
     //deepClone
     override fun deepClone(): RdTestSession   {
         return RdTestSession(
-            agentId,
+            agentInfo,
             testClassName,
             testMethodName,
             traceCategories,
