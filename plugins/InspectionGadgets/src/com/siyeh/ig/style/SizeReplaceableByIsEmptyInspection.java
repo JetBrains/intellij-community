@@ -5,7 +5,11 @@ import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -31,7 +35,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.*;
 
 public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreNegations = false;
   @SuppressWarnings("PublicField")
   public OrderedSet<String> ignoredTypes = new OrderedSet<>();
@@ -109,6 +113,13 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   }
 
   private class SizeReplaceableByIsEmptyVisitor extends BaseInspectionVisitor {
+    private static boolean isLanguageLevelCompatible(PsiElement element, PsiMethod method) {
+      Module module = ModuleUtilCore.findModuleForPsiElement(element);
+      if (module == null) return false;
+      LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
+      LanguageLevel lastIncompatibleLanguageLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(method, languageLevel);
+      return lastIncompatibleLanguageLevel == null || languageLevel.isAtLeast(lastIncompatibleLanguageLevel);
+    }
 
     @Override
     public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
@@ -153,7 +164,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       }
       for (PsiMethod method : aClass.findMethodsByName("isEmpty", true)) {
         final PsiParameterList parameterList = method.getParameterList();
-        if (parameterList.isEmpty()) {
+        if (parameterList.isEmpty() && isLanguageLevelCompatible(expression, method)) {
           isEmptyCall = qualifierExpression.getText() + ".isEmpty()";
           break;
         }
