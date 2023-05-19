@@ -1,12 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere.remote;
 
-import javax.swing.*;
+public interface RemoteSearchEverywhereConverter<I, P extends RemoteSearchEverywherePresentation> {
 
-public interface RemoteSearchEverywhereConverter<Item, Presentation> {
+  P convertToPresentation(I item);
 
-  Presentation convertToPresentation(Item item);
-
-  Item convertToItem(Presentation presentation);
+  I convertToItem(P presentation);
 
 }

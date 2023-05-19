@@ -5,11 +5,11 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 
 import java.util.List;
 
-public interface RemoteSearchEverywhereConverterSupplier<Item, Presentation> {
+public interface RemoteSearchEverywhereConverterSupplier<I, P extends RemoteSearchEverywherePresentation> {
 
   ExtensionPointName<RemoteSearchEverywhereConverterSupplier<?, ?>> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereRemoteConverter");
 
   List<String> contributorsList();
 
-  RemoteSearchEverywhereConverter<Item, Presentation> createConverter();
+  RemoteSearchEverywhereConverter<I, P> createConverter();
 }
