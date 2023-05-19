@@ -25,13 +25,23 @@ private val LOG = Logger.getInstance("#com.intellij.ide.shutdown")
 internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
   EDT.assertIsEdt()
   LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed)
-  cancelAndJoinBlocking(application.coroutineScope, debugString = "Application $application") { containerJob, _ ->
+  cancelAndJoinBlocking(application.coroutineScope, debugString = "Application $application") { containerJob, dumpJob ->
     containerJob.invokeOnCompletion {
       // Unblock `getNextEvent()` in case it's blocked.
       SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
     }
     IdeEventQueue.getInstance().pumpEventsForHierarchy {
       containerJob.isCompleted
+      // This means container job is still not completed,
+      // delayUntilCoroutineDump has passed and dump was already logged
+      // => nothing we can do here, just exit the application and don't freeze forever.
+      //
+      // After returning from blocking, the app is disposed.
+      // Returning here means some coroutines leak beyond the scope, i.e. they may continue running.
+      // Running coroutines may result is various exceptions,
+      // e.g. NPEs once `ApplicationManager.setApplication(null)` is completed.
+      // The coroutine dump is logged and should be investigated before considering exceptions from leaked coroutines.
+      || dumpJob.isCompleted
     }
   }
 }
