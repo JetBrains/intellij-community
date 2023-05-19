@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -69,7 +70,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return file -> file.getFileType() instanceof JsonFileType;
+    return new FileTypeInputFilterPredicate(fileType -> fileType instanceof JsonFileType);
   }
 
   @Override
