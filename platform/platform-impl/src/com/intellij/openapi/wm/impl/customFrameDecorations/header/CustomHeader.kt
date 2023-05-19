@@ -169,7 +169,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     window.removeComponentListener(componentListener)
   }
 
-  protected fun updateCustomTitleBar() {
+  protected open fun updateCustomTitleBar() {
     if (!added || customTitleBar == null) {
       return
     }
