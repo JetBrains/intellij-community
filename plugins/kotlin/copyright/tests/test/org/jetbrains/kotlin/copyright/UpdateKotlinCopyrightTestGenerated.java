@@ -48,6 +48,11 @@ public class UpdateKotlinCopyrightTestGenerated extends AbstractUpdateKotlinCopy
         runTest("testData/update/Script.kts");
     }
 
+    @TestMetadata("ScriptWithShebang.kts")
+    public void testScriptWithShebang() throws Exception {
+        runTest("testData/update/ScriptWithShebang.kts");
+    }
+
     @TestMetadata("Simple.kt")
     public void testSimple() throws Exception {
         runTest("testData/update/Simple.kt");

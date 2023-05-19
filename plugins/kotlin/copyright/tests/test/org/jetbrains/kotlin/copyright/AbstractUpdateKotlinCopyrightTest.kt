@@ -25,7 +25,7 @@ abstract class AbstractUpdateKotlinCopyrightTest : KotlinLightCodeInsightFixture
         for (comment in comments) {
             val commentText = comment.text
             when {
-                commentText.contains("PRESENT") -> {
+                commentText.contains("PRESENT") || commentText.contains("#!/usr/bin/env kotlin") -> {
                 }
                 commentText.contains("ABSENT") -> {
                     throw AssertionFailedError("Unexpected comment found: `$commentText`")

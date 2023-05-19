@@ -10,6 +10,7 @@ import com.maddyhome.idea.copyright.CopyrightProfile
 import com.maddyhome.idea.copyright.psi.UpdatePsiFileCopyright
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
+import org.jetbrains.kotlin.lexer.KtTokens.SHEBANG_COMMENT
 import org.jetbrains.kotlin.psi.KtDeclaration
 
 class UpdateKotlinCopyright(
@@ -23,8 +24,10 @@ class UpdateKotlinCopyright(
         file.fileType === KotlinFileType.INSTANCE
 
     override fun scanFile() {
+        val firstChild: PsiElement? = file.firstChild
         val comments = getExistentComments(file)
-        checkComments(comments.lastOrNull(), true, comments)
+        val anchor = if (firstChild.isShebangComment()) firstChild?.nextSibling else comments.lastOrNull()
+        checkComments(anchor, true, comments)
     }
 
     companion object {
@@ -32,6 +35,7 @@ class UpdateKotlinCopyright(
             SyntaxTraverser.psiTraverser(psiFile)
                 .withTraversal(TreeTraversal.LEAVES_DFS)
                 .traverse()
+                .skipWhile { element: PsiElement -> element.isShebangComment() }
                 .takeWhile { element: PsiElement ->
                     (element is PsiComment && element.getParent() !is KtDeclaration) ||
                             element is PsiWhiteSpace ||
@@ -43,3 +47,6 @@ class UpdateKotlinCopyright(
                 .toList()
     }
 }
+
+private fun PsiElement?.isShebangComment(): Boolean =
+    this is PsiComment && tokenType === SHEBANG_COMMENT
