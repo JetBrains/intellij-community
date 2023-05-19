@@ -47,7 +47,7 @@ internal fun cancelAndJoinBlocking(project: ProjectImpl) {
 internal fun cancelAndJoinBlocking(
   containerScope: CoroutineScope,
   debugString: String,
-  pumpEvents: (Job) -> Unit,
+  joinBlocking: (Job) -> Unit,
 ) {
   if (!Registry.`is`("ide.await.scope.completion", true)) {
     return
@@ -66,7 +66,7 @@ internal fun cancelAndJoinBlocking(
     LOG.warn("$debugString: scope was not completed in $delayUntilCoroutineDump.\n${dumpCoroutines(scope = containerScope)}")
   }
   try {
-    pumpEvents(containerJob)
+    joinBlocking(containerJob)
   }
   finally {
     dumpJob.cancel()
