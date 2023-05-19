@@ -3,10 +3,8 @@ package com.intellij.util
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -20,8 +18,6 @@ import kotlin.coroutines.EmptyCoroutineContext
  *
  * @param ctx additional context for the cleaner-coroutine, e.g. [CoroutineName]
  */
-@IntellijInternalApi
-@Internal
 @Experimental
 fun CoroutineScope.awaitCancellationAndInvoke(ctx: CoroutineContext = EmptyCoroutineContext, action: suspend CoroutineScope.() -> Unit) {
   requireNoJob(ctx)
