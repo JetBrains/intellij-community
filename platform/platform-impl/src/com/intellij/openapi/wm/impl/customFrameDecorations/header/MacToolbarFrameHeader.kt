@@ -175,10 +175,10 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
 
   override fun getHeaderBackground(active: Boolean) = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(active)
 
-  override fun updateCustomTitleBar() {
-    super.updateCustomTitleBar()
-    updateBorders()
-  }
+  //override fun updateCustomTitleBar() {
+  //  super.updateCustomTitleBar()
+  //  updateBorders()
+  //}
 
   private fun updateBorders() {
     val isFullscreen = root.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) != null
