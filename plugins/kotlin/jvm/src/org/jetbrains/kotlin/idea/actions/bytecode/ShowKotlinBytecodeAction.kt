@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.KotlinIcons
 
 private const val TOOLWINDOW_ID = "Kotlin Bytecode"
 
-class ShowKotlinBytecodeAction : AnAction() {
+internal class ShowKotlinBytecodeAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val toolWindowManager = ToolWindowManager.getInstance(project)

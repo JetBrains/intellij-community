@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtFile;
 
 import java.util.Objects;
 
-public class Location {
+class Location {
     @Nullable
     final Editor editor;
 

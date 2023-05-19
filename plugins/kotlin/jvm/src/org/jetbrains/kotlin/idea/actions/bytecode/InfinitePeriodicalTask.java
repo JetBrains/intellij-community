@@ -1,20 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.util;
+package org.jetbrains.kotlin.idea.actions.bytecode;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.idea.util.LongRunningReadTask;
 
-public class InfinitePeriodicalTask {
+class InfinitePeriodicalTask {
     private final Alarm myUpdateAlarm;
     private final long delay;
     private final Computable<? extends LongRunningReadTask> taskProvider;
     private LongRunningReadTask currentTask;
 
-    public InfinitePeriodicalTask(
-            long delay, @NotNull Alarm.ThreadToUse threadToUse, Disposable parentDisposable,
+    InfinitePeriodicalTask(
+            long delay,
+            @NotNull Alarm.ThreadToUse threadToUse,
+            Disposable parentDisposable,
             Computable<? extends LongRunningReadTask> taskProvider
     ) {
         myUpdateAlarm = new Alarm(threadToUse, parentDisposable);

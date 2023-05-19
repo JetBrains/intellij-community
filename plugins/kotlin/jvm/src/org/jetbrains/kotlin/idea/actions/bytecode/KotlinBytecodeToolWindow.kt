@@ -6,7 +6,6 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -21,20 +20,20 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.JBColor
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.ClassFileOrigins
 import org.jetbrains.kotlin.idea.core.KotlinCompilerIde
 import org.jetbrains.kotlin.idea.internal.DecompileFailedException
 import org.jetbrains.kotlin.idea.internal.KotlinJvmDecompilerFacade
-import org.jetbrains.kotlin.idea.util.InfinitePeriodicalTask
 import org.jetbrains.kotlin.idea.util.LongRunningReadTask
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.join
@@ -47,14 +46,20 @@ import java.util.*
 import javax.swing.*
 import kotlin.math.min
 
+@ApiStatus.Internal
 sealed class BytecodeGenerationResult {
     data class Bytecode(val text: String) : BytecodeGenerationResult()
     data class Error(val text: String) : BytecodeGenerationResult()
 }
 
-class KotlinBytecodeToolWindow(private val myProject: Project, private val toolWindow: ToolWindow) : JPanel(BorderLayout()), Disposable {
-    @Suppress("JoinDeclarationAndAssignment")
-    private val myEditor: Editor
+@ApiStatus.Internal
+class KotlinBytecodeToolWindow(
+    private val project: Project,
+    private val toolWindow: ToolWindow
+) : JPanel(BorderLayout()), Disposable {
+    private val document = EditorFactory.getInstance().createDocument("")
+    private val editor = EditorFactory.getInstance().createEditor(document, project, JavaFileType.INSTANCE, /* isViewer = */ true)
+
     private val enableInline: JCheckBox
     private val enableOptimization: JCheckBox
     private val enableAssertions: JCheckBox
@@ -68,7 +73,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
                 return null
             }
 
-            val location = Location.fromEditor(FileEditorManager.getInstance(myProject).selectedTextEditor, myProject)
+            val location = Location.fromEditor(FileEditorManager.getInstance(project).selectedTextEditor, project)
             if (location.getEditor() == null) {
                 return null
             }
@@ -94,13 +99,21 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
             val ktFile = location.kFile!!
 
             val configuration = CompilerConfiguration()
+
+            val containingModule = ktFile.module
+            if (containingModule != null) {
+                configuration.put(CommonConfigurationKeys.MODULE_NAME, containingModule.name)
+            }
+
             if (!enableInline.isSelected) {
                 configuration.put(CommonConfigurationKeys.DISABLE_INLINE, true)
             }
+
             if (!enableAssertions.isSelected) {
                 configuration.put(JVMConfigurationKeys.DISABLE_CALL_ASSERTIONS, true)
                 configuration.put(JVMConfigurationKeys.DISABLE_PARAM_ASSERTIONS, true)
             }
+
             if (!enableOptimization.isSelected) {
                 configuration.put(JVMConfigurationKeys.DISABLE_OPTIMIZATION, true)
             }
@@ -117,7 +130,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         }
 
         override fun onResultReady(requestInfo: Location, result: BytecodeGenerationResult?) {
-            val editor = requestInfo.getEditor()!!
+            val sourceEditor = requestInfo.getEditor()!!
 
             if (result == null) {
                 return
@@ -135,38 +148,32 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
                     val fileStartOffset = requestInfo.getStartOffset()
                     val fileEndOffset = requestInfo.getEndOffset()
 
-                    val document = editor.document
-                    val startLine = document.getLineNumber(fileStartOffset)
-                    var endLine = document.getLineNumber(fileEndOffset)
-                    if (endLine > startLine && fileEndOffset > 0 && document.charsSequence[fileEndOffset - 1] == '\n') {
+                    val sourceDocument = sourceEditor.document
+                    val startLine = sourceDocument.getLineNumber(fileStartOffset)
+                    var endLine = sourceDocument.getLineNumber(fileEndOffset)
+                    if (endLine > startLine && fileEndOffset > 0 && sourceDocument.charsSequence[fileEndOffset - 1] == '\n') {
                         endLine--
                     }
 
-                    val byteCodeDocument = myEditor.document
+                    val linesRange = mapLines(document.text, startLine, endLine)
+                    val endSelectionLineIndex = min(linesRange.second + 1, document.lineCount)
 
-                    val linesRange = mapLines(byteCodeDocument.text, startLine, endLine)
-                    val endSelectionLineIndex = min(linesRange.second + 1, byteCodeDocument.lineCount)
+                    val startOffset = document.getLineStartOffset(linesRange.first)
+                    val endOffset = min(document.getLineStartOffset(endSelectionLineIndex), document.textLength)
 
-                    val startOffset = byteCodeDocument.getLineStartOffset(linesRange.first)
-                    val endOffset = min(byteCodeDocument.getLineStartOffset(endSelectionLineIndex), byteCodeDocument.textLength)
-
-                    myEditor.caretModel.moveToOffset(endOffset)
-                    myEditor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
-                    myEditor.caretModel.moveToOffset(startOffset)
-                    myEditor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
-
-                    myEditor.selectionModel.setSelection(startOffset, endOffset)
+                    editor.caretModel.moveToOffset(endOffset)
+                    editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+                    editor.caretModel.moveToOffset(startOffset)
+                    editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+                    editor.selectionModel.setSelection(startOffset, endOffset)
                 }
             }
         }
     }
 
     init {
-        myEditor = EditorFactory.getInstance().createEditor(
-            EditorFactory.getInstance().createDocument(""), myProject, JavaFileType.INSTANCE, true
-        )
-        myEditor.setBorder(null)
-        add(myEditor.component)
+        editor.setBorder(null)
+        add(editor.component)
 
         decompile = JButton(KotlinJvmBundle.message("button.text.decompile"))
         /*TODO: try to extract default parameter from compiler options*/
@@ -174,9 +181,11 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         enableOptimization = JCheckBox(KotlinJvmBundle.message("checkbox.text.optimization"), true)
         enableAssertions = JCheckBox(KotlinJvmBundle.message("checkbox.text.assertions"), true)
         jvmTargets = ComboBox(JvmTarget.supportedValues().map { it.description }.toTypedArray())
+
         @NlsSafe
         val description = JvmTarget.DEFAULT.description
         jvmTargets.selectedItem = description
+
         ir = JCheckBox(KotlinJvmBundle.message("checkbox.text.ir"), false)
 
         setText(DEFAULT_TEXT)
@@ -188,33 +197,37 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         val optionPanel = JPanel(FlowLayout())
         add(optionPanel, BorderLayout.NORTH)
 
-        val decompilerFacade = KotlinJvmDecompilerFacade.getInstance()
-        if (decompilerFacade != null) {
-            optionPanel.add(decompile)
-            decompile.addActionListener {
-                decompileBytecode(decompilerFacade)
-            }
-        }
+        with(optionPanel) {
+            border = JBUI.Borders.customLineBottom(JBColor.border())
 
-        optionPanel.add(enableInline)
-        optionPanel.add(enableOptimization)
-        optionPanel.add(enableAssertions)
-        optionPanel.add(ir)
-        optionPanel.add(JLabel(KotlinJvmBundle.message("bytecode.toolwindow.label.jvm.target")))
-        optionPanel.add(jvmTargets)
-        optionPanel.border = JBUI.Borders.customLineBottom(JBColor.border())
+            val decompilerFacade = KotlinJvmDecompilerFacade.getInstance()
+            if (decompilerFacade != null) {
+                add(decompile)
+                decompile.addActionListener {
+                    decompileBytecode(decompilerFacade)
+                }
+            }
+
+            add(enableInline)
+            add(enableOptimization)
+            add(enableAssertions)
+            add(ir)
+            add(JLabel(KotlinJvmBundle.message("bytecode.toolwindow.label.jvm.target")))
+            add(jvmTargets)
+        }
     }
 
     private fun decompileBytecode(decompilerFacade: KotlinJvmDecompilerFacade) {
-        val location = Location.fromEditor(FileEditorManager.getInstance(myProject).selectedTextEditor, myProject)
-        val file = location.kFile
-        if (file == null) return
+        val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
+        val location = Location.fromEditor(editor, project)
+        val file = location.kFile ?: return
+
         try {
             decompilerFacade.showDecompiledCode(file)
         } catch (ex: DecompileFailedException) {
             LOG.info(ex)
             Messages.showErrorDialog(
-                myProject,
+                project,
                 KotlinJvmBundle.message("failed.to.decompile.0.1", file.name, ex),
                 KotlinJvmBundle.message("kotlin.bytecode.decompiler")
             )
@@ -248,11 +261,11 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
     }
 
     private fun setText(resultText: String) {
-        ApplicationManager.getApplication().runWriteAction { myEditor.document.setText(StringUtil.convertLineSeparators(resultText)) }
+        ApplicationManager.getApplication().runWriteAction { editor.document.setText(StringUtil.convertLineSeparators(resultText)) }
     }
 
     override fun dispose() {
-        EditorFactory.getInstance().releaseEditor(myEditor)
+        EditorFactory.getInstance().releaseEditor(editor)
     }
 
     companion object {
@@ -264,7 +277,6 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
                 "No Kotlin source file is opened.\n" +
                 "*/"
 
-        // public for tests
         fun getBytecodeForFile(ktFile: KtFile, configuration: CompilerConfiguration): BytecodeGenerationResult {
             val (state, classFileOrigins) = try {
                 compileSingleFile(ktFile, configuration)
@@ -320,6 +332,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
             }.ifEmpty { outputFiles }
         }
 
+        @ApiStatus.Internal
         fun compileSingleFile(ktFile: KtFile, initialConfiguration: CompilerConfiguration): Pair<GenerationState, ClassFileOrigins>? =
             KotlinCompilerIde(
                 ktFile,
