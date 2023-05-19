@@ -39,7 +39,6 @@
   </xi:include>
 
   <xi:include href="jvm-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="jvm.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="parcelize.k1.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <content>
