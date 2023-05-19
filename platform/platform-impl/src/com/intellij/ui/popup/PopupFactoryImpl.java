@@ -741,8 +741,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final boolean myMnemonicsEnabled;
     private final boolean myHonorActionMnemonics;
 
-    private final boolean myPrependWithSeparator;
-    private final @NlsContexts.Separator String mySeparatorText;
+    boolean myPrependWithSeparator;
+    private @NlsContexts.Separator String mySeparatorText;
 
     @NotNull private final List<InlineActionItem> myInlineActions;
 
@@ -868,6 +868,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     public @NlsContexts.Separator String getSeparatorText() {
       return mySeparatorText;
+    }
+
+    public void setSeparatorText(@NlsContexts.Separator String separatorText) {
+      myPrependWithSeparator = separatorText != null;
+      mySeparatorText = separatorText;
     }
 
     public boolean isEnabled() { return myIsEnabled; }

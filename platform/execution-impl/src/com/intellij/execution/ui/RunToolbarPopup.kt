@@ -12,6 +12,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
+import com.intellij.ide.dnd.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -32,6 +33,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.JBList
+import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
@@ -83,7 +85,7 @@ internal fun createRunConfigurationsActionGroup(project: Project, e: AnActionEve
     HideableDefaultActionGroup(folderName) { shouldBeShown(null, it) }
   }
   val filteringSubActions: (RunnerAndConfigurationSettings, String) -> AnAction = { configuration, folderName ->
-    createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, e) { holdingFilter ->
+    createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, e, pinned) { holdingFilter ->
       holdingFilter && !recents.contains(configuration)
     }.also {
       it.templatePresentation.putClientProperty(Presentation.PROP_VALUE, folderName)
@@ -136,9 +138,15 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
   PopupFactoryImpl.ActionGroupPopup(null, actionGroup, dataContext, false, false, true, false,
                                     disposeCallback, 30, null, null, PresentationFactory(), false) {
 
+  private val dragRange: IntRange = 0 until RunConfigurationStartHistory.getInstance(project).pinned().size + 1
+
   init {
-    (list as? JBList<*>)?.setExpandableItemsEnabled(false)
-    (list as? JBList<*>)?.dragEnabled = true
+    list.setExpandableItemsEnabled(false)
+    if (!dragRange.isEmpty()) {
+      val dndManager = DnDManager.getInstance()
+      dndManager.registerSource(MyDnDSource(), list, this)
+      dndManager.registerTarget(MyDnDTarget(), list, this)
+    }
   }
 
   override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
@@ -155,6 +163,63 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
 
   fun shouldBeShowing(action: AnAction, holdingFilter: Boolean): Boolean {
     return if (action is HideableAction) return action.shouldBeShown(holdingFilter) else true
+  }
+
+  override fun getList(): JBList<*> {
+    return super.getList() as JBList<*>
+  }
+
+  private fun isPossibleToDragItem(index: Int): Boolean {
+    return dragRange.contains(index)
+  }
+
+  private data class DraggedIndex(val from: Int)
+
+  private inner class MyDnDTarget : DnDTarget {
+    override fun update(aEvent: DnDEvent): Boolean {
+      val from = (aEvent.attachedObject as? DraggedIndex)?.from
+      if (from is Int) {
+        val targetIndex: Int = list.locationToIndex(aEvent.point)
+        val possible: Boolean = isPossibleToDragItem(targetIndex)
+        list.setDropTargetIndex(if (possible && wouldActuallyMove(from, targetIndex)) targetIndex else -1)
+        aEvent.isDropPossible = possible
+      }
+      else {
+        aEvent.isDropPossible = false
+      }
+      return false
+    }
+
+    override fun drop(aEvent: DnDEvent) {
+      list.setDropTargetIndex(-1)
+      val from = (aEvent.attachedObject as? DraggedIndex)?.from
+      if (from is Int) {
+        val targetIndex: Int = list.locationToIndex(aEvent.point)
+        if (wouldActuallyMove(from, targetIndex)) {
+          (step as ActionPopupStep).reorderItems(from, targetIndex, 0)
+          RunConfigurationStartHistory.getInstance(project).reorderItems(from, targetIndex)
+          listModel.syncModel()
+        }
+      }
+    }
+
+    private fun wouldActuallyMove(from: Int, targetIndex: Int) = from != targetIndex && from + 1 != targetIndex
+
+    override fun cleanUpOnLeave() {
+      list.setDropTargetIndex(-1)
+    }
+  }
+
+  private inner class MyDnDSource : DnDSource {
+    override fun canStartDragging(action: DnDAction, dragOrigin: Point): Boolean {
+      return isPossibleToDragItem(list.locationToIndex(dragOrigin))
+    }
+
+    override fun startDragging(action: DnDAction, dragOrigin: Point): DnDDragStartBean? {
+      val index: Int = list.locationToIndex(dragOrigin)
+      if (index < 0) return null
+      return DnDDragStartBean(DraggedIndex(index))
+    }
   }
 }
 
@@ -458,6 +523,13 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
   fun togglePin(setting: RunnerAndConfigurationSettings) {
     val newPinned = (_state.pinned.toMutableList().also { it.add(0, Element(setting.uniqueID)) }).toMutableSet()
     _state = State(_state.history, newPinned, _state.allConfigurationsExpanded)
+  }
+
+  fun reorderItems(from: Int, where: Int) {
+    val list = _state.pinned.toMutableList()
+    list.add(where, list[from])
+    list.removeAt(if (where < from) from + 1 else from)
+    _state = State(_state.history, list.toMutableSet(), _state.allConfigurationsExpanded)
   }
 
   fun register(setting: RunnerAndConfigurationSettings) {

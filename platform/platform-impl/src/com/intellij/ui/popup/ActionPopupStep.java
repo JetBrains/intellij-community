@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -318,6 +319,28 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   @Override
   public SpeedSearchFilter<PopupFactoryImpl.ActionItem> getSpeedSearchFilter() {
     return this;
+  }
+
+  @ApiStatus.Internal
+  public void reorderItems(int from, int where, int preserveSeparatorAt) {
+    if (myItems.get(from).isPrependWithSeparator() || myItems.get(where).isPrependWithSeparator()) {
+      String fromText = myItems.get(from).getSeparatorText();
+      String whereText = myItems.get(where).getSeparatorText();
+      myItems.get(from).setSeparatorText(null);
+      if (preserveSeparatorAt == from) {
+        myItems.get(from + 1).setSeparatorText(fromText);
+      }
+      if (preserveSeparatorAt == where) {
+        myItems.get(where).setSeparatorText(null);
+        myItems.get(from).setSeparatorText(whereText);
+      }
+    }
+    PopupFactoryImpl.ActionItem toMove = myItems.get(from);
+    myItems.add(where, toMove);
+    if (where < from) {
+      from ++;
+    }
+    myItems.remove(from);
   }
 
   private static boolean isPopupOrMainMenuPlace(@NotNull String place) {
