@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import static com.intellij.util.SystemProperties.getIntProperty;
+import static com.intellij.util.io.IOUtil.KiB;
 import static java.nio.file.StandardOpenOption.*;
 
 class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
@@ -57,7 +58,7 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
    * If == 0: store all gists in VFS attributes.
    * Value should be <= {@link com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage#MAX_ATTRIBUTE_VALUE_SIZE}
    */
-  public static final int MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES = getIntProperty("idea.gist.max-size-to-store-in-attributes", Integer.MAX_VALUE /*goal: 50 * KiB*/);
+  public static final int MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES = getIntProperty("idea.gist.max-size-to-store-in-attributes", 50 * KiB);
 
   private static final String HUGE_GISTS_DIR_NAME = "huge-gists";
 
