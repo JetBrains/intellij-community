@@ -12,11 +12,12 @@ import org.jetbrains.annotations.NotNull;
  * creation of a new char array on every {@code subSequence(int, int)} call in contrast to {@link String#subSequence(int, int)},
  * which actually creates a new {@link String} instance every time it's invoked.
  * <p>
+ * The downside of using {@code CharSequenceSubSequence} is that it keeps reference to the original sequence, which may be large.
+ * Therefore, results of text processing should always be stored as {@link String}, to allow garbage collection of the original sequence.
+ * <p>
  * {@code CharSequenceSubSequence} implements `hashCode` and `equals` in such a way that it can be compared against {@link String} map keys
  * and set elements without creating a {@link String} instance. However, {@code CharSequenceSubSequence} should not be used
- * as a map key or set element, since {@link CharSequence} API does not guarantee anything beside char iteration.
- * <p>
- * Results of text processing should always be stored as {@link String}.
+ * as a map key or set element, since it keeps reference to the original sequence and prevents its collection.
  **/
 public class CharSequenceSubSequence implements CharSequence, CharArrayExternalizable, CharSequenceWithStringHash {
   private final CharSequence myChars;
