@@ -7,9 +7,17 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Closeable;
 import java.io.IOException;
 
-/** Every single method call must be guarded by lockRead/lockWrite -- including .close() and .force()! */
+/**
+ * Every single method call must be guarded by lockRead/lockWrite -- including .close() and .force()!
+ * <p>
+ * TODO RC: there is inconsistency in interpreting offset/ids by this class: from the usage, all
+ * int params/return values here are kind of 'id'. I.e. append(value) returns valueId, something
+ * that could be used to access value later on -- read(valueId) it back, checkBytesAreTheSame(valueId, value),
+ * enumerate all values with processAll(). But all apt parameters are named 'addr' or 'offset',
+ * which is
+ */
 public interface AppendableObjectStorage<Data> extends Forceable, Closeable {
-  Data read(int addr, boolean checkAccess) throws IOException;
+  Data read(int valueId, boolean checkAccess) throws IOException;
 
   /**
    * Method now has quite convoluted semantics (inferred from implementation and use-cases):
@@ -27,9 +35,10 @@ public interface AppendableObjectStorage<Data> extends Forceable, Closeable {
    */
   boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException;
 
+  /** @return ID of value appended, by which value could be referred later on */
   int append(Data value) throws IOException;
 
-  boolean checkBytesAreTheSame(int addr, Data value) throws IOException;
+  boolean checkBytesAreTheSame(int valueId, Data value) throws IOException;
 
   void clear() throws IOException;
 
@@ -50,6 +59,6 @@ public interface AppendableObjectStorage<Data> extends Forceable, Closeable {
 
   @FunctionalInterface
   interface StorageObjectProcessor<Data> {
-    boolean process(int offset, Data data);
+    boolean process(int valueId, Data value);
   }
 }

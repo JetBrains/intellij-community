@@ -2,10 +2,13 @@
 package com.intellij.util.io.pagecache;
 
 import com.intellij.openapi.Forceable;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
+import com.intellij.util.io.InputStreamOverPagedStorage;
 import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
@@ -71,4 +74,16 @@ public interface PagedStorage extends Forceable, AutoCloseable {
 
   @Override
   void close() throws IOException;
+
+  default <R> @NotNull R readInputStream(
+    @NotNull ThrowableNotNullFunction<? super InputStream, R, ? extends IOException> consumer
+  ) throws IOException {
+    //MAYBE RC: it is likely suboptimal way to read through storage -- potentially many pages are load only
+    //         to be abandoned, aka 'cache trashing'. The better way would be to use already cached
+    //         pages as-is, but read not-currently-cached pages just temporary, re-using single transient
+    //         page object, without evicting currently cached pages.
+    try (final InputStreamOverPagedStorage stream = new InputStreamOverPagedStorage(this, 0, length())) {
+      return consumer.fun(stream);
+    }
+  }
 }

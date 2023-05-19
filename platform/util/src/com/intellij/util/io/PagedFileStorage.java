@@ -326,7 +326,7 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
 
   public void close() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
-      new IOException("Failed to close appendable storage[" + getFile() + "]"),
+      new IOException("Failed to close PagedFileStorage[" + getFile() + "]"),
       
       this::force,
       () -> {

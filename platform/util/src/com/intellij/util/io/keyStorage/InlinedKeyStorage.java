@@ -6,6 +6,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+/**
+ * {@link AppendableObjectStorage} implementation for values that could be bijectively mapped
+ * to-from int, see {@link InlineKeyDescriptor}.
+ * valueId == value itself converted to int
+ */
 public class InlinedKeyStorage<Data> implements AppendableObjectStorage<Data> {
 
   private final InlineKeyDescriptor<Data> myDescriptor;
@@ -15,8 +20,8 @@ public class InlinedKeyStorage<Data> implements AppendableObjectStorage<Data> {
   }
 
   @Override
-  public Data read(int addr, boolean checkAccess) throws IOException {
-    return myDescriptor.fromInt(addr);
+  public Data read(int valueId, boolean checkAccess) throws IOException {
+    return myDescriptor.fromInt(valueId);
   }
 
   @Override
@@ -30,7 +35,7 @@ public class InlinedKeyStorage<Data> implements AppendableObjectStorage<Data> {
   }
 
   @Override
-  public boolean checkBytesAreTheSame(int addr, Data value) {
+  public boolean checkBytesAreTheSame(int valueId, Data value) {
     return false;
   }
 

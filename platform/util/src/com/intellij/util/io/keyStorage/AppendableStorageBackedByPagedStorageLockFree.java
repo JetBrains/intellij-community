@@ -5,6 +5,9 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
+import com.intellij.util.io.pagecache.Page;
+import com.intellij.util.io.pagecache.PagedStorage;
+import com.intellij.util.io.pagecache.PagedStorageWithPageUnalignedAccess;
 import it.unimi.dsi.fastutil.bytes.ByteArrays;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -13,42 +16,81 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.*;
 import java.nio.file.Path;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/** valueId == offset of value in a file */
-public class AppendableStorageBackedByResizableMappedFile<Data> implements AppendableObjectStorage<Data> {
+import static com.intellij.util.io.pagecache.impl.PageContentLockingStrategy.SharedLockLockingStrategy;
+
+/**
+ * {@link AppendableObjectStorage} implementation on the top of {@link PagedStorage}
+ * valueId == offset of value in a file
+ */
+//@NotThreadSafe
+public class AppendableStorageBackedByPagedStorageLockFree<Data> implements AppendableObjectStorage<Data> {
+
   @VisibleForTesting
   @ApiStatus.Internal
   public static final int APPEND_BUFFER_SIZE = 4096;
 
-  private static final ThreadLocal<MyDataIS> TLOCAL_READ_STREAMS = ThreadLocal.withInitial(() -> new MyDataIS());
+  private static final ThreadLocal<DataStreamOverPagedStorage> TLOCAL_READ_STREAMS =
+    ThreadLocal.withInitial(() -> new DataStreamOverPagedStorage());
 
-  private final ResizeableMappedFile storage;
+  private final PagedStorage storage;
+  private final ReentrantReadWriteLock storageLock;
 
-  //TODO RC: the class is suspicious because it uses some multi-threading constructs (synchronized, volatile), but
-  //         the class overall is not thread safe in any reasonable sense. I.e. authors seem to consider the class
-  //         for multithreaded use, but it is really not safe for it. We should either made it really thread-safe,
-  //         or remove all synchronized/volatile, and rely on caller for synchronization.
-
-  private volatile int fileLength;
-  private volatile @Nullable AppendMemoryBuffer appendBuffer;
+  private int fileLength;
+  private @Nullable AppendMemoryBuffer appendBuffer;
 
   private final @NotNull DataExternalizer<Data> dataDescriptor;
 
-  public AppendableStorageBackedByResizableMappedFile(@NotNull Path file,
-                                                      int initialSize,
-                                                      @Nullable StorageLockContext lockContext,
-                                                      int pageSize,
-                                                      boolean valuesAreBufferAligned,
-                                                      @NotNull DataExternalizer<Data> dataDescriptor) throws IOException {
-    this.storage = new ResizeableMappedFile(
+
+  public AppendableStorageBackedByPagedStorageLockFree(@NotNull Path file,
+                                                       @Nullable StorageLockContext lockContext,
+                                                       int pageSize,
+                                                       boolean valuesAreBufferAligned,
+                                                       @NotNull DataExternalizer<Data> dataDescriptor,
+                                                       @NotNull ReentrantReadWriteLock storageLock) throws IOException {
+    this.storageLock = storageLock;
+    PagedFileStorageWithRWLockedPageContent storage = new PagedFileStorageWithRWLockedPageContent(
       file,
-      initialSize,
       lockContext,
       pageSize,
-      valuesAreBufferAligned
+      /*nativeByteOrder: */false, //TODO RC: why not native order?
+      new SharedLockLockingStrategy(this.storageLock)
     );
+    this.storage = valuesAreBufferAligned ? storage : new PagedStorageWithPageUnalignedAccess(storage);
     this.dataDescriptor = dataDescriptor;
-    fileLength = Math.toIntExact(storage.length());
+    fileLength = Math.toIntExact(this.storage.length());
+  }
+
+  @Override
+  public void clear() throws IOException {
+    storage.clear();
+    fileLength = 0;
+  }
+
+  @Override
+  public void lockRead() {
+    storageLock.readLock().lock();
+  }
+
+  @Override
+  public void unlockRead() {
+    storageLock.readLock().unlock();
+  }
+
+  @Override
+  public void lockWrite() {
+    storageLock.writeLock().lock();
+  }
+
+  @Override
+  public void unlockWrite() {
+    storageLock.writeLock().unlock();
+  }
+
+  @Override
+  public boolean isDirty() {
+    return AppendMemoryBuffer.hasChanges(appendBuffer) || storage.isDirty();
   }
 
   private void flushAppendBuffer() throws IOException {
@@ -60,11 +102,30 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
     }
   }
 
+  @Override
+  public void force() throws IOException {
+    flushAppendBuffer();
+    storage.force();
+  }
+
+  @Override
+  public void close() throws IOException {
+    try {
+      ExceptionUtil.runAllAndRethrowAllExceptions(
+        new IOException("Failed to .close() appendable storage [" + storage.getFile() + "]"),
+        this::flushAppendBuffer,
+        storage::close
+      );
+    }
+    finally {
+      TLOCAL_READ_STREAMS.remove();
+    }
+  }
 
   @Override
   public Data read(int valueId, boolean checkAccess) throws IOException {
-    int offset = valueId;
     AppendMemoryBuffer buffer = appendBuffer;
+    int offset = valueId;
     if (buffer != null
         && (long)offset >= buffer.startingOffsetInFile) {
       AppendMemoryBuffer copyForRead = buffer.copy();
@@ -86,33 +147,30 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
       throw new NoDataException("Requested address(=" + offset + ") points to un-existed data (file length: " + fileLength + ")");
     }
     // we do not need to flushAppendBuffer() since we store complete records
-    MyDataIS rs = TLOCAL_READ_STREAMS.get();
+    DataStreamOverPagedStorage rs = TLOCAL_READ_STREAMS.get();
 
-    rs.setup(storage, offset, fileLength, checkAccess);
+    rs.setup(storage, offset, fileLength);
     return dataDescriptor.read(rs);
   }
 
   @Override
   public boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException {
-    //TODO RC: processAll requires storage to by flushed first -- but in multithreaded environment it is
-    //         impossible to satisfy this requirement without excessive locking: one needs writeLock to
-    //         do flush, and also at least a readLock for .processAll(). But there shouldn't be any
-    //         locking gap between flush() and.processAll(), which is impossible with regular ReadWriteLock
-    //         (readLock can't be upgraded to writeLock), hence exclusive lock needed for the whole
-    //         (flush+processAll) call.
-    //         Hence right now it is easier to relax the semantics of processAll so that it doesn't guarantee
-    //         strict consistency -- items added after last flush but before .processAll() could be not listed
-    //
-    //if (isDirty()) {
-    //  //RC: why not .force() right here? Probably because of the locks: processAll is a read method, so
-    //  //    it is likely readLock is acquired, but force() requires writeLock, and one can't upgrade read
-    //  //    lock to the write one. So the responsibility was put on a caller.
-    //  throw new IllegalStateException("Must be .force()-ed first");
-    //}
+    if (isDirty()) {
+      //RC: why not .force() right here? Probably because of the locks: processAll is a read method, so
+      //    it is likely readLock is acquired, but force() requires writeLock, and one can't upgrade read
+      //    lock to the write one. So the responsibility was put on a caller.
+
+      //MAYBE RC: we really don't need full flush here -- flushAppendBuffer() is enough, since
+      //PagedStorage.readInputStream() reads over cached pages, not over on-disk file, as
+      //legacy PagedFileStorage does. But still requires writeLock, hence comment before still
+      //applies
+      throw new IllegalStateException("Must be .force()-ed first");
+    }
     if (fileLength == 0) {
       return true;
     }
     IOCancellationCallbackHolder.checkCancelled();
+    //throw new UnsupportedOperationException("Method not implemented yet");
     return storage.readInputStream(is -> {
       // calculation may restart few times, so it's expected that processor processes duplicates
       LimitedInputStream lis = new LimitedInputStream(new BufferedInputStream(is), fileLength) {
@@ -147,8 +205,8 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
     BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream();
     DataOutput out = new DataOutputStream(bos);
     dataDescriptor.save(out, value);
-    final int size = bos.size();
-    final byte[] buffer = bos.getInternalBuffer();
+    int size = bos.size();
+    byte[] buffer = bos.getInternalBuffer();
 
     int currentLength = getCurrentLength();
 
@@ -174,60 +232,14 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
   }
 
   @Override
-  public boolean checkBytesAreTheSame(int valueId, Data value) throws IOException {
+  public boolean checkBytesAreTheSame(int valueId,
+                                      Data value) throws IOException {
     int offset = valueId;
     try (CheckerOutputStream comparer = buildOldComparerStream(offset)) {
       DataOutput out = new DataOutputStream(comparer);
       dataDescriptor.save(out, value);
       return comparer.same;
     }
-  }
-
-  @Override
-  public void clear() throws IOException {
-    storage.clear();
-    fileLength = 0;
-    appendBuffer = null;
-  }
-
-  @Override
-  public boolean isDirty() {
-    return AppendMemoryBuffer.hasChanges(appendBuffer) || storage.isDirty();
-  }
-
-  @Override
-  public void force() throws IOException {
-    flushAppendBuffer();
-    storage.force();
-  }
-
-  @Override
-  public void close() throws IOException {
-    ExceptionUtil.runAllAndRethrowAllExceptions(
-      new IOException("Can't .close() appendable storage [" + storage.getPagedFileStorage().getFile() + "]"),
-      this::force,
-      storage::close
-    );
-  }
-
-  @Override
-  public void lockRead() {
-    storage.lockRead();
-  }
-
-  @Override
-  public void unlockRead() {
-    storage.unlockRead();
-  }
-
-  @Override
-  public void lockWrite() {
-    storage.lockWrite();
-  }
-
-  @Override
-  public void unlockWrite() {
-    storage.unlockWrite();
   }
 
   private abstract static class CheckerOutputStream extends OutputStream {
@@ -238,9 +250,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
    * @return fake OutputStream impl that doesn't write anything, but compare bytes to be written against
    * bytes already in a file on the same positions, and set .same to be true or false
    */
-  private @NotNull CheckerOutputStream buildOldComparerStream(final int startingOffsetInFile) throws IOException {
-    final PagedFileStorage storage = this.storage.getPagedFileStorage();
-
+  private @NotNull CheckerOutputStream buildOldComparerStream(int startingOffsetInFile) throws IOException {
     if (fileLength <= startingOffsetInFile) {
       return new CheckerOutputStream() {
         private int address = startingOffsetInFile - fileLength;
@@ -248,7 +258,9 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
         @Override
         public void write(int b) {
           if (same) {
-            same = address < AppendMemoryBuffer.getBufferPosition(appendBuffer) && appendBuffer.getAppendBuffer()[address++] == (byte)b;
+            AppendMemoryBuffer buffer = appendBuffer;
+            same = address < AppendMemoryBuffer.getBufferPosition(buffer)
+                   && buffer.getAppendBuffer()[address++] == (byte)b;
           }
         }
       };
@@ -256,8 +268,8 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
     else {
       return new CheckerOutputStream() {
         private int offsetInFile = startingOffsetInFile;
-        private int offsetInPage = storage.getOffsetInPage(startingOffsetInFile);
-        private DirectBufferWrapper buffer = storage.getByteBuffer(startingOffsetInFile, false);
+        private int offsetInPage = storage.toOffsetInPage(startingOffsetInFile);
+        private Page currentPage = storage.pageByOffset(startingOffsetInFile, /*forWrite: */false);
         private final int pageSize = storage.getPageSize();
 
         @Override
@@ -265,41 +277,44 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
           if (same) {
             if (pageSize == offsetInPage && offsetInFile < fileLength) {    // reached end of current byte buffer
               offsetInFile += offsetInPage;
-              buffer.unlock();
-              buffer = storage.getByteBuffer(offsetInFile, false);
+              currentPage.close();
+              currentPage = storage.pageByOffset(offsetInFile, /*forWrite: */ false);
               offsetInPage = 0;
             }
-            same = offsetInPage < fileLength && buffer.get(offsetInPage++, true) == (byte)b;
+            same = offsetInPage < fileLength && currentPage.get(offsetInPage) == (byte)b;
+            offsetInPage++;
           }
         }
 
         @Override
         public void close() {
-          buffer.unlock();
+          currentPage.close();
         }
       };
     }
   }
 
-  private static final class MyDataIS extends DataInputStream {
-    private MyDataIS() {
-      super(new MyBufferedIS());
+  private static final class DataStreamOverPagedStorage extends DataInputStream {
+    private DataStreamOverPagedStorage() {
+      super(new BufferedInputStreamOverPagedStorage());
     }
 
-    void setup(ResizeableMappedFile is, long pos, long limit, boolean checkAccess) {
-      ((MyBufferedIS)in).setup(is, pos, limit, checkAccess);
+    void setup(PagedStorage storage, long pos, long limit) {
+      ((BufferedInputStreamOverPagedStorage)in).setup(storage, pos, limit);
     }
   }
 
-  private static class MyBufferedIS extends BufferedInputStream {
-    MyBufferedIS() {
+  private static class BufferedInputStreamOverPagedStorage extends BufferedInputStream {
+    BufferedInputStreamOverPagedStorage() {
       super(TOMBSTONE, 512);
     }
 
-    void setup(ResizeableMappedFile in, long pos, long limit, boolean checkAccess) {
+    void setup(@NotNull PagedStorage storage,
+               long position,
+               long limit) {
       this.pos = 0;
       this.count = 0;
-      this.in = new MappedFileInputStream(in, pos, limit, checkAccess);
+      this.in = new InputStreamOverPagedStorage(storage, position, limit);
     }
   }
 
@@ -337,24 +352,24 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
     }
 
 
-    private synchronized byte[] getAppendBuffer() {
+    private byte[] getAppendBuffer() {
       return buffer;
     }
 
-    private synchronized int getBufferPosition() {
+    private int getBufferPosition() {
       return bufferPosition;
     }
 
-    public synchronized void append(byte[] buffer, int size) {
+    public void append(byte[] buffer, int size) {
       System.arraycopy(buffer, 0, this.buffer, bufferPosition, size);
       bufferPosition += size;
     }
 
-    public synchronized @NotNull AppendMemoryBuffer copy() {
+    public @NotNull AppendMemoryBuffer copy() {
       return new AppendMemoryBuffer(ByteArrays.copy(buffer), bufferPosition, startingOffsetInFile);
     }
 
-    public synchronized @NotNull AppendMemoryBuffer rewind(int offsetInFile) {
+    public @NotNull AppendMemoryBuffer rewind(int offsetInFile) {
       return new AppendMemoryBuffer(buffer, 0, offsetInFile);
     }
 
