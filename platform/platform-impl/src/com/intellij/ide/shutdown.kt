@@ -7,12 +7,14 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.TaskCancellation
-import com.intellij.openapi.progress.impl.pumpEventsUntilJobIsCompleted
+import com.intellij.openapi.progress.impl.pumpEventsForHierarchy
 import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
+import javax.swing.SwingUtilities
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -24,7 +26,13 @@ internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
   EDT.assertIsEdt()
   LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed)
   cancelAndJoinBlocking(application.coroutineScope, debugString = "Application $application") { containerJob ->
-    IdeEventQueue.getInstance().pumpEventsUntilJobIsCompleted(containerJob)
+    containerJob.invokeOnCompletion {
+      // Unblock `getNextEvent()` in case it's blocked.
+      SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
+    }
+    IdeEventQueue.getInstance().pumpEventsForHierarchy {
+      containerJob.isCompleted
+    }
   }
 }
 

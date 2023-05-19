@@ -353,13 +353,9 @@ private fun IdeEventQueue.pumpEventsForHierarchy(
 }
 
 @Internal
-fun IdeEventQueue.pumpEventsUntilJobIsCompleted(job: Job) {
-  job.invokeOnCompletion {
-    // Unblock `getNextEvent()` in case it's blocked.
-    SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
-  }
+fun IdeEventQueue.pumpEventsForHierarchy(exitCondition: () -> Boolean) {
   pumpEventsForHierarchy(
-    exitCondition = job::isCompleted,
+    exitCondition = exitCondition,
     modalComponent = { null },
   )
 }
