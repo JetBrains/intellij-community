@@ -9,7 +9,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -56,8 +55,7 @@ public class ApplicationManager {
     });
   }
 
-  private static final List<Runnable> cleaners =
-    ContainerUtil.createLockFreeCopyOnWriteList(Collections.singletonList(() -> CachedSingletonsRegistry.INSTANCE.cleanupCachedFields()));
+  private static final List<Runnable> cleaners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
    * register cleaning operation to be run when the Application instance is reset, for example, in tests
