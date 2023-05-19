@@ -100,6 +100,13 @@ public class StringBufferReplaceableByStringBuilder {
     StringBuffer sb2 = new StringBuffer();
     StringBuffer sb1 = switch(0) {default -> matcher.appendTail(sb2);};
   }
+
+  void withVar() {
+    var <warning descr="'StringBuffer sb' may be declared as 'StringBuilder'">sb</warning> = new StringBuffer();
+    sb.append("1");
+    sb.append("2");
+    System.out.println(sb.toString());
+  }
 }
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE, ElementType.TYPE, ElementType.PACKAGE})

@@ -140,10 +140,12 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
         return;
       }
       final PsiJavaCodeReferenceElement oldReferenceElement = typeElement.getInnermostComponentReferenceElement();
-      if (oldReferenceElement == null) {
+      if (oldReferenceElement == null && !typeElement.isInferredType()) {
         return;
       }
-      oldReferenceElement.replace(newClassReference);
+      if (oldReferenceElement != null && !typeElement.isInferredType()) {
+        oldReferenceElement.replace(newClassReference);
+      }
       final PsiExpression newExpression = getNewStringBuffer(variable.getInitializer());
       if (!(newExpression instanceof PsiNewExpression)) {
         return;
@@ -236,7 +238,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
           if ("appendTail".equals(methodName)) {
             return call instanceof PsiExpression && isSafeStringBufferUsage((PsiExpression)call);
           }
-          else if ("appendReplacement".equals(methodName)){
+          else if ("appendReplacement".equals(methodName)) {
             return true;
           }
         }
