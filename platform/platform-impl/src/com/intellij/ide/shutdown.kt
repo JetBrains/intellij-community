@@ -44,7 +44,11 @@ internal fun cancelAndJoinBlocking(project: ProjectImpl) {
   }
 }
 
-internal fun cancelAndJoinBlocking(containerScope: CoroutineScope, debugString: String, pumpEvents: (Job) -> Unit) {
+internal fun cancelAndJoinBlocking(
+  containerScope: CoroutineScope,
+  debugString: String,
+  pumpEvents: (Job) -> Unit,
+) {
   if (!Registry.`is`("ide.await.scope.completion", true)) {
     return
   }
