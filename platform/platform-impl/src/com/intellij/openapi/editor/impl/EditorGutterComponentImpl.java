@@ -2448,13 +2448,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public void setLeftFreePaintersAreaWidth(int widthInPixels) {
-    if (widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
+    if (widthInPixels != -1 && widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
     myForcedLeftFreePaintersAreaWidth = (short)widthInPixels;
   }
 
   @Override
   public void setRightFreePaintersAreaWidth(int widthInPixels) {
-    if (widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
+    if (widthInPixels != -1 && widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
     myForcedRightFreePaintersAreaWidth = (short)widthInPixels;
   }
 
