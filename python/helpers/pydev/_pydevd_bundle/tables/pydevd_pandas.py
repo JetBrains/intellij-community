@@ -18,6 +18,7 @@ def get_shape(table):
 # noinspection PyUnresolvedReferences
 def get_head(table, max_cols):
     # type: (Union[pd.DataFrame, pd.Series, np.ndarray], int) -> str
+    max_cols = __check_max_cols(max_cols)
     return repr(__convert_to_df(table).head().to_html(notebook=True, max_cols=max_cols))
 
 
@@ -32,6 +33,7 @@ def get_column_types(table):
 # noinspection PyUnresolvedReferences
 def get_data(table, max_cols, max_colwidth, start_index=None, end_index=None):
     # type: (Union[pd.DataFrame, pd.Series, np.ndarray], int, int, int, int) -> str
+    max_cols = __check_max_cols(max_cols)
     _jb_max_cols = pd.get_option('display.max_columns')
     _jb_max_colwidth = pd.get_option('display.max_colwidth')
 
@@ -56,6 +58,7 @@ def __get_data_slice(table, start, end):
 def display_data(table, max_cols, max_colwidth, start, end):
     # type: (Union[pd.DataFrame, pd.Series, np.ndarray], int, int, int, int) -> None
     from IPython.display import display
+    max_cols = __check_max_cols(max_cols)
 
     _jb_max_cols = pd.get_option('display.max_columns')
     _jb_max_colwidth = pd.get_option('display.max_colwidth')
@@ -98,3 +101,10 @@ def __series_to_df(table):
 def __array_to_df(table):
     # type: (np.array) -> pd.DataFrame
     return pd.DataFrame(table)
+
+
+def __check_max_cols(max_cols):
+    # type ([int, None] -> [int, None])
+    if max_cols is None or max_cols < 0:
+        return None
+    return max_cols
