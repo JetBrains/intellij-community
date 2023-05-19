@@ -160,4 +160,18 @@ class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       abstract class AbstractCCM<T> : <error descr="Usage of generified after 1.6 API which would cause compilation problems with JDK 6">AbstractListModel</error><T>() { }
     """.trimIndent())
   }
+
+  fun `test no highlighting in kdoc`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_7)
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class Javadoc {
+        /**
+         * [java.util.function.Predicate]
+         */
+        fun test() {
+          return
+        }
+      }
+    """.trimIndent())
+  }
 }

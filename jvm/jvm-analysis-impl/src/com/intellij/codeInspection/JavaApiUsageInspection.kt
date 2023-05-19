@@ -211,6 +211,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       logger.error("Unable to get the next language level for $sinceLanguageLevel")
       return
     }
+    if (reference.getUastParentOfType<UComment>() != null) return
     val message = JvmAnalysisBundle.message(
       "jvm.inspections.1.5.problem.descriptor", LanguageLevelUtil.getShortMessage(sinceLanguageLevel)
     )
