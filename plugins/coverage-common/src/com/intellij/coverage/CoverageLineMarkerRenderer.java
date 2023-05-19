@@ -41,6 +41,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +96,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     }
     if (bgColor != null) {
       g.setColor(bgColor);
-      g.fillRect(r.x, r.y, r.width, r.height);
+      g.fillRect(r.x, r.y, Math.min(r.width, JBUI.scale(8)), r.height);
     }
     final LineData lineData = getLineData(getCurrentLineNumber(editor, new Point(0, r.y)));
     if (lineData != null && lineData.isCoveredByOneTest()) {
