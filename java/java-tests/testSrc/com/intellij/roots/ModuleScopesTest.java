@@ -78,7 +78,9 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     VirtualFile file = myFixture.createFile("a/data/A.java", "class A {}");
     PsiTestUtil.addContentRoot(module, file.getParent());
     assertFalse(module.getModuleScope().contains(file));
+    assertTrue(module.getModuleContentScope().contains(file));
     assertFalse(module.getModuleWithDependenciesScope().contains(file));
+    assertTrue(module.getModuleContentWithDependenciesScope().contains(file));
     assertFalse(module.getModuleWithDependenciesAndLibrariesScope(true).contains(file));
   }
 
@@ -127,6 +129,7 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     VirtualFile classB = myFixture.createFile("b/Test.java", "public class Test { }");
     assertTrue(moduleA.getModuleWithDependenciesAndLibrariesScope(true).contains(classB));
     assertFalse(moduleA.getModuleWithDependenciesAndLibrariesScope(false).contains(classB));
+    assertFalse(moduleA.getModuleContentWithDependenciesScope().contains(classB));
     assertFalse(moduleA.getModuleWithDependenciesAndLibrariesScope(false).isSearchInModuleContent(moduleB));
 
     VirtualFile[] compilationClasspath = getCompilationClasspath(moduleA);

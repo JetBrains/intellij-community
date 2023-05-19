@@ -3,6 +3,8 @@ package com.intellij.workspaceModel.core.fileIndex
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.assertIteratedContent
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.TestApplication
@@ -10,6 +12,7 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.workspaceModel.updateProjectModelAsync
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
@@ -18,11 +21,10 @@ import com.intellij.workspaceModel.ide.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 @TestApplication
 class CustomContentFileSetTest {
@@ -33,14 +35,19 @@ class CustomContentFileSetTest {
   private val fileIndex
     get() = WorkspaceFileIndex.getInstance(projectModel.project)
 
+  private val projectFileIndex
+    get() = ProjectFileIndex.getInstance(projectModel.project)
+
   @TestDisposable
   private lateinit var disposable: Disposable
   private lateinit var customContentFileSetRoot: VirtualFile
+  private lateinit var module: Module
 
   @BeforeEach
   fun setUp() {
     customContentFileSetRoot = projectModel.baseProjectDir.newVirtualDirectory("root")
-    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(CustomContentFileSetContributor(), disposable)
+    module = projectModel.createModule()
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(CustomContentFileSetContributor(module), disposable)
   }
 
   @Test
@@ -59,6 +66,9 @@ class CustomContentFileSetTest {
 
     readAction {
       assertTrue(fileIndex.isInContent(file))
+      assertEquals(module, projectFileIndex.getModuleForFile(file))
+      assertTrue(module.moduleContentScope.contains(file))
+      assertFalse(module.moduleScope.contains(file))
       assertIteratedContent(projectModel.project, mustContain = listOf(root, file))
     }
 
@@ -68,18 +78,22 @@ class CustomContentFileSetTest {
 
     readAction {
       assertFalse(fileIndex.isInContent(root))
+      assertNull(projectFileIndex.getModuleForFile(file))
+      assertFalse(module.moduleContentScope.contains(file))
       assertIteratedContent(projectModel.project, mustNotContain = listOf(root, file))
     }
   }
   
-  private class CustomContentFileSetContributor : WorkspaceFileIndexContributor<IndexingTestEntity> {
+  private class CustomContentFileSetContributor(private val module: Module) : WorkspaceFileIndexContributor<IndexingTestEntity> {
     override val entityClass: Class<IndexingTestEntity>
       get() = IndexingTestEntity::class.java
 
     override fun registerFileSets(entity: IndexingTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
       for (root in entity.roots) {
-        registrar.registerFileSet(root, WorkspaceFileKind.CONTENT, entity, null)
+        registrar.registerFileSet(root, WorkspaceFileKind.CONTENT, entity, CustomModuleRelatedRootData(module))
       }
     }
   }
+  
+  private class CustomModuleRelatedRootData(override val module: Module): ModuleRelatedRootData
 }
