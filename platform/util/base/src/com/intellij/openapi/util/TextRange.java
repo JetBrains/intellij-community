@@ -192,7 +192,7 @@ public class TextRange implements Segment, Serializable {
     return Math.max(myStartOffset, startOffset) < Math.min(myEndOffset, endOffset);
   }
 
-  public @Nullable TextRange intersection(@NotNull TextRange range) {
+  public TextRange intersection(@NotNull TextRange range) {
     if (equals(range)) {
       return this;
     }
