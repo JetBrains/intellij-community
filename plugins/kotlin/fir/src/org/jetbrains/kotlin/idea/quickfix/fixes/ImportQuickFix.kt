@@ -247,9 +247,10 @@ class ImportQuickFix(
 
             val isImported = { fqName: FqName -> ImportPath(fqName, isAllUnder = false).isImported(defaultImports, excludedImports) }
             val importPrioritizer = ImportPrioritizer(element.containingKtFile, isImported)
+            val expressionImportWeigher = ExpressionImportWeigher.createWeigher(element)
 
             val sortedImportCandidateSymbolsWithPriorities = importCandidateSymbols
-                .map { it to createPriorityForImportableSymbol(importPrioritizer, it) }
+                .map { it to createPriorityForImportableSymbol(importPrioritizer, expressionImportWeigher, it) }
                 .sortedBy { (_, priority) -> priority }
 
             val sortedImportInfos = sortedImportCandidateSymbolsWithPriorities.mapNotNull { (candidateSymbol, priority) ->
@@ -302,13 +303,17 @@ class ImportQuickFix(
             getFqNameIfPackageOrNonLocal() ?: error("Unexpected null for fully-qualified name of importable symbol")
 
         context(KtAnalysisSession)
-        private fun createPriorityForImportableSymbol(prioritizer: ImportPrioritizer, symbol: KtDeclarationSymbol): ImportPrioritizer.Priority =
+        private fun createPriorityForImportableSymbol(
+            prioritizer: ImportPrioritizer,
+            expressionImportWeigher: ExpressionImportWeigher,
+            symbol: KtDeclarationSymbol
+        ): ImportPrioritizer.Priority =
             prioritizer.Priority(
                 declaration = symbol.psi,
                 statisticsInfo = StatisticsInfo.EMPTY,
                 isDeprecated = symbol.deprecationStatus != null,
                 fqName = symbol.getFqName(),
-                expressionWeight = 0,
+                expressionWeight = expressionImportWeigher.weigh(symbol),
             )
 
         fun KtAnalysisSession.createImportNameFix(

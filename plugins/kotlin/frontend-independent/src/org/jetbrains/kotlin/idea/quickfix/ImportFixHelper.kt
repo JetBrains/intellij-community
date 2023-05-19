@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.openapi.roots.ProjectRootManager
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
@@ -73,6 +74,30 @@ object ImportFixHelper {
             }
         } else {
             KotlinBundle.message("fix.import")
+        }
+    }
+
+    fun calculateWeightBasedOnFqName(fqName: FqName, sourceDeclaration: PsiElement?): Int {
+        val fqNameString = fqName.asString()
+        return when {
+            /**
+             * package rating calculation rule:
+             * - (highest) current project source
+             * - `kotlin.` and `kotlinx.`
+             * - `java.`
+             * - (lowest) all other 3rd party libs
+             */
+            fqNameString.startsWith("kotlin.") -> 6
+            fqNameString.startsWith("kotlinx.") -> 5
+            fqNameString.startsWith("java.") -> 2
+            sourceDeclaration != null -> {
+                val virtualFile = sourceDeclaration.containingFile?.virtualFile
+                val fileIndex = ProjectRootManager.getInstance(sourceDeclaration.project).fileIndex
+                // project source higher than libs
+                if (virtualFile != null && fileIndex.isInSourceContent(virtualFile)) 7 else 0
+            }
+
+            else -> 0
         }
     }
 }

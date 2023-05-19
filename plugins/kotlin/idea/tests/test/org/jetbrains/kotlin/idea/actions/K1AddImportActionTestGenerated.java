@@ -168,6 +168,11 @@ public class K1AddImportActionTestGenerated extends AbstractK1AddImportActionTes
         runTest("testData/idea/actions/kotlinAddImportAction/TypeAlias.kt");
     }
 
+    @TestMetadata("VarargSpreadOperator.kt")
+    public void testVarargSpreadOperator() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/VarargSpreadOperator.kt");
+    }
+
     @TestMetadata("Varargs.kt")
     public void testVarargs() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/Varargs.kt");
