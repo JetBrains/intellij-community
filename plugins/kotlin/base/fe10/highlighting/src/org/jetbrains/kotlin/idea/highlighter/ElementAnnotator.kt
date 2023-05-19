@@ -205,9 +205,7 @@ internal class ElementAnnotator(
         val module = element.module ?: return false
         val moduleFacetSettings = KotlinFacetSettingsProvider.getInstance(element.project)?.getSettings(module) ?: return false
         return when (factory) {
-            Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS ->
-                moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useIR) &&
-                        !moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useOldBackend)
+            Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS -> true
             Errors.FIR_COMPILED_CLASS ->
                 moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useK2)
             else -> error(factory)
