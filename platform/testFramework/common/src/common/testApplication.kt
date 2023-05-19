@@ -176,7 +176,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl, pluginSet: PluginSet) {
   coroutineScope {
     withTimeout(Duration.ofSeconds(40).toMillis()) {
-      preloadCriticalServices(app)
+      preloadCriticalServices(app, app.coroutineScope)
       app.preloadServices(
         modules = pluginSet.getEnabledModules(),
         activityPrefix = "",

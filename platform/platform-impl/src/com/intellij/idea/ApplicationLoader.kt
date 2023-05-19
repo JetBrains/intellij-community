@@ -152,18 +152,14 @@ private suspend fun initApplicationImpl(args: List<String>,
                                         app: ApplicationImpl,
                                         asyncScope: CoroutineScope,
                                         deferredStarter: Deferred<ApplicationStarter>) {
-  val appInitializedListeners = coroutineScope {
-    preloadCriticalServices(app)
-
-    if (!app.isHeadlessEnvironment) {
-      asyncScope.launch {
-        subtask("UISettings preloading") { app.serviceAsync<UISettings>() }
-        subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
-        subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
-      }
+  val appInitializedListeners = subtask("app preloading") {
+    subtask("critical services preloading") {
+      preloadCriticalServices(app, asyncScope)
     }
 
-    app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this, asyncScope = asyncScope)
+    subtask("app service preloading (sync)") {
+      app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this, asyncScope = asyncScope)
+    }
 
     if (!app.isHeadlessEnvironment) {
       asyncScope.launch(CoroutineName("FUS class preloading")) {
@@ -225,7 +221,7 @@ private suspend fun initApplicationImpl(args: List<String>,
   ZipFilePool.POOL = null
 }
 
-fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
+fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: CoroutineScope) {
   launch {
     // LocalHistory wants ManagingFS.
     // It should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner.
@@ -239,6 +235,31 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
     app.serviceAsync<PathMacros>()
 
     launch {
+      // required for indexing tasks (see JavaSourceModuleNameIndex for example)
+      // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
+      app.serviceAsync<PropertiesComponent>()
+      app.serviceAsync<FileTypeManager>()
+
+      // ProjectJdkTable wants FileTypeManager
+      launch {
+        // and VirtualFilePointerManager
+        app.serviceAsync<VirtualFilePointerManager>()
+        app.serviceAsync<ProjectJdkTable>()
+      }
+    }
+
+    asyncScope.launch {
+      if (!app.isHeadlessEnvironment) {
+        launch {
+          subtask("UISettings preloading") { app.serviceAsync<UISettings>() }
+          subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
+          subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
+        }
+      }
+
+      // wants PropertiesComponent
+      launch { app.serviceAsync<DebugLogManager>() }
+
       app.serviceAsync<RegistryManager>()
       // wants RegistryManager
       if (!app.isHeadlessEnvironment) {
@@ -247,21 +268,6 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
         PerformanceWatcher.getInstance()
       }
     }
-
-    // required for indexing tasks (see JavaSourceModuleNameIndex for example)
-    // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
-    app.serviceAsync<PropertiesComponent>()
-    app.serviceAsync<FileTypeManager>()
-
-    // ProjectJdkTable wants FileTypeManager
-    launch {
-      // and VirtualFilePointerManager
-      app.serviceAsync<VirtualFilePointerManager>()
-      app.serviceAsync<ProjectJdkTable>()
-    }
-
-    // wants PropertiesComponent
-    launch { app.serviceAsync<DebugLogManager>() }
   }
 }
 
