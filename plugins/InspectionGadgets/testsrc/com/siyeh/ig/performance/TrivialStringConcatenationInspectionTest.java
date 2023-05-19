@@ -18,13 +18,18 @@ public class TrivialStringConcatenationInspectionTest extends LightJavaCodeInsig
     return JAVA_8;
   }
 
-  private void doTest() {
-    myFixture.enableInspections(new TrivialStringConcatenationInspection());
+  private void doTest(boolean skipIfNecessary) {
+    TrivialStringConcatenationInspection inspection = new TrivialStringConcatenationInspection();
+    inspection.skipIfNecessary = skipIfNecessary;
+    myFixture.enableInspections(inspection);
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
   public void testTrivialStringConcatenation() {
-    doTest();
+    doTest(false);
   }
 
+  public void testTrivialStringConcatenationWithSkipNecessary() {
+    doTest(true);
+  }
 }
