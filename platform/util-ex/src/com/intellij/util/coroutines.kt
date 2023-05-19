@@ -18,14 +18,12 @@ import kotlin.coroutines.EmptyCoroutineContext
  * but there are cases when the cleanup action is expected to be invoked on a certain thread (e.g. EDT).
  * See https://github.com/Kotlin/kotlinx.coroutines/issues/3505
  *
- * TODO consider suspend [action] when a use case arrives
- *
  * @param ctx additional context for the cleaner-coroutine, e.g. [CoroutineName]
  */
 @IntellijInternalApi
 @Internal
 @Experimental
-fun CoroutineScope.awaitCancellationAndInvoke(ctx: CoroutineContext = EmptyCoroutineContext, action: () -> Unit) {
+fun CoroutineScope.awaitCancellationAndInvoke(ctx: CoroutineContext = EmptyCoroutineContext, action: suspend CoroutineScope.() -> Unit) {
   requireNoJob(ctx)
   // UNDISPATCHED guarantees that the coroutine will execute until the first suspension point (awaitCancellation)
   launch(ctx, start = CoroutineStart.UNDISPATCHED) {
