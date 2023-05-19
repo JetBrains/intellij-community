@@ -109,9 +109,8 @@ abstract class DualSourceTimeMachine(val original: VfsTimeMachine, val oracle: V
       override fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?> = alternativeState {
         readAttribute(fileAttribute)
       }
-      override fun getRecoverableChildrenIds(): DefinedState<VirtualFileSnapshot.RecoveredChildrenIds> = alternativeState {
-        getRecoverableChildrenIds()
-      }
+
+      override fun getChildrenIds(): DefinedState<VirtualFileSnapshot.RecoveredChildrenIds> = alternativeState { getChildrenIds() }
     }
   }
 }
