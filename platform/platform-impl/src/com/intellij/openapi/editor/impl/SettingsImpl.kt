@@ -54,10 +54,10 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   private var myIsCaretBlinking: Boolean? = null
   private var myCaretBlinkingPeriod: Int? = null
   private var myIsRightMarginShown: Boolean? = null
-  private var myVerticalScrollOffset: Int? = null
-  private var myVerticalScrollJump: Int? = null
-  private var myHorizontalScrollOffset: Int? = null
-  private var myHorizontalScrollJump: Int? = null
+  private var myVerticalScrollOffset: Int = -1
+  private var myVerticalScrollJump: Int = -1
+  private var myHorizontalScrollOffset: Int = -1
+  private var myHorizontalScrollJump: Int = -1
   private var myAreLineNumbersShown: Boolean? = null
   private var myGutterIconsShown: Boolean? = null
   private var myIsFoldingOutlineShown: Boolean? = null
@@ -417,7 +417,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   }
 
   override fun getVerticalScrollOffset(): Int {
-    return myVerticalScrollOffset ?: EditorSettingsExternalizable.getInstance().verticalScrollOffset
+    return if (myVerticalScrollOffset == -1) EditorSettingsExternalizable.getInstance().verticalScrollOffset else myVerticalScrollOffset
   }
 
   override fun setVerticalScrollOffset(`val`: Int) {
@@ -429,7 +429,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   }
 
   override fun getVerticalScrollJump(): Int {
-    return myVerticalScrollJump ?: EditorSettingsExternalizable.getInstance().verticalScrollJump
+    return if (myVerticalScrollJump == -1) EditorSettingsExternalizable.getInstance().verticalScrollJump else myVerticalScrollJump
   }
 
   override fun setVerticalScrollJump(`val`: Int) {
@@ -437,7 +437,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   }
 
   override fun getHorizontalScrollOffset(): Int {
-    return myHorizontalScrollOffset ?: EditorSettingsExternalizable.getInstance().horizontalScrollOffset
+    return if (myHorizontalScrollOffset == -1) EditorSettingsExternalizable.getInstance().horizontalScrollOffset else myHorizontalScrollOffset
   }
 
   override fun setHorizontalScrollOffset(`val`: Int) {
@@ -449,7 +449,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   }
 
   override fun getHorizontalScrollJump(): Int {
-    return myHorizontalScrollJump ?: EditorSettingsExternalizable.getInstance().horizontalScrollJump
+    return if (myHorizontalScrollJump == -1) EditorSettingsExternalizable.getInstance().horizontalScrollJump else myHorizontalScrollJump
   }
 
   override fun setHorizontalScrollJump(`val`: Int) {
