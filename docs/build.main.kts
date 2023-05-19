@@ -144,10 +144,12 @@ fun transformSvg(svgFile: Path) {
   transformer.setOutputProperty(OutputKeys.INDENT, "yes")
   @Suppress("HttpUrlsUsage")
   transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2")
-  // so, first node of insertAdjacentHTML result will be svg and not comment
+  // so, the first node of insertAdjacentHTML result will be svg and not comment
   transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
 
+  val fileHeader = "<!-- Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->\n".encodeToByteArray()
   Files.newOutputStream(svgFile).buffered().use { fileOut ->
+    fileOut.write(fileHeader)
     transformer.transform(DOMSource(document.documentElement), StreamResult(fileOut))
   }
 }
@@ -192,13 +194,18 @@ fun extractFontStyle(element: Element, classNameToBuilder: MutableMap<String, St
     lastUsedMonoFont = fontFamily
   }
 
-  val className = if (fontFamily != lastUsedMonoFont && size.value == defaultFontSize) {
+  val className: String
+  if (fontFamily != lastUsedMonoFont && size.value == defaultFontSize) {
     fontFamily = "'Roboto', sans-serif"
-    "text"
+    className = "text"
   }
   else if (size.value == defaultFontSize) {
     fontFamily = "'Roboto Mono', monospace"
-    "code"
+    className = "code"
+  }
+  else if (size.value == "10") {
+    // legend
+    return
   }
   else {
     throw UnsupportedOperationException("font combination is unknown (fontFamily=$fontFamily, lastUsedMonoFont=$lastUsedMonoFont)")
