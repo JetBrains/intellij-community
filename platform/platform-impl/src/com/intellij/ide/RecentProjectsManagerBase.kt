@@ -432,10 +432,15 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return if (path.endsWith(".ipr")) FileUtilRt.getNameWithoutExtension(name) else name
   }
 
+  fun forceReopenProjects() {
+    state.forceReopenProjects = true
+  }
+
   override fun willReopenProjectOnStart(): Boolean {
-    if (!GeneralSettings.getInstance().isReopenLastProject || AppMode.isDontReopenProjects()) {
+    if (!state.forceReopenProjects && (!GeneralSettings.getInstance().isReopenLastProject || AppMode.isDontReopenProjects())) {
       return false
     }
+    state.forceReopenProjects = false
 
     synchronized(stateLock) {
       return state.additionalInfo.values.any { canReopenProject(it) }
