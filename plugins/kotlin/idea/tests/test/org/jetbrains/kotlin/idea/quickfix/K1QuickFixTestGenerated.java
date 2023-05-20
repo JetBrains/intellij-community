@@ -2875,6 +2875,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/changeSignature/addConstructorParameterForConstantTypeMismatch.kt");
         }
 
+        @TestMetadata("addConstructorParameterForInlineClass.kt")
+        public void testAddConstructorParameterForInlineClass() throws Exception {
+            runTest("testData/quickfix/changeSignature/addConstructorParameterForInlineClass.kt");
+        }
+
+        @TestMetadata("addConstructorParameterForValueClass.kt")
+        public void testAddConstructorParameterForValueClass() throws Exception {
+            runTest("testData/quickfix/changeSignature/addConstructorParameterForValueClass.kt");
+        }
+
         @TestMetadata("addEnumConstructorParameter.kt")
         public void testAddEnumConstructorParameter() throws Exception {
             runTest("testData/quickfix/changeSignature/addEnumConstructorParameter.kt");
