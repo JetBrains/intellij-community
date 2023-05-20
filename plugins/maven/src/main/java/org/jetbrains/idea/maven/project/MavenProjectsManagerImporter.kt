@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.externalSystem.statistics.importActivityStarted
@@ -42,14 +43,28 @@ internal class MavenProjectsManagerImporter(private val modelsProvider: IdeModif
 
   @RequiresEdt
   fun MavenProjectsManager.importMavenProjectsEdt(): List<Module> {
-    return this.doImport()
+    val createdModules = this.doImport()
+    VirtualFileManager.getInstance().syncRefresh()
+    return createdModules
   }
 
   @RequiresBackgroundThread
   suspend fun MavenProjectsManager.importMavenProjects(): List<Module> {
     val manager = this
     return withBackgroundProgress(project, title, false) {
-      return@withBackgroundProgress manager.doImport()
+      val createdModules = manager.doImport()
+      val fm = VirtualFileManager.getInstance()
+      val noBackgroundMode = MavenUtil.isNoBackgroundMode()
+      val shouldKeepTasksAsynchronousInHeadlessMode = CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
+      if (noBackgroundMode && !shouldKeepTasksAsynchronousInHeadlessMode) {
+        writeAction {
+          fm.syncRefresh()
+        }
+      }
+      else {
+        fm.asyncRefresh()
+      }
+      return@withBackgroundProgress createdModules
     }
   }
 
@@ -57,16 +72,6 @@ internal class MavenProjectsManagerImporter(private val modelsProvider: IdeModif
     project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).importStarted()
 
     val importResult = this.runImportActivity()
-
-    val fm = VirtualFileManager.getInstance()
-    val noBackgroundMode = MavenUtil.isNoBackgroundMode()
-    val shouldKeepTasksAsynchronousInHeadlessMode = CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
-    if (noBackgroundMode && !shouldKeepTasksAsynchronousInHeadlessMode) {
-      fm.syncRefresh()
-    }
-    else {
-      fm.asyncRefresh()
-    }
 
     schedulePostImportTasks(importResult.postTasks)
 
