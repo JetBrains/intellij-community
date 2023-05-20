@@ -686,6 +686,11 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
             runTest("../idea/tests/testData/intentions/convertToStringTemplate/specialCharsInCharLiteral.kt");
         }
 
+        @TestMetadata("startsWithNullableVariable.kt")
+        public void testStartsWithNullableVariable() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertToStringTemplate/startsWithNullableVariable.kt");
+        }
+
         @TestMetadata("stringPlusStringLiteral.kt")
         public void testStringPlusStringLiteral() throws Exception {
             runTest("../idea/tests/testData/intentions/convertToStringTemplate/stringPlusStringLiteral.kt");
