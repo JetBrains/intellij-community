@@ -17,9 +17,18 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Internal
 sealed class ClientSessionsManager<T : ClientSession> {
   companion object {
+
+    /**
+     * @return a project session for specified app-level session
+     */
+    @JvmStatic
+    fun getProjectSession(project: Project, session: ClientAppSession): ClientProjectSession? {
+      return getInstance(project).getSession(session.clientId)
+    }
+
     /**
      * Returns a project-level session for a particular client.
-     * @see ClientSession
+     * @see ClientProjectSession
      */
     @JvmStatic
     @JvmOverloads
