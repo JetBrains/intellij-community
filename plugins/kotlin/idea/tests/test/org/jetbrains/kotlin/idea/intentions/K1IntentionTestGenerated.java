@@ -9608,6 +9608,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertToStringTemplate/specialCharsInCharLiteral.kt");
         }
 
+        @TestMetadata("startsWithNullableVariable.kt")
+        public void testStartsWithNullableVariable() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/startsWithNullableVariable.kt");
+        }
+
         @TestMetadata("stringPlusStringLiteral.kt")
         public void testStringPlusStringLiteral() throws Exception {
             runTest("testData/intentions/convertToStringTemplate/stringPlusStringLiteral.kt");

@@ -50,10 +50,11 @@ fun isStringPlusExpressionWithoutNewLineInOperands(expression: KtBinaryExpressio
     if (expression.getKtType()?.isString != true) return false
     val plusOperation = expression.operationReference.mainReference.resolveToSymbol() as? KtCallableSymbol
     val classContainingPlus = plusOperation?.getContainingSymbol() as? KtNamedClassOrObjectSymbol
-    if (classContainingPlus == null) {
-        return plusOperation?.callableIdIfNonLocal?.asSingleFqName()?.asString() == "kotlin.text.plus"
+    return if (classContainingPlus != null) {
+        classContainingPlus.classIdIfNonLocal?.asSingleFqName() == StandardNames.FqNames.string.toSafe()
+    } else {
+        plusOperation?.callableIdIfNonLocal?.asSingleFqName()?.asString() in listOf("kotlin.text.plus", "kotlin.plus")
     }
-    return classContainingPlus.classIdIfNonLocal?.asSingleFqName() == StandardNames.FqNames.string.toSafe()
 }
 
 /**
