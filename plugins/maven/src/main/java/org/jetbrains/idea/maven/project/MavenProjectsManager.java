@@ -76,7 +76,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
@@ -104,11 +106,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenProjectsProcessor myPostProcessor;
 
   private MavenMergingUpdateQueue myImportingQueue;
-  private final Object myImportingDataLock = new Object();
-  private final Map<MavenProject, MavenProjectChanges> myProjectsToImport = new LinkedHashMap<>();
-  private final Set<MavenProject> myProjectsToResolve = new LinkedHashSet<>();
+  private final ConcurrentHashMap<MavenProject, MavenProjectChanges> myProjectsToImport = new ConcurrentHashMap<>();
+  private final Set<MavenProject> myProjectsToResolve = ConcurrentHashMap.newKeySet();
 
-  private boolean myImportModuleGroupsRequired = false;
+  private final AtomicBoolean myImportModuleGroupsRequired = new AtomicBoolean(false);
 
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
     EventDispatcher.create(MavenProjectsTree.Listener.class);
@@ -118,7 +119,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
-  private volatile MavenSyncConsole mySyncConsole;
+  private final AtomicReference<MavenSyncConsole> mySyncConsole = new AtomicReference<>();
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
   private Module myPreviewModule;
@@ -175,7 +176,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void dispose() {
-    mySyncConsole = null;
+    mySyncConsole.set(null);
     myManagerListeners.clear();
   }
 
@@ -347,11 +348,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     });
   }
 
-  public synchronized MavenSyncConsole getSyncConsole() {
-    if (mySyncConsole == null) {
-      mySyncConsole = new MavenSyncConsole(myProject);
+  public MavenSyncConsole getSyncConsole() {
+    if (null == mySyncConsole.get()) {
+      mySyncConsole.compareAndSet(null, new MavenSyncConsole(myProject));
     }
-    return mySyncConsole;
+    return mySyncConsole.get();
   }
 
   @NotNull
@@ -1058,11 +1059,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private AsyncPromise<List<Module>> scheduleResolve() {
     final AsyncPromise<List<Module>> result = new AsyncPromise<>();
     runWhenFullyOpen(() -> {
-      LinkedHashSet<MavenProject> toResolve;
-      synchronized (myImportingDataLock) {
-        toResolve = new LinkedHashSet<>(myProjectsToResolve);
-        myProjectsToResolve.clear();
-      }
+      LinkedHashSet<MavenProject> toResolve = new LinkedHashSet<>(myProjectsToResolve);
+      myProjectsToResolve.removeAll(toResolve);
       if (toResolve.isEmpty()) {
         result.setResult(Collections.emptyList());
         myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC)
@@ -1158,9 +1156,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void scheduleImportSettings(boolean importModuleGroupsRequired) {
-    synchronized (myImportingDataLock) {
-      myImportModuleGroupsRequired = importModuleGroupsRequired;
-    }
+    myImportModuleGroupsRequired.set(importModuleGroupsRequired);
     scheduleImportChangedProjects();
   }
 
@@ -1181,11 +1177,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     runWhenFullyOpen(() -> myImportingQueue.queue(new Update(this) {
       @Override
       public void run() {
-        synchronized (myImportingDataLock) {
-          for (MavenProject project : getProjectsTree().getProjects()) {
-            myProjectsToImport.put(project, MavenProjectChanges.ALL);
-          }
-        }
+        var projectsToImport = ContainerUtil.map2Map(
+          getProjectsTree().getProjects(),
+          project -> new Pair<>(project, MavenProjectChanges.ALL)
+        );
+        myProjectsToImport.putAll(projectsToImport);
         importProjects();
         fireProjectImportCompleted();
       }
@@ -1210,26 +1206,20 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void scheduleForNextImport(Collection<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
-    synchronized (myImportingDataLock) {
-      for (Pair<MavenProject, MavenProjectChanges> each : projectsWithChanges) {
-        myProjectsToImport.compute(each.first, (__, previousChanges) ->
-          previousChanges == null ? each.second : MavenProjectChangesBuilder.merged(each.second, previousChanges)
-        );
-      }
+    for (Pair<MavenProject, MavenProjectChanges> each : projectsWithChanges) {
+      myProjectsToImport.compute(each.first, (__, previousChanges) ->
+        previousChanges == null ? each.second : MavenProjectChangesBuilder.merged(each.second, previousChanges)
+      );
     }
   }
 
   private void scheduleForNextResolve(Collection<MavenProject> projects) {
-    synchronized (myImportingDataLock) {
-      myProjectsToResolve.addAll(projects);
-    }
+    myProjectsToResolve.addAll(projects);
   }
 
   public boolean hasScheduledProjects() {
     if (!isInitialized()) return false;
-    synchronized (myImportingDataLock) {
-      return !myProjectsToImport.isEmpty() || !myProjectsToResolve.isEmpty();
-    }
+    return !myProjectsToImport.isEmpty() || !myProjectsToResolve.isEmpty();
   }
 
   @TestOnly
@@ -1277,11 +1267,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void unscheduleAllTasks(List<MavenProject> projects) {
-    for (MavenProject each : projects) {
-      synchronized (myImportingDataLock) {
-        myProjectsToImport.remove(each);
-        myProjectsToResolve.remove(each);
-      }
+    for (MavenProject project : projects) {
+      myProjectsToImport.remove(project);
+      myProjectsToResolve.remove(project);
     }
   }
 
@@ -1335,12 +1323,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public List<Module> importProjects(IdeModifiableModelsProvider modelsProvider) {
     Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges;
     boolean importModuleGroupsRequired;
-    synchronized (myImportingDataLock) {
-      projectsToImportWithChanges = Collections.unmodifiableMap(new LinkedHashMap<>(myProjectsToImport));
-      myProjectsToImport.clear();
-      importModuleGroupsRequired = myImportModuleGroupsRequired;
-      myImportModuleGroupsRequired = false;
-    }
+
+    projectsToImportWithChanges = Collections.unmodifiableMap(new LinkedHashMap<>(myProjectsToImport));
+    projectsToImportWithChanges.forEach(myProjectsToImport::remove);
+
+    importModuleGroupsRequired = myImportModuleGroupsRequired.getAndSet(false);
 
     return new MavenProjectsManagerImporter(
       modelsProvider,
