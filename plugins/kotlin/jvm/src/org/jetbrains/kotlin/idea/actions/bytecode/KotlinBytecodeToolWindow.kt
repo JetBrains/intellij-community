@@ -21,23 +21,26 @@ import com.intellij.ui.JBColor
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.backend.common.output.OutputFile
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.*
+import org.jetbrains.kotlin.analysis.api.descriptors.components.STUB_UNBOUND_IR_SYMBOLS
+import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
-import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.compiler.*
 import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.core.ClassFileOrigins
-import org.jetbrains.kotlin.idea.core.KotlinCompilerIde
 import org.jetbrains.kotlin.idea.internal.DecompileFailedException
 import org.jetbrains.kotlin.idea.internal.KotlinJvmDecompilerFacade
 import org.jetbrains.kotlin.idea.util.LongRunningReadTask
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.utils.join
+import org.jetbrains.org.objectweb.asm.ClassReader
+import org.jetbrains.org.objectweb.asm.util.TraceClassVisitor
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import java.io.File
@@ -282,8 +285,8 @@ class KotlinBytecodeToolWindow(
                 "No Kotlin source file is opened.\n" +
                 "*/"
 
-        fun getBytecodeForFile(ktFile: KtFile, configuration: CompilerConfiguration): BytecodeGenerationResult {
-            val (state, classFileOrigins) = try {
+        fun getBytecodeForFile(ktFile: KtFile, configuration: CompilerConfiguration): BytecodeGenerationResult = analyze(ktFile) {
+            val (result, classFileOrigins) = try {
                 compileSingleFile(ktFile, configuration)
                     ?: return BytecodeGenerationResult.Error(KotlinJvmBundle.message("cannot.compile.0.to.bytecode", ktFile.name))
             } catch (e: ProcessCanceledException) {
@@ -292,59 +295,97 @@ class KotlinBytecodeToolWindow(
                 return BytecodeGenerationResult.Error(printStackTraceToString(e))
             }
 
-            val answer = StringBuilder()
+            val writer = StringWriter()
 
-            val diagnostics = state.collectedExtraJvmDiagnostics.all()
-            if (!diagnostics.isEmpty()) {
-                answer.append("// Backend Errors: \n")
-                answer.append("// ================\n")
-                for (diagnostic in diagnostics) {
-                    answer.append("// Error at ")
-                        .append(diagnostic.psiFile.name)
-                        .append(join(diagnostic.textRanges, ","))
-                        .append(": ")
-                        .append(DefaultErrorMessages.render(diagnostic))
-                        .append("\n")
+            when (result) {
+                is KtCompilationResult.Success -> {
+                    val printWriter = PrintWriter(writer)
+
+                    for (outputFile in getRelevantClassFiles(ktFile, result.output, classFileOrigins)) {
+                        writer.append("// ================")
+                        writer.append(outputFile.path)
+                        writer.append(" =================\n")
+
+                        val classReader = ClassReader(outputFile.content)
+                        val traceVisitor = TraceClassVisitor(printWriter)
+                        classReader.accept(traceVisitor, 0)
+
+                        writer.append("\n\n")
+                    }
                 }
-                answer.append("// ================\n\n")
+                is KtCompilationResult.Failure -> {
+                    val diagnostics = result.errors
+                    if (diagnostics.isNotEmpty()) {
+                        writer.append("// Backend Errors: \n")
+                        writer.append("// ================\n")
+                        for (error in diagnostics) {
+                            writer.append("// Error")
+                            if (error is KtDiagnosticWithPsi<*>) {
+                                writer.append(" at ")
+                                writer.append(error.psi.containingFile.name)
+                                error.textRanges.joinTo(writer)
+                            }
+                            writer.append(": ")
+                            writer.append(error.defaultMessage)
+                            writer.append("\n")
+                        }
+                        writer.append("// ================\n\n")
+                    }
+                }
             }
 
-            for (outputFile in getRelevantOutputFiles(state, classFileOrigins, ktFile)) {
-                answer.append("// ================")
-                answer.append(outputFile.relativePath)
-                answer.append(" =================\n")
-                answer.append(outputFile.asText()).append("\n\n")
-            }
-
-            return BytecodeGenerationResult.Bytecode(answer.toString())
+            return BytecodeGenerationResult.Bytecode(writer.toString())
         }
 
         /**
-         * Returns a list of output files from [state] that should be shown to the user.
+         * Returns a list of class files from [outputFiles] that should be shown to the user.
          *
-         * An [OutputFile] is linked to its source [KtFile] via [OutputFile.sourceFiles]. However, all source files are physical, while a
-         * [KtFile] might not necessarily be physical. As a fallback for non-physical [KtFile]s, [classFileOrigins] are instead used to map
-         * the class file name to the original [KtFile]. [classFileOrigins] cannot be used on their own, because some class files are
-         * generated without an originating PSI file (see the explanation in [ClassFileOrigins]).
+         * An [KtCompiledFile] is linked to its source [KtFile] via [KtCompiledFile.sourceFiles].
+         * However, all source files are physical, while a [KtFile] might not necessarily be physical.
+         * As a fallback for non-physical [KtFile]s, [classFileOrigins] are instead used to map the class file name to the original [KtFile].
+         * [classFileOrigins] cannot be used on their own, because some class files are generated without an originating PSI file
+         * (see the explanation in [ClassFileOrigins]).
          *
          * If this approach for some reason filters out all output files, the full list is returned defensively.
          */
-        private fun getRelevantOutputFiles(state: GenerationState, classFileOrigins: ClassFileOrigins, ktFile: KtFile): List<OutputFile> {
+        private fun getRelevantClassFiles(
+            ktFile: KtFile,
+            outputFiles: List<KtCompiledFile>,
+            classFileOrigins: ClassFileOrigins
+        ): List<KtCompiledFile> {
+            val classFiles = outputFiles.filter { it.isClassFile }
             val sourceFile = File(ktFile.virtualFile.path)
-            val outputFiles = state.factory.asList()
-            return outputFiles.filter { outputFile ->
-                outputFile.sourceFiles.any { it == sourceFile } || classFileOrigins[outputFile.relativePath]?.contains(ktFile) == true
-            }.ifEmpty { outputFiles }
+
+            return classFiles
+                .filter { sourceFile in it.sourceFiles || ktFile in classFileOrigins[it.path].orEmpty() }
+                .ifEmpty { classFiles }
         }
 
         @ApiStatus.Internal
-        fun compileSingleFile(ktFile: KtFile, initialConfiguration: CompilerConfiguration): Pair<GenerationState, ClassFileOrigins>? =
-            KotlinCompilerIde(
-                ktFile,
-                initialConfiguration,
-                ClassBuilderFactories.TEST,
-                shouldStubUnboundIrSymbols = true,
-            ).compileTracingOrigin()
+        fun KtAnalysisSession.compileSingleFile(
+            ktFile: KtFile,
+            configuration: CompilerConfiguration
+        ): Pair<KtCompilationResult, ClassFileOrigins>? {
+            val effectiveConfiguration = configuration
+                .copy()
+                .apply {
+                    put(STUB_UNBOUND_IR_SYMBOLS, true)
+                }
+
+            val builderFactory = OriginTracingClassBuilderFactory(ClassBuilderFactories.TEST)
+            val compilerTarget = KtCompilerTarget.Jvm(builderFactory)
+            val allowedErrorFilter = KotlinCompilerIdeAllowedErrorFilter.getInstance()
+
+            try {
+                val result = compile(ktFile, effectiveConfiguration, compilerTarget, allowedErrorFilter)
+                return Pair(result, builderFactory.classFileOrigins)
+            } catch (e: ProcessCanceledException) {
+                throw e
+            } catch (e: Throwable) {
+                LOG.error(e)
+                return null
+            }
+        }
 
         private fun mapLines(text: String, startLine: Int, endLine: Int): Pair<Int, Int> {
             @Suppress("NAME_SHADOWING")

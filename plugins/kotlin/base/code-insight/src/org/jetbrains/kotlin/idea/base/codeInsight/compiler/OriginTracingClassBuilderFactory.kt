@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.core
+package org.jetbrains.kotlin.idea.base.codeInsight.compiler
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.codegen.ClassBuilder
 import org.jetbrains.kotlin.codegen.ClassBuilderFactory
 import org.jetbrains.kotlin.codegen.DelegatingClassBuilder
@@ -10,10 +11,11 @@ import org.jetbrains.kotlin.codegen.DelegatingClassBuilderFactory
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
 
 /**
- * A [ClassBuilderFactory] which maps the file names of generated classes to their original [PsiFile], allowing for example to filter code
- * generation output by class name.
+ * A [ClassBuilderFactory] which maps the file names of generated classes to their original [PsiFile],
+ * allowing for example to filter code generation output by class name.
  */
-internal class OriginTracingClassBuilderFactory(
+@ApiStatus.Internal
+class OriginTracingClassBuilderFactory(
     private val delegateFactory: ClassBuilderFactory,
 ) : DelegatingClassBuilderFactory(delegateFactory) {
     private val origins = mutableMapOf<String, MutableSet<PsiFile>>()

@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.internal
 
+import com.intellij.openapi.application.readAction
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
@@ -36,7 +39,12 @@ private fun configureCompilerAndCheckBytecode(withIr: Boolean, file: KtFile) {
         languageVersionSettings = file.languageVersionSettings
     }
 
-    val bytecode = KotlinBytecodeToolWindow.getBytecodeForFile(file, configuration)
+    val bytecode = runBlocking(Dispatchers.Default) {
+        readAction {
+            KotlinBytecodeToolWindow.getBytecodeForFile(file, configuration)
+        }
+    }
+
     assert(bytecode is BytecodeGenerationResult.Bytecode) {
         "Exception failed during compilation:\n$bytecode"
     }

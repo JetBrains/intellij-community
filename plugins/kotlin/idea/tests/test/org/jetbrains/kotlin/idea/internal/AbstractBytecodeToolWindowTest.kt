@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.internal
 
+import com.intellij.openapi.application.readAction
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
@@ -41,9 +44,14 @@ abstract class AbstractBytecodeToolWindowTest : KotlinLightCodeInsightFixtureTes
             languageVersionSettings = file.languageVersionSettings
         }
 
-        val bytecodes = KotlinBytecodeToolWindow.getBytecodeForFile(file, configuration)
-        assert(bytecodes is BytecodeGenerationResult.Bytecode) {
-            "Exception failed during compilation:\n$bytecodes"
+        val bytecode = runBlocking(Dispatchers.Default) {
+            readAction {
+                KotlinBytecodeToolWindow.getBytecodeForFile(file, configuration)
+            }
+        }
+
+        assert(bytecode is BytecodeGenerationResult.Bytecode) {
+            "Exception failed during compilation:\n$bytecode"
         }
     }
 }

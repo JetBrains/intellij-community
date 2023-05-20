@@ -12,10 +12,12 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.highlighter.isKotlinDecompiledFile
 import org.jetbrains.kotlin.idea.internal.DecompileFailedException
 import org.jetbrains.kotlin.psi.KtFile
 
+@ApiStatus.Internal
 class KotlinBytecodeDecompilerTask(private val file: KtFile) : Task.Backgroundable(
     file.project,
     KotlinJvmDecompilerBundle.message("internal.action.text.decompile.kotlin.bytecode")
@@ -37,9 +39,8 @@ class KotlinBytecodeDecompilerTask(private val file: KtFile) : Task.Backgroundab
 
         val text = decompiledText
         if (text != null) {
-            generateDecompiledVirtualFile(text)?.let {
-                OpenFileDescriptor(file.project, it).navigate(true)
-            }
+            val decompiledVirtualFile = generateDecompiledVirtualFile(text)
+            OpenFileDescriptor(file.project, decompiledVirtualFile).navigate(true)
         } else {
             Messages.showErrorDialog(
                 KotlinJvmDecompilerBundle.message("internal.error.text.cannot.decompile", file.name),
@@ -48,18 +49,12 @@ class KotlinBytecodeDecompilerTask(private val file: KtFile) : Task.Backgroundab
         }
     }
 
-    fun generateDecompiledVirtualFile(decompiledText: String? = null): VirtualFile? {
-        val text = decompiledText ?: try {
-            KotlinBytecodeDecompiler.decompile(file)
-        } catch (e: DecompileFailedException) {
-            null
-        } ?: return null
-
+    fun generateDecompiledVirtualFile(decompiledText: String): VirtualFile {
         val virtualFile: VirtualFile = runWriteAction {
             val root: VirtualFile = getOrCreateDummyRoot()
             val decompiledFileName = FileUtil.getNameWithoutExtension(file.name) + ".decompiled.java"
             val result = DummyFileSystem.getInstance().createChildFile(null, root, decompiledFileName)
-            VfsUtil.saveText(result, text)
+            VfsUtil.saveText(result, decompiledText)
             result
         }
 
