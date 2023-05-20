@@ -433,16 +433,19 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   fun forceReopenProjects() {
-    state.forceReopenProjects = true
+    synchronized(stateLock) {
+      state.forceReopenProjects = true
+    }
   }
 
   override fun willReopenProjectOnStart(): Boolean {
-    if (!state.forceReopenProjects && (!GeneralSettings.getInstance().isReopenLastProject || AppMode.isDontReopenProjects())) {
+    if (!synchronized(stateLock) { state.forceReopenProjects }
+        && (!GeneralSettings.getInstance().isReopenLastProject || AppMode.isDontReopenProjects())) {
       return false
     }
-    state.forceReopenProjects = false
 
     synchronized(stateLock) {
+      state.forceReopenProjects = false
       return state.additionalInfo.values.any { canReopenProject(it) }
     }
   }
