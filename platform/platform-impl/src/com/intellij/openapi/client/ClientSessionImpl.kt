@@ -13,6 +13,7 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
@@ -151,6 +152,9 @@ open class ClientAppSessionImpl(
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.appContainerDescriptor
   }
+
+  override val projectSessions: List<ClientProjectSession>
+    get() = ProjectManager.getInstance().openProjects.mapNotNull { ClientSessionsManager.getProjectSession(it, this) }
 
   init {
     @Suppress("LeakingThis")

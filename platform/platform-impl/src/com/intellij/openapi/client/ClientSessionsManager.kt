@@ -8,6 +8,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
@@ -24,6 +25,14 @@ sealed class ClientSessionsManager<T : ClientSession> {
     @JvmStatic
     fun getProjectSession(project: Project, session: ClientAppSession): ClientProjectSession? {
       return getInstance(project).getSession(session.clientId)
+    }
+
+    /**
+     * Clients may not have access to certain projects
+     * @return a list of project-level sessions available to a certain [ClientAppSession]
+     */
+    fun getAllProjectSession(session: ClientAppSession): List<ClientProjectSession> {
+      return ProjectManager.getInstance().openProjects.mapNotNull { getProjectSession(it, session) }
     }
 
     /**
