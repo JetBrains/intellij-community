@@ -7,10 +7,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.externalSystem.statistics.importActivityStarted
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -19,6 +16,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.idea.maven.importing.MavenImportStats.ImportingTaskOld
 import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.createImporter
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.runBlockingCancellableUnderIndicator
 
 internal class MavenProjectsManagerImporter(private val modelsProvider: IdeModifiableModelsProvider,
                                             private val projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
@@ -32,12 +30,7 @@ internal class MavenProjectsManagerImporter(private val modelsProvider: IdeModif
       return importer.importMavenProjectsEdt()
     }
     else {
-      val process: () -> List<Module> = {
-        runBlockingCancellable {
-          return@runBlockingCancellable importer.importMavenProjects()
-        }
-      }
-      return ProgressManager.getInstance().runProcess(process, EmptyProgressIndicator())
+      return runBlockingCancellableUnderIndicator { importer.importMavenProjects() }
     }
   }
 
