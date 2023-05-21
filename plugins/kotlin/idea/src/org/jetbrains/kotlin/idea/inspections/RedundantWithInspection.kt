@@ -7,23 +7,28 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.core.moveCaret
+import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.inspections.UnusedLambdaExpressionBodyInspection.Companion.replaceBlockExpressionWithLambdaBody
+import org.jetbrains.kotlin.idea.inspections.collections.isCalling
+import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.typeUtil.isUnit
 
 class RedundantWithInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
@@ -38,38 +43,25 @@ class RedundantWithInspection : AbstractKotlinInspection() {
             val lambdaBody = lambda.bodyExpression ?: return
 
             val context = callExpression.analyze(BodyResolveMode.PARTIAL_WITH_CFA)
-            if (lambdaBody.statements.size > 1 && callExpression.isUsedAsExpression(context)) return
-            if (callExpression.getResolvedCall(context)?.resultingDescriptor?.fqNameSafe != FqName("kotlin.with")) return
+            if (!callExpression.isCalling(FqName("kotlin.with"), context)) return
 
-            val lambdaDescriptor = context[BindingContext.FUNCTION, lambda.functionLiteral] ?: return
+            if (lambdaBody.statements.size > 1 &&
+                callExpression.isUsedAsExpression(context) &&
+                callExpression.getStrictParentOfType<KtFunction>()?.bodyExpression?.deparenthesize() != callExpression
+            ) return
 
-            var used = false
-            lambda.functionLiteral.acceptChildren(object : KtVisitorVoid() {
-                override fun visitKtElement(element: KtElement) {
-                    if (used) return
-                    element.acceptChildren(this)
-
-                    if (element is KtReturnExpression && element.getLabelName() == "with") {
-                        used = true
-                        return
-                    }
-
-                    if (isUsageOfDescriptor(lambdaDescriptor, element, context)) {
-                        used = true
-                    }
-                }
-            })
+            val functionLiteral = lambda.functionLiteral
+            val lambdaDescriptor = context[BindingContext.FUNCTION, functionLiteral] ?: return
+            val used = functionLiteral.anyDescendantOfType<KtElement> {
+                (it as? KtReturnExpression)?.getLabelName() == "with" || isUsageOfDescriptor(lambdaDescriptor, it, context)
+            }
 
             if (!used) {
                 val quickfix = when (receiver) {
                     is KtSimpleNameExpression, is KtStringTemplateExpression, is KtConstantExpression -> arrayOf(RemoveRedundantWithFix())
                     else -> LocalQuickFix.EMPTY_ARRAY
                 }
-                holder.registerProblem(
-                    callee,
-                    KotlinBundle.message("inspection.redundant.with.display.name"),
-                    *quickfix
-                )
+                holder.registerProblem(callee, KotlinBundle.message("inspection.redundant.with.display.name"), *quickfix)
             }
         })
 }
@@ -88,17 +80,27 @@ private class RemoveRedundantWithFix : LocalQuickFix {
         val lambdaBody = lambdaExpression.bodyExpression ?: return
 
         val function = callExpression.getStrictParentOfType<KtFunction>()
-        val functionBody = KtPsiUtil.deparenthesize(function?.bodyExpression)
+        val functionBody = function?.bodyExpression
 
-        val replaced = if (function?.equalsToken != null && functionBody == callExpression) {
-            val singleStatement = lambdaBody.statements.singleOrNull()?.let {
-                (it as? KtReturnExpression)?.returnedExpression ?: it
-            }
+        val replaced = if (functionBody?.deparenthesize() == callExpression) {
+            val singleStatement = lambdaBody.statements.singleOrNull()
             if (singleStatement != null) {
-                callExpression.replaced(singleStatement)
+                callExpression.replaced(
+                    (singleStatement as? KtReturnExpression)?.returnedExpression ?: singleStatement
+                )
             } else {
+                val returnType = (function.descriptor as? FunctionDescriptor)?.returnType
+                if (returnType != null && !returnType.isUnit()) {
+                    function.setType(returnType, shortenReferences = true)
+                }
+                val lastStatement = lambdaBody.statements.lastOrNull()
+                if (lastStatement != null && lastStatement !is KtReturnExpression) {
+                    lastStatement.replaced(
+                        KtPsiFactory(project).createExpressionByPattern("return $0", lastStatement)
+                    )
+                }
                 function.replaceBlockExpressionWithLambdaBody(lambdaBody)
-                function.bodyExpression
+                functionBody
             }
         } else {
             val result = lambdaBody.allChildren.takeUnless { it.isEmpty }?.let { range ->
