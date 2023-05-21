@@ -12,6 +12,7 @@ import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDImage;
 import com.intellij.ide.dnd.DnDNativeTarget;
@@ -430,7 +431,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         paintLineNumbers(g, startVisualLine, endVisualLine);
         paintCurrentAccessibleLine(g);
 
-        if (ExperimentalUI.isNewUI() && myPaintBackground) {
+        if (ExperimentalUI.isNewUI() && myPaintBackground && !ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()) {
           g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
           LinePainter2D.paint(g, gutterSeparatorX, clip.y, gutterSeparatorX, clip.y + clip.height);
         }
