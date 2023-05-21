@@ -55,7 +55,11 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
     fun getRequiredIndexes(indexedFile: IndexedFile): List<ID<*, *>> {
       if (unsureIndexIds.isEmpty()) return sureIndexIds
 
-      FileBasedIndexImpl.LOG.assertTrue(indexedFile.project != null, "Should not index files from unknown project")
+      // IDEA-320788: this assertion is not correct. Currently, the project can be null in the following cases:
+      //   1. VFS refreshed a file before scanning added it to per-project indexable files holder
+      //   2. VFS refreshed a file that belonged to a project that already closed
+      //   3. VFS refreshed a file that belongs to opened project, but excluded
+      //FileBasedIndexImpl.LOG.assertTrue(indexedFile.project != null, "Should not index files from unknown project")
       val acceptedCandidates: MutableList<ID<*, *>> = ArrayList(sureIndexIds)
       for ((indexId, filter) in unsureIndexIds) {
         if (filter.test(indexedFile)) {
