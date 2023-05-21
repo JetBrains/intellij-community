@@ -31,7 +31,7 @@ interface MavenAsyncProjectsManager {
 
 open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(project) {
   override suspend fun importMavenProjects(): List<Module> {
-    TODO("Not yet implemented")
+    return importMavenProjects(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject))
   }
 
   override fun importMavenProjectsSync(): List<Module> {
@@ -39,6 +39,10 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   override fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module> {
+    return prepareImporter(modelsProvider).importMavenProjectsBlocking()
+  }
+
+  private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider): MavenProjectsManagerImporter {
     val projectsToImportWithChanges = Collections.unmodifiableMap(LinkedHashMap(myProjectsToImport))
     projectsToImportWithChanges.forEach { (key: MavenProject, value: MavenProjectChanges) ->
       myProjectsToImport.remove(key, value)
@@ -48,7 +52,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       modelsProvider,
       projectsToImportWithChanges,
       importModuleGroupsRequired
-    ).importMavenProjectsBlocking()
+    )
+  }
+
+  private suspend fun importMavenProjects(modelsProvider: IdeModifiableModelsProvider): List<Module> {
+    return prepareImporter(modelsProvider).importMavenProjects()
   }
 
   private data class ImportResult(val createdModules: List<Module>, val postTasks: List<MavenProjectsProcessorTask>)
@@ -60,12 +68,20 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
     @RequiresBlockingContext
     fun importMavenProjectsBlocking(): List<Module> {
-      val importer = this
       if (ApplicationManager.getApplication().isDispatchThread) {
-        return importer.importMavenProjectsEdt()
+        return importMavenProjectsEdt()
       }
       else {
-        return runBlockingCancellableUnderIndicator { importMavenProjects() }
+        return runBlockingCancellableUnderIndicator { importMavenProjectsBg() }
+      }
+    }
+
+    suspend fun importMavenProjects(): List<Module> {
+      if (ApplicationManager.getApplication().isDispatchThread) {
+        return importMavenProjectsEdt()
+      }
+      else {
+        return importMavenProjectsBg()
       }
     }
 
@@ -77,7 +93,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
 
     @RequiresBackgroundThread
-    suspend fun importMavenProjects(): List<Module> {
+    suspend fun importMavenProjectsBg(): List<Module> {
       return withBackgroundProgress(project, title, false) {
         val createdModules = doImport()
         val fm = VirtualFileManager.getInstance()
