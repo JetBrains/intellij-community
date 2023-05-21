@@ -30,14 +30,14 @@ public abstract class MavenPerformanceTest extends MavenMultiVersionImportingTes
   @Test
   public void testImporting() {
     waitForReadingCompletion();
-    measure(8, () -> myProjectsManager.importProjects());
+    measure(8, () -> myProjectsManager.importMavenProjectsSync());
   }
 
   @Test
   public void testReImporting() {
     waitForReadingCompletion();
-    myProjectsManager.importProjects();
-    measure(2, () -> myProjectsManager.importProjects());
+    myProjectsManager.importMavenProjectsSync();
+    measure(2, () -> myProjectsManager.importMavenProjectsSync());
   }
 
   @Test

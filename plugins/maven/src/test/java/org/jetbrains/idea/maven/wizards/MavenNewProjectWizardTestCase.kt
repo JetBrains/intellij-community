@@ -80,7 +80,7 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
       manager.waitForImportCompletion()
       ApplicationManager.getApplication().invokeAndWait {
         manager.scheduleImportInTests(listOf(file))
-        manager.importProjects()
+        manager.importMavenProjectsSync()
       }
     }
     val promise = manager.waitForImportCompletion()

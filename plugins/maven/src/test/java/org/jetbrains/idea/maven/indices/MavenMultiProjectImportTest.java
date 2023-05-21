@@ -77,7 +77,7 @@ public class MavenMultiProjectImportTest extends ProjectWizardTestCase<AbstractP
     manager.resetManagedFilesAndProfilesInTests(Collections.singletonList(file), MavenExplicitProfiles.NONE);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       manager.scheduleImportInTests(Collections.singletonList(file));
-      manager.importProjects();
+      manager.importMavenProjectsSync();
     });
 
     Promise<?> promise = manager.waitForImportCompletion();

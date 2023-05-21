@@ -258,10 +258,10 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     List<Module> createdModules;
     if (isFromUI) {
       var modelsProvider = new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel);
-      createdModules = manager.importProjects(modelsProvider);
+      createdModules = manager.importMavenProjectsSync(modelsProvider);
     }
     else {
-      createdModules = manager.importProjects();
+      createdModules = manager.importMavenProjectsSync();
     }
     return createdModules;
   }

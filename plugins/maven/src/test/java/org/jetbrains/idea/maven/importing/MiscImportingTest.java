@@ -484,7 +484,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project", "m1", "m2");
 
     myProjectsManager.scheduleImportInTests(myProjectsManager.getProjectsFiles());
-    myProjectsManager.importProjects(new IdeModifiableModelsProviderImpl(myProject) {
+    myProjectsManager.importMavenProjectsSync(new IdeModifiableModelsProviderImpl(myProject) {
       @Override
       public void commit() {
         ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();

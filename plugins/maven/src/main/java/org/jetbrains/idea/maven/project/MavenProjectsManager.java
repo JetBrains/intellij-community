@@ -13,8 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -83,8 +81,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 @State(name = "MavenProjectsManager")
-public class MavenProjectsManager extends MavenSimpleProjectComponent
-  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable {
+public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
+  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable, MavenAsyncProjectsManager {
   private static final int IMPORT_DELAY = 1000;
 
   private final ReentrantLock initLock = new ReentrantLock();
@@ -105,11 +103,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenProjectsProcessor myArtifactsDownloadingProcessor;
   private MavenProjectsProcessor myPostProcessor;
 
-  private MavenMergingUpdateQueue myImportingQueue;
-  private final ConcurrentHashMap<MavenProject, MavenProjectChanges> myProjectsToImport = new ConcurrentHashMap<>();
+  protected MavenMergingUpdateQueue myImportingQueue;
+  protected final ConcurrentHashMap<@NotNull MavenProject, @NotNull MavenProjectChanges> myProjectsToImport = new ConcurrentHashMap<>();
   private final Set<MavenProject> myProjectsToResolve = ConcurrentHashMap.newKeySet();
 
-  private final AtomicBoolean myImportModuleGroupsRequired = new AtomicBoolean(false);
+  protected final AtomicBoolean myImportModuleGroupsRequired = new AtomicBoolean(false);
 
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
     EventDispatcher.create(MavenProjectsTree.Listener.class);
@@ -122,7 +120,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private final AtomicReference<MavenSyncConsole> mySyncConsole = new AtomicReference<>();
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
-  private Module myPreviewModule;
+  protected Module myPreviewModule;
   private transient boolean forceUpdateSnapshots = false;
 
   public static MavenProjectsManager getInstance(@NotNull Project project) {
@@ -1166,7 +1164,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     runWhenFullyOpen(() -> myImportingQueue.queue(new Update(this) {
       @Override
       public void run() {
-        result.setResult(importProjects());
+        result.setResult(importMavenProjectsSync());
         fireProjectImportCompleted();
       }
     }));
@@ -1182,7 +1180,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           project -> new Pair<>(project, MavenProjectChanges.ALL)
         );
         myProjectsToImport.putAll(projectsToImport);
-        importProjects();
+        importMavenProjectsSync();
         fireProjectImportCompleted();
       }
     }));
@@ -1316,32 +1314,13 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     });
   }
 
+  /**
+   * @deprecated Use {@link #importMavenProjectsSync()}}
+   */
+  @Deprecated
+  // used in third-party plugins
   public List<Module> importProjects() {
-    return importProjects(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject));
-  }
-
-  public List<Module> importProjects(IdeModifiableModelsProvider modelsProvider) {
-    Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges;
-    boolean importModuleGroupsRequired;
-
-    projectsToImportWithChanges = Collections.unmodifiableMap(new LinkedHashMap<>(myProjectsToImport));
-    projectsToImportWithChanges.forEach(myProjectsToImport::remove);
-
-    importModuleGroupsRequired = myImportModuleGroupsRequired.getAndSet(false);
-
-    return new MavenProjectsManagerImporter(
-      modelsProvider,
-      projectsToImportWithChanges,
-      importModuleGroupsRequired
-    ).importMavenProjectsBlocking(this);
-  }
-
-  void restartImportingQueueTimer() {
-    myImportingQueue.restartTimer();
-  }
-
-  Module getPreviewModule() {
-    return myPreviewModule;
+    return importMavenProjectsSync();
   }
 
   @ApiStatus.Internal

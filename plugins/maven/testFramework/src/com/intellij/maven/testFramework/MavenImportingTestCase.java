@@ -520,7 +520,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       myProjectsManager.scheduleImportInTests(files);
     });
-    myProjectsManager.importProjects();
+    myProjectsManager.importMavenProjectsSync();
 
     Promise<?> promise = myProjectsManager.waitForImportCompletion();
     ApplicationManager.getApplication().invokeAndWait(() -> PlatformTestUtil.waitForPromise(promise));

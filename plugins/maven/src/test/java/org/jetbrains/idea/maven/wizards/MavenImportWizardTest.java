@@ -212,7 +212,7 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
       manager.waitForImportCompletion();
       ApplicationManager.getApplication().invokeAndWait(() -> {
         manager.scheduleImportInTests(Collections.singletonList(file));
-        manager.importProjects();
+        manager.importMavenProjectsSync();
       });
     }
 
