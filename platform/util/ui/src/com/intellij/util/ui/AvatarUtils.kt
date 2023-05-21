@@ -2,15 +2,16 @@
 package com.intellij.util.ui
 
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.JBColor
 import com.intellij.ui.paint.withTxAndClipAligned
 import com.intellij.util.ui.AvatarUtils.generateColoredAvatar
 import com.intellij.util.ui.ImageUtil.applyQualityRenderingHints
 import java.awt.*
+import java.awt.font.TextAttribute
 import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
 import java.awt.image.BufferedImage
 import kotlin.math.abs
+
 
 class AvatarIcon(private val targetSize: Int,
                  private val arcRatio: Double,
@@ -98,12 +99,21 @@ object AvatarUtils {
 
   private fun getFont(size: Int): Font {
     return if (Registry.`is`("ide.experimental.ui")) {
-      val fontSize = 13 * size / 20 // Desired font is 13 with default icon size 20
-      JBFont.create(Font("JetBrains Mono", Font.BOLD, fontSize))
+      val fontSize = 13 * size / 20
+      getNewUiFont(fontSize)
     }
     else {
       JBFont.create(Font("Segoe UI", Font.PLAIN, (size / 2.2).toInt()))
     }
+  }
+
+  private fun getNewUiFont(size: Int): Font {
+    val attributes = mutableMapOf<TextAttribute, Any?>()
+
+    attributes[TextAttribute.FAMILY] = "JetBrains Mono"
+    attributes[TextAttribute.WEIGHT] = TextAttribute.WEIGHT_DEMIBOLD
+
+    return JBFont.create(Font.getFont(attributes)).deriveFont(size.toFloat())
   }
 }
 

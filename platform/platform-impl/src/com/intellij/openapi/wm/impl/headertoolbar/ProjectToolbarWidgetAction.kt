@@ -70,9 +70,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
       val project = presentation.getClientProperty(projectKey)
       if (project != null) {
         widget.leftIcons = listOf(customizer.getProjectIcon(project))
-        if (customizer.shouldShowGotIt()) {
-          customizer.showGotIt(project, widget)
-        }
+        customizer.showGotIt(project, widget)
       }
     }
     else {

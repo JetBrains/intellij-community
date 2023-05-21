@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.util.PropertiesComponent
@@ -23,6 +24,44 @@ import java.awt.*
 import javax.swing.Icon
 import javax.swing.JComponent
 
+private fun getProjectPath(project: Project): String {
+  val recentProjectManager = RecentProjectsManagerBase.getInstanceEx()
+  return recentProjectManager.getProjectPath(project) ?: project.basePath ?: run {
+    //thisLogger().warn("Impossible: no path for project $project")
+    ""
+  }
+}
+
+private fun getProjectNameForIcon(project: Project): String {
+  val path = getProjectPath(project)
+  return RecentProjectIconHelper.getProjectName(path)
+}
+
+@Service(Service.Level.PROJECT)
+private class ProjectWindowCustomizerIconCache(private val project: Project) {
+  var cachedIcon = getIconRaw()
+    private set
+
+  init {
+    project.messageBus.connect().subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      revalidate()
+    })
+
+    project.messageBus.connect().subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      revalidate()
+    })
+  }
+
+  private fun revalidate() {
+    cachedIcon = getIconRaw()
+  }
+
+  private fun getIconRaw(): Icon {
+    val path = getProjectPath(project)
+    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path, true)
+  }
+}
+
 @Service
 class ProjectWindowCustomizerService : Disposable {
   companion object {
@@ -33,7 +72,6 @@ class ProjectWindowCustomizerService : Disposable {
   private var wasGradientPainted = false
   private var ourSettingsValue = UISettings.getInstance().differentiateProjects
   private val colorCache = mutableMapOf<String, Color>()
-  private val iconCache = mutableMapOf<String, Icon>()
   private val listeners = mutableListOf<(Boolean) -> Unit>()
 
   private val colors: Array<Color>
@@ -50,26 +88,7 @@ class ProjectWindowCustomizerService : Disposable {
     )
 
   fun getProjectIcon(project: Project): Icon {
-    val path = getProjectPath(project)
-    return iconCache.getOrPut(path) {
-      Disposer.register(project) {
-        iconCache.remove(path)
-      }
-      RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path, true)
-    }
-  }
-
-  private fun getProjectPath(project: Project): String {
-    val recentProjectManager = RecentProjectsManagerBase.getInstanceEx()
-    return recentProjectManager.getProjectPath(project) ?: project.basePath ?: run {
-      thisLogger().warn("Impossible: no path for project $project")
-      ""
-    }
-  }
-
-  private fun getProjectNameForIcon(project: Project): String {
-    val path = getProjectPath(project)
-    return RecentProjectIconHelper.getProjectName(path)
+    return project.service<ProjectWindowCustomizerIconCache>().cachedIcon
   }
 
   internal fun update(newValue: Boolean) {
@@ -125,10 +144,14 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   fun showGotIt(project: Project, component: JComponent) {
+    if (!shouldShowGotIt() || !isActive()) return
+
     val gotIt = GotItTooltip("colorful.instances", IdeBundle.message("colorfulInstances.gotIt.text"), this).apply {
       withHeader(IdeBundle.message("colorfulInstances.gotIt.title"))
       // withTimeout(5000) TODO: to discuss with designers: do we want autohide or do we want a button?
     }
+
+    gotIt.showCondition = { true }
 
     if (WindowManagerEx.getInstanceEx().getFrameHelper(project)?.frame?.isFocused == true) {
       gotIt.show(component, GotItTooltip.BOTTOM_MIDDLE)
