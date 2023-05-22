@@ -73,6 +73,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     ))
 
     versionCheckerConfig = CE_CLASS_VERSIONS
+    buildDocAuthoringAssets = true
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
