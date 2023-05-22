@@ -4,7 +4,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.data.index.needIndexing
 import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getInstance
-import com.jetbrains.performancePlugin.utils.TimeArgumentHelper
+import com.jetbrains.performancePlugin.utils.TimeArgumentParserUtil
 import kotlinx.coroutines.CompletableDeferred
 
 /**
@@ -23,12 +23,20 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
     val vcsIndex = dataManager.index as VcsLogModifiableIndex
 
     if (vcsIndex.needIndexing()) {
-      val (timeout, timeunit) = TimeArgumentHelper.parse(extractCommandArgument(PREFIX))
+      val args = extractCommandArgument(PREFIX);
       val isIndexingCompleted = CompletableDeferred<Boolean>()
       vcsIndex.addListener { _ -> isIndexingCompleted.complete(true) }
 
-      Waiter.wait(timeout, timeunit, "Git log indexing project wasn't finished in $timeout $timeunit") {
+      //Will wait infinitely while test execution timeout won't be occurred
+      if (args.isBlank()) {
         isIndexingCompleted.await()
+      }
+      //Will wait for specified condition and fail with exception in case when condition wasn't satisfied
+      else {
+        val (timeout, timeunit) = TimeArgumentParserUtil.parse(args)
+        Waiter.waitOrThrow(timeout, timeunit, "Git log indexing project wasn't finished in $timeout $timeunit") {
+          isIndexingCompleted.await()
+        }
       }
     }
   }

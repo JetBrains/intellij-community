@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener.Companion.LOADED
 import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl
-import com.jetbrains.performancePlugin.utils.TimeArgumentHelper
+import com.jetbrains.performancePlugin.utils.TimeArgumentParserUtil
 import kotlinx.coroutines.CompletableDeferred
 import java.time.temporal.ChronoUnit
 
@@ -41,7 +41,7 @@ class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutine
             }
           })
 
-          Waiter.wait(waitTimeout, chronoUnit, "Jps project wasn't loaded in $waitTimeout ${chronoUnit.name}") {
+          Waiter.waitOrThrow(waitTimeout, chronoUnit, "Jps project wasn't loaded in $waitTimeout ${chronoUnit.name}") {
             completableDeferred.await()
           }
         }
@@ -54,7 +54,7 @@ class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutine
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val (timeout, timeunit) = TimeArgumentHelper.parse(extractCommandArgument(PREFIX))
+    val (timeout, timeunit) = TimeArgumentParserUtil.parse(extractCommandArgument(PREFIX))
     waitJpsProjectLoaded(context.project, timeout, timeunit)
   }
 

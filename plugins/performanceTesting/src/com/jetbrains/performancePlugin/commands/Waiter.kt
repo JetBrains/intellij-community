@@ -17,12 +17,13 @@ object Waiter {
   fun checkCondition(function: BooleanSupplier): CountDownLatch {
     val latch = CountDownLatch(1)
     val executor: ScheduledExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Performance plugin waiter")
-    executor.scheduleWithFixedDelay({
-                                      if (function.asBoolean) {
-                                        latch.countDown()
-                                        executor.shutdown()
-                                      }
-                                    }, 0, DELAY, TimeUnit.MILLISECONDS)
+    executor.scheduleWithFixedDelay(
+      {
+        if (function.asBoolean) {
+          latch.countDown()
+          executor.shutdown()
+        }
+      }, 0, DELAY, TimeUnit.MILLISECONDS)
     return latch
   }
 
@@ -34,13 +35,18 @@ object Waiter {
    * @throws RuntimeException if condition of @waitLogic didn't return any value
    */
   @JvmStatic
-  suspend fun <T> wait(timeout: Long, timeunit: TemporalUnit, errorText: String? = null, waitLogic: suspend CoroutineScope.() -> T): T? {
-    if (timeout > 0) {
-      return withTimeoutOrNull(Duration.of(timeout, timeunit), waitLogic)
-             ?: throw RuntimeException(errorText ?: "Condition wasn't satisfied in $timeout $timeunit")
+  suspend fun <T> waitOrThrow(
+    timeout: Long,
+    timeunit: TemporalUnit,
+    errorText: String? = null,
+    waitLogic: suspend CoroutineScope.() -> T
+  ): T? {
+    return if (timeout > 0) {
+      withTimeoutOrNull(Duration.of(timeout, timeunit), waitLogic)
+      ?: throw RuntimeException(errorText ?: "Condition wasn't satisfied in $timeout $timeunit")
     }
     else {
-      return null
+      null
     }
   }
 

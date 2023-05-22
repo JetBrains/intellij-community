@@ -6,7 +6,7 @@ import java.time.temporal.ChronoUnit
  * Helper will assist you to parse time and timeunit for yours test command
  * Supported units - 'ms' for millis, 's' for second, 'm' for minutes
  */
-class TimeArgumentHelper {
+class TimeArgumentParserUtil {
 
   companion object {
     private val ARGS_PATTERN = Regex("^([0-9]*)(ms|s|m)\$")
