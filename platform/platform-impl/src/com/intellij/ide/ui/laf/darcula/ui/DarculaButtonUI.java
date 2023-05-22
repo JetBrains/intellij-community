@@ -170,7 +170,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
   }
 
-  private Paint getBackground(JComponent c, Rectangle r) {
+  protected Paint getBackground(JComponent c, Rectangle r) {
     Color backgroundColor = (Color)c.getClientProperty("JButton.backgroundColor");
 
     return backgroundColor != null ? backgroundColor :
