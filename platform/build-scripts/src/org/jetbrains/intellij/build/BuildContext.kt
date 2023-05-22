@@ -76,7 +76,7 @@ interface BuildContext : CompilationContext {
    * [BuildOptions.useModularLoader].
    */
   val useModularLoader: Boolean
-  
+
   /**
    * Specifies whether the runtime module repository should be added to the distributions, see [BuildOptions.generateRuntimeModuleRepository].
    */
@@ -87,7 +87,7 @@ interface BuildContext : CompilationContext {
    * In IDEs, which use path-based loader, this list is specified manually in [ProductModulesLayout.bundledPluginModules] property.
    */
   val bundledPluginModules: List<String>
-  
+
   /**
    * see BuildTasksImpl.buildProvidedModuleList
    */
@@ -125,9 +125,9 @@ interface BuildContext : CompilationContext {
   }
 
   val jetBrainsClientModuleFilter: JetBrainsClientModuleFilter
-  
+
   val isEmbeddedJetBrainsClientEnabled: Boolean
-  
+
   fun shouldBuildDistributions(): Boolean
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
@@ -141,14 +141,15 @@ interface BuildContext : CompilationContext {
   fun checkDistributionBuildNumber()
 }
 
-suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder,
-                                            stepId: String,
-                                            crossinline step: suspend CoroutineScope.(Span) -> Unit) {
+suspend inline fun <T> BuildContext.executeStep(spanBuilder: SpanBuilder,
+                                                stepId: String,
+                                                crossinline step: suspend CoroutineScope.(Span) -> T): T? {
   if (isStepSkipped(stepId)) {
     spanBuilder.startSpan().addEvent("skip '$stepId' step").end()
+    return null
   }
   else {
-    spanBuilder.useWithScope(Dispatchers.IO, step)
+    return spanBuilder.useWithScope(Dispatchers.IO, step)
   }
 }
 

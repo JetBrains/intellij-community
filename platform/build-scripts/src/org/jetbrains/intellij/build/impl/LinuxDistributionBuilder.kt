@@ -82,21 +82,35 @@ class LinuxDistributionBuilder(
     setLastModifiedTime(osAndArchSpecificDistPath, context)
     val executableFileMatchers = generateExecutableFilesMatchers(true, arch).keys
     updateExecutablePermissions(osAndArchSpecificDistPath, executableFileMatchers)
-    context.executeStep(spanBuilder("build linux .tar.gz").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
+    context.executeStep(spanBuilder("Build Linux artifacts").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildArtifactWithoutRuntime) {
         launch {
           context.executeStep(
-            spanBuilder("Build Linux .tar.gz without bundled Runtime").setAttribute("arch", arch.name),
+            spanBuilder("Build Linux .tar.gz without bundled Runtime")
+              .setAttribute("arch", arch.name)
+              .setAttribute("runtimeDir", ""),
             BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP
-          ) {
-            buildTarGz(arch, runtimeDir = null, osAndArchSpecificDistPath, NO_RUNTIME_SUFFIX + suffix(arch))
+          ) { span ->
+            if (context.options.buildStepsToSkip.contains("${BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP}_${arch.name}")) {
+              span.addEvent("skip")
+            }
+            else {
+              buildTarGz(arch, runtimeDir = null, unixDistPath = osAndArchSpecificDistPath, suffix = NO_RUNTIME_SUFFIX + suffix(arch))
+            }
           }
         }
       }
 
       val runtimeDir = context.bundledRuntime.extract(os = OsFamily.LINUX, arch = arch)
       updateExecutablePermissions(runtimeDir, executableFileMatchers)
-      val tarGzPath = buildTarGz(arch, runtimeDir, osAndArchSpecificDistPath, suffix(arch))
+      val tarGzPath: Path? = context.executeStep(
+        spanBuilder("Build Linux .tar.gz with bundled Runtime")
+          .setAttribute("arch", arch.name)
+          .setAttribute("runtimeDir", runtimeDir.toString()),
+        "linux_tar_gz_${arch.name}"
+      ) { _ ->
+        buildTarGz(arch, runtimeDir, osAndArchSpecificDistPath, suffix(arch))
+      }
       launch {
         if (arch == JvmArchitecture.x64) {
           buildSnapPackage(runtimeDir, osAndArchSpecificDistPath, arch)
@@ -107,7 +121,7 @@ class LinuxDistributionBuilder(
         }
       }
 
-      if (!context.isStepSkipped(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+      if (tarGzPath != null && !context.isStepSkipped(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
         val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
         try {
           unTar(tarGzPath, tempTar)
