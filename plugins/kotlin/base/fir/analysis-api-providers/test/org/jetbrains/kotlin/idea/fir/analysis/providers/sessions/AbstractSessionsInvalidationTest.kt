@@ -2,11 +2,9 @@
 
 package org.jetbrains.kotlin.idea.fir.analysis.providers.sessions
 
-import com.intellij.openapi.command.WriteCommandAction
+import com.google.gson.JsonObject
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirModuleSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
@@ -17,36 +15,21 @@ import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectModule
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructure
-import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructureReader
 import org.jetbrains.kotlin.idea.fir.analysis.providers.publishOutOfBlockModification
 import org.jetbrains.kotlin.idea.jsonUtils.getString
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import java.io.File
-import java.nio.file.Paths
+import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractProjectStructureTest
+import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructureParser
 
-abstract class AbstractSessionsInvalidationTest : AbstractMultiModuleTest() {
+abstract class AbstractSessionsInvalidationTest : AbstractProjectStructureTest<SessionInvalidationTestProjectStructure>() {
     override fun isFirPlugin(): Boolean = true
 
     override fun getTestDataDirectory(): File =
-        KotlinRoot.DIR.resolve("fir-low-level-api-ide-impl").resolve("testData").resolve("sessionInvalidation")
+        KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-providers").resolve("testData").resolve("sessionInvalidation")
 
     protected fun doTest(path: String) {
-        val testStructure = TestProjectStructureReader.readToTestStructure(
-            Paths.get(path),
-            toTestStructure = MultiModuleTestProjectStructure.Companion::fromTestProjectStructure
-        )
-
-        val modulesByNames = testStructure.modules.associate { moduleData ->
-            moduleData.name to createEmptyModule(moduleData.name)
-        }
-
-        testStructure.modules.forEach { moduleData ->
-            val module = modulesByNames.getValue(moduleData.name)
-            moduleData.dependsOnModules.forEach { dependencyName ->
-                module.addDependency(modulesByNames.getValue(dependencyName))
-            }
-        }
+        val (testStructure, modulesByNames) = initializeProjectStructure(path, SessionInvalidationTestProjectStructureParser)
 
         val rootIdeaModule = modulesByNames.getValue(testStructure.rootModule)
         val rootModule = rootIdeaModule.getMainKtSourceModule()!!
@@ -84,40 +67,25 @@ abstract class AbstractSessionsInvalidationTest : AbstractMultiModuleTest() {
         val resolveSession = LLFirResolveSessionService.getInstance(project).getFirResolveSession(mainModule)
         return projectModules.map(resolveSession::getSessionFor)
     }
-
-    private fun createEmptyModule(name: String): Module {
-        val tmpDir = createTempDirectory().toPath()
-        val module: Module = createModule("$tmpDir/$name", moduleType)
-        val root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tmpDir.toFile())!!
-        WriteCommandAction.writeCommandAction(module.project).run<RuntimeException> {
-            root.refresh(false, true)
-        }
-
-        PsiTestUtil.addSourceContentToRoots(module, root)
-        return module
-    }
 }
 
-private data class MultiModuleTestProjectStructure(
-    val modules: List<TestProjectModule>,
+data class SessionInvalidationTestProjectStructure(
+    override val modules: List<TestProjectModule>,
     val rootModule: String,
     val modulesToMakeOOBM: List<String>,
     val expectedInvalidatedModules: List<String>,
-) {
-    companion object {
-        fun fromTestProjectStructure(testProjectStructure: TestProjectStructure): MultiModuleTestProjectStructure {
-            val json = testProjectStructure.json
+) : TestProjectStructure
 
-            return MultiModuleTestProjectStructure(
-                testProjectStructure.modules,
-                json.getString(ROOT_MODULE_FIELD),
-                json.getAsJsonArray(MODULES_TO_MAKE_OOBM_IN_FIELD).map { it.asString }.sorted(),
-                json.getAsJsonArray(EXPECTED_INVALIDATED_MODULES_FIELD).map { it.asString }.sorted(),
-            )
-        }
+private object SessionInvalidationTestProjectStructureParser : TestProjectStructureParser<SessionInvalidationTestProjectStructure> {
+    private const val ROOT_MODULE_FIELD = "rootModule"
+    private const val MODULES_TO_MAKE_OOBM_IN_FIELD = "modulesToMakeOOBM"
+    private const val EXPECTED_INVALIDATED_MODULES_FIELD = "expectedInvalidatedModules"
 
-        private const val ROOT_MODULE_FIELD = "rootModule"
-        private const val MODULES_TO_MAKE_OOBM_IN_FIELD = "modulesToMakeOOBM"
-        private const val EXPECTED_INVALIDATED_MODULES_FIELD = "expectedInvalidatedModules"
-    }
+    override fun parse(modules: List<TestProjectModule>, json: JsonObject): SessionInvalidationTestProjectStructure =
+        SessionInvalidationTestProjectStructure(
+            modules,
+            json.getString(ROOT_MODULE_FIELD),
+            json.getAsJsonArray(MODULES_TO_MAKE_OOBM_IN_FIELD)!!.map { it.asString }.sorted(),
+            json.getAsJsonArray(EXPECTED_INVALIDATED_MODULES_FIELD)!!.map { it.asString }.sorted(),
+        )
 }

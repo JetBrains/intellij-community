@@ -10,22 +10,9 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import java.nio.file.Path
 
-internal data class TestProjectStructure(
-    val modules: List<TestProjectModule>,
-    val json: JsonObject,
-) {
-    companion object {
-        fun parse(json: JsonElement): TestProjectStructure {
-            require(json is JsonObject)
-
-            return TestProjectStructure(
-                json.getAsJsonArray("modules").map(TestProjectModule.Companion::parse),
-                json,
-            )
-        }
-    }
+interface TestProjectStructure {
+    val modules: List<TestProjectModule>
 }
-
 
 data class TestProjectModule(val name: String, val dependsOnModules: List<String>) {
     companion object {
@@ -45,16 +32,30 @@ data class TestProjectModule(val name: String, val dependsOnModules: List<String
 }
 
 internal object TestProjectStructureReader {
-    fun read(testDirectory: Path, jsonFileName: String = "structure.json"): TestProjectStructure {
+    fun  <S : TestProjectStructure> read(
+        testDirectory: Path,
+        jsonFileName: String = "structure.json",
+        parser: TestProjectStructureParser<S>,
+    ): S {
         val jsonFile = testDirectory.resolve(jsonFileName)
 
         val json = JsonParser.parseString(FileUtil.loadFile(jsonFile.toFile(), /*convertLineSeparators=*/true))
-        return TestProjectStructure.parse(json)
+        require(json is JsonObject)
+
+        val modules = json.getAsJsonArray("modules").map(TestProjectModule.Companion::parse)
+        return parser.parse(modules, json)
     }
 
-    fun <T> readToTestStructure(
+    fun <S : TestProjectStructure> readToTestStructure(
         testDirectory: Path,
         jsonFileName: String = "structure.json",
-        toTestStructure: (TestProjectStructure) -> T,
-    ): T = read(testDirectory, jsonFileName).let(toTestStructure)
+        testProjectStructureParser: TestProjectStructureParser<S>,
+    ): S = read(testDirectory, jsonFileName, testProjectStructureParser)
+}
+
+fun interface TestProjectStructureParser<S : TestProjectStructure> {
+    /**
+     * Parses a [TestProjectStructure] from an already parsed list of [TestProjectModule]s and the original [JsonObject].
+     */
+    fun parse(modules: List<TestProjectModule>, json: JsonObject): S
 }
