@@ -170,8 +170,7 @@ private class CreateMissedActualsDialog(
     }
 
     override fun doValidate(): ValidationInfo? {
-        val filePath = getNewFilePathForModule(moduleWithExpect).nameWithoutExtension
-        if (filePath.isBlank()) {
+        if (filePathProperty.get().isBlank()) {
             return ValidationInfo(KotlinBundle.message("text.file.name.cannot.be.empty"), filePathTextField)
         }
 
