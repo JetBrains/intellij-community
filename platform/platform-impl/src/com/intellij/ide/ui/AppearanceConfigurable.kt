@@ -13,6 +13,7 @@ import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomChanged
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
+import com.intellij.internal.statistic.service.fus.collectors.ThemeAutodetectSelector
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
@@ -147,6 +148,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     }
     syncThemeProperty.afterChange(disposable!!) {
       lafManager.autodetect = it
+      ThemeAutodetectSelector.log(it)
     }
 
     return panel {
