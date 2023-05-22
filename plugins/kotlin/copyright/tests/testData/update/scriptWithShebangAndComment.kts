@@ -1,5 +1,5 @@
 #!/usr/bin/env kotlin
 
-foo()
+// comment
 
-// COMMENTS: 0
+foo()
