@@ -27,10 +27,12 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
+import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.PureKotlinSourceFoldersHolder
 import org.jetbrains.kotlin.idea.core.findExistingNonGeneratedKotlinSourceRootFiles
@@ -43,6 +45,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.*
 import java.io.File
@@ -99,7 +102,15 @@ class CreateMissedActualsFix(
         if (this.size < 2) return this.associateWith { it.name }
         val commonPrefix = this.map { it.name }.zipWithNext().map { (a, b) -> a.commonPrefixWith(b) }.minBy { it.length }
         val prefixToRemove = commonPrefix.substringBeforeLast(".", "").let { if (it.isEmpty()) it else "$it." }
-        return this.associateWith { it.name.removePrefix(prefixToRemove) }
+        return this.associateWith {
+            val name = it.name.removePrefix(prefixToRemove)
+
+            when {
+              name == "main" && it.isAndroidModule() && !it.isTestModule -> "androidMain"
+              name == "unitTest" && it.isAndroidModule() && it.isTestModule -> "androidTest"
+              else -> name
+            }
+        }
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
