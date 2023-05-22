@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ExperimentalUI;
@@ -27,7 +28,8 @@ public class EditorGutterLayout {
   static final String FOLDING_AREA = "Free painters";
   static final String VERTICAL_LINE_AREA = "Vertical line";
   private final EditorGutterComponentImpl myEditorGutter;
-  private List<GutterArea> myExpLayout;
+  private List<GutterArea> myNewUILayout;
+  private List<GutterArea> myNewUIDFMLayout;
   private List<GutterArea> myClassicLayout;
 
   public EditorGutterLayout(EditorGutterComponentImpl editorGutter) {
@@ -89,6 +91,9 @@ public class EditorGutterLayout {
 
   List<GutterArea> getLayout() {
     if (ExperimentalUI.isNewUI()) {
+      if (ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()) {
+        return getNewUIDFMLayout();
+      }
       return getExperimentalGutterLayout();
     }
     return getClassicGutterLayout();
@@ -135,7 +140,7 @@ public class EditorGutterLayout {
     return myEditorGutter.isLineNumbersShown();
   }
 
-  private List<GutterArea> createExperimentalLayout() {
+  private List<GutterArea> createNewUILayout() {
     return List.of(
       area(ANNOTATIONS_AREA, () -> 4)
         .as(EditorMouseEventArea.ANNOTATIONS_AREA)
@@ -174,6 +179,42 @@ public class EditorGutterLayout {
       );
   }
 
+  private List<GutterArea> createNewUIDFMLayout() {
+    return List.of(
+      area(LINE_NUMBERS_AREA, () -> myEditorGutter.myLineNumberAreaWidth).showIf(this::isLineNumbersShown),
+      areaGap(12).showIf(() -> myEditorGutter.isLineNumbersShown() && !myEditorGutter.isLineMarkersShown()),
+      area(ADDITIONAL_LINE_NUMBERS_AREA, () -> myEditorGutter.myAdditionalLineNumberAreaWidth),
+      area(ADDITIONAL_LINE_NUMBERS_AREA, () -> 4).showIf(() -> myEditorGutter.isLineNumbersShown() && myEditorGutter.isLineMarkersShown()),
+      area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize)
+        .as(EditorMouseEventArea.LINE_MARKERS_AREA)
+        .showIf(() -> myEditorGutter.myTextAnnotationExtraSize != 0),
+
+      area(ANNOTATIONS_AREA, () -> 4)
+        .as(EditorMouseEventArea.ANNOTATIONS_AREA)
+        .showIf(() -> myEditorGutter.myTextAnnotationGuttersSize == 0 && myEditorGutter.isLineMarkersShown()),
+      areaGap()
+        .as(EditorMouseEventArea.ANNOTATIONS_AREA)
+        .showIf(() -> myEditorGutter.isShowGapAfterAnnotations() && myEditorGutter.isLineMarkersShown()),
+      area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationGuttersSize)
+        .as(EditorMouseEventArea.ANNOTATIONS_AREA)
+        .showIf(() -> myEditorGutter.myTextAnnotationGuttersSize != 0),
+
+      area(EXTRA_LEFT_FREE_PAINTERS_AREA, myEditorGutter::getExtraLeftFreePaintersAreaWidth)
+        .showIf(() -> myEditorGutter.isLineMarkersShown()),
+      areaGap(4)
+        .as(EditorMouseEventArea.LINE_MARKERS_AREA)
+        .showIf(() -> myEditorGutter.getExtraLeftFreePaintersAreaWidth() > 0 && myEditorGutter.isLineMarkersShown()),
+
+      area(LEFT_FREE_PAINTERS_AREA, myEditorGutter::getLeftFreePaintersAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
+      area(ICONS_AREA, myEditorGutter::getIconsAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
+      area(GAP_AFTER_ICONS_AREA, myEditorGutter::getGapAfterIconsArea).showIf(myEditorGutter::isLineMarkersShown),
+      area(RIGHT_FREE_PAINTERS_AREA, myEditorGutter::getRightFreePaintersAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
+
+      area(FOLDING_AREA, myEditorGutter::getFoldingAreaWidth),
+      areaGap(3).showIf(() -> myEditorGutter.isLineMarkersShown())
+    );
+  }
+
   @NotNull
   private GutterArea areaGap() {
     return area(GAP_BETWEEN_AREAS, EditorGutterComponentImpl::getGapBetweenAreas);
@@ -185,10 +226,17 @@ public class EditorGutterLayout {
   }
 
   private List<GutterArea> getExperimentalGutterLayout() {
-    if (myExpLayout == null) {
-      myExpLayout = createExperimentalLayout();
+    if (myNewUILayout == null) {
+      myNewUILayout = createNewUILayout();
     }
-    return myExpLayout;
+    return myNewUILayout;
+  }
+
+  private List<GutterArea> getNewUIDFMLayout() {
+    if (myNewUIDFMLayout == null) {
+      myNewUIDFMLayout = createNewUIDFMLayout();
+    }
+    return myNewUIDFMLayout;
   }
 
   private static GutterArea area(String id, Supplier<Integer> areaWidth) {
