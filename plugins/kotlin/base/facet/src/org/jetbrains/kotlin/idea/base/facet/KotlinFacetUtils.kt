@@ -219,12 +219,6 @@ val Module.implementingModules: List<Module>
                 val result = mutableSetOf<Module>()
                 moduleManager.modules.filterTo(result) { it.facetSettings?.dependsOnModuleNames?.contains(thisModuleStableName) == true }
 
-                // HACK: we do not import proper dependsOn for android source-sets in M3,
-                // so add all Android modules that M2-implemention would've added,
-                // to at least not make things worse.
-                // See KT-33809 for details
-                implementingModulesM2(moduleManager).forEach { if (it !in result && it.isAndroidModule()) result += it }
-
                 result.toList()
             }
 
