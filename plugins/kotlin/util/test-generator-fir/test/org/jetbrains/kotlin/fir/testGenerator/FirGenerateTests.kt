@@ -6,6 +6,7 @@ import org.jetbrains.fir.uast.test.*
 import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightTests
 import org.jetbrains.kotlin.idea.fir.actions.AbstractK2AddImportActionTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractIdeKotlinAnnotationsResolverTest
+import org.jetbrains.kotlin.idea.fir.analysis.providers.dependents.AbstractModuleDependentsTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
 import org.jetbrains.kotlin.idea.fir.codeInsight.AbstractK2MultiModuleLineMarkerTest
@@ -79,6 +80,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractIdeKotlinAnnotationsResolverTest> {
             model("annotationsResolver", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractModuleDependentsTest> {
+            model("moduleDependents", pattern = DIRECTORY, isRecursive = false)
         }
     }
 
