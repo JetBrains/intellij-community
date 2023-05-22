@@ -93,7 +93,10 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
 
     class JdkListener(private val project: Project) : ProjectJdkTable.Listener {
         override fun jdkRemoved(jdk: Sdk) {
-            project.publishModuleStateModification(SdkInfo(project, jdk).toKtModule(), isRemoval = true)
+            // Most modules will depend on an SDK, so its removal constitutes global module state modification. We cannot be more
+            // fine-grained here because `KtSdkModules`s aren't supported by `IdeKotlinModuleDependentsProvider`, so invalidation based on
+            // a module-level modification event may not work as expected with a `KtSdkModule`.
+            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
         }
     }
 
