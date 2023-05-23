@@ -15,10 +15,11 @@ import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.OriginCapability
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
@@ -39,7 +41,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.util.match
 
 class CompletionSessionConfiguration(
     val useBetterPrefixMatcherForNonImportedClasses: Boolean,
@@ -47,7 +49,8 @@ class CompletionSessionConfiguration(
     val javaGettersAndSetters: Boolean,
     val javaClassesNotToBeUsed: Boolean,
     val staticMembers: Boolean,
-    val dataClassComponentFunctions: Boolean
+    val dataClassComponentFunctions: Boolean,
+    val excludeEnumEntries: Boolean,
 )
 
 fun CompletionSessionConfiguration(parameters: CompletionParameters) = CompletionSessionConfiguration(
@@ -56,7 +59,8 @@ fun CompletionSessionConfiguration(parameters: CompletionParameters) = Completio
     javaGettersAndSetters = parameters.invocationCount >= 2,
     javaClassesNotToBeUsed = parameters.invocationCount >= 2,
     staticMembers = parameters.invocationCount >= 2,
-    dataClassComponentFunctions = parameters.invocationCount >= 2
+    dataClassComponentFunctions = parameters.invocationCount >= 2,
+    excludeEnumEntries = !parameters.position.languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries),
 )
 
 abstract class CompletionSession(

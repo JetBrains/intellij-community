@@ -31,12 +31,10 @@ import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
-import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -88,7 +86,8 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       RefParameter[] parameters = refMethod.getParameters();
       for (RefParameter refParameter : parameters) {
         Object value = refParameter.getActualConstValue();
-        if (value != VALUE_IS_NOT_CONST && value != VALUE_UNDEFINED) {
+        List<Object> valueList = valueToList(value);
+        if (valueList == null || ContainerUtil.all(valueList, v -> v != VALUE_UNDEFINED && v != VALUE_IS_NOT_CONST)) {
           if (minimalUsageCount != 0 && refParameter.getUsageCount() < minimalUsageCount) continue;
           if (!globalContext.shouldCheck(refParameter, this)) continue;
           if (problems == null) problems = new ArrayList<>(1);
@@ -96,12 +95,26 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
           if (parameter == null) continue;
           Boolean isFixAvailable = isFixAvailable(parameter, value, refParameter.isUsedForWriting());
           if (Boolean.FALSE.equals(isFixAvailable) && ignoreWhenRefactoringIsComplicated) return null;
-          ContainerUtil.addIfNotNull(problems, registerProblem(manager, parameter, value, Boolean.TRUE.equals(isFixAvailable)));
+          Object presentableValue = value;
+          if (valueList != null && valueList.size() == 1 && valueList.get(0) == null) presentableValue = valueList.get(0);
+          ContainerUtil.addIfNotNull(problems, registerProblem(manager, parameter, presentableValue, Boolean.TRUE.equals(isFixAvailable)));
         }
       }
     }
 
     return problems == null ? null : problems.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
+  }
+
+  @Nullable
+  @Contract("null -> null; !null -> !null")
+  private static List<Object> valueToList(@Nullable Object rootValue) {
+    if (rootValue == null) return null;
+    if (rootValue instanceof List<?>) {
+      //noinspection unchecked
+      return (List<Object>)rootValue;
+    } else {
+      return new SmartList<>(rootValue);
+    }
   }
 
   @Override
@@ -395,7 +408,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
         @Override
         public boolean visitMethod(@NotNull UMethod method) {
           PsiMethod javaMethod = method.getJavaPsi();
-          if (method.isConstructor() || 
+          if (method.isConstructor() ||
               VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(javaMethod.getModifierList()), myGlobal.highestModifier) < 0) {
             return true;
           }
@@ -408,15 +421,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
           if (myDeadCodeTool.isEntryPoint(javaMethod)) return true;
           if (!javaMethod.getHierarchicalMethodSignature().getSuperSignatures().isEmpty()) return true;
 
-          UParameter lastParameter = parameters.get(parameters.size() - 1);
-          final Object[] paramValues;
-          final boolean hasVarArg = lastParameter.getType() instanceof PsiEllipsisType;
-          if (hasVarArg) {
-            if (parameters.size() == 1) return true;
-            paramValues = new Object[parameters.size() - 1];
-          } else {
-            paramValues = new Object[parameters.size()];
-          }
+          Object[] paramValues = new Object[parameters.size()];
           Arrays.fill(paramValues, VALUE_UNDEFINED);
 
           int[] usageCount = {0};
@@ -434,20 +439,20 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
               if (!(parent instanceof UCallExpression methodCall)) {
                 return false;
               }
-              List<UExpression> arguments = methodCall.getValueArguments();
-              if (arguments.size() < paramValues.length) return false;
+              if (methodCall.getValueArguments().size() < paramValues.length) return false;
 
               boolean needFurtherProcess = false;
               for (int i = 0; i < paramValues.length; i++) {
-                Object value = paramValues[i];
-                final Object currentArg = RefParameterImpl.getAccessibleExpressionValue(arguments.get(i), () -> method.getPsi());
-                if (value == VALUE_UNDEFINED) {
-                  paramValues[i] = currentArg;
-                  if (currentArg != VALUE_IS_NOT_CONST) {
+                UExpression arg = methodCall.getArgumentForParameter(i);
+                Object argValue = RefParameterImpl.getAccessibleExpressionValue(arg, () -> method.getSourcePsi());
+                Object paramValue = paramValues[i];
+                if (paramValue == VALUE_UNDEFINED) {
+                  paramValues[i] = argValue;
+                  if (argValue != VALUE_IS_NOT_CONST) {
                     needFurtherProcess = true;
                   }
-                } else if (value != VALUE_IS_NOT_CONST) {
-                  if (!Comparing.equal(paramValues[i], currentArg)) {
+                } else if (paramValue != VALUE_IS_NOT_CONST) {
+                  if (!Comparing.equal(paramValue, argValue)) {
                     paramValues[i] = VALUE_IS_NOT_CONST;
                   } else {
                     needFurtherProcess = true;
@@ -460,12 +465,15 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
             if (myGlobal.minimalUsageCount != 0 && usageCount[0] < myGlobal.minimalUsageCount) return true;
             for (int i = 0, length = paramValues.length; i < length; i++) {
               Object value = paramValues[i];
-              if (value != VALUE_UNDEFINED && value != VALUE_IS_NOT_CONST) {
+              List<Object> valueList = valueToList(value);
+              if (valueList == null || ContainerUtil.all(valueList, v -> v != VALUE_UNDEFINED && v != VALUE_IS_NOT_CONST)) {
                 final UParameter parameter = parameters.get(i);
                 Boolean isFixAvailable = isFixAvailable(parameter, value, false);
                 if (Boolean.FALSE.equals(isFixAvailable) && myGlobal.ignoreWhenRefactoringIsComplicated) return true;
+                Object presentableValue = value;
+                if (valueList != null && valueList.size() == 1 && valueList.get(0) == null) presentableValue = valueList.get(0);
                 ProblemDescriptor descriptor = 
-                  myGlobal.registerProblem(holder.getManager(), parameter, value, Boolean.TRUE.equals(isFixAvailable));
+                  myGlobal.registerProblem(holder.getManager(), parameter, presentableValue, Boolean.TRUE.equals(isFixAvailable));
                 if (descriptor != null) {
                   holder.registerProblem(descriptor);
                 }

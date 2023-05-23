@@ -254,8 +254,23 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
     List<String> processors = mavenProject.getDeclaredAnnotationProcessors();
     Map<String, String> options = mavenProject.getAnnotationProcessorOptions();
 
-    String annotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(mavenProject, false, DEFAULT_ANNOTATION_PATH_OUTPUT);
-    String testAnnotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(mavenProject, true, DEFAULT_TEST_ANNOTATION_OUTPUT);
+    boolean outputRelativeToContentRoot;
+    String annotationProcessorDirectory;
+    String testAnnotationProcessorDirectory;
+
+    if (MavenImportUtil.isMainOrTestSubmodule(module.getName())) {
+      outputRelativeToContentRoot = false;
+      annotationProcessorDirectory = getAnnotationsDirectoryRelativeTo(mavenProject, false, mavenProject.getOutputDirectory());
+      testAnnotationProcessorDirectory = getAnnotationsDirectoryRelativeTo(mavenProject, true, mavenProject.getTestOutputDirectory());
+    }
+    else {
+      String mavenProjectDirectory = mavenProject.getDirectory();
+
+      outputRelativeToContentRoot = true;
+      annotationProcessorDirectory = getAnnotationsDirectoryRelativeTo(mavenProject, false, mavenProjectDirectory);
+      testAnnotationProcessorDirectory = getAnnotationsDirectoryRelativeTo(mavenProject, true, mavenProjectDirectory);
+    }
+
 
     String annotationProcessorPath = getAnnotationProcessorPath(mavenProject, processorModules);
 
@@ -283,8 +298,8 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
     }
 
     ProcessorConfigProfile moduleProfile =
-      getModuleProfile(module, mavenProject, compilerConfiguration, moduleProfileName, annotationProcessorDirectory,
-                       testAnnotationProcessorDirectory);
+      getModuleProfile(module, mavenProject, compilerConfiguration, moduleProfileName, outputRelativeToContentRoot,
+                       annotationProcessorDirectory, testAnnotationProcessorDirectory);
     if (moduleProfile == null) return null;
 
     if (StringUtil.isNotEmpty(annotationProcessorPath)) {
@@ -372,6 +387,7 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
                                                          MavenProject mavenProject,
                                                          CompilerConfigurationImpl compilerConfiguration,
                                                          String moduleProfileName,
+                                                         boolean outputRelativeToContentRoot,
                                                          String annotationProcessorDirectory,
                                                          String testAnnotationProcessorDirectory) {
     ProcessorConfigProfile moduleProfile = compilerConfiguration.findModuleProcessorProfile(moduleProfileName);
@@ -383,13 +399,9 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
     }
     if (!moduleProfile.isEnabled()) return null;
 
-    if (MavenImportUtil.isMainOrTestSubmodule(module.getName())) {
-      moduleProfile.setOutputRelativeToContentRoot(false);
-    }
-    else {
-      moduleProfile.setOutputRelativeToContentRoot(true);
-    }
     moduleProfile.setObtainProcessorsFromClasspath(true);
+
+    moduleProfile.setOutputRelativeToContentRoot(outputRelativeToContentRoot);
     moduleProfile.setGeneratedSourcesDirectoryName(annotationProcessorDirectory, false);
     moduleProfile.setGeneratedSourcesDirectoryName(testAnnotationProcessorDirectory, true);
 
@@ -501,20 +513,18 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
   }
 
   @NotNull
-  private static String getRelativeAnnotationProcessorDirectory(MavenProject mavenProject, boolean isTest,
-                                                                String defaultTestAnnotationOutput) {
-    String annotationProcessorDirectory = mavenProject.getAnnotationProcessorDirectory(isTest);
-    Path annotationProcessorDirectoryFile = Path.of(annotationProcessorDirectory);
-    if (!annotationProcessorDirectoryFile.isAbsolute()) {
+  private static String getAnnotationsDirectoryRelativeTo(MavenProject mavenProject, boolean isTest, String relativeTo) {
+    var annotationProcessorDirectory = mavenProject.getAnnotationProcessorDirectory(isTest);
+    Path path = Path.of(annotationProcessorDirectory);
+    if (!path.isAbsolute()) {
       return annotationProcessorDirectory;
     }
 
-    String absoluteProjectDirectory = mavenProject.getDirectory();
     try {
-      return Path.of(absoluteProjectDirectory).relativize(annotationProcessorDirectoryFile).toString();
+      return Path.of(relativeTo).relativize(path).toString();
     }
     catch (IllegalArgumentException e) {
-      return defaultTestAnnotationOutput;
+      return isTest ? DEFAULT_TEST_ANNOTATION_OUTPUT : DEFAULT_ANNOTATION_PATH_OUTPUT;
     }
   }
 

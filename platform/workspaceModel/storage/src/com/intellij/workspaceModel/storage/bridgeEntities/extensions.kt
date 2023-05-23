@@ -314,14 +314,16 @@ fun SourceRootEntity.hashCodeAsOrderEntry(): Int {
   return Objects.hash(packagePrefix, generated, url)
 }
 
+private fun ContentRootEntity.excludedUrlsSet(): Set<VirtualFileUrl> = this.excludedUrls.map { excludedUrl -> excludedUrl.url }.toHashSet()
+
 fun ContentRootEntity.equalsAsOrderEntry(other: ContentRootEntity): Boolean {
   if (this.url != other.url) return false
-  if (this.excludedUrls != other.excludedUrls) return false
+  if (this.excludedUrlsSet() != other.excludedUrlsSet()) return false
   if (this.excludedPatterns != other.excludedPatterns) return false
   return true
 }
 
-fun ContentRootEntity.hashCodeAsOrderEntry(): Int = Objects.hash(url, excludedUrls, excludedPatterns)
+fun ContentRootEntity.hashCodeAsOrderEntry(): Int = Objects.hash(url, excludedUrlsSet(), excludedPatterns)
 
 fun ModuleDependencyItem.equalsAsOrderEntry(other: ModuleDependencyItem,
                                             thisStore: EntityStorage, otherStore: EntityStorage): Boolean {

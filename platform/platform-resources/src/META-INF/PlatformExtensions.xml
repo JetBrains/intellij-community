@@ -485,6 +485,7 @@ Android Studio: don't register IntelliJ fork -->
     <projectService serviceImplementation="com.intellij.ui.tabs.PerUserFileColorModelStorageManager"/>
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbService" serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
+    <postStartupActivity implementation="com.intellij.openapi.project.SmartModeScheduler$SmartModeSchedulerStartupActivity"/>
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbUtil" serviceImplementation="com.intellij.openapi.project.DumbUtilImpl"/>
     
@@ -1521,6 +1522,10 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.formatting.EditorFormatterListener"
               topic="com.intellij.psi.codeStyle.CodeStyleManager$Listener"/>
+    <listener class="com.intellij.openapi.project.SmartModeScheduler$SmartModeSchedulerDumbModeListener"
+              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
+    <listener class="com.intellij.openapi.project.SmartModeScheduler$SmartModeSchedulerFilesScannerListener"
+              topic="com.intellij.openapi.project.FilesScanningListener"/>
     <listener class="com.intellij.openapi.project.ProjectRootManagerOnEndOfDumbModeIncrementer"
               topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
   </projectListeners>

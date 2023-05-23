@@ -74,16 +74,12 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveBackground", new JBColor(0xE0E0E0, 0x515457));
   private static final Color NON_FOCUSED_MASK_COLOR = JBColor.namedColor("CompletionPopup.nonFocusedMask", Gray._0.withAlpha(0));
 
-  private static Insets selectionInnerInsets() {
-    return JBUI.insets("CompletionPopup.selectionInnerInsets", JBUI.insets(2));
-  }
-
   static Insets bodyInsets() {
     return JBUI.insets("CompletionPopup.Body.insets", JBUI.insets(4));
   }
 
   private static Insets selectionInsets() {
-    Insets innerInsets = selectionInnerInsets();
+    Insets innerInsets = JBUI.CurrentTheme.CompletionPopup.selectionInnerInsets();
     Insets bodyInsets = bodyInsets();
     //noinspection UseDPIAwareInsets
     return new Insets(innerInsets.top, innerInsets.left + bodyInsets.left, innerInsets.bottom, innerInsets.right + bodyInsets.right);

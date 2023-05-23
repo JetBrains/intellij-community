@@ -4,7 +4,7 @@ package com.intellij.webSymbols.search.impl
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPresentation
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
 

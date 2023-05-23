@@ -15,6 +15,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.getEffectiveConfiguration
 import com.intellij.execution.util.ExecutionErrorDialog
 import com.intellij.execution.util.JavaParametersUtil
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
@@ -96,7 +97,9 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       }
     }
     catch (e: CantRunException) {
-      ExecutionErrorDialog.show(e, GradleInspectionBundle.message("dialog.title.cannot.use.specified.jre"), project)
+      AppUIExecutor.onUiThread().expireWith(project).submit {
+        ExecutionErrorDialog.show(e, GradleInspectionBundle.message("dialog.title.cannot.use.specified.jre"), project)
+      }
       throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
     }
     val taskSettings = ExternalSystemTaskExecutionSettings()
@@ -108,6 +111,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     taskSettings.externalProjectPath = gradleModuleData?.directoryToRunTask ?: GradleRunnerUtil.resolveProjectPath(module)
     val runAppTaskName = mainClass.name!! + ".main()"
     taskSettings.taskNames = listOf((gradleModuleData?.getTaskPath(runAppTaskName) ?: runAppTaskName))
+    customiseTaskExecutionsSettings(taskSettings, module)
 
     val executorId = executor?.id ?: DefaultRunExecutor.EXECUTOR_ID
     val environment = ExternalSystemUtil.createExecutionEnvironment(project, GradleConstants.SYSTEM_ID, taskSettings, executorId)
@@ -134,6 +138,8 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       .filter { it.providerId !== CompileStepBeforeRun.ID }
     return environment
   }
+
+  protected open fun customiseTaskExecutionsSettings(taskSettings: ExternalSystemTaskExecutionSettings, module: Module) {}
 
   companion object {
     fun createEscapedParameters(parameters: List<String>, prefix: String): String {

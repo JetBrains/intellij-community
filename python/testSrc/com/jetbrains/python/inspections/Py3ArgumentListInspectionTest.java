@@ -113,4 +113,32 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   public void testDataclassesReplace() {
     doMultiFileTest();
   }
+
+  // PY-59760
+  public void testNoWarningStarArgumentParamSpec() {
+    doTestByText("""
+                   import logging
+                   from typing import Callable, TypeVar
+                   from typing import ParamSpec
+                                     
+                   P = ParamSpec('P')
+                   R = TypeVar('R')
+                                     
+                                     
+                   def outer_decorator(f: Callable[P, R]) -> Callable[P, R]:
+                       def inner(*args: P.args, **kwargs: P.kwargs) -> R:
+                           logging.info(f'{f.__name__} was called')
+                           return f(*args, **kwargs)
+                                     
+                       return inner
+                                     
+                                     
+                   @outer_decorator
+                   def non_working_function(x: float, y: float) -> float:
+                       return x + y
+                                     
+                                     
+                   non_working_function(1.1, 2.2)
+                   """);
+  }
 }

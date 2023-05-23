@@ -5,9 +5,9 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
-import com.intellij.webSymbols.impl.toCodeCompletionItems
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.utils.getDefaultCodeCompletions
 
 interface WebSymbolsScope : ModificationTracker {
 
@@ -25,8 +25,7 @@ interface WebSymbolsScope : ModificationTracker {
                          name: String?,
                          params: WebSymbolsCodeCompletionQueryParams,
                          scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
-    getSymbols(namespace, kind, null, WebSymbolsNameMatchQueryParams(params.queryExecutor), scope)
-      .flatMap { (it as? WebSymbol)?.toCodeCompletionItems(name, params, scope) ?: emptyList() }
+    getDefaultCodeCompletions(namespace, kind, name, params, scope)
 
   fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
     false

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.common
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.python.packaging.repository.PyEmptyPackagePackageRepository
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
@@ -55,6 +56,10 @@ interface PythonPackageSpecification {
   fun buildInstallationString(): List<String>  = buildList {
     val versionString = if (version != null) "==$version" else ""
     add("$name$versionString")
+    if (repository == PyEmptyPackagePackageRepository) {
+      thisLogger().warn("PyEmptyPackagePackageRepository used as source repository for package installation!")
+      return@buildList
+    }
     if (repository != null && repository != PyPIPackageRepository) {
       add("--index-url")
       add(repository!!.urlForInstallation)

@@ -299,7 +299,7 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
 
   @Override
   protected void performCleanup() {
-    myEditorState.revert();
+    ApplicationManager.getApplication().invokeLater(() -> myEditorState.revert());
   }
 
   @Override

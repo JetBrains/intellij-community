@@ -28,17 +28,8 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   private var lastEvent: FusEvent? = null
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
-  private var eventMergeTimeoutMs: Long
+  private val eventMergeTimeoutMs: Long = if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) 500L else 10000L
   private var lastEventFlushFuture: ScheduledFuture<CompletableFuture<Void>>? = null
-
-  init {
-    if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
-      eventMergeTimeoutMs = 500L
-    }
-    else {
-      eventMergeTimeoutMs = 10000L
-    }
-  }
 
   override fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
@@ -82,7 +73,10 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     }
     else {
       logLastEvent()
-      lastEvent = if(StatisticsRecorderUtil.isTestModeEnabled(recorderId)) FusEvent(event, rawEventId, rawData) else FusEvent(event, null, null)
+      lastEvent =
+        if (StatisticsRecorderUtil.isTestModeEnabled(recorderId))
+          FusEvent(event, rawEventId, rawData)
+        else FusEvent(event, null, null)
       lastEventTime = event.time
       lastEventCreatedTime = createdTime
     }

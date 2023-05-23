@@ -10,10 +10,9 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.yaml.YAMLElementGenerator
 import org.jetbrains.yaml.psi.YAMLQuotedText
-import org.jetbrains.yaml.psi.YAMLScalar
 
-class YAMLAddQuoteQuickFix(scalar: YAMLScalar, private val quickFixText: @Nls String) :
-  LocalQuickFixAndIntentionActionOnPsiElement(scalar) {
+class YAMLAddQuoteQuickFix(scalarOrTemplate: PsiElement, private val quickFixText: @Nls String) :
+  LocalQuickFixAndIntentionActionOnPsiElement(scalarOrTemplate) {
   override fun getText(): @Nls String = quickFixText
 
   override fun getFamilyName(): @Nls String = text

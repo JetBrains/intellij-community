@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LiftReturnOrAssignment")
+
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.RecentProjectsManager
@@ -73,7 +75,9 @@ open class ProjectFrameHelper internal constructor(
   private var activationTimestamp: Long? = null
 
   init {
-    setupCloseAction()
+    frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
+    frame.addWindowListener(WindowCloseListener)
+
     @Suppress("LeakingThis")
     rootPane = createIdeRootPane(loadingState)
     frame.doSetRootPane(rootPane)
@@ -100,8 +104,8 @@ open class ProjectFrameHelper internal constructor(
       override val helper: IdeFrame
         get() = this@ProjectFrameHelper
 
-      override val frameDecorator: IdeFrameImpl.FrameDecorator?
-        get() = this@ProjectFrameHelper.frameDecorator
+      override val isInFullScreen: Boolean
+        get() = frameDecorator?.isInFullScreen ?: false
 
       override fun dispose() {
         if (isTemporaryDisposed(frame)) {
@@ -159,10 +163,6 @@ open class ProjectFrameHelper internal constructor(
         builder.append(s)
       }
     }
-
-    private fun isTemporaryDisposed(frame: RootPaneContainer?): Boolean {
-      return ClientProperty.isTrue(frame?.rootPane, ScreenUtil.DISPOSE_TEMPORARY)
-    }
   }
 
   protected open fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
@@ -189,9 +189,13 @@ open class ProjectFrameHelper internal constructor(
     if (SystemInfoRt.isMac) {
       frame.iconImage = null
     }
-    else if (SystemInfoRt.isLinux) {
-      IdeMenuBar.installAppMenuIfNeeded(frame)
-      // in production (not from sources) makes sense only on Linux
+    else {
+      if (SystemInfoRt.isLinux) {
+        IdeMenuBar.installAppMenuIfNeeded(frame)
+      }
+
+      // in production (not from sources) it makes sense only on Linux
+      // or on Windows (for products that don't use a native launcher, e.g. MPS)
       AppUIUtil.updateWindowIcon(frame)
     }
     return frame
@@ -205,25 +209,6 @@ open class ProjectFrameHelper internal constructor(
   }
 
   override fun getComponent(): JComponent? = frame.rootPane
-
-  private fun setupCloseAction() {
-    frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
-    val helper = createCloseProjectWindowHelper()
-    frame.addWindowListener(object : WindowAdapter() {
-      override fun windowClosing(e: WindowEvent) {
-        if (isTemporaryDisposed(frame) || LaterInvocator.isInModalContext(frame, project)) {
-          return
-        }
-
-        val app = ApplicationManager.getApplication()
-        if (app != null && !app.isDisposed) {
-          helper.windowClosing(project)
-        }
-      }
-    })
-  }
-
-  protected open fun createCloseProjectWindowHelper(): CloseProjectWindowHelper = CloseProjectWindowHelper()
 
   override fun getStatusBar(): IdeStatusBarImpl? = rootPane.statusBar
 
@@ -378,6 +363,8 @@ open class ProjectFrameHelper internal constructor(
       (it as BalloonLayoutImpl).dispose()
     }
 
+    frame.removeWindowListener(WindowCloseListener)
+
     // clear both our and swing hard refs
     if (ApplicationManager.getApplication().isUnitTestMode) {
       rootPane.removeNotify()
@@ -452,4 +439,29 @@ open class ProjectFrameHelper internal constructor(
 
   internal val isTabbedWindow: Boolean
     get() = frameDecorator?.isTabbedWindow ?: false
+
+  open fun windowClosing(project: Project) {
+    CloseProjectWindowHelper().windowClosing(project)
+  }
+}
+
+private fun isTemporaryDisposed(frame: RootPaneContainer?): Boolean {
+  return ClientProperty.isTrue(frame?.rootPane, ScreenUtil.DISPOSE_TEMPORARY)
+}
+
+// static object to ensure that we do not retain a project
+private object WindowCloseListener : WindowAdapter() {
+  override fun windowClosing(e: WindowEvent) {
+    val frame = e.window as? IdeFrameImpl ?: return
+    val frameHelper = frame.frameHelper?.helper as? ProjectFrameHelper ?: return
+    val project = frameHelper.project ?: return
+    if (isTemporaryDisposed(frame) || LaterInvocator.isInModalContext(frame, project)) {
+      return
+    }
+
+    val app = ApplicationManager.getApplication()
+    if (app != null && !app.isDisposed) {
+      frameHelper.windowClosing(project)
+    }
+  }
 }

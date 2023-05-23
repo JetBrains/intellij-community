@@ -59,6 +59,13 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
   }
 
   @Override
+  protected ColoredListCellRenderer<Object> createLeftRenderer(JList list, Object value) {
+    ColoredListCellRenderer<Object> renderer = super.createLeftRenderer(list, value);
+    renderer.setIpad(new Insets(0, 0, 0, renderer.getIpad().right));
+    return renderer;
+  }
+
+  @Override
   public String getElementText(PsiElement element) {
     VirtualFile file = element instanceof PsiFile ? PsiUtilCore.getVirtualFile(element) :
                        element instanceof VirtualFile ? (VirtualFile)element : null;

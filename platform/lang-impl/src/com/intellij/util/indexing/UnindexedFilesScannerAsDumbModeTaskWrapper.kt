@@ -4,6 +4,7 @@ package com.intellij.util.indexing
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbModeTask
+import com.intellij.openapi.project.FilesScanningListener
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -19,14 +20,21 @@ class UnindexedFilesScannerAsDumbModeTaskWrapper(@VisibleForTesting val task: Un
   }
 
   override fun performInDumbMode(indicator: ProgressIndicator) {
+    val publisher = task.myProject.messageBus.syncPublisher<FilesScanningListener>(FilesScanningListener.TOPIC)
     try {
-      val old = runningTask.getAndSet(indicator)
-      LOG.assertTrue(old == null, "Old = $old")
-      task.perform(indicator)
+      publisher.filesScanningStarted()
+      try {
+        val old = runningTask.getAndSet(indicator)
+        LOG.assertTrue(old == null, "Old = $old")
+        task.perform(indicator)
+      }
+      finally {
+        val old = runningTask.getAndSet(null)
+        LOG.assertTrue(old === indicator, "Old = $old")
+      }
     }
     finally {
-      val old = runningTask.getAndSet(null)
-      LOG.assertTrue(old === indicator, "Old = $old")
+      publisher.filesScanningFinished()
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -201,28 +201,33 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       }
     }
 
-    synchronized (myPsiLock) {
-      FileElement treeElement = derefTreeElement();
-      if (treeElement != null) {
+    try {
+      synchronized (myPsiLock) {
+        FileElement treeElement = derefTreeElement();
+        if (treeElement != null) {
+          return treeElement;
+        }
+
+        treeElement = createFileElement(viewProvider.getContents());
+        treeElement.setPsi(this);
+
+        myLoadingAst = true;
+        try {
+          updateTrees(myTrees.withAst(createTreeElementPointer(treeElement)));
+        }
+        finally {
+          myLoadingAst = false;
+        }
+
+        if (LOG.isDebugEnabled() && viewProvider.isPhysical()) {
+          LOG.debug("Loaded text for file " + viewProvider.getVirtualFile().getPresentableUrl());
+        }
+
         return treeElement;
       }
-
-      treeElement = createFileElement(viewProvider.getContents());
-      treeElement.setPsi(this);
-
-      myLoadingAst = true;
-      try {
-        updateTrees(myTrees.withAst(createTreeElementPointer(treeElement)));
-      }
-      finally {
-        myLoadingAst = false;
-      }
-
-      if (LOG.isDebugEnabled() && viewProvider.isPhysical()) {
-        LOG.debug("Loaded text for file " + viewProvider.getVirtualFile().getPresentableUrl());
-      }
-
-      return treeElement;
+    }
+    catch (StubTreeLoader.StubTreeAndIndexUnmatchCoarseException e) {
+      throw e.createCompleteException();
     }
   }
 
@@ -636,44 +641,50 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     FileViewProvider viewProvider = getViewProvider();
     List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
 
-    synchronized (myPsiLock) {
-      if (getTreeElement() != null) return null;
+    try {
+      synchronized (myPsiLock) {
+        if (getTreeElement() != null) return null;
 
-      StubTree derefdOnLock = derefStub();
-      if (derefdOnLock != null) return derefdOnLock;
+        StubTree derefdOnLock = derefStub();
+        if (derefdOnLock != null) return derefdOnLock;
 
-      PsiFileStubImpl<?> baseRoot = (PsiFileStubImpl<?>)((StubTree)tree).getRoot();
-      if (!baseRoot.rootsAreSet()) {
-        LOG.error("Stub roots must be set when stub tree was read or built with StubTreeLoader");
-        return null;
-      }
-      PsiFileStub<?>[] stubRoots = baseRoot.getStubRoots();
-      if (stubRoots.length != roots.size()) {
-        Function<PsiFileStub<?>, String> stubToString = stub -> "{" + stub.getClass().getSimpleName() + " " + stub.getType().getLanguage() + "}";
-        LOG.error("readOrBuilt roots = " + StringUtil.join(stubRoots, stubToString, ", ") + "; " +
-                  StubTreeLoader.getFileViewProviderMismatchDiagnostics(viewProvider));
-        rebuildStub();
-        return null;
-      }
+        PsiFileStubImpl<?> baseRoot = (PsiFileStubImpl<?>)((StubTree)tree).getRoot();
+        if (!baseRoot.rootsAreSet()) {
+          LOG.error("Stub roots must be set when stub tree was read or built with StubTreeLoader");
+          return null;
+        }
+        PsiFileStub<?>[] stubRoots = baseRoot.getStubRoots();
+        if (stubRoots.length != roots.size()) {
+          Function<PsiFileStub<?>, String> stubToString =
+            stub -> "{" + stub.getClass().getSimpleName() + " " + stub.getType().getLanguage() + "}";
+          LOG.error("readOrBuilt roots = " + StringUtil.join(stubRoots, stubToString, ", ") + "; " +
+                    StubTreeLoader.getFileViewProviderMismatchDiagnostics(viewProvider));
+          rebuildStub();
+          return null;
+        }
 
-      StubTree result = null;
-      for (int i = 0; i < roots.size(); i++) {
-        PsiFileImpl eachPsiRoot = (PsiFileImpl)roots.get(i).second;
-        if (eachPsiRoot.derefStub() == null) {
-          StubTree stubTree = eachPsiRoot.setStubTree(stubRoots[i]);
-          if (eachPsiRoot == this) {
-            result = stubTree;
+        StubTree result = null;
+        for (int i = 0; i < roots.size(); i++) {
+          PsiFileImpl eachPsiRoot = (PsiFileImpl)roots.get(i).second;
+          if (eachPsiRoot.derefStub() == null) {
+            StubTree stubTree = eachPsiRoot.setStubTree(stubRoots[i]);
+            if (eachPsiRoot == this) {
+              result = stubTree;
+            }
           }
         }
-      }
 
-      assert result != null : "Current file not in root list: " + roots + ", vp=" + viewProvider;
-      return result;
+        assert result != null : "Current file not in root list: " + roots + ", vp=" + viewProvider;
+        return result;
+      }
+    }
+    catch (StubTreeLoader.StubTreeAndIndexUnmatchCoarseException e) {
+      throw e.createCompleteException();
     }
   }
 
   @NotNull
-  private StubTree setStubTree(PsiFileStub<?> root) {
+  private StubTree setStubTree(PsiFileStub<?> root) throws StubTreeLoader.StubTreeAndIndexUnmatchCoarseException {
     //noinspection unchecked
     ((StubBase<PsiFile>)root).setPsi(this);
     StubTree stubTree = new StubTree(root);
@@ -963,35 +974,40 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       return tree;
     }
     FileElement fileElement = calcTreeElement();
-    synchronized (myPsiLock) {
-      tree = derefStub();
+    try {
+      synchronized (myPsiLock) {
+        tree = derefStub();
 
-      if (tree == null) {
-        assertReadAccessAllowed();
-        IStubFileElementType<?> contentElementType = getElementTypeForStubBuilder();
-        if (contentElementType == null) {
-          VirtualFile vFile = getVirtualFile();
-          String message = "ContentElementType: " + getContentElementType() +
-                           "; file: " + this + (vFile.isValid() ? "" : " ("+vFile+" invalid)") +
-                           "\n\t" + "Boolean.TRUE.equals(getUserData(BUILDING_STUB)) = " + Boolean.TRUE.equals(getUserData(BUILDING_STUB)) +
-                           "\n\t" + "getTreeElement() = " + getTreeElement() +
-                           "\n\t" + "vFile instanceof VirtualFileWithId = " + (vFile instanceof VirtualFileWithId) +
-                           "\n\t" + "StubUpdatingIndex.canHaveStub(vFile) = " + StubTreeLoader.getInstance().canHaveStub(vFile);
-          rebuildStub();
-          throw new AssertionError(message);
+        if (tree == null) {
+          assertReadAccessAllowed();
+          IStubFileElementType<?> contentElementType = getElementTypeForStubBuilder();
+          if (contentElementType == null) {
+            VirtualFile vFile = getVirtualFile();
+            String message = "ContentElementType: " + getContentElementType() +
+                             "; file: " + this + (vFile.isValid() ? "" : " (" + vFile + " invalid)") +
+                             "\n\t" + "Boolean.TRUE.equals(getUserData(BUILDING_STUB)) = " + Boolean.TRUE.equals(getUserData(BUILDING_STUB)) +
+                             "\n\t" + "getTreeElement() = " + getTreeElement() +
+                             "\n\t" + "vFile instanceof VirtualFileWithId = " + (vFile instanceof VirtualFileWithId) +
+                             "\n\t" + "StubUpdatingIndex.canHaveStub(vFile) = " + StubTreeLoader.getInstance().canHaveStub(vFile);
+            rebuildStub();
+            throw new AssertionError(message);
+          }
+
+          StubElement<?> currentStubTree = contentElementType.getBuilder().buildStubTree(this);
+          if (currentStubTree == null) {
+            throw new AssertionError("Stub tree wasn't built for " + contentElementType + "; file: " + this);
+          }
+
+          tree = new StubTree((PsiFileStub<?>)currentStubTree);
+          tree.setDebugInfo("created in calcStubTree");
+          updateTrees(myTrees.withStub(tree, fileElement));
         }
 
-        StubElement<?> currentStubTree = contentElementType.getBuilder().buildStubTree(this);
-        if (currentStubTree == null) {
-          throw new AssertionError("Stub tree wasn't built for " + contentElementType + "; file: " + this);
-        }
-
-        tree = new StubTree((PsiFileStub<?>)currentStubTree);
-        tree.setDebugInfo("created in calcStubTree");
-        updateTrees(myTrees.withStub(tree, fileElement));
+        return tree;
       }
-
-      return tree;
+    }
+    catch (StubTreeLoader.StubTreeAndIndexUnmatchCoarseException e) {
+      throw e.createCompleteException();
     }
   }
 

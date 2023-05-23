@@ -16,13 +16,13 @@ import com.intellij.lang.documentation.ide.actions.registerBackForwardActions
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.impl.DocumentationPage
 import com.intellij.lang.documentation.ide.impl.DocumentationPageContent
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.ide.documentation.DOCUMENTATION_BROWSER
 import com.intellij.ui.FontSizeModel
 import com.intellij.ui.PopupHandler

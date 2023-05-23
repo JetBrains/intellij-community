@@ -5,7 +5,7 @@ import com.intellij.ide.util.PsiClassRenderingInfo
 import com.intellij.ide.util.PsiElementRenderingInfo
 import com.intellij.ide.util.PsiFunctionalExpressionRenderingInfo
 import com.intellij.ide.util.PsiMethodRenderingInfo
-import com.intellij.navigation.TargetPresentation
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFunctionalExpression

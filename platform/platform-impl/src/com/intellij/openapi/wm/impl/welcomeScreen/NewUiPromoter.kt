@@ -9,6 +9,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.BannerStartPagePromoter
 import com.intellij.openapi.wm.StartPagePromoter.Companion.PRIORITY_LEVEL_HIGH
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -25,6 +26,7 @@ class NewUiPromoter : BannerStartPagePromoter() {
   override fun canCreatePromo(isEmptyState: Boolean): Boolean {
     val propertyComponent = PropertiesComponent.getInstance()
     return !ExperimentalUI.isNewUI() &&
+           !PlatformUtils.isAppCode() &&
            !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_USED_PROPERTY) &&
            !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_PROMO_BANNER_DISABLED_PROPERTY)
   }

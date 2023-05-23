@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemInsertHandler
@@ -38,7 +39,8 @@ internal data class WebSymbolCodeCompletionItemImpl(override val name: String,
         completionPrefix.substring(offset) == name)
       return
     val priorityOffset = baselinePriorityValue - WebSymbol.Priority.NORMAL.value
-    LookupElementBuilder.create(symbol?.createPointer() ?: name, name)
+    LookupElementBuilder
+      .create(wrapSymbolForDocumentation(symbol)?.createPointer() ?: name, name)
       .withLookupStrings(aliases)
       .withIcon(icon?.scaleToHeight(16))
       .withTypeText(typeText, true)
@@ -50,31 +52,13 @@ internal data class WebSymbolCodeCompletionItemImpl(override val name: String,
           it.withPresentableText(displayName)
         else it
       }
-      .let {
-        if (completeAfterInsert) {
-          it.withInsertHandler { insertionContext, _ ->
-            insertionContext.setLaterRunnable {
-              CodeCompletionHandlerBase(CompletionType.BASIC)
-                .invokeCompletion(parameters.originalFile.project, parameters.editor)
-            }
-          }
-        }
-        else if (completeAfterChars.isNotEmpty()) {
-          it.withInsertHandler { insertionContext, completionItem ->
-            if (completeAfterChars.contains(insertionContext.completionChar)) {
-              insertionContext.setLaterRunnable {
-                CodeCompletionHandlerBase(CompletionType.BASIC)
-                  .invokeCompletion(parameters.originalFile.project, parameters.editor)
-              }
-            }
-            else {
-              insertHandler?.prepare(insertionContext, completionItem)?.run()
-            }
-          }
-        }
-        else {
-          it.withInsertHandler { insertionContext, completionItem ->
-            insertHandler?.prepare(insertionContext, completionItem)?.run()
+      .withInsertHandler { insertionContext, completionItem ->
+        val invokeCompletion = completeAfterInsert || completeAfterChars.contains(insertionContext.completionChar)
+        insertHandler?.prepare(insertionContext, completionItem, invokeCompletion)?.run()
+        if (invokeCompletion) {
+          insertionContext.setLaterRunnable {
+            CodeCompletionHandlerBase(CompletionType.BASIC)
+              .invokeCompletion(parameters.originalFile.project, parameters.editor)
           }
         }
       }.let {
@@ -92,6 +76,13 @@ internal data class WebSymbolCodeCompletionItemImpl(override val name: String,
         else result).addElement(it)
       }
   }
+
+  private fun wrapSymbolForDocumentation(symbol: WebSymbol?)=
+    when (symbol) {
+      is PsiSourcedWebSymbol -> PsiSourcedCodeCompletionWebSymbolWithDocumentation(symbol)
+      is WebSymbol -> CodeCompletionWebSymbolWithDocumentation(symbol)
+      else -> null
+    }
 
   override fun withName(name: String): WebSymbolCodeCompletionItem =
     copy(name = name)

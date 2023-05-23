@@ -14,10 +14,9 @@ class ThemesListProviderImpl : ThemesListProvider {
     val result = mutableListOf<List<UIManager.LookAndFeelInfo>>()
 
     if (ExperimentalUI.isNewUI()) {
-      result.add(ArrayList(lmi.getLafListForTargetUI(TargetUIType.NEW)))
+      result.add(lmi.getLafListForTargetUI(TargetUIType.NEW).sortedBy { it.name })
     }
-    result.add(ArrayList(lmi.getLafListForTargetUI(TargetUIType.CLASSIC)))
-
+    result.add((lmi.getLafListForTargetUI(TargetUIType.CLASSIC) + lmi.getLafListForTargetUI(TargetUIType.UNSPECIFIED)).sortedBy { it.name })
     return result
   }
 

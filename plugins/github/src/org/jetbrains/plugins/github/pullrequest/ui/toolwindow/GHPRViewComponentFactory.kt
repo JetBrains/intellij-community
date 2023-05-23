@@ -98,7 +98,8 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   private val diffRequestProducer: GHPRDiffRequestChainProducer =
     object : GHPRDiffRequestChainProducer(project,
-                                          dataProvider, dataContext.avatarIconsProvider,
+                                          dataProvider,
+                                          dataContext.htmlImageLoader, dataContext.avatarIconsProvider,
                                           dataContext.repositoryDataService,
                                           dataContext.securityService.ghostUser,
                                           dataContext.securityService.currentUser) {

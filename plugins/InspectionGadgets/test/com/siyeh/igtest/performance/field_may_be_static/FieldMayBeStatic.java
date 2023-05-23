@@ -66,3 +66,8 @@ class Outer {
   }
 
 }
+class ThisExpression {
+  private final boolean test = this instanceof Sub;
+
+  static class Sub extends ThisExpression {}
+}

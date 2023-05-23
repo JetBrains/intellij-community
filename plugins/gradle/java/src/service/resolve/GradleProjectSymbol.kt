@@ -8,9 +8,9 @@ import com.intellij.model.presentation.PresentableSymbol
 import com.intellij.navigation.NavigatableSymbol
 import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.SymbolNavigationService
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus.Internal

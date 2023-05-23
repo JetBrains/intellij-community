@@ -2,8 +2,8 @@
 package com.intellij.platform.backend.documentation
 
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.util.NlsContexts.HintText
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock

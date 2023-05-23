@@ -690,16 +690,35 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaults.put(JBUI.CurrentTheme.Tree.rowHeightKey(), 22)
       // lists
       defaults.put("List.rowHeight", 22)
-      // popup header
+      // popups
       defaults.put(JBUI.CurrentTheme.Popup.headerInsetsKey(), cmInsets(8, 10, 8, 10))
+      defaults.put(JBUI.CurrentTheme.Advertiser.borderInsetsKey(), cmInsets(4, 20, 5, 20))
+      defaults.put(JBUI.CurrentTheme.BigPopup.advertiserBorderInsetsKey(), cmInsets(4, 20, 5, 20))
+      defaults.put(JBUI.CurrentTheme.CompletionPopup.Advertiser.borderInsetsKey(), cmInsets(2, 12, 2, 8))
+      defaults.put(JBUI.CurrentTheme.CompletionPopup.selectionInnerInsetsKey(), cmInsets(0, 2, 0, 2))
+      defaults.put(JBUI.CurrentTheme.FindPopup.scopesPanelInsetsKey(), cmInsets(1, 20))
+      defaults.put(JBUI.CurrentTheme.FindPopup.bottomPanelInsetsKey(), cmInsets(1, 18))
+      defaults.put(JBUI.CurrentTheme.ComplexPopup.headerInsetsKey(), cmInsets(10, 20, 8, 15))
+      defaults.put(JBUI.CurrentTheme.ComplexPopup.textFieldInputInsetsKey(), cmInsets(4, 2))
+      defaults.put(
+        JBUI.CurrentTheme.ComplexPopup.innerBorderInsetsKey(),
+        JBUI.CurrentTheme.ComplexPopup.innerBorderInsets().withTopAndBottom(2)
+      )
+      defaults.put(JBUI.CurrentTheme.TabbedPane.tabHeightKey(), 36)
       // status bar
       defaults.put(JBUI.CurrentTheme.StatusBar.Widget.insetsKey(), cmInsets(4, 8, 3, 8))
       defaults.put(JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsetsKey(), cmInsets(1, 0, 1, 4))
       defaults.put(JBUI.CurrentTheme.StatusBar.fontKey(), Supplier { JBFont.medium() })
       // separate navbar
       defaults.put(JBUI.CurrentTheme.NavBar.itemInsetsKey(), cmInsets(2))
+      // editor search/replace
+      defaults.put(JBUI.CurrentTheme.Editor.SearchField.borderInsetsKey(), cmInsets(3, 10, 3, 8))
+      defaults.put(JBUI.CurrentTheme.Editor.SearchToolbar.borderInsetsKey(), cmInsets(0))
+      defaults.put(JBUI.CurrentTheme.Editor.ReplaceToolbar.borderInsetsKey(), cmInsets(1, 0))
+      defaults.put(JBUI.CurrentTheme.Editor.SearchReplaceModePanel.borderInsetsKey(), cmInsets(3))
       // editor tabs
-      defaults.put("EditorTabs.tabInsets", cmInsets(1, 4, 2, 4))
+      defaults.put(JBUI.CurrentTheme.EditorTabs.tabInsetsKey(), cmInsets(-2, 4, -2, 4))
+      defaults.put(JBUI.CurrentTheme.EditorTabs.verticalTabInsetsKey(), cmInsets(2, 8, 1, 6))
       defaults.put(JBUI.CurrentTheme.EditorTabs.tabActionsInsetKey(), 0)
       defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), Supplier { JBFont.medium() })
       // toolwindows
@@ -720,7 +739,12 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private fun cmInsets(all: Int): Insets = Insets(all, all, all, all)
 
   @Suppress("UseDPIAwareInsets")
+  private fun cmInsets(topAndBottom: Int, leftAndRight: Int): Insets = Insets(topAndBottom, leftAndRight, topAndBottom, leftAndRight)
+
+  @Suppress("UseDPIAwareInsets")
   private fun cmInsets(top: Int, left: Int, bottom: Int, right: Int): Insets = Insets(top, left, bottom, right)
+
+  private fun JBInsets.withTopAndBottom(topAndBottom: Int) = JBInsets(topAndBottom, unscaled.left, topAndBottom, unscaled.right)
 
   private fun updateEditorSchemeIfNecessary(oldLaf: LookAndFeelInfo?, processChangeSynchronously: Boolean) {
     if (oldLaf is TempUIThemeBasedLookAndFeelInfo || myCurrentLaf is TempUIThemeBasedLookAndFeelInfo) {
@@ -1033,8 +1057,15 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     private val lafGroups: ActionGroup
       get() {
         val allLaFs =
-          if (ExperimentalUI.isNewUI()) getLafListForTargetUI(TargetUIType.NEW) + getLafListForTargetUI(TargetUIType.CLASSIC)
-          else getLafListForTargetUI(TargetUIType.CLASSIC)
+          if (ExperimentalUI.isNewUI()) {
+            getLafListForTargetUI(TargetUIType.NEW) +
+            getLafListForTargetUI(TargetUIType.CLASSIC) +
+            getLafListForTargetUI(TargetUIType.UNSPECIFIED)
+          }
+          else{
+            getLafListForTargetUI(TargetUIType.CLASSIC) +
+            getLafListForTargetUI(TargetUIType.UNSPECIFIED)
+          }
 
         val lightLaFs = ArrayList<LookAndFeelInfo>()
         val darkLaFs = ArrayList<LookAndFeelInfo>()

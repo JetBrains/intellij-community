@@ -73,13 +73,13 @@ HtmlFile:test.html
               XmlToken:XML_NAME('p-table')
               XmlToken:XML_TAG_END('>')
               XmlText
-                PsiWhiteSpace('\n                 ')
+                PsiWhiteSpace('\n                   ')
               HtmlTag:tbody
                 XmlToken:XML_START_TAG_START('<')
                 XmlToken:XML_NAME('tbody')
                 XmlToken:XML_TAG_END('>')
                 XmlText
-                  PsiWhiteSpace('\n                   ')
+                  PsiWhiteSpace('\n                     ')
                 HtmlTag:td
                   XmlToken:XML_START_TAG_START('<')
                   XmlToken:XML_NAME('td')
@@ -90,21 +90,21 @@ HtmlFile:test.html
                   XmlToken:XML_NAME('td')
                   XmlToken:XML_TAG_END('>')
                 XmlText
-                  PsiWhiteSpace('\n                   ')
+                  PsiWhiteSpace('\n                     ')
                 HtmlTag:td
                   XmlToken:XML_START_TAG_START('<')
                   XmlToken:XML_NAME('td')
                   XmlToken:XML_TAG_END('>')
                   XmlText
                     XmlToken:XML_DATA_CHARACTERS('b')
-                    PsiWhiteSpace('\n                   ')
+                    PsiWhiteSpace('\n                     ')
                 HtmlTag:td
                   XmlToken:XML_START_TAG_START('<')
                   XmlToken:XML_NAME('td')
                   XmlToken:XML_TAG_END('>')
                   XmlText
                     XmlToken:XML_DATA_CHARACTERS('c')
-                    PsiWhiteSpace('\n                 ')
+                    PsiWhiteSpace('\n                   ')
                 XmlToken:XML_END_TAG_START('</')
                 XmlToken:XML_NAME('tbody')
                 XmlToken:XML_TAG_END('>')

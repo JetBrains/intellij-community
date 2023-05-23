@@ -746,7 +746,9 @@
           <group id="CustomLayoutsGroup" class="com.intellij.ide.actions.CustomLayoutsActionGroup" />
           <separator/>
           <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction"/>
-          <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction"/>
+          <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction">
+            <synonym key="action.StoreDefaultLayout.synonym" />
+          </action>
           <action id="StoreNewLayout" class="com.intellij.ide.actions.StoreNewLayoutAction" />
         </group>
         <separator/>
@@ -852,7 +854,7 @@
         <separator/>
         <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" icon="AllIcons.Actions.Help"/>
         <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction"/>
-        <action id="ActivateMeetNewUIToolWindow" class="com.intellij.ide.ui.experimental.meetNewUi.ActivateMeetNewUIToolWindowAction"/>
+        <action id="MeetNewUIAction" class="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUIAction"/>
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
         <action id="Help.JetBrainsTV" class="com.intellij.ide.actions.JetBrainsTvAction"/>
         <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"/>
@@ -1189,6 +1191,7 @@
         <action id="DropPluginError" internal="true" class="com.intellij.diagnostic.DropPluginErrorAction"/>
         <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"/>
       </group>
+      <action id="SimulateFreeze" class="com.intellij.diagnostic.SimulateFreeze" />
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <group id="Internal.Trust" popup="true">
@@ -1563,6 +1566,7 @@
 
     <group id="ActivateToolWindowActions" searchable="false">
       <action id="ActivateFindToolWindow" class="com.intellij.find.actions.ActivateFindToolWindowAction"/>
+      <action id="ActivateMeetNewUIToolWindow" class="com.intellij.ide.ui.experimental.meetNewUi.ActivateMeetNewUIToolWindowAction"/>
     </group>
 
     <action class="com.intellij.diagnostic.ResetWindowsDefenderNotification" id="ResetWindowsDefenderNotification"/>

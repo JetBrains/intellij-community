@@ -42,9 +42,8 @@ interface PythonConsoleRemoteProcessCreator<T> {
   }
 }
 
-data class RemoteConsoleProcessData(val remoteProcessHandlerBase: ProcessHandler,
-                                    val pydevConsoleCommunication: PydevConsoleCommunication,
-                                    val commandLine: String?,
+data class RemoteConsoleProcessData(val pydevConsoleCommunication: PydevConsoleCommunication,
+                                    val commandLine: String,
                                     val process: Process,
                                     val socketProvider: PyRemoteSocketToLocalHostProvider)
 

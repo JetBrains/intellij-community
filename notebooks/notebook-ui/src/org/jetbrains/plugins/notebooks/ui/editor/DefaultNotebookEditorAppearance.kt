@@ -91,4 +91,6 @@ object DefaultNotebookEditorAppearance: NotebookEditorAppearance, NotebookEditor
     COMMAND_MODE_CELL_LEFT_LINE_WIDTH
 
   override fun shouldShowCellLineNumbers(): Boolean = true
+
+  override fun shouldShowExecutionCounts(): Boolean = true
 }

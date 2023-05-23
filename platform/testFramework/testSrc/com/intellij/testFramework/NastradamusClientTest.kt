@@ -127,7 +127,8 @@ class NastradamusClientTest {
     Assert.assertEquals(BuildInfo(buildId = tcClient.buildId,
                                   aggregatorBuildId = "239754106",
                                   branchName = "nikita.kudrin/nastradamus",
-                                  os = "Linux"),
+                                  os = "Linux",
+                                  buildType = tcClient.buildTypeId),
                         buildInfo)
   }
 
@@ -139,7 +140,8 @@ class NastradamusClientTest {
     Assert.assertEquals(BuildInfo(buildId = tcClient.buildId,
                                   aggregatorBuildId = tcClient.buildId,
                                   branchName = "nikita.kudrin/nastradamus",
-                                  os = "Linux"),
+                                  os = "Linux",
+                                  buildType = tcClient.buildTypeId),
                         buildInfo)
   }
 
@@ -151,19 +153,23 @@ class NastradamusClientTest {
     Assert.assertEquals(BuildInfo(buildId = tcClient.buildId,
                                   aggregatorBuildId = tcClient.buildId,
                                   branchName = "master",
-                                  os = "Linux"),
+                                  os = "Linux",
+                                  buildType = tcClient.buildTypeId),
                         buildInfo)
   }
 
   @Test
   fun sendSortingDataToNostradamus() {
-    val testCases = listOf(TestCaseEntity("org.jetbrains.xx"), TestCaseEntity("com.intellij.bxjs"))
+    val testCases = listOf(TestCaseEntity("org.jetbrains.xx"),
+                           TestCaseEntity("com.intellij.bxjs"),
+                           TestCaseEntity("org.m.d.Clazzz"))
 
     val sortEntity = SortRequestEntity(
       buildInfo = BuildInfo(buildId = tcClient.buildId,
                             aggregatorBuildId = "23232323",
                             branchName = "refs/head/strange_branch",
-                            os = "linux"),
+                            os = "linux",
+                            buildType = "ijplatform_master_WorkspaceModelSmokeSmokeTestsCompositeBuild_66"),
       changes = listOf(ChangeEntity(filePath = "file/path/file.xx",
                                     relativeFile = "relative/path",
                                     beforeRevision = "00230203",
@@ -249,8 +255,17 @@ class NastradamusClientTest {
 
     val request = nastradamusMockServer.takeRequest()
 
-    Assert.assertEquals("Requested path should be equal", "/result/?build_id=100500", request.path)
     Assert.assertEquals("POST request should be sent", "POST", request.method)
-    Assert.assertTrue("Converted test entities must have 2 muted tests", testResultRequestEntity.testRunResults.count { it.isMuted } == 2)
+
+    Assert.assertTrue("""
+      Converted test entities must have 2 muted tests.
+      ${testResultRequestEntity.testRunResults}
+      """.trimIndent(), testResultRequestEntity.testRunResults.count { it.isMuted } == 2)
+
+    Assert.assertTrue("""
+      Bucket id and total bucket number should not be 0.
+      ${testResultRequestEntity.testRunResults}
+      """.trimIndent(),
+                      testResultRequestEntity.testRunResults.all { it.bucketId != 0 && it.bucketsNumber != 0 })
   }
 }

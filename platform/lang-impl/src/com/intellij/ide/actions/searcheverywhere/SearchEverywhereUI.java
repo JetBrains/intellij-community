@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
@@ -299,7 +299,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   @Nullable
   private String getWarning(List<SearchEverywhereContributor<?>> contributors) {
     if (myProject != null && DumbService.isDumb(myProject)) {
-      boolean containsPSIContributors = contributors.stream().anyMatch(c -> c instanceof AbstractGotoSEContributor);
+      boolean containsPSIContributors = ContainerUtil.exists(contributors, c -> c instanceof AbstractGotoSEContributor ||
+                                                                                c instanceof PSIPresentationBgRendererWrapper);
       if (containsPSIContributors) {
         return IdeBundle.message("dumb.mode.results.might.be.incomplete");
       }

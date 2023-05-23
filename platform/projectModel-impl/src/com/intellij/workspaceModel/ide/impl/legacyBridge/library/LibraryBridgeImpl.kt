@@ -97,6 +97,16 @@ class LibraryBridgeImpl(
     return "Library '$name', roots: ${librarySnapshot.libraryEntity.roots}"
   }
 
+  /**
+   * **Please think twice before the usage.** This method was introduced to avoid redundant copying of
+   * the storage. You can use it only if you are sure that you wouldn't roll back your changes, and
+   * they will be applied by the parent modifiable model.
+   */
+  fun getModifiableModelToTargetBuilder(): LibraryEx.ModifiableModelEx {
+    val mutableEntityStorage = targetBuilder ?: error("Unexpected state. Target builder has to be not null")
+    return getModifiableModel(mutableEntityStorage)
+  }
+
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx {
     return getModifiableModel(MutableEntityStorage.from(librarySnapshot.storage))
   }

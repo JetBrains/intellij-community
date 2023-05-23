@@ -25,10 +25,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
-import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
-import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
@@ -2595,7 +2592,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
           else {
             if (caretShift != 0) {
-              if (myMousePressedEvent != null) {
+              if (myMousePressedEvent != null && myGutterComponent.getGutterRenderer(e.getPoint()) == null) {
                 if (mySettings.isDndEnabled()) {
                   if (!myDragStarted) {
                     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -3320,25 +3317,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static void logSchemeChangeIfNeeded(EditorColorsScheme scheme) {
-    if (!LOG.isDebugEnabled()) return;
+    if (!LOG.isDebugEnabled() || !(scheme instanceof EditorColorsSchemeImpl)) return;
     EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
-    if (colorsManager == null) return;
+    boolean isGlobal = colorsManager != null && colorsManager.getGlobalScheme() == scheme;
 
-    EditorColorsScheme globalScheme = colorsManager.getGlobalScheme();
-    boolean isGlobal = (scheme == globalScheme);
-    boolean isBounded = (scheme instanceof MyColorSchemeDelegate);
-
-    while (!isGlobal && !isBounded && scheme instanceof DelegateColorScheme) {
-      scheme = ((DelegateColorScheme)scheme).getDelegate();
-      if (scheme == globalScheme) isGlobal = true;
-      if (scheme instanceof MyColorSchemeDelegate) isBounded = true;
-    }
-
-    if (isGlobal && !isBounded) {
-      LOG.debug("Will set the unbounded global scheme to editor (presentationMode=%b)"
-                  .formatted(UISettings.getInstance().getPresentationMode()));
-      LOG.debug(ExceptionUtil.currentStackTrace());
-    }
+    LOG.debug("Will set mutable scheme to editor (isGlobal=%b, presentationMode=%b)"
+                .formatted(isGlobal, UISettings.getInstance().getPresentationMode()));
+    LOG.debug(ExceptionUtil.currentStackTrace());
   }
 
   @Override
@@ -4616,12 +4601,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setEditorFontSize(float fontSize) {
-      if (fontSize < MIN_FONT_SIZE) {
-        fontSize = MIN_FONT_SIZE;
+      float originalSize = UISettingsUtils.getInstance().scaleFontSize(getDelegate().getEditorFontSize2D());
+
+      float minSize = Math.min(MIN_FONT_SIZE, originalSize);
+      if (fontSize < minSize) {
+        fontSize = minSize;
       }
-      if (fontSize > myMaxFontSize) {
-        fontSize = myMaxFontSize;
+
+      float maxSize = Math.max(myMaxFontSize, originalSize);
+      if (fontSize > maxSize) {
+        fontSize = maxSize;
       }
+
       if (fontSize == myFontSize) {
         return;
       }
@@ -4630,7 +4621,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myFontPreferencesAreSetExplicitly = false;
 
-      if (fontSize == UISettingsUtils.getInstance().scaleFontSize(getDelegate().getEditorFontSize2D())) {
+      if (fontSize == originalSize) {
         myFontSize = FONT_SIZE_TO_IGNORE;
       }
       else {

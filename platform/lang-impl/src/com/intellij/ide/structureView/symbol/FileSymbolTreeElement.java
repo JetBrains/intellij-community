@@ -17,11 +17,9 @@ import java.util.Collections;
  */
 public class FileSymbolTreeElement extends PsiTreeElementBase<PsiFile> {
   private static final Logger LOG = Logger.getInstance(FileSymbolTreeElement.class);
-  private final @NotNull SymbolBasedStructureViewModel myStructureViewModel;
 
-  public FileSymbolTreeElement(@NotNull PsiFile psiFile, @NotNull SymbolBasedStructureViewModel structureViewModel) {
+  public FileSymbolTreeElement(@NotNull PsiFile psiFile) {
     super(psiFile);
-    myStructureViewModel = structureViewModel;
   }
 
   @Override
@@ -36,7 +34,6 @@ public class FileSymbolTreeElement extends PsiTreeElementBase<PsiFile> {
 
   @Override
   public @NotNull Collection<StructureViewTreeElement> getChildrenBase() {
-    var element = getElement();
-    return element == null ? Collections.emptyList() : myStructureViewModel.collectClosestChildrenSymbols(element);
+    return Collections.emptyList();
   }
 }

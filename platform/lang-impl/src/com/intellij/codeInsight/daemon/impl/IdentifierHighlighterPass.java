@@ -110,9 +110,17 @@ public class IdentifierHighlighterPass {
    * Collects code block markers ranges to highlight. E.g. if/elsif/else. Collected ranges will be highlighted the same way as braces
    */
   private void collectCodeBlockMarkerRanges() {
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myFile.getProject());
+
     PsiElement contextElement = myFile.findElementAt(
       TargetElementUtil.adjustOffset(myFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset()));
-    myCodeBlockMarkerRanges.addAll(CodeBlockSupportHandler.findMarkersRanges(contextElement));
+    if (contextElement == null) {
+      return;
+    }
+
+    for (TextRange range : CodeBlockSupportHandler.findMarkersRanges(contextElement)) {
+      myCodeBlockMarkerRanges.add(manager.injectedToHost(contextElement, range));
+    }
   }
 
   /**

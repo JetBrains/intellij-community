@@ -2,11 +2,8 @@
 package com.intellij.diagnostic.telemetry
 
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.util.ShutDownTracker
-import com.intellij.util.SystemProperties
-import com.intellij.openapi.util.io.FileSetLimiter
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.metrics.Meter
@@ -55,9 +52,6 @@ object TraceManager {
     val metricsReportingPath = System.getProperty("idea.diagnostic.opentelemetry.metrics.file",
                                                   "open-telemetry-metrics.csv")
 
-    val connectionMetricsPath = System.getProperty("idea.diagnostic.opentelemetry.metrics.file",
-                                                  "open-telemetry-connection-metrics.csv")
-
     val connectionMetricsFlag = System.getProperty("rdct.connection.metrics.enabled")
 
     val rdctOtlpEndpoint = System.getProperty("rdct.diagnostic.otlp")
@@ -87,11 +81,13 @@ object TraceManager {
 
     val metricExporters = mutableListOf<MetricExporter>()
     if (metricsEnabled) {
-      val exporter = FilteredMetricsExporter(createMetricsExporter(metricsReportingPath)) { metric -> !metric.name.contains("rdct") }
+      val writeMetricsTo = MetricsExporterUtils.generateFileForMetrics(metricsReportingPath)
+      val exporter = FilteredMetricsExporter(CsvMetricsExporter(writeMetricsTo)) { metric -> !metric.name.contains("rdct") }
       metricExporters.add(exporter)
 
       if (connectionMetricsFlag != null) {
-        val connectionExporter = FilteredMetricsExporter(createMetricsExporter(connectionMetricsPath)) { metric ->
+        val connectionExporter = FilteredMetricsExporter(
+          CsvGzippedMetricsExporter(CsvGzippedMetricsExporter.generateFileForConnectionMetrics())) { metric ->
           metric.name.contains("rdct")
         }
         connectionMetricsReader = PeriodicMetricReader.builder(connectionExporter)
@@ -154,21 +150,6 @@ object TraceManager {
 
     val useVerboseSdk = System.getProperty("idea.diagnostic.opentelemetry.verbose")
     verboseMode = useVerboseSdk?.toBooleanStrictOrNull() == true
-  }
-
-  private fun createMetricsExporter(metricsReportingPath: String): MetricExporter {
-    val suffixDateFormat = System.getProperty("idea.diagnostic.opentelemetry.metrics.suffix-date-format", "yyyy-MM-dd-HH-mm-ss")
-    val maxFilesToKeep = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.metrics.max-files-to-keep", 14)
-
-    //if metrics path is relative -> resolve it against IDEA logDir:
-    val pathResolvedAgainstLogDir = PathManager.getLogDir().resolve(metricsReportingPath).toAbsolutePath()
-
-    val writeMetricsTo = FileSetLimiter.inDirectory(pathResolvedAgainstLogDir.parent)
-      .withBaseNameAndDateFormatSuffix(pathResolvedAgainstLogDir.fileName.toString(), suffixDateFormat)
-      .removeOldFilesBut(maxFilesToKeep, FileSetLimiter.DELETE_ASYNC)
-      .createNewFile()
-
-    return CsvMetricsExporter(writeMetricsTo)
   }
 
   /**

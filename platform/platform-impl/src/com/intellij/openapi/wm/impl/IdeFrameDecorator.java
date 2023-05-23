@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isDisableAutoRequestFocus;
 
-public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
+public abstract class IdeFrameDecorator {
   static final String FULL_SCREEN = "ide.frame.full.screen";
 
   protected final IdeFrameImpl frame;
@@ -36,7 +36,6 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
     this.frame = frame;
   }
 
-  @Override
   public abstract boolean isInFullScreen();
 
   public void setStoredFullScreen() {
@@ -211,6 +210,9 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
       }
       return CompletableFuture.completedFuture(state);
     }
+  }
+
+  public void appClosing() {
   }
 
   public static boolean isCustomDecorationAvailable() {

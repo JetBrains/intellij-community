@@ -271,7 +271,7 @@ public class StopAction extends DumbAwareAction {
   @ApiStatus.Internal
   public static @NotNull List<RunContentDescriptor> getActiveStoppableDescriptors(@Nullable Project project) {
     List<RunContentDescriptor> runningProcesses = project != null ?
-                                                  ExecutionManagerImpl.getAllDescriptors(project) :
+                                                  ExecutionManagerImpl.getInstance(project).getRunningDescriptors(d -> true) :
                                                   Collections.emptyList();
     if (runningProcesses.isEmpty()) {
       return Collections.emptyList();

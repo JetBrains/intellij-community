@@ -51,12 +51,11 @@ public abstract class XPathAction extends AnAction {
   }
 
   protected void updateMainMenu(AnActionEvent event) {
-    final boolean b = XPathAppComponent.getInstance().getConfig().SHOW_IN_MAIN_MENU;
-    event.getPresentation().setVisible(b && isEnabled(event, false));
+    event.getPresentation().setVisible(isEnabled(event, false));
   }
 
   protected void updateToolbar(AnActionEvent event) {
-    event.getPresentation().setVisible(XPathAppComponent.getInstance().getConfig().SHOW_IN_TOOLBAR);
+    event.getPresentation().setVisible(true);
   }
 
   protected boolean isEnabled(AnActionEvent event, boolean checkAvailable) {

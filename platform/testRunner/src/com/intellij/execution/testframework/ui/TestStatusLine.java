@@ -62,6 +62,7 @@ public class TestStatusLine extends NonOpaquePanel {
                                 final long endTime) {
     UIUtil.invokeLaterIfNeeded(() -> {
       doFormatTestMessage(testsTotal, finishedTestsCount, failuresCount, ignoredTestsCount, duration, endTime);
+      myState.firePropertyChange("state", 0, 1);
       updateWarningVisibility();
     });
   }
@@ -141,6 +142,7 @@ public class TestStatusLine extends NonOpaquePanel {
       myProgressPanel.remove(myProgressBar);
       if (toolbarIconSupplier != null) {
         myState.setIcon(toolbarIconSupplier.get());
+        myState.firePropertyChange("state", 0, 1);
       }
     });
   }
@@ -173,6 +175,7 @@ public class TestStatusLine extends NonOpaquePanel {
     UIUtil.invokeLaterIfNeeded(() -> {
       myState.clear();
       myState.append(progressStatus_text);
+      myState.firePropertyChange("state", 0, 1);
       myWarning.setVisible(!progressStatus_text.isEmpty());
     });
   }

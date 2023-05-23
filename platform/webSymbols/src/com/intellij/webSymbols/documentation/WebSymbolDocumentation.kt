@@ -3,6 +3,7 @@ package com.intellij.webSymbols.documentation
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
+import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationImpl
 import org.jetbrains.annotations.ApiStatus
@@ -120,7 +121,7 @@ interface WebSymbolDocumentation {
 
   companion object {
 
-    fun create(symbol: WebSymbol): WebSymbolDocumentation =
+    fun create(symbol: WebSymbol, location: PsiElement?): WebSymbolDocumentation =
       WebSymbolDocumentationImpl(symbol.name, Strings.escapeXmlEntities(symbol.name), symbol.description, symbol.docUrl, symbol.deprecated,
                                  symbol.experimental,
                                  symbol.required ?: false,
@@ -133,7 +134,7 @@ interface WebSymbolDocumentation {
                                  symbol.icon, symbol.descriptionSections, null)
         .let { doc: WebSymbolDocumentation ->
           WebSymbolDocumentationCustomizer.EP_NAME.extensionList.fold(doc) { documentation, customizer ->
-            customizer.customize(symbol, documentation)
+            customizer.customize(symbol, location, documentation)
           }
         }
 

@@ -1,11 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.details.RequestState
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindTextHtml
 import com.intellij.collaboration.ui.util.bindVisibility
@@ -26,7 +28,6 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -34,7 +35,7 @@ import javax.swing.JPanel
 internal object GHPRTitleComponent {
 
   fun create(model: SingleValueModel<GHPullRequestShort>): JComponent {
-    val titlePane = HtmlEditorPane().apply {
+    val titlePane = SimpleHtmlPane().apply {
       font = JBFont.h2().asBold()
     }
     model.addAndInvokeListener {
@@ -44,13 +45,13 @@ internal object GHPRTitleComponent {
         url = model.value.url,
         tooltip = GithubBundle.message("open.on.github.action")
       )
-      titlePane.setBody(title)
+      titlePane.setHtmlBody(title)
     }
     return titlePane
   }
 
   fun create(scope: CoroutineScope, reviewDetailsVm: GHPRDetailsViewModel): JComponent {
-    val titleLabel = HtmlEditorPane().apply {
+    val titleLabel = SimpleHtmlPane().apply {
       font = JBFont.h2().asBold()
       bindTextHtml(scope, reviewDetailsVm.titleState.map { title ->
         CodeReviewTitleUIUtil.createTitleText(

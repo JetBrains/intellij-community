@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
+import com.intellij.usageView.UsageInfo
 import com.intellij.usages.UsageSearchPresentation
 import com.intellij.usages.UsageSearcher
 
@@ -69,8 +70,12 @@ internal data class ShowTargetUsagesActionHandler(
   override fun getTargetLanguage(): Language? = null
 
   override fun getTargetClass(): Class<*> = target::class.java
-  override fun getEventData(): List<EventPair<*>> {
-    return emptyList();
+  override fun getEventData(): MutableList<EventPair<*>> {
+    return mutableListOf()
+  }
+
+  override fun buildFinishEventData(selectedUsageInfo: UsageInfo?): MutableList<EventPair<*>> {
+    return mutableListOf()
   }
 
   companion object {

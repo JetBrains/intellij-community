@@ -54,7 +54,7 @@ class NotebookGutterLineMarkerManager {
         it.lineMarkerRenderer = NotebookGutterLineMarkerRenderer(interval)
       }
 
-      if (editor.settings.isLineNumbersShown && interval.type == NotebookCellLines.CellType.CODE && editor.notebookAppearance.shouldShowCellLineNumbers() && editor.editorKind != EditorKind.DIFF) {
+      if (interval.type == NotebookCellLines.CellType.CODE && editor.notebookAppearance.shouldShowCellLineNumbers() && editor.editorKind != EditorKind.DIFF) {
         editor.markupModel.addRangeHighlighter(
           null,
           startOffset,

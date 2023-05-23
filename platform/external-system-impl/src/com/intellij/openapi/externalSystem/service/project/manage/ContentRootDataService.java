@@ -33,10 +33,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource;
 import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
@@ -202,7 +202,6 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     }
     if (modelsProvider instanceof IdeModifiableModelsProviderImpl impl) {
       MutableEntityStorage diff = impl.getActualStorageBuilder();
-      List<VirtualFileUrl> toRemove = new ArrayList<>();
 
       VirtualFileUrl vfu = project.getService(VirtualFileUrlManager.class).fromUrl(contentEntry.getUrl());
       Pair<WorkspaceEntity, String> result = ContainerUtil.find(diff.getVirtualFileUrlIndex().findEntitiesByUrl(vfu).iterator(), pair -> {
@@ -212,13 +211,9 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
       if (result != null && result.component1() instanceof ContentRootEntity contentRootEntity) {
         for (ExcludeUrlEntity excludeEntity : contentRootEntity.getExcludedUrls()) {
           if (isImportedEntity(owner, excludeEntity)) {
-            toRemove.add(excludeEntity.getUrl());
+            diff.removeEntity(excludeEntity);
           }
         }
-      }
-
-      for (VirtualFileUrl url : toRemove) {
-        contentEntry.removeExcludeFolder(url.getUrl());
       }
     }
   }

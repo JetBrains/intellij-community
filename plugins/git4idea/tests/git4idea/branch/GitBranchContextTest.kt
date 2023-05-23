@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.BranchChangeListener
 import com.intellij.tasks.context.WorkingContextManager
 import com.intellij.tasks.context.WorkingContextProvider
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.util.ui.UIUtil
 import git4idea.test.GitSingleRepoTest
 import junit.framework.TestCase
 import org.jdom.Element
@@ -33,10 +34,12 @@ class GitBranchContextTest: GitSingleRepoTest() {
 
     val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler(project))
     worker.checkoutNewBranch("foo", listOf(repo))
+    UIUtil.pump()
     TestCase.assertEquals("foo", toBranch)
     TestCase.assertEquals("master", fromBranch)
 
     worker.checkout("master", false, listOf(repo))
+    UIUtil.pump()
     TestCase.assertEquals("master", toBranch)
     TestCase.assertEquals("foo", fromBranch)
   }
@@ -65,6 +68,7 @@ class GitBranchContextTest: GitSingleRepoTest() {
     worker.checkoutNewBranch("foo", listOf(repo))
     value = "foo"
     worker.checkout("master", false, listOf(repo))
+    UIUtil.pump()
     TestCase.assertEquals("master", value)
   }
 }

@@ -3,8 +3,8 @@ package com.intellij.refactoring.rename.impl
 
 import com.intellij.model.Pointer
 import com.intellij.navigation.ItemPresentation
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.usages.UsageTarget

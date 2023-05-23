@@ -13,9 +13,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
@@ -535,7 +533,7 @@ open class EditorsSplitters internal constructor(
     get() = insideChange > 0
 
   internal fun updateFileBackgroundColorAsync(file: VirtualFile) {
-    coroutineScope.launch {
+    coroutineScope.launch(ModalityState.any().asContextElement()) {
       updateFileBackgroundColor(file)
     }
   }

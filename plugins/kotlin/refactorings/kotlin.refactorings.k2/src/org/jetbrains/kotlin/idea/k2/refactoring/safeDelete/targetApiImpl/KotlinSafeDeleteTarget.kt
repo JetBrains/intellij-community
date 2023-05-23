@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.targetApiImpl
 
 import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPresentation
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.refactoring.safeDelete.api.PsiSafeDeleteDeclarationUsage
 import com.intellij.refactoring.safeDelete.api.SafeDeleteTarget
 import com.intellij.refactoring.safeDelete.impl.DefaultPsiSafeDeleteDeclarationUsage

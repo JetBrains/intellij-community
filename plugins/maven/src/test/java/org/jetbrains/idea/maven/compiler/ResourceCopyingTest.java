@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.idea.Bombed;
 import com.intellij.maven.testFramework.MavenCompilingTestCase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -27,10 +26,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Calendar;
 
 public class ResourceCopyingTest extends MavenCompilingTestCase {
 
@@ -614,8 +613,6 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     });
   }
 
-  @Bombed(year = 2021, month = Calendar.JULY, day = 16, user = "gmyasoedov",
-    description = "addResourceFilePattern(\"!*.xxx\") not worked https://youtrack.jetbrains.com/issue/IDEA-273879")
   @Test
   public void testCopingNonMavenResources() throws Exception {
     if (ignore()) return;
@@ -655,6 +652,67 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertNotCopied("output/JavaClass.java");
     assertCopied("output/xxx.xxx");
     assertNotCopied("output/c.txt");
+  }
+
+  @Test
+  public void testCopyTestResourceWhenBuildingTestModule() throws Exception {
+    Assume.assumeTrue(isWorkspaceImport());
+
+    createProjectSubFile("src/test/resources/file.properties");
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <maven.compiler.release>8</maven.compiler.release>
+                      <maven.compiler.testRelease>11</maven.compiler.testRelease>
+                    </properties>
+                     <build>
+                      <plugins>
+                        <plugin>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                        </plugin>
+                      </plugins>
+                    </build>"""
+    );
+
+    assertModules("project", "project.main", "project.test");
+    compileModules("project.test");
+    assertCopied("target/test-classes/file.properties");
+  }
+
+  @Test
+  public void testAnnotationPathsInCompoundModules() throws Exception {
+    Assume.assumeTrue(isWorkspaceImport());
+
+    createProjectSubFile("src/main/java/Main.java", "class Main {}");
+    createProjectSubFile("src/test/java/Test.java", "class Test {}");
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <maven.compiler.release>8</maven.compiler.release>
+                      <maven.compiler.testRelease>11</maven.compiler.testRelease>
+                    </properties>
+                     <build>
+                      <plugins>
+                        <plugin>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                        </plugin>
+                      </plugins>
+                    </build>"""
+    );
+
+    assertModules("project", "project.main", "project.test");
+    compileModules("project", "project.main", "project.test");
+
+    assertCopied("target/generated-sources/annotations");
+    assertCopied("target/generated-test-sources/test-annotations");
   }
 
 }

@@ -2,8 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -22,11 +25,13 @@ import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createDescriptionComponent
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 
-class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHAvatarIconsProvider, private val ghostUser: GHUser)
-  : GHPRTimelineEventComponentFactory<GHPRTimelineEvent> {
+class GHPRTimelineEventComponentFactoryImpl(
+  private val htmlImageLoader: AsyncHtmlImageLoader,
+  private val avatarIconsProvider: GHAvatarIconsProvider,
+  private val ghostUser: GHUser
+) : GHPRTimelineEventComponentFactory<GHPRTimelineEvent> {
 
   private val simpleEventDelegate = SimpleEventComponentFactory()
   private val stateEventDelegate = StateEventComponentFactory()
@@ -59,7 +64,9 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
     }
 
     protected fun eventItem(event: GHPRTimelineEvent, titleText: @Nls String, detailsText: @Nls String? = null): JComponent {
-      val titlePane = HtmlEditorPane(titleText)
+      val titlePane = SimpleHtmlPane(customImageLoader = htmlImageLoader).apply {
+        setHtmlBody(titleText)
+      }
       val content = if (detailsText == null) {
         titlePane
       }

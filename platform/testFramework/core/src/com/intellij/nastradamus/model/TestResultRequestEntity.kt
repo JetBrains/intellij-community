@@ -4,6 +4,9 @@ package com.intellij.nastradamus.model
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class TestResultRequestEntity(
+  @JsonProperty("build_info")
+  val buildInfo: BuildInfo,
+
   @JsonProperty("test_run_results")
   val testRunResults: List<TestResultEntity>
 )

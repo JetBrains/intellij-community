@@ -96,7 +96,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
   @ApiStatus.Internal
   @RequiresBackgroundThread
   public static @NotNull Path packLogs(@Nullable Project project, @NotNull Consumer<? super Compressor> additionalFiles) throws IOException {
-    PerformanceWatcher.getInstance().dumpThreads("", false);
+    PerformanceWatcher.getInstance().dumpThreads("", false, false);
 
     String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.ENGLISH);
     @SuppressWarnings("SpellCheckingInspection") String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());

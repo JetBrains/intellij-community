@@ -25,8 +25,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.dependencyDeclarationCallback
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
@@ -122,7 +122,7 @@ internal class GradleModuleTransformer : ModuleTransformer {
             isKotlinDsl(project, buildVirtualFile) -> BuildSystemType.GRADLE_KOTLIN
             else -> BuildSystemType.GRADLE_GROOVY
         }
-        val scopes= GradleExtensionsSettings.getInstance(project)
+        val scopes = GradleExtensionsSettings.getInstance(project)
             .getExtensionsFor(nativeModule)
             ?.configurations
             ?.keys

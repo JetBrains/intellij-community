@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.BitUtil
@@ -42,39 +41,9 @@ internal class CloseTab(component: JComponent,
 
   override fun update(e: AnActionEvent) {
     val pinned = isPinned()
-
-    if (ExperimentalUI.isNewUI()) {
-      val showModifiedIcon = isModified()
-      e.presentation.putClientProperty(JBEditorTabs.MARK_MODIFIED_KEY, showModifiedIcon)
-      val icon = when {
-        showModifiedIcon -> {
-          if (pinned) {
-            val pinIcon = AllIcons.Actions.PinTab
-            BadgeIcon(pinIcon, JBUI.CurrentTheme.IconBadge.INFORMATION, object : BadgeDotProvider() {
-              override fun getX(): Double = 0.7
-
-              override fun getY(): Double = 0.2
-
-              override fun getRadius(): Double = 3.0 / pinIcon.iconWidth
-            })
-          }
-          else {
-            DotIcon(JBUI.CurrentTheme.IconBadge.INFORMATION)
-          }
-        }
-        pinned -> AllIcons.Actions.PinTab
-        else -> CLOSE_ICON
-      }
-
-      e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned || showModifiedIcon
-      e.presentation.icon = icon
-      e.presentation.hoveredIcon = if (!pinned && UISettings.getInstance().showCloseButton) CLOSE_HOVERED_ICON else icon
-    }
-    else {
-      e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned
-      e.presentation.icon = if (!pinned) CLOSE_ICON else AllIcons.Actions.PinTab
-      e.presentation.hoveredIcon = if (!pinned) CLOSE_HOVERED_ICON else AllIcons.Actions.PinTab
-    }
+    e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned || (ExperimentalUI.isNewUI() && isModified())
+    e.presentation.icon = getIcon(isHovered = false)
+    e.presentation.hoveredIcon = getIcon(isHovered = true)
 
     if (pinned && !Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean() || isCloseActionRestricted()) {
       e.presentation.text = ""
@@ -133,6 +102,44 @@ internal class CloseTab(component: JComponent,
         popup.cancel()
         if (it.canShowMorePopup()) {
           it.showMorePopup()
+        }
+      }
+    }
+  }
+
+  fun getIcon(isHovered: Boolean): Icon {
+    val pinned = isPinned()
+    return if (!ExperimentalUI.isNewUI()) {
+      when {
+        pinned -> AllIcons.Actions.PinTab
+        isHovered -> CLOSE_HOVERED_ICON
+        else -> CLOSE_ICON
+      }
+    }
+    else {
+      if (isHovered && !pinned && UISettings.getInstance().showCloseButton) {
+        CLOSE_HOVERED_ICON
+      }
+      else {
+        val showModifiedIcon = isModified()
+        when {
+          showModifiedIcon -> {
+            if (pinned) {
+              val pinIcon = AllIcons.Actions.PinTab
+              BadgeIcon(pinIcon, JBUI.CurrentTheme.IconBadge.INFORMATION, object : BadgeDotProvider() {
+                override fun getX(): Double = 0.7
+
+                override fun getY(): Double = 0.2
+
+                override fun getRadius(): Double = 3.0 / pinIcon.iconWidth
+              })
+            }
+            else {
+              DotIcon(JBUI.CurrentTheme.IconBadge.INFORMATION)
+            }
+          }
+          pinned -> AllIcons.Actions.PinTab
+          else -> CLOSE_ICON
         }
       }
     }

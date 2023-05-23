@@ -1,12 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
+import com.intellij.ide.projectView.impl.PackageViewPane;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
+import com.intellij.ide.projectView.impl.nodes.PackageViewProjectNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -30,11 +36,22 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   protected Queryable.PrintInfo myPrintInfo;
 
+  protected @NotNull String packageViewPaneId = ProjectViewPane.ID;
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    myStructure = new TestProjectTreeStructure(myProject, getTestRootDisposable());
+    myStructure = new TestProjectTreeStructure(myProject, getTestRootDisposable()) {
+      @Override
+      protected AbstractTreeNode<?> createRoot(@NotNull Project project, @NotNull ViewSettings settings) {
+        return switch (packageViewPaneId) {
+          case ProjectViewPane.ID -> super.createRoot(project, settings);
+          case PackageViewPane.ID -> new PackageViewProjectNode(project, settings);
+          default -> throw new IllegalStateException("Unexpected value: " + packageViewPaneId);
+        };
+      }
+    };
   }
 
   @Override

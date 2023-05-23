@@ -2,9 +2,33 @@
 <problems>
   <problem>
     <file>Test.kt</file>
-    <line>23</line>
+    <line>11</line>
     <problem_class>Actual method parameter is the same constant</problem_class>
     <description>Actual value of parameter 'args' is always 'foo'</description>
+  </problem>
+  <problem>
+    <file>Test.kt</file>
+    <line>20</line>
+    <problem_class>Actual method parameter is the same constant</problem_class>
+    <description>Actual value of parameter 'args' is always ['foo', 'bar']</description>
+  </problem>
+  <problem>
+    <file>Test.kt</file>
+    <line>29</line>
+    <problem_class>Actual method parameter is the same constant</problem_class>
+    <description>Actual value of parameter 'args' is always ['foo', 'bar']</description>
+  </problem>
+  <problem>
+    <file>Test.kt</file>
+    <line>40</line>
+    <problem_class>Actual method parameter is the same constant</problem_class>
+    <description>Actual value of parameter 'args' is always ['bar', 'foobar']</description>
+  </problem>
+  <problem>
+    <file>Test.kt</file>
+    <line>50</line>
+    <problem_class>Actual method parameter is the same constant</problem_class>
+    <description>Actual value of parameter 'args' is always ['foo', 'bar']</description>
   </problem>
 </problems>
 

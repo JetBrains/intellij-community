@@ -585,7 +585,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     boolean showNavBar = ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBarInBottom();
-    if (myShowNavBar == showNavBar && showNavBar) {
+    if (myShowNavBar == showNavBar) {
       return;
     }
     myShowNavBar = showNavBar;

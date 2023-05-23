@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.collaboration.async.disposingScope
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.openapi.Disposable
@@ -23,6 +24,7 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHRepositoryOwnerName
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
@@ -33,6 +35,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 import java.awt.Image
+import java.awt.Toolkit
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
@@ -74,6 +77,7 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
     }
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   @Throws(IOException::class)
   private suspend fun loadContext(contextScope: CoroutineScope,
                                   account: GithubAccount,
@@ -149,19 +153,28 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
                                                         repositoryInfo.id, repositoryInfo.defaultBranch, repositoryInfo.isFork)
 
     val iconsScope = contextScope.childScope(Dispatchers.Main)
-    val avatarIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, ImageLoader(requestExecutor)))
+    val imageLoader = AsyncHtmlImageLoader { _, src ->
+      withContext(contextScope.coroutineContext + IMAGES_DISPATCHER) {
+        coroutineToIndicator {
+          val bytes = requestExecutor.execute(ProgressManager.getInstance().progressIndicator, GithubApiRequests.getBytes(src))
+          Toolkit.getDefaultToolkit().createImage(bytes)
+        }
+      }
+    }
+    val avatarIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, AvatarLoader(requestExecutor)))
 
     val filesManager = GHPRFilesManagerImpl(project, parsedRepositoryCoordinates)
 
     val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
     return GHPRDataContext(contextScope, listLoader, listUpdatesChecker, dataProviderRepository,
-                           securityService, repoDataService, creationService, detailsService, avatarIconsProvider, filesManager,
+                           securityService, repoDataService, creationService, detailsService, imageLoader, avatarIconsProvider,
+                           filesManager,
                            GHPRDiffRequestModelImpl()).also {
       Disposer.register(this, changesService)
     }
   }
 
-  private class ImageLoader(private val requestExecutor: GithubApiRequestExecutor)
+  private class AvatarLoader(private val requestExecutor: GithubApiRequestExecutor)
     : AsyncImageIconsProvider.AsyncImageLoader<String> {
 
     private val avatarsLoader = CachingGHUserAvatarLoader.getInstance()
@@ -183,6 +196,9 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
 
   companion object {
     private val LOG = logger<GHPRDataContextRepository>()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val IMAGES_DISPATCHER: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(4)
 
     fun getInstance(project: Project) = project.service<GHPRDataContextRepository>()
 

@@ -60,7 +60,7 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
 
     return WebSymbolsQueryExecutorImpl(scopeList,
                                        createNamesProvider(project, originalLocation, context),
-                                       WebSymbolsQueryResultsCustomizerFactory.getScope(location, context),
+                                       WebSymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, context),
                                        context,
                                        allowResolve)
   }

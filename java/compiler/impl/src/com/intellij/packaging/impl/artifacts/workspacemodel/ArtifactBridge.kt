@@ -210,6 +210,14 @@ open class ArtifactBridge(
     }
     val oldRootElement = entity.rootElement!!
     if (oldRootElement != rootEntity) {
+      // As we replace old root element with the new one, we should kick builder from old root element
+      if (originalArtifact != null) {
+        diff.elements.getDataByEntity(oldRootElement)?.let { oldRootBridge ->
+          oldRootBridge.forThisAndFullTree {
+            it.updateStorage(originalArtifact.entityStorage)
+          }
+        }
+      }
       diff.modifyEntity(entity) {
         this.rootElement = rootEntity
       }

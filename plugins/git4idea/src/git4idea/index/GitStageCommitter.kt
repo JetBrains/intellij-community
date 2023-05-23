@@ -13,10 +13,7 @@ import com.intellij.vcs.commit.commitWithoutChangesRoots
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitUtil
 import git4idea.GitUtil.getRepositoryForFile
-import git4idea.checkin.GitCommitOptions
-import git4idea.checkin.GitPushAfterCommitDialog
-import git4idea.checkin.GitRepositoryCommitter
-import git4idea.checkin.isPushAfterCommit
+import git4idea.checkin.*
 import git4idea.repo.GitRepository
 import git4idea.repo.isSubmodule
 import git4idea.util.GitFileUtils.addPaths
@@ -83,5 +80,6 @@ internal class GitStageCommitter(
   private fun commitRepository(repository: GitRepository) {
     val committer = GitRepositoryCommitter(repository, GitCommitOptions(commitContext))
     committer.commitStaged(commitMessage)
+    GitPostCommitChangeConverter.markRepositoryCommit(commitContext, repository)
   }
 }

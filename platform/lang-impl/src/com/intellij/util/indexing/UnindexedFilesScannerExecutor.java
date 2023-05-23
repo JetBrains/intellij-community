@@ -29,8 +29,8 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
   }
 
   private static class TaskQueueListener implements ExecutorStateListener {
-    private final Project project;
     private final FilesScanningListener projectLevelEventPublisher;
+    private final Project project;
 
     private TaskQueueListener(Project project) {
       this.project = project;
@@ -45,11 +45,9 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
 
     @Override
     public void afterLastTask() {
-      UnindexedFilesScannerExecutor executor = project.getService(UnindexedFilesScannerExecutor.class);
-      if (!executor.getTaskQueue().isEmpty()) {
-        // process the tasks which were submitted after background thread finished polling, but before is set "completed" flag
-        executor.startBackgroundProcess();
-      }
+      // we are on background thread, so project may become disposed immediately after the check. Anyway this reduces probability
+      // of "Accessing disposed message bus". Proper fix is too heavy for bugfix release, and it is implemented only in 232 (IDEA-315703).
+      if (project.isDisposed()) return;
       projectLevelEventPublisher.filesScanningFinished();
     }
   }

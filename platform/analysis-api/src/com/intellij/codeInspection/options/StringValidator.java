@@ -16,7 +16,7 @@ public interface StringValidator {
   @NotNull String validatorId();
 
   /**
-   * Could be run in DumbMode, could be run in EDT, should be thread-safe
+   * Could be run in DumbMode, could be run in EDT or with a default project, should be thread-safe
    * @param project project in which context the string must be checked; null if unknown/non-applicable
    * @param string string to check
    * @return an error message describing why the string is not valid; null if it's valid

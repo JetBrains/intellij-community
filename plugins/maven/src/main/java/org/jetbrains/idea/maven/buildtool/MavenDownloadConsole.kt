@@ -37,10 +37,9 @@ class MavenDownloadConsole(private val myProject: Project) {
     myProgressListener = progressListener
     shownIssues.clear()
     myTaskId = createTaskId()
-    val descriptor = DefaultBuildDescriptor(myTaskId, DownloadBundle.message("maven.download.title"), myProject.basePath!!,
-                                            System.currentTimeMillis())
-    descriptor.isActivateToolWindowWhenFailed = true
-    descriptor.isActivateToolWindowWhenAdded = true
+    val descriptor = DefaultBuildDescriptor(myTaskId, DownloadBundle.message("maven.download.title"), myProject.basePath!!, System.currentTimeMillis())
+    descriptor.isActivateToolWindowWhenFailed = false
+    descriptor.isActivateToolWindowWhenAdded = false
     var message = ""
     message = if (downloadSources) {
       if (downloadDocs) {

@@ -77,7 +77,6 @@ internal class ModuleSdkDataService : AbstractProjectDataService<ModuleSdkData, 
     val projectJdkTable = ProjectJdkTable.getInstance()
     val sdk = moduleSdkName?.let { projectJdkTable.findJdk(moduleSdkName) }
     val modifiableRootModel = modelsProvider.getModifiableRootModel(module)
-    if (modifiableRootModel.sdk != null) return
     val projectRootManager = ProjectRootManager.getInstance(module.project)
     val projectSdk = projectRootManager.projectSdk
     when {

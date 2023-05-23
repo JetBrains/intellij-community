@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.experimental.ExperimentalUiCollector;
 import com.intellij.idea.AppMode;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -88,6 +89,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
         if (ENABLE_NEW_UI_REQUEST.equals(jsRequest)) {
           if (!ExperimentalUI.isNewUI()) {
             ApplicationManager.getApplication().invokeLater(() -> {
+              ExperimentalUiCollector.logSwitchUi(ExperimentalUiCollector.SwitchSource.WHATS_NEW_PAGE, true);
               ExperimentalUI.setNewUI(true);
               UISettings.getInstance().fireUISettingsChanged();
             });

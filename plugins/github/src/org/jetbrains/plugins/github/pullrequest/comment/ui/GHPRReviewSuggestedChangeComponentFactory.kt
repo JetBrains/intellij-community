@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.CommonBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
+import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.runWriteAction
@@ -34,7 +35,6 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeApplier
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -75,7 +75,7 @@ class GHPRReviewSuggestedChangeComponentFactory(
     }
 
     add(topPanel, BorderLayout.NORTH)
-    add(HtmlEditorPane(content), BorderLayout.CENTER)
+    add(SimpleHtmlPane(content), BorderLayout.CENTER)
 
     suggestedChangeHelper.isCorrectBranch.addAndInvokeListener { updateUI(optionButton, it, thread.isOutdated, thread.isResolved) }
   }

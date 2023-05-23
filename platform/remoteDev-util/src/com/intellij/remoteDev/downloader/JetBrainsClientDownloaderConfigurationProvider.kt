@@ -98,7 +98,7 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override var clientDownloadUrl: URI = URI("https://download.jetbrains.com/idea/code-with-me/")
   override var jreDownloadUrl: URI = URI("https://download.jetbrains.com/idea/jbr/")
-  override var clientCachesDir: Path = Files.createTempDirectory("")
+  override var clientCachesDir: Path = Files.createTempDirectory("jbc-test-storage")
   override var clientVersionManagementEnabled: Boolean = true
   override var verifySignature: Boolean = true
 

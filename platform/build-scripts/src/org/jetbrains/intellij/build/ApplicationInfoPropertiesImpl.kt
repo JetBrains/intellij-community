@@ -143,8 +143,8 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
       "buildContext property is not initialized, please use different constructor"
     }
     val appInfoXmlPath = findApplicationInfoInSources(context.project, context.productProperties)
-    val snapshotBuildNumber = readSnapshotBuildNumber(context.paths.communityHomeDirRoot)
-    check("$majorVersion$minorVersion".removePrefix("20") == snapshotBuildNumber.takeWhile { it != '.' }) {
+    val snapshotBuildNumber = readSnapshotBuildNumber(context.paths.communityHomeDirRoot).takeWhile { it != '.' }
+    check("$majorVersion$minorVersion".removePrefix("20").take(snapshotBuildNumber.count()) == snapshotBuildNumber) {
       "'major=$majorVersion' and 'minor=$minorVersion' attributes of '$appInfoXmlPath' don't match snapshot build number '$snapshotBuildNumber'"
     }
     val artifactsServer = context.proprietaryBuildTools.artifactsServer

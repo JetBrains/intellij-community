@@ -131,7 +131,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
         int executorSize = service.getBackendPoolExecutorSize();
         if (executorSize > ourReasonableThreadPoolSize.asInteger() + AVAILABLE_PROCESSORS) {
           String message = "Too many threads: " + executorSize + " created in the global Application pool. (" + ourReasonableThreadPoolSize+", available processors: "+AVAILABLE_PROCESSORS+")";
-          File file = doDumpThreads("newPooledThread/", true, message);
+          File file = doDumpThreads("newPooledThread/", true, message, true);
           LOG.info(message + (file == null ? "" : "; thread dump is saved to '" + file.getPath() + "'"));
         }
       });
@@ -370,16 +370,16 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
   }
 
   @Override
-  public @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName) {
-    return doDumpThreads(pathPrefix, appendMillisecondsToFileName, "");
+  public @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName, boolean stripDump) {
+    return doDumpThreads(pathPrefix, appendMillisecondsToFileName, "", stripDump);
   }
 
   @Nullable
-  private File doDumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName, @NotNull String contentsPrefix) {
+  private File doDumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName, @NotNull String contentsPrefix, boolean stripDump) {
     return myThread == null
            ? null
            : dumpThreads(pathPrefix, appendMillisecondsToFileName,
-                         contentsPrefix + ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos()).getRawDump());
+                         contentsPrefix + ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), stripDump).getRawDump());
   }
 
   private @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName, @NotNull String rawDump) {

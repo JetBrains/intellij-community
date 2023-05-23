@@ -551,7 +551,10 @@ private class EditorTabs(
       Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
     }
 
-    setUiDecorator { UiDecoration(null, JBUI.CurrentTheme.EditorTabs.tabInsets()) }
+    setUiDecorator {
+      val insets = if (isHorizontalTabs) JBUI.CurrentTheme.EditorTabs.tabInsets() else JBUI.CurrentTheme.EditorTabs.verticalTabInsets()
+      UiDecoration(null, insets)
+    }
     val source = ActionManager.getInstance().getAction("EditorTabsEntryPoint")
     source.templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
     entryPointActionGroup = DefaultActionGroup(source)
@@ -608,12 +611,7 @@ private class EditorTabs(
     override fun getPreferredHeight(): Int {
       val insets = insets
       val layoutInsets = layoutInsets
-      insets.top += layoutInsets.top
-      insets.bottom += layoutInsets.bottom
-      if (ExperimentalUI.isNewUI()) {
-        insets.top -= 7
-      }
-      return super.getPreferredHeight() - insets.top - insets.bottom
+      return super.getPreferredHeight() - layoutInsets.top - layoutInsets.bottom - insets.top - insets.bottom
     }
 
     override fun getActionsInset(): Int {
@@ -643,6 +641,14 @@ private class EditorTabs(
     private fun paintDimmed(): Boolean {
       return ExperimentalUI.isNewUI() && myTabs.selectedInfo != getInfo() && !myTabs.isHoveredTab(this)
     }
+  }
+
+  override fun getTabActionIcon(info: TabInfo, isHovered: Boolean): Icon? {
+    if (!tabs.contains(info)) {
+      return null  // can be requested right after tab is removed, return null in this case
+    }
+    val closeTabAction = info.tabLabelActions?.getChildren(null)?.lastOrNull() as? CloseTab
+    return closeTabAction?.getIcon(isHovered)
   }
 
   override fun createTabPainterAdapter(): TabPainterAdapter = EditorTabPainterAdapter()

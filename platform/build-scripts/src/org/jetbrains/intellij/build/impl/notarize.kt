@@ -46,7 +46,6 @@ internal suspend fun notarize(sitFile: Path, context: BuildContext) {
       pollingPeriod = 1.minutes,
       ignoreServerError = true,
       ignoreTimeoutExceptions = true,
-      retryDelayAfterFailure = 10.minutes,
     )
     val result = withContext(Dispatchers.IO) {
       // only .zip or .dmg files can be notarized

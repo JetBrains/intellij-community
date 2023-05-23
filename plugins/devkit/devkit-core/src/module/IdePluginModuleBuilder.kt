@@ -48,7 +48,7 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
 
   override fun getProjectTypes(): List<StarterProjectType> = emptyList()
   override fun getTestFrameworks(): List<StarterTestRunner> = emptyList()
-  override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_11.toJavaVersion()
+  override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_17.toJavaVersion()
 
   override fun getLanguages(): List<StarterLanguage> {
     return listOf(KOTLIN_STARTER_LANGUAGE) // Java and Kotlin both are available out of the box

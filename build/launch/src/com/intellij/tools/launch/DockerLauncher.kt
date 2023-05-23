@@ -129,10 +129,10 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
       dockerCmd.add("${it.key}=${it.value}")
     }
 
-    if (options.network != DockerNetwork.AUTO) {
+    if (options.network != DockerNetworkEntry.AUTO) {
       dockerCmd.addAll(listOf(
         "--network", options.network.name,
-        "--ip", options.network.IPv4Address
+        "--ip", options.network.IPAddress
       ))
     }
 
@@ -141,7 +141,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     logger.info(dockerCmd.joinToString("\n"))
 
     // docker will still have a route for all subnet packets to go through the host, this only affects anything not in the subnet
-    val ipRouteBash = if (options.network != DockerNetwork.AUTO && options.network.defaultGatewayIPv4Address != null) "sudo ip route change default via ${options.network.defaultGatewayIPv4Address}" else null
+    val ipRouteBash = if (options.network != DockerNetworkEntry.AUTO && options.network.defaultGatewayIPv4Address != null) "sudo ip route change default via ${options.network.defaultGatewayIPv4Address}" else null
 
     if (options.runBashBeforeJava != null || ipRouteBash != null) {
       dockerCmd.add("/bin/bash")

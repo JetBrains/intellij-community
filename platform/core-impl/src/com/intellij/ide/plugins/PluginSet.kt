@@ -37,10 +37,17 @@ class PluginSet internal constructor(
   fun isModuleEnabled(id: String) = enabledModuleMap.containsKey(id)
 
   fun withModule(module: IdeaPluginDescriptorImpl): PluginSetBuilder {
-    // in tests or on install plugin is not in all plugins
+    // in tests or on plugin installation is not present in all plugins list, may exist on plugin update though
     // linear search is ok here - not a hot method
-    PluginManagerCore.getLogger().assertTrue(!enabledPlugins.contains(module) && module.isEnabled)
-    return PluginSetBuilder(allPlugins + module)
+    val oldModule = enabledPlugins.find { it == module } // todo may exist on update
+    PluginManagerCore.getLogger().assertTrue((oldModule == null || !oldModule.isEnabled)
+                                             && module.isEnabled)
+
+    val unsortedPlugins = LinkedHashSet(allPlugins)
+    unsortedPlugins.removeIf { it == module }
+    unsortedPlugins.add(module)
+
+    return PluginSetBuilder(unsortedPlugins)
   }
 
   fun withoutModule(

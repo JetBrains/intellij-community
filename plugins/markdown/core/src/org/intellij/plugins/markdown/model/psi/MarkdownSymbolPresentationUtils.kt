@@ -1,6 +1,6 @@
 package org.intellij.plugins.markdown.model.psi
 
-import com.intellij.navigation.TargetPresentationBuilder
+import com.intellij.platform.backend.presentation.TargetPresentationBuilder
 import com.intellij.psi.PsiFile
 
 internal fun TargetPresentationBuilder.withLocationIn(file: PsiFile): TargetPresentationBuilder {

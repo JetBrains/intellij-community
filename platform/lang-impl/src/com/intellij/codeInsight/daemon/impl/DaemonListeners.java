@@ -37,13 +37,11 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
-import com.intellij.openapi.editor.ex.ErrorStripeEvent;
-import com.intellij.openapi.editor.ex.ErrorStripeListener;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
+import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -238,6 +236,14 @@ public final class DaemonListeners implements Disposable {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         stopDaemonAndRestartAllFiles("Project roots changed");
+        // re-initialize TrafficLightRenderer in each editor since root change event could change highlightability
+        for (Editor editor : myActiveEditors) {
+          EditorMarkupModel editorMarkupModel = (EditorMarkupModel)editor.getMarkupModel();
+          ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
+          if (renderer instanceof TrafficLightRenderer tlr) {
+            tlr.invalidate();
+          }
+        }
       }
     });
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (_1, _2, _3, _4) -> stopDaemonAndRestartAllFiles("Additional libraries changed"));

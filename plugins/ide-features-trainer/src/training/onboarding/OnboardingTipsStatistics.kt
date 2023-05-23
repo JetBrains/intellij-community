@@ -10,13 +10,13 @@ internal class OnboardingTipsStatistics : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("onboarding.tips.statistics", 2)
+    private val GROUP = EventLogGroup("onboarding.tips.statistics", 3)
 
     private val projectsWithTipsField = EventFields.Int("projects_with_tips")
     private val firstTimeActionUsedField = EventFields.Boolean("first_time_used")
     private val promotedActionField = EventFields.String("action_id", promotedActions)
 
-    private val onboardingTipsInstalledEvent = GROUP.registerEvent("tips.disabled", projectsWithTipsField)
+    private val onboardingTipsInstalledEvent = GROUP.registerEvent("onboarding.tips.installed", projectsWithTipsField)
     private val disableOnboardingTipsEvent = GROUP.registerEvent("tips.disabled", projectsWithTipsField)
     private val hideOnboardingTipsDisableProposalEvent = GROUP.registerEvent("hide.disable.proposal", projectsWithTipsField)
     private val promotedActionUsedEvent = GROUP.registerEvent("promoted.action.used", promotedActionField, projectsWithTipsField, firstTimeActionUsedField)

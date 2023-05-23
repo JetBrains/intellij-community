@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 public final class XBreakpointManagerImpl implements XBreakpointManager {
@@ -131,13 +132,16 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     }
   }
 
+  private final ExecutorService myHttpBreakpointUpdater =
+    SequentialTaskExecutor.createSequentialApplicationPoolExecutor("HttpFileSystem breakpoints updater");
+
   private void updateBreakpointInFile(final VirtualFile file) {
     ReadAction
       .nonBlocking(() -> changedBreakpoints(file))
       .coalesceBy(Pair.create(this, file))
       .expireWith(myProject)
       .finishOnUiThread(ModalityState.defaultModalityState(), this::fireBreakpointsChanged)
-      .submit(AppExecutorUtil.getAppExecutorService());
+      .submit(myHttpBreakpointUpdater);
   }
 
   private @NotNull Collection<? extends XBreakpointBase<?, ?, ?>> changedBreakpoints(VirtualFile file) {

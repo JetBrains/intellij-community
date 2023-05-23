@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
+import com.intellij.execution.Location
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
@@ -35,6 +36,7 @@ import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.SingleAlarm
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.toArray
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
@@ -100,9 +102,12 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     else -> null
   }
 
-  private fun getSlowData(dataId: String, selection: List<AbstractTreeNode<*>>?) = when {
+  @RequiresBackgroundThread
+  private fun getSlowData(dataId: String, selection: List<AbstractTreeNode<*>>?): Any? = when {
     PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selection?.firstOrNull()?.asVirtualFile
     PlatformDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selection?.mapNotNull { it.asVirtualFile }?.ifEmpty { null }?.toTypedArray()
+    PlatformCoreDataKeys.MODULE.`is`(dataId) -> selection?.firstOrNull()?.module
+    Location.DATA_KEY.`is`(dataId) -> selection?.firstOrNull()?.location
     else -> null
   }
 

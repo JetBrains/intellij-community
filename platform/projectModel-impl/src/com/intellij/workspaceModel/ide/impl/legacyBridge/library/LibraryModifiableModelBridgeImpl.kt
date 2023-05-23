@@ -95,7 +95,9 @@ internal class LibraryModifiableModelBridgeImpl(
     }
     if (isChanged) {
       if (targetBuilder != null) {
-        targetBuilder.addDiff(diff)
+        if (targetBuilder !== diff) {
+          targetBuilder.addDiff(diff)
+        }
       }
       else {
         if (originalLibrary.project != null) {

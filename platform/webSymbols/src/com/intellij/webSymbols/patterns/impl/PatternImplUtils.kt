@@ -80,7 +80,7 @@ internal fun getPatternCompletablePrefix(pattern: String?): String {
 internal fun <T> withPrevMatchScope(scopeStack: Stack<WebSymbolsScope>,
                                     prevResult: List<WebSymbolNameSegment>?,
                                     action: () -> T): T =
-  if (prevResult == null) {
+  if (prevResult.isNullOrEmpty()) {
     action()
   }
   else {

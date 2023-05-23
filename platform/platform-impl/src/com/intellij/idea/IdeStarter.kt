@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
@@ -130,18 +131,23 @@ open class IdeStarter : ModernApplicationStarter() {
       else -> null
     }
 
-    when {
-      project != null -> {
-        return
-      }
-      willReopenRecentProjectOnStart -> {
-        if (!recentProjectManager.reopenLastProjectsOnStart()) {
-          WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
-        }
-      }
-      else -> {
-        WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
-      }
+    if (project != null) {
+      return
+    }
+
+    val isOpened = willReopenRecentProjectOnStart && try {
+      recentProjectManager.reopenLastProjectsOnStart()
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      logger<IdeStarter>().error("Cannot reopen recent projects", e)
+      false
+    }
+
+    if (!isOpened) {
+      WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
     }
   }
 

@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.navigation.NavigationRequest
-import com.intellij.navigation.TargetPresentation
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock

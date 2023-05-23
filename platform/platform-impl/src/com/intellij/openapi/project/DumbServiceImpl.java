@@ -1,13 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.*;
@@ -17,12 +13,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
@@ -40,13 +34,14 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
-import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker, DumbServiceBalloon.Service {
@@ -62,7 +57,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final DumbModeListener myPublisher;
   private long myModificationCount;
 
-  private final Deque<Runnable> myRunWhenSmartQueue = new ArrayDeque<>(5);
   private final Project myProject;
 
   private final TrackedEdtActivityService myTrackedEdtActivityService;
@@ -107,6 +101,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(DumbServiceImpl.this::updateFinished);
       }
       else {
+        // because of tryEnterDumbMode in queueTaskOnEdt, it is possible that myGuiDumbTaskRunner::startBackgroundProcess is not invoked
+        // for some queued tasks. Code below makes sure that dumb tasks do not stuck in dumb queue.
         boolean needToScheduleNow = myState.compareAndSet(State.WAITING_FOR_FINISH, State.SCHEDULED_TASKS);
         if (needToScheduleNow) {
           myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);
@@ -133,35 +129,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myBalloon = new DumbServiceBalloon(project, this);
     myAlternativeResolveTracker = new DumbServiceAlternativeResolveTracker();
     myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS);
-
-    project.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        myRunWhenSmartQueue.removeIf(runnable -> {
-          if (runnable instanceof RunnableDelegate) {
-            runnable = ((RunnableDelegate)runnable).task;
-          }
-          ClassLoader classLoader = runnable.getClass().getClassLoader();
-          return classLoader instanceof PluginAwareClassLoader &&
-                 ((PluginAwareClassLoader)classLoader).getPluginId().equals(pluginDescriptor.getPluginId());
-        });
-      }
-    });
-  }
-
-  private static final class RunnableDelegate implements Runnable {
-    final Runnable task;
-    private final @NotNull Consumer<? super Runnable> executor;
-
-    private RunnableDelegate(@NotNull Runnable task, @NotNull Consumer<? super Runnable> executor) {
-      this.task = task;
-      this.executor = executor;
-    }
-
-    @Override
-    public void run() {
-      executor.accept(task);
-    }
   }
 
   void queueStartupActivitiesRequiredForSmartMode() {
@@ -177,6 +144,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // invokeLaterAfterProjectInitialized(this::updateFinished) does not work well in synchronous environments (e.g. in unit tests): code
       // continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
       myState.compareAndSet(State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS, State.SMART);
+      myTrackedEdtActivityService.submitTransaction(myPublisher::exitDumbMode);
     } else {
       // switch to smart mode and notify subscribers if no dumb mode tasks were scheduled
       if (myState.compareAndSet(State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS, State.WAITING_FOR_FINISH)) {
@@ -199,12 +167,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
-    myBalloon.dispose();
-
-    synchronized (myRunWhenSmartQueue) {
-      myRunWhenSmartQueue.clear();
-    }
+    ApplicationManager.getApplication().invokeLater(myBalloon::dispose);
+    myDumbEpoch.incrementAndGet();
     myTaskQueue.disposePendingTasks();
   }
 
@@ -275,47 +239,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void runWhenSmart(@Async.Schedule @NotNull Runnable runnable) {
-    StartupManager.getInstance(myProject).runAfterOpened(() -> doUnsafeRunWhenSmart(runnable));
-  }
-
-  private void doUnsafeRunWhenSmart(@NotNull Runnable runnable) {
-    if (!ALWAYS_SMART) {
-      synchronized (myRunWhenSmartQueue) {
-        if (isDumb()) {
-          Runnable executor = ClientId.decorateRunnable(runnable);
-          myRunWhenSmartQueue.addLast(executor == runnable ? runnable : new RunnableDelegate(runnable, it -> executor.run()));
-          return;
-        }
-      }
-    }
-
-    Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      app.invokeLater(() -> doUnsafeRunWhenSmart(runnable), ModalityState.NON_MODAL, myProject.getDisposed());
-    }
+    myProject.getService(SmartModeScheduler.class).runWhenSmart(runnable);
   }
 
   @Override
   public void unsafeRunWhenSmart(@NotNull @Async.Schedule Runnable runnable) {
-    if (!ALWAYS_SMART) {
-      synchronized (myRunWhenSmartQueue) {
-        if (isDumb()) {
-          myRunWhenSmartQueue.addLast(ClientId.decorateRunnable(runnable));
-          return;
-        }
-      }
-    }
-
-    Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      app.invokeLater(() -> unsafeRunWhenSmart(runnable), myProject.getDisposed());
-    }
+    // we probably don't need unsafeRunWhenSmart anymore
+    runWhenSmart(runnable);
   }
 
   @Override
@@ -368,10 +298,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private boolean tryEnterDumbMode(@NotNull ModalityState modality, @NotNull Throwable trace) {
     boolean wasSmart = !isDumb();
     boolean entered = WriteAction.compute(() -> {
-      synchronized (myRunWhenSmartQueue) {
-        State old = myState.getAndSet(State.SCHEDULED_TASKS);
-        if (old == State.SCHEDULED_TASKS) return false;
-      }
+      State old = myState.getAndSet(State.SCHEDULED_TASKS);
+      if (old == State.SCHEDULED_TASKS) return false;
       myDumbStart = trace;
       myDumbEnterTrace = new Throwable();
       myTrackedEdtActivityService.setDumbStartModality(modality);
@@ -391,10 +319,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private boolean switchToSmartMode() {
-    synchronized (myRunWhenSmartQueue) {
-      if (!myState.compareAndSet(State.WAITING_FOR_FINISH, State.SMART)) {
-        return false;
-      }
+    if (!myState.compareAndSet(State.WAITING_FOR_FINISH, State.SMART)) {
+      return false;
     }
 
     myDumbEnterTrace = null;
@@ -408,37 +334,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     if (ApplicationManager.getApplication().isInternal()) LOG.info("updateFinished");
 
-    try {
-      myPublisher.exitDumbMode();
-      FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
-    }
-    finally {
-      // It may happen that one of the pending runWhenSmart actions triggers new dumb mode;
-      // in this case we should quit processing pending actions and postpone them until the newly started dumb mode finishes.
-      while (!isDumb()) {
-        final Runnable runnable;
-        synchronized (myRunWhenSmartQueue) {
-          runnable = myRunWhenSmartQueue.pollFirst();
-          if (runnable == null) {
-            break;
-          }
-        }
-        doRun(runnable);
-      }
-    }
-  }
-
-  // Extracted to have a capture point
-  private static void doRun(@Async.Execute Runnable runnable) {
-    try {
-      runnable.run();
-    }
-    catch (ProcessCanceledException e) {
-      LOG.error("Task canceled: " + runnable, new Attachment("pce", e));
-    }
-    catch (Throwable e) {
-      LOG.error("Error executing task " + runnable, e);
-    }
+    myPublisher.exitDumbMode();
+    FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
   }
 
   @Override
@@ -496,18 +393,17 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (myWaitIntolerantThread == Thread.currentThread()) {
       throw new AssertionError("Don't invoke waitForSmartMode from a background startup activity");
     }
-    CountDownLatch switched;
-    synchronized (myRunWhenSmartQueue) {
-      if (!isDumb()) {
-        return;
-      }
-      switched = new CountDownLatch(1);
-      myRunWhenSmartQueue.addLast(switched::countDown);
-    }
+    CountDownLatch switched = new CountDownLatch(1);
+    SmartModeScheduler smartModeScheduler = myProject.getService(SmartModeScheduler.class);
+    smartModeScheduler.runWhenSmart(switched::countDown);
 
-    while (myState.get() != State.SMART && !myProject.isDisposed()) {
+    // we check getCurrentMode here because of tests which may hang because runWhenSmart needs EDT for scheduling
+    while (!myProject.isDisposed() && smartModeScheduler.getCurrentMode() != 0) {
+      // it is fine to unblock the caller when myProject.isDisposed, even if didn't reach smart mode: we are on background thread
+      // without read action. Dumb mode may start immediately after the caller is unblocked, so caller is prepared for this situation.
+
       try {
-        switched.await(50, TimeUnit.MILLISECONDS);
+        if (switched.await(50, TimeUnit.MILLISECONDS)) break;
       }
       catch (InterruptedException ignored) { }
       ProgressManager.checkCanceled();
@@ -624,7 +520,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void runBackgroundProcess(final @NotNull ProgressIndicator visibleIndicator) {
-    myGuiDumbTaskRunner.runBackgroundProcess(visibleIndicator);
+    myGuiDumbTaskRunner.tryStartProcessInThisThread(visibleIndicator);
   }
 
   @Override

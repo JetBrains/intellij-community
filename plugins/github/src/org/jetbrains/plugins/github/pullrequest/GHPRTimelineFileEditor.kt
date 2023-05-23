@@ -32,6 +32,7 @@ internal class GHPRTimelineFileEditor(private val project: Project,
 
   val securityService = dataContext.securityService
   val repositoryDataService = dataContext.repositoryDataService
+  val htmlImageLoader = dataContext.htmlImageLoader
   val avatarIconsProvider = dataContext.avatarIconsProvider
 
   val detailsData = dataProvider.detailsData

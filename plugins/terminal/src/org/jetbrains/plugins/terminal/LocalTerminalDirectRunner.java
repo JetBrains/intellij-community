@@ -143,6 +143,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
     envs.put("TERM_SESSION_ID", UUID.randomUUID().toString());
+    // Prevent sourcing non-existent 'terminal/fish/config.fish' and 'terminal/.zshenv' by Fig.io
+    envs.put("FIG_JETBRAINS_SHELL_INTEGRATION", "1");
 
     TerminalEnvironment.INSTANCE.setCharacterEncoding(envs);
 

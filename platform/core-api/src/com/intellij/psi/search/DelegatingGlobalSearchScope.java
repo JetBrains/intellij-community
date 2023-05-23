@@ -35,7 +35,8 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
     myEquality = Collections.emptyList();
   }
 
-  protected DelegatingGlobalSearchScope() {
+  protected DelegatingGlobalSearchScope(@NotNull Project project) {
+    super(project);
     myBaseScope = null;
     myEquality = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }

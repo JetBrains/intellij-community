@@ -76,7 +76,7 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
       endOffSet = Math.max(endOffSet, range.getEndOffset());
     }
 
-    return TextRange.from(startOffSet, endOffSet);
+    return TextRange.create(startOffSet, endOffSet);
   }
 
   @Nullable

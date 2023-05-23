@@ -40,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.SmartList;
@@ -783,8 +784,7 @@ public final class EditorTestUtil {
     List<Integer> offs = ContainerUtil.map(caretModel.getAllCarets(), Caret::getOffset);
     List<Integer> caretsOffsets = offs.isEmpty() ? List.of(-1) : offs;
     caretModel.removeSecondaryCarets();
-    CharSequence documentSequence = editor.getDocument().getCharsSequence();
-
+    CharSequence documentSequence = InjectedLanguageEditorUtil.getTopLevelEditor(editor).getDocument().getCharsSequence();
 
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled(fixture.getProject(), fixture.getProjectDisposable(), () -> {
       for (Integer caretsOffset : caretsOffsets) {
@@ -794,7 +794,7 @@ public final class EditorTestUtil {
 
         UsefulTestCase.assertSameLinesWithFile(
           answersFilePath,
-          renderTextWithHighlihgtingInfos(fixture.doHighlighting(), documentSequence, acceptableKeyNames),
+          renderTextWithHighlightingInfos(fixture.doHighlighting(), documentSequence, acceptableKeyNames),
           () -> "Failed at:\n " +
                 documentSequence.subSequence(0, caretsOffset) +
                 "<caret>" +
@@ -803,7 +803,7 @@ public final class EditorTestUtil {
       }});
   }
 
-  private static @NotNull String renderTextWithHighlihgtingInfos(@NotNull List<? extends HighlightInfo> highlightInfos,
+  private static @NotNull String renderTextWithHighlightingInfos(@NotNull List<? extends HighlightInfo> highlightInfos,
                                                                  @NotNull CharSequence documentSequence,
                                                                  @Nullable Set<String> acceptableKeyNames) {
     List<Pair<Integer, String>> sortedMarkers = highlightInfos.stream()

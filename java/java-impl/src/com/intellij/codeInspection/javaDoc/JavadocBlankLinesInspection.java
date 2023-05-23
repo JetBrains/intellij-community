@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
+import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
       @Override
       public void visitDocToken(@NotNull PsiDocToken token) {
         super.visitDocToken(token);
+        if (token.getParent() instanceof PsiSnippetDocTagBody) return;
         PsiElement nextWhitespace = token.getNextSibling();
         PsiElement prevWhitespace = token.getPrevSibling();
         if (token.getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS &&
@@ -90,7 +92,7 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
     if (index < 1) return false;
     String maybeBlockTag = text.substring(1, index);
     String trimmed = StringUtil.trim(maybeBlockTag.strip(), ch -> NOT_WHITESPACE_FILTER.accept(ch) && ch != '/');
-    return HtmlUtil.isHtmlBlockTag(trimmed) || "br".equalsIgnoreCase(trimmed);
+    return HtmlUtil.isHtmlBlockTag(trimmed, false) || "br".equalsIgnoreCase(trimmed);
   }
 
   private static boolean endsWithHtmlBlockTag(String text) {
@@ -98,7 +100,7 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
     if (text.isEmpty() || text.charAt(text.length() - 1) != '>') return false;
     String maybeBlockTag = text.substring(text.lastIndexOf('<') + 1, text.length() - 1);
     String trimmed = StringUtil.trim(maybeBlockTag.strip(), ch -> NOT_WHITESPACE_FILTER.accept(ch) && ch != '/');
-    return HtmlUtil.isHtmlBlockTag(trimmed) || "br".equalsIgnoreCase(trimmed);
+    return HtmlUtil.isHtmlBlockTag(trimmed, false) || "br".equalsIgnoreCase(trimmed);
   }
 
   private static boolean isNullOrBlockTag(PsiElement element) {

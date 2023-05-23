@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.PrefixMatcher
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DataClassResolver
+import org.jetbrains.kotlin.resolve.DescriptorUtils.isEnumClass
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindExclude
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
@@ -253,6 +255,10 @@ class ReferenceVariantsCollector(
         if (!configuration.dataClassComponentFunctions)
             variants = variants.filter { !isDataClassComponentFunction(it) }
 
+        if (configuration.excludeEnumEntries) {
+            variants = variants.filterNot(::isEnumEntriesProperty)
+        }
+
         return variants
     }
 
@@ -277,4 +283,10 @@ class ReferenceVariantsCollector(
     private fun isDataClassComponentFunction(descriptor: DeclarationDescriptor): Boolean =
         descriptor is FunctionDescriptor && descriptor.isOperator && DataClassResolver.isComponentLike(descriptor.name) && descriptor.kind == CallableMemberDescriptor.Kind
             .SYNTHESIZED
+
+    private fun isEnumEntriesProperty(descriptor: DeclarationDescriptor): Boolean {
+        return descriptor.name == StandardNames.ENUM_ENTRIES &&
+                (descriptor as? CallableMemberDescriptor)?.kind == CallableMemberDescriptor.Kind.SYNTHESIZED &&
+                isEnumClass(descriptor.containingDeclaration)
+    }
 }

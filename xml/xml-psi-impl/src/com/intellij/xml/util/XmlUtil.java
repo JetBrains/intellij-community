@@ -1271,6 +1271,13 @@ public final class XmlUtil {
     });
   }
 
+  public static boolean isNotInjectedOrCustomHtmlFile(@NotNull PsiFile file) {
+    if (InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file) == null) return true;
+    var language = file.getLanguage();
+    return language instanceof HTMLLanguage
+           && language != HTMLLanguage.INSTANCE;
+  }
+
   public interface DuplicationInfoProvider<T extends PsiElement> {
     @Nullable
     String getName(@NotNull T t);

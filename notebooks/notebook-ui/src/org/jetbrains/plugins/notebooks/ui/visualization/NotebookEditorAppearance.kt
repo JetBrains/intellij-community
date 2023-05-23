@@ -10,7 +10,7 @@ import java.awt.Color
 /**
  * Constants and functions that affects only visual representation, like colors, sizes of elements, etc.
  */
-interface NotebookEditorAppearance: NotebookEditorAppearanceColors, NotebookEditorAppearanceSizes {
+interface NotebookEditorAppearance: NotebookEditorAppearanceColors, NotebookEditorAppearanceSizes, NotebookEditorAppearanceFlags {
   companion object {
     val NOTEBOOK_APPEARANCE_KEY = Key.create<NotebookEditorAppearance>(NotebookEditorAppearance::class.java.name)
   }
@@ -69,10 +69,12 @@ interface NotebookEditorAppearanceColors {
    */
   fun getCellStripeColor(editor: EditorImpl, lines: IntRange): Color? = null
   fun getCellStripeHoverColor(editor: EditorImpl, lines: IntRange): Color? = null
-
-  fun shouldShowCellLineNumbers(): Boolean
 }
 
+interface NotebookEditorAppearanceFlags {
+  fun shouldShowCellLineNumbers(): Boolean
+  fun shouldShowExecutionCounts(): Boolean
+}
 
 object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   // TODO it's hardcoded, but it should be equal to distance between a folding line and an editor.

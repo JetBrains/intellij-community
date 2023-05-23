@@ -6,10 +6,15 @@ import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBInsets
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JEditorPane
 import javax.swing.text.DefaultCaret
 
+/**
+ * Prefer [com.intellij.collaboration.ui.SimpleHtmlPane]
+ */
+@ApiStatus.Obsolete
 open class BaseHtmlEditorPane : JEditorPane() {
 
   init {
@@ -25,6 +30,8 @@ open class BaseHtmlEditorPane : JEditorPane() {
     caret.updatePolicy = DefaultCaret.NEVER_UPDATE
   }
 
+  @Deprecated(message = "Deprecated in favour of a generic extension on JEditorPane",
+              replaceWith = ReplaceWith("setHtmlBody(body)", "com.intellij.collaboration.ui.setHtmlBody"))
   fun setBody(@Nls body: String) {
     if (body.isEmpty()) {
       text = ""

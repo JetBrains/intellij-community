@@ -61,7 +61,7 @@ class IdeScaleTransformer : Disposable {
   }
 
   private fun notifyAllAndUpdateUI() {
-    LafManager.getInstance().updateUI()
+    ApplicationManager.getApplication().getServiceIfCreated(LafManager::class.java)?.updateUI()
     EditorUtil.reinitSettings()
   }
 

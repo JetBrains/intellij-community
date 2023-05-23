@@ -6,6 +6,8 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.psi.PsiElement
+import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
@@ -20,18 +22,21 @@ import java.awt.Image
 import java.awt.image.BufferedImage
 import javax.swing.Icon
 
-internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol) : WebSymbolDocumentationTarget {
+internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
+                                                override val location: PsiElement?)
+  : WebSymbolDocumentationTarget {
 
   override fun createPointer(): Pointer<out DocumentationTarget> {
     val pointer = symbol.createPointer()
+    val locationPtr = location?.createSmartPointer()
     return Pointer<DocumentationTarget> {
-      pointer.dereference()?.let { WebSymbolDocumentationTargetImpl(it) }
+      pointer.dereference()?.let { WebSymbolDocumentationTargetImpl(it, locationPtr?.dereference()) }
     }
   }
 
   companion object {
 
-    fun buildDocumentation(origin: WebSymbolOrigin, doc: WebSymbolDocumentation): DocumentationResult? {
+    fun buildDocumentation(origin: WebSymbolOrigin, doc: WebSymbolDocumentation): DocumentationResult {
       val url2ImageMap = mutableMapOf<String, Image>()
 
       @Suppress("HardCodedStringLiteral")

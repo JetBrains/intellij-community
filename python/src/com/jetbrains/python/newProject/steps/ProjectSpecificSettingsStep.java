@@ -7,6 +7,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -23,6 +24,7 @@ import com.intellij.ui.HideableDecorator;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
@@ -44,6 +46,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -395,7 +398,14 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     return Optional
       .ofNullable(PyUtil.as(myProjectGenerator, PythonProjectGenerator.class))
       .map(PythonProjectGenerator::getNewProjectPrefix)
-      .map(it -> FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), it, ""))
+      .map(it -> FileUtil.findSequentNonexistentFile(getBaseDir(), it, ""))
       .orElseGet(() -> super.findSequentNonExistingUntitled());
+  }
+
+  private static @NotNull File getBaseDir() {
+    if (PlatformUtils.isDataSpell() && FileUtil.isAncestor(PathManager.getConfigDir(), Paths.get(ProjectUtil.getBaseDir()), false)) {
+      return new File(ProjectUtil.getUserHomeProjectDir());
+    }
+    return new File(ProjectUtil.getBaseDir());
   }
 }

@@ -812,7 +812,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public Object getData(@NotNull String dataId) {
-    Editor editor = getEditor();
+    EditorEx editor = (EditorEx)getEditor();
     if (editor == null) {
       return null;
     }
@@ -835,6 +835,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
       return this;
     }
+    if (CommonDataKeys.CARET.is(dataId)) {
+      return editor.getCaretModel().getCurrentCaret();
+    }
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return editor.getCopyProvider();
+    }
+
     return null;
   }
 

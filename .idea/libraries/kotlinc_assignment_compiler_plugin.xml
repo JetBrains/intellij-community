@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.assignment-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:assignment-compiler-plugin-for-ide:1.9.0-dev-1670" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:assignment-compiler-plugin-for-ide:1.9.0-dev-5999" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/1.9.0-dev-1670/assignment-compiler-plugin-for-ide-1.9.0-dev-1670.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/1.9.0-dev-5999/assignment-compiler-plugin-for-ide-1.9.0-dev-5999.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/1.9.0-dev-1670/assignment-compiler-plugin-for-ide-1.9.0-dev-1670-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/1.9.0-dev-5999/assignment-compiler-plugin-for-ide-1.9.0-dev-5999-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

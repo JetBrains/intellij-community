@@ -1367,6 +1367,10 @@ open class FileEditorManagerImpl(
   override fun getSelectedTextEditor(): Editor? = getSelectedTextEditor(isLockFree = false)
 
   fun getSelectedTextEditor(isLockFree: Boolean): Editor? {
+    if (!isInitialized.get()) {
+      return null
+    }
+
     if (!ClientId.isCurrentlyUnderLocalId) {
       val selectedEditor = (clientFileEditorManager ?: return null).getSelectedEditor()
       return if (selectedEditor is TextEditor) selectedEditor.editor else null

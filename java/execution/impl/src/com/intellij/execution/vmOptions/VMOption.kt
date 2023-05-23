@@ -6,13 +6,13 @@ import com.intellij.icons.AllIcons
 import com.intellij.java.JavaBundle
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.tag
 import com.intellij.openapi.util.text.HtmlChunk.text
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.presentation.TargetPresentation
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 

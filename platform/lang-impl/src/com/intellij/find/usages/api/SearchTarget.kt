@@ -3,7 +3,7 @@ package com.intellij.find.usages.api
 
 import com.intellij.model.Pointer
 import com.intellij.model.search.SearchRequest
-import com.intellij.navigation.TargetPresentation
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread

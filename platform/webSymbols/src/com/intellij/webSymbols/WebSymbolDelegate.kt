@@ -67,11 +67,12 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
     get() = delegate.pattern
   override val properties: Map<String, Any>
     get() = delegate.properties
-  override val documentation: WebSymbolDocumentation?
-    get() = delegate.documentation
 
-  override fun getDocumentationTarget(): DocumentationTarget =
-    delegate.documentationTarget
+  override fun createDocumentation(location: PsiElement?): WebSymbolDocumentation? =
+    delegate.createDocumentation(location)
+
+  override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget =
+    delegate.getDocumentationTarget(location)
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     (delegate as? NavigatableSymbol)?.getNavigationTargets(project) ?: emptyList()

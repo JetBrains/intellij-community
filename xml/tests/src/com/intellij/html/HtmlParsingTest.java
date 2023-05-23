@@ -190,11 +190,11 @@ public class HtmlParsingTest extends XmlParsingTest {
                                      </ng-template>
                                  </p-table>
                                  <p-table>
-                                  <tbody>
-                                    <td>a</td>
-                                    <td>b
-                                    <td>c
-                                  </tbody>
+                                    <tbody>
+                                      <td>a</td>
+                                      <td>b
+                                      <td>c
+                                    </tbody>
                                  </p-table>
                              </td>
                          </tr>
@@ -260,7 +260,7 @@ public class HtmlParsingTest extends XmlParsingTest {
 
   public void testPMustBeClosedCustomTag() throws Exception {
     doTestHtml("""
-                 <component>foo<p>bar</component>
+                 <my-component>foo<p>bar</my-component>
                  """);
   }
 

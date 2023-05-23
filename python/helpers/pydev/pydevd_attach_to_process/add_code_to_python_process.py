@@ -287,12 +287,6 @@ def is_mac():
     return platform.system() == 'Darwin'
 
 
-def is_aarch64():
-    import platform
-    # `aarch64` on Linux, `arm64` on macOS
-    return platform.machine().lower() in ['aarch64', 'arm64']
-
-
 def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
     from winappdbg.process import Process
@@ -453,15 +447,11 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
 
     # Valid arguments for arch are i386, i386:x86-64, i386:x64-32, i8086,
     #   i386:intel, i386:x86-64:intel, i386:x64-32:intel, i386:nacl,
-    #   i386:x86-64:nacl, i386:x64-32:nacl, aarch64, auto.
+    #   i386:x86-64:nacl, i386:x64-32:nacl, auto.
 
     if is_python_64bit():
-        if is_aarch64():
-            suffix = 'aarch64'
-            arch = 'aarch64'
-        else:
-            suffix = 'amd64'
-            arch = 'i386:x86-64'
+        suffix = 'amd64'
+        arch = 'i386:x86-64'
     else:
         suffix = 'x86'
         arch = 'i386'
@@ -541,19 +531,18 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
 
     # Valid arguments for arch are i386, i386:x86-64, i386:x64-32, i8086,
     #   i386:intel, i386:x86-64:intel, i386:x64-32:intel, i386:nacl,
-    #   i386:x86-64:nacl, i386:x64-32:nacl, auto, arm64
+    #   i386:x86-64:nacl, i386:x64-32:nacl, auto.
 
     if is_python_64bit():
-        if is_aarch64():
-            arch = 'arm64'
-        else:
-            arch = 'i386:x86-64'
+        suffix = 'x86_64.dylib'
+        arch = 'i386:x86-64'
     else:
+        suffix = 'x86.dylib'
         arch = 'i386'
 
     debug('Attaching with arch: %s'% (arch,))
 
-    target_dll = os.path.join(filedir, 'attach.dylib')
+    target_dll = os.path.join(filedir, 'attach_%s' % suffix)
     target_dll = os.path.normpath(target_dll)
     if not os.path.exists(target_dll):
         raise RuntimeError('Could not find dll file to inject: %s' % target_dll)

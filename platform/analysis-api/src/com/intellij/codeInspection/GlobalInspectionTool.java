@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
  * The shared local inspection tools shares settings and documentation with the global inspection tool.
  *
  * @author anna
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections.html">Code Inspections (IntelliJ Platform Docs)</a>
  * @see LocalInspectionTool
  */
 public abstract class GlobalInspectionTool extends InspectionProfileEntry {

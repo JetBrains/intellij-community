@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.diff.util.Side
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -26,6 +27,7 @@ import javax.swing.JComponent
 class GHPRDiffEditorReviewComponentsFactoryImpl
 internal constructor(private val project: Project,
                      private val reviewDataProvider: GHPRReviewDataProvider,
+                     private val htmlImageLoader: AsyncHtmlImageLoader,
                      private val avatarIconsProvider: GHAvatarIconsProvider,
                      private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
                      private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
@@ -35,7 +37,7 @@ internal constructor(private val project: Project,
 
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent =
     GHPRReviewThreadComponent.createForInlay(project, thread, reviewDataProvider,
-                                             avatarIconsProvider, suggestedChangeHelper,
+                                             htmlImageLoader, avatarIconsProvider, suggestedChangeHelper,
                                              ghostUser, currentUser).apply {
       border = JBUI.Borders.empty(CodeReviewCommentUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.top,
                                   0,

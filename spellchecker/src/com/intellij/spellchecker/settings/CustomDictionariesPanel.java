@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -145,7 +145,9 @@ public final class CustomDictionariesPanel extends JPanel {
     private CustomDictionariesTableView(@NotNull List<String> dictionaries,
                                         @NotNull List<String> defaultDictionaries) {
       myTypeRenderer = createTypeRenderer(defaultDictionaries);
-      setModelAndUpdateColumns(new ListTableModel<>(createDictionaryColumnInfos(), ContainerUtil.concat(defaultDictionaries, dictionaries), 0));
+      var items = new ArrayList<>(defaultDictionaries);
+      items.addAll(dictionaries);
+      setModelAndUpdateColumns(new ListTableModel<>(createDictionaryColumnInfos(), items, 0));
       setAutoResizeMode(AUTO_RESIZE_LAST_COLUMN);
       setShowGrid(false);
       setShowVerticalLines(false);

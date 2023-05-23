@@ -3,27 +3,30 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.util.DimensionRestrictions
-import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.bindTextHtml
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.map
+import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 
 internal object GHPRDetailsDescriptionComponentFactory {
   private const val VISIBLE_DESCRIPTION_LINES = 2
 
   fun create(scope: CoroutineScope, reviewDetailsVM: GHPRDetailsViewModel): JComponent {
-    val descriptionPanel = HtmlEditorPane().apply {
-      bindText(scope, reviewDetailsVM.descriptionState)
+    val descriptionPanel = SimpleHtmlPane().apply {
+      bindTextHtml(scope, reviewDetailsVM.descriptionState)
       val group = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
       PopupHandler.installPopupMenu(this, group, "GHPRDetailsPopup")
     }.let { editor ->

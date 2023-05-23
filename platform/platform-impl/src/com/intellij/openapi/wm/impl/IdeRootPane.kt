@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "LiftReturnOrAssignment")
 
 package com.intellij.openapi.wm.impl
 
@@ -160,11 +160,11 @@ open class IdeRootPane internal constructor(frame: JFrame,
       }
     }
 
-    val glassPane = IdeGlassPaneImpl(rootPane = this, loadingState = loadingState, parentDisposable = parentDisposable)
+    val glassPane = IdeGlassPaneImpl(rootPane = this, loadingState = loadingState)
     setGlassPane(glassPane)
     glassPaneInitialized = true
     if (frame is IdeFrameImpl) {
-      putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, java.lang.Boolean.TRUE)
+      putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, true)
     }
 
     UIUtil.decorateWindowHeader(this)

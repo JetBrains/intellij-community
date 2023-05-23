@@ -2,8 +2,8 @@
 package com.intellij.platform.backend.documentation.impl
 
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPresentation
 import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.presentation.TargetPresentation
 
 class DocumentationRequest(
   val targetPointer: Pointer<out DocumentationTarget>,

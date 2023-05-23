@@ -17,6 +17,7 @@ import com.intellij.ui.GotItTextBuilder
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.not
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.DateFormatUtil
@@ -47,7 +48,7 @@ class ShowGotItDemoAction : DumbAwareAction() {
 
   private class GotItConfigurationDialog(private val project: Project, private val component: JComponent) : DialogWrapper(project, false) {
     private var text: String = """
-      This is Debug tool window. 
+      This is Debug tool window. Code element example: <code>cLodlpe ja</code>.
       Here, you can use various actions like <shortcut actionId="GotoAction"/>,
       <b>Resume</b> <icon src="AllIcons.Actions.Resume"/>, 
       and <b>Stop</b> <icon src="AllIcons.Actions.Suspend"/>.""".trimIndent()
@@ -73,6 +74,8 @@ class ShowGotItDemoAction : DumbAwareAction() {
 
     private var showButton: Boolean = true
 
+    private var useContrastColors: Boolean = false
+
     private val positionsModel: ComboBoxModel<Position> = DefaultComboBoxModel(Balloon.Position.values())
     private val position: Position
       get() = positionsModel.selectedItem as Position
@@ -90,8 +93,14 @@ class ShowGotItDemoAction : DumbAwareAction() {
           .bindText(::text)
           .align(AlignX.FILL)
       }
+      lateinit var contrastColorsCheckbox: Cell<JBCheckBox>
       row {
-        checkBox("Add inline links to text").bindSelected(::addInlineLinks)
+        contrastColorsCheckbox = checkBox("Use contrast colors").bindSelected(::useContrastColors)
+      }
+      row {
+        checkBox("Add inline links to text")
+          .bindSelected(::addInlineLinks)
+          .enabledIf(contrastColorsCheckbox.selected.not())
       }
       row {
         val checkbox = checkBox("Header:").bindSelected(::showHeader)
@@ -181,7 +190,7 @@ class ShowGotItDemoAction : DumbAwareAction() {
       val image = createTestImage()
 
       val textSupplier: GotItTextBuilder.() -> String = {
-        if (addInlineLinks) buildString {
+        if (addInlineLinks && !useContrastColors) buildString {
           append(text)
           append(" ")
           append(link("Click") { ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)?.show() })
@@ -205,6 +214,8 @@ class ShowGotItDemoAction : DumbAwareAction() {
         gotIt.withBrowserLink(browserLinkText, URL("https://www.jetbrains.com/help/idea/getting-started.html"))
       }
       if (!showButton) gotIt.withTimeout(DateFormatUtil.HOUR.toInt())
+      @Suppress("DEPRECATION")
+      gotIt.withContrastColors(useContrastColors)
       gotIt.withPosition(position)
       return gotIt
     }

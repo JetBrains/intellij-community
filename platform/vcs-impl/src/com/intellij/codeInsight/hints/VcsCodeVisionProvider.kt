@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatusManager
@@ -61,7 +62,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
     return runReadAction {
       val project = editor.project ?: return@runReadAction READY_EMPTY
       val document = editor.document
-      val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction CodeVisionState.NotReady
+      val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction READY_EMPTY
 
       if (!hasSupportedVcs(project, file, editor)) return@runReadAction READY_EMPTY
 
@@ -221,12 +222,12 @@ private val VCS_CODE_AUTHOR_ANNOTATION = Key.create<FileAnnotation>("Vcs.CodeAut
 private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): AnnotationResult<FileAnnotation?> {
   editor.getUserData(VCS_CODE_AUTHOR_ANNOTATION)?.let { return AnnotationResult.Success(it) }
 
-  val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return AnnotationResult.NotReady
-  val provider = vcs.annotationProvider as? CacheableAnnotationProvider ?: return AnnotationResult.NotReady
+  val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return AnnotationResult.NoAnnotation
+  val provider = vcs.annotationProvider as? CacheableAnnotationProvider ?: return AnnotationResult.NoAnnotation
   val status = FileStatusManager.getInstance(project).getStatus(file)
-  if (status == FileStatus.UNKNOWN || status == FileStatus.IGNORED) return AnnotationResult.NotReady
+  if (status == FileStatus.UNKNOWN || status == FileStatus.IGNORED) return AnnotationResult.NoAnnotation
   if (status == FileStatus.ADDED) return AnnotationResult.Success(null) // new files have no annotation
-  val annotation = provider.getFromCache(file) ?: return AnnotationResult.NoAnnotation
+  val annotation = provider.getFromCache(file) ?: return AnnotationResult.NotReady
 
   val annotationDisposable = Disposable {
     unregisterAnnotation(annotation)
@@ -257,7 +258,7 @@ private fun unregisterAnnotation(annotation: FileAnnotation) =
 
 private val VcsCodeAuthorInfo.isMultiAuthor: Boolean get() = otherAuthorsCount > 0
 
-private fun VcsCodeAuthorInfo.getText(): String {
+private fun VcsCodeAuthorInfo.getText(): @NlsSafe String {
   val mainAuthorText = ShortNameType.shorten(mainAuthor, ShortNameType.NONE)
 
   return when {

@@ -28,7 +28,7 @@ public class DumpThreadsAction extends AnAction implements DumbAware {
 
   public static void dumpThreads(@Nullable Project project) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      File dumpDir = PerformanceWatcher.getInstance().dumpThreads("", false);
+      File dumpDir = PerformanceWatcher.getInstance().dumpThreads("", false, false);
       Notification notification = createNotification(dumpDir);
       notification.notify(project);
     });
