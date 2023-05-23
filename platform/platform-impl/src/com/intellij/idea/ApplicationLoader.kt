@@ -180,9 +180,20 @@ private suspend fun initApplicationImpl(args: List<String>,
       StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
     }
 
-    subtask("app init listener preload") {
+    val appInitListeners = async(CoroutineName("app init listener preload")) {
       getAppInitializedListeners(app)
     }
+
+    // doesn't block app start-up
+    asyncScope.launch(CoroutineName("post app init tasks")) {
+      runPostAppInitTasks(app)
+    }
+
+    asyncScope.launch {
+      addActivateAndWindowsCliListeners()
+    }
+
+    appInitListeners.await()
   }
 
   subtask("app initialized callback") {
@@ -190,14 +201,7 @@ private suspend fun initApplicationImpl(args: List<String>,
     callAppInitialized(listeners = appInitializedListeners, asyncScope = app.coroutineScope)
   }
 
-  // doesn't block app start-up
-  asyncScope.runPostAppInitTasks(app)
-
   initAppActivity.end()
-
-  asyncScope.launch {
-    addActivateAndWindowsCliListeners()
-  }
 
   val starter = deferredStarter.await()
   if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
@@ -312,15 +316,17 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
     AnimatedIcon.FS()
   }
 
-  if (!app.isUnitTestMode && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
-    val extensionPoint = app.extensionArea.getExtensionPoint<PreloadingActivity>("com.intellij.preloadingActivity")
-    val isDebugEnabled = LOG.isDebugEnabled
-    ExtensionPointName<PreloadingActivity>("com.intellij.preloadingActivity").processExtensions { preloadingActivity, pluginDescriptor ->
-      launch {
-        executePreloadActivity(preloadingActivity, pluginDescriptor, isDebugEnabled)
+  launch {
+    if (!app.isUnitTestMode && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
+      val extensionPoint = app.extensionArea.getExtensionPoint<PreloadingActivity>("com.intellij.preloadingActivity")
+      val isDebugEnabled = LOG.isDebugEnabled
+      ExtensionPointName<PreloadingActivity>("com.intellij.preloadingActivity").processExtensions { preloadingActivity, pluginDescriptor ->
+        launch {
+          executePreloadActivity(preloadingActivity, pluginDescriptor, isDebugEnabled)
+        }
       }
+      extensionPoint.reset()
     }
-    extensionPoint.reset()
   }
 }
 
