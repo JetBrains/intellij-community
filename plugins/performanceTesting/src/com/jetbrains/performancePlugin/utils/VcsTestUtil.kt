@@ -7,6 +7,9 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 
 object VcsTestUtil {
 
+  /**
+   * This function modifies 'Preferences->Version Control->Confirmation->When files are created' option
+   */
   @JvmStatic
   fun provisionVcsAddFileConfirmation(project: Project, fileConfirmation: VcsAddFileConfirmation) {
     val addFileConfirmationSetting = ProjectLevelVcsManagerEx
