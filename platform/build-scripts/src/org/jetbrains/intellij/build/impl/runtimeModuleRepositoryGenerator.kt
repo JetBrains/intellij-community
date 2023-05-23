@@ -59,7 +59,13 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
         continue
       }
       val pathInDist = context.paths.distAllDir.relativize(entry.path).pathString
-      val realPathInDist = if (pathInDist != "lib/$PRODUCT_JAR" || context.isEmbeddedJetBrainsClientEnabled) pathInDist else "lib/$APP_JAR"
+      val realPathInDist = when {
+        //jetbrains-annotations-java5 library is replaced by jetbrains-annotations
+        pathInDist == "lib/annotations-java5.jar" -> "lib/annotations.jar"
+        //product.jar is merged into app.jar unless embedded JetBrains Client is enabled
+        pathInDist == "lib/$PRODUCT_JAR" && !context.isEmbeddedJetBrainsClientEnabled -> "lib/$APP_JAR"
+        else -> pathInDist
+      }
       resourcePathMapping.putValue(moduleId.stringId, realPathInDist)
     }
   }
