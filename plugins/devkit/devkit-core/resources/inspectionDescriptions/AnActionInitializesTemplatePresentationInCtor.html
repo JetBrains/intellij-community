@@ -2,14 +2,13 @@
 <body>
 <p>
   Reports any actions that are registered in the <code>plugin.xml</code> file and initialize their
-  presentation (text, description, and/or icon) within their constructors.
+  presentation (text, description, or icon) in their constructors.
 </p>
 <p>
-  Such a practice is not advisable because it results in the loading of text, description, and/or icon,
-  and the forced creation of action presentations, which may not always be necessary. Instead, it's more
-  efficient to utilize no-argument constructors of <code>AnAction</code> and other base classes and follow
-  the convention for setting the text, description, and icon. The IntelliJ Platform will load text, description,
-  and icon only when the action is actually displayed somewhere.
+  Loading presentation in constructor results in allocating resources, which may not be necessary. Instead,
+  it's more efficient to utilize no-argument constructors of <code>AnAction</code> and other base classes
+  and follow the convention for setting the text, description, and icon in <code>plugin.xml</code>. The IDE
+  will load text, description, and icon only when the action is actually displayed in the UI.
 </p>
 <p>
   The convention for setting the text, description, and icon is as follows:
@@ -22,7 +21,7 @@
     Optionally, set the <code>icon</code> attribute if an icon is needed.
   </li>
   <li>
-    Follow this structure when setting the keys for text and description in the property file:
+    Set the text and description in the associated message bundle (it could be overridden in <code>&lt;actions&gt;</code>):
     <ul>
       <li><code>action.&lt;action-id&gt;.text=Translated Action Text</code></li>
       <li><code>action.&lt;action-id&gt;.description=Translated Action Description</code></li>
