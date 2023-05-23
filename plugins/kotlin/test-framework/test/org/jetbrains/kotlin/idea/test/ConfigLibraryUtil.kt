@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.test
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -13,6 +14,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.vfs.VfsUtil
@@ -107,6 +109,16 @@ object ConfigLibraryUtil {
         }
     }
 
+    fun addProjectLibrary(
+        project: Project,
+        name: String,
+        init: Library.ModifiableModel.() -> Unit,
+    ): Library = runWriteAction {
+        LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary(name).apply {
+            modifiableModel.init()
+        }
+    }
+
     fun addLibrary(module: Module, name: String, kind: PersistentLibraryKind<*>? = null, init: Library.ModifiableModel.() -> Unit) {
         runWriteAction {
             ModuleRootManager.getInstance(module).modifiableModel.apply {
@@ -146,7 +158,6 @@ object ConfigLibraryUtil {
 
         return library
     }
-
 
     fun removeLibrary(module: Module, libraryName: String): Boolean {
         return runWriteAction {

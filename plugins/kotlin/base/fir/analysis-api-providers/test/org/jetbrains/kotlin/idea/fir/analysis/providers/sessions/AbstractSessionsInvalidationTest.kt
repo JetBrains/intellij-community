@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import java.io.File
 import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractProjectStructureTest
+import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectLibrary
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructureParser
 
 abstract class AbstractSessionsInvalidationTest : AbstractProjectStructureTest<SessionInvalidationTestProjectStructure>() {
@@ -29,7 +30,8 @@ abstract class AbstractSessionsInvalidationTest : AbstractProjectStructureTest<S
         KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-providers").resolve("testData").resolve("sessionInvalidation")
 
     protected fun doTest(path: String) {
-        val (testStructure, modulesByNames) = initializeProjectStructure(path, SessionInvalidationTestProjectStructureParser)
+        val (testStructure, projectLibrariesByName, modulesByNames) =
+            initializeProjectStructure(path, SessionInvalidationTestProjectStructureParser)
 
         val rootIdeaModule = modulesByNames.getValue(testStructure.rootModule)
         val rootModule = rootIdeaModule.getMainKtSourceModule()!!
@@ -70,6 +72,7 @@ abstract class AbstractSessionsInvalidationTest : AbstractProjectStructureTest<S
 }
 
 data class SessionInvalidationTestProjectStructure(
+    override val libraries: List<TestProjectLibrary>,
     override val modules: List<TestProjectModule>,
     val rootModule: String,
     val modulesToMakeOOBM: List<String>,
@@ -81,8 +84,13 @@ private object SessionInvalidationTestProjectStructureParser : TestProjectStruct
     private const val MODULES_TO_MAKE_OOBM_IN_FIELD = "modulesToMakeOOBM"
     private const val EXPECTED_INVALIDATED_MODULES_FIELD = "expectedInvalidatedModules"
 
-    override fun parse(modules: List<TestProjectModule>, json: JsonObject): SessionInvalidationTestProjectStructure =
+    override fun parse(
+        libraries: List<TestProjectLibrary>,
+        modules: List<TestProjectModule>,
+        json: JsonObject,
+    ): SessionInvalidationTestProjectStructure =
         SessionInvalidationTestProjectStructure(
+            libraries,
             modules,
             json.getString(ROOT_MODULE_FIELD),
             json.getAsJsonArray(MODULES_TO_MAKE_OOBM_IN_FIELD)!!.map { it.asString }.sorted(),

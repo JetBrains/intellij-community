@@ -17,39 +17,70 @@ import org.junit.runner.RunWith;
 @TestRoot("base/fir/analysis-api-providers")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/moduleDependents")
-public class ModuleDependentsTestGenerated extends AbstractModuleDependentsTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+public abstract class ModuleDependentsTestGenerated extends AbstractModuleDependentsTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/moduleDependents/libraryTargets")
+    public static class LibraryTargets extends AbstractModuleDependentsTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("cyclical")
+        public void testCyclical() throws Exception {
+            runTest("testData/moduleDependents/libraryTargets/cyclical/");
+        }
+
+        @TestMetadata("rhombus")
+        public void testRhombus() throws Exception {
+            runTest("testData/moduleDependents/libraryTargets/rhombus/");
+        }
+
+        @TestMetadata("rhombus2")
+        public void testRhombus2() throws Exception {
+            runTest("testData/moduleDependents/libraryTargets/rhombus2/");
+        }
+
+        @TestMetadata("singleRoot")
+        public void testSingleRoot() throws Exception {
+            runTest("testData/moduleDependents/libraryTargets/singleRoot/");
+        }
     }
 
-    @TestMetadata("binaryTree")
-    public void testBinaryTree() throws Exception {
-        runTest("testData/moduleDependents/binaryTree/");
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/moduleDependents/moduleTargets")
+    public static class ModuleTargets extends AbstractModuleDependentsTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("cyclical")
-    public void testCyclical() throws Exception {
-        runTest("testData/moduleDependents/cyclical/");
-    }
+        @TestMetadata("binaryTree")
+        public void testBinaryTree() throws Exception {
+            runTest("testData/moduleDependents/moduleTargets/binaryTree/");
+        }
 
-    @TestMetadata("cyclicalSelf")
-    public void testCyclicalSelf() throws Exception {
-        runTest("testData/moduleDependents/cyclicalSelf/");
-    }
+        @TestMetadata("cyclical")
+        public void testCyclical() throws Exception {
+            runTest("testData/moduleDependents/moduleTargets/cyclical/");
+        }
 
-    @TestMetadata("cyclicalWithOutsideDependency")
-    public void testCyclicalWithOutsideDependency() throws Exception {
-        runTest("testData/moduleDependents/cyclicalWithOutsideDependency/");
-    }
+        @TestMetadata("cyclicalSelf")
+        public void testCyclicalSelf() throws Exception {
+            runTest("testData/moduleDependents/moduleTargets/cyclicalSelf/");
+        }
 
-    @TestMetadata("linear")
-    public void testLinear() throws Exception {
-        runTest("testData/moduleDependents/linear/");
-    }
+        @TestMetadata("cyclicalWithOutsideDependency")
+        public void testCyclicalWithOutsideDependency() throws Exception {
+            runTest("testData/moduleDependents/moduleTargets/cyclicalWithOutsideDependency/");
+        }
 
-    @TestMetadata("rhombus")
-    public void testRhombus() throws Exception {
-        runTest("testData/moduleDependents/rhombus/");
+        @TestMetadata("linear")
+        public void testLinear() throws Exception {
+            runTest("testData/moduleDependents/moduleTargets/linear/");
+        }
+
+        @TestMetadata("rhombus")
+        public void testRhombus() throws Exception {
+            runTest("testData/moduleDependents/moduleTargets/rhombus/");
+        }
     }
 }
