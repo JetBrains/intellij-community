@@ -5,9 +5,11 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.util.ThreeState
 import com.intellij.util.indexing.IndexedFile
 import com.intellij.util.indexing.hints.BinaryFileTypePolicy.*
+import org.jetbrains.annotations.ApiStatus
 
 enum class BinaryFileTypePolicy { BINARY, NON_BINARY, BINARY_OR_NON_BINARY }
 
+@ApiStatus.Experimental
 class FileNameSuffixInputFilter(private val fileNameSuffix: String,
                                 private val ignoreCase: Boolean,
                                 binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY) : BaseWeakFileNameSuffixInputFilter(binary) {
@@ -16,6 +18,7 @@ class FileNameSuffixInputFilter(private val fileNameSuffix: String,
   }
 }
 
+@ApiStatus.Experimental
 class ExactFileNameInputFilter(private val fileName: String,
                                private val ignoreCase: Boolean,
                                binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY) : BaseWeakFileNameSuffixInputFilter(binary) {
@@ -24,6 +27,7 @@ class ExactFileNameInputFilter(private val fileName: String,
   }
 }
 
+@ApiStatus.Experimental
 class FileNameExtensionInputFilter(extension: String,
                                    private val ignoreCase: Boolean,
                                    binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY) : BaseWeakFileNameSuffixInputFilter(binary) {
@@ -34,6 +38,7 @@ class FileNameExtensionInputFilter(extension: String,
   }
 }
 
+@ApiStatus.Experimental
 abstract class BaseWeakFileNameSuffixInputFilter internal constructor(
   private val binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY
 ) : BaseFileTypeInputFilter() {
