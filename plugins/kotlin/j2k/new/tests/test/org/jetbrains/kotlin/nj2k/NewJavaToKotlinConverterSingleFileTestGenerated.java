@@ -2639,6 +2639,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/function/mainVararg.java");
         }
 
+        @TestMetadata("mathCbrt17ApiVersion.java")
+        public void testMathCbrt17ApiVersion() throws Exception {
+            runTest("testData/newJ2k/function/mathCbrt17ApiVersion.java");
+        }
+
+        @TestMetadata("mathStaticMethods.java")
+        public void testMathStaticMethods() throws Exception {
+            runTest("testData/newJ2k/function/mathStaticMethods.java");
+        }
+
         @TestMetadata("methodClassType.java")
         public void testMethodClassType() throws Exception {
             runTest("testData/newJ2k/function/methodClassType.java");

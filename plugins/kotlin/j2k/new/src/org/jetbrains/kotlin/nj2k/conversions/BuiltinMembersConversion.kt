@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_8
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.conversions.ReplaceType.REPLACE_SELECTOR
 import org.jetbrains.kotlin.nj2k.conversions.ReplaceType.REPLACE_WITH_QUALIFIER
@@ -243,7 +244,8 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                 throwableConversions +
                 stringConversions +
                 arrayConversions +
-                printlnConversions
+                printlnConversions +
+                mathConversions
         return conversions.groupBy { it.from.fqName }
     }
 
@@ -771,6 +773,49 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                 withFilter ::isSystemOutCall
     )
 
+    private val mathConversions: List<Conversion> = listOf(
+        Method("java.lang.Math.abs") convertTo Method("kotlin.math.abs") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.acos") convertTo Method("kotlin.math.acos") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.asin") convertTo Method("kotlin.math.asin") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.atan") convertTo Method("kotlin.math.atan") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.atan2") convertTo Method("kotlin.math.atan2") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.cbrt") convertTo Method("kotlin.math.cbrt") withReplaceType REPLACE_WITH_QUALIFIER sinceKotlin KOTLIN_1_8,
+        Method("java.lang.Math.ceil") convertTo Method("kotlin.math.ceil") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.cos") convertTo Method("kotlin.math.cos") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.cosh") convertTo Method("kotlin.math.cosh") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.exp") convertTo Method("kotlin.math.exp") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.expm1") convertTo Method("kotlin.math.expm1") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.floor") convertTo Method("kotlin.math.floor") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.hypot") convertTo Method("kotlin.math.hypot") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.IEEEremainder") convertTo ExtensionMethod("kotlin.math.IEEErem") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.log") convertTo Method("kotlin.math.ln") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.log1p") convertTo Method("kotlin.math.ln1p") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.log10") convertTo Method("kotlin.math.log10") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.max") convertTo Method("kotlin.math.max") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.min") convertTo Method("kotlin.math.min") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.nextDown") convertTo ExtensionMethod("kotlin.math.nextDown") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.nextAfter") convertTo ExtensionMethod("kotlin.math.nextTowards") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.nextUp") convertTo ExtensionMethod("kotlin.math.nextUp") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.pow") convertTo ExtensionMethod("kotlin.math.pow") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.rint") convertTo Method("kotlin.math.round") withReplaceType REPLACE_WITH_QUALIFIER,
+
+        Method("java.lang.Math.round") convertTo CustomExpression { expression: JKExpression ->
+            val arguments = (expression as JKCallExpression).arguments
+            if (arguments.arguments.isEmpty()) return@CustomExpression expression
+            val firstArgument = arguments.arguments[0]::value.detached()
+            val method = if (firstArgument.isDoubleType()) "roundToLong" else "roundToInt"
+            firstArgument.callOn(symbolProvider.provideMethodSymbol("kotlin.math.$method")).withFormattingFrom(expression)
+        } withReplaceType REPLACE_WITH_QUALIFIER,
+
+        Method("java.lang.Math.signum") convertTo Method("kotlin.math.sign") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.sin") convertTo Method("kotlin.math.sin") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.sinh") convertTo Method("kotlin.math.sinh") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.sqrt") convertTo Method("kotlin.math.sqrt") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.tan") convertTo Method("kotlin.math.tan") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.tanh") convertTo Method("kotlin.math.tanh") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.copySign") convertTo ExtensionMethod("kotlin.math.withSign") withReplaceType REPLACE_WITH_QUALIFIER,
+    )
+
     private fun castReceiverToJavaLangObject(): CustomExpression = CustomExpression { expr ->
         val parent = expr.parent ?: return@CustomExpression expr
         val (receiver, selector) = if (parent is JKQualifiedExpression) {
@@ -895,4 +940,7 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
 
     private fun List<JKLiteralExpression>.containsNull(): Boolean =
         any { it.isNull() }
+
+    private fun JKExpression?.isDoubleType(): Boolean =
+        this?.calculateType(typeFactory) == JKJavaPrimitiveType.DOUBLE
 }
