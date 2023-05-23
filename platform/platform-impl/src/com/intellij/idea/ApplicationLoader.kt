@@ -226,7 +226,9 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
   launch {
     // LocalHistory wants ManagingFS.
     // It should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner.
-    app.serviceAsync<ManagingFS>()
+    subtask("ManagingFS preloading") {
+      app.serviceAsync<ManagingFS>()
+    }
     // PlatformVirtualFileManager also wants ManagingFS
     launch { app.serviceAsync<VirtualFileManager>() }
     asyncScope.launch { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
@@ -239,14 +241,14 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
       // required for indexing tasks (see JavaSourceModuleNameIndex for example)
       // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
       app.serviceAsync<PropertiesComponent>()
-      app.serviceAsync<FileTypeManager>()
 
-      // ProjectJdkTable wants FileTypeManager
-      launch {
-        // and VirtualFilePointerManager
-        app.serviceAsync<VirtualFilePointerManager>()
-        app.serviceAsync<ProjectJdkTable>()
+      // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
+      coroutineScope {
+        launch { app.serviceAsync<FileTypeManager>() }
+        launch { app.serviceAsync<VirtualFilePointerManager>() }
       }
+
+      app.serviceAsync<ProjectJdkTable>()
     }
 
     asyncScope.launch {
