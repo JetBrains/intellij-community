@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.icons.AllIcons
 import com.intellij.ide.wizard.setMinimumWidthForAllRowLabels
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager
@@ -370,45 +371,47 @@ private fun generateActualsForSelectedModules(
     }
     sourceFolderManager.rescanAndUpdateSourceFolders()
 
-    runWriteAction {
-        selectedModules.forEach { module ->
-            val root = moduleSourceRoots[module] ?: return@forEach
-            val moduleFile = getNewFilePathForModule(commonFilePath, module, simpleModuleNames)
-            val dir: PsiDirectory = declaration.manager.findDirectory(
-                root.findOrCreateDirectory(moduleFile.parent?.pathString.orEmpty())
-            ) ?: return@forEach
+    executeCommand(project, KotlinBundle.message("fix.create.missing.actual.declarations.title")) {
+        runWriteAction {
+            selectedModules.forEach { module ->
+                val root = moduleSourceRoots[module] ?: return@forEach
+                val moduleFile = getNewFilePathForModule(commonFilePath, module, simpleModuleNames)
+                val dir: PsiDirectory = declaration.manager.findDirectory(
+                    root.findOrCreateDirectory(moduleFile.parent?.pathString.orEmpty())
+                ) ?: return@forEach
 
-            val file = getOrCreateKotlinFileForSpecificPackage(moduleFile.name, dir, declaration.containingKtFile.packageFqName)
+                val file = getOrCreateKotlinFileForSpecificPackage(moduleFile.name, dir, declaration.containingKtFile.packageFqName)
 
-            if (declaration is KtCallableDeclaration) {
-                generateExpectOrActualInFile(
-                    project,
-                    editor,
-                    declaration.containingKtFile,
-                    file,
-                    null,
-                    declaration,
-                    module
-                ) block@{ project, checker, element ->
-                    if (!checker.isCorrectAndHaveAccessibleModifiers(element, true)) return@block null
-                    val descriptor = element.toDescriptor() as? CallableMemberDescriptor
+                if (declaration is KtCallableDeclaration) {
+                    generateExpectOrActualInFile(
+                        project,
+                        editor,
+                        declaration.containingKtFile,
+                        file,
+                        null,
+                        declaration,
+                        module
+                    ) block@{ project, checker, element ->
+                        if (!checker.isCorrectAndHaveAccessibleModifiers(element, true)) return@block null
+                        val descriptor = element.toDescriptor() as? CallableMemberDescriptor
 
-                    descriptor?.let { generateCallable(project, false, element, descriptor, checker = checker) }
-                }
-            } else if (declaration is KtClassOrObject) {
-                generateExpectOrActualInFile(
-                    project,
-                    editor,
-                    declaration.containingKtFile,
-                    file,
-                    null,
-                    declaration,
-                    module
-                ) block@{ project, checker, element ->
-                    checker.findAndApplyExistingClasses(element.collectDeclarationsForAddActualModifier().toList())
-                    if (!checker.isCorrectAndHaveAccessibleModifiers(element, true)) return@block null
+                        descriptor?.let { generateCallable(project, false, element, descriptor, checker = checker) }
+                    }
+                } else if (declaration is KtClassOrObject) {
+                    generateExpectOrActualInFile(
+                        project,
+                        editor,
+                        declaration.containingKtFile,
+                        file,
+                        null,
+                        declaration,
+                        module
+                    ) block@{ project, checker, element ->
+                        checker.findAndApplyExistingClasses(element.collectDeclarationsForAddActualModifier().toList())
+                        if (!checker.isCorrectAndHaveAccessibleModifiers(element, true)) return@block null
 
-                    generateClassOrObject(project, false, element, checker = checker)
+                        generateClassOrObject(project, false, element, checker = checker)
+                    }
                 }
             }
         }
