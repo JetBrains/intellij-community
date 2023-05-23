@@ -1135,7 +1135,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   // used in third-party plugins
   public void scheduleFoldersResolveForAllProjects() {
-    new MavenFolderResolver(myProject).resolveFoldersAndImport();
+    MavenProjectsManagerUtilKt.scheduleFoldersResolveForAllProjects(myProject);
   }
 
   public void scheduleArtifactsDownloading(final Collection<MavenProject> projects,
@@ -1386,7 +1386,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
 
-  private void fireProjectImportCompleted() {
+  void fireProjectImportCompleted() {
     for (Listener each : myManagerListeners) {
       each.projectImportCompleted();
     }

@@ -1,15 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
-import com.intellij.openapi.progress.TaskCancellation
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.lang.JavaVersion
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager.EmbedderTask
@@ -18,6 +13,7 @@ import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.withBackgroundProgressIfApplicable
 import java.io.File
 import java.util.function.Supplier
 
@@ -25,25 +21,21 @@ import java.util.function.Supplier
 class MavenFolderResolver(private val project: Project) {
   private val projectsManager: MavenProjectsManager = MavenProjectsManager.getInstance(project)
 
-  fun resolveFoldersAndImport() = resolveFoldersAndImport(projectsManager.projects)
+  suspend fun resolveFoldersAndImport() = resolveFoldersAndImport(projectsManager.projects)
 
-  fun resolveFoldersAndImport(projects: Collection<MavenProject>) {
-    val cs = CoroutineScope(SupervisorJob())
-    cs.launch {
-      val taskCancellation = TaskCancellation.cancellable()
-      withBackgroundProgress(project, MavenProjectBundle.message("maven.updating.folders"), taskCancellation) {
-        resolveFoldersAndImportBlocking(projects)
-      }
+  suspend fun resolveFoldersAndImport(projects: Collection<MavenProject>) {
+    withBackgroundProgressIfApplicable(project, MavenProjectBundle.message("maven.updating.folders"), true) {
+      doResolveFoldersAndImport(projects)
     }
   }
 
-  fun resolveFoldersAndImportBlocking(projects: Collection<MavenProject>) {
+  private suspend fun doResolveFoldersAndImport(projects: Collection<MavenProject>) {
     if (MavenUtil.isLinearImportEnabled()) {
       MavenImportingManager.getInstance(project).resolveFolders(projects)
       return
     }
 
-    resolveFoldersBlocking(projects)
+    resolveFoldersSync(projects)
 
     //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
     MavenUtil.restartMavenConnectors(project, false) { c: MavenServerConnector ->
@@ -54,21 +46,21 @@ class MavenFolderResolver(private val project: Project) {
     }
 
     if (projectsManager.hasScheduledProjects()) {
-      projectsManager.importMavenProjectsSync()
-      //myProjectsManager.fireProjectImportCompleted()
+      projectsManager.importMavenProjects()
+      projectsManager.fireProjectImportCompleted()
     }
   }
 
-  fun resolveFoldersBlocking(mavenProjects: Collection<MavenProject>) {
+  fun resolveFoldersSync(mavenProjects: Collection<MavenProject>) {
     val tree = projectsManager.projectsTree
     val mavenProjectsToResolve = collectMavenProjectsToResolve(mavenProjects, tree)
     val projectMultiMap = MavenUtil.groupByBasedir(mavenProjectsToResolve, tree)
     for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
-      resolveFoldersBlocking(baseDir, mavenProjectsForBaseDir, tree)
+      resolveFoldersSync(baseDir, mavenProjectsForBaseDir, tree)
     }
   }
 
-  private fun resolveFoldersBlocking(baseDir: String, mavenProjects: Collection<MavenProject>, tree: MavenProjectsTree) {
+  private fun resolveFoldersSync(baseDir: String, mavenProjects: Collection<MavenProject>, tree: MavenProjectsTree) {
     val syncConsoleSupplier = Supplier { projectsManager.syncConsole }
     val indicator = MavenProgressIndicator(project, syncConsoleSupplier)
     val goal = projectsManager.importingSettings.updateFoldersOnImportPhase

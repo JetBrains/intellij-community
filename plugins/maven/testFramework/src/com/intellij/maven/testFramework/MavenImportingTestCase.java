@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties;
 import com.intellij.java.library.MavenCoordinates;
+import com.intellij.maven.testFramework.utils.MavenImportingTestCaseKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
@@ -73,7 +74,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenResolvedContext myResolvedContext;
   protected MavenImportedContext myImportedContext;
   protected MavenImportingResult myImportingResult;
-  protected MavenSourcesGeneratedContext mySourcesGeneratedContext;
   protected MavenPluginResolvedContext myPluginResolvedContext;
 
     @Override
@@ -627,7 +627,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void resolveFoldersAndImport() {
-    new MavenFolderResolver(myProjectsManager.getProject()).resolveFoldersAndImportBlocking(myProjectsManager.getProjects());
+    MavenImportingTestCaseKt.resolveFoldersAndImport(myProjectsManager.getProject(), myProjectsManager.getProjects());
     if (isNewImportingProcess) {
       importProject();
     }
