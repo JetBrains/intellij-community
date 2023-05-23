@@ -26,6 +26,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -467,9 +468,7 @@ private suspend fun executePreloadActivity(activity: PreloadingActivity, descrip
 
   try {
     activity.execute()
-    if (isDebugEnabled) {
-      LOG.debug("${activity.javaClass.name} finished")
-    }
+    LOG.debug { "${activity.javaClass.name} finished" }
   }
   catch (e: CancellationException) {
     throw e

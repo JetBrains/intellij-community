@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.stats.completion.sender
 
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
@@ -21,19 +21,17 @@ internal fun isCompletionLogsSendAllowed(): Boolean {
   return ApplicationManager.getApplication().isEAP && java.lang.Boolean.parseBoolean(System.getProperty("completion.stats.send.logs", "true"))
 }
 
-private val LOG = logger<SenderPreloadingActivity>()
-
 @Service
 private class StatsCollectorPluginDisposable : Disposable {
   override fun dispose() {
   }
 }
 
-internal class SenderPreloadingActivity : PreloadingActivity() {
+private class SenderPreloadingActivity : PreloadingActivity() {
   private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, service<StatsCollectorPluginDisposable>())
   private val sendInterval = 5 * Time.MINUTE
 
-  override fun preload() {
+  override suspend fun execute() {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {
       return
@@ -50,7 +48,7 @@ internal class SenderPreloadingActivity : PreloadingActivity() {
     }
 
     try {
-      WebServiceStatusManager.getAllStatuses().forEachLoggingErrors(LOG) { status ->
+      WebServiceStatusManager.getAllStatuses().forEachLoggingErrors(logger<SenderPreloadingActivity>()) { status ->
         status.update()
         if (status.isServerOk()) {
           service<StatisticSender>().sendStatsData(status.dataServerUrl())
