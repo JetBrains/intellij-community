@@ -29,11 +29,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.xml.util.XmlStringUtil;
+import com.jetbrains.JBR;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -627,6 +631,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
 
     info.indicator.cancel();
+
+    if (ScreenReader.isActive() && JBR.isAccessibleAnnouncerSupported()) {
+      JFrame frame = WindowManager.getInstance().findVisibleFrame();
+      String key = success ? "plugins.configurable.plugin.installing.success" : "plugins.configurable.plugin.installing.failed";
+      String message = IdeBundle.message(key, descriptor.getName());
+      AccessibleAnnouncerUtil.announce(frame, message, true);
+    }
 
     if (success) {
       needRestart |= restartRequired;
