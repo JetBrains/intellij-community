@@ -332,9 +332,21 @@ private fun Module.selectExistingSourceRoot(
 
     if (roots.size < 2) return roots.firstOrNull()
 
-    val root = roots.firstOrNull {
-        it.name.equals("kotlin", true)
-    } ?: roots.first()
+    val root: VirtualFile
+    val rootsWithKotlinName = roots.filter { it.name.equals("kotlin", true) }
+    when (rootsWithKotlinName.size) {
+        0 -> {
+            root = roots.first()
+        }
+        1 -> {
+            root = rootsWithKotlinName.first()
+        }
+        else -> {
+            val rootsWithMainInPath = rootsWithKotlinName.firstOrNull { it.path.contains("Main") }
+            root = rootsWithMainInPath ?: rootsWithKotlinName.first()
+        }
+    }
+
     LOG.warn("${this.name} contains more then one source roots. ${root.name} was selected.")
     return root
 }
