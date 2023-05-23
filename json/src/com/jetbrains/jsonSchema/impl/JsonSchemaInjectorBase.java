@@ -41,12 +41,12 @@ public abstract class JsonSchemaInjectorBase implements MultiHostInjector {
 
     @Override
     public @NotNull String getPrefix() {
-      return StringUtil.notNullize(prefix) ;
+      return StringUtil.notNullize(prefix);
     }
 
     @Override
     public @NotNull String getSuffix() {
-      return StringUtil.notNullize(postfix) ;
+      return StringUtil.notNullize(postfix);
     }
 
     @Override
