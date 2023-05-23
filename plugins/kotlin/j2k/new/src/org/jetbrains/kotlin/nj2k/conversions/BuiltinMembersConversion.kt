@@ -256,37 +256,23 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
     )
 
     private val primitiveConversions: List<Conversion> = listOf(
-        Method("java.lang.Boolean.valueOf") convertTo valueOfReplacement()
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Byte.valueOf") convertTo valueOfReplacement()
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Short.valueOf") convertTo valueOfReplacement()
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Integer.valueOf") convertTo valueOfReplacement()
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Long.valueOf") convertTo valueOfReplacement()
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Float.valueOf") convertTo valueOfReplacement()
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Double.valueOf") convertTo valueOfReplacement()
-                withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Boolean.valueOf") convertTo valueOfReplacement() withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Byte.valueOf") convertTo valueOfReplacement() withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Short.valueOf") convertTo valueOfReplacement() withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Integer.valueOf") convertTo valueOfReplacement() withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Long.valueOf") convertTo valueOfReplacement() withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Float.valueOf") convertTo valueOfReplacement() withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Double.valueOf") convertTo valueOfReplacement() withReplaceType REPLACE_WITH_QUALIFIER,
 
-        Method("java.lang.Boolean.parseBoolean") convertTo ExtensionMethod("kotlin.text.toBoolean")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Byte.parseByte") convertTo ExtensionMethod("kotlin.text.toByte")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Short.parseShort") convertTo ExtensionMethod("kotlin.text.toShort")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Integer.parseInt") convertTo ExtensionMethod("kotlin.text.toInt")
-                withReplaceType REPLACE_WITH_QUALIFIER
+        Method("java.lang.Boolean.parseBoolean") convertTo ExtensionMethod("kotlin.text.toBoolean") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Byte.parseByte") convertTo ExtensionMethod("kotlin.text.toByte") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Short.parseShort") convertTo ExtensionMethod("kotlin.text.toShort") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Integer.parseInt") convertTo ExtensionMethod("kotlin.text.toInt") withReplaceType REPLACE_WITH_QUALIFIER
                 withByArgumentsFilter { it.size <= 2 },
-        Method("java.lang.Long.parseLong") convertTo ExtensionMethod("kotlin.text.toLong")
-                withReplaceType REPLACE_WITH_QUALIFIER
+        Method("java.lang.Long.parseLong") convertTo ExtensionMethod("kotlin.text.toLong") withReplaceType REPLACE_WITH_QUALIFIER
                 withByArgumentsFilter { it.size <= 2 },
-        Method("java.lang.Float.parseFloat") convertTo ExtensionMethod("kotlin.text.toFloat")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Double.parseDouble") convertTo ExtensionMethod("kotlin.text.toDouble")
-                withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Float.parseFloat") convertTo ExtensionMethod("kotlin.text.toFloat") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Double.parseDouble") convertTo ExtensionMethod("kotlin.text.toDouble") withReplaceType REPLACE_WITH_QUALIFIER,
 
         Method("java.lang.Number.byteValue") convertTo Method("kotlin.Number.toByte"),
         Method("java.lang.Number.doubleValue") convertTo Method("kotlin.Number.toDouble"),
@@ -295,51 +281,30 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.lang.Number.longValue") convertTo Method("kotlin.Number.toLong"),
         Method("java.lang.Number.shortValue") convertTo Method("kotlin.Number.toShort"),
 
-        Field("java.lang.Byte.MIN_VALUE") convertTo Field("kotlin.Byte.Companion.MIN_VALUE")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Byte.MAX_VALUE") convertTo Field("kotlin.Byte.Companion.MAX_VALUE")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Short.MIN_VALUE") convertTo Field("kotlin.Short.Companion.MIN_VALUE")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Short.MAX_VALUE") convertTo Field("kotlin.Short.Companion.MAX_VALUE")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Integer.MIN_VALUE") convertTo Field("kotlin.Int.Companion.MIN_VALUE")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Integer.MAX_VALUE") convertTo Field("kotlin.Int.Companion.MAX_VALUE")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Long.MIN_VALUE") convertTo Field("kotlin.Long.Companion.MIN_VALUE")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Long.MAX_VALUE") convertTo Field("kotlin.Long.Companion.MAX_VALUE")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Float.MIN_VALUE") convertTo Field("kotlin.Float.Companion.MIN_VALUE")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Float.MAX_VALUE") convertTo Field("kotlin.Float.Companion.MAX_VALUE")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Float.POSITIVE_INFINITY") convertTo Field("kotlin.Float.Companion.POSITIVE_INFINITY")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Float.NEGATIVE_INFINITY") convertTo Field("kotlin.Float.Companion.NEGATIVE_INFINITY")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Float.NaN") convertTo Field("kotlin.Float.Companion.NaN")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Double.MIN_VALUE") convertTo Field("kotlin.Double.Companion.MIN_VALUE")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Double.MAX_VALUE") convertTo Field("kotlin.Double.Companion.MAX_VALUE")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Double.POSITIVE_INFINITY") convertTo Field("kotlin.Double.Companion.POSITIVE_INFINITY")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Double.NEGATIVE_INFINITY") convertTo Field("kotlin.Double.Companion.NEGATIVE_INFINITY")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Field("java.lang.Double.NaN") convertTo Field("kotlin.Double.Companion.NaN")
-                withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Byte.MIN_VALUE") convertTo Field("kotlin.Byte.Companion.MIN_VALUE") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Byte.MAX_VALUE") convertTo Field("kotlin.Byte.Companion.MAX_VALUE") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Short.MIN_VALUE") convertTo Field("kotlin.Short.Companion.MIN_VALUE") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Short.MAX_VALUE") convertTo Field("kotlin.Short.Companion.MAX_VALUE") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Integer.MIN_VALUE") convertTo Field("kotlin.Int.Companion.MIN_VALUE") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Integer.MAX_VALUE") convertTo Field("kotlin.Int.Companion.MAX_VALUE") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Long.MIN_VALUE") convertTo Field("kotlin.Long.Companion.MIN_VALUE") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Long.MAX_VALUE") convertTo Field("kotlin.Long.Companion.MAX_VALUE") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Float.MIN_VALUE") convertTo Field("kotlin.Float.Companion.MIN_VALUE") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Float.MAX_VALUE") convertTo Field("kotlin.Float.Companion.MAX_VALUE") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Float.POSITIVE_INFINITY") convertTo Field("kotlin.Float.Companion.POSITIVE_INFINITY") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Float.NEGATIVE_INFINITY") convertTo Field("kotlin.Float.Companion.NEGATIVE_INFINITY") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Float.NaN") convertTo Field("kotlin.Float.Companion.NaN") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Double.MIN_VALUE") convertTo Field("kotlin.Double.Companion.MIN_VALUE") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Double.MAX_VALUE") convertTo Field("kotlin.Double.Companion.MAX_VALUE") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Double.POSITIVE_INFINITY") convertTo Field("kotlin.Double.Companion.POSITIVE_INFINITY") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Double.NEGATIVE_INFINITY") convertTo Field("kotlin.Double.Companion.NEGATIVE_INFINITY") withReplaceType REPLACE_WITH_QUALIFIER,
+        Field("java.lang.Double.NaN") convertTo Field("kotlin.Double.Companion.NaN") withReplaceType REPLACE_WITH_QUALIFIER,
 
-        Method("java.lang.Character.toUpperCase") convertTo ExtensionMethod("kotlin.text.uppercaseChar")
-                sinceKotlin ApiVersion.KOTLIN_1_5
+        Method("java.lang.Character.toUpperCase") convertTo ExtensionMethod("kotlin.text.uppercaseChar") sinceKotlin ApiVersion.KOTLIN_1_5
                 withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Character.toLowerCase") convertTo ExtensionMethod("kotlin.text.lowercaseChar")
-                sinceKotlin ApiVersion.KOTLIN_1_5
+        Method("java.lang.Character.toLowerCase") convertTo ExtensionMethod("kotlin.text.lowercaseChar") sinceKotlin ApiVersion.KOTLIN_1_5
                 withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Character.toTitleCase") convertTo ExtensionMethod("kotlin.text.titlecaseChar")
-                sinceKotlin ApiVersion.KOTLIN_1_5
+        Method("java.lang.Character.toTitleCase") convertTo ExtensionMethod("kotlin.text.titlecaseChar") sinceKotlin ApiVersion.KOTLIN_1_5
                 withReplaceType REPLACE_WITH_QUALIFIER,
 
         Method("java.lang.Character.digit") convertTo CustomExpression { expression ->
@@ -367,17 +332,11 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
 
     private val objectConversions: List<Conversion> = listOf(
         Method("java.lang.Object.getClass") convertTo Field("kotlin.jvm.javaClass"),
-        Method("java.lang.Object.notify")
-                convertTo castReceiverToJavaLangObject()
-                withReplaceType REPLACE_WITH_QUALIFIER
+        Method("java.lang.Object.notify") convertTo castReceiverToJavaLangObject() withReplaceType REPLACE_WITH_QUALIFIER
                 withFilter ::filterReceiverCastToJavaLangObject,
-        Method("java.lang.Object.notifyAll")
-                convertTo castReceiverToJavaLangObject()
-                withReplaceType REPLACE_WITH_QUALIFIER
+        Method("java.lang.Object.notifyAll") convertTo castReceiverToJavaLangObject() withReplaceType REPLACE_WITH_QUALIFIER
                 withFilter ::filterReceiverCastToJavaLangObject,
-        Method("java.lang.Object.wait")
-                convertTo castReceiverToJavaLangObject()
-                withReplaceType REPLACE_WITH_QUALIFIER
+        Method("java.lang.Object.wait") convertTo castReceiverToJavaLangObject() withReplaceType REPLACE_WITH_QUALIFIER
                 withFilter ::filterReceiverCastToJavaLangObject,
     )
 
@@ -388,12 +347,8 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.util.Map.values") convertTo Field("kotlin.collections.Map.values"),
         Method("java.util.Collection.size") convertTo Field("kotlin.collections.Collection.size"),
         Method("java.util.Collection.remove") convertTo Method("kotlin.collections.MutableCollection.remove"),
-        Method("java.util.Collection.toArray")
-                convertTo Method("kotlin.collections.toTypedArray")
-                withByArgumentsFilter { it.isEmpty() },
-        Method("java.util.Collection.toArray")
-                convertTo Method("kotlin.collections.toTypedArray")
-                withByArgumentsFilter {
+        Method("java.util.Collection.toArray") convertTo Method("kotlin.collections.toTypedArray") withByArgumentsFilter { it.isEmpty() },
+        Method("java.util.Collection.toArray") convertTo Method("kotlin.collections.toTypedArray") withByArgumentsFilter {
             it.singleOrNull()?.let { parameter ->
                 parameter.safeAs<JKCallExpression>()?.identifier?.fqName == "kotlin.arrayOfNulls"
             } == true
@@ -403,29 +358,13 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.util.Map.Entry.getKey") convertTo Field("kotlin.collections.Map.Entry.key"),
         Method("java.util.Map.Entry.getValue") convertTo Field("kotlin.collections.Map.Entry.value"),
 
-        Method("java.util.Set.of")
-                convertTo Method("kotlin.collections.setOf")
-                withByArgumentsFilter ::setOfFilter
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.util.List.of")
-                convertTo Method("kotlin.collections.listOf")
-                withByArgumentsFilter ::listOfFilter
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.util.Collections.singletonList")
-                convertTo Method("kotlin.collections.listOf")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.util.Collections.singleton")
-                convertTo Method("kotlin.collections.setOf")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.util.Collections.emptyList")
-                convertTo Method("kotlin.collections.emptyList")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.util.Collections.emptySet")
-                convertTo Method("kotlin.collections.emptySet")
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.util.Collections.emptyMap")
-                convertTo Method("kotlin.collections.emptyMap")
-                withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.util.Set.of") convertTo Method("kotlin.collections.setOf") withReplaceType REPLACE_WITH_QUALIFIER withByArgumentsFilter ::setOfFilter,
+        Method("java.util.List.of") convertTo Method("kotlin.collections.listOf") withReplaceType REPLACE_WITH_QUALIFIER withByArgumentsFilter ::listOfFilter,
+        Method("java.util.Collections.singletonList") convertTo Method("kotlin.collections.listOf") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.util.Collections.singleton") convertTo Method("kotlin.collections.setOf") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.util.Collections.emptyList") convertTo Method("kotlin.collections.emptyList") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.util.Collections.emptySet") convertTo Method("kotlin.collections.emptySet") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.util.Collections.emptyMap") convertTo Method("kotlin.collections.emptyMap") withReplaceType REPLACE_WITH_QUALIFIER,
     )
 
     private val enumConversions: List<Conversion> = listOf(
@@ -467,14 +406,10 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
             JKArgumentList(call)
         },
         Method("java.lang.String.getBytes") convertTo Method("kotlin.text.toByteArray"),
-        Method("java.lang.String.valueOf")
-                convertTo ExtensionMethod("kotlin.Any.toString")
-                withReplaceType REPLACE_WITH_QUALIFIER
+        Method("java.lang.String.valueOf") convertTo ExtensionMethod("kotlin.Any.toString") withReplaceType REPLACE_WITH_QUALIFIER
                 withByArgumentsFilter { it.isNotEmpty() && it.first().calculateType(typeFactory)?.isArrayType() == false },
 
-        Method("java.lang.String.getChars")
-                convertTo Method("kotlin.text.toCharArray")
-                withByArgumentsFilter { it.size == 4 }
+        Method("java.lang.String.getChars") convertTo Method("kotlin.text.toCharArray") withByArgumentsFilter { it.size == 4 }
                 withArgumentsProvider { argumentList ->
             val srcBeginArgument = argumentList.arguments[0]::value.detached()
             val srcEndArgument = argumentList.arguments[1]::value.detached()
@@ -482,28 +417,13 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
             val dstBeginArgument = argumentList.arguments[3]::value.detached()
             JKArgumentList(dstArgument, dstBeginArgument, srcBeginArgument, srcEndArgument)
         },
-
-        Method("java.lang.String.valueOf")
-                convertTo Method("kotlin.String")
-                withReplaceType REPLACE_WITH_QUALIFIER
+        Method("java.lang.String.valueOf") convertTo Method("kotlin.String") withReplaceType REPLACE_WITH_QUALIFIER
                 withByArgumentsFilter { it.isNotEmpty() && it.first().calculateType(typeFactory)?.isArrayType() == true },
-
-        Method("java.lang.String.copyValueOf")
-                convertTo Method("kotlin.String")
-                withReplaceType REPLACE_WITH_QUALIFIER
+        Method("java.lang.String.copyValueOf") convertTo Method("kotlin.String") withReplaceType REPLACE_WITH_QUALIFIER
                 withByArgumentsFilter { it.isNotEmpty() && it.first().calculateType(typeFactory)?.isArrayType() == true },
-
-        Method("java.lang.String.replaceAll")
-                convertTo Method("kotlin.text.replace")
-                withArgumentsProvider ::convertFirstArgumentToRegex,
-
-        Method("java.lang.String.replaceFirst")
-                convertTo Method("kotlin.text.replaceFirst")
-                withArgumentsProvider ::convertFirstArgumentToRegex,
-
-        Method("java.lang.String.equalsIgnoreCase")
-                convertTo Method("kotlin.text.equals")
-                withArgumentsProvider { arguments ->
+        Method("java.lang.String.replaceAll") convertTo Method("kotlin.text.replace") withArgumentsProvider ::convertFirstArgumentToRegex,
+        Method("java.lang.String.replaceFirst") convertTo Method("kotlin.text.replaceFirst") withArgumentsProvider ::convertFirstArgumentToRegex,
+        Method("java.lang.String.equalsIgnoreCase") convertTo Method("kotlin.text.equals") withArgumentsProvider { arguments ->
             JKArgumentList(
                 arguments::arguments.detached() + JKNamedArgument(
                     JKLiteralExpression("true", JKLiteralExpression.LiteralType.BOOLEAN),
@@ -512,16 +432,11 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
             )
         },
 
-        Method("java.lang.String.toUpperCase") convertTo Method("kotlin.text.uppercase")
-                sinceKotlin ApiVersion.KOTLIN_1_5
-                withArgumentsProvider (::stringConversionArgumentsProvider),
-        Method("java.lang.String.toLowerCase") convertTo Method("kotlin.text.lowercase")
-                sinceKotlin ApiVersion.KOTLIN_1_5
-                withArgumentsProvider (::stringConversionArgumentsProvider),
-
-        Method("java.lang.String.compareToIgnoreCase")
-                convertTo Method("kotlin.text.compareTo")
-                withArgumentsProvider { arguments ->
+        Method("java.lang.String.toUpperCase") convertTo Method("kotlin.text.uppercase") sinceKotlin ApiVersion.KOTLIN_1_5
+                withArgumentsProvider ::stringConversionArgumentsProvider,
+        Method("java.lang.String.toLowerCase") convertTo Method("kotlin.text.lowercase") sinceKotlin ApiVersion.KOTLIN_1_5
+                withArgumentsProvider ::stringConversionArgumentsProvider,
+        Method("java.lang.String.compareToIgnoreCase") convertTo Method("kotlin.text.compareTo") withArgumentsProvider { arguments ->
             JKArgumentList(
                 arguments::arguments.detached() + JKNamedArgument(
                     JKLiteralExpression("true", JKLiteralExpression.LiteralType.BOOLEAN),
@@ -529,13 +444,8 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                 )
             )
         },
-        Method("java.lang.String.matches")
-                convertTo Method("kotlin.text.matches")
-                withArgumentsProvider ::convertFirstArgumentToRegex,
-
-        Method("java.lang.String.regionMatches")
-                convertTo Method("kotlin.text.regionMatches")
-                withByArgumentsFilter { it.size == 5 }
+        Method("java.lang.String.matches") convertTo Method("kotlin.text.matches") withArgumentsProvider ::convertFirstArgumentToRegex,
+        Method("java.lang.String.regionMatches") convertTo Method("kotlin.text.regionMatches") withByArgumentsFilter { it.size == 5 }
                 withArgumentsProvider { arguments ->
             val detachedArguments = arguments::arguments.detached()
             JKArgumentList(
@@ -565,19 +475,14 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         // Otherwise, `JKSymbolProvider` might choose a `split` overload with different parameters
         // and `ImplicitCastsConversion` downstream will try to insert a nonsensical cast
         // of the `limit` argument to Boolean.
-        Method("java.lang.String.split")
-                convertTo Method("kotlin.text.split", listOf("kotlin.text.Regex", "kotlin.Int"))
-                andAfter { expression ->
-            val arguments =
-                expression.cast<JKQualifiedExpression>()
-                    .selector.cast<JKCallExpression>()
-                    .arguments
-
-            val patternArgument =
-                arguments.arguments.first()::value.detached().callOn(
-                    symbolProvider.provideMethodSymbol("kotlin.text.toRegex")
-                )
-
+        Method("java.lang.String.split") convertTo Method(
+            "kotlin.text.split",
+            listOf("kotlin.text.Regex", "kotlin.Int")
+        ) andAfter { expression ->
+            val arguments = expression.cast<JKQualifiedExpression>().selector.cast<JKCallExpression>().arguments
+            val patternArgument = arguments.arguments.first()::value.detached().callOn(
+                symbolProvider.provideMethodSymbol("kotlin.text.toRegex")
+            )
             val limit: Int? = if (arguments.arguments.size == 2) {
                 arguments.arguments.last().value.asLiteralTextWithPrefix()?.toIntOrNull()
             } else {
@@ -612,44 +517,32 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
 
             return@andAfter if (limit == 0) {
                 // zero or absent limit: discard trailing empty strings to match Java behavior
-                expression
-                    .callOn(
-                        symbolProvider.provideMethodSymbol("kotlin.collections.dropLastWhile"),
-                        listOf(
-                            JKLambdaExpression(
-                                JKKtItExpression(typeFactory.types.string).callOn(
-                                    symbolProvider.provideMethodSymbol("kotlin.text.isEmpty")
-                                ).asStatement(),
-                                emptyList()
-                            )
+                expression.callOn(
+                    symbolProvider.provideMethodSymbol("kotlin.collections.dropLastWhile"),
+                    listOf(
+                        JKLambdaExpression(
+                            JKKtItExpression(typeFactory.types.string).callOn(
+                                symbolProvider.provideMethodSymbol("kotlin.text.isEmpty")
+                            ).asStatement()
                         )
                     )
+                )
             } else {
                 expression
             }.castToTypedArray()
         },
 
-        Method("java.lang.String.trim")
-                convertTo Method("kotlin.text.trim")
-                withArgumentsProvider {
+        Method("java.lang.String.trim") convertTo Method("kotlin.text.trim") withArgumentsProvider {
             JKArgumentList(
                 JKLambdaExpression(
                     JKExpressionStatement(
                         JKBinaryExpression(
-                            JKFieldAccessExpression(
-                                JKUnresolvedField( //TODO replace with `it` parameter
-                                    "it",
-                                    typeFactory
-                                )
-                            ),
+                            //TODO replace with `it` parameter
+                            JKFieldAccessExpression(JKUnresolvedField("it", typeFactory)),
                             JKLiteralExpression("' '", JKLiteralExpression.LiteralType.CHAR),
-                            JKKtOperatorImpl(
-                                JKOperatorToken.LTEQ,
-                                typeFactory.types.boolean
-                            )
+                            JKKtOperatorImpl(JKOperatorToken.LTEQ, typeFactory.types.boolean)
                         )
-                    ),
-                    emptyList()
+                    )
                 )
             )
         },
@@ -716,61 +609,29 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
     )
 
     private val arrayConversions: List<Conversion> = listOf(
-        Method("java.util.Arrays.copyOf")
-                convertTo ExtensionMethod("kotlin.collections.copyOf")
-                withByArgumentsFilter { it.size == 2 }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.util.Arrays.copyOfRange")
-                convertTo ExtensionMethod("kotlin.collections.copyOfRange")
-                withByArgumentsFilter { it.size == 3 }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.util.Arrays.equals")
-                convertTo ExtensionMethod("kotlin.collections.contentEquals")
-                withByArgumentsFilter { it.size == 2 }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.util.Arrays.deepEquals")
-                convertTo ExtensionMethod("kotlin.collections.contentDeepEquals")
-                withByArgumentsFilter { it.size == 2 }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.util.Arrays.hashCode")
-                convertTo ExtensionMethod("kotlin.collections.contentHashCode")
-                withByArgumentsFilter { it.size == 1 }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.util.Arrays.deepHashCode")
-                convertTo ExtensionMethod("kotlin.collections.contentDeepHashCode")
-                withByArgumentsFilter { it.size == 1 }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.util.Arrays.toString")
-                convertTo ExtensionMethod("kotlin.collections.contentToString")
-                withByArgumentsFilter { it.size == 1 }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.util.Arrays.deepToString")
-                convertTo ExtensionMethod("kotlin.collections.contentDeepToString")
-                withByArgumentsFilter { it.size == 1 }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.util.Arrays.asList")
-                convertTo Method("kotlin.collections.mutableListOf")
-                withByArgumentsFilter ::asListFilter
-                withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.util.Arrays.copyOf") convertTo ExtensionMethod("kotlin.collections.copyOf") withReplaceType REPLACE_WITH_QUALIFIER
+                withByArgumentsFilter { it.size == 2 },
+        Method("java.util.Arrays.copyOfRange") convertTo ExtensionMethod("kotlin.collections.copyOfRange") withReplaceType REPLACE_WITH_QUALIFIER
+                withByArgumentsFilter { it.size == 3 },
+        Method("java.util.Arrays.equals") convertTo ExtensionMethod("kotlin.collections.contentEquals") withReplaceType REPLACE_WITH_QUALIFIER
+                withByArgumentsFilter { it.size == 2 },
+        Method("java.util.Arrays.deepEquals") convertTo ExtensionMethod("kotlin.collections.contentDeepEquals") withReplaceType REPLACE_WITH_QUALIFIER
+                withByArgumentsFilter { it.size == 2 },
+        Method("java.util.Arrays.hashCode") convertTo ExtensionMethod("kotlin.collections.contentHashCode") withReplaceType REPLACE_WITH_QUALIFIER
+                withByArgumentsFilter { it.size == 1 },
+        Method("java.util.Arrays.deepHashCode") convertTo ExtensionMethod("kotlin.collections.contentDeepHashCode") withReplaceType REPLACE_WITH_QUALIFIER
+                withByArgumentsFilter { it.size == 1 },
+        Method("java.util.Arrays.toString") convertTo ExtensionMethod("kotlin.collections.contentToString") withReplaceType REPLACE_WITH_QUALIFIER
+                withByArgumentsFilter { it.size == 1 },
+        Method("java.util.Arrays.deepToString") convertTo ExtensionMethod("kotlin.collections.contentDeepToString") withReplaceType REPLACE_WITH_QUALIFIER
+                withByArgumentsFilter { it.size == 1 },
+        Method("java.util.Arrays.asList") convertTo Method("kotlin.collections.mutableListOf") withReplaceType REPLACE_WITH_QUALIFIER
+                withByArgumentsFilter ::asListFilter,
     )
 
     private val printlnConversions: List<Conversion> = listOf(
-        Method("java.io.PrintStream.println")
-                convertTo Method("kotlin.io.println")
-                withReplaceType REPLACE_WITH_QUALIFIER
-                withFilter ::isSystemOutCall,
-        Method("java.io.PrintStream.print")
-                convertTo Method("kotlin.io.print")
-                withReplaceType REPLACE_WITH_QUALIFIER
-                withFilter ::isSystemOutCall
+        Method("java.io.PrintStream.println") convertTo Method("kotlin.io.println") withReplaceType REPLACE_WITH_QUALIFIER withFilter ::isSystemOutCall,
+        Method("java.io.PrintStream.print") convertTo Method("kotlin.io.print") withReplaceType REPLACE_WITH_QUALIFIER withFilter ::isSystemOutCall
     )
 
     private val mathConversions: List<Conversion> = listOf(
@@ -876,11 +737,7 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
     private fun JKExpression.callOn(symbol: JKMethodSymbol, arguments: List<JKArgument> = emptyList()) =
         JKQualifiedExpression(
             this.parenthesizeIfCompoundExpression(),
-            JKCallExpressionImpl(
-                symbol,
-                JKArgumentList(arguments),
-                JKTypeArgumentList()
-            )
+            JKCallExpressionImpl(symbol, JKArgumentList(arguments), JKTypeArgumentList())
         )
 
     private fun isSystemOutCall(expression: JKExpression): Boolean =
