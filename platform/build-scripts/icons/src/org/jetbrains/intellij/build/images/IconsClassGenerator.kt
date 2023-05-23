@@ -257,14 +257,14 @@ internal open class IconsClassGenerator(private val projectHome: Path,
 
   private fun getCopyrightComment(text: String?): String {
     if (text == null) {
-      return ""
+      return "// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.\n"
     }
     val i = text.indexOf("package ")
     if (i == -1) {
       return ""
     }
     val comment = text.substring(0, i)
-    return if (comment.trim().endsWith("*/") || comment.trim().startsWith("//")) comment else ""
+    return if (comment.startsWith("//") || comment.trimEnd().endsWith("*/")) comment else ""
   }
 
   private fun getSeparators(text: String?): LineSeparator {
@@ -497,15 +497,15 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       append(result, "${javaDoc}public static final @Deprecated @NotNull Icon $oldName = $iconName;", level)
     }
   }
+}
 
-  protected fun append(result: StringBuilder, text: String, level: Int) {
-    if (text.isNotBlank()) {
-      for (i in 0 until level) {
-        result.append(' ').append(' ')
-      }
+private fun append(result: StringBuilder, text: String, level: Int) {
+  if (text.isNotBlank()) {
+    repeat(level) {
+      result.append(' ').append(' ')
     }
-    result.append(text).append('\n')
   }
+  result.append(text).append('\n')
 }
 
 private fun generateIconFieldName(file: Path): CharSequence {
@@ -658,10 +658,11 @@ private fun capitalize(name: String): String {
 }
 
 private const val ICON_MANAGER_CODE = "IconManager.getInstance()"
+private val commentRegExp = Regex("(?s)<!--.*?-->")
 
 // remove line separators to unify line separators (\n vs \r\n), trim lines
 // normalization is required because a cache key is based on content
-internal fun loadAndNormalizeSvgFile(svgFile: Path): String {
+private fun loadAndNormalizeSvgFile(svgFile: Path): String {
   val builder = StringBuilder()
   Files.lines(svgFile).use { lines ->
     for (line in lines) {
@@ -687,7 +688,7 @@ internal fun loadAndNormalizeSvgFile(svgFile: Path): String {
       }
     }
   }
-  return builder.toString()
+  return commentRegExp.replace(builder, "")
 }
 
 private fun getPluginPackageIfPossible(module: JpsModule): String? {
