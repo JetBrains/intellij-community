@@ -229,7 +229,7 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
     app.serviceAsync<ManagingFS>()
     // PlatformVirtualFileManager also wants ManagingFS
     launch { app.serviceAsync<VirtualFileManager>() }
-    launch { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
+    asyncScope.launch { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
   }
   launch {
     // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
