@@ -12513,6 +12513,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/math/atan2.kt");
             }
 
+            @TestMetadata("cbrt.kt")
+            public void testCbrt() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/math/cbrt.kt");
+            }
+
+            @TestMetadata("cbrt17apiVersion.kt")
+            public void testCbrt17apiVersion() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/math/cbrt17apiVersion.kt");
+            }
+
             @TestMetadata("ceil.kt")
             public void testCeil() throws Exception {
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/math/ceil.kt");

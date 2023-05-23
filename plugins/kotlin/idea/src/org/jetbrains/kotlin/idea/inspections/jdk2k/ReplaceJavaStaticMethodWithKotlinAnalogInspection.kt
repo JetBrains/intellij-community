@@ -7,6 +7,8 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_8
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -121,6 +123,7 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
             Replacement("java.lang.Math.asin", "kotlin.math.asin"),
             Replacement("java.lang.Math.atan", "kotlin.math.atan"),
             Replacement("java.lang.Math.atan2", "kotlin.math.atan2"),
+            Replacement("java.lang.Math.cbrt", "kotlin.math.cbrt", filter = { it.languageVersionSettings.apiVersion >= KOTLIN_1_8 }),
             Replacement("java.lang.Math.ceil", "kotlin.math.ceil"),
             Replacement("java.lang.Math.cos", "kotlin.math.cos"),
             Replacement("java.lang.Math.cosh", "kotlin.math.cosh"),
