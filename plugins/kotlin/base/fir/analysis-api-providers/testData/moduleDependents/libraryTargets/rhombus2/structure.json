@@ -1,0 +1,15 @@
+{
+    "libraries": [
+        { "name": "L1" },
+        { "name": "L2" }
+    ],
+    "modules" : [
+        { "name": "A", "dependsOn": ["B", "C"] },
+        { "name": "B", "dependsOn": ["D"] },
+        { "name": "C", "dependsOn": ["D", "L2"] },
+        { "name": "D", "dependsOn": ["L1"] }
+    ],
+    "target": { "library": "L2" },
+    "directDependents": ["C"],
+    "transitiveDependents": ["A", "C"]
+}

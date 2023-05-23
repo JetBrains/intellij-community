@@ -8,7 +8,7 @@
     { "name": "F", "dependsOn": [] },
     { "name": "G", "dependsOn": [] }
   ],
-  "module": "F",
+  "target": { "module": "F" },
   "directDependents": ["C"],
   "transitiveDependents": ["C", "A"]
 }

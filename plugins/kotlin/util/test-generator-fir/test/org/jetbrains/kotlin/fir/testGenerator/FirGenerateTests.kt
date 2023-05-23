@@ -83,7 +83,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractModuleDependentsTest> {
-            model("moduleDependents", pattern = DIRECTORY, isRecursive = false)
+            model("moduleDependents/libraryTargets", pattern = DIRECTORY, isRecursive = false)
+            model("moduleDependents/moduleTargets", pattern = DIRECTORY, isRecursive = false)
         }
     }
 

@@ -3,7 +3,7 @@
         { "name": "A", "dependsOn": ["A"] },
         { "name": "B", "dependsOn": ["A"] }
     ],
-    "module": "A",
+    "target": { "module": "A" },
     "directDependents": ["B"],
     "transitiveDependents": ["B"]
 }

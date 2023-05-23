@@ -1,0 +1,20 @@
+{
+    "libraries": [
+        { "name": "L1" },
+        { "name": "L2" }
+    ],
+    "modules" : [
+        { "name": "A", "dependsOn": ["B", "C", "H"] },
+        { "name": "B", "dependsOn": ["D", "E"] },
+        { "name": "C", "dependsOn": ["F", "G"] },
+        { "name": "D", "dependsOn": ["L1"] },
+        { "name": "E", "dependsOn": ["L1"] },
+        { "name": "F", "dependsOn": ["L2"] },
+        { "name": "G", "dependsOn": ["L2"] },
+        { "name": "H", "dependsOn": ["I"] },
+        { "name": "I", "dependsOn": ["L1"] }
+    ],
+    "target": { "library": "L1" },
+    "directDependents": ["D", "E", "I"],
+    "transitiveDependents": ["D", "E", "I", "H", "B", "A"]
+}
