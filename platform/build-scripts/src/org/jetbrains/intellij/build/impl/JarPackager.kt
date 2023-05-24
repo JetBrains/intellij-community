@@ -478,8 +478,11 @@ private fun getLibraryFiles(library: JpsLibrary,
   // allow duplication if packed into the same target file and have the same common prefix
   files.removeIf {
     val alreadyCopiedFor = copiedFiles.get(it) ?: return@removeIf false
+    val alreadyCopiedLibraryName = alreadyCopiedFor.library.name
     alreadyCopiedFor.targetFile == targetFile &&
-    (alreadyCopiedFor.library.name.startsWith("ktor-") || (isModuleLevel && alreadyCopiedFor.library.name == libName))
+    (alreadyCopiedLibraryName.startsWith("ktor-") ||
+     alreadyCopiedLibraryName.startsWith("ai.grazie.") ||
+     (isModuleLevel && alreadyCopiedLibraryName == libName))
   }
 
   for (file in files) {
