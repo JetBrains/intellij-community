@@ -1297,6 +1297,7 @@
     <lang.findUsagesProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaFindUsagesProvider"/>
     <lang.unwrapDescriptor language="JAVA" implementationClass="com.intellij.codeInsight.unwrap.JavaUnwrapDescriptor"/>
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.JavaSurroundWithStatementRangeAdjuster"/>
+    <lang.floatingToolbarFilter language="JAVA" implementationClass="com.intellij.ui.codeFloatingToolbar.FloatingToolbarFilter$ENABLED"/>
     <lang.surroundDescriptor language="JAVA" implementationClass="com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurroundDescriptor"/>
     <lang.surroundDescriptor language="JAVA" implementationClass="com.intellij.codeInsight.generation.surroundWith.JavaStatementsSurroundDescriptor"/>
     <lang.surroundDescriptor language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.SurroundAutoCloseableAction$Template"/>
