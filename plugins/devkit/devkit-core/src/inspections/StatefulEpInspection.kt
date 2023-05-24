@@ -89,10 +89,6 @@ class StatefulEpInspection : DevKitUastInspectionBase(UField::class.java, UClass
     return false
   }
 
-  private fun UField.getAnchorPsi(): PsiElement? {
-    return this.uastAnchor?.sourcePsi
-  }
-
   private fun getMessage(isQuickFix: Boolean): @Nls String {
     var message = DevKitBundle.message("inspections.stateful.extension.point.leak.psi.element")
     if (isQuickFix) {
