@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 
 class KotlinIdePluginVersion(
     val rawVersion: String,
+    val platformBaselineVersion: String,
     val platformVersion: String,
     val isAndroidStudio: Boolean,
     val kotlinCompilerVersion: IdeKotlinVersion
@@ -34,7 +35,14 @@ class KotlinIdePluginVersion(
             val kotlinCompilerVersion = IdeKotlinVersion.parse(rawKotlinVersion)
                 .getOrElse { return Result.failure(it) }
 
-            val version = KotlinIdePluginVersion(rawVersion, platformVersion, isAndroidStudio, kotlinCompilerVersion)
+            val version = KotlinIdePluginVersion(
+                rawVersion,
+                platformReleaseBranchName,
+                platformVersion,
+                isAndroidStudio,
+                kotlinCompilerVersion
+            )
+
             return Result.success(version)
         }
 
