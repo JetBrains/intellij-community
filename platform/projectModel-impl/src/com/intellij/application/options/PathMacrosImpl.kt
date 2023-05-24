@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.application.options
 
 import com.intellij.openapi.application.PathMacroContributor
@@ -30,16 +32,13 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
   private val ignoredMacros = ContainerUtil.createLockFreeCopyOnWriteList<String>()
 
   companion object {
-    @JvmStatic
     private val EP_NAME = ExtensionPointName<PathMacroContributor>("com.intellij.pathMacroContributor")
-    @JvmStatic
     private val LOG = logger<PathMacrosImpl>()
 
     const val IGNORED_MACRO_ELEMENT = "ignoredMacro"
     const val MAVEN_REPOSITORY = "MAVEN_REPOSITORY"
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-    @JvmStatic
     private val SYSTEM_MACROS: Set<String> = java.util.Set.of(
       PathMacroUtil.APPLICATION_HOME_DIR,
       PathMacroUtil.APPLICATION_PLUGINS_DIR,
@@ -180,7 +179,7 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
       if (value.lastOrNull() == '/') {
         value = value.substring(0, value.length - 1)
       }
-      newMacros[name] = value
+      newMacros.put(name, value)
     }
 
     val newIgnoredMacros = mutableListOf<String>()
@@ -197,7 +196,7 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
     }
 
     for (forcedMacro in forcedMacros) {
-      if (newMacros[forcedMacro.key] != forcedMacro.value) {
+      if (newMacros.get(forcedMacro.key) != forcedMacro.value) {
         modificationStamp.incrementAndGet()
         break
       }
