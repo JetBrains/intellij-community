@@ -330,12 +330,9 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val action = ActionManager.getInstance().getAction("RunConfiguration")
-    val runConfigAction = action as? RunConfigurationsComboBoxAction ?: return
-    runConfigAction.update(e)
-    val icon = e.presentation.icon
-    if (icon != null) {
-      e.presentation.icon = adjustIconForHeader(icon)
+    (ActionManager.getInstance().getAction("RunConfiguration") as? RunConfigurationsComboBoxAction ?: return).update(e)
+    e.presentation.icon?.let {
+      e.presentation.icon = adjustIconForHeader(it)
     }
     val configurationName = e.project?.let { RunManager.getInstanceIfCreated(it) }?.selectedConfiguration?.name
     if (configurationName?.length?.let { it > CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH } == true) {
@@ -349,9 +346,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-  override fun displayTextInToolbar(): Boolean {
-    return true
-  }
+  override fun displayTextInToolbar(): Boolean = true
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return object : ActionButtonWithText(this, presentation, place, {

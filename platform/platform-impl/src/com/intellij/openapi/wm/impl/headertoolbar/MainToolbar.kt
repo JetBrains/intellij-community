@@ -40,7 +40,6 @@ import javax.swing.JPanel
 private const val MAIN_TOOLBAR_ID = IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
 
 internal class MainToolbar: JPanel(HorizontalLayout(10)) {
-
   private val disposable = Disposer.newDisposable()
   private val mainMenuButton: MainMenuButton?
   private val expandableMenu: ExpandableMenu?
@@ -63,7 +62,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   }
 
   companion object {
-    suspend fun computeActionGroups(): List<Pair<ActionGroup, String>> {
+    internal suspend fun computeActionGroups(): List<Pair<ActionGroup, String>> {
       val app = ApplicationManager.getApplication() as ComponentManagerEx
       app.getServiceAsync(ActionManager::class.java)
       val customActionSchema = app.getServiceAsync(CustomActionsSchema::class.java)
@@ -136,9 +135,12 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) accessibleContext = AccessibleMainToolbar()
     accessibleContext.accessibleName =
-      if (ExperimentalUI.isNewUI() && UISettings.getInstance().separateMainMenu)
+      if (ExperimentalUI.isNewUI() && UISettings.getInstance().separateMainMenu) {
         UIBundle.message("main.toolbar.accessible.group.name")
-      else ""
+      }
+      else {
+        ""
+      }
     return accessibleContext
   }
 
@@ -175,9 +177,13 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
 
   private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component) {
     val minSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
-    if (!isSeparator(cmp)) currRect.width = Integer.max(currRect.width, minSize.width)
+    if (!isSeparator(cmp)) {
+      currRect.width = Integer.max(currRect.width, minSize.width)
+    }
     currRect.height = Integer.max(currRect.height, minSize.height)
-    if (prevRect != null && prevRect.maxX > currRect.minX) currRect.x = prevRect.maxX.toInt()
+    if (prevRect != null && prevRect.maxX > currRect.minX) {
+      currRect.x = prevRect.maxX.toInt()
+    }
     currRect.y = 0
   }
 
@@ -193,7 +199,7 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
     if (action is ComboBoxAction) {
       findComboButton(component)?.apply {
         setUI(MainToolbarComboBoxButtonUI())
-        addPropertyChangeListener("UI") { evt -> if (evt.newValue !is MainToolbarComboBoxButtonUI) setUI(MainToolbarComboBoxButtonUI())}
+        addPropertyChangeListener("UI") { event -> if (event.newValue !is MainToolbarComboBoxButtonUI) setUI(MainToolbarComboBoxButtonUI())}
       }
     }
     return component
@@ -214,9 +220,13 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
     if (c is ComboBoxButton) return c
 
     for (child in c.components) {
-      if (child is ComboBoxButton) return child
+      if (child is ComboBoxButton) {
+        return child
+      }
       val childCombo = (child as? Container)?.let { findComboButton(it) }
-      if (childCombo != null) return childCombo
+      if (childCombo != null) {
+        return childCombo
+      }
     }
     return null
   }
@@ -240,7 +250,6 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
       component.font = font
     }
   }
-
 }
 
 internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {
@@ -251,17 +260,17 @@ internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance)
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
 
-fun adjustIconForHeader(icon: Icon) = if (isDarkHeader()) IconLoader.getDarkIcon(icon, true) else icon
+fun adjustIconForHeader(icon: Icon): Icon = if (isDarkHeader()) IconLoader.getDarkIcon(icon, true) else icon
 
 private class HeaderIconUpdater {
-  private val iconsCache = ContainerUtil.createWeakSet<Icon>()
+  private val iconCache = ContainerUtil.createWeakSet<Icon>()
 
   private fun updateIcon(p: Presentation, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
     if (!isDarkHeader()) return
 
     getter(p)?.let { icon ->
       val replaceIcon = adjustIconForHeader(icon)
-      iconsCache.add(replaceIcon)
+      iconCache.add(replaceIcon)
       setter(p, replaceIcon)
     }
   }
@@ -270,7 +279,7 @@ private class HeaderIconUpdater {
     updateIcon(presentation, getter, setter)
     presentation.addPropertyChangeListener(PropertyChangeListener { evt ->
       if (evt.propertyName != propName) return@PropertyChangeListener
-      if (evt.newValue != null && evt.newValue in iconsCache) return@PropertyChangeListener
+      if (evt.newValue != null && evt.newValue in iconCache) return@PropertyChangeListener
       updateIcon(presentation, getter, setter)
     })
   }

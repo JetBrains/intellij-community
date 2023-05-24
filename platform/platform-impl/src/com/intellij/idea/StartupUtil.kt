@@ -165,7 +165,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     result
   }
 
-  val preloadLafClassesJob = preloadLafClasses()
+  preloadLafClasses()
 
   val schedulePluginDescriptorLoading = launch {
     // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
@@ -459,8 +459,9 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferr
   }
 }
 
-fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<String>): Int =
-  EXTERNAL_LISTENER.apply(currentDirectory, args)
+fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<String>): Int {
+  return EXTERNAL_LISTENER.apply(currentDirectory, args)
+}
 
 internal val isImplicitReadOnEDTDisabled: Boolean
   get() = java.lang.Boolean.getBoolean(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
