@@ -34,6 +34,7 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.FileFinder
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.runBlockingCancellableUnderIndicator
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -267,15 +268,15 @@ class MavenImportFlow {
     val d = Disposer.newDisposable("MavenImportFlow:resolveFolders:treeListener")
     val projectsFoldersResolved = Collections.synchronizedList(ArrayList<MavenProject>())
     Disposer.register(MavenDisposable.getInstance(project), d)
-    projectTree.addListener(object : MavenProjectsTree.Listener {
-      override fun foldersResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
-        if (projectWithChanges.second.hasChanges()) {
-          projectsFoldersResolved.add(projectWithChanges.first)
-        }
-      }
-    }, d)
     val folderResolver = MavenFolderResolver(project)
-    folderResolver.resolveFoldersSync(projects)
+    val projectsWithChanges = runBlockingCancellableUnderIndicator {
+      return@runBlockingCancellableUnderIndicator folderResolver.resolveFolders(projects)
+    }
+    for (projectWithChanges in projectsWithChanges) {
+      if (projectWithChanges.value.hasChanges()) {
+        projectsFoldersResolved.add(projectWithChanges.key)
+      }
+    }
 
     Disposer.dispose(d)
     return projectsFoldersResolved
