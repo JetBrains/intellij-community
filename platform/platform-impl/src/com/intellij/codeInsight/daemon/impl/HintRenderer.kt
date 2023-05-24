@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment
@@ -25,6 +25,7 @@ import org.intellij.lang.annotations.JdkConstants
 import java.awt.*
 import java.awt.font.FontRenderContext
 import javax.swing.UIManager
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -171,7 +172,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
 
         val backgroundBlendedGrayed = backgroundBlended.toGray()
         val textGrayed = attributes.foregroundColor.toGray()
-        val delta = Math.abs(backgroundBlendedGrayed - textGrayed)
+        val delta = abs(backgroundBlendedGrayed - textGrayed)
         return delta < 10
       }
       return false

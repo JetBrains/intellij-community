@@ -20,6 +20,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.*
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 private val DEFAULT_SLIDER_BACKGROUND = Color.WHITE
 
@@ -31,10 +32,10 @@ class AlphaSliderComponent : SliderComponent<Int>(0) {
   var sliderBackgroundColor: Color = DEFAULT_SLIDER_BACKGROUND
 
   override fun knobPositionToValue(knobPosition: Int): Int {
-    return if (sliderWidth > 0) Math.round(knobPosition * 255f / sliderWidth) else 0
+    return if (sliderWidth > 0) (knobPosition * 255f / sliderWidth).roundToInt() else 0
   }
 
-  override fun valueToKnobPosition(value: Int): Int = Math.round(value * sliderWidth / 255f)
+  override fun valueToKnobPosition(value: Int): Int = (value * sliderWidth / 255f).roundToInt()
 
   override fun slide(shift: Int) = max(0, min(value + shift, 255))
 

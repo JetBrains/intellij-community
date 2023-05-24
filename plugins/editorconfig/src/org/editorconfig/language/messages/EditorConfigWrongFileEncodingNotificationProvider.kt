@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.messages
 
 import com.intellij.ide.util.PropertiesComponent
@@ -21,7 +21,6 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.ArrayUtil
 import org.editorconfig.language.filetype.EditorConfigFileConstants
-import java.util.*
 import java.util.function.Function
 import javax.swing.JComponent
 
@@ -105,7 +104,7 @@ class EditorConfigWrongFileEncodingNotificationProvider : EditorNotificationProv
       bytesToSave = ArrayUtil.mergeArrays(bom, bytesToSave) // for 2-byte encodings String.getBytes(Charset) adds BOM automatically
     }
 
-    return if (!Arrays.equals(bytesToSave, bytes)) EncodingUtil.Magic8.NO_WAY
+    return if (!bytesToSave.contentEquals(bytes)) EncodingUtil.Magic8.NO_WAY
     else if (StringUtil.equals(loaded, text)) EncodingUtil.Magic8.ABSOLUTELY
     else EncodingUtil.Magic8.WELL_IF_YOU_INSIST
   }
@@ -118,7 +117,7 @@ class EditorConfigWrongFileEncodingNotificationProvider : EditorNotificationProv
     val textLoadedBack = LoadTextUtil.getTextByBinaryPresentation(saved, Charsets.UTF_8)
     when {
       !StringUtil.equals(text, textLoadedBack) -> EncodingUtil.Magic8.NO_WAY
-      Arrays.equals(saved, bytesOnDisk) -> EncodingUtil.Magic8.ABSOLUTELY
+      saved.contentEquals(bytesOnDisk) -> EncodingUtil.Magic8.ABSOLUTELY
       else -> EncodingUtil.Magic8.WELL_IF_YOU_INSIST
     }
   }

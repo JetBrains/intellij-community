@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.regex.Pattern
 import javax.swing.SwingUtilities
 import kotlin.io.path.exists
+import kotlin.math.max
 
 private val NOT_FOUND = createError("not found")
 private val LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$")
@@ -196,7 +197,7 @@ private class OpenFileTask(val path: String, val request: OpenFileRequest) {
 private fun navigate(project: Project?, file: VirtualFile, request: OpenFileRequest) {
   val effectiveProject = project ?: RestService.getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
   // OpenFileDescriptor line and column number are 0-based.
-  OpenFileDescriptor(effectiveProject, file, Math.max(request.line - 1, 0), Math.max(request.column - 1, 0)).navigate(true)
+  OpenFileDescriptor(effectiveProject, file, max(request.line - 1, 0), max(request.column - 1, 0)).navigate(true)
   if (request.focused) {
     focusProjectWindow(project, true)
   }
