@@ -12,6 +12,7 @@
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeKotlinGlobalModificationService"/>
     <psi.treeChangePreprocessor
             implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeOutOfBlockPsiTreeChangePreprocessor"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirAnalysisEventSubscriptionProjectActivity"/>
   </extensions>
 
   <projectListeners>
