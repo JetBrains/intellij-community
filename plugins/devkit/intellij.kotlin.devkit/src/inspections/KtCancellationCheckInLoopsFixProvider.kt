@@ -56,17 +56,18 @@ internal class KtInsertCancellationCheckFix(
   }
 
   private fun KtLoopExpression.getOrCreateBodyBlock(project: Project): KtBlockExpression? {
-    val factory = KtPsiFactory(project)
-
     return when (val loopBody = body) {
+      // loops with body blocks
       is KtBlockExpression -> loopBody
+      // single-line loops
       is KtExpression -> {
         AddBracesIntention.addBraces(this, loopBody)
         body as KtBlockExpression
       }
+      // no-body loops like `for (i in 1..10);`
       else -> {
         val containerNode = findChildByType(this, KtNodeTypes.BODY) ?: return null
-        containerNode.add(factory.createEmptyBody())
+        containerNode.add(KtPsiFactory(project).createEmptyBody())
         deleteRedundantSemicolon(this)
         body as KtBlockExpression
       }
@@ -81,6 +82,7 @@ internal class KtInsertCancellationCheckFix(
   }
 
   private fun KtBlockExpression.addExpressionToFirstLine(expression: KtExpression): KtExpression? {
+    // otherwise the code might become incorrect in case of poor formatting before inserting an expression (e.g. missing new lines)
     CodeStyleManager.getInstance(project).reformat(this)
     return addAfter(expression, lBrace).safeAs<KtExpression>()
   }
