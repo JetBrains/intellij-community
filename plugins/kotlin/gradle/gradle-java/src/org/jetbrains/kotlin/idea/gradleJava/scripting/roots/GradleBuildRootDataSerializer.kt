@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.FileAttribute
+import com.intellij.util.SystemProperties
+import com.intellij.util.io.IOUtil
 import org.jetbrains.kotlin.idea.core.util.readNullable
 import org.jetbrains.kotlin.idea.core.util.readString
 import org.jetbrains.kotlin.idea.core.util.writeNullable
@@ -17,6 +19,11 @@ import java.io.DataInputStream
 import java.io.DataOutput
 
 internal object GradleBuildRootDataSerializer {
+
+    init {
+      SystemProperties.setProperty("vfs.file-attribute-size-max", (10 * IOUtil.MiB).toString())
+    }
+
     private val attribute = FileAttribute("kotlin-dsl-script-models", 8, false)
 
     fun read(buildRoot: VirtualFile): GradleBuildRootData? {
