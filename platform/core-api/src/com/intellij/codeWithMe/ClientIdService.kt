@@ -9,10 +9,15 @@ import com.intellij.openapi.components.service
 interface ClientIdService {
   companion object {
     fun tryGetInstance(): ClientIdService? {
-      if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred || ApplicationManager.getApplication().isDisposed) {
+      if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
         return null
       }
-      return ApplicationManager.getApplication().service<ClientIdService>()
+
+      val app = ApplicationManager.getApplication()
+      if (app == null || app.isDisposed) {
+        return null
+      }
+      return app.service<ClientIdService>()
     }
   }
 

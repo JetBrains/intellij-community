@@ -650,7 +650,9 @@ abstract class ComponentManagerImpl(
     check(adapter is ServiceComponentAdapter) {
       "$adapter is not a service (key=$key)"
     }
-    return adapter.getInstanceAsync(componentManager = this, keyClass = keyClass)
+    val result = adapter.getInstanceAsync(componentManager = this, keyClass = keyClass)
+    serviceInstanceHotCache.putIfAbsent(keyClass, result)
+    return result
   }
 
   protected open fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? = null

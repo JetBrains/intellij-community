@@ -4,6 +4,7 @@ package org.jetbrains.settingsRepository.test
 import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.TestScheme
 import com.intellij.configurationStore.serialize
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
@@ -123,7 +124,7 @@ class LoadTest : LoadTestBase() {
 
   @Test
   fun `deprecated per-os storage shouldn't resolve to the actual storage`() {
-    val componentStore = ApplicationStoreImpl().apply { setPath(configDir.value) }
+    val componentStore = ApplicationStoreImpl(ApplicationManager.getApplication()).apply { setPath(configDir.value) }
     componentStore.storageManager.addStreamProvider(provider)
 
     val _macKeymapXml = repositoryDir.resolve("${getOsFolderName()}/keymap.xml")

@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.*
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -342,7 +343,7 @@ ${dumpCoroutines(stripDump = false)}
       else {
         mainScope.launch(CoroutineName("icon mapping loading") + Dispatchers.Default) {
           runCatching {
-            service<IconMapLoader>().preloadIconMapping()
+            app.service<IconMapLoader>().preloadIconMapping()
           }.getOrLogException(log)
         }
       }
@@ -357,13 +358,12 @@ ${dumpCoroutines(stripDump = false)}
 
       mainScope.launch {
         loadIconMapping?.join()
-        val lafManagerDeferred = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
-          app.getServiceAsync(LafManager::class.java)
+        subtask("laf initialization", RawSwingDispatcher) {
+          app.serviceAsync<LafManager>()
         }
         if (!app.isHeadlessEnvironment) {
           // preload only when LafManager is ready
-          lafManagerDeferred.join()
-          app.getServiceAsync(EditorColorsManager::class.java)
+          app.serviceAsync<EditorColorsManager>()
         }
       }
     }
