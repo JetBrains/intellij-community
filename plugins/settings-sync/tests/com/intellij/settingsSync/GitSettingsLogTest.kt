@@ -428,14 +428,16 @@ internal class GitSettingsLogTest {
         val ide = repository.findRef("ide")!!
         val cloud = repository.findRef("cloud")!!
         val (parent1, parent2) = parents
-        if (parent1.id == ide.objectId) {
-          assertTrue(parent2.id == cloud.objectId)
-        }
-        else if (parent1.id == cloud.objectId) {
-          assertTrue(parent2.id == ide.objectId)
-        }
-        else {
-          fail("Neither ide nor cloud are parents of master")
+        when (parent1.id) {
+          ide.objectId -> {
+            assertTrue(parent2.id == cloud.objectId)
+          }
+          cloud.objectId -> {
+            assertTrue(parent2.id == ide.objectId)
+          }
+          else -> {
+            fail("Neither ide nor cloud are parents of master")
+          }
         }
         walk.dispose()
       }

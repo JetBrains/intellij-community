@@ -90,14 +90,10 @@ class ListLayout private constructor(
 
   override fun addLayoutComponent(component: Component, constraints: Any?) {
     if (constraints == null || constraints == defaultGrowPolicy) return
-    if (constraints is GrowPolicy) {
-      nonDefaultGrowComponents.add(component)
-    }
-    else if (constraints is Alignment) {
-      nonDefaultAlignmentComponents[component] = constraints
-    }
-    else {
-      throw IllegalArgumentException("Unsupported constraints: $constraints")
+    when (constraints) {
+      is GrowPolicy -> nonDefaultGrowComponents.add(component)
+      is Alignment -> nonDefaultAlignmentComponents[component] = constraints
+      else -> throw IllegalArgumentException("Unsupported constraints: $constraints")
     }
   }
 

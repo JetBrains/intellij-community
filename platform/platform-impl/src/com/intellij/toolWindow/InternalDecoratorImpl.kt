@@ -635,17 +635,11 @@ class InternalDecoratorImpl internal constructor(
     lastPoint.x = MathUtil.clamp(lastPoint.x, 0, windowPane.width)
     lastPoint.y = MathUtil.clamp(lastPoint.y, 0, windowPane.height)
     val bounds = bounds
-    if (anchor == ToolWindowAnchor.TOP) {
-      setBounds(0, 0, bounds.width, lastPoint.y)
-    }
-    else if (anchor == ToolWindowAnchor.LEFT) {
-      setBounds(0, 0, lastPoint.x, bounds.height)
-    }
-    else if (anchor == ToolWindowAnchor.BOTTOM) {
-      setBounds(0, lastPoint.y, bounds.width, windowPane.height - lastPoint.y)
-    }
-    else if (anchor == ToolWindowAnchor.RIGHT) {
-      setBounds(lastPoint.x, 0, windowPane.width - lastPoint.x, bounds.height)
+    when (anchor) {
+      ToolWindowAnchor.TOP -> setBounds(0, 0, bounds.width, lastPoint.y)
+      ToolWindowAnchor.LEFT -> setBounds(0, 0, lastPoint.x, bounds.height)
+      ToolWindowAnchor.BOTTOM -> setBounds(0, lastPoint.y, bounds.width, windowPane.height - lastPoint.y)
+      ToolWindowAnchor.RIGHT -> setBounds(lastPoint.x, 0, windowPane.width - lastPoint.x, bounds.height)
     }
     validate()
   }
