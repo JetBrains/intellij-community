@@ -59,13 +59,18 @@ internal class PluginStartupActivity : ProjectActivity {
     }
 
     private fun checkPluginCompatibility() {
-        val platformVersion = ApplicationInfo.getInstance().shortVersion ?: return
+        val platformBuild = ApplicationInfo.getInstance().build
+        if (platformBuild.isSnapshot) {
+            return
+        }
+
+        val platformVersion = platformBuild.baselineVersion.toString()
         val isAndroidStudio = KotlinPlatformUtils.isAndroidStudio
 
         val rawVersion = KotlinIdePlugin.version
         val kotlinPluginVersion = KotlinIdePluginVersion.parse(rawVersion).getOrNull() ?: return
 
-        if (kotlinPluginVersion.platformVersion != platformVersion || kotlinPluginVersion.isAndroidStudio != isAndroidStudio) {
+        if (kotlinPluginVersion.platformBaselineVersion != platformVersion || kotlinPluginVersion.isAndroidStudio != isAndroidStudio) {
             val ideName = ApplicationInfo.getInstance().versionName
 
             runInEdt {
