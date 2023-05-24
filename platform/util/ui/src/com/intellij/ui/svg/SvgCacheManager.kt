@@ -8,6 +8,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.hasher
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.seededHasher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.sqlite.*
@@ -20,6 +24,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.seconds
 
 @JvmInline
 @ApiStatus.Internal
@@ -34,36 +39,60 @@ value class SvgCacheClassifier(internal val key: Int) {
 
 fun getSvgIconCacheInvalidMarkerFile(file: Path): Path = file.parent.resolve("${file.fileName}.invalidated")
 
+suspend fun createSvgCacheManager(cacheFile: Path): SvgCacheManager? {
+  if (!java.lang.Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"))) {
+    return null
+  }
+
+  try {
+    return withTimeout(30.seconds) {
+      withContext(Dispatchers.IO) {
+        SvgCacheManager(connectToSvgCache(cacheFile))
+      }
+    }
+  }
+  catch (e: TimeoutCancellationException) {
+    logger<SvgCacheManager>().error("Cannot create SvgCacheManager in 30 seconds", e)
+    return null
+  }
+  catch (e: Throwable) {
+    logger<SvgCacheManager>().error("Cannot create SvgCacheManager", e)
+    return null
+  }
+}
+
+private fun connectToSvgCache(dbFile: Path): SqliteConnection {
+  val markerFile = getSvgIconCacheInvalidMarkerFile(dbFile)
+  if (Files.exists(markerFile)) {
+    Files.deleteIfExists(dbFile)
+    Files.deleteIfExists(markerFile)
+  }
+
+  var isNew = Files.notExists(dbFile)
+  val connection = try {
+    SqliteConnection(dbFile)
+  }
+  catch (e: Exception) {
+    logger<SvgCacheManager>().warn("Cannot open database, will be recreated", e)
+    Files.deleteIfExists(dbFile)
+    isNew = true
+    SqliteConnection(dbFile)
+  }
+  if (isNew) {
+    connection.execute(TABLE_SCHEMA)
+  }
+  return connection
+}
+
 @Suppress("SqlResolve")
 @ApiStatus.Internal
-class SvgCacheManager(dbFile: Path) {
-  private val connection: SqliteConnection
+class SvgCacheManager(private val connection: SqliteConnection) {
   private val selectStatementPool: SqlStatementPool<LongBinder>
   private val selectPrecomputedStatementPool: SqlStatementPool<LongBinder>
   private val insertStatementPool: SqlStatementPool<ObjectBinder>
   private val insertPrecomputedStatementPool: SqlStatementPool<ObjectBinder>
 
   init {
-    val markerFile = getSvgIconCacheInvalidMarkerFile(dbFile)
-    if (Files.exists(markerFile)) {
-      Files.deleteIfExists(dbFile)
-      Files.deleteIfExists(markerFile)
-    }
-
-    var isNew = Files.notExists(dbFile)
-    connection = try {
-      SqliteConnection(dbFile)
-    }
-    catch (e: Exception) {
-      logger<SvgCacheManager>().warn("Cannot open database, will be recreated", e)
-      Files.deleteIfExists(dbFile)
-      isNew = true
-      SqliteConnection(dbFile)
-    }
-    if (isNew) {
-      connection.execute(TABLE_SCHEMA)
-    }
-
     selectStatementPool = SqlStatementPool(sql = "select data, w, h from image where key1 = ? and key2 = ? and kind = ? and theme = ?",
                                            connection = connection) { LongBinder(4) }
     selectPrecomputedStatementPool = SqlStatementPool(sql = "select data, w, h from precomputed_image where key = ? and theme = ?",
