@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.PluginException
@@ -36,17 +36,18 @@ internal class ConstructorParameterResolver {
                       requestorConstructor: Constructor<*>,
                       expectedType: Class<*>,
                       pluginId: PluginId): Any? {
-    if (expectedType === ComponentManager::class.java) {
-      return componentManager
-    }
-
     if (isLightService(expectedType)) {
       throw PluginException(
         "Constructor injection for light services is not supported (requestorClass=$requestorClass, requestedService=$expectedType)", pluginId
       )
     }
 
-    val adapter = findTargetAdapter(componentManager, expectedType, requestorKey, requestorClass, requestorConstructor, pluginId)
+    val adapter = findTargetAdapter(componentManager = componentManager,
+                                    expectedType = expectedType,
+                                    requestorKey = requestorKey,
+                                    requestorClass = requestorClass,
+                                    requestorConstructor = requestorConstructor,
+                                    pluginId = pluginId)
                   ?: return handleUnsatisfiedDependency(componentManager, requestorClass, expectedType, pluginId)
     return when {
       adapter is BaseComponentAdapter -> {

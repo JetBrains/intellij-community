@@ -55,18 +55,12 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
     }
     else {
       var isErrorLogged = false
-      val params: Array<Any?> = Array<Any?>(parameterTypes.size) {
+      val params: Array<Any?> = Array(parameterTypes.size) {
         val parameterType = parameterTypes.get(it)
         when {
-          ComponentManager::class.java === parameterType -> {
-            componentManager
-          }
-          parameterType === MessageBus::class.java -> {
-            componentManager.messageBus
-          }
-          parameterType === CoroutineScope::class.java -> {
-            componentManager.instanceCoroutineScope(aClass)
-          }
+          ComponentManager::class.java === parameterType -> componentManager
+          parameterType === MessageBus::class.java -> componentManager.messageBus
+          parameterType === CoroutineScope::class.java -> componentManager.instanceCoroutineScope(aClass)
           else -> {
             if (!isErrorLogged && !ComponentManager::class.java.isAssignableFrom(parameterType)) {
               isErrorLogged = true
