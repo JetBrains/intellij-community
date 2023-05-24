@@ -12,15 +12,15 @@ import com.intellij.packaging.impl.ui.ModuleElementPresentation
 import com.intellij.packaging.ui.ArtifactEditorContext
 import com.intellij.packaging.ui.PackagingElementPresentation
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleSourcePackagingElementEntity
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 
 class ProductionModuleSourcePackagingElement : ModulePackagingElementBase {
-  constructor(project: Project) : super(ProductionModuleSourceElementType.ELEMENT_TYPE, project) {}
+  constructor(project: Project) : super(ProductionModuleSourceElementType.ELEMENT_TYPE, project)
 
   constructor(project: Project, modulePointer: ModulePointer) : super(ProductionModuleSourceElementType.ELEMENT_TYPE,
                                                                       project,

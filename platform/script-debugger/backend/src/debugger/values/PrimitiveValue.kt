@@ -3,11 +3,9 @@ package org.jetbrains.debugger.values
 
 open class PrimitiveValue(type: ValueType, override val valueString: String) : ValueBase(type) {
 
-  constructor(type: ValueType, value: Int) : this(type, value.toString()) {
-  }
+  constructor(type: ValueType, value: Int) : this(type, value.toString())
 
-  constructor(type: ValueType, value: Long) : this(type, value.toString()) {
-  }
+  constructor(type: ValueType, value: Long) : this(type, value.toString())
 
   companion object {
     const val NA_N_VALUE: String = "NaN"
