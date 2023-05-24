@@ -2,9 +2,12 @@
 
 package org.jetbrains.kotlin.idea.fir.analysis.providers
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeOutOfBlockModificationService
 
 internal fun Module.publishOutOfBlockModification() {
-    FirIdeOutOfBlockModificationService.getInstance(project).publishModuleOnlyOutOfBlockModification(this)
+    runWriteAction {
+        FirIdeOutOfBlockModificationService.getInstance(project).publishModuleOnlyOutOfBlockModification(this)
+    }
 }

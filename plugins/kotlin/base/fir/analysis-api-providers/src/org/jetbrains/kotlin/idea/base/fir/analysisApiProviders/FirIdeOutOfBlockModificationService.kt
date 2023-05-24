@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -38,16 +39,19 @@ internal class FirIdeOutOfBlockModificationService(val project: Project) : Dispo
     override fun dispose() {}
 
     /**
-     * Publishes out-of-block modification for [module]'s [KtModule]s.
+     * Publishes out-of-block modification for [module]'s [KtModule]s. Must be called in a write action.
      */
     fun publishModuleOnlyOutOfBlockModification(module: Module) {
+        ApplicationManager.getApplication().assertWriteAccessAllowed()
+
         module.sourceModuleInfos.forEach {
             project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).afterModification(it.toKtModule())
         }
     }
 
     /**
-     * Publishes out-of-block modification for [module]'s [KtModule]s and the project itself.
+     * Publishes out-of-block modification for [module]'s [KtModule]s and the project itself. Must be called in a write action if [module]
+     * is not `null`.
      *
      * [publishModuleAndProjectOutOfBlockModification] cannot be used for single file-based [KtModule]s (such as scripts), because they
      * don't have an associated IntelliJ [Module].
