@@ -41,10 +41,10 @@ abstract class ClientAwareComponentManager(
     return session?.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded, fallbackToShared = false)
   }
 
-  override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
-                                  app: Application?,
-                                  precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: MutableList<in Runnable>?) {
+  final override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
+                                        app: Application?,
+                                        precomputedExtensionModel: PrecomputedExtensionModel?,
+                                        listenerCallbacks: MutableList<in Runnable>?) {
     super.registerComponents(modules = modules,
                              app = app,
                              precomputedExtensionModel = precomputedExtensionModel,
@@ -52,7 +52,8 @@ abstract class ClientAwareComponentManager(
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     for (session in sessionsManager.getSessions(ClientKind.ALL)) {
-      (session as? ClientSessionImpl)?.registerComponents(modules = modules, app = app,
+      (session as? ClientSessionImpl)?.registerComponents(modules = modules,
+                                                          app = app,
                                                           precomputedExtensionModel = precomputedExtensionModel,
                                                           listenerCallbacks = listenerCallbacks)
     }

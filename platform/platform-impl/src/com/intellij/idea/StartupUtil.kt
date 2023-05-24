@@ -277,12 +277,14 @@ ${dumpCoroutines(stripDump = false)}
     val rwLockHolder = rwLockHolderDeferred.await()
     val app = subtask("app instantiation") {
       // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the job
-      val mainJob = mainScope.coroutineContext.job
-      val app = ApplicationImpl(CoroutineScope(mainJob).namedChildScope(ApplicationImpl::class.java.name),
-                                isInternal,
-                                AppMode.isHeadless(),
-                                AppMode.isCommandLine(),
-                                rwLockHolder)
+      ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job).namedChildScope(ApplicationImpl::class.java.name),
+                      isInternal,
+                      AppMode.isHeadless(),
+                      AppMode.isCommandLine(),
+                      rwLockHolder)
+    }
+
+    launch {
       // acquire IW lock on EDT indefinitely in legacy mode
       if (!isImplicitReadOnEDTDisabled) {
         subtask("AppDelayQueue instantiation", RawSwingDispatcher) {
@@ -291,10 +293,9 @@ ${dumpCoroutines(stripDump = false)}
       }
       ApplicationImpl.postInit(app)
       ApplicationManager.setApplication(app)
-      app
     }
 
-    subtask("telemetry waiting") {
+    launch(CoroutineName("telemetry waiting")) {
       try {
         telemetryInitJob.join()
       }
@@ -306,6 +307,18 @@ ${dumpCoroutines(stripDump = false)}
       }
     }
 
+    launch {
+      val pluginSet = subtask("plugin descriptor init waiting") {
+        PluginManagerCore.getInitPluginFuture().await()
+      }
+
+      subtask("app component registration") {
+        app.registerComponents(modules = pluginSet.getEnabledModules(),
+                               app = app,
+                               precomputedExtensionModel = null,
+                               listenerCallbacks = null)
+      }
+    }
     app
   }
 

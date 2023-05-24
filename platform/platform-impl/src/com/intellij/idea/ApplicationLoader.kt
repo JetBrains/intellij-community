@@ -79,22 +79,8 @@ private suspend fun doInitApplication(rawArgs: List<String>,
                                       appDeferred: Deferred<Application>,
                                       initLafJob: Job,
                                       euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
+  val app = appDeferred.await() as ApplicationImpl
   val initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization")
-  val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
-    PluginManagerCore.getInitPluginFuture().await()
-  }
-
-  val app = initAppActivity.runChild("app waiting") {
-    appDeferred.await() as ApplicationImpl
-  }
-
-  initAppActivity.runChild("app component registration") {
-    app.registerComponents(modules = pluginSet.getEnabledModules(),
-                           app = app,
-                           precomputedExtensionModel = null,
-                           listenerCallbacks = null)
-  }
-
   coroutineScope {
     val loadIconMapping = if (app.isHeadlessEnvironment) {
       null
@@ -139,7 +125,7 @@ private suspend fun doInitApplication(rawArgs: List<String>,
 
       initApplicationImpl(args = args,
                           initAppActivity = initAppActivity,
-                          pluginSet = pluginSet,
+                          pluginSet = PluginManagerCore.getPluginSet(),
                           app = app,
                           asyncScope = this,
                           deferredStarter = deferredStarter)
