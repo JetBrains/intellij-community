@@ -506,29 +506,19 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
           }
         }
 
-        if (haveChanges(toImport) || !deleted.isEmpty()) {
-          scheduleForNextImport(toImport);
-        }
-
-        if (!deleted.isEmpty() && !hasScheduledProjects()) {
+        if (toImport.isEmpty() && !deleted.isEmpty()) {
           MavenProject project = ObjectUtils.chooseNotNull(ContainerUtil.getFirstItem(toResolve),
                                                            ContainerUtil.getFirstItem(getNonIgnoredProjects()));
           if (project != null) {
-            scheduleForNextImport(Pair.create(project, MavenProjectChanges.ALL));
-            scheduleForNextResolve(Collections.singletonList(project));
+            toImport.add(Pair.create(project, MavenProjectChanges.ALL));
+            toResolve.add(project);
           }
         }
 
+        scheduleForNextImport(toImport);
         scheduleForNextResolve(toResolve);
 
         fireProjectScheduled();
-      }
-
-      private boolean haveChanges(List<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
-        for (MavenProjectChanges each : MavenUtil.collectSeconds(projectsWithChanges)) {
-          if (each.hasChanges()) return true;
-        }
-        return false;
       }
 
       @Override
