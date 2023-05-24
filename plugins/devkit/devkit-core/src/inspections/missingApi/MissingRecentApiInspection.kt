@@ -20,6 +20,8 @@ import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.idea.devkit.util.PsiUtil
 
+internal val MISSING_API_INSPECTION_SHORT_NAME = InspectionProfileEntry.getShortName(MissingRecentApiInspection::class.java.simpleName)
+
 /**
  * Inspection that warns plugin authors if they use IntelliJ Platform's APIs that aren't available
  * in some IDE versions specified as compatible with the plugin via the "since-until" constraints.
@@ -36,10 +38,6 @@ import org.jetbrains.idea.devkit.util.PsiUtil
  * where APIs' introduction versions are specified.
  */
 class MissingRecentApiInspection : LocalInspectionTool() {
-
-  companion object {
-    val INSPECTION_SHORT_NAME = InspectionProfileEntry.getShortName(MissingRecentApiInspection::class.java.simpleName)
-  }
 
   /**
    * Actual "since" build constraint of the plugin under development.
