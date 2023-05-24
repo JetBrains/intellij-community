@@ -74,7 +74,7 @@ class GitConfigTest : GitPlatformTest() {
     createRepository()
     addRemote("git@github.com:foo/bar.git")
     val pushUrl = "git@github.com:foo/push.git"
-    git("config remote.origin.pushurl " + pushUrl)
+    git("config remote.origin.pushurl $pushUrl")
 
     val config = readConfig()
     val remote = getFirstItem(config.parseRemotes())

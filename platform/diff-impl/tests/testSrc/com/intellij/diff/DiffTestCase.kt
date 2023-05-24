@@ -81,10 +81,10 @@ abstract class DiffTestCase : TestCase() {
         debugData.reset()
       }
       catch (e: Throwable) {
-        println("Seed: " + seed)
-        println("Runs: " + runs)
-        println("I: " + i)
-        println("Current seed: " + lastSeed)
+        println("Seed: $seed")
+        println("Runs: $runs")
+        println("I: $i")
+        println("Current seed: $lastSeed")
         debugData.dump()
         throw e
       }

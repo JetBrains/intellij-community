@@ -52,11 +52,11 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
   }
 
   protected fun changeFileContent(name: String, changesSourceFile: String) {
-    changeFile("m/" + name, FileUtil.loadFile(File(testDataRootPath + "/" + getTestName(true) + "/" + changesSourceFile), Charsets.UTF_8))
+    changeFile("m/$name", FileUtil.loadFile(File(testDataRootPath + "/" + getTestName(true) + "/" + changesSourceFile), Charsets.UTF_8))
   }
 
   protected fun addFile(name: String): String {
-    return createFile("m/" + name, FileUtil.loadFile(File(getTestDataPath() + name), Charsets.UTF_8))
+    return createFile("m/$name", FileUtil.loadFile(File(getTestDataPath() + name), Charsets.UTF_8))
   }
 
 

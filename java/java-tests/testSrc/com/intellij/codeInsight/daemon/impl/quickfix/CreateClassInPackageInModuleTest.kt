@@ -44,7 +44,7 @@ class CreateClassInPackageInModuleTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.launchAction(action)
     myFixture.checkHighlighting(false, false, false) // no error
 
-    val psiClass = myFixture.findClass(packageName + "." + name)
+    val psiClass = myFixture.findClass("$packageName.$name")
     assertEquals(isInterface, psiClass.isInterface)
 
     val ownerModule = JavaModuleGraphUtil.findDescriptorByElement(psiClass)

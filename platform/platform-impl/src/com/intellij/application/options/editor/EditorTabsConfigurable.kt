@@ -82,7 +82,7 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
         row { checkBox(showDirectoryForNonUniqueFilenames).enableIfTabsVisible() }
         row { checkBox(markModifiedTabsWithAsterisk).enableIfTabsVisible() }
         row { checkBox(showTabsTooltips).enableIfTabsVisible() }
-        row(CLOSE_BUTTON_POSITION + ":") {
+        row("$CLOSE_BUTTON_POSITION:") {
           closeButtonPositionComboBox()
         }.enabledIf((myEditorTabPlacement.selectedValueMatches { it != TABS_NONE }))
           .topGap(TopGap.SMALL)
