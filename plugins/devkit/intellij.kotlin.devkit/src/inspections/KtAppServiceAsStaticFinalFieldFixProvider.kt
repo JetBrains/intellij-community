@@ -93,14 +93,14 @@ private class KtWrapInSupplierQuickFix(ktProperty: KtProperty) : WrapInSupplierQ
    */
   override fun inlineElement(project: Project, element: KtProperty) {
     KotlinInlinePropertyProcessor(
-      element,
-      null,
-      false,
-      true,
-      false,
-      PsiEditorUtil.findEditor(element),
-      null,
-      project
+      declaration = element,
+      reference = null,
+      inlineThisOnly = false,
+      deleteAfter = true,
+      isWhenSubjectVariable = false,
+      editor = PsiEditorUtil.findEditor(element),
+      statementToDelete = null,
+      project = project,
     ).run()
   }
 }

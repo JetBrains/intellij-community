@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.inline.InlineConstantFieldProcessor
@@ -25,7 +24,6 @@ import com.siyeh.ig.psiutils.CommentTracker
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.util.function.Supplier
-import kotlin.reflect.KClass
 
 
 private val EP_NAME = ExtensionPointName.create<AppServiceAsStaticFinalFieldFixProvider>(
@@ -59,11 +57,6 @@ abstract class WrapInSupplierQuickFix<T : PsiNamedElement>(elementToWrap: T) : L
 
   override fun startInWriteAction() = false
 
-  override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
-    return isClassAvailable(project, Supplier::class, file.resolveScope) &&
-           isClassAvailable(project, CachedSingletonsRegistry::class, file.resolveScope)
-  }
-
   protected abstract fun findElement(startElement: PsiElement): T
 
   override fun generatePreview(project: Project, problemDescriptor: ProblemDescriptor): IntentionPreviewInfo {
@@ -74,9 +67,9 @@ abstract class WrapInSupplierQuickFix<T : PsiNamedElement>(elementToWrap: T) : L
   }
 
   /**
-   * Creates a new supplier element (field/property), wrapping the application server element (field/property) in a [Supplier],
-   * and updates all its references by changing the initializer of the application server element to a [Supplier.get] call
-   * and performing 'Inline' refactoring on it, therefore deleting the application server element.
+   * Creates a new supplier element (field/property), wrapping the application service element (field/property) in a [Supplier],
+   * and updates all its references by changing the initializer of the application service element to a [Supplier.get] call
+   * and performing 'Inline' refactoring on it, therefore deleting the application service element.
    */
   override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
     CommandProcessor.getInstance().runUndoTransparentAction {
@@ -108,10 +101,6 @@ abstract class WrapInSupplierQuickFix<T : PsiNamedElement>(elementToWrap: T) : L
   protected abstract fun changeElementInitializerToSupplierCall(project: Project, element: T, supplierElement: T)
 
   protected abstract fun inlineElement(project: Project, element: T)
-
-  private fun isClassAvailable(project: Project, classToFind: KClass<*>, scope: GlobalSearchScope): Boolean {
-    return JavaPsiFacade.getInstance(project).findClass(classToFind.java.canonicalName, scope) != null
-  }
 
 }
 
