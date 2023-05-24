@@ -104,7 +104,7 @@ class DefaultStatementConverter : JavaElementVisitor(), StatementConverter {
 
     override fun visitForeachStatement(statement: PsiForeachStatement) {
         val iterator = codeConverter.convertExpression(statement.iteratedValue, null, Nullability.NotNull)
-        val iterationParameter = statement.iterationParameter ?: TODO("iterationParameter is absent")
+        val iterationParameter = statement.iterationParameter
         result = ForeachStatement(iterationParameter.declarationIdentifier(),
                                   if (codeConverter.settings.specifyLocalVariableTypeByDefault) codeConverter.typeConverter.convertVariableType(iterationParameter) else null,
                                   iterator,
@@ -135,6 +135,7 @@ class DefaultStatementConverter : JavaElementVisitor(), StatementConverter {
     }
 
     override fun visitSwitchLabelStatement(statement: PsiSwitchLabelStatement) {
+        @Suppress("DEPRECATION")
         result = if (statement.isDefaultCase)
             ElseWhenEntrySelector()
         else
@@ -198,7 +199,7 @@ class DefaultStatementConverter : JavaElementVisitor(), StatementConverter {
         var block = converterForBody.convertBlock(tryBlock)
         var expression: Expression = Expression.Empty
         for (variable in resourceVariables.asReversed()) {
-            val parameter = LambdaParameter(Identifier.withNoPrototype(variable.name!!), null).assignNoPrototype()
+            val parameter = LambdaParameter(Identifier.withNoPrototype(variable.name), null).assignNoPrototype()
             val parameterList = ParameterList(listOf(parameter), lPar = null, rPar = null).assignNoPrototype()
             val lambda = LambdaExpression(parameterList, block)
             expression = MethodCallExpression.buildNonNull(codeConverter.convertExpression(variable.initializer), "use", ArgumentList.withNoPrototype(lambda))

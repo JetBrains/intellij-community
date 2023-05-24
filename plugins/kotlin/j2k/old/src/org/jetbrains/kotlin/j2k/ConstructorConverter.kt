@@ -135,7 +135,7 @@ class ConstructorConverter(
 
                 val fieldName = propertyInfo.name
                 if (fieldName != parameter.name) {
-                    parameterUsageReplacementMap.put(parameter.name!!, fieldName)
+                    parameterUsageReplacementMap.put(parameter.name, fieldName)
                 }
             }
 
