@@ -41,7 +41,10 @@
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
-    <cancellationCheckProvider language="kotlin" implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KotlinCancellationCheckProvider"/>
+    <cancellationCheckProvider language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCancellationCheckProvider"/>
+    <cancellationCheckInLoopsFixProvider language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCancellationCheckInLoopsFixProvider"/>
     <visitorProviderForRBCInspection language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider"/>
     <extensionClassShouldNotBePublicProvider language="kotlin"

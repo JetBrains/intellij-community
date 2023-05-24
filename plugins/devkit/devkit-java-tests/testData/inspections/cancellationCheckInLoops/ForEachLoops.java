@@ -32,6 +32,9 @@ class Clazz {
 
       // single-line loop
       <warning descr="Cancellation check 'com.intellij.openapi.progress.ProgressManager.checkCanceled' should be placed in the first line">for</warning> (String item6: items) System.out.println(item);
+
+      // no body loop
+      <warning descr="Cancellation check 'com.intellij.openapi.progress.ProgressManager.checkCanceled' should be placed in the first line">for</warning>(String item5 : items);
     }
   }
 }

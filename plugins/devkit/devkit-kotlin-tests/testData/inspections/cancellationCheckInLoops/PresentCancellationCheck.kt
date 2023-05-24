@@ -10,6 +10,17 @@ fun main() {
   for (i in 1..10) {
     ProgressManager.checkCanceled()
   }
+
+  var i = 0;
+  while (i < 5) {
+    ProgressManager.checkCanceled()
+    i++
+  }
+
+  do {
+    ProgressManager.checkCanceled()
+    i++
+  } while (i < 10)
 }
 
 @RequiresReadLock
@@ -20,7 +31,7 @@ suspend fun foo() {
   }
 
   // wrong cancellation check
-  <warning descr="Cancellation check 'com.intellij.openapi.progress.CoroutinesKt.checkCancelled' should be placed in the first line">for</warning> (i in 1..10) {
+  <warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be placed in the first line">for</warning> (i in 1..10) {
     ProgressManager.checkCanceled()
   }
 }
