@@ -19,5 +19,5 @@ class FileTypeInputFilterPredicate(private val predicate: (filetype: FileType) -
     throw AssertionError("Should not be invoked, because hintAcceptFileType for filetype never returns UNSURE");
   }
 
-  override fun hintAcceptFileType(fileType: FileType): ThreeState = ThreeState.fromBoolean(predicate(fileType))
+  override fun acceptFileType(fileType: FileType): ThreeState = ThreeState.fromBoolean(predicate(fileType))
 }

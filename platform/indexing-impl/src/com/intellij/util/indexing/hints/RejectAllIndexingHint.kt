@@ -6,9 +6,9 @@ import com.intellij.util.ThreeState
 import com.intellij.util.indexing.IndexedFile
 
 class RejectAllIndexingHint : BaseFileTypeInputFilter() {
-  override fun hintAcceptFileType(fileType: FileType): ThreeState = ThreeState.NO
+  override fun acceptFileType(fileType: FileType): ThreeState = ThreeState.NO
 
   override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
-    throw AssertionError("Should not be invoked, because hintAcceptFileType for filetype never returns UNSURE");
+    throw AssertionError("Should not be invoked, because hintAcceptFileType for filetype never returns UNSURE")
   }
 }

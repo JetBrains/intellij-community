@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.util.ThreeState
 import com.intellij.util.indexing.hints.FileTypeIndexingHint
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate
 import com.intellij.util.indexing.hints.IndexingHint
 import com.jetbrains.rd.util.concurrentMapOf
 import java.util.function.Predicate
@@ -93,16 +94,10 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
              // yes, we want to check exact class.
              // Optimization does not work for DefaultFileTypeSpecificInputFilter subtypes because subtypes can override acceptInput
              filter.javaClass == DefaultFileTypeSpecificInputFilter::class.java) {
-      object : FileTypeIndexingHint {
-        override fun hintAcceptFileType(fileType: FileType): ThreeState {
-          var matches = false
-          filter.registerFileTypesUsedForIndexing { matches = (matches || it == fileType) }
-          return ThreeState.fromBoolean(matches)
-        }
-
-        override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
-          throw AssertionError("Should not be invoked, because hintAcceptFileType for filetype never returns UNSURE");
-        }
+      FileTypeInputFilterPredicate { fileType ->
+        var matches = false
+        filter.registerFileTypesUsedForIndexing { matches = (matches || it == fileType) }
+        return@FileTypeInputFilterPredicate matches
       }
     }
     else {
@@ -150,19 +145,17 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
   }
 
   private fun getRequiredIndexesForRegularFiles(indexedFile: IndexedFile): List<ID<*, *>> {
-    var fileType = indexedFile.fileType
-    if (fileType is SubstitutedFileType) {
-      fileType = fileType.fileType
-    }
+    val fileType = indexedFile.fileType
+    val substitutedFileType = (fileType as? SubstitutedFileType)?.fileType ?: fileType
 
-    if (FileBasedIndexImpl.isProjectOrWorkspaceFile(indexedFile.file, fileType)) {
+    if (FileBasedIndexImpl.isProjectOrWorkspaceFile(indexedFile.file, substitutedFileType)) {
       return listOf(FileTypeIndex.NAME) // probably, we don't even need the filetype index
     }
     else {
       var filteredResults = indexesForFileType[fileType]
       if (filteredResults != null) return filteredResults.getRequiredIndexes(indexedFile)
 
-      filteredResults = HintAwareIndexList(getState().getFileTypesForIndex(fileType), fileType)
+      filteredResults = HintAwareIndexList(getState().getFileTypesForIndex(substitutedFileType), fileType)
       indexesForFileType[fileType] = filteredResults
       return filteredResults.getRequiredIndexes(indexedFile)
     }

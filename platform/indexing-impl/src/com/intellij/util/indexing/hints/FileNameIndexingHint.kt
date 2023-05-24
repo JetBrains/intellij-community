@@ -52,7 +52,7 @@ abstract class BaseWeakFileNameSuffixInputFilter internal constructor(
   //          4. this does not work with HashBang patterns (same reason)
   //          5. this does not work with autodetection which assigns PlainText to text files, not UnknownFileType as inferred by extension
 
-  override fun hintAcceptFileType(fileType: FileType): ThreeState {
+  override fun acceptFileType(fileType: FileType): ThreeState {
     return if ((binary == BINARY && !fileType.isBinary) ||
                (binary == NON_BINARY && fileType.isBinary)) {
       ThreeState.NO
