@@ -1,14 +1,15 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtClass
-// OPTIONS: usages, constructorUsages
-// PSI_ELEMENT_AS_TITLE: "class Server"
+// OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "interface Server"
 package server
 
-open class <caret>Server {
+interface <caret>Server {
+
     companion object {
         val NAME = "Server"
     }
 
-    open fun work() {
+    fun work() {
         println("Server")
     }
 
@@ -17,5 +18,3 @@ open class <caret>Server {
     object InnerObject
 
 }
-
-

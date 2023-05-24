@@ -1,7 +1,9 @@
-import testing.*;
+package client;
+
+import server.Server;
 
 class Client<T> {
-    private Server myServer = new Server();
+    private Server myServer = new Server() {};
 
     public void setServer(Server server) {
         myServer = server;

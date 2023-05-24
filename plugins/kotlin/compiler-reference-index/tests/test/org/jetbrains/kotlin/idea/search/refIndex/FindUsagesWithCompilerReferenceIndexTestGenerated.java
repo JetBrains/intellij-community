@@ -913,6 +913,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
+            public static class TestJavaInterfaceAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("javaInterfaceAllUsages.0.kt")
+                public void testJavaInterfaceAllUsages() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/javaInterfaceAllUsages.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinAliasedClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -1194,6 +1207,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                 @TestMetadata("kotlinInnerClassAllUsages.0.kt")
                 public void testKotlinInnerClassAllUsages() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInnerClassAllUsages.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
+            public static class TestKotlinInterfaceAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinInterfaceAllUsages.0.kt")
+                public void testKotlinInterfaceAllUsages() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInterfaceAllUsages.0.kt");
                 }
             }
 

@@ -24,5 +24,3 @@ enum class E {
 
     internal open fun <caret>foo(n: Int): Int = n
 }
-
-// FIR_IGNORE
