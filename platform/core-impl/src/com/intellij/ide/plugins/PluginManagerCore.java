@@ -432,11 +432,14 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  public static synchronized void scheduleDescriptorLoading(@NotNull CoroutineScope coroutineScope,
-                                                            @Nullable Deferred<ZipFilePool> zipFilePoolDeferred) {
-    if (initFuture == null) {
-      initFuture = PluginDescriptorLoader.scheduleLoading(coroutineScope, zipFilePoolDeferred);
+  public static synchronized Deferred<PluginSet> scheduleDescriptorLoading(@NotNull CoroutineScope coroutineScope,
+                                                                           @Nullable Deferred<ZipFilePool> zipFilePoolDeferred) {
+    Deferred<PluginSet> result = initFuture;
+    if (result == null) {
+      result = PluginDescriptorLoader.scheduleLoading(coroutineScope, zipFilePoolDeferred);
+      initFuture = result;
     }
+    return result;
   }
 
   /**

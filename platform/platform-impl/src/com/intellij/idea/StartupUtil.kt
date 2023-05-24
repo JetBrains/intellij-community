@@ -12,6 +12,7 @@ import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
@@ -167,13 +168,14 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   preloadLafClasses()
 
+  val pluginSetDeferred = CompletableDeferred<Deferred<PluginSet>>()
   val schedulePluginDescriptorLoading = launch {
     // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
     launch(Dispatchers.IO) {
       Java11Shim.INSTANCE = Java11ShimImpl()
     }
     if (!configImportNeededDeferred.await()) {
-      PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred)
+      pluginSetDeferred.complete(PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred))
     }
   }
 
@@ -325,7 +327,7 @@ ${dumpCoroutines(stripDump = false)}
 
     launch {
       val pluginSet = subtask("plugin descriptor init waiting") {
-        PluginManagerCore.getInitPluginFuture().await()
+        pluginSetDeferred.await().await()
       }
 
       subtask("app component registration") {
@@ -388,7 +390,8 @@ ${dumpCoroutines(stripDump = false)}
         appStarter = appStarterDeferred.await(),
         euaDocumentDeferred = euaDocumentDeferred,
       )
-      PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred)
+
+      pluginSetDeferred.complete(PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred))
 
       if (ConfigImportHelper.isNewUser() && !PlatformUtils.isRider() && System.getProperty("ide.experimental.ui") == null) {
         runCatching {
