@@ -17,7 +17,6 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UElementKt;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UParameter;
 
