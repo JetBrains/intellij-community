@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
@@ -337,7 +337,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
     if (icon != null) {
       e.presentation.icon = adjustIconForHeader(icon)
     }
-    val configurationName = e.project?.let { RunManager.getInstance(it) }?.selectedConfiguration?.name
+    val configurationName = e.project?.let { RunManager.getInstanceIfCreated(it) }?.selectedConfiguration?.name
     if (configurationName?.length?.let { it > CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH } == true) {
       e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description.long",
                                                                    configurationName))
