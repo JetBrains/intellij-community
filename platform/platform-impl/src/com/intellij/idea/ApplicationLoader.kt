@@ -12,8 +12,6 @@ import com.intellij.ide.*
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.plugins.PluginSet
-import com.intellij.ide.ui.IconMapLoader
-import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
@@ -22,13 +20,11 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
@@ -67,69 +63,27 @@ private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 fun initApplication(context: InitAppContext) {
   runBlocking(context.context) {
-    doInitApplication(rawArgs = context.args,
-                      appDeferred = context.appDeferred,
-                      initLafJob = context.initLafJob,
-                      euaTaskDeferred = context.euaTaskDeferred)
+    doInitApplication(rawArgs = context.args, appDeferred = context.appDeferred)
   }
 }
 
 // executed in the main scope with a sequential dispatcher - don't forget this
-private suspend fun doInitApplication(rawArgs: List<String>,
-                                      appDeferred: Deferred<Application>,
-                                      initLafJob: Job,
-                                      euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
+private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Application>) {
   val app = appDeferred.await() as ApplicationImpl
   val initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization")
-  coroutineScope {
-    val loadIconMapping = if (app.isHeadlessEnvironment) {
-      null
-    }
-    else {
-      launch(CoroutineName("icon mapping loading") + Dispatchers.Default) {
-        runCatching {
-          service<IconMapLoader>().preloadIconMapping()
-        }.getOrLogException(LOG)
-      }
+  withContext(Dispatchers.Default) {
+    val args = rawArgs.filterNot { CommandLineArgs.isKnownArgument(it) }
+
+    val deferredStarter = subtask("app starter creation") {
+      createAppStarterAsync(args)
     }
 
-    initConfigurationStore(app)
-
-    // LaF must be initialized before app init because icons maybe requested and, as a result,
-    // a scale must be already initialized (especially important for Linux)
-    subtask("init laf waiting") {
-      initLafJob.join()
-    }
-
-    euaTaskDeferred?.await()?.invoke()
-
-    // executed in the main scope with a sequential dispatcher
-    launch {
-      loadIconMapping?.join()
-      val lafManagerDeferred = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
-        app.getServiceAsync(LafManager::class.java)
-      }
-      if (!app.isHeadlessEnvironment) {
-        // preload only when LafManager is ready
-        lafManagerDeferred.join()
-        app.getServiceAsync(EditorColorsManager::class.java)
-      }
-    }
-
-    withContext(Dispatchers.Default) {
-      val args = rawArgs.filterNot { CommandLineArgs.isKnownArgument(it) }
-
-      val deferredStarter = runActivity("app starter creation") {
-        createAppStarterAsync(args)
-      }
-
-      initApplicationImpl(args = args,
-                          initAppActivity = initAppActivity,
-                          pluginSet = PluginManagerCore.getPluginSet(),
-                          app = app,
-                          asyncScope = this,
-                          deferredStarter = deferredStarter)
-    }
+    initApplicationImpl(args = args,
+                        initAppActivity = initAppActivity,
+                        pluginSet = PluginManagerCore.getPluginSet(),
+                        app = app,
+                        asyncScope = this,
+                        deferredStarter = deferredStarter)
   }
 }
 

@@ -12,6 +12,8 @@ import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.ui.IconMapLoader
+import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.IntelliJLaf
@@ -22,9 +24,11 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ShutDownTracker
@@ -177,7 +181,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     initAwtToolkitAndEventQueueJob.join()
     // SwingDispatcher must be used after Toolkit init
     withContext(RawSwingDispatcher) {
-      initUi(preloadLafClassesJob)
+      initUi()
     }
   }
 
@@ -267,6 +271,8 @@ ${dumpCoroutines(stripDump = false)}
     rwLockHolder
   }
 
+  val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
+
   val appDeferred = async {
     // logging must be initialized before creating the application
     val log = logDeferred.await()
@@ -307,6 +313,15 @@ ${dumpCoroutines(stripDump = false)}
       }
     }
 
+    val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
+      null
+    }
+    else {
+      async(CoroutineName("eua document")) {
+        prepareShowEuaIfNeededTask(euaDocumentDeferred.await(), asyncScope = this@startApplication)
+      }
+    }
+
     launch {
       val pluginSet = subtask("plugin descriptor init waiting") {
         PluginManagerCore.getInitPluginFuture().await()
@@ -318,11 +333,42 @@ ${dumpCoroutines(stripDump = false)}
                                precomputedExtensionModel = null,
                                listenerCallbacks = null)
       }
+
+      initConfigurationStore(app)
+
+      val loadIconMapping = if (app.isHeadlessEnvironment) {
+        null
+      }
+      else {
+        mainScope.launch(CoroutineName("icon mapping loading") + Dispatchers.Default) {
+          runCatching {
+            service<IconMapLoader>().preloadIconMapping()
+          }.getOrLogException(log)
+        }
+      }
+
+      // LaF must be initialized before app init because icons maybe requested and, as a result,
+      // a scale must be already initialized (especially important for Linux)
+      subtask("init laf waiting") {
+        initLafJob.join()
+      }
+
+      euaTaskDeferred?.await()?.invoke()
+
+      mainScope.launch {
+        loadIconMapping?.join()
+        val lafManagerDeferred = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
+          app.getServiceAsync(LafManager::class.java)
+        }
+        if (!app.isHeadlessEnvironment) {
+          // preload only when LafManager is ready
+          lafManagerDeferred.join()
+          app.getServiceAsync(EditorColorsManager::class.java)
+        }
+      }
     }
     app
   }
-
-  val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
   mainScope.launch {
     // required for appStarter.prepareStart
@@ -358,21 +404,12 @@ ${dumpCoroutines(stripDump = false)}
       schedulePluginDescriptorLoading.join()
     }
 
-    val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
-      null
-    }
-    else {
-      async(CoroutineName("eua document") + Dispatchers.Default) {
-        prepareShowEuaIfNeededTask(euaDocumentDeferred.await(), asyncScope = this@startApplication)
-      }
-    }
-
     // with the main dispatcher for non-technical reasons
     appStarter.start(InitAppContext(context = mainScope.coroutineContext,
                                     args = args,
                                     appDeferred = appDeferred,
                                     initLafJob = initLafJob,
-                                    euaTaskDeferred = euaTaskDeferred))
+                                    euaTaskDeferred = null))
   }
 }
 
@@ -525,7 +562,7 @@ private suspend fun initAwtToolkit(lockSystemDirsJob: Job, busyThread: Thread) {
   }
 }
 
-private suspend fun initUi(preloadLafClassesJob: Job) {
+private suspend fun initUi() {
   val isHeadless = AppMode.isHeadless()
   if (!isHeadless) {
     val env = runActivity("GraphicsEnvironment init") {
@@ -539,8 +576,6 @@ private suspend fun initUi(preloadLafClassesJob: Job) {
       }
     }
   }
-
-  preloadLafClassesJob.join()
 
   // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
 
