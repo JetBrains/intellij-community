@@ -1,11 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.FileChannelInterruptsRetryer
 import java.io.*
 import java.nio.channels.Channels
+import java.nio.file.FileAlreadyExistsException
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.*
 import java.util.*
@@ -20,10 +21,15 @@ abstract class PersistentVar<T>(
   private val writeValue: DataOutput.(value: T) -> Unit
 ) {
   init {
-    FileUtil.createIfNotExists(path.toFile())
+    path.parent?.let { Files.createDirectories(it) }
+    try {
+      Files.createFile(path)
+    }
+    catch (ignore: FileAlreadyExistsException) {
+    }
   }
 
-  protected val fileChannelRetryer = FileChannelInterruptsRetryer(path, EnumSet.of(READ, WRITE, CREATE))
+  private val fileChannelRetryer = FileChannelInterruptsRetryer(path, EnumSet.of(READ, WRITE, CREATE))
   protected var cachedValue: T? =
     fileChannelRetryer.retryIfInterrupted {
       DataInputStream(Channels.newInputStream(it.position(0))).readValue()
