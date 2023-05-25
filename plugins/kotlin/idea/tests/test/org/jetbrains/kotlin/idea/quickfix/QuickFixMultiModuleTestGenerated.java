@@ -452,6 +452,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/createActual/expectSealedInCommonWhen/");
         }
 
+        @TestMetadata("forbiddenForLeafSourceSets")
+        public void testForbiddenForLeafSourceSets() throws Exception {
+            runTest("testData/multiModuleQuickFix/createActual/forbiddenForLeafSourceSets/");
+        }
+
         @TestMetadata("function")
         public void testFunction() throws Exception {
             runTest("testData/multiModuleQuickFix/createActual/function/");
