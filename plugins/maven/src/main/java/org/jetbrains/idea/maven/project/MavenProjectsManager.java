@@ -1160,7 +1160,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myProjectsToResolve.addAll(projects);
   }
 
-  public boolean hasScheduledProjects() {
+  private boolean hasScheduledProjects() {
     if (!isInitialized()) return false;
     return !myProjectsToImport.isEmpty() || !myProjectsToResolve.isEmpty();
   }
