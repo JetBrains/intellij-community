@@ -326,48 +326,12 @@ ${dumpCoroutines(stripDump = false)}
     }
 
     launch {
-      val pluginSet = subtask("plugin descriptor init waiting") {
-        pluginSetDeferred.await().await()
-      }
-
-      subtask("app component registration") {
-        app.registerComponents(modules = pluginSet.getEnabledModules(),
-                               app = app,
-                               precomputedExtensionModel = null,
-                               listenerCallbacks = null)
-      }
-
-      initConfigurationStore(app)
-
-      val loadIconMapping = if (app.isHeadlessEnvironment) {
-        null
-      }
-      else {
-        mainScope.launch(CoroutineName("icon mapping loading") + Dispatchers.Default) {
-          runCatching {
-            app.service<IconMapLoader>().preloadIconMapping()
-          }.getOrLogException(log)
-        }
-      }
-
-      // LaF must be initialized before app init because icons maybe requested and, as a result,
-      // a scale must be already initialized (especially important for Linux)
-      subtask("init laf waiting") {
-        initLafJob.join()
-      }
-
-      euaTaskDeferred?.await()?.invoke()
-
-      mainScope.launch {
-        loadIconMapping?.join()
-        subtask("laf initialization", RawSwingDispatcher) {
-          app.serviceAsync<LafManager>()
-        }
-        if (!app.isHeadlessEnvironment) {
-          // preload only when LafManager is ready
-          app.serviceAsync<EditorColorsManager>()
-        }
-      }
+      preInitApp(app = app,
+                 mainScope = mainScope,
+                 log = log,
+                 initLafJob = initLafJob,
+                 pluginSetDeferred = pluginSetDeferred,
+                 euaTaskDeferred = euaTaskDeferred)
     }
     app
   }
@@ -408,11 +372,57 @@ ${dumpCoroutines(stripDump = false)}
     }
 
     // with the main dispatcher for non-technical reasons
-    appStarter.start(InitAppContext(context = mainScope.coroutineContext,
-                                    args = args,
-                                    appDeferred = appDeferred,
-                                    initLafJob = initLafJob,
-                                    euaTaskDeferred = null))
+    appStarter.start(InitAppContext(context = mainScope.coroutineContext, args = args, appDeferred = appDeferred))
+  }
+}
+
+private suspend fun preInitApp(app: ApplicationImpl,
+                               mainScope: CoroutineScope,
+                               log: Logger,
+                               initLafJob: Job,
+                               pluginSetDeferred: CompletableDeferred<Deferred<PluginSet>>,
+                               euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
+  val pluginSet = subtask("plugin descriptor init waiting") {
+    pluginSetDeferred.await().await()
+  }
+
+  subtask("app component registration") {
+    app.registerComponents(modules = pluginSet.getEnabledModules(),
+                           app = app,
+                           precomputedExtensionModel = null,
+                           listenerCallbacks = null)
+  }
+
+  initConfigurationStore(app)
+
+  val loadIconMapping = if (app.isHeadlessEnvironment) {
+    null
+  }
+  else {
+    mainScope.launch(CoroutineName("icon mapping loading") + Dispatchers.Default) {
+      runCatching {
+        app.service<IconMapLoader>().preloadIconMapping()
+      }.getOrLogException(log)
+    }
+  }
+
+  // LaF must be initialized before app init because icons maybe requested and, as a result,
+  // a scale must be already initialized (especially important for Linux)
+  subtask("init laf waiting") {
+    initLafJob.join()
+  }
+
+  euaTaskDeferred?.await()?.invoke()
+
+  mainScope.launch {
+    loadIconMapping?.join()
+    subtask("laf initialization", RawSwingDispatcher) {
+      app.serviceAsync<LafManager>()
+    }
+    if (!app.isHeadlessEnvironment) {
+      // preload only when LafManager is ready
+      app.serviceAsync<EditorColorsManager>()
+    }
   }
 }
 
@@ -566,7 +576,7 @@ private suspend fun initAwtToolkit(lockSystemDirsJob: Job, busyThread: Thread) {
   }
 }
 
-private suspend fun initUi() {
+private fun initUi() {
   val isHeadless = AppMode.isHeadless()
   if (!isHeadless) {
     val env = runActivity("GraphicsEnvironment init") {
