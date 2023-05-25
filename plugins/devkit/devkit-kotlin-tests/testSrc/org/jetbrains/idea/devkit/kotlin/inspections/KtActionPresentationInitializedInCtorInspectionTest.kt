@@ -2,13 +2,13 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.AnActionInitializesTemplatePresentationInCtorInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.ActionPresentationInitializedInCtorInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/anActionInitializesTemplatePresentationInCtor")
-internal class KtAnActionInitializesTemplatePresentationInCtorInspectionTest : AnActionInitializesTemplatePresentationInCtorInspectionTestBase() {
+@TestDataPath("\$CONTENT_ROOT/testData/inspections/actionPresentationInitializedInCtor")
+internal class KtActionPresentationInitializedInCtorInspectionTest : ActionPresentationInitializedInCtorInspectionTestBase() {
 
-  override fun getBasePath(): String = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/anActionInitializesTemplatePresentationInCtor/"
+  override fun getBasePath(): String = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/actionPresentationInitializedInCtor/"
   override fun getFileExtension(): String = "kt"
 
   override fun setUp() {

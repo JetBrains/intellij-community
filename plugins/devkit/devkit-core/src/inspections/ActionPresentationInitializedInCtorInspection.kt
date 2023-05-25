@@ -13,7 +13,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import javax.swing.Icon
 
-internal class AnActionInitializesTemplatePresentationInCtorInspection : DevKitUastInspectionBase(UClass::class.java) {
+internal class ActionPresentationInitializedInCtorInspection : DevKitUastInspectionBase(UClass::class.java) {
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return UastHintedVisitorAdapter.create(holder.file.language, object : AbstractUastNonRecursiveVisitor() {

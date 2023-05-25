@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
-abstract class AnActionInitializesTemplatePresentationInCtorInspectionTestBase : PluginModuleTestCase() {
+abstract class ActionPresentationInitializedInCtorInspectionTestBase : PluginModuleTestCase() {
 
   override fun setUp() {
     super.setUp()
@@ -45,7 +45,7 @@ abstract class AnActionInitializesTemplatePresentationInCtorInspectionTestBase :
                         Icon icon) { }
       }
       """)
-    myFixture.enableInspections(AnActionInitializesTemplatePresentationInCtorInspection::class.java)
+    myFixture.enableInspections(ActionPresentationInitializedInCtorInspection::class.java)
   }
 
   protected abstract fun getFileExtension(): String

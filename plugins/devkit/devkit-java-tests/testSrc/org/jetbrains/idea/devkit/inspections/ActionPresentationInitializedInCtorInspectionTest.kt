@@ -5,10 +5,10 @@ import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/anActionInitializesTemplatePresentationInCtor")
-internal class AnActionInitializesTemplatePresentationInCtorInspectionTest : AnActionInitializesTemplatePresentationInCtorInspectionTestBase() {
+@TestDataPath("\$CONTENT_ROOT/testData/inspections/actionPresentationInitializedInCtor")
+internal class ActionPresentationInitializedInCtorInspectionTest : ActionPresentationInitializedInCtorInspectionTestBase() {
 
-  override fun getBasePath(): String = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/anActionInitializesTemplatePresentationInCtor/"
+  override fun getBasePath(): String = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/actionPresentationInitializedInCtor/"
   override fun getFileExtension(): String = "java"
 
   override fun setUp() {

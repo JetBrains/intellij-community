@@ -305,7 +305,7 @@
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.AnActionInitializesTemplatePresentationInCtorInspection"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ActionPresentationInitializedInCtorInspection"
                      key="inspection.an.action.initializes.template.presentation.in.ctor.display.name"/>
     <localInspection language="UAST" shortName="NonDefaultConstructor"
                      projectType="INTELLIJ_PLUGIN"
