@@ -4,8 +4,6 @@
 // ERROR: Unresolved reference: nextDown
 // ERROR: Unresolved reference: nextUp
 // ERROR: Unresolved reference: pow
-// ERROR: Unresolved reference: roundToLong
-// ERROR: Unresolved reference: roundToInt
 import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.asin
@@ -60,8 +58,9 @@ class J {
         x.nextUp()
         x.pow(y)
         round(x)
-        x.roundToLong()
-        f.roundToInt()
+        // Don't convert `Math.round` calls, because Kotlin's `round` throws an exception for a NaN argument
+        Math.round(x)
+        Math.round(f)
         sign(x)
         sin(x)
         sinh(x)

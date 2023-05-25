@@ -26,6 +26,7 @@ public class J {
         Math.nextUp(x);
         Math.pow(x, y);
         Math.rint(x);
+        // Don't convert `Math.round` calls, because Kotlin's `round` throws an exception for a NaN argument
         Math.round(x);
         Math.round(f);
         Math.signum(x);

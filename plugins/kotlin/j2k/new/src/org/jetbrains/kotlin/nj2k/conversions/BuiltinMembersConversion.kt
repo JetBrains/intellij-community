@@ -611,8 +611,6 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
     private val arrayConversions: List<Conversion> = listOf(
         Method("java.util.Arrays.copyOf") convertTo ExtensionMethod("kotlin.collections.copyOf") withReplaceType REPLACE_WITH_QUALIFIER
                 withByArgumentsFilter { it.size == 2 },
-        Method("java.util.Arrays.copyOfRange") convertTo ExtensionMethod("kotlin.collections.copyOfRange") withReplaceType REPLACE_WITH_QUALIFIER
-                withByArgumentsFilter { it.size == 3 },
         Method("java.util.Arrays.equals") convertTo ExtensionMethod("kotlin.collections.contentEquals") withReplaceType REPLACE_WITH_QUALIFIER
                 withByArgumentsFilter { it.size == 2 },
         Method("java.util.Arrays.deepEquals") convertTo ExtensionMethod("kotlin.collections.contentDeepEquals") withReplaceType REPLACE_WITH_QUALIFIER
@@ -659,15 +657,6 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.lang.Math.nextUp") convertTo ExtensionMethod("kotlin.math.nextUp") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.pow") convertTo ExtensionMethod("kotlin.math.pow") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.rint") convertTo Method("kotlin.math.round") withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.lang.Math.round") convertTo CustomExpression { expression: JKExpression ->
-            val arguments = (expression as JKCallExpression).arguments
-            if (arguments.arguments.isEmpty()) return@CustomExpression expression
-            val firstArgument = arguments.arguments[0]::value.detached()
-            val method = if (firstArgument.isDoubleType()) "roundToLong" else "roundToInt"
-            firstArgument.callOn(symbolProvider.provideMethodSymbol("kotlin.math.$method")).withFormattingFrom(expression)
-        } withReplaceType REPLACE_WITH_QUALIFIER,
-
         Method("java.lang.Math.signum") convertTo Method("kotlin.math.sign") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.sin") convertTo Method("kotlin.math.sin") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.sinh") convertTo Method("kotlin.math.sinh") withReplaceType REPLACE_WITH_QUALIFIER,
