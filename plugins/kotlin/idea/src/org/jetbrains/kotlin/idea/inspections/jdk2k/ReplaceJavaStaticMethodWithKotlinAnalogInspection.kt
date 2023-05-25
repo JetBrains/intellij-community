@@ -1,21 +1,24 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections.jdk2k
 
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.java.JavaBundle
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_8
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
-import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -46,16 +49,24 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
             ?.map(::ReplaceWithKotlinAnalogFunction)
             ?.toTypedArray() ?: return
 
+        val highlightType = if (replacements.any { it.mayChangeSemantics }) INFORMATION else GENERIC_ERROR_OR_WARNING
         holder.registerProblem(
             call,
-            callee.textRangeIn(call),
             KotlinBundle.message("should.be.replaced.with.kotlin.function"),
+            highlightType,
+            callee.textRangeIn(call),
             *replacements
         )
     })
 
     private class ReplaceWithKotlinAnalogFunction(private val replacement: Replacement) : LocalQuickFix {
-        override fun getName() = KotlinBundle.message("replace.with.kotlin.analog.function.text", replacement.kotlinFunctionShortName)
+        val mayChangeSemantics: Boolean
+            get() = replacement.mayChangeSemantics
+
+        override fun getName(): String {
+            val suffix = if (mayChangeSemantics) JavaBundle.message("quickfix.text.suffix.may.change.semantics") else ""
+            return KotlinBundle.message("replace.with.kotlin.analog.function.text", replacement.kotlinFunctionShortName) + suffix
+        }
 
         override fun getFamilyName() = KotlinBundle.message("replace.with.kotlin.analog.function.family.name")
 
@@ -144,8 +155,8 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
             Replacement("java.lang.Math.nextUp", "kotlin.math.nextUp", ToExtensionFunctionWithNonNullableReceiver),
             Replacement("java.lang.Math.pow", "kotlin.math.pow", ToExtensionFunctionWithNonNullableReceiver),
             Replacement("java.lang.Math.rint", "kotlin.math.round"),
-            Replacement("java.lang.Math.round", "kotlin.math.roundToLong", ToExtensionFunctionWithNonNullableReceiver),
-            Replacement("java.lang.Math.round", "kotlin.math.roundToInt", ToExtensionFunctionWithNonNullableReceiver),
+            Replacement("java.lang.Math.round", "kotlin.math.roundToLong", ToExtensionFunctionWithNonNullableReceiver, mayChangeSemantics = true),
+            Replacement("java.lang.Math.round", "kotlin.math.roundToInt", ToExtensionFunctionWithNonNullableReceiver, mayChangeSemantics = true),
             Replacement("java.lang.Math.signum", "kotlin.math.sign"),
             Replacement("java.lang.Math.sin", "kotlin.math.sin"),
             Replacement("java.lang.Math.sinh", "kotlin.math.sinh"),
@@ -160,7 +171,7 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
             Replacement("java.util.Arrays.copyOf", "kotlin.collections.copyOf", ToExtensionFunctionWithNonNullableReceiver) {
                 it.valueArguments.size == 2
             },
-            Replacement("java.util.Arrays.copyOfRange", "kotlin.collections.copyOfRange", ToExtensionFunctionWithNonNullableReceiver),
+            Replacement("java.util.Arrays.copyOfRange", "kotlin.collections.copyOfRange", ToExtensionFunctionWithNonNullableReceiver, mayChangeSemantics = true),
             Replacement("java.util.Arrays.equals", "kotlin.collections.contentEquals", ToExtensionFunctionWithNullableReceiver) {
                 it.valueArguments.size == 2
             },
@@ -185,7 +196,7 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
             Replacement("java.util.List.of", "kotlin.collections.mutableListOf")
         )
 
-        val REPLACEMENTS = (JAVA_MATH + JAVA_SYSTEM + JAVA_IO + JAVA_PRIMITIVES + JAVA_COLLECTIONS)
+        val REPLACEMENTS: Map<String, List<Replacement>> = (JAVA_MATH + JAVA_SYSTEM + JAVA_IO + JAVA_PRIMITIVES + JAVA_COLLECTIONS)
             .groupBy { it.javaMethodShortName }
     }
 }
@@ -195,6 +206,7 @@ data class Replacement(
     val javaMethodFqName: String,
     val kotlinFunctionFqName: String,
     val transformation: Transformation = WithoutAdditionalTransformation,
+    val mayChangeSemantics: Boolean = false,
     val filter: (KtCallExpression) -> Boolean = { true }
 ) {
     private fun String.shortName() = takeLastWhile { it != '.' }
