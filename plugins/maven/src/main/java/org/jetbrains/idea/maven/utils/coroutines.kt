@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * [runBlockingCancellable] requires a progress indicator.
@@ -19,6 +20,7 @@ import kotlinx.coroutines.SupervisorJob
  */
 @RequiresBackgroundThread
 @RequiresBlockingContext
+@ApiStatus.Experimental
 fun <T> runBlockingCancellableUnderIndicator(action: suspend CoroutineScope.() -> T): T {
   val process: () -> T = {
     runBlockingCancellable {
@@ -35,6 +37,7 @@ fun <T> runBlockingCancellableUnderIndicator(action: suspend CoroutineScope.() -
  * "No background mode" should eventually be eliminated, and then all
  * [withBackgroundProgressIfApplicable] usages should be replaced with [withBackgroundProgress].
  */
+@ApiStatus.Experimental
 suspend fun <T> withBackgroundProgressIfApplicable(
   project: Project,
   title: @NlsContexts.ProgressTitle String,

@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
@@ -29,7 +30,8 @@ interface MavenAsyncProjectsManager {
   fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module>
 }
 
-open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(project) {
+open class MavenProjectsManagerEx(project: Project, val coroutineScope: CoroutineScope) : MavenProjectsManager(project) {
+  // region import maven projects
   override suspend fun importMavenProjects(): List<Module> {
     return importMavenProjects(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject))
   }
@@ -145,5 +147,5 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
     }
   }
-
+  //endregion
 }
