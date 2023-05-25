@@ -134,8 +134,6 @@ abstract class ComponentManagerImpl(
 
   private var messageBus: MessageBusImpl? = null
 
-  private var handlingInitComponentError = false
-
   @Volatile
   private var isServicePreloadingCancelled = false
 
@@ -378,8 +376,20 @@ abstract class ComponentManagerImpl(
           pluginDescriptor = pluginDescriptor,
         )
       }
+      catch (e: StartupAbortedException) {
+        throw e
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: PluginException) {
+        throw e
+      }
       catch (e: Throwable) {
-        handleInitComponentError(e, componentClassName, pluginDescriptor.pluginId)
+        throw PluginException("Fatal error initializing '$componentClassName'", e, pluginDescriptor.pluginId)
       }
     }
   }
@@ -558,31 +568,6 @@ abstract class ComponentManagerImpl(
                                 " app=$app, current plugin=${pluginDescriptor.pluginId}", pluginDescriptor.pluginId)
         }
       }
-    }
-  }
-
-  internal fun handleInitComponentError(error: Throwable, componentClassName: String, pluginId: PluginId) {
-    if (handlingInitComponentError) {
-      return
-    }
-
-    handlingInitComponentError = true
-    try {
-      // not logged but thrown PluginException means some fatal error
-      if (error is StartupAbortedException || error is ProcessCanceledException || error is PluginException) {
-        throw error
-      }
-
-      var effectivePluginId = pluginId
-      if (effectivePluginId == PluginManagerCore.CORE_ID) {
-        effectivePluginId = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(componentClassName)?.pluginId
-                            ?: PluginManagerCore.CORE_ID
-      }
-
-      throw PluginException("Fatal error initializing '$componentClassName'", error, effectivePluginId)
-    }
-    finally {
-      handlingInitComponentError = false
     }
   }
 
