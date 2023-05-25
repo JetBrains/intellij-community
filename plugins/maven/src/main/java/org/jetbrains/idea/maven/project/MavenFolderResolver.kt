@@ -36,7 +36,7 @@ class MavenFolderResolver(private val project: Project) {
       return
     }
 
-    resolveFolders(projects)
+    val projectsToImportWithChanges = resolveFolders(projects)
 
     //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
     MavenUtil.restartMavenConnectors(project, false) { c: MavenServerConnector ->
@@ -46,8 +46,8 @@ class MavenFolderResolver(private val project: Project) {
       false
     }
 
-    if (projectsManager.hasScheduledProjects()) {
-      projectsManager.importMavenProjects()
+    if (!projectsToImportWithChanges.isEmpty()) {
+      projectsManager.importMavenProjects(projectsToImportWithChanges)
     }
   }
 

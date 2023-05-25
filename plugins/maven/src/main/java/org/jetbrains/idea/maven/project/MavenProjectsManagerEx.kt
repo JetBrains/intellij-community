@@ -26,6 +26,7 @@ import java.util.*
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
   suspend fun importMavenProjects(): List<Module>
+  suspend fun importMavenProjects(projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>): List<Module>
   fun importMavenProjectsSync(): List<Module>
   fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module>
 }
@@ -33,7 +34,13 @@ interface MavenAsyncProjectsManager {
 open class MavenProjectsManagerEx(project: Project, val coroutineScope: CoroutineScope) : MavenProjectsManager(project) {
   // region import maven projects
   override suspend fun importMavenProjects(): List<Module> {
-    val createdModules = importMavenProjects(false)
+    val createdModules = doImportMavenProjects(false)
+    fireProjectImportCompleted()
+    return createdModules
+  }
+
+  override suspend fun importMavenProjects(projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>): List<Module> {
+    val createdModules = doImportMavenProjects(projectsToImportWithChanges, false)
     fireProjectImportCompleted()
     return createdModules
   }
@@ -46,22 +53,38 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
     return prepareImporter(modelsProvider, false).importMavenProjectsBlocking()
   }
 
+  private suspend fun doImportMavenProjects(projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+                                            importModuleGroupsRequired: Boolean): List<Module> {
+    val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
+    return prepareImporter(modelsProvider, projectsToImportWithChanges, importModuleGroupsRequired).importMavenProjects()
+  }
+
+  private suspend fun doImportMavenProjects(importModuleGroupsRequired: Boolean): List<Module> {
+    val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
+    return prepareImporter(modelsProvider, importModuleGroupsRequired).importMavenProjects()
+  }
+
   private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider,
                               importModuleGroupsRequired: Boolean): MavenProjectsManagerImporter {
     val projectsToImportWithChanges = Collections.unmodifiableMap(LinkedHashMap(myProjectsToImport))
     projectsToImportWithChanges.forEach { (key: MavenProject, value: MavenProjectChanges) ->
       myProjectsToImport.remove(key, value)
     }
-    return MavenProjectsManagerImporter(
+    return prepareImporter(
       modelsProvider,
       projectsToImportWithChanges,
       importModuleGroupsRequired
     )
   }
 
-  private suspend fun importMavenProjects(importModuleGroupsRequired: Boolean): List<Module> {
-    val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
-    return prepareImporter(modelsProvider, importModuleGroupsRequired).importMavenProjects()
+  private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider,
+                              projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+                              importModuleGroupsRequired: Boolean): MavenProjectsManagerImporter {
+    return MavenProjectsManagerImporter(
+      modelsProvider,
+      projectsToImportWithChanges,
+      importModuleGroupsRequired
+    )
   }
 
   private data class ImportResult(val createdModules: List<Module>, val postTasks: List<MavenProjectsProcessorTask>)
@@ -176,13 +199,12 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
 
 
   private suspend fun importSettings(importModuleGroupsRequired: Boolean) {
-    importMavenProjects(importModuleGroupsRequired)
+    doImportMavenProjects(importModuleGroupsRequired)
   }
 
   private suspend fun importAllProjects() {
-    val projectsToImport = projectsTree.projects.associateBy({ it }, { MavenProjectChanges.ALL })
-    myProjectsToImport.putAll(projectsToImport)
-    importMavenProjects()
+    val projectsToImportWithChanges = projectsTree.projects.associateBy({ it }, { MavenProjectChanges.ALL })
+    importMavenProjects(projectsToImportWithChanges)
   }
 
 }
