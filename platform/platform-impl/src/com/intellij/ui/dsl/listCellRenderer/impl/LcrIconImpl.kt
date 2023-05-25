@@ -5,13 +5,14 @@ import com.intellij.ui.dsl.listCellRenderer.LcrIcon
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.JLabel
+import javax.swing.JList
 
 @ApiStatus.Internal
 internal class LcrIconImpl : LcrIcon, LcrCell {
 
   override val component = JLabel()
 
-  override fun init(isSelected: Boolean, cellHasFocus: Boolean) {
+  override fun init(list: JList<*>, isSelected: Boolean, cellHasFocus: Boolean) {
     icon = null
   }
 

@@ -3,11 +3,12 @@ package com.intellij.ui.dsl.listCellRenderer.impl
 
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
+import javax.swing.JList
 
 @ApiStatus.Internal
 internal interface LcrCell {
 
   val component: JComponent
 
-  fun init(isSelected: Boolean, cellHasFocus: Boolean)
+  fun init(list: JList<*>, isSelected: Boolean, cellHasFocus: Boolean)
 }

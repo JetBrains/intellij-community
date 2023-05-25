@@ -10,6 +10,7 @@ import com.intellij.ui.dsl.listCellRenderer.*
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
@@ -46,7 +47,7 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
         border = JBUI.Borders.empty(0, 20)
       }
       else {
-        border = JBUI.Borders.empty(4)
+        border = JBUI.Borders.empty(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding())
       }
     }
     builder.resizableRow()
@@ -94,7 +95,7 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-    val background = JBUI.CurrentTheme.List.background(isSelected, cellHasFocus)
+    val background = if (isSelected) JBUI.CurrentTheme.List.Selection.background(cellHasFocus) else list.background
     if (ExperimentalUI.isNewUI()) {
       selectablePanel.background = list.background
       selectablePanel.selectionColor = background
@@ -104,7 +105,7 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
     }
 
     for (cell in cells) {
-      cell.init(isSelected, cellHasFocus)
+      cell.init(list, isSelected, cellHasFocus)
     }
 
     _renderer.invoke(list, value, index, isSelected, cellHasFocus)

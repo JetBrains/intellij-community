@@ -14,11 +14,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.NameUtil
-import com.intellij.ui.render.IconCompCompPanel
+import com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.Processor
 import com.intellij.util.text.Matcher
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -38,10 +38,7 @@ import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager
 import git4idea.repo.GitRepositoryManager
 import git4idea.search.GitSearchEverywhereItemType.*
-import java.awt.Component
 import java.util.function.Function
-import javax.swing.JLabel
-import javax.swing.JList
 import javax.swing.ListCellRenderer
 
 internal class GitSearchEverywhereContributor(private val project: Project) : WeightedSearchEverywhereContributor<Any>, DumbAware {
@@ -124,53 +121,41 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
     return dataPack
   }
 
-  private val renderer = object : ListCellRenderer<Any> {
-
-    private val panel = IconCompCompPanel(JLabel(), JLabel()).apply {
-      border = JBUI.Borders.empty(0, 8)
+  private val renderer = listCellRenderer<Any> {
+    val icon = icon()
+    val center = text {
+      grow = true
+    }
+    val right = text {
+      style = LcrTextInitParams.Style.GRAYED
     }
 
-    override fun getListCellRendererComponent(
-      list: JList<out Any>,
-      value: Any?, index: Int,
-      isSelected: Boolean, cellHasFocus: Boolean
-    ): Component {
-      panel.reset()
-      panel.background = UIUtil.getListBackground(isSelected, cellHasFocus)
-      panel.setIcon(when (value) {
-                      is VcsRef -> LabelIcon(panel.center, JBUI.scale(16), panel.background, listOf(value.type.backgroundColor))
-                      else -> AllIcons.Vcs.CommitNode
-                    })
-      panel.center.apply {
-        font = list.font
-        text = when (value) {
-          is VcsRef -> value.name
-          is VcsCommitMetadata -> value.subject
-          else -> null
-        }
-        foreground = UIUtil.getListForeground(isSelected, cellHasFocus)
+    renderer { list, value, index, isSelected, cellHasFocus ->
+      val background = UIUtil.getListBackground(isSelected, cellHasFocus)
+      icon.icon = when (value) {
+                       is VcsRef -> LabelIcon(list, JBUI.scale(16), background, listOf(value.type.backgroundColor))
+                       else -> AllIcons.Vcs.CommitNode
+                     }
+      center.text = when (value) {
+        is VcsRef -> value.name
+        is VcsCommitMetadata -> value.subject
+        else -> null
       }
-
-      panel.right.apply {
-        font = list.font
-        text = when (value) {
-          is VcsRef -> getTrackingRemoteBranchName(value)
-          is VcsCommitMetadata -> value.id.toShortString()
-          else -> null
-        }
-        foreground = if (!isSelected) NamedColorUtil.getInactiveTextColor() else UIUtil.getListForeground(isSelected, cellHasFocus)
+      right.text = when (value) {
+        is VcsRef -> getTrackingRemoteBranchName(value)
+        is VcsCommitMetadata -> value.id.toShortString()
+        else -> null
       }
-      return panel
     }
+  }
 
-    @NlsSafe
-    private fun getTrackingRemoteBranchName(vcsRef: VcsRef): String? {
-      if (vcsRef.type != GitRefManager.LOCAL_BRANCH) {
-        return null
-      }
-      val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(vcsRef.root) ?: return null
-      return GitBranchUtil.getTrackInfo(repository, vcsRef.name)?.remoteBranch?.name
+  @NlsSafe
+  private fun getTrackingRemoteBranchName(vcsRef: VcsRef): String? {
+    if (vcsRef.type != GitRefManager.LOCAL_BRANCH) {
+      return null
     }
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(vcsRef.root) ?: return null
+    return GitBranchUtil.getTrackInfo(repository, vcsRef.name)?.remoteBranch?.name
   }
 
   override fun getElementsRenderer(): ListCellRenderer<in Any> = renderer

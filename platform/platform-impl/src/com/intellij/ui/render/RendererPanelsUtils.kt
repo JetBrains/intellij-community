@@ -21,7 +21,7 @@ import javax.swing.border.EmptyBorder
 import kotlin.math.max
 
 /**
- * RendererPanelsUtils and panels like [IconCompCompPanel], [IconCompOptionalCompPanel] etc are dedicated to build
+ * RendererPanelsUtils and panels like [IconCompOptionalCompPanel] etc are dedicated to build
  * standard simple renderers, which should cover most single-lined cases. Below are the reasons why use renderers from this file:
  *
  * 1. There are many similar renderers based on different layouts. It's hard to support them all and there are many duplicated code
@@ -59,18 +59,6 @@ class RendererPanelsUtils {
  * Gap between centered and right component. Can be changed by a separate UI constant later if needed
  */
 private const val CENTER_RIGHT_GAP = 4
-
-open class IconCompCompPanel<C1 : JComponent, C2 : JComponent>(val center: C1, val right: C2) : IconPanel() {
-
-  init {
-    resetHorizontalInsets(center, right)
-
-    createBuilder()
-      .cell(iconLabel, baselineAlign = false, gaps = UnscaledGaps(right = RendererPanelsUtils.iconTextUnscaledGap))
-      .cell(center, resizableColumn = true)
-      .cell(right, gaps = UnscaledGaps(left = CENTER_RIGHT_GAP))
-  }
-}
 
 /**
  * Should be used for in cases one label, label with icon, and other similar re

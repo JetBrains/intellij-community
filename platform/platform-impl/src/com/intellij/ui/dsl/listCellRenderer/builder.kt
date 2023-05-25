@@ -20,3 +20,14 @@ fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
 
   return result
 }
+
+/**
+ * Simplified version of [listCellRenderer] with one text cell
+ */
+@ApiStatus.Experimental
+fun <T> simpleListCellRenderer(textExtractor: (T) -> String): ListCellRenderer<T> {
+  return listCellRenderer {
+    val text = text()
+    renderer { value -> text.text = textExtractor(value) }
+  }
+}

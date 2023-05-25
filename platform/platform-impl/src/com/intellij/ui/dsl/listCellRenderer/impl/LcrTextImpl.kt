@@ -9,15 +9,16 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.JLabel
+import javax.swing.JList
 
 @ApiStatus.Internal
 internal class LcrTextImpl(private val initParams: LcrTextInitParamsImpl) : LcrText, LcrCell {
 
   override val component = JLabel()
 
-  override fun init(isSelected: Boolean, cellHasFocus: Boolean) {
+  override fun init(list: JList<*>, isSelected: Boolean, cellHasFocus: Boolean) {
     text = null
-    val defaultColor = JBUI.CurrentTheme.List.foreground(isSelected, cellHasFocus)
+    val defaultColor = if (isSelected) JBUI.CurrentTheme.List.Selection.foreground(cellHasFocus) else list.foreground
     color = when (initParams.style) {
       LcrTextInitParams.Style.NORMAL -> defaultColor
       LcrTextInitParams.Style.GRAYED -> if (isSelected) defaultColor else NamedColorUtil.getInactiveTextColor()
