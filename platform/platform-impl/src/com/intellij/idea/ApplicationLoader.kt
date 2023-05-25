@@ -21,10 +21,8 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
@@ -102,6 +100,10 @@ private suspend fun initApplicationImpl(args: List<String>,
       app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this, asyncScope = asyncScope)
     }
 
+    val appInitListeners = async(CoroutineName("app init listener preload")) {
+      getAppInitializedListeners(app)
+    }
+
     if (!app.isHeadlessEnvironment) {
       asyncScope.launch(CoroutineName("FUS class preloading")) {
         // preload FUS classes (IDEA-301206)
@@ -118,10 +120,6 @@ private suspend fun initApplicationImpl(args: List<String>,
         }
       }
       StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
-    }
-
-    val appInitListeners = async(CoroutineName("app init listener preload")) {
-      getAppInitializedListeners(app)
     }
 
     // doesn't block app start-up
@@ -168,52 +166,58 @@ private suspend fun initApplicationImpl(args: List<String>,
 
 fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: CoroutineScope) {
   launch {
-    // LocalHistory wants ManagingFS.
-    // It should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner.
-    subtask("ManagingFS preloading") {
+    // loading is started by StartupUtil, here we just "join" it
+    subtask("ManagingFS waiting") {
       app.serviceAsync<ManagingFS>()
     }
+
     // PlatformVirtualFileManager also wants ManagingFS
     launch { app.serviceAsync<VirtualFileManager>() }
-    asyncScope.launch { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
-  }
-  launch {
-    // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
-    app.serviceAsync<PathMacros>()
 
     launch {
+      // loading is started by StartupUtil, here we just "join" it
+      app.serviceAsync<PathMacros>()
+
       // required for indexing tasks (see JavaSourceModuleNameIndex for example)
       // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
       app.serviceAsync<PropertiesComponent>()
 
+      asyncScope.launch {
+        // wants PropertiesComponent
+        launch { app.serviceAsync<DebugLogManager>() }
+
+        app.serviceAsync<RegistryManager>()
+        // wants RegistryManager
+        if (!app.isHeadlessEnvironment) {
+          app.serviceAsync<PerformanceWatcher>()
+          // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
+          PerformanceWatcher.getInstance()
+        }
+      }
+
       // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
       coroutineScope {
         launch { app.serviceAsync<FileTypeManager>() }
+        // wants ManagingFS
         launch { app.serviceAsync<VirtualFilePointerManager>() }
       }
 
       app.serviceAsync<ProjectJdkTable>()
     }
 
+    // LocalHistory wants ManagingFS.
+    // It should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner.
+    asyncScope.launch { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
+  }
+
+  if (!app.isHeadlessEnvironment) {
     asyncScope.launch {
-      if (!app.isHeadlessEnvironment) {
-        launch {
-          subtask("UISettings preloading") { app.serviceAsync<UISettings>() }
-          subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
-          subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
-        }
-      }
+      // loading is started by StartupUtil, here we just "join" it
+      app.serviceAsync<PathMacros>()
 
-      // wants PropertiesComponent
-      launch { app.serviceAsync<DebugLogManager>() }
-
-      app.serviceAsync<RegistryManager>()
-      // wants RegistryManager
-      if (!app.isHeadlessEnvironment) {
-        app.serviceAsync<PerformanceWatcher>()
-        // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
-        PerformanceWatcher.getInstance()
-      }
+      subtask("UISettings preloading") { app.serviceAsync<UISettings>() }
+      subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
+      subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
     }
   }
 }
@@ -262,7 +266,7 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
       val isDebugEnabled = LOG.isDebugEnabled
       ExtensionPointName<PreloadingActivity>("com.intellij.preloadingActivity").processExtensions { preloadingActivity, pluginDescriptor ->
         launch {
-          executePreloadActivity(preloadingActivity, pluginDescriptor, isDebugEnabled)
+          executePreloadActivity(preloadingActivity, pluginDescriptor)
         }
       }
       extensionPoint.reset()
@@ -380,24 +384,6 @@ fun findStarter(key: String): ApplicationStarter? {
   return ApplicationStarter.EP_NAME.findByIdOrFromInstance(key) { it.commandName }
 }
 
-fun initConfigurationStore(app: ApplicationImpl) {
-  var activity = StartUpMeasurer.startActivity("beforeApplicationLoaded")
-  val configPath = PathManager.getConfigDir()
-
-  for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
-    runCatching {
-      listener.beforeApplicationLoaded(app, configPath)
-    }.getOrLogException(LOG)
-  }
-
-  activity = activity.endAndStart("init app store")
-
-  // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
-  app.stateStore.setPath(configPath)
-  StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
-  activity.end()
-}
-
 fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedListener>, asyncScope: CoroutineScope) {
   for (listener in listeners) {
     launch {
@@ -406,7 +392,7 @@ fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedList
   }
 }
 
-private suspend fun executePreloadActivity(activity: PreloadingActivity, descriptor: PluginDescriptor?, isDebugEnabled: Boolean) {
+private suspend fun executePreloadActivity(activity: PreloadingActivity, descriptor: PluginDescriptor?) {
   val measureActivity = if (descriptor == null) {
     null
   }

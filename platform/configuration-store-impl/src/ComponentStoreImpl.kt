@@ -121,9 +121,9 @@ abstract class ComponentStoreImpl : IComponentStore {
           if (initComponent(info = componentInfo, changedStorages = null, reloadData = ThreeState.NO) && serviceDescriptor != null) {
             // if not service, so, component manager will check it later for all components
             val project = project
-            if (project != null) {
+            if (project != null && project.isInitialized) {
               val app = ApplicationManager.getApplication()
-              if (!app.isHeadlessEnvironment && !app.isUnitTestMode && project.isInitialized) {
+              if (!app.isHeadlessEnvironment && !app.isUnitTestMode) {
                 notifyUnknownMacros(store = this, project = project, componentName = componentName)
               }
             }

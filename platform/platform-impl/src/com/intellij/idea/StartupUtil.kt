@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -36,6 +37,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
 import com.intellij.ui.*
@@ -268,7 +270,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     checkSystemDirJob.join()
 
     if (!configImportNeededDeferred.await()) {
-      runPreAppClass(args)
+      runPreAppClass(args, logDeferred)
     }
 
     val rwLockHolder = rwLockHolderDeferred.await()
@@ -281,7 +283,7 @@ fun CoroutineScope.startApplication(args: List<String>,
                       rwLockHolder)
     }
 
-    launch {
+    val appIsSet = launch {
       // acquire IW lock on EDT indefinitely in legacy mode
       if (!isImplicitReadOnEDTDisabled) {
         subtask("AppDelayQueue instantiation", RawSwingDispatcher) {
@@ -305,6 +307,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     launch {
       preInitApp(app = app,
+                 appIsSet = appIsSet,
                  mainScope = mainScope,
                  log = log,
                  initLafJob = initLafJob,
@@ -385,7 +388,8 @@ private suspend fun preInitApp(app: ApplicationImpl,
                                log: Logger,
                                initLafJob: Job,
                                pluginSetDeferred: CompletableDeferred<Deferred<PluginSet>>,
-                               euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
+                               euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?,
+                               appIsSet: Job) {
   val pluginSet = subtask("plugin descriptor init waiting") {
     pluginSetDeferred.await().await()
   }
@@ -410,6 +414,19 @@ private suspend fun preInitApp(app: ApplicationImpl,
 
   initConfigurationStore(app)
 
+  mainScope.launch(CoroutineName("PathMacros preloading") + Dispatchers.Default) {
+    // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
+    app.serviceAsync<PathMacros>()
+  }
+  mainScope.launch(Dispatchers.Default) {
+    appIsSet.join()
+    // uses ApplicationManager
+    // yes, mainScope, we explicitly "join" it in preloadCriticalServices
+    mainScope.launch(CoroutineName("ManagingFS preloading") + Dispatchers.Default) {
+      app.serviceAsync<ManagingFS>()
+    }
+  }
+
   // LaF must be initialized before app init because icons maybe requested and, as a result,
   // a scale must be already initialized (especially important for Linux)
   subtask("init laf waiting") {
@@ -428,6 +445,25 @@ private suspend fun preInitApp(app: ApplicationImpl,
       app.serviceAsync<EditorColorsManager>()
     }
   }
+}
+
+@VisibleForTesting
+fun initConfigurationStore(app: ApplicationImpl) {
+  var activity = StartUpMeasurer.startActivity("beforeApplicationLoaded")
+  val configPath = PathManager.getConfigDir()
+
+  for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
+    runCatching {
+      listener.beforeApplicationLoaded(app, configPath)
+    }.getOrLogException(logger<AppStarter>())
+  }
+
+  activity = activity.endAndStart("init app store")
+
+  // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
+  app.stateStore.setPath(configPath)
+  StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
+  activity.end()
 }
 
 @Suppress("SpellCheckingInspection")
@@ -491,8 +527,9 @@ fun addExternalInstanceListener(processor: (List<String>) -> Deferred<CliResult>
   commandProcessor.set(processor)
 }
 
-private fun runPreAppClass(args: List<String>) {
+private suspend fun runPreAppClass(args: List<String>, logDeferred: Deferred<Logger>) {
   val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY) ?: return
+  logDeferred.join()
   runActivity("pre app class running") {
     try {
       val aClass = AppStarter::class.java.classLoader.loadClass(classBeforeAppProperty)

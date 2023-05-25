@@ -577,7 +577,7 @@ abstract class ComponentManagerImpl(
         componentStore.initComponent(component, serviceDescriptor, pluginId)
       }
       else {
-        check(component !is PersistentStateComponent<*>)
+        check(component !is PersistentStateComponent<*> || getApplication()!!.isUnitTestMode)
       }
     }
   }

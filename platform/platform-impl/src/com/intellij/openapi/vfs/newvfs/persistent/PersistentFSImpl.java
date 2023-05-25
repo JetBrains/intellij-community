@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -69,10 +68,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private final AtomicBoolean myConnected = new AtomicBoolean(false);
   private final AtomicInteger myStructureModificationCount = new AtomicInteger();
   private BulkFileListener myPublisher;
-  private volatile VfsData myVfsData = new VfsData();
+  private volatile VfsData myVfsData;
+  private final Application app;
   private VfsLog myVfsLog;
 
-  public PersistentFSImpl() {
+  public PersistentFSImpl(@NotNull Application app) {
+    this.app = app;
+    myVfsData = new VfsData(app);
     myRoots = SystemInfoRt.isFileSystemCaseSensitive
               ? new ConcurrentHashMap<>(10, 0.4f, JobSchedulerImpl.getCPUCoresCount())
               : ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(),
@@ -85,7 +87,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     AsyncEventSupport.startListening();
 
-    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener(){
+    app.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener(){
       @Override
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         // `myIdToDirCache` could retain alien file systems
@@ -113,7 +115,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @ApiStatus.Internal
   public void connect() {
     myIdToDirCache.clear();
-    myVfsData = new VfsData();
+    myVfsData = new VfsData(app);
     LOG.assertTrue(!myConnected.get());
     initVfsLog();
     doConnect();
@@ -153,7 +155,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     BulkFileListener publisher = myPublisher;
     if (publisher == null) {
       // the field cannot be initialized in constructor, to ensure that lazy listeners won't be created too early
-      publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
+      publisher = app.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
       myPublisher = publisher;
     }
     return publisher;
@@ -619,10 +621,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         setLength(fileId, content.length);
       }
 
-      Application application = ApplicationManager.getApplication();
       // we should cache every local file's content, because the local history feature and Perforce offline mode depend on the cache
       // (do not cache archive content unless explicitly asked)
-      if ((!fs.isReadOnly() || cacheContent && !application.isInternal() && !application.isUnitTestMode()) && shouldCache(content.length)) {
+      if ((!fs.isReadOnly() || cacheContent && !app.isInternal() && !app.isUnitTestMode()) && shouldCache(content.length)) {
         myInputLock.writeLock().lock();
         try {
           writeContent(file, ByteArraySequence.create(content), fs.isReadOnly());
@@ -786,7 +787,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         if (closed) return;
         super.close();
 
-        ApplicationManager.getApplication().assertWriteAccessAllowed();
+        app.assertWriteAccessAllowed();
 
         long oldLength = getLastRecordedLength(file);
         VFileContentChangeEvent event = new VFileContentChangeEvent(
@@ -855,7 +856,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void processEvent(@NotNull VFileEvent event) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    app.assertWriteAccessAllowed();
     if (!event.isValid()) return;
 
     List<VFileEvent> outValidatedEvents = new ArrayList<>();
@@ -1175,7 +1176,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @ApiStatus.Internal
   public void processEventsImpl(@NotNull List<? extends CompoundVFileEvent> events, boolean excludeAsyncListeners) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    app.assertWriteAccessAllowed();
 
     int startIndex = 0;
     int cappedInitialSize = Math.min(events.size(), INNER_ARRAYS_THRESHOLD);
