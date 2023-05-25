@@ -27,7 +27,8 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
   private var defaultVerticalAlign = VerticalAlign.CENTER
   private var defaultBaselineAlign = false
 
-  private var x = 0
+  var x = 0
+    private set
   private var y = GRID_EMPTY
 
   fun columnsGaps(value: List<UnscaledGapsX>): RowsGridBuilder {

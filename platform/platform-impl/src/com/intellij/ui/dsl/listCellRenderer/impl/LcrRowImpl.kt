@@ -1,0 +1,119 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.dsl.listCellRenderer.impl
+
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.dsl.UiDslException
+import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.dsl.listCellRenderer.*
+import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
+import java.awt.BorderLayout
+import java.awt.Component
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
+
+private const val HORIZONTAL_GAP = 4
+
+@ApiStatus.Internal
+internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
+
+  private lateinit var _renderer: (list: JList<out T>, value: T, index: Int, isSelected: Boolean, cellHasFocus: Boolean) -> Unit
+  private val selectablePanel = SelectablePanel()
+
+  /**
+   * Content panel allows to trim components that could go outside of selection. It's better to implement that on layout level later
+   */
+  private val content = JPanel(GridLayout())
+  private val builder = RowsGridBuilder(content)
+  private val cells = mutableListOf<LcrCell>()
+
+  init {
+    content.isOpaque = false
+
+    selectablePanel.apply {
+      layout = BorderLayout()
+      add(content, BorderLayout.CENTER)
+
+      if (ExperimentalUI.isNewUI()) {
+        preferredHeight = JBUI.CurrentTheme.List.rowHeight()
+        selectionArc = 8
+        selectionInsets = JBInsets.create(0, 12)
+        border = JBUI.Borders.empty(0, 20)
+      }
+      else {
+        border = JBUI.Borders.empty(4)
+      }
+    }
+    builder.resizableRow()
+  }
+
+  override fun icon(init: (LcrInitParams.() -> Unit)?): LcrIcon {
+    val initParams = LcrInitParamsImpl()
+    if (init != null) {
+      initParams.init()
+    }
+    val result = LcrIconImpl()
+    add(result, initParams, false)
+    return result
+  }
+
+  override fun text(init: (LcrTextInitParams.() -> Unit)?): LcrText {
+    val initParams = LcrTextInitParamsImpl()
+    if (init != null) {
+      initParams.init()
+    }
+    val result = LcrTextImpl(initParams)
+    add(result, initParams, true)
+    return result
+  }
+
+  override fun renderer(init: (list: JList<out T>, value: T, index: Int, isSelected: Boolean, cellHasFocus: Boolean) -> Unit) {
+    if (this::_renderer.isInitialized) {
+      throw UiDslException("Only one renderer is allowed")
+    }
+    _renderer = init
+  }
+
+  override fun renderer(init: (value: T) -> Unit) {
+    renderer { _, value, _, _, _ -> init(value) }
+  }
+
+  fun onInitFinished() {
+    if (!this::_renderer.isInitialized) {
+      throw UiDslException("Renderer must be specified, see LcrRow.renderer")
+    }
+  }
+
+  override fun getListCellRendererComponent(list: JList<out T>,
+                                            value: T,
+                                            index: Int,
+                                            isSelected: Boolean,
+                                            cellHasFocus: Boolean): Component {
+    val background = JBUI.CurrentTheme.List.background(isSelected, cellHasFocus)
+    if (ExperimentalUI.isNewUI()) {
+      selectablePanel.background = list.background
+      selectablePanel.selectionColor = background
+    }
+    else {
+      selectablePanel.background = background
+    }
+
+    for (cell in cells) {
+      cell.init(isSelected, cellHasFocus)
+    }
+
+    _renderer.invoke(list, value, index, isSelected, cellHasFocus)
+    return selectablePanel
+  }
+
+  private fun add(cell: LcrCell, initParams: LcrInitParamsImpl, baselineAlign: Boolean) {
+    cells.add(cell)
+    builder.cell(cell.component, gaps = if (builder.x == 0) UnscaledGaps.EMPTY else UnscaledGaps(left = HORIZONTAL_GAP),
+                 resizableColumn = initParams.grow, baselineAlign = baselineAlign)
+  }
+}
