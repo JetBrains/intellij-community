@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components
 
 import com.intellij.openapi.actionSystem.AnAction
@@ -13,6 +13,7 @@ import java.awt.Color
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.util.*
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JButton
@@ -27,7 +28,7 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
       field = value
 
       firePropertyChange(PROP_OPTIONS, oldOptions, options)
-      if (!oldOptions.contentEquals(options)) {
+      if (!Arrays.equals(oldOptions, options)) {
         revalidate()
         repaint()
       }

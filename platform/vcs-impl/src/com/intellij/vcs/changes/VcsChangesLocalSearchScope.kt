@@ -1,4 +1,3 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.changes
 
 import com.intellij.codeInsight.actions.VcsFacade
@@ -96,7 +95,7 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
     = this === other ||
       other is VcsChangesLocalSearchScope &&
       myProject === other.myProject && myIgnoreInjectedPsi == other.myIgnoreInjectedPsi &&
-      myGivenVirtualFiles.contentEquals(other.myGivenVirtualFiles)
+      Arrays.equals(myGivenVirtualFiles, other.myGivenVirtualFiles)
 
   override fun toString()
     = StringBuilder()
@@ -106,7 +105,7 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
 
   override fun getWeight(): Int = 2
 
-  override fun calcHashCode(): Int = Objects.hash(myIgnoreInjectedPsi, myGivenVirtualFiles.contentHashCode())
+  override fun calcHashCode(): Int = Objects.hash(myIgnoreInjectedPsi, Arrays.hashCode(myGivenVirtualFiles))
 
   override fun containsRange(file: PsiFile, range: TextRange): Boolean
     = getRanges(file.virtualFile).any { it.contains(range) }

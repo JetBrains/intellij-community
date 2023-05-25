@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
 import com.github.luben.zstd.ZstdInputStreamNoFinalizer
@@ -166,7 +166,7 @@ options:${getExtractOptionsShortString(options)}
       return false
     }
     val existingContent = Files.readAllBytes(flagFile)
-    return existingContent.contentEquals(getExpectedFlagFileContent(archiveFile, targetDirectory, options))
+    return Arrays.equals(existingContent, getExpectedFlagFileContent(archiveFile, targetDirectory, options))
   }
 
   // assumes file at `archiveFile` is immutable

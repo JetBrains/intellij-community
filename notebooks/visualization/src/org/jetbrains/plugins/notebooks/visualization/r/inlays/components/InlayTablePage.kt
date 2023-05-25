@@ -39,6 +39,7 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.io.BufferedWriter
 import java.io.File
+import java.util.Arrays.asList
 import javax.swing.*
 import javax.swing.table.TableRowSorter
 
@@ -223,7 +224,7 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
       }
     }
 
-    return listOf(actionSaveAsCsv, filterTable, paginateTable)
+    return asList(actionSaveAsCsv, filterTable, paginateTable)
   }
 
   /** Save the file as tsv (tab separated values) via intellij SaveFileDialog. */

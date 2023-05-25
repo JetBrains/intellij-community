@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolModelGenerator
 
 import com.intellij.openapi.util.text.StringUtil
@@ -12,7 +12,6 @@ import java.net.URL
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.util.*
-import kotlin.math.max
 
 fun main(args: Array<String>) {
   val outputDir = args[0]
@@ -41,7 +40,7 @@ fun main(args: Array<String>) {
 }
 
 private fun loadBytes(stream: InputStream): ByteArray {
-  val buffer = ByteArrayOutputStream(max(stream.available(), 16 * 1024))
+  val buffer = ByteArrayOutputStream(Math.max(stream.available(), 16 * 1024))
   val bytes = ByteArray(1024 * 20)
   while (true) {
     val n = stream.read(bytes, 0, bytes.size)
@@ -87,7 +86,7 @@ internal class Generator(outputDir: String, rootPackage: String, requestClassNam
 
     for (domain in domainList) {
       if (!INCLUDED_DOMAINS.contains(domain.domain())) {
-        println("Domain skipped: ${domain.domain()}")
+        System.out.println("Domain skipped: ${domain.domain()}")
         continue
       }
 
@@ -106,7 +105,7 @@ internal class Generator(outputDir: String, rootPackage: String, requestClassNam
 
       out.newLine()
 
-      println("Domain generated: ${domain.domain()}")
+      System.out.println("Domain generated: ${domain.domain()}")
     }
 
     typeMap.domainGeneratorMap = domainGeneratorMap

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolReader
 
 import org.jetbrains.io.JsonReaderEx
@@ -81,7 +81,7 @@ internal class ReaderRoot<R>(val type: Class<R>, private val typeToTypeHandler: 
 }
 
 private val STATIC_METHOD_PARAM_NAME_LIST = listOf(READER_NAME)
-private val STATIC_METHOD_PARAM_NAME_LIST2 = listOf(READER_NAME, "nextName")
+private val STATIC_METHOD_PARAM_NAME_LIST2 = Arrays.asList(READER_NAME, "nextName")
 
 internal class ReadDelegate(private val typeHandler: TypeWriter<*>, private val isList: Boolean, hasNextNameParam: Boolean) {
   private val paramNames = if (hasNextNameParam) STATIC_METHOD_PARAM_NAME_LIST2 else STATIC_METHOD_PARAM_NAME_LIST

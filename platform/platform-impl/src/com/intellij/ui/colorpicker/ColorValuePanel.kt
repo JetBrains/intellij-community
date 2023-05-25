@@ -32,8 +32,6 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.text.AttributeSet
 import javax.swing.text.PlainDocument
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
@@ -526,7 +524,7 @@ class ColorValueField(private val hex: Boolean = false, private val showAlpha: B
 
     val doc = document as DigitColorDocument
     val newValue = doc.getText(0, doc.length).toInt() + diff
-    val valueInRange = max(doc.valueRange.start, min(newValue, doc.valueRange.endInclusive))
+    val valueInRange = Math.max(doc.valueRange.start, Math.min(newValue, doc.valueRange.endInclusive))
     text = valueInRange.toString()
   }
 

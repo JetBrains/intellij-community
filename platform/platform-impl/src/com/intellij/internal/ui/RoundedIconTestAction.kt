@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -24,7 +24,6 @@ import java.awt.geom.Ellipse2D
 import java.awt.image.BufferedImage
 import javax.swing.*
 import javax.swing.event.ChangeListener
-import kotlin.math.min
 
 internal class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
 
@@ -122,7 +121,7 @@ internal class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
       RectanglePainter.FILL.paint(g, 0, 0, width, height, null)
       for (i in 0 until 100) {
         g.color = randomColor()
-        val r = Math.random() * min(width, height) / Math.PI
+        val r = Math.random() * Math.min(width, height) / Math.PI
         g.fill(Ellipse2D.Double(Math.random() * width, Math.random() * height, r, r))
       }
       g.color = Color(0, 0, 0, 85) //mark center of a picture

@@ -25,7 +25,6 @@ import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 import kotlin.math.max
-import kotlin.math.min
 
 private val DEFAULT_HORIZONTAL_PADDING = JBUI.scale(5)
 private val DEFAULT_VERTICAL_PADDING = JBUI.scale(5)
@@ -148,7 +147,7 @@ abstract class SliderComponent<T: Number>(initialValue: T) : JComponent() {
   }
 
   private fun processMouse(e: MouseEvent) = runAndUpdateIfNeeded {
-    val newKnobPosition = max(0, min(e.x - leftPadding, sliderWidth))
+    val newKnobPosition = Math.max(0, Math.min(e.x - leftPadding, sliderWidth))
     knobPosition = newKnobPosition
   }
 

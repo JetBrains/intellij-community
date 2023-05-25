@@ -31,9 +31,6 @@ import java.awt.image.ColorModel
 import java.awt.image.MemoryImageSource
 import javax.swing.JComponent
 import kotlin.math.ceil
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToInt
 
 private val KNOB_COLOR = Color.WHITE
 private const val KNOB_RADIUS = 4
@@ -77,8 +74,8 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
   }
 
   public fun getColorByPoint(p: Point): Color {
-    val x = max(0, min(p.x, size.width))
-    val y = max(0, min(p.y, size.height))
+    val x = Math.max(0, Math.min(p.x, size.width))
+    val y = Math.max(0, Math.min(p.y, size.height))
 
     val saturation = x.toFloat() / size.width
     val brightness = 1.0f - y.toFloat() / size.height
@@ -126,8 +123,8 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
 
     g.drawImage(image, component.x, component.y, null)
 
-    val knobX = (saturation * component.width).roundToInt()
-    val knobY = (component.height * (1.0f - brightness)).roundToInt()
+    val knobX = Math.round(saturation * component.width)
+    val knobY = Math.round(component.height * (1.0f - brightness))
 
     if (image is ToolkitImage && image.bufferedImage.width > knobX && image.bufferedImage.height > knobY) {
       val rgb = image.bufferedImage.getRGB(knobX, knobY)

@@ -28,8 +28,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import java.util.*
-import kotlin.math.ceil
-import kotlin.math.min
 
 class GCRootPathsTree(
   val analysisContext: AnalysisContext,
@@ -306,9 +304,9 @@ class GCRootPathsTree(
       }
       val totalInstanceCount = calculateTotalInstanceCount()
 
-      val minimumObjectsForReport = min(
+      val minimumObjectsForReport = Math.min(
         treeDisplayOptions.minimumObjectCount,
-        (ceil(totalInstanceCount / 100.0) * treeDisplayOptions.minimumObjectCountPercent).toInt())
+        (Math.ceil(totalInstanceCount / 100.0) * treeDisplayOptions.minimumObjectCountPercent).toInt())
 
       // Show paths from roots that have at least minimumObjectCountPercent%, minimumObjectCount objects or size of all reported objects
       // in the subtree is more than minimumObjectSize.

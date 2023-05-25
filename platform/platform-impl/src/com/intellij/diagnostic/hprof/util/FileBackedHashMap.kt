@@ -17,7 +17,6 @@ package com.intellij.diagnostic.hprof.util
 
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
-import kotlin.math.min
 
 class FileBackedHashMap(
   private val buffer: ByteBuffer,
@@ -68,7 +67,7 @@ class FileBackedHashMap(
       val emptyBuf = ByteBuffer.allocateDirect(bufferSize)
       var remaining = size
       while (remaining > 0) {
-        val toWrite = min(emptyBuf.remaining().toLong(), remaining)
+        val toWrite = Math.min(emptyBuf.remaining().toLong(), remaining)
         if (toWrite == emptyBuf.remaining().toLong()) {
           channel.write(emptyBuf)
           emptyBuf.rewind()

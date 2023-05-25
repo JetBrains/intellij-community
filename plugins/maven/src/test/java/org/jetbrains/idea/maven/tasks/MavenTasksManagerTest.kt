@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks
 
 import com.intellij.execution.ExecutionListener
@@ -8,6 +8,7 @@ import com.intellij.maven.testFramework.MavenCompilingTestCase
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.junit.Test
+import java.util.List
 
 class MavenTasksManagerTest : MavenCompilingTestCase() {
   @Test
@@ -156,7 +157,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
   private fun addCompileTask(pomPath: String, goal: String) {
     val mavenTasksManager = MavenTasksManager.getInstance(myProject)
     val task = MavenCompilerTask(pomPath, goal)
-    mavenTasksManager.addCompileTasks(listOf(task), MavenTasksManager.Phase.BEFORE_COMPILE)
+    mavenTasksManager.addCompileTasks(List.of(task), MavenTasksManager.Phase.BEFORE_COMPILE)
   }
 
   private fun subscribeToMavenGoalExecution(goal: String, parametersList: MutableList<MavenRunnerParameters>) {

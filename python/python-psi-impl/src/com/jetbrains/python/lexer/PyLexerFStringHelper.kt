@@ -6,7 +6,6 @@ import com.intellij.util.containers.Stack
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.PyElementType
 import com.jetbrains.python.psi.PyStringLiteralUtil
-import kotlin.math.min
 
 
 class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
@@ -137,7 +136,7 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
         }
       }
       else {
-        val nextThree = text.substring(i, min(text.length, i + 3))
+        val nextThree = text.substring(i, Math.min(text.length, i + 3))
         val lastWithMatchingQuotesIndex = myFStringStates.indexOfLast { nextThree.startsWith(it.openingQuotes) }
         if (lastWithMatchingQuotesIndex >= 0) {
           val state = myFStringStates[lastWithMatchingQuotesIndex]

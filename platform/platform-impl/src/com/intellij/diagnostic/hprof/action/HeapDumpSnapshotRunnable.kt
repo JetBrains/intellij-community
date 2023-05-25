@@ -42,7 +42,6 @@ import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.io.path.exists
-import kotlin.math.max
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun usedMemory(withGC: Boolean): Long {
@@ -139,7 +138,7 @@ class HeapDumpSnapshotRunnable(
   }
 
   private fun estimateRequiredFreeSpaceInMB(): Long {
-    return max(100, (usedMemory(false) * 2.0).toLong() / 1_000_000)
+    return Math.max(100, (usedMemory(false) * 2.0).toLong() / 1_000_000)
   }
 
   class CaptureHeapDumpTask(private val hprofPath: Path,

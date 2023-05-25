@@ -24,9 +24,6 @@ import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
-import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
 
 class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
   private val units = ArrayList(Collections.nCopies<SoftReference<StatisticsUnit>>(UNIT_COUNT, null))
@@ -42,7 +39,7 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
 
     var useCount = 0
     for (conjunct in info.conjuncts) {
-      useCount = max(doGetUseCount(conjunct), useCount)
+      useCount = Math.max(doGetUseCount(conjunct), useCount)
     }
     return useCount
   }
@@ -60,7 +57,7 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
 
     var recency = Integer.MAX_VALUE
     for (conjunct in info.conjuncts) {
-      recency = min(doGetRecency(conjunct), recency)
+      recency = Math.min(doGetRecency(conjunct), recency)
     }
     return recency
   }
@@ -172,7 +169,7 @@ private fun loadUnit(unitNumber: Int): StatisticsUnit {
   return unit
 }
 
-private fun getUnitNumber(key1: String) = abs(key1.hashCode() % UNIT_COUNT)
+private fun getUnitNumber(key1: String) = Math.abs(key1.hashCode() % UNIT_COUNT)
 
 private fun getPathToUnit(unitNumber: Int) = storeDir.resolve("unit.$unitNumber")
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package com.intellij.ui
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
 
@@ -169,7 +170,7 @@ private class DummyRowIcon : DummyIconImpl, RowIcon {
       return true
     }
     else {
-      return other is DummyRowIcon && icons.contentEquals(other.icons)
+      return other is DummyRowIcon && Arrays.equals(icons, other.icons)
     }
   }
 

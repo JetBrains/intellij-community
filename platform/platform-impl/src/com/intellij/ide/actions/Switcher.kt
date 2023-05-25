@@ -76,7 +76,6 @@ import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 import kotlin.math.max
-import kotlin.math.min
 
 /**
  * @author Konstantin Bulenkov
@@ -424,7 +423,7 @@ object Switcher : BaseSwitcherAction(null) {
       if (files === selectedList) {
         val size = files.itemsCount
         if (size > 0) {
-          val index = min(max(selectedIndex, 0), size - 1)
+          val index = Math.min(Math.max(selectedIndex, 0), size - 1)
           files.selectedIndex = index
           files.ensureIndexIsVisible(index)
         }
@@ -764,7 +763,7 @@ object Switcher : BaseSwitcherAction(null) {
       }
 
       private fun getIndexShortcut(index: Int): String {
-        return Strings.toUpperCase(index.toString(radix = index + 1))
+        return Strings.toUpperCase(Integer.toString(index, index + 1))
       }
 
       private fun findAppropriateWindow(window: EditorWindow?): EditorWindow? {
@@ -808,7 +807,7 @@ object Switcher : BaseSwitcherAction(null) {
       if (size.width < min.width) size.width = min.width
       if (size.height < min.height) size.height = min.height
       if (HORIZONTAL_SCROLLBAR_NEVER != getHorizontalScrollBarPolicy()) return size
-      width = max(size.width, width)
+      width = Math.max(size.width, width)
       size.width = width
       return size
     }

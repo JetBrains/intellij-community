@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
 import com.intellij.ide.HelpTooltip
@@ -107,7 +107,7 @@ internal class TestTooltipsAction : DumbAwareAction() {
     val sectionColor = ColorUtil.toHtmlColor(Gray.get(0x90))
     val editorFontStyle = "{ font-family:\"" + EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER + "\";" +
                           "font-size:" + getMonospaceFontSizeCorrection() + "%; }"
-    return listOf(
+    return java.util.List.of(
       "tt $editorFontStyle",
       "code $editorFontStyle",
       "pre $editorFontStyle",

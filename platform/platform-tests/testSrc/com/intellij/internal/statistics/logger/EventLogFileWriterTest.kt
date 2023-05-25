@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.logger
 
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
@@ -52,7 +52,7 @@ class EventLogFileWriterTest {
     val ts = System.currentTimeMillis()
 
     val f3 = TestFile(ts - 100 * 1000, "active.log")
-    doTestCleanupOldFiles(listOf(f3), listOf(false), -1, false)
+    doTestCleanupOldFiles(java.util.List.of(f3), java.util.List.of(false), -1, false)
   }
 
   @Test
@@ -60,7 +60,7 @@ class EventLogFileWriterTest {
     val ts = System.currentTimeMillis()
 
     val f3 = TestFile(ts - 1000, "active.log")
-    doTestCleanupOldFiles(listOf(f3), listOf(false), -1, false)
+    doTestCleanupOldFiles(java.util.List.of(f3), java.util.List.of(false), -1, false)
   }
 
   @Test
@@ -68,7 +68,7 @@ class EventLogFileWriterTest {
     val ts = System.currentTimeMillis()
 
     val f3 = TestFile(ts - MAX_AGE, "active.log")
-    doTestCleanupOldFiles(listOf(f3), listOf(false), -1, false)
+    doTestCleanupOldFiles(java.util.List.of(f3), java.util.List.of(false), -1, false)
   }
 
   @Test

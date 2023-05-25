@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.openapi.vcs.merge.MergeSession
@@ -15,6 +15,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.rules.ExternalResource
 import java.nio.file.FileSystem
+import java.util.*
 
 internal abstract class SettingsRepositoryGitTestBase : IcsTestCase() {
   companion object {
@@ -46,13 +47,13 @@ internal abstract class SettingsRepositoryGitTestBase : IcsTestCase() {
       val mergeSession = mergeProvider.createMergeSession(files)
       for (file in files) {
         val mergeData = mergeProvider.loadRevisions(file)
-        if (mergeData.CURRENT.contentEquals(MARKER_ACCEPT_MY) || mergeData.LAST.contentEquals(MARKER_ACCEPT_THEIRS)) {
+        if (Arrays.equals(mergeData.CURRENT, MARKER_ACCEPT_MY) || Arrays.equals(mergeData.LAST, MARKER_ACCEPT_THEIRS)) {
           mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedYours)
         }
-        else if (mergeData.CURRENT.contentEquals(MARKER_ACCEPT_THEIRS) || mergeData.LAST.contentEquals(MARKER_ACCEPT_MY)) {
+        else if (Arrays.equals(mergeData.CURRENT, MARKER_ACCEPT_THEIRS) || Arrays.equals(mergeData.LAST, MARKER_ACCEPT_MY)) {
           mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedTheirs)
         }
-        else if (mergeData.LAST.contentEquals(MARKER_ACCEPT_MY)) {
+        else if (Arrays.equals(mergeData.LAST, MARKER_ACCEPT_MY)) {
           file.setBinaryContent(mergeData.LAST)
           mergeProvider.conflictResolvedForFile(file)
         }

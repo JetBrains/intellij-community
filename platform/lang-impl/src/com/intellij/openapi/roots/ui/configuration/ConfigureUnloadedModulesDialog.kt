@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.CommonBundle
@@ -42,7 +42,6 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.MutableTreeNode
 import javax.swing.tree.TreePath
-import kotlin.math.max
 
 class ConfigureUnloadedModulesDialog(private val project: Project, selectedModuleName: String?) : DialogWrapper(project) {
   private val loadedModulesTree = ModuleDescriptionsTree(project)
@@ -117,7 +116,7 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     statusLabel.text = XmlStringUtil.wrapInHtml(ProjectBundle.message("module.unloaded.explanation"))
     mainPanel.add(statusLabel, BorderLayout.SOUTH)
     //current label text looks better when it's split on 2.5 lines, so set size of the whole component accordingly
-    mainPanel.preferredSize = Dimension(max(treesPanel.preferredSize.width, statusLabel.preferredSize.width * 2 / 5), treesPanel.preferredSize.height)
+    mainPanel.preferredSize = Dimension(Math.max(treesPanel.preferredSize.width, statusLabel.preferredSize.width*2/5), treesPanel.preferredSize.height)
     return mainPanel
   }
 
