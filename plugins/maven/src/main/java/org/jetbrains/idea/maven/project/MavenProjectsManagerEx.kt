@@ -33,7 +33,7 @@ interface MavenAsyncProjectsManager {
 open class MavenProjectsManagerEx(project: Project, val coroutineScope: CoroutineScope) : MavenProjectsManager(project) {
   // region import maven projects
   override suspend fun importMavenProjects(): List<Module> {
-    val createdModules = importMavenProjects(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject))
+    val createdModules = importMavenProjects(false)
     fireProjectImportCompleted()
     return createdModules
   }
@@ -43,15 +43,15 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
   }
 
   override fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module> {
-    return prepareImporter(modelsProvider).importMavenProjectsBlocking()
+    return prepareImporter(modelsProvider, false).importMavenProjectsBlocking()
   }
 
-  private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider): MavenProjectsManagerImporter {
+  private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider,
+                              importModuleGroupsRequired: Boolean): MavenProjectsManagerImporter {
     val projectsToImportWithChanges = Collections.unmodifiableMap(LinkedHashMap(myProjectsToImport))
     projectsToImportWithChanges.forEach { (key: MavenProject, value: MavenProjectChanges) ->
       myProjectsToImport.remove(key, value)
     }
-    val importModuleGroupsRequired = myImportModuleGroupsRequired.getAndSet(false)
     return MavenProjectsManagerImporter(
       modelsProvider,
       projectsToImportWithChanges,
@@ -59,8 +59,9 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
     )
   }
 
-  private suspend fun importMavenProjects(modelsProvider: IdeModifiableModelsProvider): List<Module> {
-    return prepareImporter(modelsProvider).importMavenProjects()
+  private suspend fun importMavenProjects(importModuleGroupsRequired: Boolean): List<Module> {
+    val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
+    return prepareImporter(modelsProvider, importModuleGroupsRequired).importMavenProjects()
   }
 
   private data class ImportResult(val createdModules: List<Module>, val postTasks: List<MavenProjectsProcessorTask>)
@@ -175,18 +176,13 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
 
 
   private suspend fun importSettings(importModuleGroupsRequired: Boolean) {
-    myImportModuleGroupsRequired.set(importModuleGroupsRequired)
-    importChangedProjects()
+    importMavenProjects(importModuleGroupsRequired)
   }
 
   private suspend fun importAllProjects() {
     val projectsToImport = projectsTree.projects.associateBy({ it }, { MavenProjectChanges.ALL })
     myProjectsToImport.putAll(projectsToImport)
     importMavenProjects()
-  }
-
-  private suspend fun importChangedProjects(): List<Module> {
-    return importMavenProjects()
   }
 
 }

@@ -107,8 +107,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   protected final ConcurrentHashMap<@NotNull MavenProject, @NotNull MavenProjectChanges> myProjectsToImport = new ConcurrentHashMap<>();
   private final Set<MavenProject> myProjectsToResolve = ConcurrentHashMap.newKeySet();
 
-  protected final AtomicBoolean myImportModuleGroupsRequired = new AtomicBoolean(false);
-
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
