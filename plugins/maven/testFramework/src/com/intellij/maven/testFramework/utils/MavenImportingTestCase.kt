@@ -2,19 +2,35 @@
 package com.intellij.maven.testFramework.utils
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
-internal fun resolveFoldersAndImport(project: Project, mavenProjects: Collection<MavenProject>) {
+fun resolveFoldersAndImport(project: Project, mavenProjects: Collection<MavenProject>) {
   runBlocking {
     MavenFolderResolver(project).resolveFoldersAndImport(mavenProjects)
   }
 }
 
-internal fun importMavenProjectsSync(mavenProjectsManager: MavenProjectsManager) {
+fun importMavenProjectsSync(mavenProjectsManager: MavenProjectsManager) {
   runBlocking {
     mavenProjectsManager.importMavenProjects()
   }
 }
+
+fun importMavenProjectsSync(mavenProjectsManager: MavenProjectsManager, projectFiles: List<VirtualFile>) {
+  val toImport= mutableMapOf<MavenProject, MavenProjectChanges>()
+  for (each in projectFiles) {
+    val project = mavenProjectsManager.findProject(each)
+    if (project != null) {
+      toImport[project] = MavenProjectChanges.ALL
+    }
+  }
+  runBlocking {
+    mavenProjectsManager.importMavenProjects(toImport)
+  }
+}
+
