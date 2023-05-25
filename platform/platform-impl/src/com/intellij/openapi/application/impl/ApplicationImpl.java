@@ -69,8 +69,9 @@ import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCa
 
 @ApiStatus.Internal
 public class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx {
-  // do not use PluginManager.processException() because it can force app to exit, but we want just to log an error and continue
-  private static final Logger LOG = Logger.getInstance(ApplicationImpl.class);
+  private static @NotNull Logger getLogger() {
+    return Logger.getInstance(ApplicationImpl.class);
+  }
 
   static final boolean IMPLICIT_READ_ON_EDT_DISABLED = StartupUtil.isImplicitReadOnEDTDisabled();
   static final String MUST_NOT_EXECUTE_INSIDE_READ_ACTION = "Must not execute inside read action";
@@ -183,7 +184,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     AtomicBoolean reported = new AtomicBoolean();
     IdeEventQueue.getInstance().addPostprocessor(e -> {
       if (app.isWriteAccessAllowed() && reported.compareAndSet(false, true)) {
-        LOG.error("AWT events are not allowed inside write action: " + e);
+        getLogger().error("AWT events are not allowed inside write action: " + e);
       }
       return true;
     }, app);
@@ -279,7 +280,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           // ignore
         }
         catch (Throwable e) {
-          LOG.error(e);
+          getLogger().error(e);
         }
         finally {
           Thread.interrupted(); // reset interrupted status
@@ -310,7 +311,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           // ignore
         }
         catch (Throwable e) {
-          LOG.error(e);
+          getLogger().error(e);
         }
         finally {
           Thread.interrupted(); // reset interrupted status
@@ -408,7 +409,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
                                                      @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
     // disallow running process in a separate thread from a write-action, or a thread will deadlock trying to acquire the read-lock
     if (isDispatchThread() && isWriteAccessAllowed()) {
-      LOG.debug("Starting process with progress from within write action makes no sense");
+      getLogger().debug("Starting process with progress from within write action makes no sense");
       try {
         ProgressManager.getInstance().runProcess(process, new EmptyProgressIndicator());
       }
@@ -482,8 +483,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(r));
   }
 
-  @NotNull
-  private Runnable wrapWithRunIntendedWriteAction(@NotNull Runnable runnable) {
+  private @NotNull Runnable wrapWithRunIntendedWriteAction(@NotNull Runnable runnable) {
     return new Runnable() {
       @Override
       public void run() {
@@ -650,7 +650,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
         lifecycleListener.appWillBeClosed(restart);
       }
       catch (Throwable t) {
-        LOG.error(t);
+        getLogger().error(t);
       }
 
       LifecycleUsageTriggerCollector.onIdeClose(restart);
@@ -664,7 +664,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
             }
           }
           catch (Throwable e) {
-            LOG.error(e);
+            getLogger().error(e);
           }
         }
         try {
@@ -672,7 +672,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           disposeContainer();
         }
         catch (Throwable t) {
-          LOG.error(t);
+          getLogger().error(t);
         }
         return true;
       });
@@ -693,7 +693,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), beforeRestart);
         }
         catch (Throwable t) {
-          LOG.error("Restart failed", t);
+          getLogger().error("Restart failed", t);
           StartupErrorReporter.showMessage(BootstrapBundle.message("restart.failed.title"), t);
           if(exitCode == 0) {
             exitCode = AppExitCodes.RESTART_FAILED;
@@ -797,8 +797,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
 
     if (hasUnsafeBgTasks && ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      LOG.error("Headless application has been completed but background tasks are still running! Application will be terminated." +
-                "\nThread dump:\n" + ThreadDumper.dumpThreadsToString());
+      getLogger().error("Headless application has been completed but background tasks are still running! Application will be terminated." +
+                        "\nThread dump:\n" + ThreadDumper.dumpThreadsToString());
       return true;
     }
 
@@ -1048,7 +1048,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void assertReadAccessAllowed() {
     if (!isReadAccessAllowed()) {
-      LOG.error(createThreadAccessException(MUST_EXECUTE_INSIDE_READ_ACTION));
+      getLogger().error(createThreadAccessException(MUST_EXECUTE_INSIDE_READ_ACTION));
     }
   }
 
@@ -1059,8 +1059,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
   }
 
-  @NotNull
-  private static String describe(@Nullable Thread o) {
+  private static @NotNull String describe(@Nullable Thread o) {
     return o == null ? "null" : o + " " + System.identityHashCode(o);
   }
 
@@ -1092,14 +1091,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     throw createThreadAccessException(message);
   }
 
-  @NotNull
-  private static RuntimeExceptionWithAttachments createThreadAccessException(@NonNls @NotNull String message) {
+  private static @NotNull RuntimeExceptionWithAttachments createThreadAccessException(@NonNls @NotNull String message) {
     return new RuntimeExceptionWithAttachments(message + DOCUMENTATION_LINK + "\n" + getThreadDetails(),
                                                new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
-  @NotNull
-  private static String getThreadDetails() {
+  private static @NotNull String getThreadDetails() {
     Thread current = Thread.currentThread();
     Thread edt = getEventQueueThread();
     return "Current thread: " + describe(current) + " (EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() + ")" +
@@ -1208,12 +1205,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
                                     AppExecutorUtil.getAppScheduledExecutorService()
                                       .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true, true),
                                                               delay, delay, TimeUnit.MILLISECONDS);
-        long t = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
+        long t = getLogger().isDebugEnabled() ? System.currentTimeMillis() : 0;
         myLock.writeLock();
-        if (LOG.isDebugEnabled()) {
+        if (getLogger().isDebugEnabled()) {
           long elapsed = System.currentTimeMillis() - t;
           if (elapsed != 0) {
-            LOG.debug("Write action wait time: " + elapsed);
+            getLogger().debug("Write action wait time: " + elapsed);
           }
         }
         if (reportSlowWrite != null) {
@@ -1493,8 +1490,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
     else if (topic == VirtualFileManager.VFS_CHANGES) {
       if (TimeUnit.NANOSECONDS.toMillis(duration) > 50) {
-        LOG.info(String.format("LONG VFS PROCESSING. Topic=%s, offender=%s, message=%s, time=%dms",
-                               topic.getDisplayName(), handler.getClass(), messageName, TimeUnit.NANOSECONDS.toMillis(duration)));
+        getLogger().info(String.format("LONG VFS PROCESSING. Topic=%s, offender=%s, message=%s, time=%dms",
+                                       topic.getDisplayName(), handler.getClass(), messageName, TimeUnit.NANOSECONDS.toMillis(duration)));
       }
     }
   }
