@@ -137,6 +137,7 @@ class CreateMissedActualsFix(
                 (actualModuleDescriptor.getCapability(ModuleInfo.Capability) as? ModuleSourceInfo)?.module
             }
             if (notActualizedLeafModules.isEmpty()) return null
+            if (notActualizedLeafModules.singleOrNull() == declaration.module) return null
             return CreateMissedActualsFix(declaration, notActualizedLeafModules)
         }
     }
