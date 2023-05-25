@@ -225,18 +225,6 @@ fun CoroutineScope.startApplication(args: List<String>,
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
   }
 
-  if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
-    launch(CoroutineName("coroutine debug probes init")) {
-      enableCoroutineDump()
-      JBR.getJstack()?.includeInfoFrom {
-        """
-$COROUTINE_DUMP_HEADER
-${dumpCoroutines(stripDump = false)}
-"""
-      }
-    }
-  }
-
   loadSystemLibsAndLogInfoAndInitMacApp(logDeferred = logDeferred,
                                         appInfoDeferred = appInfoDeferred,
                                         initUiDeferred = initLafJob,
@@ -277,10 +265,10 @@ ${dumpCoroutines(stripDump = false)}
   val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
   val appDeferred = async {
-    // logging must be initialized before creating the application
-    val log = logDeferred.await()
+    checkSystemDirJob.join()
+
     if (!configImportNeededDeferred.await()) {
-      runPreAppClass(log, args)
+      runPreAppClass(args)
     }
 
     val rwLockHolder = rwLockHolderDeferred.await()
@@ -304,6 +292,26 @@ ${dumpCoroutines(stripDump = false)}
       ApplicationManager.setApplication(app)
     }
 
+    val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
+      null
+    }
+    else {
+      async(CoroutineName("eua document")) {
+        prepareShowEuaIfNeededTask(document = euaDocumentDeferred.await(), asyncScope = this@startApplication)
+      }
+    }
+
+    val log = logDeferred.await()
+
+    launch {
+      preInitApp(app = app,
+                 mainScope = mainScope,
+                 log = log,
+                 initLafJob = initLafJob,
+                 pluginSetDeferred = pluginSetDeferred,
+                 euaTaskDeferred = euaTaskDeferred)
+    }
+
     launch(CoroutineName("telemetry waiting")) {
       try {
         telemetryInitJob.join()
@@ -316,23 +324,6 @@ ${dumpCoroutines(stripDump = false)}
       }
     }
 
-    val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
-      null
-    }
-    else {
-      async(CoroutineName("eua document")) {
-        prepareShowEuaIfNeededTask(euaDocumentDeferred.await(), asyncScope = this@startApplication)
-      }
-    }
-
-    launch {
-      preInitApp(app = app,
-                 mainScope = mainScope,
-                 log = log,
-                 initLafJob = initLafJob,
-                 pluginSetDeferred = pluginSetDeferred,
-                 euaTaskDeferred = euaTaskDeferred)
-    }
     app
   }
 
@@ -374,6 +365,19 @@ ${dumpCoroutines(stripDump = false)}
     // with the main dispatcher for non-technical reasons
     appStarter.start(InitAppContext(context = mainScope.coroutineContext, args = args, appDeferred = appDeferred))
   }
+
+  // only here as the last - it is a heavy-weight (~350ms) activity, let's first schedule a more important tasks
+  if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
+    launch(CoroutineName("coroutine debug probes init")) {
+      enableCoroutineDump()
+      JBR.getJstack()?.includeInfoFrom {
+        """
+$COROUTINE_DUMP_HEADER
+${dumpCoroutines(stripDump = false)}
+"""
+      }
+    }
+  }
 }
 
 private suspend fun preInitApp(app: ApplicationImpl,
@@ -393,8 +397,6 @@ private suspend fun preInitApp(app: ApplicationImpl,
                            listenerCallbacks = null)
   }
 
-  initConfigurationStore(app)
-
   val loadIconMapping = if (app.isHeadlessEnvironment) {
     null
   }
@@ -405,6 +407,8 @@ private suspend fun preInitApp(app: ApplicationImpl,
       }.getOrLogException(log)
     }
   }
+
+  initConfigurationStore(app)
 
   // LaF must be initialized before app init because icons maybe requested and, as a result,
   // a scale must be already initialized (especially important for Linux)
@@ -487,7 +491,7 @@ fun addExternalInstanceListener(processor: (List<String>) -> Deferred<CliResult>
   commandProcessor.set(processor)
 }
 
-private fun runPreAppClass(log: Logger, args: List<String>) {
+private fun runPreAppClass(args: List<String>) {
   val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY) ?: return
   runActivity("pre app class running") {
     try {
@@ -497,7 +501,7 @@ private fun runPreAppClass(log: Logger, args: List<String>) {
         .invoke(args.toTypedArray())
     }
     catch (e: Exception) {
-      log.error("Failed pre-app class init for class $classBeforeAppProperty", e)
+      logger<AppStarter>().error("Failed pre-app class init for class $classBeforeAppProperty", e)
     }
   }
 }
@@ -911,7 +915,7 @@ private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob:
         e.printStackTrace()
       }
 
-      val log = Logger.getInstance(AppStarter::class.java)
+      val log = logger<AppStarter>()
       log.info(IDE_STARTED)
       ShutDownTracker.getInstance().registerShutdownTask { log.info(IDE_SHUTDOWN) }
       if (java.lang.Boolean.parseBoolean(System.getProperty("intellij.log.stdout", "true"))) {

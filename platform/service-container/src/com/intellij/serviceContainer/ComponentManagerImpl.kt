@@ -564,7 +564,7 @@ abstract class ComponentManagerImpl(
         val existingAdapter = componentKeyToAdapter.putIfAbsent(key, componentAdapter)
         if (existingAdapter != null) {
           throw PluginException("Key $key duplicated; existingAdapter: $existingAdapter; " +
-                                "descriptor=${com.intellij.serviceContainer.getServiceImplementation(descriptor, this)}, " +
+                                "descriptor=${getServiceImplementation(descriptor, this)}, " +
                                 " app=$app, current plugin=${pluginDescriptor.pluginId}", pluginDescriptor.pluginId)
         }
       }
@@ -573,8 +573,12 @@ abstract class ComponentManagerImpl(
 
   internal fun initializeComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
     if (serviceDescriptor == null || !isPreInitialized(component)) {
-      LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
-      componentStore.initComponent(component, serviceDescriptor, pluginId)
+      if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+        componentStore.initComponent(component, serviceDescriptor, pluginId)
+      }
+      else {
+        check(component !is PersistentStateComponent<*>)
+      }
     }
   }
 
