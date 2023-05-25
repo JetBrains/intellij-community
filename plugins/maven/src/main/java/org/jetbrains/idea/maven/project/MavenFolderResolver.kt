@@ -48,7 +48,6 @@ class MavenFolderResolver(private val project: Project) {
 
     if (projectsManager.hasScheduledProjects()) {
       projectsManager.importMavenProjects()
-      projectsManager.fireProjectImportCompleted()
     }
   }
 

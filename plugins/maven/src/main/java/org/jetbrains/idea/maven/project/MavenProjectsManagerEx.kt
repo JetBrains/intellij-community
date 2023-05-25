@@ -33,7 +33,9 @@ interface MavenAsyncProjectsManager {
 open class MavenProjectsManagerEx(project: Project, val coroutineScope: CoroutineScope) : MavenProjectsManager(project) {
   // region import maven projects
   override suspend fun importMavenProjects(): List<Module> {
-    return importMavenProjects(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject))
+    val createdModules = importMavenProjects(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject))
+    fireProjectImportCompleted()
+    return createdModules
   }
 
   override fun importMavenProjectsSync(): List<Module> {
@@ -181,13 +183,10 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
     val projectsToImport = projectsTree.projects.associateBy({ it }, { MavenProjectChanges.ALL })
     myProjectsToImport.putAll(projectsToImport)
     importMavenProjects()
-    fireProjectImportCompleted()
   }
 
   private suspend fun importChangedProjects(): List<Module> {
-    val createdModules = importMavenProjects()
-    fireProjectImportCompleted()
-    return createdModules
+    return importMavenProjects()
   }
 
 }
