@@ -2,6 +2,7 @@
 package com.intellij.grazie
 
 import com.intellij.grazie.jlanguage.Lang
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -20,6 +21,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
+@ApiStatus.Internal
 object GrazieDynamic : DynamicPluginListener {
   private val myDynClassLoaders by lazy {
     val oldFiles = Files.walk(dynamicFolder).filter { file ->
