@@ -536,10 +536,6 @@ abstract class ComponentManagerImpl(
 
       // Allow to re-define service implementations in plugins.
       // Empty serviceImplementation means we want unregistering service.
-      val key = descriptor.getInterface()
-      if (descriptor.overrides && componentKeyToAdapter.remove(key) == null) {
-        throw PluginException("Service $key doesn't override anything", pluginDescriptor.pluginId)
-      }
 
       // empty serviceImplementation means we want unregistering service
       val implementation = when {
@@ -548,11 +544,18 @@ abstract class ComponentManagerImpl(
         else -> descriptor.serviceImplementation
       }
 
+      val key = descriptor.serviceInterface ?: implementation
+      if (descriptor.overrides && componentKeyToAdapter.remove(key) == null) {
+        throw PluginException("Service $key doesn't override anything", pluginDescriptor.pluginId)
+      }
+
       if (implementation != null) {
         val componentAdapter = ServiceComponentAdapter(descriptor, pluginDescriptor, this)
         val existingAdapter = componentKeyToAdapter.putIfAbsent(key, componentAdapter)
         if (existingAdapter != null) {
-          throw PluginException("Key $key duplicated; existingAdapter: $existingAdapter; descriptor: ${descriptor.implementation}; app: $app; current plugin: ${pluginDescriptor.pluginId}", pluginDescriptor.pluginId)
+          throw PluginException("Key $key duplicated; existingAdapter: $existingAdapter; " +
+                                "descriptor=${com.intellij.serviceContainer.getServiceImplementation(descriptor, this)}, " +
+                                " app=$app, current plugin=${pluginDescriptor.pluginId}", pluginDescriptor.pluginId)
         }
       }
     }
@@ -1084,7 +1087,8 @@ abstract class ComponentManagerImpl(
     if (!services.isEmpty()) {
       val store = componentStore
       for (service in services) {
-        val adapter = (componentKeyToAdapter.remove(service.`interface`) ?: continue) as ServiceComponentAdapter
+        val serviceInterface = getServiceInterface(service, this)
+        val adapter = (componentKeyToAdapter.remove(serviceInterface) ?: continue) as ServiceComponentAdapter
         val instance = adapter.getInitializedInstance() ?: continue
         if (instance is Disposable) {
           Disposer.dispose(instance)
@@ -1138,7 +1142,7 @@ abstract class ComponentManagerImpl(
           return
         }
 
-        scope.launch(CoroutineName("${service.`interface`} preloading")) {
+        scope.launch(CoroutineName("${getServiceInterface(service, this)} preloading")) {
           preloadService(service)
         }
       }
@@ -1154,7 +1158,7 @@ abstract class ComponentManagerImpl(
   }
 
   protected open suspend fun preloadService(service: ServiceDescriptor) {
-    val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return
+    val adapter = componentKeyToAdapter.get(getServiceInterface(service, this)) as ServiceComponentAdapter? ?: return
     val instance = adapter.getInstanceAsync<Any>(componentManager = this, keyClass = null)
     val implClass = instance.javaClass
     // well, we don't know the interface class, so we cannot add any service to a hot cache

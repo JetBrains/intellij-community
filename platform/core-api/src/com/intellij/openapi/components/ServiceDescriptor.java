@@ -76,10 +76,7 @@ public final class ServiceDescriptor {
   /**
    * Cannot be specified as part of {@link State} because to get annotation, class must be loaded, but it cannot be done for performance reasons.
    */
-  @Attribute
-  @ApiStatus.Internal
-  @Nullable
-  public final String configurationSchemaKey;
+  @Attribute @ApiStatus.Internal public final @Nullable String configurationSchemaKey;
 
   /**
    * Preload service (before component creation). Not applicable for module level.
@@ -101,13 +98,7 @@ public final class ServiceDescriptor {
    * Applicable only for application/project level services.
    * If the client is not specified, the service is considered an ordinary one that is created once per application/project.
    */
-  @Attribute
-  @Nullable
-  public final ClientKind client;
-
-  public String getInterface() {
-    return serviceInterface == null ? getImplementation() : serviceInterface;
-  }
+  @Attribute public final @Nullable ClientKind client;
 
   public @Nullable String getImplementation() {
     if (testServiceImplementation != null && ApplicationManager.getApplication().isUnitTestMode()) {
