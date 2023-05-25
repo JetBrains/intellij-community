@@ -32,16 +32,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 
 import java.util.List;
 import java.util.Set;
 
-public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspectionBase {
+final class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspectionBase {
 
   @Override
   protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
+    if (!isAllowed(holder)) return;
+
     if (element instanceof ActionOrGroup) {
       checkActionOrGroup((ActionOrGroup)element, holder);
     }

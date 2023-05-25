@@ -38,13 +38,15 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.impl.LanguageResolvingUtil;
 import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 
-public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInspectionBase {
+final class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInspectionBase {
 
   @Override
   protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     if (!(element instanceof Extension extension)) {
       return;
     }
+
+    if (!isAllowed(holder)) return;
 
     ExtensionPoint extensionPoint = extension.getExtensionPoint();
     if (extensionPoint == null ||

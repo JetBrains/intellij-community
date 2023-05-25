@@ -33,7 +33,7 @@ import java.util.Objects;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionBase {
+public final class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionBase {
   public boolean highlightNonDynamicEPUsages = false;
 
   @Override
@@ -44,6 +44,8 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
 
   @Override
   protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
+    if (!isAllowed(holder)) return;
+
     if (element instanceof ApplicationComponents ||
         element instanceof ProjectComponents ||
         element instanceof ModuleComponents) {

@@ -10,13 +10,21 @@ import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.RemoveDomElementQuickFix;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 
+/**
+ * Check {@link #isAllowed} from {@link #checkDomElement} to skip non-relevant files.
+ */
 public abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInspection<IdeaPlugin> {
 
   protected DevKitPluginXmlInspectionBase() {
     super(IdeaPlugin.class);
+  }
+
+  protected boolean isAllowed(@NotNull DomElementAnnotationHolder holder) {
+    return DevKitInspectionUtil.isAllowed(holder.getFileElement().getFile());
   }
 
   protected static boolean hasMissingAttribute(DomElement element, @NonNls String attributeName) {

@@ -376,7 +376,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.xml")
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
   void testShowPackagesInActionClass() {
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
     myFixture.addClass("package foo.goo; public class GooAction extends com.intellij.openapi.actionSystem.AnAction { }")
@@ -387,7 +386,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                   myFixture.lookup.advertisements.find { it.contains('to see inheritors of com.intellij.openapi.actionSystem.AnAction') })
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
   void testShowAnActionInheritorsOnSmartCompletion() {
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
     myFixture.addClass("package foo.goo; public class GooAction extends com.intellij.openapi.actionSystem.AnAction { }")
@@ -444,7 +442,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                                      "myTag", "myTagWithoutAnnotation")
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
   void testActionExtensionPointAttributeHighlighting() {
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
     doHighlightingTest("actionExtensionPointAttribute.xml", "MyActionAttributeEPBean.java")
@@ -466,7 +463,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     assertLookupElement(lookupElements, "MyLanguageID", null, "MyLanguage")
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
   void testIconAttribute() {
     myFixture.addClass("package foo; public class FooAction extends com.intellij.openapi.actionSystem.AnAction { }")
 
@@ -691,7 +687,6 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.checkResultByFile(getTestName(true) + "_after.xml")
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
   void testActionCompletion() {
     configureByFile()
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
