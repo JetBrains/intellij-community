@@ -509,7 +509,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
         if (nativeMavenProject != null) {
           var project = projectWithChanges.first;
           if (shouldScheduleProject(projectWithChanges)) {
-            scheduleForNextImport(projectWithChanges);
+            scheduleForNextImport(List.of(projectWithChanges));
 
             MavenImportingSettings importingSettings;
 
@@ -1146,10 +1146,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
     scheduleForNextImport(toImport);
     scheduleImportChangedProjects();
-  }
-
-  private void scheduleForNextImport(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-    scheduleForNextImport(Collections.singletonList(projectWithChanges));
   }
 
   private void scheduleForNextImport(Collection<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
