@@ -153,42 +153,38 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
     importingSettings.addListener(object : MavenImportingSettings.Listener {
       override fun createModuleGroupsChanged() {
         runBlockingCancellableUnderIndicator {
-          scheduleImportSettings(true)
+          importSettings(true)
         }
       }
 
       override fun createModuleForAggregatorsChanged() {
         runBlockingCancellableUnderIndicator {
-          scheduleImportSettings()
+          importSettings(false)
       }
       }
 
       override fun updateAllProjectStructure() {
         runBlockingCancellableUnderIndicator {
-          scheduleAllProjectImport()
+          importAllProjects()
         }
       }
     })
   }
 
 
-  private suspend fun scheduleImportSettings() {
-    scheduleImportSettings(false)
-  }
-
-  private suspend fun scheduleImportSettings(importModuleGroupsRequired: Boolean) {
+  private suspend fun importSettings(importModuleGroupsRequired: Boolean) {
     myImportModuleGroupsRequired.set(importModuleGroupsRequired)
-    scheduleImportChangedProjects()
+    importChangedProjects()
   }
 
-  private suspend fun scheduleAllProjectImport() {
+  private suspend fun importAllProjects() {
     val projectsToImport = projectsTree.projects.associateBy({ it }, { MavenProjectChanges.ALL })
     myProjectsToImport.putAll(projectsToImport)
     importMavenProjects()
     fireProjectImportCompleted()
   }
 
-  private suspend fun scheduleImportChangedProjects(): List<Module> {
+  private suspend fun importChangedProjects(): List<Module> {
     val createdModules = importMavenProjects()
     fireProjectImportCompleted()
     return createdModules
