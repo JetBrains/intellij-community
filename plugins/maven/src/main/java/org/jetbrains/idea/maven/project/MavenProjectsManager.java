@@ -525,12 +525,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
         }
       }
 
-      @Override
+/*      @Override
       public void foldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
         if (shouldScheduleProject(projectWithChanges)) {
           scheduleForNextImport(projectWithChanges);
         }
-      }
+      }*/
 
       private boolean shouldScheduleProject(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
         return !projectWithChanges.first.hasReadingProblems() && projectWithChanges.second.hasChanges();

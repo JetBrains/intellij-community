@@ -36,7 +36,8 @@ class MavenFolderResolver(private val project: Project) {
       return
     }
 
-    val projectsToImportWithChanges = resolveFolders(projects)
+    val allProjectsWithChanges = resolveFolders(projects)
+    val projectsToImportWithChanges = allProjectsWithChanges.filter { !it.key.hasReadingProblems() && it.value.hasChanges() }
 
     //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
     MavenUtil.restartMavenConnectors(project, false) { c: MavenServerConnector ->
