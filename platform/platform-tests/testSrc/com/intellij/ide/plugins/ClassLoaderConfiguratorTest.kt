@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
@@ -71,7 +71,6 @@ internal class ClassLoaderConfiguratorTest {
   }
 
   @Test
-  @Suppress("PluginXmlValidity")
   fun `inject content module if another plugin specifies dependency in old format`() {
     val rootDir = inMemoryFs.fs.getPath("/")
 
@@ -107,7 +106,6 @@ internal class ClassLoaderConfiguratorTest {
       .containsExactly("com.example.sub.xml", null)
   }
 
-  @Suppress("PluginXmlValidity")
   private fun loadPlugins(modulePackage: String?): PluginLoadingResult {
     val rootDir = inMemoryFs.fs.getPath("/")
 

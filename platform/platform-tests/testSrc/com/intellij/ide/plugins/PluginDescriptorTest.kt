@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
@@ -217,7 +217,6 @@ class PluginDescriptorTest {
     assertThat(descriptor.isLicenseOptional).isTrue()
   }
 
-  @Suppress("PluginXmlValidity")
   @Test
   fun `use newer plugin`() {
     writeDescriptor("foo_1-0", """
@@ -244,7 +243,6 @@ class PluginDescriptorTest {
     assertThat(pluginSet.findEnabledPlugin(foo.pluginId)).isSameAs(foo)
   }
 
-  @Suppress("PluginXmlValidity")
   @Test
   fun `use newer plugin if disabled`() {
     writeDescriptor("foo_3-0", """
@@ -273,7 +271,6 @@ class PluginDescriptorTest {
     assertThat(foo.pluginId.idString).isEqualTo("foo")
   }
 
-  @Suppress("PluginXmlValidity")
   @Test
   fun `prefer bundled if custom is incompatible`() {
     // names are important - will be loaded in alphabetical order
@@ -311,7 +308,6 @@ class PluginDescriptorTest {
     assertThat(result.getIdMap().get(foo.pluginId)).isSameAs(foo)
   }
 
-  @Suppress("PluginXmlValidity")
   @Test
   fun `select compatible plugin if both versions provided`() {
     writeDescriptor("foo_1-0", """
@@ -342,7 +338,6 @@ class PluginDescriptorTest {
     assertThat(pluginSet.findEnabledPlugin(foo.pluginId)).isSameAs(foo)
   }
 
-  @Suppress("PluginXmlValidity")
   @Test
   fun `use first plugin if both versions the same`() {
     PluginBuilder().noDepends().id("foo").version("1.0").build(pluginDirPath.resolve("foo_1-0"))
@@ -359,7 +354,6 @@ class PluginDescriptorTest {
     assertThat(pluginSet.findEnabledPlugin(foo.pluginId)).isSameAs(foo)
   }
 
-  @Suppress("PluginXmlValidity")
   @Test
   fun classLoader() {
     PluginBuilder().noDepends().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
@@ -367,7 +361,6 @@ class PluginDescriptorTest {
     checkClassLoader()
   }
 
-  @Suppress("PluginXmlValidity")
   @Test
   fun `classLoader - optional dependency`() {
     writeDescriptor("foo", """
