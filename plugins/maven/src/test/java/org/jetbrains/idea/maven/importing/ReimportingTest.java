@@ -195,8 +195,8 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testDoNotCreateModulesForNewlyCreatedAggregativeProjectsIfNotNecessary() {
-    getMavenImporterSettings().setCreateModulesForAggregators(false);
     configConfirmationForYesAnswer();
+    getMavenImporterSettings().setCreateModulesForAggregators(false);
 
     createProjectPom("""
                        <groupId>test</groupId>

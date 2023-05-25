@@ -5,9 +5,16 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 internal fun resolveFoldersAndImport(project: Project, mavenProjects: Collection<MavenProject>) {
   runBlocking {
     MavenFolderResolver(project).resolveFoldersAndImport(mavenProjects)
+  }
+}
+
+internal fun importMavenProjectsSync(mavenProjectsManager: MavenProjectsManager) {
+  runBlocking {
+    mavenProjectsManager.importMavenProjects()
   }
 }

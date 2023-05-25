@@ -435,24 +435,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myImportingQueue.makeModalAware(myProject);
   }
 
-  private void listenForSettingsChanges() {
-    getImportingSettings().addListener(new MavenImportingSettings.Listener() {
-      @Override
-      public void createModuleGroupsChanged() {
-        scheduleImportSettings(true);
-      }
-
-      @Override
-      public void createModuleForAggregatorsChanged() {
-        scheduleImportSettings();
-      }
-
-      @Override
-      public void updateAllProjectStructure() {
-        scheduleAllProjectImport();
-      }
-    });
-  }
+  protected abstract void listenForSettingsChanges();
 
   private void registerSyncConsoleListener() {
     if (MavenUtil.isLinearImportEnabled()) return;
@@ -1139,14 +1122,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
         new MavenProjectsProcessorArtifactsDownloadingTask(projects, myProjectsTree, artifacts, sources, docs, result)));
   }
 
-  private void scheduleImportSettings() {
-    scheduleImportSettings(false);
-  }
-
-  private void scheduleImportSettings(boolean importModuleGroupsRequired) {
-    myImportModuleGroupsRequired.set(importModuleGroupsRequired);
-    scheduleImportChangedProjects();
-  }
 
   // TODO merge [result] promises (now, promise will be lost after merge of import requests)
   private Promise<List<Module>> scheduleImportChangedProjects() {
@@ -1161,20 +1136,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return result;
   }
 
-  private void scheduleAllProjectImport() {
-    runWhenFullyOpen(() -> myImportingQueue.queue(new Update(this) {
-      @Override
-      public void run() {
-        var projectsToImport = ContainerUtil.map2Map(
-          getProjectsTree().getProjects(),
-          project -> new Pair<>(project, MavenProjectChanges.ALL)
-        );
-        myProjectsToImport.putAll(projectsToImport);
-        importMavenProjectsSync();
-        fireProjectImportCompleted();
-      }
-    }));
-  }
 
   @TestOnly
   public void scheduleImportInTests(List<VirtualFile> projectFiles) {
