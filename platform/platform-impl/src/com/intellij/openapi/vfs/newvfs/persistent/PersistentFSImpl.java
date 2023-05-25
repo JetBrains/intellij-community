@@ -46,7 +46,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Queue;
@@ -107,7 +107,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private void initVfsLog() {
     var readOnly = !VfsLog.LOG_VFS_OPERATIONS_ENABLED;
-    myVfsLog = new VfsLog(Paths.get(FSRecords.getCachesDir() + "/vfslog"), readOnly);
+    myVfsLog = new VfsLog(Path.of(FSRecords.getCachesDir() + "/vfslog"), readOnly);
   }
 
   @ApiStatus.Internal
