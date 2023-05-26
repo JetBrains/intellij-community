@@ -959,15 +959,16 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     console.startImport(myProgressListener, spec);
     StructuredIdeActivity activity = MavenImportStats.startImportActivity(myProject);
     fireImportAndResolveScheduled(spec);
-    AsyncPromise<List<Module>> promise = scheduleResolve();
-    promise.onProcessed(m -> {
+
+    Runnable callback = () -> {
       waitForImportCompletion().onProcessed(o -> {
         activity.finished();
         MavenResolveResultProblemProcessor.notifyMavenProblems(myProject);
         MavenSyncConsole.finishTransaction(myProject);
       });
-    });
-    return promise;
+    };
+
+    return scheduleResolve(callback);
   }
 
   public void showServerException(Throwable e) {
@@ -1008,7 +1009,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return promise;
   }
 
-  private AsyncPromise<List<Module>> scheduleResolve() {
+  private AsyncPromise<List<Module>> scheduleResolve(Runnable callback) {
     final AsyncPromise<List<Module>> result = new AsyncPromise<>();
     runWhenFullyOpen(() -> {
       LinkedHashSet<MavenProject> toResolve = new LinkedHashSet<>(myProjectsToResolve);
@@ -1031,6 +1032,10 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
           myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC)
             .importFinished(Collections.emptyList(), Collections.emptyList());
           fireProjectImportCompleted();
+        }
+
+        if (null != callback) {
+          callback.run();
         }
       };
 
@@ -1079,7 +1084,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @TestOnly
   public void scheduleResolveInTests(Collection<MavenProject> projects) {
     scheduleForNextResolve(projects);
-    scheduleResolve();
+    scheduleResolve(null);
   }
 
   @TestOnly
