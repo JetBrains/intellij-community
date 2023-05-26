@@ -71,7 +71,7 @@ internal class RuntimeModuleRepositoryBuilder
     val outputPath = Path.of(JpsPathUtil.urlToOsPath (outputUrl), JAR_REPOSITORY_FILE_NAME)
     val timeToSaveDescriptors = measureTimeMillis {
       try {
-        RuntimeModuleRepositorySerialization.saveToJar(descriptors, outputPath, GENERATOR_VERSION)
+        RuntimeModuleRepositorySerialization.saveToJar(descriptors, null, outputPath, GENERATOR_VERSION)
       }
       catch (e: IOException) {
         LOG.info(e)

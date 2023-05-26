@@ -106,8 +106,8 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
                            errors.joinToString("\n"))
   }
   try {
-    RuntimeModuleRepositorySerialization.saveToJar(distDescriptors, context.paths.distAllDir.resolve(JAR_REPOSITORY_FILE_NAME),
-                                                   GENERATOR_VERSION)
+    RuntimeModuleRepositorySerialization.saveToJar(distDescriptors, "intellij.platform.bootstrap",
+                                                   context.paths.distAllDir.resolve(JAR_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
   }
   catch (e: IOException) {
     context.messages.error("Failed to save runtime module repository: ${e.message}", e)
