@@ -6,43 +6,31 @@ abstract class ActionPresentationInitializedInCtorInspectionTestBase : PluginMod
   override fun setUp() {
     super.setUp()
     myFixture.addClass("package javax.swing; public interface Icon {}")
-    myFixture.addClass("package java.util.function; public interface Supplier<T> { T get();}")
     myFixture.addClass("""
       package com.intellij.openapi.actionSystem;
 
       import javax.swing.Icon;
       import java.util.function.Supplier;
 
-      @SuppressWarnings("ALL") public class AnAction {
-        static final Supplier<String> NULL_STRING = () -> null;
+      public class AnAction {
 
         public AnAction() {}
 
-        public AnAction(Icon icon) {
-          this(NULL_STRING, NULL_STRING, icon);
-        }
+        public AnAction(Icon icon) {}
 
-        public AnAction(String text) {
-          this(text, null, null);
-        }
+        public AnAction(String text) {}
 
-        public AnAction(Supplier<String> dynamicText) {
-          this(dynamicText, NULL_STRING, null);
-        }
+        public AnAction(Supplier<String> dynamicText) {}
 
         public AnAction(String text,
                         String description,
-                        Icon icon) {
-          this(NULL_STRING, NULL_STRING, icon);
-        }
+                        Icon icon) {}
 
-        public AnAction(Supplier<String> dynamicText, Icon icon) {
-          this(dynamicText, NULL_STRING, icon);
-        }
+        public AnAction(Supplier<String> dynamicText, Icon icon) {}
 
         public AnAction(Supplier<String> dynamicText,
                         Supplier<String> dynamicDescription,
-                        Icon icon) { }
+                        Icon icon) {}
       }
       """)
     myFixture.enableInspections(ActionPresentationInitializedInCtorInspection::class.java)

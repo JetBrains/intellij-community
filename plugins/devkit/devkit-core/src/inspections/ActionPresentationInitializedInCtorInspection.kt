@@ -11,7 +11,6 @@ import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
-import javax.swing.Icon
 
 internal class ActionPresentationInitializedInCtorInspection : DevKitUastInspectionBase(UClass::class.java) {
 
@@ -96,10 +95,7 @@ internal class ActionPresentationInitializedInCtorInspection : DevKitUastInspect
   }
 
   private fun isCtorInitializingTemplatePresentation(uClass: UClass, constructor: UMethod): Boolean {
-    if (uClass.qualifiedName != AnAction::class.java.canonicalName) return false
-    val uastParameters = constructor.uastParameters
-    return uastParameters.size == 3 && uastParameters[0].type.canonicalText == STRING_SUPPLIER_FQN && uastParameters[1].type.canonicalText == STRING_SUPPLIER_FQN && uastParameters[2].type.canonicalText == Icon::class.java.canonicalName
+    return uClass.qualifiedName == AnAction::class.java.canonicalName &&
+           constructor.uastParameters.isNotEmpty()
   }
 }
-
-private const val STRING_SUPPLIER_FQN = "java.util.function.Supplier<java.lang.String>"
