@@ -6,7 +6,6 @@ import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePr
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor
 import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper
-import com.intellij.ide.impl.computeOnPooledThread
 import com.intellij.lang.Language
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -14,9 +13,12 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -29,6 +31,9 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import org.ec4j.core.ResourceProperties
 import org.editorconfig.EditorConfigNotifier
 import org.editorconfig.Utils
@@ -38,14 +43,17 @@ import org.editorconfig.plugincomponents.SettingsProviderComponent
 import org.editorconfig.settings.EditorConfigSettings
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
-import java.time.Duration
-import java.util.concurrent.Callable
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
+import java.util.concurrent.CancellationException
 import java.util.function.Consumer
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG: Logger
   get() = logger<EditorConfigCodeStyleSettingsModifier>()
+
+@Service(Service.Level.PROJECT)
+private class EditorConfigCodeStyleSettingsModifierService(val coroutineScope: CoroutineScope) {
+
+}
 
 class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
   private val reportedErrorIds: MutableSet<String> = HashSet()
@@ -65,20 +73,24 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
 
     // Get editorconfig settings
     try {
-      return Handler.runWithTimeout(project) {
-        val (properties, editorConfigs) = Handler.processEditorConfig(project, psiFile)
-        // Apply editorconfig settings for the current editor
-        if (Handler.applyCodeStyleSettings(settings, properties, psiFile)) {
-          settings.addDependencies(editorConfigs)
-          val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
-          navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
-          true
+      return runBlockingMaybeCancellable {
+        withTimeout(10.seconds) {
+          val (properties, editorConfigs) = Handler.processEditorConfig(project, psiFile)
+          // Apply editorconfig settings for the current editor
+          if (Handler.applyCodeStyleSettings(settings, properties, psiFile)) {
+            settings.addDependencies(editorConfigs)
+            val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
+            navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
+            true
+          }
+          else {
+            false
+          }
         }
-        else false
       }
     }
-    catch (toe: TimeoutException) {
-      LOG.warn(toe)
+    catch (e: TimeoutCancellationException) {
+      LOG.warn(e)
       if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
         error(project, "timeout", message("error.timeout"), DisableEditorConfigAction(project), true)
       }
@@ -87,6 +99,12 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
     //catch (e: EditorConfigException) {
     //  // TODO: Report an error, ignore for now
     //}
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
     catch (e: Exception) {
       LOG.error(e)
     }
@@ -158,26 +176,6 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
       ourEnabledInTestOnly = isEnabledInTests
     }
 
-    @Throws(TimeoutException::class)
-    internal fun runWithTimeout(project: Project, callable: Callable<Boolean>): Boolean {
-      @Suppress("DEPRECATION_ERROR")
-      val future = project.computeOnPooledThread(callable)
-      try {
-        return future.get(TIMEOUT.toSeconds(), TimeUnit.SECONDS)
-      }
-      catch (e: InterruptedException) {
-        LOG.warn(e)
-      }
-      // TODO error handling with ec4j
-      //catch (e: ExecutionException) {
-      //  if (e.cause is EditorConfigException) {
-      //    throw (e.cause as EditorConfigException?)!!
-      //  }
-      //  LOG.error(e)
-      //}
-      return false
-    }
-
     internal fun applyCodeStyleSettings(settings: TransientCodeStyleSettings,
                                         properties: ResourceProperties,
                                         file: PsiFile): Boolean {
@@ -185,8 +183,18 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
       var isModified = false
       for (mapper in getMappers(settings, properties, file.language)) {
         processed.clear()
-        isModified = isModified or processOptions(properties, settings, file.fileType, mapper, false, processed)
-        isModified = isModified or processOptions(properties, settings, file.fileType, mapper, true, processed)
+        isModified = isModified or processOptions(properties = properties,
+                                                  settings = settings,
+                                                  fileType = file.fileType,
+                                                  mapper = mapper,
+                                                  languageSpecific = false,
+                                                  processed = processed)
+        isModified = isModified or processOptions(properties = properties,
+                                                  settings = settings,
+                                                  fileType = file.fileType,
+                                                  mapper = mapper,
+                                                  languageSpecific = true,
+                                                  processed = processed)
       }
       return isModified
     }
@@ -213,8 +221,6 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
     }
   }
 }
-
-private val TIMEOUT = Duration.ofSeconds(10)
 
 private var ourEnabledInTestOnly = false
 
