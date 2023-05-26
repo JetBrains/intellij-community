@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "FunctionName")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "FunctionName", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide
 
@@ -131,7 +131,6 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   companion object {
-    @JvmStatic
     private val _instance by lazy { IdeEventQueue() }
 
     @JvmStatic
@@ -154,11 +153,11 @@ class IdeEventQueue private constructor() : EventQueue() {
   fun executeWhenAllFocusEventsLeftTheQueue(runnable: Runnable) {
     ifFocusEventsInTheQueue(
       yes = { e ->
-        var runnables = runnablesWaitingFocusChange[e]
+        var runnables = runnablesWaitingFocusChange.get(e)
         if (runnables == null) {
           runnables = mutableListOf()
           runnables.add(runnable)
-          runnablesWaitingFocusChange[e] = runnables
+          runnablesWaitingFocusChange.put(e, runnables)
         }
         else {
           Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "We have already had a runnable for the event: $e" }
@@ -185,7 +184,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       yes(lastFocusGainedEvent)
     }
     else {
-      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : " + no.javaClass.name }
+      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : ${no.javaClass.name}" }
       EdtInvocationManager.invokeLaterIfNeeded(no)
     }
   }
