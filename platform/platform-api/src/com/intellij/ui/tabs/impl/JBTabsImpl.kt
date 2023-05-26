@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LeakingThis")
 
 package com.intellij.ui.tabs.impl
@@ -73,6 +73,8 @@ import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 import javax.swing.plaf.ComponentUI
 import kotlin.Pair
+import kotlin.math.max
+import kotlin.math.min
 
 private val ABC_COMPARATOR: Comparator<TabInfo> = Comparator { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.text, o2.text) }
 private val LOG = logger<JBTabsImpl>()
@@ -1001,7 +1003,7 @@ open class JBTabsImpl(private var project: Project?,
                 removeTab(tabInfo)
               }
               e.consume()
-              val indexToSelect = Math.min(clickedIndex, list.model.size)
+              val indexToSelect = min(clickedIndex, list.model.size)
               ClientProperty.put(this@JBTabsImpl, HIDDEN_INFOS_SELECT_INDEX_KEY, indexToSelect)
               step.selectTab = false // do not select current tab, because we already handled other action: close or unpin
               val curPopup = PopupUtil.getPopupContainerFor(list)
@@ -1943,7 +1945,7 @@ open class JBTabsImpl(private var project: Project?,
   private fun computeHeaderFitSize(): Dimension {
     val max = computeMaxSize()
     if (position == JBTabsPosition.top || position == JBTabsPosition.bottom) {
-      return Dimension(size.width, if (horizontalSide) Math.max(max.label.height, max.toolbar.height) else max.label.height)
+      return Dimension(size.width, if (horizontalSide) max(max.label.height, max.toolbar.height) else max.label.height)
     }
     else {
       return Dimension(max.label.width + if (horizontalSide) 0 else max.toolbar.width, size.height)
@@ -2129,8 +2131,8 @@ open class JBTabsImpl(private var project: Project?,
       val c = each.component
       if (c != null) {
         val eachSize = transform.`fun`(c)
-        size.width = Math.max(eachSize.width, size.width)
-        size.height = Math.max(eachSize.height, size.height)
+        size.width = max(eachSize.width, size.width)
+        size.height = max(eachSize.height, size.height)
       }
     }
     addHeaderSize(size, tabCount)
@@ -2142,10 +2144,10 @@ open class JBTabsImpl(private var project: Project?,
     val horizontal = tabsPosition == JBTabsPosition.top || tabsPosition == JBTabsPosition.bottom
     if (horizontal) {
       size.height += header.height
-      size.width = Math.max(size.width, header.width)
+      size.width = max(size.width, header.width)
     }
     else {
-      size.height += Math.max(size.height, header.height)
+      size.height += max(size.height, header.height)
       size.width += header.width
     }
     val insets = layoutInsets
@@ -2167,10 +2169,10 @@ open class JBTabsImpl(private var project: Project?,
         if (canGrow) {
           size.width += eachPrefSize.width
         }
-        size.height = Math.max(size.height, eachPrefSize.height)
+        size.height = max(size.height, eachPrefSize.height)
       }
       else {
-        size.width = Math.max(size.width, eachPrefSize.width)
+        size.width = max(size.width, eachPrefSize.width)
         if (canGrow) {
           size.height += eachPrefSize.height
         }

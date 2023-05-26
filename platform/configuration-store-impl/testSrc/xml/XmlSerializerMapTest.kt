@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("PropertyName", "ReplacePutWithAssignment")
 
 package com.intellij.configurationStore.xml
@@ -234,8 +234,8 @@ internal class XmlSerializerMapTest {
     }
 
     val bean = BeanWithSetKeysInMap()
-    bean.myMap.put(LinkedHashSet(Arrays.asList("a", "b", "c")), "letters")
-    bean.myMap.put(LinkedHashSet(Arrays.asList("1", "2", "3")), "numbers")
+    bean.myMap.put(LinkedHashSet(listOf("a", "b", "c")), "letters")
+    bean.myMap.put(LinkedHashSet(listOf("1", "2", "3")), "numbers")
 
     val bb = testSerializer("""
       <bean>

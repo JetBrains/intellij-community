@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.update
 
@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import java.io.IOException
 import java.net.URL
-import java.util.*
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.JAXBException
 import javax.xml.bind.annotation.*
@@ -96,7 +95,7 @@ class GooglePluginUpdateVerifier : PluginUpdateVerifier() {
             var studioRelease: Array<StudioRelease>? = null
 
             override fun toString(): String {
-                return "PluginCompatibility(studioRelease=${Arrays.toString(studioRelease)})"
+                return "PluginCompatibility(studioRelease=${studioRelease.contentToString()})"
             }
         }
 
@@ -116,7 +115,7 @@ class GooglePluginUpdateVerifier : PluginUpdateVerifier() {
 
             override fun toString(): String {
                 return "StudioRelease(" +
-                        "untilBuild=$untilBuild, name=$name, ideaPlugin=${Arrays.toString(ideaPlugin)}, " +
+                        "untilBuild=$untilBuild, name=$name, ideaPlugin=${ideaPlugin.contentToString()}, " +
                         "sinceBuild=$sinceBuild, channel=$channel" +
                         ")"
             }

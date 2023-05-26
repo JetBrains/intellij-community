@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.util.SystemInfo
@@ -16,6 +16,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.text.MessageFormat
 import kotlin.io.path.exists
+import kotlin.math.min
 
 private val EDIT_CMP = Comparator<PathEdit> { o1, o2 ->
   val a = o1.path
@@ -57,7 +58,7 @@ class DirCacheEditor(edits: List<PathEdit>, private val repository: Repository, 
       if (entryIndex < 0) {
         entryIndex = -(entryIndex + 1)
       }
-      val count = Math.min(entryIndex, maxIndex) - lastIndex
+      val count = min(entryIndex, maxIndex) - lastIndex
       if (count > 0) {
         fastKeep(lastIndex, count)
       }

@@ -582,7 +582,7 @@ open class IdeErrorsDialog internal constructor(private val myMessagePool: Messa
   private fun disablePlugin() {
     val plugin = selectedCluster().plugin
     if (plugin != null) {
-      confirmDisablePlugins(myProject, java.util.List.of(plugin))
+      confirmDisablePlugins(myProject, listOf(plugin))
     }
   }
 

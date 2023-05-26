@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ide.fileTemplates.impl
 
 import com.intellij.ide.fileTemplates.*
@@ -50,7 +50,7 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     val customInclude = File(testsDir, customIncludeFileName)
     val includeText = FileUtil.loadFile(customInclude, FileTemplate.ourEncoding)
     val templateManager = FileTemplateManager.getInstance(project)
-    val originalIncludes = ArrayList(Arrays.asList(*templateManager.allPatterns))
+    val originalIncludes = ArrayList(listOf(*templateManager.allPatterns))
     try {
       // configure custom include
       val allIncludes: MutableList<FileTemplate> = ArrayList(originalIncludes)

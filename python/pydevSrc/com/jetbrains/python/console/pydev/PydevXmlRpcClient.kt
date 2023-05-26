@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 // Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.console.pydev
 
@@ -77,7 +78,7 @@ constructor(private val process: Process, hostname: String?, port: Int) : IPydev
     }
     //make an async call so that we can keep track of not actually having an answer.
     try {
-      impl.executeAsync(command, Vector(Arrays.asList(*args)), object : AsyncCallback {
+      impl.executeAsync(command, Vector(listOf(*args)), object : AsyncCallback {
 
         override fun handleError(error: Exception, url: URL, method: String) {
           requestSynchronizer.release()
