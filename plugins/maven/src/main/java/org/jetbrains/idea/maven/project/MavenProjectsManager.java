@@ -98,13 +98,13 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenProjectsManagerWatcher myWatcher;
 
   private MavenProjectsProcessor myReadingProcessor;
-  private MavenProjectsProcessor myResolvingProcessor;
+  protected MavenProjectsProcessor myResolvingProcessor;
   private MavenProjectsProcessor myPluginsResolvingProcessor;
   private MavenProjectsProcessor myArtifactsDownloadingProcessor;
 
   protected MavenMergingUpdateQueue myImportingQueue;
   protected final ConcurrentHashMap<@NotNull MavenProject, @NotNull MavenProjectChanges> myProjectsToImport = new ConcurrentHashMap<>();
-  private final Set<MavenProject> myProjectsToResolve = ConcurrentHashMap.newKeySet();
+  protected final Set<MavenProject> myProjectsToResolve = ConcurrentHashMap.newKeySet();
 
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
     EventDispatcher.create(MavenProjectsTree.Listener.class);
@@ -529,7 +529,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }, this);
   }
 
-  private void schedulePluginResolution(@NotNull Map<String, Collection<MavenProjectWithHolder>> projectsWithUnresolvedPlugins) {
+  protected void schedulePluginResolution(@NotNull Map<String, Collection<MavenProjectWithHolder>> projectsWithUnresolvedPlugins) {
     runWhenFullyOpen(
       () -> {
         for (var pluginResolutionRequests : projectsWithUnresolvedPlugins.values()) {
@@ -1009,40 +1009,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return promise;
   }
 
-  private AsyncPromise<List<Module>> scheduleResolve(Runnable callback) {
-    final AsyncPromise<List<Module>> result = new AsyncPromise<>();
-    runWhenFullyOpen(() -> {
-      LinkedHashSet<MavenProject> toResolve = new LinkedHashSet<>(myProjectsToResolve);
-      myProjectsToResolve.removeAll(toResolve);
-      if (toResolve.isEmpty()) {
-        result.setResult(Collections.emptyList());
-        myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC)
-          .importFinished(Collections.emptyList(), Collections.emptyList());
-        fireProjectImportCompleted();
-        return;
-      }
-
-      Consumer<MavenProjectResolver.MavenProjectResolutionResult> onCompletion = resolutionResult -> {
-        schedulePluginResolution(resolutionResult.projectsWithUnresolvedPlugins());
-        if (hasScheduledProjects()) {
-          scheduleImportChangedProjects().processed(result);
-        }
-        else {
-          result.setResult(Collections.emptyList());
-          myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC)
-            .importFinished(Collections.emptyList(), Collections.emptyList());
-          fireProjectImportCompleted();
-        }
-
-        if (null != callback) {
-          callback.run();
-        }
-      };
-
-      myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(toResolve, getGeneralSettings(), myProjectsTree, onCompletion));
-    });
-    return result;
-  }
+  protected abstract AsyncPromise<List<Module>> scheduleResolve(Runnable callback);
 
   public void evaluateEffectivePom(@NotNull final MavenProject mavenProject, @NotNull final NullableConsumer<? super String> consumer) {
     runWhenFullyOpen(() -> myResolvingProcessor.scheduleTask(new MavenProjectsProcessorTask() {
@@ -1110,7 +1077,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
 
   // TODO merge [result] promises (now, promise will be lost after merge of import requests)
-  private Promise<List<Module>> scheduleImportChangedProjects() {
+  protected Promise<List<Module>> scheduleImportChangedProjects() {
     final AsyncPromise<List<Module>> result = new AsyncPromise<>();
     runWhenFullyOpen(() -> myImportingQueue.queue(new Update(this) {
       @Override
@@ -1148,7 +1115,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myProjectsToResolve.addAll(projects);
   }
 
-  private boolean hasScheduledProjects() {
+  protected boolean hasScheduledProjects() {
     if (!isInitialized()) return false;
     return !myProjectsToImport.isEmpty() || !myProjectsToResolve.isEmpty();
   }

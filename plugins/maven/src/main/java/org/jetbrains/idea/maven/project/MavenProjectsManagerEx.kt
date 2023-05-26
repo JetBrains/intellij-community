@@ -17,13 +17,16 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
+import org.jetbrains.idea.maven.project.MavenProjectResolver.MavenProjectResolutionResult
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.runBlockingCancellableUnderIndicator
 import java.util.*
+import java.util.function.Consumer
 import java.util.function.Supplier
 
 @ApiStatus.Experimental
@@ -224,6 +227,37 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
   private suspend fun importAllProjects() {
     val projectsToImportWithChanges = projectsTree.projects.associateBy({ it }, { MavenProjectChanges.ALL })
     importMavenProjects(projectsToImportWithChanges)
+  }
+
+  override fun scheduleResolve(callback: Runnable?): AsyncPromise<List<Module>> {
+    val result = AsyncPromise<List<Module>>()
+    val toResolve = LinkedHashSet(myProjectsToResolve)
+    myProjectsToResolve.removeAll(toResolve)
+
+    if (toResolve.isEmpty()) {
+      result.setResult(emptyList())
+      myProject.messageBus.syncPublisher(MavenImportListener.TOPIC).importFinished(emptyList(), emptyList())
+      fireProjectImportCompleted()
+      return result
+    }
+
+    val onCompletion = Consumer<MavenProjectResolutionResult> { resolutionResult: MavenProjectResolutionResult ->
+      schedulePluginResolution(resolutionResult.projectsWithUnresolvedPlugins)
+      if (hasScheduledProjects()) {
+        scheduleImportChangedProjects().processed(result)
+      }
+      else {
+        result.setResult(emptyList())
+        myProject.messageBus.syncPublisher(MavenImportListener.TOPIC)
+          .importFinished(emptyList(),
+                          emptyList())
+        fireProjectImportCompleted()
+      }
+      callback?.run()
+    }
+
+    myResolvingProcessor.scheduleTask(MavenProjectsProcessorResolvingTask(toResolve, generalSettings, projectsTree, onCompletion))
+    return result
   }
 
 }
