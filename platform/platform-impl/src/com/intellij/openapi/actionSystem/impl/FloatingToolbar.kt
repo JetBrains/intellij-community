@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -21,6 +22,7 @@ import java.awt.BorderLayout
 import java.awt.Point
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.properties.Delegates
@@ -126,6 +128,11 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
     return false
   }
 
+  protected open fun disableForDoubleClickSelection(): Boolean {
+    return false
+  }
+
+
   protected open fun shouldReviveAfterClose(): Boolean = true
 
   protected open fun shouldSurviveDocumentChange(): Boolean = true
@@ -197,7 +204,9 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
 
   private inner class EditorSelectionListener : SelectionListener {
     override fun selectionChanged(e: SelectionEvent) {
-      showToolbar = true
+      val event = IdeEventQueue.getInstance().trueCurrentEvent
+      val isDoubleClick = (event as? MouseEvent)?.clickCount == 2
+      showToolbar = !(disableForDoubleClickSelection() && isDoubleClick)
     }
   }
 
