@@ -699,12 +699,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void performPostImportTasks() {
-    /*if (isNewImportingProcess) {
-      assertNotNull(myImportedContext);
-      new MavenImportFlow().runPostImportTasks(myImportedContext);
-      return;
-    }*/
-    myProjectsManager.waitForPostImportTasksCompletion();
   }
 
   protected void executeGoal(String relativePath, String goal) throws Exception {

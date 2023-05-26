@@ -101,7 +101,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenProjectsProcessor myResolvingProcessor;
   private MavenProjectsProcessor myPluginsResolvingProcessor;
   private MavenProjectsProcessor myArtifactsDownloadingProcessor;
-  private MavenProjectsProcessor myPostProcessor;
 
   protected MavenMergingUpdateQueue myImportingQueue;
   protected final ConcurrentHashMap<@NotNull MavenProject, @NotNull MavenProjectChanges> myProjectsToImport = new ConcurrentHashMap<>();
@@ -422,7 +421,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true, myEmbeddersManager);
     myArtifactsDownloadingProcessor =
       new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.downloading"), true, myEmbeddersManager);
-    myPostProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.post.processing"), true, myEmbeddersManager);
 
     myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree, getGeneralSettings(), myReadingProcessor);
 
@@ -578,7 +576,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       myResolvingProcessor.stop();
       myPluginsResolvingProcessor.stop();
       myArtifactsDownloadingProcessor.stop();
-      myPostProcessor.stop();
       mySaveQueue.flush();
 
       if (MavenUtil.isMavenUnitTestModeEnabled()) {
@@ -1010,9 +1007,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       if (myResolvingProcessor != null) {
         myResolvingProcessor.waitForCompletion();
       }
-      if (myPostProcessor != null) {
-        myPostProcessor.waitForCompletion();
-      }
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         MavenProgressIndicator.MavenProgressTracker mavenProgressTracker =
           myProject.getServiceIfCreated(MavenProgressIndicator.MavenProgressTracker.class);
@@ -1203,12 +1197,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenUtil.runWhenInitialized(myProject, wrapper.get());
   }
 
-  void schedulePostImportTasks(List<MavenProjectsProcessorTask> postTasks) {
-    for (MavenProjectsProcessorTask each : postTasks) {
-      myPostProcessor.scheduleTask(each);
-    }
-  }
-
   private void unscheduleAllTasks(List<MavenProject> projects) {
     for (MavenProject project : projects) {
       myProjectsToImport.remove(project);
@@ -1237,8 +1225,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     waitForTasksCompletion(myArtifactsDownloadingProcessor);
   }
 
+  /**
+   * @deprecated This method returns immediately. Kept for compatibility reasons.
+   */
+  @Deprecated(forRemoval = true)
   public void waitForPostImportTasksCompletion() {
-    myPostProcessor.waitForCompletion();
   }
 
   private void waitForTasksCompletion(MavenProjectsProcessor processor) {

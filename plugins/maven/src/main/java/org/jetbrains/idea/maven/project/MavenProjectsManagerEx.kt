@@ -17,11 +17,14 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.runBlockingCancellableUnderIndicator
 import java.util.*
+import java.util.function.Supplier
 
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
@@ -92,7 +95,8 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
   private inner class MavenProjectsManagerImporter(private val modelsProvider: IdeModifiableModelsProvider,
                                                    private val projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
                                                    private val importModuleGroupsRequired: Boolean) {
-    private val title = MavenProjectBundle.message("maven.project.importing")
+    private val importingTitle = MavenProjectBundle.message("maven.project.importing")
+    private val postProcessingTitle = MavenProjectBundle.message("maven.post.processing")
 
     @RequiresBlockingContext
     fun importMavenProjectsBlocking(): List<Module> {
@@ -115,15 +119,16 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
 
     @RequiresEdt
     fun importMavenProjectsEdt(): List<Module> {
-      val createdModules = this.doImport()
+      val importResult = this.doImport()
       VirtualFileManager.getInstance().syncRefresh()
-      return createdModules
+      performPostImportTasks(importResult.postTasks)
+      return importResult.createdModules
     }
 
     @RequiresBackgroundThread
     suspend fun importMavenProjectsBg(): List<Module> {
-      return withBackgroundProgress(project, title, false) {
-        val createdModules = doImport()
+      val importResult = withBackgroundProgress(project, importingTitle, false) {
+        val importResult = doImport()
         val fm = VirtualFileManager.getInstance()
         val noBackgroundMode = MavenUtil.isNoBackgroundMode()
         val shouldKeepTasksAsynchronousInHeadlessMode = CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
@@ -135,16 +140,30 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
         else {
           fm.asyncRefresh()
         }
-        return@withBackgroundProgress createdModules
+        return@withBackgroundProgress importResult
+      }
+      withBackgroundProgress(project, postProcessingTitle, true) {
+        performPostImportTasks(importResult.postTasks)
+      }
+      return importResult.createdModules
+    }
+
+    fun performPostImportTasks(postTasks: List<MavenProjectsProcessorTask>) {
+      val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
+      for (task in postTasks) {
+        task.perform(myProject, embeddersManager, mavenConsole, indicator)
       }
     }
 
-    private fun doImport(): List<Module> {
+    private val mavenConsole: MavenConsole
+      get() {
+        return BTWMavenConsole(project, generalSettings.outputLevel, generalSettings.isPrintErrorStackTraces)
+      }
+
+    private fun doImport(): ImportResult {
       project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).importStarted()
 
       val importResult = this.runImportActivity()
-
-      schedulePostImportTasks(importResult.postTasks)
 
       // do not block user too often
       myImportingQueue.restartTimer();
@@ -153,7 +172,7 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
 
       project.messageBus.syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImportWithChanges.keys, createdModules)
 
-      return createdModules
+      return importResult
     }
 
     private fun runImportActivity(): ImportResult {
