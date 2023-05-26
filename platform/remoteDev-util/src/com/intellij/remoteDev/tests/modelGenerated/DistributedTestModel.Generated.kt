@@ -90,6 +90,8 @@ class DistributedTestModel private constructor(
         )
     }
     //contexts
+    //threading
+    override val extThreading: ExtThreadingKind get() = ExtThreadingKind.Default
 }
 val IProtocol.distributedTestModel get() = getOrCreateExtension(DistributedTestModel::class) { @Suppress("DEPRECATION") DistributedTestModel.create(lifetime, this) }
 
@@ -161,6 +163,7 @@ data class RdAgentInfo (
     }
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -329,6 +332,7 @@ class RdTestSession private constructor(
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -404,6 +408,7 @@ data class RdTestSessionException (
     }
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -473,6 +478,7 @@ data class RdTestSessionExceptionCause (
     }
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -548,4 +554,5 @@ data class RdTestSessionStackTraceElement (
     }
     //deepClone
     //contexts
+    //threading
 }
