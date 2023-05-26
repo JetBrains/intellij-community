@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.extended
 
 import com.intellij.application.options.CodeStyle
@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.Strings
@@ -43,10 +44,11 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.function.Consumer
 
-private val LOG = Logger.getInstance(EditorConfigCodeStyleSettingsModifier::class.java)
+private val LOG: Logger
+  get() = logger<EditorConfigCodeStyleSettingsModifier>()
 
 class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
-  private val myReportedErrorIds: MutableSet<String> = HashSet()
+  private val reportedErrorIds: MutableSet<String> = HashSet()
 
   override fun modifySettings(settings: TransientCodeStyleSettings, psiFile: PsiFile): Boolean {
     val file = psiFile.virtualFile
@@ -89,11 +91,11 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
   @Synchronized
   fun error(project: Project?, id: String, message: @Nls String, fixAction: AnAction?, oneTime: Boolean) {
     if (oneTime) {
-      if (myReportedErrorIds.contains(id)) {
+      if (reportedErrorIds.contains(id)) {
         return
       }
       else {
-        myReportedErrorIds.add(id)
+        reportedErrorIds.add(id)
       }
     }
     val notification = Notification(EditorConfigNotifier.GROUP_DISPLAY_ID, message("editorconfig"), message, NotificationType.ERROR)
@@ -102,7 +104,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
         object : AnAction(fixAction.templateText) {
           override fun actionPerformed(e: AnActionEvent) {
             fixAction.actionPerformed(e)
-            myReportedErrorIds.remove(id)
+            reportedErrorIds.remove(id)
             notification.expire()
           }
         }
@@ -295,16 +297,17 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
       return Pair(ResourceProperties.Builder().build(), emptyList())
     }
 
-    private fun getExplicitTabSize(properties: ResourceProperties): String? =
-      properties.properties["tab_width"]?.sourceValue
+    private fun getExplicitTabSize(properties: ResourceProperties): String? = properties.properties["tab_width"]?.sourceValue
 
-    private fun getDefaultTabSize(settings: CodeStyleSettings, fileType: FileType): String =
-      settings.getIndentOptions(fileType).TAB_SIZE.toString()
+    private fun getDefaultTabSize(settings: CodeStyleSettings, fileType: FileType): String {
+      return settings.getIndentOptions(fileType).TAB_SIZE.toString()
+    }
 
-    private fun isTabIndent(properties: ResourceProperties): Boolean =
-      properties.properties["indent_style"].let { prop ->
+    private fun isTabIndent(properties: ResourceProperties): Boolean {
+      return properties.properties["indent_style"].let { prop ->
         prop != null && prop.sourceValue == "tab"
       }
+    }
 
     private fun getMappers(settings: TransientCodeStyleSettings,
                            properties: ResourceProperties,
@@ -340,7 +343,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
     }
 
     private fun getLanguageIds(properties: ResourceProperties): Collection<String> {
-      val langIds: MutableSet<String> = HashSet()
+      val langIds = HashSet<String>()
       for (key in properties.properties.keys) {
         if (EditorConfigIntellijNameUtil.isIndentProperty(key)) {
           langIds.add("any")
