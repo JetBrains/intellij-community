@@ -36,7 +36,7 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
                                                         val projectModel: ProjectCodeVisionModel) {
 
   companion object {
-    private val map: HashMap<Editor, CodeVisionSelectionController> = HashMap<Editor, CodeVisionSelectionController>()
+    private val map: HashMap<Editor, CodeVisionSelectionController> = HashMap()
     private val logger: Logger = logger<CodeVisionSelectionController>()
 
     fun install(editor: EditorImpl, projectModel: ProjectCodeVisionModel) {

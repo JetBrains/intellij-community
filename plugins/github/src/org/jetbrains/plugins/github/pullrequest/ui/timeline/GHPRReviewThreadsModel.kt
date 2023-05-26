@@ -8,7 +8,7 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModelImpl
 
 class GHPRReviewThreadsModel
-  : CollectionListModel<GHPRReviewThreadModel>(SortedList<GHPRReviewThreadModel>(compareBy { it.createdAt }), true) {
+  : CollectionListModel<GHPRReviewThreadModel>(SortedList(compareBy { it.createdAt }), true) {
 
   var loaded = false
     private set

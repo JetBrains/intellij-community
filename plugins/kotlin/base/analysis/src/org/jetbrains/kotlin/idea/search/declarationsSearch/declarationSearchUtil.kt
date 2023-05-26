@@ -39,7 +39,7 @@ abstract class DeclarationsSearch<T : PsiElement, R : DeclarationSearchRequest<T
     protected abstract fun doSearch(request: R, consumer: Processor<in T>)
     protected open fun isApplicable(request: R): Boolean = true
 
-    fun search(request: R): Query<T> = if (isApplicable(request)) createUniqueResultsQuery(request) else EmptyQuery.getEmptyQuery<T>()
+    fun search(request: R): Query<T> = if (isApplicable(request)) createUniqueResultsQuery(request) else EmptyQuery.getEmptyQuery()
 }
 
 class HierarchySearchRequest<T : PsiElement>(

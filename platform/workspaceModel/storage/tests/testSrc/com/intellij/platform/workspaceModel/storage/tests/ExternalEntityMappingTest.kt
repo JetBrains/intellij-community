@@ -329,7 +329,7 @@ class ExternalEntityMappingTest {
                                                        VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     var externalMapping = replacement.getMutableExternalMapping<Int>(INDEX_ID)
     externalMapping.addMapping(fooEntity, 1)
-    externalMapping = replacement.getMutableExternalMapping<Int>(ANOTHER_INDEX_ID)
+    externalMapping = replacement.getMutableExternalMapping(ANOTHER_INDEX_ID)
     externalMapping.addMapping(barEntity, 2)
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
 
@@ -421,7 +421,7 @@ class ExternalEntityMappingTest {
     val replacement = createEmptyBuilder()
     var barEntity = replacement addEntity SampleEntity(false, "bar", ArrayList(), HashMap(),
                                                        VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
-    externalMapping = replacement.getMutableExternalMapping<Int>(ANOTHER_INDEX_ID)
+    externalMapping = replacement.getMutableExternalMapping(ANOTHER_INDEX_ID)
     externalMapping.addMapping(barEntity, 2)
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
 
@@ -442,7 +442,7 @@ class ExternalEntityMappingTest {
     val replacement = createEmptyBuilder()
     var barEntity = replacement addEntity SampleEntity(false, "bar", ArrayList(), HashMap(),
                                                        VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
-    externalMapping = replacement.getMutableExternalMapping<Int>(INDEX_ID)
+    externalMapping = replacement.getMutableExternalMapping(INDEX_ID)
     externalMapping.addMapping(barEntity, 2)
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
 

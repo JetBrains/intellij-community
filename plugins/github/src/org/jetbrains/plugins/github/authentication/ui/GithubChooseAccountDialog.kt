@@ -44,7 +44,7 @@ class GithubChooseAccountDialog @JvmOverloads constructor(project: Project?, par
       margin = JBInsets.emptyInsets()
     }
   }
-  private val accountsList: JBList<GithubAccount> = JBList<GithubAccount>(accounts).apply {
+  private val accountsList: JBList<GithubAccount> = JBList(accounts).apply {
     selectionMode = ListSelectionModel.SINGLE_SELECTION
     cellRenderer = object : ColoredListCellRenderer<GithubAccount>() {
       override fun customizeCellRenderer(list: JList<out GithubAccount>,

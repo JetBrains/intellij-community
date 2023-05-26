@@ -28,7 +28,7 @@ class EmptyModuleManager(private val project: Project) : ModuleManager() {
 
   override fun moduleDependencyComparator(): Nothing = throw UnsupportedOperationException()
 
-  override fun getModuleDependentModules(module: Module): List<Module> = emptyList<Module>()
+  override fun getModuleDependentModules(module: Module): List<Module> = emptyList()
 
   override fun isModuleDependent(@NotNull module: Module, @NotNull onModule: Module): Boolean = false
 

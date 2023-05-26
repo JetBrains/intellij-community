@@ -34,7 +34,8 @@ import kotlin.system.measureTimeMillis
 abstract class AbstractLargeProjectTest : UsefulTestCase() {
 
   abstract val testProjectPath: Path
-  protected open val projectLibraries: List<Pair<String, List<File>>> get() = listOf<Pair<String, List<File>>>()
+  protected open val projectLibraries: List<Pair<String, List<File>>>
+    get() = emptyList()
 
   protected lateinit var project: Project
 

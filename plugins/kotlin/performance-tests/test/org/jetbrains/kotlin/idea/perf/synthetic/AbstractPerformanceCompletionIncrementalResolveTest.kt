@@ -101,7 +101,7 @@ abstract class AbstractPerformanceCompletionIncrementalResolveTest : KotlinLight
     private fun innerPerfTest(name: String, setUpBody: (TestData<Unit, Array<LookupElement>>) -> Unit) {
         CompletionBindingContextProvider.ENABLED = true
         try {
-            performanceTest<Unit, Array<LookupElement>> {
+            performanceTest {
                 name(name)
                 stats(stats)
                 setUp(setUpBody)

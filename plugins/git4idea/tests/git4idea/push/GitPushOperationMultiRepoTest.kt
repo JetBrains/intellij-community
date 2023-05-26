@@ -101,7 +101,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     updateChangeListManager()
 
     val result = GitPushOperation(project, pushSupport,
-                                  Collections.singletonMap<GitRepository, PushSpec<GitPushSource, GitPushTarget>>(ultimate, mainSpec), null, false, false).execute()
+                                  Collections.singletonMap(ultimate, mainSpec), null, false, false).execute()
 
     val result1 = result.results[ultimate]!!
     val result2 = result.results[community]

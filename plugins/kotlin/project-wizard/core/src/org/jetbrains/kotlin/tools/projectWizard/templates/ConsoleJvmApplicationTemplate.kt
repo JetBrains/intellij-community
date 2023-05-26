@@ -29,14 +29,13 @@ object ConsoleJvmApplicationTemplate : Template() {
     override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
         module.configurator.moduleType == ModuleType.jvm
 
-    override fun Writer.getIrsToAddToBuildFile(
-        module: ModuleIR
-    ) = buildList<BuildSystemIR> {
-        +runTaskIrs("MainKt")
-    }
+    override fun Writer.getIrsToAddToBuildFile(module: ModuleIR): List<BuildSystemIR> =
+        buildList {
+            +runTaskIrs("MainKt")
+        }
 
-    override fun Reader.getFileTemplates(module: ModuleIR) =
-        buildList<FileTemplateDescriptorWithPath> {
+    override fun Reader.getFileTemplates(module: ModuleIR): List<FileTemplateDescriptorWithPath> =
+        buildList {
             +(FileTemplateDescriptor("$id/main.kt.vm", fileToCreate.asPath()) asSrcOf SourcesetType.main)
         }
 }

@@ -123,7 +123,7 @@ open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPo
     var name by string()
 
     @get:Tag("config")
-    var innerState: Element? by property<Element?>(null) { it === null }
+    var innerState: Element? by property(null) { it === null }
 
     open fun loadFromConfiguration(config: ContributedConfigurationBase) {
       typeId = config.typeId

@@ -28,7 +28,7 @@ class GHPRDiffController(private val diffRequestModel: GHPRDiffRequestModel,
     tree?.let { propagateSelection(it) }
   }
 
-  var filesTree: ChangesTree? by observable<ChangesTree?>(null) { _, oldValue, newValue ->
+  var filesTree: ChangesTree? by observable(null) { _, oldValue, newValue ->
     oldValue?.removeTreeSelectionListener(filesTreeListener)
     newValue?.addTreeSelectionListener(filesTreeListener)
     filesTreeListener.valueChanged(null)
@@ -39,7 +39,7 @@ class GHPRDiffController(private val diffRequestModel: GHPRDiffRequestModel,
     filesTree?.let { propagateSelection(it) }
   }
 
-  var commitsTree: ChangesTree? by observable<ChangesTree?>(null) { _, oldValue, newValue ->
+  var commitsTree: ChangesTree? by observable(null) { _, oldValue, newValue ->
     oldValue?.removeTreeSelectionListener(commitsTreeListener)
     newValue?.addTreeSelectionListener(commitsTreeListener)
     commitsTreeListener.valueChanged(null)

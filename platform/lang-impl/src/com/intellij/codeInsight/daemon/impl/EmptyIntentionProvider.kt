@@ -16,7 +16,7 @@ import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-val EP_NAME: ExtensionPointName<EmptyIntentionProvider> = ExtensionPointName<EmptyIntentionProvider>("com.intellij.emptyIntentionProvider")
+val EP_NAME: ExtensionPointName<EmptyIntentionProvider> = ExtensionPointName("com.intellij.emptyIntentionProvider")
 
 @ApiStatus.Internal
 interface EmptyIntentionProvider {

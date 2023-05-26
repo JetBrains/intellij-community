@@ -8,7 +8,7 @@ import org.jetbrains.uast.psi.UElementWithLocation
 
 @JvmField
 @Suppress("DEPRECATION")
-val allUElementSubtypes: Set<Class<out UElement>> = setOf<Class<out UElement>>(
+val allUElementSubtypes: Set<Class<out UElement>> = setOf(
   UAnchorOwner::class.java,
   UAnnotated::class.java,
   UAnnotation::class.java,

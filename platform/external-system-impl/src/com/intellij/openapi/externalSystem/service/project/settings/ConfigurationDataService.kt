@@ -98,7 +98,7 @@ internal class ConfigurationDataService : AbstractProjectDataService<Configurati
 
         val moduleDataNode = ExternalSystemApiUtil.findParent(node, ProjectKeys.MODULE)
         if (moduleDataNode != null) {
-          var module = moduleDataNode.getUserData<Module>(MODULE_KEY)
+          var module = moduleDataNode.getUserData(MODULE_KEY)
           module = module ?: modelsProvider.findIdeModule(moduleDataNode.data)
 
           if (module == null) {

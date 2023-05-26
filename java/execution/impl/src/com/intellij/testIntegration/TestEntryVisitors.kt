@@ -47,7 +47,7 @@ class SingleTestCollector : TestEntryVisitor() {
 
 
 class ConfigurationsCollector : TestEntryVisitor() {
-  val entries: MutableList<RecentTestsPopupEntry> = mutableListOf<RecentTestsPopupEntry>()
+  val entries: MutableList<RecentTestsPopupEntry> = mutableListOf()
 
   override fun visitRunConfiguration(configuration: RunConfigurationEntry) {
     entries.add(configuration)

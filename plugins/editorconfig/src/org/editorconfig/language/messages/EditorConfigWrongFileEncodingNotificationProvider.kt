@@ -63,7 +63,7 @@ class EditorConfigWrongFileEncodingNotificationProvider : EditorNotificationProv
 
     val hide = EditorConfigBundle["notification.action.hide.once"]
     result.createActionLabel(hide) {
-      editor.putUserData<Boolean>(HIDDEN_KEY, true)
+      editor.putUserData(HIDDEN_KEY, true)
       update(file, project)
     }
 

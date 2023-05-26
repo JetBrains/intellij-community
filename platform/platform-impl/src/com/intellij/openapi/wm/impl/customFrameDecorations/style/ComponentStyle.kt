@@ -108,7 +108,7 @@ class ComponentStyle<T : JComponent>private constructor(private val default: Pro
     }
 
     fun build(): ComponentStyle<T> {
-      return ComponentStyle<T>(default.clone(), styleMap.mapValues { it.value.clone()})
+      return ComponentStyle(default.clone(), styleMap.mapValues { it.value.clone()})
     }
   }
 

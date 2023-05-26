@@ -360,7 +360,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     table.tableHeader.defaultRenderer = TableHeaderRenderer()
     table.setDefaultRenderer(String::class.java, TableScopeRenderer(manager))
     // configure color renderer and its editor
-    val editor = ComboBox<String>(getColors().toTypedArray())
+    val editor: ComboBox<String> = ComboBox(getColors().toTypedArray())
     editor.renderer = ComboBoxColorRenderer(manager)
     table.setDefaultEditor(FileColorConfiguration::class.java, DefaultCellEditor(editor))
     table.setDefaultRenderer(FileColorConfiguration::class.java, TableColorRenderer(manager))

@@ -21,8 +21,8 @@ import java.awt.event.MouseEvent
 // used externally
 val editorLensContextKey: Key<EditorCodeVisionContext> = Key<EditorCodeVisionContext>("EditorCodeLensContext")
 // used externally
-val codeVisionEntryOnHighlighterKey: Key<CodeVisionEntry> = Key.create<CodeVisionEntry>("CodeLensEntryOnHighlighter")
-internal val codeVisionEntryMouseEventKey: Key<MouseEvent> = Key.create<MouseEvent>("CodeVisionEntryMouseEventKey")
+val codeVisionEntryOnHighlighterKey: Key<CodeVisionEntry> = Key.create("CodeLensEntryOnHighlighter")
+internal val codeVisionEntryMouseEventKey: Key<MouseEvent> = Key.create("CodeVisionEntryMouseEventKey")
 
 val Editor.lensContext: EditorCodeVisionContext?
   get() = getOrCreateCodeVisionContext(this)

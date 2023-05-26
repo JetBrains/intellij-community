@@ -197,7 +197,7 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     repo.checkout(revisions.first().hash)
 
     val hashes = mutableListOf<String>()
-    GitHistoryUtils.loadTimedCommits(myProject, projectRoot, Consumer<TimedVcsCommit> { hashes.add(it.id.asString()) }, "$branchName..HEAD")
+    GitHistoryUtils.loadTimedCommits(myProject, projectRoot, Consumer { hashes.add(it.id.asString()) }, "$branchName..HEAD")
 
     TestCase.assertEquals(revisions.subList(0, revisions.size - 1).map { it.hash }, hashes)
   }
