@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.cache
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.*
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -20,16 +20,16 @@ import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ArrayUtil
-import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.concurrency.CancellablePromise
+import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 
 private val LOG = logger<CodeStyleCachedValueProvider>()
-private const val MAX_COMPUTATION_THREADS = 10
-private val ourExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("CodeStyleCachedValueProvider",
-                                                                                      MAX_COMPUTATION_THREADS)
+
+@Service(Service.Level.PROJECT)
+private class CodeStyleCachedValueProviderService(val coroutineScope: CoroutineScope) {
+}
 
 internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewProvider,
                                             private val project: Project) : CachedValueProvider<CodeStyleSettings?> {
@@ -62,9 +62,9 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
   override fun compute(): CachedValueProvider.Result<CodeStyleSettings?>? {
     val settings: CodeStyleSettings?
     try {
-      settings = computation.getCurrResult()
+      settings = computation.getCurrentResult()
     }
-    catch (pce: ProcessCanceledException) {
+    catch (ignored: ProcessCanceledException) {
       computation.reset()
       return CachedValueProvider.Result(null, ModificationTracker.EVER_CHANGED)
     }
@@ -106,36 +106,46 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
 
     @Volatile
     private var currentResult: CodeStyleSettings?
-    private val settingsManager: CodeStyleSettingsManager
+    private val settingsManager = CodeStyleSettingsManager.getInstance(project)
+
     @JvmField
     val tracker = SimpleModificationTracker()
-    private var promise: CancellablePromise<Void>? = null
-    private val scheduledRunnables: MutableList<Runnable> = ArrayList()
+    private var job: Job? = null
+    private val scheduledRunnables = ArrayList<Runnable>()
     private var oldTrackerSetting: Long = 0
     private var insideRestartedComputation = false
 
     init {
-      settingsManager = CodeStyleSettingsManager.getInstance(project)
       currentResult = settingsManager.currentSettings
     }
 
     private fun start() {
-      if (isRunOnBackground) {
-        promise = ReadAction.nonBlocking { computeSettings() }
-          .expireWith(project)
-          .finishOnUiThread(ModalityState.any()) { `val`: Void? -> notifyCachedValueComputed() }
-          .submit(ourExecutorService)
+      val app = ApplicationManager.getApplication()
+      if (app.isDispatchThread && !app.isUnitTestMode && !app.isHeadlessEnvironment) {
+        job = project.service<CodeStyleCachedValueProviderService>().coroutineScope.launch {
+          readAction {
+            computeSettings()
+          }
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            notifyCachedValueComputed()
+          }
+        }
       }
       else {
-        ReadAction.run<RuntimeException> { computeSettings() }
-        notifyOnEdt()
+        app.runReadAction(::computeSettings)
+        if (app.isDispatchThread) {
+          notifyCachedValueComputed()
+        }
+        else {
+          project.service<CodeStyleCachedValueProviderService>().coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            notifyCachedValueComputed()
+          }
+        }
       }
     }
 
     fun cancel() {
-      if (promise != null && !promise!!.isDone) {
-        promise!!.cancel()
-      }
+      job?.cancel()
       currentResult = null
     }
 
@@ -151,16 +161,6 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
       }
     }
 
-    private fun notifyOnEdt() {
-      val application = ApplicationManager.getApplication()
-      if (application.isDispatchThread) {
-        notifyCachedValueComputed()
-      }
-      else {
-        application.invokeLater({ notifyCachedValueComputed() }, ModalityState.any())
-      }
-    }
-
     private fun computeSettings() {
       val file = viewProvider.virtualFile
       val psiFile = psiFile
@@ -169,23 +169,19 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
         return
       }
 
+      computationLock.lock()
       try {
-        computationLock.lock()
-        if (LOG.isDebugEnabled) {
-          LOG.debug { "Computation started for ${file.name}" }
-        }
+        LOG.debug { "Computation started for ${file.name}" }
         var currSettings = getCurrentSettings(psiFile)
         oldTrackerSetting = currSettings.modificationTracker.modificationCount
         @Suppress("TestOnlyProblems")
         if (currSettings !== settingsManager.temporarySettings) {
           val modifiableSettings = TransientCodeStyleSettings(viewProvider, currSettings)
           modifiableSettings.applyIndentOptionsFromProviders(project, file)
-          if (LOG.isDebugEnabled) {
-            LOG.debug("Created TransientCodeStyleSettings for " + file.name)
-          }
+          LOG.debug { "Created TransientCodeStyleSettings for ${file.name}" }
           for (modifier in CodeStyleSettingsModifier.EP_NAME.extensionList) {
             if (modifier.modifySettings(modifiableSettings, psiFile)) {
-              LOG.debug("Modifier: " + modifier.javaClass.name)
+              LOG.debug { "Modifier: ${modifier.javaClass.name}" }
               modifiableSettings.setModifier(modifier)
               currSettings = modifiableSettings
               break
@@ -210,7 +206,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
       return result ?: settingsManager.currentSettings
     }
 
-    fun getCurrResult(): CodeStyleSettings? {
+    fun getCurrentResult(): CodeStyleSettings? {
       if (isActive.compareAndSet(false, true)) {
         LOG.debug { "Computation initiated for ${viewProvider.virtualFile.name}" }
         start()
@@ -265,8 +261,3 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
   }
 }
 
-private val isRunOnBackground: Boolean
-  get() {
-    val application = ApplicationManager.getApplication()
-    return !application.isUnitTestMode && !application.isHeadlessEnvironment && application.isDispatchThread
-  }
