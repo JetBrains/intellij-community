@@ -123,8 +123,6 @@ class MavenImportFlow {
 
         errorsSet.addAll(toResolve.filter { it.hasReadingProblems() })
         toResolve.removeIf { it.hasReadingProblems() }
-
-        runLegacyListeners(context) { projectsScheduled() }
       }
     }, d)
 

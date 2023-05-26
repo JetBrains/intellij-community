@@ -289,11 +289,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       }
 
       @Override
-      public void projectsScheduled() {
-        fireProjectScheduled();
-      }
-
-      @Override
       public void importAndResolveScheduled() {
         for (Listener each : myManagerListeners) {
           each.importAndResolveScheduled();
@@ -496,8 +491,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
         scheduleForNextImport(toImport);
         scheduleForNextResolve(toResolve);
-
-        fireProjectScheduled();
       }
 
       @Override
@@ -1309,12 +1302,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
-  private void fireProjectScheduled() {
-    for (Listener each : myManagerListeners) {
-      each.projectsScheduled();
-    }
-  }
-
   private void fireImportAndResolveScheduled(MavenImportSpec spec) {
     for (Listener each : myManagerListeners) {
       each.importAndResolveScheduled();
@@ -1338,9 +1325,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public interface Listener {
     default void activated() {
-    }
-
-    default void projectsScheduled() {
     }
 
     default void importAndResolveScheduled() {
