@@ -52,38 +52,43 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
 
   override fun modifySettings(settings: TransientCodeStyleSettings, psiFile: PsiFile): Boolean {
     val file = psiFile.virtualFile
-    if (Utils.isFullIntellijSettingsSupport() && file != null &&
-        (!ApplicationManager.getApplication().isUnitTestMode || Handler.isEnabledInTests())) {
-      val project = psiFile.project
-      if (!project.isDisposed && Utils.isEnabled(settings)) {
-        // Get editorconfig settings
-        try {
-          return Handler.runWithTimeout(project) {
-            val (properties, editorConfigs) = Handler.processEditorConfig(project, psiFile)
-            // Apply editorconfig settings for the current editor
-            if (Handler.applyCodeStyleSettings(settings, properties, psiFile)) {
-              settings.addDependencies(editorConfigs)
-              val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
-              navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
-              true
-            }
-            else false
-          }
+    if (!Utils.isFullIntellijSettingsSupport() ||
+        file == null ||
+        (!Handler.isEnabledInTests() && ApplicationManager.getApplication().isUnitTestMode)) {
+      return false
+    }
+
+    val project = psiFile.project
+    if (project.isDisposed || !Utils.isEnabled(settings)) {
+      return false
+    }
+
+    // Get editorconfig settings
+    try {
+      return Handler.runWithTimeout(project) {
+        val (properties, editorConfigs) = Handler.processEditorConfig(project, psiFile)
+        // Apply editorconfig settings for the current editor
+        if (Handler.applyCodeStyleSettings(settings, properties, psiFile)) {
+          settings.addDependencies(editorConfigs)
+          val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
+          navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
+          true
         }
-        catch (toe: TimeoutException) {
-          LOG.warn(toe)
-          if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-            error(project, "timeout", message("error.timeout"), DisableEditorConfigAction(project), true)
-          }
-        }
-        // TODO ec4j error handling
-        //catch (e: EditorConfigException) {
-        //  // TODO: Report an error, ignore for now
-        //}
-        catch (ex: Exception) {
-          LOG.error(ex)
-        }
+        else false
       }
+    }
+    catch (toe: TimeoutException) {
+      LOG.warn(toe)
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+        error(project, "timeout", message("error.timeout"), DisableEditorConfigAction(project), true)
+      }
+    }
+    // TODO ec4j error handling
+    //catch (e: EditorConfigException) {
+    //  // TODO: Report an error, ignore for now
+    //}
+    catch (e: Exception) {
+      LOG.error(e)
     }
     return false
   }
@@ -142,11 +147,8 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
     }
   }
 
-  object Handler { // not a companion object to load less bytecode simultaneously with EditorConfigCodeStyleSettingsModifier
-    private val TIMEOUT = Duration.ofSeconds(10)
-
-    private var ourEnabledInTestOnly = false
-
+  // not a companion object to load less bytecode simultaneously with EditorConfigCodeStyleSettingsModifier
+  object Handler {
     @JvmStatic
     internal fun isEnabledInTests() = ourEnabledInTestOnly
 
@@ -157,8 +159,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
     }
 
     @Throws(TimeoutException::class)
-    internal fun runWithTimeout(project: Project,
-                               callable: Callable<Boolean>): Boolean {
+    internal fun runWithTimeout(project: Project, callable: Callable<Boolean>): Boolean {
       @Suppress("DEPRECATION_ERROR")
       val future = project.computeOnPooledThread(callable)
       try {
@@ -178,8 +179,8 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
     }
 
     internal fun applyCodeStyleSettings(settings: TransientCodeStyleSettings,
-                                       properties: ResourceProperties,
-                                       file: PsiFile): Boolean {
+                                        properties: ResourceProperties,
+                                        file: PsiFile): Boolean {
       val processed: MutableSet<String> = HashSet()
       var isModified = false
       for (mapper in getMappers(settings, properties, file.language)) {
@@ -188,92 +189,6 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
         isModified = isModified or processOptions(properties, settings, file.fileType, mapper, true, processed)
       }
       return isModified
-    }
-
-    private fun processOptions(properties: ResourceProperties,
-                               settings: CodeStyleSettings,
-                               fileType: FileType,
-                               mapper: AbstractCodeStylePropertyMapper,
-                               languageSpecific: Boolean,
-                               processed: MutableSet<String>): Boolean {
-      val langPrefix = if (languageSpecific) mapper.languageDomainId + "_" else null
-      var isModified = false
-      for (prop in properties.properties.values) {
-        val optionKey = prop.name
-        val intellijName = EditorConfigIntellijNameUtil.toIntellijName(optionKey)
-        val accessor = findAccessor(mapper, intellijName, langPrefix)
-        if (accessor != null) {
-          val `val` = preprocessValue(accessor, properties, settings, fileType, optionKey, prop.sourceValue)
-          for (dependency in getDependentProperties(optionKey, langPrefix)) {
-            if (!processed.contains(dependency)) {
-              val dependencyAccessor = findAccessor(mapper, dependency, null)
-              if (dependencyAccessor != null) {
-                isModified = isModified or dependencyAccessor.setFromString(`val`)
-              }
-            }
-          }
-          isModified = isModified or accessor.setFromString(`val`)
-          processed.add(intellijName)
-        }
-      }
-      return isModified
-    }
-
-    private fun getDependentProperties(property: String, langPrefix: String?): List<String> {
-      var stripped = property.removePrefix(EditorConfigIntellijNameUtil.IDE_PREFIX)
-      if (langPrefix != null) stripped = stripped.removePrefix(langPrefix)
-      return when (stripped) {
-        "indent_size" -> listOf("continuation_indent_size")
-        else -> emptyList()
-      }
-    }
-
-    private fun preprocessValue(accessor: CodeStylePropertyAccessor<*>,
-                                properties: ResourceProperties,
-                                settings: CodeStyleSettings,
-                                fileType: FileType,
-                                optionKey: String,
-                                rawValue: String): String {
-      val optionValue = rawValue.trim()
-      if ("indent_size" == optionKey) {
-        val explicitTabSize = getExplicitTabSize(properties)
-        if ("tab" == optionValue) {
-          return explicitTabSize ?: getDefaultTabSize(settings, fileType)
-        }
-        else if (isTabIndent(properties) && explicitTabSize != null) {
-          return explicitTabSize
-        }
-      }
-      else if ("max_line_length" == optionKey) {
-        if (optionValue == "off") {
-          return CodeStyleConstraints.MAX_RIGHT_MARGIN.toString()
-        }
-      }
-      // Left for backwards compatibility
-      else if (EditorConfigValueUtil.EMPTY_LIST_VALUE == optionValue &&
-               CodeStylePropertiesUtil.isAccessorAllowingEmptyList(accessor)) {
-        return ""
-      }
-      return optionValue
-    }
-
-    private fun findAccessor(mapper: AbstractCodeStylePropertyMapper,
-                             propertyName: String,
-                             langPrefix: String?): CodeStylePropertyAccessor<*>? {
-      if (langPrefix != null) {
-        if (propertyName.startsWith(langPrefix)) {
-          val prefixlessName = Strings.trimStart(propertyName, langPrefix)
-          val propertyKind = IntellijPropertyKindMap.getPropertyKind(prefixlessName)
-          if (propertyKind == EditorConfigPropertyKind.LANGUAGE || propertyKind == EditorConfigPropertyKind.COMMON ||
-              EditorConfigIntellijNameUtil.isIndentProperty(prefixlessName)) {
-            return mapper.getAccessor(prefixlessName)
-          }
-        }
-      }
-      else {
-        return mapper.getAccessor(propertyName)
-      }
-      return null
     }
 
     internal fun processEditorConfig(project: Project, psiFile: PsiFile): Pair<ResourceProperties, List<VirtualFile>> {
@@ -296,64 +211,154 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
       }
       return Pair(ResourceProperties.Builder().build(), emptyList())
     }
+  }
+}
 
-    private fun getExplicitTabSize(properties: ResourceProperties): String? = properties.properties["tab_width"]?.sourceValue
+private val TIMEOUT = Duration.ofSeconds(10)
 
-    private fun getDefaultTabSize(settings: CodeStyleSettings, fileType: FileType): String {
-      return settings.getIndentOptions(fileType).TAB_SIZE.toString()
-    }
+private var ourEnabledInTestOnly = false
 
-    private fun isTabIndent(properties: ResourceProperties): Boolean {
-      return properties.properties["indent_style"].let { prop ->
-        prop != null && prop.sourceValue == "tab"
-      }
-    }
-
-    private fun getMappers(settings: TransientCodeStyleSettings,
-                           properties: ResourceProperties,
-                           fileBaseLanguage: Language): Collection<AbstractCodeStylePropertyMapper> {
-      return buildSet {
-        getLanguageCodeStyleProviders(properties, fileBaseLanguage)
-          .mapTo(this) { provider -> provider.getPropertyMapper(settings) }
-        add(GeneralCodeStylePropertyMapper(settings))
-      }
-    }
-
-    private fun getLanguageCodeStyleProviders(properties: ResourceProperties,
-                                              fileBaseLanguage: Language): Collection<LanguageCodeStyleSettingsProvider> {
-      val providers: MutableSet<LanguageCodeStyleSettingsProvider> = HashSet()
-      val mainProvider = LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(fileBaseLanguage)
-      if (mainProvider != null) {
-        providers.add(mainProvider)
-      }
-      for (langId in getLanguageIds(properties)) {
-        if (langId != "any") {
-          val additionalProvider = LanguageCodeStyleSettingsProvider.findByExternalLanguageId(langId)
-          if (additionalProvider != null) {
-            providers.add(additionalProvider)
+private fun processOptions(properties: ResourceProperties,
+                           settings: CodeStyleSettings,
+                           fileType: FileType,
+                           mapper: AbstractCodeStylePropertyMapper,
+                           languageSpecific: Boolean,
+                           processed: MutableSet<String>): Boolean {
+  val langPrefix = if (languageSpecific) mapper.languageDomainId + "_" else null
+  var isModified = false
+  for (prop in properties.properties.values) {
+    val optionKey = prop.name
+    val intellijName = EditorConfigIntellijNameUtil.toIntellijName(optionKey)
+    val accessor = findAccessor(mapper, intellijName, langPrefix)
+    if (accessor != null) {
+      val `val` = preprocessValue(accessor, properties, settings, fileType, optionKey, prop.sourceValue)
+      for (dependency in getDependentProperties(optionKey, langPrefix)) {
+        if (!processed.contains(dependency)) {
+          val dependencyAccessor = findAccessor(mapper, dependency, null)
+          if (dependencyAccessor != null) {
+            isModified = isModified or dependencyAccessor.setFromString(`val`)
           }
         }
-        else {
-          providers.clear()
-          providers.addAll(LanguageCodeStyleSettingsProvider.getAllProviders())
-          break
-        }
       }
-      return providers
-    }
-
-    private fun getLanguageIds(properties: ResourceProperties): Collection<String> {
-      val langIds = HashSet<String>()
-      for (key in properties.properties.keys) {
-        if (EditorConfigIntellijNameUtil.isIndentProperty(key)) {
-          langIds.add("any")
-        }
-        val langId = EditorConfigIntellijNameUtil.extractLanguageDomainId(key)
-        if (langId != null) {
-          langIds.add(langId)
-        }
-      }
-      return langIds
+      isModified = isModified or accessor.setFromString(`val`)
+      processed.add(intellijName)
     }
   }
+  return isModified
+}
+
+private fun getDependentProperties(property: String, langPrefix: String?): List<String> {
+  var stripped = property.removePrefix(EditorConfigIntellijNameUtil.IDE_PREFIX)
+  if (langPrefix != null) stripped = stripped.removePrefix(langPrefix)
+  return when (stripped) {
+    "indent_size" -> listOf("continuation_indent_size")
+    else -> emptyList()
+  }
+}
+
+private fun preprocessValue(accessor: CodeStylePropertyAccessor<*>,
+                            properties: ResourceProperties,
+                            settings: CodeStyleSettings,
+                            fileType: FileType,
+                            optionKey: String,
+                            rawValue: String): String {
+  val optionValue = rawValue.trim()
+  if ("indent_size" == optionKey) {
+    val explicitTabSize = getExplicitTabSize(properties)
+    if ("tab" == optionValue) {
+      return explicitTabSize ?: getDefaultTabSize(settings, fileType)
+    }
+    else if (isTabIndent(properties) && explicitTabSize != null) {
+      return explicitTabSize
+    }
+  }
+  else if ("max_line_length" == optionKey) {
+    if (optionValue == "off") {
+      return CodeStyleConstraints.MAX_RIGHT_MARGIN.toString()
+    }
+  }
+  // Left for backwards compatibility
+  else if (EditorConfigValueUtil.EMPTY_LIST_VALUE == optionValue &&
+           CodeStylePropertiesUtil.isAccessorAllowingEmptyList(accessor)) {
+    return ""
+  }
+  return optionValue
+}
+
+private fun findAccessor(mapper: AbstractCodeStylePropertyMapper,
+                         propertyName: String,
+                         langPrefix: String?): CodeStylePropertyAccessor<*>? {
+  if (langPrefix != null) {
+    if (propertyName.startsWith(langPrefix)) {
+      val prefixlessName = Strings.trimStart(propertyName, langPrefix)
+      val propertyKind = IntellijPropertyKindMap.getPropertyKind(prefixlessName)
+      if (propertyKind == EditorConfigPropertyKind.LANGUAGE || propertyKind == EditorConfigPropertyKind.COMMON ||
+          EditorConfigIntellijNameUtil.isIndentProperty(prefixlessName)) {
+        return mapper.getAccessor(prefixlessName)
+      }
+    }
+  }
+  else {
+    return mapper.getAccessor(propertyName)
+  }
+  return null
+}
+
+private fun getExplicitTabSize(properties: ResourceProperties): String? = properties.properties["tab_width"]?.sourceValue
+
+private fun getDefaultTabSize(settings: CodeStyleSettings, fileType: FileType): String {
+  return settings.getIndentOptions(fileType).TAB_SIZE.toString()
+}
+
+private fun isTabIndent(properties: ResourceProperties): Boolean {
+  return properties.properties["indent_style"].let { prop ->
+    prop != null && prop.sourceValue == "tab"
+  }
+}
+
+private fun getMappers(settings: TransientCodeStyleSettings,
+                       properties: ResourceProperties,
+                       fileBaseLanguage: Language): Collection<AbstractCodeStylePropertyMapper> {
+  return buildSet {
+    getLanguageCodeStyleProviders(properties, fileBaseLanguage)
+      .mapTo(this) { provider -> provider.getPropertyMapper(settings) }
+    add(GeneralCodeStylePropertyMapper(settings))
+  }
+}
+
+private fun getLanguageCodeStyleProviders(properties: ResourceProperties,
+                                          fileBaseLanguage: Language): Collection<LanguageCodeStyleSettingsProvider> {
+  val providers: MutableSet<LanguageCodeStyleSettingsProvider> = HashSet()
+  val mainProvider = LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(fileBaseLanguage)
+  if (mainProvider != null) {
+    providers.add(mainProvider)
+  }
+  for (langId in getLanguageIds(properties)) {
+    if (langId != "any") {
+      val additionalProvider = LanguageCodeStyleSettingsProvider.findByExternalLanguageId(langId)
+      if (additionalProvider != null) {
+        providers.add(additionalProvider)
+      }
+    }
+    else {
+      providers.clear()
+      providers.addAll(LanguageCodeStyleSettingsProvider.getAllProviders())
+      break
+    }
+  }
+  return providers
+}
+
+private fun getLanguageIds(properties: ResourceProperties): Collection<String> {
+  val langIds = HashSet<String>()
+  for (key in properties.properties.keys) {
+    if (EditorConfigIntellijNameUtil.isIndentProperty(key)) {
+      langIds.add("any")
+    }
+    val langId = EditorConfigIntellijNameUtil.extractLanguageDomainId(key)
+    if (langId != null) {
+      langIds.add(langId)
+    }
+  }
+  return langIds
 }
