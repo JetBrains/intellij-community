@@ -119,13 +119,13 @@ fun loadApp(setupEventQueue: Runnable) {
 private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   val loadedModuleFuture = PluginManagerCore.getInitPluginFuture()
 
-  val rwLockHolder = RwLockHolder()
   val awtBusyThread = AppScheduledExecutorService.getPeriodicTasksThread()
+  lateinit var rwLockHolder: RwLockHolder
   EdtInvocationManager.invokeAndWaitIfNeeded {
     // Instantiate `AppDelayQueue` which starts "periodic tasks thread" which we'll mark busy to prevent this EDT from dying.
     // That thread was chosen because we know for sure it's running. Needed for EDT not to exit suddenly
     AWTAutoShutdown.getInstance().notifyThreadBusy(awtBusyThread)
-    rwLockHolder.initialize(Thread.currentThread())
+    rwLockHolder = RwLockHolder(Thread.currentThread())
   }
 
   val app = ApplicationImpl(isHeadless, rwLockHolder)

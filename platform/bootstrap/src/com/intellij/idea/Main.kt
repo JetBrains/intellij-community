@@ -47,24 +47,25 @@ fun main(rawArgs: Array<String>) {
   try {
     bootstrap(startupTimings)
     addBootstrapTiming("main scope creating", startupTimings)
-    runBlocking(rootTask()) {
+    runBlocking {
       StartUpMeasurer.addTimings(startupTimings, "bootstrap")
       val appInitPreparationActivity = StartUpMeasurer.startActivity("app initialization preparation")
-
-      // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
-      val appStarterDeferred = async(CoroutineName("main class loading") + Dispatchers.Default) {
-        val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
-        MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
-      }
-
-      launch(CoroutineName("ForkJoin CommonPool configuration") + Dispatchers.Default) {
-        IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
-      }
-
-      initRemoteDevIfNeeded(args)
-
+      val initScopeActivity = StartUpMeasurer.startActivity("init scope creating")
       val busyThread = Thread.currentThread()
-      withContext(Dispatchers.Default + StartupAbortedExceptionHandler()) {
+      withContext(Dispatchers.Default + StartupAbortedExceptionHandler() + rootTask()) {
+        initScopeActivity.end()
+        // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
+        val appStarterDeferred = async(CoroutineName("main class loading")) {
+          val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
+          MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
+        }
+
+        launch(CoroutineName("ForkJoin CommonPool configuration")) {
+          IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
+        }
+
+        initRemoteDevIfNeeded(args)
+
         StartUpMeasurer.appInitPreparationActivity = appInitPreparationActivity
         startApplication(args = args, appStarterDeferred = appStarterDeferred, mainScope = this@runBlocking, busyThread = busyThread)
       }

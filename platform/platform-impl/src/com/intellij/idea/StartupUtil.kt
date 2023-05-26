@@ -7,6 +7,7 @@ package com.intellij.idea
 import com.intellij.BundleBase
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.diagnostic.*
+import com.intellij.history.LocalHistory
 import com.intellij.ide.*
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.gdpr.EndUserAgreement
@@ -15,12 +16,16 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.DirectoryLock.CannotActivateException
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.jna.JnaLoader
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -32,12 +37,18 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
+import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
 import com.intellij.ui.*
@@ -56,6 +67,7 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.io.BuiltInServer
@@ -119,7 +131,7 @@ fun CoroutineScope.startApplication(args: List<String>,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
                                     busyThread: Thread) {
-  val appInfoDeferred = async(CoroutineName("app info") + Dispatchers.IO) {
+  val appInfoDeferred = async(CoroutineName("app info")) {
     // required for DisabledPluginsState and EUA
     ApplicationInfoImpl.getShadowInstance()
   }
@@ -129,9 +141,13 @@ fun CoroutineScope.startApplication(args: List<String>,
   val configImportNeededDeferred = if (isHeadless) {
     CompletableDeferred(false)
   }
-  else async {
-    val configPath = PathManager.getConfigDir()
-    !Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
+  else {
+    async {
+      val configPath = PathManager.getConfigDir()
+      withContext(Dispatchers.IO) {
+        !Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
+      }
+    }
   }
 
   val lockSystemDirsJob = launch {
@@ -170,6 +186,8 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   preloadLafClasses()
 
+  val asyncScope = this@startApplication
+
   val pluginSetDeferred = CompletableDeferred<Deferred<PluginSet>>()
   val schedulePluginDescriptorLoading = launch {
     // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
@@ -177,7 +195,7 @@ fun CoroutineScope.startApplication(args: List<String>,
       Java11Shim.INSTANCE = Java11ShimImpl()
     }
     if (!configImportNeededDeferred.await()) {
-      pluginSetDeferred.complete(PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred))
+      pluginSetDeferred.complete(PluginManagerCore.scheduleDescriptorLoading(asyncScope, zipFilePoolDeferred))
     }
   }
 
@@ -254,14 +272,9 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val rwLockHolderDeferred = async {
-    // preload class by creating before waiting for EDT thread
-    val rwLockHolder = RwLockHolder()
-
     // configure EDT thread
     initAwtToolkitAndEventQueueJob.join()
-
-    rwLockHolder.initialize(EDT.getEventDispatchThread())
-    rwLockHolder
+    RwLockHolder(EDT.getEventDispatchThread())
   }
 
   val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
@@ -283,17 +296,6 @@ fun CoroutineScope.startApplication(args: List<String>,
                       rwLockHolder)
     }
 
-    val appIsSet = launch {
-      // acquire IW lock on EDT indefinitely in legacy mode
-      if (!isImplicitReadOnEDTDisabled) {
-        subtask("AppDelayQueue instantiation", RawSwingDispatcher) {
-          app.acquireWriteIntentLock(null)
-        }
-      }
-      ApplicationImpl.postInit(app)
-      ApplicationManager.setApplication(app)
-    }
-
     val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
       null
     }
@@ -305,10 +307,10 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     val log = logDeferred.await()
 
-    launch {
+
+    val preloadCriticalServicesJob = async {
       preInitApp(app = app,
-                 appIsSet = appIsSet,
-                 mainScope = mainScope,
+                 asyncScope = asyncScope,
                  log = log,
                  initLafJob = initLafJob,
                  pluginSetDeferred = pluginSetDeferred,
@@ -327,17 +329,20 @@ fun CoroutineScope.startApplication(args: List<String>,
       }
     }
 
-    app
+    app to preloadCriticalServicesJob
   }
 
-  mainScope.launch {
+  launch {
     // required for appStarter.prepareStart
     appInfoDeferred.join()
 
     val appStarter = subtask("main class loading waiting") {
       appStarterDeferred.await()
     }
-    appStarter.prepareStart(args)
+
+    mainScope.launch {
+      appStarter.prepareStart(args)
+    }.join()
 
     if (!isHeadless && configImportNeededDeferred.await()) {
       initLafJob.join()
@@ -349,7 +354,7 @@ fun CoroutineScope.startApplication(args: List<String>,
         euaDocumentDeferred = euaDocumentDeferred,
       )
 
-      pluginSetDeferred.complete(PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred))
+      pluginSetDeferred.complete(PluginManagerCore.scheduleDescriptorLoading(asyncScope, zipFilePoolDeferred))
 
       if (ConfigImportHelper.isNewUser() && !PlatformUtils.isRider() && System.getProperty("ide.experimental.ui") == null) {
         runCatching {
@@ -366,7 +371,9 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
 
     // with the main dispatcher for non-technical reasons
-    appStarter.start(InitAppContext(context = mainScope.coroutineContext, args = args, appDeferred = appDeferred))
+    mainScope.launch {
+      appStarter.start(InitAppContext(context = asyncScope.coroutineContext, args = args, appDeferred = appDeferred))
+    }
   }
 
   // only here as the last - it is a heavy-weight (~350ms) activity, let's first schedule a more important tasks
@@ -384,12 +391,11 @@ ${dumpCoroutines(stripDump = false)}
 }
 
 private suspend fun preInitApp(app: ApplicationImpl,
-                               mainScope: CoroutineScope,
+                               asyncScope: CoroutineScope,
                                log: Logger,
                                initLafJob: Job,
                                pluginSetDeferred: CompletableDeferred<Deferred<PluginSet>>,
-                               euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?,
-                               appIsSet: Job) {
+                               euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?): Job {
   val pluginSet = subtask("plugin descriptor init waiting") {
     pluginSetDeferred.await().await()
   }
@@ -405,7 +411,7 @@ private suspend fun preInitApp(app: ApplicationImpl,
     null
   }
   else {
-    mainScope.launch(CoroutineName("icon mapping loading") + Dispatchers.Default) {
+    asyncScope.launch(CoroutineName("icon mapping loading")) {
       runCatching {
         app.service<IconMapLoader>().preloadIconMapping()
       }.getOrLogException(log)
@@ -414,16 +420,14 @@ private suspend fun preInitApp(app: ApplicationImpl,
 
   initConfigurationStore(app)
 
-  mainScope.launch(CoroutineName("PathMacros preloading") + Dispatchers.Default) {
-    // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
-    app.serviceAsync<PathMacros>()
+  val preloadCriticalServicesJob = asyncScope.launch(CoroutineName("critical services preloading")) {
+    preloadCriticalServices(app, asyncScope)
   }
-  mainScope.launch(Dispatchers.Default) {
-    appIsSet.join()
-    // uses ApplicationManager
-    // yes, mainScope, we explicitly "join" it in preloadCriticalServices
-    mainScope.launch(CoroutineName("ManagingFS preloading") + Dispatchers.Default) {
-      app.serviceAsync<ManagingFS>()
+
+  if (!app.isHeadlessEnvironment) {
+    asyncScope.launch(CoroutineName("FUS class preloading")) {
+      // preload FUS classes (IDEA-301206)
+      ActionsEventLogGroup.GROUP.id
     }
   }
 
@@ -435,7 +439,7 @@ private suspend fun preInitApp(app: ApplicationImpl,
 
   euaTaskDeferred?.await()?.invoke()
 
-  mainScope.launch {
+  asyncScope.launch {
     loadIconMapping?.join()
     subtask("laf initialization", RawSwingDispatcher) {
       app.serviceAsync<LafManager>()
@@ -443,6 +447,71 @@ private suspend fun preInitApp(app: ApplicationImpl,
     if (!app.isHeadlessEnvironment) {
       // preload only when LafManager is ready
       app.serviceAsync<EditorColorsManager>()
+    }
+  }
+
+  return preloadCriticalServicesJob
+}
+
+fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: CoroutineScope) {
+  launch(CoroutineName("PathMacros preloading")) {
+    // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
+    app.serviceAsync<PathMacros>()
+  }
+
+  launch {
+    // loading is started by StartupUtil, here we just "join" it
+    subtask("ManagingFS preloading") {
+      app.serviceAsync<ManagingFS>()
+    }
+
+    // PlatformVirtualFileManager also wants ManagingFS
+    launch { app.serviceAsync<VirtualFileManager>() }
+
+    launch {
+      // loading is started above, here we just "join" it
+      app.serviceAsync<PathMacros>()
+
+      // required for indexing tasks (see JavaSourceModuleNameIndex for example)
+      // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
+      app.serviceAsync<PropertiesComponent>()
+
+      asyncScope.launch {
+        // wants PropertiesComponent
+        launch { app.serviceAsync<DebugLogManager>() }
+
+        app.serviceAsync<RegistryManager>()
+        // wants RegistryManager
+        if (!app.isHeadlessEnvironment) {
+          app.serviceAsync<PerformanceWatcher>()
+          // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
+          PerformanceWatcher.getInstance()
+        }
+      }
+
+      // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
+      coroutineScope {
+        launch { app.serviceAsync<FileTypeManager>() }
+        // wants ManagingFS
+        launch { app.serviceAsync<VirtualFilePointerManager>() }
+      }
+
+      app.serviceAsync<ProjectJdkTable>()
+    }
+
+    // LocalHistory wants ManagingFS.
+    // It should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner.
+    asyncScope.launch { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
+  }
+
+  if (!app.isHeadlessEnvironment) {
+    asyncScope.launch {
+      // loading is started above, here we just "join" it
+      app.serviceAsync<PathMacros>()
+
+      subtask("UISettings preloading") { app.serviceAsync<UISettings>() }
+      subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
+      subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
     }
   }
 }
@@ -516,12 +585,14 @@ fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<Stri
   return EXTERNAL_LISTENER.apply(currentDirectory, args)
 }
 
-internal val isImplicitReadOnEDTDisabled: Boolean
+@get:Internal
+val isImplicitReadOnEDTDisabled: Boolean
   get() = java.lang.Boolean.getBoolean(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
 
 internal val isAutomaticIWLOnDirtyUIDisabled: Boolean
   get() = java.lang.Boolean.getBoolean(DISABLE_AUTOMATIC_WIL_ON_DIRTY_UI_PROPERTY)
 
+@Internal
 // called by the app after startup
 fun addExternalInstanceListener(processor: (List<String>) -> Deferred<CliResult>) {
   commandProcessor.set(processor)
@@ -915,7 +986,7 @@ private suspend fun lockSystemDirs(args: List<String>) {
           directoryLock.dispose()
         }
         catch (e: Throwable) {
-          Logger.getInstance(DirectoryLock::class.java).error(e)
+          logger<DirectoryLock>().error(e)
         }
       }
     }

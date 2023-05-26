@@ -46,7 +46,6 @@ import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
-import com.intellij.util.ui.EdtInvocationManager;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -73,7 +72,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     return Logger.getInstance(ApplicationImpl.class);
   }
 
-  static final boolean IMPLICIT_READ_ON_EDT_DISABLED = StartupUtil.isImplicitReadOnEDTDisabled();
   static final String MUST_NOT_EXECUTE_INSIDE_READ_ACTION = "Must not execute inside read action";
   static final String MUST_EXECUTE_INSIDE_READ_ACTION =
     "Read access is allowed from inside read-action or Event Dispatch Thread (EDT) only (see Application.runReadAction())";
@@ -137,11 +135,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     myCommandLineMode = true;
     mySaveAllowed = false;
 
-    // acquire IW lock on EDT indefinitely in legacy mode
-    if (!IMPLICIT_READ_ON_EDT_DISABLED) {
-      EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
-    }
-
     postInit(this);
 
     myLastDisposable = Disposer.newDisposable();
@@ -169,6 +162,9 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
 
     myLastDisposable = null;
+
+    postInit(this);
+    ApplicationManager.setApplication(this);
   }
 
   private static void registerFakeServices(ApplicationImpl app) {
@@ -384,7 +380,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     super.dispose();
     // Remove IW lock from EDT as EDT might be re-created, which might lead to deadlock if anybody uses this disposed app
-    if (!IMPLICIT_READ_ON_EDT_DISABLED || isUnitTestMode()) {
+    if (!StartupUtil.isImplicitReadOnEDTDisabled() || isUnitTestMode()) {
       invokeLater(() -> releaseWriteIntentLock(), ModalityState.NON_MODAL);
     }
 
@@ -886,7 +882,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
     // Do not ever unlock IW in legacy mode (EDT is holding lock at all times)
-    if (isWriteIntentLockAcquired() && IMPLICIT_READ_ON_EDT_DISABLED) {
+    if (isWriteIntentLockAcquired() && StartupUtil.isImplicitReadOnEDTDisabled()) {
       releaseWriteIntentLock();
       try {
         return action.compute();
@@ -1461,7 +1457,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
            +
            (isReadAccessAllowed() ? " (RA allowed)" : "")
            +
-           (IMPLICIT_READ_ON_EDT_DISABLED ? " (IR on EDT disabled)" : "")
+           (StartupUtil.isImplicitReadOnEDTDisabled() ? " (IR on EDT disabled)" : "")
            +
            (isInImpatientReader() ? " (impatient reader)" : "")
            +
@@ -1508,7 +1504,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void withoutImplicitRead(@NotNull Runnable runnable) {
-    if (!IMPLICIT_READ_ON_EDT_DISABLED) {
+    if (!StartupUtil.isImplicitReadOnEDTDisabled()) {
       runnable.run();
       return;
     }

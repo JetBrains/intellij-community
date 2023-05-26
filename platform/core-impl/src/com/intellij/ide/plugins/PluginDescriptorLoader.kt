@@ -381,7 +381,7 @@ private fun CoroutineScope.loadDescriptorsFromProperty(context: DescriptorListLo
 
 @Suppress("DeferredIsResult")
 internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFilePool>?): Deferred<PluginSet> {
-  val resultDeferred = async(CoroutineName("plugin descriptor loading") + Dispatchers.Default) {
+  val resultDeferred = async(CoroutineName("plugin descriptor loading")) {
     val isUnitTestMode = PluginManagerCore.isUnitTestMode
     val isRunningFromSources = PluginManagerCore.isRunningFromSources()
     val result = DescriptorListLoadingContext(
@@ -398,13 +398,13 @@ internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFil
     }
     result
   }
-  val pluginSetDeferred = async(Dispatchers.Default) {
+  val pluginSetDeferred = async {
     val pair = resultDeferred.await()
     PluginManagerCore.initializeAndSetPlugins(pair.first, pair.second, PluginManagerCore::class.java.classLoader)
   }
 
   // logging is no not as a part of plugin set job for performance reasons
-  launch(Dispatchers.Default) {
+  launch {
     val pair = resultDeferred.await()
     logPlugins(plugins = pluginSetDeferred.await().allPlugins, context = pair.first, loadingResult = pair.second)
   }

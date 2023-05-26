@@ -3,6 +3,7 @@ package com.intellij.idea
 
 import com.intellij.openapi.application.Application
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
@@ -10,5 +11,5 @@ import kotlin.coroutines.CoroutineContext
 class InitAppContext(
   @JvmField val context: CoroutineContext,
   @JvmField val args: List<String>,
-  @JvmField val appDeferred: Deferred<Application>,
+  @JvmField val appDeferred: Deferred<Pair<Application, Job>>,
 )
