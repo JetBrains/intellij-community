@@ -172,7 +172,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   private static WindowManagerEx getWindowManager() {
     WindowManagerEx windowManager = null;
-    Application application = ApplicationManager.getApplication();
+    Application application = LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() ? ApplicationManager.getApplication() : null;
     if (application != null) {
       windowManager = WindowManagerEx.getInstanceEx();
     }
