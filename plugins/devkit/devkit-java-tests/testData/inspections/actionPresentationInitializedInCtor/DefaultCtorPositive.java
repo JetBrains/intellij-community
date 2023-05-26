@@ -4,6 +4,10 @@ class <warning descr="Action presentation initialized in the constructor">A</war
 
 abstract class B extends AnAction {
   B() {
-    super("blah blah blah");
+    super("Test action text");
+  }
+
+  B(int i) {
+    super();
   }
 }

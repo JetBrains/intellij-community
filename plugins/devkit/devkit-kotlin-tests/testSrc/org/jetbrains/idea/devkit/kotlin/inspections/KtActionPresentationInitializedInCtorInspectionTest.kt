@@ -16,9 +16,19 @@ internal class KtActionPresentationInitializedInCtorInspectionTest : ActionPrese
     setPluginXml("plugin.xml")
   }
 
-  fun testDefaultCtor() { doTest() }
+  fun testDefaultCtorNegative() { doTest() }
 
-  fun testDeepCalls() { doTest() }
+  fun testDefaultCtorPositive() { doTest() }
+
+  fun testPrimaryCtorNegative() { doTest() }
+
+  fun testPrimaryCtorPositive() { doTest() }
+
+  fun testSecondaryCtors() { doTest() }
 
   fun testUnregisteredAction() { doTest() }
+
+  fun testCtorCallNegative() { doTest() }
+
+  fun testCtorCallPositive() { doTest() }
 }

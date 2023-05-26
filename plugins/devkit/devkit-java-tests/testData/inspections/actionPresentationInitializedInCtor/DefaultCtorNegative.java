@@ -1,9 +1,13 @@
 import com.intellij.openapi.actionSystem.AnAction;
 
-import javax.swing.*;
+class A extends B {}
 
-class B extends AnAction {
+abstract class B extends AnAction {
   B() {
+    super();
+  }
+
+  B(int i) {
     super("Test action text");
   }
 }

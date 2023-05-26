@@ -16,9 +16,15 @@ internal class ActionPresentationInitializedInCtorInspectionTest : ActionPresent
     setPluginXml("plugin.xml")
   }
 
-  fun testDefaultCtor() { doTest() }
+  fun testDefaultCtorNegative() { doTest() }
 
-  fun testDeepCalls() { doTest() }
+  fun testDefaultCtorPositive() { doTest() }
+
+  fun testThisCall() { doTest() }
 
   fun testUnregisteredAction() { doTest() }
+
+  fun testNewExpressionNegative() { doTest() }
+
+  fun testNewExpressionPositive() { doTest() }
 }

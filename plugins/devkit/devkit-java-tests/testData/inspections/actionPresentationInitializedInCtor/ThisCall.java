@@ -11,6 +11,6 @@ class A extends B {
 
 class B extends AnAction {
   B() {
-    super("");
+    super("Test action text");
   }
 }

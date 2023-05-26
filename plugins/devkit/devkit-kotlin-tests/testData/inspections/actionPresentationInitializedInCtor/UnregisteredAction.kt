@@ -1,3 +1,3 @@
 import com.intellij.openapi.actionSystem.AnAction
 
-class B : AnAction("blah blah blah")
+class B : AnAction("Test action text")
