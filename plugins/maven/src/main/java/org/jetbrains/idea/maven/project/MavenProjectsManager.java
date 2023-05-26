@@ -961,17 +961,13 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     fireImportAndResolveScheduled(spec);
     AsyncPromise<List<Module>> promise = scheduleResolve();
     promise.onProcessed(m -> {
-      completeMavenSyncOnImportCompletion(activity);
+      waitForImportCompletion().onProcessed(o -> {
+        activity.finished();
+        MavenResolveResultProblemProcessor.notifyMavenProblems(myProject);
+        MavenSyncConsole.finishTransaction(myProject);
+      });
     });
     return promise;
-  }
-
-  private void completeMavenSyncOnImportCompletion(StructuredIdeActivity activity) {
-    waitForImportCompletion().onProcessed(o -> {
-      activity.finished();
-      MavenResolveResultProblemProcessor.notifyMavenProblems(myProject);
-      MavenSyncConsole.finishTransaction(myProject);
-    });
   }
 
   public void showServerException(Throwable e) {
