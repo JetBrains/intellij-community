@@ -73,7 +73,7 @@ class KtSymbolFromIndexProvider(private val project: Project) {
         psiFilter: (PsiClass) -> Boolean = { true }
     ): Sequence<KtNamedClassOrObjectSymbol> {
         val scope = analysisScope
-        val names = buildSet<Name> {
+        val names = buildSet {
             forEachNonKotlinCache { cache ->
                 cache.processAllClassNames({ nameString ->
                     if (!Name.isValidIdentifier(nameString)) return@processAllClassNames true

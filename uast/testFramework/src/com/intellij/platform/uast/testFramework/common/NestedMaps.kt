@@ -337,7 +337,7 @@ internal fun <A : Appendable> A.withMargin(margin: CharSequence,
     val newLineMargin = "\n" + margin
 
     override fun append(csq: CharSequence?): java.lang.Appendable {
-      this@withMargin.appendReplacing<A>(csq ?: "null", "\n", newLineMargin)
+      this@withMargin.appendReplacing(csq ?: "null", "\n", newLineMargin)
       return this
     }
 

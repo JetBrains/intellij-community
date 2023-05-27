@@ -207,7 +207,7 @@ class NastradamusClientTest {
   @Test
   fun successfulErrorThresholdTest() {
     (1..3).forEach {
-      val result = withErrorThreshold<String>(
+      val result = withErrorThreshold(
         objName = testName.methodName,
         errorThreshold = 1,
         action = { it.toString() },
@@ -224,7 +224,7 @@ class NastradamusClientTest {
 
     (1..3).forEach {
       try {
-        withErrorThreshold<String>(
+        withErrorThreshold(
           objName = testName.methodName,
           errorThreshold = 3,
           action = { throw Exception("Badums") },
@@ -238,7 +238,7 @@ class NastradamusClientTest {
 
     Assert.assertEquals("Count of failures should be 3", 3, counter.get())
 
-    val result = withErrorThreshold<String>(
+    val result = withErrorThreshold(
       objName = testName.methodName,
       errorThreshold = 3,
       action = { "action" },

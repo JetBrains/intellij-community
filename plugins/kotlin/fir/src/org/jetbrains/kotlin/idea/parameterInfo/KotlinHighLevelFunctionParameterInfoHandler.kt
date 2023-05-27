@@ -167,11 +167,11 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 // We need to get the type of the target variable, and retrieve the parameter names from the type (KtFunctionalType).
                 // The names need to be added to KtFunctionalType (currently only types are there) and populated in KtSymbolByFirBuilder.TypeBuilder.
 
-                val parameterToIndex = buildMap<KtVariableLikeSignature<KtValueParameterSymbol>, Int> {
+                val parameterToIndex = buildMap {
                     valueParameters.forEachIndexed { index, parameter -> put(parameter, index) }
                 }
 
-                val parameterIndexToText = buildMap<Int, String> {
+                val parameterIndexToText = buildMap {
                     valueParameters.forEachIndexed { index, parameter ->
                         // TODO: Add hasSynthesizedParameterNames to HL API.
                         // See resolveValueParameters() in core/descriptors.jvm/src/org/jetbrains/kotlin/load/java/lazy/descriptors/LazyJavaScope.kt

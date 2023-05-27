@@ -284,7 +284,7 @@ private fun readSources(reader: JsonReaderEx, sourceRoot: String?): List<String>
     sources = emptyList()
   }
   else {
-    sources = SmartList<String>()
+    sources = SmartList()
     do {
       var sourceUrl: String = readSourcePath(reader)
       if (!sourceRoot.isNullOrEmpty()) {

@@ -412,7 +412,7 @@ class UastMappingsAccountantTest(
   ) {
     print(fileName, contextMargin, printTargetsOnNewLine) { contextMap, typeMapPrinter ->
       printMapAsAlignedLists(
-        contextMap, lexicographicalOrder<String>(),
+        contextMap, lexicographicalOrder(),
         prefix = """<span class="context">[""",
         postfix = """]</span>""",
         alignByRight = contextAlignmentByRight,
@@ -698,7 +698,7 @@ object PsiClassToString {
 
 private fun Class<*>.getBaseClassesAndInterfaces(): Sequence<Class<*>> =
   sequence {
-    val todo = java.util.ArrayDeque<Class<*>>(listOf(this@getBaseClassesAndInterfaces))
+    val todo = ArrayDeque(listOf(this@getBaseClassesAndInterfaces))
     while (todo.isNotEmpty()) {
       val head = todo.pollFirst()
       todo.addAll(head.interfaces.asList())

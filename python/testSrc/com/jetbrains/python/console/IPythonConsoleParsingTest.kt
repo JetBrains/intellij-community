@@ -27,7 +27,7 @@ class IPythonConsoleParsingTest : ParsingTestCase(
     super.setUp()
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor::class.java)
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PythonTokenSetContributor())
-    addExplicitExtension<ASTFactory>(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), PythonASTFactory())
+    addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), PythonASTFactory())
   }
 
   override fun getTestDataPath() = "${PathManager.getHomePath()}/community/python/testData/console/ipython"

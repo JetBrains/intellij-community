@@ -41,7 +41,7 @@ internal interface ScriptTemplatesProvider {
 
     companion object {
         val EP_NAME: ExtensionPointName<ScriptTemplatesProvider> =
-                ExtensionPointName.create<ScriptTemplatesProvider>("org.jetbrains.kotlin.scriptTemplatesProvider")
+                ExtensionPointName.create("org.jetbrains.kotlin.scriptTemplatesProvider")
     }
 }
 

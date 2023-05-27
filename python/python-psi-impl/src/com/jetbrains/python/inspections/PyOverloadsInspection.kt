@@ -103,7 +103,7 @@ class PyOverloadsInspection : PyInspection() {
       val name = t?.name
       if (name != null) {
         result
-          .getOrPut(name, { SortedList<PyFunction> { f1, f2 -> f1.textOffset - f2.textOffset } })
+          .getOrPut(name) { SortedList { f1, f2 -> f1.textOffset - f2.textOffset } }
           .add(t)
       }
 

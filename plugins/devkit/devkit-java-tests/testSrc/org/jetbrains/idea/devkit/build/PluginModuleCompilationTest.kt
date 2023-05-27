@@ -151,7 +151,7 @@ class PluginModuleCompilationTest : BaseCompilerTestCase() {
 
   private fun prepareForDeployment(module: Module) {
     val errorMessages = SmartList<String>()
-    PrepareToDeployAction.doPrepare(module, errorMessages, SmartList<String>())
+    PrepareToDeployAction.doPrepare(module, errorMessages, SmartList())
     assertThat(errorMessages).`as`("Building plugin zip finished with errors: $errorMessages").isEmpty()
   }
 

@@ -134,7 +134,7 @@ class MoveKotlinDeclarationsHandler internal constructor(private val handlerActi
             return false
         }
 
-        val elementsToSearch = elements.flatMapTo(LinkedHashSet<KtNamedDeclaration>()) {
+        val elementsToSearch = elements.flatMapTo(LinkedHashSet()) {
             when (it) {
                 is KtNamedDeclaration -> listOf(it)
                 is KtFile -> it.declarations.filterIsInstance<KtNamedDeclaration>()

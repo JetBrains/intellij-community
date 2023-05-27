@@ -20,7 +20,7 @@ import org.jetbrains.uast.util.classSetOf
 @JvmDefaultWithCompatibility
 interface UastLanguagePlugin {
   companion object {
-    val extensionPointName: ExtensionPointName<UastLanguagePlugin> = ExtensionPointName<UastLanguagePlugin>("org.jetbrains.uast.uastLanguagePlugin")
+    val extensionPointName: ExtensionPointName<UastLanguagePlugin> = ExtensionPointName("org.jetbrains.uast.uastLanguagePlugin")
 
     fun getInstances(): Collection<UastLanguagePlugin> = extensionPointName.extensionList
 

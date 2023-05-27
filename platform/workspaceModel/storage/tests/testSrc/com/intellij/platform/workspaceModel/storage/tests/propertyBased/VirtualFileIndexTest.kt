@@ -137,7 +137,7 @@ class VirtualFileIndexTest {
   }
 
   internal val entityIdGenerator = Generator.from { env ->
-    val clazz: Class<out WorkspaceEntity> = env.generate<Class<out WorkspaceEntity>>(Generator.sampledFrom(
+    val clazz: Class<out WorkspaceEntity> = env.generate(Generator.sampledFrom(
       ModuleEntity::class.java,
       ContentRootEntity::class.java,
       SourceRootEntity::class.java,

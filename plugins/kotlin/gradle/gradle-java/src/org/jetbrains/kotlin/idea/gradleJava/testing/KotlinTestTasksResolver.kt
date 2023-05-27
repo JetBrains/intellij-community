@@ -80,7 +80,7 @@ open class KotlinTestTasksResolver : AbstractProjectResolverExtension() {
         ideModule.children.filter { it.data in replacementMap }.forEach { it.clear(true) }
         replacementMap.values.forEach { ideModule.createChild(ProjectKeys.TASK, it) }
 
-        return originalTaskData.mapTo(arrayListOf<TaskData>()) { replacementMap[it] ?: it }
+        return originalTaskData.mapTo(arrayListOf()) { replacementMap[it] ?: it }
     }
 
     override fun enhanceTaskProcessing(

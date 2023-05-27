@@ -227,7 +227,7 @@ private class ModuleDescriptionsTree(project: Project) {
         ?.mapNotNull { it.lastPathComponent }
         ?.filterIsInstance<ModuleDescriptionTreeNode>()
         ?.flatMap { getAllModulesUnder(it) }
-        ?: emptyList<ModuleDescription>()
+        ?: emptyList()
 
   fun getAllModules() = getAllModulesUnder(root)
 
@@ -269,7 +269,7 @@ private class ModuleDescriptionsTree(project: Project) {
   }
 
   fun removeModules(modules: Collection<ModuleDescription>) {
-    val names = modules.mapTo(HashSet<String>()) { it.name }
+    val names = modules.mapTo(HashSet()) { it.name }
     val toRemove = findNodes { it.moduleDescription.name in names }
     for (node in toRemove) {
       helper.removeNode(node, root, model)

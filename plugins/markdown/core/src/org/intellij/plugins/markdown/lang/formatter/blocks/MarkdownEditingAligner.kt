@@ -21,7 +21,7 @@ object MarkdownEditingAligner {
     return findAttributes(previous, chain) ?: DEFAULT_ATTRIBUTES
   }
 
-  private fun Block.traverseLastBlocks(): Sequence<Block> = sequence<Block> {
+  private fun Block.traverseLastBlocks(): Sequence<Block> = sequence {
     var cur: Block? = this@traverseLastBlocks
     while (cur != null) {
       yield(cur)

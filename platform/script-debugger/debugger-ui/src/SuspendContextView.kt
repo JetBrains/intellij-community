@@ -35,7 +35,7 @@ abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProces
                                   @Volatile var activeVm: Vm)
   : XSuspendContext() {
 
-  private val stacks: MutableMap<Vm, ScriptExecutionStack> = Collections.synchronizedMap(LinkedHashMap<Vm, ScriptExecutionStack>())
+  private val stacks: MutableMap<Vm, ScriptExecutionStack> = Collections.synchronizedMap(LinkedHashMap())
 
   init {
     val mainVm = debugProcess.mainVm

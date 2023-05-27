@@ -23,7 +23,7 @@ import javax.swing.event.DocumentEvent
 import javax.swing.plaf.basic.BasicComboBoxEditor
 
 class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnAction(), CustomComponentAction {
-  private val latestMaskProperty = AtomicProperty<String?>(FindSettings.getInstance().fileMask)
+  private val latestMaskProperty: AtomicProperty<String?> = AtomicProperty(FindSettings.getInstance().fileMask)
   private var latestMask: String? by latestMaskProperty
   val saveMask = { FindSettings.getInstance().fileMask = latestMask }
 

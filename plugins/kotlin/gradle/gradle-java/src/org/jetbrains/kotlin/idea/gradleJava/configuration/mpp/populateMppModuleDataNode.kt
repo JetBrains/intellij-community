@@ -483,7 +483,7 @@ private fun getInternalModuleName(
 
 //flag for avoid double resolve from KotlinMPPGradleProjectResolver and KotlinAndroidMPPGradleProjectResolver
 private var DataNode<ModuleData>.isMppDataInitialized
-        by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("IS_MPP_DATA_INITIALIZED"), false)
+        by NotNullableCopyableDataNodeUserDataProperty(Key.create("IS_MPP_DATA_INITIALIZED"), false)
 
 private fun shouldDelegateToOtherPlugin(kotlinTarget: KotlinTarget): Boolean =
     kotlinTarget.platform == KotlinPlatform.ANDROID

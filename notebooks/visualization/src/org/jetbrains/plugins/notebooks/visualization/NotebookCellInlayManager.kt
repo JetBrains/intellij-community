@@ -222,7 +222,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
 
     for (interval in matchingIntervals) {
       val seenControllersByFactory: Map<NotebookCellInlayController.Factory, MutableList<NotebookCellInlayController>> =
-        allFactories.associateWith { SmartList<NotebookCellInlayController>() }
+        allFactories.associateWith { SmartList() }
       allMatchingInlays.removeIf { (inlayLine, controller) ->
         if (inlayLine in interval.lines) {
           seenControllersByFactory[controller.factory]?.add(controller)

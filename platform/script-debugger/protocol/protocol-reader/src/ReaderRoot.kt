@@ -23,10 +23,10 @@ internal class ReaderRoot<R>(val type: Class<R>, private val typeToTypeHandler: 
 
     // todo sort by source location
     val methods = clazz.methods
-    Arrays.sort<Method>(methods, { o1, o2 -> o1.name.compareTo(o2.name) })
+    Arrays.sort(methods, { o1, o2 -> o1.name.compareTo(o2.name) })
 
     for (m in methods) {
-      m.getAnnotation<JsonParseMethod>(JsonParseMethod::class.java) ?: continue
+      m.getAnnotation(JsonParseMethod::class.java) ?: continue
 
       val exceptionTypes = m.exceptionTypes
       if (exceptionTypes.size > 1) {

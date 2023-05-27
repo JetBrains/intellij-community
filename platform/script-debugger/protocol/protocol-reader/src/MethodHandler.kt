@@ -21,7 +21,7 @@ internal fun appendMethodSignatureJava(method: Method, paramNames: List<String>,
   out.append(')')
 }
 
-fun writeMethodDeclarationJava(out: TextOutput, m: Method, paramNames: List<String> = listOf<String>()) {
+fun writeMethodDeclarationJava(out: TextOutput, m: Method, paramNames: List<String> = listOf()) {
   out.append("override fun ")
   appendMethodSignatureJava(m, paramNames, out)
 }
