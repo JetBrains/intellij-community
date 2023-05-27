@@ -239,9 +239,9 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
     val onCompletion = Consumer<MavenProjectResolutionResult> { resolutionResult: MavenProjectResolutionResult ->
       schedulePluginResolution(resolutionResult.projectsWithUnresolvedPlugins)
       if (hasScheduledProjects()) {
-        //val createdModules = importMavenProjectsSync()
-        //result.setResult(createdModules)
-        scheduleImportChangedProjects().processed(result)
+        val createdModules = importMavenProjectsSync()
+        result.setResult(createdModules)
+        //scheduleImportChangedProjects().processed(result)
       }
       else {
         result.setResult(emptyList())

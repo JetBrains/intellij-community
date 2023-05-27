@@ -409,7 +409,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void importProjectWithErrors() {
-    doImportProjects(Collections.singletonList(myProjectPom), false);
+    var files = Collections.singletonList(myProjectPom);
+    doImportProjects(files, false);
+    MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager, files);
   }
 
   protected void importProjectWithProfiles(String... profiles) {
@@ -517,10 +519,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     readProjects(files, disabledProfiles, profiles);
 
-    ApplicationManager.getApplication().invokeAndWait(() -> {
+/*    ApplicationManager.getApplication().invokeAndWait(() -> {
       myProjectsManager.scheduleImportInTests(files);
-    });
-    MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager);
+    });*/
+    //MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager);
 
     Promise<?> promise = myProjectsManager.waitForImportCompletion();
     ApplicationManager.getApplication().invokeAndWait(() -> PlatformTestUtil.waitForPromise(promise));
