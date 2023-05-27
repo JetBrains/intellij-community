@@ -172,8 +172,9 @@ class ProjectWindowCustomizerService : Disposable {
 
     val color = computeOrGetColor(projectPath, project)
 
-    g.paint = GradientPaint(parent.x.toFloat(), parent.y.toFloat(), color, 400f, parent.y.toFloat(), parent.background)
-    g.fillRect(0, 0, 400, parent.height)
+    val length = Registry.intValue("ide.colorful.toolbar.gradient.length", 600)
+    g.paint = GradientPaint(parent.x.toFloat(), parent.y.toFloat(), color, length.toFloat(), parent.y.toFloat(), parent.background)
+    g.fillRect(0, 0, length, parent.height)
 
     return true
   }
