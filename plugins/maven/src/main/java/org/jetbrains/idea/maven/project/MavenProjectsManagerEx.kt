@@ -229,13 +229,6 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
     val toResolve = LinkedHashSet(myProjectsToResolve)
     myProjectsToResolve.removeAll(toResolve)
 
-    if (toResolve.isEmpty()) {
-      result.setResult(emptyList())
-      myProject.messageBus.syncPublisher(MavenImportListener.TOPIC).importFinished(emptyList(), emptyList())
-      fireProjectImportCompleted()
-      return result
-    }
-
     val onCompletion = Consumer<MavenProjectResolutionResult> { resolutionResult: MavenProjectResolutionResult ->
       schedulePluginResolution(resolutionResult.projectsWithUnresolvedPlugins)
       if (hasScheduledProjects()) {
