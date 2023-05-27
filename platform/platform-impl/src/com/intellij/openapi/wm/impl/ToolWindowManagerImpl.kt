@@ -1229,12 +1229,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     for (entry in idToEntry.values) {
       val old = layoutState.getInfo(entry.id) ?: entry.readOnlyWindowInfo as WindowInfoImpl
-      val new = newLayout.getInfo(entry.id)
-      // just copy if defined in the old layout but not in the new
+      var new = newLayout.getInfo(entry.id)
+      // If it wasn't present when the layout was saved, leave its state alone, but hide it.
       if (new == null) {
-        newLayout.addInfo(entry.id, old.copy())
+        new = old.copy().apply { isVisible = false }
+        newLayout.addInfo(entry.id, new)
       }
-      else if (old != new) {
+      if (old != new) {
         if (!entry.toolWindow.isAvailable) {
           new.isVisible = false // Preserve invariants: if it can't be shown, don't consider it visible.
         }
