@@ -34,7 +34,6 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 
 @RunWith(Parameterized::class)
-@OptIn(ExperimentalCoroutinesApi::class)
 internal class PyCondaTest {
 
   private val languageLevel = LanguageLevel.PYTHON310

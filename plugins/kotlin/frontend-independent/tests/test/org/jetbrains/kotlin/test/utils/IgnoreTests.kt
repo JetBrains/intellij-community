@@ -113,7 +113,6 @@ object IgnoreTests {
     }
 
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun handleTestWithWrongDirective(
         testPasses: Boolean,
         testFile: Path,

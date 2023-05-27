@@ -68,7 +68,6 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
 
         private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
 
-        @OptIn(ExperimentalStdlibApi::class)
         fun createForPosition(position: PsiElement): HLIndexHelper {
             val module = position.getKtModule()
             val project = module.project

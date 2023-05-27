@@ -243,7 +243,6 @@ private class ModalIndicatorDescriptor(
   val cancellation: TaskCancellation,
 )
 
-@OptIn(IntellijInternalApi::class)
 private fun CoroutineScope.showModalIndicator(
   descriptor: ModalIndicatorDescriptor,
   stateFlow: Flow<ProgressState>,

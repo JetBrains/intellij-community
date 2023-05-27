@@ -41,7 +41,6 @@ import java.util.*
  * Ensures conda SDK could be created
  */
 @RunWith(Parameterized::class)
-@OptIn(ExperimentalCoroutinesApi::class)
 internal class PyCondaSdkTest {
   private val condaRule: LocalCondaRule = LocalCondaRule()
 

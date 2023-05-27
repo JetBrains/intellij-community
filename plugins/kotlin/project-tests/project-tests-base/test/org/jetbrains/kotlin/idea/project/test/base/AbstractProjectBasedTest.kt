@@ -124,7 +124,6 @@ abstract class AbstractProjectBasedTest : UsefulTestCase() {
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun ProjectActionExecutor<*, *>.execute(
         action: ProjectAction,
         projectData: ProjectData,

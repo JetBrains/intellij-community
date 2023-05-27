@@ -129,7 +129,6 @@ object MemberNotImplementedQuickfixFactories {
             getUnimplementedMemberFixes(diagnostic.psi, false)
         }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun KtAnalysisSession.getUnimplementedMemberFixes(
         classWithUnimplementedMembers: KtClassOrObject,
         includeImplementAsConstructorParameterQuickfix: Boolean = true

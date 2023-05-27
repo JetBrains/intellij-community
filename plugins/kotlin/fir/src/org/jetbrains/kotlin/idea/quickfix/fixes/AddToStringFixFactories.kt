@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.quickfix.AddToStringFix
 import org.jetbrains.kotlin.psi.KtExpression
 
 object AddToStringFixFactories {
-    @OptIn(ExperimentalStdlibApi::class)
     private fun KtAnalysisSession.getFixes(element: PsiElement?, expectedType: KtType, actualType: KtType): List<AddToStringFix> {
         if (element !is KtExpression) return emptyList()
         return buildList {

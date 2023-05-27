@@ -22,7 +22,6 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 
-@OptIn(ExperimentalCoroutinesApi::class)
 internal class GitLabMergeRequestsFiltersViewModelImplTest {
   companion object {
     @JvmField
