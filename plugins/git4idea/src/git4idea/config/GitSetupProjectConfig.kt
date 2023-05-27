@@ -35,7 +35,9 @@ internal class GitSetupProjectConfig : ProjectActivity {
 
   private enum class ConfigVariables(val gitName: String, val settingsGetter: (GitVcsOptions) -> String?) {
     GC_AUTO("gc.auto", { it.gcAuto }),
-    CORE_LONGPATHS("core.longpaths", { if (SystemInfo.isWindows) it.coreLongpaths else null })
+    CORE_FS_MONITOR("core.fsmonitor", { it.coreFsMonitor }),
+    CORE_UNTRACKED_CACHE("core.untrackedcache", { it.coreUntrackedCache }),
+    CORE_LONGPATHS("core.longpaths", { if (SystemInfo.isWindows) it.coreLongpaths else null }),
+    FEATURE_MANY_FILES("feature.manyFiles", { it.featureManyFiles }),
   }
 }
-
