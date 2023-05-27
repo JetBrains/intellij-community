@@ -15,5 +15,8 @@ interface LcrTextInitParams : LcrInitParams {
     GRAYED
   }
 
+  /**
+   * Default value is [Style.NORMAL]
+   */
   var style: Style
 }

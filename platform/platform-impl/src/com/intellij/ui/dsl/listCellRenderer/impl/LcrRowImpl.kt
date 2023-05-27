@@ -2,7 +2,9 @@
 package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.UiDslException
+import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
@@ -14,16 +16,14 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
-import javax.swing.JList
-import javax.swing.JPanel
-import javax.swing.ListCellRenderer
+import javax.swing.*
 
 private const val HORIZONTAL_GAP = 4
 
 @ApiStatus.Internal
 internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
 
-  private lateinit var _renderer: (list: JList<out T>, value: T, index: Int, isSelected: Boolean, cellHasFocus: Boolean) -> Unit
+  private lateinit var _renderer: (list: JList<out T>, value: T, index: Int, isSelected: Boolean, cellHasFocus: Boolean, rowParams: RowParams) -> Unit
   private val selectablePanel = SelectablePanel()
 
   /**
@@ -31,7 +31,7 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
    */
   private val content = JPanel(GridLayout())
   private val builder = RowsGridBuilder(content)
-  private val cells = mutableListOf<LcrCell>()
+  private val cells = mutableListOf<LcrCellBaseImpl>()
 
   init {
     content.isOpaque = false
@@ -73,7 +73,25 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
     return result
   }
 
-  override fun renderer(init: (list: JList<out T>, value: T, index: Int, isSelected: Boolean, cellHasFocus: Boolean) -> Unit) {
+  override fun cell(component: JComponent, init: (LcrCellInitParams.() -> Unit)?): LcrCell {
+    val initParams = LcrCellInitParamsImpl()
+    if (init != null) {
+      initParams.init()
+    }
+
+    if (initParams.stripHorizontalInsets) {
+      stripHorizontalInsets(component)
+    }
+    else {
+      component.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
+    }
+
+    val result = LcrCellImpl(component)
+    add(result, initParams, isBaselineComponent(component))
+    return result
+  }
+
+  override fun renderer(init: (list: JList<out T>, value: T, index: Int, isSelected: Boolean, cellHasFocus: Boolean, rowParams: RowParams) -> Unit) {
     if (this::_renderer.isInitialized) {
       throw UiDslException("Only one renderer is allowed")
     }
@@ -81,7 +99,7 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
   }
 
   override fun renderer(init: (value: T) -> Unit) {
-    renderer { _, value, _, _, _ -> init(value) }
+    renderer { _, value, _, _, _, _ -> init(value) }
   }
 
   fun onInitFinished() {
@@ -108,13 +126,19 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
       cell.init(list, isSelected, cellHasFocus)
     }
 
-    _renderer.invoke(list, value, index, isSelected, cellHasFocus)
+    _renderer.invoke(list, value, index, isSelected, cellHasFocus, RowParamsImpl(selectablePanel))
     return selectablePanel
   }
 
-  private fun add(cell: LcrCell, initParams: LcrInitParamsImpl, baselineAlign: Boolean) {
+  private fun add(cell: LcrCellBaseImpl, initParams: LcrInitParamsImpl, baselineAlign: Boolean) {
     cells.add(cell)
     builder.cell(cell.component, gaps = if (builder.x == 0) UnscaledGaps.EMPTY else UnscaledGaps(left = HORIZONTAL_GAP),
                  resizableColumn = initParams.grow, baselineAlign = baselineAlign)
   }
+}
+
+private fun isBaselineComponent(component: JComponent): Boolean {
+  // can be extended later
+  return component is JLabel ||
+         component is SimpleColoredComponent
 }

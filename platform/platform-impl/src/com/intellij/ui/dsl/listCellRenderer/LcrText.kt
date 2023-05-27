@@ -9,8 +9,7 @@ import java.awt.Color
  * Cell with a text
  */
 @ApiStatus.Experimental
-@LcrDslMarker
-interface LcrText {
+interface LcrText: LcrCellBase {
 
   var text: @Nls String?
 

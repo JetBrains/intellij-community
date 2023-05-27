@@ -19,7 +19,6 @@ import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.Processor
 import com.intellij.util.text.Matcher
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsRef
@@ -130,8 +129,8 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
       style = LcrTextInitParams.Style.GRAYED
     }
 
-    renderer { list, value, index, isSelected, cellHasFocus ->
-      val background = UIUtil.getListBackground(isSelected, cellHasFocus)
+    renderer { list, value, index, isSelected, cellHasFocus, rowParams ->
+      val background = rowParams.background ?: JBUI.CurrentTheme.List.BACKGROUND
       icon.icon = when (value) {
                        is VcsRef -> LabelIcon(list, JBUI.scale(16), background, listOf(value.type.backgroundColor))
                        else -> AllIcons.Vcs.CommitNode

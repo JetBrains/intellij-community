@@ -12,11 +12,13 @@ import javax.swing.JLabel
 import javax.swing.JList
 
 @ApiStatus.Internal
-internal class LcrTextImpl(private val initParams: LcrTextInitParamsImpl) : LcrText, LcrCell {
+internal class LcrTextImpl(private val initParams: LcrTextInitParamsImpl) : LcrCellBaseImpl(), LcrText {
 
   override val component = JLabel()
 
   override fun init(list: JList<*>, isSelected: Boolean, cellHasFocus: Boolean) {
+    super.init(list, isSelected, cellHasFocus)
+
     text = null
     val defaultColor = if (isSelected) JBUI.CurrentTheme.List.Selection.foreground(cellHasFocus) else list.foreground
     color = when (initParams.style) {

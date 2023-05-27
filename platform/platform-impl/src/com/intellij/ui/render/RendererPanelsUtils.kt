@@ -2,22 +2,19 @@
 package com.intellij.ui.render
 
 import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.gridLayout.Constraints
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.dsl.listCellRenderer.stripHorizontalInsets
 import com.intellij.ui.popup.list.SelectablePanel
-import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
-import java.awt.Insets
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.border.EmptyBorder
 import kotlin.math.max
 
 /**
@@ -77,7 +74,7 @@ open class IconCompOptionalCompPanel<C1 : JComponent>(
       }
 
       if (value != null) {
-        resetHorizontalInsets(value)
+        stripHorizontalInsets(value)
         content.add(value, Constraints((content.layout as GridLayout).rootGrid, 2, 0, baselineAlign = true,
                                        gaps = UnscaledGaps(left = CENTER_RIGHT_GAP)))
       }
@@ -86,7 +83,7 @@ open class IconCompOptionalCompPanel<C1 : JComponent>(
     }
 
   init {
-    resetHorizontalInsets(center)
+    stripHorizontalInsets(center)
 
     createBuilder()
       .cell(iconLabel, baselineAlign = false, gaps = UnscaledGaps(right = RendererPanelsUtils.iconTextUnscaledGap))
@@ -103,7 +100,7 @@ open class IconPanel : SelectablePanel() {
   protected val iconLabel = JLabel()
 
   init {
-    resetHorizontalInsets(iconLabel)
+    stripHorizontalInsets(iconLabel)
     content.isOpaque = false
     layout = BorderLayout()
 
@@ -156,26 +153,5 @@ open class IconPanel : SelectablePanel() {
     return RowsGridBuilder(content)
       .defaultBaselineAlign(true)
       .resizableRow()
-  }
-}
-
-/**
- * Resets any horizontal insets ([EmptyBorder], [JBEmptyBorder]) and ipads ([SimpleColoredComponent.getIpad])
- */
-fun resetHorizontalInsets(vararg components: JComponent) {
-  for (component in components) {
-    component.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
-
-    val border = component.border
-    if (border != null && (border.javaClass === EmptyBorder::class.java || border.javaClass === JBEmptyBorder::class.java)) {
-      val insets = (border as EmptyBorder).borderInsets
-      @Suppress("UseDPIAwareBorders")
-      component.border = EmptyBorder(insets.top, 0, insets.bottom, 0)
-    }
-
-    if (component is SimpleColoredComponent) {
-      @Suppress("UseDPIAwareInsets")
-      component.ipad = Insets(component.ipad.top, 0, component.ipad.bottom, 0)
-    }
   }
 }

@@ -8,11 +8,13 @@ import javax.swing.JLabel
 import javax.swing.JList
 
 @ApiStatus.Internal
-internal class LcrIconImpl : LcrIcon, LcrCell {
+internal class LcrIconImpl : LcrCellBaseImpl(), LcrIcon {
 
   override val component = JLabel()
 
   override fun init(list: JList<*>, isSelected: Boolean, cellHasFocus: Boolean) {
+    super.init(list, isSelected, cellHasFocus)
+
     icon = null
   }
 

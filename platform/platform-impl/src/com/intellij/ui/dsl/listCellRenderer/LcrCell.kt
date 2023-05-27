@@ -2,13 +2,7 @@
 package com.intellij.ui.dsl.listCellRenderer
 
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.Icon
 
-/**
- * Cell with an icon
- */
 @ApiStatus.Experimental
-interface LcrIcon: LcrCellBase {
-
-  var icon: Icon?
+interface LcrCell : LcrCellBase {
 }
