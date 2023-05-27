@@ -262,7 +262,7 @@ public class JUnitConfigurationModel {
   }
 
   public void reloadTestKindModel(JComboBox<Integer> comboBox, Module module, @Nullable Runnable onDone) {
-    int selectedIndex = comboBox.getSelectedIndex();
+    Object selectedItem = comboBox.getSelectedItem();
     ReadAction.nonBlocking(() -> {
       final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
       aModel.addElement(ALL_IN_PACKAGE);
@@ -292,7 +292,7 @@ public class JUnitConfigurationModel {
       return aModel;
     }).finishOnUiThread(ModalityState.any(), model -> {
       comboBox.setModel(model);
-      comboBox.setSelectedIndex(selectedIndex == -1 ? myType : selectedIndex);
+      comboBox.setSelectedItem(selectedItem == null ? myType : selectedItem);
       if (onDone != null) {
         onDone.run();
       }

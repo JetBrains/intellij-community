@@ -207,13 +207,15 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       protected Color getActiveTextColor(Color attributesColor) {
         TabPainterAdapter painterAdapter = myTabs.getTabPainterAdapter();
         TabTheme theme = painterAdapter.getTabTheme();
-        Color foreground = myTabs.getSelectedInfo() == myInfo
-                           && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null)
-                           ? myTabs.isActiveTabs(myInfo)
-                             ? theme.getUnderlinedTabForeground()
-                             : theme.getUnderlinedTabInactiveForeground()
-                           : super.getActiveTextColor(attributesColor);
-        return editLabelForeground(foreground);
+        Color editedForeground = editLabelForeground(attributesColor);
+        if (editedForeground != null) {
+          return editedForeground;
+        }
+        return myTabs.getSelectedInfo() == myInfo && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null)
+               ? myTabs.isActiveTabs(myInfo)
+                 ? theme.getUnderlinedTabForeground()
+                 : theme.getUnderlinedTabInactiveForeground()
+               : super.getActiveTextColor(attributesColor);
       }
 
       @Override

@@ -5,6 +5,7 @@ package com.intellij.execution.impl
 
 import com.intellij.configurationStore.*
 import com.intellij.execution.*
+import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runToolbar.RunToolbarSlotManager
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -1416,8 +1417,25 @@ private fun getNameWeight(n1: String) = if (n1.startsWith("<template> of ") || n
 internal fun doGetBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
   return when (configuration) {
     is WrappingRunConfiguration<*> -> doGetBeforeRunTasks(configuration.peer)
-    else -> configuration.beforeRunTasks
+    else -> configuration.beforeRunTasks.flatMap {
+      return@flatMap beforeRunTasks(it, configuration)
+    }
   }
+}
+
+private fun beforeRunTasks(it: BeforeRunTask<*>,
+                           configuration: RunConfiguration): List<BeforeRunTask<*>> {
+  val compound = (it as? RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)?.settings?.configuration as? CompoundRunConfiguration
+  if (compound != null) {
+    val provider = RunConfigurationBeforeRunProvider(configuration.project)
+    val runManager = RunManagerImpl.getInstanceImpl(configuration.project)
+    return compound.getConfigurationsWithTargets(runManager).map {
+      val task = provider.createTask(it.key)
+      task.setSettingsWithTarget(runManager.findSettings(it.key), it.value)
+      task
+    }
+  }
+  return listOf(it)
 }
 
 internal fun RunConfiguration.cloneBeforeRunTasks() {

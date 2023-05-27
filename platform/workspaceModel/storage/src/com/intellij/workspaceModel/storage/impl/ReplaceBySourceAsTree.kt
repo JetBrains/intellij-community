@@ -89,20 +89,14 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
     // Process entities from the target storage
     val targetEntitiesToReplace = targetStorage.entitiesBySource(entityFilter)
-    val targetEntities = targetEntitiesToReplace.values.flatMap { it.values }.flatten().toMutableList()
-    if (shuffleEntities != -1L && targetEntities.size > 1) {
-      targetEntities.shuffle(Random(shuffleEntities))
-    }
+    val targetEntities = targetEntitiesToReplace.values.flatMap { it.values }.flatten().maybeShuffled()
     for (targetEntityToReplace in targetEntities) {
       TargetProcessor().processEntity(targetEntityToReplace)
     }
 
     // Process entities from the replaceWith storage
     val replaceWithEntitiesToReplace = replaceWithStorage.entitiesBySource(entityFilter)
-    val replaceWithEntities = replaceWithEntitiesToReplace.values.flatMap { it.values }.flatten().toMutableList()
-    if (shuffleEntities != -1L && replaceWithEntities.size > 1) {
-      replaceWithEntities.shuffle(Random(shuffleEntities))
-    }
+    val replaceWithEntities = replaceWithEntitiesToReplace.values.flatMap { it.values }.flatten().maybeShuffled()
     for (replaceWithEntityToReplace in replaceWithEntities) {
       ReplaceWithProcessor().processEntity(replaceWithEntityToReplace)
     }
@@ -328,7 +322,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           val parentsAssociation = replaceWithTrack.parents.mapNotNullTo(HashSet()) { processEntity(it) }
           return if (parentsAssociation.isNotEmpty()) {
             val targetEntityData = parentsAssociation.filterIsInstance<ParentsRef.TargetRef>().firstNotNullOfOrNull { parent ->
-              findEntityInTargetStore(replaceWithEntityData, parent.targetEntityId, replaceWithEntityId.clazz)
+              findEntityInTargetStore(replaceWithEntityData, parent.targetEntityId, replaceWithEntityId.clazz, emptySet())
             }
             val targetEntity = targetEntityData?.createEntity(targetStorage) as? WorkspaceEntityBase
 
@@ -439,8 +433,11 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
     /**
      * This is a very similar thing as [TargetProcessor.findSameEntity]. But it finds an entity in the target storage (or the entity that will be added)
+     *
+     * In [exceptTargetIds] you can define a set of ids where fill be filtered while searching.
      */
-    fun findSameEntityInTargetStore(replaceWithTrack: TrackToParents): ParentsRef? {
+    @Suppress("MoveVariableDeclarationIntoWhen")
+    fun findSameEntityInTargetStore(replaceWithTrack: TrackToParents, exceptTargetIds: Set<EntityId> = emptySet()): ParentsRef? {
 
       // Check if this entity was already processed
       @Suppress("MoveVariableDeclarationIntoWhen")
@@ -467,7 +464,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         for (i in entriesList.indices) {
           val value = entriesList[i].value
           if (value is ParentsRef.TargetRef) {
-            val targetEntityData = findEntityInTargetStore(replaceWithEntityData, value.targetEntityId, replaceWithTrack.entity.clazz)
+            val targetEntityData = findEntityInTargetStore(replaceWithEntityData, value.targetEntityId, replaceWithTrack.entity.clazz,
+                                                           exceptTargetIds)
             if (targetEntityData != null) {
               return targetEntityData.createEntityId().let { ParentsRef.TargetRef(it) }
             }
@@ -687,7 +685,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
             Triple(targetParent, replaceWithChildrenOptions, mutableListOfEqualEntities)
           }
 
-        val mostCommonReplaceWithChildId = replaceWithParentsCounter.maxByOrNull { it.value }?.key
+        val mostCommonReplaceWithChildId = replaceWithParentsCounter.withMaxValue()?.maybeShuffled()?.firstOrNull()?.key
         if (mostCommonReplaceWithChildId != null) {
           parentAssociationsWithChildren.forEach { (targetParent, replaceWithChildren, replaceWithSimilarEntityData) ->
             if (mostCommonReplaceWithChildId in replaceWithChildren) {
@@ -705,7 +703,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       //   We should also understand if this parent is a new entity, or it already exists in the target storage.
       if (replaceWithEntity != null) {
         val alsoTargetParents = TrackToParents(replaceWithEntity.id, replaceWithStorage).parents
-          .map { ReplaceWithProcessor().findSameEntityInTargetStore(it) }
+          .map { ReplaceWithProcessor().findSameEntityInTargetStore(it, setOf(targetEntityData.createEntityId())) }
         targetParents.addAll(alsoTargetParents.filterNotNull())
       }
       return Pair(targetParents, replaceWithEntity)
@@ -765,22 +763,36 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     replaceWithState[this] = state
   }
 
-  private fun findEntityInTargetStore(replaceWithEntityData: WorkspaceEntityData<out WorkspaceEntity>,
-                                      targetParentEntityId: EntityId,
-                                      childClazz: Int): WorkspaceEntityData<out WorkspaceEntity>? {
+  private fun findEntityInTargetStore(
+    replaceWithEntityData: WorkspaceEntityData<out WorkspaceEntity>,
+    targetParentEntityId: EntityId,
+    childClazz: Int,
+    exceptTargetIds: Set<EntityId>,
+  ): WorkspaceEntityData<out WorkspaceEntity>? {
     val childrenInTargetEntityDataCollection = childrenInTarget(targetParentEntityId, childClazz)
     if (childrenInTargetEntityDataCollection.isEmpty()) return null
-    var targetEntityData = childrenInTargetEntityDataCollection.removeSome(replaceWithEntityData)
+    var targetEntityData = childrenInTargetEntityDataCollection.removeSome(replaceWithEntityData, exceptTargetIds)
     while (targetEntityData != null && targetState[targetEntityData.createEntityId()] != null) {
-      targetEntityData = childrenInTargetEntityDataCollection.removeSome(replaceWithEntityData)
+      targetEntityData = childrenInTargetEntityDataCollection.removeSome(replaceWithEntityData, exceptTargetIds)
     }
     return targetEntityData
   }
 
-  private fun WorkspaceEntityDataCustomCollection.removeSome(entityData: WorkspaceEntityData<out WorkspaceEntity>): WorkspaceEntityData<out WorkspaceEntity>? {
+  private fun WorkspaceEntityDataCustomCollection.removeSome(
+    entityData: WorkspaceEntityData<out WorkspaceEntity>,
+    exceptTargetIds: Set<EntityId>,
+  ): WorkspaceEntityData<out WorkspaceEntity>? {
     val entityDataListWithSameHash = this[entityData] ?: return null
     if (entityDataListWithSameHash.isEmpty()) return null
-    return entityDataListWithSameHash.removeFirst()
+    entityDataListWithSameHash.maybeShuffle()
+    return entityDataListWithSameHash.removeFirst { it.createEntityId() !in exceptTargetIds }
+  }
+
+  private fun <T> MutableList<T>.removeFirst(predicate: (T) -> Boolean): T? {
+    if (isEmpty()) return null
+    val index = indexOfFirst { predicate(it) }
+    if (index == -1) return null
+    return removeAt(index)
   }
 
   private val targetChildrenEntityDataCache = HashMap<EntityId, Map<ConnectionId, WorkspaceEntityDataCustomCollection>>()
@@ -876,6 +888,22 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
     }
   }
+
+  /**
+   * Shuffle collection if the field [shuffleEntities] is not -1 (set in tests)
+   */
+  private fun <E> List<E>.maybeShuffled(): List<E> {
+    if (shuffleEntities != -1L && this.size > 1) {
+      return this.shuffled(Random(shuffleEntities))
+    }
+    return this
+  }
+
+  private fun <E> MutableList<E>.maybeShuffle() {
+    if (shuffleEntities != -1L && this.size > 1) {
+      this.shuffle(Random(shuffleEntities))
+    }
+  }
 }
 
 internal data class RelabelElement(val targetEntityId: EntityId, val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>?) {
@@ -948,4 +976,9 @@ private class TrackToParents(
       }
       return cachedParents!!
     }
+}
+
+private fun <K, R : Comparable<R>> Map<out K, R>.withMaxValue(): List<Map.Entry<K, R>>? {
+  val maxValue = values.maxOrNull() ?: return null
+  return entries.filter { it.value == maxValue }
 }

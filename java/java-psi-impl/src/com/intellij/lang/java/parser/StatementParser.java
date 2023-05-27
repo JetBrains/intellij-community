@@ -339,15 +339,22 @@ public class StatementParser {
     }
     builder.advanceLexer();
 
-    // we must distinguish record pattern from method call in for (foo();;)
+    // we must distinguish a record pattern from method call in for (foo();;)
+    int parenBalance = 1;
     while (true) {
       IElementType current = builder.getTokenType();
       if (current == null) {
         patternStart.rollbackTo();
         return false;
       }
+      if (current == JavaTokenType.LPARENTH) {
+        parenBalance++;
+      }
       if (current == JavaTokenType.RPARENTH) {
-        break;
+        parenBalance--;
+        if (parenBalance == 0) {
+          break;
+        }
       }
       builder.advanceLexer();
     }

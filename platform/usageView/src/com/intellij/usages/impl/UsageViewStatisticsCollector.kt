@@ -74,7 +74,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     val IS_IN_INJECTED_FILE = EventFields.Boolean("is_in_injected_file")
     @JvmStatic
     fun calculateElementData(psiElement: PsiElement?): ObjectEventData? {
-      if (psiElement == null) return null
+      if (psiElement == null || !psiElement.isValid) return null
       val containingFile = psiElement.containingFile
       val virtualFile = containingFile?.virtualFile
       val isInTestSources = ReadAction.compute<Boolean, Nothing> {
@@ -241,12 +241,17 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
                                      usageView: UsageView,
                                      selectedElement: PsiElement,
                                      showUsagesHandlerData: MutableList<EventPair<*>>) {
-      val containingFile = selectedElement.containingFile
       showUsagesHandlerData.add(USAGE_VIEW.with(usageView))
-      if (project != null && containingFile != null) {
-        showUsagesHandlerData.add(
-          IS_FILE_ALREADY_OPENED.with(FileEditorManager.getInstance(project).isFileOpen(selectedElement.containingFile.virtualFile))
-        )
+      if (selectedElement.isValid) {
+        val containingFile = selectedElement.containingFile
+        if (project != null && containingFile != null) {
+          val virtualFile = containingFile.virtualFile
+          if (virtualFile != null) {
+            showUsagesHandlerData.add(
+              IS_FILE_ALREADY_OPENED.with(FileEditorManager.getInstance(project).isFileOpen(virtualFile))
+            )
+          }
+        }
       }
       itemChosenInPopupFeatures.log(project, showUsagesHandlerData)
     }

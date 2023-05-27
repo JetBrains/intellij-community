@@ -1223,7 +1223,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
           item = marker.myNext;
           itemDone = false;
         }
-        else if (!myOptionalData.isCollapsed(marker.markerId)) {
+        else if (!isCollapsed(marker)) {
           curMarker = marker;
 
           CompositeElement childNode = createComposite(marker, astFactory);
@@ -1250,6 +1250,10 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         itemDone = true;
       }
     }
+  }
+
+  public boolean isCollapsed(@NotNull ProductionMarker marker) {
+    return myOptionalData.isCollapsed(marker.markerId);
   }
 
   private int insertLeaves(int curToken, int lastIdx, @NotNull CompositeElement curNode) {
@@ -1551,7 +1555,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       while (child != null) {
         lexIndex = insertLeaves(lexIndex, child.myLexemeIndex, marker.myBuilder, marker);
 
-        if (child instanceof StartMarker && child.myBuilder.myOptionalData.isCollapsed(child.markerId)) {
+        if (child instanceof StartMarker && child.myBuilder.isCollapsed((StartMarker)child)) {
           int lastIndex = child.getEndIndex();
           insertLeaf(child.getTokenType(), marker.myBuilder, child.myLexemeIndex, lastIndex, true, marker);
         }

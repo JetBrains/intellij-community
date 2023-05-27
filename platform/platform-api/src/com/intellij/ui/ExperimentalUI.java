@@ -32,7 +32,7 @@ import static java.time.temporal.ChronoUnit.DAYS;
 
 /**
  * Temporary utility class for migration to the new UI.
- * This is not public API. For plugin development use {@link NewUI#isEnabled()}
+ * Do not use this class for plugin development.
  *
  * @author Konstantin Bulenkov
  */

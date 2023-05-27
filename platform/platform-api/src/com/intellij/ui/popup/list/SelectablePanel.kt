@@ -19,6 +19,8 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
   }
 
   enum class SelectionArcCorners(internal val sides: Set<Side>) {
+    NONE(emptySet()),
+
     TOP_LEFT(setOf(Side.TOP, Side.LEFT)),
     TOP_RIGHT(setOf(Side.TOP, Side.RIGHT)),
     BOTTOM_LEFT(setOf(Side.BOTTOM, Side.LEFT)),

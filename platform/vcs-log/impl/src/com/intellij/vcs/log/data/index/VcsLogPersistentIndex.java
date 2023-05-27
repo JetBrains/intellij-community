@@ -262,6 +262,11 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     IntCollectionUtil.add(myCommitsToIndex, root, index);
   }
 
+  private synchronized void markForIndexing(@NotNull IntSet commits, @NotNull VirtualFile root) {
+    IntSet commitsToIndex = myCommitsToIndex.computeIfAbsent(root, __ -> new IntOpenHashSet());
+    commitsToIndex.addAll(commits);
+  }
+
   @Override
   public @Nullable IndexDataGetter getDataGetter() {
     if (myIndexStorage == null) return null;
@@ -621,18 +626,17 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     }
 
     private void markCommits() {
-      synchronized (VcsLogPersistentIndex.this) {
-        IndexStorage indexStorage = myIndexStorage;
-        if (indexStorage == null || !myRoots.contains(myRoot)) {
-          return;
-        }
-        try {
-          IntSet set = myCommitsToIndex.computeIfAbsent(myRoot, __ -> new IntOpenHashSet());
-          indexStorage.store.collectMissingCommits(myCommits, set);
-        }
-        catch (IOException e) {
-          myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
-        }
+      IndexStorage indexStorage = myIndexStorage;
+      if (indexStorage == null || !myRoots.contains(myRoot)) {
+        return;
+      }
+      try {
+        IntOpenHashSet missingCommits = new IntOpenHashSet();
+        indexStorage.store.collectMissingCommits(myCommits, missingCommits);
+        markForIndexing(missingCommits, myRoot);
+      }
+      catch (IOException e) {
+        myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
       }
     }
 

@@ -1,11 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl.singleRow;
 
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.ShapeTransform;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -76,6 +79,14 @@ public abstract class SingleRowLayoutStrategy {
    * @return true if the tab should be clipped, false if hidden.
    */
   public abstract boolean drawPartialOverflowTabs();
+
+  /**
+   * Return the change of scroll offset for every unit of mouse wheel scrolling.
+   *
+   * @param label the first visible tab label
+   * @return the scroll amount
+   */
+  public abstract int getScrollUnitIncrement(TabLabel label);
 
   abstract static class Horizontal extends SingleRowLayoutStrategy {
     protected Horizontal(final SingleRowLayout layout) {
@@ -162,6 +173,11 @@ public abstract class SingleRowLayoutStrategy {
     @Override
     public boolean drawPartialOverflowTabs() {
       return true;
+    }
+
+    @Override
+    public int getScrollUnitIncrement(TabLabel label) {
+      return MathUtil.clamp(Registry.intValue("ide.editor.tabs.scroll.unit.increment", 10), 1, 200);
     }
   }
 
@@ -405,6 +421,11 @@ public abstract class SingleRowLayoutStrategy {
     @Override
     public boolean drawPartialOverflowTabs() {
       return ExperimentalUI.isNewUI();
+    }
+
+    @Override
+    public int getScrollUnitIncrement(TabLabel label) {
+      return (label.getPreferredSize().height + myTabs.getTabHGap());
     }
   }
 

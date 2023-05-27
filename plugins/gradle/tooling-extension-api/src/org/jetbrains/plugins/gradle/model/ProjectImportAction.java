@@ -254,7 +254,12 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   private static DomainObjectSet<? extends GradleBuild> getEditableBuilds(@NotNull GradleBuild rootBuild,
                                                                           @Nullable GradleVersion version) {
     if (version != null && version.compareTo(GradleVersion.version("8.0")) >= 0) {
-      return rootBuild.getEditableBuilds();
+      DomainObjectSet<? extends GradleBuild> builds = rootBuild.getEditableBuilds();
+      if (builds.isEmpty()) {
+        return rootBuild.getIncludedBuilds();
+      } else {
+        return builds;
+      }
     } else {
       return rootBuild.getIncludedBuilds();
     }

@@ -54,7 +54,7 @@ class ServiceViewTree extends Tree {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent e) {
-        TreePath path = getPathForLocation(e.getX(), e.getY());
+        TreePath path = getClosestPathForLocation(e.getX(), e.getY());
         if (path == null) return false;
 
         Object lastComponent = path.getLastPathComponent();

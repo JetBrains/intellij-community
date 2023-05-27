@@ -146,7 +146,7 @@ public interface IntentionPreviewInfo {
    *   that preview for another item will be displayed. Also, preview is mostly useful for keyboard users, as it’s usually
    *   displayed as a reaction on Alt+Enter. So adding clickable links or buttons there is not a good idea.</li>
    *   <li>When possible, use generic preview methods available in {@link IntentionPreviewInfo} (e.g., {@link #rename(PsiFile, String)},
-   *   {@link #navigate(NavigatablePsiElement)}, {@link #movePsi(PsiNamedElement, PsiNamedElement)}). They provide uniform
+   *   {@link #navigate(NavigatablePsiElement)}, {@link #movePsi(PsiNamedElement, PsiNamedElement)}, {@link #moveMultiplePsi(List, PsiNamedElement)}). They provide uniform
    *   preview for common cases. Ask if you think that you need a new common method.</li>
    * </ul>
    */
@@ -242,13 +242,66 @@ public interface IntentionPreviewInfo {
     if (targetIcon instanceof DeferredIcon) {
       targetIcon = ((DeferredIcon)targetIcon).evaluate();
     }
-    HtmlBuilder builder = new HtmlBuilder()
-      .append(getIconChunk(sourceIcon, "source"))
-      .append(Objects.requireNonNull(source.getName()))
-      .append(" ").append(HtmlChunk.htmlEntity("&rarr;")).append(" ")
-      .append(getIconChunk(targetIcon, "target"))
-      .append(Objects.requireNonNull(target.getName()));
+    HtmlChunk moveFragment = getHtmlMoveFragment(sourceIcon, targetIcon, source.getName(), target.getName());
+    return new Html(moveFragment.wrapWith("p"));
+  }
+
+  /**
+   * @param sources List of PsiElements to move
+   * @param target  target PsiElement
+   * @return a presentation describing moving of source elements to the target
+   */
+  static @NotNull IntentionPreviewInfo moveMultiplePsi(
+    @NotNull List<PsiNamedElement> sources,
+    @NotNull PsiNamedElement target) {
+    return moveMultiplePsi(sources, target, null);
+  }
+
+  /**
+   * @param sources            List of PsiElements to move
+   * @param target             target PsiElement
+   * @param explicitTargetName Explicit name of the target element to be displayed; if null {@code target.getName()} will be used instead
+   * @return a presentation describing moving of source elements to the target
+   */
+  static @NotNull IntentionPreviewInfo moveMultiplePsi(
+    @NotNull List<PsiNamedElement> sources,
+    @NotNull PsiNamedElement target,
+    @Nullable @Nls String explicitTargetName) {
+
+    HtmlBuilder builder = new HtmlBuilder();
+
+    Icon targetIcon = getIcon(target);
+    builder.appendWithSeparators(
+      HtmlChunk.br(),
+      ContainerUtil.map(sources, source -> getHtmlMoveFragment(
+        getIcon(source),
+        targetIcon,
+        source.getName(),
+        explicitTargetName == null ? target.getName() : explicitTargetName)));
+
     return new Html(builder.wrapWith("p"));
+  }
+
+  private static Icon getIcon(@NotNull PsiNamedElement source) {
+    Icon icon = source.getIcon(0);
+    if (icon instanceof DeferredIcon) {
+      icon = ((DeferredIcon)icon).evaluate();
+    }
+    return icon;
+  }
+
+  @NotNull
+  private static HtmlChunk getHtmlMoveFragment(@Nullable Icon sourceIcon,
+                                               @Nullable Icon targetIcon,
+                                               @Nullable @Nls String sourceName,
+                                               @Nullable @Nls String targetName) {
+    return new HtmlBuilder()
+      .append(getIconChunk(sourceIcon, "source_" + sourceName))
+      .append(Objects.requireNonNull(sourceName))
+      .append(" ").append(HtmlChunk.htmlEntity("&rarr;")).append(" ")
+      .append(getIconChunk(targetIcon, "target_" + targetName))
+      .append(Objects.requireNonNull(targetName))
+      .toFragment();
   }
 
   /**

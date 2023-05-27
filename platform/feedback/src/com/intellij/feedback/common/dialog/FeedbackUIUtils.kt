@@ -32,6 +32,12 @@ fun JBTextArea.adjustBehaviourForFeedbackForm() {
   })
 }
 
+const val TEXT_AREA_ROW_SIZE = 5
+const val TEXT_AREA_COLUMN_SIZE = 42
+const val TEXT_FIELD_EMAIL_COLUMN_SIZE = 25
+
+val EMAIL_REGEX = Regex(".+@.+\\..+")
+
 fun <T> Panel.createSegmentedButtonWithBottomLabels(@NlsContexts.Label mainLabel: String?, items: List<T>, renderer: (T) -> String,
                                                     size: Int, bindProperty: ObservableMutableProperty<T>,
                                                     @NlsContexts.Label leftBottomLabel: String?, @NlsContexts.Label midBottomLabel: String?,

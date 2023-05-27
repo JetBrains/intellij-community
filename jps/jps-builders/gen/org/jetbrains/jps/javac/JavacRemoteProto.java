@@ -652,7 +652,7 @@ public final class JavacRemoteProto {
        */
       private void setDescription(
           java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
         description_ = value;
       }
@@ -706,7 +706,7 @@ public final class JavacRemoteProto {
        */
       private void setStacktrace(
           java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000004;
         stacktrace_ = value;
       }
@@ -1492,7 +1492,7 @@ public final class JavacRemoteProto {
          */
         private void setOutputRoot(
             java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
           outputRoot_ = value;
         }
@@ -1565,7 +1565,7 @@ public final class JavacRemoteProto {
          */
         private void setSourceRoot(
             int index, java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   ensureSourceRootIsMutable();
           sourceRoot_.set(index, value);
         }
@@ -1575,7 +1575,7 @@ public final class JavacRemoteProto {
          */
         private void addSourceRoot(
             java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   ensureSourceRootIsMutable();
           sourceRoot_.add(value);
         }
@@ -2016,7 +2016,7 @@ public final class JavacRemoteProto {
        */
       private void setOption(
           int index, java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   ensureOptionIsMutable();
         option_.set(index, value);
       }
@@ -2026,7 +2026,7 @@ public final class JavacRemoteProto {
        */
       private void addOption(
           java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   ensureOptionIsMutable();
         option_.add(value);
       }
@@ -2108,7 +2108,7 @@ public final class JavacRemoteProto {
        */
       private void setFile(
           int index, java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   ensureFileIsMutable();
         file_.set(index, value);
       }
@@ -2118,7 +2118,7 @@ public final class JavacRemoteProto {
        */
       private void addFile(
           java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   ensureFileIsMutable();
         file_.add(value);
       }
@@ -2200,7 +2200,7 @@ public final class JavacRemoteProto {
        */
       private void setPlatformClasspath(
           int index, java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   ensurePlatformClasspathIsMutable();
         platformClasspath_.set(index, value);
       }
@@ -2210,7 +2210,7 @@ public final class JavacRemoteProto {
        */
       private void addPlatformClasspath(
           java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   ensurePlatformClasspathIsMutable();
         platformClasspath_.add(value);
       }
@@ -2292,7 +2292,7 @@ public final class JavacRemoteProto {
        */
       private void setClasspath(
           int index, java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   ensureClasspathIsMutable();
         classpath_.set(index, value);
       }
@@ -2302,7 +2302,7 @@ public final class JavacRemoteProto {
        */
       private void addClasspath(
           java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   ensureClasspathIsMutable();
         classpath_.add(value);
       }
@@ -2384,7 +2384,7 @@ public final class JavacRemoteProto {
        */
       private void setSourcepath(
           int index, java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   ensureSourcepathIsMutable();
         sourcepath_.set(index, value);
       }
@@ -2394,7 +2394,7 @@ public final class JavacRemoteProto {
        */
       private void addSourcepath(
           java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   ensureSourcepathIsMutable();
         sourcepath_.add(value);
       }
@@ -2570,7 +2570,7 @@ public final class JavacRemoteProto {
        */
       private void setModulePath(
           int index, java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   ensureModulePathIsMutable();
         modulePath_.set(index, value);
       }
@@ -2580,7 +2580,7 @@ public final class JavacRemoteProto {
        */
       private void addModulePath(
           java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   ensureModulePathIsMutable();
         modulePath_.add(value);
       }
@@ -2662,7 +2662,7 @@ public final class JavacRemoteProto {
        */
       private void setUpgradeModulePath(
           int index, java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   ensureUpgradeModulePathIsMutable();
         upgradeModulePath_.set(index, value);
       }
@@ -2672,7 +2672,7 @@ public final class JavacRemoteProto {
        */
       private void addUpgradeModulePath(
           java.lang.String value) {
-        value.getClass();
+        java.lang.Class<?> valueClass = value.getClass();
   ensureUpgradeModulePathIsMutable();
         upgradeModulePath_.add(value);
       }
@@ -2739,7 +2739,7 @@ public final class JavacRemoteProto {
 
       public boolean containsModuleNames(
           java.lang.String key) {
-        key.getClass();
+        java.lang.Class<?> keyClass = key.getClass();
         return internalGetModuleNames().containsKey(key);
       }
       /**
@@ -2767,7 +2767,7 @@ public final class JavacRemoteProto {
       public java.lang.String getModuleNamesOrDefault(
           java.lang.String key,
           java.lang.String defaultValue) {
-        key.getClass();
+        java.lang.Class<?> keyClass = key.getClass();
         java.util.Map<java.lang.String, java.lang.String> map =
             internalGetModuleNames();
         return map.containsKey(key) ? map.get(key) : defaultValue;
@@ -2779,7 +2779,7 @@ public final class JavacRemoteProto {
 
       public java.lang.String getModuleNamesOrThrow(
           java.lang.String key) {
-        key.getClass();
+        java.lang.Class<?> keyClass = key.getClass();
         java.util.Map<java.lang.String, java.lang.String> map =
             internalGetModuleNames();
         if (!map.containsKey(key)) {
@@ -3684,7 +3684,7 @@ public final class JavacRemoteProto {
 
         public boolean containsModuleNames(
             java.lang.String key) {
-          key.getClass();
+          java.lang.Class<?> keyClass = key.getClass();
           return instance.getModuleNamesMap().containsKey(key);
         }
 
@@ -3699,7 +3699,7 @@ public final class JavacRemoteProto {
 
         public Builder removeModuleNames(
             java.lang.String key) {
-          key.getClass();
+          java.lang.Class<?> keyClass = key.getClass();
           copyOnWrite();
           instance.getMutableModuleNamesMap().remove(key);
           return this;
@@ -3728,7 +3728,7 @@ public final class JavacRemoteProto {
         public java.lang.String getModuleNamesOrDefault(
             java.lang.String key,
             java.lang.String defaultValue) {
-          key.getClass();
+          java.lang.Class<?> keyClass = key.getClass();
           java.util.Map<java.lang.String, java.lang.String> map =
               instance.getModuleNamesMap();
           return map.containsKey(key) ? map.get(key) : defaultValue;
@@ -3740,7 +3740,7 @@ public final class JavacRemoteProto {
 
         public java.lang.String getModuleNamesOrThrow(
             java.lang.String key) {
-          key.getClass();
+          java.lang.Class<?> keyClass = key.getClass();
           java.util.Map<java.lang.String, java.lang.String> map =
               instance.getModuleNamesMap();
           if (!map.containsKey(key)) {
@@ -3754,8 +3754,8 @@ public final class JavacRemoteProto {
         public Builder putModuleNames(
             java.lang.String key,
             java.lang.String value) {
-          key.getClass();
-          value.getClass();
+          java.lang.Class<?> keyClass = key.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
           copyOnWrite();
           instance.getMutableModuleNamesMap().put(key, value);
           return this;
@@ -4365,7 +4365,7 @@ public final class JavacRemoteProto {
          */
         private void setText(
             java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
           text_ = value;
         }
@@ -4419,7 +4419,7 @@ public final class JavacRemoteProto {
          */
         private void setSourceUri(
             java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000004;
           sourceUri_ = value;
         }
@@ -5458,7 +5458,7 @@ public final class JavacRemoteProto {
          */
         private void setFilePath(
             java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
           filePath_ = value;
         }
@@ -5512,7 +5512,7 @@ public final class JavacRemoteProto {
          */
         private void setOutputRoot(
             java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000004;
           outputRoot_ = value;
         }
@@ -5566,7 +5566,7 @@ public final class JavacRemoteProto {
          */
         private void setRelativePath(
             java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000008;
           relativePath_ = value;
         }
@@ -5620,7 +5620,7 @@ public final class JavacRemoteProto {
          */
         private void setClassName(
             java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000010;
           className_ = value;
         }
@@ -5693,7 +5693,7 @@ public final class JavacRemoteProto {
          */
         private void setSourceUri(
             int index, java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   ensureSourceUriIsMutable();
           sourceUri_.set(index, value);
         }
@@ -5703,7 +5703,7 @@ public final class JavacRemoteProto {
          */
         private void addSourceUri(
             java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   ensureSourceUriIsMutable();
           sourceUri_.add(value);
         }
@@ -5756,7 +5756,7 @@ public final class JavacRemoteProto {
          * @param value The content to set.
          */
         private void setContent(com.google.protobuf.ByteString value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000020;
           content_ = value;
         }
@@ -5801,7 +5801,7 @@ public final class JavacRemoteProto {
          */
         private void setLocation(
             java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000040;
           location_ = value;
         }
@@ -6668,7 +6668,7 @@ public final class JavacRemoteProto {
          */
         private void setClassName(
             java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
           className_ = value;
         }
@@ -6741,7 +6741,7 @@ public final class JavacRemoteProto {
          */
         private void setImportStatement(
             int index, java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   ensureImportStatementIsMutable();
           importStatement_.set(index, value);
         }
@@ -6751,7 +6751,7 @@ public final class JavacRemoteProto {
          */
         private void addImportStatement(
             java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   ensureImportStatementIsMutable();
           importStatement_.add(value);
         }
@@ -6833,7 +6833,7 @@ public final class JavacRemoteProto {
          */
         private void setStaticImport(
             int index, java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   ensureStaticImportIsMutable();
           staticImport_.set(index, value);
         }
@@ -6843,7 +6843,7 @@ public final class JavacRemoteProto {
          */
         private void addStaticImport(
             java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   ensureStaticImportIsMutable();
           staticImport_.add(value);
         }
@@ -6925,7 +6925,7 @@ public final class JavacRemoteProto {
          */
         private void setIdentifier(
             int index, java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   ensureIdentifierIsMutable();
           identifier_.set(index, value);
         }
@@ -6935,7 +6935,7 @@ public final class JavacRemoteProto {
          */
         private void addIdentifier(
             java.lang.String value) {
-          value.getClass();
+          java.lang.Class<?> valueClass = value.getClass();
   ensureIdentifierIsMutable();
           identifier_.add(value);
         }

@@ -27,10 +27,16 @@ import com.intellij.psi.PsiReference
 import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackagesListPanelProvider
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.pkgsUiStateModifier
 
 class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : IntentionAction, LowPriorityAction, Iconable {
 
+    // This regex matches strings that start with a package name, consisting of one or more groups of a Java identifier followed by a period.
+    // This is followed by an uppercase letter, which is the start of a class name,
+    // and then one or more characters that can be part of a Java identifier, which make up the rest of the class name.
+    //
+    // Example: com.example.package.MyClass
     private val classnamePattern =
         Regex("(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{Lu}\\p{javaJavaIdentifierPart}+")
 
@@ -41,7 +47,8 @@ class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : 
     }
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = ref.element.run {
-        isValid && classnamePattern.matches(text)
+        // TODO PKGS-1047 Support JPS
+        isValid && classnamePattern.matches(text) && project.packageSearchProjectService.isAvailable
     }
 
     override fun getText() = PackageSearchBundle.message("packagesearch.quickfix.packagesearch.action")

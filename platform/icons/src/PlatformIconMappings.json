@@ -72,6 +72,7 @@
       "cwmAccess.svg": "codeWithMe/cwmAccess.svg",
       "cwmDisableCall.svg": "codeWithMe/cwmDisableCall.svg",
       "cwmEnableCall.svg": "codeWithMe/cwmEnableCall.svg",
+      "cwmIconModificator.svg": "codeWithMe/cwmIconModificator.svg",
       "cwmInvite.svg": "codeWithMe/cwmInvite.svg",
       "cwmUsers.svg": "users.svg"
     },
@@ -444,6 +445,14 @@
         "general/inlineVariables.svg",
         "general/inlineVariablesHover.svg"
       ]
+    },
+    "javaee": {
+      "home.svg": "javaee/home.svg",
+      "persistenceEntity.svg": "javaee/persistenceEntity.svg",
+      "updateRunningApplication.svg": "javaee/updateRunningApplication.svg",
+      "webModuleGroup.svg": "javaee/webModuleGroup.svg",
+      "webService.svg": "javaee/WebService.svg",
+      "webServiceClient.svg": "javaee/WebServiceClient.svg"
     },
     "nodes": {
       "abstractException.svg": "nodes/abstractException.svg",

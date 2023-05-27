@@ -267,10 +267,16 @@ public class FileSetLimiter {
   private static String fileNameFormatFromBaseFileNameAndDateFormat(final @NotNull String baseFileName,
                                                                     final @NotNull String dateFormat) {
     final String extension = FileUtilRt.getExtension(baseFileName);
-    final String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(baseFileName);
+    String unzippedExtension = "";
+    String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(baseFileName);
+
+    if (extension.equals("gz")) {
+      unzippedExtension = FileUtilRt.getExtension(nameWithoutExtension) + ".";
+      nameWithoutExtension = FileUtilRt.getNameWithoutExtension(nameWithoutExtension);
+    }
 
     return extension.isEmpty()
            ? nameWithoutExtension + ".{0,date," + dateFormat + "}"
-           : nameWithoutExtension + ".{0,date," + dateFormat + "}." + extension;
+           : nameWithoutExtension + ".{0,date," + dateFormat + "}." + unzippedExtension + extension;
   }
 }

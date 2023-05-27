@@ -151,7 +151,7 @@ public final class FileSystemUtil {
       static final int S_IFREG = 0100000;  // regular file
       static final int S_IFDIR = 0040000;  // directory
       static final int S_IWUSR = 0200;
-      static final int IW_MASK = 0022;
+      static final int IW_MASK = 0222;     // write mask (a file might be writable iff all bits are 0)
       static final int W_OK = 2;           // write permission flag for access(2)
 
       static native int getuid();

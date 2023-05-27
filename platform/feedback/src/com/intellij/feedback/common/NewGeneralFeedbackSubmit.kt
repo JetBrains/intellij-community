@@ -31,6 +31,8 @@ private const val FEEDBACK_EMAIL_KEY = "email"
 private const val FEEDBACK_SUBJECT_KEY = "subject"
 private const val FEEDBACK_COMMENT_KEY = "comment"
 
+internal const val DEFAULT_FEEDBACK_CONSENT_ID = "rsch.statistics.feedback.common"
+
 private const val REQUEST_ID_KEY = "Request-Id"
 
 private val LOG = Logger.getInstance(FeedbackRequestDataHolder::class.java)

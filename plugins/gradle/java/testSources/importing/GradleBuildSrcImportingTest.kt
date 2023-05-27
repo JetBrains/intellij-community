@@ -261,6 +261,24 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                   "build2.buildSrc", "build2.buildSrc.main", "build2.buildSrc.test")
   }
 
+
+  @Test
+  @TargetVersions("8.0+")
+  fun `test composite members included in build Src are properly imported`() {
+    //createProjectSubFile("gradle.properties", "org.gradle.jvmargs=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005")
+    createSettingsFile("""
+      rootProject.name = "A"
+    """.trimIndent())
+
+    createProjectSubFile("buildSrc/settings.gradle", "includeBuild('../buildSrcIncluded')")
+    createProjectSubFile("buildSrcIncluded/settings.gradle", "rootProject.name='includedFromBuildSrc'")
+
+    importProject("")
+    assertModules("A",
+                  "A.buildSrc", "A.buildSrc.test", "A.buildSrc.main",
+                  "includedFromBuildSrc")
+  }
+
   /*
 
   Builds inclusion and buildSrc presence graph

@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.branch.DvcsBranchManager
 import com.intellij.dvcs.branch.DvcsBranchManager.DvcsBranchManagerListener
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
@@ -36,7 +35,7 @@ internal class BranchesDashboardController(private val project: Project,
 
   private val changeListener = DataPackChangeListener { ui.updateBranchesTree(false) }
   private val logUiFilterListener = VcsLogFilterUiEx.VcsLogFilterListener { rootsToFilter = ui.getRootsToFilter() }
-  private val logUiPropertiesListener = object: VcsLogUiProperties.PropertiesChangeListener {
+  private val logUiPropertiesListener = object : VcsLogUiProperties.PropertiesChangeListener {
     override fun <T : Any?> onPropertyChanged(property: VcsLogUiProperties.VcsLogUiProperty<T>) {
       if (property == SHOW_GIT_BRANCHES_LOG_PROPERTY) {
         ui.toggleBranchesPanelVisibility()
@@ -46,7 +45,7 @@ internal class BranchesDashboardController(private val project: Project,
 
   val localBranches = hashSetOf<BranchInfo>()
   val remoteBranches = hashSetOf<BranchInfo>()
-  var showOnlyMy: Boolean by Delegates.observable(false) { _, old, new -> if (old != new) updateBranchesIsMyState() }
+  var showOnlyMy: Boolean by AtomicObservableProperty(false) { old, new -> if (old != new) updateBranchesIsMyState() }
 
   private var rootsToFilter: Set<VirtualFile>? by Delegates.observable(null) { _, old, new ->
     if (new != null && old != null && old != new) {
@@ -181,7 +180,9 @@ internal class BranchesDashboardController(private val project: Project,
       val branchesToCheck = allBranches.filter { it.isMy == ThreeState.UNSURE }
       ui.startLoadingBranches()
       calculateMyBranchesInBackground(
-        run = { indicator -> BranchesDashboardUtil.checkIsMyBranchesSynchronously(VcsProjectLog.getInstance(project), branchesToCheck, indicator) },
+        run = { indicator ->
+          BranchesDashboardUtil.checkIsMyBranchesSynchronously(VcsProjectLog.getInstance(project), branchesToCheck, indicator)
+        },
         onSuccess = { branches ->
           localBranches.updateUnsureBranchesStateFrom(branches)
           remoteBranches.updateUnsureBranchesStateFrom(branches)

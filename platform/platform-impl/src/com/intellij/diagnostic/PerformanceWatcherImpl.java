@@ -225,7 +225,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
 
   private static @Nullable IdePerformanceListener getPublisher() {
     Application application = ApplicationManager.getApplication();
-    return application != null && !application.isDisposed() ?
+    return application != null && !application.isDisposed() && LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() ?
            application.getMessageBus().syncPublisher(IdePerformanceListener.TOPIC) :
            null;
   }

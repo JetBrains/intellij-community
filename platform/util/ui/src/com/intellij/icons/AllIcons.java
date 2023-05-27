@@ -696,7 +696,7 @@ public class AllIcons {
   /** 100x100 */ public static final @NotNull Icon Idea_logo_welcome = load("idea_logo_welcome.png", 0, 0);
 
   public static final class Javaee {
-    /** 16x16 */ public static final @NotNull Icon Home = load("javaee/home.svg", -1395024929, 1);
+    /** 16x16 */ public static final @NotNull Icon Home = load("javaee/home.svg", -1395024929, 0);
     /** 16x16 */ public static final @NotNull Icon PersistenceEntity = load("javaee/persistenceEntity.svg", 1189216795, 0);
     /** 16x16 */ public static final @NotNull Icon UpdateRunningApplication = load("javaee/updateRunningApplication.svg", -1419199974, 2);
     /** 16x16 */ public static final @NotNull Icon WebModuleGroup = load("javaee/webModuleGroup.svg", -1443428390, 0);
