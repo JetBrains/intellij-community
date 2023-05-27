@@ -8,7 +8,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.ProjectActivity
@@ -99,7 +98,7 @@ class ProjectWindowCustomizerService : Disposable {
     }
   }
 
-  fun isAvailable() = PlatformUtils.isRider() || System.getProperty("ide.colorful.toolbar")?.toBoolean() == true
+  fun isAvailable() = PlatformUtils.isRider() || Registry.`is`("ide.colorful.toolbar")
 
   fun isActive() = wasGradientPainted && ourSettingsValue && isAvailable()
 
