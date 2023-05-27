@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.editorconfig.configmanagement.extended
 
 import com.intellij.application.options.CodeStyle
@@ -13,7 +15,6 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
@@ -31,7 +32,6 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.ec4j.core.ResourceProperties
@@ -49,11 +49,6 @@ import kotlin.time.Duration.Companion.seconds
 
 private val LOG: Logger
   get() = logger<EditorConfigCodeStyleSettingsModifier>()
-
-@Service(Service.Level.PROJECT)
-private class EditorConfigCodeStyleSettingsModifierService(val coroutineScope: CoroutineScope) {
-
-}
 
 class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
   private val reportedErrorIds: MutableSet<String> = HashSet()
@@ -75,9 +70,9 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
     try {
       return runBlockingMaybeCancellable {
         withTimeout(10.seconds) {
-          val (properties, editorConfigs) = Handler.processEditorConfig(project, psiFile)
+          val (properties, editorConfigs) = processEditorConfig(project, psiFile)
           // Apply editorconfig settings for the current editor
-          if (Handler.applyCodeStyleSettings(settings, properties, psiFile)) {
+          if (applyCodeStyleSettings(settings, properties, psiFile)) {
             settings.addDependencies(editorConfigs)
             val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
             navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
@@ -153,71 +148,22 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
     return Utils.isEnabled(CodeStyle.getSettings(project)) && Utils.editorConfigExists(project)
   }
 
-  override fun getName(): String {
-    return message("editorconfig")
-  }
+  override fun getName(): String = message("editorconfig")
 
   override fun getDisablingFunction(project: Project): Consumer<CodeStyleSettings> {
     return Consumer { settings: CodeStyleSettings ->
-      val editorConfigSettings = settings.getCustomSettings(
-        EditorConfigSettings::class.java)
+      val editorConfigSettings = settings.getCustomSettings(EditorConfigSettings::class.java)
       editorConfigSettings.ENABLED = false
     }
   }
 
   // not a companion object to load less bytecode simultaneously with EditorConfigCodeStyleSettingsModifier
   object Handler {
-    @JvmStatic
     internal fun isEnabledInTests() = ourEnabledInTestOnly
 
-    @JvmStatic
     @TestOnly
     fun setEnabledInTests(isEnabledInTests: Boolean) {
       ourEnabledInTestOnly = isEnabledInTests
-    }
-
-    internal fun applyCodeStyleSettings(settings: TransientCodeStyleSettings,
-                                        properties: ResourceProperties,
-                                        file: PsiFile): Boolean {
-      val processed: MutableSet<String> = HashSet()
-      var isModified = false
-      for (mapper in getMappers(settings, properties, file.language)) {
-        processed.clear()
-        isModified = isModified or processOptions(properties = properties,
-                                                  settings = settings,
-                                                  fileType = file.fileType,
-                                                  mapper = mapper,
-                                                  languageSpecific = false,
-                                                  processed = processed)
-        isModified = isModified or processOptions(properties = properties,
-                                                  settings = settings,
-                                                  fileType = file.fileType,
-                                                  mapper = mapper,
-                                                  languageSpecific = true,
-                                                  processed = processed)
-      }
-      return isModified
-    }
-
-    internal fun processEditorConfig(project: Project, psiFile: PsiFile): Pair<ResourceProperties, List<VirtualFile>> {
-      try {
-        val file = psiFile.virtualFile
-        val filePath = Utils.getFilePath(project, file)
-        if (filePath != null) {
-          return SettingsProviderComponent.getInstance(project).getPropertiesAndEditorConfigs(file)
-        }
-        else {
-          if (VfsUtilCore.isBrokenLink(file)) {
-            LOG.warn(file.presentableUrl + " is a broken link")
-          }
-        }
-      }
-      catch (e: Exception) { // TODO exceptions when parsing
-        // Parsing exceptions may occur with incomplete files which is a normal case when .editorconfig is being edited.
-        // Thus, the error is logged only when debug mode is enabled.
-        LOG.debug(e)
-      }
-      return Pair(ResourceProperties.Builder().build(), emptyList())
     }
   }
 }
@@ -237,7 +183,12 @@ private fun processOptions(properties: ResourceProperties,
     val intellijName = EditorConfigIntellijNameUtil.toIntellijName(optionKey)
     val accessor = findAccessor(mapper, intellijName, langPrefix)
     if (accessor != null) {
-      val `val` = preprocessValue(accessor, properties, settings, fileType, optionKey, prop.sourceValue)
+      val `val` = preprocessValue(accessor = accessor,
+                                  properties = properties,
+                                  settings = settings,
+                                  fileType = fileType,
+                                  optionKey = optionKey,
+                                  rawValue = prop.sourceValue)
       for (dependency in getDependentProperties(optionKey, langPrefix)) {
         if (!processed.contains(dependency)) {
           val dependencyAccessor = findAccessor(mapper, dependency, null)
@@ -255,7 +206,9 @@ private fun processOptions(properties: ResourceProperties,
 
 private fun getDependentProperties(property: String, langPrefix: String?): List<String> {
   var stripped = property.removePrefix(EditorConfigIntellijNameUtil.IDE_PREFIX)
-  if (langPrefix != null) stripped = stripped.removePrefix(langPrefix)
+  if (langPrefix != null) {
+    stripped = stripped.removePrefix(langPrefix)
+  }
   return when (stripped) {
     "indent_size" -> listOf("continuation_indent_size")
     else -> emptyList()
@@ -310,14 +263,14 @@ private fun findAccessor(mapper: AbstractCodeStylePropertyMapper,
   return null
 }
 
-private fun getExplicitTabSize(properties: ResourceProperties): String? = properties.properties["tab_width"]?.sourceValue
+private fun getExplicitTabSize(properties: ResourceProperties): String? = properties.properties.get("tab_width")?.sourceValue
 
 private fun getDefaultTabSize(settings: CodeStyleSettings, fileType: FileType): String {
   return settings.getIndentOptions(fileType).TAB_SIZE.toString()
 }
 
 private fun isTabIndent(properties: ResourceProperties): Boolean {
-  return properties.properties["indent_style"].let { prop ->
+  return properties.properties.get("indent_style").let { prop ->
     prop != null && prop.sourceValue == "tab"
   }
 }
@@ -326,37 +279,35 @@ private fun getMappers(settings: TransientCodeStyleSettings,
                        properties: ResourceProperties,
                        fileBaseLanguage: Language): Collection<AbstractCodeStylePropertyMapper> {
   return buildSet {
-    getLanguageCodeStyleProviders(properties, fileBaseLanguage)
-      .mapTo(this) { provider -> provider.getPropertyMapper(settings) }
+    getLanguageCodeStyleProviders(properties, fileBaseLanguage).mapTo(this) { it.getPropertyMapper(settings) }
     add(GeneralCodeStylePropertyMapper(settings))
   }
 }
 
 private fun getLanguageCodeStyleProviders(properties: ResourceProperties,
                                           fileBaseLanguage: Language): Collection<LanguageCodeStyleSettingsProvider> {
-  val providers: MutableSet<LanguageCodeStyleSettingsProvider> = HashSet()
-  val mainProvider = LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(fileBaseLanguage)
-  if (mainProvider != null) {
-    providers.add(mainProvider)
+  val providers = LinkedHashSet<LanguageCodeStyleSettingsProvider>()
+  LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(fileBaseLanguage)?.let {
+    providers.add(it)
   }
+
   for (langId in getLanguageIds(properties)) {
-    if (langId != "any") {
-      val additionalProvider = LanguageCodeStyleSettingsProvider.findByExternalLanguageId(langId)
-      if (additionalProvider != null) {
-        providers.add(additionalProvider)
-      }
-    }
-    else {
+    if (langId == "any") {
       providers.clear()
       providers.addAll(LanguageCodeStyleSettingsProvider.getAllProviders())
       break
+    }
+    else {
+      LanguageCodeStyleSettingsProvider.findByExternalLanguageId(langId)?.let {
+        providers.add(it)
+      }
     }
   }
   return providers
 }
 
 private fun getLanguageIds(properties: ResourceProperties): Collection<String> {
-  val langIds = HashSet<String>()
+  val langIds = LinkedHashSet<String>()
   for (key in properties.properties.keys) {
     if (EditorConfigIntellijNameUtil.isIndentProperty(key)) {
       langIds.add("any")
@@ -367,4 +318,45 @@ private fun getLanguageIds(properties: ResourceProperties): Collection<String> {
     }
   }
   return langIds
+}
+
+private fun applyCodeStyleSettings(settings: TransientCodeStyleSettings, properties: ResourceProperties, file: PsiFile): Boolean {
+  val processed = HashSet<String>()
+  var isModified = false
+  for (mapper in getMappers(settings = settings, properties = properties, fileBaseLanguage = file.language)) {
+    processed.clear()
+    isModified = isModified or processOptions(properties = properties,
+                                              settings = settings,
+                                              fileType = file.fileType,
+                                              mapper = mapper,
+                                              languageSpecific = false,
+                                              processed = processed)
+    isModified = isModified or processOptions(properties = properties,
+                                              settings = settings,
+                                              fileType = file.fileType,
+                                              mapper = mapper,
+                                              languageSpecific = true,
+                                              processed = processed)
+  }
+  return isModified
+}
+
+private fun processEditorConfig(project: Project, psiFile: PsiFile): Pair<ResourceProperties, List<VirtualFile>> {
+  try {
+    val file = psiFile.virtualFile
+    val filePath = Utils.getFilePath(project, file)
+    if (filePath != null) {
+      return SettingsProviderComponent.getInstance(project).getPropertiesAndEditorConfigs(file)
+    }
+    else if (VfsUtilCore.isBrokenLink(file)) {
+      LOG.warn("${file.presentableUrl} is a broken link")
+    }
+  }
+  catch (e: Exception) { // TODO exceptions when parsing
+    // Parsing exceptions may occur with incomplete files
+    // which is a normal case when .editorconfig is being edited.
+    // Thus, the error is logged only when debug mode is enabled.
+    LOG.debug(e)
+  }
+  return Pair(ResourceProperties.Builder().build(), emptyList())
 }
