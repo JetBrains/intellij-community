@@ -158,11 +158,6 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
       }
     }
 
-    private val mavenConsole: MavenConsole
-      get() {
-        return BTWMavenConsole(project, generalSettings.outputLevel, generalSettings.isPrintErrorStackTraces)
-      }
-
     private fun doImport(): ImportResult {
       project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).importStarted()
 
@@ -244,13 +239,13 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
     val onCompletion = Consumer<MavenProjectResolutionResult> { resolutionResult: MavenProjectResolutionResult ->
       schedulePluginResolution(resolutionResult.projectsWithUnresolvedPlugins)
       if (hasScheduledProjects()) {
+        //val createdModules = importMavenProjectsSync()
+        //result.setResult(createdModules)
         scheduleImportChangedProjects().processed(result)
       }
       else {
         result.setResult(emptyList())
-        myProject.messageBus.syncPublisher(MavenImportListener.TOPIC)
-          .importFinished(emptyList(),
-                          emptyList())
+        myProject.messageBus.syncPublisher(MavenImportListener.TOPIC).importFinished(emptyList(), emptyList())
         fireProjectImportCompleted()
       }
       callback?.run()
@@ -259,5 +254,10 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
     myResolvingProcessor.scheduleTask(MavenProjectsProcessorResolvingTask(toResolve, generalSettings, projectsTree, onCompletion))
     return result
   }
+
+  private val mavenConsole: MavenConsole
+    get() {
+      return BTWMavenConsole(project, generalSettings.outputLevel, generalSettings.isPrintErrorStackTraces)
+    }
 
 }
