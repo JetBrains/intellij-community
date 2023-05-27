@@ -152,7 +152,7 @@ public class RegistryValue {
     final String s = get(myKey, null, true);
     if (s != null) {
       Color color = ColorHexUtil.fromHex(s, null);
-      if (color != null && myKey.contains("color")) {
+      if (color != null && (myKey.endsWith(".color") || myKey.endsWith(".color.dark") || myKey.endsWith(".color.light"))) {
         return color;
       }
       final String[] rgb = s.split(",");
