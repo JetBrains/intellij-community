@@ -11,5 +11,5 @@ import kotlin.coroutines.CoroutineContext
 class InitAppContext(
   @JvmField val context: CoroutineContext,
   @JvmField val args: List<String>,
-  @JvmField val appDeferred: Deferred<Pair<Application, Job>>,
+  @JvmField val appDeferred: Deferred<Pair<Application, Deferred<Job>>>,
 )

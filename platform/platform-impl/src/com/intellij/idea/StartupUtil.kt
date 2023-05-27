@@ -375,7 +375,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  // only here as the last - it is a heavy-weight (~350ms) activity, let's first schedule a more important tasks
+  // only here as the last - it is a heavy-weight (~350ms) activity, let's first schedule more important tasks
   if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
     launch(CoroutineName("coroutine debug probes init")) {
       enableCoroutineDump()
@@ -471,7 +471,7 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
       // loading is started above, here we just "join" it
       app.serviceAsync<PathMacros>()
 
-      // required for indexing tasks (see JavaSourceModuleNameIndex for example)
+      // required for indexing tasks (see JavaSourceModuleNameIndex, for example)
       // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
       app.serviceAsync<PropertiesComponent>()
 

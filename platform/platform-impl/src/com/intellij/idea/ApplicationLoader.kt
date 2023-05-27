@@ -63,14 +63,12 @@ private suspend fun initApplicationImpl(args: List<String>,
                                         pluginSet: PluginSet,
                                         app: ApplicationImpl,
                                         asyncScope: CoroutineScope,
-                                        preloadCriticalServicesJob: Job) {
+                                        preloadCriticalServicesJob: Deferred<Job>) {
   val deferredStarter = subtask("app starter creation") {
     createAppStarterAsync(args)
   }
 
   val appInitializedListeners = subtask("app preloading") {
-    preloadCriticalServicesJob.join()
-
     subtask("app service preloading (sync)") {
       app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this, asyncScope = asyncScope)
     }
@@ -99,6 +97,7 @@ private suspend fun initApplicationImpl(args: List<String>,
       addActivateAndWindowsCliListeners()
     }
 
+    preloadCriticalServicesJob.await().join()
     appInitListeners.await()
   }
 
