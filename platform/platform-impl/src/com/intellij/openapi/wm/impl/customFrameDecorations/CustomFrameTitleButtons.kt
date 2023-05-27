@@ -83,7 +83,7 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
   private val activeCloseStyle = closeStyleBuilder.build()
 
   private val inactiveCloseStyle = closeStyleBuilder
-    .updateDefault() {
+    .updateDefault {
       icon = closeInactive
     }.build()
 

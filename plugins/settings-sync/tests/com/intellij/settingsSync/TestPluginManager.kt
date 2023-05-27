@@ -11,7 +11,7 @@ import org.junit.Assert
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal class TestPluginManager : AbstractPluginManagerProxy() {
-  val installer = TestPluginInstaller() {
+  val installer = TestPluginInstaller {
     addPluginDescriptors(TestPluginDescriptor.ALL[it]!!)
   }
   private val ownPluginDescriptors = HashMap<PluginId, IdeaPluginDescriptor>()

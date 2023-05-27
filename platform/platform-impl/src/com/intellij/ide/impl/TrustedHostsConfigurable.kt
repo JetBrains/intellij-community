@@ -51,7 +51,7 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
       // Remove this loop with EP_NAME_OLD
       for (additionalPanel in EP_NAME_OLD.extensionList) {
         // RIDER-92645 Port TrustedSolutionConfigurablePanelProvider to Kotlin UI DSL 2
-        val panel = com.intellij.ui.layout.panel() {
+        val panel = com.intellij.ui.layout.panel {
           row {
             additionalPanel.getCellBuilder(this)
           }

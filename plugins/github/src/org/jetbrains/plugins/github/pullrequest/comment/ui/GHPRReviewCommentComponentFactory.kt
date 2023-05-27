@@ -106,7 +106,7 @@ class GHPRReviewCommentComponentFactory(
       }
       indexes.add(comment.length)
 
-      return indexes.zipWithNext() { start, end -> start..end }
+      return indexes.zipWithNext { start, end -> start..end }
     }
   }
 }

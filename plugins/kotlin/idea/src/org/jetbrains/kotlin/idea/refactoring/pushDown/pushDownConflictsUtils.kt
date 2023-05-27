@@ -139,7 +139,7 @@ private fun checkMemberClashing(
             targetClass.declarations
                 .asSequence()
                 .filterIsInstance<KtClassOrObject>()
-                .firstOrNull() { it.name == member.name }
+                .firstOrNull { it.name == member.name }
                 ?.let {
                     val message = KotlinBundle.message(
                         "text.0.already.contains.nested.class.1",
