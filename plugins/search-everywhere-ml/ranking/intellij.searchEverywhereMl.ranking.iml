@@ -107,8 +107,8 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.common" />
-    <orderEntry type="module" module-name="intellij.searchEverywhereMl.vcs" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.searchEverywhereMl.yaml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.vcs" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.yaml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.typos" scope="RUNTIME" />
   </component>
 </module>

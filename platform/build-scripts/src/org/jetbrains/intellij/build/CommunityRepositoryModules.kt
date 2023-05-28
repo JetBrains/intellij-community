@@ -288,8 +288,8 @@ object CommunityRepositoryModules {
       "intellij.searchEverywhereMl",
       "intellij.searchEverywhereMl.ranking",
       "intellij.searchEverywhereMl.common",
-      "intellij.searchEverywhereMl.yaml",
-      "intellij.searchEverywhereMl.vcs",
+      "intellij.searchEverywhereMl.ranking.yaml",
+      "intellij.searchEverywhereMl.ranking.vcs",
       "intellij.searchEverywhereMl.typos"
     )),
     plugin("intellij.platform.testFramework.ui") { spec ->

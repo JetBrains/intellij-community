@@ -9,8 +9,8 @@
   ]]></description>
 
   <content>
-    <module name="intellij.searchEverywhereMl.yaml"/>
-    <module name="intellij.searchEverywhereMl.vcs"/>
+    <module name="intellij.searchEverywhereMl.ranking.yaml"/>
+    <module name="intellij.searchEverywhereMl.ranking.vcs"/>
   </content>
 
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>

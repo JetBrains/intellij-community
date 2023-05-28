@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.ide.actions.searcheverywhere.ml.vcs">
+<idea-plugin package="com.intellij.searchEverywhereMl.ranking.vcs">
 
   <dependencies>
     <plugin id="Git4Idea"/>
@@ -6,6 +6,6 @@
 
   <extensions defaultExtensionNs="com.intellij.searcheverywhere.ml">
     <searchEverywhereElementFeaturesProvider
-      implementation="com.intellij.ide.actions.searcheverywhere.ml.vcs.features.SearchEverywhereVcsFileFeaturesProvider" />
+      implementation="com.intellij.searchEverywhereMl.ranking.vcs.SearchEverywhereVcsFileFeaturesProvider" />
   </extensions>
 </idea-plugin>

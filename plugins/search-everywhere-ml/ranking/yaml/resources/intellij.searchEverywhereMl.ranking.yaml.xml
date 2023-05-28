@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.ide.actions.searcheverywhere.ml.yaml">
+<idea-plugin package="com.intellij.searchEverywhereMl.ranking.yaml">
 
   <dependencies>
     <plugin id="org.jetbrains.plugins.yaml"/>
@@ -6,11 +6,11 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <statistician key="searchEverywhere"
-                  implementationClass="com.intellij.ide.actions.searcheverywhere.ml.yaml.features.statistician.SEYamlKeyStatistician"/>
+                  implementationClass="com.intellij.searchEverywhereMl.ranking.yaml.statistician.SEYamlKeyStatistician"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.searcheverywhere.ml">
     <searchEverywhereElementFeaturesProvider
-      implementation="com.intellij.ide.actions.searcheverywhere.ml.yaml.features.SEYamlKeyFeaturesProvider"/>
+      implementation="com.intellij.searchEverywhereMl.ranking.yaml.SEYamlKeyFeaturesProvider"/>
   </extensions>
 </idea-plugin>

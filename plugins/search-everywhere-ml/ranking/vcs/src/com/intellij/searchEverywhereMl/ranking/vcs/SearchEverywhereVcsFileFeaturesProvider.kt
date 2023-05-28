@@ -1,4 +1,4 @@
-package com.intellij.ide.actions.searcheverywhere.ml.vcs.features
+package com.intellij.searchEverywhereMl.ranking.vcs
 
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
