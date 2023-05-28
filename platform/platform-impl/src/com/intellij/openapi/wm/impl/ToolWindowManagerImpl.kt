@@ -1365,7 +1365,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   override fun invokeLater(runnable: Runnable) {
     if (!toolWindowSetInitializer.addToPendingTasksIfNotInitialized(runnable)) {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, project.disposed)
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+        runnable.run()
+      }
     }
   }
 
