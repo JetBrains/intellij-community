@@ -30,7 +30,7 @@ import java.util.function.Supplier
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
   suspend fun importMavenProjects(): List<Module>
-  suspend fun importMavenProjects(projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>): List<Module>
+  suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
   fun importMavenProjectsSync(): List<Module>
   fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module>
 }
@@ -43,8 +43,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return createdModules
   }
 
-  override suspend fun importMavenProjects(projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>): List<Module> {
-    val createdModules = doImportMavenProjects(projectsToImportWithChanges, false)
+  override suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
+    val createdModules = doImportMavenProjects(projectsToImport, false)
     fireProjectImportCompleted()
     return createdModules
   }
@@ -57,10 +57,10 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return prepareImporter(modelsProvider, false).importMavenProjectsBlocking()
   }
 
-  private suspend fun doImportMavenProjects(projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+  private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
                                             importModuleGroupsRequired: Boolean): List<Module> {
     val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
-    return prepareImporter(modelsProvider, projectsToImportWithChanges, importModuleGroupsRequired).importMavenProjects()
+    return prepareImporter(modelsProvider, projectsToImport, importModuleGroupsRequired).importMavenProjects()
   }
 
   private suspend fun doImportMavenProjects(importModuleGroupsRequired: Boolean): List<Module> {
@@ -70,23 +70,23 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider,
                               importModuleGroupsRequired: Boolean): MavenProjectsManagerImporter {
-    val projectsToImportWithChanges = Collections.unmodifiableMap(LinkedHashMap(myProjectsToImport))
-    projectsToImportWithChanges.forEach { (key: MavenProject, value: MavenProjectChanges) ->
+    val projectsToImport = Collections.unmodifiableMap(LinkedHashMap(myProjectsToImport))
+    projectsToImport.forEach { (key: MavenProject, value: MavenProjectChanges) ->
       myProjectsToImport.remove(key, value)
     }
     return prepareImporter(
       modelsProvider,
-      projectsToImportWithChanges,
+      projectsToImport,
       importModuleGroupsRequired
     )
   }
 
   private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider,
-                              projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+                              projectsToImport: Map<MavenProject, MavenProjectChanges>,
                               importModuleGroupsRequired: Boolean): MavenProjectsManagerImporter {
     return MavenProjectsManagerImporter(
       modelsProvider,
-      projectsToImportWithChanges,
+      projectsToImport,
       importModuleGroupsRequired
     )
   }
@@ -94,7 +94,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private data class ImportResult(val createdModules: List<Module>, val postTasks: List<MavenProjectsProcessorTask>)
 
   private inner class MavenProjectsManagerImporter(private val modelsProvider: IdeModifiableModelsProvider,
-                                                   private val projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+                                                   private val projectsToImport: Map<MavenProject, MavenProjectChanges>,
                                                    private val importModuleGroupsRequired: Boolean) {
     private val importingTitle = MavenProjectBundle.message("maven.project.importing")
     private val postProcessingTitle = MavenProjectBundle.message("maven.post.processing")
@@ -166,7 +166,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
       val createdModules = importResult.createdModules
 
-      project.messageBus.syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImportWithChanges.keys, createdModules)
+      project.messageBus.syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImport.keys, createdModules)
 
       return importResult
     }
@@ -177,7 +177,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
       try {
         val projectImporter = MavenProjectImporter.createImporter(
-          project, projectsTree, projectsToImportWithChanges, importModuleGroupsRequired,
+          project, projectsTree, projectsToImport, importModuleGroupsRequired,
           modelsProvider, importingSettings, myPreviewModule, activity
         )
         val postTasks = projectImporter.importProject()
@@ -218,8 +218,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   private suspend fun importAllProjects() {
-    val projectsToImportWithChanges = projectsTree.projects.associateBy({ it }, { MavenProjectChanges.ALL })
-    importMavenProjects(projectsToImportWithChanges)
+    val projectsToImport = projectsTree.projects.associateBy({ it }, { MavenProjectChanges.ALL })
+    importMavenProjects(projectsToImport)
   }
 
   override fun scheduleResolveSync(callback: Runnable?): AsyncPromise<List<Module>> {
