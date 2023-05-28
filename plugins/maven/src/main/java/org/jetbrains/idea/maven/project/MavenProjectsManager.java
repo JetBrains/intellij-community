@@ -968,7 +968,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       });
     };
 
-    return scheduleResolve(callback);
+    return scheduleResolveSync(callback);
   }
 
   public void showServerException(Throwable e) {
@@ -1009,7 +1009,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return promise;
   }
 
-  protected abstract AsyncPromise<List<Module>> scheduleResolve(Runnable callback);
+  protected abstract AsyncPromise<List<Module>> scheduleResolveSync(Runnable callback);
 
   public void evaluateEffectivePom(@NotNull final MavenProject mavenProject, @NotNull final NullableConsumer<? super String> consumer) {
     runWhenFullyOpen(() -> myResolvingProcessor.scheduleTask(new MavenProjectsProcessorTask() {
@@ -1051,7 +1051,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @TestOnly
   public void scheduleResolveInTests(Collection<MavenProject> projects) {
     scheduleForNextResolve(projects);
-    scheduleResolve(null);
+    scheduleResolveSync(null);
   }
 
   @TestOnly

@@ -20,12 +20,11 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
-import org.jetbrains.idea.maven.project.MavenProjectResolver.MavenProjectResolutionResult
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.runBlockingCancellableUnderIndicator
+import org.jetbrains.idea.maven.utils.withBackgroundProgressIfApplicable
 import java.util.*
-import java.util.function.Consumer
 import java.util.function.Supplier
 
 @ApiStatus.Experimental
@@ -223,21 +222,39 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     importMavenProjects(projectsToImportWithChanges)
   }
 
-  override fun scheduleResolve(callback: Runnable?): AsyncPromise<List<Module>> {
+  override fun scheduleResolveSync(callback: Runnable?): AsyncPromise<List<Module>> {
+    return runBlockingCancellableUnderIndicator { scheduleResolve(callback) }
+  }
+
+  private suspend fun scheduleResolve(callback: Runnable?): AsyncPromise<List<Module>> {
     val result = AsyncPromise<List<Module>>()
-    val toResolve = LinkedHashSet(myProjectsToResolve)
-    myProjectsToResolve.removeAll(toResolve)
 
-    val onCompletion = Consumer<MavenProjectResolutionResult> { resolutionResult: MavenProjectResolutionResult ->
-      schedulePluginResolution(resolutionResult.projectsWithUnresolvedPlugins)
+    val projectsToResolve = LinkedHashSet(myProjectsToResolve)
+    myProjectsToResolve.removeAll(projectsToResolve)
 
-      val createdModules = importMavenProjectsSync()
-      result.setResult(createdModules)
+    val resolver = MavenProjectResolver.getInstance(project)
+    val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
 
-      callback?.run()
+    val resolutionResult = withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.resolving"), true) {
+      val activity = importActivityStarted(project, MavenUtil.SYSTEM_ID) {
+        listOf(ProjectImportCollector.TASK_CLASS.with(MavenProjectsProcessorResolvingTask::class.java))
+      }
+      try {
+        return@withBackgroundProgressIfApplicable resolver.resolve(
+          projectsToResolve, projectsTree, generalSettings, embeddersManager, mavenConsole, indicator)
+      }
+      finally {
+        activity.finished()
+      }
     }
 
-    myResolvingProcessor.scheduleTask(MavenProjectsProcessorResolvingTask(toResolve, generalSettings, projectsTree, onCompletion))
+    schedulePluginResolution(resolutionResult.projectsWithUnresolvedPlugins)
+
+    val createdModules = importMavenProjects()
+    result.setResult(createdModules)
+
+    callback?.run()
+
     return result
   }
 
