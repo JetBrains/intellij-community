@@ -259,6 +259,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testAddingAndRemovingManagedFiles() {
+    configConfirmationForYesAnswer();
+
     VirtualFile m1 = createModulePom("m1",
                                      """
                                        <groupId>test</groupId>
@@ -1576,6 +1578,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void shouldUnsetMavenizedIfManagedFilesWasRemoved(){
+    configConfirmationForYesAnswer();
+
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
