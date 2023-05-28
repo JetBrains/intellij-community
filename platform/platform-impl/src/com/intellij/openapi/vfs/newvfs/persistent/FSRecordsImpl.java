@@ -954,7 +954,8 @@ public final class FSRecordsImpl {
 
   @NotNull AttributeOutputStream writeAttribute(int fileId,
                                                 @NotNull FileAttribute attribute) {
-    //TODO RC: we need to check fileId here, and throw exception if it is not valid
+    //TODO RC: check fileId here, and throw exception if it is not valid
+    //         (fileId will be checked on stream.close(), but in general it is better to do it earlier)
     return attributeAccessor.writeAttribute(fileId, attribute);
   }
 

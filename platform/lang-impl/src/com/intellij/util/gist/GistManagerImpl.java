@@ -15,8 +15,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.gist.storage.GistStorage;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -25,25 +26,27 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 public final class GistManagerImpl extends GistManager {
   private static final Logger LOG = Logger.getInstance(GistManagerImpl.class);
+
+  private static final boolean USE_NEW_IMPLEMENTATION = SystemProperties.getBooleanProperty("idea.gist.use-new-impl", true);
 
   private static final String GIST_REINDEX_COUNT_PROPERTY_NAME = "file.gist.reindex.count";
   private static final Key<AtomicInteger> GIST_INVALIDATION_COUNT_KEY = Key.create("virtual.file.gist.invalidation.count");
 
   private static final Map<String, VirtualFileGist<?>> ourGists = ContainerUtil.createConcurrentWeakValueMap();
 
+
   private final AtomicInteger myReindexCount =
     new AtomicInteger(PropertiesComponent.getInstance().getInt(GIST_REINDEX_COUNT_PROPERTY_NAME, 0));
 
-  private final MergingUpdateQueue myDropCachesQueue = new MergingUpdateQueue("gist-manager-drop-caches", 500, true, null)
-    .setRestartTimerOnAdd(true);
+  private final MergingUpdateQueue myDropCachesQueue = new MergingUpdateQueue("gist-manager-drop-caches", 500, USE_NEW_IMPLEMENTATION, null)
+    .setRestartTimerOnAdd(USE_NEW_IMPLEMENTATION);
   private final AtomicInteger myMergingDropCachesRequestors = new AtomicInteger();
+
+  private final GistStorage gistStorage;
 
   static final class MyBulkFileListener implements BulkFileListener {
     @Override
@@ -62,12 +65,7 @@ public final class GistManagerImpl extends GistManager {
   }
 
   public GistManagerImpl() {
-    //Setup cleanup task for old Gists:
-    // remove <caches>/huge-gists/<fsrecords-timestamp> dirs there <fsrecords-timestamp> != FSRecords.getCreatedTimestamp()
-    AppExecutorUtil.getAppScheduledExecutorService().schedule(
-      (Runnable)VirtualFileGistImpl::cleanupAncientGistsDirs,
-      15, SECONDS
-    );
+    gistStorage = GistStorage.getInstance();
   }
 
   @NotNull
@@ -81,7 +79,14 @@ public final class GistManagerImpl extends GistManager {
     }
 
     //noinspection unchecked
-    return (VirtualFileGist<Data>)ourGists.computeIfAbsent(id, __ -> new VirtualFileGistImpl<>(id, version, externalizer, calcData));
+    return (VirtualFileGist<Data>)ourGists.computeIfAbsent(id, __ -> {
+      if (USE_NEW_IMPLEMENTATION) {
+        return new VirtualFileGistOverGistStorage<>(gistStorage.newGist(id, version, externalizer), calcData);
+      }
+      else {
+        return new VirtualFileGistImpl<>(id, version, externalizer, calcData);
+      }
+    });
   }
 
   @NotNull
@@ -149,9 +154,26 @@ public final class GistManagerImpl extends GistManager {
 
   static int getGistStamp(@NotNull VirtualFile file) {
     AtomicInteger invalidationCount = file.getUserData(GIST_INVALIDATION_COUNT_KEY);
-    return Objects.hash(file.getModificationCount(),
-                        ((GistManagerImpl)getInstance()).getReindexCount(),
-                        invalidationCount != null ? invalidationCount.get() : 0);
+    int reindexCount = ((GistManagerImpl)getInstance()).getReindexCount();
+    long fileModificationCount = file.getModificationCount();
+    return mix(
+      mix(
+        mix(Long.hashCode(fileModificationCount))
+        + reindexCount
+      )
+      + (invalidationCount != null ? invalidationCount.get() : 0)
+    );
+
+    //return Objects.hash(file.getModificationCount(),
+    //                    ((GistManagerImpl)getInstance()).getReindexCount(),
+    //                    invalidationCount != null ? invalidationCount.get() : 0);
+  }
+
+  private static final int INT_PHI = 0x9E3779B9;
+
+  static int mix(int x) {
+    final int h = x * INT_PHI;
+    return h ^ (h >>> 16);
   }
 
   @TestOnly

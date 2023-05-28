@@ -50,6 +50,7 @@ import static com.intellij.util.SystemProperties.getIntProperty;
 import static com.intellij.util.io.IOUtil.KiB;
 import static java.nio.file.StandardOpenOption.*;
 
+/** {@link VirtualFileGistOverGistStorage} is a replacement -- keep this class for a while */
 class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
   private static final Logger LOG = Logger.getInstance(VirtualFileGist.class);
 
@@ -216,7 +217,7 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
         attributeStream.writeByte(VALUE_KIND_INLINE);
         attributeStream.write(outputStream.getInternalBuffer(), 0, outputStream.size());
 
-        if(wasStoredInDedicatedFileBefore){
+        if (wasStoredInDedicatedFileBefore) {
           Path gistPath = dedicatedGistFilePath(file);
           FileUtilRt.deleteRecursively(gistPath);
         }
@@ -238,6 +239,8 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
     FactoryMap.create(key -> new FileAttribute(key.first, key.second, false));
 
   private FileAttribute getFileAttribute(@Nullable Project project) {
+    //TODO RC: we create a new VFS attribute for each project -- but never clean up
+    //         attributes for projects that are e.g. deleted. 
     synchronized (attributes) {
       return attributes.get(
         Pair.create(id + (project == null ? "###noProject###" : project.getLocationHash()), version + INTERNAL_VERSION));

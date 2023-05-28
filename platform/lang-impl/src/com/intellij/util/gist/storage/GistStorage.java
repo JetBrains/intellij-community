@@ -59,11 +59,11 @@ public abstract class GistStorage {
      * project = null means data is not attached to any specific project,
      * i.e. it is global (application-wise) data
      */
-    @Nullable GistData<Data> getProjectData(@Nullable Project project,
+    @NotNull GistData<Data> getProjectData(@Nullable Project project,
                                             @NotNull VirtualFile file,
                                             int expectedGistStamp) throws IOException;
 
-    default @Nullable GistData<Data> getGlobalData(@NotNull VirtualFile file,
+    default @NotNull GistData<Data> getGlobalData(@NotNull VirtualFile file,
                                                    int expectedGistStamp) throws IOException {
       return getProjectData(null, file, expectedGistStamp);
     }

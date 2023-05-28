@@ -51,10 +51,10 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testGistGetData_ReturnsDataAsPerGistCalculator_EvenForHugeDataSize() {
-    if(!assumeHugeGistsAreEnabledAndSafeToTest()){
+    if (!assumeHugeGistsAreEnabledAndSafeToTest()) {
       return;
     }
-    
+
     int hugeGistSize = MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES + 10;
 
     VirtualFileGist<String> gist = gistOfFileContent();
@@ -76,7 +76,7 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testGistGetData_CachesDataSuccessfully_ForTransitionsBetweenHugeAndRegularGistSize() throws IOException {
-    if(!assumeHugeGistsAreEnabledAndSafeToTest()){
+    if (!assumeHugeGistsAreEnabledAndSafeToTest()) {
       return;
     }
 
@@ -85,6 +85,10 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
 
     IntRef invocationCounter = new IntRef();
     VirtualFileGist<String> gistOfFileContent = gistOfFileContent(invocationCounter);
+    if (!(gistOfFileContent instanceof VirtualFileGistImpl)) {
+      // We check implementation-specific detail => skip the test if different impl is used:
+      return;
+    }
 
     String hugeFileContent = "a".repeat(hugeGistSize);
     String notHugeFileContent = "b".repeat(notHugeGistSize);
@@ -144,11 +148,11 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private static boolean assumeHugeGistsAreEnabledAndSafeToTest() {
-    if(MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES <= 0){
+    if (MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES <= 0) {
       //"Huge Gists saving to dedicated files is disabled -- skip the test"
       return false;
     }
-    if(MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES >= 50 * IOUtil.MiB){
+    if (MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES >= 50 * IOUtil.MiB) {
       //"Max Gists size is too big to test (" + MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES + ", risk of OoM) -- skip the test"
       return false;
     }

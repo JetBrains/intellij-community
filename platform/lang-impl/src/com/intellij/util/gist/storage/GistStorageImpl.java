@@ -3,6 +3,7 @@ package com.intellij.util.gist.storage;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -187,9 +188,9 @@ public class GistStorageImpl extends GistStorage {
     }
 
     @Override
-    public GistData<Data> getProjectData(@Nullable Project project,
-                                         @NotNull VirtualFile file,
-                                         int expectedGistStamp) throws IOException {
+    public @NotNull GistData<Data> getProjectData(@Nullable Project project,
+                                                  @NotNull VirtualFile file,
+                                                  int expectedGistStamp) throws IOException {
       ApplicationManager.getApplication().assertReadAccessAllowed();
       ProgressManager.checkCanceled();
 
@@ -220,7 +221,7 @@ public class GistStorageImpl extends GistStorage {
             Path gistPath = dedicatedGistFilePath(file);
             if (!Files.exists(gistPath)) {
               //looks like data corruption: if gist value was indeed null, we would have stored it as VALUE_KIND_NULL
-              throw new IOException("Gist file [" + gistPath + "] doesn't exists -> corruption?");
+              throw new IOException("Gist file [" + gistPath + "] doesn't exists -> looks like data corruption?");
             }
             try (DataInputStream gistStream = new DataInputStream(Files.newInputStream(gistPath, READ))) {
               return GistData.withData(
@@ -234,7 +235,10 @@ public class GistStorageImpl extends GistStorage {
             throw new IOException("Unrecognized gist.valueKind(=" + persistedGistValueKind + "): incorrect (outdated?) gist format");
         }
       }
-      catch (IOException e) {
+      catch (ProcessCanceledException pce){
+        throw pce;
+      }
+      catch (Exception e) {
         throw new IOException("Can't read " + this, e);
       }
     }
@@ -244,7 +248,9 @@ public class GistStorageImpl extends GistStorage {
                                @NotNull VirtualFile file,
                                @Nullable Data data,
                                int gistStamp) throws IOException {
-      ApplicationManager.getApplication().assertWriteAccessAllowed();
+      //RC: Do we want to allow put-operations under read-action only?
+      //    Maybe assert_Write_AccessAllowed()?
+      ApplicationManager.getApplication().assertReadAccessAllowed();
       ProgressManager.checkCanceled();
 
       //attribute content: <valueKind>, <gistData>?
@@ -297,8 +303,11 @@ public class GistStorageImpl extends GistStorage {
           }
         }
       }
-      catch (Throwable e) {
-        throw new IOException("Can't cache gist[" + id + "]@[" + file + "] -- gist will be re-calculated again on next request", e);
+      catch (ProcessCanceledException pce) {
+        throw pce;
+      }
+      catch (Exception e) {
+        throw new IOException("Can't store gist[" + id + "]@[" + file + "]", e);
       }
     }
 
