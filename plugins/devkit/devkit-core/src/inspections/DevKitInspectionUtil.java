@@ -26,7 +26,7 @@ public final class DevKitInspectionUtil {
     return isAllowed(file, __ -> true);
   }
 
-  public static boolean isClassAvailable(ProblemsHolder holder, @NonNls String classFqn) {
+  public static boolean isClassAvailable(@NotNull ProblemsHolder holder, @NonNls String classFqn) {
     return JavaPsiFacade.getInstance(holder.getProject()).findClass(classFqn, holder.getFile().getResolveScope()) != null;
   }
 
