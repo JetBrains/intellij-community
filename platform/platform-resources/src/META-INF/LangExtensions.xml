@@ -269,8 +269,11 @@
 
     <applicationService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
                         serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
+
     <applicationService serviceInterface="com.intellij.util.gist.GistManager"
                         serviceImplementation="com.intellij.util.gist.GistManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.util.gist.storage.GistStorage"
+                        serviceImplementation="com.intellij.util.gist.storage.GistStorageImpl"/>
 
     <formattingService implementation="com.intellij.formatting.service.ExternalFormatProcessorAdapter" order="first"/>
     <postFormatProcessor implementation="com.intellij.formatting.LineCommentAddSpacePostFormatProcessor"/>
