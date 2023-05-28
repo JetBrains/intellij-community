@@ -764,7 +764,7 @@ object Switcher : BaseSwitcherAction(null) {
       }
 
       private fun getIndexShortcut(index: Int): String {
-        return Strings.toUpperCase(index.toString(radix = index + 1))
+        return Strings.toUpperCase(index.toString(radix = (index + 1).coerceIn(2..36)))
       }
 
       private fun findAppropriateWindow(window: EditorWindow?): EditorWindow? {
