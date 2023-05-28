@@ -6,7 +6,7 @@ import com.intellij.ide.ui.customization.CustomizableActionGroupProvider;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 
-public class XDebugTabCustomizableActionGroupProvider extends CustomizableActionGroupProvider {
+final class XDebugTabCustomizableActionGroupProvider extends CustomizableActionGroupProvider {
   @Override
   public void registerGroups(CustomizableActionGroupRegistrar registrar) {
     registrar.addCustomizableActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP, XDebuggerBundle.message("debug.watches.toolbar"));

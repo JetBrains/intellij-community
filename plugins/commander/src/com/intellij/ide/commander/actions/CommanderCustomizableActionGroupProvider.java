@@ -5,7 +5,7 @@ import com.intellij.ide.commander.CommanderBundle;
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 
-public class CommanderCustomizableActionGroupProvider extends CustomizableActionGroupProvider {
+final class CommanderCustomizableActionGroupProvider extends CustomizableActionGroupProvider {
   @Override
   public void registerGroups(CustomizableActionGroupRegistrar registrar) {
     registrar.addCustomizableActionGroup(IdeActions.GROUP_COMMANDER_POPUP, CommanderBundle.message("commender.view.popup.menu.title"));
