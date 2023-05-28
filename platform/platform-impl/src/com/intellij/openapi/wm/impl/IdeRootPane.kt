@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "LiftReturnOrAssignment")
 
 package com.intellij.openapi.wm.impl
@@ -134,6 +134,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
     else {
       if (isDecoratedMenu) {
+        @Suppress("DEPRECATION")
         JBR.getCustomWindowDecoration().setCustomDecorationEnabled(frame, true)
 
         val selectedEditorFilePath: SelectedEditorFilePath?
@@ -218,17 +219,19 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
   companion object {
     /**
-     * Returns true if menu should be placed in toolbar instead of menu bar
+     * Returns true if a menu should be placed in toolbar instead of menu bar
      */
     internal val isMenuButtonInToolbar: Boolean
       get() = SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && !UISettings.shadowInstance.separateMainMenu && !hideNativeLinuxTitle
 
-    internal val hideNativeLinuxTitle = SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && Registry.`is`("ide.linux.hide.native.title")
+    internal val hideNativeLinuxTitle: Boolean
+      get() = SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && Registry.`is`("ide.linux.hide.native.title", false)
 
     internal fun customizeRawFrame(frame: IdeFrameImpl) {
       // some rootPane is required
       val rootPane = JRootPane()
       if (isDecoratedMenu && !isFloatingMenuBarSupported) {
+        @Suppress("DEPRECATION")
         JBR.getCustomWindowDecoration().setCustomDecorationEnabled(frame, true)
       }
       frame.doSetRootPane(rootPane)
@@ -262,7 +265,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
   }
 
   override fun getAccessibleContext(): AccessibleContext {
-    return if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       if (accessibleContext == null) {
         // We need to turn IdeRootPane into an accessible group in order to make notifications announcing working
         accessibleContext = object : AccessibleJRootPane() {
@@ -275,9 +278,11 @@ open class IdeRootPane internal constructor(frame: JFrame,
           }
         }
       }
-      accessibleContext
+      return accessibleContext
     }
-    else super.getAccessibleContext()
+    else {
+      return super.getAccessibleContext()
+    }
   }
 
   open fun getToolWindowPane(): ToolWindowPane = toolWindowPane!!
@@ -285,7 +290,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
   private fun updateScreenState(isInFullScreen: () -> Boolean) {
     fullScreen = isInFullScreen()
     if (helper is DecoratedHelper) {
-      val isCustomFrameHeaderVisible = !fullScreen || SystemInfo.isMac && !isCompactHeader
+      val isCustomFrameHeaderVisible = !fullScreen || SystemInfoRt.isMac && !isCompactHeader
       helper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
     }
     else if (SystemInfoRt.isXWindow) {
@@ -434,17 +439,13 @@ open class IdeRootPane internal constructor(frame: JFrame,
   }
 
   private fun updateMainMenuVisibility() {
-    val uiSettings = UISettings.shadowInstance
-    val globalMenuVisible = SystemInfoRt.isLinux && GlobalMenuLinux.isPresented()
-    val isNewToolbar = ExperimentalUI.isNewUI()
-
-    // don't show swing-menu when global (system) menu presented
+    // don't show swing-menu when a global (system) menu presented
     val visible = SystemInfo.isMacSystemMenu
                   || fullScreen
                   || (!IdeFrameDecorator.isCustomDecorationActive()
-                      && !globalMenuVisible
-                      && uiSettings.showMainMenu
-                      && (!isMenuButtonInToolbar || isCompactHeader && isNewToolbar)
+                      && !(SystemInfoRt.isLinux && GlobalMenuLinux.isPresented())
+                      && UISettings.shadowInstance.showMainMenu
+                      && (!isMenuButtonInToolbar || isCompactHeader && ExperimentalUI.isNewUI())
                       && !hideNativeLinuxTitle)
 
     if (menuBar != null && visible != menuBar.isVisible) {
