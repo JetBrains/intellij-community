@@ -346,6 +346,8 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testSameFolderAsParent() throws Exception {
+    configConfirmationForYesAnswer();
+
     Assume.assumeFalse(Registry.is("maven.linear.import"));
 
     VirtualFile customPomXml = createProjectSubFile("custompom.xml", createPomXml(
