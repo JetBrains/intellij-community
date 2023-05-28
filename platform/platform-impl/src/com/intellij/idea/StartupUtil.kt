@@ -17,6 +17,7 @@ import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.IntelliJLaf
@@ -504,13 +505,14 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
   }
 
   if (!app.isHeadlessEnvironment) {
+    asyncScope.launch(CoroutineName("ActionManager preloading")) { app.serviceAsync<ActionManager>() }
+    asyncScope.launch(CoroutineName("CustomActionsSchema preloading")) { app.serviceAsync<CustomActionsSchema>() }
     asyncScope.launch {
       // loading is started above, here we just "join" it
       app.serviceAsync<PathMacros>()
 
       subtask("UISettings preloading") { app.serviceAsync<UISettings>() }
       subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
-      subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
     }
   }
 }

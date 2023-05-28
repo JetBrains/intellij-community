@@ -18,6 +18,7 @@ import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -473,6 +474,11 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 }
 
 private class WelcomeFrameMenuBar : IdeMenuBar() {
+  override suspend fun getMainMenuActionGroupAsync(): ActionGroup {
+    val manager = service<ActionManager>()
+    return DefaultActionGroup(manager.getAction(IdeActions.GROUP_FILE), manager.getAction(IdeActions.GROUP_HELP_MENU))
+  }
+
   override fun getMainMenuActionGroup(): ActionGroup {
     val manager = ActionManager.getInstance()
     return DefaultActionGroup(manager.getAction(IdeActions.GROUP_FILE), manager.getAction(IdeActions.GROUP_HELP_MENU))

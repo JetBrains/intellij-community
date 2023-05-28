@@ -155,7 +155,7 @@ public final class CustomizationUtil {
             final AnAction anAction = reorderedChildren.get(actionUrl.getAbsolutePosition());
             if (anAction.getTemplatePresentation().getText() == null
                 ? (componentAction.getTemplatePresentation().getText() != null &&
-                   componentAction.getTemplatePresentation().getText().length() > 0)
+                   !componentAction.getTemplatePresentation().getText().isEmpty())
                 : !anAction.getTemplatePresentation().getText().equals(componentAction.getTemplatePresentation().getText())) {
               continue;
             }
@@ -465,13 +465,13 @@ public final class CustomizationUtil {
    * @param groupId target group ID to be updated
    */
   public static void updateActionGroup(@NotNull List<Object> actions, @NotNull String groupId) {
-    var defaultActionList = getGroupActions(groupId, new CustomActionsSchema());
+    var defaultActionList = getGroupActions(groupId, new CustomActionsSchema(null));
     var diff = new ArrayList<ActionUrl>();
     var groupPath = new ArrayList<>(Arrays.asList("root", CustomActionsSchema.getInstance().getDisplayName(groupId)));
     computeDiff(toActionUrls(groupPath, defaultActionList), toActionUrls(groupPath, actions), diff);
 
     var globalSchema = CustomActionsSchema.getInstance();
-    var tmpSchema = new CustomActionsSchema();
+    var tmpSchema = new CustomActionsSchema(null);
     tmpSchema.copyFrom(globalSchema);
     tmpSchema.getActions().removeIf(url -> Objects.equals(groupPath, url.getGroupPath()));
     tmpSchema.getActions().addAll(diff);
@@ -644,7 +644,7 @@ public final class CustomizationUtil {
 
         @Override
         public void update(@NotNull AnActionEvent e) {
-          CustomActionsSchema cleanScheme = new CustomActionsSchema();
+          CustomActionsSchema cleanScheme = new CustomActionsSchema(null);
           updateLocalSchema(cleanScheme);
           e.getPresentation().setEnabled(mySelectedSchema.isModified(cleanScheme));
         }
@@ -662,7 +662,7 @@ public final class CustomizationUtil {
 
         @Override
         public void update(@NotNull AnActionEvent e) {
-          CustomActionsSchema cleanScheme = new CustomActionsSchema();
+          CustomActionsSchema cleanScheme = new CustomActionsSchema(null);
           updateLocalSchema(cleanScheme);
           e.getPresentation().setEnabled(mySelectedSchema.isModified(CustomActionsSchema.getInstance()) ||
                                          mySelectedSchema.isModified(cleanScheme));

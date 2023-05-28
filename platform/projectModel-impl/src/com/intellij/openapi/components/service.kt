@@ -5,6 +5,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  *   - Using the method keeps `MyApplicationService.getInstance()` consistent with `MyProjectService.getInstance(project)`,
  *     both on the declaration and call sites.
  */
+@RequiresBlockingContext
 inline fun <reified T : Any> service(): T {
   val serviceClass = T::class.java
   return ApplicationManager.getApplication().getService(serviceClass)

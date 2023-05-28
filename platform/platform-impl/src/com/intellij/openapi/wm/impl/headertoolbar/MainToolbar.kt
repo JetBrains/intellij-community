@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
@@ -63,9 +63,9 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 
   companion object {
     internal suspend fun computeActionGroups(): List<Pair<ActionGroup, String>> {
-      val app = ApplicationManager.getApplication() as ComponentManagerEx
-      app.getServiceAsync(ActionManager::class.java)
-      val customActionSchema = app.getServiceAsync(CustomActionsSchema::class.java)
+      val app = ApplicationManager.getApplication()
+      app.serviceAsync<ActionManager>()
+      val customActionSchema = app.serviceAsync<CustomActionsSchema>()
       return computeActionGroups(customActionSchema)
     }
 
