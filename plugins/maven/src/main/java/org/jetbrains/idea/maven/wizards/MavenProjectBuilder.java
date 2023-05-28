@@ -254,14 +254,19 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       }
     }
 
+    var projectsToImport = new HashMap<MavenProject, MavenProjectChanges>();
+    for (var selectedProject : selectedProjects) {
+      var projectToImport = manager.getProjectsTree().findProject(selectedProject.getFile());
+      projectsToImport.put(projectToImport, MavenProjectChanges.ALL);
+    }
     boolean isFromUI = model != null;
     List<Module> createdModules;
     if (isFromUI) {
       var modelsProvider = new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel);
-      createdModules = manager.importMavenProjectsSync(modelsProvider);
+      createdModules = manager.importMavenProjectsSync(modelsProvider, projectsToImport);
     }
     else {
-      createdModules = manager.importMavenProjectsSync();
+      createdModules = manager.importMavenProjectsSync(projectsToImport);
     }
     return createdModules;
   }

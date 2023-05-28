@@ -33,6 +33,8 @@ interface MavenAsyncProjectsManager {
   suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
   fun importMavenProjectsSync(): List<Module>
   fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module>
+  fun importMavenProjectsSync(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
+  fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider, projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
 }
 
 open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(project) {
@@ -55,6 +57,14 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   override fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module> {
     return prepareImporter(modelsProvider, false).importMavenProjectsBlocking()
+  }
+
+  override fun importMavenProjectsSync(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
+    return importMavenProjectsSync(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject), projectsToImport)
+  }
+
+  override fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider, projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
+    return prepareImporter(modelsProvider, projectsToImport, false).importMavenProjectsBlocking()
   }
 
   private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
