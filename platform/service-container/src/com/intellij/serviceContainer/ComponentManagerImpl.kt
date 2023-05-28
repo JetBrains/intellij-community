@@ -1128,8 +1128,22 @@ abstract class ComponentManagerImpl(
           return
         }
 
-        scope.launch(CoroutineName("${getServiceInterface(service, this)} preloading")) {
-          preloadService(service)
+        val serviceInterface = getServiceInterface(service, this)
+        if (plugin.pluginId != PluginManagerCore.CORE_ID) {
+          val impl = getServiceImplementation(service, this)
+          if (!servicePreloadingAllowListForNonCorePlugin.contains(impl)) {
+            val message = "`preload=true` should be used only for core services (service=$impl, plugin=${plugin.pluginId})"
+            if (service.preload == PreloadMode.AWAIT) {
+              LOG.error(PluginException(message, plugin.pluginId))
+            }
+            else {
+              LOG.warn(message)
+            }
+          }
+        }
+
+        scope.launch(CoroutineName("$serviceInterface preloading")) {
+          preloadService(service, serviceInterface)
         }
       }
     }
@@ -1143,8 +1157,8 @@ abstract class ComponentManagerImpl(
                                          onlyIfAwait: Boolean) {
   }
 
-  protected open suspend fun preloadService(service: ServiceDescriptor) {
-    val adapter = componentKeyToAdapter.get(getServiceInterface(service, this)) as ServiceComponentAdapter? ?: return
+  protected open suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
+    val adapter = componentKeyToAdapter.get(serviceInterface) as ServiceComponentAdapter? ?: return
     val instance = adapter.getInstanceAsync<Any>(componentManager = this, keyClass = null)
     val implClass = instance.javaClass
     // well, we don't know the interface class, so we cannot add any service to a hot cache
@@ -1612,3 +1626,37 @@ private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescripto
   task(mainPluginDescriptor)
   executeRegisterTaskForOldContent(mainPluginDescriptor, task)
 }
+
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "SpellCheckingInspection")
+private val servicePreloadingAllowListForNonCorePlugin = java.util.Set.of(
+  "com.android.tools.adtui.webp.WebpMetadata\$WebpMetadataRegistrar",
+  "com.intellij.completion.ml.experiment.ClientExperimentStatus",
+  "com.intellij.compiler.server.BuildManager",
+  "com.intellij.openapi.module.WebModuleTypeRegistrar",
+  "com.intellij.tasks.config.PasswordConversionEnforcer",
+  "com.intellij.ide.RecentProjectsManagerBase",
+  "org.jetbrains.android.AndroidPlugin",
+  "com.intellij.remoteDev.tests.impl.DistributedTestHost",
+  "com.intellij.configurationScript.inspection.ExternallyConfigurableProjectInspectionProfileManager",
+  // use lazy listener
+  "com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge",
+  "com.intellij.compiler.CompilerConfigurationImpl",
+  "com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl",
+  "org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService",
+  "org.jetbrains.idea.maven.project.MavenProjectsManagerEx",
+  // use lazy listener
+  "org.jetbrains.idea.maven.navigator.MavenProjectsNavigator",
+  "org.jetbrains.idea.maven.tasks.MavenShortcutsManager",
+  "com.jetbrains.rd.platform.codeWithMe.toolbar.CodeWithMeToolbarUpdater",
+  "com.jetbrains.rdserver.portForwarding.cwm.CodeWithMeBackendPortForwardingToolWindowManager",
+  "com.jetbrains.rdserver.followMe.FollowMeManagerService",
+  "com.jetbrains.rdserver.diagnostics.BackendPerformanceHost",
+  "com.jetbrains.rdserver.followMe.BackendUserManager",
+  "com.jetbrains.rdserver.followMe.BackendUserFocusManager",
+  "com.jetbrains.rdserver.projectView.BackendProjectViewSync",
+  "com.jetbrains.rdserver.editors.BackendFollowMeEditorsHost",
+  "com.jetbrains.rdserver.debugger.BackendFollowMeDebuggerHost",
+  "com.jetbrains.rdserver.editors.BackendEditorService",
+  "com.jetbrains.rdserver.toolWindow.BackendServerToolWindowManager",
+  "com.jetbrains.rdserver.toolbar.CWMHostClosedToolbarNotification",
+)
