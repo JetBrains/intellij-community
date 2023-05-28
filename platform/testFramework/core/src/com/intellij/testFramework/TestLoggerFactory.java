@@ -152,7 +152,7 @@ public final class TestLoggerFactory implements Logger.Factory {
           logText = Files.readString(logFile);
         }
 
-        out.println("\n\nIdea Log:");
+        out.println("\n\nIdea Log at " + logFile + ":");
         int startPos = logText.lastIndexOf(testStartMarker);
         out.println(startPos > 0 ? logText.substring(startPos) : logText);
       }
