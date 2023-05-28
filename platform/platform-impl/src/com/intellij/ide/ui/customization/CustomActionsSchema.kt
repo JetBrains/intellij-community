@@ -93,10 +93,10 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
 
   companion object {
     /**
-     * Original icon should be saved in template presentation when one customizes action icon
+     * The original icon should be saved in template presentation when one customizes action icon
      */
     @JvmField
-    val PROP_ORIGINAL_ICON = Key.create<Icon?>("originalIcon")
+    val PROP_ORIGINAL_ICON: Key<Icon?> = Key.create("originalIcon")
 
     @JvmStatic
     fun addSettingsGroup(itemId: String, itemName: @Nls String) {
