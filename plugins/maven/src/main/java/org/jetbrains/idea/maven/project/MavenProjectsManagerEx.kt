@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
@@ -37,7 +36,7 @@ interface MavenAsyncProjectsManager {
   fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module>
 }
 
-open class MavenProjectsManagerEx(project: Project, val coroutineScope: CoroutineScope) : MavenProjectsManager(project) {
+open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(project) {
   // region import maven projects
   override suspend fun importMavenProjects(): List<Module> {
     val createdModules = doImportMavenProjects(false)
@@ -164,7 +163,7 @@ open class MavenProjectsManagerEx(project: Project, val coroutineScope: Coroutin
       val importResult = this.runImportActivity()
 
       // do not block user too often
-      myImportingQueue.restartTimer();
+      myImportingQueue.restartTimer()
 
       val createdModules = importResult.createdModules
 
