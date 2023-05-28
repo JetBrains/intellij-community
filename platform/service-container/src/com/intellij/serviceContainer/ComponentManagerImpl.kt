@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.attachAsChildTo
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
@@ -56,7 +57,6 @@ import java.util.concurrent.atomic.AtomicReference
 internal val LOG: Logger
   get() = logger<ComponentManagerImpl>()
 
-private val constructorParameterResolver = ConstructorParameterResolver()
 private val methodLookup = MethodHandles.lookup()
 private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
 private val coroutineScopeMethodType = emptyConstructorMethodType.appendParameterTypes(CoroutineScope::class.java)
@@ -621,6 +621,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
+  @RequiresBlockingContext
   final override fun <T : Any> getService(serviceClass: Class<T>): T? {
     // `computeIfAbsent` cannot be used because of recursive update
     @Suppress("UNCHECKED_CAST")
@@ -1007,11 +1008,7 @@ abstract class ComponentManagerImpl(
 
   final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId): T {
     return resetThreadContext().use {
-      instantiateUsingPicoContainer(aClass = aClass,
-                                    requestorKey = key,
-                                    pluginId = pluginId,
-                                    componentManager = this,
-                                    parameterResolver = constructorParameterResolver)
+      instantiateUsingPicoContainer(aClass = aClass, requestorKey = key, pluginId = pluginId, componentManager = this)
     }
   }
 
