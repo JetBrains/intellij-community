@@ -8,6 +8,9 @@
     <searchEverywhereContributor
       implementation="com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSearchEverywhereContributor$Companion$Factory" />
 
+    <searchEverywhereReorderingService
+      implementation="com.intellij.searchEverywhereMl.semantics.reordering.SearchEverywhereReorderingServiceImpl" />
+
     <registryKey defaultValue="true"
                  description="Use remote model for Action candidates retrieval"
                  key="search.everywhere.ml.semantic.actions.use.server.model"/>
@@ -23,5 +26,9 @@
     <registryKey defaultValue="https://se-semantics.labs.jb.gg/actions/similarity"
                  description="Remote semantic model host for the Actions tab"
                  key="search.everywhere.ml.semantic.actions.remote.host"/>
+
+    <registryKey defaultValue="true"
+                 description="Whether to use custom search items reordering to collect dataset for semantic contributors or not"
+                 key="search.everywhere.ml.semantic.actions.use.reordering"/>
   </extensions>
 </idea-plugin>

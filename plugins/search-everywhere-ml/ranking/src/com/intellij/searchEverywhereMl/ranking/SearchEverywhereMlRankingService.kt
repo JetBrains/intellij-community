@@ -58,7 +58,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
                                       priority: Int): SearchEverywhereFoundElementInfo {
     val foundElementInfoWithoutMl = SearchEverywhereFoundElementInfoWithMl.withoutMl(element, priority, contributor)
 
-    if (!isEnabled()) return foundElementInfoWithoutMl
+    if (!isEnabled() || contributor.isSemantic) return foundElementInfoWithoutMl
 
     val session = getCurrentSession() ?: return foundElementInfoWithoutMl
     val state = session.getCurrentSearchState() ?: return foundElementInfoWithoutMl

@@ -16,6 +16,8 @@ class MixedSearchListModel extends SearchListModel {
 
   private final Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors = new HashMap<>();
 
+  private final SearchEverywhereReorderingService myReorderingService = SearchEverywhereReorderingService.getInstance();
+
   private Comparator<? super SearchEverywhereFoundElementInfo> myElementsComparator = SearchEverywhereFoundElementInfo.COMPARATOR.reversed();
 
   // new elements cannot be added before this index when "more..." elements are loaded
@@ -50,6 +52,7 @@ class MixedSearchListModel extends SearchListModel {
       listElements.clear();
       if (lastIndex >= 0) fireIntervalRemoved(this, 0, lastIndex);
       listElements.addAll(items);
+      reorderItemsIfApplicable();
       if (!listElements.isEmpty()) fireIntervalAdded(this, 0, listElements.size() - 1);
 
       resultsExpired = false;
@@ -68,9 +71,16 @@ class MixedSearchListModel extends SearchListModel {
                                                      ? listElements.subList(myMaxFrozenIndex + 1, listElements.size())
                                                      : listElements;
         lst.sort(myElementsComparator);
+        reorderItemsIfApplicable();
         int begin = myMaxFrozenIndex >= 0 ? myMaxFrozenIndex + 1 : 0;
         fireContentsChanged(this, begin, endIndex);
       }
+    }
+  }
+
+  private void reorderItemsIfApplicable() {
+    if (myReorderingService != null) {
+      myReorderingService.reorder(listElements);
     }
   }
 
