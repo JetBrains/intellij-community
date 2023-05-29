@@ -40,8 +40,8 @@ public abstract class AbstractCommand implements PlaybackCommand {
 
   public ArrayList<String> extractCommandList(String prefix, String delimiter) {
     return new ArrayList<>(Arrays.stream(extractCommandArgument(prefix).split(delimiter))
-                             .map(a -> a.trim())
-                             .filter(a -> !a.isEmpty())
+                             .map(argument -> argument.trim())
+                             .filter(argument -> !argument.isEmpty())
                              .toList());
   }
 
