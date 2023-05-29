@@ -56,6 +56,13 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
     return getGroupName();
   }
 
+
+  @ApiStatus.Internal
+  @NotNull
+  default String getDefaultTabId() {
+    return getGroupName();
+  }
+
   /**
    * <p>Defines weight for sorting contributors (<b>not elements</b>).
    * This weight is used for example for ordering groups in results list when splitting by groups is enabled.</p>

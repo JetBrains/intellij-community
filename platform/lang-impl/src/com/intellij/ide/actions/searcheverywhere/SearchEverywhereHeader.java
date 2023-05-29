@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -182,19 +183,33 @@ public final class SearchEverywhereHeader {
       res.add(allTab);
     }
 
-    TabsCustomizationStrategy.getInstance()
-      .getSeparateTabContributors(contributors)
-      .forEach(contributor -> {
-        SETab tab = createTab(contributor, onChanged);
-        res.add(tab);
-      });
+    var separateTabContributors = TabsCustomizationStrategy.getInstance()
+      .getSeparateTabContributors(contributors);
+
+    var tabIdToTab = separateTabContributors
+      .stream()
+      .collect(Collectors.groupingBy(
+        SearchEverywhereContributor::getDefaultTabId,
+        Collectors.collectingAndThen(Collectors.toList(), contributorList -> {
+          return createMultipleContributorsTab(contributorList, onChanged);
+        })
+      ));
+
+    var addedTabs = new HashSet<String>();
+    for (var contributor : separateTabContributors) {
+      String tabId = contributor.getDefaultTabId();
+      if (!addedTabs.contains(tabId)) {
+        res.add(tabIdToTab.get(tabId));
+        addedTabs.add(tabId);
+      }
+    }
 
     return res;
   }
 
   private static PersistentSearchEverywhereContributorFilter<String> createContributorsFilter(List<? extends SearchEverywhereContributor<?>> contributors) {
     Map<String, @Nls String> namesMap = ContainerUtil.map2Map(contributors, c -> Pair.create(c.getSearchProviderId(),
-                                                                                               c.getFullGroupName()));
+                                                                                             c.getFullGroupName()));
     return new PersistentSearchEverywhereContributorFilter<>(
       ContainerUtil.map(contributors, c -> c.getSearchProviderId()),
       SearchEverywhereConfiguration.getInstance(),
@@ -281,8 +296,20 @@ public final class SearchEverywhereHeader {
   }
 
   private static SETab createTab(@NotNull SearchEverywhereContributor<?> contributor, Runnable onChanged) {
-    return new SETab(contributor.getSearchProviderId(), contributor.getGroupName(), Collections.singletonList(contributor),
-                     contributor.getActions(onChanged), null);
+    return createMultipleContributorsTab(Collections.singletonList(contributor), onChanged);
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  private static SETab createMultipleContributorsTab(List<? extends SearchEverywhereContributor<?>> contributors,
+                                                     @NotNull Runnable onChanged) {
+    var allActions = new ArrayList<AnAction>();
+    contributors.forEach(contributor -> {
+      allActions.addAll(contributor.getActions(onChanged));
+    });
+
+    String tabId = contributors.get(0).getDefaultTabId();
+    return new SETab(tabId, contributors.get(0).getGroupName(), contributors, allActions, null);
   }
 
   @NotNull
@@ -291,6 +318,7 @@ public final class SearchEverywhereHeader {
     PersistentSearchEverywhereContributorFilter<String> filter = createContributorsFilter(contributors);
     List<AnAction> actions = Arrays.asList(new CheckBoxSearchEverywhereToggleAction(actionText) {
       final SearchEverywhereManagerImpl seManager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
+
       @Override
       public boolean isEverywhere() {
         return seManager.isEverywhere();

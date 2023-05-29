@@ -10,7 +10,22 @@ import com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEvery
 
 internal class SearchEverywhereContributorFeaturesProvider {
   companion object {
-    internal val CONTRIBUTOR_INFO_ID = EventFields.String("contributorId", SE_TABS)
+    internal val SE_CONTRIBUTORS = listOf(
+      "SearchEverywhereContributor.All", "ClassSearchEverywhereContributor",
+      "FileSearchEverywhereContributor", "RecentFilesSEContributor",
+      "SymbolSearchEverywhereContributor", "ActionSearchEverywhereContributor",
+      "RunConfigurationsSEContributor", "CommandsContributor",
+      "TopHitSEContributor", "com.intellij.ide.actions.searcheverywhere.CalculatorSEContributor",
+      "TmsSearchEverywhereContributor", "YAMLKeysSearchEverywhereContributor",
+      "UrlSearchEverywhereContributor", "Vcs.Git", "AutocompletionContributor",
+      "TextSearchContributor", "DbSETablesContributor", "third.party"
+    )
+
+    internal val SE_TABS = listOf(
+      "SearchEverywhereContributor.All", "Actions", "Files", "Classes", "Symbols", "Git"
+    )
+
+    internal val CONTRIBUTOR_INFO_ID = EventFields.String("contributorId", SE_CONTRIBUTORS)
     internal val CONTRIBUTOR_PRIORITY = EventFields.Int("contributorPriority")
     internal val CONTRIBUTOR_WEIGHT = EventFields.Int("contributorWeight")
     internal val CONTRIBUTOR_IS_MOST_POPULAR = EventFields.Boolean("contributorIsMostPopular")
