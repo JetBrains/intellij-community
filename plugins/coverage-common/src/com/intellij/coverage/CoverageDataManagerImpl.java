@@ -273,7 +273,11 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   @Override
   public void removeCoverageSuite(final CoverageSuite suite) {
     suite.deleteCachedCoverageData();
+    unregisterCoverageSuite(suite);
+  }
 
+  @Override
+  public void unregisterCoverageSuite(CoverageSuite suite) {
     myCoverageSuites.remove(suite);
     if (myCurrentSuitesBundle != null && myCurrentSuitesBundle.contains(suite)) {
       CoverageSuite[] suites = myCurrentSuitesBundle.getSuites();
