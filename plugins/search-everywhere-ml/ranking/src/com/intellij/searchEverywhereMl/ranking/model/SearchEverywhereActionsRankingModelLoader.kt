@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking.model
 
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereTabWithMl
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.ResourcesModelMetadataReader
 import com.intellij.searchEverywhere.model.actions.PredictionModel
+import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
 
 internal class SearchEverywhereActionsRankingModelLoader : SearchEverywhereMLRankingModelLoader() {
   private val standardResourceDirectory = "actions_features"
@@ -13,7 +13,7 @@ internal class SearchEverywhereActionsRankingModelLoader : SearchEverywhereMLRan
   private val expResourceDirectory = "actions_features_exp"
   private val expModelDirectory = "actions_model_exp"
 
-  override val supportedTab = SearchEverywhereTabWithMl.ACTION
+  override val supportedTab = SearchEverywhereTabWithMlRanking.ACTION
 
   override fun getBundledModel(): DecisionFunction {
     return if (shouldProvideExperimentalModel()) {

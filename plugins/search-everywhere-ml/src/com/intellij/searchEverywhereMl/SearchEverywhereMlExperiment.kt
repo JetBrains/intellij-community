@@ -1,7 +1,5 @@
 package com.intellij.searchEverywhereMl
 
-import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
@@ -21,9 +19,9 @@ class SearchEverywhereMlExperiment {
   private val tabsWithEnabledLogging = setOf(
     SearchEverywhereTabWithMlRanking.ACTION.tabId,
     SearchEverywhereTabWithMlRanking.FILES.tabId,
-    ClassSearchEverywhereContributor::class.java.simpleName,
+    SearchEverywhereTabWithMlRanking.CLASSES.tabId,
     SymbolSearchEverywhereContributor::class.java.simpleName,
-    SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
+    SearchEverywhereTabWithMlRanking.ALL.tabId
   )
 
   private val tabExperiments = hashMapOf(
