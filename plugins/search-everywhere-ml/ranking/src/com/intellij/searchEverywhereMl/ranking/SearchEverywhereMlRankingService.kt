@@ -2,11 +2,11 @@
 package com.intellij.searchEverywhereMl.ranking
 
 import com.intellij.ide.actions.searcheverywhere.*
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService.Companion.EP_NAME
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.searchEverywhereMl.RANKING_EP_NAME
 import com.intellij.searchEverywhereMl.common.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
 import com.intellij.searchEverywhereMl.common.settings.SearchEverywhereMlSettings
@@ -18,11 +18,10 @@ import javax.swing.ListCellRenderer
 
 
 @ApiStatus.Internal
-class SearchEverywhereMlServiceImpl : SearchEverywhereMlService {
+class SearchEverywhereMlRankingService : SearchEverywhereMlService {
   companion object {
-    internal const val RECORDER_CODE = "MLSE"
-
-    fun getService() = EP_NAME.findExtensionOrFail(SearchEverywhereMlServiceImpl::class.java).takeIf { it.isEnabled() }
+    fun getService(): SearchEverywhereMlRankingService?
+      = RANKING_EP_NAME.findExtensionOrFail(SearchEverywhereMlRankingService::class.java).takeIf { it.isEnabled() }
   }
 
   private val sessionIdCounter = AtomicInteger()

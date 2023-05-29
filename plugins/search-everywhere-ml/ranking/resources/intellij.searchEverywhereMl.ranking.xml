@@ -10,12 +10,11 @@
 
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhereMlService implementation="com.intellij.searchEverywhereMl.ranking.SearchEverywhereMlServiceImpl"/>
-    <statistic.eventLog.eventLoggerProvider
-      implementation="com.intellij.searchEverywhereMl.ranking.logger.SearchEverywhereEventLoggerProvider"
-      order="first"/>
+  <extensions defaultExtensionNs="com.intellij.searchEverywhereMl">
+    <rankingService implementation="com.intellij.searchEverywhereMl.ranking.SearchEverywhereMlRankingService"/>
+  </extensions>
 
+  <extensions defaultExtensionNs="com.intellij">
     <advancedSetting default="true" id="searcheverywhere.ml.sort.action"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
                      bundle="messages.searchEverywhereMlBundle"/>

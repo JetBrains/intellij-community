@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.searchEverywhereMl.ranking.SearchEverywhereFoundElementInfoWithMl
-import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMlServiceImpl
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMlRankingService
 import com.intellij.searchEverywhereMl.ranking.SearchEverywhereRankingDiffCalculator
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereContributorFeaturesProvider
 
@@ -41,7 +41,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
 
   private fun shouldActionBeEnabled(e: AnActionEvent): Boolean {
     val seManager = SearchEverywhereManager.getInstance(e.project)
-    val session = SearchEverywhereMlServiceImpl.getService()?.getCurrentSession()
+    val session = SearchEverywhereMlRankingService.getService()?.getCurrentSession()
 
     return e.project != null
            && seManager.isShown
@@ -61,7 +61,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
   }
 
   private fun getFeaturesReport(searchEverywhereUI: SearchEverywhereUI): Map<String, Any> {
-    val mlSessionService = SearchEverywhereMlServiceImpl.getService() ?: return emptyMap()
+    val mlSessionService = SearchEverywhereMlRankingService.getService() ?: return emptyMap()
     val searchSession = mlSessionService.getCurrentSession()!!
     val state = searchSession.getCurrentSearchState()!!
 

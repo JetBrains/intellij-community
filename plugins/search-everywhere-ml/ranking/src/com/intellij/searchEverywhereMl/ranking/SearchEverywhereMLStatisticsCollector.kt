@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.common.SE_TABS
-import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMlServiceImpl.Companion.RECORDER_CODE
+import com.intellij.searchEverywhereMl.common.log.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.ranking.features.*
 import com.intellij.searchEverywhereMl.ranking.id.SearchEverywhereMlItemIdProvider
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -272,7 +272,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 62, RECORDER_CODE)
+    private val GROUP = EventLogGroup("mlse.log", 62, MLSE_RECORDER_ID)
     private const val REPORTED_ITEMS_LIMIT = 50
 
     private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")

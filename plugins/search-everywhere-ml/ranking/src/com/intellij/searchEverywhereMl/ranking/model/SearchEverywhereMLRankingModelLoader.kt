@@ -5,7 +5,7 @@ import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.catboost.CatBoostResourcesModelMetadataReader
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMlServiceImpl
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMlRankingService
 import com.intellij.searchEverywhereMl.ranking.model.local.LocalRankingModelProviderUtil
 
 /**
@@ -50,7 +50,7 @@ internal abstract class SearchEverywhereMLRankingModelLoader {
   protected abstract val supportedContributorName: String
 
   protected fun shouldProvideExperimentalModel(): Boolean {
-    return SearchEverywhereMlServiceImpl.getService()?.shouldUseExperimentalModel(supportedContributorName) ?: false
+    return SearchEverywhereMlRankingService.getService()?.shouldUseExperimentalModel(supportedContributorName) ?: false
   }
 
   private fun shouldProvideLocalModel(): Boolean {

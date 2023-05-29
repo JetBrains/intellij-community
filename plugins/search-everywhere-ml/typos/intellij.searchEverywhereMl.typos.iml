@@ -28,5 +28,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.common" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl" />
   </component>
 </module>

@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.ide.actions.searcheverywhere.ml">
+<idea-plugin package="com.intellij.searchEverywhereMl">
   <id>com.intellij.searcheverywhere.ml</id>
   <name>Machine Learning in Search Everywhere</name>
   <vendor>JetBrains</vendor>
@@ -18,4 +18,21 @@
     <module name="intellij.searchEverywhereMl.ranking.yaml"/>
     <module name="intellij.searchEverywhereMl.ranking.vcs"/>
   </content>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <searchEverywhereMlService implementation="com.intellij.searchEverywhereMl.SearchEverywhereMlServiceImpl"/>
+    <statistic.eventLog.eventLoggerProvider
+      implementation="com.intellij.searchEverywhereMl.SearchEverywhereEventLoggerProvider"
+      order="first"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.rankingService"
+                    interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.itemSelectedListener"
+                    interface="com.intellij.searchEverywhereMl.SearchEverywhereItemSelectedListener"
+                    dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

@@ -2,6 +2,7 @@
 
   <dependencies>
     <plugin id="org.jetbrains.plugins.yaml"/>
+    <module name="intellij.searchEverywhereMl.ranking"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

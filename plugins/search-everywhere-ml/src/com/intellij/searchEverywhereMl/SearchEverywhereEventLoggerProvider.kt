@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.searchEverywhereMl.ranking.logger
+package com.intellij.searchEverywhereMl
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.searchEverywhereMl.common.log.MLSE_RECORDER_ID
 import com.intellij.util.PlatformUtils
 import java.util.concurrent.TimeUnit
 
-class SearchEverywhereEventLoggerProvider : StatisticsEventLoggerProvider("MLSE", 8, TimeUnit.MINUTES.toMillis(10), 100 * 1024, sendLogsOnIdeClose = true) {
+private class SearchEverywhereEventLoggerProvider : StatisticsEventLoggerProvider(MLSE_RECORDER_ID, 8, TimeUnit.MINUTES.toMillis(10), 100 * 1024, sendLogsOnIdeClose = true) {
   override fun isRecordEnabled(): Boolean {
     val app = ApplicationManager.getApplication()
     return !app.isUnitTestMode && app.isEAP &&
