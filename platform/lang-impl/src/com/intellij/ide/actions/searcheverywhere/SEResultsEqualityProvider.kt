@@ -46,6 +46,16 @@ interface SEResultsEqualityProvider {
       override fun combine(another: SEEqualElementsActionType): SEEqualElementsActionType =
         if (another is Replace) Replace(toBeReplaced + another.toBeReplaced) else this
     }
+
+    /**
+     * Information from a new item should be added to already existing item in search list
+     */
+    data class Merge(val toBeMerged: List<SearchEverywhereFoundElementInfo>) : SEEqualElementsActionType() {
+      constructor(toBeReplaced: SearchEverywhereFoundElementInfo) : this(listOf(toBeReplaced))
+      override fun combine(another: SEEqualElementsActionType): SEEqualElementsActionType =
+        if (another is Merge) Replace(toBeMerged + another.toBeMerged) else this
+    }
+
     abstract fun combine(another: SEEqualElementsActionType): SEEqualElementsActionType
   }
 
