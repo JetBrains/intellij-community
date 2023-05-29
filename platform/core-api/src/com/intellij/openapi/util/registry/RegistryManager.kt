@@ -1,31 +1,31 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.util.registry;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.util.registry
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 
-public interface RegistryManager {
+interface RegistryManager {
+  companion object {
+    @JvmStatic
+    fun getInstance(): RegistryManager = ApplicationManager.getApplication().service<RegistryManager>()
 
-  @Topic.AppLevel
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
-  // only afterValueChanged is dispatched
-  Topic<RegistryValueListener> TOPIC = new Topic<>(RegistryValueListener.class, Topic.BroadcastDirection.NONE, true);
-
-  static @NotNull RegistryManager getInstance() {
-    return ApplicationManager.getApplication().getService(RegistryManager.class);
+    @Topic.AppLevel
+    @ApiStatus.Experimental
+    @ApiStatus.Internal
+    @JvmField
+    // only afterValueChanged is dispatched
+    val TOPIC: Topic<RegistryValueListener> = Topic(RegistryValueListener::class.java, Topic.BroadcastDirection.NONE, true)
   }
 
-  boolean is(@NotNull String key);
+  fun `is`(key: String): Boolean
 
-  int intValue(@NotNull String key);
+  fun intValue(key: String): Int
 
-  @Nullable String stringValue(@NotNull String key);
+  fun stringValue(key: String): String?
 
-  int intValue(@NotNull String key, int defaultValue);
+  fun intValue(key: String, defaultValue: Int): Int
 
-  @NotNull RegistryValue get(@NotNull String key);
+  fun get(key: String): RegistryValue
 }

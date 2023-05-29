@@ -18,7 +18,7 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 
-class ToggleEssentialHighlightingAction : ToggleAction() {
+private class ToggleEssentialHighlightingAction : ToggleAction() {
   override fun isSelected(e: AnActionEvent): Boolean {
     return EssentialHighlightingMode.isEnabled()
   }
@@ -26,7 +26,7 @@ class ToggleEssentialHighlightingAction : ToggleAction() {
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     EssentialHighlightingMode.setEnabled(state)
     if (state) {
-      EssentialHighlightingNotifier.notifyOnEssentialHighlightingMode(e.getData(CommonDataKeys.PROJECT))
+      notifyOnEssentialHighlightingMode(e.getData(CommonDataKeys.PROJECT))
     }
   }
 
@@ -35,47 +35,45 @@ class ToggleEssentialHighlightingAction : ToggleAction() {
   }
 }
 
+private const val IGNORE_ESSENTIAL_HIGHLIGHTING = "ignore.essential-highlighting.mode"
+
 internal class EssentialHighlightingNotifier : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (EssentialHighlightingMode.isEnabled()) {
       notifyOnEssentialHighlightingMode(project)
     }
   }
+}
 
-  companion object {
-    private const val IGNORE_ESSENTIAL_HIGHLIGHTING = "ignore.essential-highlighting.mode"
+private class NotificationExpirationListener(private val notification: Notification) : RegistryValueListener {
+  override fun afterValueChanged(value: RegistryValue) {
+    notification.expire()
+  }
+}
 
-    fun notifyOnEssentialHighlightingMode(project: Project?) {
-      if (PropertiesComponent.getInstance().getBoolean(IGNORE_ESSENTIAL_HIGHLIGHTING)) {
-        return
-      }
-
-      val notification = NotificationGroupManager.getInstance().getNotificationGroup("Essential Highlighting Mode").createNotification(
-        IdeBundle.message("essential-highlighting.mode.on.notification.title"),
-        IdeBundle.message("essential-highlighting.mode.on.notification.content"),
-        NotificationType.WARNING
-      )
-      notification.addAction(object : NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          PropertiesComponent.getInstance().setValue(IGNORE_ESSENTIAL_HIGHLIGHTING, true)
-          notification.expire()
-        }
-      })
-      notification.addAction(object : NotificationAction(IdeBundle.message("essential-highlighting.mode.disable.action.title")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          EssentialHighlightingMode.setEnabled(false)
-          notification.expire()
-        }
-      })
-      notification.notify(project)
-      val balloon = notification.balloon ?: return
-      RegistryManager.getInstance()["ide.highlighting.mode.essential"].addListener(NotificationExpirationListener(notification), balloon)
-    }
+private fun notifyOnEssentialHighlightingMode(project: Project?) {
+  if (PropertiesComponent.getInstance().getBoolean(IGNORE_ESSENTIAL_HIGHLIGHTING)) {
+    return
   }
 
-  private class NotificationExpirationListener(private val notification: Notification) : RegistryValueListener {
-    override fun afterValueChanged(value: RegistryValue) {
+  val notification = NotificationGroupManager.getInstance().getNotificationGroup("Essential Highlighting Mode").createNotification(
+    IdeBundle.message("essential-highlighting.mode.on.notification.title"),
+    IdeBundle.message("essential-highlighting.mode.on.notification.content"),
+    NotificationType.WARNING
+  )
+  notification.addAction(object : NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
+    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+      PropertiesComponent.getInstance().setValue(IGNORE_ESSENTIAL_HIGHLIGHTING, true)
       notification.expire()
     }
-  }
+  })
+  notification.addAction(object : NotificationAction(IdeBundle.message("essential-highlighting.mode.disable.action.title")) {
+    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+      EssentialHighlightingMode.setEnabled(false)
+      notification.expire()
+    }
+  })
+  notification.notify(project)
+  val balloon = notification.balloon ?: return
+  RegistryManager.getInstance().get("ide.highlighting.mode.essential").addListener(NotificationExpirationListener(notification), balloon)
 }
