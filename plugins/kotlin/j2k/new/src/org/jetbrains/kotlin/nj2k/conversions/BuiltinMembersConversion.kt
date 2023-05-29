@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedField
 import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.INT
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.STRING
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.cast
@@ -280,6 +281,20 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.lang.Number.intValue") convertTo Method("kotlin.Number.toInt"),
         Method("java.lang.Number.longValue") convertTo Method("kotlin.Number.toLong"),
         Method("java.lang.Number.shortValue") convertTo Method("kotlin.Number.toShort"),
+
+        Method("java.lang.Boolean.toString") convertTo ExtensionMethod("kotlin.Boolean.toString") withByArgumentsFilter { it.size == 1 } withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Character.toString") convertTo ExtensionMethod("kotlin.Char.toString") withReplaceType REPLACE_WITH_QUALIFIER withByArgumentsFilter { arguments ->
+            if (arguments.size != 1) return@withByArgumentsFilter false
+            arguments[0].calculateType(typeFactory) == JKJavaPrimitiveType.CHAR
+        },
+        Method("java.lang.Byte.toString") convertTo ExtensionMethod("kotlin.Byte.toString") withByArgumentsFilter { it.size == 1 } withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Short.toString") convertTo ExtensionMethod("kotlin.Short.toString") withByArgumentsFilter { it.size == 1 } withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Integer.toString") convertTo ExtensionMethod("kotlin.Int.toString") withByArgumentsFilter { it.size == 1 } withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Integer.toString") convertTo primitiveToStringWithRadix() withByArgumentsFilter(::primitiveToStringWithRadixArgumentsFilter) withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Long.toString") convertTo ExtensionMethod("kotlin.Long.toString") withByArgumentsFilter { it.size == 1 } withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Long.toString") convertTo primitiveToStringWithRadix() withByArgumentsFilter(::primitiveToStringWithRadixArgumentsFilter) withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Float.toString") convertTo ExtensionMethod("kotlin.Float.toString") withByArgumentsFilter { it.size == 1 } withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Double.toString") convertTo ExtensionMethod("kotlin.Double.toString") withByArgumentsFilter { it.size == 1 } withReplaceType REPLACE_WITH_QUALIFIER,
 
         Field("java.lang.Byte.MIN_VALUE") convertTo Field("kotlin.Byte.Companion.MIN_VALUE") withReplaceType REPLACE_WITH_QUALIFIER,
         Field("java.lang.Byte.MAX_VALUE") convertTo Field("kotlin.Byte.Companion.MAX_VALUE") withReplaceType REPLACE_WITH_QUALIFIER,
@@ -665,6 +680,31 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.lang.Math.tanh") convertTo Method("kotlin.math.tanh") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.copySign") convertTo ExtensionMethod("kotlin.math.withSign") withReplaceType REPLACE_WITH_QUALIFIER,
     )
+
+    private fun primitiveToStringWithRadix(): CustomExpression = CustomExpression { expression ->
+        val arguments = (expression as JKCallExpression).arguments::arguments.detached()
+        val receiver = arguments[0]::value.detached()
+        val radix = arguments[1]::value.detached()
+
+        val newRadix = if (radix is JKLiteralExpression) {
+            val radixValue = radix.literal.toInt().coerceIn(2, 36)
+            JKLiteralExpression(radixValue.toString(), INT)
+        } else {
+            radix.callOn(
+                symbolProvider.provideMethodSymbol("kotlin.ranges.coerceIn"),
+                listOf(JKLiteralExpression("2", INT), JKLiteralExpression("36", INT))
+            )
+        }
+        val newArguments = listOf(JKArgumentImpl(newRadix))
+        receiver.callOn(symbolProvider.provideMethodSymbol("kotlin.text.toString"), newArguments).withFormattingFrom(expression)
+    }
+
+    private fun primitiveToStringWithRadixArgumentsFilter(arguments: List<JKExpression>): Boolean {
+        if (arguments.size != 2) return false
+        val radix = arguments[1]
+        if (radix !is JKLiteralExpression) return true
+        return radix.literal.toIntOrNull() != null
+    }
 
     private fun castReceiverToJavaLangObject(): CustomExpression = CustomExpression { expr ->
         val parent = expr.parent ?: return@CustomExpression expr

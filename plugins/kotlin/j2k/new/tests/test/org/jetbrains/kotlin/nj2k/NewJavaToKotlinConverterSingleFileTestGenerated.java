@@ -2729,6 +2729,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/function/parameterModification.java");
         }
 
+        @TestMetadata("PrimitiveStaticToString.java")
+        public void testPrimitiveStaticToString() throws Exception {
+            runTest("testData/newJ2k/function/PrimitiveStaticToString.java");
+        }
+
         @TestMetadata("private.java")
         public void testPrivate() throws Exception {
             runTest("testData/newJ2k/function/private.java");
