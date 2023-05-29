@@ -306,16 +306,15 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   override fun getAction(id: String): AnAction? = getActionImpl(id = id, canReturnStub = false)
 
   private fun getActionImpl(id: String, canReturnStub: Boolean): AnAction? {
-    var action: AnAction?
-    synchronized(lock) {
-      action = idToAction[id]
-      if (canReturnStub || action !is ActionStubBase) {
-        return action
-      }
+    var action = synchronized(lock) {
+      idToAction.get(id)
+    }
+    if (canReturnStub || action !is ActionStubBase) {
+      return action
     }
 
     val converted = if (action is ActionStub) {
-      convertStub(action as ActionStub)
+      convertStub(action)
     }
     else {
       convertGroupStub(stub = action as ActionGroupStub, actionManager = this)
@@ -1054,7 +1053,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   /**
-   * Unregisters already registered action and prevents the action from being registered in the future.
+   * Unregisters already registered action and prevented the action from being registered in the future.
    * Should be used only in IDE configuration
    */
   @ApiStatus.Internal
