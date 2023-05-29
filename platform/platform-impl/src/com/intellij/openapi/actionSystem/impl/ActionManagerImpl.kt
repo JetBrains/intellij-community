@@ -128,7 +128,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   companion object {
-    fun convertStub(stub: ActionStub): AnAction? {
+    internal fun convertStub(stub: ActionStub): AnAction? {
       val anAction = instantiate(stubClassName = stub.className, pluginDescriptor = stub.plugin, expectedClass = AnAction::class.java)
                      ?: return null
       stub.initAction(anAction)
@@ -1416,13 +1416,14 @@ private fun <T> instantiate(stubClassName: String, pluginDescriptor: PluginDescr
 private fun updateIconFromStub(stub: ActionStubBase, anAction: AnAction) {
   val iconPath = stub.iconPath
   if (iconPath != null) {
-    val icon = loadIcon(stub.plugin, iconPath, anAction.javaClass.name)
+    val icon = loadIcon(module = stub.plugin, iconPath = iconPath, requestor = anAction.javaClass.name)
     anAction.templatePresentation.icon = icon
   }
+
   val customActionsSchema = ApplicationManager.getApplication().serviceIfCreated<CustomActionsSchema>()
   if (customActionsSchema != null && !customActionsSchema.getIconPath(stub.id).isEmpty()) {
     RecursionManager.doPreventingRecursion<Any?>(stub.id, false) {
-      customActionsSchema.initActionIcon(anAction, stub.id, ActionManager.getInstance())
+      customActionsSchema.initActionIcon(anAction = anAction, actionId = stub.id, actionManager = ActionManager.getInstance())
       null
     }
   }
