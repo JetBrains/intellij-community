@@ -51,15 +51,19 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler.ForEachCaret {
         VisualPosition targetPosition = myDirection == Direction.RIGHT ? caret.getSelectionEndPosition()
                                                                        : caret.getSelectionStartPosition();
 
+        scrollingModel.disableAnimation();
         selectionModel.removeSelection();
         caretModel.moveToVisualPosition(targetPosition);
         if (caret == editor.getCaretModel().getPrimaryCaret()) {
           scrollingModel.scrollToCaret(ScrollType.RELATIVE);
         }
+        scrollingModel.enableAnimation();
         return;
       }
     }
     VisualPosition currentPosition = caret.getVisualPosition();
+
+    scrollingModel.disableAnimation();
     if (caret.isAtBidiRunBoundary() && (myDirection == Direction.RIGHT ^ currentPosition.leansRight)) {
       caret.moveToVisualPosition(currentPosition.leanRight(!currentPosition.leansRight));
     }
@@ -68,5 +72,6 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler.ForEachCaret {
                                     && caret == editor.getCaretModel().getPrimaryCaret();
       caretModel.moveCaretRelatively(myDirection == Direction.RIGHT ? 1 : -1, 0, false, false, scrollToCaret);
     }
+    scrollingModel.disableAnimation();
   }
 }
