@@ -97,6 +97,7 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
+import kotlin.Unit;
 import kotlin.sequences.SequencesKt;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.EntryStream;
@@ -396,7 +397,10 @@ public final class BuildManager implements Disposable {
     });
 
     if (!application.isHeadlessEnvironment()) {
-      configureIdleAutomake();
+      RegistryManager.Companion.executeWhenReady(coroutineScope, registryManager -> {
+        configureIdleAutomake(registryManager);
+        return Unit.INSTANCE;
+      });
     }
 
     ShutDownTracker.getInstance().registerShutdownTask(this::stopListening);
@@ -407,19 +411,19 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  private void configureIdleAutomake() {
-    int idleTimeout = getAutomakeWhileIdleTimeout();
+  private void configureIdleAutomake(@NotNull RegistryManager registryManager) {
+    int idleTimeout = getAutomakeWhileIdleTimeout(registryManager);
     int listenerTimeout = idleTimeout > 0 ? idleTimeout : 60000;
     Ref<AccessToken> idleListenerHandle = new Ref<>();
     idleListenerHandle.set(IdleTracker.getInstance().addIdleListener(listenerTimeout, () -> {
-      int currentTimeout = getAutomakeWhileIdleTimeout();
+      int currentTimeout = getAutomakeWhileIdleTimeout(registryManager);
       if (idleTimeout != currentTimeout) {
         // re-schedule with a changed period
         AccessToken removeListener = idleListenerHandle.get();
         if (removeListener != null) {
           removeListener.close();
         }
-        configureIdleAutomake();
+        configureIdleAutomake(registryManager);
       }
 
       if (currentTimeout > 0 /*is enabled*/ && !myAutoMakeTask.myInProgress.get()) {
@@ -681,7 +685,7 @@ public final class BuildManager implements Disposable {
 
   private void runAutoMake() {
     Collection<Project> projects = Collections.emptyList();
-    final int appIdleTimeout = getAutomakeWhileIdleTimeout();
+    final int appIdleTimeout = getAutomakeWhileIdleTimeout(RegistryManager.getInstance());
     if (appIdleTimeout > 0 && ApplicationManager.getApplication().getIdleTime() > appIdleTimeout) {
       // been idle for quite a while, so try to process all open projects while idle
       projects = getOpenProjects();
@@ -731,8 +735,8 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  private static int getAutomakeWhileIdleTimeout() {
-    return RegistryManager.getInstance().intValue("compiler.automake.build.while.idle.timeout", 60000);
+  private static int getAutomakeWhileIdleTimeout(@NotNull RegistryManager registryManager) {
+    return registryManager.intValue("compiler.automake.build.while.idle.timeout", 60000);
   }
 
   private static boolean canStartAutoMake(@NotNull Project project) {
@@ -1006,7 +1010,7 @@ public final class BuildManager implements Disposable {
               if (exitValue != 0) {
                 final @Nls StringBuilder msg = new StringBuilder();
                 msg.append(JavaCompilerBundle.message("abnormal.build.process.termination")).append(": ");
-                if (errorsOnLaunch != null && errorsOnLaunch.length() > 0) {
+                if (errorsOnLaunch != null && !errorsOnLaunch.isEmpty()) {
                   msg.append("\n").append(errorsOnLaunch);
                   if (StringUtil.contains(errorsOnLaunch, "java.lang.NoSuchMethodError")) {
                     msg.append(
@@ -2126,7 +2130,7 @@ public final class BuildManager implements Disposable {
       getInstance().runCommand(() -> {
         updateUsageFile(project, getInstance().getProjectSystemDirectory(project));
       });
-      // run automake after project opened
+      // run automake after a project opened
       getInstance().scheduleAutoMake();
     }
   }
@@ -2308,7 +2312,7 @@ public final class BuildManager implements Disposable {
 
       final StringBuilder buf = new StringBuilder();
       for (CharSequence element : myPath) {
-        if (buf.length() > 0) {
+        if (!buf.isEmpty()) {
           buf.append("/");
         }
         buf.append(element);
