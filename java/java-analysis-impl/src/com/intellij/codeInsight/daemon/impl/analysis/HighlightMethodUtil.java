@@ -868,11 +868,20 @@ public final class HighlightMethodUtil {
     }
     else if (candidates.length == 0) {
       PsiClass qualifierClass = RefactoringChangeUtil.getQualifierClass(referenceToMethod);
-      String qualifier = qualifierClass != null ? qualifierClass.getName() : null;
+      String className = qualifierClass != null ? qualifierClass.getName() : null;
+      PsiExpression qualifierExpression = referenceToMethod.getQualifierExpression();
 
-      description = qualifier != null
-                    ? JavaErrorBundle.message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), qualifier)
-                    : JavaErrorBundle.message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list, true));
+      if (className != null) {
+        description = JavaErrorBundle.message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), className);
+      }
+      else {
+        description =
+          qualifierExpression != null &&
+          qualifierExpression.getType() instanceof PsiPrimitiveType primitiveType &&
+          !primitiveType.equals(PsiTypes.nullType()) && !primitiveType.equals(PsiTypes.voidType())
+          ? JavaErrorBundle.message("cannot.call.method.on.type", qualifierExpression.getText(), primitiveType.getPresentableText(false))
+          : JavaErrorBundle.message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list, true));
+      }
       highlightInfoType = HighlightInfoType.WRONG_REF;
     }
     else {
