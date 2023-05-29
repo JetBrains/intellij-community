@@ -819,6 +819,9 @@
         "labelBackground" : "Grey2",
         "foreground" : "Grey5"
       }
+    },
+    "AIAssistant": {
+      "Expander": "Grey12"
     }
   },
 
