@@ -525,18 +525,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }, this);
   }
 
-  protected void schedulePluginResolution(@NotNull Map<String, Collection<MavenProjectWithHolder>> projectsWithUnresolvedPlugins) {
-    runWhenFullyOpen(
-      () -> {
-        for (var pluginResolutionRequests : projectsWithUnresolvedPlugins.values()) {
-          myPluginsResolvingProcessor.scheduleTask(
-            new MavenProjectsProcessorPluginsResolvingTask(pluginResolutionRequests, new MavenPluginResolver(getProjectsTree()))
-          );
-        }
-      }
-    );
-  }
-
   public void listenForExternalChanges() {
     myWatcher.start();
   }

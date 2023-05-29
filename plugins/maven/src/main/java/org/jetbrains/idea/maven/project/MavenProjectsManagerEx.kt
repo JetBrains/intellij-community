@@ -258,7 +258,21 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
     }
 
-    schedulePluginResolution(resolutionResult.projectsWithUnresolvedPlugins)
+    // TODO: plugins can be resolved in parallel with import
+    val pluginResolver = MavenPluginResolver(projectsTree)
+    withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
+      val activity = importActivityStarted(project, MavenUtil.SYSTEM_ID) {
+        listOf(ProjectImportCollector.TASK_CLASS.with(MavenProjectsProcessorPluginsResolvingTask::class.java))
+      }
+      try {
+        for (entry in resolutionResult.projectsWithUnresolvedPlugins) {
+          pluginResolver.resolvePlugins(entry.value, embeddersManager, mavenConsole, indicator, true)
+        }
+      }
+      finally {
+        activity.finished()
+      }
+    }
 
     val createdModules = importMavenProjects()
     result.setResult(createdModules)
