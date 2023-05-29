@@ -15,7 +15,15 @@ class CancellationCheckInLoopsInspectionTest : CancellationCheckInLoopsInspectio
     doTest()
   }
 
+  fun testRunConditionOnSuperMethod() {
+    doTest()
+  }
+
   fun testPresentCancellationCheck() {
+    doTest()
+  }
+
+  fun testCancellationCheckPresentNotInFirstLine() {
     doTest()
   }
 

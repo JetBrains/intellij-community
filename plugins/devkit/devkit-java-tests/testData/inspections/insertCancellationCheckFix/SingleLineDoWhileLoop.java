@@ -10,7 +10,7 @@ class Clazz {
     @RequiresReadLock
     public static void foo() {
         int i = 0;
-        <warning descr="Cancellation check 'com.intellij.openapi.progress.ProgressManager.checkCanceled' should be placed in the first line">do<caret></warning> i++;
+        <warning descr="Cancellation check 'com.intellij.openapi.progress.ProgressManager.checkCanceled' should be the first statement in a loop body">do<caret></warning> i++;
         while (i < 100);
     }
 }

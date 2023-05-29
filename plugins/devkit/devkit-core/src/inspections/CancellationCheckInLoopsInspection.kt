@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
@@ -77,8 +78,7 @@ class CancellationCheckInLoopsInspection : DevKitUastInspectionBase() {
    */
   private fun shouldBeRunOn(uElement: UElement): Boolean {
     val containingMethod = uElement.getParentOfType<UMethod>() ?: return false
-    val superMethods = containingMethod.javaPsi.findSuperMethods()
-    return superMethods.plus(containingMethod).any { it.hasAnnotation(RequiresReadLock::class.java.canonicalName) }
+    return AnnotationUtil.isAnnotated(containingMethod.javaPsi, RequiresReadLock::class.java.canonicalName, AnnotationUtil.CHECK_HIERARCHY)
   }
 
   private val ULoopExpression.bodyExpressions: List<UExpression>

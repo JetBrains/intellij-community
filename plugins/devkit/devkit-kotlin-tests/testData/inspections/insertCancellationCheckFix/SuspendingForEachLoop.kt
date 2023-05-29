@@ -7,7 +7,7 @@ import inspections.cancellationCheckInLoops.Foo.doSomething
 
 @RequiresReadLock
 suspend fun main() {
-  <warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be placed in the first line">for<caret></warning> (i in 1..10) {
+  <warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">for<caret></warning> (i in 1..10) {
     // comments
     doSomething()
   }

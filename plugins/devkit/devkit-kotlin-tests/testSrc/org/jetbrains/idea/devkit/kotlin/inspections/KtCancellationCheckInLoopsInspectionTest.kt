@@ -25,11 +25,23 @@ class KtCancellationCheckInLoopsInspectionTest : CancellationCheckInLoopsInspect
       """.trimIndent())
   }
 
+  fun testRunCondition() {
+    doTest()
+  }
+
+  fun testRunConditionOnSuperMethod() {
+    doTest()
+  }
+
   fun testSuspendingContext() {
     doTest()
   }
 
   fun testPresentCancellationCheck() {
+    doTest()
+  }
+
+  fun testCancellationCheckPresentNotInFirstLine() {
     doTest()
   }
 

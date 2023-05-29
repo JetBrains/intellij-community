@@ -15,7 +15,7 @@ class Clazz {
     while (j < 100) {
       for (int i = 0; i < 5; i++) {
         for (String item : items) {
-          <warning descr="Cancellation check 'com.intellij.openapi.progress.ProgressManager.checkCanceled' should be placed in the first line">do</warning> {
+          <warning descr="Cancellation check 'com.intellij.openapi.progress.ProgressManager.checkCanceled' should be the first statement in a loop body">do</warning> {
             doSomething();
             j++;
           } while (j < 5);
@@ -25,7 +25,7 @@ class Clazz {
     }
 
     // single line nested loops
-    for (int i = 0; i < 5; i++) <warning descr="Cancellation check 'com.intellij.openapi.progress.ProgressManager.checkCanceled' should be placed in the first line">for</warning> (String item : items) {
+    for (int i = 0; i < 5; i++) <warning descr="Cancellation check 'com.intellij.openapi.progress.ProgressManager.checkCanceled' should be the first statement in a loop body">for</warning> (String item : items) {
       doSomething();
     }
   }

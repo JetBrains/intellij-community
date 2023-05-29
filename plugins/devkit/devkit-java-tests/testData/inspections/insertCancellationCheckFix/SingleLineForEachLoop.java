@@ -11,6 +11,6 @@ class Clazz {
     public static void foo() {
         String[] items = {""};
 
-        <warning descr="Cancellation check 'com.intellij.openapi.progress.ProgressManager.checkCanceled' should be placed in the first line">for<caret></warning> (String item : items) doSomething();
+        <warning descr="Cancellation check 'com.intellij.openapi.progress.ProgressManager.checkCanceled' should be the first statement in a loop body">for<caret></warning> (String item : items) doSomething();
     }
 }
