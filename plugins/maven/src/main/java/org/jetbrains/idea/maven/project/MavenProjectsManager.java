@@ -96,7 +96,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenProjectsManagerWatcher myWatcher;
 
   private MavenProjectsProcessor myReadingProcessor;
-  protected MavenProjectsProcessor myResolvingProcessor;
   private MavenProjectsProcessor myPluginsResolvingProcessor;
   private MavenProjectsProcessor myArtifactsDownloadingProcessor;
 
@@ -409,7 +408,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void initWorkers() {
     myReadingProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.reading"), false, myEmbeddersManager);
-    myResolvingProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.resolving"), true, myEmbeddersManager);
     myPluginsResolvingProcessor =
       new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true, myEmbeddersManager);
     myArtifactsDownloadingProcessor =
@@ -564,7 +562,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       myWatcher.stop();
 
       myReadingProcessor.stop();
-      myResolvingProcessor.stop();
       myPluginsResolvingProcessor.stop();
       myArtifactsDownloadingProcessor.stop();
       mySaveQueue.flush();
@@ -992,9 +989,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       if (myPluginsResolvingProcessor != null) {
         myPluginsResolvingProcessor.waitForCompletion();
       }
-      if (myResolvingProcessor != null) {
-        myResolvingProcessor.waitForCompletion();
-      }
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         MavenProgressIndicator.MavenProgressTracker mavenProgressTracker =
           myProject.getServiceIfCreated(MavenProgressIndicator.MavenProgressTracker.class);
@@ -1136,7 +1130,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void waitForResolvingCompletion() {
-    waitForTasksCompletion(myResolvingProcessor);
+    waitForTasksCompletion(null);
   }
 
   public void waitForPluginsResolvingCompletion() {
