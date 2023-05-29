@@ -81,6 +81,72 @@ class ClassDiagramTest : MermaidLexerTestCase() {
     doTest(content)
   }
 
+  fun `test class relationships RL without spaces`() {
+    val content = """
+    classDiagram
+      classA<|--classB
+      classC*--classD
+      classEo--classF
+      classG<--classH
+      classI--classJ
+      classK<..classL
+      classM<|..classN
+      classO..classP
+      
+      classA<|-- classB
+      classC*-- classD
+      classEo-- classF
+      classG<-- classH
+      classI-- classJ
+      classK<.. classL
+      classM<|.. classN
+      classO.. classP
+      
+      classA <|--classB
+      classC *--classD
+      classE o--classF
+      classG <--classH
+      classI --classJ
+      classK <..classL
+      classM <|..classN
+      classO ..classP
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test class relationships LR without spaces`() {
+    val content = """
+    classDiagram
+      classA--|>classB
+      classC--*classD
+      classE--oclassF
+      classG-->classH
+      classI--classJ
+      classK..>classL
+      classM..|>classN
+      classO..classP
+      
+      classA--|> classB
+      classC--* classD
+      classE--o classF
+      classG--> classH
+      classI-- classJ
+      classK..> classL
+      classM..|> classN
+      classO.. classP
+      
+      classA --|>classB
+      classC --*classD
+      classE --oclassF
+      classG -->classH
+      classI --classJ
+      classK ..>classL
+      classM ..|>classN
+      class O..classP
+    """.trimIndent()
+    doTest(content)
+  }
+
   fun `test class two-way relationship`() {
     val content = """
     classDiagram
@@ -231,6 +297,16 @@ class ClassDiagramTest : MermaidLexerTestCase() {
       class `Animal Class!`
       class `Car Class`
       `Animal Class!` --> `Car Class`
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test hyphens in names`() {
+    val content = """
+    classDiagram
+      class Bugs-Bunny
+      Animal <|-- Bugs-Bunny
+      <<interface>> A-B
     """.trimIndent()
     doTest(content)
   }

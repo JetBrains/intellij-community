@@ -42,4 +42,6 @@ class ClassDiagramTest : MermaidParserTestCase("class") {
   fun `test class labels`() = doTest(true)
 
   fun `test backticks`() = doTest(true)
+
+  fun `test hyphens in names`() = doTest(true)
 }

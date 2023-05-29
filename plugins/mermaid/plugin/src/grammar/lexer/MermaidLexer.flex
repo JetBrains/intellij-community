@@ -58,7 +58,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states sequence, sequence_id, sequence_alias, sequence_message, sequence_control_id, sequence_links, sequence_links_values, autonumbers
 
-%states class_diagram, struct, generic, simple_direction_value, annotation, class_name, class_in_relation, description, class_style_id, class_member
+%states class_diagram, struct, generic, simple_direction_value, annotation, class_name, class_relation_line, class_relation_start, class_relation_end, class_in_relation, description, class_style_id, class_member
 
 %states state_diagram, state_statement, note_statement, note_content, simple_note_content, state_class_def, state_class_def_id, state_class, state_class_style, state_scale
 
@@ -446,21 +446,50 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 
 //---class------------------------------------------------------------------------
-<class_diagram, class_name> {
+<class_relation_start, class_diagram> {
+  "<|"/"--"|".." { yybegin(class_relation_line); return ClassDiagram.EXTENSION_START; }
+  "<"/"--"|".." { yybegin(class_relation_line); return ClassDiagram.DEPENDENCY_START; }
+  [\*]/"--"|".." { yybegin(class_relation_line); return ClassDiagram.COMPOSITION; }
+  "o"/"--"|".." { yybegin(class_relation_line); return ClassDiagram.AGGREGATION; }
+  "()"/"--"|".." { yybegin(class_relation_line); return ClassDiagram.LOLLIPOP; }
+}
+<class_relation_line, class_diagram> {
+  "--"/[|>o*(] { yybegin(class_relation_end); return ClassDiagram.LINE; }
+  ".."/[|>o*(] { yybegin(class_relation_end); return ClassDiagram.DOTTED_LINE; }
+
+  "--" { yybegin(class_in_relation); return ClassDiagram.LINE; }
+  ".." { yybegin(class_in_relation); return ClassDiagram.DOTTED_LINE; }
+}
+<class_relation_end> {
+  "|>" { yybegin(class_in_relation); return ClassDiagram.EXTENSION_END; }
+  ">" { yybegin(class_in_relation); return ClassDiagram.DEPENDENCY_END; }
+  [\*] { yybegin(class_in_relation); return ClassDiagram.COMPOSITION; }
+  "o" { yybegin(class_in_relation); return ClassDiagram.AGGREGATION; }
+  "()" { yybegin(class_in_relation); return ClassDiagram.LOLLIPOP; }
+}
+<class_diagram> {
   "link" { yypushstate(click); return LINK; }
   "callback" { yypushstate(click); return CALLBACK; }
-  "{" { yybegin(struct); return OPEN_CURLY; }
   ":::" { yypushstate(class_style_id); return STYLE_SEPARATOR; }
   "note for" { return ClassDiagram.NOTE_FOR; }
   "note" { return NOTE; }
+  "class"/[^\S\n\r]+.* { return CLASS; }
+  "direction" { yypushstate(direction_value); return DIRECTION; }
+
+  [\w_-]+/[^\S\n\r]*[o|O]("--"|"..")[^\S\n\r]*[\w_-]+ { yybegin(class_relation_start); return ClassDiagram.CLASS_ID; }
+  [\w_-]+/[^\S\n\r]*"--"[^\S\n\r]*[\w_-]+ { yybegin(class_relation_line); return ClassDiagram.CLASS_ID; }
+  [\w_-]+/[^\S\n\r]*"--" { yybegin(class_relation_line); return ClassDiagram.CLASS_ID; }
+  [\w_-]+ { return ClassDiagram.CLASS_ID; }
+
+  "{" { yybegin(struct); return OPEN_CURLY; }
+}
+<class_in_relation> {
+  [\w_-]+ { return ClassDiagram.CLASS_ID; }
+  ":" { yypushstate(description); return COLON; }
+  [\n\r] { yybegin(class_diagram); return EOL; }
 }
 <class_style_id> {
   [\w_]+ { yypopstate(); return ID; }
-}
-<class_diagram, class_name> {
-  "class" { yypushstate(class_name); return CLASS; }
-  "direction" { yypushstate(direction_value); return DIRECTION; }
-  [\w_]+ { yypushstate(class_name); return ClassDiagram.CLASS_ID; }
 }
 <struct> {
   "{" { return OPEN_CURLY; }
@@ -475,7 +504,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "{" { return OPEN_CURLY; }
   "}" { return CLOSE_CURLY; }
 }
-<class_diagram, struct, class_name, class_member> {
+<class_diagram, struct, class_name, class_member, class_in_relation> {
   [~] { yypushstate(generic); return TILDA; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   [`] { yypushstate(back_quoted_string); return BACK_QUOTE; }
@@ -503,37 +532,11 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "~"/[^\s~{:] { yypushstate(generic); return TILDA; }
   [^\s~]* { return ClassDiagram.GENERIC_TYPE; }
   [^\S\n\r]+ { return WHITE_SPACE; }
-
 }
 <annotation> {
   \w+ { return ANNOTATION_VALUE; }
   ">>" { yypopstate(); return ANNOTATION_END; }
   [^\S\n\r]+ { return WHITE_SPACE; }
-}
-<class_name> {
-  "<|" { return ClassDiagram.EXTENSION_START; }
-  "<" { return ClassDiagram.DEPENDENCY_START; }
-  [\*]/[\-\.] { return ClassDiagram.COMPOSITION; }
-  "o"/[\-\.] { return ClassDiagram.AGGREGATION; }
-  "()"/[\-\.] { return ClassDiagram.LOLLIPOP; }
-  "--" { yybegin(class_in_relation); return ClassDiagram.LINE; }
-  ".." { yybegin(class_in_relation); return ClassDiagram.DOTTED_LINE; }
-}
-<class_in_relation> {
-  [~] { yypushstate(generic); return TILDA; }
-  ":" { yypushstate(description); return COLON; }
-  [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
-  [`] { yypushstate(back_quoted_string); return BACK_QUOTE; }
-
-  "|>" { return ClassDiagram.EXTENSION_END; }
-  ">" { return ClassDiagram.DEPENDENCY_END; }
-  [\*] { return ClassDiagram.COMPOSITION; }
-  "o" { return ClassDiagram.AGGREGATION; }
-  "()" { return ClassDiagram.LOLLIPOP; }
-  [\w_]+ { return ClassDiagram.CLASS_ID; }
-
-  [\n\r] { yybegin(class_diagram); return EOL; }
-  [^\S\r\n]+ { return WHITE_SPACE; }
 }
 <description> {
   [^\s]+ { return LABEL; }
