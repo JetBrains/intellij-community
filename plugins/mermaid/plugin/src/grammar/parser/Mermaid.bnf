@@ -714,7 +714,7 @@ mindmapNodeId ::= (ID | COLON)+ {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 mindmapNodeDescr ::= NODE_DESCR_START nodeDescription NODE_DESCR_END
-nodeDescription ::= NODE_DESCR+ | string
+nodeDescription ::= NODE_DESCR+ | string | mdText
 
 iconStatement ::= OPEN_ICON ICON_VALUE? CLOSE_ICON
 mindmapClassStatement ::= STYLE_SEPARATOR CLASS+

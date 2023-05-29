@@ -870,6 +870,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 <mindmap_node> {
   \" { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  [\"]/` { yypushstate(md_string); return DOUBLE_QUOTE; }
 
   [^\"\s)\](}][^\"\s)\](}]* { return Mindmap.NODE_DESCR; }
 
