@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -6,12 +6,14 @@ import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomChanged
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
+import com.intellij.internal.statistic.service.fus.collectors.ThemeAutodetectSelector
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
@@ -24,6 +26,7 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
@@ -107,6 +110,9 @@ private val cdFullPathsInTitleBar
   get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
 private val cdShowMenuIcons
   get() = CheckboxDescriptor(message("checkbox.show.icons.in.menu.items"), settings::showIconsInMenus, groupName = windowOptionGroupName)
+private val cdDifferentiateProjects
+  get() = CheckboxDescriptor(message("checkbox.use.solution.colors.in.main.toolbar"), settings::differentiateProjects,
+                             message("text.use.solution.colors.in.main.toolbar"), groupName = uiOptionGroupName)
 
 internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
   return sequenceOf(
@@ -122,7 +128,8 @@ internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
     cdShowTreeIndents,
     cdDnDWithAlt,
     cdFullPathsInTitleBar,
-    cdSeparateMainMenu
+    cdSeparateMainMenu,
+    cdDifferentiateProjects
   ).map(CheckboxDescriptor::asUiOptionDescriptor)
 }
 
@@ -141,6 +148,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     }
     syncThemeProperty.afterChange(disposable!!) {
       lafManager.autodetect = it
+      ThemeAutodetectSelector.log(it)
     }
 
     return panel {
@@ -203,7 +211,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         val useCustomCheckbox = checkBox(message("checkbox.override.default.laf.fonts"))
           .gap(RightGap.SMALL)
           .bindSelected(settings::overrideLafFonts) {
-            settings.overrideLafFonts = it
+            NotRoamableUiSettings.getInstance().overrideLafFonts = it
             if (!it) {
               getDefaultFont().let { defaultFont ->
                 settings.fontFace = defaultFont.family
@@ -339,6 +347,13 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           }
           yield({ checkBox(cdFullPathsInTitleBar) })
           yield({ checkBox(cdShowMenuIcons) })
+          if (ProjectWindowCustomizerService.getInstance().isAvailable()) {
+            yield {
+              checkBox(cdDifferentiateProjects)
+                .enabledIf(AtomicBooleanProperty(ExperimentalUI.isNewUI()))
+                .comment(cdDifferentiateProjects.comment, 30)
+            }
+          }
         }
 
         // Since some of the columns have variable number of items, enumerate them in a loop, while moving orphaned items from the right

@@ -981,14 +981,11 @@
     },
     "RunWidget" : {
       "foreground": "black",
-      "runModeIconColor": "#5fad65",
-      "disabledForeground": "#FFFFFF66",
-      "background": "#3369d6",
+      "runIconColor": "#5fad65",
       "runningBackground": "#599e5e",
       "stopBackground": "#c94f4f",
       "hoverBackground": "#00000019",
-      "pressedBackground": "#00000028",
-      "separatorColor": "#FFFFFF40"
+      "pressedBackground": "#00000028"
     },
 
     "MainWindow.Tab" : {
@@ -1001,6 +998,57 @@
       "hoverBackground": "grey13",
       "separatorColor": "grey09",
       "borderColor": "grey09"
+    },
+    "Profiler": {
+      "ChartSlider": {
+        "foreground": "#000000",
+        "lineColor": "#ADADAD"
+      },
+      "CpuChart": {
+        "background": "#6296554D",
+        "borderColor": "#629655",
+        "inactiveBackground": "#62965533",
+        "inactiveBorderColor": "#A1C099",
+        "pointBackground": "#629625",
+        "pointBorderColor": "#FFFFFF"
+      },
+      "MemoryChart": {
+        "background": "#589DF680",
+        "borderColor": "#589DF6",
+        "inactiveBackground": "#589DF633",
+        "inactiveBorderColor": "#ABCEFA",
+        "pointBackground": "#589dF6",
+        "pointBorderColor": "#FFFFFF"
+      },
+      "Timer": {
+        "foreground": "#000000",
+        "disabledForeground": "#808080",
+        "background": "#F2F2F2"
+      },
+      "LiveChart": {
+        "horizontalAxisColor": "#515151"
+      }
+    },
+    "FlameGraph.Tooltip": {
+      "scaleBackground": "#EBEBEB",
+      "scaleColor": "#A7D1EC",
+      "foreground": "#000000"
+    },
+    "LineProfiler" : {
+      "Line" : {
+        "labelBackground" : "#DFDFDF",
+        "foreground" : "#808080",
+        "hoverBackground" : "#D1D1D1"
+      },
+      "HotLine" : {
+        "labelBackground" : "#FFE0E0",
+        "foreground" : "#C7222D",
+        "hoverBackground" : "#FFCCCC"
+      },
+      "IgnoredLine" : {
+        "labelBackground" : "#DFDFDF",
+        "foreground" : "#B0B0B0"
+      }
     }
   }
 }

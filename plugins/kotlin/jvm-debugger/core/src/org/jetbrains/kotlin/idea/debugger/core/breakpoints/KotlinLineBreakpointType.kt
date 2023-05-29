@@ -82,16 +82,8 @@ class KotlinLineBreakpointType :
         return true
     }
 
-    override fun getContainingMethod(breakpoint: LineBreakpoint<*>): PsiElement? {
-        val position = breakpoint.sourcePosition ?: return null
-        val properties = breakpoint.javaBreakpointProperties
-        if (properties is JavaLineBreakpointProperties) {
-            val lambda = getLambdaByOrdinal(position, properties.lambdaOrdinal)
-            if (lambda != null) return lambda
-        }
-
-        return position.elementAt.getContainingMethod()
-    }
+    override fun getContainingMethod(breakpoint: LineBreakpoint<*>): PsiElement? =
+        breakpoint.sourcePosition?.elementAt?.getContainingMethod()
 
     override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
         return isBreakpointApplicable(file, line, project) { element: PsiElement ->

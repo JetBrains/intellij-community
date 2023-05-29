@@ -31,7 +31,6 @@ import kotlin.io.path.exists
 
 
 @RunWith(Parameterized::class)
-@OptIn(ExperimentalCoroutinesApi::class)
 class PyAddCondaPanelModelTest {
 
   @JvmField

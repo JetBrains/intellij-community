@@ -355,10 +355,10 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                               <configuration>
                                 <sources>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/foo1</directory>
+                                    <directory>${project.basedir}/src/foo1</directory>
                                   </fileset>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/foo2</directory>
+                                    <directory>${project.basedir}/src/foo2</directory>
                                   </fileset>
                                 </sources>
                               </configuration>
@@ -371,10 +371,10 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                               <configuration>
                                 <sources>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/test-foo1</directory>
+                                    <directory>${project.basedir}/src/test-foo1</directory>
                                   </fileset>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/test-foo2</directory>
+                                    <directory>${project.basedir}/src/test-foo2</directory>
                                   </fileset>
                                 </sources>
                               </configuration>
@@ -429,10 +429,10 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                               <configuration>
                                 <sources>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/foo1</directory>
+                                    <directory>${project.basedir}/src/foo1</directory>
                                   </fileset>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/foo2</directory>
+                                    <directory>${project.basedir}/src/foo2</directory>
                                   </fileset>
                                 </sources>
                               </configuration>
@@ -445,10 +445,10 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                               <configuration>
                                 <sources>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/test-foo1</directory>
+                                    <directory>${project.basedir}/src/test-foo1</directory>
                                   </fileset>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/test-foo2</directory>
+                                    <directory>${project.basedir}/src/test-foo2</directory>
                                   </fileset>
                                 </sources>
                               </configuration>

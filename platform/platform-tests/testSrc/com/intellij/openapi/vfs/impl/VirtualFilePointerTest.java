@@ -791,7 +791,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       for (int it = 0; it < nThreads; it++) {
         jobs.add(JobLauncher.getInstance().submitToJobThread(read, null));
       }
-      ready.await();
+      boolean isReady = ready.await(10, TimeUnit.SECONDS);
+      assumeTrue("It took too long to start all jobs", isReady);
 
       myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
 

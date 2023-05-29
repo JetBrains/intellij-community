@@ -25,6 +25,7 @@ import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.psi.PsiFile
 import com.intellij.util.ui.EDT
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.event.MouseEvent
 
 internal fun navigateToLookupItem(project: Project): Boolean {
@@ -55,13 +56,16 @@ internal fun navigateRequestLazy(project: Project, requestor: NavigationRequesto
   }
 }
 
-internal fun navigateRequest(project: Project, request: NavigationRequest) {
+
+@Internal
+fun navigateRequest(project: Project, request: NavigationRequest) {
   EDT.assertIsEdt()
   IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
   when (request) {
     is SourceNavigationRequest -> {
       // TODO support pure source request without OpenFileDescriptor
-      val openFileDescriptor = OpenFileDescriptor(project, request.file, request.offset)
+      val offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1
+      val openFileDescriptor = OpenFileDescriptor(project, request.file, offset)
       if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
         openFileDescriptor.isUsePreviewTab = true
       }

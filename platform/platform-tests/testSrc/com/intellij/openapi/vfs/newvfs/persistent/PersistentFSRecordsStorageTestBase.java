@@ -275,7 +275,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     );
 
     final IntSet recordIdsReadBack = new IntOpenHashSet();
-    storage.processAllRecords((fileId, nameId, flags, parentId, corrupted) -> {
+    storage.processAllRecords((fileId, nameId, flags, parentId, attributeRecordId, contentId, corrupted) -> {
       recordIdsReadBack.add(fileId);
     });
 

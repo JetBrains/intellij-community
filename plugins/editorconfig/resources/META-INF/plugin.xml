@@ -96,7 +96,6 @@ For more information, check the documentation for <a href="https://editorconfig.
         implementationClass="org.editorconfig.language.psi.reference.EditorConfigTargetElementEvaluator"/>
 
     <fileEncodingProvider implementation="org.editorconfig.configmanagement.ConfigEncodingManager"/>
-    <fileDocumentManagerListener implementation="org.editorconfig.configmanagement.LineEndingsManager"/>
 
     <utf8BomOptionProvider implementation="org.editorconfig.configmanagement.EditorConfigUtf8BomOptionProvider"/>
 
@@ -248,7 +247,7 @@ For more information, check the documentation for <a href="https://editorconfig.
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="WARNING"
-        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigCharClassRedundancyInspection"/>
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigCharClassPatternRedundancyInspection"/>
 
     <!-- Option inspections -->
     <localInspection

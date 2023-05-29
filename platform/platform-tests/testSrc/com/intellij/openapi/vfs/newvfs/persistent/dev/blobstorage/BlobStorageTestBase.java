@@ -17,7 +17,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage.NULL_ID;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
  * Superclass for tests different implementations of blob storages -- i.e. storages of
@@ -271,7 +272,7 @@ public abstract class BlobStorageTestBase<S> {
   }
 
   @NotNull
-  protected static String randomString(final ThreadLocalRandom rnd,
+  public static String randomString(final ThreadLocalRandom rnd,
                                        final int size) {
     final char[] chars = new char[size];
     for (int i = 0; i < chars.length; i++) {

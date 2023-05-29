@@ -6,7 +6,7 @@ use std::fmt::{Debug, Formatter};
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Command, ExitStatus, Output, Stdio};
+use std::process::{Command, ExitStatus, Stdio};
 use std::sync::Once;
 
 use anyhow::{bail, Context, Result};
@@ -75,6 +75,44 @@ impl<'a> TestEnvironment<'a> {
             .write_all(content.as_bytes())
             .expect(&format!("Cannot write {:?}", &file));
     }
+
+    #[cfg(target_os = "windows")]
+    pub fn to_unc(&self) -> Self {
+        self.map_path(Self::convert_to_unc)
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn to_ns_prefix(&self) -> Self {
+        self.map_path(Self::ns_prefix)
+    }
+
+    #[cfg(target_os = "windows")]
+    fn map_path(&self, mapping: fn(&Path) -> PathBuf) -> Self {
+        let new_temp_dir = mapping(self.test_root_dir.path().parent().unwrap());
+        TestEnvironment {
+            dist_root: mapping(&self.dist_root),
+            project_dir: mapping(&self.project_dir),
+            launcher_path: mapping(&self.launcher_path),
+            shared_env: self.shared_env,
+            test_root_dir: Builder::new().prefix("xplat_launcher_test_").tempdir_in(new_temp_dir).unwrap(),
+            to_delete: Vec::new()
+        }
+    }
+
+    // "C:\some\path" -> "\\127.0.0.1\\C$\some\path"
+    #[cfg(target_os = "windows")]
+    fn convert_to_unc(path: &Path) -> PathBuf {
+        assert!(path.has_root(), "Invalid path: {:?}", path);
+        let path_str = path.to_str().unwrap();
+        PathBuf::from(String::from("\\\\127.0.0.1\\") + &path_str[0..1] + "$" + &path_str[2..])
+    }
+
+    // "C:\some\path" -> "\\?\C:\some\path"
+    #[cfg(target_os = "windows")]
+    fn ns_prefix(path: &Path) -> PathBuf {
+        assert!(path.has_root(), "Invalid path: {:?}", path);
+        PathBuf::from(String::from("\\\\?\\") + path.to_str().unwrap())
+    }
 }
 
 impl<'a> Drop for TestEnvironment<'a> {
@@ -132,99 +170,35 @@ fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation, with_jbr: bool
 }
 
 fn init_test_environment_once() -> Result<TestEnvironmentShared> {
+    //xplat_launcher::mini_logger::init(log::LevelFilter::Debug)?;
+
     // clean environment variables
     env::remove_var("JDK_HOME");
     env::remove_var("JAVA_HOME");
 
     let project_root = env::current_dir().expect("Failed to get project root");
 
-    let build_target = if cfg!(debug_assertions) { "debug" } else { "release" };
     let bin_name = if cfg!(target_os = "windows") { "xplat-launcher.exe" } else { "xplat-launcher" };
-    let launcher_path = project_root.join("target").join(build_target).join(bin_name);
+    let launcher_path = env::current_exe()?.parent_or_err()?.parent_or_err()?.join(bin_name);
     if !launcher_path.exists() {
         bail!("Didn't find source launcher to layout, expected path: {:?}", launcher_path);
     }
 
-    // gradle_command_wrapper("clean");
-    gradle_command_wrapper("fatJar");
+    let gradle_build_dir = Path::new("./resources/TestProject/build").canonicalize()?.strip_ns_prefix()?;
+    let jbr_root = gradle_build_dir.join("jbr");
+    if !jbr_root.is_dir() {
+        bail!("Missing: {:?}; please run `gradlew :downloadJbr` first", jbr_root);
+    }
 
-    let jbr_root = get_jbr_sdk_from_project_root(&project_root)?;
-
-    let app_jar_path = Path::new("./resources/TestProject/build/libs/app.jar").canonicalize()?;
+    let app_jar_path = gradle_build_dir.join("libs").join("app.jar");
+    if !app_jar_path.is_file() {
+        bail!("Missing: {:?}; please run `gradlew :fatJar` first", app_jar_path);
+    }
 
     let product_info_path = project_root.join(format!("resources/product_info_{}.json", env::consts::OS));
     let vm_options_path = project_root.join("resources/xplat.vmoptions");
 
     Ok(TestEnvironmentShared { launcher_path, jbr_root, app_jar_path, product_info_path, vm_options_path })
-}
-
-fn get_jbr_sdk_from_project_root(project_root: &Path) -> Result<PathBuf> {
-    let gradle_jvm = project_root.join("resources").join("TestProject").join("gradle-jvm");
-
-    // TODO: remove after wrapper with https://github.com/mfilippov/gradle-jvm-wrapper/pull/31
-    let java_dir_prefix = if cfg!(target_os = "windows") { "jdk" } else { "jbrsdk" };
-
-    // jbrsdk-17.0.3-osx-x64-b469.37-f87880
-    let sdk_gradle_parent = get_child_dir(&gradle_jvm, java_dir_prefix)?;
-
-    // jbrsdk-17.0.3-x64-b469
-    let sdk_root = get_child_dir(&sdk_gradle_parent, java_dir_prefix)?;
-
-    Ok(sdk_root)
-}
-
-fn gradle_command_wrapper(gradle_command: &str) {
-    let current_dir = env::current_dir()
-        .expect("Failed to get current dir")
-        .canonicalize()
-        .expect("Failed to get canonical path to current dir");
-    println!("current_dir={current_dir:?}");
-
-    let executable_name = get_gradlew_executable_name();
-    let executable = PathBuf::from("./resources/TestProject")
-        .join(executable_name);
-
-    assert!(executable.exists());
-
-    let gradlew = executable.canonicalize().expect("Failed to get canonical path to gradlew");
-    let command_to_execute = Command::new(gradlew)
-        .arg(gradle_command)
-        .current_dir("./resources/TestProject")
-        .output()
-        .expect(&format!("Failed to execute gradlew :{gradle_command}"));
-
-    command_handler(&command_to_execute);
-}
-
-#[cfg(target_os = "windows")]
-fn get_gradlew_executable_name() -> String {
-    "gradlew.bat".to_string()
-}
-
-#[cfg(target_family = "unix")]
-fn get_gradlew_executable_name() -> String {
-    "gradlew".to_string()
-}
-
-fn command_handler(command: &Output) {
-    let exit_status = command.status;
-    let stdout = String::from_utf8_lossy(&command.stdout);
-    let stderr = String::from_utf8_lossy(&command.stderr);
-
-    if !exit_status.success() {
-        let message = format!("Command didn't succeed,\n exit code: {exit_status},\n stdout: {stdout},\n stderr: {stderr}");
-        panic!("{}", message)
-    }
-}
-
-fn get_child_dir(parent: &Path, prefix: &str) -> Result<PathBuf> {
-    let entry = fs::read_dir(parent)?
-        .map(|r| r.unwrap())
-        .find(|e| e.file_name().to_string_lossy().starts_with(prefix));
-    match entry {
-        Some(e) => Ok(e.path()),
-        None => bail!("'{}*' not found in {:?}", prefix, parent)
-    }
 }
 
 #[cfg(target_os = "linux")]
@@ -367,13 +341,13 @@ fn layout_launcher_impl(
     for target_rel_path in create_files {
         let target = &target_dir.join(target_rel_path);
         fs::create_dir_all(target.parent_or_err()?)?;
-        File::create(target).context(format!("Failed to create file {target:?}"))?;
+        File::create(target).with_context(|| format!("Failed to create file {target:?}"))?;
     }
 
     for (source, target_rel_path) in copy_files {
         let target = &target_dir.join(target_rel_path);
         fs::create_dir_all(target.parent_or_err()?)?;
-        fs::copy(source, target).context(format!("Failed to copy from {source:?} to {target:?}"))?;
+        fs::copy(source, target).with_context(|| format!("Failed to copy from {source:?} to {target:?}"))?;
     }
 
     if include_jbr {
@@ -386,7 +360,7 @@ fn layout_launcher_impl(
 #[cfg(target_family = "unix")]
 fn symlink(original: &Path, link: &Path) -> Result<()> {
     std::os::unix::fs::symlink(original, link)
-        .context(format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
+        .with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
 
     Ok(())
 }
@@ -394,7 +368,7 @@ fn symlink(original: &Path, link: &Path) -> Result<()> {
 #[cfg(target_os = "windows")]
 fn symlink(original: &Path, link: &Path) -> Result<()> {
     std::os::windows::fs::symlink_dir(original, link)
-        .context(format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
+        .with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
 
     Ok(())
 }
@@ -480,8 +454,8 @@ impl LauncherRunResult {
 impl Debug for LauncherRunResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
-            "\n** exit code: {}\n** stderr: <<<{}>>>\n** stdout: <<<{}>>>",
-            self.exit_status.code().unwrap_or(-1), self.stderr, self.stdout))
+            "\n** exit code: {:?} ({:?})\n** stderr: <<<{}>>>\n** stdout: <<<{}>>>",
+            self.exit_status.code(), self.exit_status, self.stderr, self.stdout))
     }
 }
 
@@ -514,13 +488,14 @@ pub fn run_launcher_ext(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) 
 }
 
 fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> Result<LauncherRunResult> {
-    println!("Starting {:?} with args {:?}", &test_env.launcher_path, run_spec.args);
+    debug!("Starting '{}'\n  with args {:?}\n  in '{}'",
+           test_env.launcher_path.display(), run_spec.args, test_env.test_root_dir.path().display());
 
     let stdout_file_path = test_env.test_root_dir.path().join("out.txt");
     let stderr_file_path = test_env.test_root_dir.path().join("err.txt");
     let project_dir = test_env.project_dir.to_str().unwrap();
     let dump_file_path = test_env.test_root_dir.path().join("output.json");
-    let dump_file_path_str = dump_file_path.to_string_lossy();
+    let dump_file_path_str = dump_file_path.strip_ns_prefix()?.to_string_checked()?;
 
     let mut full_args = Vec::<&str>::new();
     if run_spec.dump {
@@ -554,7 +529,7 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
     }
 
     let mut launcher_process = Command::new(&test_env.launcher_path)
-        .current_dir(&test_env.test_root_dir)
+        .current_dir(&test_env.test_root_dir.path())
         .args(full_args)
         .stdout(Stdio::from(File::create(&stdout_file_path)?))
         .stderr(Stdio::from(File::create(&stderr_file_path)?))
@@ -570,22 +545,14 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
             panic!("Launcher has been running for more than 60 seconds, terminating")
         }
 
-        match launcher_process.try_wait() {
-            Ok(opt) => match opt {
-                None => {
-                    println!("Waiting for launcher process to exit");
-                }
-                Some(es) => return Ok(LauncherRunResult {
-                    exit_status: es,
-                    stdout: fs::read_to_string(&stdout_file_path).context("Cannot open stdout file")?,
-                    stderr: fs::read_to_string(&stderr_file_path).context("Cannot open stderr file")?,
-                    dump: if run_spec.dump { Some(read_launcher_run_result(&dump_file_path)) } else { None }
-                }),
-            },
-            Err(e) => {
-                Err(e)?
-            }
-        };
+        if let Some(es) = launcher_process.try_wait()? {
+            return Ok(LauncherRunResult {
+                exit_status: es,
+                stdout: fs::read_to_string(&stdout_file_path).context("Cannot open stdout file")?,
+                stderr: fs::read_to_string(&stderr_file_path).context("Cannot open stderr file")?,
+                dump: if run_spec.dump { Some(read_launcher_run_result(&dump_file_path)) } else { None }
+            });
+        }
 
         thread::sleep(time::Duration::from_secs(1))
     }

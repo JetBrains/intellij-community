@@ -11,16 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 public interface TodoCacheManager {
 
-  /**
-   * @deprecated please use {@link TodoCacheManager#getInstance} instead
-   */
-  @Deprecated(forRemoval = true)
-  final class SERVICE {
-    public static TodoCacheManager getInstance(Project project) {
-      return TodoCacheManager.getInstance(project);
-    }
-  }
-
   static TodoCacheManager getInstance(Project project) {
     return project.getService(TodoCacheManager.class);
   }

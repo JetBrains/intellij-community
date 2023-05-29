@@ -10,7 +10,7 @@ class TemplatesCompletionTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun prepare(text: String) {
     myFixture.configureByText(JavaFileType.INSTANCE, text)
-    myFixture.editor.putUserData(StructuralSearchDialog.TEST_STRUCTURAL_SEARCH_DIALOG, true)
+    myFixture.editor.putUserData(StructuralSearchDialogKeys.TEST_STRUCTURAL_SEARCH_DIALOG, true)
   }
 
   private val renderedLookupElementTexts: Collection<Pair<String, String>>

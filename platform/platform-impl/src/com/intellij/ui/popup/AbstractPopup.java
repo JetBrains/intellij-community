@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.ModalityHelper;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
@@ -267,7 +268,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
                                  PopupBorder.Factory.createEmpty();
     myPopupBorder.setPopupUsed();
     myShadowed = showShadow;
-    if (showBorder && SystemInfo.isMac) {
+    if (showBorder) {
       myPopupBorderColor = borderColor == null ? JBUI.CurrentTheme.Popup.borderColor(true) : borderColor;
     }
     myContent = createContentPanel(resizable, myPopupBorder, false);
@@ -510,17 +511,19 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   private static Window getTargetWindow(Component component) {
+    Window res = null;
     while (component != null) {
       if (component instanceof FloatingDecorator fd) {
         return fd;
       }
       Component parent = component.getParent();
-      if (parent == null && component instanceof Window w) {
-        return w;
+      if (component instanceof Window w) {
+        if (ModalityHelper.isModalBlocked(w)) break;
+        res = w;
       }
       component = parent;
     }
-    return null;
+    return res;
   }
 
   @Override
@@ -952,6 +955,25 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     prepareToShow();
     installWindowHook(this);
 
+    Object roundedCornerParams = null;
+    if (WindowRoundedCornersManager.isAvailable()) {
+      PopupCornerType cornerType = getUserData(PopupCornerType.class);
+      if (cornerType == null) {
+        cornerType = PopupCornerType.RoundedWindow;
+      }
+      if (cornerType != PopupCornerType.None) {
+        if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
+          roundedCornerParams = new Object[]{cornerType,
+            myPopupBorderColor == null ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor};
+          // must set the border before calculating size below
+          myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
+        }
+        else {
+          roundedCornerParams = cornerType;
+        }
+      }
+    }
+
     Dimension sizeToSet = getStoredSize();
     if (myForcedSize != null) {
       sizeToSet = myForcedSize;
@@ -1085,32 +1107,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       final IdeGlassPaneImpl glass = new IdeGlassPaneImpl(root);
       root.setGlassPane(glass);
 
-      WindowResizeListener resizeListener = new WindowResizeListener(
+      WindowResizeListenerEx resizeListener = new WindowResizeListenerEx(
+        glass,
         myComponent,
         myMovable ? JBUI.insets(4) : JBUI.insets(0, 0, 4, 4),
-        null) {
-        private Cursor myCursor;
-
-        @Override
-        protected void setCursor(@NotNull Component content, Cursor cursor) {
-          if (myCursor != cursor || myCursor != Cursor.getDefaultCursor()) {
-            glass.setCursor(cursor, this);
-            myCursor = cursor;
-
-            if (content instanceof JComponent) {
-              IdeGlassPaneImpl.savePreProcessedCursor((JComponent)content, content.getCursor());
-            }
-            super.setCursor(content, cursor);
-          }
-        }
-
-        @Override
-        protected void notifyResized() {
-          myResizeListeners.forEach(Runnable::run);
-        }
-      };
-      glass.addMousePreprocessor(resizeListener, this);
-      glass.addMouseMotionPreprocessor(resizeListener, this);
+        null);
+      resizeListener.install(this);
+      resizeListener.addResizeListeners(() -> {
+        myResizeListeners.forEach(Runnable::run);
+      });
       myResizeListener = resizeListener;
     }
 
@@ -1168,21 +1173,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     window.setAutoRequestFocus(myRequestFocus);
 
-    if (WindowRoundedCornersManager.isAvailable()) {
-      PopupCornerType cornerType = getUserData(PopupCornerType.class);
-      if (cornerType == null) {
-        cornerType = PopupCornerType.RoundedWindow;
-      }
-      if (cornerType != PopupCornerType.None) {
-        if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
-          WindowRoundedCornersManager.setRoundedCorners(window, new Object[]{cornerType,
-            SystemInfoRt.isWindows ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor});
-          myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
-        }
-        else {
-          WindowRoundedCornersManager.setRoundedCorners(window, cornerType);
-        }
-      }
+    if (roundedCornerParams != null) {
+      WindowRoundedCornersManager.setRoundedCorners(window, roundedCornerParams);
     }
 
     myWindow = window;
@@ -1759,8 +1751,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
           }
         }
       };
-      myCaption.addMouseListener(moveListener);
-      myCaption.addMouseMotionListener(moveListener);
+      moveListener.installTo(myCaption);
       final MyContentPanel saved = myContent;
       Disposer.register(this, () -> {
         ListenerUtil.removeMouseListener(saved, moveListener);

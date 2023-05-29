@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -56,8 +56,8 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.util.indexing.roots.kind.ContentOrigin;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
-import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.text.StringSearcher;
 import com.intellij.util.ui.EDT;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
@@ -247,7 +247,7 @@ final class FindInProjectTask {
       Document document = FileDocumentManager.getInstance().getCachedDocument(sourceVirtualFile);
       CharSequence s = document != null ? document.getCharsSequence() :
                        DiskQueryRelay.compute(() -> LoadTextUtil.loadText(sourceVirtualFile, -1));
-      if (s.length() == 0 || searcher.scan(s) < 0) {
+      if (s.isEmpty() || searcher.scan(s) < 0) {
         return true;
       }
     }
@@ -343,7 +343,7 @@ final class FindInProjectTask {
       ProgressManager.checkCanceled();
       if (obj instanceof IndexableFilesIterator) {
         IndexableSetOrigin origin = ((IndexableFilesIterator)obj).getOrigin();
-        if (!searchInLibs && !(origin instanceof ModuleRootOrigin)) return true;
+        if (!searchInLibs && !(origin instanceof ContentOrigin)) return true;
         ((IndexableFilesIterator)obj).iterateFiles(myProject, file -> {
           if (file.isDirectory()) return true;
           deque.add(file);

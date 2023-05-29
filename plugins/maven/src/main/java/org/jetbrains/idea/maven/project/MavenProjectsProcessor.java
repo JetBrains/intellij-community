@@ -33,8 +33,8 @@ import org.jetbrains.idea.maven.execution.BTWMavenConsole;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MavenProjectsProcessor {
   private static final Logger LOG = Logger.getInstance(MavenProjectsProcessor.class);
@@ -43,8 +43,7 @@ public class MavenProjectsProcessor {
   private final boolean myCancellable;
   private final MavenEmbeddersManager myEmbeddersManager;
 
-  private final Queue<MavenProjectsProcessorTask> myQueue = new LinkedList<>();
-  private boolean isProcessing;
+  private final ConcurrentLinkedQueue<MavenProjectsProcessorTask> myQueue = new ConcurrentLinkedQueue<>();
 
   private volatile boolean isStopped;
 
@@ -59,26 +58,11 @@ public class MavenProjectsProcessor {
   }
 
   public void scheduleTask(MavenProjectsProcessorTask task) {
-    boolean startProcessingInThisThread = false;
-    synchronized (myQueue) {
-      if (!isProcessing && !MavenUtil.isNoBackgroundMode()) {
-        isProcessing = true;
-        startProcessingInThisThread = true;
-      }
-      else {
-        if (myQueue.contains(task)) return;
-        myQueue.add(task);
-      }
-    }
+    if (myQueue.contains(task)) return;
+    myQueue.add(task);
 
-    if (startProcessingInThisThread) {
-      startProcessing(task);
-    }
-  }
-
-  public void removeTask(MavenProjectsProcessorTask task) {
-    synchronized (myQueue) {
-      myQueue.remove(task);
+    if (!MavenUtil.isNoBackgroundMode()) {
+      startProcessing();
     }
   }
 
@@ -86,111 +70,94 @@ public class MavenProjectsProcessor {
     if (isStopped) return;
 
     if (MavenUtil.isNoBackgroundMode()) {
-      while (true) {
-        MavenProjectsProcessorTask task;
-        synchronized (myQueue) {
-          task = myQueue.poll();
-          if (task == null) {
-            return;
-          }
-        }
-        startProcessing(task);
-      }
+      startProcessing();
     }
+    else {
+      final Semaphore semaphore = new Semaphore();
+      semaphore.down();
+      scheduleTask(new MavenProjectsProcessorWaitForCompletionTask(semaphore));
 
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    scheduleTask(new MavenProjectsProcessorWaitForCompletionTask(semaphore));
-
-    while (true) {
-      if (isStopped || semaphore.waitFor(1000)) return;
+      while (true) {
+        if (isStopped || semaphore.waitFor(1000)) return;
+      }
     }
   }
 
   public void stop() {
     isStopped = true;
-    synchronized (myQueue) {
-      myQueue.clear();
+    myQueue.clear();
+  }
+
+  private final AtomicBoolean isProcessing = new AtomicBoolean(false);
+  private void startProcessing() {
+    if (isProcessing.compareAndSet(false, true)) {
+      MavenUtil.runInBackground(myProject, myTitle, myCancellable, new MavenTask() {
+        @Override
+        public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+          Condition<MavenProgressIndicator> condition = mavenProgressIndicator -> isStopped;
+          indicator.addCancelCondition(condition);
+          try {
+            doProcessPendingTasks(indicator);
+          }
+          finally {
+            isProcessing.set(false);
+            indicator.removeCancelCondition(condition);
+          }
+        }
+      });
     }
   }
 
-  private void startProcessing(final MavenProjectsProcessorTask task) {
-    MavenUtil.runInBackground(myProject, myTitle, myCancellable, new MavenTask() {
-      @Override
-      public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-        Condition<MavenProgressIndicator> condition = mavenProgressIndicator -> isStopped;
-        indicator.addCancelCondition(condition);
-        try {
-          doProcessPendingTasks(indicator, task);
-        }
-        finally {
-          indicator.removeCancelCondition(condition);
-        }
-      }
-    });
-  }
-
-  private void doProcessPendingTasks(MavenProgressIndicator indicator,
-                                     MavenProjectsProcessorTask task)
+  private void doProcessPendingTasks(MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
+    MavenProjectsProcessorTask task;
     int counter = 0;
     try {
-      while (true) {
+      while ((task = myQueue.poll()) != null) {
         indicator.checkCanceled();
         counter++;
 
         int remained;
-        synchronized (myQueue) {
-          remained = myQueue.size();
-        }
+        remained = myQueue.size();
         indicator.setFraction(counter / (double)(counter + remained));
 
-        MavenProjectsProcessorTask finalTask = task;
-        StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(myProject, MavenUtil.SYSTEM_ID, () ->
-          Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(finalTask.getClass()))
-        );
-        long startTime = System.currentTimeMillis();
-        try {
-          final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
-          task.perform(myProject, myEmbeddersManager,
-                       getMavenConsole(mavenGeneralSettings),
-                       indicator);
-        }
-        catch (MavenProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          logImportErrorIfNotControlFlow(e);
-        }
-        finally {
-          activity.finished();
-          long duration = System.currentTimeMillis() - startTime;
-          if (duration > 10) {
-            LOG.info("[maven import] " + StringUtil.getShortName(task.getClass()) + " took " + duration + "ms");
-          }
-        }
-
-        synchronized (myQueue) {
-          task = myQueue.poll();
-          if (task == null) {
-            isProcessing = false;
-            return;
-          }
-        }
+        processTask(indicator, task);
       }
     }
     catch (MavenProcessCanceledException e) {
-      synchronized (myQueue) {
-
-        while (!myQueue.isEmpty()) {
-          MavenProjectsProcessorTask removedTask = myQueue.remove();
-          if (removedTask instanceof MavenProjectsProcessorWaitForCompletionTask) {
-            ((MavenProjectsProcessorWaitForCompletionTask)removedTask).mySemaphore.up();
-          }
+      MavenProjectsProcessorTask removedTask;
+      while ((removedTask = myQueue.poll()) != null) {
+        if (removedTask instanceof MavenProjectsProcessorWaitForCompletionTask) {
+          ((MavenProjectsProcessorWaitForCompletionTask)removedTask).mySemaphore.up();
         }
-        isProcessing = false;
       }
       throw e;
+    }
+  }
+
+  private void processTask(MavenProgressIndicator indicator, MavenProjectsProcessorTask task) throws MavenProcessCanceledException {
+    StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(myProject, MavenUtil.SYSTEM_ID, () ->
+      Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(task.getClass()))
+    );
+    long startTime = System.currentTimeMillis();
+    try {
+      final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
+      task.perform(myProject, myEmbeddersManager,
+                   getMavenConsole(mavenGeneralSettings),
+                   indicator);
+    }
+    catch (MavenProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      logImportErrorIfNotControlFlow(e);
+    }
+    finally {
+      activity.finished();
+      long duration = System.currentTimeMillis() - startTime;
+      if (duration > 10) {
+        LOG.info("[maven import] " + StringUtil.getShortName(task.getClass()) + " took " + duration + "ms");
+      }
     }
   }
 
@@ -221,8 +188,7 @@ public class MavenProjectsProcessor {
     MavenProjectsProcessorWaitForCompletionTask(Semaphore semaphore) { mySemaphore = semaphore; }
 
     @Override
-    public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
-      throws MavenProcessCanceledException {
+    public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator) {
       mySemaphore.up();
     }
   }

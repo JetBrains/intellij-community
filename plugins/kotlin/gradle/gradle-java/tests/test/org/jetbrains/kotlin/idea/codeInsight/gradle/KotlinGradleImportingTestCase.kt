@@ -154,7 +154,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
                     || it.name == GradleConstants.SETTINGS_FILE_NAME
         }
             .forEach {
-                if (it.name == GradleConstants.SETTINGS_FILE_NAME && !File(testDataDirectory(), it.name + AFTER_SUFFIX).exists()) return@forEach
+                if (it.name == GradleConstants.SETTINGS_FILE_NAME && !File(testDataDirectory(), GradleConstants.SETTINGS_FILE_NAME + AFTER_SUFFIX).exists()) return@forEach
                 val actualText = configureKotlinVersionAndProperties(LoadTextUtil.loadText(it).toString())
                 val expectedFileName = if (File(testDataDirectory(), it.name + ".$gradleVersion" + AFTER_SUFFIX).exists()) {
                     it.name + ".$gradleVersion" + AFTER_SUFFIX
@@ -162,6 +162,37 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
                     it.name + AFTER_SUFFIX
                 }
                 val expectedFile = File(testDataDirectory(), expectedFileName)
+                KotlinTestUtils.assertEqualsToFile(expectedFile, actualText) { s -> configureKotlinVersionAndProperties(s) }
+            }
+    }
+
+    /**
+     * Compares expected (with ".after" postfix) and actual files with directory traversal.
+     */
+    protected fun checkFilesInMultimoduleProject(files: List<VirtualFile>, subModules: List<String>) {
+        FileDocumentManager.getInstance().saveAllDocuments()
+
+        files.filter {
+            it.name == GradleConstants.DEFAULT_SCRIPT_NAME
+                    || it.name == GradleConstants.KOTLIN_DSL_SCRIPT_NAME
+                    || it.name == GradleConstants.SETTINGS_FILE_NAME
+        }
+            .forEach {
+                if (it.name == GradleConstants.SETTINGS_FILE_NAME && !File(testDataDirectory(), GradleConstants.SETTINGS_FILE_NAME + AFTER_SUFFIX).exists()) return@forEach
+                val actualText = configureKotlinVersionAndProperties(LoadTextUtil.loadText(it).toString())
+                var moduleForBuildScript = ""
+                for (module in subModules) {
+                    if(it.path.substringBefore("/" + it.name).endsWith(module)) {
+                        moduleForBuildScript = module
+                        break
+                    }
+                }
+                val expectedFileName = if (File(File(testDataDirectory(), moduleForBuildScript), it.name + ".$gradleVersion" + AFTER_SUFFIX).exists()) {
+                    it.name + ".$gradleVersion" + AFTER_SUFFIX
+                } else {
+                    it.name + AFTER_SUFFIX
+                }
+                val expectedFile = File(testDataDirectory(), if (moduleForBuildScript.isNotEmpty()) {"$moduleForBuildScript/$expectedFileName"} else expectedFileName)
                 KotlinTestUtils.assertEqualsToFile(expectedFile, actualText) { s -> configureKotlinVersionAndProperties(s) }
             }
     }

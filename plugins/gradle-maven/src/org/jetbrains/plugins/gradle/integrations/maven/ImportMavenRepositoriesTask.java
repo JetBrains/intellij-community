@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.integrations.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,8 +39,7 @@ import java.util.stream.Collectors;
 /**
  * @author Vladislav.Soroka
  */
-class ImportMavenRepositoriesTask {
-
+final class ImportMavenRepositoriesTask {
   @NotNull
   private final MavenRemoteRepository mavenCentralRemoteRepository;
 
@@ -52,11 +51,13 @@ class ImportMavenRepositoriesTask {
   }
 
   void schedule() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     ReadAction.nonBlocking(this::performTask).inSmartMode(myProject).submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private void performTask() {
+  void performTask() {
     final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     final List<PsiFile> psiFileList = new ArrayList<>();
 

@@ -131,6 +131,9 @@ internal object CompiledClasses {
     check(JavaVersion.current().isAtLeast(17)) {
       "Build script must be executed under Java 17 to compile intellij project but it's executed under Java ${JavaVersion.current()}"
     }
+    check(isCompilationRequired(context.options)) {
+      "Unexpected compilation request, unable to proceed"
+    }
     context.messages.progress("Compiling project")
     context.compilationData.statisticsReported = false
     val runner = JpsCompilationRunner(context)

@@ -6,8 +6,8 @@ class Simple {
     String s = foo();
     test(s);
   }
-  
-  String foo() {
+
+   String foo() {
     return "safe";
   }
 

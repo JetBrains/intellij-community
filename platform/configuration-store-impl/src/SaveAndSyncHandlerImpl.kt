@@ -238,8 +238,9 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
    * deadlock may occur because some saving activities require EDT with modality state "not modal" (by intention).
    */
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
-    //saveSettingsUnderModalProgress is intended to be called only in EDT because otherwise wrapping into modal progress task is not required and `saveSettings` should be called directly
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    // saveSettingsUnderModalProgress is intended to be called only in EDT because
+    // otherwise wrapping into a modal progress task is not required and `saveSettings` should be called directly
+    ApplicationManager.getApplication().assertIsDispatchThread()
 
     var isSavedSuccessfully = true
     var isAutoSaveCancelled = false

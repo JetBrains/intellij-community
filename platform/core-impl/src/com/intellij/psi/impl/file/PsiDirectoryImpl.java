@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.navigation.NavigationRequest;
-import com.intellij.platform.backend.navigation.NavigationRequests;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -521,7 +520,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public @Nullable NavigationRequest navigationRequest() {
-    return NavigationRequests.getInstance().directoryNavigationRequest(this);
+    return NavigationRequest.directoryNavigationRequest(this);
   }
 
   @Override

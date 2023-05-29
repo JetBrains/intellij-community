@@ -11,16 +11,26 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module-library" exported="">
-      <library name="jgit-develar">
+      <library name="jetbrains.intellij.deps.eclipse.jgit" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps:org.eclipse.jgit:6.5.0.202303070854-r-custom-3">
+          <exclude>
+            <dependency maven-id="org.slf4j:slf4j-api" />
+          </exclude>
+        </properties>
         <ANNOTATIONS>
           <root url="file://$MODULE_DIR$/lib" />
         </ANNOTATIONS>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jgit.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-3/org.eclipse.jgit-6.5.0.202303070854-r-custom-3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.13/JavaEWAH-1.1.13.jar!/" />
         </CLASSES>
-        <JAVADOC />
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-3/org.eclipse.jgit-6.5.0.202303070854-r-custom-3-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.13/JavaEWAH-1.1.13-javadoc.jar!/" />
+        </JAVADOC>
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/jgit-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-3/org.eclipse.jgit-6.5.0.202303070854-r-custom-3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.13/JavaEWAH-1.1.13-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -45,7 +55,7 @@
     <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="caffeine" level="project" />

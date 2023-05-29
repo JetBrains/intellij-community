@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.base.highlighting
 
 import com.intellij.codeHighlighting.*
-import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.highlighter.BeforeResolveHighlightingVisitor
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinBeforeResolveHighlightingPass(file: KtFile, document: Document) : AbstractHighlightingPassBase(file, document) {
-    override fun runAnnotatorWithContext(element: PsiElement, holder: AnnotationHolder) {
+    override fun runAnnotatorWithContext(element: PsiElement, holder: HighlightInfoHolder) {
         val visitor = BeforeResolveHighlightingVisitor(holder)
         val extensions = EP_NAME.extensionList.map { it.createVisitor(holder) }
 
@@ -57,5 +57,5 @@ class KotlinBeforeResolveHighlightingPass(file: KtFile, document: Document) : Ab
 
 @ApiStatus.Internal
 interface BeforeResolveHighlightingExtension {
-    fun createVisitor(holder: AnnotationHolder): AbstractHighlightingVisitor
+    fun createVisitor(holder: HighlightInfoHolder): AbstractHighlightingVisitor
 }

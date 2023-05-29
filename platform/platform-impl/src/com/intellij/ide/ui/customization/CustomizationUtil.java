@@ -17,12 +17,10 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ClientProperty;
@@ -157,7 +155,7 @@ public final class CustomizationUtil {
             final AnAction anAction = reorderedChildren.get(actionUrl.getAbsolutePosition());
             if (anAction.getTemplatePresentation().getText() == null
                 ? (componentAction.getTemplatePresentation().getText() != null &&
-                   componentAction.getTemplatePresentation().getText().length() > 0)
+                   !componentAction.getTemplatePresentation().getText().isEmpty())
                 : !anAction.getTemplatePresentation().getText().equals(componentAction.getTemplatePresentation().getText())) {
               continue;
             }
@@ -467,13 +465,13 @@ public final class CustomizationUtil {
    * @param groupId target group ID to be updated
    */
   public static void updateActionGroup(@NotNull List<Object> actions, @NotNull String groupId) {
-    var defaultActionList = getGroupActions(groupId, new CustomActionsSchema());
+    var defaultActionList = getGroupActions(groupId, new CustomActionsSchema(null));
     var diff = new ArrayList<ActionUrl>();
     var groupPath = new ArrayList<>(Arrays.asList("root", CustomActionsSchema.getInstance().getDisplayName(groupId)));
     computeDiff(toActionUrls(groupPath, defaultActionList), toActionUrls(groupPath, actions), diff);
 
     var globalSchema = CustomActionsSchema.getInstance();
-    var tmpSchema = new CustomActionsSchema();
+    var tmpSchema = new CustomActionsSchema(null);
     tmpSchema.copyFrom(globalSchema);
     tmpSchema.getActions().removeIf(url -> Objects.equals(groupPath, url.getGroupPath()));
     tmpSchema.getActions().addAll(diff);
@@ -505,52 +503,12 @@ public final class CustomizationUtil {
 
       final Ref<Component> popupInvoker = Ref.create();
       DefaultActionGroup customizationGroup = new DefaultActionGroup(
-        DumbAwareAction.create(IdeBundle.message("action.customizations.customize.action"),
-                               event -> {
-                                 Component src = popupInvoker.get();
-                                 AnAction targetAction = ObjectUtils.doIfCast(src, ActionButton.class, ActionButton::getAction);
-                                 ToolbarCustomizableActionsPanel panel = new ToolbarCustomizableActionsPanel(groupID, groupName);
-                                 DialogWrapper dialogWrapper = new DialogWrapper(event.getProject(), true) {
-                                   {
-                                     setTitle(IdeBundle.message("dialog.title.customize.0", groupName));
-                                     init();
-                                     setSize(600, 600);
-                                   }
-
-                                   @Override
-                                   public @Nullable JComponent getPreferredFocusedComponent() {
-                                     return panel.getPreferredFocusedComponent();
-                                   }
-
-                                   @Override
-                                   protected @Nullable JComponent createCenterPanel() {
-                                     panel.reset();
-                                     String id = ObjectUtils.doIfNotNull(targetAction, ActionManager.getInstance()::getId);
-                                     if (id != null) {
-                                       panel.selectAction(id);
-                                     }
-                                     return panel.getPanel();
-                                   }
-
-                                   @Override
-                                   protected void doOKAction() {
-                                     try {
-                                       panel.apply();
-                                     }
-                                     catch (ConfigurationException ex) {
-                                       LOG.error(ex);
-                                     }
-                                     close(OK_EXIT_CODE);
-                                   }
-
-                                   @Override
-                                   public void doCancelAction() {
-                                     panel.reset();
-                                     super.doCancelAction();
-                                   }
-                                 };
-                                 dialogWrapper.show();
-                               })
+        DumbAwareAction.create(IdeBundle.message("action.customizations.customize.action"), event -> {
+          Component src = popupInvoker.get();
+          AnAction targetAction = ObjectUtils.doIfCast(src, ActionButton.class, ActionButton::getAction);
+          DialogWrapper dialogWrapper = createCustomizeGroupDialog(event.getProject(), groupID, groupName, targetAction);
+          dialogWrapper.show();
+        })
       );
 
 
@@ -558,6 +516,10 @@ public final class CustomizationUtil {
         if(rollbackAction != null) {
           customizationGroup.add(rollbackAction);
         }
+
+      customizationGroup.addSeparator();
+      ActionGroup popupActionsGroup = (ActionGroup)ActionManager.getInstance().getAction("ToolbarPopupActions");
+      customizationGroup.addAll(popupActionsGroup);
 
       PopupHandler popupHandler = new PopupHandler() {
         @Override
@@ -590,6 +552,50 @@ public final class CustomizationUtil {
       return popupHandler;
     }
     return null;
+  }
+
+  public static @NotNull DialogWrapper createCustomizeGroupDialog(@Nullable Project project, @NotNull String groupID,
+                                                                  @NlsContexts.DialogTitle String groupName, @Nullable AnAction targetAction) {
+    ToolbarCustomizableActionsPanel panel = new ToolbarCustomizableActionsPanel(groupID, groupName);
+    return new DialogWrapper(project, true) {
+      {
+        setTitle(IdeBundle.message("dialog.title.customize.0", groupName));
+        init();
+        setSize(600, 600);
+      }
+
+      @Override
+      public @Nullable JComponent getPreferredFocusedComponent() {
+        return panel.getPreferredFocusedComponent();
+      }
+
+      @Override
+      protected @Nullable JComponent createCenterPanel() {
+        panel.reset();
+        String id = ObjectUtils.doIfNotNull(targetAction, ActionManager.getInstance()::getId);
+        if (id != null) {
+          panel.selectAction(id);
+        }
+        return panel.getPanel();
+      }
+
+      @Override
+      protected void doOKAction() {
+        try {
+          panel.apply();
+        }
+        catch (ConfigurationException ex) {
+          LOG.error(ex);
+        }
+        close(OK_EXIT_CODE);
+      }
+
+      @Override
+      public void doCancelAction() {
+        panel.reset();
+        super.doCancelAction();
+      }
+    };
   }
 
   @Nullable
@@ -638,7 +644,7 @@ public final class CustomizationUtil {
 
         @Override
         public void update(@NotNull AnActionEvent e) {
-          CustomActionsSchema cleanScheme = new CustomActionsSchema();
+          CustomActionsSchema cleanScheme = new CustomActionsSchema(null);
           updateLocalSchema(cleanScheme);
           e.getPresentation().setEnabled(mySelectedSchema.isModified(cleanScheme));
         }
@@ -656,7 +662,7 @@ public final class CustomizationUtil {
 
         @Override
         public void update(@NotNull AnActionEvent e) {
-          CustomActionsSchema cleanScheme = new CustomActionsSchema();
+          CustomActionsSchema cleanScheme = new CustomActionsSchema(null);
           updateLocalSchema(cleanScheme);
           e.getPresentation().setEnabled(mySelectedSchema.isModified(CustomActionsSchema.getInstance()) ||
                                          mySelectedSchema.isModified(cleanScheme));

@@ -126,8 +126,8 @@ public class FileAttribute {
 
   @Override
   public String toString() {
-    return "FileAttribute[" + myId + "]{" +
-           ", version: " + myVersion +
+    return "FileAttribute[" + myId + "]" +
+           "{version: " + myVersion +
            ", fixedSize: " + myFixedSize +
            ", shouldEnumerate: " + myShouldEnumerate +
            '}';

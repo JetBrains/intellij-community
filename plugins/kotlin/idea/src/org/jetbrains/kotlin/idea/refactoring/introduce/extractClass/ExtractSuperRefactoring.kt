@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.actions.createKotlinFileFromTemplate
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.getPackage
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
@@ -31,14 +30,16 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
+import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.core.quoteSegmentsIfNeeded
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.introduce.insertDeclaration
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.getChildrenToAnalyze
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.toJavaMemberInfo
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveConflictCheckerInfo
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveConflictCheckerSupport
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveConflictChecker
 import org.jetbrains.kotlin.idea.refactoring.pullUp.checkVisibilityInAbstractedMembers
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -140,17 +141,16 @@ class ExtractSuperRefactoring(
             val elementsToMove = getElementsToMove(memberInfos, originalClass, isExtractInterface).keys
 
             val moveTarget = if (targetParent is PsiDirectory) {
-              val targetPackage = targetParent.getPackage() ?: return conflicts
-              KotlinMoveTarget.DeferredFile(FqName(targetPackage.qualifiedName), targetParent.virtualFile)
+                val targetPackage = targetParent.getPackage() ?: return conflicts
+                KotlinMoveTarget.DeferredFile(FqName(targetPackage.qualifiedName), targetParent.virtualFile)
             } else {
                 KotlinMoveTarget.ExistingElement(targetParent as KtElement)
             }
-            val conflictChecker = MoveConflictChecker(
+            val conflictChecker = KotlinMoveConflictCheckerInfo(
                 project,
-                elementsToMove,
+                elementsToMove - memberInfos.asSequence().filter { it.isToAbstract }.mapNotNull { it.member }.toSet(),
                 moveTarget,
                 originalClass,
-                memberInfos.asSequence().filter { it.isToAbstract }.mapNotNull { it.member }.toList()
             )
 
             project.runSynchronouslyWithProgress(RefactoringBundle.message("detecting.possible.conflicts"), true) {
@@ -164,7 +164,9 @@ class ExtractSuperRefactoring(
                             }
                         }
                     }
-                    conflictChecker.checkAllConflicts(usages, LinkedHashSet(), conflicts)
+                    conflicts.putAllValues(
+                        KotlinMoveConflictCheckerSupport.getInstance().checkAllConflicts(conflictChecker, usages, LinkedHashSet())
+                    )
                     if (targetParent is PsiDirectory) {
                         ExtractSuperClassUtil.checkSuperAccessible(targetParent, conflicts, originalClass.toLightClass())
                     }

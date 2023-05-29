@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ui
@@ -14,12 +14,13 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.SameThreadExecutor
 import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.LongAdder
 import javax.swing.Icon
 
-internal class IconDeferrerImpl private constructor() : IconDeferrer() {
+internal class IconDeferrerImpl : IconDeferrer() {
   companion object {
     private val isEvaluationInProgress = ThreadLocal.withInitial { false }
 
@@ -38,6 +39,7 @@ internal class IconDeferrerImpl private constructor() : IconDeferrer() {
 
   private val iconCache = Caffeine.newBuilder()
     .maximumSize(SystemProperties.getLongProperty("ide.icons.deferrerCacheSize", 1000))
+    .executor(SameThreadExecutor.INSTANCE)
     .build<Any, Icon>()
 
   private var lastClearTimestamp = LongAdder()

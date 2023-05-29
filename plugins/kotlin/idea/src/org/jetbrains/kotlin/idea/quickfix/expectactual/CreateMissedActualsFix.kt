@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.icons.AllIcons
 import com.intellij.ide.wizard.setMinimumWidthForAllRowLabels
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager
@@ -27,11 +28,12 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
+import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.PureKotlinSourceFoldersHolder
 import org.jetbrains.kotlin.idea.core.findExistingNonGeneratedKotlinSourceRootFiles
@@ -41,8 +43,10 @@ import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.refactoring.getOrCreateKotlinFile
 import org.jetbrains.kotlin.idea.util.application.isHeadlessEnvironment
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.*
 import java.io.File
@@ -99,7 +103,15 @@ class CreateMissedActualsFix(
         if (this.size < 2) return this.associateWith { it.name }
         val commonPrefix = this.map { it.name }.zipWithNext().map { (a, b) -> a.commonPrefixWith(b) }.minBy { it.length }
         val prefixToRemove = commonPrefix.substringBeforeLast(".", "").let { if (it.isEmpty()) it else "$it." }
-        return this.associateWith { it.name.removePrefix(prefixToRemove) }
+        return this.associateWith {
+            val name = it.name.removePrefix(prefixToRemove)
+
+            when {
+              name == "main" && it.isAndroidModule() && !it.isTestModule -> "androidMain"
+              name == "unitTest" && it.isAndroidModule() && it.isTestModule -> "androidTest"
+              else -> name
+            }
+        }
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
@@ -125,6 +137,7 @@ class CreateMissedActualsFix(
                 (actualModuleDescriptor.getCapability(ModuleInfo.Capability) as? ModuleSourceInfo)?.module
             }
             if (notActualizedLeafModules.isEmpty()) return null
+            if (notActualizedLeafModules.singleOrNull() == declaration.module) return null
             return CreateMissedActualsFix(declaration, notActualizedLeafModules)
         }
     }
@@ -159,8 +172,7 @@ private class CreateMissedActualsDialog(
     }
 
     override fun doValidate(): ValidationInfo? {
-        val filePath = getNewFilePathForModule(moduleWithExpect).nameWithoutExtension
-        if (filePath.isBlank()) {
+        if (filePathProperty.get().isBlank()) {
             return ValidationInfo(KotlinBundle.message("text.file.name.cannot.be.empty"), filePathTextField)
         }
 
@@ -321,9 +333,21 @@ private fun Module.selectExistingSourceRoot(
 
     if (roots.size < 2) return roots.firstOrNull()
 
-    val root = roots.firstOrNull {
-        it.name.equals("kotlin", true)
-    } ?: roots.first()
+    val root: VirtualFile
+    val rootsWithKotlinName = roots.filter { it.name.equals("kotlin", true) }
+    when (rootsWithKotlinName.size) {
+        0 -> {
+            root = roots.first()
+        }
+        1 -> {
+            root = rootsWithKotlinName.first()
+        }
+        else -> {
+            val rootsWithMainInPath = rootsWithKotlinName.firstOrNull { it.path.contains("Main") }
+            root = rootsWithMainInPath ?: rootsWithKotlinName.first()
+        }
+    }
+
     LOG.warn("${this.name} contains more then one source roots. ${root.name} was selected.")
     return root
 }
@@ -360,45 +384,47 @@ private fun generateActualsForSelectedModules(
     }
     sourceFolderManager.rescanAndUpdateSourceFolders()
 
-    runWriteAction {
-        selectedModules.forEach { module ->
-            val root = moduleSourceRoots[module] ?: return@forEach
-            val moduleFile = getNewFilePathForModule(commonFilePath, module, simpleModuleNames)
-            val dir: PsiDirectory = declaration.manager.findDirectory(
-                root.findOrCreateDirectory(moduleFile.parent?.pathString.orEmpty())
-            ) ?: return@forEach
+    executeCommand(project, KotlinBundle.message("fix.create.missing.actual.declarations.title")) {
+        runWriteAction {
+            selectedModules.forEach { module ->
+                val root = moduleSourceRoots[module] ?: return@forEach
+                val moduleFile = getNewFilePathForModule(commonFilePath, module, simpleModuleNames)
+                val dir: PsiDirectory = declaration.manager.findDirectory(
+                    root.findOrCreateDirectory(moduleFile.parent?.pathString.orEmpty())
+                ) ?: return@forEach
 
-            val file = getOrCreateKotlinFileForSpecificPackage(moduleFile.name, dir, declaration.containingKtFile.packageFqName)
+                val file = getOrCreateKotlinFileForSpecificPackage(moduleFile.name, dir, declaration.containingKtFile.packageFqName)
 
-            if (declaration is KtCallableDeclaration) {
-                generateExpectOrActualInFile(
-                    project,
-                    editor,
-                    declaration.containingKtFile,
-                    file,
-                    null,
-                    declaration,
-                    module
-                ) block@{ project, checker, element ->
-                    if (!checker.isCorrectAndHaveAccessibleModifiers(element, true)) return@block null
-                    val descriptor = element.toDescriptor() as? CallableMemberDescriptor
+                if (declaration is KtCallableDeclaration) {
+                    generateExpectOrActualInFile(
+                        project,
+                        editor,
+                        declaration.containingKtFile,
+                        file,
+                        null,
+                        declaration,
+                        module
+                    ) block@{ project, checker, element ->
+                        if (!checker.isCorrectAndHaveAccessibleModifiers(element, true)) return@block null
+                        val descriptor = element.toDescriptor() as? CallableMemberDescriptor
 
-                    descriptor?.let { generateCallable(project, false, element, descriptor, checker = checker) }
-                }
-            } else if (declaration is KtClassOrObject) {
-                generateExpectOrActualInFile(
-                    project,
-                    editor,
-                    declaration.containingKtFile,
-                    file,
-                    null,
-                    declaration,
-                    module
-                ) block@{ project, checker, element ->
-                    checker.findAndApplyExistingClasses(element.collectDeclarationsForAddActualModifier().toList())
-                    if (!checker.isCorrectAndHaveAccessibleModifiers(element, true)) return@block null
+                        descriptor?.let { generateCallable(project, false, element, descriptor, checker = checker) }
+                    }
+                } else if (declaration is KtClassOrObject) {
+                    generateExpectOrActualInFile(
+                        project,
+                        editor,
+                        declaration.containingKtFile,
+                        file,
+                        null,
+                        declaration,
+                        module
+                    ) block@{ project, checker, element ->
+                        checker.findAndApplyExistingClasses(element.collectDeclarationsForAddActualModifier().toList())
+                        if (!checker.isCorrectAndHaveAccessibleModifiers(element, true)) return@block null
 
-                    generateClassOrObject(project, false, element, checker = checker)
+                        generateClassOrObject(project, false, element, checker = checker)
+                    }
                 }
             }
         }

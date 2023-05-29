@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
@@ -44,9 +44,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class FSRecords {
   static final Logger LOG = Logger.getInstance(FSRecords.class);
   static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
-
-  /** Limit on how many cached fs roots to log on error (could be too many of them in total) */
-  private static final int MAX_CACHED_ROOTS_TO_LOG = SystemProperties.getIntProperty("idea.vfs.max-roots-to-log", 128);
 
   static final boolean BACKGROUND_VFS_FLUSH = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
 
@@ -90,8 +87,13 @@ public final class FSRecords {
 
   //========== lifecycle: =====================================================
 
-  static synchronized void connect(@NotNull VfsLog vfsLog) throws UncheckedIOException {
-    impl = FSRecordsImpl.connect(Path.of(getCachesDir()), vfsLog);
+  static synchronized void connect(@NotNull List<ConnectionInterceptor> connectionInterceptors) throws UncheckedIOException {
+    connect(connectionInterceptors, FSRecordsImpl.ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD);
+  }
+
+  static synchronized void connect(@NotNull List<ConnectionInterceptor> connectionInterceptors,
+                                   @NotNull FSRecordsImpl.ErrorHandler errorHandler) throws UncheckedIOException {
+    impl = FSRecordsImpl.connect(Path.of(getCachesDir()), connectionInterceptors, errorHandler);
   }
 
   static synchronized void dispose() {
@@ -122,6 +124,16 @@ public final class FSRecords {
 
   public static long getCreationTimestamp() {
     return implOrFail().getCreationTimestamp();
+  }
+
+  /** Intermediate failures met during VFS initialization (if any) */
+  public static List<Throwable> initializationFailures(){
+    return implOrFail().initializationFailures();
+  }
+
+  /** Were VFS storages created anew this run, or we read already filled */
+  public static boolean wasCreateANew(){
+    return implOrFail().wasCreatedANew();
   }
 
   //========== modifications counters: ========================================
@@ -508,7 +520,7 @@ public final class FSRecords {
   }
 
   static int getContentId(int fileId) {
-    return implOrFail().getContentId(fileId);
+    return implOrFail().getContentRecordId(fileId);
   }
 
   @TestOnly
@@ -533,12 +545,24 @@ public final class FSRecords {
 
   //========== aux: ========================================================
 
-  public static void invalidateCaches(@Nullable String diagnosticMessage) {
+  /** With method create 'VFS corruption marker', which forces VFS to rebuild on the next startup */
+  public static void invalidateCaches(@NotNull String diagnosticMessage,
+                                      @NotNull Throwable errorCause) {
+    implOrFail().invalidateCaches(diagnosticMessage, errorCause);
+  }
+
+  /**
+   * With method create 'VFS corruption marker', which forces VFS to rebuild on next startup.
+   * Contrary to the {@link #invalidateCaches(String, Throwable)} version, this method is not
+   * considered a scenario as 'an error', but as a regular request -- e.g. no errors logged.
+   */
+  public static void invalidateCaches(@NotNull String diagnosticMessage) {
     implOrFail().invalidateCaches(diagnosticMessage, null);
   }
 
-  /** Please use {@link #invalidateCaches(String)} instead -> provide explicit reason for invalidate caches */
+  /** @deprecated please use {@link #invalidateCaches(String)} instead -> provide explicit reason for invalidate caches */
   @ApiStatus.Obsolete
+  @Deprecated
   public static void invalidateCaches() {
     invalidateCaches("No description given");
   }

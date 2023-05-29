@@ -8,10 +8,10 @@ import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.concurrency.JobLauncher
-import com.intellij.diagnostic.telemetry.TraceManager
-import com.intellij.diagnostic.telemetry.computeWithSpan
-import com.intellij.diagnostic.telemetry.runWithSpan
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.impl.computeWithSpan
+import com.intellij.platform.diagnostic.telemetry.impl.runWithSpan
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -39,7 +39,7 @@ class CodeVisionPass(
   private val editor: Editor
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
   companion object {
-    private val tracer by lazy { TraceManager.getTracer(CodeVision.toString(), true) }
+    private val tracer by lazy { TelemetryTracer.getInstance().getTracer(CodeVision.toString(), true) }
 
     @JvmStatic
     @Internal

@@ -194,8 +194,8 @@
     <keyboard-shortcut first-keystroke="meta END"/>
   </action>
   <action id="EditorTextEndWithSelection">
-    <keyboard-shortcut first-keystroke="shift meta END"/>
     <keyboard-shortcut first-keystroke="shift meta DOWN"/>
+    <keyboard-shortcut first-keystroke="shift meta END"/>
     <keyboard-shortcut first-keystroke="shift END"/>
   </action>
   <action id="EditorTextStart">
@@ -203,8 +203,8 @@
     <keyboard-shortcut first-keystroke="meta HOME"/>
   </action>
   <action id="EditorTextStartWithSelection">
-    <keyboard-shortcut first-keystroke="shift meta HOME"/>
     <keyboard-shortcut first-keystroke="shift meta UP"/>
+    <keyboard-shortcut first-keystroke="shift meta HOME"/>
     <keyboard-shortcut first-keystroke="shift HOME"/>
   </action>
   <action id="editRunConfigurations">

@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.api.dto
 import com.intellij.collaboration.api.dto.GraphQLFragment
 
 @GraphQLFragment("/graphql/fragment/mergeRequestPermissions.graphql")
-class GitLabMergeRequestPermissionsDTO(
+data class GitLabMergeRequestPermissionsDTO(
   val canApprove: Boolean,
   val canMerge: Boolean,
   val createNote: Boolean,

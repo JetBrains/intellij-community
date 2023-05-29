@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "RAW_RUN_BLOCKING", "LiftReturnOrAssignment")
 @file:JvmName("PluginDescriptorLoader")
 @file:Internal
@@ -38,7 +38,6 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.zip.ZipFile
 import javax.xml.stream.XMLStreamException
-import kotlin.io.path.name
 
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
@@ -103,6 +102,7 @@ fun loadDescriptorFromDir(file: Path,
                                    locationSource = file.toString())
     val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginPath ?: file, isBundled = isBundled, id = null, moduleName = null,
                                               useCoreClassLoader = useCoreClassLoader)
+    context.debugData?.recordDescriptorPath(descriptor, raw, descriptorRelativePath)
     descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = false, dataLoader = dataLoader)
     descriptor.jarFiles = Collections.singletonList(file)
     return descriptor
@@ -139,7 +139,8 @@ fun loadDescriptorFromJar(file: Path,
       ImmutableZipFileDataLoader(pool.load(file), file, pool)
     }
 
-    val raw = readModuleDescriptor(input = dataLoader.load("META-INF/$fileName") ?: return null,
+    val relativePath = "META-INF/$fileName"
+    val raw = readModuleDescriptor(input = dataLoader.load(relativePath) ?: return null,
                                    readContext = parentContext,
                                    pathResolver = pathResolver,
                                    dataLoader = dataLoader,
@@ -147,8 +148,13 @@ fun loadDescriptorFromJar(file: Path,
                                    readInto = null,
                                    locationSource = file.toString())
 
-    val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginPath ?: file, isBundled = isBundled, id = null, moduleName = null,
+    val descriptor = IdeaPluginDescriptorImpl(raw = raw,
+                                              path = pluginPath ?: file,
+                                              isBundled = isBundled,
+                                              id = null,
+                                              moduleName = null,
                                               useCoreClassLoader = useCoreClassLoader)
+    parentContext.debugData?.recordDescriptorPath(descriptor, raw, relativePath)
     descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = parentContext, isSub = false, dataLoader = dataLoader)
     descriptor.jarFiles = Collections.singletonList(descriptor.pluginPath)
     return descriptor
@@ -375,7 +381,7 @@ private fun CoroutineScope.loadDescriptorsFromProperty(context: DescriptorListLo
 
 @Suppress("DeferredIsResult")
 internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFilePool>?): Deferred<PluginSet> {
-  val resultDeferred = async(CoroutineName("plugin descriptor loading") + Dispatchers.Default) {
+  val resultDeferred = async(CoroutineName("plugin descriptor loading")) {
     val isUnitTestMode = PluginManagerCore.isUnitTestMode
     val isRunningFromSources = PluginManagerCore.isRunningFromSources()
     val result = DescriptorListLoadingContext(
@@ -392,13 +398,13 @@ internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFil
     }
     result
   }
-  val pluginSetDeferred = async(Dispatchers.Default) {
+  val pluginSetDeferred = async {
     val pair = resultDeferred.await()
     PluginManagerCore.initializeAndSetPlugins(pair.first, pair.second, PluginManagerCore::class.java.classLoader)
   }
 
   // logging is no not as a part of plugin set job for performance reasons
-  launch(Dispatchers.Default) {
+  launch {
     val pair = resultDeferred.await()
     logPlugins(plugins = pluginSetDeferred.await().allPlugins, context = pair.first, loadingResult = pair.second)
   }
@@ -598,18 +604,16 @@ private fun CoroutineScope.loadCoreModules(context: DescriptorListLoadingContext
   val rootModuleDescriptors = if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
                                   (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
     Collections.singletonList(async {
-      loadCoreProductPlugin(getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!,
+      loadCoreProductPlugin(PluginManagerCore.PLUGIN_XML_PATH, classLoader,
                             context = context,
                             pathResolver = pathResolver,
-                            useCoreClassLoader = useCoreClassLoader)
+                            useCoreClassLoader = useCoreClassLoader)!!
     })
   }
   else {
     val fileName = "${platformPrefix}Plugin.xml"
     var result = listOf(async {
-      getResourceReader("${PluginManagerCore.META_INF}$fileName", classLoader)?.let {
-        loadCoreProductPlugin(it, context, pathResolver, useCoreClassLoader)
-      }
+      loadCoreProductPlugin("${PluginManagerCore.META_INF}$fileName", classLoader, context, pathResolver, useCoreClassLoader)
     })
 
     val urlToFilename = collectPluginFilesInClassPath(classLoader)
@@ -636,10 +640,12 @@ private fun getResourceReader(path: String, classLoader: ClassLoader): XMLStream
   }
 }
 
-private fun loadCoreProductPlugin(reader: XMLStreamReader2,
+private fun loadCoreProductPlugin(path: String,
+                                  classLoader: ClassLoader,
                                   context: DescriptorListLoadingContext,
                                   pathResolver: ClassPathXmlPathResolver,
-                                  useCoreClassLoader: Boolean): IdeaPluginDescriptorImpl {
+                                  useCoreClassLoader: Boolean): IdeaPluginDescriptorImpl? {
+  val reader = getResourceReader(path, classLoader) ?: return null
   val dataLoader = object : DataLoader {
     override val pool: ZipFilePool
       get() = throw IllegalStateException("must be not called")
@@ -664,6 +670,7 @@ private fun loadCoreProductPlugin(reader: XMLStreamReader2,
                                             id = null,
                                             moduleName = null,
                                             useCoreClassLoader = useCoreClassLoader)
+  context.debugData?.recordDescriptorPath(descriptor, raw, path)
   descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = false, dataLoader = dataLoader)
   return descriptor
 }
@@ -710,7 +717,7 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
       .extract(outputDir)
     try {
       //org.jetbrains.intellij.build.io.ZipArchiveOutputStream may add __index__ entry to the plugin zip, we need to ignore it here
-      val rootDir = NioFiles.list(outputDir).firstOrNull { it.name != "__index__" }
+      val rootDir = NioFiles.list(outputDir).firstOrNull { it.fileName.toString() != "__index__" }
       if (rootDir != null) {
         return runBlocking {
           loadDescriptorFromFileOrDir(file = rootDir,
@@ -764,7 +771,7 @@ fun loadDescriptorsFromOtherIde(
 ): PluginLoadingResult {
   return DescriptorListLoadingContext(
     disabledPlugins = emptySet(),
-    brokenPluginVersions = brokenPluginVersions ?: PluginManagerCore.getBrokenPluginVersions(),
+    brokenPluginVersions = brokenPluginVersions ?: getBrokenPluginVersions(),
     productBuildNumber = { productBuildNumber ?: PluginManagerCore.getBuildNumber() },
     isMissingIncludeIgnored = true,
     isMissingSubDescriptorIgnored = true,
@@ -908,6 +915,7 @@ private fun loadDescriptorFromResource(
                                               id = null,
                                               moduleName = null,
                                               useCoreClassLoader = useCoreClassLoader)
+    context.debugData?.recordDescriptorPath(descriptor, raw, filename)
     descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = false, dataLoader = dataLoader)
     // do not set jarFiles by intention - doesn't make sense
     return descriptor

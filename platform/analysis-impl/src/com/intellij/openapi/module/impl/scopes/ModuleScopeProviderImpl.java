@@ -16,6 +16,7 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   private final IntObjectMap<GlobalSearchScope> myScopeCache =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private ModuleWithDependentsTestScope myModuleTestsWithDependentsScope;
+  private volatile ModuleWithDependenciesContentScope myModuleWithDependenciesContentScope;
 
   public ModuleScopeProviderImpl(@NotNull Module module) {
     myModule = module;
@@ -58,13 +59,17 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   @NotNull
   @Override
   public GlobalSearchScope getModuleContentScope() {
-    return getCachedScope(ModuleWithDependenciesScope.CONTENT);
+    return new ModuleContentScope(myModule);
   }
 
   @NotNull
   @Override
   public GlobalSearchScope getModuleContentWithDependenciesScope() {
-    return getCachedScope(ModuleWithDependenciesScope.CONTENT | ModuleWithDependenciesScope.MODULES);
+    ModuleWithDependenciesContentScope scope = myModuleWithDependenciesContentScope;
+    if (scope == null) {
+      myModuleWithDependenciesContentScope = scope = new ModuleWithDependenciesContentScope(myModule);
+    }
+    return scope;
   }
 
   @Override
@@ -112,5 +117,6 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   public void clearCache() {
     myScopeCache.clear();
     myModuleTestsWithDependentsScope = null;
+    myModuleWithDependenciesContentScope = null;
   }
 }

@@ -463,6 +463,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "JCodings", libraryName = "joni", transitiveDependency = true, version = "1.0.55",
                    url = "https://github.com/jruby/jcodings")
       .mit("https://github.com/jruby/jcodings/blob/master/LICENSE.txt"),
+    LibraryLicense(name = "JDOM (JetBrains's fork)", version = "2", attachedTo = "intellij.platform.util.jdom",
+                   url = "http://jdom.org/",
+                   licenseUrl = "https://github.com/JetBrains/intellij-deps-jdom/blob/master/LICENSE.txt"),
     LibraryLicense(libraryName = "jediterm-core", license = "LGPL 3",
                    url = "https://github.com/JetBrains/jediterm",
                    licenseUrl = "https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt"),
@@ -485,9 +488,9 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/jetCheck/blob/master/LICENSE"),
     LibraryLicense(name = "JGit", libraryName = "JGit", license = "Eclipse Distribution License 1.0",
                    licenseUrl = "https://www.eclipse.org/org/documents/edl-v10.php", url = "https://www.eclipse.org/jgit/"),
-    LibraryLicense(name = "JGit (develar's fork)", libraryName = "jgit-develar", version = "4.0",
+    LibraryLicense(name = "JGit (Settings Sync and SettingsRepo)", libraryName = "jetbrains.intellij.deps.eclipse.jgit",
                    license = "Eclipse Distribution License 1.0",
-                   licenseUrl = "https://www.eclipse.org/org/documents/edl-v10.php", url = "https://github.com/develar/jgit"),
+                   licenseUrl = "https://www.eclipse.org/org/documents/edl-v10.php", url = "https://www.eclipse.org/jgit/"),
     LibraryLicense(name = "JGoodies Common", libraryName = "jgoodies-common",
                    url = "https://www.jgoodies.com/freeware/libraries/looks/").simplifiedBsd(),
     LibraryLicense(name = "JGoodies Forms", libraryName = "jgoodies-forms",
@@ -534,7 +537,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Kotlin Coroutines for Guava", libraryName = "kotlinx-coroutines-guava",
                    url = "https://github.com/Kotlin/kotlinx.coroutines")
       .apache("https://github.com/Kotlin/kotlinx.coroutines/blob/master/LICENSE.txt"),
-    LibraryLicense(name = "Kotlin Coroutines for JDK 8", libraryName = "kotlinx-coroutines-jdk8",
+    LibraryLicense(name = "Kotlin Coroutines for JDK 8", libraryName = "kotlinx-coroutines-core",
                    url = "https://github.com/Kotlin/kotlinx.coroutines")
       .apache("https://github.com/Kotlin/kotlinx.coroutines/blob/master/LICENSE.txt"),
     LibraryLicense(name = "Kotlin Coroutines for Slf4j", libraryName = "kotlinx-coroutines-slf4j",

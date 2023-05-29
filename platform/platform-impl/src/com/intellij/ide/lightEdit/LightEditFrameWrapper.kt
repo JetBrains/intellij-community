@@ -1,20 +1,24 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit
 
+import com.apple.eawt.event.FullScreenEvent
 import com.intellij.diagnostic.IdeMessagePanel
 import com.intellij.ide.lightEdit.menuBar.LightEditMainMenuHelper
+import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
 import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.project.impl.applyBoundsOrDefault
 import com.intellij.openapi.project.impl.createNewProjectFrame
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
@@ -22,6 +26,9 @@ import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.adaptV2Widget
 import com.intellij.toolWindow.ToolWindowPane
+import com.intellij.ui.mac.MacFullScreenControlsManager
+import com.intellij.ui.mac.MacMainFrameDecorator
+import com.intellij.ui.mac.MacMainFrameDecorator.FSAdapter
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,9 +53,11 @@ internal class LightEditFrameWrapper(
     fun allocate(project: Project, frameInfo: FrameInfo?, closeHandler: BooleanSupplier): LightEditFrameWrapper {
       return runBlockingModalWithRawProgressReporter(project, "") {
         withContext(Dispatchers.EDT) {
-          allocateLightEditFrame(project) { frame ->
+          val wrapper = allocateLightEditFrame(project) { frame ->
             LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrame(frameInfo).create(), closeHandler = closeHandler)
           } as LightEditFrameWrapper
+          (FileEditorManager.getInstance(project) as LightEditFileEditorManagerImpl).internalInit()
+          wrapper
         }
       }
     }
@@ -87,6 +96,21 @@ internal class LightEditFrameWrapper(
         }
         frameInfo.bounds?.let {
           applyBoundsOrDefault(frame.frame, FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it)?.first)
+        }
+      }
+
+      if (SystemInfoRt.isMac) {
+        val decorator = frame.getDecorator()
+        if (decorator is MacMainFrameDecorator) {
+          decorator.dispatcher.addListener(object : FSAdapter() {
+            override fun windowEnteringFullScreen(e: FullScreenEvent?) {
+              MacFullScreenControlsManager.configureForLightEdit(true)
+            }
+
+            override fun windowExitedFullScreen(e: FullScreenEvent?) {
+              MacFullScreenControlsManager.configureForLightEdit(false)
+            }
+          })
         }
       }
 
@@ -156,25 +180,24 @@ internal class LightEditFrameWrapper(
   override fun getTitleInfoProviders(): List<TitleInfoProvider> = emptyList()
 
   override fun dispose() {
-    Disposer.dispose(editPanel!!)
-  }
-
-  fun closeAndDispose(lightEditServiceImpl: LightEditServiceImpl) {
     val frameInfo = getInstance(project).getActualFrameInfoInDeviceSpace(
       frameHelper = this,
       frame = frame,
       windowManager = (WindowManager.getInstance() as WindowManagerImpl)
     )
-
+    val lightEditServiceImpl = LightEditService.getInstance() as LightEditServiceImpl
     lightEditServiceImpl.setFrameInfo(frameInfo)
-    frame.isVisible = false
-    Disposer.dispose(this)
+    lightEditServiceImpl.frameDisposed()
+    Disposer.dispose(editPanel!!)
+    super.dispose()
   }
 
   private inner class LightEditRootPane(frame: JFrame,
                                         parentDisposable: Disposable) : IdeRootPane(frame = frame,
                                                                                     parentDisposable = parentDisposable,
-                                                                                    loadingState = null) {
+                                                                                    loadingState = null), LightEditCompatible {
+    override val isLightEdit: Boolean get() = true
+
     override fun createCenterComponent(frame: JFrame, parentDisposable: Disposable): Component {
       val panel = LightEditPanel(LightEditUtil.requireProject())
       editPanel = panel

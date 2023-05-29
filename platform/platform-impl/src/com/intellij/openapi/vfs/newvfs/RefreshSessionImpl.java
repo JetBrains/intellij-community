@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -251,8 +252,8 @@ final class RefreshSessionImpl extends RefreshSession {
     mySemaphore.waitFor();
   }
 
-  boolean waitFor(long msTimeout) {
-    return mySemaphore.waitFor(msTimeout);
+  Semaphore getSemaphore() {
+    return mySemaphore;
   }
 
   @NotNull ModalityState getModality() {

@@ -12,7 +12,7 @@ class AssertFindUsagesCommand(text: String, line: Int) : PlaybackCommandCoroutin
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val lastUsageReport = FindUsagesCommand.getFoundUsagesJsonPath()
+    val lastUsageReport = FindUsagesDumper.getFoundUsagesJsonPath()
     if (lastUsageReport == null) {
       throw IllegalStateException("Find usages report is null")
     }
@@ -24,7 +24,7 @@ class AssertFindUsagesCommand(text: String, line: Int) : PlaybackCommandCoroutin
       throw IllegalStateException("Provide expected count of usages")
     }
 
-    val data: FindUsagesCommand.FoundUsagesReport = DataDumper.read(lastUsageReport, FindUsagesCommand.FoundUsagesReport::class.java)
+    val data: FindUsagesDumper.FoundUsagesReport = DataDumper.read(lastUsageReport, FindUsagesDumper.FoundUsagesReport::class.java)
     val expected = args[0].toInt()
     if (data.totalNumberOfUsages != expected) {
       throw IllegalStateException("Expected ${expected} find usages, but got ${data.totalNumberOfUsages}")

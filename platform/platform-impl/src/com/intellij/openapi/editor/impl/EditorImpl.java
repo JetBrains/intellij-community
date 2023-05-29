@@ -5,6 +5,7 @@ import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
+import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
@@ -142,10 +143,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final Key<Boolean> DISABLE_CARET_POSITION_KEEPING = Key.create("editor.disable.caret.position.keeping");
   public static final Key<Boolean> DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION =
     Key.create("editor.disable.caret.shift.on.whitespace.insertion");
+  public static final Key<Boolean> DISABLE_REMOVE_ON_DROP = Key.create("editor.disable.remove.on.drop");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
-  private static final Key<Boolean> INITIALIZED = Key.create("editor.is.fully.initialized");
   private final @NotNull DocumentEx myDocument;
 
   private final JPanel myPanel;
@@ -517,7 +518,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }, myCaretModel);
 
-    setFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
+    myScheme.setEditorFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
 
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
@@ -550,7 +551,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
-    putUserData(INITIALIZED, Boolean.TRUE);
   }
 
   public void applyFocusMode() {
@@ -621,32 +621,34 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter,
                                     boolean canImpactGutterSize, boolean fontStyleChanged, boolean foregroundColorChanged) {
-    if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return; // will be repainted later
+    EdtInvocationManager.invokeLaterIfNeeded(() -> {
+      if (isDisposed() || myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return; // will be repainted later
 
-    if (canImpactGutterSize) {
-      updateGutterSize();
-    }
+      if (canImpactGutterSize) {
+        updateGutterSize();
+      }
 
-    if (myDocumentChangeInProgress) return;
+      if (myDocumentChangeInProgress) return;
 
-    int textLength = myDocument.getTextLength();
-    int start = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
-    int end = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), 0, textLength);
+      int textLength = myDocument.getTextLength();
+      int start = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
+      int end = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), start, textLength);
 
-    if (myGutterComponent.getCurrentAccessibleLine() != null &&
-        AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer())) {
-      escapeGutterAccessibleLine(start, end);
-    }
-    int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
-    int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
-    if (start != end && (fontStyleChanged || foregroundColorChanged)) {
-      myView.invalidateRange(start, end, fontStyleChanged);
-    }
-    if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of batch folding operation everything is repainted
-      repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
-    }
+      if (myGutterComponent.getCurrentAccessibleLine() != null &&
+          AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer())) {
+        escapeGutterAccessibleLine(start, end);
+      }
+      int startLine = myDocument.getLineNumber(start);
+      int endLine = myDocument.getLineNumber(end);
+      if (start != end && (fontStyleChanged || foregroundColorChanged)) {
+        myView.invalidateRange(start, end, fontStyleChanged);
+      }
+      if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of batch folding operation everything is repainted
+        repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
+      }
 
-    updateCaretCursor();
+      updateCaretCursor();
+    });
   }
 
   private void onInlayUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
@@ -3568,7 +3570,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   boolean isHighlighterAvailable(@NotNull RangeHighlighter highlighter) {
-    return myHighlightingFilter == null || myHighlightingFilter.test(highlighter);
+    Predicate<? super RangeHighlighter> filter = myHighlightingFilter;
+    return filter == null || filter.test(highlighter);
   }
 
   private boolean hasBlockInlay(@NotNull Point point) {
@@ -3636,7 +3639,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public @NotNull Rectangle getTextLocation(TextHitInfo offset) {
       if (isDisposed()) return new Rectangle();
-      Point caret = logicalPositionToXY(getCaretModel().getLogicalPosition());
+      Point caret = logicalPositionToXY(getCaretModel().getPrimaryCaret().getLogicalPosition());
       Rectangle r = new Rectangle(caret, new Dimension(1, getLineHeight()));
       Point p = getLocationOnScreen(getContentComponent());
       r.translate(p.x, p.y);
@@ -4180,7 +4183,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       boolean isNavigation = oldStart == oldEnd && newStart == newEnd && oldStart != newStart;
       if (getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
-        if (ExperimentalUI.isNewUI() && UISettings.getInstance().getShowBreakpointsOverLineNumbers()) {
+        if (ExperimentalUI.isNewUI() && EditorUtil.isBreakPointsOnLineNumbers()) {
           //do nothing here and set/unset a breakpoint if possible in XLineBreakpointManager
           return false;
         }
@@ -4913,7 +4916,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             LOG.error("No suitable paste handler found");
           }
           else {
-            handler.execute(editor, editor.getDataContext(), () -> t);
+            try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+              handler.execute(editor, editor.getDataContext(), () -> t);
+            }
           }
         }
         else {
@@ -4925,6 +4930,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           editor.getCaretModel().moveToOffset(range.getStartOffset());
           editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
         }
+
+        if (DnDManager.getInstance() instanceof DnDManagerImpl manager) {
+          manager.setLastDropHandler(editor.getContentComponent());
+        }
       }
       catch (Exception exception) {
         LOG.error(exception);
@@ -4935,6 +4944,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static class MyTransferHandler extends TransferHandler {
+    private static final TransferHandler transferHandlerStub = new TransferHandler() {
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        return null;
+      }
+    };
+    private static final JComponent componentStub = new JComponent() {
+      @Override
+      public TransferHandler getTransferHandler() {
+        return transferHandlerStub;
+      }
+    };
+    private static final MouseEvent mouseEventStub = new MouseEvent(new Component() {}, 0, 0L, 0, 0, 0, 0, false, 0);
+
     private static EditorImpl getEditor(@NotNull JComponent comp) {
       EditorComponentImpl editorComponent = (EditorComponentImpl)comp;
       return editorComponent.getEditor();
@@ -4990,7 +5013,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       final Component last = DnDManager.getInstance().getLastDropHandler();
 
-      if (last != null && !(last instanceof EditorComponentImpl) && !(last instanceof EditorGutterComponentImpl)) return;
+      if (last != null) {
+        if (!(last instanceof EditorComponentImpl) && !(last instanceof EditorGutterComponentImpl)) {
+          return;
+        }
+        if (last != source && Boolean.TRUE.equals(DISABLE_REMOVE_ON_DROP.get(getEditor((JComponent)last)))) {
+          return;
+        }
+      }
 
       final EditorImpl editor = getEditor(source);
       if (action == MOVE && !editor.isViewer() && editor.myDraggedRange != null) {
@@ -4998,6 +5028,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       editor.clearDnDContext();
+
+      // IDEA-316937 Project leak via TransferHandler$SwingDragGestureRecognizer.
+      // This is a dirty, makeshift solution. We are restricted by Swing, because javax.swing.TransferHandler.recognizer
+      // is a private field, and we cannot reset its value to null to avoid the memory leak.
+      // To prevent project leaks, we pass a contextless componentStub for it to replace the previous value of the recognizer field.
+      if (source != componentStub) {
+        exportAsDrag(componentStub, mouseEventStub, MOVE);
+      }
+
     }
 
     private static void removeDraggedOutFragment(@NotNull EditorImpl editor) {

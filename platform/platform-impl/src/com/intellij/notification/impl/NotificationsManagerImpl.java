@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -48,15 +47,11 @@ import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.accessibility.ScreenReader;
-import com.jetbrains.AccessibleAnnouncer;
-import com.jetbrains.JBR;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -281,67 +276,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         NotificationCollector.getInstance().logToolWindowNotificationShown(project, notification);
       }
     }
-
-    announceNotification(notification);
-  }
-
-  private static void announceNotification(Notification notification) {
-    if (!isAnnouncingEnabled()) return;
-    EDT.assertIsEdt();
-
-    List<String> components = getComponentsToAnnounce(notification);
-    announceComponents(components, notification, getAnnouncingMode());
-  }
-
-  @ApiStatus.Experimental
-  public static boolean isAnnouncingEnabled() {
-    return ScreenReader.isActive() && getAnnouncingMode() != 0;
-  }
-
-  private static int getAnnouncingMode() {
-    return Registry.intValue("ide.accessibility.announcing.notifications.mode");
-  }
-
-  private static void announceComponents(List<String> components, Notification notification, int mode) {
-    Accessible accessible = null;
-    Balloon balloon = notification.getBalloon();
-    if (balloon instanceof BalloonImpl && !balloon.isDisposed()) {
-      JComponent comp = ((BalloonImpl)balloon).getComponent();
-      if (comp instanceof Accessible) accessible = (Accessible)comp;
-    }
-
-    String text = StringUtil.join(components, ". ");
-    AccessibleAnnouncer announcer = JBR.getAccessibleAnnouncer();
-    announcer.announce(accessible, text, mode == 1
-                                         ? AccessibleAnnouncer.ANNOUNCE_WITHOUT_INTERRUPTING_CURRENT_OUTPUT
-                                         : AccessibleAnnouncer.ANNOUNCE_WITH_INTERRUPTING_CURRENT_OUTPUT);
-  }
-
-  private static List<String> getComponentsToAnnounce(Notification notification) {
-    List<String> components = new ArrayList<>();
-
-    components.add(IdeBundle.message("notification.accessible.announce.prefix"));
-    if (!notification.getTitle().isEmpty()) {
-      components.add(notification.getTitle());
-    }
-
-    String subtitle = notification.getSubtitle();
-    if (subtitle != null && !subtitle.isEmpty()) {
-      components.add(subtitle);
-    }
-
-    if (!notification.getContent().isEmpty()) {
-      components.add(StringUtil.removeHtmlTags(notification.getContent()));
-    }
-    List<AnAction> actions = notification.getActions();
-    if (!actions.isEmpty()) {
-      components.add(IdeBundle.message("notification.accessible.announce.actions.prefix"));
-      for (AnAction action: actions) {
-        components.add(action.getTemplatePresentation().getText());
-      }
-    }
-
-    return components;
   }
 
   private static @Nullable Balloon notifyByBalloon(Notification notification,

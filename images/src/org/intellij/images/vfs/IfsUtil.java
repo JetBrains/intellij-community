@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.ScaleContextCache;
 import com.intellij.util.SVGLoader;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.bytesource.ByteSourceArray;
@@ -101,7 +102,7 @@ public final class IfsUtil {
 
           file.putUserData(FORMAT_KEY, SVG_FORMAT);
           file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(new ImageDocument.CachedScaledImageProvider() {
-            final ScaleContext.Cache<Image> cache = new ScaleContext.Cache<>((ctx) -> {
+            final ScaleContextCache<Image> cache = new ScaleContextCache<>((ctx) -> {
               try {
                 return SVGLoader.loadHiDPI(url.get(), new ByteArrayInputStream(content), ctx);
               }

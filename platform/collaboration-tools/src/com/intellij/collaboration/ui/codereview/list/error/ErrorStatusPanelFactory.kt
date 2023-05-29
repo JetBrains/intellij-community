@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.list.error
 
-import com.intellij.collaboration.ui.util.getName
+import com.intellij.collaboration.ui.util.name
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -95,7 +95,7 @@ object ErrorStatusPanelFactory {
       val errorAction = errorPresenter.getErrorAction(error)
       if (errorAction != null) {
         action = errorAction
-        errorTextBuilder.appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.getName()))
+        errorTextBuilder.appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.name.orEmpty()))
       }
 
       htmlEditorPane.text = errorTextBuilder.wrapWithHtmlBody().toString()

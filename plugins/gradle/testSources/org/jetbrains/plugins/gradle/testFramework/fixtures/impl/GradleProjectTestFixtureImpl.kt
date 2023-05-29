@@ -20,8 +20,9 @@ import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWr
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.util.refreshAndAwait
+import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleProjectReload
+import org.jetbrains.plugins.gradle.testFramework.util.refreshAndAwait
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 
 internal class GradleProjectTestFixtureImpl private constructor(
@@ -85,8 +86,10 @@ internal class GradleProjectTestFixtureImpl private constructor(
 
     private suspend fun createProjectCaches(projectRoot: VirtualFile) {
       closeOpenedProjectsIfFailAsync {
-        awaitAnyGradleProjectReload {
-          openProjectAsync(projectRoot)
+        ExternalSystemExecutionTracer.assertExecutionStatusIsSuccess {
+          awaitAnyGradleProjectReload {
+            openProjectAsync(projectRoot)
+          }
         }
       }.useProjectAsync(save = true) {
         projectRoot.refreshAndAwait()

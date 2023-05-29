@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -49,13 +49,11 @@ final class SequenceIterator<T> implements Iterator<T> {
     myIterators[myCurrentIndex].remove();
   }
 
-  @NotNull
-  public static <T> SequenceIterator<T> create(@NotNull Iterator<? extends T> first, @NotNull Iterator<? extends T> second) {
+  public static @NotNull <T> SequenceIterator<T> create(@NotNull Iterator<? extends T> first, @NotNull Iterator<? extends T> second) {
     return new SequenceIterator<>(first, second);
   }
 
-  @NotNull
-  public static <T> SequenceIterator<T> create(@NotNull Iterator<? extends T> first, @NotNull Iterator<? extends T> second, @NotNull Iterator<? extends T> third) {
+  public static @NotNull <T> SequenceIterator<T> create(@NotNull Iterator<? extends T> first, @NotNull Iterator<? extends T> second, @NotNull Iterator<? extends T> third) {
     return new SequenceIterator<>(first, second, third);
   }
 }

@@ -2,15 +2,16 @@
 package com.intellij.util.ui
 
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.JBColor
 import com.intellij.ui.paint.withTxAndClipAligned
 import com.intellij.util.ui.AvatarUtils.generateColoredAvatar
 import com.intellij.util.ui.ImageUtil.applyQualityRenderingHints
 import java.awt.*
+import java.awt.font.TextAttribute
 import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
 import java.awt.image.BufferedImage
 import kotlin.math.abs
+
 
 class AvatarIcon(private val targetSize: Int,
                  private val arcRatio: Double,
@@ -79,8 +80,8 @@ object AvatarUtils {
     val image = ImageUtil.createImage(gc, size, size, BufferedImage.TYPE_INT_ARGB)
     val g2 = image.createGraphics()
     applyQualityRenderingHints(g2)
-    g2.paint = GradientPaint(0.0f, 0.0f, color2,
-                             size.toFloat(), size.toFloat(), color1)
+    g2.paint = GradientPaint(0.0f, size.toFloat(), color2,
+                             size.toFloat(), 0.0f, color1)
 
     val arcSize = arcRatio * size
     val avatarOvalArea = Area(RoundRectangle2D.Double(0.0, 0.0,
@@ -88,7 +89,7 @@ object AvatarUtils {
                                                       arcSize, arcSize))
     g2.fill(avatarOvalArea)
 
-    g2.paint = JBColor.WHITE
+    g2.paint = Color.WHITE // JBColor.WHITE paints black color ¯\_(ツ)_/¯
     g2.font = getFont(size)
     UIUtil.drawCenteredString(g2, Rectangle(0, 0, size, size), shortName)
     g2.dispose()
@@ -98,12 +99,21 @@ object AvatarUtils {
 
   private fun getFont(size: Int): Font {
     return if (Registry.`is`("ide.experimental.ui")) {
-      val fontSize = 13 * size / 20 // Desired font is 13 with default icon size 20
-      JBFont.create(Font("JetBrains Mono Medium", Font.PLAIN, fontSize))
+      val fontSize = 13 * size / 20
+      getNewUiFont(fontSize)
     }
     else {
       JBFont.create(Font("Segoe UI", Font.PLAIN, (size / 2.2).toInt()))
     }
+  }
+
+  private fun getNewUiFont(size: Int): Font {
+    val attributes = mutableMapOf<TextAttribute, Any?>()
+
+    attributes[TextAttribute.FAMILY] = "JetBrains Mono"
+    attributes[TextAttribute.WEIGHT] = TextAttribute.WEIGHT_DEMIBOLD
+
+    return JBFont.create(Font.getFont(attributes)).deriveFont(size.toFloat())
   }
 }
 
@@ -137,12 +147,16 @@ internal object Avatars {
 }
 
 interface ColorPalette {
+  companion object {
+    fun <T> select(storage: Array<T>, seed: String? = null): T {
+      val keyCode = seed?.let { abs(it.hashCode()) % storage.size } ?: 0
+
+      return storage[keyCode]
+    }
+  }
   val gradients: Array<Pair<Color, Color>>
 
-  fun gradient(seed: String? = null): Pair<Color, Color> {
-    val keyCode = if (seed == null) 0 else abs(seed.hashCode()) % gradients.size
-    return gradients[keyCode]
-  }
+  fun gradient(seed: String? = null) = select(gradients, seed)
 }
 
 private object AvatarPalette : ColorPalette {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.command.impl.DummyProject
@@ -31,11 +31,27 @@ class ProjectIndexingHistoryImplTest {
     val time = Instant.now()
     history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, time)
     history.suspendStages(time.plusNanos(1))
-    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(2))
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(3))
     history.indexingFinished()
 
     assertTrue(history.times.indexingDuration > Duration.ZERO)
-    assertEquals(history.times.suspendedDuration, Duration.ZERO)
+    assertEquals(history.times.suspendedDuration, Duration.ofNanos(2))
+    assertEquals(history.times.scanFilesDuration, Duration.ZERO)
+    assertEquals(history.times.pushPropertiesDuration, Duration.ZERO)
+  }
+
+  @Test
+  fun `test usual start suspended picture`() {
+    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.FULL)
+    val time = Instant.now()
+    history.suspendStages(time)
+    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(10))
+    history.stopSuspendingStages(time.plusNanos(11))
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(15))
+    history.indexingFinished()
+
+    assertEquals(history.times.indexingDuration, Duration.ofNanos(4))
+    assertEquals(history.times.suspendedDuration, Duration.ofNanos(11))
     assertEquals(history.times.scanFilesDuration, Duration.ZERO)
     assertEquals(history.times.pushPropertiesDuration, Duration.ZERO)
   }

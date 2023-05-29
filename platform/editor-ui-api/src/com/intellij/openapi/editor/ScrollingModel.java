@@ -3,9 +3,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,11 +50,5 @@ public interface ScrollingModel {
   interface ScrollingHelper {
     @NotNull Point calculateScrollingLocation(@NotNull Editor editor, @NotNull VisualPosition pos);
     @NotNull Point calculateScrollingLocation(@NotNull Editor editor, @NotNull LogicalPosition pos);
-  }
-
-  @ApiStatus.Experimental
-  interface ScrollPositionCalculator {
-    ExtensionPointName<ScrollPositionCalculator> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.openapi.editor.ScrollPositionCalculator");
-    @NotNull Point calcOffsetsToScroll(@NotNull Editor editor, @NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect);
   }
 }

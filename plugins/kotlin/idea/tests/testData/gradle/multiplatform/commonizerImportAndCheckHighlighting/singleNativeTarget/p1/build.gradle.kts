@@ -11,4 +11,8 @@ kotlin {
         SystemInfo.isWindows -> mingwX64("native")
         else -> throw IllegalStateException("Unsupported host")
     }
+
+    sourceSets.all {
+        languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
+    }
 }

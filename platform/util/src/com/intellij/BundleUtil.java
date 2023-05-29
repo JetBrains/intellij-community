@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,11 +10,10 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 public final class BundleUtil {
-  private final static Method SET_PARENT = ReflectionUtil.getDeclaredMethod(ResourceBundle.class, "setParent", ResourceBundle.class);
-  private final static Logger LOG = Logger.getInstance(BundleUtil.class);
+  private static final Method SET_PARENT = ReflectionUtil.getDeclaredMethod(ResourceBundle.class, "setParent", ResourceBundle.class);
+  private static final Logger LOG = Logger.getInstance(BundleUtil.class);
 
-  @Nullable
-  public static ResourceBundle loadLanguageBundle(@Nullable ClassLoader pluginClassLoader, String name) {
+  public static @Nullable ResourceBundle loadLanguageBundle(@Nullable ClassLoader pluginClassLoader, String name) {
     if (pluginClassLoader == null) return null;
     ResourceBundle.Control control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES);
     ResourceBundle pluginBundle = ResourceBundle.getBundle(name, Locale.getDefault(), pluginClassLoader, control);

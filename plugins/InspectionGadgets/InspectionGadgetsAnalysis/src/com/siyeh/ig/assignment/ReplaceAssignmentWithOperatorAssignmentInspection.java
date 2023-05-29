@@ -15,11 +15,8 @@
  */
 package com.siyeh.ig.assignment;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,17 +25,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -113,11 +107,11 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new ReplaceAssignmentWithOperatorAssignmentFix((PsiPolyadicExpression)infos[1]);
   }
 
-  private static final class ReplaceAssignmentWithOperatorAssignmentFix extends InspectionGadgetsFix {
+  private static final class ReplaceAssignmentWithOperatorAssignmentFix extends PsiUpdateModCommandQuickFix {
 
     private final @IntentionName String m_name;
 
@@ -146,8 +140,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiAssignmentExpression expression)) {
         return;
       }

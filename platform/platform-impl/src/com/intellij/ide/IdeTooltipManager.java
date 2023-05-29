@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -32,6 +32,8 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.*;
+import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -43,12 +45,11 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 
 // Android team doesn't want to use new mockito for now, so, class cannot be final
-public class IdeTooltipManager implements Disposable, AWTEventListener {
+public class IdeTooltipManager implements Disposable {
   public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", null);
 
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
@@ -86,9 +87,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   private Runnable myShowRequest;
   private IdeTooltip myQueuedTooltip;
 
-  public IdeTooltipManager() {
-    Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
-
+  public IdeTooltipManager(@NotNull CoroutineScope coroutineScope) {
     SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
     connection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
@@ -103,9 +102,13 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       }
     });
 
-    RegistryManager registryManager = RegistryManager.getInstance();
-    isEnabled = registryManager.is(IDE_TOOLTIP_CALLOUT_KEY);
-    processEnabled(registryManager.is(IDE_HELPTOOLTIP_ENABLED_KEY));
+    RegistryManager.Companion.executeWhenReady(coroutineScope, registryManager -> {
+      Toolkit.getDefaultToolkit().addAWTEventListener(this::eventDispatched, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+
+      isEnabled = registryManager.is(IDE_TOOLTIP_CALLOUT_KEY);
+      processEnabled(registryManager.is(IDE_HELPTOOLTIP_ENABLED_KEY));
+      return Unit.INSTANCE;
+    });
   }
 
   static final class MyRegistryListener implements RegistryValueListener {
@@ -123,8 +126,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     }
   }
 
-  @Override
-  public void eventDispatched(AWTEvent event) {
+  private void eventDispatched(AWTEvent event) {
     if (!isEnabled) {
       return;
     }

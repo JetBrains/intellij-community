@@ -36,14 +36,6 @@ public final class FilePathImpl implements FilePath {
     myIsDirectory = isDirectory;
   }
 
-  /**
-   * @deprecated Use {@link LocalFilePath}.
-   */
-  @Deprecated(forRemoval = true)
-  public FilePathImpl(@NotNull VirtualFile file) {
-    this(file.getPath(), file.isDirectory());
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

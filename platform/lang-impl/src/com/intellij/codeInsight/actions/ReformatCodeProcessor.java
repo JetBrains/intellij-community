@@ -5,6 +5,7 @@ package com.intellij.codeInsight.actions;
 import com.intellij.CodeStyleBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.formatting.KeptLineFeedsCollector;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
@@ -25,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SlowOperations;
@@ -41,7 +41,7 @@ import java.util.concurrent.FutureTask;
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance(ReformatCodeProcessor.class);
   private static final Key<Trinity<Long, Date, List<TextRange>>> SECOND_FORMAT_KEY = Key.create("second.format");
-  private static final String SECOND_REFORMAT_CONFIRMED = "second.reformat.confirmed";
+  private static final String SECOND_REFORMAT_CONFIRMED = "second.reformat.confirmed.2";
 
   private final List<TextRange> myRanges = new ArrayList<>();
   private SelectionModel mySelectionModel;
@@ -136,14 +136,14 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     });
   }
 
-  private boolean isSecondReformatDisabled() {
-    return !CodeStyle.getSettings(myProject).ENABLE_SECOND_REFORMAT && PropertiesComponent.getInstance().isValueSet(SECOND_REFORMAT_CONFIRMED);
+  private static boolean isSecondReformatDisabled() {
+    return !CodeInsightSettings.getInstance().ENABLE_SECOND_REFORMAT && PropertiesComponent.getInstance().isValueSet(SECOND_REFORMAT_CONFIRMED);
   }
 
   private boolean confirmSecondReformat(@NotNull PsiFile file) {
-    boolean doNotKeepLineBreaks = isDoNotKeepLineBreaks(file);
+    boolean doNotKeepLineBreaks = ReadAction.compute(() -> isDoNotKeepLineBreaks(file));
     if (!doNotKeepLineBreaks || isSecondReformatDisabled()) return false;
-    CodeStyleSettings settings = CodeStyle.getSettings(myProject);
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (!settings.ENABLE_SECOND_REFORMAT) {
       Ref<Boolean> ref = Ref.create(true);
       ApplicationManager.getApplication().invokeAndWait(() -> {

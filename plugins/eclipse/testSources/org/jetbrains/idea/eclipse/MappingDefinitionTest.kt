@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse
 
-import com.intellij.openapi.options.SchemeImportException
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.*
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.const
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.field
@@ -10,7 +9,6 @@ import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.c
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 class MappingDefinitionTest {
   class TestObject {
@@ -94,7 +92,7 @@ class MappingDefinitionTest {
   }
 
   @Test
-  fun testInvalidOptionsThrow() {
+  fun testInvalidOptions() {
     val mappingDefinition = MappingDefinitionBuilder().apply {
       "option1" mapTo field(obj::boolField).convert(BooleanConvertor)
       "option2" mapTo field(obj::intField).convert(IntConvertor)
@@ -105,8 +103,9 @@ class MappingDefinitionTest {
       "option2" to "10"
     )
 
-    assertThrows<SchemeImportException> { mappingDefinition.importSettings(toImport) }
-    assertEquals(false, obj.boolField, "Option imported before failure should be correctly imported")
-    assertEquals(0, obj.intField)
+    val problems = mappingDefinition.importSettings(toImport)
+    assertEquals(listOf("option1=invalid"), problems)
+    assertEquals(false, obj.boolField, "Field is not changed in case of an error")
+    assertEquals(10, obj.intField, "Import of a field is not affected by an error elsewhere")
   }
 }

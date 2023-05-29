@@ -1,7 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework;
 
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ContentFolder;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -9,6 +13,10 @@ import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -22,7 +30,7 @@ import java.util.List;
 @RunWith(Parameterized.class)
 public abstract class MavenMultiVersionImportingTestCase extends MavenImportingTestCase {
 
-  public static final String[] MAVEN_VERSIONS = new String[]{"bundled"};
+  public static final String[] MAVEN_VERSIONS = new String[]{"bundled", "4.0.0-alpha-5"};
 
   @Parameterized.Parameters(name = "with Maven-{0}")
   public static List<String[]> getMavenVersions() {
@@ -50,6 +58,10 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
 
   protected void assumeVersionNot(String version) {
     Assume.assumeTrue("Version " + version + " skipped", VersionComparatorUtil.compare(myMavenVersion, version) != 0);
+  }
+
+  protected void assumeVersion(String version) {
+    Assume.assumeTrue("Version " + version + " skipped", VersionComparatorUtil.compare(myMavenVersion, version) == 0);
   }
 
   @Before
@@ -99,33 +111,194 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     return StringUtil.compareVersionNumbers(version, getActualVersion(myMavenVersion)) <= 0;
   }
 
-  private List<String> defaultResources() {
-    if (StringUtil.compareVersionNumbers(getActualVersion(myMavenVersion), "4.0") >= 0) {
-      return List.of("src/main/resources", "src/main/resources-filtered");
-    }
-    return List.of("src/main/resources");
+  protected boolean isMaven4() {
+    return StringUtil.compareVersionNumbers(getActualVersion(myMavenVersion), "4.0") >= 0;
   }
 
-  private List<String> defaultTestResources() {
-    if (StringUtil.compareVersionNumbers(getActualVersion(myMavenVersion), "4.0") >= 0) {
-      return List.of("src/test/resources", "src/test/resources-filtered");
-    }
-    return List.of("src/test/resources");
+  protected String maven4orNull(String value) {
+    return isMaven4() ? value : null;
+  }
+
+  protected String[] defaultResources() {
+    return arrayOfNotNull("src/main/resources", maven4orNull("src/main/resources-filtered"));
+  }
+
+  protected String[] defaultTestResources() {
+    return arrayOfNotNull("src/test/resources",  maven4orNull("src/test/resources-filtered"));
+  }
+
+  protected String[] allDefaultResources() {
+    return ArrayUtil.mergeArrays(defaultResources(), defaultTestResources());
   }
 
   protected void assertDefaultResources(String moduleName, String... additionalSources) {
-    var expectedList = new ArrayList<String>();
-    expectedList.addAll(defaultResources());
-    expectedList.addAll(Arrays.asList(additionalSources));
-    var expectedSources = ArrayUtil.toStringArray(expectedList);
+    var expectedSources = ArrayUtil.mergeArrays(defaultResources(), additionalSources);
     assertResources(moduleName, expectedSources);
   }
 
   protected void assertDefaultTestResources(String moduleName, String... additionalSources) {
-    var expectedList = new ArrayList<String>();
-    expectedList.addAll(defaultTestResources());
-    expectedList.addAll(Arrays.asList(additionalSources));
-    var expectedSources = ArrayUtil.toStringArray(expectedList);
+    var expectedSources = ArrayUtil.mergeArrays(defaultTestResources(), additionalSources);
     assertTestResources(moduleName, expectedSources);
+  }
+
+  protected void assertDefaultResources(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... additionalSources) {
+    var expectedSources = ArrayUtil.mergeArrays(defaultResources(), additionalSources);
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expectedSources);
+  }
+
+  protected void assertDefaultTestResources(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... additionalSources) {
+    var expectedSources = ArrayUtil.mergeArrays(defaultTestResources(), additionalSources);
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expectedSources);
+  }
+
+  protected String[] arrayOfNotNull(String... values) {
+    if (null == values) return ArrayUtil.EMPTY_STRING_ARRAY;
+    return Arrays.stream(values).filter(v -> null != v).toArray(String[]::new);
+  }
+
+  protected void createStdProjectFolders() {
+    createStdProjectFolders("");
+  }
+
+  protected void createStdProjectFolders(String subdir) {
+    if (!subdir.isEmpty()) subdir += "/";
+
+    var folders = ArrayUtil.mergeArrays(allDefaultResources(),
+      "src/main/java",
+      "src/test/java"
+    );
+
+    createProjectSubDirs(subdir, folders);
+  }
+
+  private void createProjectSubDirs(String subdir, String... relativePaths) {
+    for (String path : relativePaths) {
+      createProjectSubDir(subdir + path);
+    }
+  }
+
+  protected void assertRelativeContentRoots(String moduleName, String... expectedRelativeRoots) {
+    var expectedRoots = Arrays.stream(expectedRelativeRoots)
+      .map(root -> getProjectPath() + ("".equals(root) ? "" : "/" + root))
+      .toArray(String[]::new);
+    assertContentRoots(moduleName, expectedRoots);
+  }
+
+  protected void assertContentRoots(String moduleName, String... expectedRoots) {
+    List<String> actual = new ArrayList<>();
+    for (ContentEntry e : getContentRoots(moduleName)) {
+      actual.add(e.getUrl());
+    }
+    assertUnorderedPathsAreEqual(actual, ContainerUtil.map(expectedRoots, root -> VfsUtilCore.pathToUrl(root)));
+  }
+
+  protected void assertGeneratedSources(String moduleName, String... expectedSources) {
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    List<ContentFolder> folders = new ArrayList<>();
+    for (SourceFolder folder : contentRoot.getSourceFolders(JavaSourceRootType.SOURCE)) {
+      JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaSourceRootType.SOURCE);
+      assertNotNull(properties);
+      if (properties.isForGeneratedSources()) {
+        folders.add(folder);
+      }
+    }
+    doAssertContentFolders(contentRoot, folders, expectedSources);
+  }
+
+  protected void assertSources(String moduleName, String... expectedSources) {
+    doAssertContentFolders(moduleName, JavaSourceRootType.SOURCE, expectedSources);
+  }
+
+  protected void assertContentRootSources(String moduleName, String contentRoot, String... expectedSources) {
+    ContentEntry root = getContentRoot(moduleName, contentRoot);
+    doAssertContentFolders(root, root.getSourceFolders(JavaSourceRootType.SOURCE), expectedSources);
+  }
+
+  protected void assertResources(String moduleName, String... expectedSources) {
+    doAssertContentFolders(moduleName, JavaResourceRootType.RESOURCE, expectedSources);
+  }
+
+  protected void assertContentRootResources(String moduleName, String contentRoot, String... expectedSources) {
+    ContentEntry root = getContentRoot(moduleName, contentRoot);
+    doAssertContentFolders(root, root.getSourceFolders(JavaResourceRootType.RESOURCE), expectedSources);
+  }
+
+  protected void assertTestSources(String moduleName, String... expectedSources) {
+    doAssertContentFolders(moduleName, JavaSourceRootType.TEST_SOURCE, expectedSources);
+  }
+
+  protected void assertContentRootTestSources(String moduleName, String contentRoot, String... expectedSources) {
+    ContentEntry root = getContentRoot(moduleName, contentRoot);
+    doAssertContentFolders(root, root.getSourceFolders(JavaSourceRootType.TEST_SOURCE), expectedSources);
+  }
+
+  protected void assertTestResources(String moduleName, String... expectedSources) {
+    doAssertContentFolders(moduleName, JavaResourceRootType.TEST_RESOURCE, expectedSources);
+  }
+
+  protected void assertContentRootTestResources(String moduleName, String contentRoot, String... expectedSources) {
+    ContentEntry root = getContentRoot(moduleName, contentRoot);
+    doAssertContentFolders(root, root.getSourceFolders(JavaResourceRootType.TEST_RESOURCE), expectedSources);
+  }
+
+  protected void assertExcludes(String moduleName, String... expectedExcludes) {
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    doAssertContentFolders(contentRoot, Arrays.asList(contentRoot.getExcludeFolders()), expectedExcludes);
+  }
+
+  protected void assertContentRootExcludes(String moduleName, String contentRoot, String... expectedExcudes) {
+    ContentEntry root = getContentRoot(moduleName, contentRoot);
+    doAssertContentFolders(root, Arrays.asList(root.getExcludeFolders()), expectedExcudes);
+  }
+
+  protected void doAssertContentFolders(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... expected) {
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expected);
+  }
+
+  private static void doAssertContentFolders(ContentEntry e,
+                                             final List<? extends ContentFolder> folders,
+                                             String... expected) {
+    List<String> actual = new ArrayList<>();
+    for (ContentFolder f : folders) {
+      String rootUrl = e.getUrl();
+      String folderUrl = f.getUrl();
+
+      if (folderUrl.startsWith(rootUrl)) {
+        int length = rootUrl.length() + 1;
+        folderUrl = folderUrl.substring(Math.min(length, folderUrl.length()));
+      }
+
+      actual.add(folderUrl);
+    }
+
+    assertSameElements("Unexpected list of folders in content root " + e.getUrl(),
+                       actual, Arrays.asList(expected));
+  }
+
+  private ContentEntry getContentRoot(String moduleName) {
+    ContentEntry[] ee = getContentRoots(moduleName);
+    List<String> roots = new ArrayList<>();
+    for (ContentEntry e : ee) {
+      roots.add(e.getUrl());
+    }
+
+    String message = "Several content roots found: [" + StringUtil.join(roots, ", ") + "]";
+    assertEquals(message, 1, ee.length);
+
+    return ee[0];
+  }
+
+  private ContentEntry getContentRoot(String moduleName, String path) {
+    ContentEntry[] roots = getContentRoots(moduleName);
+    for (ContentEntry e : roots) {
+      if (e.getUrl().equals(VfsUtilCore.pathToUrl(path))) return e;
+    }
+    throw new AssertionError("content root not found in module " + moduleName + ":" +
+                             "\nExpected root: " + path +
+                             "\nExisting roots:" +
+                             "\n" + StringUtil.join(roots, it -> " * " + it.getUrl(), "\n"));
   }
 }

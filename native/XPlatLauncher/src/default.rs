@@ -1,32 +1,36 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Result};
-use log::{debug, warn};
+use log::debug;
 
 use crate::*;
 
 const IDE_HOME_LOOKUP_DEPTH: usize = 5;
 
+#[cfg(not(target_os = "macos"))]
+const PRODUCT_INFO_REL_PATH: &str = "product-info.json";
+#[cfg(target_os = "macos")]
+const PRODUCT_INFO_REL_PATH: &str = "Resources/product-info.json";
+
+#[cfg(target_os = "windows")]
+const PATH_MACRO: &str = "%IDE_HOME%";
+#[cfg(target_os = "macos")]
+const PATH_MACRO: &str = "$APP_PACKAGE/Contents";
+#[cfg(target_os = "linux")]
+const PATH_MACRO: &str = "$IDE_HOME";
+
 pub struct DefaultLaunchConfiguration {
     pub product_info: ProductInfo,
-    launch_data_idx: usize,
     pub ide_home: PathBuf,
     pub vm_options_path: PathBuf,
     pub user_config_dir: PathBuf,
     pub args: Vec<String>,
     pub launcher_base_name: String,
     pub env_var_base_name: String
-}
-
-impl DefaultLaunchConfiguration {
-    fn launch_data(&self) -> &ProductInfoLaunchField {
-        &self.product_info.launch[self.launch_data_idx]
-    }
 }
 
 impl LaunchConfiguration for DefaultLaunchConfiguration {
@@ -37,15 +41,21 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
     fn get_vm_options(&self) -> Result<Vec<String>> {
         let mut vm_options = Vec::with_capacity(100);
 
+        // error file locations go first (users should be able to override them)
+        let user_home_path = get_user_home()?.to_string_checked()?;
+        let slash = std::path::MAIN_SEPARATOR;
+        vm_options.push(format!("-XX:ErrorFile={user_home_path}{slash}java_error_in_{}_%p.log", self.launcher_base_name));
+        vm_options.push(format!("-XX:HeapDumpPath={user_home_path}{slash}java_error_in_{}_%p.hprof", self.launcher_base_name));
+
         // collecting JVM options from user and distribution files
         self.collect_vm_options_from_files(&mut vm_options)?;
 
         // appending product-specific VM options (non-overridable, so should come last)
         debug!("Appending product-specific VM options");
-        vm_options.extend_from_slice(&self.launch_data().additionalJvmArguments);
+        vm_options.extend_from_slice(&self.product_info.launch[0].additionalJvmArguments);
 
         for vm_option in vm_options.iter_mut() {
-            *vm_option = self.expand_vars(&vm_option)?;
+            *vm_option = self.expand_path_macro(&vm_option)?;
         }
 
         Ok(vm_options)
@@ -57,59 +67,30 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
-        let class_path = &self.launch_data().bootClassPathJarNames;
-        let lib_path = &self.ide_home.join("lib");
-        let lib_path_canonical = std::fs::canonicalize(lib_path)?;
-
-        let mut canonical_class_path = Vec::new();
-
-        for item in class_path {
-            let item_path = lib_path_canonical.join(item);
-
-            // JBR doesn't like UNC in classpath
-            let item_canonical_path = match canonical_non_unc(&item_path) {
-                Ok(x) => { x }
-                Err(e) => {
-                    match e.is::<std::io::Error>() {
-                        true => {
-                            // this handles non-existent file probably
-                            warn!("{item_path:?}: IoError {e:?} when trying to get canonical path");
-                            continue
-                        }
-                        false => bail!("Failed to get canonical non-UNC path for {item_path:?} {e:?}"),
-                    }
-                }
-            };
-
-            let expanded = self.expand_vars(&item_canonical_path)?;
-
-            canonical_class_path.push(expanded);
-        }
-
-        Ok(canonical_class_path)
+        let lib_path = self.ide_home.join("lib").to_string_checked()?;
+        let class_path = self.product_info.launch[0].bootClassPathJarNames.iter()
+            .map(|item| lib_path.to_string() + std::path::MAIN_SEPARATOR_STR + item)
+            .collect();
+        Ok(class_path)
     }
 
-    fn prepare_for_launch(&self) -> Result<PathBuf> {
-        let java_executable = self.locate_runtime()?;
-        let java_home = java_executable
-            .parent_or_err()?
-            .parent_or_err()?;
-
-        return Ok(java_home.to_path_buf());
+    fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
+        let jre_home = self.locate_runtime()?.strip_ns_prefix()?;
+        return Ok((jre_home, &self.product_info.launch[0].mainClass));
     }
 }
 
 impl DefaultLaunchConfiguration {
     pub fn new(exe_path: &Path, args: Vec<String>) -> Result<Self> {
-        let (ide_home, product_info_file) = find_ide_home(exe_path)?;
+        let (ide_home, product_info_file) = find_ide_home(exe_path)
+            .with_context(|| format!("Cannot find a directory with a product descriptor near '{}'", exe_path.display()))?;
         debug!("IDE home dir: {ide_home:?}");
 
         let config_home = get_config_home()?;
         debug!("OS config dir: {config_home:?}");
 
         let product_info = read_product_info(&product_info_file)?;
-        let launch_data_idx = Self::get_launch_data_idx(&product_info)?;
-        let vm_options_rel_path = &product_info.launch[launch_data_idx].vmOptionsFilePath;
+        let vm_options_rel_path = &product_info.launch[0].vmOptionsFilePath;
         let vm_options_path = product_info_file.parent().unwrap().join(vm_options_rel_path);
         let user_config_dir = config_home.join(&product_info.productVendor).join(&product_info.dataDirectoryName);
         let launcher_base_name = Self::get_launcher_base_name(vm_options_rel_path);
@@ -117,7 +98,6 @@ impl DefaultLaunchConfiguration {
 
         let config = DefaultLaunchConfiguration {
             product_info,
-            launch_data_idx,
             ide_home,
             vm_options_path,
             user_config_dir,
@@ -127,18 +107,6 @@ impl DefaultLaunchConfiguration {
         };
 
         Ok(config)
-    }
-
-    /// Locates the OS-specific launch information block, when there are more than one.
-    fn get_launch_data_idx(product_info: &ProductInfo) -> Result<usize> {
-        match product_info.launch.len() {
-            0 => bail!("Product descriptor is corrupted: 'launch' field is missing"),
-            1 => Ok(0),
-            _ => match product_info.launch.iter().enumerate().find(|(_, rec)| rec.os.to_lowercase() == env::consts::OS) {
-                Some((idx, _)) => Ok(idx),
-                None => bail!("Product descriptor is corrupted: no 'launch' field for '{}'", env::consts::OS)
-            },
-        }
     }
 
     /// Extracts a base name (i.e. a name without the extension and architecture suffix)
@@ -224,7 +192,7 @@ impl DefaultLaunchConfiguration {
     }
 
     fn get_runtime_from_user_config(&self) -> Result<PathBuf> {
-        let config_ext = if env::consts::OS == "windows" { "64.exe.jdk" } else { ".jdk" };
+        let config_ext = if cfg!(target_os = "windows") { "64.exe.jdk" } else { ".jdk" };
         let config_name = self.launcher_base_name.to_owned() + config_ext;
         let config_path = self.user_config_dir.join(config_name);
         debug!("Reading {config_path:?}");
@@ -242,14 +210,15 @@ impl DefaultLaunchConfiguration {
     }
 
     fn check_runtime_dir(runtime_home: &Path) -> Result<PathBuf> {
-        let java_executable = get_bin_java_path(&runtime_home);
+        let adjusted_home = if cfg!(target_os = "macos") { runtime_home.join("Contents/Home") } else { runtime_home.to_path_buf() };
+        let java_executable = adjusted_home.join(if cfg!(target_os = "windows") { "bin\\java.exe" } else { "bin/java" });
         if !java_executable.exists() {
             bail!("Java executable not found at {java_executable:?}");
         }
-        if !is_executable(&java_executable)? {
+        if !java_executable.is_executable()? {
             bail!("Not an executable file: {java_executable:?}");
         }
-        Ok(java_executable)
+        Ok(adjusted_home)
     }
 
     /// Reads VM options from both distribution and user-specific files and puts them into the given vector.
@@ -268,8 +237,7 @@ impl DefaultLaunchConfiguration {
             Ok(path) => {
                 debug!("Custom VM options file: {:?}", path);
                 vm_options.extend(read_vm_options(&path)?);
-                let path_string = path.to_str().expect(&format!("Inconvertible path: {:?}", path));
-                vm_options.push(jvm_property!("jb.vmOptionsFile", path_string));
+                vm_options.push(jvm_property!("jb.vmOptionsFile", path.to_string_checked()?));
                 return Ok(());
             }
             Err(e) => { debug!("Failed: {}", e.to_string()); }
@@ -299,8 +267,7 @@ impl DefaultLaunchConfiguration {
 
         vm_options.extend(user_vm_options);
 
-        let path_string = vm_options_path.to_str().expect(&format!("Inconvertible path: {:?}", vm_options_path));
-        vm_options.push(jvm_property!("jb.vmOptionsFile", path_string));
+        vm_options.push(jvm_property!("jb.vmOptionsFile", vm_options_path.to_string_checked()?));
 
         return Ok(());
     }
@@ -308,7 +275,7 @@ impl DefaultLaunchConfiguration {
     /// Looks for user-editable config files near the installation (Toolbox-style)
     /// or under the OS standard configuration directory.
     fn get_user_vm_options_file(&self) -> Result<PathBuf> {
-        let real_ide_home = if env::consts::OS == "macos" { self.ide_home.parent().unwrap() } else { &self.ide_home };
+        let real_ide_home = if cfg!(target_os = "macos") { self.ide_home.parent().unwrap() } else { &self.ide_home };
         let tb_file_base = real_ide_home.file_name().unwrap().to_str().unwrap();
         let tb_file_path = real_ide_home.parent().unwrap().join(tb_file_base.to_string() + ".vmoptions");
         debug!("Checking {:?}", tb_file_path);
@@ -326,31 +293,10 @@ impl DefaultLaunchConfiguration {
         bail!("User-editable config files not found");
     }
 
-    fn expand_vars(&self, value: &str) -> Result<String> {
-        let (from, to) = match env::consts::OS {
-            "macos"   => ("$APP_PACKAGE/Contents", self.ide_home.to_string_lossy()),
-            "windows" => ("%IDE_HOME%", self.ide_home.to_string_lossy()),
-            "linux"   => return Ok(value.to_string()),
-            unsupported_os => bail!("Unsupported OS: {unsupported_os}"),
-        };
-
-        Ok(value.replace(from, &to))
+    fn expand_path_macro(&self, value: &str) -> Result<String> {
+        let ide_home_path = self.ide_home.to_string_checked()?;
+        Ok(value.replace(PATH_MACRO, &ide_home_path))
     }
-}
-
-#[cfg(target_os = "linux")]
-fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home.join("bin/java")
-}
-
-#[cfg(target_os = "windows")]
-fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home.join("bin\\java.exe")
-}
-
-#[cfg(target_os = "macos")]
-fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home.join("Contents/Home/bin/java")
 }
 
 fn read_vm_options(path: &Path) -> Result<Vec<String>> {
@@ -374,25 +320,29 @@ fn is_gc_vm_option(s: &str) -> bool {
 
 fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
     let file = File::open(product_info_path)?;
-    let reader = BufReader::new(file);
-    let product_info: ProductInfo = serde_json::from_reader(reader)?;
+
+    let product_info: ProductInfo = serde_json::from_reader(BufReader::new(file))?;
     debug!("{:?}", serde_json::to_string(&product_info));
-    return Ok(product_info);
+
+    if product_info.launch.len() != 1 {
+        bail!("Malformed product descriptor (expecting 1 'launch' record, got {})", product_info.launch.len())
+    }
+
+    Ok(product_info)
 }
 
 fn find_ide_home(current_exe: &Path) -> Result<(PathBuf, PathBuf)> {
-    let product_info_rel_path = if env::consts::OS == "macos" { "Resources/product-info.json" } else { "product-info.json" };
-    debug!("Looking for: '{product_info_rel_path}'");
+    debug!("Looking for: '{PRODUCT_INFO_REL_PATH}'");
 
-    let mut candidate = current_exe.parent_or_err()?;
+    let mut candidate = current_exe.to_path_buf();
     for _ in 0..IDE_HOME_LOOKUP_DEPTH {
+        candidate = candidate.parent_or_err()?;
         debug!("Probing for IDE home: {:?}", candidate);
-        let product_info_path = candidate.join(product_info_rel_path);
+        let product_info_path = candidate.join(PRODUCT_INFO_REL_PATH);
         if product_info_path.is_file() {
             return Ok((candidate, product_info_path))
         }
-        candidate = candidate.parent_or_err()?;
     }
 
-    bail!("Cannot find a directory with a product descriptor")
+    bail!("Max lookup depth ({IDE_HOME_LOOKUP_DEPTH}) reached")
 }

@@ -68,17 +68,22 @@ public interface ApplicationEx extends Application {
     exit();
   }
 
+  default void exit(int flags, int exitCode) {
+    exit();
+  }
+
   @Override
   default void exit() {
     exit(SAVE);
   }
 
   /**
-   * @param force when {@code true}, no additional confirmations will be shown. The application is guaranteed to exit
+   * @param force         when {@code true}, no additional confirmations will be shown. The application is guaranteed to exit
    * @param exitConfirmed when {@code true}, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
    *                      a corresponding confirmation will be shown with the possibility to cancel the operation
+   * @param exitCode      set when you want exitCode to be different from default 0
    */
-  default void exit(boolean force, boolean exitConfirmed) {
+  default void exit(boolean force, boolean exitConfirmed, int exitCode) {
     int flags = SAVE;
     if (force) {
       flags |= FORCE_EXIT;
@@ -86,7 +91,11 @@ public interface ApplicationEx extends Application {
     if (exitConfirmed) {
       flags |= EXIT_CONFIRMED;
     }
-    exit(flags);
+    exit(flags, exitCode);
+  }
+
+  default void exit(boolean force, boolean exitConfirmed) {
+    exit(force, exitConfirmed, 0);
   }
 
   /**

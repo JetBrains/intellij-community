@@ -1,14 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -58,13 +59,13 @@ abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
   }
 
   @Override
-  protected final InspectionGadgetsFix buildFix(Object... infos) {
+  protected final LocalQuickFix buildFix(Object... infos) {
     final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)infos[0];
     final StringBuilder replacementText = buildReplacementText(typeCastExpression, new StringBuilder());
     return new ReplaceCastedLiteralWithJustLiteralFix(replacementText.toString());
   }
 
-  private class ReplaceCastedLiteralWithJustLiteralFix extends InspectionGadgetsFix {
+  private class ReplaceCastedLiteralWithJustLiteralFix extends PsiUpdateModCommandQuickFix {
 
     private final String replacementString;
 
@@ -86,8 +87,7 @@ abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiTypeCastExpression typeCastExpression)) {
         return;
       }

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -19,17 +19,6 @@ import java.util.Set;
  * @param newText new text
  */
 public record ModUpdatePsiFile(@NotNull PsiFile file, @NotNull String oldText, @NotNull String newText) implements ModCommand {
-  @Override
-  public @NotNull ModStatus execute(@NotNull Project project) {
-    return IntentionPreviewUtils.writeAndCompute(() -> {
-      if (!file.textMatches(oldText)) return ModStatus.ABORT;
-      Document document = file.getViewProvider().getDocument();
-      document.replaceString(0, document.getTextLength(), newText);
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      return ModStatus.SUCCESS;
-    });
-  }
-
   @Override
   public boolean isEmpty() {
     return oldText.equals(newText);

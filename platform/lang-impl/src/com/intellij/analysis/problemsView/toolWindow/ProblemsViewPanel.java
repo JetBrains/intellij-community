@@ -72,7 +72,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   private final ProblemsTreeModel myTreeModel = new ProblemsTreeModel(this);
   private final DescriptorPreview myPreview = new DescriptorPreview(this, true, myClientId);
   private final JPanel myPanel;
-  private final ActionToolbar myToolbar;
+  protected final ActionToolbar myToolbar;
   private final Insets myToolbarInsets = JBUI.insetsRight(1);
   private final Tree myTree;
   private final TreeExpander myTreeExpander;
@@ -124,7 +124,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     @Override
     public boolean isEnabled() {
       VirtualFile file = getSelectedFile();
-      return file != null && null != ProblemsView.getDocument(getProject(), file);
+      return file != null && file.isValid() && ProblemsView.getDocument(getProject(), file) != null;
     }
 
     @Override
@@ -215,12 +215,12 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     PopupHandler.installPopupMenu(myTree, getPopupHandlerGroupId(), "ProblemsView.ToolWindow.TreePopup");
     myTreeExpander = new DefaultTreeExpander(myTree);
 
+    JComponent centerComponent = createCenterComponent();
     myToolbar = getToolbar();
-    myToolbar.setTargetComponent(myTree);
+    myToolbar.setTargetComponent(centerComponent);
     myToolbar.getComponent().setVisible(state.getShowToolbar());
-
     myPanel = new JPanel(new BorderLayout());
-    JScrollPane scrollPane = createScrollPane(myTree, true);
+    JScrollPane scrollPane = createScrollPane(centerComponent, true);
     if (ExperimentalUI.isNewUI()) {
       scrollPane.getHorizontalScrollBar().addAdjustmentListener(event -> {
         int orientation = ((ActionToolbarImpl)myToolbar).getOrientation();
@@ -307,6 +307,10 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
 
   protected void updateToolWindowContent() {
     myUpdateAlarm.cancelAndRequest();
+  }
+
+  protected @NotNull JComponent createCenterComponent() {
+    return myTree;
   }
 
   @Override

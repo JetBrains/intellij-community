@@ -23,13 +23,21 @@ import java.util.*;
 public final class MethodBytecodeUtil {
   private MethodBytecodeUtil() { }
 
+  public interface InstructionOffsetReader {
+    void readBytecodeInstructionOffset(int offset);
+  }
+
   /**
-   * Allows to use ASM MethodVisitor with JDI method bytecode
+   * Allows to use ASM {@link MethodVisitor} with JDI method bytecode.
+   * Visitor could implement {@link InstructionOffsetReader} to additionally consume bytecode instruction offsets.
    */
   public static void visit(Method method, MethodVisitor methodVisitor, boolean withLineNumbers) {
     visit(method, method.bytecodes(), methodVisitor, withLineNumbers);
   }
 
+  /**
+   * @see #visit(Method, MethodVisitor, boolean)
+   */
   public static void visit(Method method, long maxOffset, MethodVisitor methodVisitor, boolean withLineNumbers) {
     if (maxOffset > 0) {
       // need to keep the size, otherwise labels array will not be initialized correctly
@@ -74,7 +82,18 @@ public final class MethodBytecodeUtil {
     MethodVisitor mv = writer.visitMethod(Opcodes.ACC_PUBLIC, method.name(), method.signature(), method.signature(), null);
     mv.visitAttribute(createCode(writer, method, bytecodes, withLineNumbers));
 
-    new ClassReader(writer.toByteArray()).accept(new ClassVisitor(Opcodes.API_VERSION) {
+    InstructionOffsetReader insnOffsReader = methodVisitor instanceof InstructionOffsetReader
+                                             ? (InstructionOffsetReader)methodVisitor
+                                             : null;
+
+    new ClassReader(writer.toByteArray()) {
+      @Override
+      protected void readBytecodeInstructionOffset(int bytecodeOffset) {
+        if (insnOffsReader != null) {
+          insnOffsReader.readBytecodeInstructionOffset(bytecodeOffset);
+        }
+      }
+    }.accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         assert name.equals(method.name());

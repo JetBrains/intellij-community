@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -59,8 +59,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
-import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
 
 final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
@@ -83,7 +83,7 @@ final class ActionUpdater {
   private final String myPlace;
   private final boolean myContextMenuAction;
   private final boolean myToolbarAction;
-  private final @Nullable Project myProject;
+  private final @Nullable Project project;
 
   private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
   private final Map<AnAction, Presentation> myUpdatedPresentations = new ConcurrentHashMap<>();
@@ -119,7 +119,7 @@ final class ActionUpdater {
                 boolean isToolbarAction,
                 @Nullable Function<? super AnActionEvent, ? extends AnActionEvent> eventTransform,
                 @Nullable Consumer<? super Runnable> laterInvocator) {
-    myProject = CommonDataKeys.PROJECT.getData(dataContext);
+    project = CommonDataKeys.PROJECT.getData(dataContext);
     myPresentationFactory = presentationFactory;
     myDataContext = dataContext;
     myPlace = place;
@@ -130,7 +130,8 @@ final class ActionUpdater {
     myPreCacheSlowDataKeys = Utils.isAsyncDataContext(dataContext) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
     myRealUpdateStrategy = new UpdateStrategy(
       action -> updateActionReal(action),
-      group -> callAction(group, Op.getChildren, () -> doGetChildren(group, createActionEvent(orDefault(group, myUpdatedPresentations.get(group))))));
+      group -> callAction(group, Op.getChildren,
+                          () -> doGetChildren(group, createActionEvent(orDefault(group, myUpdatedPresentations.get(group))))));
     myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> doGetChildren(group, null));
 
     myTestDelayMillis = ActionPlaces.ACTION_SEARCH.equals(myPlace) || ActionPlaces.isShortcutPlace(myPlace) ?
@@ -211,7 +212,7 @@ final class ActionUpdater {
     return computeOnEdt(action, operationName, call, updateThread == ActionUpdateThread.EDT);
   }
 
-  /** @noinspection AssignmentToStaticFieldFromInstanceMethod*/
+  /** @noinspection AssignmentToStaticFieldFromInstanceMethod */
   private <T> T computeOnEdt(@NotNull Object action,
                              @NotNull String operationName,
                              @NotNull Supplier<? extends T> call,
@@ -342,16 +343,18 @@ final class ActionUpdater {
       myPresentationFactory, myDataContext, myPlace, group, myToolbarAction, hideDisabled, this::doExpandActionGroupAsync);
   }
 
-  @NotNull
-  private CancellablePromise<List<AnAction>> doExpandActionGroupAsync(ActionGroup group, boolean hideDisabled) {
+  private @NotNull CancellablePromise<List<AnAction>> doExpandActionGroupAsync(ActionGroup group, boolean hideDisabled) {
     ClientId clientId = ClientId.getCurrent();
-    ComponentManager disposableParent = Objects.requireNonNull(
-      myProject != null
-      ? myProject.isDefault()
-        ? myProject
-        : ClientSessionsManager.getProjectSession(myProject, clientId)
-      : ClientSessionsManager.getAppSession(clientId));
-
+    ComponentManager disposableParent;
+    if (project == null) {
+      disposableParent = Objects.requireNonNull(ClientSessionsManager.getAppSession(clientId));
+    }
+    else if (project.isDefault()) {
+      disposableParent = project;
+    }
+    else {
+      disposableParent = Objects.requireNonNull(ClientSessionsManager.getProjectSession(project, clientId));
+    }
 
     ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
@@ -373,9 +376,12 @@ final class ActionUpdater {
     });
     Computable<Computable<Void>> computable = () -> {
       indicator.checkCanceled();
-      if (myTestDelayMillis > 0) waitTheTestDelay();
+      if (myTestDelayMillis > 0) {
+        waitTheTestDelay();
+      }
       List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
-      return () -> { // invoked outside the read-action
+      // invoked outside the read-action
+      return () -> {
         try {
           applyPresentationChanges();
           promise.setResult(result);
@@ -626,7 +632,9 @@ final class ActionUpdater {
     for (int i = 0; i < visible.size(); i++) {
       AnAction child = visible.get(i);
       if (child instanceof Separator &&
-          (result.isEmpty() || i == visible.size() - 1 || visible.get(i + 1) instanceof Separator)) {
+          (i == visible.size() - 1 ||
+           visible.get(i + 1) instanceof Separator ||
+           result.isEmpty() && StringUtil.isEmpty(((Separator)child).getText()))) {
         continue;
       }
       result.add(child);
@@ -658,7 +666,8 @@ final class ActionUpdater {
   UpdateSession asFastUpdateSession(@Nullable Consumer<? super String> missedKeys,
                                     @Nullable Consumer<? super Runnable> laterInvocator) {
     DataContext frozenContext = Utils.freezeDataContext(myDataContext, missedKeys);
-    Consumer<? super Runnable> invocator = Objects.requireNonNull(ObjectUtils.<Consumer<? super Runnable>>coalesce(laterInvocator, myLaterInvocator));
+    Consumer<? super Runnable> invocator =
+      Objects.requireNonNull(ObjectUtils.<Consumer<? super Runnable>>coalesce(laterInvocator, myLaterInvocator));
     ActionUpdater updater = new ActionUpdater(myPresentationFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
                                               myEventTransform, invocator);
     updater.myPreCacheSlowDataKeys = false;
@@ -670,20 +679,22 @@ final class ActionUpdater {
   }
 
   private @NotNull JBIterable<AnAction> iterateGroupChildren(@NotNull ActionGroup group, @NotNull UpdateStrategy strategy) {
-    boolean isDumb = myProject != null && DumbService.getInstance(myProject).isDumb();
+    boolean isDumb = project != null && DumbService.getInstance(project).isDumb();
     return JBTreeTraverser.<AnAction>from(o -> {
-      if (o == group) return null;
-      if (isDumb && !o.isDumbAware()) return null;
-      if (!(o instanceof ActionGroup oo)) return null;
+        if (o == group) return null;
+        if (isDumb && !o.isDumbAware()) return null;
+        if (!(o instanceof ActionGroup oo)) {
+          return null;
+        }
         Presentation presentation = update(oo, strategy);
-      if (presentation == null || !presentation.isVisible()) {
-        return null;
-      }
-      if (presentation.isPopupGroup() || presentation.isPerformGroup()) {
-        return null;
-      }
-      return getGroupChildren(oo, strategy);
-    })
+        if (presentation == null || !presentation.isVisible()) {
+          return null;
+        }
+        if (presentation.isPopupGroup() || presentation.isPerformGroup()) {
+          return null;
+        }
+        return getGroupChildren(oo, strategy);
+      })
       .withRoots(getGroupChildren(group, strategy))
       .unique()
       .traverse(TreeTraversal.LEAVES_DFS)
@@ -775,14 +786,15 @@ final class ActionUpdater {
                                    "See CustomComponentAction.createCustomComponent javadoc, if caused by a custom component."));
     }
     if (!nestedWA && promise instanceof AsyncPromise) {
-      ((AsyncPromise<?>)promise).setError(reason instanceof Throwable ? (Throwable)reason : new Utils.ProcessCanceledWithReasonException(reason));
+      ((AsyncPromise<?>)promise).setError(
+        reason instanceof Throwable ? (Throwable)reason : new Utils.ProcessCanceledWithReasonException(reason));
     }
     else {
       promise.cancel();
     }
   }
 
-  private enum Op { update, getChildren }
+  private enum Op {update, getChildren}
 
   private record UpdateStrategy(NullableFunction<? super AnAction, Presentation> update,
                                 NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren) {

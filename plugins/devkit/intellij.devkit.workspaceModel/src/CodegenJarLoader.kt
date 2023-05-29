@@ -17,7 +17,6 @@ import com.intellij.workspaceModel.storage.CodeGeneratorVersions
 import org.jetbrains.concurrency.await
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import java.util.*
 
 
 @Service(Service.Level.PROJECT)

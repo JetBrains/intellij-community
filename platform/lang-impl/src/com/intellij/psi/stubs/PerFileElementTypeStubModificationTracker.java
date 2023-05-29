@@ -1,21 +1,23 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +35,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
 
   private final ConcurrentMap<String, List<StubFileElementType<?>>> myFileElementTypesCache = new ConcurrentHashMap<>();
   private final ConcurrentMap<StubFileElementType<?>, Long> myModCounts = new ConcurrentHashMap<>();
-  private final ClearableLazyValue<StubUpdatingIndexStorage> myStubUpdatingIndexStorage = ClearableLazyValue.createAtomic(() -> {
+  private final SynchronizedClearableLazy<StubUpdatingIndexStorage> myStubUpdatingIndexStorage = new SynchronizedClearableLazy<>(() -> {
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     fileBasedIndex.waitUntilIndicesAreInitialized();
     UpdatableIndex<?, ?, ?, ?> index = fileBasedIndex.getIndex(StubUpdatingIndex.INDEX_ID);
@@ -43,7 +45,20 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     return (StubUpdatingIndexStorage)index;
   });
 
-  private record FileInfo(VirtualFile file, Project project, StubFileElementType<?> type) { }
+  private final SimpleMessageBusConnection myProjectCloseListener;
+
+  PerFileElementTypeStubModificationTracker() {
+    myProjectCloseListener = ApplicationManager.getApplication().getMessageBus().simpleConnect();
+    myProjectCloseListener.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
+      @Override
+      public void projectClosing(@NotNull Project project) {
+        endUpdatesBatch();
+      }
+    });
+  }
+
+  private record FileInfo(@NotNull VirtualFile file, @NotNull Project project, @NotNull StubFileElementType<?> type) {
+  }
 
   private final Queue<VirtualFile> myPendingUpdates = new ArrayDeque<>();
   private final Queue<FileInfo> myProbablyExpensiveUpdates = new ArrayDeque<>();
@@ -77,7 +92,8 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       fastCheck();
       if (myProbablyExpensiveUpdates.size() > PRECISE_CHECK_THRESHOLD) {
         coarseCheck();
-      } else {
+      }
+      else {
         preciseCheck();
       }
     });
@@ -130,8 +146,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     DataIndexer<Integer, SerializedStubTree, FileContent> stubIndexer = myStubUpdatingIndexStorage.getValue().getIndexer();
     while (!myProbablyExpensiveUpdates.isEmpty()) {
       FileInfo info = myProbablyExpensiveUpdates.poll();
-      if (wereModificationsInCurrentBatch(info.type) ||
-          (info.project != null && info.project.isDisposed())) continue;
+      if (wereModificationsInCurrentBatch(info.type) || info.project.isDisposed()) continue;
       FileBasedIndexImpl.markFileIndexed(info.file, null);
       try {
         var diffBuilder = (StubCumulativeInputDiffBuilder)myStubUpdatingIndexStorage.getValue().getForwardIndexAccessor()
@@ -161,24 +176,27 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   }
 
   private static @Nullable FileContent getTransientAwareFileContent(FileInfo info) throws IOException {
-    Document doc = FileDocumentManager.getInstance().getDocument(info.file);
-    if (doc == null || info.project == null) {
+    var file = info.file;
+    var doc = FileDocumentManager.getInstance().getDocument(file);
+    var project = info.project;
+    if (doc == null) {
       try {
-        return FileContentImpl.createByFile(info.file, info.project);
-      } catch (FileNotFoundException | NoSuchFileException ignored) {
+        return FileContentImpl.createByFile(file, project);
+      }
+      catch (FileNotFoundException | NoSuchFileException ignored) {
         return null;
       }
     }
-    PsiFile psi = PsiDocumentManager.getInstance(info.project).getPsiFile(doc);
+    PsiFile psi = PsiDocumentManager.getInstance(project).getPsiFile(doc);
     DocumentContent content = FileBasedIndexImpl.findLatestContent(doc, psi);
-    var file = info.file;
     return FileContentImpl.createByContent(file, () -> {
       var text = content.getText();
       return text.toString().getBytes(file.getCharset());
-    }, info.project);
+    }, project);
   }
 
   public void dispose() {
+    myProjectCloseListener.disconnect();
     myFileElementTypesCache.clear();
     myModCounts.clear();
     myPendingUpdates.clear();
@@ -187,7 +205,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     myStubUpdatingIndexStorage.drop();
   }
 
-  private static @Nullable StubFileElementType determineCurrentFileElementType(IndexedFile indexedFile) {
+  private static @Nullable StubFileElementType<?> determineCurrentFileElementType(IndexedFile indexedFile) {
     if (shouldSkipFile(indexedFile.getFile())) return null;
     var stubBuilderType = StubTreeBuilder.getStubBuilderType(indexedFile, true);
     if (stubBuilderType == null) return null;

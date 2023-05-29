@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.ComponentAdapter;
-import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.HashMap;
@@ -32,7 +31,7 @@ import java.util.Set;
 
 public class MockComponentManager extends UserDataHolderBase implements ComponentManager, MessageBusOwner {
   private final MessageBus myMessageBus = MessageBusFactoryImpl.createRootBus(this);
-  private final DefaultPicoContainer myPicoContainer;
+  private final DefaultPicoContainer picoContainer;
   private final ExtensionsAreaImpl myExtensionArea;
 
   private final Map<Class<?>, Object> myComponents = new HashMap<>();
@@ -40,7 +39,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   private boolean myDisposed;
 
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
-    myPicoContainer = new DefaultPicoContainer((DefaultPicoContainer)parent) {
+    picoContainer = new DefaultPicoContainer((DefaultPicoContainer)parent) {
       @Override
       public @Nullable Object getComponentInstance(@NotNull Object componentKey) {
         if (myDisposed) {
@@ -53,9 +52,18 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
       }
     };
 
-    myPicoContainer.registerComponentInstance(getClass(), this);
+    picoContainer.registerComponentInstance(getClass(), this);
     myExtensionArea = new ExtensionsAreaImpl(this);
     Disposer.register(parentDisposable, this);
+  }
+
+  public DefaultPicoContainer getPicoContainer() {
+    return picoContainer;
+  }
+
+  @Override
+  public <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
+    return ReflectionUtil.newInstance(aClass, false);
   }
 
   @Override
@@ -96,8 +104,8 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull Class<? extends T> serviceImplementation) {
-    myPicoContainer.unregisterComponent(serviceInterface.getName());
-    myPicoContainer.registerComponentImplementation(serviceInterface.getName(), serviceImplementation);
+    picoContainer.unregisterComponent(serviceInterface.getName());
+    picoContainer.registerComponentImplementation(serviceInterface.getName(), serviceImplementation);
   }
 
   public <T> void registerService(@NotNull Class<T> serviceImplementation) {
@@ -105,14 +113,14 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
-    myPicoContainer.registerComponentInstance(serviceInterface.getName(), serviceImplementation);
+    picoContainer.registerComponentInstance(serviceInterface.getName(), serviceImplementation);
     registerComponentInDisposer(serviceImplementation);
   }
 
   public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation, @NotNull Disposable parentDisposable) {
     String key = serviceInterface.getName();
     registerService(serviceInterface, serviceImplementation);
-    Disposer.register(parentDisposable, () -> myPicoContainer.unregisterComponent(key));
+    Disposer.register(parentDisposable, () -> picoContainer.unregisterComponent(key));
   }
 
   public <T> void addComponent(@NotNull Class<T> interfaceClass, @NotNull T instance) {
@@ -122,25 +130,20 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   @Override
   public @Nullable <T> T getComponent(@NotNull Class<T> interfaceClass) {
-    final Object o = myPicoContainer.getComponentInstance(interfaceClass);
+    final Object o = picoContainer.getComponentInstance(interfaceClass);
     //noinspection unchecked
     return (T)(o != null ? o : myComponents.get(interfaceClass));
   }
 
   @Override
   public <T> T getService(@NotNull Class<T> serviceClass) {
-    T result = myPicoContainer.getService(serviceClass);
+    T result = picoContainer.getService(serviceClass);
     registerComponentInDisposer(result);
     return result;
   }
 
-  @Override
-  public final @NotNull MutablePicoContainer getPicoContainer() {
-    return myPicoContainer;
-  }
-
   public final ComponentAdapter getComponentAdapter(@NotNull Object componentKey) {
-    return myPicoContainer.getComponentAdapter(componentKey);
+    return picoContainer.getComponentAdapter(componentKey);
   }
 
   @Override

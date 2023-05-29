@@ -3,7 +3,6 @@ package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.project.DumbAware;
@@ -22,7 +21,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,15 +35,14 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     return project.isDisposed() ? null : ToolWindowManager.getInstance(project).getToolWindow(ID);
   }
 
-  public static void toggleCurrentFileProblems(@NotNull Project project, @Nullable VirtualFile file) {
+  public static void toggleCurrentFileProblems(@NotNull Project project, @Nullable VirtualFile file, @Nullable Document document) {
     ToolWindow window = getToolWindow(project);
     if (window == null) return; // does not exist
-    ContentManager manager = window.getContentManager();
-    Content selectedContent = manager.getSelectedContent();
-    HighlightingPanel panel = selectedContent == null ? null : get(HighlightingPanel.class, selectedContent);
+    ContentManager contentManager = window.getContentManager();
+    HighlightingPanel panel = getSelectedHighlightingPanel(contentManager.getSelectedContent());
     ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl) ToolWindowManager.getInstance(project);
-    if (file == null || panel == null || !panel.isShowing()) {
-      ProblemsViewToolWindowUtils.INSTANCE.selectContent(manager, HighlightingPanel.ID);
+    if (file == null || document == null || panel == null || !panel.isShowing()) {
+      ProblemsViewToolWindowUtils.INSTANCE.selectContent(contentManager, HighlightingPanel.ID);
       window.setAvailable(true, null);
       toolWindowManager.activateToolWindow(window.getId(), null, true, ToolWindowEventSource.InspectionsWidget);
     }
@@ -53,14 +50,19 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
       toolWindowManager.hideToolWindow(window.getId(), false, true, false, ToolWindowEventSource.InspectionsWidget);
     }
     else {
-      panel.setCurrentFile(file);
+      panel.setCurrentFile(new kotlin.Pair<>(file, document));
       toolWindowManager.activateToolWindow(window.getId(), null, true, ToolWindowEventSource.InspectionsWidget);
     }
   }
 
+  @Nullable
+  private static HighlightingPanel getSelectedHighlightingPanel(Content selectedContent) {
+    return selectedContent == null ? null : get(HighlightingPanel.class, selectedContent);
+  }
+
   public static void selectHighlighterIfVisible(@NotNull Project project, @NotNull RangeHighlighterEx highlighter) {
     Content selectedContent = getSelectedContent(project);
-    HighlightingPanel panel = selectedContent == null ? null : get(HighlightingPanel.class, selectedContent);
+    HighlightingPanel panel = getSelectedHighlightingPanel(selectedContent);
     if (panel != null && panel.isShowing()) panel.selectHighlighter(highlighter);
   }
 
@@ -72,6 +74,11 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   public static @Nullable ProblemsViewPanel getSelectedPanel(@NotNull Project project) {
     Content selectedContent = getSelectedContent(project);
     return selectedContent == null ? null : get(ProblemsViewPanel.class, selectedContent);
+  }
+
+  public static @Nullable ProblemsViewTab getSelectedTab(@NotNull Project project) {
+    Content selectedContent = getSelectedContent(project);
+    return selectedContent == null ? null : get(ProblemsViewTab.class, selectedContent);
   }
 
   private static @Nullable Content getSelectedContent(@NotNull Project project) {
@@ -86,7 +93,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     }
 
     Content content = manager.getFactory().createContent(component, panel.getName(0), false);
-    content.setCloseable(false);
+    content.setCloseable(panel.isCloseable());
     manager.addContent(content);
   }
 
@@ -144,8 +151,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
         createContent(manager, panel);
         if (panel instanceof HighlightingPanel) {
           CompletableFuture<Void> future = new CompletableFuture<>();
-          ReadAction.nonBlocking(() -> ((HighlightingPanel)panel).initInBGT())
-            .submit(AppExecutorUtil.getAppExecutorService())
+          ((HighlightingPanel)panel).updateSelectedFile()
             .onError(throwable -> future.completeExceptionally(throwable))
             .onSuccess(o->future.complete(o));
           result = result.thenCompose(__->future);

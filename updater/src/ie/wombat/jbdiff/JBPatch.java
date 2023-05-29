@@ -44,7 +44,7 @@ public final class JBPatch {
 
     byte[] diffData = Utils.readBytes(diffFileIn);
 
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataInputStream diffIn = new DataInputStream(new ByteArrayInputStream(diffData));
+    DataInputStream diffIn = new DataInputStream(new ByteArrayInputStream(diffData));
 
     // ctrlBlockLen after gzip compression at heater offset 0 (length 8 bytes)
     long ctrlBlockLen = diffIn.readLong();
@@ -58,13 +58,13 @@ public final class JBPatch {
     InputStream in;
     in = new ByteArrayInputStream(diffData);
     skip(in, ctrlBlockLen + 24);
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPInputStream diffBlockIn = new GZIPInputStream(in);
+    GZIPInputStream diffBlockIn = new GZIPInputStream(in);
 
     in = new ByteArrayInputStream(diffData);
     skip(in, diffBlockLen + ctrlBlockLen + 24);
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPInputStream extraBlockIn = new GZIPInputStream(in);
+    GZIPInputStream extraBlockIn = new GZIPInputStream(in);
 
-    byte[] oldBuf = realAllFileContent(oldFileIn);
+    byte[] oldBuf = oldFileIn.readAllBytes();
     int oldSize = oldBuf.length;
 
     byte[] newBuf = new byte[BLOCK_SIZE];
@@ -131,18 +131,5 @@ public final class JBPatch {
 
   private static void skip(InputStream in, long n) throws IOException {
     if (in.skip(n) != n) throw new IOException("Premature EOF?");
-  }
-
-  private static byte[] realAllFileContent(InputStream oldFileIn) throws IOException {
-    // Important: oldFileIn may be very large: so use max size (to avoid allocating memory to next power of 2) +
-    // do not hold reference for oldFileByteOut on stack
-    ByteArrayOutputStream oldFileByteOut = new ByteArrayOutputStream(Math.max(oldFileIn.available(), 32));
-    try {
-      Utils.copyStream(oldFileIn, oldFileByteOut);
-    }
-    finally {
-      oldFileByteOut.close();
-    }
-    return oldFileByteOut.toByteArray();
   }
 }

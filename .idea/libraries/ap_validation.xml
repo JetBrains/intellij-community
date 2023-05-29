@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="ap-validation" type="repository">
-    <properties maven-id="com.jetbrains.fus.reporting:ap-validation:74">
+    <properties maven-id="com.jetbrains.fus.reporting:ap-validation:76">
       <exclude>
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
@@ -10,13 +10,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation/74/ap-validation-74.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/model/74/model-74.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation/76/ap-validation-76.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/model/76/model-76.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation/74/ap-validation-74-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/model/74/model-74-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation/76/ap-validation-76-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/model/76/model-76-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

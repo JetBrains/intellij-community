@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.ide.ui.NotRoamableUiSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +32,7 @@ import static java.time.temporal.ChronoUnit.DAYS;
 
 /**
  * Temporary utility class for migration to the new UI.
- * This is not public API. For plugin development use {@link NewUI#isEnabled()}
+ * This is not a public API. For plugin development use {@link NewUI#isEnabled()}
  *
  * @author Konstantin Bulenkov
  */
@@ -47,6 +48,10 @@ public abstract class ExperimentalUI {
 
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
   private IconPathPatcher iconPathPatcher;
+
+  public static ExperimentalUI getInstance() {
+    return ApplicationManager.getApplication().getService(ExperimentalUI.class);
+  }
 
   @Contract(pure = true)
   public static boolean isNewUI() {
@@ -90,10 +95,6 @@ public abstract class ExperimentalUI {
 
   public static boolean isEditorTabsWithScrollBar() {
     return isNewUI() && Registry.is("ide.experimental.ui.editor.tabs.scrollbar");
-  }
-
-  public static ExperimentalUI getInstance() {
-    return ApplicationManager.getApplication().getService(ExperimentalUI.class);
   }
 
   @SuppressWarnings("unused")
@@ -192,7 +193,7 @@ public abstract class ExperimentalUI {
   private static void installInterFont() {
     if (UISettings.getInstance().getOverrideLafFonts()) {
       //todo[kb] add RunOnce
-      UISettings.getInstance().setOverrideLafFonts(false);
+      NotRoamableUiSettings.Companion.getInstance().setOverrideLafFonts(false);
     }
   }
 }

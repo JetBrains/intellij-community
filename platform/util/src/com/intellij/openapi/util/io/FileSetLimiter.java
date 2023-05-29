@@ -279,8 +279,7 @@ public final class FileSetLimiter {
    * Splits baseFileName into the name and the extension, and insert dateFormat between them.
    * E.g.: ('my-file.log','yyyy-MM-dd-HH-mm-ss') -> 'my-file.{0,date,yyyy-MM-dd-HH-mm-ss}.log'
    */
-  @NotNull
-  private static String fileNameFormatFromBaseFileNameAndDateFormat(final @NotNull String baseFileName,
+  private static @NotNull String fileNameFormatFromBaseFileNameAndDateFormat(final @NotNull String baseFileName,
                                                                     final @NotNull String dateFormat) {
     final String extension = FileUtilRt.getExtension(baseFileName);
     String unzippedExtension = "";
@@ -296,8 +295,7 @@ public final class FileSetLimiter {
            : nameWithoutExtension + ".{0,date," + dateFormat + "}." + unzippedExtension + extension;
   }
 
-  @NotNull
-  private Pair<Path, Date> tryParsePath(final Path path) {
+  private @NotNull Pair<Path, Date> tryParsePath(final Path path) {
     //TODO RC: use FileRecord instead of Pair, and parse sub-millisecond suffix also
     final String fileName = directory.relativize(path).toString();
     try {

@@ -1,18 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "UnstableApiUsage")
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.diagnostic.telemetry.forkJoinTask
-import com.intellij.diagnostic.telemetry.use
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.use
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.util.containers.ContainerUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.context.Context
+import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.VisibleForTesting
@@ -244,7 +245,7 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
     items.sortBy { it.name }
 
     var verifyTime = 0L
-    val upToDate = Collections.newSetFromMap<String>(ConcurrentHashMap())
+    val upToDate = ContainerUtil.newConcurrentSet<String>()
     spanBuilder("check previously unpacked directories").useWithScope { span ->
       verifyTime += checkPreviouslyUnpackedDirectories(items = items,
                                                        span = span,
@@ -519,3 +520,23 @@ private data class CompilationPartsMetadata(
    */
   val files: Map<String, String>,
 )
+
+/**
+ * Returns a new [ForkJoinTask] that performs the given function as its action within a trace, and returns
+ * a null result upon [ForkJoinTask.join].
+ *
+ * See [Span](https://opentelemetry.io/docs/reference/specification).
+ */
+inline fun <T> forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: () -> T): ForkJoinTask<T> {
+  val context = Context.current()
+  return ForkJoinTask.adapt(Callable {
+    val thread = Thread.currentThread()
+    spanBuilder
+      .setParent(context)
+      .setAttribute(SemanticAttributes.THREAD_NAME, thread.name)
+      .setAttribute(SemanticAttributes.THREAD_ID, thread.id)
+      .useWithScope {
+        operation()
+      }
+  })
+}

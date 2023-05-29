@@ -4,7 +4,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
@@ -92,7 +92,7 @@ public final class Utils {
 
   static @NotNull Tracer getTracer(boolean checkNoop) {
     return checkNoop && !Boolean.TRUE.equals(Context.current().get(OT_ENABLE_SPANS)) ?
-           OpenTelemetry.noop().getTracer("") : TraceManager.INSTANCE.getTracer(ActionSystem.toString(), true);
+           OpenTelemetry.noop().getTracer("") : TelemetryTracer.getInstance().getTracer(ActionSystem, true);
   }
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {

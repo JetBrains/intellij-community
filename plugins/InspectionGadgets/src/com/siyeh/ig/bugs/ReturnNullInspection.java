@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -9,7 +9,9 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.options.JavaInspectionButtons;
 import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.OptionalUtil;
@@ -19,7 +21,9 @@ import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -75,7 +79,7 @@ public class ReturnNullInspection extends BaseInspection {
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiElement elt = (PsiElement)infos[0];
     if (!AnnotationUtil.isAnnotatingApplicable(elt)) {
       return null;
@@ -90,8 +94,8 @@ public class ReturnNullInspection extends BaseInspection {
     }
 
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(elt.getProject());
-    return new DelegatingFix(new AddAnnotationPsiFix(manager.getDefaultNullable(), method,
-                                                     ArrayUtilRt.toStringArray(manager.getNotNulls())));
+    return new AddAnnotationPsiFix(manager.getDefaultNullable(), method,
+                                   ArrayUtilRt.toStringArray(manager.getNotNulls()));
   }
 
   @Override
@@ -99,7 +103,7 @@ public class ReturnNullInspection extends BaseInspection {
     return new ReturnNullVisitor();
   }
 
-  private static class ReplaceWithEmptyOptionalFix extends InspectionGadgetsFix {
+  private static class ReplaceWithEmptyOptionalFix extends PsiUpdateModCommandQuickFix {
 
     private final String myTypeText;
 
@@ -122,8 +126,7 @@ public class ReturnNullInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiLiteralExpression literalExpression)) {
         return;
       }

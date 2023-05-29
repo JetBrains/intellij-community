@@ -13,9 +13,9 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ArrayUtil
 import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.util.ArrayUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.FileContainerDescription
@@ -31,7 +31,7 @@ class LibraryStateSnapshot(
   val libraryEntity: LibraryEntity,
   val storage: EntityStorage,
   val libraryTable: LibraryTable,
-  val parentDisposable: Disposable) {
+) {
   private val roots = collectFiles(libraryEntity)
   private val excludedRootsContainer = if (libraryEntity.excludedRoots.isNotEmpty()) {
     FileContainerDescription(libraryEntity.excludedRoots.map { it.url }, emptyList())
@@ -99,7 +99,7 @@ class LibraryStateSnapshot(
     get() = (libraryEntity.entitySource as? JpsImportedEntitySource)?.toExternalSource()
 
   companion object {
-    fun collectFiles(libraryEntity: LibraryEntity): Map<Any, FileContainerDescription> = libraryEntity.roots.groupBy { it.type }.mapValues { (_, roots) ->
+    private fun collectFiles(libraryEntity: LibraryEntity): Map<Any, FileContainerDescription> = libraryEntity.roots.groupBy { it.type }.mapValues { (_, roots) ->
       val urls = roots.filter { it.inclusionOptions == LibraryRoot.InclusionOptions.ROOT_ITSELF }.map { it.url }
       val jarDirs = roots
         .filter { it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF }

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.structuralsearch
 import com.intellij.psi.PsiComment
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
+import com.intellij.util.asSafely
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.descriptorUtil.classValueType
@@ -58,6 +60,7 @@ fun KtExpression.resolveExprType(): KotlinType? {
     val descriptor = resolveMainReferenceToDescriptors().firstOrNull()
     if (descriptor is ClassDescriptor) return descriptor.classValueType ?: descriptor.defaultType
     if (descriptor is PropertyDescriptor) return descriptor.returnType
+    if (this is KtDotQualifiedExpression && parent is KtDotQualifiedExpression) return parent.asSafely<KtExpression>()?.resolveReceiverType()
     return resolveType()
 }
 

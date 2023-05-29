@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ui;
 
@@ -189,7 +189,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       InspectionProfileImpl profile = getCurrentProfile();
       String toolId = Objects.requireNonNull(profile.getSingleTool());
       InspectionToolWrapper<?,?> tool = Objects.requireNonNull(profile.getInspectionTool(toolId, getProject()));
-      mySettingsEnabled = InspectionOptionPaneRenderer.hasSettings(tool.getTool());
+      mySettingsEnabled = OptionPaneRenderer.hasSettings(tool.getTool());
     }
   }
 

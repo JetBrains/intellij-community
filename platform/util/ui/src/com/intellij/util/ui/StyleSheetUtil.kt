@@ -58,18 +58,4 @@ object StyleSheetUtil {
     result.loadRules(InputStreamReader(input, StandardCharsets.UTF_8), ref)
     return result
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "Use loadStyleSheet(InputStream)")
-  fun loadStyleSheet(url: URL): StyleSheet? {
-    try {
-      val result = StyleSheet()
-      result.loadRules(InputStreamReader(url.openStream(), StandardCharsets.UTF_8), url)
-      return result
-    }
-    catch (e: IOException) {
-      thisLogger().warn("$url loading failed", e)
-      return null
-    }
-  }
 }

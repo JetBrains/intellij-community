@@ -2,9 +2,8 @@ EditorConfig file
   EditorConfigSectionImpl(SECTION)
     EditorConfigHeaderImpl(HEADER)
       PsiElement(EditorConfigTokenType.L_BRACKET)('[')
-      EditorConfigPatternImpl(PATTERN)
-        EditorConfigFlatPatternImpl(FLAT_PATTERN)
-          PsiElement(EditorConfigTokenType.PATTERN_IDENTIFIER)('foo')
+      EditorConfigFlatPatternImpl(FLAT_PATTERN)
+        PsiElement(EditorConfigTokenType.PATTERN_IDENTIFIER)('foo')
       PsiElement(EditorConfigTokenType.R_BRACKET)(']')
     PsiWhiteSpace('\n')
     foo.bar.bas = value

@@ -54,7 +54,6 @@ internal class BookmarkTypeChooser(
   private var current: BookmarkType?,
   assigned: Set<BookmarkType>,
   private var description: String?,
-  private val onChosen: (BookmarkType, String) -> Unit
 ) {
   private val bookmarkLayoutGrid = BookmarkLayoutGrid(
     current,
@@ -66,6 +65,7 @@ internal class BookmarkTypeChooser(
 
   val firstButton = bookmarkLayoutGrid.buttons().first()
   val content: JPanel
+  var onChosen: (BookmarkType, String) -> Unit = { _, _ -> }
 
   init {
     content = panel {

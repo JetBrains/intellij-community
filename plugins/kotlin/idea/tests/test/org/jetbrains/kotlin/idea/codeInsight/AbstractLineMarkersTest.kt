@@ -48,7 +48,7 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
         return checkHighlighting(psiFile, documentToAnalyze, expectedHighlighting, expectedFile)
     }
 
-    fun doTest(unused: String, additionalCheck: () -> Unit) {
+    fun doTest(@Suppress("UNUSED_PARAMETER") unused: String, additionalCheck: () -> Unit) {
         val fileText = FileUtil.loadFile(dataFile())
         try {
             ConfigLibraryUtil.configureLibrariesByDirective(myFixture.module, fileText)
@@ -115,27 +115,31 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
 
                 val lineMarker = navigateMarker!!.lineMarker
 
-                val handler = lineMarker.navigationHandler
-                if (handler is InheritorsLineMarkerNavigator) {
-                    val gotoData =
-                        GotoImplementationHandler().createDataForSourceForTests(editor, lineMarker.element!!.parent!!)
-                    val targets = gotoData.targets.toMutableList().sortedBy {
-                        it.renderAsGotoImplementation()
+                when (val handler = lineMarker.navigationHandler) {
+                    is InheritorsLineMarkerNavigator -> {
+                        val gotoData =
+                            GotoImplementationHandler().createDataForSourceForTests(editor, lineMarker.element!!.parent!!)
+                        val targets = gotoData.targets.toMutableList().sortedBy {
+                            it.renderAsGotoImplementation()
+                        }
+                        val actualNavigationData = NavigationTestUtils.getNavigateElementsText(project, targets)
+
+                        UsefulTestCase.assertSameLines(getExpectedNavigationText(navigationComment), actualNavigationData)
+
                     }
-                    val actualNavigationData = NavigationTestUtils.getNavigateElementsText(project, targets)
 
-                    UsefulTestCase.assertSameLines(getExpectedNavigationText(navigationComment), actualNavigationData)
+                    is TestableLineMarkerNavigator -> {
+                        val navigateElements = handler.getTargetsPopupDescriptor(lineMarker.element)?.targets?.sortedBy {
+                            it.renderAsGotoImplementation()
+                        }
+                        val actualNavigationData = NavigationTestUtils.getNavigateElementsText(project, navigateElements)
 
-                }
-                else if (handler is TestableLineMarkerNavigator) {
-                    val navigateElements = handler.getTargetsPopupDescriptor(lineMarker.element)?.targets?.sortedBy {
-                        it.renderAsGotoImplementation()
+                        UsefulTestCase.assertSameLines(getExpectedNavigationText(navigationComment), actualNavigationData)
                     }
-                    val actualNavigationData = NavigationTestUtils.getNavigateElementsText(project, navigateElements)
 
-                    UsefulTestCase.assertSameLines(getExpectedNavigationText(navigationComment), actualNavigationData)
-                } else {
-                    Assert.fail("Only TestableLineMarkerNavigator are supported in navigate check")
+                    else -> {
+                        Assert.fail("Only TestableLineMarkerNavigator are supported in navigate check")
+                    }
                 }
             }
         }

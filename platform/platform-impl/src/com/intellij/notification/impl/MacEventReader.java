@@ -17,8 +17,7 @@ final class MacEventReader implements Notifications {
 
   @Override
   public void notify(@NotNull Notification notification) {
-    if (!NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldReadAloud() ||
-        NotificationsManagerImpl.isAnnouncingEnabled()) {
+    if (!NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldReadAloud() || NotificationsAnnouncer.isEnabled()) {
       return;
     }
 

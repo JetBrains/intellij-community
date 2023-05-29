@@ -147,8 +147,11 @@ object CommunityRepositoryModules {
       spec.withGeneratedResources { targetDir, context ->
         val targetLib = targetDir.resolve("lib")
 
-        val mavenLibs = BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDirRoot)
-        copyDir(mavenLibs, targetLib.resolve("maven3-server-lib"))
+        val maven4Libs = BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
+        copyDir(maven4Libs, targetLib.resolve("maven4-server-lib"))
+
+        val maven3Libs = BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
+        copyDir(maven3Libs, targetLib.resolve("maven3-server-lib"))
 
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
         copyDir(mavenDist, targetLib.resolve("maven3"))
@@ -227,9 +230,9 @@ object CommunityRepositoryModules {
     plugin("intellij.terminal") { spec ->
       spec.withResource("resources/zsh/.zshenv", "zsh")
       spec.withResource("resources/zsh/hooks.zsh", "zsh")
-      spec.withResource("resources/bash/jediterm-bash.in", "bash")
       spec.withResource("resources/fish/init.fish", "fish")
       spec.withResource("resources/pwsh/pwsh.ps1", "pwsh")
+      spec.withResource("resources/shell-integrations", "shell-integrations")
     },
     plugin("intellij.emojipicker") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)
@@ -283,8 +286,11 @@ object CommunityRepositoryModules {
     },
     plugin(listOf(
       "intellij.searchEverywhereMl",
-      "intellij.searchEverywhereMl.yaml",
-      "intellij.searchEverywhereMl.vcs"
+      "intellij.searchEverywhereMl.ranking",
+      "intellij.searchEverywhereMl.common",
+      "intellij.searchEverywhereMl.ranking.yaml",
+      "intellij.searchEverywhereMl.ranking.vcs",
+      "intellij.searchEverywhereMl.typos"
     )),
     plugin("intellij.platform.testFramework.ui") { spec ->
       spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")

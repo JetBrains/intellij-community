@@ -4,13 +4,13 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.lang.ParserDefinition
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -18,7 +18,7 @@ internal class TokenSetInParserDefinitionInspection : DevKitUastInspectionBase(U
 
   override fun checkClass(uClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
     val javaPsi = uClass.javaPsi
-    if (!PsiUtil.isExtensionPointImplementationCandidate(javaPsi)) return ProblemDescriptor.EMPTY_ARRAY
+    if (!ExtensionUtil.isExtensionPointImplementationCandidate(javaPsi)) return ProblemDescriptor.EMPTY_ARRAY
     if (!InheritanceUtil.isInheritor(javaPsi, ParserDefinition::class.java.name)) return ProblemDescriptor.EMPTY_ARRAY
 
     val problemsHolder = createProblemsHolder(uClass, manager, isOnTheFly)
@@ -67,8 +67,7 @@ internal class TokenSetInParserDefinitionInspection : DevKitUastInspectionBase(U
   }
 
   private fun reportField(field: UField, problemsHolder: ProblemsHolder) {
-    val anchorPsi = field.getAnchorPsi() ?: return
-    problemsHolder.registerProblem(anchorPsi, DevKitBundle.message("inspection.token.set.in.parser.definition"))
+    problemsHolder.registerUProblem(field, DevKitBundle.message("inspection.token.set.in.parser.definition"))
   }
 
   private fun UDeclaration.containsFieldAssignmentWithIllegalReferences(field: UField): Boolean {

@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -74,7 +75,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new RemoveModifierFix(PsiModifier.FINAL);
   }
 

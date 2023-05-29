@@ -13,7 +13,7 @@ import java.io.File
 
 abstract class AbstractKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest() {
 
-    override fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>) {
+    override fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>, testAppDirectory: File) {
         val scriptsSrcPath = listOf(testAppPath, SCRIPT_SOURCES_DIR).joinToString(File.separator)
         val virtualFile = File(scriptsSrcPath).refreshAndToVirtualFile()
             ?: error("Can't find virtual file $scriptsSrcPath for module ${module.name}")

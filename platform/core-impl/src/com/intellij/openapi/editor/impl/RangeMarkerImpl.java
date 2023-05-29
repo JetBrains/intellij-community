@@ -71,12 +71,13 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   protected void unregisterInTree() {
+    RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
     if (!isValid()) return;
-    IntervalTreeImpl<?> tree = myNode.getTree();
+    IntervalTreeImpl<?> tree = node.getTree();
     tree.checkMax(true);
     DocumentEx document = getCachedDocument();
     if (document == null) {
-      storeOffsetsBeforeDying();
+      storeOffsetsBeforeDying(node);
       myNode = null;
     }
     else {
@@ -87,11 +88,14 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   @Override
   public long getId() {
+    // read id before myNode to avoid returning changed id during concurrent dispose
+    // (because myId is assigned before myNode in dispose)
+    long id = myId;
     RangeMarkerTree.RMNode<?> node = myNode;
     if (node == null) {
       throw new IllegalStateException("Already disposed");
     }
-    return myId;
+    return id;
   }
 
   @Override
@@ -440,16 +444,13 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return getTextRange();
   }
 
-  void storeOffsetsBeforeDying() {
-    RangeMarkerTree.RMNode<?> node = myNode;
-    if (node != null) {
-      // store current offsets to give async listeners the ability to get offsets
-      int delta = node.computeDeltaUpToRoot();
-      long range = TextRangeScalarUtil.shift(node.toScalarRange(), delta, delta);
-      int startOffset = Math.max(0, TextRangeScalarUtil.startOffset(range));
-      int endOffset = Math.max(startOffset, TextRangeScalarUtil.endOffset(range));
-      // piggyback myId to store offsets, to conserve memory
-      myId = TextRangeScalarUtil.toScalarRange(startOffset, endOffset); // avoid invalid range
-    }
+  void storeOffsetsBeforeDying(@NotNull IntervalTreeImpl.IntervalNode<?> node) {
+    // store current offsets to give async listeners the ability to get offsets
+    int delta = node.computeDeltaUpToRoot();
+    long range = TextRangeScalarUtil.shift(node.toScalarRange(), delta, delta);
+    int startOffset = Math.max(0, TextRangeScalarUtil.startOffset(range));
+    int endOffset = Math.max(startOffset, TextRangeScalarUtil.endOffset(range));
+    // piggyback myId to store offsets, to conserve memory
+    myId = TextRangeScalarUtil.toScalarRange(startOffset, endOffset); // avoid invalid range
   }
 }

@@ -1,4 +1,4 @@
-// IS_APPLICABLE: true
+// IS_APPLICABLE: false
 
 object Object {
     fun foo() = 42

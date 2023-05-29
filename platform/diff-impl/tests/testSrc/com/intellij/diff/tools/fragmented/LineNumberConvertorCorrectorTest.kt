@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented
 
 import com.intellij.diff.util.Side
 import junit.framework.TestCase
+import kotlin.math.max
 
 class LineNumberConvertorCorrectorTest : TestCase() {
   fun testUnmodified() {
@@ -136,8 +123,8 @@ class LineNumberConvertorCorrectorTest : TestCase() {
       else {
         builder2.put(onesideStart, twosideStart, length)
       }
-      maxLength = Math.max(maxLength, onesideStart + length)
-      maxLength = Math.max(maxLength, twosideStart + length)
+      maxLength = max(maxLength, onesideStart + length)
+      maxLength = max(maxLength, twosideStart + length)
     }
 
     fun finish(): Test = Test(builder1.build(), builder2.build(), maxLength)
@@ -147,7 +134,7 @@ class LineNumberConvertorCorrectorTest : TestCase() {
     fun change(onesideLine: Int, oldLength: Int, newLength: Int, side: Side) {
       convertor1.handleMasterChange(onesideLine, onesideLine + oldLength, newLength - oldLength, side == Side.LEFT)
       convertor2.handleMasterChange(onesideLine, onesideLine + oldLength, newLength - oldLength, side == Side.RIGHT)
-      length = Math.max(length, length + newLength - oldLength)
+      length = max(length, length + newLength - oldLength)
     }
 
     fun checkStrictSymmetrical() {

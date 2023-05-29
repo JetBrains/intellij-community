@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.openapi.project.Project
@@ -23,9 +23,11 @@ import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
 
     private val Project.analysisCompletedHandler: UastAnalysisHandlerExtension?
-        get() = getExtensions(AnalysisHandlerExtension.extensionPointName)
+        get() {
+            return extensionArea.getExtensionPoint(AnalysisHandlerExtension.extensionPointName).extensionList
                 .filterIsInstance<UastAnalysisHandlerExtension>()
                 .firstOrNull()
+        }
 
     @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
     override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {

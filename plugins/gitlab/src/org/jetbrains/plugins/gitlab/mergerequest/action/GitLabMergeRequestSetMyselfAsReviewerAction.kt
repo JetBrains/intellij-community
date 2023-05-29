@@ -15,7 +15,7 @@ internal class GitLabMergeRequestSetMyselfAsReviewerAction(
 ) : AbstractAction(CollaborationToolsBundle.message("review.details.action.set.myself.as.reviewer")) {
   init {
     scope.launch {
-      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.userCanManageReview) { isBusy, userCanManageReview ->
+      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.userCanManage) { isBusy, userCanManageReview ->
         isEnabled = !isBusy && userCanManageReview
       }
     }

@@ -1112,15 +1112,6 @@ public final class PyTypeChecker {
     return match(container.getArgumentType(context), PyUnionType.union(types), context, substitutions);
   }
 
-  /**
-   * @deprecated use {@link PyTypeChecker#unifyReceiverWithParamSpecs(PyExpression, TypeEvalContext)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public static Map<PyGenericType, PyType> unifyReceiver(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
-    return unifyReceiverWithParamSpecs(receiver, context).typeVars;
-  }
-
   @NotNull
   public static GenericSubstitutions unifyReceiverWithParamSpecs(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
     // Collect generic params of object type

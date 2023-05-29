@@ -160,6 +160,9 @@ class PortableCompilationCache(private val context: CompilationContext) {
   }
 
   private fun compileProject(context: CompilationContext) {
+    check(CompiledClasses.isCompilationRequired(context.options)) {
+      "Unexpected compilation request, unable to proceed"
+    }
     // fail-fast in case of KTIJ-17296
     if (SystemInfoRt.isWindows && git.lineBreaksConfig() != "input") {
       context.messages.error("PortableCompilationCache cannot be used with CRLF line breaks, " +

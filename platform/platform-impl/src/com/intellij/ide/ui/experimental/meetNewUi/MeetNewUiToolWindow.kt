@@ -11,7 +11,9 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -86,10 +88,11 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
         }.customize(UnscaledGapsY(bottom = 8))
         row {
           themes += Theme(null, false, null, null)
-          findLafReference("Light")?.let { lafReference ->
+          val appInfo = ApplicationInfoEx.getInstanceEx()
+          findLafReference(appInfo.defaultLightLaf ?: "Light")?.let { lafReference ->
             themes += Theme(lafReference, false, ExpUiIcons.MeetNewUi.LightTheme, ExpUiIcons.MeetNewUi.LightThemeSelected)
           }
-          findLafReference("Dark")?.let { lafReference ->
+          findLafReference(appInfo.defaultDarkLaf ?: "Dark")?.let { lafReference ->
             themes += Theme(lafReference, false, ExpUiIcons.MeetNewUi.DarkTheme, ExpUiIcons.MeetNewUi.DarkThemeSelected)
           }
           themes += Theme(null, true, ExpUiIcons.MeetNewUi.SystemTheme, ExpUiIcons.MeetNewUi.SystemThemeSelected)

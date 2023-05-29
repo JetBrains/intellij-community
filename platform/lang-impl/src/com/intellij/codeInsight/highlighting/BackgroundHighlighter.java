@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.template.Template;
@@ -22,22 +24,22 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.EdtExecutorService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Listens for editor events and starts brace/identifier highlighting in the background
@@ -152,17 +154,7 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
   }
 
   private void submitUpdateHighlighted(@NotNull Project project, @NotNull Editor editor) {
-    boolean immediatelyHighlightAllowed = true;
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (file != null) {
-      BackgroundElementHighlighter elementHighlighter = LanguageBackgroundElementHighlighter.INSTANCE.forLanguage(file.getLanguage());
-      immediatelyHighlightAllowed = elementHighlighter == null || elementHighlighter.isImmediatelyHighlightAllowed();
-    }
-    if (immediatelyHighlightAllowed || ApplicationManager.getApplication().isUnitTestMode()) {
-      updateHighlighted(project, editor);
-    } else {
-      EdtExecutorService.getScheduledExecutorInstance().schedule(() -> updateHighlighted(project, editor), 300, TimeUnit.MILLISECONDS);
-    }
+    updateHighlighted(project, editor);
   }
 
   private void updateHighlighted(@NotNull Project project, @NotNull Editor editor) {
@@ -206,30 +198,36 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
     });
   }
 
-  private static void submitIdentifierHighlighterPass(@NotNull Editor editor,
+  private static void submitIdentifierHighlighterPass(@NotNull Editor hostEditor,
                                                       int offsetBefore,
                                                       @NotNull PsiFile newFile,
                                                       @NotNull Editor newEditor) {
     ReadAction.nonBlocking(() -> {
         int textLength = newFile.getTextLength();
-        if (textLength == -1) {
+        if (textLength == -1 | hostEditor.isDisposed()) {
           // sometimes some crazy stuff is returned (EA-248725)
           return null;
         }
-        IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().
-          createHighlightingPass(newFile, newEditor, TextRange.from(0, textLength));
-        if (pass != null) {
-          pass.doCollectInformation();
-        }
+        ProperTextRange visibleRange = ProperTextRange.from(0, textLength);
+        IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().createHighlightingPass(newFile, newEditor, visibleRange);
+        DaemonProgressIndicator indicator = new DaemonProgressIndicator();
+        ProgressManager.getInstance().runProcess(() -> {
+          PsiFile hostPsiFile = PsiDocumentManager.getInstance(newFile.getProject()).getPsiFile(hostEditor.getDocument());
+          if (hostPsiFile == null) return;
+          HighlightingSessionImpl.runInsideHighlightingSession(hostPsiFile, hostEditor.getColorsScheme(), ProperTextRange.create(hostPsiFile.getTextRange()), false, session -> {
+            if (pass != null) {
+              pass.doCollectInformation(session);
+            }
+          });
+        }, indicator);
         return pass;
       })
-      .expireWhen(() -> !BackgroundHighlightingUtil.isValidEditor(editor) ||
-                        editor.getCaretModel().getOffset() != offsetBefore ||
-                        !newFile.isValid())
-      .coalesceBy(HighlightIdentifiersKey.class, editor)
-      .finishOnUiThread(ModalityState.stateForComponent(editor.getComponent()), identifierHighlighterPass -> {
-        if (identifierHighlighterPass != null) {
-          identifierHighlighterPass.doApplyInformationToEditor();
+      .expireWhen(() -> !BackgroundHighlightingUtil.isValidEditor(hostEditor) ||
+                        hostEditor.getCaretModel().getOffset() != offsetBefore)
+      .coalesceBy(HighlightIdentifiersKey.class, hostEditor)
+      .finishOnUiThread(ModalityState.stateForComponent(hostEditor.getComponent()), pass -> {
+        if (pass != null) {
+          pass.doAdditionalCodeBlockHighlighting();
         }
       })
       .submit(AppExecutorUtil.getAppExecutorService());

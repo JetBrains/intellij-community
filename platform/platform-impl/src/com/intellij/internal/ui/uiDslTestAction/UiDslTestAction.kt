@@ -11,14 +11,14 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.*
+import com.intellij.util.ui.JBDimension
 import java.awt.BorderLayout
-import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.border.Border
 
-internal class UiDslTestAction : DumbAwareAction("Show UI DSL Tests") {
+internal class UiDslTestAction : DumbAwareAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -41,8 +41,8 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
 
   override fun createCenterPanel(): JComponent {
     val tabbedPane = JBTabbedPane()
-    tabbedPane.minimumSize = Dimension(300, 200)
-    tabbedPane.preferredSize = Dimension(1000, 800)
+    tabbedPane.minimumSize = JBDimension(300, 200)
+    tabbedPane.preferredSize = JBDimension(1000, 800)
     tabbedPane.addTab("Labels", JScrollPane(LabelsPanel().panel))
     tabbedPane.addTab("Text Fields", createTextFields())
     tabbedPane.addTab("Comments", JScrollPane(createCommentsPanel()))

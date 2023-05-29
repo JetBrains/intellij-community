@@ -14,6 +14,8 @@ import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.structure.base.utils.exists
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
+import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.IOException
@@ -47,18 +49,18 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
   val distDescriptors = ArrayList<RawRuntimeModuleDescriptor>()
   val resourcePathMapping = MultiMap.createOrderedSet<String, String>()
 
-  val mainPathsForLibraries = computeMainPathsForLibrariesCopiedToMultiplePlaces(entries, context)
+  val mainPathsForResources = computeMainPathsForResourcesCopiedToMultiplePlaces(entries, context)
 
   for (entry in entries) {
     //todo handle entries from OS-specific directories as well
     if (context.paths.distAllDir.isAncestor(entry.path, false)) {
-      if (entry is ProjectLibraryEntry && mainPathsForLibraries[entry.data.libraryName].let { it != null && it != entry.path}) {
+      val moduleId = entry.runtimeModuleId
+      if (mainPathsForResources[moduleId].let { it != null && it != entry.path}) {
         continue
       }
-      val moduleId = entry.runtimeModuleId.stringId
       val pathInDist = context.paths.distAllDir.relativize(entry.path).pathString
-      val realPathInDist = if (pathInDist != "lib/$PRODUCT_JAR") pathInDist else "lib/$APP_JAR"
-      resourcePathMapping.putValue(moduleId, "../$realPathInDist")
+      val realPathInDist = if (pathInDist != "lib/$PRODUCT_JAR" || context.isEmbeddedJetBrainsClientEnabled) pathInDist else "lib/$APP_JAR"
+      resourcePathMapping.putValue(moduleId.stringId, realPathInDist)
     }
   }
 
@@ -107,43 +109,44 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
 }
 
 /**
- * Some project-level libraries are copied to multiple places in the distribution. 
+ * Some project-level libraries and modules are copied to multiple places in the distribution. 
  * In order to decide which location should be specified in the runtime descriptor, this method determines the main location used the
  * following heuristics:
  *   * the entry from IDE_HOME/lib is preferred;
  *   * otherwise, the entry which is put to a separate JAR file is preferred.
  */
-private fun computeMainPathsForLibrariesCopiedToMultiplePlaces(entries: List<DistributionFileEntry>, 
-                                                               context: BuildContext): Map<String, Path> {
-  val mainPathForLibraries = HashMap<String, Path>()
+private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<DistributionFileEntry>,
+                                                               context: BuildContext): Map<RuntimeModuleId, Path> {
   val singleFileProjectLibraries = context.project.libraryCollection.libraries.asSequence()
     .filter { it.getFiles(JpsOrderRootType.COMPILED).size == 1 }
     .mapTo(HashSet()) { it.name }
   val pathToEntries = entries.groupBy { it.path }
 
-  val projectLibrariesToPaths = entries.asSequence()
-    .filterIsInstance<ProjectLibraryEntry>()
-    .filter { it.data.libraryName in singleFileProjectLibraries }
-    .filter { context.paths.distAllDir.isAncestor(it.path, true) }
-    .groupBy({ it.data.libraryName }, { it.path })
+  val moduleIdsToPaths = entries.asSequence()
+    .filter { entry ->
+      (entry is ProjectLibraryEntry && entry.data.libraryName in singleFileProjectLibraries || entry is ModuleOutputEntry) &&
+      context.paths.distAllDir.isAncestor(entry.path, true)
+    }
+    .groupBy({ it.runtimeModuleId }, { it.path })
 
   val libDir = context.paths.distAllDir.resolve("lib")
-  fun chooseMainLocation(libraryName: String, paths: List<Path>): Path {
+  fun chooseMainLocation(moduleId: RuntimeModuleId, paths: List<Path>): Path {
     val mainLocation =  paths.singleOrNull { it.parent == libDir } ?:
                         paths.singleOrNull { pathToEntries[it]?.size == 1 }
     if (mainLocation != null) {
       return mainLocation
     }
-    context.messages.warning("Cannot choose the main location for '$libraryName' among $paths")
+    context.messages.warning("Cannot choose the main location for '${moduleId.stringId}' among $paths")
     return paths.min()
   }
-  
-  for ((libraryName, paths) in projectLibrariesToPaths) {
+
+  val mainPaths = HashMap<RuntimeModuleId, Path>()
+  for ((moduleId, paths) in moduleIdsToPaths) {
     if (paths.size > 1) {
-      mainPathForLibraries[libraryName] = chooseMainLocation(libraryName, paths)
+      mainPaths[moduleId] = chooseMainLocation(moduleId, paths)
     }
   }
-  return mainPathForLibraries
+  return mainPaths
 }
 
 /**

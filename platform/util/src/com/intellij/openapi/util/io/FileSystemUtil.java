@@ -151,7 +151,7 @@ public final class FileSystemUtil {
       static final int S_IFREG = 0100000;  // regular file
       static final int S_IFDIR = 0040000;  // directory
       static final int S_IWUSR = 0200;
-      static final int IW_MASK = 0022;
+      static final int IW_MASK = 0222;     // write mask (a file might be writable iff all bits are 0)
       static final int W_OK = 2;           // write permission flag for access(2)
 
       static native int getuid();
@@ -433,7 +433,7 @@ public final class FileSystemUtil {
   }
 
   //<editor-fold desc="Windows case sensitivity detection (NTFS-only)">
-  private volatile static boolean WINDOWS_CS_API_AVAILABLE = true;
+  private static volatile boolean WINDOWS_CS_API_AVAILABLE = true;
 
   private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(String path) {
     Kernel32 kernel32;
@@ -516,7 +516,7 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="macOS case sensitivity detection">
-  private volatile static boolean MAC_CS_API_AVAILABLE = true;
+  private static volatile boolean MAC_CS_API_AVAILABLE = true;
 
   private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(String path) {
     CoreFoundation cf;
@@ -576,7 +576,7 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="Linux case sensitivity detection">
-  private volatile static boolean LINUX_CS_API_AVAILABLE = true;
+  private static volatile boolean LINUX_CS_API_AVAILABLE = true;
 
   private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(String path) {
     LibC libC;

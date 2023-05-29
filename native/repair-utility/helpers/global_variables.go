@@ -56,8 +56,8 @@ var (
 	possibleBaseFileNames = []string{"appcode", "clion", "datagrip", "dataspell", "goland", "idea", "phpstorm", "pycharm", "rubymine", "webstorm", "rider", "Draft", "aqua"}
 	possibleBinariesPaths = map[string][]string{
 		"darwin":  {"$HOME/Applications/*.app/Contents/MacOS/{possibleBaseFileName}", "/Applications/*.app/Contents/MacOS/{possibleBaseFileName}", "$HOME/Library/Application Support/JetBrains/Toolbox/apps/*/ch-*/*/*.app/Contents/MacOS/{possibleBaseFileName}"},
-		"linux":   {"$HOME/.local/share/JetBrains/Toolbox/apps/*/ch-*/*/bin/{possibleBaseFileName}.sh"},
-		"windows": {os.Getenv("HOMEDRIVE") + "/Program Files/JetBrains/*" + IdeBinaryRelatedToInstallationPath["windows"], os.Getenv("LOCALAPPDATA") + "/JetBrains/Toolbox/apps/*/ch-*/*" + IdeBinaryRelatedToInstallationPath["windows"]},
+		"linux":   {"$HOME/.local/share/JetBrains/Toolbox/apps/*/ch-*/*/bin/{possibleBaseFileName}.sh", "$HOME/.local/share/JetBrains/Toolbox/apps/*/bin/{possibleBaseFileName}.sh"},
+		"windows": {os.Getenv("HOMEDRIVE") + "/Program Files/JetBrains/*" + IdeBinaryRelatedToInstallationPath["windows"], os.Getenv("LOCALAPPDATA") + "/JetBrains/Toolbox/apps/*/ch-*/*" + IdeBinaryRelatedToInstallationPath["windows"], os.Getenv("LOCALAPPDATA") + "/Programs/*" + IdeBinaryRelatedToInstallationPath["windows"]},
 	}
 	IdeBinaryRelatedToInstallationPath = map[string]string{
 		"darwin":  "/Contents/MacOS/{possibleBaseFileName}",

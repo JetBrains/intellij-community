@@ -415,6 +415,8 @@
   <xs:complexType name="default-lafType">
     <xs:attribute type="xs:string" name="light"/>
     <xs:attribute type="xs:string" name="dark"/>
+    <xs:attribute type="xs:string" name="light-classic"/>
+    <xs:attribute type="xs:string" name="dark-classic"/>
   </xs:complexType>
   <xs:complexType name="zendeskFormType">
     <xs:sequence>

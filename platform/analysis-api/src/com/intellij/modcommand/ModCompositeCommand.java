@@ -26,17 +26,6 @@ public record ModCompositeCommand(@NotNull List<@NotNull ModCommand> commands) i
   }
 
   @Override
-  public @NotNull ModStatus execute(@NotNull Project project) {
-    for (ModCommand command : commands) {
-      ModStatus status = command.execute(project);
-      if (status != ModStatus.SUCCESS) {
-        return status;
-      }
-    }
-    return ModStatus.SUCCESS;
-  }
-
-  @Override
   public boolean isEmpty() {
     return ContainerUtil.all(commands, ModCommand::isEmpty);
   }

@@ -313,6 +313,7 @@ open class EditorComposite internal constructor(
   }
 
   private fun manageTopOrBottomComponent(editor: FileEditor, component: JComponent, top: Boolean, remove: Boolean) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
     val container = (if (top) topComponents.get(editor) else bottomComponents.get(editor))!!
     selfBorder = false
     if (remove) {

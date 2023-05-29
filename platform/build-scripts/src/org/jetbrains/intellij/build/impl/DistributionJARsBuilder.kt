@@ -4,10 +4,10 @@
 package org.jetbrains.intellij.build.impl
 
 import com.fasterxml.jackson.jr.ob.JSON
-import com.intellij.diagnostic.telemetry.useWithScope
-import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
@@ -28,6 +28,8 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
+import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_CLIENT_JAR
+import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
@@ -103,13 +105,20 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
 
         val distAllDir = context.paths.distAllDir
         val libDir = distAllDir.resolve("lib")
-        val appFile = libDir.resolve("app.jar")
-        mergeProductJar(appFile, libDir)
+        val appFile = libDir.resolve(APP_JAR)
+        if (!context.isEmbeddedJetBrainsClientEnabled) {
+          /* in order to support running JetBrains Client from the IDE's distribution, we should not merge scrambled product.jar and
+          product-client.jar to app.jar */
+          mergeProductJar(appFile, libDir)
+        }
         if (!context.isStepSkipped(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
-          reorderJar("lib/app.jar", appFile)
+          reorderJar("lib/$APP_JAR", appFile)
+          if (context.isEmbeddedJetBrainsClientEnabled) {
+            reorderJar("lib/$APP_CLIENT_JAR", libDir.resolve(APP_CLIENT_JAR))
+          }
         }
         context.bootClassPathJarNames =
-          if (context.useModularLoader) persistentListOf("boot.jar", "platform-runtime-repository.jar")
+          if (context.useModularLoader) persistentListOf(PLATFORM_LOADER_JAR)
           else generateClasspath(homeDir = distAllDir, libDir = libDir, antTargetFile = antTargetFile)
         result
       }
@@ -1196,7 +1205,8 @@ suspend fun buildSearchableOptions(ideClassPath: Set<String>,
     // bundled maven is also downloaded during traverseUI execution in an external process,
     // making it fragile to call more than one traverseUI at the same time (in the reproducibility test, for example),
     // so it's pre-downloaded with proper synchronization
-    BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDirRoot)
+    BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
+    BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
     // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
     // It'll process all UI elements in `Settings` dialog and build index for them.

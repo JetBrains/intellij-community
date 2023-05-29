@@ -28,11 +28,11 @@ enum class LabelPosition {
 @JvmDefaultWithCompatibility
 interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): Cell<T>
 
@@ -43,6 +43,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   override fun gap(rightGap: RightGap): Cell<T>
 
   @Deprecated("Use customize(UnscaledGaps) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): Cell<T>
 
   override fun customize(customGaps: UnscaledGaps): Cell<T>

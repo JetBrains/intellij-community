@@ -102,6 +102,7 @@ class CommitRenderer<T> private constructor(private val presenter: (T?) -> Selec
 sealed interface CommitPresenter {
   class SingleCommit(
     val title: @NlsSafe String,
+    val description: @NlsSafe String,
     val author: @NlsSafe String,
     val committedDate: Date
   ) : CommitPresenter

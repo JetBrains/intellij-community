@@ -17,7 +17,6 @@ package org.jetbrains.jps.model.ex;
 
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsEventDispatcher;
 import org.jetbrains.jps.model.JpsNamedElement;
 
 public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedCompositeElementBase<Self>> extends JpsCompositeElementBase<Self>
@@ -48,13 +47,6 @@ public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedComposit
 
   @Override
   public void setName(@NlsSafe @NotNull String name) {
-    if (!myName.equals(name)) {
-      String oldName = myName;
-      myName = name;
-      final JpsEventDispatcher eventDispatcher = getEventDispatcher();
-      if (eventDispatcher != null) {
-        eventDispatcher.fireElementRenamed(this, oldName, name);
-      }
-    }
+    myName = name;
   }
 }

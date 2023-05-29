@@ -16,8 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -94,7 +93,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new SortModifiersFix();
   }
 
@@ -111,7 +110,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
                checkbox("typeUseWithType", InspectionGadgetsBundle.message("missorted.modifiers.typeuse.before.type.option"))));
   }
 
-  private class SortModifiersFix extends InspectionGadgetsFix {
+  private class SortModifiersFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -120,8 +119,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiModifierList)) {
         element = element.getParent();
         if (!(element instanceof PsiModifierList)) return;

@@ -40,7 +40,7 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
     myCodeClass.codeFields.toMutableList()
   }
   private val myInnerClasses: MutableList<PsiClass> by lazy(LazyThreadSafetyMode.NONE) {
-    myCodeClass.codeInnerClasses.toMutableList<PsiClass>()
+    myCodeClass.codeInnerClasses.toMutableList()
   }
   private val myImplementsTypes: MutableList<PsiClassType> by lazy(LazyThreadSafetyMode.NONE) {
     getReferenceListTypes(myCodeClass.implementsClause).toMutableList()

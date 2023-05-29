@@ -23,6 +23,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,34 +127,34 @@ public class StringFormatSymbolReferenceProvider implements PsiSymbolReferencePr
     }
   }
 
-  public static class JavaFormatArgumentSymbol implements Symbol, SearchTarget, NavigatableSymbol {
-    private final @NotNull SmartPsiElementPointer<PsiExpression> myPointer;
-    private final @NlsSafe @NotNull String myTargetText;
+  @ApiStatus.Internal
+  public static final class JavaFormatArgumentSymbol implements Symbol, SearchTarget, NavigatableSymbol {
+    private final @NotNull PsiExpression myExpression;
 
-    public JavaFormatArgumentSymbol(@NotNull PsiExpression argument) {
-      myPointer = SmartPointerManager.createPointer(argument);
-      myTargetText = argument.getText();
+    JavaFormatArgumentSymbol(@NotNull PsiExpression argument) {
+      myExpression = argument;
     }
 
     @Override
     public @NotNull Pointer<JavaFormatArgumentSymbol> createPointer() {
-      return Pointer.hardPointer(this);
+      return Pointer.delegatingPointer(SmartPointerManager.createPointer(myExpression), JavaFormatArgumentSymbol::new);
     }
 
     @Override
     public @NotNull Collection<? extends NavigationTarget> getNavigationTargets(@NotNull Project project) {
-      PsiExpression element = myPointer.getElement();
-      return element == null ? List.of() : List.of(SymbolNavigationService.getInstance().psiElementNavigationTarget(element));
+      return List.of(SymbolNavigationService.getInstance().psiElementNavigationTarget(myExpression));
     }
 
-    @Nullable PsiExpression getExpression() {
-      return myPointer.getElement();
+    @NotNull PsiExpression getExpression() {
+      return myExpression;
+    }
+
+    private @NlsSafe @NotNull String getTargetText() {
+      return myExpression.getText();
     }
 
     @Nullable PsiExpression getFormatString() {
-      PsiExpression element = myPointer.getElement();
-      if (element == null ||
-          !(element.getParent() instanceof PsiExpressionList list) ||
+      if (!(myExpression.getParent() instanceof PsiExpressionList list) ||
           !(list.getParent() instanceof PsiCallExpression call)) {
         return null;
       }
@@ -162,11 +163,9 @@ public class StringFormatSymbolReferenceProvider implements PsiSymbolReferencePr
       return argument.getExpression();
     }
 
-    @Nullable
     @Override
     public SearchScope getMaximalSearchScope() {
-      PsiExpression element = myPointer.getElement();
-      if (element != null && element.getParent() instanceof PsiExpressionList list && list.getParent() instanceof PsiCallExpression call) {
+      if (myExpression.getParent() instanceof PsiExpressionList list && list.getParent() instanceof PsiCallExpression call) {
         return new LocalSearchScope(call);
       }
       return LocalSearchScope.EMPTY;
@@ -175,23 +174,23 @@ public class StringFormatSymbolReferenceProvider implements PsiSymbolReferencePr
     @NotNull
     @Override
     public TargetPresentation presentation() {
-      return TargetPresentation.builder(myTargetText).presentation();
+      return TargetPresentation.builder(getTargetText()).presentation();
     }
 
     @NotNull
     @Override
     public UsageHandler getUsageHandler() {
-      return UsageHandler.createEmptyUsageHandler(myTargetText);
+      return UsageHandler.createEmptyUsageHandler(getTargetText());
     }
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof JavaFormatArgumentSymbol that && myPointer.equals(that.myPointer);
+      return obj instanceof JavaFormatArgumentSymbol that && myExpression.equals(that.myExpression);
     }
 
     @Override
     public int hashCode() {
-      return myPointer.hashCode();
+      return myExpression.hashCode();
     }
   }
 }

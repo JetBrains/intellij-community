@@ -23,29 +23,24 @@ import org.jetbrains.idea.maven.server.security.MavenToken;
 import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public interface MavenServerEmbedder extends Remote {
   String MAVEN_EMBEDDER_VERSION = "idea.maven.embedder.version";
   String MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS = "idea.maven.embedder.ext.cli.args";
   String MAVEN_EXT_CLASS_PATH = "maven.ext.class.path";
 
-  @Nullable
-  MavenServerPullProgressIndicator customizeAndGetProgressIndicator(
-    @Nullable MavenWorkspaceMap workspaceMap,
-    boolean alwaysUpdateSnapshots,
-    @Nullable Properties userProperties,
-    MavenToken token) throws RemoteException;
-
   @NotNull
   Collection<MavenServerExecutionResult> resolveProjects(
     @NotNull String longRunningTaskId,
-    @NotNull Collection<File> files,
-    @NotNull Collection<String> activeProfiles,
-    @NotNull Collection<String> inactiveProfiles,
+    @NotNull ProjectResolutionRequest request,
     MavenToken token) throws RemoteException;
 
   List<PluginResolutionResponse> resolvePlugins(
+    @NotNull String longRunningTaskId,
     @NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
     MavenToken token) throws RemoteException;
 
@@ -94,12 +89,12 @@ public interface MavenServerEmbedder extends Remote {
     @Nullable String url,
     MavenToken token) throws RemoteException;
 
-  void reset(MavenToken token) throws RemoteException;
-
   void release(MavenToken token) throws RemoteException;
 
   @NotNull
   LongRunningTaskStatus getLongRunningTaskStatus(@NotNull String longRunningTaskId, MavenToken token) throws RemoteException;
 
   boolean cancelLongRunningTask(@NotNull String longRunningTaskId, MavenToken token) throws RemoteException;
+
+  boolean ping(MavenToken token) throws RemoteException;
 }

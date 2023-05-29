@@ -20,6 +20,8 @@
 
     <nameSuggestionProvider implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggestionProvider"/>
 
+    <lang.floatingToolbarFilter language="kotlin" implementationClass="com.intellij.ui.codeFloatingToolbar.FloatingToolbarFilter$ENABLED" />
+
     <lang.refactoringSupport
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider"/>
@@ -35,8 +37,13 @@
     <refactoring.helper implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinRefactoringHelperForDelayedRequests"/>
     <refactoring.helper implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinOptimizeImportsRefactoringHelper"/>
 
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.memberInfo.K1MemberInfoSupport"
+                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport"/>
+
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.move.K1MoveRefactoringSupport"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRefactoringSupport"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.move.K1MoveConflictCheckerSupport"
+                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveConflictCheckerSupport"/>
 
     <refactoring.moveHandler
             id="kotlin.moveMethod"
@@ -58,25 +65,6 @@
     <refactoring.moveDirectoryWithClassesHelper
             implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.KotlinMoveDirectoryWithClassesHelper"
             order="first" />
-
-    <refactoring.moveClassHandler
-            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinClassHandler"
-            order="first"/>
-    <refactoring.moveClassHandler
-            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinAliasClassHandler"
-            order="first"/>
-
-    <refactoring.moveMemberHandler
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinMemberHandler"/>
-
-    <refactoring.moveInnerHandler
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinInnerHandler"/>
-
-    <refactoring.moveInnerClassUsagesHandler
-            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.MoveJavaInnerClassKotlinUsagesHandler"
-            language="kotlin" />
 
     <refactoring.copyHandler
             id="kotlinClass"
@@ -180,6 +168,7 @@
     <action id="ExtractFunction" class="org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractFunctionAction"
             use-shortcut-of="ExtractMethod">
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
+      <add-to-group group-id="Floating.CodeToolbar.Extract" anchor="first"/>
     </action>
 
     <action id="IntroduceProperty" class="org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty.IntroducePropertyAction"

@@ -10,6 +10,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable.LineNumerationType
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
@@ -17,9 +18,11 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.PlatformUtils
+import javax.swing.DefaultComboBoxModel
 
 // @formatter:off
 private val model:EditorSettingsExternalizable
@@ -68,6 +71,18 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
       }
       row {
         checkBox(myCbShowLineNumbers)
+        comboBox(
+          DefaultComboBoxModel(LineNumerationType.values()),
+          renderer = SimpleListCellRenderer.create("")
+          {
+            when (it) {
+              LineNumerationType.ABSOLUTE -> "Absolute"
+              LineNumerationType.RELATIVE -> "Relative"
+              LineNumerationType.HYBRID -> "Hybrid"
+              else -> "null"
+            }
+          }
+        ).bindItem(model::getLineNumeration, model::setLineNumeration)
       }
       row {
         checkBox(myCbShowMethodSeparators)

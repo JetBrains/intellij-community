@@ -400,6 +400,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       RunnerAndConfigurationSettings settings = myEnv.getRunnerAndConfigurationSettings();
       if (settings != null) {
         contentDescriptor.setActivateToolWindowWhenAdded(settings.isActivateToolWindowBeforeRun());
+        contentDescriptor.setAutoFocusContent(settings.isFocusToolWindowBeforeRun());
       }
     }
   }

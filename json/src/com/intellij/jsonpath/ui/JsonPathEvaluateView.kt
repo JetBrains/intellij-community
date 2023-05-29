@@ -384,7 +384,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(Runnable {
+        .setItemChosenCallback(Runnable {
           val selectedValue = list.selectedValue
           if (selectedValue != null) {
             textField.text = selectedValue

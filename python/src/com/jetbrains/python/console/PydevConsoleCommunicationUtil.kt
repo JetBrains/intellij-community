@@ -11,7 +11,10 @@ import com.jetbrains.python.debugger.ArrayChunkBuilder
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyFrameAccessor
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
-import kotlinx.serialization.*
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.Serializer
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
@@ -22,7 +25,6 @@ import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.decodeStructure
 import kotlinx.serialization.json.Json
-import java.util.*
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializer(forClass = DataFrameDebugValue.InformationColumns::class)
@@ -67,7 +69,7 @@ private fun parseDebugValue(value: String): DataFrameDebugValue.InformationColum
 
 private fun extractDataFrameColumns(dfReference: String,
                                     frameAccessor: PydevConsoleCommunication): DataFrameDebugValue.InformationColumns? {
-  val additionalInformation = frameAccessor.evaluate(DataFrameDebugValue.commandExtractPandasColumns(dfReference, true), true, true)
+  val additionalInformation = frameAccessor.evaluate(DataFrameDebugValue.commandExtractPandasColumns(dfReference, true), true, false)
   return when (additionalInformation.type) {
     "str" -> additionalInformation.value?.let { parseDebugValue(it) }
     else -> null

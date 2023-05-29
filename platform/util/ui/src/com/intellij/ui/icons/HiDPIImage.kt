@@ -13,8 +13,6 @@ import java.awt.Image
 
 @ApiStatus.Internal
 class HiDPIImage : JBHiDPIScaledImage {
-  constructor(width: Int, height: Int, type: Int) : super(gc = null, width = width.toDouble(), height = height.toDouble(), type = type)
-
   constructor(image: Image, width: Int, height: Int, type: Int) : super(image = image,
                                                                         width = width.toDouble(),
                                                                         height = height.toDouble(),

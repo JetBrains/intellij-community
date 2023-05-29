@@ -47,7 +47,7 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         self.default.get_class_path()
     }
 
-    fn prepare_for_launch(&self) -> Result<PathBuf> {
+    fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
         init_env_vars(&self.launcher_name)?;
         let project_trust_file = self.init_project_trust_file_if_needed()?;
         debug!("Project trust file is: {:?}", project_trust_file);
@@ -242,13 +242,13 @@ impl RemoteDevLaunchConfiguration {
 
     fn create(exe_path: &Path, project_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
         // prevent opening of 2 backends for the same directory via symlinks
-        let canonical_project_path = canonical_non_unc(project_path)?;
+        let canonical_project_path = project_path.canonicalize()?.strip_ns_prefix()?;
 
-        if project_path != project_path.canonicalize()? {
+        if project_path != canonical_project_path {
             info!("Will use canonical form '{canonical_project_path:?}' of '{project_path:?}' to avoid concurrent IDE instances on the same project");
         }
 
-        let per_project_config_dir_name = canonical_project_path
+        let per_project_config_dir_name = canonical_project_path.to_string_lossy()
             .replace("/", "_")
             .replace("\\", "_")
             .replace(":", "_");
@@ -378,10 +378,9 @@ impl RemoteDevLaunchConfiguration {
         let filename = format!("pid.{pid}.temp.remote-dev.properties");
         let path = self.system_dir.join(filename);
 
-        match path.parent() {
-            None => {}
-            Some(x) => fs::create_dir_all(x)
-                .context("Failed to create to parent folder for IDE properties file at path {x:?}")?
+        if let Some(dir) = path.parent() {
+            fs::create_dir_all(dir)
+                .with_context(|| format!("Failed to create to parent folder for IDE properties file at path {dir:?}"))?
         }
 
         let file = File::create(&path)?;

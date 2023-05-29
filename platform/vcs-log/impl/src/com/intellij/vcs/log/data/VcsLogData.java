@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.*;
@@ -31,9 +32,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.intellij.diagnostic.telemetry.ScopesExtensionsKt.tracer;
-import static com.intellij.diagnostic.telemetry.TraceKt.runSpanWithScope;
-import static com.intellij.vcs.log.data.util.VcsScopeKt.VCS;
+import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runSpanWithScope;
 
 public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
@@ -162,7 +162,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     synchronized (myLock) {
       if (myState.equals(State.CREATED)) {
         myState = State.INITIALIZED;
-        Span span = tracer(VCS).spanBuilder("initialize").startSpan();
+        Span span = TelemetryTracer.getInstance().getTracer(VcsScope).spanBuilder("initialize").startSpan();
         Task.Backgroundable backgroundable = new Task.Backgroundable(myProject,
                                                                      VcsLogBundle.message("vcs.log.initial.loading.process"),
                                                                      false) {
@@ -223,7 +223,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   private void readCurrentUser() {
-    Span span = tracer(VCS).spanBuilder("readCurrentUser").startSpan();
+    Span span = TelemetryTracer.getInstance().getTracer(VcsScope).spanBuilder("readCurrentUser").startSpan();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
       VirtualFile root = entry.getKey();
       try {

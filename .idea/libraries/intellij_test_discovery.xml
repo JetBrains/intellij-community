@@ -5,6 +5,8 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.713/intellij-test-discovery-agent-1.0.713.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.713/intellij-test-discovery-agent-1.0.713-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

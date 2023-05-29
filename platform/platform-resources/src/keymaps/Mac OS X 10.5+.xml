@@ -175,8 +175,8 @@
     <keyboard-shortcut first-keystroke="control alt F"/>
   </action>
   <action id="EditorLineStart">
-    <keyboard-shortcut first-keystroke="HOME"/>
     <keyboard-shortcut first-keystroke="meta LEFT"/>
+    <keyboard-shortcut first-keystroke="HOME"/>
   </action>
   <action id="ValidateXml"/>
   <action id="TypeHierarchy">
@@ -185,8 +185,8 @@
   <action id="ToggleReadOnlyAttribute"/>
   <action id="ShowPopupMenu"/>
   <action id="EditorLineStartWithSelection">
-    <keyboard-shortcut first-keystroke="shift HOME"/>
     <keyboard-shortcut first-keystroke="meta shift LEFT"/>
+    <keyboard-shortcut first-keystroke="shift HOME"/>
   </action>
   <action id="ContextHelp">
     <keyboard-shortcut first-keystroke="meta shift F1"/>
@@ -245,15 +245,15 @@
     <keyboard-shortcut first-keystroke="shift meta MULTIPLY"/>
   </action>
   <action id="EditorLineEndWithSelection">
-    <keyboard-shortcut first-keystroke="shift END"/>
     <keyboard-shortcut first-keystroke="meta shift RIGHT"/>
+    <keyboard-shortcut first-keystroke="shift END"/>
   </action>
   <action id="ExportToTextFile">
     <keyboard-shortcut first-keystroke="control O"/>
   </action>
   <action id="EditorLineEnd">
-    <keyboard-shortcut first-keystroke="END"/>
     <keyboard-shortcut first-keystroke="meta RIGHT"/>
+    <keyboard-shortcut first-keystroke="END"/>
   </action>
   <action id="Exit">
     <keyboard-shortcut first-keystroke="meta Q"/>
@@ -584,14 +584,14 @@
     <keyboard-shortcut first-keystroke="control B"/>
   </action>
   <action id="EditorLineEnd">
-    <keyboard-shortcut first-keystroke="END"/>
     <keyboard-shortcut first-keystroke="meta RIGHT"/>
     <keyboard-shortcut first-keystroke="control E"/>
+    <keyboard-shortcut first-keystroke="END"/>
   </action>
   <action id="EditorLineStart">
-    <keyboard-shortcut first-keystroke="HOME"/>
     <keyboard-shortcut first-keystroke="meta LEFT"/>
     <keyboard-shortcut first-keystroke="control A"/>
+    <keyboard-shortcut first-keystroke="HOME"/>
   </action>
   <action id="EditorRight">
     <keyboard-shortcut first-keystroke="RIGHT"/>

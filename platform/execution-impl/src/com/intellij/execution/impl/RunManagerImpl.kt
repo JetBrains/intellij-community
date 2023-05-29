@@ -7,7 +7,6 @@ import com.intellij.configurationStore.*
 import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.execution.*
 import com.intellij.execution.actions.ChooseRunConfigurationPopup
-import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runToolbar.RunToolbarSlotManager
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -35,13 +34,13 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
-import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
+import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
 import com.intellij.util.IconUtil
@@ -49,7 +48,7 @@ import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.filterSmart
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
 import com.intellij.util.containers.toMutableSmartList
@@ -65,7 +64,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -87,7 +85,7 @@ interface RunConfigurationTemplateProvider {
 }
 
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
-open class RunManagerImpl @JvmOverloads constructor(val project: Project, sharedStreamProvider: StreamProvider? = null) :
+open class RunManagerImpl @NonInjectable constructor(val project: Project, sharedStreamProvider: StreamProvider?) :
   RunManagerEx(), PersistentStateComponent<Element>, Disposable, SettingsSavingComponent {
   companion object {
     const val CONFIGURATION: String = "configuration"
@@ -123,6 +121,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       return true
     }
   }
+
+  constructor(project: Project) : this(project = project, sharedStreamProvider = null)
 
   private val lock = ReentrantReadWriteLock()
 
@@ -221,14 +221,12 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   private val isFirstLoadState = AtomicBoolean(true)
 
-  private val stringIdToBeforeRunProvider = object : ClearableLazyValue<ConcurrentMap<String, BeforeRunTaskProvider<*>>>() {
-    override fun compute(): ConcurrentMap<String, BeforeRunTaskProvider<*>> {
-      val result = ConcurrentHashMap<String, BeforeRunTaskProvider<*>>()
-      for (provider in BeforeRunTaskProvider.EP_NAME.getExtensions(project)) {
-        result.put(provider.id.toString(), provider)
-      }
-      return result
+  private val stringIdToBeforeRunProvider = SynchronizedClearableLazy {
+    val result = ConcurrentHashMap<String, BeforeRunTaskProvider<*>>()
+    for (provider in BeforeRunTaskProvider.EP_NAME.getExtensions(project)) {
+      result.put(provider.id.toString(), provider)
     }
+    result
   }
 
   internal val eventPublisher: RunManagerListener
@@ -238,7 +236,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     val messageBusConnection = project.messageBus.connect()
     messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
-        if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() || event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
+        if (event.getChanges(ContentRootEntity::class.java).any() || event.getChanges(SourceRootEntity::class.java).any()) {
           clearSelectedConfigurationIcon()
 
           deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
@@ -337,7 +335,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   fun getSettings(configuration: RunConfiguration) = allSettings.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
 
-  override fun getConfigurationSettingsList(type: ConfigurationType) = allSettings.filterSmart { it.type === type }
+  override fun getConfigurationSettingsList(type: ConfigurationType) = allSettings.filter { it.type === type }
 
   fun getConfigurationsGroupedByTypeAndFolder(isIncludeUnknown: Boolean): Map<ConfigurationType, Map<String?, List<RunnerAndConfigurationSettings>>> {
     val result = LinkedHashMap<ConfigurationType, MutableMap<String?, MutableList<RunnerAndConfigurationSettings>>>()
@@ -1114,7 +1112,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override val tempConfigurationsList: List<RunnerAndConfigurationSettings>
-    get() = allSettings.filterSmart { it.isTemporary }
+    get() = allSettings.filter { it.isTemporary }
 
   override fun makeStable(settings: RunnerAndConfigurationSettings) {
     settings.isTemporary = false
@@ -1426,25 +1424,8 @@ private fun getNameWeight(n1: String) = if (n1.startsWith("<template> of ") || n
 internal fun doGetBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
   return when (configuration) {
     is WrappingRunConfiguration<*> -> doGetBeforeRunTasks(configuration.peer)
-    else -> configuration.beforeRunTasks.flatMap {
-      return@flatMap beforeRunTasks(it, configuration)
-    }
+    else -> configuration.beforeRunTasks
   }
-}
-
-private fun beforeRunTasks(it: BeforeRunTask<*>,
-                           configuration: RunConfiguration): List<BeforeRunTask<*>> {
-  val compound = (it as? RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)?.settings?.configuration as? CompoundRunConfiguration
-  if (compound != null) {
-    val provider = RunConfigurationBeforeRunProvider(configuration.project)
-    val runManager = RunManagerImpl.getInstanceImpl(configuration.project)
-    return compound.getConfigurationsWithTargets(runManager).map {
-      val task = provider.createTask(it.key)
-      task.setSettingsWithTarget(runManager.findSettings(it.key), it.value)
-      task
-    }
-  }
-  return listOf(it)
 }
 
 internal fun RunConfiguration.cloneBeforeRunTasks() {

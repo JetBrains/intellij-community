@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic;
 
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
@@ -35,12 +36,12 @@ public final class IntentionsCollector extends CounterUsagesCollector {
     return GROUP;
   }
 
-  public static void record(@NotNull Project project, @NotNull IntentionAction action, @NotNull Language language) {
+  public static void record(@NotNull Project project, @NotNull CommonIntentionAction action, @NotNull Language language) {
     recordIntentionEvent(project, action, language, CALLED);
   }
 
   private static void recordIntentionEvent(@NotNull Project project,
-                                           @NotNull IntentionAction action,
+                                           @NotNull CommonIntentionAction action,
                                            @NotNull Language language,
                                            EventId3<Class<?>, PluginInfo, Language> eventId) {
     final Class<?> clazz = getOriginalHandlerClass(action);
@@ -52,7 +53,7 @@ public final class IntentionsCollector extends CounterUsagesCollector {
   }
 
   @NotNull
-  private static Class<?> getOriginalHandlerClass(@NotNull IntentionAction action) {
+  private static Class<?> getOriginalHandlerClass(@NotNull CommonIntentionAction action) {
     if (action instanceof IntentionActionDelegate actionDelegate) {
       IntentionAction delegate = actionDelegate.getDelegate();
       if (delegate != action) {
@@ -60,7 +61,10 @@ public final class IntentionsCollector extends CounterUsagesCollector {
       }
     }
     LocalQuickFix quickFix = QuickFixWrapper.unwrap(action);
-    return (quickFix == null ? action : quickFix).getClass();
+    if (quickFix != null) {
+      return quickFix.getClass();
+    }
+    return action.getClass();
   }
 
   public static void reportShownIntentions(@NotNull Project project,

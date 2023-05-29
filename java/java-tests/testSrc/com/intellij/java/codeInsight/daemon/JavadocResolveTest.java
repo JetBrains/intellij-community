@@ -6,7 +6,6 @@ import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
-import com.intellij.navigation.NavigatableSymbol;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,11 +52,9 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
     Collection<? extends Symbol> symbols = ref.resolveReference();
     assertEquals(1, symbols.size());
     Symbol symbol = symbols.iterator().next();
-    assertTrue(symbol instanceof NavigatableSymbol);
-    Collection<? extends NavigationTarget> targets = ((NavigatableSymbol)symbol).getNavigationTargets(myProject);
-    assertEquals(1, targets.size());
-    NavigationTarget target = targets.iterator().next();
-    TargetPresentation presentation = target.presentation();
+    assertTrue(symbol instanceof NavigationTarget);
+    NavigationTarget target = ((NavigationTarget)symbol);
+    TargetPresentation presentation = target.computePresentation();
     assertEquals("@start region=reg", presentation.getPresentableText());
     assertEquals("Test.java", presentation.getLocationText());
     NavigationRequest request = ReadAction
@@ -68,7 +65,7 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
     VirtualFile file = snr.getFile();
     assertEquals(file.getName(), "Test.java");
     PsiFile snippetFile = PsiManager.getInstance(myProject).findFile(file);
-    assertTrue(snippetFile.getText().startsWith("@start region=reg", snr.getOffset()));
+    assertTrue(snippetFile.getText().startsWith("@start region=reg", snr.getOffsetMarker().getStartOffset()));
   }
 
   private void doTest() {

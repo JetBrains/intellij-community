@@ -17,8 +17,8 @@ package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,19 +26,17 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class StringConcatenationInspection extends BaseInspection {
 
@@ -70,19 +68,19 @@ public class StringConcatenationInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)infos[0];
-    final Collection<InspectionGadgetsFix> result = new ArrayList<>();
+    final Collection<LocalQuickFix> result = new ArrayList<>();
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(polyadicExpression);
     if (parent instanceof PsiVariable variable) {
-      ContainerUtil.addIfNotNull(result, (InspectionGadgetsFix)createAddAnnotationFix(variable));
+      ContainerUtil.addIfNotNull(result, createAddAnnotationFix(variable));
     }
     else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
       final PsiExpression lhs = assignmentExpression.getLExpression();
       if (lhs instanceof PsiReferenceExpression referenceExpression) {
         final PsiElement target = referenceExpression.resolve();
         if (target instanceof PsiModifierListOwner modifierListOwner) {
-          ContainerUtil.addIfNotNull(result, (InspectionGadgetsFix)createAddAnnotationFix(modifierListOwner));
+          ContainerUtil.addIfNotNull(result, createAddAnnotationFix(modifierListOwner));
         }
       }
     }
@@ -94,7 +92,7 @@ public class StringConcatenationInspection extends BaseInspection {
         if (qualifierExpression instanceof PsiReferenceExpression referenceExpression) {
           final PsiElement target = referenceExpression.resolve();
           if (target instanceof PsiModifierListOwner modifierListOwner) {
-            ContainerUtil.addIfNotNull(result, (InspectionGadgetsFix)createAddAnnotationFix(modifierListOwner));
+            ContainerUtil.addIfNotNull(result, createAddAnnotationFix(modifierListOwner));
           }
         }
       }
@@ -103,33 +101,33 @@ public class StringConcatenationInspection extends BaseInspection {
     for (PsiExpression operand : operands) {
       final PsiModifierListOwner element1 = getAnnotatableElement(operand);
       if (element1 != null) {
-        ContainerUtil.addIfNotNull(result, (InspectionGadgetsFix)createAddAnnotationFix(element1));
+        ContainerUtil.addIfNotNull(result, createAddAnnotationFix(element1));
       }
     }
     final PsiElement expressionParent = PsiTreeUtil.getParentOfType(polyadicExpression, PsiReturnStatement.class, PsiExpressionList.class);
     if (!(expressionParent instanceof PsiExpressionList) && expressionParent != null) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(expressionParent, PsiMethod.class);
       if (method != null) {
-        ContainerUtil.addIfNotNull(result, (InspectionGadgetsFix)createAddAnnotationFix(method));
+        ContainerUtil.addIfNotNull(result, createAddAnnotationFix(method));
       }
     }
 
     final SuppressForTestsScopeFix suppressFix = SuppressForTestsScopeFix.build(this, polyadicExpression);
     if (suppressFix == null) {
-      return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+      return result.toArray(LocalQuickFix.EMPTY_ARRAY);
     }
     result.add(suppressFix);
    
-    return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  private static DelegatingFix createAddAnnotationFix(PsiModifierListOwner listOwner) {
+  private static LocalQuickFix createAddAnnotationFix(PsiModifierListOwner listOwner) {
     if (listOwner.getManager().isInProject(listOwner) && 
         JavaPsiFacade.getInstance(listOwner.getProject()).findClass(AnnotationUtil.NON_NLS, 
                                                                     listOwner.getResolveScope()) == null) {
       return null;
     }
-    return new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, listOwner));
+    return new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, listOwner);
   }
 
   @Nullable

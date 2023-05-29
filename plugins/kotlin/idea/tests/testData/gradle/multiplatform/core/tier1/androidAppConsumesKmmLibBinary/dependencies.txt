@@ -12,6 +12,14 @@ project.androidApp.main
 project.androidApp.unitTest
     org.jetbrains.kotlin.mpp.tests:kmmLib-android-debug:1.0@aar (TEST)
 
+project.androidTest
+    main (friend, TEST)
+
+project.main
+
+project.unitTest
+    main (friend, TEST)
+
 
 Test configuration:
 - hiding source modules matching .*kmmLib.*

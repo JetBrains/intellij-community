@@ -203,10 +203,14 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
           newLineNumber++;
         }
       }
-      else if (!editorSettings.isVirtualSpace() && lineShift == 0 && columnShift == -1) {
+      else if (lineShift == 0 && columnShift == -1) {
         if (newColumnNumber < 0 && newLineNumber > 0) {
           newLineNumber--;
-          newColumnNumber = EditorUtil.getLastVisualLineColumnNumber(myEditor, newLineNumber);
+          if (editorSettings.isVirtualSpace()) {
+            newColumnNumber = myEditor.offsetToVisualPosition(Math.max(0, oldOffset - 1)).column;
+          } else {
+            newColumnNumber = EditorUtil.getLastVisualLineColumnNumber(myEditor, newLineNumber);
+          }
         }
       }
 

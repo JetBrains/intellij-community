@@ -165,6 +165,15 @@ abstract class ProductProperties {
   var supportModularLoading: Boolean = false
 
   /**
+   * Specifies the main module of JetBrains Client product which distribution should be embedded into the IDE's distribution to allow 
+   * running JetBrains Client. 
+   * If it's set to a non-null value and [BuildOptions.enableEmbeddedJetBrainsClient] is set to `true`, product-modules.xml from the 
+   * specified module is used to compute [JetBrainsClientModuleFilter]. 
+   */
+  @ApiStatus.Experimental
+  var embeddedJetBrainsClientMainModule: String? = null 
+
+  /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.
    */
   open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String =

@@ -3,7 +3,6 @@ includedBuild.consumer
 
 includedBuild.consumer.androidTest
     includedBuild.consumer.commonMain (friend, TEST)
-    includedBuild.consumer.commonTest (refines, TEST)
     includedBuild.consumer.main (friend, TEST)
     includedBuild.producer.commonMain (TEST)
     includedBuild.producer.jvmMain (TEST)

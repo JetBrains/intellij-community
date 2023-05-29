@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReference
 @ApiStatus.NonExtendable
 open class AtomicLazyProperty<T>(private val initial: () -> T) : AbstractObservableClearableProperty<T>(), AtomicMutableProperty<T> {
 
-  private val value = AtomicReference<Any?>(UNINITIALIZED_VALUE)
+  private val value = AtomicReference(UNINITIALIZED_VALUE)
 
   override fun get(): T {
     return update { it }

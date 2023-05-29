@@ -51,7 +51,7 @@ interface NotebookEditorAppearanceSizes {
 interface NotebookEditorAppearanceColors {
   // TODO Sort everything lexicographically.
 
-  fun getCodeCellBackground(scheme: EditorColorsScheme): Color? = null
+  fun getCodeCellBackground(scheme: EditorColorsScheme): Color? = scheme.defaultBackground
   fun getGutterInputExecutionCountForegroundColor(scheme: EditorColorsScheme): Color? = null
   fun getGutterOutputExecutionCountForegroundColor(scheme: EditorColorsScheme): Color? = null
   fun getProgressStatusRunningColor(scheme: EditorColorsScheme): Color = Color.BLUE

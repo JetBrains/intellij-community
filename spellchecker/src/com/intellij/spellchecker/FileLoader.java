@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.dictionary.Loader;
@@ -12,6 +13,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 public final class FileLoader implements Loader {
@@ -44,6 +46,9 @@ public final class FileLoader implements Loader {
       try (BufferedReader br = new BufferedReader(new InputStreamReader(stream, charset))) {
         br.lines().forEach(consumer);
       }
+    }
+    catch (ProcessCanceledException | CancellationException exception) {
+      throw exception;
     }
     catch (Exception e) {
       Logger.getInstance(FileLoader.class).error(e);

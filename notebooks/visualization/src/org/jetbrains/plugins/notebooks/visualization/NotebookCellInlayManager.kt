@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
@@ -130,7 +131,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
     val factories = NotebookCellInlayController.Factory.EP_NAME.extensionList
     for (interval in notebookCellLines.intervals) {
       for (factory in factories) {
-        val controller = factory.compute(editor, emptyList(), notebookCellLines.intervals.listIterator(interval.ordinal))
+        val controller = failSafeCompute(factory, editor, emptyList(), notebookCellLines.intervals.listIterator(interval.ordinal))
         if (controller != null) {
           rememberController(controller, interval)
         }
@@ -221,7 +222,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
 
     for (interval in matchingIntervals) {
       val seenControllersByFactory: Map<NotebookCellInlayController.Factory, MutableList<NotebookCellInlayController>> =
-        allFactories.associateWith { SmartList<NotebookCellInlayController>() }
+        allFactories.associateWith { SmartList() }
       allMatchingInlays.removeIf { (inlayLine, controller) ->
         if (inlayLine in interval.lines) {
           seenControllersByFactory[controller.factory]?.add(controller)
@@ -231,7 +232,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
       }
       for ((factory, controllers) in seenControllersByFactory) {
         val actualController = if (!editor.isDisposed) {
-          factory.compute(editor, controllers, notebookCellLines.intervals.listIterator(interval.ordinal))
+          failSafeCompute(factory, editor, controllers, notebookCellLines.intervals.listIterator(interval.ordinal))
         }
         else {
           null
@@ -353,6 +354,19 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
         if (interval.lines.first > logicalLines.last) break
       }
     }
+
+  private fun failSafeCompute(factory: NotebookCellInlayController.Factory,
+                              editor: EditorImpl,
+                              controllers: Collection<NotebookCellInlayController>,
+                              intervalIterator: ListIterator<NotebookCellLines.Interval>): NotebookCellInlayController? {
+    try {
+      return factory.compute(editor, controllers, intervalIterator)
+    }
+    catch (ex: Exception) {
+      thisLogger().error("NotebookCellInlayController.Factory shouldn't throw exceptions", ex)
+      return null
+    }
+  }
 
   @TestOnly
   fun getInlays(): MutableMap<Inlay<*>, NotebookCellInlayController> = inlays

@@ -7,28 +7,21 @@ import org.eclipse.aether.transfer.TransferEvent;
 import org.eclipse.aether.transfer.TransferListener;
 import org.eclipse.aether.transfer.TransferResource;
 import org.jetbrains.idea.maven.server.MavenProcessCanceledRuntimeException;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
 import org.jetbrains.idea.maven.server.MavenServerGlobals;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
-import org.jetbrains.idea.maven.server.RuntimeRemoteException;
 
 import java.io.File;
-import java.rmi.RemoteException;
 
 public class Maven40TransferListenerAdapter implements TransferListener {
 
-  protected final MavenServerProgressIndicator myIndicator;
+  protected final MavenServerConsoleIndicatorImpl myIndicator;
 
-  public Maven40TransferListenerAdapter(MavenServerProgressIndicator indicator) {
+  public Maven40TransferListenerAdapter(MavenServerConsoleIndicatorImpl indicator) {
     myIndicator = indicator;
   }
 
   private void checkCanceled() {
-    try {
-      if (myIndicator.isCanceled()) throw new MavenProcessCanceledRuntimeException();
-    }
-    catch (RemoteException e) {
-      throw new RuntimeRemoteException(e);
-    }
+    if (myIndicator.isCanceled()) throw new MavenProcessCanceledRuntimeException();
   }
 
   private static String formatResourceName(TransferEvent event) {
@@ -40,14 +33,8 @@ public class Maven40TransferListenerAdapter implements TransferListener {
   @Override
   public void transferInitiated(TransferEvent event) {
     checkCanceled();
-    try {
-      String eventString = formatResourceName(event);
-      myIndicator.setIndeterminate(true);
-      myIndicator.setText2(eventString);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeRemoteException(e);
-    }
+    String eventString = formatResourceName(event);
+    myIndicator.debug(eventString);
   }
 
   @Override
@@ -66,66 +53,35 @@ public class Maven40TransferListenerAdapter implements TransferListener {
     String sizeInfo;
     if (totalLength <= 0) {
       sizeInfo = StringUtilRt.formatFileSize(event.getTransferredBytes()) + " / ?";
-    } else {
+    }
+    else {
       sizeInfo = StringUtilRt.formatFileSize(event.getTransferredBytes()) + " / " + StringUtilRt.formatFileSize(totalLength);
     }
 
-    try {
-      myIndicator.setText2(formatResourceName(event) + "  (" + sizeInfo + ')');
-      if (totalLength <= 0) {
-        myIndicator.setIndeterminate(true);
-      }
-      else {
-        myIndicator.setIndeterminate(false);
-        myIndicator.setFraction((double)event.getTransferredBytes() / totalLength);
-      }
-    }
-    catch (RemoteException e) {
-      throw new RuntimeRemoteException(e);
+    myIndicator.debug(formatResourceName(event) + "  (" + sizeInfo + ')');
+    if (totalLength > 0) {
+      myIndicator.debug(String.valueOf(Math.floor(100 * (double)event.getTransferredBytes() / totalLength)) + "%");
     }
   }
 
   @Override
   public void transferCorrupted(TransferEvent event) throws TransferCancelledException {
-    try {
-      myIndicator.setText2("Checksum failed: " + formatResourceName(event));
-      myIndicator.setIndeterminate(true);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeRemoteException(e);
-    }
+    myIndicator.warn("Checksum failed: " + formatResourceName(event));
   }
 
   @Override
   public void transferSucceeded(TransferEvent event) {
-    try {
-      myIndicator.setText2("Finished (" + StringUtilRt.formatFileSize(event.getTransferredBytes()) + ") " + formatResourceName(event));
-      myIndicator.setIndeterminate(true);
-      MavenServerGlobals.getDownloadListener().artifactDownloaded(event.getResource().getFile(), event.getResource().getResourceName());
-    }
-    catch (RemoteException e) {
-      throw new RuntimeRemoteException(e);
-    }
+    myIndicator.debug("Finished (" + StringUtilRt.formatFileSize(event.getTransferredBytes()) + ") " + formatResourceName(event));
+    MavenServerGlobals.getDownloadListener().artifactDownloaded(event.getResource().getFile(), event.getResource().getResourceName());
   }
 
   @Override
   public void transferFailed(TransferEvent event) {
-    try {
-      if (myIndicator.isCanceled()) {
-        myIndicator.setText2("Canceling...");
-        return; // Don't throw exception here.
-      }
-    }
-    catch (RemoteException e) {
-      throw new RuntimeRemoteException(e);
+    if (myIndicator.isCanceled()) {
+      myIndicator.info("Canceling...");
+      return; // Don't throw exception here.
     }
 
-    try {
-      myIndicator.setText2("Failed to download " + formatResourceName(event));
-      myIndicator.setIndeterminate(true);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeRemoteException(e);
-    }
+    myIndicator.warn("Failed to download " + formatResourceName(event));
   }
 }

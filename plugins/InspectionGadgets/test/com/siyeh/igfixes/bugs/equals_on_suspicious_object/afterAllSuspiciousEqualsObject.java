@@ -14,24 +14,24 @@ public class AtomicFix {
   @Nullable
   StringBuilder sb2;
   public void testField() {
-    if (sb2 != null && sb1.toString().equals(sb2.toString())) {
+    if (sb1.compareTo(sb2) == 0) {
       System.out.println("1");
     }
   }
   public void testStringBuilder(StringBuilder sb1, StringBuilder sb2) {
-    if (!sb1.toString().equals(sb2.toString()) && isaBoolean()) {
+    if (!(sb1.compareTo(sb2) == 0) && isaBoolean()) {
       System.out.println("Strange");
     }
   }
 
   public void testStringBuilderNullable(StringBuilder sb1, @Nullable StringBuilder sb2) {
-    if (isaBoolean() || !(sb2 != null && sb1.toString().equals(sb2.toString())) && isaBoolean()) {
+    if (isaBoolean() || !(sb1.compareTo(sb2) == 0) && isaBoolean()) {
       System.out.println("Strange");
     }
   }
 
   public void testStringBuffer(StringBuffer sb1, StringBuffer sb2) {
-    if (!sb1.toString().equals(sb2.toString()) && isaBoolean()) {
+    if (!(sb1.compareTo(sb2) == 0) && isaBoolean()) {
       System.out.println("Strange");
     }
   }

@@ -2,10 +2,7 @@
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
@@ -20,7 +17,6 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UElementKt;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UParameter;
 
@@ -53,14 +49,11 @@ public class UnsafeReturnStatementVisitorInspection extends DevKitUastInspection
         final boolean visitLambdaMissing = !hasMethod(uClass, "visitLambdaExpression", PsiLambdaExpression.class.getName());
         final boolean visitClassMissing = !hasMethod(uClass, "visitClass", PsiClass.class.getName());
         if (visitLambdaMissing || visitClassMissing) {
-          PsiElement classNameAnchor = UElementKt.getSourcePsiElement(uClass.getUastAnchor());
-          if (classNameAnchor != null) {
-            final ProblemsHolder holder = createProblemsHolder(uClass, manager, isOnTheFly);
-            holder.registerProblem(classNameAnchor,
-                                   DevKitBundle.message("inspections.unsafe.return.message"),
-                                   createFixes(uClass, visitLambdaMissing, visitClassMissing));
-            return holder.getResultsArray();
-          }
+          final ProblemsHolder holder = createProblemsHolder(uClass, manager, isOnTheFly);
+          ProblemHolderUtilKt.registerUProblem(holder, uClass,
+                                               DevKitBundle.message("inspections.unsafe.return.message"),
+                                               createFixes(uClass, visitLambdaMissing, visitClassMissing));
+          return holder.getResultsArray();
         }
       }
     }

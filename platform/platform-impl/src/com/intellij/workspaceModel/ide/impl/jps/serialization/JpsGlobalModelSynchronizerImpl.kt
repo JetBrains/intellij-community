@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspaceModel.jps.JpsGlobalFileEntitySource
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
@@ -65,7 +66,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
       loadGlobalEntitiesToEmptyStorage(mutableStorage, initialEntityStorage)
     }
 
-    jpsLoadInitialStateMs.addAndGet(System.currentTimeMillis() - start)
+    jpsLoadInitialStateMs.addElapsedTimeMs(start)
     return callback
   }
 

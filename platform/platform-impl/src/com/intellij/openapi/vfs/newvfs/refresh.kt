@@ -2,23 +2,17 @@
 package com.intellij.openapi.vfs.newvfs
 
 import com.intellij.openapi.vfs.VirtualFileManager
-import kotlinx.coroutines.*
+import com.intellij.util.io.awaitFor
 
 suspend fun refreshVFSAsync() {
   val sessionId = VirtualFileManager.getInstance().asyncRefresh()
   val refreshQueueImpl = RefreshQueue.getInstance() as? RefreshQueueImpl
   val session = refreshQueueImpl?.getSession(sessionId) ?: return
   try {
-    while (!wait(session)) {
-      yield()
-    }
+    session.semaphore.awaitFor()
   }
   catch (t: Throwable) {
     refreshQueueImpl.cancelSession(sessionId)
     throw t
   }
-}
-
-private suspend fun wait(session: RefreshSessionImpl) = runInterruptible(Dispatchers.IO) {
-  session.waitFor(100L)
 }

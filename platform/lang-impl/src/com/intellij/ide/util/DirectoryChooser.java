@@ -33,6 +33,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -333,12 +334,22 @@ public class DirectoryChooser extends DialogWrapper {
     private final String myPostfix;
     private final Icon myIcon;
 
-    private String myRelativeToProjectPath = null;
+    private final String myRelativeToProjectPath;
 
+    /**
+     * Can be created outside BG thread.
+     */
+    public static final ItemWrapper NULL = new ItemWrapper(null, null);
+
+    @RequiresBackgroundThread(generateAssertion = false)
     public ItemWrapper(PsiDirectory directory, String postfix) {
       myDirectory = directory;
       myPostfix = postfix != null && postfix.length() > 0 ? postfix : null;
       myIcon = directory != null ? getIconInternal(directory) : PlatformIcons.FOLDER_ICON;
+      final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
+      myRelativeToProjectPath =
+        virtualFile != null ? ProjectUtil.calcRelativeToProjectPath(virtualFile, directory.getProject(), true, false, true) +
+                              ObjectUtils.notNull(myPostfix, "") : getPresentableUrl();
     }
 
     public PathFragment[] getFragments() { return myFragments; }
@@ -396,13 +407,6 @@ public class DirectoryChooser extends DialogWrapper {
     }
 
     public @NlsSafe String getRelativeToProjectPath() {
-      if (myRelativeToProjectPath == null) {
-        final PsiDirectory directory = getDirectory();
-        final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
-        myRelativeToProjectPath = virtualFile != null
-               ? ProjectUtil.calcRelativeToProjectPath(virtualFile, directory.getProject(), true, false, true) + ObjectUtils.notNull(myPostfix, "")
-               : getPresentableUrl();
-      }
       return myRelativeToProjectPath;
     }
   }

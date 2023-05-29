@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="jcef" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps.jcef:jcef:111.2.1-g870da30-chromium-111.0.5563.64-api-1.10" />
+    <properties maven-id="org.jetbrains.intellij.deps.jcef:jcef:111.2.1-g870da30-chromium-111.0.5563.64-api-1.12" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/111.2.1-g870da30-chromium-111.0.5563.64-api-1.10/jcef-111.2.1-g870da30-chromium-111.0.5563.64-api-1.10.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/111.2.1-g870da30-chromium-111.0.5563.64-api-1.12/jcef-111.2.1-g870da30-chromium-111.0.5563.64-api-1.12.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/111.2.1-g870da30-chromium-111.0.5563.64-api-1.10/jcef-111.2.1-g870da30-chromium-111.0.5563.64-api-1.10-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/111.2.1-g870da30-chromium-111.0.5563.64-api-1.12/jcef-111.2.1-g870da30-chromium-111.0.5563.64-api-1.12-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -50,7 +50,7 @@ internal class LegacyProjectModelListenersBridge(
   override fun changed(event: VersionedStorageChange) {
     val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
     val changes = event.getChanges(ModuleEntity::class.java)
-    if (changes.isNotEmpty() || moduleLibraryChanges.isNotEmpty()) {
+    if (changes.any() || moduleLibraryChanges.any()) {
       LOG.debug("Process changed modules and facets")
       moduleModificationTracker.incModificationCount()
       for (change in moduleLibraryChanges) {

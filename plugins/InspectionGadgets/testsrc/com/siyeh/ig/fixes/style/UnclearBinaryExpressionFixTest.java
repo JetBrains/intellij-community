@@ -4,6 +4,7 @@ package com.siyeh.ig.fixes.style;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.UnclearBinaryExpressionInspection;
@@ -30,6 +31,7 @@ public class UnclearBinaryExpressionFixTest extends IGQuickFixesTestCase {
       action = IntentionActionDelegate.unwrap(action);
       if (QuickFixWrapper.unwrap(action) != null) {
         myFixture.launchAction(action);
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
         myFixture.checkResultByFile(getRelativePath() + "/" + testName + ".after.java");
         return;
       }

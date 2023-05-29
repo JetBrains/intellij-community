@@ -19,6 +19,10 @@ class PyCharmCommunityProperties(communityHome: Path) : PyCharmPropertiesBase() 
     scrambleMainJar = false
     buildSourcesArchive = true
 
+    /* main module for JetBrains Client isn't available in the intellij-community project, 
+       so this property is set only when PyCharm Community is built from the intellij-ultimate project. */
+    embeddedJetBrainsClientMainModule = null
+
     productLayout.mainModules = listOf("intellij.pycharm.community.main")
     productLayout.productApiModules = listOf("intellij.xml.dom")
     productLayout.productImplementationModules = listOf(

@@ -8,7 +8,9 @@ import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.util.StorageId
-import java.util.concurrent.Future
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 
 internal class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLog) {
   private val countBySource = EnumMultiset.create(VcsLogErrorHandler.Source::class.java)
@@ -42,37 +44,39 @@ internal class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLog) 
 
     projectLog.recreateLog(logManager, invalidateCaches)
   }
+}
 
-  companion object {
-    private const val INVALIDATE_CACHES_COUNT = 5
-    private const val DISABLE_INDEX_COUNT = 2 * INVALIDATE_CACHES_COUNT
+private const val INVALIDATE_CACHES_COUNT = 5
+private const val DISABLE_INDEX_COUNT = 2 * INVALIDATE_CACHES_COUNT
 
-    fun VcsLogManager.storageIds(): List<StorageId> {
-      return linkedSetOf((dataManager.index as? VcsLogPersistentIndex)?.indexStorageId,
-                         (dataManager.storage as? VcsLogStorageImpl)?.refsStorageId,
-                         (dataManager.storage as? VcsLogStorageImpl)?.hashesStorageId).filterNotNull()
-    }
+internal fun VcsLogManager.storageIds(): List<StorageId> {
+  return linkedSetOf((dataManager.index as? VcsLogPersistentIndex)?.indexStorageId,
+                     (dataManager.storage as? VcsLogStorageImpl)?.refsStorageId,
+                     (dataManager.storage as? VcsLogStorageImpl)?.hashesStorageId).filterNotNull()
+}
 
-    private fun VcsProjectLog.recreateLog(logManager: VcsLogManager, invalidateCaches: Boolean): Future<*>? {
-      val storageIds = logManager.storageIds()
-      thisLogger().assertTrue(storageIds.isNotEmpty())
+internal fun VcsProjectLog.invalidateCaches(logManager: VcsLogManager): Job = recreateLog(logManager = logManager, invalidateCaches = true)
 
-      return runOnDisposedLog {
-        if (invalidateCaches) {
-          for (storageId in storageIds) {
-            try {
-              val deleted = storageId.cleanupAllStorageFiles()
-              if (deleted) thisLogger().info("Deleted ${storageId.storagePath}")
-              else thisLogger().error("Could not delete ${storageId.storagePath}")
-            }
-            catch (t: Throwable) {
-              thisLogger().error(t)
-            }
+private fun VcsProjectLog.recreateLog(logManager: VcsLogManager, invalidateCaches: Boolean): Job {
+  val storageIds = logManager.storageIds()
+  thisLogger().assertTrue(storageIds.isNotEmpty())
+
+  return runOnDisposedLog {
+    if (invalidateCaches) {
+      for (storageId in storageIds) {
+        try {
+          val deleted = withContext(Dispatchers.IO) { storageId.cleanupAllStorageFiles() }
+          if (deleted) {
+            thisLogger().info("Deleted ${storageId.storagePath}")
           }
+          else {
+            thisLogger().error("Could not delete ${storageId.storagePath}")
+          }
+        }
+        catch (t: Throwable) {
+          thisLogger().error(t)
         }
       }
     }
-
-    fun VcsProjectLog.invalidateCaches(logManager: VcsLogManager): Future<*>? = recreateLog(logManager, true)
   }
 }

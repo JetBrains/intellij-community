@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.roots
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.SourceFolder
@@ -18,20 +17,6 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.config.ALL_KOTLIN_RESOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
-
-fun getKotlinAwareDestinationSourceRoots(project: Project): List<VirtualFile> {
-    return ModuleManager.getInstance(project).modules.flatMap { it.collectKotlinAwareDestinationSourceRoots() }
-}
-
-fun Module.collectKotlinAwareDestinationSourceRoots(): List<VirtualFile> {
-    return rootManager
-        .contentEntries
-        .asSequence()
-        .flatMap { it.getSourceFolders(KOTLIN_AWARE_SOURCE_ROOT_TYPES).asSequence() }
-        .filterNot { isForGeneratedSources(it) }
-        .mapNotNull { it.file }
-        .toList()
-}
 
 fun isOutsideSourceRootSet(psiFile: PsiFile?, sourceRootTypes: Set<JpsModuleSourceRootType<*>>): Boolean {
     if (psiFile == null || psiFile is PsiCodeFragment) return false

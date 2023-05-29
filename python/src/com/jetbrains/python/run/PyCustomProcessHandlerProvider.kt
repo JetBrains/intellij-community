@@ -35,8 +35,13 @@ interface PyCustomProcessHandlerProvider {
      */
     @ApiStatus.Internal
     @JvmStatic
-    fun createProcessHandler(process: Process, commandLine: String, charset: Charset, pathMapper: PyRemotePathMapper): ProcessHandler =
+    @JvmOverloads
+    fun createProcessHandler(process: Process,
+                             commandLine: String,
+                             charset: Charset,
+                             pathMapper: PyRemotePathMapper,
+                             isMostlySilentProcess: Boolean = false): ProcessHandler =
       EP_NAME.computeSafeIfAny { it.tryCreateProcessHandler(process, commandLine, charset, pathMapper) }
-      ?: ProcessHandlerWithPyPositionConverter(process, commandLine, charset, pathMapper)
+      ?: ProcessHandlerWithPyPositionConverter(process, commandLine, charset, pathMapper, isMostlySilentProcess)
   }
 }

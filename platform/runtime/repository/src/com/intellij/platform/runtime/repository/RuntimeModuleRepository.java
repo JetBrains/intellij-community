@@ -9,8 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Represents the set of available modules. 
@@ -22,21 +21,35 @@ public interface RuntimeModuleRepository {
    */
   static @NotNull RuntimeModuleRepository create(@NotNull Path moduleDescriptorsJarPath) throws MalformedRepositoryException {
     Map<String, RawRuntimeModuleDescriptor> map = RuntimeModuleRepositorySerialization.loadFromJar(moduleDescriptorsJarPath);
-    return new RuntimeModuleRepositoryImpl(RuntimeModuleRepositoryImpl.createDescriptors(map, moduleDescriptorsJarPath));
+    return new RuntimeModuleRepositoryImpl(map, moduleDescriptorsJarPath.getParent());
   }
 
   /**
-   * Returns the module by the given {@code moduleId} or {@code null} if there is no module with such ID in the repository. 
-   */
-  @Nullable RuntimeModuleDescriptor findModule(@NotNull RuntimeModuleId moduleId);
-
-  /**
-   * Returns the module by the given {@code moduleId} or throws an exception if there is no module with such ID in the repository.
+   * Returns the module by the given {@code moduleId} or throws an exception if this module or any module from its dependencies is not 
+   * found in the repository.
    */
   @NotNull RuntimeModuleDescriptor getModule(@NotNull RuntimeModuleId moduleId);
 
   /**
-   * Returns list of directories and JAR files containing classes of {@code moduleId} and its direct and transitive dependencies.
+   * Tries to resolve the module by the given {@code moduleId} and returns the resolution result. 
    */
-  @NotNull List<Path> getModuleClasspath(@NotNull RuntimeModuleId moduleId);
+  @NotNull ResolveResult resolveModule(@NotNull RuntimeModuleId moduleId);
+
+  /**
+   * Computes resource paths of a module with the given {@code moduleId} without resolving its dependencies.
+   */
+  @NotNull List<Path> getModuleResourcePaths(@NotNull RuntimeModuleId moduleId);
+  
+  interface ResolveResult {
+    /**
+     * Returns the module descriptor if resolution succeeded or {@code null} if it failed.
+     */
+    @Nullable RuntimeModuleDescriptor getResolvedModule();
+
+    /**
+     * Returns the path of transitive dependencies from the initially requested module to the module which failed to load if resolution
+     * failed or an empty list of resolution succeeded.
+     */
+    @NotNull List<RuntimeModuleId> getFailedDependencyPath();
+  }
 }

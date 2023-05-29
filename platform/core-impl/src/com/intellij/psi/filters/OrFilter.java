@@ -18,29 +18,14 @@ package com.intellij.psi.filters;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
 public class OrFilter implements ElementFilter {
   private final List<ElementFilter> myFilters;
 
-  /** @deprecated use {@link #OrFilter(ElementFilter...)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public OrFilter() {
-    myFilters = new SmartList<>();
-  }
-
   public OrFilter(ElementFilter... filters) {
     myFilters = new SmartList<>(filters);
-  }
-
-  /** @deprecated use {@link #OrFilter(ElementFilter...)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public void addFilter(ElementFilter filter) {
-    myFilters.add(filter);
   }
 
   @Override

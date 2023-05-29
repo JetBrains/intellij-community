@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
@@ -21,6 +21,11 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Aggregates all the settings, information, target, and program runner required to execute a process.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/run-configuration-execution.html">Run Configurations / Execution (IntelliJ Platform Docs)</a>
+ */
 public final class ExecutionEnvironment extends UserDataHolderBase implements Disposable {
   private static final AtomicLong myIdHolder = new AtomicLong(1L);
 
@@ -223,9 +228,9 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   }
 
   /**
-   * By default a new unique executionId is assigned to each new {@link ExecutionEnvironment} ({@see assignNewExecutionId}).
+   * By default, a new unique execution ID is assigned to each new {@link ExecutionEnvironment} (see {@link #assignNewExecutionId}).
    * Can be set manually to create a batch of {@link ExecutionEnvironment} that are semantically a "single launch".
-   * {@link RunContentDescriptor}s will not reuse each other tabs if they have the same executionId.
+   * {@link RunContentDescriptor}s will not reuse each other tabs if they have the same execution ID.
    *
    * @return An id that will be propagated to resulting {@link RunContentDescriptor}.
    */

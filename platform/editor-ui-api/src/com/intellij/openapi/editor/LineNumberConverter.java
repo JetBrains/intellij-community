@@ -11,6 +11,9 @@ import org.jetbrains.annotations.Nullable;
  * @see Increasing
  */
 public interface LineNumberConverter {
+  default boolean shouldRepaintOnCaretMovement() {
+    return false;
+  }
   /**
    * Defines the number to be displayed in the gutter for the given document line.
    *

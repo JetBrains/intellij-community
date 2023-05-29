@@ -5,4 +5,13 @@ public abstract class RemoteServerUtil {
   public static boolean isWSL(){
     return Boolean.parseBoolean(System.getProperty("idea.maven.wsl"));
   }
+
+  public static boolean isDebug(String[] args){
+    for (String arg : args) {
+      if ("runWithDebugger".equals(arg)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

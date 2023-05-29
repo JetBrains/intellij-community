@@ -22,6 +22,8 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabPersistentAccounts"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager"
                         serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.PersistentGitLabAccountManager"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gitlab.GitLabServersManager"
+                        serviceImplementation="org.jetbrains.plugins.gitlab.CachingGitLabServersManager"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.gitlab.GitLabProjectsManager"
                     serviceImplementation="org.jetbrains.plugins.gitlab.GitLabProjectsManagerImpl"/>
@@ -38,11 +40,16 @@
     <virtualFileSystem key="gitlabmr" implementationClass="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabVirtualFileSystem"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabFileEditorProvider"/>
     <diff.DiffExtension implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffExtension"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider
+      implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
+      implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
     <iconMapper mappingFile="GitlabIconMappings.json"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
-    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.gitlab.git.http.GitLabGitHttpAuthDataProvider"/>
+    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.gitlab.git.http.GitLabSilentHttpAuthDataProvider"/>
+    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.gitlab.git.http.GitLabHttpAuthDataProvider"/>
   </extensions>
 
   <actions>
@@ -83,5 +90,16 @@
       <reference ref="ExpandAll"/>
       <reference ref="CollapseAll"/>
     </group>
+
+    <group id="GitLab.Merge.Request.Diff.Discussions.View.Options"
+           class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestDiffReviewDiscussionsToggleAction"
+           icon="AllIcons.Actions.Show"
+           popup="true">
+      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"
+                    relative-to-action="Vcs.Diff.ToggleDiffAligningMode"
+                    anchor="before"/>
+    </group>
+    <action id="GitLab.MergeRequest.Review.Submit"
+            class="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestDiffSubmitReviewAction"/>
   </actions>
 </idea-plugin>

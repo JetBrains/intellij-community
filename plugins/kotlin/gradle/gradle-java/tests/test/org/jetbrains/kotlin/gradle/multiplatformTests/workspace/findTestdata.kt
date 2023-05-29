@@ -2,7 +2,30 @@
 
 package org.jetbrains.kotlin.gradle.multiplatformTests.workspace
 
+import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.io.File
+
+internal fun findMostSpecificExistingFileOrNewDefault(
+    checkerClassifier: String,
+    testDataDir: File,
+    kgpVersion: KotlinToolingVersion,
+    gradleClassifier: String,
+    agpClassifier: String?,
+    testConfiguration: TestConfiguration
+): File {
+    val kotlinClassifier = with(kgpVersion) { "$major.$minor.$patch" }
+    val testClassifier = testConfiguration.getConfiguration(GeneralWorkspaceChecks).testClassifier
+    return findMostSpecificExistingFileOrNewDefault(
+        checkerClassifier,
+        testDataDir,
+        kotlinClassifier,
+        gradleClassifier,
+        agpClassifier,
+        testClassifier
+    )
+}
 
 internal fun findMostSpecificExistingFileOrNewDefault(
     checkerClassifier: String,

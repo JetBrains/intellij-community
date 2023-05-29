@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.UtilBundle;
+import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
@@ -58,8 +59,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-
-import static com.intellij.analysis.problemsView.toolWindow.ProblemsView.toggleCurrentFileProblems;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   @NotNull
@@ -533,7 +532,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     @Override
     public void toggleProblemsView() {
       PsiFile file = getPsiFile();
-      toggleCurrentFileProblems(getProject(), file == null ? null : file.getVirtualFile());
+      VirtualFile virtualFile = file == null ? null : file.getVirtualFile();
+      Document document = file == null ? null : file.getViewProvider().getDocument();
+      ProblemsView.toggleCurrentFileProblems(getProject(), virtualFile, document);
     }
   }
 

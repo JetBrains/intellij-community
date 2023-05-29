@@ -15,14 +15,16 @@ interface FileEditorComposite {
         get() = false
     }
 
-    fun createFileEditorComposite(allEditors: List<FileEditor>, allProviders: List<FileEditorProvider>): FileEditorComposite {
+    fun createFileEditorComposite(allEditors: List<FileEditor>,
+                                  allProviders: List<FileEditorProvider>,
+                                  isPreview: Boolean = false): FileEditorComposite {
       return object : FileEditorComposite {
         override val allEditors: List<FileEditor>
           get() = allEditors
         override val allProviders: List<FileEditorProvider>
           get() = allProviders
         override val isPreview: Boolean
-          get() = false
+          get() = isPreview
       }
     }
 

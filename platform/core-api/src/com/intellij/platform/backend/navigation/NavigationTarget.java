@@ -35,7 +35,7 @@ public interface NavigationTarget {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  @NotNull TargetPresentation presentation();
+  @NotNull TargetPresentation computePresentation();
 
   /**
    * This method is called once before the actual navigation.

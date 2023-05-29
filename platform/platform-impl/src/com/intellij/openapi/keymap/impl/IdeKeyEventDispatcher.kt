@@ -45,13 +45,19 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ComponentWithMnemonics
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.speedSearch.SpeedSearchSupply
-import com.intellij.util.Alarm
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.matching.KeyboardLayoutUtil
 import com.intellij.util.ui.MacUIUtil
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -72,6 +78,7 @@ import javax.swing.text.JTextComponent
 /**
  * This class is automaton with a finite number of states.
  */
+@OptIn(DelicateCoroutinesApi::class)
 class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
   private var firstKeyStroke: KeyStroke? = null
 
@@ -108,17 +115,23 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
   @get:ApiStatus.Internal
   val context: KeyProcessorContext = KeyProcessorContext()
 
-  private val secondStrokeTimeout = Alarm()
-
-  private val secondStrokeTimeoutRunnable = Runnable {
-    if (keyState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
-      resetState()
-      set(null, context.project)
-    }
-  }
+  private val secondStrokeTimeout = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   val isWaitingForSecondKeyStroke: Boolean
     get() = state == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE || isPressedWasProcessed
+
+  init {
+    GlobalScope.launch {
+      secondStrokeTimeout
+        .collectLatest {
+          delay(Registry.intValue("actionSystem.secondKeystrokeTimeout", 2_000).toLong())
+          if (keyState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
+            resetState()
+            set(text = null, project = context.project)
+          }
+        }
+    }
+  }
 
   companion object {
     /**
@@ -188,7 +201,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     fun isAltGrLayout(component: Component?): Boolean {
       val locale = component?.inputContext?.locale ?: return false
       val language = locale.language
-      val contains = if ("en" == language) ALT_GR_COUNTRIES.contains(locale.country) else ALT_GR_LANGUAGES.contains(language)
+      val contains = if (language == "en") ALT_GR_COUNTRIES.contains(locale.country) else ALT_GR_LANGUAGES.contains(language)
       LOG.debug("AltGr", if (contains) "" else " not", " supported for ", locale)
       return contains
     }
@@ -443,8 +456,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
 
   private fun waitSecondStroke(chosenAction: AnAction, presentation: Presentation) {
     set(text = getSecondStrokeMessage(chosenAction = chosenAction, presentation = presentation), project = context.project)
-    secondStrokeTimeout.cancelAllRequests()
-    secondStrokeTimeout.addRequest(secondStrokeTimeoutRunnable, Registry.intValue("actionSystem.secondKeystrokeTimeout"))
+    check(secondStrokeTimeout.tryEmit(Unit))
     state = KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE
   }
 

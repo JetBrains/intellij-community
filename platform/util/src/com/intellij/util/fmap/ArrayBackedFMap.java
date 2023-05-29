@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.fmap;
 
 import org.jetbrains.annotations.NotNull;
@@ -128,8 +128,7 @@ final class ArrayBackedFMap<K, V> implements FMap<K, V> {
     return Collections.unmodifiableMap(toMapInner());
   }
 
-  @NotNull
-  private Map<K, V> toMapInner() {
+  private @NotNull Map<K, V> toMapInner() {
     Map<K, V> map = new HashMap<>(size());
     for (int i = 0; i < myData.length; i += 2) {
       map.put(asKey(i), asValue(i + 1));

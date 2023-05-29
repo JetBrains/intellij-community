@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
@@ -37,6 +38,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -152,7 +154,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testClearParentAndSubFoldersOfNewlyImportedFolders() {
-    createProjectSubDirs("src/main/java", "src/main/resources");
+    createStdProjectFolders();
 
     importProject("""
                     <groupId>test</groupId>
@@ -629,9 +631,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testPluginSourcesWithIntermoduleDependency() {
-    createProjectSubDirs("m1/src/main/java",
-                         "m1/src/main/resources",
-                         "m1/src/foo");
+    createStdProjectFolders("m1");
+    createProjectSubDirs("m1/src/foo");
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -934,25 +935,30 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertExcludes("project", "target");
 
     String mainResources = getProjectPath() + "/src/main/resources";
-    var mainSources = new String[]{
+    String mainResourcesFiltered = getProjectPath() + "/src/main/resources-filtered";
+    var mainSources = arrayOfNotNull(
       getProjectPath() + "/src/main/java",
       mainResources,
+      isMaven4() ? mainResourcesFiltered : null,
       getProjectPath() + "/target/generated-sources/src1",
       getProjectPath() + "/target/generated-sources/src2"
-    };
+    );
+
     String testResources = getProjectPath() + "/src/test/resources";
-    var testSources = new String[]{
+    String testResourcesFiltered = getProjectPath() + "/src/test/resources-filtered";
+    var testSources = arrayOfNotNull(
       getProjectPath() + "/src/test/java",
       testResources,
+      isMaven4() ? testResourcesFiltered : null,
       getProjectPath() + "/target/generated-test-sources/test1",
       getProjectPath() + "/target/generated-test-sources/test2"
-    };
+    );
 
     assertContentRoots("project.main", mainSources);
     assertContentRoots("project.test", testSources);
 
     for (String main : mainSources) {
-      if (main.equals(mainResources)) {
+      if (main.equals(mainResources) || main.equals(mainResourcesFiltered)) {
         assertContentRootResources("project.main", main, "");
       }
       else {
@@ -967,7 +973,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
       assertContentRootResources("project.test", test);
       assertContentRootSources("project.test", test);
 
-      if (test.equals(testResources)) {
+      if (test.equals(testResources) || test.equals(testResourcesFiltered)) {
         assertContentRootTestResources("project.test", test, "");
       }
       else {
@@ -1020,9 +1026,15 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                   mn("project", "m1.main"),
                   mn("project", "m1.test"));
 
-    assertContentRoots(mn("project", "m1.main"),
-                       getProjectPath() + "/m1/src/main/resources",
-                       getProjectPath() + "/custom-sources");
+    var expectedRoots = new ArrayList<String>();
+    expectedRoots.add(getProjectPath() + "/custom-sources");
+
+    expectedRoots.add(getProjectPath() + "/m1/src/main/resources");
+    if (isMaven4()) {
+      expectedRoots.add(getProjectPath() + "/m1/src/main/resources-filtered");
+    }
+
+    assertContentRoots(mn("project", "m1.main"), ArrayUtil.toStringArray(expectedRoots));
   }
 
   @Test
@@ -1519,12 +1531,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
         </build>
         """));
 
-    createProjectSubDirs("m1/src/main/java",
-                         "m1/src/main/resources",
-                         "m1/src/test/java",
-                         "m1/src/test/resources",
-
-                         "m1/sources/resources",
+    createStdProjectFolders("m1");
+    createProjectSubDirs("m1/sources/resources",
                          "m1/tests");
 
     importProject("""
@@ -1545,19 +1553,36 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     String m1_pom_root = getProjectPath() + "/m1";
     assertContentRoots(m1_pom_module, m1_pom_root);
     assertContentRootSources(m1_pom_module, m1_pom_root, "src/main/java");
-    assertContentRootResources(m1_pom_module, m1_pom_root, "src/main/resources");
+    var expectedResources = new ArrayList<String>();
+    expectedResources.add("src/main/resources");
+    if (isMaven4()) {
+      expectedResources.add("src/main/resources-filtered");
+    }
+    assertContentRootResources(m1_pom_module, m1_pom_root, ArrayUtil.toStringArray(expectedResources));
     assertContentRootTestSources(m1_pom_module, m1_pom_root, "src/test/java");
-    assertContentRootTestResources(m1_pom_module, m1_pom_root, "src/test/resources");
+    var expectedTestResources = new ArrayList<String>();
+    expectedTestResources.add("src/test/resources");
+    if (isMaven4()) {
+      expectedTestResources.add("src/test/resources-filtered");
+    }
+    assertContentRootTestResources(m1_pom_module, m1_pom_root, ArrayUtil.toStringArray(expectedTestResources));
 
     String m1_custom_sources_root = getProjectPath() + "/m1/sources";
     String m1_custom_tests_root = getProjectPath() + "/m1/tests";
     String m1_standard_test_resources = getProjectPath() + "/m1/src/test/resources";
-    assertContentRoots(m1_custom_module,
-                       m1_custom_sources_root,
-                       m1_custom_tests_root,
-                       // [anton] The next folder doesn't look correct, as it intersects with 'pom.xml' module folders,
-                       // but I'm testing the behavior as is in order to preserve it in the new Workspace import
-                       m1_standard_test_resources);
+
+    var m1_content_roots = new ArrayList<String>();
+    m1_content_roots.add(m1_custom_sources_root);
+    m1_content_roots.add(m1_custom_tests_root);
+
+    // [anton] The next folder doesn't look correct, as it intersects with 'pom.xml' module folders,
+    // but I'm testing the behavior as is in order to preserve it in the new Workspace import
+    m1_content_roots.add(m1_standard_test_resources);
+    if (isMaven4()) {
+      m1_content_roots.add(m1_standard_test_resources + "-filtered");
+    }
+
+    assertContentRoots(m1_custom_module, ArrayUtil.toStringArray(m1_content_roots));
     assertContentRootSources(m1_custom_module, m1_custom_sources_root, "");
     assertContentRootResources(m1_custom_module, m1_custom_sources_root);
     assertContentRootTestSources(m1_custom_module, m1_custom_tests_root, "");
@@ -1622,11 +1647,15 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertContentRootSources(mn("project", "m1-pom"), getProjectPath() + "/pom-sources", "");
     assertContentRootTestSources(mn("project", "m1-pom"), getProjectPath() + "/pom-sources");
 
-    assertContentRoots(mn("project", "m1-custom"),
-                       getProjectPath() + "/custom-sources",
-                       getProjectPath() + "/m1/src/main/resources",
-                       getProjectPath() + "/m1/src/test/java",
-                       getProjectPath() + "/m1/src/test/resources");
+    var expectedRoots = arrayOfNotNull(
+      getProjectPath() + "/custom-sources",
+      getProjectPath() + "/m1/src/main/resources",
+      maven4orNull(getProjectPath() + "/m1/src/main/resources-filtered"),
+      getProjectPath() + "/m1/src/test/java",
+      getProjectPath() + "/m1/src/test/resources",
+      maven4orNull(getProjectPath() + "/m1/src/test/resources-filtered")
+    );
+    assertContentRoots(mn("project", "m1-custom"), expectedRoots);
 
     // this is not quite correct behavior, since we have both modules (m1-pom and m2-custom) pointing at the same folders
     // (Though, it somehow works in IJ, and it's a rare case anyway).

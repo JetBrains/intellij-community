@@ -58,11 +58,11 @@ public class RemoteServer {
   private static Remote ourRemote;
 
   protected static void start(Remote remote) throws Exception {
-    start(remote, true);
+    start(remote, true, false);
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  protected static void start(Remote remote, boolean localHostOnly) throws Exception {
+  protected static void start(Remote remote, boolean localHostOnly, boolean spinForever) throws Exception {
     IdeaWatchdog watchdog = new IdeaWatchdogImpl();
     if (remote instanceof IdeaWatchdogAware) {
       ((IdeaWatchdogAware)remote).setWatchdog(watchdog);
@@ -111,7 +111,9 @@ public class RemoteServer {
       System.out.println("Port/ServicesPort/ID: " + (port + "/" + servicesPort + "/" + name));
       System.out.println();
 
-      spinWhileWatchdogAlive(watchdog);
+      if (!spinForever) {
+        spinWhileWatchdogAlive(watchdog);
+      }
     }
     catch (Throwable e) {
       e.printStackTrace(System.err);

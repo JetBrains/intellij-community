@@ -12,7 +12,12 @@ public class TrivialStringConcatenationFixTest extends IGQuickFixesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new TrivialStringConcatenationInspection());
+    TrivialStringConcatenationInspection inspection = new TrivialStringConcatenationInspection();
+    inspection.skipIfNecessary = false;
+    if (getTestName(true).contains("SkipIfNecessary")) {
+      inspection.skipIfNecessary = true;
+    }
+    myFixture.enableInspections(inspection);
     myRelativePath = "performance/trivial_string_concatenation";
     myDefaultHint = InspectionGadgetsBundle.message("string.replace.quickfix");
     fixAll = InspectionsBundle.message("fix.all.inspection.problems.in.file",
@@ -37,6 +42,9 @@ public class TrivialStringConcatenationFixTest extends IGQuickFixesTestCase {
   }
 
   public void testNotSeenString() {
+    doTest(fixAll);
+  }
+  public void testNotSeenString_SkipIfNecessary() {
     doTest(fixAll);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
@@ -19,6 +19,9 @@ public interface ExternalLibrariesWorkspaceModelNodesProvider<T extends Workspac
   @NotNull
   Class<T> getWorkspaceClass();
 
+  /**
+   * @see ExternalLibrariesWorkspaceModelNode
+   */
   @Nullable
   AbstractTreeNode<?> createNode(@NotNull T entity, @NotNull Project project, ViewSettings settings);
 }

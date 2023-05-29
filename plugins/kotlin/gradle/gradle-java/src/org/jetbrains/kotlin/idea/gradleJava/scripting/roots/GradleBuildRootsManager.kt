@@ -153,6 +153,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
             add(newRoot)
         } catch (e: Exception) {
             markImportingInProgress(sync.workingDir, false)
+            scriptingErrorLog("Couldn't update Gradle build root: ${oldRoot.pathPrefix}", e)
             return
         }
     }

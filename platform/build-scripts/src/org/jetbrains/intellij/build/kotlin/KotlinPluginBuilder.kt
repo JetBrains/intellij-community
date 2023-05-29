@@ -86,7 +86,8 @@ object KotlinPluginBuilder {
     "kotlin.compiler-plugins.sam-with-receiver.common",
     "kotlin.compiler-plugins.sam-with-receiver.gradle",
     "kotlin.compiler-plugins.sam-with-receiver.maven",
-    "kotlin.compiler-plugins.assignment.common",
+    "kotlin.compiler-plugins.assignment.common-k1",
+    "kotlin.compiler-plugins.assignment.common-k2",
     "kotlin.compiler-plugins.assignment.gradle",
     "kotlin.compiler-plugins.assignment.maven",
     "kotlin.compiler-plugins.lombok.gradle",
@@ -185,6 +186,7 @@ object KotlinPluginBuilder {
     "kotlin.navigation",
     "kotlin.refactorings.common",
     "kotlin.refactorings.k2",
+    "kotlin.refactorings.move.k2",
     "kotlin.refactorings.rename.k2",
     "kotlin.performanceExtendedPlugin",
     "kotlin.bundled-compiler-plugins-support",
@@ -271,6 +273,7 @@ object KotlinPluginBuilder {
           "kotlin-ultimate.javascript.nodeJs",
           "kotlin-ultimate.ultimate-plugin",
           "kotlin-ultimate.ultimate-native",
+          "kotlin-ultimate.profiler",
         ))
       }
 

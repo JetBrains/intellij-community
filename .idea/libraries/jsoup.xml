@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="jsoup" type="repository">
-    <properties maven-id="org.jsoup:jsoup:1.15.4" />
+    <properties maven-id="org.jsoup:jsoup:1.16.1" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.15.4/jsoup-1.15.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.16.1/jsoup-1.16.1.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.15.4/jsoup-1.15.4-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.16.1/jsoup-1.16.1-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.15.4/jsoup-1.15.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.16.1/jsoup-1.16.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

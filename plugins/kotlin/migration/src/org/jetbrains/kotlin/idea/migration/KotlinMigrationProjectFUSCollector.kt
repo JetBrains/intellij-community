@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
-class KotlinMigrationProjectFUSCollector : CounterUsagesCollector() {
+    class KotlinMigrationProjectFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
     companion object {

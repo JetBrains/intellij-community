@@ -232,17 +232,22 @@ class CompletionInvokerImpl(private val project: Project,
       moveCaret(offset + currentString.length)
       val lookup = getSuggestions(expectedLine, settings)
 
-      emulator.pickBestSuggestion(currentString, lookup, this).also {
+      emulator.pickBestSuggestion(currentString, lookup, this).also { resultLookup ->
+        val selected = resultLookup.selectedWithoutPrefix()
+        val lookupImpl = LookupManager.getActiveLookup(editor) as? LookupImpl
+        if (selected != null && lookupImpl != null) {
+          lookupImpl.finish(resultLookup.selectedPosition, selected.length, forceUndo = true)
+        }
         if (settings.invokeOnEachChar) {
           LookupManager.hideActiveLookup(project)
         }
-        currentString += it.selectedWithoutPrefix() ?: nextChar
+        currentString += selected ?: nextChar
         if (currentString.isNotEmpty() && !settings.invokeOnEachChar) {
-          if (it.suggestions.isEmpty() || currentString.last().let { ch -> !(ch == '_' || ch.isLetter() || ch.isDigit()) }) {
+          if (resultLookup.suggestions.isEmpty() || currentString.last().let { ch -> !(ch == '_' || ch.isLetter() || ch.isDigit()) }) {
             LookupManager.hideActiveLookup(project)
           }
         }
-        addLookup(it)
+        addLookup(resultLookup)
       }
     }
   }
@@ -286,7 +291,7 @@ class CompletionInvokerImpl(private val project: Project,
     return LookupManager.getActiveLookup(editor)
   }
 
-  private fun LookupImpl.finish(expectedItemIndex: Int, completionLength: Int): Boolean {
+  private fun LookupImpl.finish(expectedItemIndex: Int, completionLength: Int, forceUndo: Boolean = false): Boolean {
     selectedIndex = expectedItemIndex
     val document = editor.document
     val lengthBefore = document.textLength
@@ -297,7 +302,7 @@ class CompletionInvokerImpl(private val project: Project,
       LOG.warn("Lookup finishing error.", e)
       return false
     }
-    if (lengthBefore + completionLength != document.textLength) {
+    if (forceUndo || lengthBefore + completionLength != document.textLength) {
       LOG.info("Undo operation after finishing completion.")
       UndoManagerImpl.getInstance(project).undo(FileEditorManager.getInstance(project).selectedEditor)
       return false

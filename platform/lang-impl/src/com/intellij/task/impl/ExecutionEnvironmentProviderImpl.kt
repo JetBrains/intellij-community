@@ -56,6 +56,7 @@ class ExecutionEnvironmentProviderImpl : ExecutionEnvironmentProvider {
       val environmentSettings = environment.runnerAndConfigurationSettings
       if (environmentSettings != null && environmentSettings !== settings) {
         environmentSettings.isActivateToolWindowBeforeRun = settings.isActivateToolWindowBeforeRun
+        environmentSettings.isFocusToolWindowBeforeRun = settings.isFocusToolWindowBeforeRun
         environmentSettings.isEditBeforeRun = settings.isEditBeforeRun
       }
     }

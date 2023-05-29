@@ -21,7 +21,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
 
 
   /* ================ FILE HEADER FIELDS LAYOUT ======================================================= */
-  
+
   public static final int HEADER_SIZE = PersistentFSHeaders.HEADER_SIZE;
 
   /* ================ RECORD FIELDS LAYOUT  =========================================================== */
@@ -610,6 +610,8 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
         getNameId(recordId),
         getFlags(recordId),
         getParent(recordId),
+        getAttributeRecordId(recordId),
+        getContentRecordId(recordId),
         /* corrupted = */ false
       );
     }
@@ -677,14 +679,9 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
 
   @Override
   public void close() throws IOException {
-    if(!storage.isClosed()) {
+    if (!storage.isClosed()) {
       force();
-      try {
-        storage.close();
-      }
-      catch (InterruptedException e) {
-        throw new IOException(e);
-      }
+      storage.close();
     }
   }
 

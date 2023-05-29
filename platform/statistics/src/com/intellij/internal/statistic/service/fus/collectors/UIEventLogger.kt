@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.lang.Language
 
-private val uiEventGroup = EventLogGroup("ui.event", 17)
+private val uiEventGroup = EventLogGroup("ui.event", 18)
 
 @JvmField
 val NavBarShowPopup: EventId = uiEventGroup.registerEvent("NavBarShowPopup")
@@ -139,6 +139,9 @@ val StatusBarPopupShown: EventId1<Class<*>> = uiEventGroup.registerEvent(
   "StatusBarPopupShown",
   EventFields.Class("class"),
 )
+
+@JvmField
+val ThemeAutodetectSelector: EventId1<Boolean> = uiEventGroup.registerEvent("theme.autodetect.selector", EventFields.Boolean("autodetect"))
 
 @JvmField
 val IdeZoomChanged: VarargEventId = uiEventGroup.registerVarargEvent("ide.zoom.changed",

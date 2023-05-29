@@ -35,7 +35,8 @@ class FindPopupItem(
   }
 }
 
-internal class SearchEverywhereItem(
+@ApiStatus.Internal
+class SearchEverywhereItem(
   val usage: UsageInfo2UsageAdapter,
   val presentation: UsagePresentation,
 ) {

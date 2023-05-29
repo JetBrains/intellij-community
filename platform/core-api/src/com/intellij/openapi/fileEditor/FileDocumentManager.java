@@ -2,10 +2,12 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.core.CoreBundle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -13,6 +15,8 @@ import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +29,7 @@ import java.util.function.Predicate;
  * Manages the saving of changes to disk.
  */
 public abstract class FileDocumentManager implements SavingRequestor {
-  @NotNull
-  public static FileDocumentManager getInstance() {
+  public static @NotNull FileDocumentManager getInstance() {
     return ApplicationManager.getApplication().getService(FileDocumentManager.class);
   }
 
@@ -45,8 +48,18 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * @see VirtualFile#contentsToByteArray()
    * @see Application#runReadAction(Computable)
    */
-  @Nullable
-  public abstract Document getDocument(@NotNull VirtualFile file);
+  @RequiresReadLock
+  public abstract @Nullable Document getDocument(@NotNull VirtualFile file);
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @RequiresBlockingContext
+  @RequiresReadLock
+  public @Nullable Document getDocument(@NotNull VirtualFile file, @NotNull Project preferredProject) {
+    try (AccessToken ignored = ProjectLocator.withPreferredProject(file, preferredProject)) {
+      return getDocument(file);
+    }
+  }
 
   /**
    * Returns the document for the specified file which has already been loaded into memory.<p/>
@@ -56,8 +69,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * @param file the file for which the document is requested.
    * @return the document, or null if the specified virtual file hasn't been loaded into memory.
    */
-  @Nullable
-  public abstract Document getCachedDocument(@NotNull VirtualFile file);
+  public abstract @Nullable Document getCachedDocument(@NotNull VirtualFile file);
 
   /**
    * Returns the virtual file corresponding to the specified document.
@@ -65,8 +77,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * @param document the document for which the virtual file is requested.
    * @return the file, or null if the document wasn't created from a virtual file.
    */
-  @Nullable
-  public abstract VirtualFile getFile(@NotNull Document document);
+  public abstract @Nullable VirtualFile getFile(@NotNull Document document);
 
   /**
    * Saves all unsaved documents to disk. This operation can modify documents that will be saved
@@ -154,8 +165,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
    */
   public abstract void reloadFromDisk(@NotNull Document document);
 
-  @NotNull
-  public abstract String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project);
+  public abstract @NotNull String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project);
 
   /**
    * Requests writing access on the given document, possibly involving interaction with user.
@@ -170,8 +180,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
   /**
    * Requests writing access info on the given document. Can involve interaction with user.
    */
-  @NotNull
-  public WriteAccessStatus requestWritingStatus(@NotNull Document document, @Nullable Project project) {
+  public @NotNull WriteAccessStatus requestWritingStatus(@NotNull Document document, @Nullable Project project) {
     return requestWriting(document, project) ? WriteAccessStatus.WRITABLE : WriteAccessStatus.NON_WRITABLE;
   }
 
@@ -190,8 +199,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
   public void reloadBinaryFiles() { }
 
   @ApiStatus.Internal
-  @Nullable
-  public FileViewProvider findCachedPsiInAnyProject(@NotNull VirtualFile file) {
+  public @Nullable FileViewProvider findCachedPsiInAnyProject(@NotNull VirtualFile file) {
     return null;
   }
 
@@ -225,10 +233,8 @@ public abstract class FileDocumentManager implements SavingRequestor {
 
     public boolean hasWriteAccess() {return myWithWriteAccess;}
 
-    @NotNull
-    public @NlsContexts.HintText String getReadOnlyMessage() {return myReadOnlyMessage;}
+    public @NotNull @NlsContexts.HintText String getReadOnlyMessage() {return myReadOnlyMessage;}
 
-    @Nullable
-    public HyperlinkListener getHyperlinkListener() {return myHyperlinkListener;}
+    public @Nullable HyperlinkListener getHyperlinkListener() {return myHyperlinkListener;}
   }
 }

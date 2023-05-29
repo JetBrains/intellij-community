@@ -105,6 +105,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @ApiStatus.Internal
   public abstract <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(ID<K, V> indexId);
 
+  public void resetHints() { }
+
   @ApiStatus.Internal
   public abstract void waitUntilIndicesAreInitialized();
 

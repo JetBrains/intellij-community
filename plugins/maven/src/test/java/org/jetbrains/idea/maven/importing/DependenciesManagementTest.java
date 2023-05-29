@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
 import java.io.File;
@@ -130,7 +130,7 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
     myProjectsManager.getEmbeddersManager().releaseForcefullyInTests();
     myProjectsManager.scheduleResolveInTests(Arrays.asList(myProjectsManager.findProject(bom),
                                                            myProjectsManager.findProject(project)));
-    myProjectsManager.waitForResolvingCompletion();
+    myProjectsManager.waitForReadingCompletion();
 
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }
@@ -185,7 +185,7 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
     myProjectsManager.getEmbeddersManager().reset();
     myProjectsManager.scheduleResolveInTests(Arrays.asList(myProjectsManager.findProject(parent),
                                                            myProjectsManager.findProject(project)));
-    myProjectsManager.waitForResolvingCompletion();
+    myProjectsManager.waitForReadingCompletion();
 
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }

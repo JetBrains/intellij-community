@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -105,7 +106,9 @@ public interface Application extends ComponentManager {
    *
    * @param action the action to run.
    * @see CoroutinesKt#readAction
+   * @see CoroutinesKt#readActionBlocking
    */
+  @RequiresBlockingContext
   void runReadAction(@NotNull Runnable action);
 
   /**
@@ -117,8 +120,11 @@ public interface Application extends ComponentManager {
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
+   * @see CoroutinesKt#readAction
+   * @see CoroutinesKt#readActionBlocking
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @RequiresBlockingContext
   <T> T runReadAction(@NotNull Computable<T> computation);
 
   /**
@@ -131,8 +137,11 @@ public interface Application extends ComponentManager {
    * @param computation the computation to perform.
    * @return the result returned by the computation.
    * @throws E re-frown from ThrowableComputable
+   * @see CoroutinesKt#readAction
+   * @see CoroutinesKt#readActionBlocking
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @RequiresBlockingContext
   <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
@@ -142,7 +151,9 @@ public interface Application extends ComponentManager {
    * See also {@link WriteAction#run} for a more lambda-friendly version.
    *
    * @param action the action to run
+   * @see CoroutinesKt#writeAction
    */
+  @RequiresBlockingContext
   void runWriteAction(@NotNull Runnable action);
 
   /**
@@ -154,8 +165,10 @@ public interface Application extends ComponentManager {
    *
    * @param computation the computation to run
    * @return the result returned by the computation.
+   * @see CoroutinesKt#writeAction
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @RequiresBlockingContext
   <T> T runWriteAction(@NotNull Computable<T> computation);
 
   /**
@@ -168,8 +181,10 @@ public interface Application extends ComponentManager {
    * @param computation the computation to run
    * @return the result returned by the computation.
    * @throws E re-frown from ThrowableComputable
+   * @see CoroutinesKt#writeAction
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @RequiresBlockingContext
   <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
@@ -256,6 +271,10 @@ public interface Application extends ComponentManager {
    */
   void exit();
 
+  default void exit(boolean force, boolean exitConfirmed, boolean restart, int exitCode) {
+    exit();
+  }
+
   default void exit(boolean force, boolean exitConfirmed, boolean restart) {
     exit();
   }
@@ -322,7 +341,9 @@ public interface Application extends ComponentManager {
    *
    * @param runnable the runnable to execute.
    * @param expired  condition to check before execution.
+   * @see CoroutinesKt#getEDT
    */
+  @RequiresBlockingContext
   void invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired);
 
   /**
@@ -335,6 +356,7 @@ public interface Application extends ComponentManager {
    *
    * @param runnable the runnable to execute.
    * @param state    the state in which the runnable will be executed.
+   * @see CoroutinesKt#getEDT
    */
   @RequiresBlockingContext
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state);
@@ -351,7 +373,9 @@ public interface Application extends ComponentManager {
    * @param runnable the runnable to execute.
    * @param state    the state in which the runnable will be executed.
    * @param expired  condition to check before execution.
+   * @see CoroutinesKt#getEDT
    */
+  @RequiresBlockingContext
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired);
 
   /**
@@ -377,12 +401,14 @@ public interface Application extends ComponentManager {
    * @param runnable      the runnable to execute.
    * @param modalityState the state in which the runnable will be executed.
    * @throws ProcessCanceledException when the current thread is interrupted
+   * @see CoroutinesKt#getEDT
    */
   @RequiresBlockingContext
   void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) throws ProcessCanceledException;
 
   /**
    * Same as {@link #invokeAndWait(Runnable, ModalityState)}, using {@link ModalityState#defaultModalityState()}.
+   * @see CoroutinesKt#getEDT
    */
   @RequiresBlockingContext
   void invokeAndWait(@NotNull Runnable runnable) throws ProcessCanceledException;
@@ -392,6 +418,7 @@ public interface Application extends ComponentManager {
    *
    * @return the current modality state.
    */
+  @RequiresEdt
   @NotNull ModalityState getCurrentModalityState();
 
   /**
@@ -399,6 +426,7 @@ public interface Application extends ComponentManager {
    *
    * @return the modality state for the dialog to which the specified component belongs.
    */
+  @RequiresEdt
   @NotNull ModalityState getModalityStateForComponent(@NotNull Component c);
 
   /**
@@ -485,6 +513,7 @@ public interface Application extends ComponentManager {
    * @param action to be executed
    * @return future result
    */
+  @RequiresBlockingContext
   @NotNull Future<?> executeOnPooledThread(@NotNull Runnable action);
 
   /**
@@ -500,6 +529,7 @@ public interface Application extends ComponentManager {
    * @param action to be executed
    * @return future result
    */
+  @RequiresBlockingContext
   @NotNull <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action);
 
   /**

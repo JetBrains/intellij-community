@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.openapi.Disposable;
@@ -44,13 +44,11 @@ public final class MavenShortcutsManager implements Disposable {
 
   private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
 
-  @NotNull
-  public static MavenShortcutsManager getInstance(Project project) {
+  public static @NotNull MavenShortcutsManager getInstance(Project project) {
     return project.getService(MavenShortcutsManager.class);
   }
 
-  @Nullable
-  public static MavenShortcutsManager getInstanceIfCreated(@NotNull Project project) {
+  public static @Nullable MavenShortcutsManager getInstanceIfCreated(@NotNull Project project) {
     return project.getServiceIfCreated(MavenShortcutsManager.class);
   }
 
@@ -97,8 +95,7 @@ public final class MavenShortcutsManager implements Disposable {
     myListeners.clear();
   }
 
-  @NotNull
-  public String getActionId(@Nullable String projectPath, @Nullable String goal) {
+  public @NotNull String getActionId(@Nullable String projectPath, @Nullable String goal) {
     StringBuilder result = new StringBuilder(ACTION_ID_PREFIX);
     result.append(myProject.getLocationHash());
 

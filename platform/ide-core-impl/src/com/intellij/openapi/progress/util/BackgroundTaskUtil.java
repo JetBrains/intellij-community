@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
@@ -239,7 +238,7 @@ public final class BackgroundTaskUtil {
    * {@link ProgressIndicator} which gets cancelled when the given disposable is disposed. <br/><br/>
    * <p>
    * This allows to stop a lengthy background activity by calling {@link ProgressManager#checkCanceled()}
-   * and avoid Already Disposed exceptions (in particular, because checkCanceled() is called in {@link ServiceManager#getService(Class)}.
+   * and avoid Already Disposed exceptions (in particular, because checkCanceled() is called in {@link ComponentManager#getService(Class)}.
    */
   @CalledInAny
   public static @NotNull ProgressIndicator executeOnPooledThread(@NotNull Disposable parent, @NotNull Runnable runnable) {

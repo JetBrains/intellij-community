@@ -150,7 +150,7 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
   }
 
   fun `test quickfix class expression suite converter`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       import junit.framework.TestSuite
       import junit.framework.Test
@@ -185,11 +185,11 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
         companion object {
         }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", testPreview = true)
   }
 
   fun `test quickfix nested suite converter`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       import junit.framework.TestSuite
       import junit.framework.Test
@@ -243,11 +243,11 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
         companion object {
         }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", testPreview = true)
   }
 
   fun `test quickfix assertion converter`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       
       class JUnit3<caret>Test : TestCase() {
@@ -266,11 +266,11 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
               Assert.assertEquals(2, 1 + 1)
           }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", testPreview = true)
   }
 
   fun `test quickfix setup and teardown converter`() {
-    myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       
       class JUnit3<caret>Test : TestCase() {
@@ -314,6 +314,6 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
               println("tearDown")
           }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", testPreview = true)
   }
 }

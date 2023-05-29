@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.CommonBundle
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
@@ -15,10 +16,12 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButto
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
+import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleContextCache
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -28,6 +31,8 @@ import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
 import java.util.*
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.Border
 import kotlin.math.ceil
@@ -54,7 +59,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   private var windowListener: WindowAdapter
   private val componentListener: ComponentListener
-  private val iconProvider = ScaleContext.Cache(::getFrameIcon)
+  private val iconProvider = ScaleContextCache(::getFrameIcon)
 
   protected var myActive = false
 
@@ -237,6 +242,20 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   open fun addMenuItems(menu: JPopupMenu) {
     val closeMenuItem = menu.add(myCloseAction)
     closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
+  }
+
+  override fun getAccessibleContext(): AccessibleContext {
+    if (accessibleContext == null) {
+      accessibleContext = AccessibleCustomHeader()
+      accessibleContext.accessibleName = UIBundle.message("frame.header.accessible.group.name")
+    }
+    return accessibleContext
+  }
+
+  private inner class AccessibleCustomHeader: AccessibleJPanel() {
+    override fun getAccessibleRole(): AccessibleRole {
+      return AccessibilityUtils.GROUPED_ELEMENTS
+    }
   }
 
   inner class CustomFrameTopBorder(val isTopNeeded: () -> Boolean = { true }, val isBottomNeeded: () -> Boolean = { false }) : Border {

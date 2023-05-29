@@ -33,7 +33,7 @@ interface CodeVisionGroupSettingProvider {
     val languageId = previewLanguage?.id ?: return defaultDescription
     val ep = CodeVisionSettingsPreviewLanguage.EP_NAME.extensionList.first { it.language == languageId } ?: return defaultDescription
     val bundle = ep.findBundle() ?: return defaultDescription
-    return BundleBase.messageOrDefault(bundle, "$languageId.codeLens.$groupId.description", defaultDescription)
+    return BundleBase.messageOrDefault(bundle, "$languageId.codeLens.$groupId.description", defaultDescription)!!
   }
 
   private val defaultDescription: @Nls String
@@ -45,7 +45,7 @@ interface CodeVisionGroupSettingProvider {
       return CodeVisionSettingsPreviewLanguage.EP_NAME.extensionList.asSequence()
                .filter { it.modelId == groupId }
                .map { Language.findLanguageByID(it.language) }
-               .sortedBy { primaryIdeLanguages.indexOf(it).takeIf { it != -1 } ?: Integer.MAX_VALUE }
+               .sortedBy { language -> primaryIdeLanguages.indexOf(language).takeIf { it != -1 } ?: Integer.MAX_VALUE }
                .firstOrNull()
              ?: Language.findLanguageByID("JAVA")
     }

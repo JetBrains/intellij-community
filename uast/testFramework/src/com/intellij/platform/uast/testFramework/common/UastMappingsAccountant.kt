@@ -4,6 +4,7 @@ package com.intellij.platform.uast.testFramework.common
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
+import com.intellij.platform.uast.testFramework.common.UastMappingsAccountant.computeMappingsInSeveralViewsSimultaneously
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -11,7 +12,6 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.parents
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastFacade
-import com.intellij.platform.uast.testFramework.common.UastMappingsAccountant.computeMappingsInSeveralViewsSimultaneously
 import java.nio.file.Path
 
 
@@ -22,7 +22,7 @@ internal typealias PsiClazz = Class<out PsiElement>
 internal typealias UastClazz = Class<out UElement>
 
 data class Location(val path: Path, val line: Int) {
-  override fun toString() = "$path:$line"
+  override fun toString(): String = "$path:$line"
 }
 
 /**
@@ -38,7 +38,7 @@ typealias PsiContextBuilder = (PsiElement) -> PsiContext
 typealias UastMappingsRepository<S, T> = Map3<S, PsiContext, UastClazz, Collection<T>>
 typealias UastMutableMappingsRepository<S, T> = MutableMap3<S, PsiContext, UastClazz, MutableCollection<T>>
 
-fun <S, T> mutableUastMappingsRepository() = mutableMap3Of<S, PsiContext, UastClazz, MutableCollection<T>>()
+fun <S, T> mutableUastMappingsRepository(): MutableMap3<S, PsiContext, UastClazz, MutableCollection<T>> = mutableMap3Of()
 
 //endregion
 /* ------------------------------------------------------------------------------------------- */
@@ -186,7 +186,7 @@ data class PairWithFirstIdentity<out F, out S>(val first: F, val second: S) {
     return true
   }
 
-  override fun hashCode() = first?.hashCode() ?: 0
+  override fun hashCode(): Int = first?.hashCode() ?: 0
 }
 
 //endregion

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.RainbowVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
+import com.intellij.codeInsight.highlighting.PassRunningAssert;
 import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -65,7 +66,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   };
   private static final Random RESTART_DAEMON_RANDOM = new Random();
 
-  private static final HighlightingPerformanceAssert HIGHLIGHTING_PERFORMANCE_ASSERT = new HighlightingPerformanceAssert();
+  private static final PassRunningAssert HIGHLIGHTING_PERFORMANCE_ASSERT =
+    new PassRunningAssert("the expensive method should not be called inside the highlighting pass");
 
   final boolean myUpdateAll;
   @NotNull
@@ -108,7 +110,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   public static void assertHighlightingPassNotRunning() {
-    HIGHLIGHTING_PERFORMANCE_ASSERT.assertHighlightingPassNotRunning();
+    HIGHLIGHTING_PERFORMANCE_ASSERT.assertPassNotRunning();
   }
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");

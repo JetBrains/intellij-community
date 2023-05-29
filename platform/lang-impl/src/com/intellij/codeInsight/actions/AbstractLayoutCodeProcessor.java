@@ -4,6 +4,9 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.core.CoreBundle;
+import com.intellij.formatting.service.CoreFormattingService;
+import com.intellij.formatting.service.FormattingService;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -345,7 +348,8 @@ public abstract class AbstractLayoutCodeProcessor {
 
   private static boolean canBeFormatted(@NotNull PsiFile file) {
     if (!file.isValid()) return false;
-    if (LanguageFormatting.INSTANCE.forContext(file) == null) {
+    FormattingService formattingService = FormattingServiceUtil.findService(file, true, true);
+    if (formattingService instanceof CoreFormattingService && LanguageFormatting.INSTANCE.forContext(file) == null) {
       return false;
     }
     VirtualFile virtualFile = file.getVirtualFile();

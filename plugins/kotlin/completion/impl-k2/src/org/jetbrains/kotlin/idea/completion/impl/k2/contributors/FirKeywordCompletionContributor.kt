@@ -62,7 +62,7 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
                     createLookups(parameters, expression, lookupElement, project)
                 }
                 ?: listOf(lookupElement)
-            lookups.forEach { Weighers.applyWeighsToLookupElement(weighingContext, it, symbol = null, scopeKind = null) }
+            lookups.forEach { Weighers.applyWeighsToLookupElement(weighingContext, it, symbolWithOrigin = null) }
             sink.addAllElements(lookups)
         }
     }

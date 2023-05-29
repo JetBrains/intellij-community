@@ -148,6 +148,7 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
 
     settingsToApply.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
     settingsToApply.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
+    settingsToApply.setFocusToolWindowBeforeRun(myBeforeRunStepsPanel.needFocusToolWindowBeforeRun());
     if (content.isAllowRunningInParallelCheckBox.isVisible()) {
       settings.getConfiguration().setAllowRunningInParallel(content.isAllowRunningInParallelCheckBox.isSelected());
     }

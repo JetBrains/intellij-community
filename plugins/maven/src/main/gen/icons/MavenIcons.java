@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -16,7 +16,7 @@ public final class MavenIcons {
   }
   /** 16x16 */ public static final @NotNull Icon ChildrenProjects = load("images/childrenProjects.svg", -985931240, 2);
   /** 16x16 */ public static final @NotNull Icon ExecuteMavenGoal = load("images/executeMavenGoal.svg", 1616290340, 2);
-  /** 16x16 */ public static final @NotNull Icon MavenIgnored = load("images/mavenIgnored.svg", -1186342609, 2);
+  /** 16x16 */ public static final @NotNull Icon MavenIgnored = load("images/mavenIgnored.svg", -1681982409, 2);
   /** 16x16 */ public static final @NotNull Icon MavenLoadChanges = load("images/mavenLoadChanges.svg", -855662362, 2);
   /** 16x16 */ public static final @NotNull Icon MavenPlugin = load("images/mavenPlugin.svg", 1839929032, 0);
   /** 16x16 */ public static final @NotNull Icon MavenProject = load("images/mavenProject.svg", 1041122923, 0);

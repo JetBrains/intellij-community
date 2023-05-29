@@ -115,6 +115,7 @@ open class AddModifierFix(
         val addFinalToProperty = AddModifierFix.createFactory(KtTokens.FINAL_KEYWORD, KtProperty::class.java)
         val addInnerModifier = createFactory(KtTokens.INNER_KEYWORD)
         val addOverrideModifier = createFactory(KtTokens.OVERRIDE_KEYWORD)
+        val addDataModifier = createFactory(KtTokens.DATA_KEYWORD, KtClass::class.java)
 
         val modifiersWithWarning: Set<KtModifierKeywordToken> = setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.FINAL_KEYWORD)
         private val modalityModifiers = modifiersWithWarning + KtTokens.OPEN_KEYWORD

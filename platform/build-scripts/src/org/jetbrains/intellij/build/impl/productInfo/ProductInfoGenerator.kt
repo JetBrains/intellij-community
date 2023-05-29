@@ -86,7 +86,8 @@ data class ProductInfoLaunchData(
   val vmOptionsFilePath: String,
   val startupWmClass: String? = null,
   val bootClassPathJarNames: List<String>,
-  val additionalJvmArguments: List<String>
+  val additionalJvmArguments: List<String>,
+  val mainClass: String
 )
 
 @Serializable

@@ -8,12 +8,14 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferRead
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
 import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-final class PersistentFSAttributeAccessor {
+@ApiStatus.Internal
+public final class PersistentFSAttributeAccessor {
 
   @NotNull
   private final PersistentFSConnection connection;
@@ -34,6 +36,13 @@ final class PersistentFSAttributeAccessor {
   public AttributeInputStream readAttribute(final int fileId,
                                             final @NotNull FileAttribute attribute) throws IOException {
     final AttributeInputStream attributeStream = attributesStorage.readAttribute(connection, fileId, attribute);
+    return validateAttributeVersion(attribute, attributeStream);
+  }
+
+  @ApiStatus.Internal
+  @Nullable
+  public static AttributeInputStream validateAttributeVersion(final @NotNull FileAttribute attribute,
+                                                              final AttributeInputStream attributeStream) {
     if (attributeStream != null && attribute.isVersioned()) {
       try {
         final int actualVersion = DataInputOutputUtil.readINT(attributeStream);

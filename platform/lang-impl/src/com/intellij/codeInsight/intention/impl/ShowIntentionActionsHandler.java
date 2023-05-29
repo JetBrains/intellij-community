@@ -27,7 +27,10 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.IntentionsCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -48,10 +51,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -220,7 +226,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       PsiFile fileToApply = null;
 
       Editor injectedEditor = null;
-      // TODO: support intention preview in injections
       if (injectedFile != null && !(hostEditor instanceof IntentionPreviewEditor)) {
         injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile);
         if (predicate.process(injectedFile, injectedEditor)) {
@@ -253,13 +258,67 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
-      Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
-      if (pair == null) return false;
-      CommandProcessor.getInstance().executeCommand(project, () ->
-        invokeIntention(action, pair.second, pair.first), commandName, null);
-      checkPsiTextConsistency(hostFile);
+      ModCommandAction commandAction = ModCommandAction.unwrap(action);
+      if (commandAction != null) {
+        invokeCommandAction(hostFile, hostEditor, commandName, commandAction);
+      } else {
+        Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
+        if (pair == null) return false;
+        CommandProcessor.getInstance().executeCommand(project, () ->
+          invokeIntention(action, pair.second, pair.first), commandName, null);
+        checkPsiTextConsistency(hostFile);
+      }
     }
     return true;
+  }
+
+  private static void invokeCommandAction(@NotNull PsiFile hostFile,
+                                          @Nullable Editor hostEditor,
+                                          @NotNull @NlsContexts.Command String commandName,
+                                          @NotNull ModCommandAction commandAction) {
+    record ContextAndCommand(@NotNull ModCommandAction.ActionContext context, @NotNull ModCommand command) { }
+    ReadAction.nonBlocking(() -> {
+        ModCommandAction.ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction);
+        return context == null ? null : new ContextAndCommand(context, commandAction.perform(context));
+      })
+      .finishOnUiThread(ModalityState.defaultModalityState(), contextAndCommand -> {
+        if (contextAndCommand == null) return;
+        ModCommandAction.ActionContext context = contextAndCommand.context();
+        Project project = context.project();
+        IntentionsCollector.record(project, commandAction, context.file().getLanguage());
+        CommandProcessor.getInstance().executeCommand(project, () -> {
+          contextAndCommand.command().execute(project);
+        }, commandName, null);
+      })
+      .expireWhen(() -> hostFile.getProject().isDisposed())
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  @Nullable
+  @RequiresBackgroundThread
+  private static ModCommandAction.ActionContext chooseContextForAction(@NotNull PsiFile hostFile,
+                                                                       @Nullable Editor hostEditor,
+                                                                       @NotNull ModCommandAction commandAction) {
+    if (hostEditor == null) {
+      return ModCommandAction.ActionContext.from(null, hostFile);
+    }
+    PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, hostEditor.getCaretModel().getOffset());
+    Editor injectedEditor = null;
+    if (injectedFile != null && !(hostEditor instanceof IntentionPreviewEditor)) {
+      injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile);
+      ModCommandAction.ActionContext injectedContext = ModCommandAction.ActionContext.from(injectedEditor, injectedFile);
+      if (commandAction.getPresentation(injectedContext) != null) {
+        return injectedContext;
+      }
+    }
+
+    if (hostEditor != injectedEditor) {
+      ModCommandAction.ActionContext hostContext = ModCommandAction.ActionContext.from(hostEditor, hostFile);
+      if (commandAction.getPresentation(hostContext) != null) {
+        return hostContext;
+      }
+    }
+    return null;
   }
 
   private static void checkPsiTextConsistency(@NotNull PsiFile hostFile) {

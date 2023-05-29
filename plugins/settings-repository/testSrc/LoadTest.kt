@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.TestScheme
-import com.intellij.configurationStore.save
 import com.intellij.configurationStore.serialize
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
@@ -18,7 +18,6 @@ import org.eclipse.jgit.lib.Repository
 import org.jetbrains.settingsRepository.ReadonlySource
 import org.jetbrains.settingsRepository.SyncType
 import org.jetbrains.settingsRepository.getOsFolderName
-import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.commit
 import org.junit.Assert.assertFalse
@@ -39,7 +38,7 @@ class LoadTest : LoadTestBase() {
 
     schemeManager.save()
 
-    val dirPath = (icsManager.repositoryManager as GitRepositoryManager).repository.workTree.toPath().resolve(dirName)
+    val dirPath = icsManager.repositoryManager.repository.workTree.toPath().resolve(dirName)
     assertThat(dirPath).isDirectory()
 
     schemeManager.removeScheme(actualLocalScheme)
@@ -125,7 +124,7 @@ class LoadTest : LoadTestBase() {
 
   @Test
   fun `deprecated per-os storage shouldn't resolve to the actual storage`() {
-    val componentStore = ApplicationStoreImpl().apply { setPath(configDir.value) }
+    val componentStore = ApplicationStoreImpl(ApplicationManager.getApplication()).apply { setPath(configDir.value) }
     componentStore.storageManager.addStreamProvider(provider)
 
     val _macKeymapXml = repositoryDir.resolve("${getOsFolderName()}/keymap.xml")

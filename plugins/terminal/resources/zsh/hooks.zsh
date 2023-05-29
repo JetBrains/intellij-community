@@ -24,6 +24,19 @@ __intellij_encode_large() {
   fi
 }
 
+__intellij_prompt_shown() {
+  builtin printf '\e]1341;prompt_shown\a'
+}
+
+__intellij_configure_prompt() {
+  PS1="%{$(__intellij_prompt_shown)%}"
+  # do not show right prompt
+  builtin unset RPS1
+  builtin unset RPROMPT
+  # always show new prompt after completion list
+  builtin unsetopt ALWAYS_LAST_PROMPT
+}
+
 __intellij_command_preexec() {
   builtin local entered_command="$1"
   builtin local current_directory="$PWD"
@@ -34,13 +47,20 @@ __intellij_command_precmd() {
   builtin local LAST_EXIT_CODE="$?"
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_finished;exit_code=%s;current_directory=%s\a' "$LAST_EXIT_CODE" "$(__intellij_encode "${current_directory}")"
+  __intellij_configure_prompt
 }
 
 add-zsh-hook preexec __intellij_command_preexec
 add-zsh-hook precmd __intellij_command_precmd
 
+# Do not show "zsh: do you wish to see all <N> possibilities (<M> lines)?" question
+# when there are big number of completion items
+LISTMAX=1000000
+
 # This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
 builtin printf '\e]1341;initialized\a'
+
+__intellij_configure_prompt
 
 # `HISTFILE` is already initialized at this point.
 # Get all commands from history from the first command

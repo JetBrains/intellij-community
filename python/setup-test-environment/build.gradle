@@ -43,16 +43,31 @@ envs {
   String python39version = "3.9.13"
   String python310version = "3.10.8"
   String python311version = "3.11.0"
+  String python312version = "3.12.0a7"
 
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
 
-  def djangoTrunkOnly  = System.getProperty("djangoTrunkOnly") ?: false
+  def djangoTrunkOnly = System.getProperty("djangoTrunkOnly") ?: false
 
-  if (System.getenv().containsKey("PYCHARM_ZIP_REPOSITORY")) {
-    zipRepository = new URL(System.getenv().get("PYCHARM_ZIP_REPOSITORY"))
-    shouldUseZipsFromRepository = isWindows
+
+  if (isWindows) {
+    // On Windows you almost always want to use cache server except you are outside of JB
+    def zipRepositoryURL = new URL(
+      System.getenv().getOrDefault("PYCHARM_ZIP_REPOSITORY", "https://repo.labs.intellij.net/pycharm/python-archives-windows/"))
+    try {
+      zipRepositoryURL.getContent()
+    }
+    catch (Exception ignored) {
+      zipRepositoryURL = null
+      System.err.println("Cache server is only accessible from JB network. Will try to build python from scratch. Use cache if possible")
+    }
+    if (zipRepositoryURL != null) {
+      zipRepository = zipRepositoryURL
+      shouldUseZipsFromRepository = true
+    }
   }
+
   Boolean shouldUseCondaInterpreters = System.getenv().getOrDefault("PYCHARM_USE_CONDA", "false").toBoolean()
 
   Closure createPython = { String pythonName,
@@ -143,6 +158,11 @@ envs {
                "python3.11",
                true)
 
+  createPython("python3.12",
+               python312version,
+               [],
+               "python3\npython3.12")
+
   // For tox
   createPython("py36",
                python36version,
@@ -160,21 +180,21 @@ envs {
   createPython("py37_tensorflow1_oldpaths",
                python37version,
                ["tensorflow < 1.15.0rc0"],
-               "tensorflow1\ntensorflow_oldpaths",
+               "tensorflow1\ntensorflow_oldpaths\npython3.7",
                true)
   createPython("py37_tensorflow1_newpaths",
                python37version,
                ["tensorflow >= 1.15.0rc0, < 2.0.0a0"],
-               "tensorflow1\ntensorflow_newpaths",
+               "tensorflow1\ntensorflow_newpaths\npython3.7",
                true)
   createPython("py37_tensorflow2_newpaths",
                python37version,
                ["tensorflow >= 2.0.0rc0"],
-               "tensorflow2\ntensorflow_newpaths",
+               "tensorflow2\ntensorflow_newpaths\npython3.7",
                true)
 
   if (isUnix) {
-    createPython("qt_env", python37version, ["pyqt5==5.12", "PySide2==5.12.1"], "qt", true)
+    createPython("qt_env", python37version, ["pyqt5==5.12", "PySide2==5.12.1"], "qt\npython3.7", true)
   }
 }
 

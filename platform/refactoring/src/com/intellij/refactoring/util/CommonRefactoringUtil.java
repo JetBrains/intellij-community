@@ -245,14 +245,6 @@ public final class CommonRefactoringUtil {
     });
   }
 
-  /**
-   * @deprecated use {@link StringUtil#capitalize(String)}
-   */
-  @Deprecated(forRemoval = true)
-  public static String capitalize(@NotNull String text) {
-    return StringUtil.capitalize(text);
-  }
-
   public static boolean isAncestor(@NotNull PsiElement resolved, @NotNull Collection<? extends PsiElement> scopes) {
     for (final PsiElement scope : scopes) {
       if (PsiTreeUtil.isAncestor(scope, resolved, false)) return true;

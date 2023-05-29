@@ -66,7 +66,7 @@ class RuntimeChooserDialog(
       }.getOrNull()
 
       if (!newPath.isNullOrBlank() && knownPaths.add(newPath)) {
-        RuntimeChooserCustom.importDetectedItem(newPath.trim(), model)
+        RuntimeChooserCustom.importDetectedItem(newPath.trim(), model, true)
       }
     }
 
@@ -225,7 +225,7 @@ class RuntimeChooserDialog(
         jdkCombobox.addItemListener { updateLocation() }
       }
     }.apply {
-      border = IntelliJSpacingConfiguration().dialogGap.toJBEmptyBorder()
+      border = IntelliJSpacingConfiguration().dialogUnscaledGaps.toJBEmptyBorder()
       putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
     }
   }

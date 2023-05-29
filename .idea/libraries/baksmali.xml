@@ -13,6 +13,9 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/smali/util/2.5.2/util-2.5.2.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/smali/baksmali/2.5.2/baksmali-2.5.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/smali/util/2.5.2/util-2.5.2-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

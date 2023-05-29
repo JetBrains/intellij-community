@@ -81,14 +81,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
       });
     }
     MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, SyncBundle.message("maven.sync.restarting"), false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        connectorsToShutDown.forEach(it -> {
-          it.stop(wait);
-        });
-      }
-    });
+    MavenServerManagerEx.stopConnectors(project, wait, connectorsToShutDown);
   }
 
   MavenServerManagerImpl() {

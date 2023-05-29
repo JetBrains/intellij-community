@@ -1,0 +1,20 @@
+LineBreakpoint created at breakpointInOneLineLambda.kt:7 lambdaOrdinal = 1
+LineBreakpoint created at breakpointInOneLineLambda.kt:9 lambdaOrdinal = 1
+LineBreakpoint created at breakpointInOneLineLambda.kt:13 lambdaOrdinal = 1
+LineBreakpoint created at breakpointInOneLineLambda.kt:17 lambdaOrdinal = 1
+Run Java
+Connected to the target VM
+breakpointInOneLineLambda.kt:7
+breakpointInOneLineLambda.kt:9
+breakpointInOneLineLambda.kt:7
+breakpointInOneLineLambda.kt:9
+breakpointInOneLineLambda.kt:7
+breakpointInOneLineLambda.kt:9
+breakpointInOneLineLambda.kt:13
+breakpointInOneLineLambda.kt:13
+breakpointInOneLineLambda.kt:17
+breakpointInOneLineLambda.kt:17
+breakpointInOneLineLambda.kt:17
+Disconnected from the target VM
+
+Process finished with exit code 0

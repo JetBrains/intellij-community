@@ -10,22 +10,20 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class CodeInsightBundle extends DynamicBundle {
-  @NonNls public static final String BUNDLE = "messages.CodeInsightBundle";
-  private static final CodeInsightBundle INSTANCE = new CodeInsightBundle();
+public final class CodeInsightBundle {
+  public static final @NonNls String BUNDLE = "messages.CodeInsightBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(CodeInsightBundle.class, BUNDLE);
 
-  private CodeInsightBundle() { super(BUNDLE); }
+  private CodeInsightBundle() {}
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     if (INSTANCE.containsKey(key)) {
       return INSTANCE.getMessage(key, params);
     }
     return IdeDeprecatedMessagesBundle.message(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     if (INSTANCE.containsKey(key)) {
       return INSTANCE.getLazyMessage(key, params);
     }

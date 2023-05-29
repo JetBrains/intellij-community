@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Condition;
@@ -37,35 +37,25 @@ public class UniqueNameGenerator implements Condition<String> {
     return value(prefix + name + suffix);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String generateUniqueName(@NotNull String defaultName, @NotNull Collection<String> existingNames) {
+  public static @NlsSafe @NotNull String generateUniqueName(@NotNull String defaultName, @NotNull Collection<String> existingNames) {
     return generateUniqueName(defaultName, "", "", existingNames);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix, @NotNull Collection<String> existingNames) {
+  public static @NlsSafe @NotNull String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix, @NotNull Collection<String> existingNames) {
     return generateUniqueName(defaultName, prefix, suffix, s -> !existingNames.contains(s));
   }
 
-  @NlsSafe
-  @NotNull
-  public static String generateUniqueName(@NotNull String defaultName, @NotNull Condition<? super String> validator) {
+  public static @NlsSafe @NotNull String generateUniqueName(@NotNull String defaultName, @NotNull Condition<? super String> validator) {
     return generateUniqueName(defaultName, "", "", validator);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix, @NotNull Condition<? super String> validator) {
+  public static @NlsSafe @NotNull String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix, @NotNull Condition<? super String> validator) {
     return generateUniqueName(defaultName, prefix, suffix, "", "", validator);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix,
-                                          @NotNull String beforeNumber, @NotNull String afterNumber,
-                                          @NotNull Condition<? super String> validator) {
+  public static @NlsSafe @NotNull String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix,
+                                                            @NotNull String beforeNumber, @NotNull String afterNumber,
+                                                            @NotNull Condition<? super String> validator) {
     String defaultFullName = (prefix + defaultName + suffix).trim();
     if (validator.value(defaultFullName)) {
       return defaultFullName;
@@ -79,15 +69,11 @@ public class UniqueNameGenerator implements Condition<String> {
     }
   }
 
-  @NlsSafe
-  @NotNull
-  public String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix) {
+  public @NlsSafe @NotNull String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix) {
     return generateUniqueName(defaultName, prefix, suffix, "", "");
   }
 
-  @NlsSafe
-  @NotNull
-  public String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix, @NotNull String beforeNumber, @NotNull String afterNumber) {
+  public @NlsSafe @NotNull String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix, @NotNull String beforeNumber, @NotNull String afterNumber) {
     String result = generateUniqueName(defaultName, prefix, suffix, beforeNumber, afterNumber, this);
     addExistingName(result);
     return result;
@@ -97,9 +83,7 @@ public class UniqueNameGenerator implements Condition<String> {
     myExistingNames.add(result);
   }
 
-  @NlsSafe
-  @NotNull
-  public String generateUniqueName(@NotNull String defaultName) {
+  public @NlsSafe @NotNull String generateUniqueName(@NotNull String defaultName) {
     return generateUniqueName(defaultName, "", "");
   }
 }

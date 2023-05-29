@@ -76,7 +76,7 @@ class ServiceSingleView extends ServiceView {
   @Override
   List<ServiceViewItem> getSelectedItems() {
     ServiceViewItem item = myRef.get();
-    return item == null ? Collections.emptyList() : Collections.singletonList(item);
+    return ContainerUtil.createMaybeSingletonList(item);
   }
 
   @Override

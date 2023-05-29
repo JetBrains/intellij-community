@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.diagnostic;
 
-import com.intellij.diagnostic.telemetry.helpers.SharedMetrics;
+import com.intellij.platform.diagnostic.telemetry.Scope;
+import com.intellij.platform.diagnostic.telemetry.helpers.SharedMetrics;
 
 import java.util.concurrent.Semaphore;
 
@@ -9,7 +10,7 @@ public final class ExternalSystemSyncDiagnostic extends SharedMetrics {
   private static final Semaphore lock = new Semaphore(1);
   private static ExternalSystemSyncDiagnostic instance = null;
 
-  private ExternalSystemSyncDiagnostic() { super("external-system-sync"); }
+  private ExternalSystemSyncDiagnostic() { super(new Scope("external-system-sync", null)); }
 
   public static ExternalSystemSyncDiagnostic getInstance() {
     try {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.ide.IdeBundle
@@ -99,7 +99,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     ideFontProperty.afterChange(parentDisposable) {
       if (settings.fontSize2D == it) return@afterChange
       settings.fontFace = getIdeFontName()
-      settings.overrideLafFonts = true
+      NotRoamableUiSettings.getInstance().overrideLafFonts = true
       WelcomeScreenEventCollector.logIdeFontChanged(settings.fontSize2D, it)
       settings.fontSize2D = it
       updateFontSettingsLater()

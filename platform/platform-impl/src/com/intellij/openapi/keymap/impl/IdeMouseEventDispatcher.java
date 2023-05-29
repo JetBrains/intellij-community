@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -397,7 +397,7 @@ public final class IdeMouseEventDispatcher {
 
   public static boolean isDiagramViewComponent(@Nullable Component component) {
     // in production yfiles classes is obfuscated
-    return component != null && ClientProperty.isTrue((Component)component, "Diagram-View-Component-Key");
+    return component != null && ClientProperty.isTrue(component, "Diagram-View-Component-Key");
   }
 
   public void blockNextEvents(@NotNull MouseEvent e, @NotNull IdeEventQueue.BlockMode blockMode) {

@@ -13,7 +13,6 @@ abstract class MismatchedLightServiceLevelAndCtorInspectionTestBase : LightDevKi
     super.setUp()
     myFixture.enableInspections(MismatchedLightServiceLevelAndCtorInspection())
     myFixture.addClass(
-      //language=java
       """
       package com.intellij.openapi.components;
 
@@ -24,7 +23,6 @@ abstract class MismatchedLightServiceLevelAndCtorInspectionTestBase : LightDevKi
       }
       """)
     myFixture.addClass(
-      //language=java
       """
       package com.intellij.openapi.project;
 
@@ -33,7 +31,6 @@ abstract class MismatchedLightServiceLevelAndCtorInspectionTestBase : LightDevKi
       public interface Project extends ComponentManager {}
       """)
     myFixture.addClass(
-      //language=java
       """
       package kotlinx.coroutines;
 

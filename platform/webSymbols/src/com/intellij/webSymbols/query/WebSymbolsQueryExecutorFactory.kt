@@ -9,6 +9,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.WebSymbolsScope
 import org.jetbrains.annotations.TestOnly
 
+/**
+ * Use the factory to create [WebSymbolsQueryExecutor] for a particular location in the source code.
+ */
 interface WebSymbolsQueryExecutorFactory : Disposable {
 
   fun create(location: PsiElement?, allowResolve: Boolean = true): WebSymbolsQueryExecutor

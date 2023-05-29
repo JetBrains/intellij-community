@@ -2,9 +2,8 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.CommandLineUtil;
-import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.Disposable;
@@ -38,11 +37,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.exp.TerminalWidgetImpl;
+import org.jetbrains.plugins.terminal.util.ShellIntegration;
+import org.jetbrains.plugins.terminal.util.ShellType;
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -50,7 +50,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -67,6 +66,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final String SH_NAME = "sh";
   private static final String ZSH_NAME = "zsh";
   private static final String FISH_NAME = "fish";
+  public static final String BLOCK_TERMINAL_REGISTRY = "ide.experimental.ui.new.terminal";
 
   protected final Charset myDefaultCharset;
   private final ThreadLocal<ShellStartupOptions> myStartupOptionsThreadLocal = new ThreadLocal<>();
@@ -79,11 +79,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Nullable
   private static String findRCFile(@NotNull String shellName) {
     String rcfile = switch (shellName) {
-      case BASH_NAME, SH_NAME -> "bash/jediterm-bash.in";
+      case BASH_NAME, SH_NAME -> "shell-integrations/bash/bash-integration.bash";
       case ZSH_NAME -> "zsh/.zshenv";
       case FISH_NAME -> "fish/init.fish";
       default -> null;
     };
+    if (rcfile == null && isPowerShell(shellName)) {
+      rcfile = "shell-integrations/powershell/powershell-integration.ps1";
+    }
     if (rcfile != null) {
       try {
         return findAbsolutePath(rcfile);
@@ -93,6 +96,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       }
     }
     return null;
+  }
+
+  private static boolean isPowerShell(@NotNull String shellName) {
+    return shellName.equalsIgnoreCase("powershell") ||
+           shellName.equalsIgnoreCase("powershell.exe") ||
+           shellName.equalsIgnoreCase("pwsh") ||
+           shellName.equalsIgnoreCase("pwsh.exe");
   }
 
   @NotNull
@@ -149,6 +159,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     // Prevent sourcing non-existent 'terminal/fish/config.fish' and 'terminal/.zshenv' by Fig.io
     envs.put("FIG_JETBRAINS_SHELL_INTEGRATION", "1");
 
+    if (Registry.is(BLOCK_TERMINAL_REGISTRY, false)) {
+      envs.put("INTELLIJ_TERMINAL_COMMAND_BLOCKS", "1");
+    }
+
     TerminalEnvironment.INSTANCE.setCharacterEncoding(envs);
 
     if (TrustedProjects.isTrusted(myProject)) {
@@ -165,7 +179,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent, @NotNull ShellStartupOptions startupOptions) {
-    if (Registry.is("ide.experimental.ui.new.terminal", false)) {
+    if (Registry.is(BLOCK_TERMINAL_REGISTRY, false)) {
       return new TerminalWidgetImpl(myProject, getSettingsProvider(), parent);
     }
     return super.createShellTerminalWidget(parent, startupOptions);
@@ -341,11 +355,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  protected ProcessHandler createProcessHandler(final PtyProcess process) {
-    return new PtyProcessHandler(process, getShellPath());
-  }
-
-  @Override
   public @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
     return new PtyProcessTtyConnector(process, myDefaultCharset) {
 
@@ -422,7 +431,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
     List<String> arguments = new ArrayList<>(shellCommand.subList(1, shellCommand.size()));
     Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(options.getEnvVariables());
-    boolean blockShellIntegrationEnabled = false;
+    ShellType shellType = null;
+    boolean withCommandBlocks = false;
 
     List<String> resultCommand = new ArrayList<>();
     resultCommand.add(shellExe);
@@ -436,6 +446,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         boolean loginShell = arguments.removeAll(LOGIN_CLI_OPTIONS);
         setLoginShellEnv(envs, loginShell);
         setCommandHistoryFile(options, envs);
+        shellType = ShellType.BASH;
+        withCommandBlocks = true;
       }
       else if (shellName.equals(ZSH_NAME)) {
         String zdotdir = envs.get(ZDOTDIR);
@@ -443,12 +455,19 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
           envs.put("_INTELLIJ_ORIGINAL_ZDOTDIR", zdotdir);
         }
         envs.put(ZDOTDIR, PathUtil.getParentPath(rcFilePath));
-        blockShellIntegrationEnabled = true;
+        shellType = ShellType.ZSH;
+        withCommandBlocks = true;
       }
       else if (shellName.equals(FISH_NAME)) {
         // `--init-command=COMMANDS` is available since Fish 2.7.0 (released November 23, 2017)
         // Multiple `--init-command=COMMANDS` are supported.
         resultCommand.add("--init-command=source " + CommandLineUtil.posixQuote(rcFilePath));
+        shellType = ShellType.FISH;
+      }
+      else if (isPowerShell(shellName)) {
+        resultCommand.addAll(List.of("-NoExit", "-ExecutionPolicy", "Bypass", "-File", rcFilePath));
+        shellType = ShellType.POWERSHELL;
+        withCommandBlocks = true;
       }
     }
 
@@ -456,7 +475,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return options.builder()
       .shellCommand(resultCommand)
       .envVariables(envs)
-      .blockShellIntegrationEnabled(blockShellIntegrationEnabled)
+      .shellIntegration(shellType != null ? new ShellIntegration(shellType, withCommandBlocks) : null)
       .build();
   }
 
@@ -513,65 +532,5 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   private static boolean isLogin(@NotNull List<String> command) {
     return ContainerUtil.exists(command, LOGIN_CLI_OPTIONS::contains);
-  }
-
-  private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {
-
-    private final PtyProcess myProcess;
-    private final ProcessWaitFor myWaitFor;
-
-    PtyProcessHandler(PtyProcess process, @NotNull String presentableName) {
-      myProcess = process;
-      myWaitFor = new ProcessWaitFor(process, this, presentableName);
-    }
-
-    @Override
-    public void startNotify() {
-      addProcessListener(new ProcessAdapter() {
-        @Override
-        public void startNotified(@NotNull ProcessEvent event) {
-          try {
-            myWaitFor.setTerminationCallback(integer -> notifyProcessTerminated(integer));
-          }
-          finally {
-            removeProcessListener(this);
-          }
-        }
-      });
-
-      super.startNotify();
-    }
-
-    @Override
-    protected void destroyProcessImpl() {
-      myProcess.destroy();
-    }
-
-    @Override
-    protected void detachProcessImpl() {
-      destroyProcessImpl();
-    }
-
-    @Override
-    public boolean detachIsDefault() {
-      return false;
-    }
-
-    @Override
-    public boolean isSilentlyDestroyOnClose() {
-      return true;
-    }
-
-    @Nullable
-    @Override
-    public OutputStream getProcessInput() {
-      return myProcess.getOutputStream();
-    }
-
-    @NotNull
-    @Override
-    public Future<?> executeTask(@NotNull Runnable task) {
-      return AppExecutorUtil.getAppExecutorService().submit(task);
-    }
   }
 }

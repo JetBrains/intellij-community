@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -278,8 +278,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
      * packing/unpacking cachedDeltaUpToRoot field parts
      * Bits layout:
      * XXXXXXXXNMMMMMMMM where
-     * XXXXXXXX - 31bit int containing cached delta up to root
-     * N        - 1bit flag.  if set then all deltas up to root are null
+     * XXXXXXXX - 31bit int containing cached delta up to the root
+     * N        - 1bit flag. If set, then all deltas up to root are null
      * MMMMMMMM - 32bit int containing this node modification count
      */
     private static final AtomicLongFieldUpdater<IntervalNode>
@@ -351,13 +351,15 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     @NonNls
     @Override
     public String toString() {
-      return "Node: " + intervals;
+      return "Node "+TextRangeScalarUtil.create(myRange) + ": "+intervals;
     }
   }
 
   @NotNull
   private Supplier<? extends T> createGetter(@NotNull T interval) {
-    return keepIntervalsOnWeakReferences() ? new WeakReferencedGetter<>(interval, myReferenceQueue) : () -> interval;
+    return keepIntervalsOnWeakReferences()
+           ? new WeakReferencedGetter<>(interval, myReferenceQueue)
+           : new StaticSupplier<>(interval);
   }
 
   private static final class WeakReferencedGetter<T> extends WeakReference<T> implements Supplier<T> {
@@ -368,7 +370,25 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     @NonNls
     @Override
     public String toString() {
-      return "Ref: " + get();
+      return "wRef: " + get();
+    }
+  }
+  private static final class StaticSupplier<T> implements Supplier<T> {
+    private final T myT;
+
+    private StaticSupplier(@NotNull T referent) {
+      myT = referent;
+    }
+
+    @Override
+    public T get() {
+      return myT;
+    }
+
+    @NonNls
+    @Override
+    public String toString() {
+      return "sRef: " + get();
     }
   }
 
@@ -432,7 +452,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
                           @NotNull Processor<? super T> processor) {
     if (root == null) return true;
 
-    WalkingState.TreeGuide<IntervalNode<T>> guide = getGuide();
+    WalkingState.TreeGuide<IntervalNode<T>> guide = IntervalTreeGuide.getGuide();
     return WalkingState.processAll(root, guide, node -> {
       if (!node.processAliveKeys(processor)) return false;
       if (getModCount() != modCountBefore) throw new ConcurrentModificationException();
@@ -778,7 +798,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     l.writeLock().lock();
     try {
       if (firingRemove) {
-        throw new IncorrectOperationException("Must not add range marker from within beforeRemoved listener");
+        throw new IncorrectOperationException("Must not add range marker from within removed() listener");
       }
       checkMax(true);
       processReferenceQueue();
@@ -863,8 +883,9 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       liveInterval = t;
       checkBelongsToTheTree(t, false);
       if (((RangeMarkerImpl)t).isValid()) {
-        boolean added = ids.add(((RangeMarkerImpl)t).getId());
-        assert added : t;
+        long id = ((RangeMarkerImpl)t).getId();
+        boolean added = ids.add(id);
+        assert added : t +"\nids:"+ids+"; id="+id+"\n; root.intervals="+root.intervals;
       }
     }
     if (assertInvalid && liveInterval != null) {
@@ -962,7 +983,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       IntervalNode<T> node = lookupNode(interval);
       if (node == null) return false;
 
-      beforeRemove(interval);
+      beforeRemove(interval, node);
 
       node.removeInterval(interval);
       return true;
@@ -970,7 +991,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     finally {
       setNode(interval, null);
       l.writeLock().unlock();
-      afterRemove(interval);
+      fireAfterRemoved(interval);
     }
   }
 
@@ -1277,19 +1298,20 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   @Override
   public void clear() {
     List<T> toRemove = new ArrayList<>();
+    processAll(t -> toRemove.add(t));
+    for (T t : toRemove) {
+      removeInterval(t);
+    }
     l.writeLock().lock();
-    processAll(t -> {
-      toRemove.add(t);
-      beforeRemove(t);
-      return true;
-    });
     try {
-      super.clear();
-      keySize = 0;
+      // make sure to avoid clearing when there are markers created between "removeInterval" and write lock start
+      if (nodeSize() == 0) {
+        super.clear();
+        keySize = 0;
+      }
     }
     finally {
       l.writeLock().unlock();
-      afterRemove(toRemove);
     }
   }
 
@@ -1308,16 +1330,16 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
   void fireAfterRemoved(@NotNull T marker) {
   }
-  void afterRemove(@NotNull List<? extends T> markers) {
+  void fireAfterRemoved(@NotNull List<? extends T> markers) {
     for (T marker : markers) {
-      afterRemove(marker);
+      fireAfterRemoved(marker);
     }
   }
 
   // must be called under l.writeLock()
-  void beforeRemove(@NotNull T marker) {
+  void beforeRemove(@NotNull T marker, @NotNull IntervalNode<T> node) {
     if (firingRemove) {
-      throw new IllegalStateException("must not remove range markers from within beforeRemove() listener");
+      throw new IncorrectOperationException("must not remove range markers from within beforeRemove() listener");
     }
     firingRemove = true;
     try {
@@ -1327,21 +1349,14 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       firingRemove = false;
     }
   }
-  private void afterRemove(@NotNull T marker) {
-    if (firingRemove) {
-      throw new IncorrectOperationException("must not remove range markers from within beforeRemove() listener");
-    }
-    firingRemove = true;
-    try {
-      fireAfterRemoved(marker);
-    }
-    finally {
-      firingRemove = false;
-    }
-  }
-
 
   private static class IntervalTreeGuide<T extends MutableInterval> implements WalkingState.TreeGuide<IntervalNode<T>> {
+    private static final IntervalTreeGuide<?> INSTANCE = new IntervalTreeGuide<>();
+    @NotNull
+    private static <T> WalkingState.TreeGuide<IntervalNode<T>> getGuide() {
+      //noinspection unchecked,rawtypes
+      return (WalkingState.TreeGuide)INSTANCE;
+    }
     @Override
     public IntervalNode<T> getNextSibling(@NotNull IntervalNode<T> element) {
       IntervalNode<T> parent = element.getParent();
@@ -1367,14 +1382,6 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       return element.getParent();
     }
   }
-
-  private static final IntervalTreeGuide<?> INTERVAL_TREE_GUIDE_INSTANCE = new IntervalTreeGuide<>();
-  @NotNull
-  private static <T> WalkingState.TreeGuide<IntervalNode<T>> getGuide() {
-    //noinspection unchecked,rawtypes
-    return (WalkingState.TreeGuide)INTERVAL_TREE_GUIDE_INSTANCE;
-  }
-
 
   public int maxHeight() {
     return maxHeight(root);

@@ -41,8 +41,14 @@ public class MavenModelBase implements Serializable {
     while (newPropertyNames.hasMoreElements()) {
       String key = newPropertyNames.nextElement().toString();
       String value = newProperties.getProperty(key);
-      properties.put(key, value);
+      properties.setProperty(key, value);
     }
+  }
+
+  public void setProperties(Map<String, String> newMap) {
+    Properties newProperties = new Properties();
+    newProperties.putAll(newMap);
+    setProperties(newProperties);
   }
 
   public List<MavenPlugin> getPlugins() {

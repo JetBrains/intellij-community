@@ -75,7 +75,7 @@ internal object IndexableIteratorBuilders {
     if (roots.isEmpty() && sourceRoots.isEmpty()) emptyList()
     else listOf(ExternalEntityIteratorBuilder(entityReference, roots, sourceRoots, customization))
 
-  fun instantiateBuilders(builders: List<IndexableIteratorBuilder>,
+  fun instantiateBuilders(builders: Collection<IndexableIteratorBuilder>,
                           project: Project,
                           entityStorage: EntityStorage): List<IndexableFilesIterator> {
     if (builders.isEmpty()) return emptyList()

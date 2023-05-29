@@ -298,7 +298,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }
 
     val textFlow = combine(collapsedFlow, vm.mainNote) { collapsed, mainNote ->
-      if (collapsed) mainNote.body else mainNote.htmlBody
+      if (collapsed) mainNote.body else mainNote.bodyHtml
     }.flatMapLatest { it }
 
     val textPane = GitLabNoteComponentFactory.createTextPanel(cs, textFlow)

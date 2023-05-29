@@ -15,7 +15,7 @@ class JavaUClassInitializer(
 ) : JavaAbstractUElement(uastParent), UClassInitializerEx, JavaUElementWithComments, UAnchorOwner, PsiClassInitializer by sourcePsi {
 
   @Suppress("OverridingDeprecatedMember")
-  override val psi get() = sourcePsi
+  override val psi: PsiClassInitializer get() = sourcePsi
 
   override val javaPsi: PsiClassInitializer = sourcePsi
 

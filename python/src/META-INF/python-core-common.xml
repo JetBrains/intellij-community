@@ -25,6 +25,8 @@
       topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
     <listener class="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowModuleAttachListener"
               topic="com.intellij.platform.ModuleAttachListener"/>
+    <listener class="com.jetbrains.python.packaging.PyDependencyCollectorListener"
+              topic="com.jetbrains.python.packaging.PyPackageManager$Listener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -194,6 +196,9 @@
     <localInspection language="Python" shortName="PyRelativeImportInspection" suppressId="PyPackages" bundle="messages.PyPsiBundle"
                      key="INSP.NAME.relative.import" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="com.jetbrains.python.inspections.PyRelativeImportInspection"/>
+    <localInspection language="Python" shortName="PyPandasSeriesToListInspection" suppressId="PyPackages" bundle="messages.PyPsiBundle"
+                     key="INSP.pandas.series.values.replace.with.tolist" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyPandasSeriesToListInspection"/>
 
     <defaultLiveTemplates file="liveTemplates/Python.xml"/>
     <liveTemplateContext contextId="Python"
@@ -488,7 +493,6 @@
     <toolWindowExtractorMode id="Python Packages" mode="mirror"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.PyAddNewEnvCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.packaging.statistics.PythonPackagesDialogStatisticsCollector"/>
 
     <vcs.envCustomizer implementation="com.jetbrains.python.sdk.PyVirtualEnvVcsCustomizer"/>
 
@@ -505,6 +509,8 @@
       serviceImplementation="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory$Available$Default"/>
 
     <registryKey key="python.new.run.config" defaultValue="true" description="Python Run configurations new UI"/>
+
+    <dependencyCollector kind="python" implementation="com.jetbrains.python.packaging.PyDependencyCollector"/>
   </extensions>
 
   <extensionPoints>
@@ -625,6 +631,7 @@
     <pyAnnotator implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyPatternAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyTryExceptAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.PyVariableAnnotator"/>
 
     <!--stdlib-->
     <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>

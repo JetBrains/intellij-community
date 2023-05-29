@@ -1,10 +1,4 @@
 kotlin.code.style=official
-#if (${Platform} == 'WEB' || ${ConfigType} == 'MULTI_PLATFORM')
-kotlin.native.enableDependencyPropagation=false
-#end
-#if (${Platform} == 'WEB' && ${ConfigType} != 'MULTI_PLATFORM')
-kotlin.js.webpack.major.version=4
-#end
 #if (${ConfigType} == 'MULTI_PLATFORM')
 android.useAndroidX=true
 #end

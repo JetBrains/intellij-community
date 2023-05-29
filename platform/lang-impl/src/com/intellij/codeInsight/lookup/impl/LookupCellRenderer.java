@@ -6,7 +6,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
@@ -28,7 +27,10 @@ import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
@@ -44,8 +46,10 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.lookup.Lookup.LOOKUP_COLOR;
@@ -616,9 +620,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       if (myShrinkLookup || maxWidth > myLookupTextWidth) {
         myLookupTextWidth = maxWidth;
         myLookup.requestResize();
-        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
-          myLookup.refreshUi(false, false);
-        }
+        myLookup.refreshUi(false, false);
       }
     }
   }

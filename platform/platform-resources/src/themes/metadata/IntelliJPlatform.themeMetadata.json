@@ -105,6 +105,14 @@
       "description": "Used in tool buttons bars and the navigation bar"
     },
     {
+      "key": "Button.Split.default.separatorColor",
+      "description": "Separator color for default split button"
+    },
+    {
+      "key": "Button.Split.default.iconColor",
+      "description": "Chevron arrow color for default split button"
+    },
+    {
       "key": "ComboPopup.border",
       "description": "Combo box drop-down menu. Format: \"top, left, bottom, right, hex\", e.g. “1,1,1,1,FFFFFF\". Size in pixels"
     },
@@ -757,6 +765,11 @@
       "description": "Light-colored links. Used in the Variables tab of the Debugger tool window. Can be seen when a tree line is long, does not fit into the tab's width, and its popup on hover goes beyond the right monitor side."
     },
     {
+      "key": "MainMenu.transparentSelectionBackground",
+      "description": "Selection background in colorful header mode",
+      "since": "2023.2"
+    },
+    {
       "key": "MemoryIndicator.usedBackground",
       "description": "Memory indicator color for used memory rectangle",
       "since": "2019.2"
@@ -1013,6 +1026,9 @@
     },
     {
       "key": "Plugins.ScreenshotPagination.CurrentImage.fillColor"
+    },
+    {
+      "key": "Plugins.suggestedLabelBackground"
     },
     {
       "key": "ProgressIcon.color",
@@ -1938,20 +1954,13 @@
     },
     {
       "key": "RunWidget.foreground",
-      "description": "Foreground for run widget components and stroke icons on the contrast background",
+      "description": "Foreground for run widget components",
       "since": "2022.3"
     },
     {
-      "key": "RunWidget.disabledForeground",
-      "description": "Foreground for run widget components and stroke icons in disable state in the contrast run widget",
-      "since": "2022.3",
-      "deprecated": true
-    },
-    {
-      "key": "RunWidget.background",
-      "description": "Background for the contrast run widget in non-running state",
-      "since": "2022.3",
-      "deprecated": true
+      "key": "RunWidget.iconColor",
+      "description": "Color for non-debug/stop icons like More Actions or spinning icon",
+      "since": "2023.2"
     },
     {
       "key": "RunWidget.runningBackground",
@@ -1959,24 +1968,23 @@
       "since": "2022.3"
     },
     {
+      "key": "RunWidget.runningIconColor",
+      "description": "Color for icons like stop/re-run in the running state",
+      "since": "2023.2"
+    },
+    {
       "key": "RunWidget.hoverBackground",
-      "description": "Background for hover state in run widget. Will be applied over RunWidget.background or RunWidget.runningBackground.",
+      "description": "Background for hover state in run widget. Will be applied over RunWidget.runningBackground.",
       "since": "2022.3"
     },
     {
       "key": "RunWidget.pressedBackground",
-      "description": "Background for pressed state in run widget. Will be applied over RunWidget.background or RunWidget.runningBackground.",
+      "description": "Background for pressed state in run widget. Will be applied over RunWidget.runningBackground.",
       "since": "2022.3"
     },
     {
-      "key": "RunWidget.separatorColor",
-      "description": "The color for separator in the contrast run widget",
-      "since": "2022.3",
-      "deprecated": true
-    },
-    {
-      "key": "RunWidget.runModeIconColor",
-      "description": "The non-running state color for stroke icons in the non-contrast run widget",
+      "key": "RunWidget.runIconColor",
+      "description": "Color for icons like debug/run in the non-running state",
       "since": "2023.1"
     },
     {

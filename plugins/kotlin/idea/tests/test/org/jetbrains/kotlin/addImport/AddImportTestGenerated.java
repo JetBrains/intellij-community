@@ -258,6 +258,11 @@ public class AddImportTestGenerated extends AbstractAddImportTest {
         runTest("testData/addImport/PropertyAlreadyImported2.kt");
     }
 
+    @TestMetadata("RootPackageWithoutFormatter.kt")
+    public void testRootPackageWithoutFormatter() throws Exception {
+        runTest("testData/addImport/RootPackageWithoutFormatter.kt");
+    }
+
     @TestMetadata("StdlibImportsLast.kt")
     public void testStdlibImportsLast() throws Exception {
         runTest("testData/addImport/StdlibImportsLast.kt");

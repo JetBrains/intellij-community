@@ -3,20 +3,33 @@
     "actions": {
       "buildAutoReloadChanges.svg": "actions/buildAutoReloadChanges.svg",
       "deploy.svg": "nodes/deploy.svg",
+      "diffWithClipboard.svg": "actions/diffWithClipboard.svg",
       "filterdups.svg": "toolbar/filterdups.svg",
       "generated.svg": "actions/generatedFolder.svg",
       "groupByMethod.svg": "actions/groupByMethod.svg",
       "groupByModule.svg": "actions/GroupByModule.svg",
+      "groupByPackage.svg": "actions/GroupByPackage.svg",
       "groupByTestProduction.svg": "actions/groupByTestProduction.svg",
+      "inSelection.svg": "actions/inSelection.svg",
       "install.svg": "actions/install.svg",
+      "moveToBottomLeft.svg": "actions/moveToBottomLeft.svg",
+      "moveToBottomRight.svg": "actions/moveToBottomRight.svg",
+      "moveToButton.svg": "actions/move-to-button.svg",
+      "moveToLeftBottom.svg": "actions/moveToLeftBottom.svg",
+      "moveToLeftTop.svg": "actions/moveToLeftTop.svg",
+      "moveToRightBottom.svg": "actions/moveToRightBottom.svg",
+      "moveToRightTop.svg": "actions/moveToRightTop.svg",
       "newFolder.svg": "actions/newFolder.svg",
       "playFirst.svg": "actions/play_first.svg",
       "playBack.svg": "actions/play_back.svg",
       "playForward.svg": "actions/play_forward.svg",
       "playLast.svg": "actions/play_last.svg",
+      "profileCPU.svg": "actions/profileCPU.svg",
       "projectDirectory.svg": "actions/projectDirectory.svg",
-      "showWriteAccess.svg": "actions/showWriteAccess.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
+      "showWriteAccess.svg": "actions/showWriteAccess.svg",
+      "swapPanels.svg": "actions/swapPanels.svg",
+      "synchronizeScrolling.svg": "actions/synchronizeScrolling.svg",
       "showImportStatements.svg": "actions/showImportStatements.svg",
       "toggleVisibility.svg": "actions/toggleVisibility.svg",
       "undeploy.svg": "nodes/undeploy.svg"
@@ -79,6 +92,10 @@
       "cwmUsers.svg": "users.svg"
     },
     "debugger": {
+      "dbPrimitive.svg": "debugger/db_primitive.svg",
+      "frame.svg": "debugger/frame.svg",
+      "threads.svg": "debugger/threads.svg",
+      "value.svg": "debugger/value.svg",
       "watch.svg": "debugger/watch.svg"
     },
     "diff": {
@@ -108,7 +125,7 @@
       "remove@14x14.svg": "diff/remove.svg",
       "revert@14x14.svg": "diff/revert.svg"
     },
-    "editor": {
+    "codeInsight": {
       "inlayGlobe.svg": "actions/inlayGlobe.svg",
       "inlaySecuredShield.svg": "actions/inlaySecuredShield.svg",
       "inlayRenameInComments.svg": "actions/inlayRenameInComments.svg",
@@ -133,6 +150,7 @@
     ],
     "fileTypes": {
       "actionScript.svg": "fileTypes/as.svg",
+      "addAny.svg": "fileTypes/addAny.svg",
       "angularJS.svg": "icons/AngularJS.svg",
       "anyType.svg": "fileTypes/any_type.svg",
       "archive.svg": [
@@ -140,6 +158,7 @@
         "nodes/ppJar.svg"
       ],
       "aspectJ.svg": "fileTypes/aspectj.svg",
+      "config.svg": "fileTypes/config.svg",
       "css.svg": "fileTypes/css.svg",
       "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
       "eclipse.svg": "providers/eclipse.svg",
@@ -167,12 +186,12 @@
       "properties.svg": "fileTypes/properties.svg",
       "protobuf.svg": "protoFile.png",
       "react.svg": "org/jetbrains/kotlin/idea/icons/wizard/react.svg",
+      "regexp.svg": "fileTypes/regexp.svg",
       "scala.svg": "org/jetbrains/plugins/scala/images/scala16.png",
       "scratch.svg": "actions/scratch.svg",
       "scratches.svg": "scope/scratches.svg",
       "scss.svg": "org/jetbrains/plugins/sass/sass.svg",
       "shell.svg": [
-        "icons/shFile.svg",
         "nodes/console.svg",
         "debugger/console.svg"
       ],
@@ -196,18 +215,18 @@
     },
     "general": {
       "inspections": {
-        "inspectionsError.svg": "icons/general/inspectionsError.svg",
-        "inspectionsErrorEmpty.svg": "icons/general/inspectionsErrorEmpty.svg",
-        "inspectionsEye.svg": "icons/general/inspectionsEye.svg",
-        "inspectionsMixed.svg": "icons/general/inspectionsMixed.svg",
-        "inspectionsOK.svg": "icons/general/inspectionsOK.svg",
-        "inspectionsOKEmpty.svg": "icons/general/inspectionsOKEmpty.svg",
-        "inspectionsPause.svg": "icons/general/inspectionsPause.svg",
-        "inspectionsPowerSaveMode.svg": "icons/general/inspectionsPowerSaveMode.svg",
-        "inspectionsTrafficOff.svg": "icons/general/inspectionsTrafficOff.svg",
-        "inspectionsTypos.svg": "icons/general/inspectionsTypos.svg",
-        "inspectionsWarning.svg": "icons/general/inspectionsWarning.svg",
-        "inspectionsWarningEmpty.svg": "icons/general/inspectionsWarningEmpty.svg"
+        "inspectionsError.svg": "general/inspectionsError.svg",
+        "inspectionsErrorEmpty.svg": "general/inspectionsErrorEmpty.svg",
+        "inspectionsEye.svg": "general/inspectionsEye.svg",
+        "inspectionsMixed.svg": "general/inspectionsMixed.svg",
+        "inspectionsOK.svg": "general/inspectionsOK.svg",
+        "inspectionsOKEmpty.svg": "general/inspectionsOKEmpty.svg",
+        "inspectionsPause.svg": "general/inspectionsPause.svg",
+        "inspectionsPowerSaveMode.svg": "general/inspectionsPowerSaveMode.svg",
+        "inspectionsTrafficOff.svg": "general/inspectionsTrafficOff.svg",
+        "inspectionsTypos.svg": "general/inspectionsTypos.svg",
+        "inspectionsWarning.svg": "general/inspectionsWarning.svg",
+        "inspectionsWarningEmpty.svg": "general/inspectionsWarningEmpty.svg"
       },
       "add.svg": [
         "general/add.svg",
@@ -318,6 +337,7 @@
       "right.svg": "actions/forward.svg",
       "runAnything.svg": "actions/run_anything.svg",
       "search.svg": "actions/find.svg",
+      "separatorHorizontal.svg": "general/separatorH.svg",
       "settings.svg": [
         "general/gearPlain.svg",
         "general/settings.svg"
@@ -340,11 +360,15 @@
       "projectWideAnalysisOn.svg": "actions/projectWideAnalysisOn.svg",
       "softWrap.svg": "actions/toggleSoftWrap.svg",
       "scrollDown.svg": "runConfigurations/scroll_down.svg",
+      "scrollUp.svg": "runConfigurations/scroll_up.svg",
       "projectStructure.svg": "general/projectStructure.svg",
       "successDialog.svg": "general/successDialog.svg",
       "successLogin.svg": "general/successLogin.svg",
       "questionDialog.svg": "general/questionDialog.svg",
       "warningDialog.svg": "general/warningDialog.svg"
+    },
+    "graph": {
+      "graphLayout.svg": "graph/layout.svg"
     },
     "gutter": {
       "bookmark.svg": "gutter/bookmark.svg",
@@ -372,6 +396,7 @@
       "writeAccess.svg": "gutter/writeAccess.svg"
     },
     "ide": {
+      "configFile.svg": "ide/configFile.svg",
       "feedbackRating.svg": "ide/feedbackRating.svg",
       "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
       "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",
@@ -471,6 +496,7 @@
       "copyOfFolder.svg": "nodes/copyOfFolder.svg",
       "dataColumn.svg": "nodes/dataColumn.svg",
       "dataSchema.svg": "nodes/dataSchema.svg",
+      "dataTables.svg": "nodes/DataTables.svg",
       "desktop.svg": "nodes/desktop.svg",
       "editFolder.svg": "modules/editFolder.svg",
       "enum.svg": "nodes/enum.svg",
@@ -486,6 +512,8 @@
       "generatedTestRoot.svg": "modules/generatedTestRoot.svg",
       "gvariable.svg": "nodes/gvariable.svg",
       "homeFolder.svg": "nodes/homeFolder.svg",
+      "ideaProject.svg": "nodes/ideaProject.svg",
+      "include.svg": "nodes/include.svg",
       "interface.svg": "nodes/interface.svg",
       "jdk.svg": "nodes/ppJdk.svg",
       "lambda.svg": "nodes/lambda.svg",
@@ -506,6 +534,7 @@
         "nodes/parameter.svg"
       ],
       "plugin.svg": "nodes/plugin.svg",
+      "ppWeb.svg": "nodes/ppWeb.svg",
       "property.svg": [
         "nodes/property.svg",
         "nodes/propertyRead.svg",
@@ -522,7 +551,9 @@
       "star.svg": "nodes/favorite.svg",
       "starEmpty.svg": "nodes/notFavoriteOnHover.svg",
       "static.svg": "nodes/static.svg",
+      "template.svg": "nodes/template.svg",
       "test.svg": "nodes/test.svg",
+      "testGroup.svg": "nodes/testGroup.svg",
       "testIgnored.svg": "nodes/testIgnored.svg",
       "testResourcesRoot.svg": "modules/testResourcesRoot.svg",
       "testRoot.svg": "modules/testRoot.svg",
@@ -545,7 +576,8 @@
     },
     "profiler": {
       "collapseNode.svg": "profiler/collapseNode.svg",
-      "expandNode.svg": "profiler/expandNode.svg"
+      "expandNode.svg": "profiler/expandNode.svg",
+      "rec.svg": "profiler/rec.svg"
     },
     "progress": {
       "pause.svg": [
@@ -679,6 +711,7 @@
       "web.svg": "toolwindows/webToolWindow.svg"
     },
     "vcs": {
+      "branch.svg": "vcs/branch.svg",
       "changelist.svg": "vcs/changelist.svg",
       "changes.svg": "actions/listChanges.svg",
       "changesPush@12x12.svg": "icons/outgoing.svg",
@@ -704,10 +737,7 @@
         "vcs/unshelveSilent.svg"
       ],
       "update.svg": "actions/checkOut.svg",
-      "vcs.svg": [
-        "vcs/branch.svg",
-        "vcs/branchNode.svg"
-      ]
+      "vcs.svg": "vcs/branchNode.svg"
     },
     "welcome": {
       "createNewProjectTab.svg": "welcome/createNewProjectTab.svg",

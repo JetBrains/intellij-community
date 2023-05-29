@@ -254,25 +254,17 @@ public final class ChangeListWorker {
   @Nullable
   public Change getChangeForPath(@Nullable FilePath filePath) {
     if (filePath == null) return null;
-    for (Change change : myIdx.getChanges()) {
-      ContentRevision before = change.getBeforeRevision();
-      ContentRevision after = change.getAfterRevision();
-      if (before != null && before.getFile().equals(filePath) ||
-          after != null && after.getFile().equals(filePath)) {
-        return change;
-      }
-    }
-    return null;
+    return myIdx.getChange(filePath);
   }
 
   @Nullable
   private Change getChangeForAfterPath(@Nullable FilePath filePath) {
-    if (filePath == null) return null;
-    for (Change change : myIdx.getChanges()) {
-      ContentRevision after = change.getAfterRevision();
-      if (after != null && after.getFile().equals(filePath)) {
-        return change;
-      }
+    Change change = getChangeForPath(filePath);
+    if (change == null) return null;
+
+    ContentRevision after = change.getAfterRevision();
+    if (after != null && after.getFile().equals(filePath)) {
+      return change;
     }
     return null;
   }
@@ -386,7 +378,7 @@ public final class ChangeListWorker {
 
   @Nullable
   public FileStatus getStatus(@NotNull VirtualFile file) {
-    return myIdx.getStatus(file);
+    return myIdx.getStatus(VcsUtil.getFilePath(file));
   }
 
   @Nullable

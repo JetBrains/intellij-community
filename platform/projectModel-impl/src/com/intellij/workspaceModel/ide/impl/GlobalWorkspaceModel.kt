@@ -10,7 +10,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
 import com.intellij.platform.workspaceModel.jps.JpsGlobalFileEntitySource
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
@@ -78,7 +81,8 @@ class GlobalWorkspaceModel : Disposable {
     entityStorage = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
 
     val callback = JpsGlobalModelSynchronizer.getInstance().loadInitialState(mutableEntityStorage, entityStorage, loadedFromCache)
-    entityStorage.replaceSilently(mutableEntityStorage.toSnapshot())
+    val changes = mutableEntityStorage.collectChanges(EntityStorageSnapshot.empty())
+    entityStorage.replace(mutableEntityStorage.toSnapshot(), changes, {}, {})
     callback.invoke()
   }
 
@@ -134,6 +138,7 @@ class GlobalWorkspaceModel : Disposable {
 
   override fun dispose() = Unit
 
+  @RequiresWriteLock
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     logErrorOnEventHandling {
@@ -147,6 +152,7 @@ class GlobalWorkspaceModel : Disposable {
     GlobalLibraryTableBridge.getInstance().handleBeforeChangeEvents(change)
   }
 
+  @RequiresWriteLock
   private fun onChanged(change: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
@@ -159,6 +165,7 @@ class GlobalWorkspaceModel : Disposable {
     isFromGlobalWorkspaceModel = false
   }
 
+  @RequiresWriteLock
   fun applyStateToProject(targetProject: Project) {
     val start = System.currentTimeMillis()
 
@@ -175,18 +182,18 @@ class GlobalWorkspaceModel : Disposable {
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
 
-    applyStateToProjectTimeMs.addAndGet(System.currentTimeMillis() - start)
+    applyStateToProjectTimeMs.addElapsedTimeMs(start)
   }
 
   fun applyStateToProjectBuilder(project: Project, targetBuilder: MutableEntityStorage) {
-    applyStateToProjectBuilderTimeMs.addAndGet(
-      measureTimeMillis {
-        LOG.info("Sync global entities with mutable entity storage")
-        targetBuilder.replaceBySource(globalEntitiesFilter,
-                                      copyEntitiesToEmptyStorage(entityStorage.current, VirtualFileUrlManager.getInstance(project)))
-      })
+    applyStateToProjectBuilderTimeMs.addMeasuredTimeMs {
+      LOG.info("Sync global entities with mutable entity storage")
+      targetBuilder.replaceBySource(globalEntitiesFilter,
+                                    copyEntitiesToEmptyStorage(entityStorage.current, VirtualFileUrlManager.getInstance(project)))
+    }
   }
 
+  @RequiresWriteLock
   fun syncEntitiesWithProject(sourceProject: Project) {
     val start = System.currentTimeMillis()
 
@@ -198,7 +205,7 @@ class GlobalWorkspaceModel : Disposable {
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
     filteredProject = null
-    syncEntitiesWithProjectTimeMs.addAndGet(System.currentTimeMillis() - start)
+    syncEntitiesWithProjectTimeMs.addElapsedTimeMs(start)
   }
 
   private fun copyEntitiesToEmptyStorage(storage: EntityStorage, vfuManager: VirtualFileUrlManager): MutableEntityStorage {
@@ -226,7 +233,8 @@ class GlobalWorkspaceModel : Disposable {
   private fun logErrorOnEventHandling(action: () -> Unit) {
     try {
       action.invoke()
-    } catch (e: Throwable) {
+    }
+    catch (e: Throwable) {
       val message = "Exception at Workspace Model event handling"
       LOG.error(message, e)
     }

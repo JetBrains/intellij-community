@@ -6,12 +6,16 @@ import com.intellij.openapi.application.ApplicationManager
 
 class DefaultEnvironmentService : BaseEnvironmentService() {
 
-  override suspend fun getValue(key: EnvironmentKey, defaultValue: String?): String? {
+  override suspend fun getEnvironmentValue(key: EnvironmentKey): String? {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       LOG.warn("Access to UI is not allowed in the headless environment")
     }
     checkKeyRegistered(key)
-    return defaultValue
+    return null
   }
 
+  override suspend fun getEnvironmentValue(key: EnvironmentKey, defaultValue: String): String {
+    getEnvironmentValue(key)
+    return defaultValue
+  }
 }

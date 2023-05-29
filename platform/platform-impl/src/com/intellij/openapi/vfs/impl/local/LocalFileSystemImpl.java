@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -51,11 +52,12 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     myManagingFS = ManagingFS.getInstance();
     myWatcher = new FileWatcher(myManagingFS, () -> {
       AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
-          if (!ApplicationManager.getApplication().isDisposed()) {
-            storeRefreshStatusToFiles();
-          }
-        },
-        STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
+        Application application = ApplicationManager.getApplication();
+        if (application != null && !application.isDisposed()) {
+          storeRefreshStatusToFiles();
+        }
+      },
+      STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     });
 
     for (PluggableLocalFileSystemContentLoader contentLoader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {

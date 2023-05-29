@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.core.CoreBundle;
-import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Forceable;
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.io.GentleFlusherBase;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -27,7 +27,10 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingContentStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -36,14 +39,13 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.intellij.diagnostic.telemetry.PlatformScopesKt.INDEXES;
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -198,33 +200,6 @@ public final class PersistentFSConnection {
     }
   }
 
-  void createBrokenMarkerFile(@Nullable String message,
-                              @Nullable Throwable reason) {
-    final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    try (@SuppressWarnings("ImplicitDefaultCharsetUsage") PrintStream stream = new PrintStream(out)) {
-      new VFSCorruptedException(
-        message == null ? "(No specific reason of corruption was given)" : message,
-        reason
-      ).printStackTrace(stream);
-    }
-    LOG.info("Creating VFS corruption marker; Trace=\n" + out);
-
-
-    try {
-      final Path brokenMarker = myPersistentFSPaths.getCorruptionMarkerFile();
-      Files.write(
-        brokenMarker,
-        Collections.singletonList("These files are corrupted and must be rebuilt from the scratch on next startup"),
-        UTF_8,
-        StandardOpenOption.WRITE, StandardOpenOption.CREATE
-      );
-    }
-    catch (IOException ex) {
-      // No luck:
-      LOG.info("Can't create VFS corruption marker", ex);
-    }
-  }
-
   @TestOnly
   int getPersistentModCount() {
     return myRecords.getGlobalModCount();
@@ -326,28 +301,56 @@ public final class PersistentFSConnection {
 
   int getAttributeId(@NotNull String attId) {
     return myEnumeratedAttributes.enumerate(attId);
-    // do not invoke FSRecords.requestVfsRebuild under read lock to avoid deadlock
-    //return myAttributesList.getIdRaw(attId) + FIRST_ATTR_ID_OFFSET;
   }
 
-  @Contract("_->fail")
-  void handleError(@NotNull Throwable e) throws RuntimeException, Error {
-    // No need to forcibly mark VFS corrupted if it is already shut down
+  void markAsCorruptedAndScheduleRebuild(@NotNull Throwable cause) throws RuntimeException, Error {
     try {
       if (myCorrupted.compareAndSet(false, true)) {
-        createBrokenMarkerFile(e.getMessage(), e);
+        scheduleVFSRebuild(cause.getMessage(), cause);
         if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
           showCorruptionNotification();
         }
-        doForce();
+        doForce();//forces connectionStatus=CORRUPTED to be written on disk
       }
     }
     catch (IOException ioException) {
       LOG.error(ioException);
     }
-
-    ExceptionUtil.rethrow(e);
   }
+
+  void scheduleVFSRebuild(@Nullable String message,
+                          @Nullable Throwable errorCause) {
+    final VFSCorruptedException corruptedException = new VFSCorruptedException(
+      message == null ? "(No specific reason of corruption was given)" : message,
+      errorCause
+    );
+    if (errorCause == null) {
+      //Without 'errorCause' it is not an error, but, likely, an explicit 'invalidateCache' call:
+      // no need to print stacktrace then, also no need for a WARN
+      LOG.info("VFS is corrupted; Creating VFS corruption marker: " + message);
+    }
+    else {
+      LOG.warn("VFS is corrupted; Creating VFS corruption marker", corruptedException);
+    }
+
+    try {
+      final Path brokenMarker = myPersistentFSPaths.getCorruptionMarkerFile();
+      final ByteArrayOutputStream out = new ByteArrayOutputStream();
+      try (PrintStream stream = new PrintStream(out, false, UTF_8)) {
+        stream.println("VFS files are corrupted and must be rebuilt from the scratch on next startup");
+        corruptedException.printStackTrace(stream);
+      }
+      Files.write(
+        brokenMarker,
+        out.toByteArray(),
+        StandardOpenOption.WRITE, StandardOpenOption.CREATE
+      );
+    }
+    catch (IOException ex) {// No luck:
+      LOG.info("Can't create VFS corruption marker", ex);
+    }
+  }
+
 
   static class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
     boolean myAttrPageRequested;
@@ -398,8 +401,8 @@ public final class PersistentFSConnection {
             doForce();
           }
           catch (IOException e) {
-            handleError(e);
-            throw new RuntimeException(e);
+            markAsCorruptedAndScheduleRebuild(e);
+            ExceptionUtil.rethrow(e);
           }
         }
       }
@@ -435,7 +438,7 @@ public final class PersistentFSConnection {
       super("VFSFlusher",
             scheduler, FLUSHING_PERIOD_MS,
             MIN_CONTENTION_QUOTA, MAX_CONTENTION_QUOTA, INITIAL_CONTENTION_QUOTA,
-            TraceManager.getMeter(INDEXES)
+            TelemetryTracer.getMeter(Indexes)
       );
     }
 

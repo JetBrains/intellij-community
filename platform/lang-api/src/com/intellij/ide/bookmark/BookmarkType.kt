@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.editor.colors.EditorColorsUtil
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.IconWrapperWithToolTip
@@ -103,7 +104,7 @@ class BookmarkIcon : IconWrapperWithToolTip {
       }
       val painter = MnemonicPainter(icon, mnemonic.toString())
       val paintSize = when (size) {
-        IconSize.GUTTER -> 12
+        IconSize.GUTTER -> if (ExperimentalUI.isNewUI()) 14 else 12
         else -> 16
       }
       return RegionPaintIcon(paintSize, paintSize, 0, painter).withIconPreScaled(false)

@@ -118,15 +118,6 @@ public final class MagicConstantUtils {
   }
 
   /**
-   * @deprecated used {@link #getAllowedValues(PsiModifierListOwner, PsiType, PsiElement)}
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type) {
-    return getAllowedValues(element, type, null);
-  }
-
-  /**
    * @param element element with possible MagicConstant annotation
    * @param type    element type
    * @param context context where annotation is applied (to check the accessibility of magic constant)

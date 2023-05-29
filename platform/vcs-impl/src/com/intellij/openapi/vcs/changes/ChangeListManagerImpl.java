@@ -49,12 +49,10 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
@@ -62,6 +60,7 @@ import com.intellij.vcs.commit.*;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import kotlin.text.StringsKt;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -71,7 +70,7 @@ import javax.swing.*;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled;
@@ -81,7 +80,7 @@ import static com.intellij.util.ui.UIUtil.BR;
 import static java.util.stream.Collectors.toSet;
 
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ChangeListManagerImpl extends ChangeListManagerEx implements PersistentStateComponent<Element>, Disposable {
+public final class ChangeListManagerImpl extends ChangeListManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(ChangeListManagerImpl.class);
 
   @Topic.ProjectLevel
@@ -91,7 +90,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   private final Project myProject;
   private final ChangelistConflictTracker myConflictTracker;
 
-  private final Scheduler myScheduler = new Scheduler(); // update thread
+  private final Scheduler myScheduler; // update thread
 
   private final EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
   private final DelayedNotificator myDelayedNotificator; // notifies myListeners on the update thread
@@ -126,11 +125,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     return (ChangeListManagerImpl)getInstance(project);
   }
 
-  public ChangeListManagerImpl(@NotNull Project project) {
+  public ChangeListManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
     myConflictTracker = new ChangelistConflictTracker(project, this);
 
     myComposite = FileHolderComposite.create(project);
+    myScheduler = new Scheduler(coroutineScope);
     myDelayedNotificator = new DelayedNotificator(myProject, this, myScheduler);
     myWorker = new ChangeListWorker(myProject, myDelayedNotificator);
 
@@ -1553,13 +1553,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     return myConflictTracker;
   }
 
-  private static class MyChangesDeltaForwarder implements ChangeListDeltaListener {
+  private static final class MyChangesDeltaForwarder implements ChangeListDeltaListener {
     private final RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
     private final Project myProject;
-    private final ChangeListManagerImpl.Scheduler myScheduler;
+    private final Scheduler myScheduler;
 
-    MyChangesDeltaForwarder(final Project project, @NotNull ChangeListManagerImpl.Scheduler scheduler) {
+    MyChangesDeltaForwarder(final Project project, @NotNull Scheduler scheduler) {
       myProject = project;
       myScheduler = scheduler;
       myRevisionsCache = RemoteRevisionsCache.getInstance(project);
@@ -1627,122 +1627,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
         if (oldMessage.equals(changeList.getComment())) {
           editComment(changeList.getName(), newMessage);
         }
-      }
-    }
-  }
-
-  static class Scheduler {
-    private final ScheduledExecutorService myExecutor =
-      AppExecutorUtil.createBoundedScheduledExecutorService("ChangeListManagerImpl Pool", 1);
-
-    // @TestOnly
-    private final boolean myUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    private final ArrayDeque<Future<?>> myFutures = new ArrayDeque<>();
-
-    public void schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
-      try {
-        ScheduledFuture<?> future = myExecutor.schedule(new MyLoggingRunnable(command), delay, unit);
-        if (myUnitTestMode) addFuture(future);
-      }
-      catch (RejectedExecutionException e) {
-        LOG.warn(e);
-      }
-    }
-
-    public void submit(@NotNull Runnable command) {
-      try {
-        Future<?> future = myExecutor.submit(new MyLoggingRunnable(command));
-        if (myUnitTestMode) addFuture(future);
-      }
-      catch (RejectedExecutionException e) {
-        LOG.warn(e);
-      }
-    }
-
-    private void addFuture(Future<?> future) {
-      assert ApplicationManager.getApplication().isUnitTestMode();
-      synchronized (myFutures) {
-        myFutures.add(future);
-      }
-    }
-
-    @TestOnly
-    private void cancelAll() {
-      synchronized (myFutures) {
-        for (Future<?> future : myFutures) {
-          future.cancel(true);
-        }
-        myFutures.clear();
-      }
-    }
-
-    @TestOnly
-    public void awaitAllAndStop() {
-      awaitAll();
-      synchronized (myFutures) {
-        cancelAll(); //interrupt running
-        myExecutor.shutdownNow();
-      }
-    }
-
-    @TestOnly
-    private void awaitAll() {
-      List<Throwable> throwables = new ArrayList<>();
-
-      long start = System.currentTimeMillis();
-      while (true) {
-        if (System.currentTimeMillis() - start > TimeUnit.MINUTES.toMillis(10)) {
-          cancelAll();
-          throwables.add(new IllegalStateException("Too long waiting for VCS update"));
-          break;
-        }
-        Future<?> future;
-        synchronized (myFutures) {
-          future = myFutures.peek();
-        }
-        if (future == null) break;
-
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          UIUtil.dispatchAllInvocationEvents();
-        }
-
-        try {
-          future.get(10, TimeUnit.MILLISECONDS);
-        }
-        catch (TimeoutException ignore) {
-          continue;
-        }
-        catch (CancellationException ignored) {
-        }
-        catch (InterruptedException | ExecutionException e) {
-          throwables.add(e);
-        }
-
-        synchronized (myFutures) {
-          myFutures.remove(future);
-        }
-      }
-
-      CompoundRuntimeException.throwIfNotEmpty(throwables);
-    }
-  }
-
-  private static class MyLoggingRunnable implements Runnable {
-    private final Runnable myDelegate;
-
-    private MyLoggingRunnable(@NotNull Runnable delegate) {
-      myDelegate = delegate;
-    }
-
-    @Override
-    public void run() {
-      try {
-        myDelegate.run();
-      }
-      catch (ProcessCanceledException ignore) {
-      }
-      catch (Throwable e) {
-        LOG.error(e);
       }
     }
   }

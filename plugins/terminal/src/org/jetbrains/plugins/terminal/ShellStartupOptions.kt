@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.containers.CollectionFactory
 import com.jediterm.core.util.TermSize
+import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.nio.file.Path
 
 class ShellStartupOptions private constructor(builder: Builder) {
@@ -13,12 +14,12 @@ class ShellStartupOptions private constructor(builder: Builder) {
   val commandHistoryFileProvider: (() -> Path?)? = builder.commandHistoryFileProvider
   val initialTermSize: TermSize? = builder.initialTermSize
   val widget: TerminalWidget? = builder.widget
-  val isBlockShellIntegrationEnabled: Boolean = builder.isBlockShellIntegrationEnabled
+  val shellIntegration: ShellIntegration? = builder.shellIntegration
   val envVariables: Map<String, String> = builder.envVariables
 
   fun builder(): Builder {
     return Builder(workingDirectory, shellCommand, commandHistoryFileProvider, initialTermSize,
-                   widget, isBlockShellIntegrationEnabled, envVariables)
+                   widget, shellIntegration, envVariables)
   }
 
   override fun toString(): String {
@@ -32,7 +33,7 @@ class ShellStartupOptions private constructor(builder: Builder) {
                                      var commandHistoryFileProvider: (() -> Path?)?,
                                      var initialTermSize: TermSize?,
                                      var widget: TerminalWidget?,
-                                     var isBlockShellIntegrationEnabled: Boolean = false,
+                                     var shellIntegration: ShellIntegration? = null,
                                      var envVariables: Map<String, String> = createEnvVariablesMap()) {
 
     constructor() : this(null, null, null, null, null)
@@ -43,7 +44,7 @@ class ShellStartupOptions private constructor(builder: Builder) {
     fun commandHistoryFileProvider(commandHistoryFileProvider: (() -> Path?)?) = also { this.commandHistoryFileProvider = commandHistoryFileProvider }
     fun initialTermSize(initialTermSize: TermSize?) = also { this.initialTermSize = initialTermSize }
     fun widget(widget: TerminalWidget?) = also { this.widget = widget }
-    fun blockShellIntegrationEnabled(enabled: Boolean) = also { this.isBlockShellIntegrationEnabled = enabled }
+    fun shellIntegration(shellIntegration: ShellIntegration?) = also { this.shellIntegration = shellIntegration }
 
     fun modify(modifier: (Builder) -> Unit): Builder = also {
       modifier(this)

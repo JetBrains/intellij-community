@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,8 +14,7 @@ import static java.util.Objects.requireNonNull;
  * (see ignoreRepeatedMessagesInMs ctor arg)
  */
 public class ThrottledLogger {
-  @NotNull
-  private final Logger logger;
+  private final @NotNull Logger logger;
   /**
    * Ignore (i.e. skip logging) subsequent messages with same key if they come during that period after the first message.
    */
@@ -32,8 +31,7 @@ public class ThrottledLogger {
     this.ignoreRepeatedMessagesInMs = ignoreRepeatedMessagesInMs;
   }
 
-  @NotNull
-  public Logger wrappedLogger() {
+  public @NotNull Logger wrappedLogger() {
     return logger;
   }
 

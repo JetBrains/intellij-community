@@ -12,12 +12,12 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Function;
 
 public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   @NonNls
@@ -31,9 +31,9 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
       @Override
       public CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder,
                                               @NotNull String name,
-                                              @NotNull Function<? super String, String> attributeProvider,
+                                              @NotNull Function1<? super String, String> attributeProvider,
                                               boolean isBundled) {
-        return new CodeStyleSchemeImpl(attributeProvider.apply("name"), attributeProvider.apply("parent"), dataHolder);
+        return new CodeStyleSchemeImpl(attributeProvider.invoke("name"), attributeProvider.invoke("parent"), dataHolder);
       }
     }, null, null, SettingsCategory.CODE);
 

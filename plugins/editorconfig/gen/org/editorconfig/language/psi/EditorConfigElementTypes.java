@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // This is a generated file. Not intended for manual editing.
 package org.editorconfig.language.psi;
@@ -11,10 +11,12 @@ import org.editorconfig.language.psi.impl.*;
 public interface EditorConfigElementTypes {
 
   IElementType ASTERISK_PATTERN = new EditorConfigElementType("ASTERISK_PATTERN");
-  IElementType CHAR_CLASS = new EditorConfigElementType("CHAR_CLASS");
   IElementType CHAR_CLASS_EXCLAMATION = new EditorConfigElementType("CHAR_CLASS_EXCLAMATION");
   IElementType CHAR_CLASS_LETTER = new EditorConfigElementType("CHAR_CLASS_LETTER");
+  IElementType CHAR_CLASS_PATTERN = new EditorConfigElementType("CHAR_CLASS_PATTERN");
+  IElementType CONCATENATED_PATTERN = new EditorConfigElementType("CONCATENATED_PATTERN");
   IElementType DOUBLE_ASTERISK_PATTERN = new EditorConfigElementType("DOUBLE_ASTERISK_PATTERN");
+  IElementType ENUMERATION_PATTERN = new EditorConfigElementType("ENUMERATION_PATTERN");
   IElementType FLAT_OPTION_KEY = new EditorConfigElementType("FLAT_OPTION_KEY");
   IElementType FLAT_PATTERN = new EditorConfigElementType("FLAT_PATTERN");
   IElementType HEADER = new EditorConfigElementType("HEADER");
@@ -22,8 +24,6 @@ public interface EditorConfigElementTypes {
   IElementType OPTION_VALUE_IDENTIFIER = new EditorConfigElementType("OPTION_VALUE_IDENTIFIER");
   IElementType OPTION_VALUE_LIST = new EditorConfigElementType("OPTION_VALUE_LIST");
   IElementType OPTION_VALUE_PAIR = new EditorConfigElementType("OPTION_VALUE_PAIR");
-  IElementType PATTERN = new EditorConfigElementType("PATTERN");
-  IElementType PATTERN_ENUMERATION = new EditorConfigElementType("PATTERN_ENUMERATION");
   IElementType QUALIFIED_KEY_PART = new EditorConfigElementType("QUALIFIED_KEY_PART");
   IElementType QUALIFIED_OPTION_KEY = new EditorConfigElementType("QUALIFIED_OPTION_KEY");
   IElementType QUESTION_PATTERN = new EditorConfigElementType("QUESTION_PATTERN");
@@ -45,6 +45,7 @@ public interface EditorConfigElementTypes {
   IElementType L_BRACKET = new EditorConfigTokenType("L_BRACKET");
   IElementType L_CURLY = new EditorConfigTokenType("L_CURLY");
   IElementType PATTERN_IDENTIFIER = new EditorConfigTokenType("PATTERN_IDENTIFIER");
+  IElementType PATTERN_WHITE_SPACE = new EditorConfigTokenType("PATTERN_WHITE_SPACE");
   IElementType QUESTION = new EditorConfigTokenType("QUESTION");
   IElementType R_BRACKET = new EditorConfigTokenType("R_BRACKET");
   IElementType R_CURLY = new EditorConfigTokenType("R_CURLY");
@@ -56,17 +57,23 @@ public interface EditorConfigElementTypes {
       if (type == ASTERISK_PATTERN) {
         return new EditorConfigAsteriskPatternImpl(node);
       }
-      else if (type == CHAR_CLASS) {
-        return new EditorConfigCharClassImpl(node);
-      }
       else if (type == CHAR_CLASS_EXCLAMATION) {
         return new EditorConfigCharClassExclamationImpl(node);
       }
       else if (type == CHAR_CLASS_LETTER) {
         return new EditorConfigCharClassLetterImpl(node);
       }
+      else if (type == CHAR_CLASS_PATTERN) {
+        return new EditorConfigCharClassPatternImpl(node);
+      }
+      else if (type == CONCATENATED_PATTERN) {
+        return new EditorConfigConcatenatedPatternImpl(node);
+      }
       else if (type == DOUBLE_ASTERISK_PATTERN) {
         return new EditorConfigDoubleAsteriskPatternImpl(node);
+      }
+      else if (type == ENUMERATION_PATTERN) {
+        return new EditorConfigEnumerationPatternImpl(node);
       }
       else if (type == FLAT_OPTION_KEY) {
         return new EditorConfigFlatOptionKeyImpl(node);
@@ -88,12 +95,6 @@ public interface EditorConfigElementTypes {
       }
       else if (type == OPTION_VALUE_PAIR) {
         return new EditorConfigOptionValuePairImpl(node);
-      }
-      else if (type == PATTERN) {
-        return new EditorConfigPatternImpl(node);
-      }
-      else if (type == PATTERN_ENUMERATION) {
-        return new EditorConfigPatternEnumerationImpl(node);
       }
       else if (type == QUALIFIED_KEY_PART) {
         return new EditorConfigQualifiedKeyPartImpl(node);

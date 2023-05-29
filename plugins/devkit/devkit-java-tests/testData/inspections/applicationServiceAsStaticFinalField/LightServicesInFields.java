@@ -7,13 +7,11 @@ import serviceDeclarations.*;
 
 class MyClass {
 
-  <warning descr="Application service must not be assigned to a static final field">static final LightServiceAppAndProjectLevelAnnotation myAppService1 = LightServiceAppAndProjectLevelAnnotation.getInstance();</warning>
+  static final LightServiceAppAndProjectLevelAnnotation <warning descr="Application service must not be assigned to a static final field">myAppService1</warning> = LightServiceAppAndProjectLevelAnnotation.getInstance();
 
-  <warning descr="Application service must not be assigned to a static final field">private static final LightServiceAppLevelAnnotation myAppService2 = ApplicationManager.getApplication().getService(LightServiceAppLevelAnnotation.class);</warning>
+  private static final LightServiceAppLevelAnnotation <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = ApplicationManager.getApplication().getService(LightServiceAppLevelAnnotation.class);
 
-  <warning descr="Application service must not be assigned to a static final field">static final LightServiceDefaultAnnotation myAppService3 = LightServiceDefaultAnnotation.getInstance();</warning>
-
-  <warning descr="Application service must not be assigned to a static final field">public static final LightServiceEmptyAnnotation myAppService4 = LightServiceEmptyAnnotation.getInstance();</warning>
+  public static final LightServiceEmptyAnnotation <warning descr="Application service must not be assigned to a static final field">myAppService4</warning> = LightServiceEmptyAnnotation.getInstance();
 
   // not final
   static LightServiceAppAndProjectLevelAnnotation myAppService5 = LightServiceAppAndProjectLevelAnnotation.getInstance();

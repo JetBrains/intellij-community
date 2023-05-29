@@ -189,6 +189,15 @@ class BuildContextImpl(
     return null
   }
 
+  override val jetBrainsClientModuleFilter: JetBrainsClientModuleFilter by lazy {
+    val mainModule = productProperties.embeddedJetBrainsClientMainModule
+    if (mainModule != null && options.enableEmbeddedJetBrainsClient) JetBrainsClientModuleFilterImpl(mainModule, this)
+    else EmptyJetBrainsClientModuleFilter
+  }
+  
+  override val isEmbeddedJetBrainsClientEnabled: Boolean
+    get() = productProperties.embeddedJetBrainsClientMainModule != null && options.enableEmbeddedJetBrainsClient
+
   override fun shouldBuildDistributions(): Boolean = !options.targetOs.isEmpty()
 
   override fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean {

@@ -1,6 +1,6 @@
 package com.intellij.remoteDev.tracing
 
-import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.context.Context
@@ -26,7 +26,7 @@ suspend fun <T> withSpan(message: String,
                          delta: Long = 0,
                          action: suspend Span.() -> T): T {
   val startTime = currentTimeWithAdjustment(delta)
-  return TraceManager.getTracer(RDCT_INSTRUMENTER_NAME).spanBuilder(message)
+  return TelemetryTracer.getInstance().getTracer(RDCT_INSTRUMENTER_NAME).spanBuilder(message)
     .setSpanKind(kind)
     .setParent(parent)
     .setAttribute("start time", startTime)

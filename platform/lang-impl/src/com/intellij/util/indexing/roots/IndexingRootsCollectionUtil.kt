@@ -9,26 +9,27 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.CustomizingIndexingContributor
 import com.intellij.util.indexing.ReincludedRootsUtil
-import com.intellij.util.indexing.customizingIteration.ModuleAwareContentEntityIterator
 import com.intellij.util.indexing.customizingIteration.GenericContentEntityIterator
+import com.intellij.util.indexing.customizingIteration.ModuleAwareContentEntityIterator
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createGenericContentEntityIterators
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.Companion.createIterator
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forExternalEntity
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forGenericContentEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forLibraryEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forModuleAwareCustomizedContentEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forModuleRootsFileBased
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forGenericContentEntity
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor
-import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -38,6 +39,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import java.util.*
 import java.util.function.Consumer
 import java.util.function.Function
 
@@ -56,10 +58,10 @@ fun optimizeRoots(roots: Collection<VirtualFile>): List<VirtualFile> {
     SmartList(roots.iterator().next())
   }
   else if (size > ROOTS_SIZE_OPTIMISING_LIMIT) {
-    java.util.ArrayList(roots)
+    ArrayList(roots)
   }
   else {
-    val filteredList: MutableList<VirtualFile> = java.util.ArrayList()
+    val filteredList: MutableList<VirtualFile> = ArrayList()
     val consumer: Consumer<VirtualFile> = object : Consumer<VirtualFile> {
       private var previousPath: String? = null
       override fun accept(file: VirtualFile) {
@@ -165,6 +167,36 @@ internal data class EntityExternalRootsDescription<E : WorkspaceEntity>(val enti
 private fun <T> toList(value: Collection<T>): List<T> {
   if (value is List<T>) return value
   return if (value.isEmpty()) emptyList() else ArrayList(value)
+}
+
+private fun toRootList(value: Collection<VirtualFile>): List<VirtualFile> {
+  if (value.size < 2) {
+    if (value is List<VirtualFile>) return value
+    return if (value.isEmpty()) emptyList() else ArrayList(value)
+  }
+
+  val pathMap = TreeMap<String, VirtualFile>(OSAgnosticPathUtil.COMPARATOR)
+  for (file in value) {
+    val path = FileUtil.toSystemIndependentName(file.path)
+    if (!isIncluded(pathMap, path)) {
+      pathMap[path] = file
+      while (true) {
+        val excludedPath = pathMap.higherKey(path)
+        if (excludedPath != null && OSAgnosticPathUtil.startsWith(excludedPath, path)) {
+          pathMap.remove(excludedPath)
+        }
+        else {
+          break
+        }
+      }
+    }
+  }
+  return pathMap.values.toList()
+}
+
+private fun isIncluded(existingFiles: NavigableMap<String, VirtualFile>, path: String): Boolean {
+  val suggestedCoveringRoot = existingFiles.floorKey(path)
+  return suggestedCoveringRoot != null && OSAgnosticPathUtil.startsWith(path, suggestedCoveringRoot)
 }
 
 internal class WorkspaceIndexingRootsBuilder {
@@ -289,9 +321,9 @@ internal class WorkspaceIndexingRootsBuilder {
   fun addIteratorsFromRoots(iterators: MutableList<IndexableFilesIterator>,
                             libraryOriginsToFilterDuplicates: MutableSet<IndexableSetOrigin>,
                             storage: EntityStorage) {
-    val initialIterators = java.util.ArrayList<IndexableFilesIterator>()
+    val initialIterators = ArrayList<IndexableFilesIterator>()
     for ((module, roots) in moduleRoots.entrySet()) {
-      initialIterators.add(ModuleIndexableFilesIteratorImpl(module, toList(roots), true))
+      initialIterators.add(ModuleIndexableFilesIteratorImpl(module, toRootList(roots), true))
     }
     for (description in descriptions) {
       when (description) {
@@ -307,6 +339,7 @@ internal class WorkspaceIndexingRootsBuilder {
         is EntityExternalRootsDescription<*> -> iterators.addAll(description.createIterators())
       }
     }
+    iterators.addAll(0, initialIterators)
   }
 
   fun <E : WorkspaceEntity> registerEntitiesFromContributor(contributor: WorkspaceFileIndexContributor<E>,
@@ -341,14 +374,15 @@ internal class WorkspaceIndexingRootsBuilder {
   }
 
   companion object {
+    @JvmOverloads
     fun registerEntitiesFromContributors(project: Project,
                                          entityStorage: EntityStorage,
-                                         settings: Settings?): WorkspaceIndexingRootsBuilder {
+                                         settings: Settings = Settings.DEFAULT): WorkspaceIndexingRootsBuilder {
       val builder = WorkspaceIndexingRootsBuilder()
       val contributors = (WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexImpl).contributors
       for (contributor in contributors) {
         ProgressManager.checkCanceled()
-        if (settings?.shouldIgnore(contributor) == true) {
+        if (settings.shouldIgnore(contributor)) {
           continue
         }
         builder.registerEntitiesFromContributor(contributor, entityStorage)
@@ -357,6 +391,13 @@ internal class WorkspaceIndexingRootsBuilder {
     }
 
     internal class Settings {
+      companion object {
+        val DEFAULT = Settings()
+
+        init {
+          DEFAULT.retainCondition = Condition<WorkspaceFileIndexContributor<*>> { contributor -> contributor.storageKind == EntityStorageKind.MAIN }
+        }
+      }
       var retainCondition: Condition<WorkspaceFileIndexContributor<*>>? = null
       fun shouldIgnore(contributor: WorkspaceFileIndexContributor<*>): Boolean {
         val condition = retainCondition
@@ -394,7 +435,7 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
     val entityReference = entity.createReference<E>()
     fillCustomizationValues(entity, entityReference)
 
-    if (customData is ModuleContentOrSourceRootData) {
+    if (customData is ModuleRelatedRootData) {
       if (contributor is CustomizingIndexingContributor<E, *>) {
         customizedModuleContentEntities.putValue(customData.module, entityReference)
         customizedModuleContentRoots.putValue(entityReference, root)

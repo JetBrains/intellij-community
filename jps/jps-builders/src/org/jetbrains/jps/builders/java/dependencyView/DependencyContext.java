@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,8 +34,9 @@ final class DependencyContext implements NamingContext {
      return r;
    }
 
-  TypeRepr.AbstractType getType(final TypeRepr.AbstractType t) {
-    final TypeRepr.AbstractType r = myTypeMap.get(t);
+  <T extends TypeRepr.AbstractType> T getType(final T t) {
+    //noinspection unchecked
+    final T r = (T)myTypeMap.get(t);
 
     if (r != null) {
       return r;
@@ -100,7 +101,7 @@ final class DependencyContext implements NamingContext {
   }
 
   public LoggerWrapper<Integer> getLogger(final Logger log) {
-    return new LoggerWrapper<Integer>() {
+    return new LoggerWrapper<>() {
       @Override
       public boolean isDebugEnabled() {
         return log.isDebugEnabled();
@@ -115,7 +116,7 @@ final class DependencyContext implements NamingContext {
 
       @Override
       public void debug(String comment, String t) {
-        if (isDebugEnabled()){
+        if (isDebugEnabled()) {
           log.debug(comment + t);
         }
       }

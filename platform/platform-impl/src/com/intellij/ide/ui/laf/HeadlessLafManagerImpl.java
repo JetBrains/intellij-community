@@ -92,4 +92,10 @@ final class HeadlessLafManagerImpl extends LafManager {
 
   @Override
   public void removeLafManagerListener(@NotNull LafManagerListener listener) { }
+
+  @Override
+  public UIManager.LookAndFeelInfo getDefaultLightLaf() { return null; }
+
+  @Override
+  public UIManager.LookAndFeelInfo getDefaultDarkLaf() { return null; }
 }

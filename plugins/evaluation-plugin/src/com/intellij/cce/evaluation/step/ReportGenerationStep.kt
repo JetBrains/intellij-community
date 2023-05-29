@@ -160,9 +160,4 @@ class ReportGenerationStep(
       ReportInfo(it.type, it.generateGlobalReport(metrics))
     }
   }
-
-  private fun List<Boolean>.allEquals(): Boolean {
-    return distinct().singleOrNull()
-           ?: throw IllegalArgumentException("Can't create workspace for code golf and not code golf evaluating together")
-  }
 }

@@ -15,17 +15,19 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
+import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
@@ -49,7 +51,8 @@ import java.util.concurrent.atomic.AtomicReference
  */
 abstract class ScriptClassRootsUpdater(
     val project: Project,
-    val manager: CompositeScriptConfigurationManager
+    val manager: CompositeScriptConfigurationManager,
+    val scope: CoroutineScope
 ) {
     private var lastSeen: ScriptClassRootsCache? = null
     private var invalidated: Boolean = false
@@ -159,6 +162,7 @@ abstract class ScriptClassRootsUpdater(
             invalidated = false
 
             if (syncUpdateRequired || isUnitTestMode()) {
+                concurrentUpdates.incrementAndGet()
                 syncUpdateRequired = false
                 updateSynchronously()
             } else {
@@ -175,6 +179,7 @@ abstract class ScriptClassRootsUpdater(
             scheduledUpdate?.cancel()
 
             if (!disposable.disposed) {
+                concurrentUpdates.incrementAndGet()
                 scheduledUpdate = BackgroundTaskUtil.submitTask(disposable) {
                     doUpdate()
                 }
@@ -249,6 +254,7 @@ abstract class ScriptClassRootsUpdater(
             }
         } finally {
             scheduledUpdate = null
+            concurrentUpdates.decrementAndGet()
         }
     }
 
@@ -325,17 +331,21 @@ abstract class ScriptClassRootsUpdater(
          * As FIR plugin does not have scripts support yet, just disabling not working one for now
          */
         @Suppress("DEPRECATION")
-        if (project.service<FirPluginOracleService>().isFirPlugin()) return
+        if (project.isDisposed || project.service<FirPluginOracleService>().isFirPlugin()) return
 
-        GlobalScope.launch(EDT(project)) {
-            if (project.isDisposed) return@launch
+        val ktFiles = openedScripts.mapNotNull {
+            if (!it.isValid) return@mapNotNull null
 
-            openedScripts.forEach {
-                if (!it.isValid) return@forEach
-
-                PsiManager.getInstance(project).findFile(it)?.let { psiFile ->
-                    if (psiFile is KtFile) {
-                        DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
+            val ktFile = PsiManager.getInstance(project).findFile(it) as? KtFile
+            ktFile?.createSmartPointer()
+        }
+        if (ktFiles.isNotEmpty()) {
+            scope.launch {
+                withContext(Dispatchers.EDT) {
+                    ktFiles.forEach {
+                        val ktFile = it.element ?: return@forEach
+                        DaemonCodeAnalyzer.getInstance(project)
+                            .restart(ktFile)
                     }
                 }
             }

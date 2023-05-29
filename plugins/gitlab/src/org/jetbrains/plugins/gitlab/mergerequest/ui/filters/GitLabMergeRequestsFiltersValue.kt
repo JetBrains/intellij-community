@@ -20,13 +20,14 @@ data class GitLabMergeRequestsFiltersValue(
   @Transient
   override val filterCount: Int = calcFilterCount()
 
-  fun toSearchQuery(): String = filters.mapNotNull { it }.joinToString(separator = "&") { filter ->
-    "${filter.queryField()}=${filter.queryValue()}"
-  }
+  fun toSearchQuery(): String = filters.asSequence()
+    .filterNotNull()
+    .map { "${it.queryField()}=${it.queryValue()}" }
+    .let { if (searchQuery != null) it + "search=$searchQuery" else it }
+    .joinToString(separator = "&")
 
   private fun calcFilterCount(): Int {
     var count = 0
-    if (searchQuery != null) count++
     if (state != null) count++
     if (author != null) count++
     if (assignee != null) count++

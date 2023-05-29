@@ -193,11 +193,12 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
             }
           }
           is Event.StageEvent -> {
-            normalizedEvents.add(event)
             if (suspensionStartTime != null) {
-              //apparently we haven't stopped yet
-              suspensionStartTime = event.instant
+              normalizedEvents.add(Event.SuspensionEvent(true, suspensionStartTime))
+              normalizedEvents.add(Event.SuspensionEvent(false, event.instant))
+              suspensionStartTime = null
             }
+            normalizedEvents.add(event)
           }
         }
       }
@@ -466,11 +467,14 @@ data class ProjectScanningHistoryImpl(override val project: Project,
             }
           }
           is Event.StageEvent -> {
-            normalizedEvents.add(event)
+            //progressIndicator is checked before registering stages, so suspension has definitely ended before that moment;
+            //event may be registered later, but the milliseconds of difference are not that important
             if (suspensionStartTime != null) {
-              //apparently we haven't stopped yet
-              suspensionStartTime = event.instant
+              normalizedEvents.add(Event.SuspensionEvent(true, suspensionStartTime))
+              normalizedEvents.add(Event.SuspensionEvent(false, event.instant))
+              suspensionStartTime = null
             }
+            normalizedEvents.add(event)
           }
         }
       }
@@ -599,7 +603,8 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     for ((fileType, fileTypeStats) in statistics.statsPerFileType) {
       val totalStats = totalStatsPerFileType.getOrPut(fileType) {
         StatsPerFileTypeImpl(0, 0, 0, 0,
-                             LimitedPriorityQueue(biggestContributorsPerFileTypeLimit, compareBy { it.processingTimeInAllThreads }))
+                             LimitedPriorityQueue(biggestContributorsPerFileTypeLimit, compareBy { it.processingTimeInAllThreads }),
+                             fileTypeStats.parentLanguages)
       }
       totalStats.totalNumberOfFiles += fileTypeStats.numberOfFiles
       totalStats.totalBytes += fileTypeStats.totalBytes
@@ -704,7 +709,8 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     override var totalBytes: BytesNumber,
     override var totalProcessingTimeInAllThreads: TimeNano,
     override var totalContentLoadingTimeInAllThreads: TimeNano,
-    val biggestFileTypeContributors: LimitedPriorityQueue<BiggestFileTypeContributorImpl>
+    val biggestFileTypeContributors: LimitedPriorityQueue<BiggestFileTypeContributorImpl>,
+    val parentLanguages: List<String>
   ) : StatsPerFileType {
     override val biggestFileTypeContributorList: List<BiggestFileTypeContributor>
       get() = biggestFileTypeContributors.biggestElements

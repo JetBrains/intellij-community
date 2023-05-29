@@ -1,6 +1,6 @@
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.diagnostic.telemetry.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;

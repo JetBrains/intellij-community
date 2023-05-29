@@ -3,9 +3,11 @@ package com.intellij.ui.scale
 
 import com.intellij.ui.JreHiDpiUtil
 import java.awt.Component
+import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.GraphicsConfiguration
 import java.lang.ref.WeakReference
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 
 /**
@@ -24,7 +26,7 @@ class ScaleContext : UserScaleContext {
      * Creates a context with all scale factors set to 1.
      */
     @JvmStatic
-    fun createIdentity(): ScaleContext = ScaleContext(ScaleType.USR_SCALE.of(1.0), ScaleType.SYS_SCALE.of(1.0))
+    fun createIdentity(): ScaleContext = ScaleContext(ScaleType.USR_SCALE.of(1f), ScaleType.SYS_SCALE.of(1f))
 
     /**
      * Creates a context from the provided `ctx`.
@@ -146,7 +148,7 @@ class ScaleContext : UserScaleContext {
    * Also updates the system scale (if the context was created from Component) if necessary.
    */
   override fun update(): Boolean {
-    var updated = setScale(ScaleType.USR_SCALE.of(JBUIScale.scale(1f)))
+    var updated = setScale(ScaleType.USR_SCALE.of(JBUIScale.userScale))
     if (componentRef != null) {
       val component = componentRef!!.get()
       if (component != null) {
@@ -177,7 +179,23 @@ class ScaleContext : UserScaleContext {
 
   fun copyWithScale(scale: Scale): ScaleContext {
     val result = ScaleContext(usrScale, sysScale, objScale, scale)
-    result.overriddenScales = overriddenScales?.clone()
+    overriddenScales?.let {
+      result.overriddenScales = it.clone()
+    }
+    return result
+  }
+
+  // system scale from the current `Graphics` and the current user scale, object scale from the icon scale context
+  fun copyIfNeeded(g: Graphics): ScaleContext {
+    val newSystemScale = JBUIScale.sysScale(g as? Graphics2D)
+    val newUserScale = JBUIScale.userScale
+    if (newSystemScale == getScale(ScaleType.SYS_SCALE).toFloat() && newUserScale == getScale(ScaleType.USR_SCALE).toFloat()) {
+      return this
+    }
+    val result = ScaleContext(ScaleType.USR_SCALE.of(newUserScale), ScaleType.SYS_SCALE.of(newSystemScale), objScale)
+    overriddenScales?.let {
+      result.overriddenScales = it.clone()
+    }
     return result
   }
 
@@ -204,7 +222,7 @@ class ScaleContext : UserScaleContext {
   }
 
   override fun <T : UserScaleContext> copy(): T {
-    val result = createIdentity()
+    val result = ScaleContext(usrScale, sysScale, objScale)
     result.updateAll(this)
     @Suppress("UNCHECKED_CAST")
     return result as T
@@ -212,5 +230,36 @@ class ScaleContext : UserScaleContext {
 
   override fun toString(): String = "$usrScale, $sysScale, $objScale, $pixScale"
 
-  open class Cache<D>(dataProvider: Function<in ScaleContext, out D>) : UserScaleContext.Cache<D, ScaleContext>(dataProvider)
+  @Deprecated("Use ScaleContextCache")
+  open class Cache<T>(dataProvider: Function<in ScaleContext, out T>) : ScaleContextCache<T>(dataProvider::apply)
+}
+
+/**
+ * A cache for the last usage of a data object matching a scale context.
+ *
+ * @param dataProvider provides a data object matching the passed scale context
+ **/
+open class ScaleContextCache<T>(private val dataProvider: (ScaleContext) -> T) {
+  private val data = AtomicReference<Pair<Double, T>?>(null)
+
+  /**
+   * Returns the data object from the cache if it matches the `ctx`,
+   * otherwise provides the new data via the provider and caches it.
+   */
+  fun getOrProvide(scaleContext: ScaleContext): T? {
+    var data = data.get()
+    val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE)
+    if (data == null || scale.compareTo(data.first) != 0) {
+      data = scale to dataProvider(scaleContext)
+      this.data.set(data)
+    }
+    return data.second
+  }
+
+  /**
+   * Clears the cache.
+   */
+  fun clear() {
+    data.set(null)
+  }
 }

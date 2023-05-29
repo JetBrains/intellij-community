@@ -188,7 +188,9 @@ data class ClientId(val value: String) {
 
     @JvmStatic
     fun withClientId(clientId: ClientId?): AccessToken {
-      if (clientId == null) return AccessToken.EMPTY_ACCESS_TOKEN
+      if (clientId == null) {
+        return AccessToken.EMPTY_ACCESS_TOKEN
+      }
       return withClientId(clientId.value)
     }
 

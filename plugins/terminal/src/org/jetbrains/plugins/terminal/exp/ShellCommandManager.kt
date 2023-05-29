@@ -21,6 +21,7 @@ class ShellCommandManager(terminal: Terminal) {
     terminal.addCustomCommandListener(TerminalCustomCommandListener {
       when (it.getOrNull(0)) {
         "initialized" -> fireInitialized()
+        "prompt_shown" -> firePromptShown()
         "command_started" -> processCommandStartedEvent(it)
         "command_finished" -> processCommandFinishedEvent(it)
         "command_history" -> processCommandHistoryEvent(it)
@@ -76,6 +77,15 @@ class ShellCommandManager(terminal: Terminal) {
     }
     for (listener in listeners) {
       listener.initialized()
+    }
+  }
+
+  private fun firePromptShown() {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: prompt_shown")
+    }
+    for (listener in listeners) {
+      listener.promptShown()
     }
   }
 
@@ -137,6 +147,13 @@ class ShellCommandManager(terminal: Terminal) {
 interface ShellCommandListener {
   /** Fired before the first prompt is printed */
   fun initialized() {}
+
+  /**
+   * Fired each time when prompt is printed.
+   * The prompt itself is empty, so this event can be counted both as before or after prompt is printed.
+   * Fired on session start after [initialized] event, after [commandFinished] event, and after completion with multiple items is finished.
+   */
+  fun promptShown() {}
 
   fun commandStarted(command: String) {}
 

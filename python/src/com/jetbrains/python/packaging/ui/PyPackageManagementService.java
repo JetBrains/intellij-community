@@ -22,7 +22,6 @@ import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
-import com.jetbrains.python.packaging.statistics.PythonPackagesDialogStatisticsCollector;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -242,7 +241,6 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public void uninstallPackages(List<? extends InstalledPackage> installedPackages, @NotNull Listener listener) {
-    PythonPackagesDialogStatisticsCollector.getPackageUninstalledEvent().log(myProject);
     final String packageName = installedPackages.size() == 1 ? installedPackages.get(0).getName() : null;
     final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, mySdk, new PyPackageManagerUI.Listener() {
       @Override

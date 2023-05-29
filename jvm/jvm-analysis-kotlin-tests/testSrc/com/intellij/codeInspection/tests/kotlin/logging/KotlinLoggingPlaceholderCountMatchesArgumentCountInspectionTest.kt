@@ -76,6 +76,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
     }
 
     fun `test escaping`() {
+      inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
       myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.LoggerFactory
 

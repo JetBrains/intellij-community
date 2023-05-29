@@ -1,13 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
-import com.intellij.ide.actions.ToggleDistractionFreeModeAction
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.AdjustableSizeCardLayout
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
@@ -15,6 +16,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCusto
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
+import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.gridLayout.GridLayout
@@ -30,9 +32,9 @@ import java.awt.*
 import java.awt.GridBagConstraints.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import javax.swing.Box
 import javax.swing.JComponent
 import javax.swing.JFrame
+import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.math.roundToInt
 
@@ -40,19 +42,25 @@ private enum class ShowMode {
   MENU, TOOLBAR
 }
 
-internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
+internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val myMenuBar = IdeMenuBar.createMenuBar()
+  private val ideMenuHelper = IdeMenuHelper(myMenuBar)
   private val menuBarHeaderTitle = SimpleCustomDecorationPath(frame, true).apply {
     isOpaque = false
   }
   private val menuBarContainer = createMenuBarContainer()
-  private val expandableMenu = ExpandableMenu(this)
-  private val mainMenuButton = MainMenuButton(expandableMenu)
+  private val mainMenuButton = MainMenuButton()
   private var toolbar : MainToolbar? = null
   private val myToolbarPlaceholder = createToolbarPlaceholder()
   private val myHeaderContent = createHeaderContent()
+  private val expandableMenu = ExpandableMenu(myHeaderContent)
   private val toolbarHeaderTitle = SimpleCustomDecorationPath(frame).apply {
     isOpaque = false
+  }
+  private val customizer get() = ProjectWindowCustomizerService.getInstance()
+
+  init {
+    updateMenuBar()
   }
 
   private fun createToolbarPlaceholder(): JPanel {
@@ -80,18 +88,17 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     }
   }
 
-  private var mode = ShowMode.MENU
-  private val isCompact: Boolean
-    get() = ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()
+  private val mode: ShowMode
+    get() = if (isToolbarInHeader(UISettings.shadowInstance)) ShowMode.TOOLBAR else ShowMode.MENU
+  private val isCompact: Boolean get() = (root as? IdeRootPane)?.isCompactHeader == true
+
   private fun toolbarCardName(isCompact: Boolean = this.isCompact): String =
     if (isCompact) "PATH" else "TOOLBAR"
 
   init {
-    expandableMenu.headerContent = myHeaderContent
+    mainMenuButton.expandableMenu = expandableMenu
     layout = GridBagLayout()
     val gb = GridBag().anchor(WEST)
-
-    updateLayout(UISettings.getInstance())
 
     productIcon.border = JBUI.Borders.empty(V, 0, V, 0)
     add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(H))
@@ -100,7 +107,13 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     add(buttonsView, gb.next().anchor(EAST))
 
     setCustomFrameTopBorder({ false }, {true})
-    updateToolbarAppearanceFromMode()
+
+    customizer.addListener(this, true) {
+      isOpaque = !it
+      revalidate()
+    }
+
+    updateToolbar()
   }
 
   private fun wrap(comp: JComponent) = object : NonOpaquePanel(comp) {
@@ -113,7 +126,19 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
   }
 
   override fun updateToolbar() {
-    doUpdateToolbar(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
+    updateLayout()
+
+    when (mode) {
+      ShowMode.TOOLBAR -> doUpdateToolbar(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
+      ShowMode.MENU -> removeToolbar()
+    }
+
+    updateToolbarAppearanceFromMode()
+  }
+
+  override fun paint(g: Graphics?) {
+    customizer.paint(frame, this, g)
+    super.paint(g)
   }
 
   @RequiresEdt
@@ -160,12 +185,14 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     super.installListeners()
     mainMenuButton.rootPane = frame.rootPane
     myMenuBar.addComponentListener(contentResizeListener)
+    ideMenuHelper.installListeners()
   }
 
   override fun uninstallListeners() {
     super.uninstallListeners()
     myMenuBar.removeComponentListener(contentResizeListener)
     toolbar?.removeComponentListener(contentResizeListener)
+    ideMenuHelper.uninstallListeners()
   }
 
   override fun updateMenuActions(forceRebuild: Boolean) {
@@ -176,24 +203,22 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
   override fun getComponent(): JComponent = this
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    updateLayout(uiSettings)
-    updateToolbarFromMode()
+    updateToolbar()
   }
 
   override fun updateUI() {
     super.updateUI()
     if (parent != null) {
-      updateToolbarFromMode()
+      updateToolbar()
+      updateMenuBar()
+      ideMenuHelper.updateUI()
     }
   }
 
-  private fun updateToolbarFromMode() {
-    when (mode) {
-      ShowMode.TOOLBAR -> updateToolbar()
-      ShowMode.MENU -> removeToolbar()
+  private fun updateMenuBar() {
+    if (IdeRootPane.hideNativeLinuxTitle) {
+      myMenuBar.border = null
     }
-
-    updateToolbarAppearanceFromMode()
   }
 
   private fun updateToolbarAppearanceFromMode() {
@@ -238,13 +263,10 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
   }
 
   private fun createHeaderContent(): JPanel {
-    val res = NonOpaquePanel(CardLayout())
-    res.border = JBUI.Borders.emptyLeft(JBUI.scale(16))
-
     val menuPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
       add(menuBarContainer, gb.next().fillCellVertically().weighty(1.0))
-      add(Box.createHorizontalGlue(), gb.next().weightx(1.0).fillCell())
+      add(createDraggableWindowArea(), gb.next().weightx(1.0).fillCell())
     }
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
@@ -252,15 +274,28 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
       add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCell())
     }
 
-    res.add(ShowMode.MENU.name, menuPnl)
-    res.add(ShowMode.TOOLBAR.name, toolbarPnl)
+    val result = NonOpaquePanel(CardLayout()).apply {
+      border = JBUI.Borders.emptyLeft(JBUI.scale(16))
+      background = null
+      add(ShowMode.MENU.name, menuPnl)
+      add(ShowMode.TOOLBAR.name, toolbarPnl)
+    }
 
-    return res
+    return result
   }
 
-  private fun updateLayout(settings: UISettings) {
-    mode = if (isToolbarInHeader(settings)) ShowMode.TOOLBAR else ShowMode.MENU
+  private fun updateLayout() {
     val layout = myHeaderContent.layout as CardLayout
     layout.show(myHeaderContent, mode.name)
+  }
+
+  private fun createDraggableWindowArea(): JComponent {
+    val result = JLabel()
+    if (IdeRootPane.hideNativeLinuxTitle) {
+      val windowMoveListener = WindowMoveListener(this)
+      windowMoveListener.installTo(result)
+      windowMoveListener.installTo(this)
+    }
+    return result
   }
 }

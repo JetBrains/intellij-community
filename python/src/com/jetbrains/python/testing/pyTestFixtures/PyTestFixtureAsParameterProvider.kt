@@ -15,6 +15,7 @@ import com.jetbrains.python.testing.PyTestFunctionParameterProvider
 internal object PyTestFixtureAsParameterProvider : PyTestFunctionParameterProvider {
   override fun getArguments(function: PyFunction, evalContext: TypeEvalContext, module: Module): List<PyTestFunctionParameter> {
     return getFixtures(module, function, evalContext)
+      .distinctBy { it.name }
       .map { PyTestFunctionParameter(it.name, IconManager.getInstance().getPlatformIcon(PlatformIcons.Function)) }
   }
 }

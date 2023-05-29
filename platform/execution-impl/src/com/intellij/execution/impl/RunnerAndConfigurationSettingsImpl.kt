@@ -39,6 +39,7 @@ const val DUMMY_ELEMENT_NAME: String = "dummy"
 private const val TEMPORARY_ATTRIBUTE = "temporary"
 private const val EDIT_BEFORE_RUN = "editBeforeRun"
 private const val ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun"
+private const val FOCUS_TOOLWINDOW_BEFORE_RUN = "focusToolWindowBeforeRun"
 
 private const val TEMP_CONFIGURATION = "tempConfiguration"
 internal const val TEMPLATE_FLAG_ATTRIBUTE = "default"
@@ -85,6 +86,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   private var pathIfStoredInArbitraryFile: String? = null
   private var isEditBeforeRun = false
   private var isActivateToolWindowBeforeRun = true
+  private var isFocusToolWindowBeforeRun = false
   private var wasSingletonSpecifiedExplicitly = false
   private var folderName: String? = null
 
@@ -181,6 +183,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
   override fun isActivateToolWindowBeforeRun() = isActivateToolWindowBeforeRun
 
+  override fun setFocusToolWindowBeforeRun(value: Boolean) {
+    isFocusToolWindowBeforeRun = value
+  }
+
+  override fun isFocusToolWindowBeforeRun() = isFocusToolWindowBeforeRun
+
   override fun setFolderName(value: String?) {
     folderName = value
   }
@@ -197,9 +205,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
       level = if (element.getAttributeBooleanValue(TEMPORARY_ATTRIBUTE) || TEMP_CONFIGURATION == element.name) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
     }
 
-    isEditBeforeRun = (element.getAttributeBooleanValue(EDIT_BEFORE_RUN))
+    isEditBeforeRun = element.getAttributeBooleanValue(EDIT_BEFORE_RUN)
     val value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN)
     isActivateToolWindowBeforeRun = value == null || value.toBoolean()
+    isFocusToolWindowBeforeRun = element.getAttributeBooleanValue(FOCUS_TOOLWINDOW_BEFORE_RUN)
     folderName = element.getAttributeValue(FOLDER_NAME)
     val factory = manager.getFactory(element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE), element.getAttributeValue(FACTORY_NAME_ATTRIBUTE), !isTemplate)
 
@@ -274,6 +283,9 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
       }
       if (!isActivateToolWindowBeforeRun) {
         element.setAttribute(ACTIVATE_TOOLWINDOW_BEFORE_RUN, "false")
+      }
+      if (isFocusToolWindowBeforeRun) {
+        element.setAttribute(FOCUS_TOOLWINDOW_BEFORE_RUN, "true")
       }
       if (wasSingletonSpecifiedExplicitly || configuration.isAllowRunningInParallel != factory.singletonPolicy.isAllowRunningInParallel) {
         element.setAttribute(SINGLETON, (!configuration.isAllowRunningInParallel).toString())

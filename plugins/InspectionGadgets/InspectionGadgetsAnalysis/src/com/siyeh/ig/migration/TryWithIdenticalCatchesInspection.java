@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
@@ -409,11 +408,11 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new CollapseCatchSectionsFix((Boolean)infos[1], ignoreBlocksWithDifferentComments);
   }
 
-  private static class CollapseCatchSectionsFix extends InspectionGadgetsFix {
+  private static class CollapseCatchSectionsFix extends PsiUpdateModCommandQuickFix {
     private final boolean myEmpty;
     private final boolean myIgnoreBlocksWithDifferentComments;
 
@@ -429,10 +428,10 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
       // smart psi pointer lost correct catch section when multiple catch sections were collapsed in batch mode,
       // so we need to re-calculate everything based on what exists at this point
-      final PsiCatchSection catchSection = (PsiCatchSection)descriptor.getPsiElement();
+      final PsiCatchSection catchSection = (PsiCatchSection)startElement;
       final PsiTryStatement tryStatement = (PsiTryStatement)catchSection.getParent();
 
       final CatchSectionWrapper[] sections = CatchSectionWrapper.createWrappers(tryStatement);

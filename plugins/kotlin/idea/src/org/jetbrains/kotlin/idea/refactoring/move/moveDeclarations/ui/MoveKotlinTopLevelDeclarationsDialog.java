@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionTable;
-import org.jetbrains.kotlin.idea.refactoring.move.MoveUtilsKt;
+import org.jetbrains.kotlin.idea.refactoring.move.MoveUtilKt;
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox;
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinFileChooserDialog;
 import org.jetbrains.kotlin.idea.util.ExpectActualUtilKt;
@@ -182,7 +182,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
             @NotNull List<KtNamedDeclaration> declarations
     ) {
         //KotlinMemberInfo run resolve on declaration so it is good to place it to the process
-        List<KotlinMemberInfo> memberInfos = MoveUtilsKt.mapWithReadActionInProcess(declarations, myProject, MoveHandler.getRefactoringName(), (declaration) -> {
+        List<KotlinMemberInfo> memberInfos = MoveUtilKt.mapWithReadActionInProcess(declarations, myProject, MoveHandler.getRefactoringName(), (declaration) -> {
             KotlinMemberInfo memberInfo = new KotlinMemberInfo(declaration, false);
             memberInfo.setChecked(elementsToMove.contains(declaration));
             return memberInfo;
@@ -200,7 +200,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
     }
 
     private void updateSuggestedFileName() {
-        tfFileNameInPackage.setText(MoveUtilsKt.guessNewFileName(getSelectedElementsToMove()));
+        tfFileNameInPackage.setText(MoveUtilKt.guessNewFileName(getSelectedElementsToMove()));
     }
 
     private void updateFileNameInPackageField() {
@@ -313,7 +313,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
 
         String initialTargetPath = targetFile != null
                 ? targetFile.getVirtualFile().getPath()
-                : sourceFiles.get(0).getVirtualFile().getParent().getPath() + "/" + MoveUtilsKt.guessNewFileName(elementsToMove);
+                : sourceFiles.get(0).getVirtualFile().getParent().getPath() + "/" + MoveUtilKt.guessNewFileName(elementsToMove);
         fileChooser.setText(initialTargetPath);
     }
 
@@ -467,7 +467,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
         saveRefactoringSettings();
 
         try {
-            MoveUtilsKt.logFusForMoveRefactoring(
+            MoveUtilKt.logFusForMoveRefactoring(
                     modelResult.getElementsCount(),
                     modelResult.getEntityToMove(),
                     modelResult.getDestination(),

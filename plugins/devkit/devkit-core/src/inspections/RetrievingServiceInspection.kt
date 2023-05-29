@@ -32,30 +32,29 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
 
       override fun visitCallExpression(node: UCallExpression): Boolean {
         val retrievingExpression = node.uastParent as? UQualifiedReferenceExpression ?: return true
-        val anchor = retrievingExpression.sourcePsi ?: return true
         val serviceType = node.returnType as? PsiClassType ?: return true
         if (!COMPONENT_MANAGER_GET_SERVICE.uCallMatches(node)) return true
         val howServiceRetrieved = howServiceRetrieved(node) ?: return true
         val serviceClass = serviceType.resolve()?.toUElement(UClass::class.java) ?: return true
-        val serviceLevel = ServiceUtil.getLevelType(serviceClass, holder.project)
+        val serviceLevel = getLevelType(holder.project, serviceClass)
         if (isServiceRetrievedCorrectly(serviceLevel, howServiceRetrieved)) {
           checkIfCanBeReplacedWithGetInstance(retrievingExpression, howServiceRetrieved, serviceClass, holder)
         }
         else {
           val message = getMessage(howServiceRetrieved)
-          holder.registerProblem(anchor, message)
+          holder.registerUProblem(node, message)
         }
         return true
       }
-
-      private fun isServiceRetrievedCorrectly(serviceLevel: ServiceUtil.LevelType, howServiceRetrieved: Level): Boolean {
-        return serviceLevel == ServiceUtil.LevelType.NOT_SPECIFIED ||
-               when (howServiceRetrieved) {
-                 Level.APP -> serviceLevel.isApp()
-                 Level.PROJECT -> serviceLevel.isProject()
-               }
-      }
     }, arrayOf(UCallExpression::class.java))
+  }
+
+  private fun isServiceRetrievedCorrectly(serviceLevel: LevelType, howServiceRetrieved: Level): Boolean {
+    return serviceLevel == LevelType.NOT_SPECIFIED ||
+           when (howServiceRetrieved) {
+             Level.APP -> serviceLevel.isApp()
+             Level.PROJECT -> serviceLevel.isProject()
+           }
   }
 
   private fun howServiceRetrieved(getServiceCandidate: UCallExpression): Level? {

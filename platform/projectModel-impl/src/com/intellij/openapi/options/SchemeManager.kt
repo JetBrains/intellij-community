@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options
 
 import com.intellij.openapi.components.SettingsCategory
@@ -69,7 +69,7 @@ abstract class SchemeManager<T> {
    */
   abstract fun isMetadataEditable(scheme: T): Boolean
 
-  abstract fun save(errors: MutableList<Throwable>)
+  abstract fun save()
 
   /**
    * Returns the category which settings of this scheme belong to.

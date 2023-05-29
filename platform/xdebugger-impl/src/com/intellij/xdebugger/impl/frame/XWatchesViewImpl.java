@@ -270,7 +270,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       });
       addToWatchesActionRef.get()
         .registerCustomShortcutSet(new CustomShortcutSet(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE), editorComponent);
-      JComponent component = JBUI.Panels.simplePanel(myEvaluateComboBox.getComponent());
+      JComponent component = myEvaluateComboBox.getComponent();
       //component.setBackground(tree.getBackground());
       component.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
       if (!UIExperiment.isNewDebuggerUIEnabled()) {

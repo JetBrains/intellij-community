@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.trustedProjects.TrustedProjectsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -55,7 +56,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element> {
+public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectLevelVcsManagerImpl.class);
   @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
@@ -87,7 +88,11 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     myOptionsAndConfirmations = new OptionsAndConfirmations();
 
     myMappings = new NewMappings(myProject, this);
-    Disposer.register(myProject, myMappings);
+  }
+
+  @Override
+  public void dispose() {
+    Disposer.dispose(myMappings);
   }
 
   public static ProjectLevelVcsManagerImpl getInstanceImpl(@NotNull Project project) {
@@ -385,16 +390,22 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator, directoryFilter);
   }
 
+  /**
+   * @see #writeDirectoryMappings(Element)
+   */
   @Override
   public @NotNull Element getState() {
     Element element = new Element("state");
     ProjectLevelVcsManagerSerialization.writeExternalUtil(element, myOptionsAndConfirmations);
-    if (myHaveLegacyVcsConfiguration) {
+    if (myHaveLegacyVcsConfiguration && !myProject.isDefault()) {
       element.setAttribute(SETTINGS_EDITED_MANUALLY, "true");
     }
     return element;
   }
 
+  /**
+   * @see #readDirectoryMappings(Element)
+   */
   @Override
   public void loadState(@NotNull Element state) {
     ProjectLevelVcsManagerSerialization.readExternalUtil(state, myOptionsAndConfirmations);
@@ -657,7 +668,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
    * @see VcsStartupActivity
    */
   public void addInitializationRequest(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
-    VcsInitialization.getInstance(myProject).add(vcsInitObject, runnable);
+    VcsInitialization.Companion.getInstance(myProject).add(vcsInitObject, runnable);
   }
 
   @Override
@@ -754,7 +765,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @TestOnly
   public void waitForInitialized() {
-    VcsInitialization.getInstance(myProject).waitFinished();
+    VcsInitialization.Companion.getInstance(myProject).waitFinished();
   }
 
   @Override

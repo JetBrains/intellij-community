@@ -14,7 +14,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.*
@@ -25,6 +24,7 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
@@ -37,7 +37,7 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter
 import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
-class ComponentModuleRegistrationChecker(private val moduleToModuleSet: ClearableLazyValue<MutableMap<String, PluginXmlDomInspection.PluginModuleSet>>,
+class ComponentModuleRegistrationChecker(private val moduleToModuleSet: SynchronizedClearableLazy<MutableMap<String, PluginXmlDomInspection.PluginModuleSet>>,
                                          private val ignoredClasses: MutableList<String>,
                                          private val annotationHolder: DomElementAnnotationHolder) {
   fun checkProperModule(extensionPoint: ExtensionPoint) {

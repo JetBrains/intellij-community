@@ -14,6 +14,10 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
+import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
+import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
+import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.tasks.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.tasks.UTIL_8_JAR
 import org.jetbrains.intellij.build.tasks.UTIL_JAR
@@ -163,6 +167,7 @@ suspend fun createPlatformLayout(pluginsToPublish: Set<PluginLayout>, context: B
 internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
                                           projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>,
                                           context: BuildContext): PlatformLayout {
+  val jetBrainsClientModuleFilter = context.jetBrainsClientModuleFilter
   val productLayout = context.productProperties.productLayout
   val layout = PlatformLayout()
   // used only in modules that packed into Java
@@ -192,6 +197,9 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   ), productLayout = productLayout, layout = layout)
   // used by jdom - pack to the same JAR
   layout.withProjectLibrary(libraryName = "aalto-xml", jarName = UTIL_8_JAR)
+  // Space plugin uses it and bundled into IntelliJ IDEA, but not bundled into DataGrip, so, or Space plugin should bundle this lib,
+  // or IJ Platform. As it is a small library and consistency is important across other coroutine libs, bundle to IJ Platform.
+  layout.withProjectLibrary(libraryName = "kotlinx-coroutines-slf4j", jarName = APP_JAR)
 
   // used by intellij.database.jdbcConsole -
   // cannot be in 3rd-party-rt.jar, because this JAR must contain classes for java versions <= 7 only
@@ -202,6 +210,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
     "intellij.platform.util.classLoader",
     "intellij.platform.util.zip",
     "intellij.platform.boot",
+    "intellij.platform.runtime.repository",
     "intellij.platform.runtime.loader",
   ), productLayout = productLayout, layout = layout)
   addModule(UTIL_JAR, listOf(
@@ -220,7 +229,6 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   if (!productLayout.excludedModuleNames.contains("intellij.java.guiForms.rt")) {
     layout.withModule("intellij.java.guiForms.rt", "forms_rt.jar")
   }
-  addModule("platform-runtime-repository.jar", listOf("intellij.platform.runtime.repository"), productLayout = productLayout, layout = layout)
   addModule("jps-model.jar", listOf(
     "intellij.platform.jps.model",
     "intellij.platform.jps.model.serialization",
@@ -242,13 +250,19 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
     }
 
     explicit.add(ModuleItem(moduleName = moduleName,
-                            relativeOutputFile = if (isModuleCloseSource(moduleName, context = context)) PRODUCT_JAR else APP_JAR,
+                            relativeOutputFile = when {
+                              isModuleCloseSource(moduleName, context = context) -> {
+                                if (jetBrainsClientModuleFilter.isModuleIncluded(moduleName)) PRODUCT_CLIENT_JAR else PRODUCT_JAR
+                              }
+                              else -> PlatformJarNames.getPlatformModuleJarName(moduleName, context) 
+                            },
                             reason = "productImplementationModules"))
   }
-  explicit.addAll(toModuleItemSequence(PLATFORM_API_MODULES, productLayout = productLayout, reason = "PLATFORM_API_MODULES"))
-  explicit.addAll(
-    toModuleItemSequence(PLATFORM_IMPLEMENTATION_MODULES, productLayout = productLayout, reason = "PLATFORM_IMPLEMENTATION_MODULES"))
-  explicit.addAll(toModuleItemSequence(productLayout.productApiModules, productLayout = productLayout, reason = "productApiModules"))
+  explicit.addAll(toModuleItemSequence(PLATFORM_API_MODULES, productLayout = productLayout, reason = "PLATFORM_API_MODULES", context))
+  explicit.addAll(toModuleItemSequence(PLATFORM_IMPLEMENTATION_MODULES, productLayout = productLayout, reason = "PLATFORM_IMPLEMENTATION_MODULES",
+                                       context))
+  explicit.addAll(toModuleItemSequence(productLayout.productApiModules, productLayout = productLayout, reason = "productApiModules",
+                                       context))
   if (addPlatformCoverage) {
     explicit.add(ModuleItem(moduleName = "intellij.platform.coverage", relativeOutputFile = APP_JAR, reason = "coverage"))
   }
@@ -263,7 +277,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
                       productPluginContentModules +
                       implicit.asSequence().map {
                         ModuleItem(moduleName = it.first,
-                                   relativeOutputFile = APP_JAR,
+                                   relativeOutputFile = PlatformJarNames.getPlatformModuleJarName(it.first, context),
                                    reason = "<- " + it.second.asReversed().joinToString(separator = " <- "))
                       }).sortedBy { it.moduleName }.toList())
   for (item in projectLibrariesUsedByPlugins) {
@@ -341,10 +355,13 @@ private fun isModuleCloseSource(moduleName: String, context: BuildContext): Bool
   }
 }
 
-private fun toModuleItemSequence(list: Collection<String>, productLayout: ProductModulesLayout, reason: String): Sequence<ModuleItem> {
+private fun toModuleItemSequence(list: Collection<String>,
+                                 productLayout: ProductModulesLayout,
+                                 reason: String,
+                                 context: BuildContext): Sequence<ModuleItem> {
   return list.asSequence()
     .filter { !productLayout.excludedModuleNames.contains(it) }
-    .map { ModuleItem(moduleName = it, relativeOutputFile = APP_JAR, reason = reason) }
+    .map { ModuleItem(moduleName = it, relativeOutputFile = PlatformJarNames.getPlatformModuleJarName(it, context), reason = reason) }
 }
 
 private suspend fun computeImplicitRequiredModules(explicit: List<String>,

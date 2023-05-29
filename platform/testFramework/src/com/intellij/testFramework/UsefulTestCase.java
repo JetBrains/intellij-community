@@ -238,7 +238,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  // some brilliant tests override setup and change setup flow in an alien way - quite unsafe to fix now
+  // some brilliant tests override setup and change the setup-flow in an alien way - quite unsafe to fix now
   protected final void setupTempDir() throws IOException {
     if (myTempDir == null && shouldContainTempFiles()) {
       myTempDir = createGlobalTempDirectory();
@@ -792,14 +792,14 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static <T> T assertOneElement(@NotNull Collection<? extends T> collection) {
     if (collection.size() != 1) {
-      Assert.assertEquals(collection.toString(), 1, collection.size());
+      Assert.assertEquals(toString(collection), 1, collection.size());
     }
     return collection.iterator().next();
   }
 
   public static <T> T assertOneElement(T @NotNull [] ts) {
     if (ts.length != 1) {
-      Assert.assertEquals(Arrays.toString(ts), 1, ts.length);
+      Assert.assertEquals(toString(Arrays.asList(ts)), 1, ts.length);
     }
     return ts[0];
   }
@@ -825,7 +825,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void assertEmpty(@NotNull Collection<?> collection) {
     if (!collection.isEmpty()) {
-      assertEmpty(collection.toString(), collection);
+      assertEmpty(toString(collection), collection);
     }
   }
 
@@ -997,7 +997,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   /**
    * @return true for a test which performs a lot of computations to test resource consumption, not correctness.
-   * Such test should avoid performing expensive consistency checks, e.g., data structure consistency complex validations.
+   * Such tests should avoid performing expensive consistency checks, e.g., data structure consistency complex validations.
    * If you want your test to be treated as "Performance", mention "Performance" word in its class/method name.
    * For example: {@code public void testHighlightingPerformance()}
    */
@@ -1007,7 +1007,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   /**
    * @return true for a test which performs a lot of computations <b>and</b> does care about the correctness of operations it performs.
-   * Such test should typically avoid performing expensive checks, e.g., data structure consistency complex validations.
+   * Such tests should typically avoid performing expensive checks, e.g., data structure consistency complex validations.
    * If you want your test to be treated as "Stress", please mention one of these words in its name: "Stress", "Slow".
    * For example: {@code public void testStressPSIFromDifferentThreads()}
    */

@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.util.indexing.*
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
+import org.jetbrains.kotlin.idea.KotlinModuleFileType
 import org.jetbrains.kotlin.load.kotlin.loadModuleMapping
 import org.jetbrains.kotlin.metadata.jvm.deserialization.ModuleMapping
 import org.jetbrains.kotlin.metadata.jvm.deserialization.PackageParts
@@ -55,9 +57,7 @@ class KotlinModuleMappingIndex internal constructor() : FileBasedIndexExtension<
 
     override fun getValueExternalizer() = VALUE_EXTERNALIZER
 
-    override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { file ->
-        file.nameSequence.endsWith(MAPPING_FILE_DOT_FILE_EXTENSION)
-    }
+    override fun getInputFilter(): FileBasedIndex.InputFilter = FileTypeInputFilterPredicate(KotlinModuleFileType.INSTANCE)
 
     override fun getVersion(): Int = 5
 

@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.use
-import com.intellij.diagnostic.telemetry.useWithScope
-import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Formats
+import com.intellij.platform.diagnostic.telemetry.impl.use
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.util.io.Decompressor
 import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
@@ -125,7 +125,8 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
     context.paths.distAllDir = targetDirectory
     context.options.targetOs = persistentListOf(currentOs)
     context.options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
-    BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDirRoot)
+    BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
+    BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
     buildDistribution(state = compileModulesForDistribution(context), context = context, isUpdateFromSources = true)
     val arch = if (SystemInfoRt.isMac && CpuArch.isIntel64() && CpuArch.isEmulated()) {
@@ -740,6 +741,8 @@ private fun checkProductProperties(context: BuildContextImpl) {
   checkPaths2(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
   checkPaths2(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
   checkModules(properties.additionalModulesToCompile, "productProperties.additionalModulesToCompile", context)
+  checkModule(properties.applicationInfoModule, "productProperties.applicationInfoModule", context)
+  checkModule(properties.embeddedJetBrainsClientMainModule, "productProperties.embeddedJetBrainsClientMainModule", context)
   checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests", context)
 
   context.windowsDistributionCustomizer?.let { winCustomizer ->
@@ -871,6 +874,12 @@ private fun checkModules(modules: Collection<String>?, fieldName: String, contex
   }
 }
 
+private fun checkModule(moduleName: String?, fieldName: String, context: CompilationContext) {
+  if (moduleName != null && context.findModule(moduleName) == null) {
+    context.messages.error("Module '$moduleName' from $fieldName isn't found in the project")
+  }
+}
+
 private fun checkArtifacts(names: Collection<String>, fieldName: String, context: CompilationContext) {
   val unknownArtifacts = names - JpsArtifactService.getInstance().getArtifacts(context.project).map { it.name }.toSet()
   check(unknownArtifacts.isEmpty()) {
@@ -966,7 +975,8 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
           javaExecutablePath = null,
           vmOptionsFilePath = "bin/win/${executableName}64.exe.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
-          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch, isPortableDist = true)),
+          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch, isPortableDist = true),
+          mainClass = context.ideMainClassName),
         ProductInfoLaunchData(
           os = OsFamily.LINUX.osName,
           arch = arch.dirName,
@@ -975,7 +985,8 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
           vmOptionsFilePath = "bin/linux/${executableName}64.vmoptions",
           startupWmClass = getLinuxFrameClass(context),
           bootClassPathJarNames = context.bootClassPathJarNames,
-          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch, isPortableDist = true)),
+          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch, isPortableDist = true),
+          mainClass = context.ideMainClassName),
         ProductInfoLaunchData(
           os = OsFamily.MACOS.osName,
           arch = arch.dirName,
@@ -983,7 +994,8 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
           javaExecutablePath = null,
           vmOptionsFilePath = "bin/mac/${executableName}.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
-          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch, isPortableDist = true))
+          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch, isPortableDist = true),
+          mainClass = context.ideMainClassName)
       )
     }.toList(),
     context = context,
@@ -1210,6 +1222,9 @@ fun collectModulesToCompile(context: BuildContext, result: MutableCollection<Str
   result.addAll(productLayout.productApiModules)
   result.addAll(productLayout.productImplementationModules)
   result.addAll(getToolModules())
+  if (context.isEmbeddedJetBrainsClientEnabled) {
+    result.add(context.productProperties.embeddedJetBrainsClientMainModule!!)
+  }
   result.addAll(context.productProperties.additionalModulesToCompile)
   result.add("intellij.idea.community.build.tasks")
   result.add("intellij.platform.images.build")

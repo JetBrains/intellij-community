@@ -13,5 +13,5 @@ fun findSuitableFrameworks(klass: KtClassOrObject): List<TestFramework> {
     val lightClass = klass.toLightClass() ?: return emptyList()
     val frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME).filter { it.language == JavaLanguage.INSTANCE }
     return frameworks.firstOrNull { it.isTestClass(lightClass) }?.let { listOf(it) }
-        ?: frameworks.filterTo(SmartList<TestFramework>()) { it.isPotentialTestClass(lightClass) }
+        ?: frameworks.filterTo(SmartList()) { it.isPotentialTestClass(lightClass) }
 }

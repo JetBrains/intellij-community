@@ -20,15 +20,16 @@ class ProductModulesLoaderTest {
   @Test
   fun simple() {
     val repository = createRepository(tempDirectory.rootPath, 
-      RawRuntimeModuleDescriptor("root", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor("util", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor("root", emptyList(), listOf("util")),
       RawRuntimeModuleDescriptor("plugin", emptyList(), emptyList()),
     )
     val xml = directoryContent { 
       xml(FILE_NAME, """
         <product-modules>
-          <root-platform-modules>
+          <main-root-modules>
             <module importance="functional">root</module>
-          </root-platform-modules>
+          </main-root-modules>
           <bundled-plugins>
             <module>plugin</module>
           </bundled-plugins>  
@@ -36,10 +37,15 @@ class ProductModulesLoaderTest {
       """.trimIndent())
     }.generateInTempDir().resolve(FILE_NAME)
     val productModules = RuntimeModuleRepositorySerialization.loadProductModules(xml, repository)
-    val platformModule = productModules.rootPlatformModules.single()
-    assertEquals("root", platformModule.moduleDescriptor.moduleId.stringId)
-    assertEquals(ModuleImportance.FUNCTIONAL, platformModule.importance)
-    val pluginModule = productModules.bundledPluginMainModules.single()
-    assertEquals("plugin", pluginModule.moduleId.stringId)
+    val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
+    assertEquals(2, mainGroupModules.size)
+    val (root, util) = mainGroupModules
+    assertEquals("root", root.moduleDescriptor.moduleId.stringId)
+    assertEquals(ModuleImportance.FUNCTIONAL, root.importance)
+    assertEquals("util", util.moduleDescriptor.moduleId.stringId)
+    assertEquals(ModuleImportance.SERVICE, util.importance)
+    
+    val pluginGroup = productModules.bundledPluginModuleGroups.single()
+    assertEquals("plugin", pluginGroup.includedModules.single().moduleDescriptor.moduleId.stringId)
   }
 }

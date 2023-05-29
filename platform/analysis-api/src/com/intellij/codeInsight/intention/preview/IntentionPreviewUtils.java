@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention.preview;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ModChooseTarget;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModNavigate;
 import com.intellij.modcommand.ModUpdatePsiFile;
@@ -171,7 +172,18 @@ public final class IntentionPreviewUtils {
           info2 = IntentionPreviewInfo.navigate(target, navigate.caret());
         }
       }
+      else if (command instanceof ModChooseTarget<?> target) {
+        return getChoosePreview(file, target);
+      }
     }
     return info == null ? info2 : info;
+  }
+
+  private static @NotNull <T extends PsiElement> IntentionPreviewInfo getChoosePreview(@NotNull PsiFile file, @NotNull ModChooseTarget<@NotNull T> target) {
+    var elements = target.elements();
+    if (elements.isEmpty()) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    return getModCommandPreview(target.nextStep().apply(elements.get(0).element()), file);
   }
 }

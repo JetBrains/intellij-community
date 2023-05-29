@@ -15,16 +15,16 @@
  */
 package org.jetbrains.idea.maven.execution;
 
-import org.jetbrains.idea.maven.server.MavenServerConsole;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
 public class MavenExecutionOptions {
   public enum LoggingLevel {
-    DEBUG("maven.log.level.debug", MavenServerConsole.LEVEL_DEBUG),
-    INFO("maven.log.level.info", MavenServerConsole.LEVEL_INFO),
-    WARN("maven.log.level.warn", MavenServerConsole.LEVEL_WARN),
-    ERROR("maven.log.level.error", MavenServerConsole.LEVEL_ERROR),
-    FATAL("maven.log.level.fatal", MavenServerConsole.LEVEL_FATAL),
-    DISABLED("maven.log.level.disabled", MavenServerConsole.LEVEL_DISABLED);
+    DEBUG("maven.log.level.debug", MavenServerConsoleIndicator.LEVEL_DEBUG),
+    INFO("maven.log.level.info", MavenServerConsoleIndicator.LEVEL_INFO),
+    WARN("maven.log.level.warn", MavenServerConsoleIndicator.LEVEL_WARN),
+    ERROR("maven.log.level.error", MavenServerConsoleIndicator.LEVEL_ERROR),
+    FATAL("maven.log.level.fatal", MavenServerConsoleIndicator.LEVEL_FATAL),
+    DISABLED("maven.log.level.disabled", MavenServerConsoleIndicator.LEVEL_DISABLED);
 
     private final String myMessageKey;
     private final int myLevel;

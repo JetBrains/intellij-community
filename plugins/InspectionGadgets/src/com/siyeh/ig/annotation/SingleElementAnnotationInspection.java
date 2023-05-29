@@ -1,15 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.annotation;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddAnnotationAttributeNameFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateAnnotationMethodFromUsageFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,11 +31,11 @@ public class SingleElementAnnotationInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new ExpandAnnotationFix();
   }
 
-  private static class ExpandAnnotationFix extends InspectionGadgetsFix {
+  private static class ExpandAnnotationFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -50,8 +51,8 @@ public class SingleElementAnnotationInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiNameValuePair annotationParameter = (PsiNameValuePair)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiNameValuePair annotationParameter = (PsiNameValuePair)startElement;
       final String text = buildReplacementText(annotationParameter);
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(annotationParameter.getProject());
       final PsiAnnotation newAnnotation = factory.createAnnotationFromText("@A(" + text + " )", annotationParameter);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize
 
 import com.intellij.application.options.CodeStyle
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.ide.projectView.impl.ProjectViewSharedSettings
+import com.intellij.ide.ui.NotRoamableUiSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
@@ -54,15 +55,13 @@ private class WelcomeWizardHelper : ApplicationInitializedListener {
     }
 
     WelcomeWizardUtil.getAppearanceFontSize()?.let {
-      val settings = UISettings.getInstance()
-      settings.overrideLafFonts = true
+      NotRoamableUiSettings.getInstance().overrideLafFonts = true
       UISettings.getInstance().fontSize = it
     }
 
     WelcomeWizardUtil.getAppearanceFontFace()?.let {
-      val settings = UISettings.getInstance()
-      settings.overrideLafFonts = true
-      settings.fontFace = it
+      NotRoamableUiSettings.getInstance().overrideLafFonts = true
+      UISettings.getInstance().fontFace = it
     }
   }
 }

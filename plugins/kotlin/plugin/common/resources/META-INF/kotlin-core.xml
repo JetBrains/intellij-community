@@ -65,7 +65,7 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.quickfix.QuickFixes"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptions"/>
-    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner" preload="true"/>
+    <applicationInitializedListener implementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.KotlinPluginDisposable"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.util.ProjectJob"/>
@@ -241,6 +241,11 @@
     <listener class="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$ModelChangeListener"
               topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
   </projectListeners>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
+  </applicationListeners>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <versionInfoProvider implementation="org.jetbrains.kotlin.idea.base.compilerPreferences.facet.KotlinVersionInfoProviderByModuleDependencies"/>

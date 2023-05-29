@@ -113,6 +113,7 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PySuperClassAttributesCompletionContributor"/>
     <completion.contributor language="Python"
+                            id="PyDictKeyNames"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyDictKeyNamesCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyDictLiteralCompletionContributor"/>

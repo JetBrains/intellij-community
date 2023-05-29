@@ -332,7 +332,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
 
     private class CancelableArrayCollectProcessor<T> : Processor<T> {
         private val set = HashSet<T>()
-        private val processor = Processors.cancelableCollectProcessor<T>(set)
+        private val processor = Processors.cancelableCollectProcessor(set)
 
         override fun process(value: T): Boolean {
             return processor.process(value)

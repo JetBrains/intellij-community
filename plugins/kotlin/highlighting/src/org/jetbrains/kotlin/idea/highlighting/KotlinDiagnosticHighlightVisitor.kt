@@ -21,8 +21,10 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
+import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
@@ -50,17 +52,24 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
 
     private fun analyze(file: KtFile, holder: HighlightInfoHolder) {
         analyze(file) {
-            file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).forEach { diagnostic ->
+            val diagnostics = file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            for (diagnostic in diagnostics) {
                 addDiagnostic(diagnostic, holder)
             }
+            KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
+                diagnostics.asSequence().filter { it.severity == Severity.ERROR }.mapNotNull(KtDiagnosticWithPsi<*>::factoryName),
+                file
+            )
         }
     }
 
     context(KtAnalysisSession)
     private fun addDiagnostic(diagnostic: KtDiagnosticWithPsi<*>, holder: HighlightInfoHolder) {
-        val fixes = KotlinQuickFixService.getInstance().getQuickFixesFor(diagnostic)
+        val isWarning = diagnostic.severity == Severity.WARNING
         val factoryName = diagnostic.factoryName
-        val problemGroup = if (diagnostic.severity == Severity.WARNING && factoryName != null) {
+        val fixes = KotlinQuickFixService.getInstance().getQuickFixesFor(diagnostic).takeIf { it.isNotEmpty() }
+            ?: if (isWarning && factoryName != null) listOf(CompilerWarningIntentionAction(factoryName)) else emptyList()
+        val problemGroup = if (isWarning && factoryName != null) {
             KotlinSuppressableWarningProblemGroup(factoryName)
         } else null
         diagnostic.textRanges.forEach { range ->

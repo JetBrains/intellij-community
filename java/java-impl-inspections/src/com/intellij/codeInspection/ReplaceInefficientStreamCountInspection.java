@@ -198,7 +198,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     }
   }
 
-  private static class CountFix implements LocalQuickFix {
+  private static class CountFix extends PsiUpdateModCommandQuickFix {
     private final SimplificationMode mySimplificationMode;
 
     CountFix(SimplificationMode simplificationMode) {
@@ -220,8 +220,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiMethodCallExpression countCall)) return;
       PsiElement countName = countCall.getMethodExpression().getReferenceNameElement();
       if (countName == null) return;

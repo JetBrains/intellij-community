@@ -6,9 +6,9 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +21,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
@@ -31,7 +32,7 @@ public final class Restarter {
   private Restarter() { }
 
   public static boolean isSupported() {
-    return ourRestartSupported.getValue();
+    return ourRestartSupported.get();
   }
 
   private static final NullableLazyValue<Path> ourStarter = lazyNullable(() -> {
@@ -58,7 +59,7 @@ public final class Restarter {
     return null;
   });
 
-  private static final NotNullLazyValue<Boolean> ourRestartSupported = NotNullLazyValue.atomicLazy(() -> {
+  private static final Supplier<Boolean> ourRestartSupported = new SynchronizedClearableLazy<>(() -> {
     String problem;
 
     var restartExitCode = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);

@@ -12,15 +12,16 @@ class Simple {
         return ((another.foo()) + (another.foo()));
     }
 
-    static String bar() {
-        return "safe";
+    static String bar(x) {
+        return x;
     }
 
     void sink(@Untainted String s) {}
 }
 
 class Another {
+  String x;
     String foo() {
-        return Simple.bar();
+        return Simple.bar(x);
     }
 }

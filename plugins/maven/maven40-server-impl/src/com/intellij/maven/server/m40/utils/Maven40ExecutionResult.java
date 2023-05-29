@@ -62,10 +62,6 @@ public class Maven40ExecutionResult {
     return myExceptions;
   }
 
-  public boolean hasExceptions() {
-    return !myExceptions.isEmpty();
-  }
-
   public List<ModelProblem> getModelProblems() {
     return myModelProblems;
   }

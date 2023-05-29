@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -46,6 +46,7 @@ import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 import static com.intellij.ide.startup.StartupActionScriptManager.*;
 
 public final class PluginInstaller {
@@ -266,7 +267,7 @@ public final class PluginInstaller {
         MessagesEx.showErrorDialog(parent, error.getDetailedMessage(), CommonBundle.getErrorTitle());
         return false;
       }
-      if (PluginManagerCore.isBrokenPlugin(pluginDescriptor)) {
+      if (isBrokenPlugin(pluginDescriptor)) {
         String message =
           CoreBundle.message("plugin.loading.error.long.marked.as.broken", pluginDescriptor.getName(), pluginDescriptor.getVersion());
         MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());

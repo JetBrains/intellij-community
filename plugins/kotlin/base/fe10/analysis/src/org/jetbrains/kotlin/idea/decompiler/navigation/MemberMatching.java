@@ -2,27 +2,12 @@
 
 package org.jetbrains.kotlin.idea.decompiler.navigation;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.builtins.StandardNames;
-import org.jetbrains.kotlin.descriptors.CallableDescriptor;
-import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor;
-import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor;
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor;
-import org.jetbrains.kotlin.lexer.KtTokens;
-import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.*;
-import org.jetbrains.kotlin.renderer.DescriptorRenderer;
-import org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilsKt;
-import org.jetbrains.kotlin.types.KotlinType;
 
 import java.util.List;
-import java.util.Set;
 
 public final class MemberMatching {
     /* DECLARATIONS ROUGH MATCHING */
@@ -118,101 +103,6 @@ public final class MemberMatching {
     }
 
 
-    /* DECLARATION AND DESCRIPTOR STRICT MATCHING */
-    static boolean receiversMatch(@NotNull KtNamedDeclaration declaration, @NotNull CallableDescriptor descriptor) {
-        KtTypeReference declarationReceiver = getReceiverType(declaration);
-        ReceiverParameterDescriptor descriptorReceiver = descriptor.getExtensionReceiverParameter();
-        if (declarationReceiver == null && descriptorReceiver == null) {
-            return true;
-        }
-        if (declarationReceiver != null && descriptorReceiver != null) {
-            return declarationReceiver.getText().equals(DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(descriptorReceiver.getType()));
-        }
-        return false;
-    }
-
-    static boolean valueParametersTypesMatch(@NotNull KtNamedDeclaration declaration, @NotNull CallableDescriptor descriptor) {
-        List<KtParameter> declarationParameters = getValueParameters(declaration);
-        List<ValueParameterDescriptor> descriptorParameters = descriptor.getValueParameters();
-        if (descriptorParameters.size() != declarationParameters.size()) {
-            return false;
-        }
-
-        for (int i = 0; i < descriptorParameters.size(); i++) {
-            ValueParameterDescriptor descriptorParameter = descriptorParameters.get(i);
-            KtParameter declarationParameter = declarationParameters.get(i);
-            KtTypeReference typeReference = declarationParameter.getTypeReference();
-            if (typeReference == null) {
-                return false;
-            }
-            KtModifierList modifierList = declarationParameter.getModifierList();
-            boolean varargInDeclaration = modifierList != null && modifierList.hasModifier(KtTokens.VARARG_KEYWORD);
-            boolean varargInDescriptor = descriptorParameter.getVarargElementType() != null;
-            if (varargInDeclaration != varargInDescriptor) {
-                return false;
-            }
-            String declarationTypeText = typeReference.getText();
-
-            KotlinType typeToRender = varargInDeclaration ? descriptorParameter.getVarargElementType() : descriptorParameter.getType();
-            assert typeToRender != null;
-            String descriptorParameterText = DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(typeToRender);
-            if (!declarationTypeText.equals(descriptorParameterText)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    static boolean typeParametersMatch(
-            @NotNull KtTypeParameterListOwner typeParameterListOwner,
-            @NotNull List<TypeParameterDescriptor> typeParameterDescriptors
-    ) {
-        List<KtTypeParameter> decompiledParameters = typeParameterListOwner.getTypeParameters();
-        if (decompiledParameters.size() != typeParameterDescriptors.size()) {
-            return false;
-        }
-
-        Multimap<Name, String> decompiledParameterToBounds = HashMultimap.create();
-        for (KtTypeParameter parameter : decompiledParameters) {
-            KtTypeReference extendsBound = parameter.getExtendsBound();
-            if (extendsBound != null) {
-                decompiledParameterToBounds.put(parameter.getNameAsName(), extendsBound.getText());
-            }
-        }
-
-        for (KtTypeConstraint typeConstraint : typeParameterListOwner.getTypeConstraints()) {
-            KtSimpleNameExpression typeParameterName = typeConstraint.getSubjectTypeParameterName();
-            assert typeParameterName != null;
-
-            KtTypeReference bound = typeConstraint.getBoundTypeReference();
-            assert bound != null;
-
-            decompiledParameterToBounds.put(typeParameterName.getReferencedNameAsName(), bound.getText());
-        }
-
-        for (int i = 0; i < decompiledParameters.size(); i++) {
-            KtTypeParameter decompiledParameter = decompiledParameters.get(i);
-            TypeParameterDescriptor descriptor = typeParameterDescriptors.get(i);
-
-            Name name = decompiledParameter.getNameAsName();
-            assert name != null;
-            if (!name.equals(descriptor.getName())) {
-                return false;
-            }
-
-            Set<String> descriptorUpperBounds = Sets.newHashSet(ContainerUtil.map(
-                    descriptor.getUpperBounds(), type -> DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type)));
-
-            KotlinBuiltIns builtIns = DescriptorUtilsKt.getBuiltIns(descriptor);
-            Set<String> decompiledUpperBounds = decompiledParameterToBounds.get(descriptor.getName()).isEmpty()
-                    ? Sets.newHashSet(DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(builtIns.getDefaultBound()))
-                    : Sets.newHashSet(decompiledParameterToBounds.get(descriptor.getName()));
-            if (!descriptorUpperBounds.equals(decompiledUpperBounds)) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     private MemberMatching() {
     }

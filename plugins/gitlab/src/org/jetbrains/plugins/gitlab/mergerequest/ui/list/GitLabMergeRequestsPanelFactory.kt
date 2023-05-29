@@ -26,24 +26,24 @@ internal class GitLabMergeRequestsPanelFactory {
              listVm: GitLabMergeRequestsListViewModel): JComponent {
 
     val listModel = collectMergeRequests(scope, listVm)
-    val listMergeRequests = GitLabMergeRequestsListComponentFactory.create(listModel, listVm.avatarIconsProvider).also { list ->
-      DataManager.registerDataProvider(list) { dataId ->
+    val listMergeRequests = GitLabMergeRequestsListComponentFactory.create(listModel, listVm.avatarIconsProvider)
+
+    val listLoaderPanel = createListLoaderPanel(scope, listVm, listMergeRequests)
+    val listWrapper = Wrapper()
+    val progressStripe = CollaborationToolsUIUtil.wrapWithProgressStripe(scope, listVm.loadingState, listWrapper).also { panel ->
+      DataManager.registerDataProvider(panel) { dataId ->
         when {
-          GitLabMergeRequestsActionKeys.SELECTED.`is`(dataId) -> list.selectedValue
+          GitLabMergeRequestsActionKeys.SELECTED.`is`(dataId) -> listMergeRequests.takeIf { it.isShowing }?.selectedValue
           GitLabMergeRequestsActionKeys.REVIEW_LIST_VM.`is`(dataId) -> listVm
           else -> null
         }
       }
 
       val groupId = "GitLab.Merge.Request.List.Actions"
-      PopupHandler.installPopupMenu(list, ActionManager.getInstance().getAction(groupId) as ActionGroup, groupId)
+      PopupHandler.installPopupMenu(panel, ActionManager.getInstance().getAction(groupId) as ActionGroup, groupId)
       val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
-      EmptyAction.registerWithShortcutSet("GitLab.Merge.Request.Show", shortcuts, list)
+      EmptyAction.registerWithShortcutSet("GitLab.Merge.Request.Show", shortcuts, panel)
     }
-
-    val listLoaderPanel = createListLoaderPanel(scope, listVm, listMergeRequests)
-    val listWrapper = Wrapper()
-    val progressStripe = CollaborationToolsUIUtil.wrapWithProgressStripe(scope, listVm.loadingState, listWrapper)
     ScrollableContentBorder.setup(listLoaderPanel, Side.TOP, progressStripe)
 
     val searchPanel = createSearchPanel(scope, listVm)

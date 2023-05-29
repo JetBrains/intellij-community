@@ -148,11 +148,6 @@ object StatisticsUtil {
     return bounds.last()
   }
 
-  @JvmStatic
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "Use roundToUpperBound instead", replaceWith = ReplaceWith("roundToUpperBound"))
-  fun getUpperBound(value: Int, bounds: IntArray): Int = roundToUpperBound(value, bounds)
-
   /**
    * Anonymizes sensitive project properties by rounding it to the next value in steps list.
    * See `com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector`

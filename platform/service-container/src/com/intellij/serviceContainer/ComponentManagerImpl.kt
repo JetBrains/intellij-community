@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.serviceContainer
 
 import com.intellij.concurrency.resetThreadContext
@@ -17,10 +17,12 @@ import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.extensions.impl.createExtensionPoints
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Condition
@@ -28,19 +30,18 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.attachAsChildTo
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.namedChildScope
-import com.intellij.util.requireNoJob
 import com.intellij.util.runSuppressing
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
-import org.picocontainer.PicoContainer
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -52,11 +53,10 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
-internal val LOG = logger<ComponentManagerImpl>()
-private val constructorParameterResolver = ConstructorParameterResolver()
+internal val LOG: Logger
+  get() = logger<ComponentManagerImpl>()
+
 private val methodLookup = MethodHandles.lookup()
 private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
 private val coroutineScopeMethodType = emptyConstructorMethodType.appendParameterTypes(CoroutineScope::class.java)
@@ -70,27 +70,22 @@ private fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: Me
   }
 }
 
-@ApiStatus.Internal
+@Internal
 abstract class ComponentManagerImpl(
   internal val parent: ComponentManagerImpl?,
+  private val coroutineScope: CoroutineScope?,
   setExtensionsRootArea: Boolean = parent == null,
-  context: CoroutineContext = EmptyCoroutineContext,
 ) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx, ComponentStoreOwner {
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
 
   companion object {
-    @JvmField
-    @Volatile
-    @ApiStatus.Internal
-    var mainScope: CoroutineScope? = null
-
-    @ApiStatus.Internal
+    @Internal
     @JvmField val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-    @ApiStatus.Internal
+    @Internal
     @JvmField val badWorkspaceComponents: Set<String> = java.util.Set.of(
       "jetbrains.buildServer.codeInspection.InspectionPassRegistrar",
       "jetbrains.buildServer.testStatus.TestStatusPassRegistrar",
@@ -98,7 +93,7 @@ abstract class ComponentManagerImpl(
     )
 
     // not as a file level function to avoid scope cluttering
-    @ApiStatus.Internal
+    @Internal
     fun createAllServices(componentManager: ComponentManagerImpl, requireEdt: Set<String>, requireReadAction: Set<String>) {
       for (o in componentManager.componentKeyToAdapter.values) {
         if (o !is ServiceComponentAdapter) {
@@ -126,10 +121,6 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  init {
-    requireNoJob(context)
-  }
-
   private val componentKeyToAdapter = ConcurrentHashMap<Any, ComponentAdapter>()
   private val componentAdapters = LinkedHashSetWrapper<MyComponentAdapter>()
   private val serviceInstanceHotCache = ConcurrentHashMap<Class<*>, Any?>()
@@ -143,14 +134,14 @@ abstract class ComponentManagerImpl(
 
   private var messageBus: MessageBusImpl? = null
 
-  private var handlingInitComponentError = false
-
   @Volatile
   private var isServicePreloadingCancelled = false
 
-  private fun debugString(short: Boolean = false): String = "${if (short) javaClass.simpleName else javaClass.name}@${System.identityHashCode(this)}"
+  private fun debugString(short: Boolean = false): String {
+    return "${if (short) javaClass.simpleName else javaClass.name}@${System.identityHashCode(this)}"
+  }
 
-  internal val serviceParentDisposable = Disposer.newDisposable("services of ${debugString()}")
+  internal val serviceParentDisposable: Disposable = Disposer.newDisposable("services of ${debugString()}")
 
   protected open val isLightServiceSupported = parent?.parent == null
   protected open val isMessageBusSupported = parent?.parent == null
@@ -159,25 +150,6 @@ abstract class ComponentManagerImpl(
 
   @Volatile
   internal var componentContainerIsReadonly: String? = null
-
-  private val coroutineScope: CoroutineScope? = when {
-    parent == null -> { // application
-      // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the Job
-      val mainJob = mainScope?.coroutineContext?.job
-      val parentScope = if (mainJob == null) {
-        @OptIn(DelicateCoroutinesApi::class)
-        GlobalScope
-      }
-      else {
-        CoroutineScope(mainJob)
-      }
-      parentScope.namedChildScope(debugString(short = true), context)
-    }
-    parent.parent == null -> { // project
-      parent.coroutineScope!!.namedChildScope(debugString(short = true), context)
-    }
-    else -> null
-  }
 
   @Suppress("MemberVisibilityCanBePrivate")
   fun getCoroutineScope(): CoroutineScope = coroutineScope ?: throw RuntimeException("Module doesn't have coroutineScope")
@@ -191,28 +163,12 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  private val picoContainerAdapter: PicoContainer = object : PicoContainer {
-    override fun getComponentInstance(componentKey: Any): Any? {
-      return this@ComponentManagerImpl.getComponentInstance(componentKey)
-    }
-
-    override fun getComponentInstanceOfType(componentType: Class<*>): Any? {
-      throw UnsupportedOperationException("Do not use getComponentInstanceOfType()")
-    }
-  }
-
   internal fun getComponentInstance(componentKey: Any): Any? {
     assertComponentsSupported()
 
     val adapter = componentKeyToAdapter.get(componentKey)
                   ?: if (componentKey is Class<*>) componentKeyToAdapter.get(componentKey.name) else null
     return if (adapter == null) parent?.getComponentInstance(componentKey) else adapter.componentInstance
-  }
-
-  @Deprecated("Use ComponentManager API", level = DeprecationLevel.ERROR)
-  final override fun getPicoContainer(): PicoContainer {
-    checkState()
-    return picoContainerAdapter
   }
 
   private fun registerAdapter(componentAdapter: ComponentAdapter, pluginDescriptor: PluginDescriptor?) {
@@ -292,8 +248,8 @@ abstract class ComponentManagerImpl(
 
     var activity = activityNamePrefix?.let { StartUpMeasurer.startActivity("${it}service and ep registration") }
 
-    // register services before registering extensions because plugins can access services in their
-    // extensions which can be invoked right away if the plugin is loaded dynamically
+    // register services before registering extensions because plugins can access services in their extensions,
+    // which can be invoked right away if the plugin is loaded dynamically
     val extensionPoints = if (precomputedExtensionModel == null) HashMap(extensionArea.extensionPoints) else null
     for (rootModule in modules) {
       executeRegisterTask(rootModule) { module ->
@@ -323,7 +279,7 @@ abstract class ComponentManagerImpl(
 
         if (extensionPoints != null) {
           containerDescriptor.extensionPoints?.let {
-            ExtensionsAreaImpl.createExtensionPoints(it, this, extensionPoints, module)
+            createExtensionPoints(points = it, componentManager = this, result = extensionPoints, pluginDescriptor = module)
           }
         }
       }
@@ -373,10 +329,10 @@ abstract class ComponentManagerImpl(
 
     val result = HashMap<String, ExtensionPointImpl<*>>(precomputedExtensionModel.extensionPointTotalCount)
     for (i in 0 until n) {
-      ExtensionsAreaImpl.createExtensionPoints(precomputedExtensionModel.extensionPoints[i],
-                                               this,
-                                               result,
-                                               precomputedExtensionModel.pluginDescriptors[i])
+      createExtensionPoints(points = precomputedExtensionModel.extensionPoints[i],
+                            componentManager = this,
+                            result = result,
+                            pluginDescriptor = precomputedExtensionModel.pluginDescriptors[i])
     }
 
     val immutableExtensionPoints = java.util.Map.copyOf(result)
@@ -420,8 +376,20 @@ abstract class ComponentManagerImpl(
           pluginDescriptor = pluginDescriptor,
         )
       }
+      catch (e: StartupAbortedException) {
+        throw e
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: PluginException) {
+        throw e
+      }
       catch (e: Throwable) {
-        handleInitComponentError(e, componentClassName, pluginDescriptor.pluginId)
+        throw PluginException("Fatal error initializing '$componentClassName'", e, pluginDescriptor.pluginId)
       }
     }
   }
@@ -465,7 +433,8 @@ abstract class ComponentManagerImpl(
   }
 
   @Suppress("DuplicatedCode")
-  protected suspend fun createComponentsNonBlocking() {
+  @Internal
+  suspend fun createComponentsNonBlocking() {
     LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
 
     val activity = when (val activityNamePrefix = activityNamePrefix()) {
@@ -474,7 +443,7 @@ abstract class ComponentManagerImpl(
     }
 
     for (componentAdapter in componentAdapters.getImmutableSet()) {
-      componentAdapter.getInstanceAsync<Any>(this, keyClass = null).await()
+      componentAdapter.getInstanceAsync<Any>(this, keyClass = null)
     }
 
     activity?.end()
@@ -577,10 +546,6 @@ abstract class ComponentManagerImpl(
 
       // Allow to re-define service implementations in plugins.
       // Empty serviceImplementation means we want unregistering service.
-      val key = descriptor.getInterface()
-      if (descriptor.overrides && componentKeyToAdapter.remove(key) == null) {
-        throw PluginException("Service $key doesn't override anything", pluginDescriptor.pluginId)
-      }
 
       // empty serviceImplementation means we want unregistering service
       val implementation = when {
@@ -589,45 +554,31 @@ abstract class ComponentManagerImpl(
         else -> descriptor.serviceImplementation
       }
 
+      val key = descriptor.serviceInterface ?: implementation
+      if (descriptor.overrides && componentKeyToAdapter.remove(key) == null) {
+        throw PluginException("Service $key doesn't override anything", pluginDescriptor.pluginId)
+      }
+
       if (implementation != null) {
         val componentAdapter = ServiceComponentAdapter(descriptor, pluginDescriptor, this)
         val existingAdapter = componentKeyToAdapter.putIfAbsent(key, componentAdapter)
         if (existingAdapter != null) {
-          throw PluginException("Key $key duplicated; existingAdapter: $existingAdapter; descriptor: ${descriptor.implementation}; app: $app; current plugin: ${pluginDescriptor.pluginId}", pluginDescriptor.pluginId)
+          throw PluginException("Key $key duplicated; existingAdapter: $existingAdapter; " +
+                                "descriptor=${getServiceImplementation(descriptor, this)}, " +
+                                " app=$app, current plugin=${pluginDescriptor.pluginId}", pluginDescriptor.pluginId)
         }
       }
     }
   }
 
-  internal fun handleInitComponentError(error: Throwable, componentClassName: String, pluginId: PluginId) {
-    if (handlingInitComponentError) {
-      return
-    }
-
-    handlingInitComponentError = true
-    try {
-      // not logged but thrown PluginException means some fatal error
-      if (error is StartupAbortedException || error is ProcessCanceledException || error is PluginException) {
-        throw error
-      }
-
-      var effectivePluginId = pluginId
-      if (effectivePluginId == PluginManagerCore.CORE_ID) {
-        effectivePluginId = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(componentClassName)?.pluginId
-                            ?: PluginManagerCore.CORE_ID
-      }
-
-      throw PluginException("Fatal error initializing '$componentClassName'", error, effectivePluginId)
-    }
-    finally {
-      handlingInitComponentError = false
-    }
-  }
-
   internal fun initializeComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
     if (serviceDescriptor == null || !isPreInitialized(component)) {
-      LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
-      componentStore.initComponent(component, serviceDescriptor, pluginId)
+      if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+        componentStore.initComponent(component, serviceDescriptor, pluginId)
+      }
+      else {
+        check(component !is PersistentStateComponent<*> || getApplication()!!.isUnitTestMode)
+      }
     }
   }
 
@@ -670,6 +621,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
+  @RequiresBlockingContext
   final override fun <T : Any> getService(serviceClass: Class<T>): T? {
     // `computeIfAbsent` cannot be used because of recursive update
     @Suppress("UNCHECKED_CAST")
@@ -681,17 +633,19 @@ abstract class ComponentManagerImpl(
     return result
   }
 
-  final override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): Deferred<T> {
+  final override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
     return getServiceAsyncIfDefined(keyClass) ?: throw RuntimeException("service is not defined for $keyClass")
   }
 
-  suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): Deferred<T>? {
+  suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): T? {
     val key = keyClass.name
     val adapter = componentKeyToAdapter.get(key) ?: return null
-    if (adapter !is ServiceComponentAdapter) {
-      throw RuntimeException("$adapter is not a service (key=$key)")
+    check(adapter is ServiceComponentAdapter) {
+      "$adapter is not a service (key=$key)"
     }
-    return adapter.getInstanceAsync(componentManager = this, keyClass = keyClass)
+    val result = adapter.getInstanceAsync(componentManager = this, keyClass = keyClass)
+    serviceInstanceHotCache.putIfAbsent(keyClass, result)
+    return result
   }
 
   protected open fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? = null
@@ -1054,7 +1008,7 @@ abstract class ComponentManagerImpl(
 
   final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId): T {
     return resetThreadContext().use {
-      instantiateUsingPicoContainer(aClass, key, pluginId, this, constructorParameterResolver)
+      instantiateUsingPicoContainer(aClass = aClass, requestorKey = key, pluginId = pluginId, componentManager = this)
     }
   }
 
@@ -1119,7 +1073,8 @@ abstract class ComponentManagerImpl(
     if (!services.isEmpty()) {
       val store = componentStore
       for (service in services) {
-        val adapter = (componentKeyToAdapter.remove(service.`interface`) ?: continue) as ServiceComponentAdapter
+        val serviceInterface = getServiceInterface(service, this)
+        val adapter = (componentKeyToAdapter.remove(serviceInterface) ?: continue) as ServiceComponentAdapter
         val instance = adapter.getInitializedInstance() ?: continue
         if (instance is Disposable) {
           Disposer.dispose(instance)
@@ -1173,21 +1128,27 @@ abstract class ComponentManagerImpl(
           return
         }
 
-        scope.launch {
-          val activity = StartUpMeasurer.startActivity("${service.`interface`} preloading")
-          val job = preloadService(service) ?: return@launch
-          if (scope === syncScope) {
-            job.join()
-            activity.end()
+        val serviceInterface = getServiceInterface(service, this)
+        if (plugin.pluginId != PluginManagerCore.CORE_ID) {
+          val impl = getServiceImplementation(service, this)
+          if (!servicePreloadingAllowListForNonCorePlugin.contains(impl)) {
+            val message = "`preload=true` should be used only for core services (service=$impl, plugin=${plugin.pluginId})"
+            if (service.preload == PreloadMode.AWAIT) {
+              LOG.error(PluginException(message, plugin.pluginId))
+            }
+            else {
+              LOG.warn(message)
+            }
           }
-          else {
-            job.invokeOnCompletion { activity.end() }
-          }
+        }
+
+        scope.launch(CoroutineName("$serviceInterface preloading")) {
+          preloadService(service, serviceInterface)
         }
       }
     }
 
-    postPreloadServices(modules, activityPrefix, syncScope, onlyIfAwait)
+    postPreloadServices(modules = modules, activityPrefix = activityPrefix, syncScope = syncScope, onlyIfAwait = onlyIfAwait)
   }
 
   protected open fun postPreloadServices(modules: List<IdeaPluginDescriptorImpl>,
@@ -1196,19 +1157,14 @@ abstract class ComponentManagerImpl(
                                          onlyIfAwait: Boolean) {
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  protected open suspend fun preloadService(service: ServiceDescriptor): Job? {
-    val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return null
-    val deferred = adapter.getInstanceAsync<Any>(componentManager = this, keyClass = null)
-    if (deferred.isCompleted) {
-      val instance = deferred.getCompleted()
-      val implClass = instance.javaClass
-      // well, we don't know the interface class, so we cannot add any service to a hot cache
-      if (Modifier.isFinal(implClass.modifiers)) {
-        serviceInstanceHotCache.putIfAbsent(implClass, instance)
-      }
+  protected open suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
+    val adapter = componentKeyToAdapter.get(serviceInterface) as ServiceComponentAdapter? ?: return
+    val instance = adapter.getInstanceAsync<Any>(componentManager = this, keyClass = null)
+    val implClass = instance.javaClass
+    // well, we don't know the interface class, so we cannot add any service to a hot cache
+    if (Modifier.isFinal(implClass.modifiers)) {
+      serviceInstanceHotCache.putIfAbsent(implClass, instance)
     }
-    return deferred
   }
 
   override fun isDisposed(): Boolean {
@@ -1487,9 +1443,9 @@ abstract class ComponentManagerImpl(
    * Key: plugin coroutine scope.
    * Value: intersection of this container scope and plugin coroutine scope.
    */
-  private val pluginScopes: AtomicReference<PersistentMap<CoroutineScope, CoroutineScope>> = AtomicReference(persistentHashMapOf())
+  private val pluginScopes = AtomicReference<PersistentMap<CoroutineScope, CoroutineScope>>(persistentHashMapOf())
 
-  internal fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope {
+  fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope {
     val pluginClassloader = pluginClass.classLoader
     val intersectionScope = if (pluginClassloader is PluginAwareClassLoader) {
       val pluginScope = pluginClassloader.pluginCoroutineScope
@@ -1497,10 +1453,11 @@ abstract class ComponentManagerImpl(
                         ?: pluginScope
       intersectionCoroutineScope(parentScope)
     }
-    else { // non-unloadable
+    else {
+      // non-unloadable
       getCoroutineScope()
     }
-    // The parent scope should become cancelled only when the container is disposed, or the plugin is unloaded.
+    // The parent scope should become canceled only when the container is disposed, or the plugin is unloaded.
     // Leaking the parent scope might lead to premature cancellation.
     // Fool proofing: a fresh child scope is created per instance to avoid leaking the parent to clients.
     return intersectionScope.namedChildScope(pluginClass.name)
@@ -1539,7 +1496,7 @@ abstract class ComponentManagerImpl(
   }
 
   private fun removePluginScope(pluginScope: CoroutineScope) {
-    pluginScopes.updateAndGet { scopes: PersistentMap<CoroutineScope, CoroutineScope> ->
+    pluginScopes.updateAndGet { scopes ->
       scopes.remove(pluginScope)
     }
   }
@@ -1669,3 +1626,37 @@ private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescripto
   task(mainPluginDescriptor)
   executeRegisterTaskForOldContent(mainPluginDescriptor, task)
 }
+
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "SpellCheckingInspection")
+private val servicePreloadingAllowListForNonCorePlugin = java.util.Set.of(
+  "com.android.tools.adtui.webp.WebpMetadata\$WebpMetadataRegistrar",
+  "com.intellij.completion.ml.experiment.ClientExperimentStatus",
+  "com.intellij.compiler.server.BuildManager",
+  "com.intellij.openapi.module.WebModuleTypeRegistrar",
+  "com.intellij.tasks.config.PasswordConversionEnforcer",
+  "com.intellij.ide.RecentProjectsManagerBase",
+  "org.jetbrains.android.AndroidPlugin",
+  "com.intellij.remoteDev.tests.impl.DistributedTestHost",
+  "com.intellij.configurationScript.inspection.ExternallyConfigurableProjectInspectionProfileManager",
+  // use lazy listener
+  "com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge",
+  "com.intellij.compiler.CompilerConfigurationImpl",
+  "com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl",
+  "org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService",
+  "org.jetbrains.idea.maven.project.MavenProjectsManagerEx",
+  // use lazy listener
+  "org.jetbrains.idea.maven.navigator.MavenProjectsNavigator",
+  "org.jetbrains.idea.maven.tasks.MavenShortcutsManager",
+  "com.jetbrains.rd.platform.codeWithMe.toolbar.CodeWithMeToolbarUpdater",
+  "com.jetbrains.rdserver.portForwarding.cwm.CodeWithMeBackendPortForwardingToolWindowManager",
+  "com.jetbrains.rdserver.followMe.FollowMeManagerService",
+  "com.jetbrains.rdserver.diagnostics.BackendPerformanceHost",
+  "com.jetbrains.rdserver.followMe.BackendUserManager",
+  "com.jetbrains.rdserver.followMe.BackendUserFocusManager",
+  "com.jetbrains.rdserver.projectView.BackendProjectViewSync",
+  "com.jetbrains.rdserver.editors.BackendFollowMeEditorsHost",
+  "com.jetbrains.rdserver.debugger.BackendFollowMeDebuggerHost",
+  "com.jetbrains.rdserver.editors.BackendEditorService",
+  "com.jetbrains.rdserver.toolWindow.BackendServerToolWindowManager",
+  "com.jetbrains.rdserver.toolbar.CWMHostClosedToolbarNotification",
+)

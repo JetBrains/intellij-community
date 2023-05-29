@@ -16,6 +16,7 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleView;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
@@ -46,7 +47,7 @@ public interface PydevConsoleRunner {
 
   PythonConsoleExecuteActionHandler getConsoleExecuteActionHandler();
 
-  PyConsoleProcessHandler getProcessHandler();
+  ProcessHandler getProcessHandler();
 
   PythonConsoleView getConsoleView();
 

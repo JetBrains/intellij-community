@@ -45,25 +45,28 @@ final class LineMarkersUtil {
 
   static void setLineMarkersToEditor(@NotNull Project project,
                                      @NotNull Document document,
-                                     @NotNull Segment bounds,
-                                     @NotNull Collection<? extends LineMarkerInfo<?>> markers,
+                                     @NotNull TextRange bounds,
+                                     @NotNull Collection<? extends LineMarkerInfo<?>> newMarkers,
                                      int group) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     HighlightersRecycler toReuse = new HighlightersRecycler();
     processLineMarkers(project, document, bounds, group, info -> {
-      toReuse.recycleHighlighter(info.highlighter);
+      RangeHighlighterEx highlighter = (RangeHighlighterEx)info.highlighter;
+      if (highlighter != null) {
+        toReuse.recycleHighlighter(highlighter);
+      }
       return true;
     });
 
     if (LOG.isDebugEnabled()) {
       List<LineMarkerInfo<?>> oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
-      LOG.debug("LineMarkersUtil.setLineMarkersToEditor(markers: "+markers+", group: " + group+
+      LOG.debug("LineMarkersUtil.setLineMarkersToEditor(markers: "+newMarkers+", group: " + group+
                 "); oldMarkers: "+oldMarkers+"; reused: "+toReuse.forAllInGarbageBin().size());
     }
 
-    for (LineMarkerInfo<?> info : markers) {
+    for (LineMarkerInfo<?> info : newMarkers) {
       PsiElement element = info.getElement();
       if (element == null) {
         continue;
@@ -72,10 +75,9 @@ final class LineMarkersUtil {
       TextRange textRange = element.getTextRange();
       if (textRange == null) continue;
       TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, textRange);
-      if (!TextRange.containsRange(bounds, elementRange)) {
-        continue;
+      if (bounds.contains(elementRange)) {
+        createOrReuseLineMarker(info, markupModel, toReuse);
       }
-      createOrReuseLineMarker(info, markupModel, toReuse);
     }
 
     for (RangeHighlighter highlighter : toReuse.forAllInGarbageBin()) {
@@ -88,7 +90,7 @@ final class LineMarkersUtil {
                                               @Nullable HighlightersRecycler toReuse) {
     LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer<?>)info.createGutterRenderer();
 
-    RangeHighlighter highlighter = toReuse == null ? null : toReuse.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX);
+    RangeHighlighterEx highlighter = toReuse == null ? null : toReuse.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX);
     boolean newHighlighter = false;
     if (highlighter == null) {
       newHighlighter = true;
@@ -118,7 +120,7 @@ final class LineMarkersUtil {
       boolean lineSeparatorPlacementChanged = !Comparing.equal(highlighter.getLineSeparatorPlacement(), info.separatorPlacement);
 
       if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged) {
-        markupModel.changeAttributesInBatch((RangeHighlighterEx)highlighter, markerEx -> {
+        markupModel.changeAttributesInBatch(highlighter, markerEx -> {
           if (rendererChanged) {
             markerEx.setGutterIconRenderer(newRenderer);
           }
@@ -137,7 +139,7 @@ final class LineMarkersUtil {
   static void addLineMarkerToEditorIncrementally(@NotNull Project project,
                                                  @NotNull Document document,
                                                  @NotNull LineMarkerInfo<?> marker) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     LineMarkerInfo<?>[] markerInTheWay = {null};

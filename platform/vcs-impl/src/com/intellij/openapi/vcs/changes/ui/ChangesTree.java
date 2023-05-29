@@ -629,18 +629,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myTreeExpander = expander;
   }
 
-  /**
-   * @deprecated See {@link ChangesTree#GROUP_BY_ACTION_GROUP}, {@link TreeActionsToolbarPanel}
-   */
-  @Deprecated(forRemoval = true)
-  public AnAction[] getTreeActions() {
-    return new AnAction[]{
-      ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP),
-      createExpandAllAction(false),
-      createCollapseAllAction(false)
-    };
-  }
-
   @NotNull
   public AnAction createExpandAllAction(boolean headerAction) {
     if (headerAction) {

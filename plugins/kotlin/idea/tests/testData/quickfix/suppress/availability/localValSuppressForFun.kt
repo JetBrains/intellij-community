@@ -1,7 +1,5 @@
-// "Suppress 'REDUNDANT_NULLABLE' for fun foo" "true"
+// "Suppress 'DIVISION_BY_ZERO' for fun foo" "true"
 
 fun foo() {
-    val a: String?<caret>? = null
+    val a = 2 / <caret>0
 }
-
-// IGNORE_FIR

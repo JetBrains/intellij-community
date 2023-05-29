@@ -57,6 +57,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.MessageCategory;
@@ -135,7 +136,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @Nullable private final Function<TargetEnvironment, String> myWorkingDirFunction;
   @Nullable private Sdk mySdk;
   private PydevConsoleCommunication myPydevConsoleCommunication;
-  private PyConsoleProcessHandler myProcessHandler;
+  private ProcessHandler myProcessHandler;
   protected PythonConsoleExecuteActionHandler myConsoleExecuteActionHandler;
   private final List<ConsoleListener> myConsoleListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final PyConsoleType myConsoleType;
@@ -474,12 +475,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   /**
-   * To be deprecated.
-   * <p>
-   * The legacy implementation based on {@link GeneralCommandLine}. The new
-   * implementation based on Targets API could be found in
+   * The legacy implementation based on {@link GeneralCommandLine}. The new implementation based on Targets API could be found in
    * {@link #createProcessUsingTargetsAPI(Sdk)}.
+   * <p>
+   * The method is going to be removed when the flag {@code python.use.targets.api} is eliminated.
    */
+  @ApiStatus.Obsolete
   @NotNull
   private ConsoleProcessCreationResult createProcess(@NotNull Sdk sdk) throws ExecutionException {
     PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = getRemoteAdditionalData(sdk);
@@ -617,7 +618,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     PyRemotePathMapper pathMapper =
       PydevConsoleRunnerUtil.createTargetEnvironmentPathMapper(myProject, sdk, myConsoleSettings, targetEnvironment);
     ProcessHandler processHandler =
-      PyCustomProcessHandlerProvider.createProcessHandler(process, commandLineString, targetedCommandLine.getCharset(), pathMapper);
+      PyCustomProcessHandlerProvider.createProcessHandler(process, commandLineString, targetedCommandLine.getCharset(), pathMapper, true);
     return new TargetProcessHandlerFactory(processHandler, process, commandLineString, communicationServer, targetEnvironment);
   }
 
@@ -742,12 +743,15 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       return myTargetEnvironment;
     }
 
-    public abstract @NotNull PyConsoleProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView);
+    public abstract @NotNull ProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView);
   }
 
   /**
    * Corresponds to disabled {@code python.use.targets.api} registry flag and using a local Python interpreter.
+   * <p>
+   * The class is going to be removed when the flag {@code python.use.targets.api} is eliminated.
    */
+  @ApiStatus.Obsolete
   private static final class LegacyLocalProcessHandlerCreator extends ConsoleProcessCreationResult {
     private LegacyLocalProcessHandlerCreator(@NotNull Process process,
                                              @NotNull String commandLineString,
@@ -756,7 +760,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public @NotNull PyConsoleProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView) {
+    public @NotNull ProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView) {
       return new PyConsoleProcessHandler(myProcess, consoleView, myConsoleCommunication, myCommandLineString, CONSOLE_CHARSET);
     }
   }
@@ -764,7 +768,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   /**
    * Corresponds to disabled {@code python.use.targets.api} registry flag and a remote Python interpreter with
    * {@link Sdk#getSdkAdditionalData()} of legacy {@link PyRemoteSdkAdditionalDataBase} class.
+   * <p>
+   * The class is going to be removed when the flag {@code python.use.targets.api} is eliminated.
    */
+  @ApiStatus.Obsolete
   private static final class LegacyRemoteSdkProcessHandlerCreator extends ConsoleProcessCreationResult {
     private final @NotNull PyRemoteSdkAdditionalDataBase mySdkAdditionalData;
     private final @NotNull Project myProject;
@@ -786,7 +793,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public @NotNull PyConsoleProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView) {
+    public @NotNull ProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView) {
       return myRemoteInterpreterManager.createConsoleProcessHandler(
         myProcess, consoleView, myConsoleCommunication,
         myCommandLineString,
@@ -814,9 +821,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public @NotNull PyConsoleProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView) {
-      return PyConsoleProcessHandlers.createPythonConsoleProcessHandler(myProcessHandler, myProcess, consoleView, myConsoleCommunication,
-                                                                        myCommandLineString, CONSOLE_CHARSET);
+    public @NotNull ProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView) {
+      PyConsoleProcessHandlers.configureProcessHandlerForPythonConsole(myProcessHandler, consoleView, myConsoleCommunication);
+      return myProcessHandler;
     }
   }
 
@@ -1182,8 +1189,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           UIUtil.invokeAndWaitIfNeeded(() -> closeCommunication());
 
           boolean processStopped = myProcessHandler.waitFor(WAIT_BEFORE_FORCED_CLOSE_MILLIS);
-          if (!processStopped && myProcessHandler.canKillProcess()) {
-            myProcessHandler.killProcess();
+          if (!processStopped) {
+            tryKillProcess(myProcessHandler);
           }
           myProcessHandler.waitFor();
         }
@@ -1201,6 +1208,14 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         }
       }
     }.queue();
+  }
+
+  private static void tryKillProcess(@NotNull ProcessHandler processHandler) {
+    if (processHandler instanceof KillableProcessHandler) {
+      if (((KillableProcessHandler)processHandler).canKillProcess()) {
+        ((KillableProcessHandler)processHandler).killProcess();
+      }
+    }
   }
 
   @Override
@@ -1342,7 +1357,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   @Override
-  public PyConsoleProcessHandler getProcessHandler() {
+  public ProcessHandler getProcessHandler() {
     return myProcessHandler;
   }
 

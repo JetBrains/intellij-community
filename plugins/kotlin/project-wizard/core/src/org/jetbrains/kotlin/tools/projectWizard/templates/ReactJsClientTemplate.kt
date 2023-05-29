@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.tools.projectWizard.templates
 
 
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.tools.projectWizard.Dependencies
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.Writer
 import org.jetbrains.kotlin.tools.projectWizard.core.asPath
@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.DependencyType
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
 import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositories
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
@@ -55,18 +54,24 @@ object ReactJsClientTemplate : JsClientTemplate() {
             useReactRedux
         )
 
+    private fun wrapperDependency(artifact: String, version: Version) =
+        ArtifactBasedLibraryDependencyIR(
+            MavenArtifact(Repositories.KOTLIN_JS_WRAPPERS, "org.jetbrains.kotlin-wrappers", artifact),
+            version,
+            DependencyType.MAIN
+        )
+
     override fun Writer.getRequiredLibraries(module: ModuleIR): List<DependencyIR> = withSettingsOf(module.originalModule) {
         buildList {
-            val kotlinVersion = KotlinPlugin.version.propertyValue
-            +Dependencies.KOTLIN_REACT
-            +Dependencies.KOTLIN_REACT_DOM
-            +Dependencies.KOTLIN_EMOTION
+            +ArtifactBasedLibraryDependencyIR(Dependencies.JS_WRAPPERS.KOTLIN_REACT, DependencyType.MAIN)
+            +ArtifactBasedLibraryDependencyIR(Dependencies.JS_WRAPPERS.KOTLIN_REACT_DOM, DependencyType.MAIN)
+            +ArtifactBasedLibraryDependencyIR(Dependencies.JS_WRAPPERS.KOTLIN_EMOTION, DependencyType.MAIN)
             if (useReactRouterDom.reference.settingValue) {
-                +Dependencies.KOTLIN_REACT_ROUTER_DOM
+                +ArtifactBasedLibraryDependencyIR(Dependencies.JS_WRAPPERS.KOTLIN_REACT_ROUTER_DOM, DependencyType.MAIN)
             }
             if (useReactRedux.reference.settingValue) {
-                +Dependencies.KOTLIN_REDUX
-                +Dependencies.KOTLIN_REACT_REDUX
+                +ArtifactBasedLibraryDependencyIR(Dependencies.JS_WRAPPERS.KOTLIN_REDUX, DependencyType.MAIN)
+                +ArtifactBasedLibraryDependencyIR(Dependencies.JS_WRAPPERS.KOTLIN_REACT_REDUX, DependencyType.MAIN)
             }
         }
     }
@@ -85,44 +90,5 @@ object ReactJsClientTemplate : JsClientTemplate() {
 
     override fun Reader.getAdditionalSettings(module: Module): Map<String, Any> = withSettingsOf(module) {
         jsSettings(module)
-    }
-
-    private object Dependencies {
-        val KOTLIN_REACT = wrapperDependency(
-            "kotlin-react",
-            Versions.JS_WRAPPERS.KOTLIN_REACT
-        )
-
-        val KOTLIN_REACT_DOM = wrapperDependency(
-            "kotlin-react-dom",
-            Versions.JS_WRAPPERS.KOTLIN_REACT_DOM
-        )
-
-        val KOTLIN_EMOTION = wrapperDependency(
-            "kotlin-emotion",
-            Versions.JS_WRAPPERS.KOTLIN_EMOTION
-        )
-
-        val KOTLIN_REACT_ROUTER_DOM = wrapperDependency(
-            "kotlin-react-router-dom",
-            Versions.JS_WRAPPERS.KOTLIN_REACT_ROUTER_DOM
-        )
-
-        val KOTLIN_REDUX = wrapperDependency(
-            "kotlin-redux",
-            Versions.JS_WRAPPERS.KOTLIN_REDUX
-        )
-
-        val KOTLIN_REACT_REDUX = wrapperDependency(
-            "kotlin-react-redux",
-            Versions.JS_WRAPPERS.KOTLIN_REACT_REDUX
-        )
-
-        private fun wrapperDependency(artifact: String, version: Version) =
-            ArtifactBasedLibraryDependencyIR(
-                MavenArtifact(Repositories.KOTLIN_JS_WRAPPERS, "org.jetbrains.kotlin-wrappers", artifact),
-                version,
-                DependencyType.MAIN
-            )
     }
 }

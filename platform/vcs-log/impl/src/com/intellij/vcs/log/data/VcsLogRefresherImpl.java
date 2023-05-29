@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -31,11 +32,10 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static com.intellij.diagnostic.telemetry.ScopesExtensionsKt.tracer;
-import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
-import static com.intellij.diagnostic.telemetry.TraceUtil.computeWithSpanThrows;
-import static com.intellij.diagnostic.telemetry.TraceUtil.runWithSpanThrows;
-import static com.intellij.vcs.log.data.util.VcsScopeKt.VCS;
+import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.computeWithSpanThrows;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.runWithSpanThrows;
 
 public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherImpl.class);
@@ -54,7 +54,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
   private volatile @NotNull DataPack myDataPack = DataPack.EMPTY;
 
-  private final @NotNull Tracer myTracer = tracer(VCS);
+  private final @NotNull Tracer myTracer = TelemetryTracer.getInstance().getTracer(VcsScope);
 
   public VcsLogRefresherImpl(@NotNull Project project,
                              @NotNull VcsLogStorage storage,
@@ -147,7 +147,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   }
 
   private static @NotNull <T extends GraphCommit<Integer>> List<T> multiRepoJoin(@NotNull Collection<? extends List<T>> commits) {
-    Span span = tracer(VCS).spanBuilder("multi-repo join").startSpan();
+    Span span = TelemetryTracer.getInstance().getTracer(VcsScope).spanBuilder("multi-repo join").startSpan();
     List<T> joined = new VcsLogMultiRepoJoiner<Integer, T>().join(commits);
     span.end();
     return joined;

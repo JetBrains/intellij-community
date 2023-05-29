@@ -1,7 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.asserttoif;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -37,17 +40,17 @@ public class IfCanBeAssertionInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     boolean isObjectsRequireNonNullAvailable = (boolean)infos[0];
     boolean isIfStatement = (boolean)infos[1];
-    List<InspectionGadgetsFix> fixes = new ArrayList<>(2);
+    List<LocalQuickFix> fixes = new ArrayList<>(2);
     if (isObjectsRequireNonNullAvailable) {
       fixes.add(new ReplaceWithObjectsNonNullFix(isIfStatement));
     }
     if (isIfStatement) {
       fixes.add(new IfToAssertionFix());
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   static PsiNewExpression getThrownNewException(PsiElement element) {
@@ -90,7 +93,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     }
   }
 
-  private static class ReplaceWithObjectsNonNullFix extends InspectionGadgetsFix {
+  private static class ReplaceWithObjectsNonNullFix extends PsiUpdateModCommandQuickFix {
     private final boolean myIsIfStatement;
 
     ReplaceWithObjectsNonNullFix(boolean isIfStatement) {
@@ -105,9 +108,9 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
       if (myIsIfStatement) {
-        final PsiElement parent = descriptor.getPsiElement().getParent();
+        final PsiElement parent = startElement.getParent();
         if (!(parent instanceof PsiIfStatement ifStatement)) return;
         final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
         if (!(condition instanceof PsiBinaryExpression)) return;
@@ -127,7 +130,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
         final String text = buildNewExpressionText(tracker.markUnchanged(nullComparedExpression), message);
         PsiReplacementUtil.replaceStatementAndShortenClassNames(ifStatement, text + ";", tracker);
       } else {
-        PsiReferenceExpression ref = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiReferenceExpression.class);
+        PsiReferenceExpression ref = ObjectUtils.tryCast(startElement.getParent(), PsiReferenceExpression.class);
         if (ref == null) return;
         PsiMethodCallExpression methodCall = ObjectUtils.tryCast(ref.getParent(), PsiMethodCallExpression.class);
         if (!MATCHER.test(methodCall)) {
@@ -158,7 +161,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     }
   }
 
-  private static class IfToAssertionFix extends InspectionGadgetsFix {
+  private static class IfToAssertionFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -167,8 +170,8 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement parent = descriptor.getPsiElement().getParent();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiElement parent = startElement.getParent();
       if (!(parent instanceof PsiIfStatement ifStatement)) {
         return;
       }

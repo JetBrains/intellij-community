@@ -12,16 +12,21 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenConfigBuildIssue;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
@@ -48,15 +53,11 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
       var mavenProjectsInBaseDir = entry.getValue();
       MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir);
       try {
-        Properties userProperties = new Properties();
         for (MavenProject mavenProject : mavenProjectsInBaseDir) {
           mavenProject.setConfigFileError(null);
-          for (MavenImporter mavenImporter : MavenImporter.getSuitableImporters(mavenProject)) {
-            mavenImporter.customizeUserProperties(myProject, mavenProject, userProperties);
-          }
         }
-        embedder.customizeForResolve(console, process, updateSnapshots, tree.getWorkspaceMap(), userProperties);
-        var projectsWithUnresolvedPluginsChunk = doResolve(mavenProjectsInBaseDir, tree, generalSettings, embedder, process);
+        var projectsWithUnresolvedPluginsChunk =
+          doResolve(mavenProjectsInBaseDir, tree, generalSettings, embedder, process, console, tree.getWorkspaceMap(), updateSnapshots);
         projectsWithUnresolvedPlugins.put(baseDir, projectsWithUnresolvedPluginsChunk);
       }
       catch (Throwable t) {
@@ -105,7 +106,10 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
                                                        @NotNull MavenProjectsTree tree,
                                                        @NotNull MavenGeneralSettings generalSettings,
                                                        @NotNull MavenEmbedderWrapper embedder,
-                                                       @NotNull MavenProgressIndicator process)
+                                                       @NotNull MavenProgressIndicator process,
+                                                       @NotNull MavenConsole console,
+                                                       @Nullable MavenWorkspaceMap workspaceMap,
+                                                       boolean updateSnapshots)
     throws MavenProcessCanceledException {
     if (mavenProjects.isEmpty()) return List.of();
 
@@ -117,8 +121,16 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
 
     MavenExplicitProfiles explicitProfiles = tree.getExplicitProfiles();
     Collection<VirtualFile> files = ContainerUtil.map(mavenProjects, p -> p.getFile());
-    Collection<MavenProjectReaderResult> results = new MavenProjectReader(myProject)
-      .resolveProject(generalSettings, embedder, files, explicitProfiles, tree.getProjectLocator(), process);
+    Collection<MavenProjectReaderResult> results = new MavenProjectReader(myProject).resolveProject(
+      generalSettings,
+      embedder,
+      files,
+      explicitProfiles,
+      tree.getProjectLocator(),
+      process,
+      console,
+      workspaceMap,
+      updateSnapshots);
 
     MavenResolveResultProblemProcessor.MavenResolveProblemHolder problems = MavenResolveResultProblemProcessor.getProblems(results);
     MavenResolveResultProblemProcessor.notifySyncForProblem(myProject, problems);

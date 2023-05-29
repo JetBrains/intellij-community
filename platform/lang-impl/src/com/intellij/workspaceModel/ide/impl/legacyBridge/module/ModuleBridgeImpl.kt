@@ -15,6 +15,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.TestModuleProperties
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
@@ -38,29 +40,6 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.system.measureTimeMillis
-
-private val moduleBridgeBeforeChangedTimeMs: AtomicLong = AtomicLong()
-private val facetsInitializationTimeMs: AtomicLong = AtomicLong()
-private val updateOptionTimeMs: AtomicLong = AtomicLong()
-
-private fun setupOpenTelemetryReporting(meter: Meter) {
-  val moduleBridgeBeforeChangedTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.before.changed.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
-  val facetsInitializationTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.facet.initialization.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
-  val updateOptionTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.update.option.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-  meter.batchCallback(
-    {
-      moduleBridgeBeforeChangedTimeGauge.record(moduleBridgeBeforeChangedTimeMs.get())
-      facetsInitializationTimeGauge.record(facetsInitializationTimeMs.get())
-      updateOptionTimeGauge.record(updateOptionTimeMs.get())
-    },
-    moduleBridgeBeforeChangedTimeGauge, facetsInitializationTimeGauge, updateOptionTimeGauge
-  )
-}
 
 @Suppress("OVERRIDE_DEPRECATION")
 internal class ModuleBridgeImpl(
@@ -93,7 +72,7 @@ internal class ModuleBridgeImpl(
             }
           }
 
-          moduleBridgeBeforeChangedTimeMs.addAndGet(System.currentTimeMillis() - start)
+          moduleBridgeBeforeChangedTimeMs.addElapsedTimeMs(start)
         }
       })
     }
@@ -134,8 +113,11 @@ internal class ModuleBridgeImpl(
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: MutableList<in Runnable>?) {
-    registerComponents(modules.find { it.pluginId == PluginManagerCore.CORE_ID }, modules, precomputedExtensionModel, app,
-                       listenerCallbacks)
+    registerComponents(corePlugin = modules.find { it.pluginId == PluginManagerCore.CORE_ID },
+                       modules = modules,
+                       precomputedExtensionModel = precomputedExtensionModel,
+                       app = app,
+                       listenerCallbacks = listenerCallbacks)
   }
 
   override fun callCreateComponents() {
@@ -148,10 +130,9 @@ internal class ModuleBridgeImpl(
   }
 
   override fun initFacets() {
-    facetsInitializationTimeMs.addAndGet(
-      measureTimeMillis {
-        FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
-      })
+    facetsInitializationTimeMs.addMeasuredTimeMs {
+      FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
+    }
   }
 
   override fun registerComponents(corePlugin: IdeaPluginDescriptor?,
@@ -222,11 +203,33 @@ internal class ModuleBridgeImpl(
       }
     }
 
-    updateOptionTimeMs.addAndGet(System.currentTimeMillis() - start)
+    updateOptionTimeMs.addElapsedTimeMs(start)
     return
   }
 
   companion object {
+    private val moduleBridgeBeforeChangedTimeMs: AtomicLong = AtomicLong()
+    private val facetsInitializationTimeMs: AtomicLong = AtomicLong()
+    private val updateOptionTimeMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val moduleBridgeBeforeChangedTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.before.changed.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val facetsInitializationTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.facet.initialization.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val updateOptionTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.update.option.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      meter.batchCallback(
+        {
+          moduleBridgeBeforeChangedTimeGauge.record(moduleBridgeBeforeChangedTimeMs.get())
+          facetsInitializationTimeGauge.record(facetsInitializationTimeMs.get())
+          updateOptionTimeGauge.record(updateOptionTimeMs.get())
+        },
+        moduleBridgeBeforeChangedTimeGauge, facetsInitializationTimeGauge, updateOptionTimeGauge
+      )
+    }
+
     init {
       setupOpenTelemetryReporting(jpsMetrics.meter)
     }

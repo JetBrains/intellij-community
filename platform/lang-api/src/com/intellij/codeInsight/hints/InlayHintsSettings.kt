@@ -1,14 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.SettingsCategory
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.util.messages.Topic
 import org.jdom.Element
 import java.util.*
@@ -17,15 +14,13 @@ import java.util.*
 class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   companion object {
     @JvmStatic
-    fun instance(): InlayHintsSettings {
-      return ApplicationManager.getApplication().getService(InlayHintsSettings::class.java)
-    }
+    fun instance(): InlayHintsSettings = ApplicationManager.getApplication().service()
 
     /**
      * Inlay hints settings changed.
      */
     @Topic.AppLevel
-    @JvmStatic
+    @JvmField
     val INLAY_SETTINGS_CHANGED: Topic<SettingsListener> = Topic(SettingsListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
   }
 
@@ -40,6 +35,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     var enabledHintProviderIds: TreeSet<String> = sortedSetOf()
 
     var disabledHintProviderIds: TreeSet<String> = sortedSetOf()
+
     // We can't store Map<String, Any> directly, because values deserialized as Object
     var settingsMapElement: Element = Element("settingsMapElement")
 
@@ -52,6 +48,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
 
   // protected by lock
   private val myCachedSettingsMap: MutableMap<String, Any> = hashMapOf()
+
   // protected by lock
   private val isEnabledByDefaultIdsCache: MutableMap<String, Boolean> = hashMapOf()
 
@@ -100,7 +97,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     myState.lastViewedProviderKeyId = providerId
   }
 
-  fun getLastViewedProviderId() : String? {
+  fun getLastViewedProviderId(): String? {
     return myState.lastViewedProviderKeyId
   }
 
@@ -110,7 +107,8 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
         myState.isEnabled = enabled
         listener.globalEnabledStatusChanged(enabled)
         true
-      } else {
+      }
+      else {
         false
       }
     }
@@ -119,20 +117,20 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     }
   }
 
-  fun hintsEnabledGlobally() : Boolean = synchronized(lock) {
+  fun hintsEnabledGlobally(): Boolean = synchronized(lock) {
     return myState.isEnabled
   }
 
   /**
    * @param createSettings is a setting, that was obtained from createSettings method of provider
    */
-  fun <T: Any> findSettings(key: SettingsKey<T>, language: Language, createSettings: ()->T): T = synchronized(lock) {
+  fun <T : Any> findSettings(key: SettingsKey<T>, language: Language, createSettings: () -> T): T = synchronized(lock) {
     val fullId = key.getFullId(language)
     return getSettingCached(fullId, createSettings)
   }
 
-  fun <T: Any> storeSettings(key: SettingsKey<T>, language: Language, value: T) {
-    synchronized(lock){
+  fun <T : Any> storeSettings(key: SettingsKey<T>, language: Language, value: T) {
+    synchronized(lock) {
       val fullId = key.getFullId(language)
       myCachedSettingsMap[fullId] = value as Any
       val element = myState.settingsMapElement.clone()
@@ -151,16 +149,16 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     listener.settingsChanged()
   }
 
-  fun hintsEnabled(language: Language) : Boolean = synchronized(lock) {
+  fun hintsEnabled(language: Language): Boolean = synchronized(lock) {
     return language.id !in myState.disabledLanguages
   }
 
-  fun hintsShouldBeShown(language: Language) : Boolean = synchronized(lock) {
+  fun hintsShouldBeShown(language: Language): Boolean = synchronized(lock) {
     if (!hintsEnabledGlobally()) return false
     return hintsEnabled(language)
   }
 
-  fun hintsEnabled(key: SettingsKey<*>, language: Language) : Boolean {
+  fun hintsEnabled(key: SettingsKey<*>, language: Language): Boolean {
     synchronized(lock) {
       if (explicitlyDisabled(language, key)) {
         return false
@@ -203,7 +201,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   }
 
   // may return parameter settings object or cached object
-  private fun <T : Any> getSettingCached(id: String, settings: ()->T): T {
+  private fun <T : Any> getSettingCached(id: String, settings: () -> T): T {
     synchronized(lock) {
       @Suppress("UNCHECKED_CAST")
       val cachedValue = myCachedSettingsMap[id] as T?
@@ -218,23 +216,23 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     val state = myState.settingsMapElement
     val settingsElement = state.getChild(id)
     if (settingsElement == null) return settings
-    val settingsElementChildren= settingsElement.children
+    val settingsElementChildren = settingsElement.children
     if (settingsElementChildren.isEmpty()) return settings
     settingsElementChildren.first().deserializeInto(settings)
     return settings
   }
 
   // must be called under lock
-  private fun isEnabledByDefault(key: SettingsKey<*>, language: Language) : Boolean {
-      return isEnabledByDefaultIdsCache.computeIfAbsent(key.getFullId(language)) { computeIsEnabledByDefault(it) }
+  private fun isEnabledByDefault(key: SettingsKey<*>, language: Language): Boolean {
+    return isEnabledByDefaultIdsCache.computeIfAbsent(key.getFullId(language)) { computeIsEnabledByDefault(it) }
   }
 
-  private fun computeIsEnabledByDefault(id: String) : Boolean {
+  private fun computeIsEnabledByDefault(id: String): Boolean {
     val bean = InlayHintsProviderExtension.inlayProviderName.extensionList
-      .firstOrNull {
-        val keyId = it.settingsKeyId ?: return@firstOrNull false
-        SettingsKey.getFullId(it.language!!, keyId) == id
-      } ?: return true
+                 .firstOrNull {
+                   val keyId = it.settingsKeyId ?: return@firstOrNull false
+                   SettingsKey.getFullId(it.language!!, keyId) == id
+                 } ?: return true
     return bean.isEnabledByDefault
   }
 

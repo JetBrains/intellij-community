@@ -4,10 +4,8 @@ package com.intellij.platform.impl.toolkit
 
 import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.annotations.ApiStatus.Internal
-import sun.awt.AWTAccessor
 import sun.awt.PlatformGraphicsInfo
 import sun.java2d.SunGraphicsEnvironment
-import java.awt.Frame
 import java.awt.Rectangle
 
 @Internal
@@ -28,7 +26,8 @@ class IdeGraphicsEnvironment: SunGraphicsEnvironment() {
       }
       val client = try {
         ClientGraphicsEnvironment.getInstance()
-      } catch (ex: IllegalStateException) {   // service could be not loaded yet
+      }
+      catch (ex: IllegalStateException) {   // service could be not loaded yet
         HeadlessDummyGraphicsEnvironment.instance
       }
       if (!client.isInitialized()) {
@@ -36,6 +35,11 @@ class IdeGraphicsEnvironment: SunGraphicsEnvironment() {
       }
       return client
     }
+  }
+
+  init {
+    // Because JBR in some cases changes this property to false in the `SunGraphicsEnvironment` constructor
+    System.setProperty("swing.bufferPerWindow", true.toString())
   }
 
   fun notifyDevicesChanged() = displayChanger.notifyListeners()

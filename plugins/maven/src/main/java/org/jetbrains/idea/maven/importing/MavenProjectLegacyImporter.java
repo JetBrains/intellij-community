@@ -397,7 +397,10 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
 
   private boolean ensureModuleCreated(MavenProject project) {
     Module existingModule = myMavenProjectToModule.get(project);
-    if (existingModule != null && existingModule != myPreviewModule) return false;
+    if (existingModule != null && existingModule != myPreviewModule) {
+      myCreatedModules.add(existingModule); // compatibility with workspace importer
+      return false;
+    }
     final String path = myMavenProjectToModulePath.get(project);
     String moduleName = ModulePath.Companion.getModuleNameByFilePath(path);
 

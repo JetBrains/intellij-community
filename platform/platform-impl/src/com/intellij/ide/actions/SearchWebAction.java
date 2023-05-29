@@ -34,10 +34,11 @@ public class SearchWebAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
-    CopyProvider provider = PlatformDataKeys.COPY_PROVIDER.getData(dataContext);
-    boolean available = provider != null && provider.isCopyEnabled(dataContext) && provider.isCopyVisible(dataContext);
-    presentation.setEnabledAndVisible(available);
+    CopyAction.updateWithProvider(event, event.getData(PlatformDataKeys.COPY_PROVIDER), false, provider -> {
+      presentation.setEnabledAndVisible(provider != null &&
+                                        provider.isCopyEnabled(event.getDataContext()) &&
+                                        provider.isCopyVisible(event.getDataContext()));
+    });
   }
 
   @Override

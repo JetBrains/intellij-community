@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -40,7 +41,7 @@ final class ReadMostlyRWLock {
   private static final byte WRITE_ACQUIRED = 2; // this writer obtained the write lock
 
   @NotNull final Thread writeThread;
-  private final AtomicBoolean writeIntent = new AtomicBoolean(false);
+  private final AtomicBoolean writeIntent = new AtomicBoolean(!StartupUtil.isImplicitReadOnEDTDisabled());
   // All reader threads are registered here. Dead readers are garbage collected in writeUnlock().
   private final ConcurrentList<Reader> readers = ContainerUtil.createConcurrentList();
 

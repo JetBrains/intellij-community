@@ -276,17 +276,22 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
 
-    final Set<String> files = data.getClasses().keySet();
-    final Map<String, String> normalizedFiles2Files = new HashMap<>();
-    for (final String file : files) {
-      normalizedFiles2Files.put(normalizeFilePath(file), file);
-    }
+    final Map<String, String> normalizedFiles2Files = getNormalizedFiles2FilesMapping(data);
     collectFolderCoverage(contentRoot, dataManager, annotator, data,
                           suite.isTrackTestFolders(),
                           index,
                           suite.getCoverageEngine(),
                           new HashSet<>(),
                           Collections.unmodifiableMap(normalizedFiles2Files));
+  }
+
+  protected Map<String, String> getNormalizedFiles2FilesMapping(ProjectData data) {
+    final Map<String, String> normalizedFiles2Files = new HashMap<>();
+    final Set<String> files = data.getClasses().keySet();
+    for (final String file : files) {
+      normalizedFiles2Files.put(normalizeFilePath(file), file);
+    }
+    return normalizedFiles2Files;
   }
 
   @Override

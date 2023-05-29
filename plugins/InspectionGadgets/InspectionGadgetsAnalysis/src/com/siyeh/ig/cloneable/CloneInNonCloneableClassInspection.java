@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.cloneable;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiAnonymousClass;
@@ -24,7 +25,6 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DelegatingFixFactory;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -66,7 +66,7 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return DelegatingFixFactory.createMakeCloneableFix((PsiClass)infos[0]);
   }
 

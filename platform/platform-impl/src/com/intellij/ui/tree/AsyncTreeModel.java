@@ -833,7 +833,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
 
     private void setLoading(Node loading) {
       this.leafState = LeafState.NEVER;
-      this.children = loading != null ? singletonList(loading) : emptyList();
+      this.children = ContainerUtil.createMaybeSingletonList(loading);
       this.loading = loading;
     }
 

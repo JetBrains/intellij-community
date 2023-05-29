@@ -75,5 +75,4 @@ object ReviewDetailsUIUtil {
     )
 
   val STATUSES_MAX_HEIGHT: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 143, newUI = 143)
-  val COMMIT_INFO_MAX_HEIGHT: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 100, newUI = 100)
 }

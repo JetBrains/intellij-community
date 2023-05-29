@@ -31,7 +31,7 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
 @ApiStatus.Internal
-public class LineWrappingUtil {
+public final class LineWrappingUtil {
   private static final String WRAP_LINE_COMMAND_NAME = "AutoWrapLongLine";
 
   /**
@@ -127,7 +127,7 @@ public class LineWrappingUtil {
 
       // We know that current line exceeds right margin if control flow reaches this place, so, wrap it.
       int wrapOffset = strategy.calculateWrapPosition(
-        document, editor.getProject(), Math.max(startLineOffset, startOffsetToUse), Math.min(endLineOffset, endOffsetToUse),
+        document, project, Math.max(startLineOffset, startOffsetToUse), Math.min(endLineOffset, endOffsetToUse),
         preferredWrapPosition, false, false
       );
       if (wrapOffset < 0 // No appropriate wrap position is found.
@@ -195,7 +195,7 @@ public class LineWrappingUtil {
       Runnable command = () -> EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER)
         .execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
       if (commandProcessor.getCurrentCommand() == null) {
-        commandProcessor.executeCommand(editor.getProject(), command, WRAP_LINE_COMMAND_NAME, null);
+        commandProcessor.executeCommand(project, command, WRAP_LINE_COMMAND_NAME, null);
       }
       else {
         command.run();

@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Utility class for pattern inference
  */
-public class PatternInference {
+public final class PatternInference {
   /**
    * @param resolveResult result of deconstruction pattern type element resolve before the inference
    * @param pattern deconstruction pattern itself, which has no type arguments specified 

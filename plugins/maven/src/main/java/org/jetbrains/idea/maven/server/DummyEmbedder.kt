@@ -10,28 +10,8 @@ import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.security.MavenToken
 import java.io.File
-import java.util.*
 
 abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
-  override fun customizeAndGetProgressIndicator(workspaceMap: MavenWorkspaceMap?,
-                                                alwaysUpdateSnapshots: Boolean,
-                                                userProperties: Properties?,
-                                                token: MavenToken?): MavenServerPullProgressIndicator {
-    return object : MavenServerPullProgressIndicator {
-      override fun pullDownloadEvents(): MutableList<MavenArtifactDownloadServerProgressEvent>? {
-        return null
-      }
-
-      override fun pullConsoleEvents(): MutableList<MavenServerConsoleEvent>? {
-        return null
-      }
-
-      override fun cancel() {
-      }
-
-    }
-  }
-
   override fun evaluateEffectivePom(file: File,
                                     activeProfiles: List<String>,
                                     inactiveProfiles: List<String>,
@@ -51,7 +31,9 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     return MavenArtifactResolveResult(emptyList(), null)
   }
 
-  override fun resolvePlugins(pluginResolutionRequests: Collection<PluginResolutionRequest>, token: MavenToken?): List<PluginResolutionResponse> {
+  override fun resolvePlugins(longRunningTaskId: String,
+                              pluginResolutionRequests: Collection<PluginResolutionRequest>,
+                              token: MavenToken?): List<PluginResolutionResponse> {
     return emptyList()
   }
 
@@ -60,9 +42,6 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
                            goal: String,
                            token: MavenToken?): List<MavenGoalExecutionResult> {
     return emptyList()
-  }
-
-  override fun reset(token: MavenToken?) {
   }
 
   override fun release(token: MavenToken?) {
@@ -91,16 +70,16 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     return mutableMapOf()
   }
 
-  override fun getLongRunningTaskStatus(longRunningTaskId: String, token: MavenToken?): LongRunningTaskStatus = LongRunningTaskStatus(0, 0)
+  override fun getLongRunningTaskStatus(longRunningTaskId: String, token: MavenToken?): LongRunningTaskStatus = LongRunningTaskStatus.EMPTY
 
   override fun cancelLongRunningTask(longRunningTaskId: String, token: MavenToken?) = true
+
+  override fun ping(token: MavenToken?) = true
 }
 
 class UntrustedDummyEmbedder(myProject: Project) : DummyEmbedder(myProject) {
   override fun resolveProjects(longRunningTaskId: String,
-                               files: Collection<File>,
-                               activeProfiles: Collection<String>,
-                               inactiveProfiles: Collection<String>,
+                               request: ProjectResolutionRequest,
                                token: MavenToken?): Collection<MavenServerExecutionResult> {
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
       object : BuildIssue {
@@ -124,9 +103,7 @@ class MisconfiguredPlexusDummyEmbedder(myProject: Project,
                                        private val myMavenVersion: String?,
                                        private val myUnresolvedId: MavenId?) : DummyEmbedder(myProject) {
   override fun resolveProjects(longRunningTaskId: String,
-                               files: Collection<File>,
-                               activeProfiles: Collection<String>,
-                               inactiveProfiles: Collection<String>,
+                               request: ProjectResolutionRequest,
                                token: MavenToken?): Collection<MavenServerExecutionResult> {
 
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(

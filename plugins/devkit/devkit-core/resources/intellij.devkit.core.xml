@@ -5,6 +5,8 @@
   </dependencies>
   <resource-bundle>messages.DevKitBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
+    <projectTypesProvider implementation="org.jetbrains.idea.devkit.DevKitProjectTypeProvider"/>
+
     <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem"/>
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider"/>
     <highlightingPassFactory implementation="org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory"/>
@@ -78,51 +80,61 @@
                             language="XML"/>
 
     <localInspection language="XML" shortName="PluginXmlValidity" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"
                      key="inspection.plugin.xml.validity.display.name"/>
     <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDynamicPluginInspection"
                      key="inspection.plugin.xml.dynamic.plugin.display.name"/>
     <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlExtensionRegistrationInspection"
                      key="inspection.plugin.xml.extension.registration.display.name"/>
 
     <localInspection language="JVM" shortName="ComponentNotRegistered"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path"
                      key="inspections.component.not.registered.name" groupKey="inspections.group.code" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection"/>
     <localInspection language="JVM" shortName="StatisticsCollectorNotRegistered"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path"
                      key="inspections.statistics.collector.not.registered.name" groupKey="inspections.group.code" enabledByDefault="false"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.internal.StatisticsCollectorNotRegisteredInspection"
                      isInternal="true"/>
     <localInspection language="UAST" shortName="InspectionDescriptionNotFoundInspection"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection"
                      key="inspection.inspection.description.not.found.inspection.display.name"/>
     <localInspection language="UAST" shortName="InspectionUsingGrayColors"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UseGrayInspection"
                      key="inspection.inspection.using.gray.colors.display.name"/>
     <localInspection language="UAST" shortName="UnspecifiedActionsPlace"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UnspecifiedActionsPlaceInspection"
                      key="inspection.inspection.unspecified.actions.place.display.name"/>
     <localInspection language="UAST" shortName="IntentionDescriptionNotFoundInspection"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection"
                      key="inspection.intention.description.not.found.inspection.display.name"/>
     <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
                      key="inspections.component.postfix.template.not.found.description.name"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"
                      enabledByDefault="true"
@@ -130,205 +142,251 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection"/>
     <!--suppress PluginXmlCapitalization -->
     <localInspection language="UAST" shortName="ComponentRegistrationProblems"
+                     projectType="INTELLIJ_PLUGIN"
                      key="inspections.registration.problems.name"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection"/>
 
     <localInspection language="UAST" shortName="UndesirableClassUsage"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UndesirableClassUsageInspection"
                      key="inspection.undesirable.class.usage.display.name"/>
     <localInspection language="UAST" shortName="FileEqualsUsage"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.FileEqualsUsageInspection"
                      key="inspection.file.equals.usage.display.name"/>
     <localInspection language="UAST" shortName="MissingAccessibleContext"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.MissingAccessibleContextInspection"
                      key="inspection.missing.accessible.context.display.name"/>
     <localInspection language="UAST" shortName="UnsafeVfsRecursion"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeVfsRecursionInspection"
                      key="inspection.unsafe.vfs.recursion.display.name"/>
     <localInspection language="UAST" shortName="UseJBColor"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseJBColorInspection"
                      key="inspection.use.JB.color.display.name"/>
     <localInspection language="UAST" shortName="UseDPIAwareInsets"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsInspection"
                      key="inspection.use.DPI.aware.insets.display.name"/>
     <localInspection language="UAST" shortName="UseDPIAwareBorders"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareEmptyBorderInspection"
                      key="inspection.use.DPI.aware.borders.display.name"/>
     <localInspection language="UAST" shortName="UseCouple"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WARNING" cleanupTool="true"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseCoupleInspection"
                      key="inspection.use.couple.display.name"/>
     <!--suppress PluginXmlCapitalization -->
     <localInspection language="UAST" shortName="UseVirtualFileEquals"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseVirtualFileEqualsInspection"
                      key="inspection.use.virtual.file.equals.display.name"/>
     <localInspection language="UAST" shortName="UsePluginIdEquals"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePluginIdEqualsInspection"
                      key="inspection.use.plugin.id.equals.display.name"/>
     <localInspection language="UAST" shortName="UnsafeReturnStatementVisitor"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection"
                      key="inspection.unsafe.return.statement.visitor.display.name"/>
     <localInspection language="UAST" shortName="StatefulEp"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"
                      key="inspection.stateful.ep.display.name"/>
     <localInspection language="UAST" shortName="UElementAsPsi"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UElementAsPsiInspection"
                      key="inspection.u.element.as.psi.display.name"/>
     <localInspection language="UAST" shortName="UsePrimitiveTypes"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesEqualsInspection"
                      key="inspection.use.primitive.types.equals.display.name"/>
     <!--suppress PluginXmlCapitalization -->
     <localInspection language="" shortName="HighlightVisitorInternal"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" isInternal="true"
                      level="ERROR" implementationClass="org.jetbrains.idea.devkit.inspections.internal.HighlightVisitorInternalInspection"
                      key="inspection.highlight.visitor.internal.display.name"/>
     <localInspection language="UAST" shortName="QuickFixGetFamilyNameViolation"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.QuickFixGetFamilyNameViolationInspection"
                      key="inspection.quick.fix.get.family.name.violation.display.name"/>
     <localInspection language="UAST" shortName="ActionIsNotPreviewFriendly"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ActionIsNotPreviewFriendlyInspection"
                      key="inspection.action.is.not.preview.friendly.display.name"/>
     <localInspection language="JAVA" shortName="PsiElementConcatenation"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PsiElementConcatenationInspection"
                      key="inspection.psi.element.concatenation.display.name"/>
     <localInspection language="UAST" shortName="MigrateToOptControl"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.MigrateToOptControlInspection"
                      key="inspection.migrate.to.opt.control.display.name"/>
     <localInspection language="JVM" shortName="LightServiceMustBeFinal"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="ERROR"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalInspection"
                      key="inspection.light.service.must.be.final.display.name"/>
     <localInspection language="JVM" shortName="MismatchedLightServiceLevelAndCtor"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.MismatchedLightServiceLevelAndCtorInspection"
                      key="inspection.mismatched.light.service.level.and.ctor.display.name"/>
     <localInspection language="UAST" shortName="RetrievingService"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RetrievingServiceInspection"
                      key="inspection.retrieving.service.display.name"/>
-    <localInspection language="JVM" shortName="ExtensionClassShouldBeFinalAndPackagePrivate"
+    <localInspection language="JVM" shortName="ExtensionClassShouldBeFinalAndNonPublic"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalAndPackagePrivateInspection"
-                     key="inspection.extension.class.should.be.final.and.package.private.display.name"/>
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalAndNonPublicInspection"
+                     key="inspection.extension.class.should.be.final.and.non.public.display.name"/>
     <localInspection language="XML" applyToDialects="false" shortName="LightServiceMigrationXML"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMigrationXMLInspection"
                      key="inspection.light.service.migration.display.name"/>
     <localInspection language="JVM" shortName="LightServiceMigrationCode"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMigrationCodeInspection"
                      key="inspection.light.service.migration.display.name"/>
+    <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ActionPresentationInitializedInCtorInspection"
+                     key="inspection.an.action.initializes.template.presentation.in.ctor.display.name"/>
     <localInspection language="UAST" shortName="NonDefaultConstructor"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.NonDefaultConstructorInspection"
                      key="inspection.non.default.constructor.display.name"/>
     <localInspection language="UAST" shortName="PresentationAnnotation"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PresentationAnnotationInspection"
                      key="inspection.presentation.annotation.display.name"/>
     <localInspection language="UAST" shortName="MissingRecentApi"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection"
                      key="inspection.missing.recent.api.display.name"/>
     <localInspection language="UAST" shortName="SerializableCtor"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.SerializableCtorInspection"
                      key="inspection.serializable.ctor.display.name"/>
     <localInspection language="UAST" shortName="IncorrectParentDisposable"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IncorrectParentDisposableInspection"
                      key="inspection.incorrect.parent.disposable.display.name"/>
     <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
                      key="inspections.leakable.map.key.name"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.LeakableMapKeyInspection"/>
     <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
                      key="inspections.unresolved.plugin.config.reference"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UnresolvedPluginConfigReferenceInspection"/>
     <localInspection language="JVM" shortName="MissingActionUpdateThread"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path"
                      key="inspections.action.update.thread.display.name" groupKey="inspections.group.code" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.MissingActionUpdateThread"/>
 
     <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="ExtensionRegisteredAsServiceOrComponent"
+                     projectType="INTELLIJ_PLUGIN"
                      key="inspection.extension.registered.as.service.or.component.display.name"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionRegisteredAsServiceOrComponentInspection"/>
 
     <localInspection language="UAST" key="inspection.cancellation.check.in.loops.display.name" shortName="CancellationCheckInLoops"
+                     projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.CancellationCheckInLoopsInspection"/>
 
     <localInspection language="UAST" shortName="ApplicationServiceAsStaticFinalField" groupPathKey="inspections.group.path"
+                     projectType="INTELLIJ_PLUGIN"
                      key="inspections.application.service.as.static.final.field.display.name" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldInspection"/>
 
     <localInspection language="UAST" enabledByDefault="false" level="ERROR"
+                     projectType="INTELLIJ_PLUGIN"
                      key="inspection.threading.concurrency.display.name"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ThreadingConcurrencyInspection"/>
 
     <localInspection language="UAST" enabledByDefault="false" level="WARNING"
+                     projectType="INTELLIJ_PLUGIN"
                      key="inspection.token.set.in.parser.definition.display.name"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      implementationClass="org.jetbrains.idea.devkit.inspections.TokenSetInParserDefinitionInspection"/>
 
     <localInspection language="UAST" enabledByDefault="false" level="WEAK WARNING"
+                     projectType="INTELLIJ_PLUGIN"
                      key="inspections.calling.method.should.be.rbc.annotated"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      shortName="CallingMethodShouldBeRequiresBlockingContext"
@@ -457,10 +515,20 @@
   <extensions defaultExtensionNs="DevKit.lang">
     <goodCodeRedVisitor language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.internal.JavaGoodCodeRedVisitor"/>
     <cancellationCheckProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.JavaCancellationCheckProvider"/>
+    <cancellationCheckInLoopsFixProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaCancellationCheckInLoopsFixProvider"/>
     <visitorProviderForRBCInspection language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProviderForJava"/>
-    <extensionClassModifiersCheckerProvider language="JAVA"
-      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalAndPackagePrivateInspection$ExtensionClassModifiersCheckerProviderForJava"/>
+    <extensionClassShouldNotBePublicProvider language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldNotBePublicProviderForJava"/>
+    <extensionClassShouldBeFinalErrorMessageProvider language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalErrorMessageProvider"/>
+    <serviceLevelExtractor language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJava"/>
+    <lightServiceMustBeFinalErrorMessageProvider language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalErrorMessageProvider"/>
+    <appServiceAsStaticFinalFieldQuickFixProvider
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAppServiceAsStaticFinalFieldFixProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -474,15 +542,40 @@
                     dynamic="true">
     <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.CancellationCheckProvider"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.cancellationCheckInLoopsFixProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.quickfix.CancellationCheckInLoopsFixProvider"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.visitorProviderForRBCInspection"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements=" org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProvider"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="DevKit.lang.extensionClassModifiersCheckerProvider"
+    <extensionPoint qualifiedName="DevKit.lang.extensionClassShouldNotBePublicProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
-      <with attribute="implementationClass" implements=" org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalAndPackagePrivateInspection$ExtensionClassModifiersCheckerProvider"/>
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldNotBePublicProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.extensionClassShouldBeFinalErrorMessageProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.ErrorMessageProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.serviceLevelExtractor"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractor"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.lightServiceMustBeFinalErrorMessageProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.ErrorMessageProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.appServiceAsStaticFinalFieldQuickFixProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldFixProvider"/>
     </extensionPoint>
   </extensionPoints>
 

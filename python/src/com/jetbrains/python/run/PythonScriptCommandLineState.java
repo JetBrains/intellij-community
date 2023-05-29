@@ -28,6 +28,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -210,7 +211,11 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
    * @see com.intellij.terminal.ProcessHandlerTtyConnector
    */
   private boolean emulateTerminal() {
-    return myConfig.emulateTerminal() && !PythonSdkUtil.isRemote(getSdk());
+    if (PythonSdkUtil.isRemote(getSdk()) && !Registry.is("python.use.targets.api")) {
+      // do not allow to emulate terminal for legacy non-target remote interpreters logic
+      return false;
+    }
+    return myConfig.emulateTerminal();
   }
 
   @Override

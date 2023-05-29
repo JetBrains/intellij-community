@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.grazie.async
 
 import ai.grazie.spell.lists.WordList
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.spellchecker.dictionary.Loader
@@ -50,6 +51,7 @@ internal class WordListLoader(private val project: Project, private val coroutin
         consumer(loader.name, SimpleWordList(readAll(loader)))
 
         while (listsToLoad.isNotEmpty()) {
+          ProgressManager.checkCanceled()
           val (curLoader, currentConsumer) = listsToLoad.removeAt(0)
           LOG.debug("${curLoader.name} loaded!")
           currentConsumer(curLoader.name, SimpleWordList(readAll(curLoader)))
@@ -68,6 +70,7 @@ internal class WordListLoader(private val project: Project, private val coroutin
   private fun readAll(loader: Loader): Set<String> {
     val set = CollectionFactory.createSmallMemoryFootprintSet<String>()
     loader.load {
+      ProgressManager.checkCanceled()
       set.add(it)
     }
     return set

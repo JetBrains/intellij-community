@@ -17,12 +17,12 @@ package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -52,12 +52,12 @@ public class PublicFieldInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new ArrayList<>();
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    final List<LocalQuickFix> fixes = new ArrayList<>();
     final PsiField field = (PsiField)infos[0];
     fixes.add(new EncapsulateVariableFix(field.getName()));
     AddToIgnoreIfAnnotatedByListQuickFix.build(field, ignorableAnnotations, fixes);
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override

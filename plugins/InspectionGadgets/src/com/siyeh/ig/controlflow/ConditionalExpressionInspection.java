@@ -16,8 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -68,7 +67,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final boolean quickFix = ((Boolean)infos[0]).booleanValue();
     if (!quickFix) {
       return null;
@@ -76,7 +75,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
     return new ReplaceWithIfFix();
   }
 
-  private static class ReplaceWithIfFix extends InspectionGadgetsFix {
+  private static class ReplaceWithIfFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -85,8 +84,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiConditionalExpression expression)) {
         return;
       }

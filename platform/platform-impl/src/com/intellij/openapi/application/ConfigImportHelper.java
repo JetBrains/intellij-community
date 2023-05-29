@@ -13,6 +13,8 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.idea.StartupErrorReporter;
+import com.intellij.openapi.application.migrations.BigDataTools232;
+import com.intellij.openapi.application.migrations.PackageSearch232;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -564,7 +566,7 @@ public final class ConfigImportHelper {
     return StringUtilRt.startsWithIgnoreCase(name, strictPrefix) && !name.equalsIgnoreCase(strictPrefix);
   }
 
-  private static String getNameWithVersion(Path configDir) {
+  public static String getNameWithVersion(Path configDir) {
     String name = configDir.getFileName().toString();
     if (CONFIG.equals(name)) {
       name = Strings.trimStart(configDir.getParent().getFileName().toString(), ".");
@@ -882,6 +884,11 @@ public final class ConfigImportHelper {
                                                      pluginsToDownload);
     }
 
+    migrateGlobalPlugins(newConfigDir,
+                         oldConfigDir,
+                         pluginsToMigrate,
+                         pluginsToDownload);
+
     pluginsToMigrate.removeIf(hasPendingUpdate);
     if (!pluginsToMigrate.isEmpty()) {
       migratePlugins(newPluginsDir, pluginsToMigrate, log);
@@ -894,6 +901,20 @@ public final class ConfigImportHelper {
       // migrating plugins for which we weren't able to download updates
       migratePlugins(newPluginsDir, pluginsToDownload, log);
     }
+  }
+
+  private static void migrateGlobalPlugins(@NotNull Path newConfigDir,
+                                           @NotNull Path oldConfigDir,
+                                           @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
+                                           @NotNull List<IdeaPluginDescriptor> pluginsToDownload) {
+    String currentProductVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
+
+    PluginMigrationOptions options = new PluginMigrationOptions(currentProductVersion,
+                                                                newConfigDir, oldConfigDir,
+                                                                pluginsToMigrate, pluginsToDownload);
+
+    new BigDataTools232().migratePlugins(options);
+    new PackageSearch232().migratePlugins(options);
   }
 
   private static void partitionNonBundled(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
@@ -1031,7 +1052,7 @@ public final class ConfigImportHelper {
   private static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor,
                                         @Nullable Map<PluginId, Set<String>> brokenPluginVersions) {
     if (brokenPluginVersions == null) {
-      return PluginManagerCore.isBrokenPlugin(descriptor);
+      return BrokenPluginFileKt.isBrokenPlugin(descriptor);
     }
     Set<String> versions = brokenPluginVersions.get(descriptor.getPluginId());
     return versions != null && versions.contains(descriptor.getVersion());

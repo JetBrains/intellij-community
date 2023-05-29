@@ -43,7 +43,7 @@ object Futures {
    */
   @JvmStatic
   @JvmOverloads
-  fun inEdt(modalityState: ModalityState? = null) = Executor { runnable -> runInEdt(modalityState) { runnable.run() } }
+  fun inEdt(modalityState: ModalityState? = null): Executor = Executor { runnable -> runInEdt(modalityState) { runnable.run() } }
 
   /**
    * Is used to specify that the action should be executed on the EDT inside write action.
@@ -57,7 +57,7 @@ object Futures {
    */
   @JvmStatic
   @JvmOverloads
-  fun inWriteAction(modalityState: ModalityState? = null) = Executor { runnable ->
+  fun inWriteAction(modalityState: ModalityState? = null): Executor = Executor { runnable ->
     runInEdt(modalityState) {
       ApplicationManager.getApplication().runWriteAction(runnable)
     }
@@ -182,6 +182,24 @@ object Futures {
     action: Function<in ProgressIndicator, out CompletableFuture<T>>
   ): CompletableFuture<T> {
     val future = CompletableFuture<T>()
+    runAsyncProgressInBackground(future, project, title, canBeCancelled, performInBackgroundOption, onCancel, action)
+    return future
+  }
+
+  /**
+   * Runs given asynchronous [action] and waits for its result inside the [Task.Backgroundable]
+   */
+  @JvmStatic
+  @JvmOverloads
+  fun <T> runAsyncProgressInBackground(
+    future: CompletableFuture<T>,
+    project: Project,
+    title: @NlsContexts.ProgressTitle String,
+    canBeCancelled: Boolean = true,
+    performInBackgroundOption: PerformInBackgroundOption? = null,
+    onCancel: Runnable? = null,
+    action: Function<in ProgressIndicator, out CompletableFuture<T>>
+  ) {
     ApplicationManager.getApplication().executeOnPooledThread {
       ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, canBeCancelled, performInBackgroundOption) {
         var value: Result<T>? = null
@@ -202,7 +220,6 @@ object Futures {
         override fun onThrowable(error: Throwable) = future.waitForProgressBarCloseAndCompleteExceptionally(error)
       })
     }
-    return future
   }
 
   /**

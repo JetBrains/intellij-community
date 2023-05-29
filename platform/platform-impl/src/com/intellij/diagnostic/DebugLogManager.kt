@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.util.PropertiesComponent
@@ -8,7 +8,8 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 /**
- * Allows to apply & persist custom log debug categories which can be turned on by user via the [com.intellij.ide.actions.DebugLogConfigureAction].
+ * Allows applying & persisting custom log debug categories
+ * which can be turned on by user via the [com.intellij.ide.actions.DebugLogConfigureAction].
  * Applies these custom categories on startup.
  */
 class DebugLogManager {
@@ -18,7 +19,7 @@ class DebugLogManager {
 
   companion object {
     @JvmStatic
-    fun getInstance() = service<DebugLogManager>()
+    fun getInstance(): DebugLogManager = service()
   }
 
   // java.util.logging keeps only weak references to loggers, so we need to store strong references to loggers we've customized to ensure
@@ -28,7 +29,7 @@ class DebugLogManager {
   init {
     val categories = mutableListOf<Category>()
     categories.addAll(getSavedCategories())
-    // add categories from system properties (e.g. for tests on CI server)
+    // add categories from system properties (e.g., for tests on CI server)
     categories.addAll(fromString(System.getProperty(LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.DEBUG))
     categories.addAll(fromString(System.getProperty(LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.TRACE))
     categories.addAll(fromString(System.getProperty(LOG_ALL_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.ALL))
@@ -65,13 +66,13 @@ class DebugLogManager {
       }
       .distinct()
       .toList()
-    filtered.forEach {
-      val logger = Logger.getLogger(it)
+    for (name in filtered) {
+      val logger = Logger.getLogger(name)
       logger.level = loggerLevel
       customizedLoggers.add(logger)
     }
     if (filtered.isNotEmpty()) {
-      LOG.info("Set ${level.name} for the following categories: ${filtered.joinToString()}")
+      logger<DebugLogManager>().info("Set ${level.name} for the following categories: ${filtered.joinToString()}")
     }
   }
 
@@ -107,5 +108,3 @@ private const val LOG_ALL_CATEGORIES = "log.all.categories"
 private const val LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_DEBUG_CATEGORIES"
 private const val LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_TRACE_CATEGORIES"
 private const val LOG_ALL_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_ALL_CATEGORIES"
-
-private val LOG = logger<DebugLogManager>()

@@ -33,14 +33,14 @@ variant_size_differences
 use std::env;
 use std::path::{Path, PathBuf};
 
-use anyhow::{bail, Context, Result};
-use log::{debug, error, LevelFilter, warn};
+use anyhow::{anyhow, bail, Context, Result};
+use log::{debug, LevelFilter, warn};
 use serde::{Deserialize, Serialize};
 
 #[cfg(target_os = "windows")]
 use {
     windows::core::{GUID, PWSTR},
-    windows::Win32::Foundation::HANDLE,
+    windows::Win32::Foundation,
     windows::Win32::UI::Shell
 };
 
@@ -80,25 +80,13 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     mini_logger::init(level).expect("Cannot initialize the logger");
     debug!("Executable: {exe_path:?}");
     debug!("Mode: {}", if remote_dev { "remote-dev" } else { "standard" });
-
-    // lets the panic on JVM thread crash the launcher (or not?)
-    let orig_hook = std::panic::take_hook();
-    std::panic::set_hook(Box::new(move |panic_info| {
-        error!("{panic_info:?}");
-        // TODO: crash on JVM thread
-        // for l in &loggers {
-        //     l.flush()
-        // }
-
-        orig_hook(panic_info);
-        std::process::exit(1);
-    }));
+    debug!("Current directory: {:?}", env::current_dir());
 
     debug!("** Preparing launch configuration");
-    let configuration = get_configuration(remote_dev, &exe_path).context("Cannot detect a launch configuration")?;
+    let configuration = get_configuration(remote_dev, &exe_path.strip_ns_prefix()?).context("Cannot detect a launch configuration")?;
 
     debug!("** Locating runtime");
-    let jre_home = configuration.prepare_for_launch().context("Cannot find a runtime")?;
+    let (jre_home, main_class) = configuration.prepare_for_launch().context("Cannot find a runtime")?;
     debug!("Resolved runtime: {jre_home:?}");
 
     debug!("** Collecting JVM options");
@@ -107,11 +95,9 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
 
     debug!("** Launching JVM");
     let args = configuration.get_args();
-    let result = java::run_jvm_and_event_loop(jre_home, vm_options, args.to_vec());
+    java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec()).context("Cannot start the runtime")?;
 
-    log::logger().flush();
-
-    result
+    Ok(())
 }
 
 #[macro_export]
@@ -131,10 +117,10 @@ pub struct ProductInfo {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ProductInfoLaunchField {
-    pub os: String,
     pub vmOptionsFilePath: String,
     pub bootClassPathJarNames: Vec<String>,
-    pub additionalJvmArguments: Vec<String>
+    pub additionalJvmArguments: Vec<String>,
+    pub mainClass: String
 }
 
 pub trait LaunchConfiguration {
@@ -142,7 +128,7 @@ pub trait LaunchConfiguration {
     fn get_vm_options(&self) -> Result<Vec<String>>;
     fn get_properties_file(&self) -> Result<PathBuf>;
     fn get_class_path(&self) -> Result<Vec<String>>;
-    fn prepare_for_launch(&self) -> Result<PathBuf>;
+    fn prepare_for_launch(&self) -> Result<(PathBuf, &str)>;
 }
 
 fn get_configuration(is_remote_dev: bool, exe_path: &Path) -> Result<Box<dyn LaunchConfiguration>> {
@@ -164,8 +150,7 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
     match configuration.get_properties_file() {
         Ok(path) => {
             debug!("Custom properties file: {:?}", path);
-            let path_string = path.to_str().expect(&format!("Inconvertible path: {:?}", path));
-            vm_options.push(jvm_property!("idea.properties.file", path_string));
+            vm_options.push(jvm_property!("idea.properties.file", path.to_string_checked()?));
         }
         Err(e) => { debug!("Failed: {}", e.to_string()); }
     }
@@ -195,7 +180,7 @@ pub fn get_logs_home() -> Result<Option<PathBuf>> {
 #[cfg(target_os = "windows")]
 fn get_known_folder_path(rfid: &GUID, rfid_debug_name: &str) -> Result<PathBuf> {
     debug!("Calling SHGetKnownFolderPath({})", rfid_debug_name);
-    let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, HANDLE(0)) }?;
+    let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, Foundation::HANDLE(0)) }?;
     let result_str = unsafe { result.to_string() }?;
     debug!("  result: {}", result_str);
     Ok(PathBuf::from(result_str))
@@ -244,6 +229,31 @@ fn get_xdg_dir(env_var_name: &str, fallback: &str) -> Result<PathBuf> {
     Ok(get_user_home()?.join(fallback))
 }
 
+#[cfg(target_family = "windows")]
+fn get_user_home() -> Result<PathBuf> {
+    env::var("USERPROFILE")
+        .or_else(|_| win_user_profile_dir())
+        .map(|s| PathBuf::from(s))
+        .context("Cannot detect a user home directory")
+}
+
+#[cfg(target_family = "windows")]
+fn win_user_profile_dir() -> Result<String> {
+    let token = Foundation::HANDLE(-4);  // as defined in `GetCurrentProcessToken()`; Windows 8+/Server 2012+
+    let mut buf: [u16; Foundation::MAX_PATH as usize] = unsafe { std::mem::zeroed() };
+    let mut size = buf.len() as u32;
+    debug!("Calling GetUserProfileDirectoryW({:?})", token);
+    let result: Foundation::BOOL = unsafe {
+        Shell::GetUserProfileDirectoryW(token, PWSTR::from_raw(buf.as_mut_ptr()), std::ptr::addr_of_mut!(size))
+    };
+    debug!("  result: {:?}, size: {}", result, size);
+    if result == Foundation::TRUE {
+        Ok(String::from_utf16(&buf[0..(size - 1) as usize])?)
+    } else {
+        bail!("GetUserProfileDirectoryW(): {:?}", unsafe { Foundation::GetLastError() })
+    }
+}
+
 #[cfg(target_family = "unix")]
 #[allow(deprecated)]
 fn get_user_home() -> Result<PathBuf> {
@@ -274,41 +284,50 @@ pub fn get_path_from_user_config(config_raw: &str, expecting_dir: Option<bool>) 
     Ok(path)
 }
 
-#[cfg(target_family = "unix")]
-pub fn is_executable(path: &Path) -> Result<bool> {
-    let metadata = path.metadata()?;
-    Ok(metadata.is_file() && (metadata.permissions().mode() & 0o111 != 0))
-}
-
-#[cfg(target_os = "windows")]
-pub fn is_executable(_path: &Path) -> Result<bool> {
-    Ok(true)
-}
-
-#[cfg(target_os = "windows")]
-pub fn canonical_non_unc(path: &Path) -> Result<String> {
-    let canonical = path.canonicalize()?;
-    let os_str = canonical.as_os_str().to_string_lossy().to_string();
-    let stripped_unc = os_str.strip_prefix("\\\\?\\").unwrap().to_string();
-    Ok(stripped_unc)
-}
-
-#[cfg(target_family = "unix")]
-pub fn canonical_non_unc(path: &Path) -> Result<String> {
-    let canonical = path.canonicalize()?;
-    let os_str = canonical.as_os_str().to_string_lossy().to_string();
-    Ok(os_str)
-}
-
 pub trait PathExt {
     fn parent_or_err(&self) -> Result<PathBuf>;
+    fn to_string_checked(&self) -> Result<String>;
+    fn is_executable(&self) -> Result<bool>;
+    fn strip_ns_prefix(&self) -> Result<PathBuf>;
 }
 
 impl PathExt for Path {
     fn parent_or_err(&self) -> Result<PathBuf> {
-        match self.parent() {
-            Some(path) => Ok(path.to_path_buf()),
-            None => bail!("No parent dir for '{self:?}'")
-        }
+        self.parent()
+            .map(|p| p.to_path_buf())
+            .ok_or_else(|| anyhow!("No parent dir for '{self:?}'"))
+    }
+
+    fn to_string_checked(&self) -> Result<String> {
+        self.to_str()
+            .map(|s| s.to_string())
+            .ok_or_else(|| anyhow!("Inconvertible path: {:?}", self))
+    }
+
+    #[cfg(target_os = "windows")]
+    fn is_executable(&self) -> Result<bool> {
+        Ok(true)
+    }
+
+    #[cfg(target_family = "unix")]
+    fn is_executable(&self) -> Result<bool> {
+        let metadata = self.metadata()?;
+        Ok(metadata.is_file() && (metadata.permissions().mode() & 0o111 != 0))
+    }
+
+    #[cfg(target_os = "windows")]
+    fn strip_ns_prefix(&self) -> Result<PathBuf> {
+        let path_str = self.to_string_checked()?;
+        Ok(if path_str.starts_with("\\\\?\\") {
+            // Windows namespace prefixes are misunderstood both by JVM and classloaders
+            PathBuf::from(&path_str[4..])
+        } else {
+            self.to_path_buf()
+        })
+    }
+
+    #[cfg(target_family = "unix")]
+    fn strip_ns_prefix(&self) -> Result<PathBuf> {
+        Ok(self.to_path_buf())
     }
 }

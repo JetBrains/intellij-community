@@ -2,6 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.concurrency.currentThreadContext
+import kotlinx.coroutines.currentCoroutineContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -10,6 +11,10 @@ import kotlin.coroutines.CoroutineContext
  * The code within [ModalityState.any] context modality state must only perform pure UI operations,
  * it must not access any PSI, VFS, project model, or indexes. It also must not show any modal dialogs.
  */
+suspend fun isModalAwareContext(): Boolean {
+  return currentCoroutineContext().contextModality() != ModalityState.any()
+}
+
 @Suppress("CONFLICTING_OVERLOADS")
 fun ModalityState.asContextElement(): CoroutineContext {
   return ModalityStateElement(this)

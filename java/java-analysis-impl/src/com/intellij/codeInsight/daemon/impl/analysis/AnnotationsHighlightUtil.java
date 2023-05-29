@@ -472,7 +472,7 @@ public final class AnnotationsHighlightUtil {
     String target = JavaAnalysisBundle.message("annotation.target." + targets[0]);
     String message = JavaErrorBundle.message("annotation.not.applicable", nameRef.getText(), target);
     HighlightInfo.Builder info = createAnnotationError(annotation, message);
-    if (Objects.requireNonNull(annotation.resolveAnnotationType()).isWritable()) {
+    if (BaseIntentionAction.canModify(Objects.requireNonNull(annotation.resolveAnnotationType()))) {
       for (PsiAnnotation.TargetType targetType : targets) {
         IntentionAction action = QUICK_FIX_FACTORY.createAddAnnotationTargetFix(annotation, targetType);
         info.registerFix(action, null, null, null, null);

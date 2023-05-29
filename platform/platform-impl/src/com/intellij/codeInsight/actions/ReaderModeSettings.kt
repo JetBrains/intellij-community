@@ -94,14 +94,6 @@ interface ReaderModeSettings : Disposable {
       }
     }
 
-    @Internal
-    @Deprecated("Method is not used anymore", ReplaceWith("matchMode(project, file, editor)"))
-    @ScheduledForRemoval
-    @JvmStatic
-    fun matchModeForStats(project: Project, file: VirtualFile, editor: Editor? = null): Boolean {
-      return getInstance(project).enabled && matchMode(project, file, editor)
-    }
-
     @RequiresReadLock
     fun matchMode(project: Project?, file: VirtualFile?, editor: Editor? = null): Boolean {
       if (project == null || file == null) return false

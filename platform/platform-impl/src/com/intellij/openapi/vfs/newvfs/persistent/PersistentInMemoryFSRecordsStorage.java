@@ -333,6 +333,8 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
         getNameId(recordId),
         getFlags(recordId),
         getParent(recordId),
+        getAttributeRecordId(recordId),
+        getContentRecordId(recordId),
         /* corrupted = */ false
       );
     }

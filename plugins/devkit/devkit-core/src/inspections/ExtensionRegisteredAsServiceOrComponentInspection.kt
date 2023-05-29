@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.components.Service
 import com.intellij.psi.PsiClass
@@ -11,7 +12,6 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.uast.UClass
 
@@ -21,7 +21,7 @@ class ExtensionRegisteredAsServiceOrComponentInspection : DevKitUastInspectionBa
 
   override fun checkClass(uClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor?>? {
     val psiClass = uClass.javaPsi
-    if (!PsiUtil.isExtensionPointImplementationCandidate(psiClass)) {
+    if (!ExtensionUtil.isExtensionPointImplementationCandidate(psiClass)) {
       return ProblemDescriptor.EMPTY_ARRAY
     }
 
@@ -85,9 +85,8 @@ class ExtensionRegisteredAsServiceOrComponentInspection : DevKitUastInspectionBa
                               @InspectionMessage message: String,
                               manager: InspectionManager,
                               isOnTheFly: Boolean): Array<ProblemDescriptor?> {
-    val classPsiAnchor = uClass.uastAnchor?.sourcePsi!!
     val holder = createProblemsHolder(uClass, manager, isOnTheFly)
-    holder.registerProblem(classPsiAnchor, message)
+    holder.registerUProblem(uClass, message)
     return holder.resultsArray
   }
 }

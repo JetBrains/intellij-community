@@ -299,7 +299,7 @@ abstract class PropertyNameInspectionBase protected constructor(
         return when {
             isLocal -> PropertyKind.LOCAL
 
-            hasModifier(KtTokens.CONST_KEYWORD) -> PropertyKind.CONST
+            hasModifier(KtTokens.CONST_KEYWORD) && !isTopLevel -> PropertyKind.CONST
 
             private && containingClassOrObject is KtObjectDeclaration -> PropertyKind.OBJECT_PRIVATE
 

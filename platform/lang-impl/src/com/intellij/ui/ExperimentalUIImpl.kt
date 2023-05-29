@@ -9,38 +9,23 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.PlatformUtils
 
 /**
  * @author Konstantin Bulenkov
  */
-class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
+private class ExperimentalUIImpl : ExperimentalUI() {
+  @JvmField
   var newValue: Boolean = isNewUI()
-
-  init {
-    val app = ApplicationManager.getApplication()
-    app.messageBus.connect().subscribe(AppLifecycleListener.TOPIC, this)
-    if (ConfigImportHelper.isNewUser() && isNewUIEnabledByDefault() && !isNewUI()) {
-      app.invokeLater {
-        newValue = true
-        onExpUIEnabled(false)
-      }
-    }
-  }
-
-  private fun isNewUIEnabledByDefault() = PlatformUtils.isAqua() ||
-                                          PlatformUtils.isPyCharmCommunity() ||
-                                          PlatformUtils.isPyCharmPro() ||
-                                          PlatformUtils.isWebStorm()
 
   override fun getIconMappings(): Map<ClassLoader, Map<String, String>> = service<IconMapLoader>().loadIconMapping()
 
@@ -58,8 +43,12 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
     newValue = newUI
 
     if (newValue != isNewUI() && suggestRestart) {
-      val action = if (ApplicationManager.getApplication().isRestartCapable) IdeBundle.message("ide.restart.action")
-      else IdeBundle.message("ide.shutdown.action")
+      val action = if (ApplicationManager.getApplication().isRestartCapable) {
+        IdeBundle.message("ide.restart.action")
+      }
+      else {
+        IdeBundle.message("ide.shutdown.action")
+      }
       if (PlatformUtils.isJetBrainsClient()) {
         Registry.get("ide.experimental.ui").setValue(newValue)
       }
@@ -73,27 +62,8 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
 
 
         if (result == Messages.YES) {
-          ApplicationManagerEx.getApplicationEx().restart(true);
+          ApplicationManagerEx.getApplicationEx().restart(true)
         }
-      }
-    }
-  }
-
-  override fun appStarted() {
-    if (isNewUI()) {
-      val propertyComponent = PropertiesComponent.getInstance()
-      propertyComponent.setValue(NEW_UI_USED_PROPERTY, true)
-    }
-  }
-
-  override fun appClosing() {
-    if (newValue != isNewUI()) {
-      Registry.get("ide.experimental.ui").setValue(newValue)
-      if (newValue) {
-        onExpUIEnabled(false)
-      }
-      else {
-        onExpUIDisabled(false)
       }
     }
   }
@@ -106,52 +76,70 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
     newValue = true
     NewUIInfoService.getInstance().updateEnableNewUIDate()
 
-    setRegistryKeyIfNecessary("ide.experimental.ui", true)
-    setRegistryKeyIfNecessary("debugger.new.tool.window.layout", true)
+    val registryManager = RegistryManager.getInstance()
+    setRegistryKeyIfNecessary(key = "ide.experimental.ui", value = true, registryManager = registryManager)
+    setRegistryKeyIfNecessary(key = "debugger.new.tool.window.layout", value = true, registryManager = registryManager)
     UISettings.getInstance().hideToolStripes = false
-    val name = if (JBColor.isBright()) "Light" else "Dark"
-    val lafManager = LafManager.getInstance()
-    val laf = lafManager.installedLookAndFeels.firstOrNull { it.name == name }
-    if (laf != null) {
-      lafManager.currentLookAndFeel = laf
-      if (lafManager.autodetect) {
-        if (JBColor.isBright()) {
-          lafManager.setPreferredLightLaf(laf)
-        }
-        else {
-          lafManager.setPreferredDarkLaf(laf)
-        }
-      }
-    }
+    resetLafSettingsToDefault()
   }
 
   override fun onExpUIDisabled(suggestRestart: Boolean) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) return
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      return
+    }
 
     newValue = false
     NewUIInfoService.getInstance().updateDisableNewUIDate()
 
-    setRegistryKeyIfNecessary("ide.experimental.ui", false)
-    setRegistryKeyIfNecessary("debugger.new.tool.window.layout", false)
-    val lafManager = LafManager.getInstance() as LafManagerImpl
-    val currentLafName = lafManager.currentLookAndFeel?.name
-    if (currentLafName == "Dark" || currentLafName == "Light") {
-      val laf = if (JBColor.isBright()) lafManager.defaultLightLaf!! else lafManager.getDefaultDarkLaf()
-      lafManager.setCurrentLookAndFeel(laf)
-      if (lafManager.autodetect) {
-        if (JBColor.isBright()) {
-          lafManager.setPreferredLightLaf(laf)
-        } else {
-          lafManager.setPreferredDarkLaf(laf)
-        }
-      }
+    val registryManager = RegistryManager.getInstance()
+    setRegistryKeyIfNecessary(key = "ide.experimental.ui", value = false, registryManager = registryManager)
+    setRegistryKeyIfNecessary(key = "debugger.new.tool.window.layout", value = false, registryManager = registryManager)
+    resetLafSettingsToDefault()
+  }
+
+  private fun resetLafSettingsToDefault() {
+    val lafManager = LafManager.getInstance()
+    val defaultLightLaf = lafManager.defaultLightLaf
+    val defaultDarkLaf = lafManager.defaultDarkLaf
+    if (defaultLightLaf == null || defaultDarkLaf == null) {
+      return
+    }
+
+    val laf = if (JBColor.isBright()) defaultLightLaf else defaultDarkLaf
+    lafManager.currentLookAndFeel = laf
+    if (lafManager.autodetect) {
+      lafManager.setPreferredLightLaf(defaultLightLaf)
+      lafManager.setPreferredDarkLaf(defaultDarkLaf)
+    }
+  }
+}
+
+private fun setRegistryKeyIfNecessary(key: String, value: Boolean, registryManager: RegistryManager) {
+  val registryValue = registryManager.get(key)
+  if (registryValue.isBoolean != value) {
+    registryValue.setValue(value)
+  }
+}
+
+private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
+  override fun appStarted() {
+    if (ExperimentalUI.isNewUI()) {
+      PropertiesComponent.getInstance().setValue(ExperimentalUI.NEW_UI_USED_PROPERTY, true)
     }
   }
 
-  companion object {
-    private fun setRegistryKeyIfNecessary(key: String, value: Boolean) {
-      if (Registry.`is`(key) != value) {
-        Registry.get(key).setValue(value)
+  override fun appClosing() {
+    val experimentalUi = (ExperimentalUI.getInstance() as? ExperimentalUIImpl) ?: return
+    val newValue = experimentalUi.newValue
+    if (newValue != ExperimentalUI.isNewUI()) {
+      // if RegistryManager not yet created on appClosing, it means that something fatal is occurred, do not try to use it
+      val registryManager = ApplicationManager.getApplication().serviceIfCreated<RegistryManager>() ?: return
+      registryManager.get("ide.experimental.ui").setValue(newValue)
+      if (newValue) {
+        experimentalUi.onExpUIEnabled(suggestRestart = false)
+      }
+      else {
+        experimentalUi.onExpUIDisabled(suggestRestart = false)
       }
     }
   }

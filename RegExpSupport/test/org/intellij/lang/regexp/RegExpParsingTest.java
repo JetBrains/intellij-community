@@ -24,7 +24,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProject.registerService(SmartPointerManager.class, new MockSmartPointerManager());
+    project.registerService(SmartPointerManager.class, new MockSmartPointerManager());
   }
 
   @Override

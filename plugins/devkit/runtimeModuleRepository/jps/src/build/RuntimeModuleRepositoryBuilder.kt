@@ -165,7 +165,7 @@ internal class RuntimeModuleRepositoryBuilder
     collectDependencies(module, test, dependencies, processedDummyTestDependencies, runtimeModuleNameGenerator)
     val sourceRootTypes = if (test) JavaModuleSourceRootTypes.TESTS else JavaModuleSourceRootTypes.PRODUCTION
     val resourcePaths = if (module.sourceRoots.any { it.rootType in sourceRootTypes }) {
-      listOf("../${if (test) "test" else "production"}/${module.name}")
+      listOf("${if (test) "test" else "production"}/${module.name}")
     }
     else {
       emptyList()

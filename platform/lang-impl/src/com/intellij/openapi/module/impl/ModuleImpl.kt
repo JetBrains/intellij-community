@@ -40,7 +40,7 @@ private val LOG: Logger
   get() = logger<ModuleImpl>()
 
 open class ModuleImpl @ApiStatus.Internal constructor(name: String, project: Project) :
-  ComponentManagerImpl(parent = project as ComponentManagerImpl), ModuleEx, Queryable {
+  ComponentManagerImpl(parent = project as ComponentManagerImpl, coroutineScope = null), ModuleEx, Queryable {
   private val project: Project
   protected var imlFilePointer: VirtualFilePointer? = null
 
@@ -161,16 +161,6 @@ open class ModuleImpl @ApiStatus.Internal constructor(name: String, project: Pro
 
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.moduleContainerDescriptor
-  }
-
-  @Suppress("removal", "DEPRECATION")
-  override fun projectClosed() {
-    val components = collectInitializedComponents(com.intellij.openapi.module.ModuleComponent::class.java)
-    for (i in components.indices.reversed()) {
-      runCatching {
-        components.get(i).projectClosed()
-      }.getOrLogException(LOG)
-    }
   }
 
   override fun getProject(): Project = project

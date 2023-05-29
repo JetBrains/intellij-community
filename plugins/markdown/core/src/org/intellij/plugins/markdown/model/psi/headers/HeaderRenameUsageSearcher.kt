@@ -4,7 +4,6 @@ import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import com.intellij.psi.SmartPointerManager
 import com.intellij.refactoring.rename.api.*
 import com.intellij.util.Query
 import com.intellij.util.text.StringOperation
@@ -45,7 +44,7 @@ internal class HeaderRenameUsageSearcher: RenameUsageSearcher {
     override val range: TextRange
   ): PsiModifiableRenameUsage {
     override fun createPointer(): Pointer<out PsiModifiableRenameUsage> {
-      return HeaderAnchorPsiModifiableRenameUsagePointer(file, range)
+      return Pointer.fileRangePointer(file, range, ::HeaderAnchorModifiableRenameUsage)
     }
 
     override val declaration: Boolean = false
@@ -65,19 +64,6 @@ internal class HeaderRenameUsageSearcher: RenameUsageSearcher {
 
       override fun prepareFileUpdate(usage: ModifiableRenameUsage, newName: String): Collection<FileOperation> {
         return listOf(FileOperation.modifyFile(file, StringOperation.replace(range, newName)))
-      }
-    }
-
-    private class HeaderAnchorPsiModifiableRenameUsagePointer(
-      file: PsiFile,
-      range: TextRange
-    ): Pointer<HeaderAnchorModifiableRenameUsage> {
-      private val rangePointer = SmartPointerManager.getInstance(file.project).createSmartPsiFileRangePointer(file, range)
-
-      override fun dereference(): HeaderAnchorModifiableRenameUsage? {
-        val file = rangePointer.element ?: return null
-        val range = rangePointer.range?.let(TextRange::create) ?: return null
-        return HeaderAnchorModifiableRenameUsage(file, range)
       }
     }
   }

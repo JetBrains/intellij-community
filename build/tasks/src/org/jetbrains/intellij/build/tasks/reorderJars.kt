@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.tasks
 
-import com.intellij.diagnostic.telemetry.use
+import com.intellij.platform.diagnostic.telemetry.impl.use
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap

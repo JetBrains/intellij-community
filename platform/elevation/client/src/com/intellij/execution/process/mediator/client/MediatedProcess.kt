@@ -79,6 +79,7 @@ class MediatedProcess private constructor(
   private fun createOutputStream(@Suppress("SameParameterValue") fd: Int): OutputStream {
     val ackFlow = MutableStateFlow<Long?>(0L)
 
+    @Suppress("RemoveExplicitTypeArguments")
     val channel = handle.rpcScope.actor<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc { handleId ->
         try {
@@ -103,6 +104,7 @@ class MediatedProcess private constructor(
 
   @Suppress("EXPERIMENTAL_API_USAGE")
   private fun createInputStream(fd: Int): InputStream {
+    @Suppress("RemoveExplicitTypeArguments")
     val channel = handle.rpcScope.produce<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc { handleId ->
         try {

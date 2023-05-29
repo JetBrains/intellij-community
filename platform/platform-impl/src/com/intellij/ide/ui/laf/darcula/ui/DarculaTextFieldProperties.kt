@@ -13,7 +13,7 @@ object DarculaTextFieldProperties {
    * Allow forcing painting with rounded corners.
    */
   @JvmStatic
-  fun makeTextFiledRounded(textFiled: JTextComponent) {
+  fun makeTextFieldRounded(textFiled: JTextComponent) {
     ClientProperty.put(textFiled, FORCE_TEXT_FIELD_ROUNDING, true)
   }
 

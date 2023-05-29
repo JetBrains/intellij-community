@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -28,7 +28,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.intellij.diagnostic.telemetry.PlatformScopesKt.INDEXES;
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
 import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationAggregatesCollector.MAX_TRACKABLE_DURATION_MS;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -904,7 +904,7 @@ public final class IndexOperationFUS {
     private final BatchCallback batchCallbackHandle;
 
     private OTelIndexesMetricsReporter() {
-      final Meter meter = TraceManager.getMeter(INDEXES);
+      final Meter meter = TelemetryTracer.getMeter(Indexes);
 
       allKeysTotalLookups = meter.gaugeBuilder("Indexes.allKeys.lookups").buildObserver();
       allKeysLookupDurationAvg = meter.gaugeBuilder("Indexes.allKeys.lookupDurationAvgMs").buildObserver();

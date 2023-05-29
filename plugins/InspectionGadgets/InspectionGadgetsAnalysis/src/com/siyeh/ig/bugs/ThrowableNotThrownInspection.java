@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.openapi.project.Project;
@@ -16,7 +18,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -58,11 +59,11 @@ public class ThrowableNotThrownInspection extends BaseInspection {
   }
 
   @Override
-  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return ThrowableNotThrownFix.createFix((PsiCallExpression)infos[0]);
   }
 
-  private static class ThrowableNotThrownFix extends InspectionGadgetsFix {
+  private static class ThrowableNotThrownFix extends PsiUpdateModCommandQuickFix {
     private ThrowableNotThrownFix() {}
     private static ThrowableNotThrownFix createFix(PsiCallExpression context) {
       final PsiElement parent = context.getParent();
@@ -79,8 +80,8 @@ public class ThrowableNotThrownInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement().getParent();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiElement element = startElement.getParent();
       if (!(element instanceof PsiCallExpression)) {
         return;
       }

@@ -172,7 +172,9 @@ public final class ImageUtil {
   public static int getRealWidth(@NotNull Image image) {
     if (image instanceof JBHiDPIScaledImage) {
       Image img = ((JBHiDPIScaledImage)image).getDelegate();
-      if (img != null) image = img;
+      if (img != null) {
+        image = img;
+      }
     }
     return image.getWidth(null);
   }
@@ -187,14 +189,14 @@ public final class ImageUtil {
 
   public static int getUserWidth(@NotNull Image image) {
     if (image instanceof JBHiDPIScaledImage) {
-      return ((JBHiDPIScaledImage)image).getUserWidth(null);
+      return ((JBHiDPIScaledImage)image).getUserWidth();
     }
     return image.getWidth(null);
   }
 
   public static int getUserHeight(@NotNull Image image) {
     if (image instanceof JBHiDPIScaledImage) {
-      return ((JBHiDPIScaledImage)image).getUserHeight(null);
+      return ((JBHiDPIScaledImage)image).getUserHeight();
     }
     return image.getHeight(null);
   }

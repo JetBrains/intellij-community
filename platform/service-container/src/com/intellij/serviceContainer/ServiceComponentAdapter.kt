@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.openapi.Disposable
@@ -8,23 +8,27 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CompletableDeferred
 
+private val isDebugEnabled = LOG.isDebugEnabled
+
 internal class ServiceComponentAdapter(
   @JvmField val descriptor: ServiceDescriptor,
   pluginDescriptor: PluginDescriptor,
   componentManager: ComponentManagerImpl,
   implementationClass: Class<*>? = null,
   deferred: CompletableDeferred<Any> = CompletableDeferred()
-) : BaseComponentAdapter(componentManager, pluginDescriptor, deferred, implementationClass) {
-  companion object {
-    private val isDebugEnabled = LOG.isDebugEnabled
+) : BaseComponentAdapter(componentManager = componentManager,
+                         pluginDescriptor = pluginDescriptor,
+                         deferred = deferred,
+                         implementationClass = implementationClass) {
+  override val implementationClassName: String
+    get() = getServiceImplementation(descriptor, componentManager)
+
+  override fun isImplementationEqualsToInterface(): Boolean {
+    val serviceInterface = descriptor.serviceInterface ?: return true
+    return serviceInterface == getServiceImplementation(descriptor, componentManager)
   }
 
-  override val implementationClassName: String
-    get() = descriptor.implementation!!
-
-  override fun isImplementationEqualsToInterface() = descriptor.serviceInterface == null || descriptor.serviceInterface == descriptor.implementation
-
-  override fun getComponentKey(): String = descriptor.getInterface()
+  override fun getComponentKey(): String = getServiceInterface(descriptor, componentManager)
 
   override fun getActivityCategory(componentManager: ComponentManagerImpl) = componentManager.getActivityCategory(isExtension = false)
 
@@ -49,4 +53,14 @@ internal class ServiceComponentAdapter(
   }
 
   override fun toString() = "ServiceAdapter(descriptor=$descriptor, pluginDescriptor=$pluginDescriptor)"
+}
+
+internal fun getServiceInterface(descriptor: ServiceDescriptor, componentManager: ComponentManagerImpl): String {
+  return descriptor.serviceInterface ?: getServiceImplementation(descriptor, componentManager)
+}
+
+internal fun getServiceImplementation(descriptor: ServiceDescriptor, componentManager: ComponentManagerImpl): String {
+  return descriptor.testServiceImplementation?.takeIf { componentManager.getApplication()!!.isUnitTestMode }
+         ?: descriptor.headlessImplementation?.takeIf { componentManager.getApplication()!!.isHeadlessEnvironment }
+         ?: descriptor.serviceImplementation
 }

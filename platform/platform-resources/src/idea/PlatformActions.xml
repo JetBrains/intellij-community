@@ -943,6 +943,9 @@
     <group id="MainToolbarNewUI" >
       <group id="MainToolbarLeft" searchable="false">
         <action id="main.toolbar.Project" class="com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction"/>
+        <group id="MainToolbarGeneralActionsGroup" searchable="false">
+          <separator/>
+        </group>
       </group>
       <group id="MainToolbarCenter" searchable="false">
         <!--suppress PluginXmlCapitalization -->
@@ -1241,6 +1244,7 @@
           <action id="JEditorPaneDemoAction" internal="true" class="com.intellij.internal.ui.JEditorPaneDemoAction"/>
           <action id="WebBrowser" class="com.intellij.internal.jcef.JBCefBrowserDemo"/>
           <action id="UiDslTestAction" internal="true" class="com.intellij.internal.ui.uiDslTestAction.UiDslTestAction"/>
+          <action id="ComponentsTestAction" internal="true" class="com.intellij.internal.ui.componentsTestAction.ComponentsTestAction"/>
           <action id="JBTabsDemo" internal="true" class="com.intellij.internal.JBTabsDemoAction"/>
           <action id="JTabbedPaneDemo" internal="true" class="com.intellij.internal.JTabbedPaneDemoAction"/>
           <action id="TestTooltipsAction" internal="true" class="com.intellij.internal.TestTooltipsAction"/>
@@ -1600,6 +1604,27 @@
 
     <group id="FindInFiles.Results.ContextMenu" searchable="false">
       <reference id="CopyReferencePopupGroup"/>
+    </group>
+
+    <group id="TopStripeActionGroup" class="com.intellij.toolWindow.StripeActionGroup"/>
+    <action id="TopStripeEnableAction" class="com.intellij.toolWindow.EnableStripeGroup"/>
+
+    <group id="MainToolbarQuickActions" class="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarQuickActionsGroup" searchable="false" popup="true">
+      <separator key="MainToolbarQuickActions.run.separator"/>
+      <action id="addQuickAction.Build" class="com.intellij.openapi.wm.impl.headertoolbar.BuildQuickAction" icon="AllIcons.Actions.Compile"/>
+      <action id="addQuickAction.Coverage" class="com.intellij.openapi.wm.impl.headertoolbar.CoverageQuickAction" icon="AllIcons.General.RunWithCoverage"/>
+      <action id="addQuickAction.Profile" class="com.intellij.openapi.wm.impl.headertoolbar.ProfilerQuickAction" icon="AllIcons.Actions.Profile"/>
+      <separator key="MainToolbarQuickActions.General.separator"/>
+      <action id="addQuickAction.OpenFile" class="com.intellij.openapi.wm.impl.headertoolbar.OpenFileQuickAction" icon="AllIcons.Actions.MenuOpen"/>
+      <action id="addQuickAction.SaveAll" class="com.intellij.openapi.wm.impl.headertoolbar.SaveAllQuickAction" icon="AllIcons.Actions.MenuSaveall"/>
+      <action id="addQuickAction.Synchronize" class="com.intellij.openapi.wm.impl.headertoolbar.SynchronizeQuickAction" icon="AllIcons.Actions.Refresh"/>
+      <action id="addQuickAction.BackForward" class="com.intellij.openapi.wm.impl.headertoolbar.BackForwardQuickAction" icon="AllIcons.Actions.Back"/>
+      <action id="addQuickAction.UndoRedo" class="com.intellij.openapi.wm.impl.headertoolbar.UndoRedoQuickAction" icon="AllIcons.Actions.Undo"/>
+    </group>
+
+    <group id="ToolbarPopupActions">
+      <action id="ColoredHeaderAction" class="com.intellij.ide.ui.customization.UseProjectColorsCheckboxAction"/>
+      <reference id="MainToolbarQuickActions"/>
     </group>
   </actions>
 </idea-plugin>

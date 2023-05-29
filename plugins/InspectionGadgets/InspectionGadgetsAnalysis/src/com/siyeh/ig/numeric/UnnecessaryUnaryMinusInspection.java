@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -12,7 +14,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -37,8 +38,8 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    return (InspectionGadgetsFix[])infos[0];
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    return (LocalQuickFix[])infos[0];
   }
 
   @Override
@@ -46,7 +47,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
     return new UnnecessaryUnaryMinusVisitor();
   }
 
-  private static class ReplaceParentOperatorFix extends InspectionGadgetsFix {
+  private static class ReplaceParentOperatorFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -55,8 +56,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element.getParent();
       final PsiExpression operand = prefixExpression.getOperand();
       if (operand == null) {
@@ -107,7 +107,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
     }
   }
 
-  private static class RemoveDoubleUnaryMinusFix extends InspectionGadgetsFix {
+  private static class RemoveDoubleUnaryMinusFix extends PsiUpdateModCommandQuickFix {
     private final boolean myMinusOnTheLeft;
 
     private RemoveDoubleUnaryMinusFix(boolean minusOnTheLeft) {
@@ -120,8 +120,8 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiPrefixExpression prefixExpr = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiPrefixExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiPrefixExpression prefixExpr = ObjectUtils.tryCast(startElement.getParent(), PsiPrefixExpression.class);
       if (prefixExpr == null) {
         return;
       }
@@ -163,7 +163,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
       if (operand == null) {
         return;
       }
-      final List<InspectionGadgetsFix> fixes = new SmartList<>();
+      final List<LocalQuickFix> fixes = new SmartList<>();
       ContainerUtil.addIfNotNull(fixes, createReplaceParentOperatorFix(prefixExpr));
       if (isOnTheFly()) {
         ContainerUtil.addIfNotNull(fixes, ConvertDoubleUnaryToPrefixOperationFix.createFix(prefixExpr));
@@ -171,11 +171,11 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
       }
       if (!fixes.isEmpty()) {
         registerError(prefixExpr.getOperationSign(),
-                      (Object)fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY));
+                      (Object)fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }
 
-    private static InspectionGadgetsFix createReplaceParentOperatorFix(@NotNull PsiPrefixExpression prefixExpr) {
+    private static LocalQuickFix createReplaceParentOperatorFix(@NotNull PsiPrefixExpression prefixExpr) {
       final PsiElement parent = prefixExpr.getParent();
       if (parent instanceof PsiPolyadicExpression polyadicExpression) {
         if (ExpressionUtils.hasType(polyadicExpression, CommonClassNames.JAVA_LANG_STRING)) {
@@ -209,7 +209,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
       return null;
     }
 
-    private static InspectionGadgetsFix createRemoveDoubleUnaryMinusFix(@NotNull PsiPrefixExpression prefixExpr) {
+    private static LocalQuickFix createRemoveDoubleUnaryMinusFix(@NotNull PsiPrefixExpression prefixExpr) {
       final PsiElement parent = PsiUtil.skipParenthesizedExprUp(prefixExpr.getParent());
       final PsiExpression operandExpr;
       final PsiExpression expr;

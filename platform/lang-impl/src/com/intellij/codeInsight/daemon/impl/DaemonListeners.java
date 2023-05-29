@@ -129,7 +129,7 @@ public final class DaemonListeners implements Disposable {
     EditorFactory editorFactory = EditorFactory.getInstance();
     EditorEventMulticasterEx eventMulticaster = (EditorEventMulticasterEx)editorFactory.getEventMulticaster();
     eventMulticaster.addDocumentListener(new DocumentListener() {
-      // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
+      // clearing highlighters before changing the document because change can damage editor highlighters drastically, so we'll clear more than necessary
       @Override
       public void beforeDocumentChange(@NotNull DocumentEvent e) {
         Document document = e.getDocument();
@@ -405,9 +405,11 @@ public final class DaemonListeners implements Disposable {
     HeavyProcessLatch.INSTANCE.addListener(this, __ -> stopDaemon(true, "re-scheduled to execute after heavy processing finished"));
   }
 
-  private void removeAllHighlightersFromHighlightPasses(@NotNull Document document, @NotNull Project project) {
+  private static void removeAllHighlightersFromHighlightPasses(@NotNull Document document, @NotNull Project project) {
     MarkupModel model = DocumentMarkupModel.forDocument(document, project, false);
-    if (model == null) return;
+    if (model == null) {
+      return;
+    }
     for (RangeHighlighter highlighter : model.getAllHighlighters()) {
       Object tooltip = highlighter.getErrorStripeTooltip();
       if (tooltip instanceof HighlightInfo) {

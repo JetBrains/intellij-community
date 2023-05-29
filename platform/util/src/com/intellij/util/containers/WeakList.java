@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -84,8 +84,7 @@ public final class WeakList<T> extends UnsafeWeakList<T> {
   }
 
   @Override
-  @NotNull
-  public Iterator<@NotNull T> iterator() {
+  public @NotNull Iterator<@NotNull T> iterator() {
     final Iterator<T> iterator;
     synchronized (myList) {
       iterator = super.iterator();
@@ -114,16 +113,14 @@ public final class WeakList<T> extends UnsafeWeakList<T> {
     };
   }
 
-  @NotNull
   @Override
-  public List<@NotNull T> toStrongList() {
+  public @NotNull List<@NotNull T> toStrongList() {
     synchronized (myList) {
       return super.toStrongList();
     }
   }
 
-  @NotNull
-  public List<@NotNull T> copyAndClear() {
+  public @NotNull List<@NotNull T> copyAndClear() {
     synchronized (myList) {
       List<T> result = toStrongList();
       clear();

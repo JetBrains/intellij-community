@@ -4,6 +4,10 @@
 
   <incompatible-with>com.intellij.modules.androidstudio</incompatible-with>
 
+  <dependencies>
+    <plugin id="tanvd.grazi"/>
+  </dependencies>
+
   <extensions defaultExtensionNs="com.intellij">
     <searchEverywhereSpellingCorrector
       implementation="com.intellij.searchEverywhereMl.typos.SearchEverywhereSpellingCorrectorFactoryImpl" />
@@ -21,8 +25,8 @@
                  defaultValue="false"/>
 
     <spellchecker.dictionary.runtimeDictionaryProvider
-      implementation="com.intellij.searchEverywhereMl.typos.RuntimeActionsDictionaryProvider"/>
+      implementation="com.intellij.searchEverywhereMl.typos.models.RuntimeActionsDictionaryProvider"/>
 
-    <postStartupActivity implementation="com.intellij.searchEverywhereMl.typos.ActionsLanguageModel$ModelComputationStarter"/>
+    <postStartupActivity implementation="com.intellij.searchEverywhereMl.typos.models.ActionsLanguageModel$ModelComputationStarter"/>
   </extensions>
 </idea-plugin>

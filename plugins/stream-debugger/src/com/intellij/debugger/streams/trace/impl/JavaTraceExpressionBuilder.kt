@@ -25,7 +25,7 @@ class JavaTraceExpressionBuilder(private val project: Project, handlerFactory: H
     val elementFactory = JavaPsiFacade.getElementFactory(project)
 
     return ApplicationManager.getApplication()
-      .runReadAction(Computable<String> {
+      .runReadAction(Computable {
         val block = elementFactory.createCodeBlockFromText(
           codeBlock, chain.context)
 

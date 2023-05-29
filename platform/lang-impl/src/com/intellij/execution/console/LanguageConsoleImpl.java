@@ -35,7 +35,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -98,7 +97,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   public LanguageConsoleImpl(@NotNull Helper helper) {
     super(helper.project, GlobalSearchScope.allScope(helper.project), true, true);
     myHelper = helper;
-    EditorFactory editorFactory = EditorFactory.getInstance();
     myConsoleExecutionEditor = new ConsoleExecutionEditor(helper);
     Disposer.register(this, myConsoleExecutionEditor);
     myHistoryViewer = doCreateHistoryEditor();
@@ -108,17 +106,15 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     myScrollBar.putClientProperty(Alignment.class, Alignment.BOTTOM);
   }
 
-  @NotNull
-  protected EditorEx doCreateHistoryEditor() {
+  protected @NotNull EditorEx doCreateHistoryEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document historyDocument = ((EditorFactoryImpl)editorFactory).createDocument(true);
     UndoUtil.disableUndoFor(historyDocument);
     return (EditorEx)editorFactory.createViewer(historyDocument, getProject(), EditorKind.CONSOLE);
   }
 
-  @NotNull
   @Override
-  protected final EditorEx doCreateConsoleEditor() {
+  protected final @NotNull EditorEx doCreateConsoleEditor() {
     return myHistoryViewer;
   }
 
@@ -126,9 +122,8 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   protected final void disposeEditor() {
   }
 
-  @NotNull
   @Override
-  protected JComponent createCenterComponent() {
+  protected @NotNull JComponent createCenterComponent() {
     initComponents();
     return myPanel;
   }
@@ -196,20 +191,17 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   @Override
-  @Nullable
-  public String getPrompt() {
+  public @Nullable String getPrompt() {
     return myConsoleExecutionEditor.getPrompt();
   }
 
   @Override
-  @Nullable
-  public ConsoleViewContentType getPromptAttributes() {
+  public @Nullable ConsoleViewContentType getPromptAttributes() {
     return myConsoleExecutionEditor.getPromptAttributes();
   }
 
 
-  @NotNull
-  public ConsolePromptDecorator getConsolePromptDecorator() {
+  public @NotNull ConsolePromptDecorator getConsolePromptDecorator() {
     return myConsoleExecutionEditor.getConsolePromptDecorator();
   }
 
@@ -234,32 +226,27 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   @Override
-  @NotNull
-  public final PsiFile getFile() {
+  public final @NotNull PsiFile getFile() {
     return myHelper.getFileSafe();
   }
 
   @Override
-  @NotNull
-  public final VirtualFile getVirtualFile() {
+  public final @NotNull VirtualFile getVirtualFile() {
     return myConsoleExecutionEditor.getVirtualFile();
   }
 
   @Override
-  @NotNull
-  public final EditorEx getHistoryViewer() {
+  public final @NotNull EditorEx getHistoryViewer() {
     return myHistoryViewer;
   }
 
   @Override
-  @NotNull
-  public final Document getEditorDocument() {
+  public final @NotNull Document getEditorDocument() {
     return myConsoleExecutionEditor.getDocument();
   }
 
   @Override
-  @NotNull
-  public final EditorEx getConsoleEditor() {
+  public final @NotNull EditorEx getConsoleEditor() {
     return myConsoleExecutionEditor.getEditor();
   }
 
@@ -277,8 +264,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     return addToHistoryInner(textRange, editor, false, preserveMarkup);
   }
 
-  @NotNull
-  public String prepareExecuteAction(boolean addToHistory, boolean preserveMarkup, boolean clearInput) {
+  public @NotNull String prepareExecuteAction(boolean addToHistory, boolean preserveMarkup, boolean clearInput) {
     EditorEx editor = getCurrentEditor();
     Document document = editor.getDocument();
     String text = document.getText();
@@ -296,8 +282,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     return text;
   }
 
-  @NotNull
-  protected String addToHistoryInner(@NotNull final TextRange textRange, @NotNull final EditorEx editor, boolean erase, final boolean preserveMarkup) {
+  protected @NotNull String addToHistoryInner(final @NotNull TextRange textRange, final @NotNull EditorEx editor, boolean erase, final boolean preserveMarkup) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     String result = addTextRangeToHistory(textRange, editor, preserveMarkup);
@@ -344,8 +329,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     return text;
   }
 
-  @NotNull
-  protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx inputEditor, boolean preserveMarkup) {
+  protected @NotNull String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx inputEditor, boolean preserveMarkup) {
     return printWithHighlighting(this, inputEditor, textRange);
 
 
@@ -418,22 +402,19 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     }
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
+  public @Nullable Object getData(@NotNull @NonNls String dataId) {
     return super.getData(dataId);
   }
 
 
   @Override
-  @NotNull
-  public EditorEx getCurrentEditor() {
+  public @NotNull EditorEx getCurrentEditor() {
     return myConsoleExecutionEditor.getCurrentEditor();
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return getFile().getLanguage();
   }
 
@@ -444,7 +425,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   @Override
-  public void setInputText(@NotNull final String query) {
+  public void setInputText(final @NotNull String query) {
     myConsoleExecutionEditor.setInputText(query);
   }
 
@@ -487,15 +468,12 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       return this;
     }
 
-    @NotNull
-    public PsiFile getFile() {
+    public @NotNull PsiFile getFile() {
       return ReadAction.compute(() -> PsiUtilCore.getPsiFile(project, virtualFile));
     }
 
-    @NotNull
-    public Document getDocument() {
-      Document document = ProjectLocator.computeWithPreferredProject(virtualFile, project, () ->
-        FileDocumentManager.getInstance().getDocument(virtualFile));
+    public @NotNull Document getDocument() {
+      Document document = FileDocumentManager.getInstance().getDocument(virtualFile, project);
       if (document == null) {
         Language language = (virtualFile instanceof LightVirtualFile) ? ((LightVirtualFile)virtualFile).getLanguage() : null;
         throw new AssertionError(String.format("no document for: %s (fileType: %s, language: %s, length: %s, valid: %s)",
@@ -523,13 +501,11 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       DataManager.registerDataProvider(editor.getComponent(), (dataId) -> getEditorData(editor, dataId));
     }
 
-    @NotNull
-    public PsiFile getFileSafe() {
+    public @NotNull PsiFile getFileSafe() {
       return file == null || !file.isValid() ? file = getFile() : file;
     }
 
-    @Nullable
-    protected Object getEditorData(@NotNull EditorEx editor, String dataId) {
+    protected @Nullable Object getEditorData(@NotNull EditorEx editor, String dataId) {
       if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
         return editor;
       }
@@ -548,8 +524,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       myConsole = console;
     }
 
-    @NotNull
-    public LanguageConsoleImpl getConsole() {
+    public @NotNull LanguageConsoleImpl getConsole() {
       return myConsole;
     }
   }

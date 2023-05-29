@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.highlighting.highlighters
 
-import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -18,16 +18,13 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
 
-internal class DslHighlighter(
-    holder: AnnotationHolder,
-    project: Project,
-) : AfterResolveHighlighter(holder, project) {
+internal class DslHighlighter(project: Project) : AfterResolveHighlighter(project) {
 
     context(KtAnalysisSession)
-    override fun highlight(element: KtElement) {
-        when (element) {
-            is KtCallExpression -> highlightCall(element)
-            else -> return
+    override fun highlight(element: KtElement): List<HighlightInfo.Builder> {
+        return when (element) {
+            is KtCallExpression -> listOfNotNull(highlightCall(element))
+            else -> emptyList()
         }
     }
 
@@ -38,14 +35,14 @@ internal class DslHighlighter(
      * 2) The class or its superclasses' definition is marked by a dsl annotation
      */
     context(KtAnalysisSession)
-    private fun highlightCall(element: KtCallExpression) {
-        val calleeExpression = element.calleeExpression ?: return
-        val lambdaExpression = element.lambdaArguments.singleOrNull()?.getLambdaExpression() ?: return
-        val receiverType = (lambdaExpression.getKtType() as? KtFunctionalType)?.receiverType ?: return
-        val dslAnnotation = getDslAnnotation(receiverType) ?: return
+    private fun highlightCall(element: KtCallExpression): HighlightInfo.Builder? {
+        val calleeExpression = element.calleeExpression ?: return null
+        val lambdaExpression = element.lambdaArguments.singleOrNull()?.getLambdaExpression() ?: return null
+        val receiverType = (lambdaExpression.getKtType() as? KtFunctionalType)?.receiverType ?: return null
+        val dslAnnotation = getDslAnnotation(receiverType) ?: return null
 
         val dslStyleId = DslStyleUtils.styleIdByFQName(dslAnnotation.asSingleFqName())
-        highlightName(
+        return highlightName(
             calleeExpression,
             DslStyleUtils.styleById(dslStyleId),
             DslStyleUtils.styleOptionDisplayName(dslStyleId)

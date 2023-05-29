@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -69,11 +72,11 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new ExtendsObjectFix();
   }
 
-  private static class ExtendsObjectFix extends InspectionGadgetsFix {
+  private static class ExtendsObjectFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -83,8 +86,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement identifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement identifier, @NotNull EditorUpdater updater) {
       final PsiElement parent = identifier.getParent();
       if (parent instanceof PsiTypeParameter typeParameter) {
         final PsiReferenceList extendsList =
@@ -93,7 +95,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
           extendsList.getReferenceElements();
         for (PsiJavaCodeReferenceElement referenceElement :
           referenceElements) {
-          deleteElement(referenceElement);
+          referenceElement.delete();
         }
       }
       else {

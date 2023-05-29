@@ -4,7 +4,7 @@ import serviceDeclarations.RegisteredApplicationService
 // explicit constructor call
 val myAppService1 = RegisteredApplicationService()
 
-<warning descr="Application service must not be assigned to a static final field">val myAppService2 = RegisteredApplicationService.getInstance()</warning>
+val <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = RegisteredApplicationService.getInstance()
 
 
 // -------- companion object declarations ---------
@@ -14,7 +14,7 @@ class MyClass {
     // explicit constructor call
     val myAppService1 = RegisteredApplicationService()
 
-    <warning descr="Application service must not be assigned to a static final field">val myAppService2 = RegisteredApplicationService.getInstance()</warning>
+    val <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = RegisteredApplicationService.getInstance()
   }
 
 }
@@ -25,6 +25,6 @@ object MyObject {
   // explicit constructor call
   val myAppService1 = RegisteredApplicationService()
 
-  <warning descr="Application service must not be assigned to a static final field">val myAppService2 = RegisteredApplicationService.getInstance()</warning>
+  val <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = RegisteredApplicationService.getInstance()
 
 }

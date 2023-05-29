@@ -5,8 +5,8 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.*
 import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PlatformLayout
-import org.jetbrains.intellij.build.impl.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import java.nio.file.Files
 import java.nio.file.Path
@@ -58,7 +58,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.maven",
   "intellij.maven.model",
   "intellij.maven.server",
-  "intellij.packageSearch",
   "intellij.gradle",
   "intellij.gradle.dependencyUpdater",
   "intellij.android.gradle.dsl",
@@ -69,6 +68,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.vcs.svn",
   "intellij.vcs.hg",
   "intellij.vcs.github",
+  "intellij.vcs.gitlab",
   "intellij.groovy",
   "intellij.junit",
   "intellij.testng",

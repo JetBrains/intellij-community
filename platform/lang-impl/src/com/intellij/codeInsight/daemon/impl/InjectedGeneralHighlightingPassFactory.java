@@ -34,7 +34,7 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
   @NotNull
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    TextRange fileRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
+    TextRange fileRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.UPDATE_ALL);
     if (fileRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(file.getProject(), editor.getDocument());
     Collection<TextRange> adjustedRanges = computeReducedRanges(file, editor);
     TextRange restrictRange = computeRestrictRange(adjustedRanges, fileRange);

@@ -19,6 +19,10 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.util.TraceableDisposable;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.Scope;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -27,6 +31,8 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   private static boolean debug;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug);
   private volatile Throwable myCancellationCause;
+  private volatile Span mySpan;
+  private final IJTracer myTraceManager = TelemetryTracer.Companion.getInstance().getTracer(new Scope("daemon", null));
 
   @Override
   public final void stop() {
@@ -38,6 +44,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   // return true if was stopped
   boolean stopIfRunning() {
+    if(mySpan != null) mySpan.end();
     synchronized (getLock()) {
       if (isRunning()) {
         stop();
@@ -89,6 +96,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   public final void start() {
     checkCanceled();
     assert !isRunning() : "running";
+    mySpan = myTraceManager.spanBuilder("run daemon").startSpan();
     super.start();
   }
 

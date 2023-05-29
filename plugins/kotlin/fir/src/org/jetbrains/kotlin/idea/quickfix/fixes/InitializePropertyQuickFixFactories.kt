@@ -33,7 +33,6 @@ object InitializePropertyQuickFixFactories {
     }
 
 
-    @OptIn(ExperimentalStdlibApi::class)
     val initializePropertyFactory =
         diagnosticFixFactories(
             KtFirDiagnostic.MustBeInitialized::class,

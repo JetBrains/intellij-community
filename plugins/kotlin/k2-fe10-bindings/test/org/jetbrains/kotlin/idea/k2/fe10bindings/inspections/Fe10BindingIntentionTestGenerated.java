@@ -496,6 +496,16 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
             runTest("../idea/tests/testData/intentions/convertToStringTemplate/doesNotCorruptExistingTemplateWithBraces.kt");
         }
 
+        @TestMetadata("dollarSignBeforeLeftBrace.kt")
+        public void testDollarSignBeforeLeftBrace() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertToStringTemplate/dollarSignBeforeLeftBrace.kt");
+        }
+
+        @TestMetadata("dollarSignBeforeRightBrace.kt")
+        public void testDollarSignBeforeRightBrace() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertToStringTemplate/dollarSignBeforeRightBrace.kt");
+        }
+
         @TestMetadata("dollarSignChar.kt")
         public void testDollarSignChar() throws Exception {
             runTest("../idea/tests/testData/intentions/convertToStringTemplate/dollarSignChar.kt");
@@ -519,6 +529,11 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
         @TestMetadata("insertBracesForSimpleNamedExpression.kt")
         public void testInsertBracesForSimpleNamedExpression() throws Exception {
             runTest("../idea/tests/testData/intentions/convertToStringTemplate/insertBracesForSimpleNamedExpression.kt");
+        }
+
+        @TestMetadata("intToString.kt")
+        public void testIntToString() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertToStringTemplate/intToString.kt");
         }
 
         @TestMetadata("interpolate2StringConstants.kt")
@@ -669,6 +684,11 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
         @TestMetadata("specialCharsInCharLiteral.kt")
         public void testSpecialCharsInCharLiteral() throws Exception {
             runTest("../idea/tests/testData/intentions/convertToStringTemplate/specialCharsInCharLiteral.kt");
+        }
+
+        @TestMetadata("startsWithNullableVariable.kt")
+        public void testStartsWithNullableVariable() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertToStringTemplate/startsWithNullableVariable.kt");
         }
 
         @TestMetadata("stringPlusStringLiteral.kt")

@@ -1,10 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemHolderUtilKt;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -12,7 +17,6 @@ import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UIdentifier;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.util.List;
@@ -48,11 +52,7 @@ public class FileEqualsUsageInspection extends DevKitUastInspectionBase {
 
     if (!DevKitInspectionUtil.isClassAvailable(holder, FileUtil.class.getName())) return;
 
-    final UIdentifier identifier = node.getMethodIdentifier();
-    if (identifier == null) return;
-    final PsiElement sourcePsi = identifier.getSourcePsi();
-    if (sourcePsi == null) return;
-
-    holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.file.equals.method"), ProblemHighlightType.LIKE_DEPRECATED);
+    ProblemHolderUtilKt.registerUProblem(holder, node, DevKitBundle.message("inspections.file.equals.method"),
+                                         LocalQuickFix.notNullElements(), ProblemHighlightType.LIKE_DEPRECATED);
   }
 }

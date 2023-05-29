@@ -283,7 +283,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
         return UiInspectorUtil.collectAnActionInfo(action);
       }
       if (object instanceof IntentionActionDelegate actionDelegate) {
-        IntentionAction delegate = actionDelegate.getDelegate();
+        IntentionAction delegate = IntentionActionDelegate.unwrap(actionDelegate.getDelegate());
         if (delegate != object) {
           return findActionsFor(delegate);
         }

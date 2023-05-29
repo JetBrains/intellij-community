@@ -5,10 +5,13 @@ import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.lang.Language
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiType
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.asSafely
 import com.siyeh.ig.callMatcher.CallMatcher
@@ -26,9 +29,13 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = UastHintedVisitorAdapter.create(
-    holder.file.language, AssertEqualsBetweenInconvertibleTypesVisitor(holder), arrayOf(UCallExpression::class.java), true
-  )
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    // Disable for kotlin for now because retrieving types from expressions doesn't always result in the correct type
+    if (holder.file.language == Language.findLanguageByID("kotlin")) return PsiElementVisitor.EMPTY_VISITOR
+    return UastHintedVisitorAdapter.create(
+      holder.file.language, AssertEqualsBetweenInconvertibleTypesVisitor(holder), arrayOf(UCallExpression::class.java), true
+    )
+  }
 }
 
 private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
@@ -88,13 +95,11 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
       if (elem !is UCallExpression) continue
       sourceType = when {
         ASSERTJ_EXTRACTING_REF_MATCHER.uCallMatches(elem) -> return // not supported
-        ASSERTJ_EXTRACTING_FUN_MATCHER.uCallMatches(elem) -> {
-          val arg = elem.valueArguments.firstOrNull() ?: return
-          when (arg) {
-            is ULambdaExpression -> arg.body.getExpressionType() ?: return
-            is UCallableReferenceExpression -> arg.qualifierExpression?.getExpressionType() ?: return
-            else -> return
-          }
+        ASSERTJ_EXTRACTING_FUN_MATCHER.uCallMatches(elem) -> return // not supported
+        ASSERTJ_EXTRACTING_ITER_FUN_MATCHER.uCallMatches(elem) -> return // not supported
+        ASSERTJ_SINGLE_ELEMENT_MATCHER.uCallMatches(elem) -> {
+          if (!InheritanceUtil.isInheritor(sourceType, "java.lang.Iterable")) return
+          sourceType.asSafely<PsiClassType>()?.parameters?.firstOrNull() ?: return
         }
         else -> sourceType
       }
@@ -132,6 +137,14 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
 
     private val ASSERTJ_EXTRACTING_FUN_MATCHER: CallMatcher = CallMatcher.instanceCall(
       "org.assertj.core.api.AbstractObjectAssert", "extracting"
+    )
+
+    private val ASSERTJ_SINGLE_ELEMENT_MATCHER: CallMatcher = CallMatcher.instanceCall(
+      "org.assertj.core.api.AbstractIterableAssert", "singleElement"
+    )
+
+    private val ASSERTJ_EXTRACTING_ITER_FUN_MATCHER: CallMatcher = CallMatcher.instanceCall(
+      "org.assertj.core.api.AbstractIterableAssert", "extracting"
     )
 
     private val ASSERTJ_ASSERT_THAT_MATCHER: CallMatcher = CallMatcher.staticCall(

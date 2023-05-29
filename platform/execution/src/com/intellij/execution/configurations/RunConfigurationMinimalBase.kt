@@ -51,7 +51,7 @@ abstract class RunConfigurationMinimalBase<T : BaseState>(name: String?,
   }
 
   private fun createOptions(): T {
-    return ReflectionUtil.newInstance<T>(getOptionsClass())
+    return ReflectionUtil.newInstance(getOptionsClass())
   }
 
   private fun getOptionsClass(): Class<T> {

@@ -6,6 +6,7 @@ package com.intellij.ide
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
 import com.intellij.ui.icons.loadPng
@@ -68,14 +69,19 @@ internal class RecentProjectIconHelper {
       projectIconCache.remove(path)
     }
 
-    fun generateProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean): Icon {
+    fun getProjectName(path: @SystemIndependent String): String {
       val projectManager = RecentProjectsManagerBase.getInstanceEx()
       val displayName = projectManager.getDisplayName(path)
-      val name = when {
+      return when {
         displayName == null -> projectManager.getProjectName(path)
         displayName.contains(',') -> iconTextForCommaSeparatedName(displayName)
         else -> displayName
       }
+    }
+
+    @JvmStatic
+    fun generateProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean): Icon {
+      val name = getProjectName(path)
       var generatedProjectIcon: Icon = AvatarIcon(targetSize = unscaledProjectIconSize(),
                                                   arcRatio = 0.3,
                                                   gradientSeed = name,
@@ -242,15 +248,24 @@ private object ProjectIconPalette : ColorPalette {
   override val gradients: Array<Pair<Color, Color>>
     get() {
       return arrayOf(
-        JBColor(0xDB3D3C, 0xCE443C) to JBColor(0xFF8E42, 0xE77E41),
-        JBColor(0xF57236, 0xE27237) to JBColor(0xFCBA3F, 0xE8A83E),
-        JBColor(0x2BC8BB, 0x2DBCAD) to JBColor(0x36EBAE, 0x35D6A4),
-        JBColor(0x359AF2, 0x3895E1) to JBColor(0x57DBFF, 0x51C5EA),
-        JBColor(0x8379FB, 0x7B75E8) to JBColor(0x85A8FF, 0x7D99EB),
-        JBColor(0x7E54B5, 0x7854AD) to JBColor(0x9486FF, 0x897AE6),
-        JBColor(0xD63CC8, 0x8F4593) to JBColor(0xF582B9, 0xB572E3),
-        JBColor(0x954294, 0xC840B9) to JBColor(0xC87DFF, 0xE074AE),
-        JBColor(0xE75371, 0xD75370) to JBColor(0xFF78B5, 0xE96FA3)
+        JBColor.namedColor("RecentProject.Color1.Avatar.Start", JBColor(0xDB3D3C, 0xCE443C))
+        to JBColor.namedColor("RecentProject.Color1.Avatar.End", JBColor(0xFF8E42, 0xE77E41)),
+        JBColor.namedColor("RecentProject.Color2.Avatar.Start", JBColor(0xF57236, 0xE27237))
+        to JBColor.namedColor("RecentProject.Color2.Avatar.End", JBColor(0xFCBA3F, 0xE8A83E)),
+        JBColor.namedColor("RecentProject.Color3.Avatar.Start", JBColor(0x2BC8BB, 0x2DBCAD))
+        to JBColor.namedColor("RecentProject.Color3.Avatar.End", JBColor(0x36EBAE, 0x35D6A4)),
+        JBColor.namedColor("RecentProject.Color4.Avatar.Start", JBColor(0x359AF2, 0x3895E1))
+        to JBColor.namedColor("RecentProject.Color4.Avatar.End", JBColor(0x57DBFF, 0x51C5EA)),
+        JBColor.namedColor("RecentProject.Color5.Avatar.Start", JBColor(0x8379FB, 0x7B75E8))
+        to JBColor.namedColor("RecentProject.Color5.Avatar.End", JBColor(0x85A8FF, 0x7D99EB)),
+        JBColor.namedColor("RecentProject.Color6.Avatar.Start", JBColor(0x7E54B5, 0x7854AD))
+        to JBColor.namedColor("RecentProject.Color6.Avatar.End", JBColor(0x9486FF, 0x897AE6)),
+        JBColor.namedColor("RecentProject.Color7.Avatar.Start", JBColor(0xD63CC8, 0x8F4593))
+        to JBColor.namedColor("RecentProject.Color7.Avatar.End", JBColor(0xF582B9, 0xB572E3)),
+        JBColor.namedColor("RecentProject.Color8.Avatar.Start", JBColor(0x954294, 0xC840B9))
+        to JBColor.namedColor("RecentProject.Color8.Avatar.End", JBColor(0xC87DFF, 0xE074AE)),
+        JBColor.namedColor("RecentProject.Color9.Avatar.Start", JBColor(0xE75371, 0xD75370))
+        to JBColor.namedColor("RecentProject.Color9.Avatar.End", JBColor(0xFF78B5, 0xE96FA3))
       )
     }
 }

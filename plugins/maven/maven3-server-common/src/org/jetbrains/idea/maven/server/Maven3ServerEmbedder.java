@@ -26,9 +26,7 @@ import org.apache.maven.artifact.resolver.ResolutionListener;
 import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.model.building.ModelBuildingException;
 import org.apache.maven.model.building.ModelBuildingRequest;
-import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.project.*;
@@ -44,6 +42,7 @@ import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
 import org.jetbrains.idea.maven.server.embedder.Maven3ExecutionResult;
 import org.jetbrains.idea.maven.server.security.MavenToken;
+import org.jetbrains.idea.maven.server.utils.Maven3ResolverUtil;
 
 import java.io.File;
 import java.rmi.RemoteException;
@@ -84,17 +83,17 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
 
   private static Level toJavaUtilLoggingLevel(int level) {
     switch (level) {
-      case MavenServerConsole.LEVEL_DEBUG:
+      case MavenServerConsoleIndicator.LEVEL_DEBUG:
         return Level.ALL;
-      case MavenServerConsole.LEVEL_ERROR:
+      case MavenServerConsoleIndicator.LEVEL_ERROR:
         return Level.SEVERE;
-      case MavenServerConsole.LEVEL_FATAL:
+      case MavenServerConsoleIndicator.LEVEL_FATAL:
         return Level.SEVERE;
-      case MavenServerConsole.LEVEL_DISABLED:
+      case MavenServerConsoleIndicator.LEVEL_DISABLED:
         return Level.OFF;
-      case MavenServerConsole.LEVEL_INFO:
+      case MavenServerConsoleIndicator.LEVEL_INFO:
         return Level.INFO;
-      case MavenServerConsole.LEVEL_WARN:
+      case MavenServerConsoleIndicator.LEVEL_WARN:
         return Level.WARNING;
     }
     return Level.INFO;
@@ -159,68 +158,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
       buildingResults.add(build);
     }
     catch (ProjectBuildingException e) {
-      handleProjectBuildingException(buildingResults, e);
-    }
-  }
-
-  protected void handleProjectBuildingException(List<ProjectBuildingResult> buildingResults, ProjectBuildingException e) {
-    List<ProjectBuildingResult> results = e.getResults();
-    if (results != null && !results.isEmpty()) {
-      buildingResults.addAll(results);
-    }
-    else {
-      Throwable cause = e.getCause();
-      List<ModelProblem> problems = null;
-      if (cause instanceof ModelBuildingException) {
-        problems = ((ModelBuildingException)cause).getProblems();
-      }
-      buildingResults.add(new MyProjectBuildingResult(null, e.getPomFile(), null, problems, null));
-    }
-  }
-
-  private static class MyProjectBuildingResult implements ProjectBuildingResult {
-
-    private final String myProjectId;
-    private final File myPomFile;
-    private final MavenProject myMavenProject;
-    private final List<ModelProblem> myProblems;
-    private final DependencyResolutionResult myDependencyResolutionResult;
-
-    MyProjectBuildingResult(String projectId,
-                            File pomFile,
-                            MavenProject mavenProject,
-                            List<ModelProblem> problems,
-                            DependencyResolutionResult dependencyResolutionResult) {
-      myProjectId = projectId;
-      myPomFile = pomFile;
-      myMavenProject = mavenProject;
-      myProblems = problems;
-      myDependencyResolutionResult = dependencyResolutionResult;
-    }
-
-    @Override
-    public String getProjectId() {
-      return myProjectId;
-    }
-
-    @Override
-    public File getPomFile() {
-      return myPomFile;
-    }
-
-    @Override
-    public MavenProject getProject() {
-      return myMavenProject;
-    }
-
-    @Override
-    public List<ModelProblem> getProblems() {
-      return myProblems;
-    }
-
-    @Override
-    public DependencyResolutionResult getDependencyResolutionResult() {
-      return myDependencyResolutionResult;
+      Maven3ResolverUtil.handleProjectBuildingException(buildingResults, e);
     }
   }
 
@@ -265,7 +203,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
   protected abstract List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException;
 
   @NotNull
-  protected List<ArtifactRepository> map2ArtifactRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
+  protected List<ArtifactRepository> map2ArtifactRepositories(List<MavenRemoteRepository> repositories) {
     PlexusContainer container = getContainer();
     List<ArtifactRepository> result = new ArrayList<>();
     for (MavenRemoteRepository each : repositories) {
@@ -289,7 +227,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
 
   public abstract <T> T getComponent(Class<T> clazz);
 
-  protected void executeWithMavenSession(MavenExecutionRequest request, final Runnable runnable) {
+  public void executeWithMavenSession(MavenExecutionRequest request, final Runnable runnable) {
     if (VersionComparatorUtil.compare(getMavenVersion(), "3.2.5") >= 0) {
       executeWithSessionScope(request, runnable);
     }
@@ -364,8 +302,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
 
   public abstract MavenExecutionRequest createRequest(File file,
                                                       List<String> activeProfiles,
-                                                      List<String> inactiveProfiles,
-                                                      String goal)
+                                                      List<String> inactiveProfiles)
     throws RemoteException;
 
   protected static void warn(String message, Throwable e) {
@@ -419,20 +356,20 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
 
   @Nullable
   @Override
-  public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull final String groupId, @NotNull final String artifactId,
-                                                              @NotNull final String version,
+  public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
+                                                              @NotNull String version,
                                                               @NotNull List<MavenRemoteRepository> repositories,
-                                                              @Nullable final String url, MavenToken token) throws RemoteException {
+                                                              @Nullable String url, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
-      final MavenExecutionRequest request = createRequest(null, null, null, null);
+      MavenExecutionRequest request = createRequest(null, null, null);
       List<ArtifactRepository> artifactRepositories = map2ArtifactRepositories(repositories);
       for (ArtifactRepository repository : artifactRepositories) {
         request.addRemoteRepository(repository);
       }
 
-      final Map<String, String> result = new HashMap<>();
-      final AtomicBoolean unknownArchetypeError = new AtomicBoolean(false);
+      Map<String, String> result = new HashMap<>();
+      AtomicBoolean unknownArchetypeError = new AtomicBoolean(false);
       executeWithMavenSession(request, () -> {
         MavenArtifactRepository artifactRepository = null;
         if (url != null) {

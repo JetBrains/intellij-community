@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build
 
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.openapi.util.SystemInfoRt
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.TraceManager.spanBuilder

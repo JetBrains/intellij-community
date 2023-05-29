@@ -81,22 +81,6 @@ public final class IllegalDataException extends IllegalArgumentException {
   }
 
   /**
-   * This will create an <code>Exception</code> indicating
-   * that the specified data is illegal for the construct
-   * it was supplied to.
-   *
-   * @param data      <code>String</code> data that breaks rules.
-   * @param construct <code>String</code> construct that data is illegal for.
-   */
-  IllegalDataException(String data, String construct) {
-    super("The data \"" +
-          data +
-          "\" is not legal for a JDOM " +
-          construct +
-          ".");
-  }
-
-  /**
    * This will create an exception with the specified error message.
    *
    * @param reason cause of the problem

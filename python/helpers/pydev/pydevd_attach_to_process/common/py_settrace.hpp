@@ -187,7 +187,16 @@ int InternalSetSysTraceFunc(
     {
         // See comments on py_settrace_37.hpp for why we need a different implementation in Python 3.7 onwards.
         DEFINE_PROC(pyUnicode_InternFromString, PyUnicode_InternFromString*, "PyUnicode_InternFromString", 520);
-        DEFINE_PROC(pyObject_FastCallDict, _PyObject_FastCallDict*, "_PyObject_FastCallDict", 530);
+
+        _PyObject_FastCallDict* pyObject_FastCallDict;
+        if (version < PythonVersion_39) {
+          DEFINE_PROC(fastCallDict, _PyObject_FastCallDict*, "_PyObject_FastCallDict", 530);
+          pyObject_FastCallDict = fastCallDict;
+        } else {
+          DEFINE_PROC(vectorcallDict, _PyObject_FastCallDict*, "PyObject_VectorcallDict", 530);
+          pyObject_FastCallDict = vectorcallDict;
+        }
+
         DEFINE_PROC(pyTraceBack_Here, PyTraceBack_Here*, "PyTraceBack_Here", 540);
         DEFINE_PROC(pyEval_SetTrace, PyEval_SetTrace*, "PyEval_SetTrace", 550);
         

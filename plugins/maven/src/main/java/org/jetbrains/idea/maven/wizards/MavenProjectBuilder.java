@@ -245,7 +245,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
          Registry.is("ide.force.maven.import", false)) // workaround for inspection integration test
     ) {
       Promise<List<Module>> promise = manager.scheduleImportAndResolve();
-      manager.waitForResolvingCompletion();
+      manager.waitForReadingCompletion();
       try {
         return promise.blockingGet(0);
       }
@@ -254,11 +254,21 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       }
     }
 
-    boolean isFromUI = model != null;
-    if (isFromUI) {
-      return manager.importProjects(new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel));
+    var projectsToImport = new HashMap<MavenProject, MavenProjectChanges>();
+    for (var selectedProject : selectedProjects) {
+      var projectToImport = manager.getProjectsTree().findProject(selectedProject.getFile());
+      projectsToImport.put(projectToImport, MavenProjectChanges.ALL);
     }
-    return manager.importProjects();
+    boolean isFromUI = model != null;
+    List<Module> createdModules;
+    if (isFromUI) {
+      var modelsProvider = new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel);
+      createdModules = manager.importMavenProjectsSync(modelsProvider, projectsToImport);
+    }
+    else {
+      createdModules = manager.importMavenProjectsSync(projectsToImport);
+    }
+    return createdModules;
   }
 
   private @Nullable Module createPreviewModule(Project project, List<MavenProject> selectedProjects) {
@@ -327,20 +337,9 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     });
   }
 
-  @Deprecated(forRemoval = true)
-  public boolean setSelectedProfiles(MavenExplicitProfiles profiles) {
-    return runConfigurationProcess(MavenProjectBundle.message("maven.scanning.projects"), new MavenTask() {
-      @Override
-      public void run(MavenProgressIndicator indicator) {
-        readMavenProjectTree(indicator);
-        indicator.setText2("");
-      }
-    });
-  }
-
   private static boolean runConfigurationProcess(@NlsContexts.DialogTitle String message, MavenTask p) {
     try {
-      MavenUtil.run(null, message, p);
+      MavenUtil.run(message, p);
     }
     catch (MavenProcessCanceledException e) {
       return false;

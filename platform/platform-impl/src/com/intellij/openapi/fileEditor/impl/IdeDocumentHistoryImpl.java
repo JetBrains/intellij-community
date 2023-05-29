@@ -484,7 +484,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     for (int i = myCurrentIndex - 1; i >= 0; i--) {
       PlaceInfo info = myChangePlaces.get(i);
       if (currentPlace == null || !isSame(currentPlace, info)) {
-        executeCommand(() -> gotoPlaceInfo(info), "", null);
+        executeCommand(() -> gotoPlaceInfo(info, true), "", null);
         myCurrentIndex = i;
         break;
       }
@@ -565,11 +565,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   @Override
-  public void gotoPlaceInfo(@NotNull PlaceInfo info, boolean wasActive) {
+  public void gotoPlaceInfo(@NotNull PlaceInfo info, boolean requestFocus) {
     FileEditorManagerEx editorManager = getFileEditorManager();
     FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
       .withUsePreviewTab(info.isPreviewTab())
-      .withRequestFocus(wasActive);
+      .withRequestFocus(requestFocus);
     var editorsWithProviders = editorManager.openFile(info.getFile(), info.getWindow(), openOptions);
 
     editorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());

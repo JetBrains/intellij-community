@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.thirdparty;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -397,8 +398,8 @@ public final class LombokUtils {
     return toSetterName(accessorsInfo, psiField.getName(), PsiTypes.booleanType().equals(psiField.getType()));
   }
 
-  public static String getWitherName(@NotNull PsiField psiField, @NotNull AccessorsInfo accessorsInfo) {
-    return toWitherName(accessorsInfo.withFluent(false), psiField.getName(), PsiTypes.booleanType().equals(psiField.getType()));
+  public static String getWitherName(@NotNull PsiVariable psiVariable, @NotNull AccessorsInfo accessorsInfo) {
+    return toWitherName(accessorsInfo.withFluent(false), psiVariable.getName(), PsiTypes.booleanType().equals(psiVariable.getType()));
   }
 
   /**

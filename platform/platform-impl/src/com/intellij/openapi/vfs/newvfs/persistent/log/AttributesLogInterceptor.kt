@@ -16,11 +16,11 @@ class AttributesLogInterceptor(
         override fun writeEnumeratedString(str: String?) = aos.writeEnumeratedString(str)
 
         override fun close() {
-          { super.close() } catchResult ::interceptClose
+          val data = aos.asByteArraySequence().toBytes();
+          { super.close() } catchResult { interceptClose(data, it) }
         }
 
-        private fun interceptClose(result: OperationResult<Unit>) {
-          val data = aos.asByteArraySequence().toBytes()
+        private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
           context.enqueueOperationWrite(VfsOperationTag.ATTR_WRITE_ATTR) {
             val attrIdEnumerated = stringEnumerator.enumerate(attribute.id)
             val payloadRef =

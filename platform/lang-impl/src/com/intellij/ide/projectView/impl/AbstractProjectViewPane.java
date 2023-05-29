@@ -31,7 +31,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
@@ -247,23 +246,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   public JComponent getComponentToFocus() {
     return myTree;
-  }
-
-  public void expand(final Object @Nullable [] path, final boolean requestFocus){
-    if (getTreeBuilder() == null || path == null) return;
-    AbstractTreeUi ui = getTreeBuilder().getUi();
-    if (ui != null) ui.buildNodeForPath(path);
-
-    DefaultMutableTreeNode node = ui == null ? null : ui.getNodeForPath(path);
-    if (node == null) {
-      return;
-    }
-    TreePath treePath = new TreePath(node.getPath());
-    myTree.expandPath(treePath);
-    if (requestFocus) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
-    }
-    TreeUtil.selectPath(myTree, treePath);
   }
 
   @Override
@@ -1024,6 +1006,20 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return true;
   }
 
+  @ApiStatus.Internal
+  public boolean supportsSortByTime() {
+    return true;
+  }
+
+  @ApiStatus.Internal
+  public final boolean supportsSortKey(@NotNull NodeSortKey sortKey) {
+    return switch (sortKey) {
+      case BY_NAME -> true;
+      case BY_TYPE -> supportsSortByType();
+      case BY_TIME_DESCENDING, BY_TIME_ASCENDING -> supportsSortByTime();
+    };
+  }
+
   @NotNull
    private static Color getFileForegroundColor(@NotNull Project project, @NotNull VirtualFile file) {
     FileEditorManager manager = FileEditorManager.getInstance(project);
@@ -1229,13 +1225,15 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @Nullable
   public static TreeVisitor createVisitor(@NotNull Object object) {
-    if (object instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)object;
+    if (object instanceof AbstractTreeNode<?> node) {
+      if (node.getEqualityObject() instanceof SmartPsiElementPointer<?> ptr) {
+        return new ProjectViewNodeVisitor(ptr);
+      }
       object = node.getValue();
     }
-    if (object instanceof ProjectFileNode) {
+    else if (object instanceof ProjectFileNode) {
       ProjectFileNode node = (ProjectFileNode)object;
-      object = node.getVirtualFile();
+      return createVisitor(node.getVirtualFile());
     }
     if (object instanceof VirtualFile) return createVisitor((VirtualFile)object);
     if (object instanceof PsiElement) return createVisitor((PsiElement)object);

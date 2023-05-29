@@ -72,7 +72,7 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
     private data class KotlinCachedInjection(val modificationCount: Long, val baseInjection: BaseInjection)
 
     private var KtElement.cachedInjectionWithModification: KotlinCachedInjection? by UserDataProperty(
-        Key.create<KotlinCachedInjection>("CACHED_INJECTION_WITH_MODIFICATION")
+        Key.create("CACHED_INJECTION_WITH_MODIFICATION")
     )
 
     private fun getBaseInjection(ktHost: KtElement, support: LanguageInjectionSupport): Injection {
@@ -496,5 +496,5 @@ internal fun isSupportedElement(context: KtElement): Boolean {
 }
 
 internal var KtElement.indentHandler: IndentHandler? by UserDataProperty(
-    Key.create<IndentHandler>("KOTLIN_INDENT_HANDLER")
+    Key.create("KOTLIN_INDENT_HANDLER")
 )

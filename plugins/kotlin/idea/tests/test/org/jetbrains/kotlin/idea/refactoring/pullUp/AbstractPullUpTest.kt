@@ -11,7 +11,7 @@ import com.intellij.refactoring.util.DocCommentPolicy
 import com.intellij.refactoring.util.RefactoringHierarchyUtil
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.kotlin.idea.base.util.getPackage
+import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.refactoring.AbstractMemberPullPushTest
 import org.jetbrains.kotlin.idea.refactoring.chooseMembers
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
@@ -56,13 +56,13 @@ abstract class AbstractPullUpTest : AbstractMemberPullPushTest() {
 
             val targetDirectory = targetClass.containingFile.containingDirectory
             val conflicts = PullUpConflictsUtil.checkConflicts(
-              memberInfos,
-              sourceClass,
-              targetClass,
-              targetDirectory.getPackage()!!,
-              targetDirectory,
-              { psiMethod: PsiMethod -> PullUpProcessor.checkedInterfacesContain(memberInfoList, psiMethod) },
-              true
+                memberInfos,
+                sourceClass,
+                targetClass,
+                targetDirectory.getPackage()!!,
+                targetDirectory,
+                { psiMethod: PsiMethod -> PullUpProcessor.checkedInterfacesContain(memberInfoList, psiMethod) },
+                true
             )
             if (!conflicts.isEmpty) throw BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values())
 

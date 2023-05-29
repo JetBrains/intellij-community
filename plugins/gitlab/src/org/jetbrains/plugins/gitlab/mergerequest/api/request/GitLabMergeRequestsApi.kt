@@ -2,17 +2,20 @@
 package org.jetbrains.plugins.gitlab.mergerequest.api.request
 
 import com.intellij.collaboration.api.json.loadJsonList
+import com.intellij.collaboration.api.json.loadOptionalJsonList
 import com.intellij.collaboration.util.resolveRelative
 import com.intellij.collaboration.util.withQuery
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQueries
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.api.dto.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.restApiUri
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestApprovalRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
+import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
@@ -35,28 +38,23 @@ suspend fun GitLabApi.loadMergeRequest(
   return loadGQLResponse(request, GitLabMergeRequestDTO::class.java, "project", "mergeRequest")
 }
 
-suspend fun GitLabApi.loadMergeRequestStateEvents(project: GitLabProjectCoordinates,
-                                                  mr: GitLabMergeRequestId)
-  : HttpResponse<out List<GitLabResourceStateEventDTO>> {
-  val uri = project.restApiUri.resolveRelative("merge_requests").resolveRelative(mr.iid).resolveRelative("resource_state_events")
-  val request = request(uri).GET().build()
-  return loadJsonList(request)
-}
+fun getMergeRequestStateEventsUri(project: GitLabProjectCoordinates, mr: GitLabMergeRequestId): URI =
+  project.restApiUri.resolveRelative("merge_requests").resolveRelative(mr.iid).resolveRelative("resource_state_events")
 
-suspend fun GitLabApi.loadMergeRequestLabelEvents(project: GitLabProjectCoordinates,
-                                                  mr: GitLabMergeRequestId)
-  : HttpResponse<out List<GitLabResourceLabelEventDTO>> {
-  val uri = project.restApiUri.resolveRelative("merge_requests").resolveRelative(mr.iid).resolveRelative("resource_label_events")
-  val request = request(uri).GET().build()
-  return loadJsonList(request)
-}
+fun getMergeRequestLabelEventsUri(project: GitLabProjectCoordinates, mr: GitLabMergeRequestId): URI =
+  project.restApiUri.resolveRelative("merge_requests").resolveRelative(mr.iid).resolveRelative("resource_label_events")
 
-suspend fun GitLabApi.loadMergeRequestMilestoneEvents(project: GitLabProjectCoordinates,
-                                                      mr: GitLabMergeRequestId)
-  : HttpResponse<out List<GitLabResourceMilestoneEventDTO>> {
-  val uri = project.restApiUri.resolveRelative("merge_requests").resolveRelative(mr.iid).resolveRelative("resource_milestone_events")
-  val request = request(uri).GET().build()
-  return loadJsonList(request)
+fun getMergeRequestMilestoneEventsUri(project: GitLabProjectCoordinates, mr: GitLabMergeRequestId): URI =
+  project.restApiUri.resolveRelative("merge_requests").resolveRelative(mr.iid).resolveRelative("resource_milestone_events")
+
+suspend inline fun <reified T> GitLabApi.loadUpdatableJsonList(uri: URI, eTag: String? = null)
+  : HttpResponse<out List<T>?> {
+  val request = request(uri).GET().apply {
+    if (eTag != null) {
+      header("If-None-Match", eTag)
+    }
+  }.build()
+  return loadOptionalJsonList(request)
 }
 
 suspend fun GitLabApi.mergeRequestApprove(

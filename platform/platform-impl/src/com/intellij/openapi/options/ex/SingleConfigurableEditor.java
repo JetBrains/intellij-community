@@ -172,7 +172,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     return "#" + displayName;
   }
 
-  protected class ApplyAction extends AbstractAction {
+  protected class ApplyAction extends DialogWrapperAction {
     private final Alarm myUpdateAlarm = new Alarm(getDisposable());
 
     public ApplyAction() {
@@ -203,10 +203,8 @@ public class SingleConfigurableEditor extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(ActionEvent event) {
-      if (myPerformAction) return;
+    protected void doAction(ActionEvent event) {
       try {
-        myPerformAction = true;
         if (myConfigurable.isModified()) {
           myConfigurable.apply();
           mySaveAllOnClose = true;
@@ -220,9 +218,6 @@ public class SingleConfigurableEditor extends DialogWrapper {
         else {
           Messages.showMessageDialog(getRootPane(), e.getMessage(), e.getTitle(), Messages.getErrorIcon());
         }
-      }
-      finally {
-        myPerformAction = false;
       }
     }
   }

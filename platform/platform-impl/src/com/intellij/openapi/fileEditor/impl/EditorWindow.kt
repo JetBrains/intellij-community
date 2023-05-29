@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "PrivatePropertyName")
 
 package com.intellij.openapi.fileEditor.impl
@@ -506,7 +506,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   }
 
   fun closeAllExcept(selectedFile: VirtualFile?) {
-    FileEditorManagerImpl.runBulkTabChange(owner) {
+    runBulkTabChange(owner) {
       for (file in getFileSequence().toList()) {
         if (file != selectedFile && !isFilePinned(file)) {
           closeFile(file)
@@ -546,7 +546,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   }
 
   internal fun closeFile(file: VirtualFile, composite: EditorComposite?, disposeIfNeeded: Boolean = true) {
-    FileEditorManagerImpl.runBulkTabChange(owner) {
+    runBulkTabChange(owner) {
       val fileEditorManager = manager
       try {
         fileEditorManager.project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
@@ -643,7 +643,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
         val composite = getComposite(histFile) ?: continue
         val histFileIndex = findComponentIndex(composite.component)
         if (histFileIndex >= 0) {
-          // if the file being closed is located before the hist file, then after closing the index of the histFile will be shifted by -1
+          // if the file being closed is located before the hist file, then after closing, the index of the histFile will be shifted by -1
           return histFileIndex
         }
       }
@@ -652,7 +652,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       return fileIndex + 1
     }
 
-    // by default, select previous neighbour
+    // by default, select the previous neighbour
     return if (fileIndex > 0) fileIndex - 1 else -1
   }
 

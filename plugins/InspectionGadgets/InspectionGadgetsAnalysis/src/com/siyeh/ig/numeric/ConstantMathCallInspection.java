@@ -15,8 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
@@ -71,11 +70,11 @@ public class ConstantMathCallInspection extends BaseInspection implements Cleanu
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new MakeStrictFix();
   }
 
-  private static class MakeStrictFix extends InspectionGadgetsFix {
+  private static class MakeStrictFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -85,9 +84,9 @@ public class ConstantMathCallInspection extends BaseInspection implements Cleanu
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
       final PsiIdentifier nameIdentifier =
-        (PsiIdentifier)descriptor.getPsiElement();
+        (PsiIdentifier)startElement;
       final PsiReferenceExpression reference =
         (PsiReferenceExpression)nameIdentifier.getParent();
       assert reference != null;

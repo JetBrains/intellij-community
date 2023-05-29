@@ -11,10 +11,6 @@ import org.jetbrains.intellij.build.BuildContext
 import java.lang.StackWalker.Option
 import kotlin.streams.asSequence
 
-const val APP_JAR: String = "app.jar"
-const val PRODUCT_JAR: String = "product.jar"
-const val TEST_FRAMEWORK_JAR: String = "testFramework.jar"
-
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
  */

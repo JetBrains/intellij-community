@@ -191,29 +191,6 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
       }
     }
   }
-
-  @ScheduledForRemoval
-  @Deprecated(
-    message = "Use ProjectFUStateUsagesLogger.scheduleLogProjectState",
-    ReplaceWith(
-      "project.service<ProjectFUStateUsagesLogger>().scheduleLogProjectState().join()",
-      "com.intellij.openapi.components.service"
-    ),
-  )
-  suspend fun logProjectStates(project: Project) {
-    project.service<ProjectFUStateUsagesLogger>().scheduleLogProjectState().join()
-  }
-
-  @ScheduledForRemoval
-  @Deprecated(
-    message = "Use FUStateUsagesLogger.scheduleLogProjectState",
-    replaceWith = ReplaceWith(
-      "scheduleLogApplicationState().join()"
-    ),
-  )
-  suspend fun logApplicationStates() {
-    scheduleLogApplicationState().join()
-  }
 }
 
 @Internal

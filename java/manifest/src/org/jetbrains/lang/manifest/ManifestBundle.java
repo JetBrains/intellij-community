@@ -6,16 +6,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public final class ManifestBundle extends DynamicBundle {
-
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
-    return BUNDLE.getMessage(key, params);
-  }
-
-  public static final String PATH_TO_BUNDLE = "messages.ManifestBundle";
-  private static final ManifestBundle BUNDLE = new ManifestBundle();
+public final class ManifestBundle {
+  private static final String BUNDLE = "messages.ManifestBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(ManifestBundle.class, BUNDLE);
 
   private ManifestBundle() {
-    super(PATH_TO_BUNDLE);
+  }
+
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getMessage(key, params);
   }
 }

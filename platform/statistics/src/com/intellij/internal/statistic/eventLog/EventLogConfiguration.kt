@@ -18,10 +18,12 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.MathUtil
 import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.bytesToHex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nullable
 import java.nio.file.Path
@@ -34,7 +36,7 @@ import java.util.prefs.Preferences
 @Service(Service.Level.APP)
 class EventLogConfiguration {
   companion object {
-    internal val LOG: Logger = Logger.getInstance(EventLogConfiguration::class.java)
+    internal val LOG: Logger = logger<EventLogConfiguration>()
 
     internal const val UNDEFINED_DEVICE_ID = "000000000000000-0000-0000-0000-000000000000"
 
@@ -54,12 +56,12 @@ class EventLogConfiguration {
       val md = DigestUtil.sha256()
       md.update(salt)
       md.update(data.toByteArray())
-      return StringUtil.toHexString(md.digest())
+      return bytesToHex(md.digest())
     }
 
     fun getOrGenerateSaltFromPrefs(recorderId: String): ByteArray{
       val companyName = ApplicationInfoImpl.getShadowInstance().shortCompanyName
-      val name = if (StringUtil.isEmptyOrSpaces(companyName)) "jetbrains" else companyName.lowercase(Locale.US)
+      val name = if (companyName.isNullOrBlank()) "jetbrains" else companyName.lowercase(Locale.US)
       val prefs = Preferences.userRoot().node(name)
 
       val saltKey = getSaltPropertyKey(recorderId)

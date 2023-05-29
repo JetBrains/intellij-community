@@ -210,14 +210,6 @@ fun <T> CoroutineScope.startChildBackgroundAsync(
   action: suspend CoroutineScope.() -> T
 ) = async(applicationThreadPool, start, action)
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use startChildNonUrgentBackgroundAsync without lifetime or use lifetimedCoroutineScope", ReplaceWith("startChildNonUrgentBackgroundAsync(start, action)"))
-fun <T> CoroutineScope.startChildNonUrgentBackgroundAsync(
-  lifetime: Lifetime,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> T
-): Deferred<T> = startChildAsync(lifetime, nonUrgentDispatcher, start, action)
-
 fun <T> CoroutineScope.startChildNonUrgentBackgroundAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> T

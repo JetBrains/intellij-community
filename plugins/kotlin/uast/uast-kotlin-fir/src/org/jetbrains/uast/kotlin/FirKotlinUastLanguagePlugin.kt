@@ -1,15 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.project.structure.KtNotUnderContentRootModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.uast.DEFAULT_TYPES_LIST
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
@@ -35,7 +37,7 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
 
     private val PsiElement.isJvmElement: Boolean
         get() {
-            val resolveProvider = ServiceManager.getService(project, FirKotlinUastResolveProviderService::class.java)
+            val resolveProvider = project.getService(FirKotlinUastResolveProviderService::class.java)
             return resolveProvider.isJvmElement(this)
         }
 

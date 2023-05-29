@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
@@ -22,7 +23,6 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class ObjectNotifyInspection extends BaseInspection {
@@ -46,7 +46,7 @@ public class ObjectNotifyInspection extends BaseInspection {
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new ObjectNotifyFix();
   }
 

@@ -1124,7 +1124,6 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     return new LocalInspectionToolWrapper(foo);
   }
 
-  @SuppressWarnings("InspectionDescriptionNotFoundInspection")
   public static class TestTool extends LocalInspectionTool {
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.coverage.view;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ui.components.JBTreeTable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +47,7 @@ public class CoverageRowSorter extends RowSorter<TableModel> {
 
   @Override
   public List<? extends SortKey> getSortKeys() {
-    return mySortKey == null ? Collections.emptyList() : Collections.singletonList(mySortKey);
+    return ContainerUtil.createMaybeSingletonList(mySortKey);
   }
 
   @Override

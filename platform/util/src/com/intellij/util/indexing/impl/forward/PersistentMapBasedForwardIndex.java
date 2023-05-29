@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -31,9 +31,8 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex, MeasurableI
     myReadOnly = isReadOnly;
   }
 
-  @Nullable
   @Override
-  public ByteArraySequence get(@NotNull Integer key) throws IOException {
+  public @Nullable ByteArraySequence get(@NotNull Integer key) throws IOException {
     return myPersistentMap.get(key);
   }
 
@@ -76,11 +75,10 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex, MeasurableI
     return myPersistentMap;
   }
 
-  @NotNull
-  private static PersistentMap<Integer, ByteArraySequence> createMap(@NotNull Path file,
-                                                                     boolean useChunks,
-                                                                     boolean isReadOnly,
-                                                                     @Nullable StorageLockContext storageLockContext) throws IOException {
+  private static @NotNull PersistentMap<Integer, ByteArraySequence> createMap(@NotNull Path file,
+                                                                              boolean useChunks,
+                                                                              boolean isReadOnly,
+                                                                              @Nullable StorageLockContext storageLockContext) throws IOException {
     assert PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get() == null || storageLockContext == null;
     PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext);
     try {

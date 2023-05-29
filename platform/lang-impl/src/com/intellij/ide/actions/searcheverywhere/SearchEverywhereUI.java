@@ -965,7 +965,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
 
     if (myMlService != null) {
-      myMlService.onItemSelected(myProject, indexes, selectedItems, closePopup, () -> myListModel.getFoundElementsInfo());
+      var tabId = myHeader.getSelectedTab().getID();
+      myMlService.onItemSelected(myProject, tabId, indexes, selectedItems, () -> myListModel.getFoundElementsInfo(), closePopup);
     }
 
     if (closePopup) {

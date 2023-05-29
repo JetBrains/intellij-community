@@ -53,6 +53,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return enabled ? myIcon : myDisabledIcon;
   }
   private boolean mySmallVariant = true;
+  private boolean myFontSet;
   protected @NlsContexts.PopupTitle String myPopupTitle;
 
 
@@ -341,7 +342,14 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public Font getFont() {
+      if (myFontSet) return super.getFont();
       return isSmallVariant() ? UIUtil.getToolbarFont() : StartupUiUtil.getLabelFont();
+    }
+
+    @Override
+    public void setFont(Font font) {
+      super.setFont(font);
+      myFontSet = true;
     }
 
     @Override

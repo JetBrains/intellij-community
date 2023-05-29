@@ -33,5 +33,5 @@ public abstract class RemoteProcess extends Process implements SelfKiller, Proce
   @Nullable
   public abstract HostAndPort getLocalTunnel(int remotePort);
 
-
+  public abstract void setWindowSize(int columns, int rows);
 }

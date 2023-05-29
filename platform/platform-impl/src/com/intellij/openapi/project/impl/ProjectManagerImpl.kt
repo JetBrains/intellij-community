@@ -9,9 +9,6 @@ import com.intellij.conversion.CannotConvertException
 import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.*
-import com.intellij.diagnostic.telemetry.tracer
-import com.intellij.openapi.util.ProjectManagerScope
-import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
 import com.intellij.ide.impl.*
@@ -32,13 +29,17 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ModalTaskOwner
@@ -48,7 +49,7 @@ import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.ProjectImpl.Companion.preloadServicesAndCreateComponents
+import com.intellij.openapi.project.impl.ProjectImpl.Companion.preloadServices
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -64,7 +65,9 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.attachToProjectAsync
-import com.intellij.platform.jps.model.impl.diagnostic.JpsMetrics
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
+import com.intellij.platform.jps.model.diagnostic.JpsMetrics
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IdeUICustomization
@@ -191,7 +194,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   override fun loadProject(path: Path): Project {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
-    val project = ProjectImpl(filePath = path, projectName = null)
+    val project = ProjectImpl(filePath = path, projectName = null, parent = ApplicationManager.getApplication() as ComponentManagerImpl)
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(modalityState.asContextElement()) {
@@ -369,7 +372,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     // somebody can start progress here, do not wrap in write action
     fireProjectClosing(project)
     if (project is ProjectImpl) {
-      joinBlocking(project)
+      cancelAndJoinBlocking(project)
     }
     app.runWriteAction {
       removeFromOpened(project)
@@ -807,7 +810,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   protected open fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
     val activity = StartUpMeasurer.startActivity("project instantiation")
-    val project = ProjectImpl(filePath = projectStoreBaseDir, projectName = options.projectName)
+    val project = ProjectImpl(filePath = projectStoreBaseDir,
+                              projectName = options.projectName,
+                              parent = ApplicationManager.getApplication() as ComponentManagerImpl)
     activity.end()
     options.beforeInit?.invoke(project)
     return project
@@ -921,7 +926,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 }
 
-private val tracer by lazy { ProjectManagerScope.tracer() }
+private val tracer by lazy { TelemetryTracer.getInstance().getTracer(ProjectManagerScope) }
 
 @NlsSafe
 private fun message(e: Throwable): String {
@@ -941,9 +946,7 @@ fun CoroutineScope.runInitProjectActivities(project: Project) {
     (StartupManager.getInstance(project) as StartupManagerImpl).initProject()
   }
 
-  val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
-  launchAndMeasure("projectOpened event executing", Dispatchers.EDT) {
-    waitEdtActivity.end()
+  launch(CoroutineName("projectOpened event executing") + Dispatchers.EDT) {
     tracer.spanBuilder("projectOpened event executing").useWithScope2 {
       @Suppress("DEPRECATION", "removal")
       ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
@@ -957,22 +960,13 @@ fun CoroutineScope.runInitProjectActivities(project: Project) {
     return
   }
 
-  launchAndMeasure("projectOpened component executing", Dispatchers.EDT) {
+  launch(CoroutineName("projectOpened component executing") + Dispatchers.EDT) {
     for (component in projectComponents) {
-      try {
+      runCatching {
         val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER)
         component.projectOpened()
         componentActivity.end()
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
+      }.getOrLogException(LOG)
     }
   }
 }
@@ -1188,7 +1182,21 @@ private suspend fun initProject(file: Path,
 
       rawProjectDeferred?.complete(project)
 
-      preloadServicesAndCreateComponents(project, preloadServices)
+      val beforeComponentCreation: Job? = if (rawProjectDeferred == null) {
+        null
+      }
+      else {
+        (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob
+      }
+
+      if (preloadServices) {
+        preloadServices(project)
+      }
+
+      launch {
+        beforeComponentCreation?.join()
+        project.createComponentsNonBlocking()
+      }
 
       if (!isTrusted.await()) {
         throw CancellationException("not trusted")

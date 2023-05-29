@@ -76,15 +76,13 @@ abstract class WorkspaceModelChecker<V : Any>(private val respectOrder: Boolean)
         testConfiguration: TestConfiguration,
         agpClassifier: String?,
     ) {
-        val kotlinClassifier = with(kotlinPluginVersion) { "$major.$minor.$patch" }
-        val testClassifier = testConfiguration.getConfiguration(GeneralWorkspaceChecks).testClassifier
         val expectedTestDataFile = findMostSpecificExistingFileOrNewDefault(
             classifier,
             expectedTestDataDir,
-            kotlinClassifier,
+            kotlinPluginVersion,
             gradleVersion,
             agpClassifier,
-            testClassifier
+            testConfiguration
         )
 
         val actualProjectReport = buildProjectReport(project, actualTestProjectRoot, testConfiguration, kotlinPluginVersion)

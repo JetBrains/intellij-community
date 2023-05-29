@@ -98,6 +98,7 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
   }
 
   @Deprecated("Use customize(UnscaledGaps) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): SegmentedButton<T> {
     return customize(customGaps.toUnscaled())
   }

@@ -21,7 +21,7 @@ import com.intellij.util.indexing.testEntities.IndexingTestEntity;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar;
-import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import com.intellij.workspaceModel.storage.EntityReference;
 import com.intellij.workspaceModel.storage.EntityStorage;
@@ -151,14 +151,7 @@ public class EntityIndexingServiceOnCustomEntitiesWithCustomizedIndexingTest ext
     public void registerFileSets(@NotNull IndexingTestEntity entity,
                                  @NotNull WorkspaceFileSetRegistrar registrar,
                                  @NotNull EntityStorage storage) {
-      ModuleContentOrSourceRootData data = new ModuleContentOrSourceRootData() {
-
-        @Nullable
-        @Override
-        public VirtualFile getCustomContentRoot() {
-          return null;
-        }
-
+      ModuleRelatedRootData data = new ModuleRelatedRootData() {
         @NotNull
         @Override
         public Module getModule() {

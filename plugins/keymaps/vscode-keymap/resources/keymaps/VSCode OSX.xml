@@ -198,14 +198,14 @@
         <keyboard-shortcut first-keystroke="ctrl j" />
     </action>
     <action id="EditorLineEnd">
-        <keyboard-shortcut first-keystroke="END"/>
         <keyboard-shortcut first-keystroke="meta right" />
         <keyboard-shortcut first-keystroke="control E"/>
+        <keyboard-shortcut first-keystroke="END"/>
     </action>
     <action id="EditorLineStart">
-        <keyboard-shortcut first-keystroke="END"/>
         <keyboard-shortcut first-keystroke="meta left" />
         <keyboard-shortcut first-keystroke="control A"/>
+        <keyboard-shortcut first-keystroke="HOME"/>
     </action>
     <action id="EditorMatchBrace">
         <keyboard-shortcut first-keystroke="shift meta back_slash" />

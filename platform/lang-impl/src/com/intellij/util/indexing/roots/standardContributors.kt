@@ -18,6 +18,7 @@ import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
+import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -171,7 +172,8 @@ internal class WorkspaceFileIndexContributorBasedContributor : IndexableFilesCon
 
     val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
     val settings = WorkspaceIndexingRootsBuilder.Companion.Settings()
-    settings.retainCondition = Condition { contributor -> contributor !is PlatformInternalWorkspaceFileIndexContributor }
+    settings.retainCondition = Condition { contributor -> contributor.storageKind == EntityStorageKind.MAIN &&
+                                                          contributor !is PlatformInternalWorkspaceFileIndexContributor }
     val builder = WorkspaceIndexingRootsBuilder.registerEntitiesFromContributors(project, entityStorage, settings)
     val result = mutableListOf<IndexableFilesIterator>()
     builder.addIteratorsFromRoots(result, mutableSetOf(), entityStorage)

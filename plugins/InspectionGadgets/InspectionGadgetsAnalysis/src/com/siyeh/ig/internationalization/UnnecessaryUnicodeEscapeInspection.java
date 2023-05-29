@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -17,7 +19,6 @@ import com.intellij.psi.PsiFile;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,15 +54,13 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryUnicodeEscapeFix(((Character) infos[0]).charValue(), (RangeMarker)infos[1]);
   }
 
-  private static class UnnecessaryUnicodeEscapeFix extends InspectionGadgetsFix {
+  private static class UnnecessaryUnicodeEscapeFix extends PsiUpdateModCommandQuickFix {
 
     private final char c;
-    // It holds the original document but we take care not to use it
-    @SafeFieldForPreview
     private final RangeMarker myRangeMarker;
 
     UnnecessaryUnicodeEscapeFix(char c, RangeMarker rangeMarker) {
@@ -88,8 +87,8 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      Document document = descriptor.getPsiElement().getContainingFile().getViewProvider().getDocument();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      Document document = startElement.getContainingFile().getViewProvider().getDocument();
       if (document != null) {
         document.replaceString(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset(), String.valueOf(c));
       }

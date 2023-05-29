@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl
 
 import com.intellij.find.FindBundle
@@ -34,11 +34,13 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
+import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import javax.swing.ListCellRenderer
 
-internal class TextSearchContributor(
+@ApiStatus.Internal
+class TextSearchContributor(
   val event: AnActionEvent
 ) : WeightedSearchEverywhereContributor<SearchEverywhereItem>,
     SearchFieldActionsContributor,
@@ -103,7 +105,7 @@ internal class TextSearchContributor(
       }
       else {
         SearchEverywhereItem(usage, usagePresentation(project, scope, usage)).also {
-         if (!consumer.process(FoundItemDescriptor(it, 0))) return@findUsages false
+          if (!consumer.process(FoundItemDescriptor(it, 0))) return@findUsages false
         }
       }
       recentItemRef.set(WeakReference(newItem))
@@ -128,9 +130,17 @@ internal class TextSearchContributor(
 
   override fun createRightActions(onChanged: Runnable): List<TextSearchRightActionAction> {
     lateinit var regexp: AtomicBooleanProperty
-    val word = AtomicBooleanProperty(model.isWholeWordsOnly).apply { afterChange { model.isWholeWordsOnly = it; if (it) regexp.set(false) } }
+    val word = AtomicBooleanProperty(model.isWholeWordsOnly).apply {
+      afterChange {
+        model.isWholeWordsOnly = it; if (it) regexp.set(false)
+      }
+    }
     val case = AtomicBooleanProperty(model.isCaseSensitive).apply { afterChange { model.isCaseSensitive = it } }
-    regexp = AtomicBooleanProperty(model.isRegularExpressions).apply { afterChange { model.isRegularExpressions = it; if (it) word.set(false) } }
+    regexp = AtomicBooleanProperty(model.isRegularExpressions).apply {
+      afterChange {
+        model.isRegularExpressions = it; if (it) word.set(false)
+      }
+    }
 
     return listOf(CaseSensitiveAction(case, onChanged), WordAction(word, onChanged), RegexpAction(regexp, onChanged))
   }
@@ -151,7 +161,8 @@ internal class TextSearchContributor(
 
   private fun setSelectedScope(scope: ScopeDescriptor) {
     selectedScopeDescriptor = scope
-    SE_TEXT_SELECTED_SCOPE.set(project, if (scope.scopeEquals(everywhereScope) || scope.scopeEquals(projectScope)) null else scope.displayName)
+    SE_TEXT_SELECTED_SCOPE.set(project,
+                               if (scope.scopeEquals(everywhereScope) || scope.scopeEquals(projectScope)) null else scope.displayName)
     FindSettings.getInstance().customScope = selectedScopeDescriptor.scope?.displayName
 
     model.customScopeName = selectedScopeDescriptor.scope?.displayName
@@ -206,7 +217,7 @@ internal class TextSearchContributor(
     private fun enabled() = AdvancedSettings.getBoolean(ADVANCED_OPTION_ID)
 
     class Factory : SearchEverywhereContributorFactory<SearchEverywhereItem> {
-      override fun isAvailable() = enabled()
+      override fun isAvailable(project: Project) = enabled()
       override fun createContributor(event: AnActionEvent) = TextSearchContributor(event)
     }
 
@@ -218,14 +229,6 @@ internal class TextSearchContributor(
 
       override fun actionPerformed(e: AnActionEvent) {
         showInSearchEverywherePopup(ID, e, true, true)
-      }
-    }
-
-    internal class TextSearchActivity : ProjectActivity {
-      override suspend fun execute(project: Project) {
-        RunOnceUtil.runOnceForApp(ADVANCED_OPTION_ID) {
-          AdvancedSettings.setBoolean(ADVANCED_OPTION_ID, PlatformUtils.isRider())
-        }
       }
     }
   }

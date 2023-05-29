@@ -48,7 +48,8 @@ class NewProjectWizardLanguageStep(
     if (PlatformUtils.isIdeaCommunity())
       mapOf(
         Language.PYTHON to "PythonCore",
-        Language.SCALA to "org.intellij.scala"
+        Language.SCALA to "org.intellij.scala",
+        Language.RUST to "org.rust.lang"
       )
     else
       mapOf(
@@ -56,7 +57,8 @@ class NewProjectWizardLanguageStep(
         Language.RUBY to "org.jetbrains.plugins.ruby",
         Language.PHP to "com.jetbrains.php",
         Language.PYTHON to "Pythonid",
-        Language.SCALA to "org.intellij.scala"
+        Language.SCALA to "org.intellij.scala",
+        Language.RUST to "org.rust.lang"
       )
 
   override fun createAndSetupSwitcher(builder: Row): SegmentedButton<String> {

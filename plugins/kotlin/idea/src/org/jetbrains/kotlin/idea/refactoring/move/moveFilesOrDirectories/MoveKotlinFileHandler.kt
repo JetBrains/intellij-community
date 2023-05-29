@@ -17,8 +17,6 @@ import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
 import org.jetbrains.kotlin.idea.refactoring.move.*
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDelegate
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDescriptor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
 import org.jetbrains.kotlin.idea.roots.isOutsideKotlinAwareSourceRoot
 import org.jetbrains.kotlin.psi.KtFile
@@ -83,14 +81,14 @@ class MoveKotlinFileHandler : MoveFileHandler() {
 
         return MoveKotlinDeclarationsProcessor(
             MoveDeclarationsDescriptor(
-                project = project,
-                moveSource = KotlinMoveSource(psiFile),
-                moveTarget = moveTarget,
-                delegate = MoveDeclarationsDelegate.TopLevel,
-                allElementsToMove = psiFile.allElementsToMove,
-                analyzeConflicts = withConflicts,
-                searchInCommentsAndStrings = searchInCommentsAndStrings,
-                searchInNonCode = searchInNonCode,
+              project = project,
+              moveSource = KotlinMoveSource(psiFile),
+              moveTarget = moveTarget,
+              delegate = KotlinMoveDeclarationDelegate.TopLevel,
+              allElementsToMove = psiFile.allElementsToMove,
+              analyzeConflicts = withConflicts,
+              searchInCommentsAndStrings = searchInCommentsAndStrings,
+              searchInNonCode = searchInNonCode,
             )
         )
     }

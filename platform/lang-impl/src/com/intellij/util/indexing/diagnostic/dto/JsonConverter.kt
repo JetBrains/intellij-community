@@ -2,6 +2,8 @@
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.intellij.util.indexing.diagnostic.*
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectDumbIndexingHistory.JsonStatsPerFileType
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectDumbIndexingHistory.JsonStatsPerParentLanguage
 import java.time.Duration
 
 fun TimeNano.toMillis(): TimeMillis = this / 1_000_000
@@ -179,11 +181,13 @@ private fun ProjectDumbIndexingHistoryImpl.changeToJson(): JsonProjectDumbIndexi
     timesImpl.appliedAllValuesSeparately = false
     timesImpl.separateValueApplicationVisibleTime = 0
   }
+  val (statsPerFileType, statsPerParentLanguage) = aggregateStatsPerFileTypeAndLanguage()
   return JsonProjectDumbIndexingHistory(
     projectName = project.name,
     times = times.toJson(),
     fileCount = getFileCount(),
-    totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalProcessingTime.doublePercentages },
+    totalStatsPerFileType = statsPerFileType.sortedByDescending { it.partOfTotalProcessingTime.doublePercentages },
+    totalStatsPerBaseLanguage = statsPerParentLanguage.sortedByDescending { it.partOfTotalProcessingTime.doublePercentages },
     totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
     scanningStatisticsOfRefreshedFiles = refreshedScanningStatistics,
     fileProviderStatistics = providerStatistics.sortedByDescending { it.totalIndexingVisibleTime.nano },
@@ -252,7 +256,7 @@ private fun ProjectIndexingHistoryImpl.aggregateStatsPerFileType(): List<JsonPro
   }
 }
 
-private fun ProjectDumbIndexingHistoryImpl.aggregateStatsPerFileType(): List<JsonProjectDumbIndexingHistory.JsonStatsPerFileType> {
+private fun ProjectDumbIndexingHistoryImpl.aggregateStatsPerFileTypeAndLanguage(): Pair<List<JsonStatsPerFileType>, List<JsonStatsPerParentLanguage>> {
   val totalProcessingTime = totalStatsPerFileType.values.sumOf { it.totalProcessingTimeInAllThreads }
   val fileTypeToProcessingTimePart = totalStatsPerFileType.mapValues {
     calculatePercentages(it.value.totalProcessingTimeInAllThreads, totalProcessingTime)
@@ -268,16 +272,37 @@ private fun ProjectDumbIndexingHistoryImpl.aggregateStatsPerFileType(): List<Jso
     JsonProcessingSpeed(it.value.totalBytes, it.value.totalProcessingTimeInAllThreads)
   }
 
-  return totalStatsPerFileType.map { (fileType, stats) ->
+  data class LanguageData(var totalNumberOfFiles: Int,
+                          var totalBytes: BytesNumber,
+                          var totalProcessingTimeInAllThreads: TimeNano,
+                          val totalContentLoadingTime: TimeNano) {
+    fun plus(fileTypeStats: ProjectDumbIndexingHistoryImpl.StatsPerFileTypeImpl): LanguageData =
+      LanguageData(totalNumberOfFiles = totalNumberOfFiles + fileTypeStats.totalNumberOfFiles,
+                   totalBytes = totalBytes + fileTypeStats.totalBytes,
+                   totalProcessingTimeInAllThreads = totalProcessingTimeInAllThreads + fileTypeStats.totalProcessingTimeInAllThreads,
+                   totalContentLoadingTime = totalContentLoadingTime + fileTypeStats.totalContentLoadingTimeInAllThreads)
+  }
+
+  val languageMap: MutableMap<String, LanguageData> = mutableMapOf()
+  totalStatsPerFileType.values.forEach { stat ->
+    stat.parentLanguages.forEach { lang ->
+      val data: LanguageData = languageMap.computeIfAbsent(lang) {
+        LanguageData(0, 0, 0, 0)
+      }
+      languageMap[lang] = data.plus(stat)
+    }
+  }
+
+  val statsPerFileTypes = totalStatsPerFileType.map { (fileType, stats) ->
     val jsonBiggestFileTypeContributors = stats.biggestFileTypeContributors.biggestElements.map {
-      JsonProjectDumbIndexingHistory.JsonStatsPerFileType.JsonBiggestFileTypeContributor(
+      JsonStatsPerFileType.JsonBiggestFileTypeContributor(
         it.providerName,
         it.numberOfFiles,
         JsonFileSize(it.totalBytes),
         calculatePercentages(it.processingTimeInAllThreads, stats.totalProcessingTimeInAllThreads)
       )
     }
-    JsonProjectDumbIndexingHistory.JsonStatsPerFileType(
+    JsonStatsPerFileType(
       fileType,
       fileTypeToProcessingTimePart.getValue(fileType),
       fileTypeToContentLoadingTimePart.getValue(fileType),
@@ -287,6 +312,17 @@ private fun ProjectDumbIndexingHistoryImpl.aggregateStatsPerFileType(): List<Jso
       jsonBiggestFileTypeContributors.sortedByDescending { it.partOfTotalProcessingTimeOfThisFileType.doublePercentages }
     )
   }
+
+  val statsPerParentLang = languageMap.map { (lang, data) ->
+    JsonStatsPerParentLanguage(language = lang,
+                               partOfTotalProcessingTime = calculatePercentages(data.totalProcessingTimeInAllThreads, totalProcessingTime),
+                               partOfTotalContentLoadingTime = calculatePercentages(data.totalContentLoadingTime, totalContentLoadingTime),
+                               totalNumberOfFiles = data.totalNumberOfFiles,
+                               totalFilesSize = JsonFileSize(data.totalBytes),
+                               totalProcessingSpeed = JsonProcessingSpeed(data.totalBytes, data.totalProcessingTimeInAllThreads)
+    )
+  }
+  return Pair(statsPerFileTypes, statsPerParentLang)
 }
 
 private fun ProjectIndexingHistoryImpl.aggregateStatsPerIndexer(): List<JsonProjectIndexingHistory.JsonStatsPerIndexer> {

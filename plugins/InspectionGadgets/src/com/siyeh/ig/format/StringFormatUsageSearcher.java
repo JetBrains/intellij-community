@@ -8,7 +8,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.SyntaxTraverser;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -29,7 +28,7 @@ public class StringFormatUsageSearcher implements UsageSearcher {
         .flatMap(StringFormatSymbolReferenceProvider::getReferences)
         .filter(ref -> ref.resolvesTo(symbol))
         .<Usage>map(PsiUsage::textUsage)
-        .append(ContainerUtil.createMaybeSingletonList(arg == null ? null : new DefUsage(arg)))
+        .append(List.of(new DefUsage(arg)))
         .toList();
     }
     return List.of();

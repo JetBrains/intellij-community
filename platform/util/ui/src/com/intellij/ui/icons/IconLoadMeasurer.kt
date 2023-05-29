@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -32,7 +32,7 @@ object IconLoadMeasurer {
   val loadFromResources = Counter("load-from-resource")
 
   /**
-   * Get icon for action. Measured to understand impact.
+   * Get icon for action. Measured to understand the impact.
    */
   @JvmField
   val actionIcon: Counter = Counter("action-icon")

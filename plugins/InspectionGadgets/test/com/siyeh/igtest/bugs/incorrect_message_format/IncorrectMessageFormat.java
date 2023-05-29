@@ -8,13 +8,13 @@ class MessagePatternsExample {
     format = MessageFormat.format("{0}", 1);
     System.out.println(format);
 
-    format = MessageFormat.<warning descr="No argument for index 2">format</warning>("{2}", <warning descr="Argument with index '0' is not used in the pattern">1</warning>, <warning descr="Argument with index '1' is not used in the pattern">2</warning>); //warning
+    format = MessageFormat.<warning descr="No argument for index '2'">format</warning>("{2}", <warning descr="Argument with index '0' is not used in the pattern">1</warning>, <warning descr="Argument with index '1' is not used in the pattern">2</warning>); //warning
     System.out.println(format);
 
     format = MessageFormat.format("<weak_warning descr="Unpaired quote in message pattern">'</weak_warning>{0}", <warning descr="Argument with index '0' is not used in the pattern">1</warning>); //warning
     System.out.println(format);
 
-    format = MessageFormat.<warning descr="No arguments for indexes: 2,3">format</warning>("{2}, {3}", <warning descr="Argument with index '0' is not used in the pattern">1</warning>, <warning descr="Argument with index '1' is not used in the pattern">2</warning>); //warning
+    format = MessageFormat.<warning descr="No arguments for indexes: 2, 3">format</warning>("{2}, {3}", <warning descr="Argument with index '0' is not used in the pattern">1</warning>, <warning descr="Argument with index '1' is not used in the pattern">2</warning>); //warning
 
     MessageFormat messageFormat = new MessageFormat("<weak_warning descr="Unpaired quote in message pattern">'</weak_warning>{0}"); //warning
 
@@ -77,5 +77,7 @@ class MessagePatternsExample {
 
     format = MessageFormat.format(PATTERN, <warning descr="Argument with index '0' is not used in the pattern">1</warning>); //warning
     System.out.println(format);
+
+    String abc = MessageFormat.format("{1}{2}{3}{65}",6, 5, 4, 3,<error descr="Expression expected">)</error>;
   }
 }

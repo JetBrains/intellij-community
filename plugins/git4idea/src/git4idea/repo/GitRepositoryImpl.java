@@ -8,9 +8,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.VcsScopeKt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.data.util.VcsScopeKt;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import git4idea.GitDisposable;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
@@ -28,11 +29,9 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 
-import static com.intellij.diagnostic.telemetry.ScopesExtensionsKt.tracer;
-import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.vcs.log.data.util.VcsScopeKt.*;
 
 public final class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   private static final Logger LOG = Logger.getInstance(GitRepositoryImpl.class);
@@ -249,7 +248,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
 
   @NotNull
   private GitRepoInfo readRepoInfo() {
-    return computeWithSpan(tracer(VCS), "reading Git repo info", span -> {
+    return computeWithSpan(TelemetryTracer.getInstance().getTracer(VcsScopeKt.VcsScope), "reading Git repo info", span -> {
       span.setAttribute("repository", getShortRepositoryName(this));
 
       File configFile = myRepositoryFiles.getConfigFile();

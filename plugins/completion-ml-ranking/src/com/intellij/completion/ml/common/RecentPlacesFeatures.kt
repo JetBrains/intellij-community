@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.FixedHashMap
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.function.BooleanSupplier
@@ -43,11 +44,7 @@ class RecentPlacesFeatures : ElementFeatureProvider {
       private const val MAX_CHILDREN_PER_PLACE = 10
 
       private fun createFixedSizeSet(maxSize: Int): MutableSet<String> =
-        Collections.newSetFromMap(object : LinkedHashMap<String, Boolean>() {
-          override fun removeEldestEntry(eldest: Map.Entry<String, Boolean>): Boolean {
-            return size > maxSize
-          }
-        })
+        Collections.newSetFromMap(FixedHashMap(maxSize))
 
       fun isInRecentPlaces(value: String) =
         synchronized(recentPlaces) {

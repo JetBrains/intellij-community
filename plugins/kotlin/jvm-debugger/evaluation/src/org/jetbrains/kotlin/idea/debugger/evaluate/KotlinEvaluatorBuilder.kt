@@ -36,8 +36,10 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.util.caching.ConcurrentFactoryCache
-import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariableByName
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
@@ -45,9 +47,6 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator.loadClassesSafely
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.VariableFinder
-import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
-import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
-import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariableByName
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.attachmentByPsiFile
 import org.jetbrains.kotlin.idea.util.application.merge
@@ -196,59 +195,16 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             evaluationException(DefaultErrorMessages.render(it))
         }
 
-        val (bindingContext, filesToCompile) = runReadAction {
-            val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
-            try {
-                val filesToCompile = if (!CodeFragmentCompiler.useIRFragmentCompiler()) {
-                    analyzeInlinedFunctions(
-                        resolutionFacade,
-                        codeFragment,
-                        analyzeOnlyReifiedInlineFunctions = false,
-                    )
-                } else {
-                    // The IR Evaluator is sensitive to the analysis order of files in fragment compilation:
-                    // The codeFragment must be passed _last_ to analysis such that the result is stacked at
-                    // the _bottom_ of the composite analysis result.
-                    //
-                    // The situation as seen from here is as follows:
-                    //   1) `analyzeWithAllCompilerChecks` analyze each individual file passed to it separately.
-                    //   2) The individual results are "stacked" on top of each other.
-                    //   3) With distinct files, "stacking on top" is equivalent to "side by side" - there is
-                    //      no overlap in what is analyzed, so the order doesn't matter: the composite analysis
-                    //      result is just a look-up mechanism for convenience.
-                    //   4) Code Fragments perform partial analysis of the context of the fragment, e.g. a
-                    //      breakpoint in a function causes partial analysis of the surrounding function.
-                    //   5) If the surrounding function is _also_ included in the `filesToCompile`, that
-                    //      function will be analyzed more than once: in particular, fresh symbols will be
-                    //      allocated anew upon repeated analysis.
-                    //   6) Now the order of composition is significant: layering the fragment at the bottom
-                    //      ensures code that needs a consistent view of the entire function (i.e. psi2ir)
-                    //      does not mix the fresh, partial view of the function in the fragment analysis with
-                    //      the complete analysis from the separate analysis of the entire file included in the
-                    //      compilation.
-                    //
-                    fun <T> MutableList<T>.moveToLast(element: T) {
-                        removeAll(listOf(element))
-                        add(element)
-                    }
-
-                    gatherProjectFilesDependedOnByFragment(
-                        codeFragment,
-                        analysisResult.bindingContext
-                    ).toMutableList().apply {
-                        moveToLast(codeFragment)
-                    }
-                }
-                val analysis = resolutionFacade.analyzeWithAllCompilerChecks(filesToCompile)
-                Pair(analysis.bindingContext, filesToCompile)
-            } catch (e: IllegalArgumentException) {
-                evaluationException(e.message ?: e.toString())
-            }
+        // TODO remove this registry key?
+        val compilerStrategy = if (CodeFragmentCompiler.useIRFragmentCompiler()) {
+            IRCodeFragmentCompilingStrategy(codeFragment)
+        } else {
+            OldCodeFragmentCompilingStrategy(codeFragment)
         }
+        val compilerHandler = CodeFragmentCompilerHandler(compilerStrategy)
 
-        val moduleDescriptor = analysisResult.moduleDescriptor
-
-        val result = CodeFragmentCompiler(context).compile(codeFragment, filesToCompile, bindingContext, moduleDescriptor)
+        val result =
+            compilerHandler.compileCodeFragment(codeFragment, analysisResult.moduleDescriptor, analysisResult.bindingContext, context)
 
         if (@Suppress("TestOnlyProblems") LOG_COMPILATIONS) {
             LOG.debug("Compile bytecode for ${codeFragment.text}")

@@ -3,9 +3,9 @@ package com.intellij.ide.ui
 
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.caches.CachesInvalidator
+import com.intellij.idea.getSvgIconCacheFile
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.ui.svg.getSvgIconCacheFile
 import com.intellij.ui.svg.getSvgIconCacheInvalidMarkerFile
 import com.intellij.ui.svg.svgCache
 import java.nio.file.Files
@@ -20,7 +20,10 @@ private class IconDbMaintainer : AppLifecycleListener {
   }
 
   override fun appWillBeClosed(isRestart: Boolean) {
-    svgCache?.close()
+    svgCache?.let {
+      svgCache = null
+      it.close()
+    }
   }
 }
 

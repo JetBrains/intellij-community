@@ -78,10 +78,10 @@ open class FileBasedStorage(file: Path,
     }
   }
 
-  override fun createSaveSession(states: StateMap) = FileSaveSession(states, this)
+  override fun createSaveSession(states: StateMap) = FileSaveSessionProducer(states, this)
 
-  protected open class FileSaveSession(storageData: StateMap, storage: FileBasedStorage) :
-    XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {
+  protected open class FileSaveSessionProducer(storageData: StateMap, storage: FileBasedStorage) :
+    XmlElementStorage.XmlElementStorageSaveSessionProducer<FileBasedStorage>(storageData, storage) {
 
     final override fun isSaveAllowed(): Boolean {
       if (!super.isSaveAllowed()) {
@@ -120,7 +120,7 @@ open class FileBasedStorage(file: Path,
           val file = storage.file
           LOG.debug { "Save $file" }
           try {
-            dataWriter.writeTo(file, this, lineSeparator.separatorString)
+            dataWriter.writeTo(file, this, lineSeparator)
           }
           catch (e: ReadOnlyModificationException) {
             throw e
@@ -348,7 +348,7 @@ private fun doWrite(requestor: StorageManagerFileWriteRequestor, file: VirtualFi
         output.write(lineSeparator.separatorBytes)
       }
       if (dataWriterOrByteArray is DataWriter) {
-        dataWriterOrByteArray.write(output, lineSeparator.separatorString)
+        dataWriterOrByteArray.write(output, lineSeparator)
       }
       else {
         (dataWriterOrByteArray as BufferExposingByteArrayOutputStream).writeTo(output)

@@ -174,7 +174,6 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             )
         }
 
-        @OptIn(ExperimentalStdlibApi::class)
         fun configureFacet(
             moduleData: ModuleData,
             kotlinSourceSet: KotlinSourceSetInfo,

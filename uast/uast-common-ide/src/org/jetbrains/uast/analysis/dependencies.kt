@@ -9,17 +9,17 @@ sealed class Dependent : UserDataHolderBase() {
   abstract val element: UElement
 
   data class CallExpression(val resolvedIndex: Int, val call: UCallExpression, val type: PsiType) : Dependent() {
-    override val element get() = call
+    override val element: UCallExpression get() = call
   }
 
   data class Assigment(val assignee: UExpression) : Dependent() {
-    override val element get() = assignee
+    override val element: UExpression get() = assignee
   }
 
   data class CommonDependent(override val element: UElement) : Dependent()
 
   data class BinaryOperatorDependent(val binaryExpression: UBinaryExpression, val isDependentOfLeftOperand: Boolean) : Dependent() {
-    override val element get() = binaryExpression
+    override val element: UBinaryExpression get() = binaryExpression
 
     val currentOperand: UExpression get() = if (isDependentOfLeftOperand) binaryExpression.leftOperand else binaryExpression.rightOperand
     val anotherOperand: UExpression get() = if (isDependentOfLeftOperand) binaryExpression.rightOperand else binaryExpression.leftOperand
@@ -34,11 +34,11 @@ sealed class Dependency : UserDataHolderBase() {
     val element: UElement,
     override val referenceInfo: DependencyOfReference.ReferenceInfo? = null
   ) : Dependency(), DependencyOfReference {
-    override val elements = setOf(element)
+    override val elements: Set<UElement> = setOf(element)
   }
 
   data class ArgumentDependency(val element: UElement, val call: UCallExpression) : Dependency() {
-    override val elements = setOf(element)
+    override val elements: Set<UElement> = setOf(element)
   }
 
   data class BranchingDependency(

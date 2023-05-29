@@ -70,9 +70,6 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     }
     myEditors.add(editorInfo);
     installListener(editorInfo);
-    project.getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(
-      FileEditorManager.getInstance(project), file
-    );
     return editorInfo;
   }
 

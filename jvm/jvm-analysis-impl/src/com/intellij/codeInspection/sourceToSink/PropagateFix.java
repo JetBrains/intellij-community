@@ -19,7 +19,8 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -30,19 +31,14 @@ import java.util.function.Consumer;
 public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   @NotNull
-  private final String myName;
-
-  @NotNull
   private final TaintValueFactory myTaintValueFactory;
 
   private final boolean supportRefactoring;
 
-  public PropagateFix(@NotNull PsiElement psiElement,
-                      @NotNull String name,
+  public PropagateFix(@NotNull PsiElement sourcePsi,
                       @NotNull TaintValueFactory taintValueFactory,
                       boolean supportRefactoring) {
-    super(psiElement);
-    myName = name;
+    super(sourcePsi);
     myTaintValueFactory = taintValueFactory;
     this.supportRefactoring = supportRefactoring;
   }
@@ -55,7 +51,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   @Override
   public @NotNull String getText() {
-    return JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.text", myName);
+    return JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.text");
   }
 
   @Override
@@ -68,19 +64,29 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                      @NotNull PsiFile file,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-    UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(startElement, UCallExpression.class, UReferenceExpression.class);
+    UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(startElement, UExpression.class);
     if (uExpression == null) return;
     PsiElement reportedElement = uExpression.getSourcePsi();
     if (reportedElement == null) return;
     TaintAnalyzer analyzer = new TaintAnalyzer(myTaintValueFactory);
-    if (analyzer.analyze(uExpression) != TaintValue.UNKNOWN) return;
-    PsiElement target = ((UResolvable)uExpression).resolve();
-    TaintNode root = new TaintNode(null, target, reportedElement, myTaintValueFactory);
+    try {
+      TaintValue value = analyzer.analyzeExpression(uExpression, false, TaintValue.TAINTED);
+      if (value != TaintValue.UNKNOWN) return;
+    }
+    catch (DeepTaintAnalyzerException e) {
+      return;
+    }
+
+    List<TaintNode> roots = ContainerUtil.map(analyzer.getNonMarkedElements(), nonMarkedElement ->
+      new TaintNode(null, nonMarkedElement.myNonMarked, nonMarkedElement.myRef, myTaintValueFactory, nonMarkedElement.myNext));
+    if (roots.isEmpty()) return;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      Set<TaintNode> toAnnotate = new HashSet<>();
-      toAnnotate = PropagateAnnotationPanel.getSelectedElements(root, toAnnotate);
-      if (toAnnotate == null || root.myTaintValue == TaintValue.TAINTED) return;
-      annotate(project, toAnnotate);
+      for (TaintNode root : roots) {
+        Set<TaintNode> toAnnotate = new HashSet<>();
+        toAnnotate = PropagateAnnotationPanel.getSelectedElements(root, toAnnotate);
+        if (toAnnotate == null || root.myTaintValue == TaintValue.TAINTED) continue;
+        annotate(project, toAnnotate);
+      }
       return;
     }
     Consumer<Collection<TaintNode>> callback = toAnnotate -> {
@@ -88,7 +94,8 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
       ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
       if (toolWindow != null) toolWindow.hide();
     };
-    PropagateAnnotationPanel panel = new PropagateAnnotationPanel(project, root, callback, supportRefactoring);
+    PropagateAnnotationPanel panel =
+      new PropagateAnnotationPanel(project, roots, callback, supportRefactoring);
     String title = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.title");
     ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
     if (toolWindow == null) return;
@@ -128,7 +135,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     if (taintNode.myTaintValue == TaintValue.TAINTED) return false;
     PsiElement psiElement = taintNode.getPsiElement();
     if (psiElement == null) return true;
-    return myTaintValueFactory.fromAnnotation(psiElement) != TaintValue.UNTAINTED;
+    return myTaintValueFactory.fromElement(psiElement) != TaintValue.UNTAINTED;
   }
 
   private static @Nullable Set<@NotNull PsiElement> getPsiElements(@NotNull Collection<TaintNode> toAnnotate) {

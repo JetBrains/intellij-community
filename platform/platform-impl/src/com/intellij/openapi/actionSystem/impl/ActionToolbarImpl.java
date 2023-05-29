@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
@@ -50,6 +51,8 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.CancellablePromise;
 import sun.swing.SwingUtilities2;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -425,7 +428,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     List<AnAction> rightAligned = new ArrayList<>();
     for (int i = 0; i < actions.size(); i++) {
       AnAction action = actions.get(i);
-      if (isAlignmentEnabled() && action instanceof RightAlignedToolbarAction) {
+      if (isAlignmentEnabled() && action instanceof RightAlignedToolbarAction || forceRightAlignment()) {
         rightAligned.add(action);
         continue;
       }
@@ -478,6 +481,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   protected boolean isAlignmentEnabled() {
     return true;
+  }
+
+  protected boolean forceRightAlignment() {
+    return false;
   }
 
   @Override
@@ -1873,6 +1880,30 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     public Insets getBorderInsets() {
       return myOrientation == SwingConstants.VERTICAL ?
              JBUI.insets(myDirectionalGap, myOrthogonalGap) : JBUI.insets(myOrthogonalGap, myDirectionalGap);
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) accessibleContext = new AccessibleActionToolbar();
+
+    // We don't need additional grouping for ActionToolbar in the new frame header or if it's empty
+    if (!myVisibleActions.isEmpty() &&
+        !(ExperimentalUI.isNewUI() && getPlace().equals(ActionPlaces.MAIN_TOOLBAR))
+        && !getPlace().equals(ActionPlaces.NEW_UI_RUN_TOOLBAR)) {
+      accessibleContext.setAccessibleName(UIBundle.message("action.toolbar.accessible.group.name"));
+    }
+    else {
+      accessibleContext.setAccessibleName("");
+    }
+
+    return accessibleContext;
+  }
+
+  private class AccessibleActionToolbar extends AccessibleJPanel {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibilityUtils.GROUPED_ELEMENTS;
     }
   }
 }

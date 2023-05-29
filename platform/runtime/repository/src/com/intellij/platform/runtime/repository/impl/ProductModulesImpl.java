@@ -2,8 +2,7 @@
 package com.intellij.platform.runtime.repository.impl;
 
 import com.intellij.platform.runtime.repository.ProductModules;
-import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor;
-import com.intellij.platform.runtime.repository.IncludedRuntimeModule;
+import com.intellij.platform.runtime.repository.RuntimeModuleGroup;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,28 +10,28 @@ import java.util.List;
 
 public final class ProductModulesImpl implements ProductModules {
   private final String myDebugName;
-  private final List<IncludedRuntimeModule> myRootPlatformModules;
-  private final List<RuntimeModuleDescriptor> myBundledPluginModules;
+  private final MainRuntimeModuleGroup myMainGroup;
+  private final List<RuntimeModuleGroup> myBundledPluginGroups;
 
-  public ProductModulesImpl(@NotNull @NonNls String debugName, @NotNull List<IncludedRuntimeModule> rootPlatformModules,
-                            @NotNull List<RuntimeModuleDescriptor> bundledPluginModules) {
+  public ProductModulesImpl(@NotNull @NonNls String debugName, MainRuntimeModuleGroup mainGroup,
+                            @NotNull List<RuntimeModuleGroup> bundledPluginGroups) {
     myDebugName = debugName;
-    myRootPlatformModules = rootPlatformModules;
-    myBundledPluginModules = bundledPluginModules;
+    myMainGroup = mainGroup;
+    myBundledPluginGroups = bundledPluginGroups;
   }
 
   @Override
-  public @NotNull List<IncludedRuntimeModule> getRootPlatformModules() {
-    return myRootPlatformModules;
+  public @NotNull RuntimeModuleGroup getMainModuleGroup() {
+    return myMainGroup;
   }
 
   @Override
-  public @NotNull List<RuntimeModuleDescriptor> getBundledPluginMainModules() {
-    return myBundledPluginModules;
+  public @NotNull List<@NotNull RuntimeModuleGroup> getBundledPluginModuleGroups() {
+    return myBundledPluginGroups;
   }
 
   @Override
   public String toString() {
-    return "ProductModules[" + myDebugName + "]";
+    return "ProductModules{debugName=" + myDebugName + '}';
   }
 }

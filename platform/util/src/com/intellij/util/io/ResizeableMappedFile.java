@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -71,6 +57,11 @@ public class ResizeableMappedFile implements Forceable, Closeable {
     ensureParentDirectoryExists();
     myInitialSize = initialSize;
     myLastWrittenLogicalSize = myLogicalSize = readLength();
+    if (myLastWrittenLogicalSize > 0 && !Files.exists(file)) {
+      //probably, the main file was removed
+      myLastWrittenLogicalSize = myLogicalSize = 0;
+      writeLength(0);
+    }
   }
 
   public boolean isNativeBytesOrder() {
@@ -107,7 +98,8 @@ public class ResizeableMappedFile implements Forceable, Closeable {
 
     if (realSize == 0) {
       suggestedSize = doRoundToFactor(Math.max(myInitialSize, max));
-    } else {
+    }
+    else {
       suggestedSize = Math.max(realSize + 1, 2); // suggestedSize should increase with int multiplication on 1.625 factor
 
       while (max > suggestedSize) {
@@ -259,29 +251,27 @@ public class ResizeableMappedFile implements Forceable, Closeable {
     return myLogicalSize;
   }
 
+  @Override
   public void close() throws IOException {
-    List<Exception> exceptions = new SmartList<>();
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> {
-      ensureLengthWritten();
-      assert myLogicalSize == myLastWrittenLogicalSize;
-      myStorage.force();
-      if (truncateOnClose && myLogicalSize < myStorage.length()) {
-        myStorage.resize(myLogicalSize);
-      }
-    }));
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> myStorage.close()));
-    if (!exceptions.isEmpty()) {
-      throw new IOException(new CompoundRuntimeException(exceptions));
-    }
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      new IOException("Failed to close ResizableMappedFile[" + getPagedFileStorage().getFile() + "]"),
+      () -> {
+        ensureLengthWritten();
+        assert myLogicalSize == myLastWrittenLogicalSize;
+        myStorage.force();
+        if (truncateOnClose && myLogicalSize < myStorage.length()) {
+          myStorage.resize(myLogicalSize);
+        }
+      },
+      myStorage::close
+    );
   }
 
-  @NotNull
-  public PagedFileStorage getPagedFileStorage() {
+  public @NotNull PagedFileStorage getPagedFileStorage() {
     return myStorage;
   }
 
-  @NotNull
-  public StorageLockContext getStorageLockContext() {
+  public @NotNull StorageLockContext getStorageLockContext() {
     return myStorage.getStorageLockContext();
   }
 

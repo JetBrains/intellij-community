@@ -30,6 +30,7 @@ fragment mergeRequest on MergeRequest {
     ...pipeline
   }
   mergeStatusEnum
+  mergeable
   state
   draft
 

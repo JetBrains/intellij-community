@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ProjectWindowCustomizerService;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
@@ -10,6 +11,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import sun.swing.SwingUtilities2;
@@ -91,6 +93,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     c.setForeground(JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground()));
     c.setBackground(JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.background()));
     c.setHoverBackground(JBColor.namedColor("MainToolbar.Dropdown.hoverBackground", JBColor.background()));
+    c.setTransparentHoverBackground(JBColor.namedColor("MainToolbar.Dropdown.transparentHoverBackground", c.getHoverBackground()));
 
     Insets insets = JBUI.CurrentTheme.MainToolbar.Dropdown.borderInsets();
     JBEmptyBorder border = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
@@ -118,7 +121,6 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
 
       String text = getText(combo);
       if (!StringUtil.isEmpty(text) && maxTextWidth > 0) {
-        g2.setColor(c.getForeground());
         Rectangle textRect = new Rectangle(paintRect.x, paintRect.y, maxTextWidth, paintRect.height);
         drawText(c, text, g2, textRect);
         doClip(paintRect, maxTextWidth);
@@ -132,7 +134,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
 
       if (isSeparatorShown(combo)) {
         doClip(paintRect, getGapBeforeSeparator());
-        g2.setColor(UIManager.getColor("MainToolbar.separatorColor"));
+        g2.setColor(c.isEnabled() ? UIManager.getColor("MainToolbar.separatorColor") : UIUtil.getLabelDisabledForeground());
         g2.fillRect(paintRect.x, ((int)paintRect.getCenterY()) - SEPARATOR_HEIGHT / 2, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
         separatorPosition = paintRect.x;
         doClip(paintRect, SEPARATOR_WIDTH);
@@ -178,11 +180,14 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
         g2.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
       }
 
-      Rectangle hoverRect = hoverTracker.getHoverRect();
-      Color hoverBackground = c.getHoverBackground();
-      if (hoverRect != null && hoverBackground != null) {
-        g2.setColor(hoverBackground);
-        g2.fillRect(hoverRect.x, hoverRect.y, hoverRect.width, hoverRect.height);
+      if (c.isEnabled()) {
+        Rectangle hoverRect = hoverTracker.getHoverRect();
+        Color hoverBackground = ProjectWindowCustomizerService.getInstance().isActive()
+                                ? c.getTransparentHoverBackground() : c.getHoverBackground();
+        if (hoverRect != null && hoverBackground != null) {
+          g2.setColor(hoverBackground);
+          g2.fillRect(hoverRect.x, hoverRect.y, hoverRect.width, hoverRect.height);
+        }
       }
     }
     finally {
@@ -192,6 +197,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
 
   private void drawText(JComponent c, @NotNull String fullText, Graphics2D g, Rectangle textBounds) {
     FontMetrics metrics = c.getFontMetrics(c.getFont());
+    g.setColor(c.isEnabled() ? c.getForeground() : UIUtil.getLabelDisabledForeground());
 
     int baseline = c.getBaseline(textBounds.width, textBounds.height);
     String text = textCutStrategy.calcShownText(fullText, metrics, textBounds.width);
@@ -387,6 +393,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     public boolean onClick(@NotNull MouseEvent e, int clickCount) {
       Component component = e.getComponent();
       if (!(component instanceof ToolbarComboWidget comp)) return false;
+      if (!comp.isEnabled()) return false;
       if (!comp.isExpandable()) {
         notifyPressListeners(e);
         return false;

@@ -246,8 +246,6 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     reportNullabilityProblems(reporter, problems);
     reportNullableReturns(reporter, problems, scope);
 
-    reportOptionalOfNullableImprovements(reporter, visitor.getOfNullableCalls());
-
     reportRedundantInstanceOf(visitor, reporter);
 
     reportArrayAccessProblems(holder, visitor);
@@ -638,20 +636,6 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       return name != null ? name : ref;
     }
     return call;
-  }
-
-  private static void reportOptionalOfNullableImprovements(ProblemReporter reporter, Map<PsiElement, ThreeState> nullArgs) {
-    nullArgs.forEach((anchor, alwaysPresent) -> {
-      if (alwaysPresent == ThreeState.UNSURE) return;
-      if (alwaysPresent.toBoolean()) {
-        reporter.registerProblem(anchor, JavaAnalysisBundle.message("dataflow.message.passing.non.null.argument.to.optional"),
-                                 LocalQuickFix.notNullElements(DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix(anchor)));
-      }
-      else {
-        reporter.registerProblem(anchor, JavaAnalysisBundle.message("dataflow.message.passing.null.argument.to.optional"),
-                                 LocalQuickFix.notNullElements(DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(anchor)));
-      }
-    });
   }
 
   private void reportNullableArgumentPassedToNonAnnotatedMethodRef(@NotNull ProblemReporter reporter,

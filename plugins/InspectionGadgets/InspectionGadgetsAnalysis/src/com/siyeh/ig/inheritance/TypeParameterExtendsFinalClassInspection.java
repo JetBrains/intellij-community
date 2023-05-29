@@ -16,8 +16,7 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -57,11 +56,11 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new TypeParameterExtendsFinalClassFix();
   }
 
-  private static class TypeParameterExtendsFinalClassFix extends InspectionGadgetsFix {
+  private static class TypeParameterExtendsFinalClassFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -70,8 +69,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiTypeParameter typeParameter) {
         replaceTypeParameterUsagesWithType(typeParameter);

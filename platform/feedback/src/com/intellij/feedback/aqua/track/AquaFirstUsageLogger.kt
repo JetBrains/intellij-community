@@ -12,7 +12,9 @@ import kotlinx.datetime.toLocalDateTime
 
 internal class AquaFirstUsageLogger : ProjectActivity {
   override suspend fun execute(project: Project) {
-    ApplicationManager.getApplication().service<AquaOldUserFeedbackService>().state.firstUsageTime = Clock.System.now().toLocalDateTime(
-      TimeZone.currentSystemDefault())
+    val oldUserInfoState = ApplicationManager.getApplication().service<AquaOldUserFeedbackService>().state
+    if (oldUserInfoState.firstUsageTime == null) {
+      oldUserInfoState.firstUsageTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    }
   }
 }

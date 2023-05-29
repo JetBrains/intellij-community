@@ -350,7 +350,7 @@
               class="com.intellij.lang.documentation.ide.actions.DocumentationForwardAction"/>
       <action id="Documentation.EditSource" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSource"
               class="com.intellij.lang.documentation.ide.actions.DocumentationEditSourceAction"/>
-      
+
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
     <action id="Documentation.ViewExternal" icon="AllIcons.General.Web" use-shortcut-of="ExternalJavaDoc"
@@ -484,6 +484,24 @@
     </group>
 
     <!-- Code -->
+    <group id="Floating.CodeToolbar" popup="false">
+      <group id="Floating.CodeToolbar.Extract" popup="true" class="com.intellij.ui.codeFloatingToolbar.DropdownActionGroup"
+             searchable="false" />
+      <group id="Floating.CodeToolbar.Surround" popup="true" class="com.intellij.ui.codeFloatingToolbar.DropdownActionGroup"
+             searchable="false">
+        <!--suppress PluginXmlCapitalization -->
+        <action id="Floating.CodeToolbar.SurroundWithTryCatch" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
+        <!--suppress PluginXmlCapitalization -->
+        <action id="Floating.CodeToolbar.SurroundWithTryCatchFinally"
+                class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
+        <!--suppress PluginXmlCapitalization -->
+        <action id="Floating.CodeToolbar.SurroundWithIf" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
+      </group>
+      <group id="Floating.CodeToolbar.Configure" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup" searchable="false">
+        <action id="Floating.CodeToolbar.Customize" class="com.intellij.ui.codeFloatingToolbar.CustomizeCodeFloatingToolbarAction" />
+        <action id="Floating.CodeToolbar.Disable" class="com.intellij.ui.codeFloatingToolbar.DisableCodeFloatingToolbarAction" />
+      </group>
+    </group>
     <group id="CodeMenu" popup="true">
       <reference ref="OverrideMethods"/>
       <reference ref="ImplementMethods"/>
@@ -580,12 +598,16 @@
       <separator/>
 
       <group id="CommentGroup">
-        <action id="CommentByLineComment" class="com.intellij.codeInsight.generation.actions.CommentByLineCommentAction"/>
+        <action id="CommentByLineComment" class="com.intellij.codeInsight.generation.actions.CommentByLineCommentAction"
+                icon="AllIcons.Actions.InlayRenameInComments">
+          <add-to-group group-id="Floating.CodeToolbar" anchor="after" relative-to-action="Floating.CodeToolbar.Surround" />
+        </action>
         <action id="CommentByBlockComment" class="com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction"/>
       </group>
 
       <group id="CodeFormatGroup">
         <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction">
+          <add-to-group group-id="Floating.CodeToolbar" anchor="after" relative-to-action="CommentByLineComment" />
           <synonym key="action.ReformatCode.synonym1"/>
         </action>
         <action id="ShowReformatFileDialog" class="com.intellij.codeInsight.actions.ShowReformatFileDialog"/>
@@ -628,14 +650,22 @@
       <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
       <separator/>
       <group id="IntroduceActionsGroup" popup="true" class="com.intellij.ide.actions.PopupInMainMenuActionGroup">
-        <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
-        <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
+        <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction">
+          <add-to-group group-id="Floating.CodeToolbar.Extract" />
+        </action>
+        <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction">
+          <add-to-group group-id="Floating.CodeToolbar.Extract" />
+        </action>
         <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
-        <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction"/>
+        <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction">
+          <add-to-group group-id="Floating.CodeToolbar.Extract" />
+        </action>
         <separator/>
         <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction"/>
         <separator/>
-        <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
+        <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction">
+          <add-to-group group-id="Floating.CodeToolbar.Extract" anchor="first" />
+        </action>
         <separator/>
         <action id="ExtractClass" class="com.intellij.refactoring.actions.ExtractClassAction"/>
         <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
@@ -901,9 +931,15 @@
         <action id="ProjectView.ManualOrder"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ManualOrder"
                 icon="AllIcons.ObjectBrowser.Sorted"/>
+        <action id="ProjectView.SortByName"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByName"/>
         <action id="ProjectView.SortByType"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByType"
                 icon="AllIcons.ObjectBrowser.SortByType"/>
+        <action id="ProjectView.SortByTimeDescending"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByTimeDescending"/>
+        <action id="ProjectView.SortByTimeAscending"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByTimeAscending"/>
         <action id="ProjectView.FoldersAlwaysOnTop"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FoldersAlwaysOnTop"/>
       </group>
@@ -912,6 +948,8 @@
       <action id="ProjectView.AutoscrollToSource"
               class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollToSource"
               icon="AllIcons.General.AutoscrollToSource"/>
+      <action id="ProjectView.OpenDirectoriesWithSingleClick"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$OpenDirectoriesWithSingleClick"/>
       <action id="ProjectView.AutoscrollFromSource"
               class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollFromSource"
               icon="AllIcons.General.AutoscrollFromSource"/>
@@ -1633,22 +1671,11 @@
       <add-to-group group-id="MainToolbarRight" anchor="first"/>
     </action>
 
-    <action id="StopWithDropDown" class="com.intellij.execution.ui.StopWithDropDownAction">
-      <add-to-group group-id="MainToolbarRight" relative-to-action="NewUiRunWidget" anchor="after"/>
-    </action>
-
-    <group id="ContrastRunToolbarMainActionGroup">
-      <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
-      <separator/>
-      <group id="RunToolbarTopLevelExecutorActionGroup" class="com.intellij.execution.ui.RunToolbarTopLevelExecutorActionGroup" />
-      <action id="MoreRunToolbarActions" class="com.intellij.execution.ui.MoreRunToolbarActions" />
-    </group>
-
     <group id="RunToolbarMainActionGroup">
-      <reference ref="RedesignedRunConfigurationSelector"/>
-      <reference ref="RunToolbarTopLevelExecutorActionGroup"/>
+      <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
+      <group id="RunToolbarTopLevelExecutorActionGroup" class="com.intellij.execution.ui.RunToolbarTopLevelExecutorActionGroup" />
       <reference ref="Stop"/>
-      <reference ref="MoreRunToolbarActions"/>
+      <action id="MoreRunToolbarActions" class="com.intellij.execution.ui.MoreRunToolbarActions" />
       <action id="InactiveStopActionPlaceholder" class="com.intellij.execution.ui.InactiveStopActionPlaceholder" />
     </group>
 
@@ -1691,6 +1718,7 @@
       <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
       <action id="DumpIElementTypesAction" internal="true" class="com.intellij.internal.DumpIElementTypesAction"/>
       <action id="DumpLoadedInspectionsAction" internal="true" class="com.intellij.internal.DumpLoadedInspectionsAction"/>
+      <action id="DumpPluginDescriptorsAction" internal="true" class="com.intellij.internal.DumpPluginDescriptorsAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
     <group id="Internal.VFS" popup="true" internal="true">
@@ -1710,5 +1738,9 @@
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
     <action internal="true" id="ShowUsageFeatures" class ="com.intellij.usages.similarity.internal.ShowUsageFeaturesInternalAction"/>
+
+    <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
+      <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
+    </action>
   </actions>
 </idea-plugin>

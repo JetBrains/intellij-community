@@ -48,11 +48,11 @@ class ContentsLogInterceptor(
       val sdo = underlying(record, fixedSize)
       object : IStorageDataOutput by sdo {
         override fun close() {
-          { sdo.close() } catchResult ::interceptClose
+          val data = sdo.asByteArraySequence().toBytes();
+          { sdo.close() } catchResult { interceptClose(data, it) }
         }
 
-        private fun interceptClose(result: OperationResult<Unit>) {
-          val data = sdo.asByteArraySequence().toBytes()
+        private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
           context.enqueueOperationWrite(VfsOperationTag.CONTENT_WRITE_STREAM_2) {
             val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
               write(data, 0, data.size)
@@ -68,11 +68,11 @@ class ContentsLogInterceptor(
       val ias = underlying(record)
       object : IAppenderStream by ias {
         override fun close() {
-          { ias.close() } catchResult ::interceptClose
+          val data = ias.asByteArraySequence().toBytes();
+          { ias.close() } catchResult { interceptClose(data, it) }
         }
 
-        private fun interceptClose(result: OperationResult<Unit>) {
-          val data = ias.asByteArraySequence().toBytes()
+        private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
           context.enqueueOperationWrite(VfsOperationTag.CONTENT_APPEND_STREAM) {
             val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
               write(data, 0, data.size)

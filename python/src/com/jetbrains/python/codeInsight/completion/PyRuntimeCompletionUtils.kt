@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener
@@ -24,6 +25,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonLanguage
+import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyXValueGroup
 import com.jetbrains.python.debugger.pydev.ProcessDebugger
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
@@ -33,16 +35,21 @@ import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl
 import java.util.concurrent.CompletableFuture
 import javax.swing.tree.TreeNode
 
+data class PyQualifiedExpressionItem(val pyQualifiedName: String, val delimiter: IElementType)
+
 /**
  * This data class stores information about a possible python object.
  * @param psiName - name of PsiElement, that could be a python object
- * @param needValidatorCheck - boolean flag to switch on check for validating completion items name
- * @param pyQualifiedExpressionList - represents a qualified expression in the list
  * LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance()).isIdentifier()
+ * @param pyQualifiedExpressionList - represents a qualified expression in the list
+ * @see PyQualifiedExpressionItem
  *
- * An example "a.b.c": psiName = "a", needValidatorCheck = false, pyQualifiedExpressionList = ["b","c"]
+ * An example "a.b.c.":
+ *     psiName = PyQualifiedExpressionItem("a",PyTokenTypes.DOT),
+ *     pyQualifiedExpressionList = [PyQualifiedExpressionItem("b",PyTokenTypes.DOT),PyQualifiedExpressionItem("c",PyTokenTypes.DOT)]
  */
-data class PyObjectCandidate(val psiName: String, val needValidatorCheck: Boolean, val pyQualifiedExpressionList: List<String>)
+data class PyObjectCandidate(val psiName: PyQualifiedExpressionItem,
+                             val pyQualifiedExpressionList: List<PyQualifiedExpressionItem>)
 
 
 // Temporary priority value to control order in CompletionResultSet (DS-3746)
@@ -51,9 +58,8 @@ private const val RUNTIME_COMPLETION_PRIORITY = 100.0
 fun getCompleteAttribute(parameters: CompletionParameters): List<PyObjectCandidate> {
 
   val callInnerReferenceExpression = getCallInnerReferenceExpression(parameters)
-  val (currentElement, needValidatorCheck) =
-    findCompleteAttribute(parameters)
-    ?: return getPossibleObjectsDataFrame(parameters, callInnerReferenceExpression)
+  val (currentElement, lastDelimiter) = findCompleteAttribute(parameters) ?: return getPossibleObjectsDataFrame(parameters,
+                                                                                                                callInnerReferenceExpression)
 
   return when (currentElement) {
     is PyCallExpression, is PyParenthesizedExpression -> {
@@ -61,10 +67,10 @@ fun getCompleteAttribute(parameters: CompletionParameters): List<PyObjectCandida
     }
     is PyExpression -> buildList {
       val parentLambdaExpression = collectParentOfLambdaExpression(currentElement, callInnerReferenceExpression)
-      parentLambdaExpression?.let {
-        add(createPandasDataFrameCandidate(it, needValidatorCheck))
+      parentLambdaExpression?.let { expression ->
+        createPyObjectCandidate(expression, lastDelimiter)?.let { add(it) }
       }
-      add(createPandasDataFrameCandidate(currentElement, needValidatorCheck))
+      createPyObjectCandidate(currentElement, lastDelimiter)?.let { add(it) }
     }
     else -> {
       emptyList()
@@ -72,36 +78,56 @@ fun getCompleteAttribute(parameters: CompletionParameters): List<PyObjectCandida
   }
 }
 
-private fun createPandasDataFrameCandidate(psiElement: PsiElement, needValidatorCheck: Boolean): PyObjectCandidate {
-  val columns = mutableListOf<String>()
+private fun getPyElementText(child: PsiElement?): String? {
+  child ?: return null
+  if (child.elementType != PyTokenTypes.DOT && child.elementType != PyTokenTypes.LBRACKET && child.elementType != PyTokenTypes.RBRACKET) {
+    return when (child) {
+      is PyStringLiteralExpression -> {
+        return (child as PyStringLiteralExpressionImpl).stringValue
+      }
+      is PyStringElement -> {
+        child.content
+      }
+      else -> {
+        child.text
+      }
+    }
+  }
+  return null
+}
+
+private fun createPyObjectCandidate(psiElement: PsiElement, lastDelimiter: IElementType): PyObjectCandidate? {
+  val names = mutableListOf<String>()
+  val delimiter = mutableListOf<IElementType>()
 
   val firstChild: PsiElement = PsiTreeUtil.getDeepestFirst(psiElement)
-
   val lastChild = PsiTreeUtil.getDeepestLast(psiElement)
   if (firstChild != lastChild) {
     var child = PsiTreeUtil.nextLeaf(firstChild)
     while (child != null) {
-      if (child.elementType != PyTokenTypes.DOT && child.elementType != PyTokenTypes.LBRACKET && child.elementType != PyTokenTypes.RBRACKET) {
-        when (child) {
-          is PyStringLiteralExpression -> {
-            columns.add((child as PyStringLiteralExpressionImpl).stringValue)
-          }
-          is PyStringElement -> {
-            columns.add(child.content)
-          }
-          else -> {
-            columns.add(child.text)
-          }
-        }
+      if (child.elementType == PyTokenTypes.DOT || child.elementType == PyTokenTypes.LBRACKET) {
+        child.elementType?.let { delimiter.add(it) }
+        child = PsiTreeUtil.nextLeaf(child)
+        continue
       }
+      getPyElementText(child)?.let { names.add(it) }
       if (child == lastChild) {
         break
       }
       child = PsiTreeUtil.nextLeaf(child)
     }
-  }
 
-  return PyObjectCandidate(firstChild.text, needValidatorCheck, columns)
+    if (delimiter.size == names.size) {
+      val firstDelimiter = delimiter.removeAt(0)
+      delimiter.add(lastDelimiter)
+      return PyObjectCandidate(PyQualifiedExpressionItem(firstChild.text, firstDelimiter),
+                               names.zip(delimiter).map { pair ->
+                                 PyQualifiedExpressionItem(pair.first, pair.second)
+                               })
+    }
+    return null
+  }
+  return PyObjectCandidate(PyQualifiedExpressionItem(firstChild.text, lastDelimiter), emptyList())
 }
 
 private fun getPossibleObjectsDataFrame(parameters: CompletionParameters,
@@ -109,22 +135,25 @@ private fun getPossibleObjectsDataFrame(parameters: CompletionParameters,
   return setOfNotNull(callInnerReferenceExpression?.text, getSliceSubscriptionReferenceExpression(parameters)?.text,
                       getAttributeReferenceExpression(parameters)?.text).map {
 
-    PyObjectCandidate(it, false, emptyList())
+    PyObjectCandidate(PyQualifiedExpressionItem(it, PyTokenTypes.LBRACKET), emptyList())
   }
 }
 
-private fun findCompleteAttribute(parameters: CompletionParameters): Pair<PsiElement, Boolean>? {
-  var needCheck = true
+private fun findCompleteAttribute(parameters: CompletionParameters): Pair<PsiElement, IElementType>? {
   var element = parameters.position
+  val delimiter: IElementType?
 
   if (element.prevSibling?.elementType != PyTokenTypes.DOT && element.parent?.prevSibling?.elementType == PyTokenTypes.LBRACKET) {
-    needCheck = false
+    delimiter = element.parent?.prevSibling?.elementType
     element = element.parent
+  }
+  else {
+    delimiter = element.prevSibling?.elementType
   }
 
   val exactElement = element.prevSibling?.prevSibling
   return when {
-    exactElement != null -> Pair(exactElement, needCheck)
+    exactElement != null && delimiter != null -> Pair(exactElement, delimiter)
 
     else -> null
   }
@@ -206,11 +235,16 @@ private fun collectParentOfLambdaExpression(element: PyExpression, callInnerRefe
 fun proceedPyValueChildrenNames(childrenNodes: Set<String>, ignoreML: Boolean = false): List<LookupElement> {
   return childrenNodes.map {
     val lookupElement = LookupElementBuilder.create(it).withTypeText(PyBundle.message("runtime.completion.type.text"))
-    when (ignoreML) {
-      true -> PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY).asMLIgnorable()
-      false -> PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY)
-    }
+    createPrioritizedLookupElement(lookupElement, ignoreML)
   }
+}
+
+internal fun createPrioritizedLookupElement(lookupElement: LookupElement, ignoreML: Boolean): LookupElement {
+  val prioritizedElement = PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY)
+  if (ignoreML) {
+    return prioritizedElement.asMLIgnorable()
+  }
+  return prioritizedElement
 }
 
 fun processDataFrameColumns(dfName: String,
@@ -230,10 +264,7 @@ fun processDataFrameColumns(dfName: String,
       else -> null
     }?.let {
       val lookupElement = LookupElementBuilder.create(it).withTypeText(PyBundle.message("pandas.completion.type.text", dfName))
-      when (ignoreML) {
-        true -> PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY).asMLIgnorable()
-        false -> PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY)
-      }
+      createPrioritizedLookupElement(lookupElement, ignoreML)
     }
   }
 }
@@ -273,24 +304,44 @@ fun extractChildByName(childrenNodes: List<TreeNode>, name: String): XValueNodeI
 }
 
 fun getParentNodeByName(children: List<TreeNode>, psiName: String): XValueNodeImpl? {
-  for (node in children) {
-    if (node is XValueGroupNodeImpl && (node.valueContainer as PyXValueGroup).groupType == ProcessDebugger.GROUP_TYPE.SPECIAL) {
-      computeChildrenIfNeeded(node)
-      extractChildByName(node.loadedChildren, psiName)?.let {
-        return it
-      }
+  /**
+   * For preventing an extra load of "Special variables".
+   * Firstly, looking through loaded variables and if not found - load values inside the group (make a request to jupyter server).
+   */
+  val globalVariables = children.filterIsInstance<XValueNodeImpl>()
+  globalVariables.forEach { node ->
+    if (node.name == psiName) {
+      return node
     }
-    else if (node is XValueNodeImpl) {
-      if (node.name == psiName) {
-        return node
-      }
+  }
+  val specialVariables = children.filterIsInstance<XValueGroupNodeImpl>()
+    .filter { node -> (node.valueContainer as PyXValueGroup).groupType == ProcessDebugger.GROUP_TYPE.SPECIAL }
+  specialVariables.forEach { node ->
+    computeChildrenIfNeeded(node)
+    extractChildByName(node.loadedChildren, psiName)?.let {
+      return it
     }
   }
   return null
 }
 
-fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?, listOfCall: List<String>): Pair<XValueNodeImpl, List<String>>? {
+val typeToDelimiter = mapOf(
+  "polars.internals.dataframe.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET),
+  "polars.dataframe.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET),
+  "pandas.core.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET, PyTokenTypes.DOT)
+)
+
+fun checkDelimiterByType(qualifiedType: String?, delimiter: IElementType): Boolean {
+  qualifiedType ?: return false
+  val delimiters = typeToDelimiter[qualifiedType]
+  if (delimiters != null && delimiter !in delimiters) return true
+  return false
+}
+
+fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?,
+                                 listOfCall: List<PyQualifiedExpressionItem>): Pair<XValueNodeImpl, List<PyQualifiedExpressionItem>>? {
   var currentNode = valueNode ?: return null
+
   listOfCall.forEachIndexed { index, call ->
     when (currentNode.valueContainer) {
       is DataFrameDebugValue -> {
@@ -298,11 +349,14 @@ fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?, listOfCall: List<St
       }
       else -> {
         computeChildrenIfNeeded(currentNode)
-        currentNode = extractChildByName(currentNode.children, call) ?: return null
+        currentNode = extractChildByName(currentNode.children, call.pyQualifiedName) ?: return null
       }
     }
+    val valueContainer = currentNode.valueContainer
+    if (valueContainer is PyDebugValue) {
+      if (checkDelimiterByType(valueContainer.qualifiedType, call.delimiter)) return null
+    }
   }
-  computeChildrenIfNeeded(currentNode)
   return Pair(currentNode, emptyList())
 }
 

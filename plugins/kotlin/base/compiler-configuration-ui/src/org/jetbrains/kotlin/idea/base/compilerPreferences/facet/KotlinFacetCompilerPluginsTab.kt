@@ -42,7 +42,7 @@ class KotlinFacetCompilerPluginsTab(
         val pluginInfos: List<PluginInfo> = ArrayList<PluginInfo>().apply {
             parsePluginOptions(configuration)
                 .sortedWith(
-                    Comparator<CliOptionValue> { o1, o2 ->
+                    Comparator { o1, o2 ->
                         var result = o1.pluginId.compareTo(o2.pluginId)
                         if (result == 0) {
                             result = o1.optionName.compareTo(o2.optionName)

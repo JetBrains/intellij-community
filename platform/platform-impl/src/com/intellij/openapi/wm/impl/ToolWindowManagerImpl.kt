@@ -46,6 +46,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.ui.Splitter
+import com.intellij.openapi.ui.ThreeComponentsSplitter
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.*
@@ -574,20 +575,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     dispatcher.addListener(listener)
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR,
-              replaceWith = ReplaceWith("project.messageBus.connect(parentDisposable).subscribe(ToolWindowManagerListener.TOPIC, listener)",
-                                                    "com.intellij.openapi.wm.ex.ToolWindowManagerListener"))
-  override fun addToolWindowManagerListener(listener: ToolWindowManagerListener, parentDisposable: Disposable) {
-    project.messageBus.connect(parentDisposable).subscribe(ToolWindowManagerListener.TOPIC, listener)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
-  override fun removeToolWindowManagerListener(listener: ToolWindowManagerListener) {
-    dispatcher.removeListener(listener)
-  }
-
   override fun activateEditorComponent() {
     EditorsSplitters.focusDefaultComponentInSplittersIfPresent(project)
   }
@@ -614,6 +601,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     if (isUnifiedToolWindowSizesEnabled()) {
       info.weight = layoutState.getUnifiedAnchorWeight(info.anchor)
+      LOG.debug("Activated tool window: ${info.id}, using ${info.anchor} unified weight of ${info.weight}")
     }
 
     if (source != null) {
@@ -1241,12 +1229,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     for (entry in idToEntry.values) {
       val old = layoutState.getInfo(entry.id) ?: entry.readOnlyWindowInfo as WindowInfoImpl
-      val new = newLayout.getInfo(entry.id)
-      // just copy if defined in the old layout but not in the new
+      var new = newLayout.getInfo(entry.id)
+      // If it wasn't present when the layout was saved, leave its state alone, but hide it.
       if (new == null) {
-        newLayout.addInfo(entry.id, old.copy())
+        new = old.copy().apply { isVisible = false }
+        newLayout.addInfo(entry.id, new)
       }
-      else if (old != new) {
+      if (old != new) {
         if (!entry.toolWindow.isAvailable) {
           new.isVisible = false // Preserve invariants: if it can't be shown, don't consider it visible.
         }
@@ -1327,9 +1316,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
           if (another != null && anchor.isUltrawideLayout()) { // split windows side-by-side, set weight of the entire splitter
             weight += another.new.weight
           }
+          LOG.debug("Setting ${item.entry.id} weight=${weight} from the saved layout")
           toolWindowPane.setWeight(anchor, weight)
         }
         if (item.old.sideWeight != item.new.sideWeight) {
+          LOG.debug("Setting ${item.entry.id} side weight ${item.new.sideWeight} from the saved layout")
           toolWindowPane.setSideWeight(item.entry.toolWindow, item.new.sideWeight)
         }
       }
@@ -1357,9 +1348,26 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     checkInvariants(null)
   }
 
+  override fun getMoreButtonSide() = state.moreButton
+
+  override fun setMoreButtonSide(side: ToolWindowAnchor) {
+    state.moreButton = side
+
+    if (isNewUi) {
+      for (pane in toolWindowPanes.values) {
+        val buttonManager = pane.buttonManager
+        if (buttonManager is ToolWindowPaneNewButtonManager) {
+          buttonManager.updateMoreButtons()
+        }
+      }
+    }
+  }
+
   override fun invokeLater(runnable: Runnable) {
     if (!toolWindowSetInitializer.addToPendingTasksIfNotInitialized(runnable)) {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, project.disposed)
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+        runnable.run()
+      }
     }
   }
 
@@ -1464,7 +1472,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     val buttonManager = toolWindowPane.buttonManager as ToolWindowPaneNewButtonManager
     var button = buttonManager.getSquareStripeFor(entry.readOnlyWindowInfo.anchor).getButtonFor(options.toolWindowId)?.getComponent()
     if (button == null || !button.isShowing) {
-      button = (buttonManager.getSquareStripeFor(ToolWindowAnchor.LEFT) as? ToolWindowLeftToolbar)?.moreButton!!
+      button = buttonManager.getMoreButton(getMoreButtonSide())
       position = Balloon.Position.atLeft
     }
     val show = Runnable {
@@ -2032,8 +2040,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
     else {
       // docked and sliding windows
+      val dockingAreaComponent = if (source.parent is Splitter) source.parent as Splitter else source
+      if (!dockingAreaIsInSplitterWithVisibleEditorArea(dockingAreaComponent)) {
+        return
+      }
       val anchor = info.anchor
-      val dockingAreaComponent: Component
       if (source.parent is Splitter) {
         var sizeInSplit = if (anchor.isSplitVertically) source.height else source.width
         val splitter = source.parent as Splitter
@@ -2043,18 +2054,35 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         info.sideWeight = getAdjustedRatio(partSize = sizeInSplit,
                                            totalSize = if (anchor.isSplitVertically) splitter.height else splitter.width,
                                            direction = if (splitter.secondComponent === source) -1 else 1)
-        dockingAreaComponent = splitter
-      }
-      else {
-        dockingAreaComponent = source
       }
       val toolWindowPane = getToolWindowPane(toolWindow)
       val toolWindowWeight = getAdjustedWeight(toolWindowPane, anchor, source)
       val dockingAreaWeight = getAdjustedWeight(toolWindowPane, anchor, dockingAreaComponent)
       info.weight = toolWindowWeight
       layoutState.setUnifiedAnchorWeight(anchor, dockingAreaWeight)
+      LOG.debug("Moved/resized tool window ${info.id}, updated weight=${toolWindowWeight}, docking area weight=${dockingAreaWeight}")
     }
     fireStateChanged(MovedOrResized, toolWindow)
+  }
+
+  private fun dockingAreaIsInSplitterWithVisibleEditorArea(dockingAreaComponent: Component): Boolean {
+    val parentSplitter = dockingAreaComponent.parent as? ThreeComponentsSplitter
+    if (parentSplitter == null) {
+      LOG.warn(Exception("InternalDecoratorImpl/Splitter is not in a ThreeComponentsSplitter, " +
+                         "can't perform sanity checks, tool window info is not updated. " +
+                         "Actual parent = ${dockingAreaComponent.parent}"))
+      return false
+    }
+    val editorComponent = parentSplitter.innerComponent
+    if (editorComponent == null) {
+      LOG.info("Editor area is null, not updating tool window weights")
+      return false
+    }
+    if (!editorComponent.isVisible) {
+      LOG.info("Editor area is not visible, not updating tool window weights")
+      return false
+    }
+    return true
   }
 
   private fun getAdjustedWeight(

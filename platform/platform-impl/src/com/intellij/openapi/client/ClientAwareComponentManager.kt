@@ -15,8 +15,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 abstract class ClientAwareComponentManager(
   internal val parent: ComponentManagerImpl?,
+  coroutineScope: CoroutineScope,
   setExtensionsRootArea: Boolean = parent == null
-) : ComponentManagerImpl(parent, setExtensionsRootArea) {
+) : ComponentManagerImpl(parent = parent, coroutineScope = coroutineScope, setExtensionsRootArea = setExtensionsRootArea) {
   override fun <T : Any> getServices(serviceClass: Class<T>, clientKind: ClientKind): List<T> {
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     return sessionsManager.getSessions(clientKind).mapNotNull {
@@ -25,24 +26,25 @@ abstract class ClientAwareComponentManager(
   }
 
   override fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
-    val sessionsManager = if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+    val sessionManager: ClientSessionsManager<*>?
+    if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
       if (createIfNeeded) {
-        throwAlreadyDisposedError(serviceClass.name, this)
+        throwAlreadyDisposedError(serviceDescription = serviceClass.name, componentManager = this)
       }
-      super.doGetService(ClientSessionsManager::class.java, false)
+      sessionManager = super.doGetService(serviceClass = ClientSessionsManager::class.java, createIfNeeded = false)
     }
     else {
-      super.doGetService(ClientSessionsManager::class.java, true)
+      sessionManager = super.doGetService(serviceClass = ClientSessionsManager::class.java, createIfNeeded = true)
     }
 
-    val session = sessionsManager?.getSession(ClientId.current) as? ClientSessionImpl
-    return session?.doGetService(serviceClass, createIfNeeded, false)
+    val session = sessionManager?.getSession(ClientId.current) as? ClientSessionImpl
+    return session?.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded, fallbackToShared = false)
   }
 
-  override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
-                                  app: Application?,
-                                  precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: MutableList<in Runnable>?) {
+  final override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
+                                        app: Application?,
+                                        precomputedExtensionModel: PrecomputedExtensionModel?,
+                                        listenerCallbacks: MutableList<in Runnable>?) {
     super.registerComponents(modules = modules,
                              app = app,
                              precomputedExtensionModel = precomputedExtensionModel,
@@ -50,7 +52,8 @@ abstract class ClientAwareComponentManager(
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     for (session in sessionsManager.getSessions(ClientKind.ALL)) {
-      (session as? ClientSessionImpl)?.registerComponents(modules = modules, app = app,
+      (session as? ClientSessionImpl)?.registerComponents(modules = modules,
+                                                          app = app,
                                                           precomputedExtensionModel = precomputedExtensionModel,
                                                           listenerCallbacks = listenerCallbacks)
     }

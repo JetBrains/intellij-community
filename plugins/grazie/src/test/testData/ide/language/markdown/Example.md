@@ -37,6 +37,10 @@ val b = "It is friend."
 It's a <warning descr="A_GOOGLE">react</warning> method. (An LT warning here)
 It's a *react* method. (Fine, as it's emphasized)
 
+Defined field String name = "John<warning descr="EN_QUOTES">"</warning>
+System.out.println(<warning descr="EN_QUOTES">"</warning>Hello <warning descr="EN_QUOTES">"</warning> + name)
+foo(<warning descr="THE_PUNCT">a,</warning> <warning descr="THE_PUNCT">the,</warning> an)
+
 ## Немного русского
 
 В коробке лежало <warning descr="Sklonenije_NUM_NN">пять карандаша</warning>.

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
-import com.intellij.ide.actions.ToggleDistractionFreeModeAction
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -9,6 +9,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
@@ -21,6 +22,7 @@ import com.jetbrains.CustomWindowDecoration
 import com.jetbrains.JBR
 import java.awt.CardLayout
 import java.awt.Component
+import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -38,9 +40,13 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   private val ideMenu: IdeMenuBar = IdeMenuBar()
   private var toolbar: MainToolbar? = null
   private val headerTitle = SimpleCustomDecorationPath(frame)
+  private var toolbarHasNoActions = false
+  private val isCompact: Boolean get() = (root as? IdeRootPane)?.isCompactHeader == true || toolbarHasNoActions
 
   private val TOOLBAR_CARD = "TOOLBAR_CARD"
   private val PATH_CARD = "PATH_CARD"
+
+  private val customizer get() = ProjectWindowCustomizerService.getInstance()
 
   init {
     layout = AdjustableSizeCardLayout()
@@ -60,6 +66,11 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
         MacFullScreenControlsManager.updateColors(frame)
       }
     })
+
+    customizer.addListener(this, true) {
+      isOpaque = !it
+      revalidate()
+    }
   }
 
   private fun createToolBar(): MainToolbar {
@@ -74,6 +85,11 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     })
     add(toolbar, TOOLBAR_CARD)
     return toolbar
+  }
+
+  override fun paint(g: Graphics?) {
+    ProjectWindowCustomizerService.getInstance().paint(frame, this, g)
+    super.paint(g)
   }
 
   private fun addHeaderTitle() {
@@ -93,6 +109,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
 
   override fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
     toolbar?.init(toolbarActionGroups)
+    updateToolbarHasNoActions(toolbarActionGroups)
   }
 
   override fun updateToolbar() {
@@ -100,16 +117,22 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     remove(toolbar)
     toolbar = createToolBar()
     this.toolbar = toolbar
-    toolbar.init(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
+    val actionGroups = MainToolbar.computeActionGroups(CustomActionsSchema.getInstance())
+    toolbar.init(actionGroups)
 
     revalidate()
     updateCustomDecorationHitTestSpots()
 
+    updateToolbarHasNoActions(actionGroups)
+  }
+
+  private fun updateToolbarHasNoActions(actionGroups: List<Pair<ActionGroup, String>>) {
+    toolbarHasNoActions = actionGroups.all { it.first.getChildren(null).isEmpty() }
     updateVisibleCard()
   }
 
   private fun updateVisibleCard() {
-    val cardToShow = if (ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()) PATH_CARD else TOOLBAR_CARD
+    val cardToShow = if (isCompact) PATH_CARD else TOOLBAR_CARD
     (getLayout() as? CardLayout)?.show(this, cardToShow)
 
     revalidate()
@@ -151,6 +174,11 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   }
 
   override fun getHeaderBackground(active: Boolean) = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(active)
+
+  //override fun updateCustomTitleBar() {
+  //  super.updateCustomTitleBar()
+  //  updateBorders()
+  //}
 
   private fun updateBorders() {
     val isFullscreen = root.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) != null

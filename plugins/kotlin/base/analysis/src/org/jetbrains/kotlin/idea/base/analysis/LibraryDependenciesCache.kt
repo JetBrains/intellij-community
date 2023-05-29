@@ -490,7 +490,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         override fun beforeChanged(event: VersionedStorageChange) {
             val storageBefore = event.storageBefore
-            val changes = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+            val changes = event.getChanges(ModuleEntity::class.java)
+            if (changes.none()) return
 
             val outdatedModules = mutableSetOf<Module>()
             for (change in changes) {

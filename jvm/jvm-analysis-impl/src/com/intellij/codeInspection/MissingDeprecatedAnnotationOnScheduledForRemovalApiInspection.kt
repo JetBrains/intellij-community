@@ -49,11 +49,9 @@ class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection : LocalInspe
 
     private fun checkMissingDeprecatedAnnotationOnScheduledForRemovalApi(node: UDeclaration) {
       if (isScheduledForRemoval(node) && !hasDeprecatedAnnotation(node)) {
-        val identifierPsi = node.uastAnchor.sourcePsiElement ?: return
-        problemsHolder.registerProblem(
-          identifierPsi,
+        problemsHolder.registerUProblem(
+          node,
           JvmAnalysisBundle.message("jvm.inspections.missing.deprecated.annotation.on.scheduled.for.removal.api.description"),
-          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
           *LocalQuickFix.notNullElements(createAnnotationFix(node))
         )
       }

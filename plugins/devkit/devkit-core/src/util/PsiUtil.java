@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -190,13 +189,6 @@ public final class PsiUtil {
       if (new File(path, file).isFile()) return true;
     }
     return false;
-  }
-
-  public static boolean isExtensionPointImplementationCandidate(PsiClass psiClass) {
-    return psiClass.getClassKind() == JvmClassKind.CLASS &&
-           !com.intellij.psi.util.PsiUtil.isInnerClass(psiClass) &&
-           !com.intellij.psi.util.PsiUtil.isLocalOrAnonymousClass(psiClass) &&
-           !com.intellij.psi.util.PsiUtil.isAbstractClass(psiClass);
   }
 
 }

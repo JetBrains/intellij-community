@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.util.projectStructure
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -14,8 +15,6 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.base.util.getModule
-import org.jetbrains.kotlin.idea.base.util.module
 import java.io.File
 
 @Deprecated(
@@ -55,14 +54,7 @@ fun Library.ModifiableModel.replaceFileRoot(oldFile: File, newFile: File) {
     replaceInRootType(OrderRootType.SOURCES)
 }
 
-@Deprecated(
-    "Use 'org.jetbrains.kotlin.idea.base.util.ProjectStructureUtils' instead",
-    ReplaceWith("this.getModule(project)", "org.jetbrains.kotlin.idea.base.util.getModule"),
-)
-fun VirtualFile.getModule(project: Project) = getModule(project)
+fun VirtualFile.getModule(project: Project) = ModuleUtilCore.findModuleForFile(this, project)
 
-@Deprecated(
-    "Use 'org.jetbrains.kotlin.idea.base.util.GenericPsiUtils' instead",
-    ReplaceWith("this.module", "org.jetbrains.kotlin.idea.base.util.module"),
-)
-val PsiElement.module get() = module
+val PsiElement.module
+    get() = ModuleUtilCore.findModuleForPsiElement(this)

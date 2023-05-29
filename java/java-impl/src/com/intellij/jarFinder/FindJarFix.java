@@ -161,7 +161,7 @@ public abstract class FindJarFix extends ExpensivePsiIntentionAction implements 
             JBPopupFactory.getInstance()
             .createListPopupBuilder(libNames)
             .setTitle(JavaBundle.message("popup.title.select.a.jar.file"))
-            .setItemChoosenCallback(() -> {
+            .setItemChosenCallback(() -> {
               String jarName = libNames.getSelectedValue();
               String url = libs.get(jarName);
               if (url != null) {

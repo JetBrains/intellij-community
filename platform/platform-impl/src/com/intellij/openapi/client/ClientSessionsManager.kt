@@ -1,13 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
@@ -17,9 +18,26 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Internal
 sealed class ClientSessionsManager<T : ClientSession> {
   companion object {
+
+    /**
+     * @return a project session for specified app-level session
+     */
+    @JvmStatic
+    fun getProjectSession(project: Project, session: ClientAppSession): ClientProjectSession? {
+      return getInstance(project).getSession(session.clientId)
+    }
+
+    /**
+     * Clients may not have access to certain projects
+     * @return a list of project-level sessions available to a certain [ClientAppSession]
+     */
+    fun getAllProjectSession(session: ClientAppSession): List<ClientProjectSession> {
+      return ProjectManager.getInstance().openProjects.mapNotNull { getProjectSession(it, session) }
+    }
+
     /**
      * Returns a project-level session for a particular client.
-     * @see ClientSession
+     * @see ClientProjectSession
      */
     @JvmStatic
     @JvmOverloads
@@ -108,12 +126,11 @@ sealed class ClientSessionsManager<T : ClientSession> {
   }
 }
 
-open class ClientAppSessionsManager : ClientSessionsManager<ClientAppSession>() {
+open class ClientAppSessionsManager(@Suppress("NonDefaultConstructor") app: Application) : ClientSessionsManager<ClientAppSession>() {
   init {
-    val application = ApplicationManager.getApplication()
-    if (application is ApplicationImpl) {
+    if (app is ApplicationImpl) {
       @Suppress("LeakingThis")
-      registerSession(application, createLocalSession(application))
+      registerSession(app, createLocalSession(app))
     }
   }
 
@@ -128,11 +145,16 @@ open class ClientAppSessionsManager : ClientSessionsManager<ClientAppSession>() 
 open class ClientProjectSessionsManager(project: Project) : ClientSessionsManager<ClientProjectSession>() {
   init {
     if (project is ProjectImpl) {
-      registerSession(project, ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, project))
+      @Suppress("LeakingThis")
+      registerSession(project, createLocalSession(project))
     } else if (project.isDefault) {
       (project.actualComponentManager as? ClientAwareComponentManager)?.let { componentManager ->
         registerSession(project, ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, componentManager, project))
       }
     }
+  }
+
+  protected open fun createLocalSession(project: ProjectImpl): ClientProjectSessionImpl {
+    return ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, project)
   }
 }

@@ -27,7 +27,7 @@
     <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRootWatcher"/>
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager"
-      serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge" preload="await"/>
+      serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge" preload="true"/>
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher"/>
 
     <initProjectActivity
@@ -73,7 +73,7 @@
                         headlessImplementation="com.intellij.openapi.wm.impl.IdeFocusManagerHeadless" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionManager"
-                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl" preload="notHeadless"/>
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.ide.DataManager"
                         serviceImplementation="com.intellij.ide.impl.DataManagerImpl"
                         testServiceImplementation="com.intellij.ide.impl.HeadlessDataManager"/>
@@ -135,6 +135,7 @@
 
     <projectService serviceImplementation="com.intellij.ide.navigationToolbar.experimental.NewToolbarRootPaneManager"/>
 
+    <idePerformanceListener implementation="com.intellij.diagnostic.IdeaFreezeReporter"/>
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->
@@ -167,8 +168,6 @@
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.openapi.editor.impl.EditorLastActionTracker$MyAnActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
-    <listener class="com.intellij.diagnostic.IdeaFreezeReporter" topic="com.intellij.diagnostic.IdePerformanceListener"
-              activeInTestMode="false" activeInHeadlessMode="false"/>
 
     <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
               topic="com.intellij.notification.Notifications"/>
@@ -198,6 +197,8 @@
     <listener class="com.intellij.notification.impl.MacEventReader" topic="com.intellij.notification.Notifications" os="mac"
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.notification.impl.NotificationsBeeper" topic="com.intellij.notification.Notifications"
+              activeInHeadlessMode="false"/>
+    <listener class="com.intellij.notification.impl.NotificationsAnnouncer$MyListener" topic="com.intellij.notification.Notifications"
               activeInHeadlessMode="false"/>
 
     <listener class="com.intellij.internal.performance.LatenciometerListener"
@@ -236,6 +237,8 @@
     <listener class="com.intellij.notification.impl.MacEventReader" topic="com.intellij.notification.Notifications" os="mac"
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.notification.impl.NotificationsBeeper" topic="com.intellij.notification.Notifications"
+              activeInHeadlessMode="false"/>
+    <listener class="com.intellij.notification.impl.NotificationsAnnouncer$MyListener" topic="com.intellij.notification.Notifications"
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.codeInsight.actions.ReaderModeSettingsListener"
               topic="com.intellij.codeInsight.actions.ReaderModeListener" activeInHeadlessMode="false"/>

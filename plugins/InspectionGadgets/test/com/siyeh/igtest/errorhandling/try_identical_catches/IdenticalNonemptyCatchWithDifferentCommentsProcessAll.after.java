@@ -7,12 +7,12 @@ class C {
       e = null;
       //non final
     }
-    catch (NullPointerException | IllegalStateException | ClassCastException e) {
+    catch (NullPointerException | ClassCastException | IllegalStateException e) {
       /*same comment*/
       // comment 1
       e.printStackTrace();
-    } //line comment
-    // comment 2
+    } // comment 2
+ //line comment
     // comment 3
 
   }

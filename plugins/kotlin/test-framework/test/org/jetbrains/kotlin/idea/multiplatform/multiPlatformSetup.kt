@@ -308,7 +308,7 @@ private fun parseIsTestRoot(parts: List<String>) =
     testSuffixes.any { suffix -> parts.any { it.equals(suffix, ignoreCase = true) } }
 
 private fun parseIndex(parts: List<String>): Int? {
-    return parts.singleOrNull() { it.startsWith("id") }?.substringAfter("id")?.toInt()
+    return parts.singleOrNull { it.startsWith("id") }?.substringAfter("id")?.toInt()
 }
 
 private data class ModuleId(

@@ -11,11 +11,21 @@ import java.io.IOException
 
 class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService() {
 
-  private val configurationFileModel : Deferred<Map<String, String>> = scope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+  private val configurationFileModel: Deferred<Map<String, String>> = scope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
     getModelFromFile()
   }
 
-  override suspend fun getValue(key: EnvironmentKey, defaultValue: String?): String {
+  override suspend fun getEnvironmentValue(key: EnvironmentKey): String? {
+    return getEnvironmentValueOrNull(key)
+           ?: throw MissingEnvironmentKeyException(key)
+  }
+
+  override suspend fun getEnvironmentValue(key: EnvironmentKey, defaultValue: String): String {
+    return getEnvironmentValueOrNull(key)
+           ?: defaultValue
+  }
+
+  private suspend fun getEnvironmentValueOrNull(key: EnvironmentKey): String? {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       LOG.warn("Access to environment parameters in the IDE with UI must be delegated to the user")
     }
@@ -31,12 +41,7 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
     if (valueFromConfigurationFile != null) {
       return valueFromConfigurationFile
     }
-
-    if (defaultValue != null) {
-      return defaultValue
-    }
-
-    throw MissingEnvironmentKeyException(key)
+    return null
   }
 
   class MissingEnvironmentKeyException(val key: EnvironmentKey) : CancellationException(
@@ -56,11 +61,14 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
     val pathToFile = EnvironmentUtil.getPathToConfigurationFile() ?: return emptyMap()
 
     val objectMapper = ObjectMapper()
-    val deserializedType: CollectionType = objectMapper.typeFactory.constructCollectionType(ArrayList::class.java, EnvironmentKeyEntry::class.java)
+    val deserializedType: CollectionType = objectMapper.typeFactory.constructCollectionType(
+      ArrayList::class.java, EnvironmentKeyEntry::class.java
+    )
 
-    val list : List<EnvironmentKeyEntry> = try {
+    val list: List<EnvironmentKeyEntry> = try {
       objectMapper.readValue(pathToFile.toFile(), deserializedType)
-    } catch (e : IOException) {
+    }
+    catch (e: IOException) {
       LOG.warn(e)
       return emptyMap()
     }

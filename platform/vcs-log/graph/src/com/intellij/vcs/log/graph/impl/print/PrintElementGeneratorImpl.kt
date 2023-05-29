@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.impl.print
 
@@ -22,6 +22,9 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils.*
 import com.intellij.vcs.log.graph.utils.NormalEdge
 import org.jetbrains.annotations.TestOnly
 import java.util.*
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.sqrt
 
 internal class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: LinearGraph,
                                                                private val presentationManager: PrintElementPresentationManager,
@@ -45,7 +48,7 @@ internal class PrintElementGeneratorImpl @TestOnly constructor(private val linea
 
   fun getRecommendedWidth(): Int {
     if (recommendedWidth <= 0) {
-      val n = Math.min(SAMPLE_SIZE, linearGraph.nodesCount())
+      val n = min(SAMPLE_SIZE, linearGraph.nodesCount())
 
       var sum = 0.0
       var sumSquares = 0.0
@@ -96,7 +99,7 @@ internal class PrintElementGeneratorImpl @TestOnly constructor(private val linea
          * 0 <= K < 1; weight is an arithmetic progression, starting at 2 / ( n * (k + 1)) ending at k * 2 / ( n * (k + 1))
          * this formula ensures that sum of all weights is 1
          */
-        val width = Math.max(edgesCount + upArrows, newEdgesCount + downArrows)
+        val width = max(edgesCount + upArrows, newEdgesCount + downArrows)
         val weight = 2 / (n * (K + 1)) * (1 + (K - 1) * i / (n - 1))
         sum += width * weight
         sumSquares += width.toDouble() * width.toDouble() * weight
@@ -109,7 +112,7 @@ internal class PrintElementGeneratorImpl @TestOnly constructor(private val linea
       http://stackoverflow.com/questions/30383270/how-do-i-calculate-the-standard-deviation-between-weighted-measurements
        s*/
       val average = sum
-      val deviation = Math.sqrt(sumSquares - average * average)
+      val deviation = sqrt(sumSquares - average * average)
       recommendedWidth = Math.round(average + deviation).toInt()
     }
 
@@ -261,7 +264,7 @@ internal class PrintElementGeneratorImpl @TestOnly constructor(private val linea
   }
 
   private fun getAttachmentDistance(e1: NormalEdge, rowIndex: Int): Int {
-    return Math.min(rowIndex - e1.up, e1.down - rowIndex)
+    return min(rowIndex - e1.up, e1.down - rowIndex)
   }
 
   private inner class PrintElementBuilder(private val rowIndex: Int) {

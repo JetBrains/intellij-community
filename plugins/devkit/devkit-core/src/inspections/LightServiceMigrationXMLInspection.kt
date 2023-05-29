@@ -17,8 +17,11 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 
 internal class LightServiceMigrationXMLInspection : DevKitPluginXmlInspectionBase() {
+
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
     if (element !is Extension) return
+    if (!isAllowed(holder)) return
+
     if (LightServiceMigrationUtil.isVersion193OrHigher(element) ||
         ApplicationManager.getApplication().isUnitTestMode) {
       val (aClass, level) = LightServiceMigrationUtil.getServiceImplementation(element) ?: return

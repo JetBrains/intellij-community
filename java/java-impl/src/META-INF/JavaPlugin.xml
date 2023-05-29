@@ -586,7 +586,7 @@
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.roots.ui.configuration.DefaultModuleEditorsProvider"
                                        order="first"/>
 
-    <postStartupActivity implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileSelectionListener$MyStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileSelectionListenerStartupActivity"/>
 
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
 
@@ -642,6 +642,7 @@
                         serviceImplementation="com.intellij.debugger.impl.DebuggerUtilsImpl"/>
 
     <projectService serviceImplementation="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
+    <registryKey defaultValue="true" description="Trigger autotest on delay instead of build events" key="trigger.autotest.on.delay" />
 
     <applicationService serviceInterface="com.intellij.framework.library.DownloadableLibraryService"
                         serviceImplementation="com.intellij.framework.library.impl.DownloadableLibraryServiceImpl"/>
@@ -1296,6 +1297,7 @@
     <lang.findUsagesProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaFindUsagesProvider"/>
     <lang.unwrapDescriptor language="JAVA" implementationClass="com.intellij.codeInsight.unwrap.JavaUnwrapDescriptor"/>
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.JavaSurroundWithStatementRangeAdjuster"/>
+    <lang.floatingToolbarFilter language="JAVA" implementationClass="com.intellij.ui.codeFloatingToolbar.FloatingToolbarFilter$ENABLED"/>
     <lang.surroundDescriptor language="JAVA" implementationClass="com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurroundDescriptor"/>
     <lang.surroundDescriptor language="JAVA" implementationClass="com.intellij.codeInsight.generation.surroundWith.JavaStatementsSurroundDescriptor"/>
     <lang.surroundDescriptor language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.SurroundAutoCloseableAction$Template"/>
@@ -1823,9 +1825,13 @@
                      bundle="messages.JavaBundle" key="inspection.data.flow.display.name"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.dataFlow.DataFlowInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OptionalOfNullableMisuse" bundle="messages.JavaBundle" key="inspection.data.flow.optional.of.nullable.misuse.display.name"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.dataFlow.OptionalOfNullableMisuseInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConstantValue" bundle="messages.JavaBundle" key="inspection.data.flow.constant.values.display.name"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.dataFlow.ConstantValueInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.dataFlow.OptionalOfNullableMisuseInspectionMerger" />
     <inspectionElementsMerger implementation="com.intellij.codeInspection.dataFlow.ConstantValueInspectionMerger" />
     <inspectionElementsMerger implementation="com.intellij.codeInspection.dataFlow.DataFlowInspectionMerger" />
     <localInspection groupPath="Java" language="JAVA" shortName="Java9UndeclaredServiceUsage"
@@ -1888,6 +1894,11 @@
                      groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.refactoring.extractMethod.ExtractMethodRecommenderInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousReturnByteInputStream"
+                     key="inspection.suspicious.return.byte.input.stream.name" bundle="messages.JavaBundle"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.SuspiciousReturnByteInputStreamInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantLabeledSwitchRuleCodeBlock"
                      key="inspection.labeled.switch.rule.redundant.code.block.display.name" bundle="messages.JavaBundle"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
@@ -2424,8 +2435,16 @@
     <projectService serviceImplementation="com.intellij.jarRepository.RepositoryLibrarySettings$Service" configurationSchemaKey="repositoryLibrary"/>
   </extensions>
 
+  <applicationListeners>
+    <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileFileEditorManagerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.jarRepository.RepositoryLibraryChangeListener"
               topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
+    <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileInlaySelectionListenerSettingsListener"
+              topic="com.intellij.codeInsight.hints.InlayHintsSettings$SettingsListener"/>
+    <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileRefactoringEventListener"
+              topic="com.intellij.refactoring.listeners.RefactoringEventListener"/>
   </projectListeners>
 </idea-plugin>

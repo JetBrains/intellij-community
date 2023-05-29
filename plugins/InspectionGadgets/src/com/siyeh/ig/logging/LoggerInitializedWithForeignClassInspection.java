@@ -3,9 +3,7 @@ package com.siyeh.ig.logging;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInsight.options.JavaIdentifierValidator;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -96,7 +94,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new LoggerInitializedWithForeignClassFix((String)infos[0]);
   }
 
@@ -141,7 +139,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     });
   }
 
-  private static final class LoggerInitializedWithForeignClassFix extends InspectionGadgetsFix {
+  private static final class LoggerInitializedWithForeignClassFix extends PsiUpdateModCommandQuickFix {
 
     private final String newClassName;
 
@@ -162,8 +160,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiClassObjectAccessExpression classObjectAccessExpression)) {
         return;
       }

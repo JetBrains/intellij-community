@@ -19,7 +19,7 @@ internal class PsiFileNavigationTarget(
     psiFile.createSmartPointer(), ::PsiFileNavigationTarget
   )
 
-  override fun presentation(): TargetPresentation {
+  override fun computePresentation(): TargetPresentation {
     val project = psiFile.project
 
     var builder = TargetPresentation

@@ -1,11 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -17,7 +23,6 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -31,7 +36,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.*;
 
 public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreNegations = false;
   @SuppressWarnings("PublicField")
   public OrderedSet<String> ignoredTypes = new OrderedSet<>();
@@ -52,8 +57,8 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> result = new SmartList<>();
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    final List<LocalQuickFix> result = new SmartList<>();
     final PsiExpression expression = (PsiExpression)infos[1];
     final String methodName = (String)infos[2];
     final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
@@ -65,10 +70,10 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       }
     }
     result.add(new SizeReplaceableByIsEmptyFix());
-    return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  protected static class SizeReplaceableByIsEmptyFix extends InspectionGadgetsFix {
+  protected static class SizeReplaceableByIsEmptyFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -77,8 +82,8 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)startElement;
       PsiExpression operand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
       if (!(operand instanceof PsiMethodCallExpression)) {
         operand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
@@ -109,6 +114,13 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   }
 
   private class SizeReplaceableByIsEmptyVisitor extends BaseInspectionVisitor {
+    private static boolean isLanguageLevelCompatible(PsiElement element, PsiMethod method) {
+      Module module = ModuleUtilCore.findModuleForPsiElement(element);
+      if (module == null) return false;
+      LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
+      LanguageLevel lastIncompatibleLanguageLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(method, languageLevel);
+      return lastIncompatibleLanguageLevel == null || languageLevel.isAtLeast(lastIncompatibleLanguageLevel);
+    }
 
     @Override
     public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
@@ -153,7 +165,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       }
       for (PsiMethod method : aClass.findMethodsByName("isEmpty", true)) {
         final PsiParameterList parameterList = method.getParameterList();
-        if (parameterList.isEmpty()) {
+        if (parameterList.isEmpty() && isLanguageLevelCompatible(expression, method)) {
           isEmptyCall = qualifierExpression.getText() + ".isEmpty()";
           break;
         }

@@ -593,17 +593,6 @@
     <depends optional="true">com.intellij.modules.java</depends>
     <depends optional="true">-org-jetbrains-plugins-yaml-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.struts2/META-INF/plugin.xml">
-    <id>-com-intellij-struts2-</id>
-    <name>Struts 2</name>
-    <depends>-com-intellij-javaee-</depends>
-    <depends>-JavaScript-</depends>
-    <depends>-com-intellij-java-i18n-</depends>
-    <depends optional="true">-com-intellij-freemarker-</depends>
-    <depends optional="true">-com-intellij-spring-</depends>
-    <depends optional="true">-org-intellij-groovy-</depends>
-    <depends optional="true">-com-intellij-velocity-</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.spring.webflow/META-INF/plugin.xml">
     <id>-com-intellij-spring-webflow-</id>
     <name>Spring Web Flow</name>
@@ -895,13 +884,6 @@
     <depends>-JavaScriptDebugger-</depends>
     <depends>com.intellij.modules.lang</depends>
     <depends optional="true">com.intellij.modules.coverage</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.play/META-INF/plugin.xml">
-    <id>-com-intellij-play-</id>
-    <name>Play Framework</name>
-    <depends>-org-intellij-groovy-</depends>
-    <depends>com.intellij.modules.ultimate</depends>
-    <depends optional="true">-com-intellij-persistence-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.dart/META-INF/plugin.xml">
     <id>-Dart-</id>

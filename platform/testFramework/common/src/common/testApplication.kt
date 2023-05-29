@@ -31,7 +31,7 @@ import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
@@ -56,6 +56,7 @@ import com.intellij.testFramework.UITestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.SystemProperties
+import com.intellij.util.WalkingState
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
@@ -118,13 +119,13 @@ fun loadApp(setupEventQueue: Runnable) {
 private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   val loadedModuleFuture = PluginManagerCore.getInitPluginFuture()
 
-  val rwLockHolder = RwLockHolder()
   val awtBusyThread = AppScheduledExecutorService.getPeriodicTasksThread()
+  lateinit var rwLockHolder: RwLockHolder
   EdtInvocationManager.invokeAndWaitIfNeeded {
     // Instantiate `AppDelayQueue` which starts "periodic tasks thread" which we'll mark busy to prevent this EDT from dying.
     // That thread was chosen because we know for sure it's running. Needed for EDT not to exit suddenly
     AWTAutoShutdown.getInstance().notifyThreadBusy(awtBusyThread)
-    rwLockHolder.initialize(Thread.currentThread())
+    rwLockHolder = RwLockHolder(Thread.currentThread())
   }
 
   val app = ApplicationImpl(isHeadless, rwLockHolder)
@@ -133,6 +134,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   AWTExceptionHandler.register()
   Disposer.setDebugMode(true)
   Logger.setUnitTestMode()
+  WalkingState.setUnitTestMode()
 
   Disposer.register(app) {
     AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
@@ -147,19 +149,23 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
     val pluginSet = loadedModuleFuture.asCompletableFuture().get(40, TimeUnit.SECONDS)
     app.registerComponents(modules = pluginSet.getEnabledModules(), app = app, precomputedExtensionModel = null, listenerCallbacks = null)
 
-    initConfigurationStore(app)
+    val task = suspend {
+      initConfigurationStore(app)
 
-    addKeysFromPlugins()
-    Registry.markAsLoaded()
+      addKeysFromPlugins()
+      Registry.markAsLoaded()
+
+      preloadServicesAndCallAppInitializedListeners(app, pluginSet)
+    }
 
     if (EDT.isCurrentThreadEdt()) {
-      runBlockingModalWithRawProgressReporter(ModalTaskOwner.guess(), "") {
-        preloadServicesAndCallAppInitializedListeners(app, pluginSet)
+      runBlockingModal(ModalTaskOwner.guess(), "") {
+        task()
       }
     }
     else {
       runBlocking(Dispatchers.Default) {
-        preloadServicesAndCallAppInitializedListeners(app, pluginSet)
+        task()
       }
     }
 
@@ -174,7 +180,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl, pluginSet: PluginSet) {
   coroutineScope {
     withTimeout(Duration.ofSeconds(40).toMillis()) {
-      preloadCriticalServices(app)
+      preloadCriticalServices(app, app.coroutineScope)
       app.preloadServices(
         modules = pluginSet.getEnabledModules(),
         activityPrefix = "",

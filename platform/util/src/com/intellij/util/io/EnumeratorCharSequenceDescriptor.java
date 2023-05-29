@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,12 +22,12 @@ public final class EnumeratorCharSequenceDescriptor implements KeyDescriptor<Cha
   }
 
   @Override
-  public void save(@NotNull final DataOutput storage, @NotNull final CharSequence value) throws IOException {
+  public void save(final @NotNull DataOutput storage, final @NotNull CharSequence value) throws IOException {
     IOUtil.writeUTF(storage, value);
   }
 
   @Override
-  public CharSequence read(@NotNull final DataInput storage) throws IOException {
+  public CharSequence read(final @NotNull DataInput storage) throws IOException {
     return IOUtil.readUTFCharSequence(storage);
   }
 }

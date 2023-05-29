@@ -197,7 +197,7 @@ open class UnknownSdkCollector(private val myProject: Project) : UnknownSdkBlock
         throw e
       } catch (t: Throwable) {
         LOG.warn("Failed to contribute SDKs with ${it.javaClass.name}. ${t.message}", t)
-        listOf<UnknownSdk>()
+        listOf()
       }
 
       for (unknownSdk in contrib) {

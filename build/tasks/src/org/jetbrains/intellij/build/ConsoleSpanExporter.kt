@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build
 
-import com.intellij.diagnostic.telemetry.AsyncSpanExporter
+import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.sdk.trace.data.SpanData

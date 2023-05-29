@@ -150,11 +150,4 @@ public final class MarkdownApplicationSettings implements PersistentStateCompone
 
     default void settingsChanged(@NotNull MarkdownApplicationSettings settings) { }
   }
-
-  @Deprecated(forRemoval = true)
-  public interface FontChangedListener {
-    Topic<FontChangedListener> TOPIC = Topic.create("FontChangedListener", FontChangedListener.class);
-
-    default void fontChanged() { }
-  }
 }

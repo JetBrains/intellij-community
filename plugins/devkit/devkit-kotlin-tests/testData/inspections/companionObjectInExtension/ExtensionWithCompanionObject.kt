@@ -1,5 +1,5 @@
-class ExtensionWithCompanionObject : MyExtension {
-  <error descr="Companion objects in extensions can only contain a logger and constants">companion</error> object {
+class MyExtensionImpl : MyExtension {
+  <error descr="Companion objects in extensions may only contain a logger and constants">companion</error> object {
     private val s = ""
 
     fun foo() { }

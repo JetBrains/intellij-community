@@ -3,7 +3,7 @@ package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.*
 import com.intellij.platform.runtime.repository.ProductModules
-import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
+import com.intellij.platform.runtime.repository.RuntimeModuleGroup
 import com.intellij.util.lang.ZipFilePool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -17,18 +17,18 @@ class ModuleBasedPluginDescriptorLoadingStrategy(private val productModules: Pro
                                             isUnitTestMode: Boolean,
                                             context: DescriptorListLoadingContext,
                                             zipFilePool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>> {
-    return productModules.bundledPluginMainModules.map { runtimeModuleDescriptor ->
+    return productModules.bundledPluginModuleGroups.map { moduleGroup ->
       scope.async {
-        loadPluginDescriptorFromRuntimeModule(runtimeModuleDescriptor, context, zipFilePool)
+        loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool)
       }
     }
   }
   
-  private fun loadPluginDescriptorFromRuntimeModule(runtimeModuleDescriptor: RuntimeModuleDescriptor,
+  private fun loadPluginDescriptorFromRuntimeModule(pluginModuleGroup: RuntimeModuleGroup,
                                                     context: DescriptorListLoadingContext,
                                                     zipFilePool: ZipFilePool?): IdeaPluginDescriptorImpl? {
-    val resourceRoot = runtimeModuleDescriptor.resourceRootPaths.singleOrNull()
-                       ?: error("Only single-module plugins are supported for now, so '${runtimeModuleDescriptor.moduleId.stringId}' cannot be loaded")
+    val resourceRoot = pluginModuleGroup.includedModules.singleOrNull()?.moduleDescriptor?.resourceRootPaths?.singleOrNull()
+                       ?: error("Only single-module plugins are supported for now, so '${pluginModuleGroup}' cannot be loaded")
     return if (Files.isDirectory(resourceRoot)) {
       loadDescriptorFromDir(
         file = resourceRoot,

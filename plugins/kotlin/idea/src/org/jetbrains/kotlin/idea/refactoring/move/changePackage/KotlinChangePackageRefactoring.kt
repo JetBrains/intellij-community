@@ -10,8 +10,6 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRe
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.move.*
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDelegate
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDescriptor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.FqName
@@ -26,12 +24,12 @@ class KotlinChangePackageRefactoring(val file: KtFile) {
 
         val declarationProcessor = MoveKotlinDeclarationsProcessor(
             MoveDeclarationsDescriptor(
-                project = project,
-                moveSource = KotlinMoveSource(file),
-                moveTarget = KotlinMoveTarget.Directory(newFqName, file.containingDirectory!!.virtualFile),
-                delegate = MoveDeclarationsDelegate.TopLevel,
-                searchInCommentsAndStrings = KotlinRefactoringSettings.instance.MOVE_SEARCH_IN_COMMENTS,
-                searchInNonCode = KotlinRefactoringSettings.instance.MOVE_SEARCH_FOR_TEXT,
+              project = project,
+              moveSource = KotlinMoveSource(file),
+              moveTarget = KotlinMoveTarget.Directory(newFqName, file.containingDirectory!!.virtualFile),
+              delegate = KotlinMoveDeclarationDelegate.TopLevel,
+              searchInCommentsAndStrings = KotlinRefactoringSettings.instance.MOVE_SEARCH_IN_COMMENTS,
+              searchInNonCode = KotlinRefactoringSettings.instance.MOVE_SEARCH_FOR_TEXT,
             )
         )
 

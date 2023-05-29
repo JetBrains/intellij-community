@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -69,11 +70,16 @@ public final class VfsData {
 
   private static final short NULL_INDEXING_STAMP = 0;
   private static final AtomicInteger ourIndexingStamp = new AtomicInteger(1);
+  private final Application app;
 
   public static boolean isIsIndexedFlagDisabled() {
+    return isIsIndexedFlagDisabled(ApplicationManager.getApplication());
+  }
+
+  public static boolean isIsIndexedFlagDisabled(@NotNull Application app) {
     if (isIsIndexedFlagDisabled == null) {
       Boolean enable;
-      if (ApplicationManager.getApplication().isUnitTestMode() && ((enable = TestModeFlags.get(ENABLE_IS_INDEXED_FLAG_KEY)) != null)) {
+      if (app.isUnitTestMode() && ((enable = TestModeFlags.get(ENABLE_IS_INDEXED_FLAG_KEY)) != null)) {
         isIsIndexedFlagDisabled = !enable;
       }
       else {
@@ -101,17 +107,18 @@ public final class VfsData {
 
   private final IntObjectMap<VirtualDirectoryImpl> myChangedParents = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
-  public VfsData() {
-    ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
+  public VfsData(@NotNull Application app) {
+    this.app = app;
+    app.addApplicationListener(new ApplicationListener() {
       @Override
       public void writeActionFinished(@NotNull Object action) {
         // after top-level write action is finished, all the deletion listeners should have processed the deleted files
         // and their data is considered safe to remove. From this point on accessing a removed file will result in an exception.
-        if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        if (!app.isWriteAccessAllowed()) {
           killInvalidatedFiles();
         }
       }
-    }, ApplicationManager.getApplication());
+    }, app);
   }
 
   private void killInvalidatedFiles() {
@@ -148,8 +155,9 @@ public final class VfsData {
     if (nameId <= 0) {
       String message = "nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() +
                              "; db.parent=" + FSRecords.getParent(id);
-      FSRecords.invalidateCaches(message);
-      throw new AssertionError(message);
+      final AssertionError error = new AssertionError(message);
+      FSRecords.invalidateCaches(message, error);
+      throw error;
     }
 
     if (o instanceof DirectoryData) {
@@ -173,7 +181,7 @@ public final class VfsData {
   }
 
   @Contract("_,true->!null")
-  public Segment getSegment(int id, boolean create) {
+  Segment getSegment(int id, boolean create) {
     int key = id >>> SEGMENT_BITS;
     Segment segment = mySegments.get(key);
     if (segment != null || !create) {
@@ -201,7 +209,9 @@ public final class VfsData {
     Object existingData = segment.myObjectArray.get(offset);
     if (existingData != null) {
       String msg = FSRecords.describeAlreadyCreatedFile(id, nameId);
-      throw new FileAlreadyCreatedException(msg);
+      final FileAlreadyCreatedException exception = new FileAlreadyCreatedException(msg);
+      FSRecords.invalidateCaches(msg, exception);
+      throw exception;
     }
     segment.myObjectArray.set(offset, data);
   }
@@ -225,7 +235,7 @@ public final class VfsData {
   }
 
   private void changeParent(int id, @NotNull VirtualDirectoryImpl parent) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    app.assertWriteAccessAllowed();
     myChangedParents.put(id, parent);
   }
 
@@ -262,14 +272,14 @@ public final class VfsData {
     }
 
     boolean isIndexed(int fileId) {
-      if (isIsIndexedFlagDisabled()) {
+      if (isIsIndexedFlagDisabled(vfsData.app)) {
         return false;
       }
       return myIntArray.get(getOffset(fileId) * 3 + 2) == ourIndexingStamp.intValue();
     }
 
     void setIndexed(int fileId, boolean indexed) {
-      if (isIsIndexedFlagDisabled()) {
+      if (isIsIndexedFlagDisabled(vfsData.app)) {
         return;
       }
       if (fileId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId);

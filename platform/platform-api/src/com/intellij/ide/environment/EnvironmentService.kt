@@ -2,9 +2,6 @@
 package com.intellij.ide.environment
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Contract
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.contract
 
 /**
  * Allows retrieving values for [EnvironmentKey].
@@ -21,7 +18,6 @@ interface EnvironmentService {
    *
    * The semantics of returned value is the following:
    * - If the environment has some defined value for [key], then this value is returned.
-   * - Otherwise if [defaultValue] is not `null`, [defaultValue] is returned.
    * - Otherwise the service enters in its error-handling state.
    *
    * In particular, current implementations of this service have the following behavior in error-handling state:
@@ -43,5 +39,14 @@ interface EnvironmentService {
    * }
    * ```
    */
-  suspend fun getValue(key: EnvironmentKey, defaultValue: String?): String?
+  suspend fun getEnvironmentValue(key: EnvironmentKey): String?
+
+  /**
+   * Retrieves a value for [key] from the environment.
+   *
+   * The semantics of returned value is the following:
+   * - If the environment has some defined value for [key], then this value is returned.
+   * - Otherwise [defaultValue] is returned.
+   */
+  suspend fun getEnvironmentValue(key: EnvironmentKey, defaultValue: String): String
 }

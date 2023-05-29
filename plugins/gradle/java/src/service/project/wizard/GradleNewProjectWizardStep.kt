@@ -4,18 +4,20 @@ package org.jetbrains.plugins.gradle.service.project.wizard
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Gradle.logDslChanged
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.setupProjectFromBuilder
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardStep
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
+import com.intellij.openapi.externalSystem.service.ui.completion.whenItemChangedFromUi
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.util.bindEnumStorage
 import com.intellij.openapi.observable.util.not
@@ -49,6 +51,12 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleV
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.DistributionTypeItem.LOCAL
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.DistributionTypeItem.WRAPPER
+import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.Companion.logGradleDistributionChanged
+import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.Companion.logGradleDistributionFinished
+import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.Companion.logGradleDslChanged
+import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.Companion.logGradleDslFinished
+import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.Companion.logGradleVersionChanged
+import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.Companion.logGradleVersionFinished
 import org.jetbrains.plugins.gradle.service.settings.PlaceholderGroup.Companion.placeholderGroup
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
@@ -111,8 +119,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     builder.row(GradleBundle.message("gradle.dsl.new.project.wizard")) {
       segmentedButton(listOf(GradleDsl.KOTLIN, GradleDsl.GROOVY)) { it.text }
         .bind(gradleDslProperty)
-        .whenItemSelectedFromUi { logDslChanged(it == GradleDsl.KOTLIN) }
+        .whenItemSelectedFromUi { logGradleDslChanged(gradleDsl) }
     }.bottomGap(BottomGap.SMALL)
+    builder.onApply { logGradleDslFinished(gradleDsl) }
   }
 
   protected fun setupGradleDistributionUI(builder: Panel) {
@@ -123,6 +132,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
         comboBox(listOf(WRAPPER, LOCAL), listCellRenderer { text = it.text })
           .columns(COLUMNS_SHORT)
           .bindItem(distributionTypeProperty)
+          .whenItemSelectedFromUi { logGradleDistributionChanged(distributionType.value) }
+          .onApply { logGradleDistributionFinished(distributionType.value) }
       }
       row {
         placeholderGroup {
@@ -139,6 +150,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
                 .validationOnApply { validateGradleVersion(gradleVersion, withDialog = true) }
                 .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
                 .enabledIf(autoSelectGradleVersionProperty.not())
+                .whenItemChangedFromUi { logGradleVersionChanged(gradleVersion) }
+                .onApply { logGradleVersionFinished(gradleVersion) }
               checkBox(GradleBundle.message("gradle.project.settings.distribution.wrapper.version.auto.select"))
                 .bindSelected(autoSelectGradleVersionProperty)
             }
@@ -238,7 +251,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
         ),
         dialogMessage = GradleBundle.message(
           "gradle.settings.wizard.unsupported.jdk.message",
-          suggestOldestCompatibleJavaVersion(gradleVersion),
+          (gradleVersion),
           suggestLatestJavaVersion(gradleVersion),
           javaVersion.toFeatureString(),
           gradleVersion.version
@@ -338,8 +351,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   protected fun linkGradleProject(
     project: Project,
     configureBuildScript: GradleBuildScriptBuilder<*>.() -> Unit
-  ) {
-    val builder = InternalGradleModuleBuilder()
+  ): Module? {
+    val builder = GradleJavaModuleBuilder()
+
     builder.moduleJdk = sdk
     builder.name = parentStep.name
     builder.contentEntryPath = parentStep.path + "/" + parentStep.name
@@ -368,8 +382,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       it.configureBuildScript()
     }
 
-    val model = context.getUserData(NewProjectWizardStep.MODIFIABLE_MODULE_MODEL_KEY)
-    builder.commit(project, model)
+    return setupProjectFromBuilder(project, builder)
   }
 
   class GradleDataView(override val data: ProjectData) : DataView<ProjectData>() {

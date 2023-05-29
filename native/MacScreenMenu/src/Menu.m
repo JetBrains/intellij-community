@@ -73,6 +73,19 @@ static bool sUpdateInProgress = false; // used only in AppKit
     JNI_COCOA_EXIT();
 }
 
+- (void)menuWillOpen:(NSMenu *)menu {
+    if (javaPeer == nil)
+        return;
+
+    JNIEnv *env = getAppKitEnv();
+    JNI_COCOA_ENTER();
+    GET_MENU_CLASS();
+    DECLARE_METHOD(jm_Menu_menuWillOpen, sjc_Menu, "menuWillOpen", "()V");
+    (*env)->CallVoidMethod(env, javaPeer, jm_Menu_menuWillOpen);
+    CHECK_EXCEPTION(env);
+    JNI_COCOA_EXIT();
+}
+
 - (void)menuDidClose:(NSMenu *)menu {
     if (javaPeer == nil)
         return;

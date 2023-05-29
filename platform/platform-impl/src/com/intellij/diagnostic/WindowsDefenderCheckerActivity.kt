@@ -3,6 +3,7 @@ package com.intellij.diagnostic
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.ShowLogAction
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.ActionsBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction.createSimple
@@ -21,7 +22,7 @@ private val LOG = logger<WindowsDefenderCheckerActivity>()
 
 internal class WindowsDefenderCheckerActivity : ProjectActivity {
   init {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (ApplicationManager.getApplication().isUnitTestMode || PluginManagerCore.isRunningFromSources()) {
       throw ExtensionNotApplicableException.create()
     }
   }

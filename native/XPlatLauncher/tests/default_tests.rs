@@ -27,6 +27,34 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_os = "windows")]
+    fn classpath_test_on_unc() {
+        let test_orig = prepare_test_env(LauncherLocation::Standard); // to prevent directories from disappearing
+        let test_unc = test_orig.to_unc();
+        let dump = run_launcher_ext(&test_unc, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let classpath = &dump.systemProperties["java.class.path"];
+
+        assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
+
+        let os_specific_jar = format!("boot-{}.jar", env::consts::OS);
+        assert!(classpath.contains(&os_specific_jar), "{} is not present in classpath: {}", os_specific_jar, classpath);
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn classpath_test_on_ns_prefixed_path() {
+        let test_orig = prepare_test_env(LauncherLocation::Standard); // to prevent directories from disappearing
+        let test_unc = test_orig.to_ns_prefix();
+        let dump = run_launcher_ext(&test_unc, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let classpath = &dump.systemProperties["java.class.path"];
+
+        assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
+
+        let os_specific_jar = format!("boot-{}.jar", env::consts::OS);
+        assert!(classpath.contains(&os_specific_jar), "{} is not present in classpath: {}", os_specific_jar, classpath);
+    }
+
+    #[test]
     fn standard_vm_options_loading_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
         let vm_options_name = if cfg!(target_os = "windows") { "xplat64.exe.vmoptions" }
@@ -40,14 +68,31 @@ mod tests {
         assert_vm_option_presence(&dump, "-Xmx256m");
         assert_vm_option_presence(&dump, "-XX:+UseG1GC");
         assert_vm_option_presence(&dump, "-Dsun.io.useCanonCaches=false");
+
         // `product-info.json`
         assert_vm_option_presence(&dump, "-Didea.vendor.name=JetBrains");
         assert_vm_option_presence(&dump, "-Didea.paths.selector=XPlatLauncherTest");
 
+        // options injected by the launcher
         let vm_option = dump.vmOptions.iter().find(|s| s.starts_with("-Djb.vmOptionsFile="))
-            .expect(&format!("'jb.vmOptionsFile' is not in {:?}", dump.vmOptions));
+            .expect(&format!("'-Djb.vmOptionsFile=' is not in {:?}", dump.vmOptions));
         let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
         assert_eq!(vm_options_file.canonicalize().unwrap(), path.canonicalize().unwrap());
+
+        dump.vmOptions.iter().find(|s| s.starts_with("-XX:ErrorFile="))
+            .expect(&format!("'-XX:ErrorFile=' is not in {:?}", dump.vmOptions));
+    }
+
+    #[test]
+    fn path_macro_expansion_test() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+
+        let dump = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+
+        let vm_option = dump.vmOptions.iter().find(|s| s.starts_with("-Dpath.macro.test="))
+            .expect(&format!("'-Dpath.macro.test=' is not in {:?}", dump.vmOptions));
+        let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
+        assert_eq!(test.dist_root.canonicalize().unwrap(), path.canonicalize().unwrap());
     }
 
     #[test]
@@ -197,5 +242,52 @@ mod tests {
     fn exit_code_passing() {
         let result = run_launcher(LauncherRunSpec::standard().with_args(&["exit-code", "42"]));
         assert_eq!(result.exit_status.code(), Some(42), "The exit code of the launcher is unexpected: {:?}", result);
+    }
+
+    #[test]
+    fn exception_handling() {
+        let result = run_launcher(LauncherRunSpec::standard().with_args(&["exception"]));
+
+        assert!(!result.exit_status.success(), "Expected to fail: {:?}", result);
+
+        let exception = "java.lang.UnsupportedOperationException: aw, snap";
+        assert!(result.stderr.contains(exception), "Exception message ('{}') is missing: {:?}", exception, result);
+        assert!(result.stderr.contains("at com.intellij.idea.TestMain.exception"), "Stacktrace is missing: {:?}", result);
+    }
+
+    #[test]
+    fn reporting_vm_creation_failures() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_toolbox_vm_options("-XX:+UseG1GC\n-XX:+UseZGC\n");
+
+        let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
+
+        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+
+        let header = "Cannot start the IDE";
+        let header_present = result.stderr.find(header);
+        assert!(header_present.is_some(), "Error header ('{}') is missing: {:?}", header, result);
+
+        let jvm_message = "Conflicting collector combinations in option list";
+        let jvm_message_present = result.stderr.find(jvm_message);
+        assert!(jvm_message_present.is_some(), "JVM error message ('{}') is missing: {:?}", jvm_message, result);
+
+        assert!(header_present.unwrap() < jvm_message_present.unwrap(), "JVM error message wasn't captured: {:?}", result);
+    }
+
+    #[test]
+    fn crash_log_creation() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        let crash_log_path = test.project_dir.join("_jvm_error.log");
+        test.create_toolbox_vm_options(&format!("-XX:ErrorFile={}", crash_log_path.display()));
+
+        let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_args(&["sigsegv"]));
+
+        assert!(!result.exit_status.success(), "Expected to fail: {:?}", result);
+        assert!(crash_log_path.exists(), "No crash log at {:?}: {:?}", crash_log_path, result);
+
+        let marker = "# A fatal error has been detected by the Java Runtime Environment:";
+        let content = fs::read_to_string(&crash_log_path).expect(&format!("Cannot read: {:?}", crash_log_path));
+        assert!(content.contains(marker), "Marker message ('{}') is not in the crash log:\n{}", marker, content);
     }
 }

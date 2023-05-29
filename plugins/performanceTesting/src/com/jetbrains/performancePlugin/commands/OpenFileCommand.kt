@@ -4,6 +4,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
+import com.intellij.openapi.fileEditor.impl.waitForFullyLoaded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -15,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
 import com.sampullara.cli.Args
-import com.sampullara.cli.Argument
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Scope
 import kotlinx.coroutines.Dispatchers
@@ -41,10 +41,6 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
         else -> project.guessProjectDir()?.findFileByRelativePath(filePath)
       }
     }
-
-    internal class Options(@field:Argument var timeout: Long = 0L,
-                           @field:Argument var suppressErrors: Boolean = false,
-                           @field:Argument(required = true) var file: String = "")
   }
 
   override fun getName(): String {
@@ -52,10 +48,12 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val myOptions = Options().apply { Args.parse(this, extractCommandArgument(PREFIX).split(" ").toTypedArray()) }
-    val filePath = myOptions.file
-    val timeout = myOptions.timeout
-    val suppressErrors = myOptions.suppressErrors
+    val myOptions = runCatching {
+      OpenFileCommandOptions().apply { Args.parse(this, extractCommandArgument(PREFIX).split(" ").toTypedArray()) }
+    }.getOrNull()
+    val filePath = myOptions?.file ?:  text.split(' ', limit = 4)[1]
+    val timeout = myOptions?.timeout ?: 0
+    val suppressErrors = myOptions?.suppressErrors ?: false
 
     val project = context.project
     val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
@@ -76,7 +74,8 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
       ProjectUtil.focusProjectWindow(project)
     }
 
-    FileEditorManagerEx.getInstanceEx(project).openFile(file = file, options = FileEditorOpenOptions(requestFocus = true)).allEditors
+    FileEditorManagerEx.getInstanceEx(project).openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
+      .waitForFullyLoaded()
 
     job.onError {
       spanRef.get()?.setAttribute("timeout", "true")

@@ -459,7 +459,7 @@ object IconUtil {
       val newScaleContext = scaleContext.copy<ScaleContext>()
       // reset OBJ_SCALE in the context to preserve ScalableIcon.scale(float) implementation
       // from accumulation of the scales: OBJ_SCALE * scale.
-      newScaleContext.setScale(ScaleType.OBJ_SCALE.of(1.0))
+      newScaleContext.setScale(ScaleType.OBJ_SCALE.of(1f))
       copiedIcon.updateScaleContext(newScaleContext)
     }
     return copiedIcon.scale(scale.toFloat())

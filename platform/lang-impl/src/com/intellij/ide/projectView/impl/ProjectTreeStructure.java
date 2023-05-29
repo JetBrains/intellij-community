@@ -2,6 +2,7 @@
 
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.projectView.NodeSortKey;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.openapi.project.Project;
@@ -68,6 +69,11 @@ public abstract class ProjectTreeStructure extends AbstractProjectTreeStructure 
   @Override
   public boolean isShowVisibilityIcons() {
     return ProjectView.getInstance(myProject).isShowVisibilityIcons(myId);
+  }
+
+  @Override
+  public @NotNull NodeSortKey getSortKey() {
+    return ProjectView.getInstance(myProject).getSortKey(myId);
   }
 
 }

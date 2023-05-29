@@ -64,7 +64,7 @@
     <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.dependenciesToolwindow" scope="RUNTIME" />
     <orderEntry type="library" name="StreamEx" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="error-prone-annotations" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
@@ -136,6 +136,7 @@
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.tips" scope="RUNTIME" />
     <orderEntry type="library" name="HdrHistogram" level="project" />
@@ -143,5 +144,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" name="hash4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
   </component>
 </module>

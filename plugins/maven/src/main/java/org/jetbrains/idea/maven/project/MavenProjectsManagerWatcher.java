@@ -103,7 +103,7 @@ public final class MavenProjectsManagerWatcher {
   @TestOnly
   public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
     myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
-    scheduleUpdateAll(new MavenImportSpec(false, true, true));
+    scheduleUpdateAll(new MavenImportSpec(true, true, true));
   }
 
   public synchronized void removeManagedFiles(List<VirtualFile> files) {

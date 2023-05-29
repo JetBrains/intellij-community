@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
+import com.intellij.codeInspection.ui.OptionPaneRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -109,10 +109,10 @@ public final class ScopeToolState {
   }
 
   @Nullable
-  public JComponent getAdditionalConfigPanel(Disposable parent, @NotNull Project project) {
+  public JComponent getAdditionalConfigPanel(@NotNull Disposable parent, @NotNull Project project) {
     if (myAdditionalConfigPanelState == null) {
       myAdditionalConfigPanelState = ConfigPanelState.of(
-        InspectionOptionPaneRenderer.createOptionsPanel(myToolWrapper.getTool(), parent, project), myToolWrapper);
+        OptionPaneRenderer.createOptionsPanel(myToolWrapper.getTool(), parent, project), myToolWrapper);
     }
     return myAdditionalConfigPanelState.getPanel(isEnabled());
   }

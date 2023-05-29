@@ -179,6 +179,10 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     }
     PsiUtilCore.ensureValid(baseElement);
     PsiFile containingFile = baseElement.getContainingFile();
+    //sometimes decompiled files don't have documents, because these documents are associated with its binary files
+    if (PsiDocumentManager.getInstance(project).getDocument(containingFile) == null) {
+      containingFile = containingFile.getOriginalFile();
+    }
     Editor editor = UtilKt.mockEditor(containingFile);
     GotoData source = createDataForSource(Objects.requireNonNull(editor, "No document for " + containingFile), baseElement.getTextOffset(), baseElement);
     show(project, editor, containingFile, source, popup -> popup.show(new RelativePoint(e)));

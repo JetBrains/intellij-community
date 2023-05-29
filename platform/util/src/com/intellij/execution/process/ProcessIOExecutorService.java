@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.util.concurrency.CountingThreadFactory;
@@ -30,9 +30,8 @@ public final class ProcessIOExecutorService extends ThreadPoolExecutor {
     // in Thread.inheritedAccessControlContext
     private final ThreadFactory myThreadFactory = Executors.privilegedThreadFactory();
 
-    @NotNull
     @Override
-    public Thread newThread(@NotNull final Runnable r) {
+    public @NotNull Thread newThread(final @NotNull Runnable r) {
       Thread thread = myThreadFactory.newThread(r);
       thread.setName(POOLED_THREAD_PREFIX + counter.incrementAndGet());
       thread.setPriority(Thread.NORM_PRIORITY - 1);

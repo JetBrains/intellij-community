@@ -39,7 +39,11 @@ class DefaultInclusionModel(
 ) : BaseInclusionModel() {
   private val inclusion: MutableSet<Any> = if (inclusionHashingStrategy == null) HashSet() else CollectionFactory.createCustomHashingStrategySet(inclusionHashingStrategy)
 
-  override fun getInclusion(): Set<Any> = Collections.unmodifiableSet<Any>((if (inclusionHashingStrategy == null) HashSet(inclusion) else CollectionFactory.createCustomHashingStrategySet(inclusionHashingStrategy).also { it.addAll(inclusion) }))
+  override fun getInclusion(): Set<Any> {
+    val set = if (inclusionHashingStrategy == null) HashSet(inclusion)
+    else CollectionFactory.createCustomHashingStrategySet(inclusionHashingStrategy).also { it.addAll(inclusion) }
+    return Collections.unmodifiableSet(set)
+  }
 
   override fun getInclusionState(item: Any): ThreeStateCheckBox.State =
     if (item in inclusion) ThreeStateCheckBox.State.SELECTED else ThreeStateCheckBox.State.NOT_SELECTED

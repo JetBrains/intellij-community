@@ -6,12 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
 import com.intellij.util.io.OpenChannelsCache.FileChannelOperation;
 import com.intellij.util.io.storage.AbstractStorage;
-import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +21,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.List;
 
 import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
 
@@ -33,14 +29,11 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
 
   private static final int DEFAULT_PAGE_SIZE = PageCacheUtils.DEFAULT_PAGE_SIZE;
 
-  @NotNull
-  private static final ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
+  private static final @NotNull ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
 
-  @NotNull
-  public static final ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
+  public static final @NotNull ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
 
-  @NotNull
-  private final StorageLockContext myStorageLockContext;
+  private final @NotNull StorageLockContext myStorageLockContext;
   private final boolean myNativeBytesOrder;
   /**
    * Storage id(key), as returned by {@link FilePageCache#registerPagedFileStorage(PagedFileStorage)}, or -1 when closed
@@ -51,11 +44,9 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
    * but the main idea is that buffers in that cache are 'locked', i.e. can't be reclaimed by {@link FilePageCache},
    * hence this is also a way to reduce 'page faults' on most recent buffers
    */
-  @NotNull
-  private final PagedFileStorageCache myLastAccessedBufferCache = new PagedFileStorageCache();
+  private final @NotNull PagedFileStorageCache myLastAccessedBufferCache = new PagedFileStorageCache();
 
-  @NotNull
-  private final Path myFile;
+  private final @NotNull Path myFile;
   private final boolean myReadOnly;
   private final Object myInputStreamLock = new Object();
 
@@ -334,19 +325,19 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
   }
 
   public void close() throws IOException {
-    List<Exception> exceptions = new SmartList<>();
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> force()));
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> {
-      unmapAll();
-      myStorageLockContext.getBufferCache().removeStorage(myStorageIndex);
-      myStorageIndex = -1;
-    }));
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> {
-      CHANNELS_CACHE.closeChannel(myFile);
-    }));
-    if (!exceptions.isEmpty()) {
-      throw new IOException(new CompoundRuntimeException(exceptions));
-    }
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      new IOException("Failed to close appendable storage[" + getFile() + "]"),
+      
+      this::force,
+      () -> {
+        unmapAll();
+        myStorageLockContext.getBufferCache().removeStorage(myStorageIndex);
+        myStorageIndex = -1;
+      },
+      () -> {
+        CHANNELS_CACHE.closeChannel(myFile);
+      }
+    );
   }
 
   private void unmapAll() {
@@ -449,8 +440,7 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     }
   }
 
-  @NotNull
-  private DirectBufferWrapper doGetBufferWrapper(long page, boolean modify, boolean checkAccess) throws IOException {
+  private @NotNull DirectBufferWrapper doGetBufferWrapper(long page, boolean modify, boolean checkAccess) throws IOException {
     if (myReadOnly && modify) {
       throw new IOException("Read-only storage can't be modified");
     }

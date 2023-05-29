@@ -368,6 +368,13 @@ class BuildOptions(
    */
   @ApiStatus.Experimental
   var generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", false)
+  
+  /**
+   * If `true` and [ProductProperties.embeddedJetBrainsClientMainModule] is not null, the JAR files in the distribution will be adjusted
+   * to allow starting JetBrains Client directly from the IDE's distribution. 
+   */
+  @ApiStatus.Experimental
+  var enableEmbeddedJetBrainsClient = SystemProperties.getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true)
 
   /**
    * Specifies a prefix to use when looking for an artifact of a [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] to be bundled with distributions.

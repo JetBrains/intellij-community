@@ -4,10 +4,13 @@
 
 See `org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil` for common utility methods.
 
-Consider marking inspections with _safe-only_ fixes ready for _Code | Code Cleanup..._(`com.intellij.codeInspection.CleanupLocalInspectionTool`).
+Consider marking inspections with _safe-only_ fixes ready for _Code | Code Cleanup..._
+(`com.intellij.codeInspection.CleanupLocalInspectionTool`).
 
 Inspections should avoid running whenever they are not applicable in the current context.
-This includes:
+Add `projectType="INTELLIJ_PLUGIN"` in `plugin.xml` registration to avoid loading inspection in non-plugin projects.
+
+Additional contexts include:
 
 - requires minimum platform version (`org.jetbrains.idea.devkit.util.PluginPlatformInfo`)
 - requires present platform API class (only available in newer platform versions).

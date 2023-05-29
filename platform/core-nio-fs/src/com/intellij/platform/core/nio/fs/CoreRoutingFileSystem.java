@@ -145,6 +145,11 @@ public class CoreRoutingFileSystem extends FileSystem {
     return CoreRoutingFileSystemProvider.normalizePath(virtualFilePath).startsWith(ourMountedFSPrefix);
   }
 
+  static boolean matchesPrefixNoSlash(String path) {
+    String prefix = ourMountedFSPrefix;
+    return prefix != null && !prefix.isEmpty() && prefix.charAt(0) == '/' && path.regionMatches(0, prefix, 1, prefix.length() - 1);
+  }
+
   private static <T> Iterable<T> concat(Iterable<T> first, Iterable<T> second) {
     Stream<T> firstStream = StreamSupport.stream(first.spliterator(), false);
     Stream<T> secondStream = StreamSupport.stream(second.spliterator(), false);

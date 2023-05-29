@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.useWithScope
-import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -348,7 +348,8 @@ private fun generateProductJson(targetDir: Path, context: BuildContext, arch: Jv
       vmOptionsFilePath = "bin/${context.productProperties.baseFileName}64.vmoptions",
       startupWmClass = getLinuxFrameClass(context),
       bootClassPathJarNames = context.bootClassPathJarNames,
-      additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch))),
+      additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch),
+      mainClass = context.ideMainClassName)),
     context)
   writeProductInfoJson(targetDir.resolve(PRODUCT_INFO_FILE_NAME), json, context)
   return json

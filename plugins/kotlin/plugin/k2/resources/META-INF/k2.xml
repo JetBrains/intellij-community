@@ -51,6 +51,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"
                     serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider"/>
+    <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilableFileTypesProvider" />
     <!-- fir-specific -->
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.fir.AndroidPluginIncompatibilityCheckerStartupActivity"/>
 
@@ -241,6 +242,7 @@
 
     <module name="kotlin.searching.k2"/>
     <module name="kotlin.refactorings.k2"/>
+    <module name="kotlin.refactorings.move.k2"/>
     <module name="kotlin.refactorings.rename.k2"/>
 
     <module name="kotlin.navigation"/>
@@ -248,5 +250,6 @@
     <module name="kotlin.highlighting"/>
 
     <module name="kotlin.compiler-reference-index"/>
+    <module name="kotlin.compiler-plugins.assignment.common-k2"/>
   </content>
 </idea-plugin>

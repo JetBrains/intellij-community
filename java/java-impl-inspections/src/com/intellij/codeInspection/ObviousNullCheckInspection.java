@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -106,7 +106,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     }
   }
 
-  public static class RemoveExcessiveNullComparisonFix implements LocalQuickFix {
+  public static class RemoveExcessiveNullComparisonFix extends PsiUpdateModCommandQuickFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -115,8 +115,8 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpression arg = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiExpression arg = ObjectUtils.tryCast(element, PsiExpression.class);
       if (arg == null) return;
       PsiReferenceExpression comparedToNull = ExpressionUtils.getReferenceExpressionFromNullComparison(arg, false);
       if (comparedToNull == null) return;
@@ -124,7 +124,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     }
   }
 
-  public static class RemoveNullCheckFix implements LocalQuickFix {
+  public static class RemoveNullCheckFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -133,8 +133,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement startElement = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(startElement, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiElement parent = call.getParent();

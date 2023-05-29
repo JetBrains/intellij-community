@@ -13,10 +13,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
+import org.jetbrains.idea.maven.server.MavenArtifactEvent;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -24,7 +26,7 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.components.Service.Level.PROJECT;
 
 public class MavenProgressIndicator {
-  private ProgressIndicator myIndicator;
+  private @NotNull ProgressIndicator myIndicator;
   private final List<Condition<MavenProgressIndicator>> myCancelConditions = new ArrayList<>();
   private @Nullable final Supplier<MavenSyncConsole> mySyncSupplier;
   private @Nullable final Project myProject;
@@ -35,7 +37,7 @@ public class MavenProgressIndicator {
   }
 
   public MavenProgressIndicator(@Nullable Project project,
-                                ProgressIndicator i,
+                                @NotNull ProgressIndicator i,
                                 @Nullable Supplier<MavenSyncConsole> syncSupplier) {
     myProject = project;
     myIndicator = i;
@@ -43,7 +45,7 @@ public class MavenProgressIndicator {
     maybeTrackIndicator(i);
   }
 
-  public synchronized void setIndicator(ProgressIndicator i) {
+  public synchronized void setIndicator(@NotNull ProgressIndicator i) {
     maybeTrackIndicator(i);
     //setIndicatorStatus(i);
     i.setText(myIndicator.getText());
@@ -55,6 +57,7 @@ public class MavenProgressIndicator {
     myIndicator = i;
   }
 
+  @NotNull
   public synchronized ProgressIndicator getIndicator() {
     return myIndicator;
   }
@@ -108,25 +111,35 @@ public class MavenProgressIndicator {
     if (isCanceled()) throw new MavenProcessCanceledException();
   }
 
-  public void startedDownload(MavenServerProgressIndicator.ResolveType type, String id) {
+  public void startedDownload(MavenServerConsoleIndicator.ResolveType type, String id) {
 
     if (mySyncSupplier != null) {
       mySyncSupplier.get().getListener(type).downloadStarted(id);
     }
   }
 
-  public void completedDownload(MavenServerProgressIndicator.ResolveType type, String id) {
+  public void completedDownload(MavenServerConsoleIndicator.ResolveType type, String id) {
     if (mySyncSupplier != null) {
       mySyncSupplier.get().getListener(type).downloadCompleted(id);
     }
   }
 
-  public void failedDownload(MavenServerProgressIndicator.ResolveType type,
+  public void failedDownload(MavenServerConsoleIndicator.ResolveType type,
                              String id,
                              String message,
                              String trace) {
     if (mySyncSupplier != null) {
       mySyncSupplier.get().getListener(type).downloadFailed(id, message, trace);
+    }
+  }
+
+  public void handleDownloadEvents(@NotNull List<MavenArtifactEvent> downloadEvents) {
+    for (var e : downloadEvents) {
+      switch (e.getArtifactEventType()) {
+        case DOWNLOAD_STARTED -> startedDownload(e.getResolveType(), e.getDependencyId());
+        case DOWNLOAD_COMPLETED -> completedDownload(e.getResolveType(), e.getDependencyId());
+        case DOWNLOAD_FAILED -> failedDownload(e.getResolveType(), e.getDependencyId(), e.getErrorMessage(), e.getStackTrace());
+      }
     }
   }
 

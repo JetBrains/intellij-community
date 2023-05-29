@@ -118,7 +118,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
   }
 
   @ParameterizedTest
-  @TargetVersions("7.6+")
+  @TargetVersions("4.7+")
   @AllGradleVersionsSource
   fun `test assertion result of raw Junit 5`(gradleVersion: GradleVersion) {
     testJunit5Project(gradleVersion) {
@@ -150,26 +150,42 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             """.trimMargin())
           }
           assertNode("test assert equals for objects") {
-            assertTestConsoleContains("""
-              |
-              |assertion message
-              |Expected :expected text
-              |Actual   :actual text
-              |<Click to see difference>
-              |
-              |org.opentest4j.AssertionFailedError: assertion message
-            """.trimMargin())
+            if (isTestLauncherSupported()) {
+              assertTestConsoleContains("""
+                |
+                |assertion message
+                |Expected :expected text
+                |Actual   :actual text
+                |<Click to see difference>
+                |
+                |org.opentest4j.AssertionFailedError: assertion message
+              """.trimMargin())
+            }
+            else {
+              assertTestConsoleContains("""
+                |
+                |org.opentest4j.AssertionFailedError: assertion message
+              """.trimMargin())
+            }
           }
           assertNode("test assert equals for same objects") {
-            assertTestConsoleContains("""
-              |
-              |assertion message
-              |Expected :string
-              |Actual   :string
-              |<Click to see difference>
-              |
-              |org.opentest4j.AssertionFailedError: assertion message
-            """.trimMargin())
+            if (isTestLauncherSupported()) {
+              assertTestConsoleContains("""
+                |
+                |assertion message
+                |Expected :string
+                |Actual   :string
+                |<Click to see difference>
+                |
+                |org.opentest4j.AssertionFailedError: assertion message
+              """.trimMargin())
+            }
+            else {
+              assertTestConsoleContains("""
+                |
+                |org.opentest4j.AssertionFailedError: assertion message
+              """.trimMargin())
+            }
           }
         }
       }
@@ -662,6 +678,94 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
               Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
               Assertions.assertEquals(null, diffViewerProvider.actualFilePath)
             }
+          }
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test controlled spread of Gradle daemon's pollution`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class TestCase {
+        |  @Test public void test() {}
+        |}
+      """.trimMargin())
+      appendText("build.gradle", """
+        |import java.nio.file.Paths
+        |
+        |test {
+        |  doLast {
+        |    def daemonMainClass = Class.forName("org.gradle.launcher.daemon.bootstrap.DaemonMain")
+        |    def classLoader = (URLClassLoader) daemonMainClass.getClassLoader()
+        |    for (def url: classLoader.getURLs()) {
+        |       println 'DAEMON_CLASSPATH: ' + Paths.get(url.toURI())
+        |    }
+        |    for (def file: test.classpath.files) {
+        |       println 'TEST_CLASSPATH: ' + Paths.get(file.toURI())
+        |    }
+        |  }
+        |}
+      """.trimMargin())
+
+      executeTasks(":test")
+      assertTestConsoleDoesNotContain("DAEMON_CLASSPATH: " + projectRoot.toNioPath())
+      assertTestConsoleContains("TEST_CLASSPATH: " + projectRoot.toNioPath())
+    }
+  }
+
+  @ParameterizedTest
+  @TargetVersions("4.7+")
+  @AllGradleVersionsSource
+  fun `test not null assertion Junit5`(gradleVersion: GradleVersion) {
+    testJunit5Project(gradleVersion) {
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |
+        |import org.junit.jupiter.api.Test;
+        |import org.junit.jupiter.api.Assertions;
+        |
+        |public class TestCase {
+        |
+        |  @Test
+        |  public void test_assert_null() {
+        |    Assertions.assertNull("Actual text.");
+        |  }
+        |
+        |  @Test
+        |  public void test_assert_not_null() {
+        |    Assertions.assertNotNull(null);
+        |  }
+        |}
+      """.trimMargin())
+
+      executeTasks(":test")
+      assertTestTreeView {
+        assertNode("TestCase") {
+          assertNode("test_assert_null") {
+            assertTestConsoleContains("""
+              |
+              |Expected :null
+              |Actual   :Actual text.
+              |<Click to see difference>
+              |
+              |org.opentest4j.AssertionFailedError: expected: <null> but was: <Actual text.>
+            """.trimMargin())
+          }
+          assertNode("test_assert_not_null") {
+            assertTestConsoleDoesNotContain("""
+              |Expected :
+              |Actual   :
+              |<Click to see difference>
+            """.trimMargin())
+            assertTestConsoleContains("""
+              |
+              |org.opentest4j.AssertionFailedError: expected: not <null>
+            """.trimMargin())
           }
         }
       }

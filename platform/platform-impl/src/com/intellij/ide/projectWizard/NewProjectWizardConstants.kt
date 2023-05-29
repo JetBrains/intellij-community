@@ -13,18 +13,14 @@ object NewProjectWizardConstants {
     const val RUBY = "Ruby"
     const val GO = "Go"
     const val SCALA = "Scala"
-
-    val ALL = arrayOf(JAVA, KOTLIN, GROOVY, JAVASCRIPT, HTML, PYTHON, PHP, RUBY, GO, SCALA)
-    val ALL_DSL = arrayOf(KOTLIN, GROOVY)
+    const val RUST = "Rust"
   }
 
   object BuildSystem {
     const val INTELLIJ = "IntelliJ"
     const val GRADLE = "Gradle"
     const val MAVEN = "Maven"
-    private const val SBT = "SBT"
-
-    val ALL = arrayOf(INTELLIJ, GRADLE, MAVEN, SBT)
+    const val SBT = "SBT"
   }
 
   object Generators {
@@ -34,6 +30,11 @@ object NewProjectWizardConstants {
     const val SIMPLE_MODULE = "simple-module"
   }
 
+  object GroovySdk {
+    const val MAVEN = "Maven"
+    const val LOCAL = "Local"
+    const val NONE = "None"
+  }
+
   const val OTHER = "other"
-  const val NULL = "null"
 }

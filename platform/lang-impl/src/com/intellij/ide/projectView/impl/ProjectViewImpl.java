@@ -9,9 +9,7 @@ import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.bookmark.BookmarksListener;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
-import com.intellij.ide.projectView.HelpID;
-import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
@@ -46,7 +44,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -103,7 +103,7 @@ import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBI
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.ui.treeStructure.Tree.AUTO_SCROLL_FROM_SOURCE_BLOCKED;
 
-@State(name = "ProjectView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
+@State(name = "ProjectView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), getStateRequiresEdt = true)
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, QuickActionProvider, BusyObject {
   private static final Logger LOG = Logger.getInstance(ProjectViewImpl.class);
   private static final Key<String> ID_KEY = Key.create("pane-id");
@@ -168,6 +168,28 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       myCurrentState.setAutoscrollToSource(selected);
       getDefaultState().setAutoscrollToSource(selected);
       getGlobalOptions().setAutoscrollToSource(selected);
+    }
+  };
+
+  private final Option myOpenDirectoriesWithSingleClick = new Option() {
+    @Override
+    public boolean isSelected() {
+      return myCurrentState.getOpenDirectoriesWithSingleClick();
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+      if (myProject.isDisposed()) return;
+      myCurrentState.setOpenDirectoriesWithSingleClick(selected);
+      getDefaultState().setOpenDirectoriesWithSingleClick(selected);
+      getGlobalOptions().setOpenDirectoriesWithSingleClick(selected);
+      var pane = getCurrentProjectViewPane();
+      if (pane != null) {
+        var tree = pane.getTree();
+        if (tree != null) {
+          tree.setToggleClickCount(selected ? 1 : 2);
+        }
+      }
     }
   };
 
@@ -468,28 +490,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       getDefaultState().setShowVisibilityIcons(selected);
       getGlobalOptions().setShowVisibilityIcons(selected);
       if (updated) updatePanes(false);
-    }
-  };
-
-  private final Option mySortByType = new Option() {
-    @Override
-    public boolean isEnabled(@NotNull AbstractProjectViewPane pane) {
-      return pane.supportsSortByType();
-    }
-
-    @Override
-    public boolean isSelected() {
-      return myCurrentState.getSortByType();
-    }
-
-    @Override
-    public void setSelected(boolean selected) {
-      if (myProject.isDisposed()) return;
-      boolean updated = selected != isSelected();
-      myCurrentState.setSortByType(selected);
-      getDefaultState().setSortByType(selected);
-      getGlobalOptions().setSortByType(selected);
-      if (updated) updatePanes(true);
     }
   };
 
@@ -872,6 +872,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (newPane.myTree != null) {
       myAutoScrollToSourceHandler.install(newPane.myTree);
       myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
+      newPane.myTree.setToggleClickCount(myOpenDirectoriesWithSingleClick.isSelected() ? 1 : 2);
     }
 
     newPane.restoreExpandedPaths();
@@ -881,6 +882,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         null,
         () -> ContainerUtil.getFirstItem(newPane.getElementsFromNode(selectedUserObject)),
         true,
+        false,
         null
       );
     }
@@ -1214,7 +1216,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return target.target();
   }
 
-  private ProjectViewSelectInTarget getProjectViewSelectInTarget(AbstractProjectViewPane pane) {
+  ProjectViewSelectInTarget getProjectViewSelectInTarget(@NotNull AbstractProjectViewPane pane) {
     SelectInTarget target = getSelectInTarget(pane.getId());
     return target instanceof ProjectViewSelectInTarget
            ? (ProjectViewSelectInTarget)target
@@ -1256,11 +1258,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW).getContentManager();
     }
     return myContentManager;
-  }
-
-  @Override
-  public void changeView() {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -1750,12 +1747,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    void scrollFromSource(boolean requestFocus) {
-      scrollFromSource(null, requestFocus);
+    void scrollFromSource(boolean invokedManually) {
+      scrollFromSource(null, invokedManually);
     }
 
-    void scrollFromSource(@Nullable FileEditor fileEditor, boolean requestFocus) {
-      myProject.getService(SelectInProjectViewImpl.class).selectInCurrentTarget(fileEditor, requestFocus);
+    private void scrollFromSource(@Nullable FileEditor fileEditor, boolean invokedManually) {
+      myProject.getService(SelectInProjectViewImpl.class).selectInCurrentTarget(fileEditor, invokedManually);
     }
 
     private boolean isCurrentProjectViewPaneFocused() {
@@ -1796,16 +1793,41 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public boolean isSortByType(String paneId) {
-    return mySortByType.isSelected() && mySortByType.isEnabled(paneId);
+    return getSortKey(paneId) == NodeSortKey.BY_TYPE;
   }
 
   @Override
   public void setSortByType(@NotNull String paneId, final boolean sortByType) {
-    if (mySortByType.isEnabled(paneId)) mySortByType.setSelected(sortByType);
+    setSortKey(paneId, sortByType ? NodeSortKey.BY_TYPE : ProjectViewSettings.Immutable.DEFAULT.getSortKey());
+  }
+
+  @Override
+  public @NotNull NodeSortKey getSortKey(String paneId) {
+    var currentSortKey = myCurrentState.getSortKey();
+    var pane = getProjectViewPaneById(paneId);
+    return pane != null && pane.supportsSortKey(currentSortKey) ? currentSortKey : ProjectViewSettings.Immutable.DEFAULT.getSortKey();
+  }
+
+  @Override
+  public void setSortKey(@NotNull String paneId, @NotNull NodeSortKey sortKey) {
+    setSortKey(this, getProjectViewPaneById(paneId), sortKey);
+  }
+
+  private static void setSortKey(@Nullable ProjectViewImpl view, @Nullable AbstractProjectViewPane pane, @NotNull NodeSortKey sortKey) {
+    getDefaultState().setSortKey(sortKey);
+    getGlobalOptions().setSortKey(sortKey);
+    if (view == null || (pane != null && !pane.supportsSortKey(sortKey))) {
+      return;
+    }
+    boolean updated = view.myCurrentState.getSortKey() != sortKey;
+    view.myCurrentState.setSortKey(sortKey);
+    if (updated) {
+      view.updatePanes(true);
+    }
   }
 
   boolean isSelectOpenedFileEnabled() {
-    return !isAutoscrollFromSourceEnabled(myCurrentViewId);
+    return !isAutoscrollFromSourceEnabled(myCurrentViewId) || AdvancedSettings.getBoolean("project.view.do.not.autoscroll.to.libraries");
   }
 
   void selectOpenedFile() {
@@ -1905,6 +1927,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
+    static final class OpenDirectoriesWithSingleClick extends Action {
+      OpenDirectoriesWithSingleClick() {
+        super(view -> view.myOpenDirectoriesWithSingleClick);
+      }
+    }
+
     static final class OpenInPreviewTab extends Action {
       OpenInPreviewTab() {
         super(view -> view.myOpenInPreviewTab);
@@ -1983,9 +2011,82 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    static final class SortByType extends Action {
+    static abstract class SortKeyAction extends DumbAwareToggleAction {
+
+      private final @NotNull NodeSortKey mySortKey;
+
+      SortKeyAction(@NotNull NodeSortKey sortKey) {
+        mySortKey = sortKey;
+      }
+
+      @Override
+      public boolean isSelected(@NotNull AnActionEvent e) {
+        var view = getProjectView(e);
+        return view != null && view.myCurrentState.getSortKey() == mySortKey;
+      }
+
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean selected) {
+        var view = getProjectView(e);
+        setSortKey(view, null, mySortKey);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        var presentation = e.getPresentation();
+        presentation.setEnabledAndVisible(ApplicationManager.getApplication().isUnitTestMode());
+        if (ActionPlaces.isPopupPlace(e.getPlace())) {
+          presentation.setIcon(null);
+        }
+        var pane = getCurrentProjectViewPane(e);
+        if (pane == null) {
+          return;
+        }
+        presentation.setEnabledAndVisible(pane.supportsSortKey(mySortKey));
+      }
+
+      protected static @Nullable AbstractProjectViewPane getCurrentProjectViewPane(@NotNull AnActionEvent e) {
+        var view = getProjectView(e);
+        if (view == null) {
+          return null;
+        }
+        return view.getCurrentProjectViewPane();
+      }
+
+      private static @Nullable ProjectViewImpl getProjectView(@NotNull AnActionEvent event) {
+        Project project = event.getProject();
+        ProjectView view = project == null || project.isDisposed() ? null : getInstance(project);
+        return view instanceof ProjectViewImpl ? (ProjectViewImpl) view : null;
+      }
+    }
+
+    static final class SortByName extends SortKeyAction {
+      SortByName() {
+        super(NodeSortKey.BY_NAME);
+      }
+    }
+
+    static final class SortByType extends SortKeyAction {
       SortByType() {
-        super(view -> view.mySortByType);
+        super(NodeSortKey.BY_TYPE);
+      }
+    }
+
+    static final class SortByTimeDescending extends SortKeyAction {
+      SortByTimeDescending() {
+        super(NodeSortKey.BY_TIME_DESCENDING);
+      }
+    }
+
+    static final class SortByTimeAscending extends SortKeyAction {
+      SortByTimeAscending() {
+        super(NodeSortKey.BY_TIME_ASCENDING);
       }
     }
   }

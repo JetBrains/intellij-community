@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -32,14 +32,12 @@ public final class JDOMExternalizerUtil {
     }
   }
 
-  @NotNull
-  public static String readField(@NotNull Element parent, @NotNull @NonNls String fieldName, @NotNull String defaultValue) {
+  public static @NotNull String readField(@NotNull Element parent, @NotNull @NonNls String fieldName, @NotNull String defaultValue) {
     String val = readField(parent, fieldName);
     return val == null ? defaultValue : val;
   }
 
-  @Nullable
-  public static String readField(@NotNull Element parent, @NonNls @NotNull String fieldName) {
+  public static @Nullable String readField(@NotNull Element parent, @NonNls @NotNull String fieldName) {
     for (Element element : parent.getChildren(Constants.OPTION)) {
       if (fieldName.equals(element.getAttributeValue(Constants.NAME))) {
         return element.getAttributeValue(Constants.VALUE);
@@ -51,16 +49,14 @@ public final class JDOMExternalizerUtil {
   /**
    * Adds the {@code <option name="{fieldName}"/>} element to the parent and returns the created element.
    */
-  @NotNull
-  public static Element writeOption(@NotNull Element parent, @NotNull String fieldName) {
+  public static @NotNull Element writeOption(@NotNull Element parent, @NotNull String fieldName) {
     Element element = new Element(Constants.OPTION);
     element.setAttribute(Constants.NAME, fieldName);
     parent.addContent(element);
     return element;
   }
 
-  @Nullable
-  public static Element readOption(@NotNull Element parent, @NotNull String fieldName) {
+  public static @Nullable Element readOption(@NotNull Element parent, @NotNull String fieldName) {
     for (Element element : parent.getChildren(Constants.OPTION)) {
       if (fieldName.equals(element.getAttributeValue(Constants.NAME))) {
         return element;
@@ -80,8 +76,7 @@ public final class JDOMExternalizerUtil {
     parent.addContent(element);
   }
 
-  @Nullable
-  public static String readCustomField(@NotNull Element parent, @NotNull String tagName) {
+  public static @Nullable String readCustomField(@NotNull Element parent, @NotNull String tagName) {
     Element element = parent.getChild(tagName);
     return element != null ? element.getAttributeValue(Constants.VALUE) : null;
   }

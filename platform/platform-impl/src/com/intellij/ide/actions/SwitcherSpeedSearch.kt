@@ -10,7 +10,7 @@ import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import javax.swing.ListModel
 
-internal class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSearchBase<SwitcherPanel>(switcher, null) {
+class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSearchBase<SwitcherPanel>(switcher, null) {
   fun updateEnteredPrefix() = searchField?.let {
     val text = it.text ?: ""
     when (text.length > 1) {
@@ -92,7 +92,7 @@ internal class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) 
                                        Registry.`is`("ide.recent.files.speed.search.camel.case"))
     addChangeListener {
       if (myComponent.project.isDisposed) {
-        myComponent.myPopup.cancel()
+        myComponent.myPopup?.cancel()
       }
       else {
         val isPopupActive = isPopupActive

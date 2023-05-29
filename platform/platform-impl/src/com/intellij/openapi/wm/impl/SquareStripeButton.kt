@@ -24,21 +24,46 @@ import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 
-internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
-  ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
+internal abstract class AbstractSquareStripeButton(action: AnAction, presentation: Presentation) :
+  ActionButton(action, presentation, ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
+
+  protected fun doInit(popupBuilder: () -> ActionGroup) {
+    setLook(SquareStripeButtonLook(this))
+    addMouseListener(object : PopupHandler() {
+      override fun invokePopup(component: Component, x: Int, y: Int) {
+        val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, popupBuilder.invoke())
+        popupMenu.component.show(component, x, y)
+      }
+    })
+  }
+
+  fun paintDraggingButton(g: Graphics) {
+    val areaSize = size.also {
+      JBInsets.removeFrom(it, insets)
+      JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
+    }
+
+    val rect = Rectangle(areaSize)
+    buttonLook.paintLookBackground(g, rect, JBUI.CurrentTheme.ActionButton.pressedBackground())
+    icon.let {
+      val x = (areaSize.width - it.iconWidth) / 2
+      val y = (areaSize.height - it.iconHeight) / 2
+      buttonLook.paintIcon(g, this, it, x, y)
+    }
+
+    buttonLook.paintLookBorder(g, rect, JBUI.CurrentTheme.ActionButton.pressedBorder())
+  }
+}
+
+internal open class SquareStripeButton(action: SquareAnActionButton, val toolWindow: ToolWindowImpl) :
+  AbstractSquareStripeButton(action, createPresentation(toolWindow)) {
+  constructor(toolWindow: ToolWindowImpl) : this(SquareAnActionButton(toolWindow), toolWindow)
   companion object {
     fun createMoveGroup() = ToolWindowMoveAction.Group()
   }
 
   init {
-    setLook(SquareStripeButtonLook(this))
-    addMouseListener(object : PopupHandler() {
-      override fun invokePopup(component: Component, x: Int, y: Int) {
-        val popupMenu = ActionManager.getInstance()
-          .createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, createPopupGroup(toolWindow))
-        popupMenu.component.show(component, x, y)
-      }
-    })
+    doInit { createPopupGroup(toolWindow) }
     MouseDragHelper.setComponentDraggable(this, true)
   }
 
@@ -59,26 +84,9 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
 
   fun isHovered() = myRollover
 
-  fun isFocused() = toolWindow.isActive
+  open fun isFocused() = toolWindow.isActive
 
   fun resetDrop() = resetMouseState()
-
-  fun paintDraggingButton(g: Graphics) {
-    val areaSize = size.also {
-      JBInsets.removeFrom(it, insets)
-      JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
-    }
-
-    val rect = Rectangle(areaSize)
-    buttonLook.paintLookBackground(g, rect, JBUI.CurrentTheme.ActionButton.pressedBackground())
-    icon.let {
-      val x = (areaSize.width - it.iconWidth) / 2
-      val y = (areaSize.height - it.iconHeight) / 2
-      buttonLook.paintIcon(g, this, it, x, y)
-    }
-
-    buttonLook.paintLookBorder(g, rect, JBUI.CurrentTheme.ActionButton.pressedBorder())
-  }
 
   override fun updateToolTipText() {
     @Suppress("DialogTitleCapitalization")
@@ -89,19 +97,19 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
       .setInitialDelay(0)
       .setHideDelay(0)
       .installOn(this)
-    HelpTooltip.setMasterPopupOpenCondition(this) { !(parent as AbstractDroppableStripe).isDroppingButton() }
+    HelpTooltip.setMasterPopupOpenCondition(this) { !((parent as? AbstractDroppableStripe)?.isDroppingButton() ?: false) }
   }
 
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
-}
 
-private fun getAlignment(anchor: ToolWindowAnchor, splitMode: Boolean): HelpTooltip.Alignment {
-  return when (anchor) {
-    ToolWindowAnchor.RIGHT -> HelpTooltip.Alignment.LEFT
-    ToolWindowAnchor.TOP -> HelpTooltip.Alignment.LEFT
-    ToolWindowAnchor.LEFT -> HelpTooltip.Alignment.RIGHT
-    ToolWindowAnchor.BOTTOM -> if (splitMode) HelpTooltip.Alignment.LEFT else HelpTooltip.Alignment.RIGHT
-    else -> HelpTooltip.Alignment.RIGHT
+  protected open fun getAlignment(anchor: ToolWindowAnchor, splitMode: Boolean): HelpTooltip.Alignment {
+    return when (anchor) {
+      ToolWindowAnchor.RIGHT -> HelpTooltip.Alignment.LEFT
+      ToolWindowAnchor.TOP -> HelpTooltip.Alignment.LEFT
+      ToolWindowAnchor.LEFT -> HelpTooltip.Alignment.RIGHT
+      ToolWindowAnchor.BOTTOM -> if (splitMode) HelpTooltip.Alignment.LEFT else HelpTooltip.Alignment.RIGHT
+      else -> HelpTooltip.Alignment.RIGHT
+    }
   }
 }
 
@@ -137,12 +145,12 @@ private class HideAction(private val toolWindow: ToolWindowImpl)
   }
 }
 
-private class SquareAnActionButton(private val window: ToolWindowImpl) : ToggleActionButton(window.stripeTitle, null), DumbAware {
+internal open class SquareAnActionButton(protected val window: ToolWindowImpl) : ToggleActionButton(window.stripeTitle, null), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-
   override fun isSelected(e: AnActionEvent): Boolean {
     e.presentation.icon = window.icon ?: AllIcons.Toolbar.Unknown
     scaleIcon(e.presentation)
+    e.presentation.isVisible = window.isShowStripeButton && window.isAvailable
     return window.isVisible
   }
 
@@ -164,3 +172,4 @@ private class SquareAnActionButton(private val window: ToolWindowImpl) : ToggleA
     }
   }
 }
+

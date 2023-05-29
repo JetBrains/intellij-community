@@ -594,8 +594,8 @@ final class FileTypeDetectionService implements Disposable {
       }
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(file + "; type=" + fileType.getDescription() + "; " + counterAutoDetect);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(file + "; type=" + fileType.getDescription() + "; " + counterAutoDetect);
     }
 
     // do not treat DetectedByContentFileType as a simple PlainTextFileType to give it a chance to re-detect itself later

@@ -219,7 +219,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     // For PersistentStateComponents the fileSpec is passed without the 'options' folder, e.g. 'editor.xml' or 'mac/keymaps.xml'
     // OTOH for schemas it is passed together with the containing folder, e.g. 'keymaps/mykeymap.xml'
     return if (!fileSpecPassedToProvider.contains("/") || fileSpecPassedToProvider.startsWith(getPerOsSettingsStorageFolderName() + "/")) {
-      OPTIONS_DIRECTORY + "/" + fileSpecPassedToProvider
+      "$OPTIONS_DIRECTORY/$fileSpecPassedToProvider"
     }
     else {
       fileSpecPassedToProvider

@@ -197,19 +197,9 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
                 runTest("../../../idea/tests/testData/quickfix/suppress/annotationPosition/topLevelFunctionSuppressNoArgsPreviousLine.kt");
             }
 
-            @TestMetadata("topLevelFunctionSuppressNoArgsPreviousLineBare.kt")
-            public void testTopLevelFunctionSuppressNoArgsPreviousLineBare() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/suppress/annotationPosition/topLevelFunctionSuppressNoArgsPreviousLineBare.kt");
-            }
-
             @TestMetadata("topLevelFunctionSuppressNoArgsTheSameLine.kt")
             public void testTopLevelFunctionSuppressNoArgsTheSameLine() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/suppress/annotationPosition/topLevelFunctionSuppressNoArgsTheSameLine.kt");
-            }
-
-            @TestMetadata("topLevelFunctionSuppressNoArgsTheSameLineBare.kt")
-            public void testTopLevelFunctionSuppressNoArgsTheSameLineBare() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/suppress/annotationPosition/topLevelFunctionSuppressNoArgsTheSameLineBare.kt");
             }
 
             @TestMetadata("topLevelFunctionSuppressOnFile.kt")
@@ -236,11 +226,6 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             public void testTopLevelFunctionUnrelatedAnnotation() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/suppress/annotationPosition/topLevelFunctionUnrelatedAnnotation.kt");
             }
-
-            @TestMetadata("topLevelFunctionUnrelatedAnnotationBare.kt")
-            public void testTopLevelFunctionUnrelatedAnnotationBare() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/suppress/annotationPosition/topLevelFunctionUnrelatedAnnotationBare.kt");
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -248,6 +233,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         public static class Availability extends AbstractK2QuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inlineKeyword.kt")
+            public void testInlineKeyword() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suppress/availability/inlineKeyword.kt");
             }
 
             @TestMetadata("localFunSuppressForLocal.kt")
@@ -295,6 +285,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
                 runTest("../../../idea/tests/testData/quickfix/suppress/availability/memberSuppressForMember.kt");
             }
 
+            @TestMetadata("parameterSuppressForDestructuredLambdaFun.kt")
+            public void testParameterSuppressForDestructuredLambdaFun() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suppress/availability/parameterSuppressForDestructuredLambdaFun.kt");
+            }
+
             @TestMetadata("parameterSuppressForDestructuredLambdaParameter.kt")
             public void testParameterSuppressForDestructuredLambdaParameter() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/suppress/availability/parameterSuppressForDestructuredLambdaParameter.kt");
@@ -308,6 +303,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             @TestMetadata("topLevelFunctionAlreadySuppressed.kt")
             public void testTopLevelFunctionAlreadySuppressed() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/suppress/availability/topLevelFunctionAlreadySuppressed.kt");
+            }
+
+            @TestMetadata("upperBound.kt")
+            public void testUpperBound() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suppress/availability/upperBound.kt");
             }
         }
 
@@ -692,6 +692,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
                 runTest("../../../idea/tests/testData/quickfix/suppress/inspections/constantConditionIf.kt");
             }
 
+            @TestMetadata("redundantUnitReturn.kt")
+            public void testRedundantUnitReturn() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suppress/inspections/redundantUnitReturn.kt");
+            }
+
             @TestMetadata("unusedImports.kt")
             public void testUnusedImports() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/suppress/inspections/unusedImports.kt");
@@ -703,6 +708,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         public static class Redundant extends AbstractK2QuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("RedundantUnitReturn.kt")
+            public void testRedundantUnitReturn() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suppress/redundant/RedundantUnitReturn.kt");
             }
 
             @TestMetadata("RemoveAnnotation.kt")
@@ -719,6 +729,87 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             public void testSuppressed() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/suppress/redundant/Suppressed.kt");
             }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/removeAnnotation")
+    public static class RemoveAnnotation extends AbstractK2QuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("jvmField.kt")
+        public void testJvmField() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/jvmField.kt");
+        }
+
+        @TestMetadata("jvmFieldOnOverridingProperty.kt")
+        public void testJvmFieldOnOverridingProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/jvmFieldOnOverridingProperty.kt");
+        }
+
+        @TestMetadata("jvmOverloads.kt")
+        public void testJvmOverloads() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/jvmOverloads.kt");
+        }
+
+        @TestMetadata("jvmOverloadsOnAnnotationClassConstructor.kt")
+        public void testJvmOverloadsOnAnnotationClassConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/jvmOverloadsOnAnnotationClassConstructor.kt");
+        }
+
+        @TestMetadata("setTargetOnGetter.kt")
+        public void testSetTargetOnGetter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/setTargetOnGetter.kt");
+        }
+
+        @TestMetadata("useSiteGetDoesntHaveAnyEffect.kt")
+        public void testUseSiteGetDoesntHaveAnyEffect() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/useSiteGetDoesntHaveAnyEffect.kt");
+        }
+
+        @TestMetadata("useSiteGetOnClass.kt")
+        public void testUseSiteGetOnClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/useSiteGetOnClass.kt");
+        }
+
+        @TestMetadata("wrongExtenstionFunctionType.kt")
+        public void testWrongExtenstionFunctionType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/wrongExtenstionFunctionType.kt");
+        }
+
+        @TestMetadata("wrongExtenstionFunctionTypeWarning.kt")
+        public void testWrongExtenstionFunctionTypeWarning() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/wrongExtenstionFunctionTypeWarning.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/removeUseSiteTarget")
+    public static class RemoveUseSiteTarget extends AbstractK2QuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("setTargetOnGetter.kt")
+        public void testSetTargetOnGetter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUseSiteTarget/setTargetOnGetter.kt");
+        }
+
+        @TestMetadata("useSiteGetDoesntHaveAnyEffect.kt")
+        public void testUseSiteGetDoesntHaveAnyEffect() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUseSiteTarget/useSiteGetDoesntHaveAnyEffect.kt");
+        }
+
+        @TestMetadata("useSiteGetOnClass.kt")
+        public void testUseSiteGetOnClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUseSiteTarget/useSiteGetOnClass.kt");
+        }
+
+        @TestMetadata("whitespaces.kt")
+        public void testWhitespaces() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUseSiteTarget/whitespaces.kt");
         }
     }
 

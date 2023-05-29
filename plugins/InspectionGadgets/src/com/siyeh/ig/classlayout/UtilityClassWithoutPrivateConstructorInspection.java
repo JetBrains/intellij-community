@@ -17,6 +17,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
@@ -63,8 +64,8 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new ArrayList<>();
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    final List<LocalQuickFix> fixes = new ArrayList<>();
     final PsiClass aClass = (PsiClass)infos[0];
     final PsiMethod constructor = getNullArgConstructor(aClass);
     final boolean isOnTheFly = (boolean)infos[1];
@@ -81,7 +82,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
       }
     }
     AddToIgnoreIfAnnotatedByListQuickFix.build(aClass, ignorableAnnotations, fixes);
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override

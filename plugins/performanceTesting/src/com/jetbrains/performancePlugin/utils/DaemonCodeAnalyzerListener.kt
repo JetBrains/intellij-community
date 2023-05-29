@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.utils
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.Ref
 import com.intellij.util.messages.SimpleMessageBusConnection
 import io.opentelemetry.api.trace.Span
@@ -24,11 +25,17 @@ internal object DaemonCodeAnalyzerListener {
   fun listen(connection: SimpleMessageBusConnection,
              spanRef: Ref<Span>,
              scopeRef: Ref<Scope>,
-             timeoutInSeconds: Long = 0): DaemonCodeAnalyzerResult {
+             timeoutInSeconds: Long = 0,
+             expectedOpenedFile: String? = null): DaemonCodeAnalyzerResult {
     val result = DaemonCodeAnalyzerResult(connection, spanRef, scopeRef, timeoutInSeconds)
     connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
-      override fun daemonFinished() {
-        result.release()
+      override fun daemonFinished(fileEditors: Collection<FileEditor>) {
+        if (expectedOpenedFile == null) {
+          result.release()
+        }
+        if (expectedOpenedFile != null && fileEditors.any { fileEditor -> fileEditor.file.name == expectedOpenedFile }) {
+          result.release()
+        }
       }
     })
     return result

@@ -43,4 +43,9 @@ class JarResourceRoot extends ResourceRoot {
   public @NotNull Path getRootPath() {
     return myJarFile;
   }
+
+  @Override
+  public String toString() {
+    return "JarResourceRoot{jarFile=" + myJarFile + '}';
+  }
 }

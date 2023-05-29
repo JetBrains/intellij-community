@@ -311,8 +311,8 @@
   </action>
 
   <action id="GotoRelated">
-    <keyboard-shortcut first-keystroke="control alt HOME"/>
     <keyboard-shortcut first-keystroke="ctrl meta DOWN"/>
+    <keyboard-shortcut first-keystroke="control alt HOME"/>
   </action>
 
   <action id="Back">

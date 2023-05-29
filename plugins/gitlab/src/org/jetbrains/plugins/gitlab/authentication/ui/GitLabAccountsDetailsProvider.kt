@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gitlab.authentication.ui
 
 import com.intellij.collaboration.auth.ui.LazyLoadingAccountsDetailsProvider
-import com.intellij.util.ui.EmptyIcon
+import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -14,7 +14,7 @@ import java.awt.Image
 
 internal class GitLabAccountsDetailsProvider(scope: CoroutineScope,
                                              private val apiClientSupplier: suspend (GitLabAccount) -> GitLabApi?)
-  : LazyLoadingAccountsDetailsProvider<GitLabAccount, GitLabUserDTO>(scope, EmptyIcon.ICON_16) {
+  : LazyLoadingAccountsDetailsProvider<GitLabAccount, GitLabUserDTO>(scope, CollaborationToolsIcons.Review.DefaultAvatar) {
 
   override suspend fun loadDetails(account: GitLabAccount): Result<GitLabUserDTO> {
     val api = apiClientSupplier(account) ?: return Result.Error(GitLabBundle.message("account.token.missing"), true)
@@ -24,7 +24,7 @@ internal class GitLabAccountsDetailsProvider(scope: CoroutineScope,
 
   override suspend fun loadAvatar(account: GitLabAccount, url: String): Image? {
     val api = apiClientSupplier(account) ?: return null
-    val actualUrl = account.server.uri + url
+    val actualUrl = if (url.startsWith("http")) url else account.server.uri + url
     return api.loadImage(actualUrl)
   }
 }

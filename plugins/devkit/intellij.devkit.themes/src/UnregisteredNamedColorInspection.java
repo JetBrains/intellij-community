@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHolderUtilKt;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
@@ -91,13 +92,8 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
   private static void registerProblem(@NotNull String key,
                                       @NotNull ProblemsHolder holder,
                                       @NotNull UCallExpression expression) {
-    UIdentifier identifier = expression.getMethodIdentifier();
-    if (identifier == null) return;
-    PsiElement identifierPsi = identifier.getPsi();
-    if (identifierPsi == null) return;
-
-    holder.registerProblem(identifierPsi,
-                           DevKitThemesBundle.message("inspections.unregistered.named.color", key), new LocalQuickFix() {
+    ProblemHolderUtilKt.registerUProblem(holder, expression,
+                                         DevKitThemesBundle.message("inspections.unregistered.named.color", key), new LocalQuickFix() {
 
         @Nls(capitalization = Nls.Capitalization.Sentence)
         @NotNull

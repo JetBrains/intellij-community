@@ -21,7 +21,7 @@ import java.lang.Runnable
 import kotlin.coroutines.ContinuationInterceptor
 
 /**
- * @see WithModalProgressIndicatorTest
+ * @see WithModalProgressTest
  */
 class RunBlockingModalTest : ModalCoroutineTest() {
 
@@ -76,15 +76,29 @@ class RunBlockingModalTest : ModalCoroutineTest() {
 
   @Test
   fun rethrow(): Unit = timeoutRunBlocking {
-    val t: Throwable = object : Throwable() {}
     withContext(Dispatchers.EDT) {
-      val thrown = assertThrows<Throwable> {
-        runBlockingModal<Unit> {
-          throw t // fail the scope
-        }
-      }
-      assertSame(t, thrown)
+      testRunBlockingModalRethrow(object : Throwable() {})
+      testRunBlockingModalRethrow(CancellationException()) // manual CE
+      testRunBlockingModalRethrow(ProcessCanceledException()) // manual PCE
     }
+  }
+
+  private inline fun <reified T : Throwable> testRunBlockingModalRethrow(t: T) {
+    val thrown = assertThrows<T> {
+      runBlockingModal {
+        throw t
+      }
+    }
+    assertSame(t, thrown)
+  }
+
+  private fun testRunBlockingModalRethrow(t: CancellationException) {
+    val thrown = assertThrows<CeProcessCanceledException> {
+      runBlockingModal {
+        throw t
+      }
+    }
+    assertSame(t, assertInstanceOf<CancellationException>(thrown.cause).cause)
   }
 
   @Test

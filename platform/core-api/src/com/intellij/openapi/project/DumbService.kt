@@ -17,9 +17,7 @@ import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.Contract
-import java.util.*
 import javax.swing.JComponent
-import kotlin.jvm.Throws
 
 /**
  * A service managing the IDE's 'dumb' mode: when indexes are updated in the background, and the functionality is very much limited.
@@ -42,7 +40,7 @@ abstract class DumbService {
   abstract val modificationTracker: ModificationTracker
 
   /**
-   * To avoid race conditions use it only in EDT thread or inside read-action. See documentation for this class [DumbService]
+   * To avoid race conditions, use it only in EDT thread or inside read-action. See documentation for this class [DumbService]
    *
    * @return whether the IDE is in dumb mode, which means that right now indexes are updated in the background.
    * The IDE offers only limited functionality at such times, e.g., plain text file editing and version control operations.
@@ -413,13 +411,11 @@ abstract class DumbService {
       return project.getService(DumbService::class.java)
     }
 
+    @Suppress("SSBasedInspection")
     @JvmStatic
     @Contract("null -> false", pure = true)
     fun isDumbAware(o: Any?): Boolean {
-      return if (o is PossiblyDumbAware) {
-        o.isDumbAware
-      }
-      else o is DumbAware
+      return if (o is PossiblyDumbAware) o.isDumbAware else o is DumbAware
     }
 
     /**

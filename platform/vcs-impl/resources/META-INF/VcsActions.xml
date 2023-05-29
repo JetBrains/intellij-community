@@ -28,7 +28,10 @@
     <action id="Compare.Selected" class="com.intellij.openapi.vcs.actions.CompareWithSelectedRevisionAction" popup="true"/>
     <action id="Compare.Specified" class="com.intellij.openapi.vcs.actions.SelectAndCompareWithSelectedRevisionAction"
             popup="true"/>
-    <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction"/>
+    <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction">
+      <synonym key="action.synonym.Vcs.ShowHistoryForBlock.method.text"/>
+      <synonym key="action.synonym.Vcs.ShowHistoryForBlock.class.text"/>
+    </action>
     <action id="Vcs.GetVersion" class="com.intellij.openapi.vcs.history.actions.GetVersionAction" icon="AllIcons.Actions.Download"/>
     <action id="Vcs.RefreshFileHistory" class="com.intellij.openapi.vcs.history.actions.RefreshFileHistoryAction"
             use-shortcut-of="Refresh"/>

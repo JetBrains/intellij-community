@@ -38,6 +38,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * @deprecated use {@link org.jetbrains.idea.maven.wizards.archetype.MavenArchetypeNewProjectWizard} instead
+ */
+@Deprecated
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class SelectPropertiesStep extends ModuleWizardStep {
 
   private final Project myProjectOrNull;
@@ -59,10 +64,6 @@ public class SelectPropertiesStep extends ModuleWizardStep {
     initComponents();
   }
 
-  /**
-   * @deprecated use {@link SelectPropertiesStep#SelectPropertiesStep(Project, AbstractMavenModuleBuilder)} instead
-   */
-  @Deprecated(forRemoval = true)
   public SelectPropertiesStep(@Nullable Project project, MavenModuleBuilder builder) {
     this(project, (AbstractMavenModuleBuilder)builder);
   }

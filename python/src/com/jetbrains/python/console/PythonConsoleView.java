@@ -3,6 +3,7 @@ package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.process.ProcessHandler;
@@ -403,6 +404,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         }
       }
     }
+  }
+
+  @Override
+  protected void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
+    String processedText = PyConsoleUtil.processPrompts(this, text);
+    super.print(processedText, contentType, info);
   }
 
   public void detectIPython(String text, final ConsoleViewContentType outputType) {

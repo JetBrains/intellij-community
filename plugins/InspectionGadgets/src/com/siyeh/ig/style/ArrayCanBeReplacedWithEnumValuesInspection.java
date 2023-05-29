@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -10,7 +12,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
@@ -38,14 +39,14 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     if (infos.length == 1 && infos[0] instanceof String) {
       return new ArrayToEnumValueFix((String)infos[0]);
     }
     return null;
   }
 
-  private static final class ArrayToEnumValueFix extends InspectionGadgetsFix {
+  private static final class ArrayToEnumValueFix extends PsiUpdateModCommandQuickFix {
     private final String myEnumName;
 
     private ArrayToEnumValueFix(String enumName) {
@@ -68,11 +69,10 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
 
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (myEnumName == null) {
         return;
       }
-      final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiNewExpression || element instanceof PsiArrayInitializerExpression) {
         PsiReplacementUtil.replaceExpression((PsiExpression)element, myEnumName + ".values()");
       }

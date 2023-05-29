@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.DataManager;
@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -177,7 +178,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     if (localEditor != null) {
       activeEditors.add(localEditor);
     }
-    for (ClientEditorManager manager : application.getServices(ClientEditorManager.class, false)) {
+    for (ClientEditorManager manager : application.getServices(ClientEditorManager.class, ClientKind.REMOTE)) {
       manager.editors().filter(e -> UIUtil.hasFocus(e.getContentComponent()) && e.getDocument() == document).forEach(activeEditors::add);
     }
     return activeEditors;

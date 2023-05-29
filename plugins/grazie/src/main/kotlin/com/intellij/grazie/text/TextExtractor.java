@@ -83,16 +83,6 @@ public abstract class TextExtractor {
   }
 
   /**
-   * @deprecated use {@link #findTextsAt}
-   * @return the first of {@link #findTextsAt} or null if it's empty
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public static TextContent findTextAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
-    return ContainerUtil.getFirstItem(findTextsAt(psi, allowedDomains));
-  }
-
-  /**
    * @return text contents intersecting the given PSI element with the domains from the allowed set.
    * The extensions are queried for the given {@code psi} and its parents, the results are cached and reused.
    */
@@ -207,15 +197,6 @@ public abstract class TextExtractor {
 
   private static boolean isSuppressionComment(TextContent content) {
     return content.getDomain() == TextContent.TextDomain.COMMENTS && SUPPRESSION.matcher(content).matches();
-  }
-
-  /**
-   * @deprecated use {@link #findUniqueTextsAt}
-   * @return the first of {@link #findUniqueTextsAt} or null if it's empty
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable TextContent findUniqueTextAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
-    return ContainerUtil.getFirstItem(findUniqueTextsAt(psi, allowedDomains));
   }
 
   /**

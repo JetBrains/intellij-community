@@ -96,7 +96,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
   }
 
   val directDependents = IdentityHashMap<IdeaPluginDescriptorImpl, ArrayList<IdeaPluginDescriptorImpl>>(modules.size)
-  val edges = Collections.newSetFromMap<Map.Entry<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>>(HashMap())
+  val edges = HashSet<Map.Entry<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>>()
   for (module in modules) {
     for (inNode in getOrEmpty(directDependencies, module)) {
       if (edges.add(AbstractMap.SimpleImmutableEntry(inNode, module))) {

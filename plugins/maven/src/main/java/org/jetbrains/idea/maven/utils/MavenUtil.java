@@ -85,7 +85,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -547,17 +546,17 @@ public class MavenUtil {
     return true;
   }
 
-  public static void run(Project project, @NlsContexts.DialogTitle String title, final MavenTask task)
+  public static void run(@NlsContexts.DialogTitle String title, final MavenTask task)
     throws MavenProcessCanceledException {
     final Exception[] canceledEx = new Exception[1];
     final RuntimeException[] runtimeEx = new RuntimeException[1];
     final Error[] errorEx = new Error[1];
 
-    ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
+    ProgressManager.getInstance().run(new Task.Modal(null, title, true) {
       @Override
       public void run(@NotNull ProgressIndicator i) {
         try {
-          task.run(new MavenProgressIndicator(project, i, null));
+          task.run(new MavenProgressIndicator(null, i, null));
         }
         catch (MavenProcessCanceledException | ProcessCanceledException e) {
           canceledEx[0] = e;
@@ -577,25 +576,15 @@ public class MavenUtil {
     if (errorEx[0] != null) throw errorEx[0];
   }
 
-
   @NotNull
-  public static MavenTaskHandler runInBackground(@NotNull final Project project,
-                                                 @NotNull @NlsContexts.Command final String title,
-                                                 final boolean cancellable,
-                                                 @NotNull final MavenTask task) {
-    return runInBackground(project, title, cancellable, task, null);
-  }
-
-  @NotNull
-  public static MavenTaskHandler runInBackground(@NotNull final Project project,
-                                                 @NotNull @NlsContexts.Command final String title,
-                                                 final boolean cancellable,
-                                                 @NotNull final MavenTask task,
-                                                 @Nullable("null means application pooled thread")
-                                                 ExecutorService executorService) {
+  // used in third-party plugins
+  public static MavenTaskHandler runInBackground(@NotNull Project project,
+                                                 @NotNull @NlsContexts.Command String title,
+                                                 boolean cancellable,
+                                                 @NotNull MavenTask task) {
     MavenProjectsManager manager = MavenProjectsManager.getInstanceIfCreated(project);
     Supplier<MavenSyncConsole> syncConsoleSupplier = manager == null ? null : () -> manager.getSyncConsole();
-    final MavenProgressIndicator indicator = new MavenProgressIndicator(project, syncConsoleSupplier);
+    MavenProgressIndicator indicator = new MavenProgressIndicator(project, syncConsoleSupplier);
 
     Runnable runnable = () -> {
       if (project.isDisposed()) return;
@@ -617,14 +606,9 @@ public class MavenUtil {
       };
     }
     else {
-      final Future<?> future;
-      if (executorService == null) {
-        future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
-      }
-      else {
-        future = executorService.submit(runnable);
-      }
-      final MavenTaskHandler handler = new MavenTaskHandler() {
+      Future<?> future;
+      future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
+      MavenTaskHandler handler = new MavenTaskHandler() {
         @Override
         public void waitFor() {
           try {

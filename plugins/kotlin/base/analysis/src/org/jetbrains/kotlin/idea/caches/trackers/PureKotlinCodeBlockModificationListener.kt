@@ -75,7 +75,7 @@ class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable
 
         private inline fun isStringLiteralChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) {
             it?.elementType == KtTokens.REGULAR_STRING_PART &&
-                    it?.psi?.parentOfTypes(KtAnnotationEntry::class, KtWhenCondition::class) == null
+                    it?.psi?.parentOfTypes(KtAnnotationEntry::class, KtIfExpression::class, KtWhenCondition::class) == null
         }
 
         /**

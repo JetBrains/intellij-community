@@ -17,6 +17,7 @@ import com.intellij.ui.icons.IconUtilKt;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -576,7 +577,7 @@ final class PainterHelper implements Painter.Listener {
         boolean flipH = imageLoadSettings.flipH();
         BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
         // we scale and handle HiDPI later
-        return IconUtilKt.filterImage(image, flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter));
+        return IconUtilKt.filterImage(image, ContainerUtil.createMaybeSingletonList(flipFilter));
       }
       catch (Exception e) {
         LOG.warn(e);

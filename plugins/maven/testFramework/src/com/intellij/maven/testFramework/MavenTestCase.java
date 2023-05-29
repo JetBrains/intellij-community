@@ -519,18 +519,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
     });
   }
 
-  protected void createStdProjectFolders() {
-    createStdProjectFolders("");
-  }
-
-  protected void createStdProjectFolders(String subdir) {
-    if (!subdir.isEmpty()) subdir += "/";
-    createProjectSubDirs(subdir + "src/main/java",
-                         subdir + "src/main/resources",
-                         subdir + "src/test/java",
-                         subdir + "src/test/resources");
-  }
-
   protected void createProjectSubDirs(String... relativePaths) {
     for (String path : relativePaths) {
       createProjectSubDir(path);

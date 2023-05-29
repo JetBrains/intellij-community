@@ -5,7 +5,7 @@ import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindIn
-import com.intellij.collaboration.ui.util.getName
+import com.intellij.collaboration.ui.util.name
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -139,7 +139,7 @@ class AccountSelectorComponentFactory<A : Account>(
             }
           is ComboBoxWithActionsModel.Item.Action<A> ->
             value.action.let {
-              AccountMenuItem.Action(it.getName(), {}, showSeparatorAbove = value.needSeparatorAbove)
+              AccountMenuItem.Action(it.name.orEmpty(), {}, showSeparatorAbove = value.needSeparatorAbove)
             }
         }
         return delegateRenderer.getListCellRendererComponent(null, item, index, selected, focused)

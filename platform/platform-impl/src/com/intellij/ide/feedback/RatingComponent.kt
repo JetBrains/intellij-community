@@ -27,7 +27,6 @@ class RatingComponent : JComponent() {
   var myRating = 0
     private set
 
-
   init {
     isFocusable = true
     focusTraversalKeysEnabled = false

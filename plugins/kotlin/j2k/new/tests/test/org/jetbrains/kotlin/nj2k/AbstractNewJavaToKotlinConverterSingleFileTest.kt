@@ -62,5 +62,5 @@ abstract class AbstractNewJavaToKotlinConverterSingleFileTest : AbstractJavaToKo
     private fun getLanguageLevel() =
         if (testDataDirectory.toString().contains("newJavaFeatures")) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_8
 
-    override fun getProjectDescriptor() = descriptorByFileDirective(File(testDataPath, fileName()), languageLevel = getLanguageLevel())
+    override fun getProjectDescriptor() = descriptorByFileDirective(File(testDataDirectory, fileName()), languageLevel = getLanguageLevel())
 }

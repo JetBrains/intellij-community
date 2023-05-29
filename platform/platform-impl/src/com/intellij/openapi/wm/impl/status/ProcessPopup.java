@@ -4,11 +4,11 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.ExperimentalUI;
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Objects;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -37,7 +36,6 @@ class ProcessPopup {
   private final JPanel myIndicatorPanel;
   private final JScrollPane myContentPanel;
   private JBPopup myPopup;
-  private Rectangle myPopupBounds;
   private boolean myPopupVisible;
 
   ProcessPopup(@NotNull InfoAndProgressPanel progressPanel) {
@@ -82,11 +80,6 @@ class ProcessPopup {
 
   private @NotNull Rectangle calculateBounds() {
     JFrame frame = (JFrame)UIUtil.findUltimateParent(myProgressPanel.getComponent());
-
-    Rectangle savedBounds = WindowStateService.getInstance().getBoundsFor(frame, DIMENSION_SERVICE_KEY);
-    if (savedBounds != null) {
-      return savedBounds;
-    }
 
     Dimension contentSize = myContentPanel.getPreferredSize();
     int contentWidth = Math.max(contentSize.width, JBUI.scale(300));
@@ -134,10 +127,10 @@ class ProcessPopup {
 
     ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(LafManagerListener.TOPIC, source -> updateContentUI());
 
-    myPopupBounds = calculateBounds();
-    myContentPanel.setPreferredSize(myPopupBounds.getSize());
+    Rectangle popupBounds = calculateBounds();
+    myContentPanel.setPreferredSize(popupBounds.getSize());
     myPopupVisible = true;
-    myPopup.showInScreenCoordinates(myProgressPanel.getComponent().getRootPane(), myPopupBounds.getLocation());
+    myPopup.showInScreenCoordinates(myProgressPanel.getComponent().getRootPane(), popupBounds.getLocation());
   }
 
   public boolean isShowing() {
@@ -186,21 +179,14 @@ class ProcessPopup {
     builder.setRequestFocus(requestFocus);
     builder.setBelongsToGlobalPopupStack(false);
     builder.setMinSize(new JBDimension(300, 100));
+    var frame = UIUtil.findUltimateParent(myProgressPanel.getComponent());
+    Project project = null;
+    if (frame instanceof IdeFrame ideFrame) {
+      project = ideFrame.getProject();
+    }
+    builder.setDimensionServiceKey(project, DIMENSION_SERVICE_KEY, true);
 
     builder.setCancelButton(new MinimizeButton(IdeBundle.message("tooltip.hide")));
-
-    builder.setCancelCallback(() -> {
-      Rectangle newBounds = Objects.requireNonNull(UIUtil.getWindow(myPopup.getContent())).getBounds();
-      if (myPopup instanceof AbstractPopup) {
-        newBounds.height -= ((AbstractPopup)myPopup).getHeaderPreferredSize().height;
-      }
-      if (!myPopupBounds.equals(newBounds)) {
-        WindowStateService.getInstance().putBoundsFor(UIUtil.findUltimateParent(myProgressPanel.getComponent()), DIMENSION_SERVICE_KEY, newBounds);
-      }
-      myPopupBounds = null;
-
-      return true;
-    });
 
     myPopup = builder.createPopup();
   }

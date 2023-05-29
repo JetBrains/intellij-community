@@ -31,7 +31,7 @@ import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.fillHalfOval
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
-import org.intellij.plugins.markdown.ui.floating.FloatingToolbar
+import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.Point
@@ -204,7 +204,7 @@ internal class VerticalBarPresentation(
 
   private fun showToolbar() {
     val targetComponent = TableActionKeys.createDataContextComponent(editor, createDataProvider(row))
-    FloatingToolbar.createImmediatelyUpdatedToolbar(
+    ToolbarUtils.createImmediatelyUpdatedToolbar(
       group = rowActionGroup,
       place = TableActionPlaces.TABLE_INLAY_TOOLBAR,
       targetComponent,

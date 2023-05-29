@@ -36,14 +36,15 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
     return "LargeFileEditor";
   }
 
-  public static class LargeTextFileEditor extends TextEditorImpl {
+  public static final class LargeTextFileEditor extends TextEditorImpl {
     LargeTextFileEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
-      super(project, file, provider);
+      super(project, file, provider, TextEditorImpl.Companion.createTextEditor(project, file));
+
       getEditor().setViewer(true);
     }
   }
 
-  private static class LargeBinaryFileEditor extends UserDataHolderBase implements FileEditor {
+  private static final class LargeBinaryFileEditor extends UserDataHolderBase implements FileEditor {
     private final VirtualFile myFile;
 
     LargeBinaryFileEditor(VirtualFile file) {

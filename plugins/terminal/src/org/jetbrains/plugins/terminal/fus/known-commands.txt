@@ -54,6 +54,7 @@ git log
 git merge
 git pull
 git push
+git rebase
 git reset
 git stash
 git status

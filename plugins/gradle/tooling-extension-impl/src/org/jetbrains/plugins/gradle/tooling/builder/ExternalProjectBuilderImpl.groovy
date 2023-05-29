@@ -38,6 +38,7 @@ import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -231,7 +232,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def ideaTestSourceDirs = null
     def ideaTestResourceDirs = null
     def downloadJavadoc = false
-    def downloadSources = true
+    def downloadSources = Boolean.parseBoolean(System.getProperty("idea.disable.gradle.download.sources", "true"))
 
     def testSourceSets = []
 
@@ -756,7 +757,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         if (sourcePaths != null) {
           for (Object path : sourcePaths) {
             if (isSafeToResolve(path)) {
-              def files = archiveTask.project.files(path).files
+              def files = project.files(path).files
               outputFiles.removeAll(files)
             }
           }
@@ -772,12 +773,10 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   /**
    * Checks that object can be safely resolved using {@link Project#files(java.lang.Object...)} API.
-   * <br/>
-   * Some FileCollections implementations may have file definitions that can not
-   * be resolved during sync, causing {@link org.gradle.api.InvalidUserCodeException}
-   * and {@link org.gradle.api.InvalidUserDataException}.
+   *
    * @param object
    * @return true if object is safe to resolve using {@link Project#files(java.lang.Object...)}
+   * @see org.jetbrains.plugins.gradle.tooling.builder.ExternalProjectBuilderImpl#unpackPresentProvider
    */
   private static boolean isSafeToResolve(Object param) {
     Object object = unpackPresentProvider(param)
@@ -789,6 +788,37 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       || object instanceof File || object instanceof Path
       || isDirectoryOrRegularFile
       || object instanceof SourceSetOutput
+  }
+
+  /**
+   * Some Gradle {@link org.gradle.api.provider.Provider} implementations can not be resolved during sync,
+   * causing {@link org.gradle.api.InvalidUserCodeException}
+   * and {@link org.gradle.api.InvalidUserDataException}.
+   *
+   * @return provided value or current if value isn't present or cannot be evaluated
+   */
+  private static Object unpackPresentProvider(Object object) {
+    if (!dynamicCheckInstanceOf(object, "org.gradle.api.provider.Provider")) {
+      return object
+    }
+    try {
+      def providerClass = object.getClass()
+      def isPresentMethod = providerClass.getMethod("isPresent")
+      def getterMethod = providerClass.getMethod("get")
+      if ((Boolean)isPresentMethod.invoke(object)) {
+        return getterMethod.invoke(object)
+      }
+      return object
+    }
+    catch (InvocationTargetException exception) {
+      Throwable targetException = exception.targetException
+      boolean isCodeException = dynamicCheckInstanceOf(targetException, "org.gradle.api.InvalidUserCodeException")
+      boolean isDataException = dynamicCheckInstanceOf(targetException, "org.gradle.api.InvalidUserDataException")
+      if (isCodeException || isDataException) {
+        return object
+      }
+      throw exception
+    }
   }
 
   private static boolean isCustomJarTask(@NotNull AbstractArchiveTask archiveTask,

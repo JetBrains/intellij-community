@@ -31,6 +31,8 @@ import java.awt.image.ColorModel
 import java.awt.image.MemoryImageSource
 import javax.swing.JComponent
 import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
 
 private val KNOB_COLOR = Color.WHITE
 private const val KNOB_RADIUS = 4
@@ -74,8 +76,8 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
   }
 
   public fun getColorByPoint(p: Point): Color {
-    val x = Math.max(0, Math.min(p.x, size.width))
-    val y = Math.max(0, Math.min(p.y, size.height))
+    val x = max(0, min(p.x, size.width))
+    val y = max(0, min(p.y, size.height))
 
     val saturation = x.toFloat() / size.width
     val brightness = 1.0f - y.toFloat() / size.height

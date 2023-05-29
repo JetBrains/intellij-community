@@ -77,7 +77,7 @@ public class MarkupModelTest extends AbstractEditorTest {
     });
   }
 
-  public void _testMarkupModelListenersMustWorkInBGT() throws ExecutionException, InterruptedException {
+  public void testMarkupModelListenersMustWorkInBGT() throws ExecutionException, InterruptedException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     initText(" ".repeat(100));
     Document document = getDocument(getFile());
@@ -97,6 +97,25 @@ public class MarkupModelTest extends AbstractEditorTest {
   private void assertEventsFired(List<String> expected, List<String> actualEvents, String... events) {
     expected.addAll(List.of(events));
     assertEquals(expected, actualEvents);
+  }
+
+  public void testRangeMarkerTreeClearMustFireRemoveEvents() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    initText(" ".repeat(100));
+    Document document = getDocument(getFile());
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    List<String> events = new ArrayList<>();
+    addMarkupListener(markupModel, events);
+    List<String> expected = new ArrayList<>();
+    RangeHighlighter highlighter = markupModel.addRangeHighlighter(1, 2, 0, null, HighlighterTargetArea.EXACT_RANGE);
+    assertEventsFired(expected, events, "(1,2): AA");
+    RangeHighlighter highlighter2 = markupModel.addRangeHighlighter(2, 3, 0, null, HighlighterTargetArea.EXACT_RANGE);
+    assertEventsFired(expected, events, "(2,3): AA");
+    markupModel.removeAllHighlighters();
+    assertEventsFired(expected, events, "(1,2): BR", "(1,2): AR", "(2,3): BR", "(2,3): AR");
+    assertFalse(highlighter.isValid());
+    assertFalse(highlighter2.isValid());
+    assertEmpty((markupModel.getAllHighlighters()));
   }
 
   public void testMarkupModelListenersFireAfterDocumentChangeLedToRangeHighlighterRemoval() {
@@ -119,7 +138,6 @@ public class MarkupModelTest extends AbstractEditorTest {
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
     RangeHighlighter highlighter = markupModel.addRangeHighlighter(10, 11, 1, null, HighlighterTargetArea.EXACT_RANGE);
     RangeHighlighter highlighter2 = markupModel.addRangeHighlighter(10, 11, 1, null, HighlighterTargetArea.EXACT_RANGE);
-    RangeHighlighter highlighter3 = markupModel.addRangeHighlighter(11, 11, 1, null, HighlighterTargetArea.EXACT_RANGE);
     AtomicInteger fired = new AtomicInteger();
     markupModel.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
@@ -130,17 +148,8 @@ public class MarkupModelTest extends AbstractEditorTest {
         assertThrows(IncorrectOperationException.class, ()->markupModel.addRangeHighlighter(1, 3, 1, null, HighlighterTargetArea.EXACT_RANGE));
         assertThrows(IncorrectOperationException.class, ()->markupModel.removeHighlighter(highlighter2));
       }
-
-      @Override
-      public void afterRemoved(@NotNull RangeHighlighterEx highlighter1) {
-        fired.incrementAndGet();
-        assertSame(highlighter, highlighter1);
-        assertTrue(highlighter3.isValid());
-        assertThrows(IncorrectOperationException.class, ()->markupModel.addRangeHighlighter(1, 3, 1, null, HighlighterTargetArea.EXACT_RANGE));
-        assertThrows(IncorrectOperationException.class, ()->markupModel.removeHighlighter(highlighter3));
-      }
     });
     highlighter.dispose();
-    assertEquals(2, fired.get());
+    assertEquals(1, fired.get());
   }
 }

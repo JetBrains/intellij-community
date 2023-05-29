@@ -20,6 +20,6 @@ fun <T> getIfEnabledOn(clazz: ClassDescriptor, body: () -> T): T? {
     return if (isEnabledIn(clazz.module)) body() else null
 }
 
-fun runIfEnabledOn(clazz: ClassDescriptor, body: () -> Unit) { getIfEnabledOn<Unit>(clazz, body) }
+fun runIfEnabledOn(clazz: ClassDescriptor, body: () -> Unit) { getIfEnabledOn(clazz, body) }
 
 fun runIfEnabledIn(moduleDescriptor: ModuleDescriptor, block: () -> Unit) { if (isEnabledIn(moduleDescriptor)) block() }

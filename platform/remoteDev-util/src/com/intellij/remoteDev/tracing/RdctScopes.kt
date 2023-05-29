@@ -1,12 +1,12 @@
 package com.intellij.remoteDev.tracing
 
-import com.intellij.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.Scope
 
 @JvmField
 val RDCT = Scope("rdct")
 
 @JvmField
-val CONNECTION = Scope("connection", RDCT)
+val Connection = Scope("connection", RDCT)
 
 @JvmField
-val LUX = Scope("lux", RDCT)
+val Lux = Scope("lux", RDCT)

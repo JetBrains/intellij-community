@@ -14,10 +14,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -128,11 +125,21 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
     }
   }
 
-  private void waitForPendingWriteForRecord(int record) {
+  private void waitForPendingWriteForRecord(int record) throws InterruptedIOException {
     Future<?> future = myPendingWriteRequests.get(record);
     if (future != null) {
       try {
         future.get();
+      }
+      catch (InterruptedException ie){
+        //RC: need to throw something recognizable as Interrupted, but InterruptedException is checked,
+        //    and not a part of IStorage API, hence we can't just rethrow it. InterruptedIOException
+        //    seems like a good candidate for a wrapper: it carries very similar meaning (i.e. it is
+        //    clear why we catch it somewhere up the stack), but it is also an IOException, which _is_
+        //    a part of IStorage API
+        final InterruptedIOException wrapperException = new InterruptedIOException();
+        wrapperException.addSuppressed(ie);
+        throw wrapperException;
       }
       catch (Exception e) {
         throw new RuntimeException(e);

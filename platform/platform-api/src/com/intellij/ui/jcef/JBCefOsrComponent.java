@@ -7,8 +7,10 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.scroll.TouchScrollUtil;
 import com.intellij.util.Alarm;
 import org.cef.browser.CefBrowser;
+import org.cef.input.CefTouchEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,6 +140,24 @@ class JBCefOsrComponent extends JPanel {
   protected void processMouseWheelEvent(MouseWheelEvent e) {
     super.processMouseWheelEvent(e);
     if (e.isConsumed()) {
+      return;
+    }
+
+    if (TouchScrollUtil.isTouchScroll(e)) {
+      CefTouchEvent.EventType type;
+      if (TouchScrollUtil.isBegin(e)) {
+        type = CefTouchEvent.EventType.PRESSED;
+      }
+      else if (TouchScrollUtil.isUpdate(e)) {
+        type = CefTouchEvent.EventType.MOVED;
+      }
+      else if (TouchScrollUtil.isEnd(e)) {
+        type = CefTouchEvent.EventType.RELEASED;
+      } else {
+        type = CefTouchEvent.EventType.CANCELLED;
+      }
+      myBrowser.sendTouchEvent(new CefTouchEvent(0, e.getX(), e.getY(), 0, 0, 0, 0, type, e.getModifiersEx(),
+                                                 CefTouchEvent.PointerType.UNKNOWN));
       return;
     }
 

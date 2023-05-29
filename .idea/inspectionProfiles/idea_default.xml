@@ -873,6 +873,16 @@
         <constraint name="Expression" nameOfExprType="java\.util\.stream\.Stream" exprTypeWithinHierarchy="true" target="true" within="" contains="" />
         <constraint name="params" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Call to 'equals()' on KtType" description="Calling `equals` on two types only checks whether the structure of the types is equal, not whether the types are actually equal." suppressId="EqualsOnKtType" text="$lType$ == $rType$" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$lType$.isEqualTo($rType$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="lType" nameOfExprType="org\.jetbrains\.kotlin\.analysis\.api\.types\.KtType" within="" contains="" />
+        <constraint name="rType" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Call to 'equals()' on KtType" text="$lType$ != $rType$" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="!$lType$.isEqualTo($rType$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="lType" nameOfExprType="org\.jetbrains\.kotlin\.analysis\.api\.types\.KtType" within="" contains="" />
+        <constraint name="rType" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="can be simplified to ReadAction.compute()" uuid="44cf5267-e665-3ff5-9d2f-0de5c6983156" text="$application$.runReadAction(new $Computable$() {&#10;  public $SearchScope$ compute() {&#10;    return $e$;&#10;  }&#10;})" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute(()-&gt;$e$)">
         <constraint name="SearchScope" within="" contains="" />
         <constraint name="e" within="" contains="" />
@@ -954,6 +964,14 @@
       <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.newSetFromMap&lt;$T$&gt;(ConcurrentHashMap())" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentSet()">
         <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def ccf = JavaPsiFacade.getInstance(__context__.getProject()).findClass(&quot;com.intellij.concurrency.ConcurrentCollectionFactory&quot;, GlobalSearchScope.allScope(__context__.getProject()));&#10;def ccfVirtualFile = PsiUtil.getVirtualFile(ccf);&#10;&#10;ccfVirtualFile != null &amp;&amp;  &#10;__context__.getResolveScope().contains(ccfVirtualFile)&#10;&#10;&quot;" target="true" within="" contains="" />
         <constraint name="T" minCount="0" maxCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="$info$ == null ? Collections.emptyList() : Collections.singletonList($info$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.createMaybeSingletonList($info$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="info" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="$info$ != null ? Collections.singletonList($info$) : Collections.emptyList()" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.createMaybeSingletonList($info$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="info" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="can use StringUtil" uuid="e2009598-65b8-3ae6-a9f8-9159d2b2e27a" text="if ($s$.endsWith($e$)) {&#10;  $s$ = $s$.substring(0, $s$.length() - $e$.length());&#10;}" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$s$ = com.intellij.openapi.util.text.StringUtil.trimEnd($s$, $e$);&#10;">
         <constraint name="s" within="" contains="" />
@@ -2225,6 +2243,13 @@
     <inspection_tool class="SillyAssignmentJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SimplifiableIfStatement" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SingletonInjectsScoped" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="SizeReplaceableByIsEmpty" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredTypes">
+        <set>
+          <option value="com.intellij.util.containers.MultiMap" />
+        </set>
+      </option>
+    </inspection_tool>
     <inspection_tool class="SocketResource" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="insideTryAllowed" value="false" />
     </inspection_tool>

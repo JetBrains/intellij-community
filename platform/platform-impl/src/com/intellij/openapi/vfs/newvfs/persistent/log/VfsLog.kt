@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.diagnostic.Logger
@@ -20,7 +20,7 @@ import kotlin.io.path.forEachDirectoryEntry
 @ApiStatus.Experimental
 class VfsLog(
   private val storagePath: Path,
-  val readOnly: Boolean = false
+  private val readOnly: Boolean = false
 ) {
   private var version by PersistentVar.integer(storagePath / "version")
 
@@ -41,7 +41,7 @@ class VfsLog(
     }
   }
 
-  private val context = object : VfsLogContext {
+  private inner class ContextImpl: VfsLogContext {
     @OptIn(ExperimentalCoroutinesApi::class)
     override val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(WORKER_THREADS_COUNT))
 
@@ -70,19 +70,21 @@ class VfsLog(
     }
   }
 
+  private val _context = ContextImpl()
+  val context: VfsLogContext
+    get() = _context
+
   init {
     if (!readOnly) {
-      context.coroutineScope.launch {
-        context.flusher()
+      _context.coroutineScope.launch {
+        _context.flusher()
       }
     }
   }
 
-  fun <R> query(body: VfsLogContext.() -> R): R = context.body()
-
   fun dispose() {
     LOG.debug("VfsLog disposing")
-    context.dispose()
+    _context.dispose()
     LOG.debug("VfsLog disposed")
   }
 
@@ -112,7 +114,7 @@ class VfsLog(
   companion object {
     private val LOG = Logger.getInstance(VfsLog::class.java)
 
-    const val VERSION = -44
+    const val VERSION = -48
 
     @JvmField
     val LOG_VFS_OPERATIONS_ENABLED = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)

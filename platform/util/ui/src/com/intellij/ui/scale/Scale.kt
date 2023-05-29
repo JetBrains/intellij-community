@@ -7,9 +7,12 @@ import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.ScaleType.*
 import it.unimi.dsi.fastutil.doubles.Double2ObjectMap
 import it.unimi.dsi.fastutil.doubles.Double2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectFunction
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import java.util.function.DoubleFunction
+
 
 /**
  * The IDE supports two different HiDPI modes:
@@ -82,7 +85,11 @@ enum class ScaleType {
   fun of(value: Double): Scale = scaleOf(value = value, type = this)
 
   @Internal
-  fun of(value: Float): Scale = scaleOf(value = value.toDouble(), type = this)
+  fun of(value: Float): Scale {
+    return simpleCache.get().computeIfAbsent(cacheKey(value = value, type = this), Long2ObjectFunction { key ->
+      Scale(value = Float.fromBits((key shr 32).toInt()).toDouble(), type = ScaleType.values()[key.toInt()])
+    })
+  }
 }
 
 /**
@@ -96,6 +103,15 @@ data class Scale(val value: Double, val type: ScaleType)
 // the cache radically reduces potential thousands of equal Scale instances
 private val cache = ThreadLocal.withInitial {
   EnumMap<ScaleType, Double2ObjectMap<Scale>>(ScaleType::class.java)
+}
+
+private fun cacheKey(value: Float, type: ScaleType): Long {
+  return (value.toBits().toLong() shl 32) or (type.ordinal.toLong() and 0xffffffffL)
+}
+
+// the cache radically reduces potential thousands of equal Scale instances
+private val simpleCache = ThreadLocal.withInitial {
+  Long2ObjectOpenHashMap<Scale>()
 }
 
 private fun scaleOf(value: Double, type: ScaleType): Scale {

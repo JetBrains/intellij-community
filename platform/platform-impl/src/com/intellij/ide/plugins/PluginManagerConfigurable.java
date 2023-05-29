@@ -430,8 +430,10 @@ public final class PluginManagerConfigurable
             for (String host : UpdateSettings.getInstance().getPluginHosts()) {
               List<PluginNode> allDescriptors = customRepositoriesMap.get(host);
               if (allDescriptors != null) {
+                String groupName = IdeBundle.message("plugins.configurable.repository.0", host);
+                LOG.info("Marketplace tab: '" + groupName + "' group load started");
                 addGroup(groups,
-                         IdeBundle.message("plugins.configurable.repository.0", host),
+                         groupName,
                          PluginsGroupType.CUSTOM_REPOSITORY,
                          "/repository:\"" + host + "\"",
                          allDescriptors,
@@ -722,7 +724,7 @@ public final class PluginManagerConfigurable
 
                 if (parser.suggested) {
                   if (project != null) {
-                    result.descriptors.addAll(new PluginsAdvertiserStartupActivity().getSuggestedPlugins(project, customRepositoriesMap));
+                    result.descriptors.addAll(PluginsAdvertiserStartupActivity.getSuggestedPlugins(project, customRepositoriesMap));
                   }
                   return;
                 }
@@ -1210,8 +1212,10 @@ public final class PluginManagerConfigurable
   private void addSuggestedGroup(@NotNull List<? super PluginsGroup> groups,
                                  @NotNull Project project,
                                  Map<String, @NotNull List<PluginNode>> customMap) {
-    List<IdeaPluginDescriptor> plugins = new PluginsAdvertiserStartupActivity().getSuggestedPlugins(project, customMap);
-    addGroup(groups, IdeBundle.message("plugins.configurable.suggested"), PluginsGroupType.SUGGESTED, "", plugins, group -> false);
+    String groupName = IdeBundle.message("plugins.configurable.suggested");
+    LOG.info("Marketplace tab: '" + groupName + "' group load started");
+    List<IdeaPluginDescriptor> plugins = PluginsAdvertiserStartupActivity.getSuggestedPlugins(project, customMap);
+    addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", plugins, group -> false);
   }
 
   private final class ComparablePluginsGroup extends PluginsGroup
@@ -1738,7 +1742,7 @@ public final class PluginManagerConfigurable
                         @NotNull PluginsGroupType type,
                         @NotNull String showAllQuery,
                         @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
-                        @NotNull Predicate<? super PluginsGroup> predicate) {
+                        @NotNull Predicate<? super PluginsGroup> showAllPredicate) {
     PluginsGroup group = new PluginsGroup(name, type);
 
     int i = 0;
@@ -1746,7 +1750,7 @@ public final class PluginManagerConfigurable
       group.descriptors.add(iterator.next());
     }
 
-    if (predicate.test(group)) {
+    if (showAllPredicate.test(group)) {
       group.rightAction = new LinkLabel<>(IdeBundle.message("plugins.configurable.show.all"),
                                           null,
                                           myMarketplaceTab.mySearchListener,
@@ -1757,6 +1761,7 @@ public final class PluginManagerConfigurable
     if (!group.descriptors.isEmpty()) {
       groups.add(group);
     }
+    LOG.info("Marketplace tab: '" + name + "' group load finished");
   }
 
   private void addGroupViaLightDescriptor(@NotNull List<? super PluginsGroup> groups,
@@ -1764,6 +1769,7 @@ public final class PluginManagerConfigurable
                                           @NotNull PluginsGroupType type,
                                           @NotNull @NonNls String query,
                                           @NotNull @NonNls String showAllQuery) throws IOException {
+    LOG.info("Marketplace tab: '" + name + "' group load started");
     List<PluginNode> pluginNodes = MarketplaceRequests.getInstance().searchPlugins(query, ITEMS_PER_GROUP * 2);
     addGroup(groups,
              name,

@@ -111,14 +111,14 @@ public final class Maven3XProfileUtil {
 
   @NotNull
   public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
-    Model result = Maven3ModelConverter.toNativeModel(model);
-    result = doInterpolate(result, basedir);
+    Model nativeModel = Maven3ModelConverter.toNativeModel(model);
+    Model result = doInterpolate(nativeModel, basedir);
     org.apache.maven.project.path.PathTranslator pathTranslator = new DefaultPathTranslator();
     pathTranslator.alignToBaseDirectory(result, basedir);
     return Maven3ModelConverter.convertModel(result, null);
   }
 
-  static Collection<String> collectActivatedProfiles(MavenProject mavenProject) {
+  public static Collection<String> collectActivatedProfiles(MavenProject mavenProject) {
     // for some reason project's active profiles do not contain parent's profiles - only local and settings'.
     // parent's profiles do not contain settings' profiles.
 

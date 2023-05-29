@@ -82,7 +82,7 @@ abstract class JavaReflectionClassNavigationTestBase : LightJavaCodeInsightFixtu
       if (dotPos >= 0) expectedName = expectedName.substring(0, dotPos).replace("<caret>", "")
     }
     else {
-      atCaret = className + "<caret>"
+      atCaret = "$className<caret>"
     }
     myFixture.configureByText("Main.java",
                               """import foo.bar.*;

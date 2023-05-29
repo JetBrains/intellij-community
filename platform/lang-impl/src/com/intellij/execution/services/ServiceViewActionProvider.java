@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarSpacer;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +103,7 @@ class ServiceViewActionProvider {
 
   List<AnAction> getAdditionalGearActions() {
     AnAction showServicesActions = ActionManager.getInstance().getAction("ServiceView.ShowServices");
-    return showServicesActions == null ? Collections.emptyList() : Collections.singletonList(showServicesActions);
+    return ContainerUtil.createMaybeSingletonList(showServicesActions);
   }
 
   @Nullable

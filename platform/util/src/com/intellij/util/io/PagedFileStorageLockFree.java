@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
@@ -364,7 +365,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
    * new storage from the same file.
    */
   @Override
-  public void close() throws IOException, InterruptedException {
+  public void close() throws IOException {
     if (isClosed()) {
       return;
     }
@@ -386,6 +387,15 @@ public class PagedFileStorageLockFree implements PagedStorage {
       else {
         throw new IOException("Can't close storage for " + file, cause);
       }
+    }
+    catch (InterruptedException e) {
+      //RC: storage.close() method throwing InterruptedException is a lot of pain, because in many places only IO
+      //    exceptions are expected, and there is no better way to deal with IE other then rethrow it as some kind
+      //    of IO exception. So finally I decided to do it right here, instead of repeating it in 10s places around
+      //    the codebase:
+      final InterruptedIOException ioEx = new InterruptedIOException("Closing storage for " + file + " was interrupted");
+      ioEx.addSuppressed(e);
+      throw ioEx;
     }
   }
 
@@ -526,8 +536,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
     }
   }
 
-  @NotNull
-  private static StorageLockContext findOutAppropriateContext(final @Nullable StorageLockContext storageLockContext) {
+  private static @NotNull StorageLockContext findOutAppropriateContext(final @Nullable StorageLockContext storageLockContext) {
     final StorageLockContext threadContext = THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get();
     if (threadContext != null) {
       if (storageLockContext != null && storageLockContext != threadContext) {

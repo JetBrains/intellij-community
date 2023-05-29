@@ -9,11 +9,23 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiElement
 
+/**
+ * Should be implemented by [WebSymbol] if its declaration is a regular [PsiElement], e.g. a variable or a declared type.
+ * Once a symbol implements this interface it can be searched and refactored together with the PSI element declaration.
+ * If your symbol is part of a [PsiElement] (e.g. part of a string literal), or spans multiple PSI elements,
+ * or does not relate 1-1 with a PSI element, instead of implementing this interface you should contribute
+ * dedicated declaration provider.
+ *
+ * See also: [Declarations, References, Search, Refactoring](https://plugins.jetbrains.com/docs/intellij/websymbols-implementation.html#declarations-references-search-refactoring)
+ */
 interface PsiSourcedWebSymbol : WebSymbol {
 
   override val psiContext: PsiElement?
     get() = source
 
+  /**
+   * The [PsiElement], which is the symbol declaration.
+   */
   val source: PsiElement?
     get() = null
 

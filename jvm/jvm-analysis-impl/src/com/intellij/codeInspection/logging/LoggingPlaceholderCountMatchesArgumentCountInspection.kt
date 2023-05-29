@@ -80,10 +80,9 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       val lastArgumentIsSupplier = couldBeThrowableSupplier(loggerType, parameters[parameters.size - 1], arguments[arguments.size - 1])
 
       if (argumentCount == 1 && parameters.size > 1) {
-        val lastParameter = parameters.last()
         val argument = arguments[index]
         val argumentType = argument.getExpressionType()
-        if (argumentType is PsiArrayType && lastParameter.type is PsiArrayType) {
+        if (argumentType is PsiArrayType) {
           return true
         }
       }
@@ -110,7 +109,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
             if (placeholderCountHolder.count == argumentCount) ResultType.SUCCESS else ResultType.PLACE_HOLDER_MISMATCH
           }
         }
-        LoggerType.EQUAL_PLACEHOLDERS -> {
+        LoggerType.SLF4J_EQUAL_PLACEHOLDERS, LoggerType.LOG4J_EQUAL_PLACEHOLDERS, LoggerType.AKKA_PLACEHOLDERS -> {
           if (placeholderCountHolder.status == PlaceholdersStatus.PARTIAL) {
             if (placeholderCountHolder.count <= argumentCount) ResultType.SUCCESS else ResultType.PARTIAL_PLACE_HOLDER_MISMATCH
           }
@@ -203,11 +202,11 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
         PlaceholderCountResult(validators.size, if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)
       }
       else {
-        countPlaceholders(holders)
+        countPlaceholders(holders, loggerType)
       }
     }
 
-    private fun countPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>): PlaceholderCountResult {
+    private fun countPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>, loggerType: LoggerType): PlaceholderCountResult {
       var count = 0
       var full = true
       for (holderIndex in holders.indices) {
@@ -222,7 +221,8 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
         var placeholder = false
         for (i in 0 until length) {
           val c = string[i]
-          if (c == '\\') {
+          if (c == '\\' &&
+              (loggerType == LoggerType.SLF4J_EQUAL_PLACEHOLDERS || loggerType == LoggerType.SLF4J)) {
             escaped = !escaped
           }
           else if (c == '{') {
@@ -303,12 +303,13 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       return index
     }
 
-    private val LOGGER_TYPE_SEARCHERS = CallMapper<LoggerTypeSearcher>().register(
-      CallMatcher.instanceCall(LoggingUtil.SLF4J_LOGGER, "trace", "debug", "info", "warn", "error"), SLF4J_HOLDER).register(
-      CallMatcher.instanceCall(LoggingUtil.SLF4J_EVENT_BUILDER, "log"), SLF4J_BUILDER_HOLDER).register(
-      CallMatcher.instanceCall(LoggingUtil.LOG4J_LOGGER, "trace", "debug", "info", "warn", "error", "fatal", "log"),
-      LOG4J_HOLDER).register(CallMatcher.instanceCall(LoggingUtil.LOG4J_LOG_BUILDER, "log"), LOG4J_LOG_BUILDER_HOLDER)
-
+    private val LOGGER_TYPE_SEARCHERS = CallMapper<LoggerTypeSearcher>()
+      .register(CallMatcher.instanceCall(LoggingUtil.SLF4J_LOGGER, "trace", "debug", "info", "warn", "error"), SLF4J_HOLDER)
+      .register(CallMatcher.instanceCall(LoggingUtil.SLF4J_EVENT_BUILDER, "log"), SLF4J_BUILDER_HOLDER)
+      .register(CallMatcher.instanceCall(LoggingUtil.LOG4J_LOGGER, "trace", "debug", "info", "warn", "error", "fatal", "log"), LOG4J_HOLDER)
+      .register(CallMatcher.instanceCall(LoggingUtil.LOG4J_LOG_BUILDER, "log"), LOG4J_LOG_BUILDER_HOLDER)
+      .register(CallMatcher.instanceCall(LoggingUtil.AKKA_LOGGING, "debug", "error", "format", "info", "log", "warning"),
+                AKKA_PLACEHOLDERS)
   }
 
 
@@ -331,7 +332,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       if (qualifierExpression is UReferenceExpression) {
         val target: UVariable = qualifierExpression.resolveToUElement() as? UVariable ?: return null
         if (!target.isFinal) {
-          return LoggerType.EQUAL_PLACEHOLDERS //formatted builder is really rare
+          return LoggerType.LOG4J_EQUAL_PLACEHOLDERS //formatted builder is really rare
         }
         qualifierExpression = target.uastInitializer?.skipParenthesizedExprDown()
       }
@@ -341,11 +342,11 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       if (qualifierExpression is UCallExpression) {
         return when (LOG4J_HOLDER.findType(qualifierExpression, context)) {
           LoggerType.LOG4J_FORMATTED_STYLE -> LoggerType.LOG4J_FORMATTED_STYLE
-          LoggerType.LOG4J_OLD_STYLE -> LoggerType.EQUAL_PLACEHOLDERS
+          LoggerType.LOG4J_OLD_STYLE -> LoggerType.LOG4J_EQUAL_PLACEHOLDERS
           else -> null
         }
       }
-      return LoggerType.EQUAL_PLACEHOLDERS
+      return LoggerType.LOG4J_EQUAL_PLACEHOLDERS
     }
   }
 
@@ -353,7 +354,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
   private val SLF4J_BUILDER_HOLDER = object : LoggerTypeSearcher {
     override fun findType(expression: UCallExpression, context: LoggerContext): LoggerType {
       if (context.log4jAsImplementationForSlf4j) {
-        return LoggerType.EQUAL_PLACEHOLDERS
+        return LoggerType.SLF4J_EQUAL_PLACEHOLDERS
       }
       return LoggerType.SLF4J
     }
@@ -391,6 +392,12 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
 
   }
 
+  private val AKKA_PLACEHOLDERS = object : LoggerTypeSearcher {
+    override fun findType(expression: UCallExpression, context: LoggerContext): LoggerType {
+      return LoggerType.AKKA_PLACEHOLDERS
+    }
+  }
+
   private fun getImmediateLoggerQualifier(expression: UCallExpression): UExpression? {
     val result = expression.receiver?.skipParenthesizedExprDown()
     if (result is UQualifiedReferenceExpression) {
@@ -411,7 +418,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
   }
 
   private enum class LoggerType {
-    SLF4J, EQUAL_PLACEHOLDERS, LOG4J_OLD_STYLE, LOG4J_FORMATTED_STYLE
+    SLF4J, SLF4J_EQUAL_PLACEHOLDERS, LOG4J_OLD_STYLE, LOG4J_FORMATTED_STYLE, LOG4J_EQUAL_PLACEHOLDERS, AKKA_PLACEHOLDERS
   }
 
 

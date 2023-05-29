@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -79,5 +80,18 @@ public class ControlFlowTest extends LightJavaCodeInsightTestCase {
     IntList exitPoints = new IntArrayList();
     ControlFlowUtil.findExitPointsAndStatements(flow, 0, flow.getSize() -1 , exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
     assertEquals(1, exitPoints.size());
+  }
+
+  public void testWriteToFieldByInitializer() throws Exception {
+    @Language("JAVA")
+    String text = """
+      public class Foo {
+        int i = 3;
+      }""";
+    configureFromFileText("a.java", text);
+    final PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
+    ControlFlow flow = ControlFlowFactory.getInstance(getProject()).getControlFlow(field, AllVariablesControlFlowPolicy.getInstance());
+    assertSize(1, flow.getInstructions());
+    assertInstanceOf(flow.getInstructions().get(0), WriteVariableInstruction.class);
   }
 }

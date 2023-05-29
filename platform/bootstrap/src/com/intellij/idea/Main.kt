@@ -4,7 +4,6 @@
 
 package com.intellij.idea
 
-import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.rootTask
@@ -17,6 +16,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.platform.impl.toolkit.IdeFontManager
+import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
 import com.intellij.platform.impl.toolkit.IdeToolkit
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
@@ -47,24 +47,25 @@ fun main(rawArgs: Array<String>) {
   try {
     bootstrap(startupTimings)
     addBootstrapTiming("main scope creating", startupTimings)
-    runBlocking(rootTask()) {
+    runBlocking {
       StartUpMeasurer.addTimings(startupTimings, "bootstrap")
       val appInitPreparationActivity = StartUpMeasurer.startActivity("app initialization preparation")
-
-      launch(CoroutineName("ForkJoin CommonPool configuration") + Dispatchers.Default) {
-        IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
-      }
-
-      // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
-      val appStarterDeferred = async(CoroutineName("main class loading") + Dispatchers.Default) {
-        val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
-        MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
-      }
-
-      initRemoteDevIfNeeded(args)
-
+      val initScopeActivity = StartUpMeasurer.startActivity("init scope creating")
       val busyThread = Thread.currentThread()
-      withContext(Dispatchers.Default + StartupAbortedExceptionHandler()) {
+      withContext(Dispatchers.Default + StartupAbortedExceptionHandler() + rootTask()) {
+        initScopeActivity.end()
+        // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
+        val appStarterDeferred = async(CoroutineName("main class loading")) {
+          val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
+          MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
+        }
+
+        launch(CoroutineName("ForkJoin CommonPool configuration")) {
+          IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
+        }
+
+        initRemoteDevIfNeeded(args)
+
         StartUpMeasurer.appInitPreparationActivity = appInitPreparationActivity
         startApplication(args = args, appStarterDeferred = appStarterDeferred, mainScope = this@runBlocking, busyThread = busyThread)
       }
@@ -94,7 +95,8 @@ private fun initRemoteDevIfNeeded(args: List<String>) {
     initRemoteDevGraphicsEnvironment()
     if (isLuxEnabled()) {
       initLux()
-    } else {
+    }
+    else {
       initProjector()
     }
   }
@@ -111,8 +113,14 @@ private fun initProjector() {
 
 private fun initRemoteDevGraphicsEnvironment() {
   JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
-    if (isLuxEnabled()) IdeGraphicsEnvironment.instance
-    else AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment").getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
+    if (isLuxEnabled()) {
+      IdeGraphicsEnvironment.instance
+    }
+    else {
+      AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
+        .getDeclaredMethod("getInstance")
+        .invoke(null) as GraphicsEnvironment
+    }
   }
 }
 
@@ -126,7 +134,9 @@ private fun setStaticField(clazz: Class<out Any>, fieldName: String, value: Any)
 }
 
 private fun initLux() {
-  if (!isLuxEnabled()) return
+  if (!isLuxEnabled()) {
+    return
+  }
 
   System.setProperty("java.awt.headless", false.toString())
   System.setProperty("swing.volatileImageBufferEnabled", false.toString())
@@ -138,6 +148,7 @@ private fun initLux() {
   System.setProperty("awt.toolkit", IdeToolkit::class.java.canonicalName)
 
   setStaticField(FontManagerFactory::class.java, "instance", IdeFontManager())
+  @Suppress("SpellCheckingInspection")
   System.setProperty("sun.font.fontmanager", IdeFontManager::class.java.canonicalName)
 }
 
@@ -168,13 +179,13 @@ fun initClassLoader(addCwmLibs: Boolean) {
   val distDir = Path.of(PathManager.getHomePath())
   val classLoader = AppMode::class.java.classLoader as? PathClassLoader
                     ?: throw RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
-  val classpath = LinkedHashSet<Path>()
   val preinstalledPluginDir = distDir.resolve("plugins")
-  
+
   var pluginDir = preinstalledPluginDir
   var marketPlaceBootDir = BootstrapClassLoaderUtil.findMarketplaceBootDir(pluginDir)
   var mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR)
-  var installMarketplace = Files.exists(mpBoot) // enough to check for existence as preinstalled plugin is always compatible
+  // enough to check for existence as preinstalled plugin is always compatible
+  var installMarketplace = Files.exists(mpBoot)
 
   if (!installMarketplace) {
     pluginDir = Path.of(PathManager.getPluginsPath())
@@ -182,7 +193,8 @@ fun initClassLoader(addCwmLibs: Boolean) {
     mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR)
     installMarketplace = BootstrapClassLoaderUtil.isMarketplacePluginCompatible(distDir, pluginDir, mpBoot)
   }
-  
+
+  val classpath = LinkedHashSet<Path>()
   if (installMarketplace) {
     val marketplaceImpl = marketPlaceBootDir.resolve("marketplace-impl.jar")
     if (Files.exists(marketplaceImpl)) {
@@ -192,7 +204,7 @@ fun initClassLoader(addCwmLibs: Boolean) {
       installMarketplace = false
     }
   }
-  
+
   var updateSystemClassLoader = false
   if (addCwmLibs) {
     // Remote dev requires Projector libraries in system classloader due to AWT internals (see below)

@@ -96,12 +96,18 @@ final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     }
 
     private void recalculateRenderFlagsUp() {
-      RHNode n = this;
-      while (n != null) {
-        boolean prevInGutter = n.isRenderedInGutter();
-        n.recalculateRenderFlags();
-        if (n.isRenderedInGutter() == prevInGutter) break;
-        n = (RHNode)n.getParent();
+      getTree().l.writeLock().lock();
+      try {
+        RHNode n = this;
+        while (n != null) {
+          boolean prevInGutter = n.isRenderedInGutter();
+          n.recalculateRenderFlags();
+          if (n.isRenderedInGutter() == prevInGutter) break;
+          n = (RHNode)n.getParent();
+        }
+      }
+      finally {
+        getTree().l.writeLock().unlock();
       }
     }
 

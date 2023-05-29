@@ -1,20 +1,42 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.troubleshooting
 
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.DimensionService
 import com.intellij.openapi.util.WindowStateService
+import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.troubleshooting.GeneralTroubleInfoCollector
 import org.jdom.Element
 
 internal fun collectDimensionServiceDiagnosticsData(project: Project): String {
   return CompositeGeneralTroubleInfoCollector.collectInfo(
     project,
+    ProjectFrameTroubleInfoCollector(),
+    AppFrameTroubleInfoCollector(),
     WindowStateProjectServiceTroubleInfoCollector(),
     WindowStateApplicationServiceTroubleInfoCollector(),
     DimensionServiceTroubleInfoCollector()
   )
+}
+
+private class ProjectFrameTroubleInfoCollector : GeneralTroubleInfoCollector {
+  override fun getTitle() = "IDE Frame (per project)"
+
+  override fun collectInfo(project: Project): String =
+    RecentProjectsManagerBase.getInstanceEx().state.additionalInfo.entries
+      .joinToString("\n") { entry -> "${entry.key}: ${entry.value.frame?.toString()}" }
+
+}
+
+private class AppFrameTroubleInfoCollector : GeneralTroubleInfoCollector {
+  override fun getTitle() = "IDE Frame (per app)"
+
+  override fun collectInfo(project: Project): String =
+    (WindowManagerEx.getInstanceEx() as? WindowManagerImpl).serviceToTroubleshootingString()
+
 }
 
 private class WindowStateProjectServiceTroubleInfoCollector : GeneralTroubleInfoCollector {

@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
-import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -15,26 +15,22 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ConvertExpressionToReturnFix extends LocalQuickFixAndIntentionActionOnPsiElement
-  implements IntentionActionWithFixAllOption, HighPriorityAction {
+public class ConvertExpressionToReturnFix extends PsiUpdateModCommandAction<PsiExpression> {
   public ConvertExpressionToReturnFix(@NotNull PsiExpression expression) {
     super(expression);
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    PsiExpression expression = (PsiExpression)startElement;
-    CommentTracker tracker = new CommentTracker();
-    tracker.replaceAndRestoreComments(expression.getParent(), "return " + tracker.text(expression) + ";");
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression element) {
+    return Presentation.of(getFamilyName())
+      .withPriority(PriorityAction.Priority.HIGH)
+      .withFixAllOption(this);
   }
 
   @Override
-  public @NotNull String getText() {
-    return getFamilyName();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression expression, @NotNull EditorUpdater updater) {
+    CommentTracker tracker = new CommentTracker();
+    tracker.replaceAndRestoreComments(expression.getParent(), "return " + tracker.text(expression) + ";");
   }
 
   @Override

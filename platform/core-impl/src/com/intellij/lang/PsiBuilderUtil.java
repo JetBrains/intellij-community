@@ -5,6 +5,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +79,7 @@ public final class PsiBuilderUtil {
 
   @NotNull
   public static CharSequence rawTokenText(PsiBuilder builder, int index) {
-    return builder.getOriginalText().subSequence(builder.rawTokenTypeStart(index), builder.rawTokenTypeStart(index + 1));
+    return new CharSequenceSubSequence(builder.getOriginalText(), builder.rawTokenTypeStart(index), builder.rawTokenTypeStart(index + 1));
   }
 
   /**

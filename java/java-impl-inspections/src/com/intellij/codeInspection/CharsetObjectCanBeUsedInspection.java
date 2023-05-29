@@ -265,7 +265,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     }
   }
 
-  static class CharsetObjectCanBeUsedFix implements LocalQuickFix {
+  static class CharsetObjectCanBeUsedFix extends PsiUpdateModCommandQuickFix {
     private final String myCharsetExpression;
 
     CharsetObjectCanBeUsedFix(String charsetExpression) {
@@ -287,8 +287,8 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpression expression = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      PsiExpression expression = ObjectUtils.tryCast(startElement, PsiExpression.class);
       if (expression == null) return;
       PsiElement anchor = FOR_NAME_MATCHER.matches(expression) ? null : PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);
       CommentTracker ct = new CommentTracker();

@@ -186,7 +186,7 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
 
   @NotNull List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
     synchronized (myOriginals) {
-      if (myOriginals.isEmpty()) {
+      if (myDisposed || myOriginals.isEmpty()) {
         return Collections.emptyList();
       }
 

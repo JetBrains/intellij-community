@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
@@ -30,8 +30,7 @@ import java.util.function.Function;
 public final class Registry  {
   private static Reference<Map<String, String>> bundledRegistry;
 
-  @NonNls
-  public static final String REGISTRY_BUNDLE = "misc.registry";
+  public static final @NonNls String REGISTRY_BUNDLE = "misc.registry";
 
   private static final RegistryValueListener EMPTY_VALUE_LISTENER = new RegistryValueListener() {
   };
@@ -43,8 +42,7 @@ public final class Registry  {
   private static final Registry ourInstance = new Registry();
   private volatile boolean isLoaded;
 
-  @NotNull
-  private volatile RegistryValueListener valueChangeListener = EMPTY_VALUE_LISTENER;
+  private volatile @NotNull RegistryValueListener valueChangeListener = EMPTY_VALUE_LISTENER;
 
   public static @NotNull RegistryValue get(@NonNls @NotNull String key) {
     return getInstance().doGet(key);
@@ -188,28 +186,31 @@ public final class Registry  {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Map<String, String> loadState(@Nullable Element state) {
+  public static @NotNull Map<String, String> loadState(@Nullable Element state, @Nullable Map<String, String> earlyAccess) {
     Registry registry = ourInstance;
 
-    if (state == null) {
-      registry.isLoaded = true;
-      return null;
-    }
-
-    registry.myUserProperties.clear();
-    for (Element eachEntry : state.getChildren("entry")) {
-      String key = eachEntry.getAttributeValue("key");
-      String value = eachEntry.getAttributeValue("value");
-      if (key != null && value != null) {
-        RegistryValue registryValue = registry.doGet(key);
-        if (registryValue.isChangedFromDefault(value, registry)) {
-          registry.myUserProperties.put(key, value);
-          registryValue.resetCache();
+    Map<String, String> userProperties = registry.myUserProperties;
+    userProperties.clear();
+    if (state != null) {
+      for (Element eachEntry : state.getChildren("entry")) {
+        String key = eachEntry.getAttributeValue("key");
+        String value = eachEntry.getAttributeValue("value");
+        if (key != null && value != null) {
+          RegistryValue registryValue = registry.doGet(key);
+          if (registryValue.isChangedFromDefault(value, registry)) {
+            userProperties.put(key, value);
+            registryValue.resetCache();
+          }
         }
       }
     }
+
+    if (earlyAccess != null) {
+      // yes, earlyAccess overrides user properties
+      userProperties.putAll(earlyAccess);
+    }
     registry.isLoaded = true;
-    return registry.myUserProperties;
+    return userProperties;
   }
 
   @ApiStatus.Internal

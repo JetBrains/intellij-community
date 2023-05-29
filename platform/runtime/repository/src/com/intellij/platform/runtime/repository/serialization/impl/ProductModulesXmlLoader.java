@@ -2,6 +2,8 @@
 package com.intellij.platform.runtime.repository.serialization.impl;
 
 import com.intellij.platform.runtime.repository.*;
+import com.intellij.platform.runtime.repository.impl.MainRuntimeModuleGroup;
+import com.intellij.platform.runtime.repository.impl.PluginModuleGroup;
 import com.intellij.platform.runtime.repository.impl.ProductModulesImpl;
 import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +24,8 @@ public final class ProductModulesXmlLoader {
     int level = 0;
     ModuleImportance importance = null;
     String moduleName = null;
-    List<IncludedRuntimeModule> platformModules = new ArrayList<>();
-    List<RuntimeModuleDescriptor> bundledPluginModules = new ArrayList<>();
+    List<IncludedRuntimeModule> rootMainGroupModules = new ArrayList<>();
+    List<RuntimeModuleGroup> bundledPluginModuleGroups = new ArrayList<>();
     String parentTag = null;
     while (reader.hasNext()) {
       int event = reader.next();
@@ -57,12 +59,12 @@ public final class ProductModulesXmlLoader {
           if (moduleName == null || moduleName.isEmpty()) {
             throw new XMLStreamException("Module name is not specified");
           }
-          if ("root-platform-modules".equals(parentTag)) {
+          if ("main-root-modules".equals(parentTag)) {
             assert importance != null;
-            platformModules.add(new IncludedRuntimeModuleImpl(repository.getModule(RuntimeModuleId.raw(moduleName)), importance, Collections.emptySet()));
+            rootMainGroupModules.add(new IncludedRuntimeModuleImpl(repository.getModule(RuntimeModuleId.raw(moduleName)), importance, Collections.emptySet()));
           }
           else {
-            bundledPluginModules.add(repository.getModule(RuntimeModuleId.raw(moduleName)));
+            bundledPluginModuleGroups.add(new PluginModuleGroup(repository.getModule(RuntimeModuleId.raw(moduleName))));
           }
           moduleName = null;
           importance = null;
@@ -73,6 +75,7 @@ public final class ProductModulesXmlLoader {
       }
     }
     reader.close();
-    return new ProductModulesImpl(debugName, platformModules, bundledPluginModules);
+    MainRuntimeModuleGroup mainGroup = new MainRuntimeModuleGroup(rootMainGroupModules);
+    return new ProductModulesImpl(debugName, mainGroup, bundledPluginModuleGroups);
   }
 }

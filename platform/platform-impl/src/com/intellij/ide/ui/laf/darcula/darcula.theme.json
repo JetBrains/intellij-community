@@ -605,14 +605,11 @@
     },
     "RunWidget" : {
       "foreground": "#ffffff",
-      "runModeIconColor": "#5fad65",
-      "disabledForeground": "#FFFFFF66",
-      "background": "#3369d6",
+      "runIconColor": "#5fad65",
       "runningBackground": "#599e5e",
       "stopBackground": "#c94f4f",
       "hoverBackground": "#00000019",
-      "pressedBackground": "#00000028",
-      "separatorColor": "#FFFFFF40"
+      "pressedBackground": "#00000028"
     },
 
 
@@ -626,6 +623,57 @@
       "hoverBackground": "#1A1A1B",
       "separatorColor": "#2B2D30",
       "borderColor": "#1E1F22"
+    },
+    "Profiler": {
+      "ChartSlider": {
+        "foreground": "#FEFEFE",
+        "lineColor": "#9AA7B0"
+      },
+      "CpuChart": {
+        "background": "#6296554D",
+        "borderColor": "#629655",
+        "inactiveBackground": "#62965533",
+        "inactiveBorderColor": "#4F6A4B",
+        "pointBackground": "#629625",
+        "pointBorderColor": "#3C3F41"
+      },
+      "MemoryChart": {
+        "background": "#589DF680",
+        "borderColor": "#589DF6",
+        "inactiveBackground": "#589DF633",
+        "inactiveBorderColor": "#476589",
+        "pointBackground": "#589dF6",
+        "pointBorderColor": "#3C3F41"
+      },
+      "Timer": {
+        "foreground": "#BBBBBB",
+        "disabledForeground": "#777777",
+        "background": "#323232"
+      },
+      "LiveChart": {
+        "horizontalAxisColor": "#D1D1D1"
+      }
+    },
+    "FlameGraph.Tooltip": {
+      "scaleBackground": "#363839",
+      "scaleColor": "#365880",
+      "foreground": "#BBBBBB"
+    },
+    "LineProfiler" : {
+      "Line" : {
+        "labelBackground" : "#43474A",
+        "foreground" : "#787878",
+        "hoverBackground" : "#4A4E52"
+      },
+      "HotLine" : {
+        "labelBackground" : "#593D41",
+        "foreground" : "#FF5261",
+        "hoverBackground" : "#704745"
+      },
+      "IgnoredLine" : {
+        "labelBackground" : "#43474A",
+        "foreground" : "#5F5F5F"
+      }
     }
   },
 

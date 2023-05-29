@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.CopyPasteDelegator
 import com.intellij.ide.CopyPasteSupport
 import com.intellij.ide.IdeBundle
@@ -43,6 +44,8 @@ import java.awt.Point
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.lang.ref.WeakReference
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
@@ -71,7 +74,6 @@ internal class NewNavBarPanel(
     if (!ExperimentalUI.isNewUI() && StartupUiUtil.isUnderDarcula && isFloating) {
       border = LineBorder(Gray._120, 1)
     }
-    AccessibleContextUtil.setName(this, IdeBundle.message("navigation.bar"))
 
     if (!isFloating) {
       addFocusListener(NavBarDialogFocusListener(this))
@@ -253,5 +255,18 @@ internal class NewNavBarPanel(
         source.putClientProperty(key, it)
       }
     }
+  }
+
+  override fun getAccessibleContext(): AccessibleContext {
+    if (accessibleContext == null) {
+      accessibleContext = AccessibleNewNavBarPanel()
+      accessibleContext.accessibleName = IdeBundle.message("navigation.bar")
+    }
+
+    return accessibleContext
+  }
+
+  private inner class AccessibleNewNavBarPanel : AccessibleJPanel() {
+    override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
 }

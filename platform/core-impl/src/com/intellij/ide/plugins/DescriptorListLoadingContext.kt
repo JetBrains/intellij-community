@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ide.plugins
@@ -22,7 +22,7 @@ class DescriptorListLoadingContext(
   @JvmField val disabledPlugins: Set<PluginId> = DisabledPluginsState.getDisabledIds(),
   @JvmField val expiredPlugins: Set<PluginId> = ExpiredPluginsState.expiredPluginIds,
   @ApiStatus.Experimental @JvmField val enabledOnDemandPlugins: Set<PluginId> = EnabledOnDemandPluginsState.enabledPluginIds,
-  private val brokenPluginVersions: Map<PluginId, Set<String?>> = PluginManagerCore.getBrokenPluginVersions(),
+  private val brokenPluginVersions: Map<PluginId, Set<String?>> = getBrokenPluginVersions(),
   @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.getBuildNumber() },
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
@@ -55,7 +55,6 @@ class DescriptorListLoadingContext(
     private set
 
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
-
 
   internal fun reportCannotLoad(file: Path, e: Throwable?) {
     PluginManagerCore.getLogger().warn("Cannot load $file", e)
@@ -106,10 +105,18 @@ class DescriptorListLoadingContext(
               "Current plugin: $descriptor.")
     return true
   }
+
+  @JvmField
+  internal val debugData: PluginDescriptorsDebugData? =
+    if (System.getProperty("intellij.platform.plugins.record.debug.data.for.descriptors").toBoolean()) {
+      PluginDescriptorsDebugData()
+    }
+    else {
+      null
+    }
 }
 
-// doesn't make sense to intern class name since it is a unique
-// ouch, do we really cannot agree how to name implementation class attribute?
+// doesn't make sense to intern class name since it is unique
 private val CLASS_NAMES = ReferenceOpenHashSet(arrayOf(
   "implementation", "implementationClass", "builderClass",
   "serviceImplementation", "class", "className", "beanClass",
@@ -145,7 +152,7 @@ private class MyXmlInterner : XmlInterner {
   override fun name(value: String): String = strings.addOrGet(value)
 
   override fun value(name: String, value: String): String {
-    // doesn't make sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
+    // doesn't make sense to intern a long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
     return if (value.length > 64 || CLASS_NAMES.contains(name)) value else strings.addOrGet(value)
   }
 }

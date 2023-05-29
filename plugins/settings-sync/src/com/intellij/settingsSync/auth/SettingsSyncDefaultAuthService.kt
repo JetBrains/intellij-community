@@ -1,6 +1,7 @@
 package com.intellij.settingsSync.auth
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.EventDispatcher
 
@@ -13,6 +14,9 @@ internal class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
   }
 
   override fun getUserData(): JBAccountInfoService.JBAData? {
+    if(ApplicationManagerEx.isInIntegrationTest()){
+      return JBAccountInfoService.JBAData("integrationTest", "testLogin", "testEmail@example.com")
+    }
     return JBAccountInfoService.getInstance()?.userData
   }
 

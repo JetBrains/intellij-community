@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -39,7 +38,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   private Color myLineSeparatorColor;
   private SeparatorPlacement mySeparatorPlacement;
   private GutterIconRenderer myGutterIconRenderer;
-  private Object myErrorStripeTooltip;
+  private volatile Object myErrorStripeTooltip;
   private MarkupEditorFilter myFilter = MarkupEditorFilter.EMPTY;
   private CustomHighlighterRenderer myCustomRenderer;
   private LineSeparatorRenderer myLineSeparatorRenderer;
@@ -248,7 +247,6 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @Override
   public void setErrorStripeTooltip(Object tooltipObject) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     Object old = myErrorStripeTooltip;
     myErrorStripeTooltip = tooltipObject;
     if (!Objects.equals(old, tooltipObject)) {
@@ -263,7 +261,6 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @Override
   public void setThinErrorStripeMark(boolean value) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     boolean old = isThinErrorStripeMark();
     setFlag(ERROR_STRIPE_IS_THIN_MASK, value);
     if (old != value) {
@@ -395,8 +392,9 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     };
   }
 
+  // synchronized to avoid concurrent changes
   @Mask
-  byte changeAttributesNoEvents(@NotNull Consumer<? super RangeHighlighterEx> change) {
+  synchronized byte changeAttributesNoEvents(@NotNull Consumer<? super RangeHighlighterEx> change) {
     assert !isFlagSet(IN_BATCH_CHANGE_MASK);
     assert !isFlagSet(CHANGED_MASK);
     setMask(IN_BATCH_CHANGE_MASK | RENDERERS_CHANGED_MASK | FONT_STYLE_CHANGED_MASK | FOREGROUND_COLOR_CHANGED_MASK, IN_BATCH_CHANGE_MASK);

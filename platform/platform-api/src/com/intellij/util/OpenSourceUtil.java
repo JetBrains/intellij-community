@@ -4,6 +4,7 @@ package com.intellij.util;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.StatePreservingNavigatable;
@@ -17,6 +18,10 @@ public final class OpenSourceUtil {
   }
 
   public static void openSourcesFrom(@NotNull DataContext context, boolean requestFocus) {
+    if (Registry.is("ide.navigation.requests")) {
+      OpenSourceUtilKt.openSourcesFrom(context, requestFocus);
+      return;
+    }
     navigate(requestFocus, false, CommonDataKeys.NAVIGATABLE_ARRAY.getData(context));
   }
 
@@ -81,6 +86,12 @@ public final class OpenSourceUtil {
     if (navigatables == null) {
       return false;
     }
+    if (Registry.is("ide.navigation.requests")) {
+      Project project = OpenSourceUtilKt.findProject(navigatables);
+      if (project != null) {
+        return OpenSourceUtilKt.navigate(project, requestFocus, tryNotToScroll, navigatables);
+      }
+    }
 
     Navigatable nonSourceNavigatable = null;
 
@@ -139,7 +150,16 @@ public final class OpenSourceUtil {
    * @return {@code true} if navigation is done, {@code false} otherwise
    */
   public static boolean navigateToSource(boolean requestFocus, boolean tryNotToScroll, @Nullable Navigatable navigatable) {
-    if (navigatable == null || !navigatable.canNavigateToSource()) {
+    if (navigatable == null) {
+      return false;
+    }
+    if (Registry.is("ide.navigation.requests")) {
+      Project project = OpenSourceUtilKt.findProject(navigatable);
+      if (project != null) {
+        return OpenSourceUtilKt.navigateToSource(project, requestFocus, tryNotToScroll, navigatable);
+      }
+    }
+    if (!navigatable.canNavigateToSource()) {
       return false;
     }
     if (tryNotToScroll && navigatable instanceof StatePreservingNavigatable) {

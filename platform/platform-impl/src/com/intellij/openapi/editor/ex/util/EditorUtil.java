@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.Dumpable;
@@ -63,7 +63,7 @@ public final class EditorUtil {
 
   /**
    * @return true if the editor is in fact an ordinary file editor;
-   * false if the editor is part of EditorTextField, CommitMessage and etc.
+   * false if the editor is part of EditorTextField, CommitMessage etc.
    */
   public static boolean isRealFileEditor(@Nullable Editor editor) {
     return editor != null && TextEditorProvider.getInstance().getTextEditor(editor) instanceof TextEditorImpl;
@@ -90,7 +90,7 @@ public final class EditorUtil {
       return 0;
     }
 
-    // Filter all lines that are not shown because of collapsed folding region.
+    // Filter all lines that are not shown because of a collapsed folding region.
     VisualPosition visStart = new VisualPosition(line, 0);
     LogicalPosition logStart = editor.visualToLogicalPosition(visStart);
     int lastLogLine = logStart.line;
@@ -119,7 +119,7 @@ public final class EditorUtil {
         VisualPosition visual = editor.offsetToVisualPosition(softWrap.getStart() - 1);
         int result = visual.column;
         int x = editor.visualPositionToXY(visual).x;
-        // We need to add width of the next symbol because current result column points to the last symbol before the soft wrap.
+        // We need to add the width of the next symbol because the current result column points to the last symbol before the soft wrap.
         return  result + textWidthInColumns(editor, text, softWrap.getStart() - 1, softWrap.getStart(), x);
       }
 
@@ -140,7 +140,7 @@ public final class EditorUtil {
         int result = visual.column;
         int x = editor.visualPositionToXY(visual).x;
 
-        // We need to add symbol width because current column points to the last symbol before the next soft wrap;
+        /* We need to add symbol width because current column points to the last symbol before the next soft wrap; */
         result += textWidthInColumns(editor, text, nextSoftWrap.getStart() - 1, nextSoftWrap.getStart(), x);
 
         int lineFeedIndex = StringUtil.indexOf(nextSoftWrap.getText(), '\n');
@@ -228,7 +228,7 @@ public final class EditorUtil {
 
   public static void fillVirtualSpaceUntil(final @NotNull Editor editor, int columnNumber, int lineNumber) {
     final int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
-    final String filler = EditorModificationUtil.calcStringToFillVirtualSpace(editor);
+    final String filler = EditorModificationUtilEx.calcStringToFillVirtualSpace(editor);
     if (!filler.isEmpty()) {
       WriteAction.run(() -> {
         editor.getDocument().insertString(offset, filler);
@@ -435,7 +435,7 @@ public final class EditorUtil {
    * Allows to answer what width in pixels is required to draw fragment of the given char array from {@code [start; end)} interval
    * at the given editor.
    * <p/>
-   * Tabulation symbols is processed specially, i.e. it's ta
+   * Tabulation symbols are processed specially, i.e. it's ta
    * <p/>
    * <b>Note:</b> it's assumed that target text fragment remains to the single line, i.e. line feed symbols within it are not
    * treated specially.
@@ -1194,5 +1194,11 @@ public final class EditorUtil {
   private static class EditorNotification {
     private static final Key<Long> LAST_MAX_CARETS_NOTIFY_TIMESTAMP = Key.create("last.max.carets.notify.timestamp");
     private static final long MAX_CARETS_NOTIFY_INTERVAL_MS = 10_000;
+  }
+
+  public static boolean isBreakPointsOnLineNumbers() {
+    return UISettings.getInstance().getShowBreakpointsOverLineNumbers()
+           && !UISettings.getInstance().getPresentationMode()
+           && !Registry.is("editor.distraction.free.mode");
   }
 }

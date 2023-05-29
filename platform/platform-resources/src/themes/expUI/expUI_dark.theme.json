@@ -181,6 +181,13 @@
         "endBorderColor": "Blue6",
         "focusedBorderColor": "Grey1",
         "shadowColor": "#00000000"
+      },
+
+      "Split": {
+        "default": {
+          "iconColor": "Grey14",
+          "separatorColor": "Blue10"
+        }
       }
     },
 
@@ -296,7 +303,8 @@
 
     "MainMenu": {
       "selectionForeground": "Grey12",
-      "selectionBackground": "Grey3"
+      "selectionBackground": "Grey3",
+      "transparentSelectionBackground": "#FFFFFF1A"
     },
 
     "MemoryIndicator": {
@@ -534,7 +542,8 @@
       },
       "Dropdown": {
         "pressedBackground": "Grey3",
-        "maxWidth": 350
+        "maxWidth": 350,
+        "transparentHoverBackground": "#FFFFFF1A"
       },
       "background": "Grey2",
       "separatorColor": "Grey4"
@@ -597,6 +606,72 @@
       "foreground": "Grey14",
       "stepNumberForeground": "Blue11",
       "codeBorderColor": "#FFFFFFBF"
+    },
+
+    "RecentProject": {
+      "Color1": {
+        "MainToolbarGradientStart": "#CE443C",
+        "Avatar": {
+          "Start": "#DB3D3C",
+          "End": "#FF8E42"
+        }
+      },
+      "Color2": {
+        "MainToolbarGradientStart": "#E27237",
+        "Avatar": {
+          "Start": "#F57236",
+          "End": "#FCBA3F"
+        }
+      },
+      "Color3": {
+        "MainToolbarGradientStart": "#2DBCAD",
+        "Avatar": {
+          "Start": "#2BC8BB",
+          "End": "#36EBAE"
+        }
+      },
+      "Color4": {
+        "MainToolbarGradientStart": "#3895E1",
+        "Avatar": {
+          "Start": "#359AF2",
+          "End": "#57DBFF"
+        }
+      },
+      "Color5": {
+        "MainToolbarGradientStart": "#7B75E8",
+        "Avatar": {
+          "Start": "#8379FB",
+          "End": "#85A8FF"
+        }
+      },
+      "Color6": {
+        "MainToolbarGradientStart": "#7854AD",
+        "Avatar": {
+          "Start": "#7E54B5",
+          "End": "#9486FF"
+        }
+      },
+      "Color7": {
+        "MainToolbarGradientStart": "#8F4593",
+        "Avatar": {
+          "Start": "#D63CC8",
+          "End": "#F582B9"
+        }
+      },
+      "Color8": {
+        "MainToolbarGradientStart": "#C840B9",
+        "Avatar": {
+          "Start": "#954294",
+          "End": "#C87DFF"
+        }
+      },
+      "Color9": {
+        "MainToolbarGradientStart": "#D75370",
+        "Avatar": {
+          "Start": "#E75371",
+          "End": "#FF78B5"
+        }
+      }
     },
 
     "UnattendedHostStatus": {
@@ -675,12 +750,11 @@
     },
     "RunWidget" : {
       "foreground": "Grey12",
-      "disabledForeground": "#FFFFFF66",
-      "background": "Blue5",
+      "iconColor": "Grey12",
       "runningBackground": "Green5",
+      "runningIconColor": "Grey12",
       "hoverBackground": "#00000019",
-      "pressedBackground": "#00000028",
-      "separatorColor": "#FFFFFF40"
+      "pressedBackground": "#00000028"
     },
 
     "MainWindow.Tab" : {
@@ -695,7 +769,57 @@
       "borderColor": "Grey1"
     },
 
-    "MainWindow.FullScreeControl.Background": "#575A5C"
+    "MainWindow.FullScreeControl.Background": "#575A5C",
+    "Profiler": {
+      "ChartSlider": {
+        "foreground": "Grey12",
+        "lineColor": "Grey5"
+      },
+      "CpuChart": {
+        "background": "Green2",
+        "borderColor": "Green5",
+        "inactiveBackground": "Green1",
+        "inactiveBorderColor": "Green2",
+        "pointBackground": "Green5",
+        "pointBorderColor": "Grey2"
+      },
+      "MemoryChart": {
+        "background": "Blue2",
+        "borderColor": "Blue8",
+        "inactiveBackground": "Blue1",
+        "inactiveBorderColor": "Blue3",
+        "pointBackground": "Blue5",
+        "pointBorderColor": "Grey2"
+      },
+      "Timer": {
+        "foreground": "Grey12",
+        "disabledForeground": "Grey7"
+      },
+      "LiveChart": {
+        "horizontalAxisColor": "Grey4"
+      }
+    },
+    "FlameGraph.Tooltip": {
+      "scaleBackground": "#43454A",
+      "scaleColor": "#375FAD",
+      "foreground": "#DFE1E5"
+    },
+    "LineProfiler" : {
+      "Line" : {
+        "labelBackground" : "Grey2",
+        "foreground" : "Grey7",
+        "hoverBackground" : "Grey3"
+      },
+      "HotLine" : {
+        "labelBackground" : "Red1",
+        "foreground" : "Red6",
+        "hoverBackground" : "Red2"
+      },
+      "IgnoredLine" : {
+        "labelBackground" : "Grey2",
+        "foreground" : "Grey5"
+      }
+    }
   },
 
   "icons": {

@@ -14,6 +14,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.ScaleContextCache;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -36,21 +37,12 @@ import static com.intellij.ide.navbar.ui.UiKt.*;
  */
 @Deprecated
 public abstract class AbstractNavBarUI implements NavBarUI {
-
-  private final static Map<NavBarItem, Map<ImageType, ScaleContext.Cache<BufferedImage>>> cache = new ConcurrentHashMap<>();
+  private final static Map<NavBarItem, Map<ImageType, ScaleContextCache<BufferedImage>>> cache = new ConcurrentHashMap<>();
 
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
     return isPopupElement ? navBarPopupItemInsets()
                           : navBarItemInsets();
-  }
-
-  @Override
-  @Deprecated(forRemoval = true)
-  public JBInsets getElementPadding() {
-    return ExperimentalUI.isNewUI()
-           ? JBUI.CurrentTheme.StatusBar.Breadcrumbs.itemInsets()
-           : JBUI.insets(3);
   }
 
   @Override
@@ -120,9 +112,9 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       ImageType type = ImageType.from(floating, toolbarVisible, selected, nextSelected);
 
       // see: https://github.com/JetBrains/intellij-community/pull/1111
-      Map<ImageType, ScaleContext.Cache<BufferedImage>> cache = AbstractNavBarUI.cache.computeIfAbsent(item, k -> new HashMap<>());
-      ScaleContext.Cache<BufferedImage> imageCache = cache.computeIfAbsent(type, k -> {
-        return new ScaleContext.Cache<>(ctx -> {
+      Map<ImageType, ScaleContextCache<BufferedImage>> cache = AbstractNavBarUI.cache.computeIfAbsent(item, k -> new HashMap<>());
+      ScaleContextCache<BufferedImage> imageCache = cache.computeIfAbsent(type, k -> {
+        return new ScaleContextCache<>(ctx -> {
           return drawToBuffer(item, ctx, floating, toolbarVisible, selected, nextSelected, item.isLastElement());
         });
       });

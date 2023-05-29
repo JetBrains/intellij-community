@@ -245,7 +245,7 @@ open class AttachToProcessDialog(
           return
         }
         if (isNonPrintable(e.keyCode)) return
-        filterTextField.text = filterTextField.text + e.keyChar
+        filterTextField.text += e.keyChar
       }
     }
     list.getFocusedComponent().addKeyListener(keyListener)

@@ -45,8 +45,9 @@ public interface SweepProcessor<T> {
       int start = marker.getStartOffset();
       while (!ends.isEmpty()) {
         T previous = ends.peek();
-        if (start < previous.getStartOffset()) {
-          throw new IllegalStateException("Generator "+generator+" supplied segments in a wrong order: "+marker+" was received after "+previous);
+        int previousStartOffset = previous.getStartOffset();
+        if (start < previousStartOffset) {
+          throw new IllegalStateException("Generator "+generator+" supplied segments in a wrong order: "+previous+" was received before "+ marker +" ("+start+"<"+previousStartOffset+")");
         }
         int prevEnd = previous.getEndOffset();
         if (prevEnd <= start) {

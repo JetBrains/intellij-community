@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -18,7 +17,6 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.intellij.lang.annotations.Pattern;
@@ -43,16 +41,16 @@ public class ForCanBeForeachInspection extends BaseInspection {
   public boolean ignoreUntypedCollections;
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     boolean indexed = (boolean)infos[0];
     if (indexed) {
-      return new InspectionGadgetsFix[]{
+      return new LocalQuickFix[]{
         new ForCanBeForeachFix(ignoreUntypedCollections),
-        new DelegatingFix(new SetInspectionOptionFix(this, "REPORT_INDEXED_LOOP",
-                                                     InspectionGadgetsBundle.message("for.can.be.foreach.fix.no.indexed"), false))
+        new SetInspectionOptionFix(this, "REPORT_INDEXED_LOOP",
+                                                     InspectionGadgetsBundle.message("for.can.be.foreach.fix.no.indexed"), false),
       };
     }
-    return new InspectionGadgetsFix[]{new ForCanBeForeachFix(ignoreUntypedCollections)};
+    return new LocalQuickFix[]{new ForCanBeForeachFix(ignoreUntypedCollections)};
   }
 
   @Override
@@ -993,7 +991,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     }
   }
 
-  private static class ForCanBeForeachFix extends InspectionGadgetsFix {
+  private static class ForCanBeForeachFix extends PsiUpdateModCommandQuickFix {
     private final boolean myIgnoreUntypedCollections;
 
     ForCanBeForeachFix(boolean ignoreUntypedCollections) {
@@ -1007,8 +1005,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement forElement = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement forElement, @NotNull EditorUpdater updater) {
       final PsiElement parent = forElement.getParent();
       if (!(parent instanceof PsiForStatement forStatement)) {
         return;

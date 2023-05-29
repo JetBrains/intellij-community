@@ -15,6 +15,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
+import java.time.LocalDateTime;
+import java.time.Month;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -92,6 +98,85 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                   a.txt
                   b.txt
                  """);
+  }
+
+  public void testSortByTime() {
+    setModificationTime("a.java", LocalDateTime.of(2023, Month.MAY, 8, 0, 0));
+    setModificationTime("a.txt", LocalDateTime.of(2023, Month.MAY, 8, 0, 1));
+    setModificationTime("b.java", LocalDateTime.of(2023, Month.MAY, 7, 0, 1));
+    setModificationTime("b.txt", LocalDateTime.of(2023, Month.MAY, 7, 0, 0));
+    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_NAME);
+    myStructure.setSortKey(NodeSortKey.BY_NAME);
+    assertTree("""
+                 -sortByTime
+                  +dir1
+                  +dir2
+                  a.java
+                  a.txt
+                  b.java
+                  b.txt
+                 """);
+
+    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_ASCENDING);
+    myStructure.setSortKey(NodeSortKey.BY_TIME_ASCENDING);
+    assertTree("""
+                 -sortByTime
+                  +dir1
+                  +dir2
+                  b.txt
+                  b.java
+                  a.java
+                  a.txt
+                 """);
+
+    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_DESCENDING);
+    myStructure.setSortKey(NodeSortKey.BY_TIME_DESCENDING);
+    assertTree("""
+                 -sortByTime
+                  +dir1
+                  +dir2
+                  a.txt
+                  a.java
+                  b.java
+                  b.txt
+                 """);
+
+    ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false);
+
+    // Check that folders are still on top because they are considered to have no timestamps:
+
+    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_ASCENDING);
+    myStructure.setSortKey(NodeSortKey.BY_TIME_ASCENDING);
+    assertTree("""
+                 -sortByTime
+                  +dir1
+                  +dir2
+                  b.txt
+                  b.java
+                  a.java
+                  a.txt
+                 """);
+
+    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_DESCENDING);
+    myStructure.setSortKey(NodeSortKey.BY_TIME_DESCENDING);
+    assertTree("""
+                 -sortByTime
+                  +dir1
+                  +dir2
+                  a.txt
+                  a.java
+                  b.java
+                  b.txt
+                 """);
+  }
+
+  private void setModificationTime(String fileName, LocalDateTime time) {
+    try {
+      Files.setLastModifiedTime(getContentRoot().toNioPath().resolve(fileName), FileTime.from(time.toInstant(ZoneOffset.UTC)));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void testFoldersOnTop() {

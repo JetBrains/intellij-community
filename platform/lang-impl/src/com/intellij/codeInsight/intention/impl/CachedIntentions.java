@@ -350,11 +350,7 @@ public final class CachedIntentions {
       return value.getIcon();
     }
 
-    IntentionAction action = value.getAction();
-
-    while (action instanceof IntentionActionDelegate) {
-      action = ((IntentionActionDelegate)action).getDelegate();
-    }
+    IntentionAction action = IntentionActionDelegate.unwrap(value.getAction());
     Object iconable = action;
     //custom icon
     LocalQuickFix fix = QuickFixWrapper.unwrap(action);

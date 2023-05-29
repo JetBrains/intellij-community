@@ -322,6 +322,9 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
   }
 
   public static String normalizePath(String path) {
+    if (CoreRoutingFileSystem.matchesPrefixNoSlash(path)) {
+      path = '/' + path;
+    }
     return path.replace("\\", SEPARATOR);
   }
 }

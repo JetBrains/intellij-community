@@ -94,6 +94,6 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
     if (!selectedRepositories.isEmpty()) return selectedRepositories;
 
     HgRepository repository = HgUtil.guessRepositoryForOperation(project, dataContext);
-    return repository != null ? Collections.singletonList(repository) : Collections.emptyList();
+    return ContainerUtil.createMaybeSingletonList(repository);
   }
 }

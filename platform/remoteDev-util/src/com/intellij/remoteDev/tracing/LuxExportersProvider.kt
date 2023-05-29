@@ -1,9 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteDev.tracing
 
-import com.intellij.diagnostic.telemetry.*
-import com.intellij.diagnostic.telemetry.otExporters.OTelExportersProvider
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
+import com.intellij.platform.diagnostic.telemetry.FilteredMetricsExporter
+import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
+import com.intellij.platform.diagnostic.telemetry.belongsToScope
+import com.intellij.platform.diagnostic.telemetry.impl.CsvGzippedMetricsExporter
+import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OTelExportersProvider
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import java.io.File
 import java.time.Duration
@@ -25,7 +29,7 @@ class LuxExportersProvider : OTelExportersProvider {
     fileToWrite?.let {
       return listOf(
         FilteredMetricsExporter(CsvGzippedMetricsExporter(fileToWrite)) { metric ->
-          metric.belongsToScope(LUX)
+          metric.belongsToScope(Lux)
         })
     }
     return emptyList()

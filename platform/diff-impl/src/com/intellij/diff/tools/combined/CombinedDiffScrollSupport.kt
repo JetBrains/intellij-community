@@ -24,7 +24,7 @@ internal class CombinedDiffScrollSupport(project: Project?, private val viewer: 
   private val combinedEditorsScrollingModel = ScrollingModelImpl(CombinedEditorsScrollingModelHelper(project, viewer))
 
   fun scroll(index: Int, block: CombinedDiffBlock<*>, scrollPolicy: ScrollPolicy){
-    val isEditorBased = viewer.diffViewers[block.id]?.isEditorBased ?: false
+    val isEditorBased = viewer.getDiffViewerForId(block.id)?.isEditorBased ?: false
     if (scrollPolicy == ScrollPolicy.DIFF_BLOCK || !isEditorBased) {
       scrollToDiffBlock(index)
     }
@@ -40,8 +40,10 @@ internal class CombinedDiffScrollSupport(project: Project?, private val viewer: 
   }
 
   private fun scrollToDiffBlock(index: Int) {
-    if (viewer.diffBlocksPositions.values.contains(index)) {
-      viewer.contentPanel.components.getOrNull(index)?.bounds?.let(viewer.contentPanel::scrollRectToVisible)
+    if (viewer.getDiffViewerForIndex(index) != null) {
+      val bounds = viewer.blocksPanel.components.getOrNull(index)?.bounds ?: return
+      bounds.height = Int.MAX_VALUE
+      viewer.blocksPanel.scrollRectToVisible(bounds)
     }
   }
 
@@ -69,7 +71,7 @@ internal class CombinedDiffScrollSupport(project: Project?, private val viewer: 
   internal inner class CombinedDiffPrevNextBlocksIterable : PrevNextDifferenceIterable {
     var index = 0
 
-    override fun canGoNext(): Boolean = index < viewer.diffBlocks.size - 1
+    override fun canGoNext(): Boolean = index < viewer.getDiffBlocksCount() - 1
 
     override fun canGoPrev(): Boolean = index > 0
 
@@ -92,7 +94,7 @@ internal class CombinedDiffScrollSupport(project: Project?, private val viewer: 
       Disposer.register(disposable, this)
     }
 
-    override fun getEditor(): Editor = viewer.getDiffViewer(blockIterable.index)?.editor ?: dummyEditor
+    override fun getEditor(): Editor = viewer.getDiffViewerForIndex(blockIterable.index)?.editor ?: dummyEditor
 
     override fun getScrollPane(): JScrollPane = viewer.scrollPane
 

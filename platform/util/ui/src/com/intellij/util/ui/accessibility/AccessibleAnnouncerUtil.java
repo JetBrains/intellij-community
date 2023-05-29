@@ -3,7 +3,7 @@ package com.intellij.util.ui.accessibility;
 
 import com.jetbrains.AccessibleAnnouncer;
 import com.jetbrains.JBR;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import java.awt.*;
@@ -20,7 +20,7 @@ final public class AccessibleAnnouncerUtil {
    * @param str       message for announcing
    * @param interruptCurrentOutput  output interruption
    */
-  public static void announce(@NotNull final Accessible a, final String str, final boolean interruptCurrentOutput) {
+  public static void announce(@Nullable final Accessible a, final String str, final boolean interruptCurrentOutput) {
     if (announcer == null) return;
 
     KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();

@@ -300,20 +300,19 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   protected boolean shouldPaintFadeout() {
-    return !Registry.is("ui.no.bangs.and.whistles", false)
-           && myTabs.getEffectiveLayout$intellij_platform_ide().isScrollable()
-           && myTabs.isSingleRow() && !isHovered() && !isSelected();
+    return !Registry.is("ui.no.bangs.and.whistles", false) && myTabs.isSingleRow();
   }
 
   protected void paintFadeout(final Graphics g) {
     Graphics2D g2d = (Graphics2D)g.create();
     try {
-      Color tabBg = myTabs.getTabPainter().getBackgroundColor();
+      Color tabBg = getEffectiveBackground();
       Color transparent = ColorUtil.withAlpha(tabBg, 0);
       int borderThickness = myTabs.getBorderThickness();
       int width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200));
 
       Rectangle myRect = getBounds();
+      myRect.height -= borderThickness + (isSelected() ? myTabs.getTabPainter().getTabTheme().getUnderlineHeight() : borderThickness);
       // Fadeout for left part (needed only in top and bottom placements)
       if (myRect.x < 0) {
         Rectangle leftRect = new Rectangle(-myRect.x, borderThickness, width, myRect.height - 2 * borderThickness);
@@ -321,14 +320,15 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       }
 
       Rectangle contentRect = myLabelPlaceholder.getBounds();
-      // Fadeout for right side before pin/close button (needed only in side placements)
+      // Fadeout for right side before pin/close button (needed only in side placements and in squeezing layout)
       if (contentRect.width < myLabelPlaceholder.getPreferredSize().width + myTabs.getTabHGap()) {
         Rectangle rightRect =
           new Rectangle(contentRect.x + contentRect.width - width, borderThickness, width, myRect.height - 2 * borderThickness);
         paintGradientRect(g2d, rightRect, transparent, tabBg);
       }
       // Fadeout for right side
-      else if (myRect.width < getPreferredSize().width + myTabs.getTabHGap()) {
+      else if (myTabs.getEffectiveLayout$intellij_platform_ide().isScrollable() &&
+               myRect.width < getPreferredSize().width + myTabs.getTabHGap()) {
         Rectangle rightRect = new Rectangle(myRect.width - width, borderThickness, width, myRect.height - 2 * borderThickness);
         paintGradientRect(g2d, rightRect, transparent, tabBg);
       }
@@ -684,6 +684,13 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
   private void paintBackground(Graphics g) {
     myTabs.tabPainterAdapter.paintBackground(this, g, myTabs);
+  }
+
+  protected @NotNull Color getEffectiveBackground() {
+    Color bg = myTabs.getTabPainter().getBackgroundColor();
+    Color customBg = myTabs.getTabPainter().getCustomBackground(getInfo().getTabColor(), isSelected(),
+                                                                myTabs.isActiveTabs(getInfo()), isHovered());
+    return customBg != null ? ColorUtil.alphaBlending(customBg, bg) : bg;
   }
 
   @Override

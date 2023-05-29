@@ -489,6 +489,9 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
         GlobalCompilingVisitor.setFilter(handler, e -> e instanceof PsiJavaCodeReferenceElement);
       }
     }
+    else if (!(parent instanceof PsiAnnotation)) {
+      GlobalCompilingVisitor.setFilter(handler, e -> e instanceof PsiJavaCodeReferenceElement);
+    }
   }
 
   @Override

@@ -5,7 +5,6 @@ import com.intellij.diff.*
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffSettingsHolder
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.tools.combined.CombinedDiffModel.NewRequestData
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
@@ -13,14 +12,10 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.EdtInvocationManager.invokeAndWaitIfNeeded
+import com.intellij.util.ui.update.UiNotifyConnector
 import java.awt.Dimension
-import kotlin.math.min
 
 private val LOG = logger<CombinedDiffComponentFactory>()
 
@@ -37,17 +32,17 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
   private var combinedViewer: CombinedDiffViewer
 
   init {
-    if (model.haveParentDisposable) {
+    if (model.haveParentDisposable) { // diff preview scenario?
       Disposer.register(model.ourDisposable, ourDisposable)
     }
-    else {
+    else { // diff from action
       Disposer.register(ourDisposable, model.ourDisposable)
     }
     model.addListener(ModelListener(), ourDisposable)
     mainUi = createMainUI()
     combinedViewer = createCombinedViewer()
 
-    buildCombinedDiffChildBlocks()
+    buildLoadingBlocks()
   }
 
   internal fun getPreferredFocusedComponent() = mainUi.getPreferredFocusedComponent()
@@ -81,133 +76,58 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     override fun onModelReset() {
       Disposer.dispose(combinedViewer)
       combinedViewer = createCombinedViewer()
-      buildCombinedDiffChildBlocks()
-    }
-
-    override fun onContentReloadRequested(requests: Map<CombinedBlockId, DiffRequest>) {
-      model.loadRequestContents(requests.keys.toList(), null)
+      buildLoadingBlocks()
     }
 
     @RequiresEdt
-    override fun onRequestsLoaded(requests: Map<CombinedBlockId, DiffRequest>, blockIdToSelect: CombinedBlockId?) {
-      for ((blockId, request) in requests) {
-        buildBlockContent(mainUi, model.context, request, blockId)?.let { newContent ->
-          combinedViewer.diffBlocks[blockId]?.let { block ->
-            mainUi.countDifferences(blockId, newContent.viewer)
-            combinedViewer.updateBlockContent(block, newContent)
-            request.onAssigned(true)
-          }
-        }
+    override fun onRequestsLoaded(blockId: CombinedBlockId, request: DiffRequest) {
+      buildBlockContent(mainUi, model.context, request, blockId)?.let { newContent ->
+        mainUi.countDifferences(blockId, newContent.viewer)
+        combinedViewer.updateBlockContent(newContent)
+        request.onAssigned(true)
       }
 
       combinedViewer.contentChanged()
-
-      if (blockIdToSelect != null) {
-        combinedViewer.diffBlocks[blockIdToSelect]?.let { block ->
-          combinedViewer.selectDiffBlock(block, ScrollPolicy.DIFF_BLOCK, false)
-        }
-      }
-    }
-
-    @RequiresEdt
-    override fun onRequestsPreloaded(requests: List<Pair<CombinedBlockId, DiffRequest>>) {
-      invokeAndWaitIfNeeded {
-        for ((index, blockIdAndRequest) in requests.withIndex()) {
-          val (blockId, request) = blockIdAndRequest
-          buildBlockContent(mainUi, model.context, request, blockId)?.let {
-            combinedViewer.addChildBlock(it, index > 0)
-            mainUi.countDifferences(blockId, it.viewer)
-            request.onAssigned(true)
-          }
-        }
-
-        combinedViewer.contentChanged()
-      }
     }
 
     @RequiresEdt
     override fun onRequestContentsUnloaded(requests: Map<CombinedBlockId, DiffRequest>) {
       for ((blockId, request) in requests) {
-        buildLoadingBlockContent(blockId, combinedViewer.diffViewers[blockId]?.component?.size).let { newContent ->
-          combinedViewer.diffBlocks[blockId]?.let { block ->
-            combinedViewer.updateBlockContent(block, newContent)
-            request.onAssigned(false)
-          }
+        val size = combinedViewer.getDiffViewerForId(blockId)?.component?.size
+        buildLoadingBlockContent(blockId, size).let { newContent ->
+          combinedViewer.updateBlockContent(newContent)
+          request.onAssigned(false)
         }
       }
-    }
-
-    @RequiresEdt
-    override fun onRequestAdded(requestData: NewRequestData, request: DiffRequest, onAdded: (CombinedBlockId) -> Unit) {
-      addNewBlock(mainUi, combinedViewer, model.context, requestData, request)?.run { onAdded(id) }
     }
   }
 
   private inner class MyBlockListener : BlockListener {
 
-    override fun blocksHidden(blocks: Collection<CombinedDiffBlock<*>>) {
-      val blockIds = blocks.asSequence().map(CombinedDiffBlock<*>::id).toSet()
+    override fun blocksHidden(blockIds: Collection<CombinedBlockId>) {
       model.unloadRequestContents(blockIds)
     }
 
-    override fun blocksVisible(blocks: Collection<CombinedDiffBlock<*>>, blockToSelect: CombinedBlockId?) {
-      val blockIds = blocks.asSequence().map(CombinedDiffBlock<*>::id).toSet()
-      model.loadRequestContents(blockIds, blockToSelect)
+    override fun blocksVisible(blockIds: Collection<CombinedBlockId>) {
+      model.loadRequestContents(blockIds)
     }
   }
 
-  private fun buildCombinedDiffChildBlocks() {
-    Alarm(combinedViewer.component, combinedViewer).addComponentRequest(
-      Runnable {
-        val childCount = model.requests.size
-        val visibleBlockCount = min(combinedViewer.scrollPane.visibleRect.height / CombinedLazyDiffViewer.HEIGHT.get(), childCount)
-        val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
+  private fun buildLoadingBlocks() {
+    for (blockId in model.requests.keys) {
+      combinedViewer.addBlock(buildLoadingBlockContent(blockId))
+    }
 
-        BackgroundTaskUtil.executeOnPooledThread(ourDisposable) {
-         val indicator = EmptyProgressIndicator()
-          BackgroundTaskUtil.runUnderDisposeAwareIndicator(ourDisposable, {
+    val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
 
-            runInEdt { mainUi.startProgress() }
-            try {
-              val allRequests = model.requests
-                .asSequence()
-                .map { CombinedDiffModel.RequestData(it.key, it.value) }
-
-              model.preloadRequests(indicator, allRequests.take(visibleBlockCount).toList())
-
-              allRequests.drop(visibleBlockCount).forEachIndexed { index, childRequest ->
-                invokeAndWaitIfNeeded {
-                  combinedViewer.addChildBlock(buildLoadingBlockContent(childRequest.blockId), index > 0 || visibleBlockCount > 0)
-                }
-              }
-            }
-            finally {
-              runInEdt {
-                mainUi.stopProgress()
-                if (blockToSelect != null) {
-                  combinedViewer.selectDiffBlock(blockToSelect, ScrollPolicy.DIFF_BLOCK, true)
-                }
-              }
-            }
-
-          }, indicator)
-        }
-      }, 100
+    UiNotifyConnector.doWhenFirstShown(
+      getMainComponent(),
+      { combinedViewer.selectDiffBlock(blockToSelect, true) },
+      ourDisposable
     )
   }
 
   companion object {
-    private fun addNewBlock(mainUi: CombinedDiffMainUI,
-                            viewer: CombinedDiffViewer,
-                            context: DiffContext,
-                            requestData: NewRequestData,
-                            request: DiffRequest,
-                            needTakeTool: (FrameDiffTool) -> Boolean = { true }): CombinedDiffBlock<*>? {
-      val content = buildBlockContent(mainUi, context, request, requestData.blockId, needTakeTool)
-                    ?: return null
-      return viewer.insertChildBlock(content, requestData.position)
-    }
-
     private fun buildBlockContent(mainUi: CombinedDiffMainUI,
                                   context: DiffContext,
                                   request: DiffRequest,
@@ -237,7 +157,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     }
 
     private fun buildLoadingBlockContent(blockId: CombinedBlockId, size: Dimension? = null): CombinedDiffBlockContent {
-      return CombinedDiffBlockContent(CombinedLazyDiffViewer(size), blockId)
+      return CombinedDiffBlockContent(CombinedDiffLoadingBlock(size), blockId)
     }
 
     private fun findSubstitutor(tool: FrameDiffTool, context: DiffContext, request: DiffRequest): FrameDiffTool {

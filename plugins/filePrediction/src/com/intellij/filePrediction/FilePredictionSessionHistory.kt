@@ -16,7 +16,7 @@ internal class FilePredictionSessionHistory {
 
   private var candidatesPerSession: Int = DEFAULT_CANDIDATES_PER_SESSION
 
-  private var previousCandidates: Array<Set<String>> = Array(3) { emptySet<String>() }
+  private var previousCandidates: Array<Set<String>> = Array(3) { emptySet() }
 
   @TestOnly
   fun setCandidatesPerSession(size: Int) {

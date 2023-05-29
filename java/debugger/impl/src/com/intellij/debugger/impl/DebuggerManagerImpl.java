@@ -345,20 +345,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       .create(parameters);
   }
 
-  /**
-   * @deprecated use {@link RemoteConnectionBuilder}
-   */
-  @Deprecated(forRemoval = true)
-  public static RemoteConnection createDebugParameters(final JavaParameters parameters,
-                                                       GenericDebuggerRunnerSettings settings,
-                                                       boolean checkValidity)
-    throws ExecutionException {
-    return new RemoteConnectionBuilder(settings.LOCAL, settings.getTransport(), settings.getDebugPort())
-      .checkValidity(checkValidity)
-      .asyncAgent(true)
-      .create(parameters);
-  }
-
   private static class MyDebuggerStateManager extends DebuggerStateManager {
     private DebuggerSession myDebuggerSession;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -18,16 +18,15 @@ public abstract class InspectionProjectProfileManager implements InspectionProfi
   /**
    * @deprecated use {@link #getCurrentProfile()}
    */
-  @NotNull
-  @Deprecated
-  public InspectionProfile getInspectionProfile() {
+  @Deprecated(forRemoval = true)
+  public @NotNull InspectionProfile getInspectionProfile() {
     return getCurrentProfile();
   }
 
   public static boolean isInformationLevel(String shortName, @NotNull PsiElement element) {
-    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key != null) {
-      final HighlightDisplayLevel errorLevel = getInstance(element.getProject()).getCurrentProfile().getErrorLevel(key, element);
+      HighlightDisplayLevel errorLevel = getInstance(element.getProject()).getCurrentProfile().getErrorLevel(key, element);
       return HighlightDisplayLevel.DO_NOT_SHOW.equals(errorLevel);
     }
     return false;

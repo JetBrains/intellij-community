@@ -62,10 +62,7 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveApp
                 symbolProvider.provideClassSymbol("kotlin.Array"),
                 JKArgumentList(
                     dimensions[0],
-                    JKLambdaExpression(
-                        JKExpressionStatement(buildArrayInitializer(dimensions.subList(1, dimensions.size), type)),
-                        emptyList()
-                    )
+                    JKLambdaExpression(JKExpressionStatement(buildArrayInitializer(dimensions.subList(1, dimensions.size), type)))
                 ),
                 JKTypeArgumentList(arrayType)
             )

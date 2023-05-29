@@ -36,8 +36,8 @@ import kotlin.time.Duration.Companion.milliseconds
 open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
                          scope: CoroutineScope,
                          protected val helper: EditorBasedWidgetHelper = EditorBasedWidgetHelper(dataContext.project)) : TextWidgetPresentation {
-  private val updateTextRequests = MutableSharedFlow<Editor?>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  private val charCountRequests = MutableSharedFlow<CodePointCountTask>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val updateTextRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val charCountRequests = MutableSharedFlow<CodePointCountTask>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   companion object {
     @JvmField
@@ -55,11 +55,8 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
     multicaster.addCaretListener(object : CaretListener {
       override fun caretPositionChanged(e: CaretEvent) {
         val editor = e.editor
-        if (
-          editor.caretModel.caretCount == 1 && // when multiple carets exist in editor, we don't show information about caret positions
-          isFocusedEditor(editor) &&
-          editor.isOurEditor()
-        ) {
+        // when multiple carets exist in editor, we don't show information about caret positions
+        if (editor.caretModel.caretCount == 1) {
           updatePosition(editor)
         }
       }
@@ -75,17 +72,13 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
     multicaster.addSelectionListener(object : SelectionListener {
       override fun selectionChanged(e: SelectionEvent) {
         // react to "select all" action
-        val editor = e.editor
-        if (editor.isOurEditor()) {
-          updatePosition(editor)
-        }
+        updatePosition(e.editor)
       }
     }, disposable)
     multicaster.addDocumentListener(object : BulkAwareDocumentListener.Simple {
       override fun afterDocumentChange(document: Document) {
         EditorFactory.getInstance().editors(document).asSequence()
-          .firstOrNull(::isFocusedEditor)
-          .let(::updatePosition)
+          .forEach(::updatePosition)
       }
     }, disposable)
     scope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
@@ -94,12 +87,9 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
     check(charCountRequests.tryEmit(CodePointCountTask(text = "", startOffset = 0, endOffset = 0)))
   }
 
-  private fun Editor.isOurEditor(): Boolean =
-    this === dataContext.currentFileEditor.value?.let { (it as? TextEditor)?.editor }
-
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun text(): Flow<@NlsContexts.Label String?> {
-    return merge(updateTextRequests, dataContext.currentFileEditor.map { (it as? TextEditor)?.editor })
+    return combine(updateTextRequests, dataContext.currentFileEditor) { _, fileEditor -> (fileEditor as? TextEditor)?.editor }
       .debounce(100.milliseconds)
       .mapLatest { editor ->
         if (editor == null || DISABLE_FOR_EDITOR.isIn(editor)) null else readAction { getPositionText(editor) }
@@ -143,12 +133,11 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
     }
   }
 
-  private fun isFocusedEditor(editor: Editor): Boolean {
-    return helper.getFocusedComponent() === editor.contentComponent
-  }
-
-  private fun updatePosition(editor: Editor?) {
-    check(updateTextRequests.tryEmit(editor))
+  private fun updatePosition(editor: Editor) {
+    val ourEditor = (dataContext.currentFileEditor.value as? TextEditor)?.editor
+    if (editor === ourEditor) {
+      check(updateTextRequests.tryEmit(Unit))
+    }
   }
 
   @Suppress("HardCodedStringLiteral")

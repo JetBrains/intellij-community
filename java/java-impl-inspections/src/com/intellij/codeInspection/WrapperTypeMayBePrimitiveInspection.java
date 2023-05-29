@@ -326,7 +326,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     }
   }
 
-  private static class ConvertWrapperTypeToPrimitive implements LocalQuickFix {
+  private static class ConvertWrapperTypeToPrimitive extends PsiUpdateModCommandQuickFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -342,8 +342,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       PsiTypeElement typeElement = tryCast(element, PsiTypeElement.class);
       if (typeElement == null) return;
       PsiLocalVariable variable = tryCast(typeElement.getParent(), PsiLocalVariable.class);

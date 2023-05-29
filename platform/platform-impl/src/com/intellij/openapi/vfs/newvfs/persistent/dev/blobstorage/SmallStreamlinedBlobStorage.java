@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.util.io.DirectBufferWrapper;
@@ -17,7 +17,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 
-import static com.intellij.diagnostic.telemetry.PlatformScopesKt.STORAGE;
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storage;
 
 /**
  * Store blobs, like {@link com.intellij.util.io.storage.AbstractStorage}, but tries to be faster:
@@ -1084,7 +1084,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
 
   @NotNull
   private BatchCallback setupReportingToOpenTelemetry(final Path fileName) {
-    final Meter meter = TraceManager.getMeter(STORAGE);
+    final Meter meter = TelemetryTracer.getMeter(Storage);
 
     final var recordsAllocated = meter.counterBuilder("StreamlinedBlobStorage.recordsAllocated").buildObserver();
     final var recordsRelocated = meter.counterBuilder("StreamlinedBlobStorage.recordsRelocated").buildObserver();

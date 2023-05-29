@@ -253,7 +253,6 @@ class ClassLoaderConfigurator(
           // multiple packages - intellij.diagram and intellij.diagram.impl modules
           createScopeWithExtraPackage("com.intellij.diagram.")
         }
-        "com.intellij.struts2" -> createScopeWithExtraPackage("com.intellij.lang.ognl.")
         "com.intellij.properties" -> {
           // todo ability to customize (cannot move due to backward compatibility)
           object : ResolveScopeManager {

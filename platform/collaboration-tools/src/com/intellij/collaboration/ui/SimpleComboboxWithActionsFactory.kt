@@ -2,7 +2,7 @@
 package com.intellij.collaboration.ui
 
 import com.intellij.collaboration.ui.util.bindIn
-import com.intellij.collaboration.ui.util.getName
+import com.intellij.collaboration.ui.util.name
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.*
 import kotlinx.coroutines.CoroutineScope
@@ -43,7 +43,7 @@ class SimpleComboboxWithActionsFactory<T : Any>(
           }
           if (value is ComboBoxWithActionsModel.Item.Action) {
             if (model.size == index) border = IdeBorderFactory.createBorder(SideBorder.TOP)
-            append(value.action.getName())
+            append(value.action.name.orEmpty())
           }
         }
       }
@@ -54,7 +54,7 @@ class SimpleComboboxWithActionsFactory<T : Any>(
       ComboboxSpeedSearch.installSpeedSearch(combo) {
         when (it) {
           is ComboBoxWithActionsModel.Item.Wrapper -> presenter(it.wrappee).name
-          is ComboBoxWithActionsModel.Item.Action -> it.action.getName()
+          is ComboBoxWithActionsModel.Item.Action -> it.action.name.orEmpty()
         }
       }
     }

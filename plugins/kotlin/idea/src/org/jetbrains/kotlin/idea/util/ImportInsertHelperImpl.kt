@@ -6,9 +6,12 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.nextLeaf
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
+import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
@@ -489,11 +492,27 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                 val newDirective = psiFactory.createImportDirective(importPath)
                 val imports = importList.imports
                 return if (imports.isEmpty()) {
-                    file.packageDirective?.takeIf { it.packageKeyword != null }?.let {
+                    val packageDirective = file.packageDirective?.takeIf { it.packageKeyword != null }
+                    packageDirective?.let {
                         file.addAfter(psiFactory.createNewLine(2), it)
                     }
 
-                    importList.add(newDirective) as KtImportDirective
+                    (importList.add(newDirective) as KtImportDirective).also {
+                        if (packageDirective == null) {
+                            val whiteSpace = importList.nextLeaf(true)
+                            if (whiteSpace is PsiWhiteSpace) {
+                                val newLineBreak = if (whiteSpace.isMultiLine()) {
+                                    psiFactory.createWhiteSpace("\n" + whiteSpace.text)
+                                } else {
+                                    psiFactory.createWhiteSpace("\n\n" + whiteSpace.text)
+                                }
+
+                                whiteSpace.replace(newLineBreak)
+                            } else {
+                                file.addAfter(psiFactory.createNewLine(2), importList)
+                            }
+                        }
+                    }
                 } else {
                     val importPathComparator = ImportInsertHelperImpl(project).getImportSortComparator(file)
                     val insertAfter = imports.lastOrNull {

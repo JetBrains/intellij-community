@@ -253,6 +253,116 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         }
     }
 
+    @Test
+    @TargetVersions("4.4+")
+    fun testConfigureAllModulesInJvmProjectGroovy() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(rootModule, subModule), IdeKotlinVersion.get("1.8.0"), collector)
+
+                val subModules = listOf("app")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("4.4+")
+    fun testConfigureAllModulesInJvmProjectKts() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(rootModule, subModule), IdeKotlinVersion.get("1.8.0"), collector)
+
+                val subModules = listOf("app")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("4.4+")
+    fun testConfigureRootModuleInJvmProjectGroovy() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+
+                val subModules = listOf("app")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("4.4+")
+    fun testConfigureRootModuleInJvmProjectKts() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+
+                val subModules = listOf("app")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("4.4+")
+    fun testConfigureSubModuleInJvmProjectGroovy() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(subModule), IdeKotlinVersion.get("1.8.0"), collector)
+
+                val subModules = listOf("app")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("4.4+")
+    fun testConfigureSubModuleInJvmProjectKts() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(subModule), IdeKotlinVersion.get("1.8.0"), collector)
+
+                val subModules = listOf("app")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
     private fun findGradleModuleConfigurator(): KotlinGradleModuleConfigurator {
         return KotlinProjectConfigurator.EP_NAME.findExtensionOrFail(KotlinGradleModuleConfigurator::class.java)
     }

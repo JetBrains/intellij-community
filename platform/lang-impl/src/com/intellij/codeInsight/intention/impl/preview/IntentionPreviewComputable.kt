@@ -17,8 +17,8 @@ import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModCommandAction.ActionContext
-import com.intellij.modcommand.ModCommandActionWrapper
 import com.intellij.model.SideEffectGuard
 import com.intellij.model.SideEffectGuard.SideEffectNotAllowedException
 import com.intellij.openapi.diagnostic.logger
@@ -176,9 +176,10 @@ internal class IntentionPreviewComputable(private val project: Project,
   }
 
   private fun getModActionPreview(origFile: PsiFile, origEditor: Editor): IntentionPreviewInfo {
-    val unwrapped = ModCommandActionWrapper.unwrap(action) ?: return IntentionPreviewInfo.EMPTY
-    return convertResult(unwrapped.generatePreview(ActionContext.from(origEditor, origFile)), 
-      origFile, origFile, false) ?: IntentionPreviewInfo.EMPTY
+    val unwrapped = ModCommandAction.unwrap(action) ?: return IntentionPreviewInfo.EMPTY
+    val info = SideEffectGuard.computeWithoutSideEffects<IntentionPreviewInfo, Exception> 
+      { unwrapped.generatePreview(ActionContext.from(origEditor, origFile)) }
+    return convertResult(info, origFile, origFile, false) ?: IntentionPreviewInfo.EMPTY
   }
 
   private fun generateFallbackDiff(editorCopy: IntentionPreviewEditor, psiFileCopy: PsiFile): IntentionPreviewInfo {

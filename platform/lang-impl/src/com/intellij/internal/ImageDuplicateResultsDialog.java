@@ -137,7 +137,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
         JBPopupFactory.getInstance().createListPopupBuilder(modules)
           .setTitle("Add Resource Module")
           .setNamerForFiltering(o -> o.getName())
-          .setItemChoosenCallback(() -> {
+          .setItemChosenCallback(() -> {
             Module value = modules.getSelectedValue();
             if (value != null && !myResourceModules.contains(value)) {
               myResourceModules.add(value);

@@ -169,6 +169,15 @@ class QuickFixRegistrar : QuickFixContributor {
         NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER.registerFactory(ImportForMismatchingArgumentsFix)
         TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER.registerFactory(ImportForMismatchingArgumentsFix)
 
+        INAPPLICABLE_TARGET_ON_PROPERTY.registerFactory(
+            RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect,
+            RemoveUseSiteTargetFix.UseSiteGetDoesntHaveAnyEffect
+        )
+        INAPPLICABLE_TARGET_ON_PROPERTY_WARNING.registerFactory(
+            RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect,
+            RemoveUseSiteTargetFix.UseSiteGetDoesntHaveAnyEffect
+        )
+
         INFERRED_INTO_DECLARED_UPPER_BOUNDS.registerFactory(InsertExplicitTypeArgumentsIntention)
 
         UNRESOLVED_REFERENCE_WRONG_RECEIVER.registerFactory(ImportFix)
@@ -768,5 +777,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         WRONG_EXTENSION_FUNCTION_TYPE.registerFactory(RemoveAnnotationFix.ExtensionFunctionType)
         WRONG_EXTENSION_FUNCTION_TYPE_WARNING.registerFactory(RemoveAnnotationFix.ExtensionFunctionType)
+
+        NON_DATA_CLASS_JVM_RECORD.registerFactory(AddModifierFixFE10.createFactory(DATA_KEYWORD))
     }
 }

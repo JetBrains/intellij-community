@@ -29,6 +29,8 @@ public class DefaultFileTypeSpecificInputFilter implements FileBasedIndex.FileTy
 
   @Override
   public boolean acceptInput(@NotNull VirtualFile file) {
+    // please review com.intellij.util.indexing.RequiredIndexesEvaluator.getRequiredIndexes and specifically
+    // com.intellij.util.indexing.RequiredIndexesEvaluator.toHint if you decide to return something other than `true` by default
     return true;
   }
 }

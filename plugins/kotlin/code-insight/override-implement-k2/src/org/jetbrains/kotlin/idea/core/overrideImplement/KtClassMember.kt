@@ -7,6 +7,7 @@ import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocCommentOwner
 import org.jetbrains.annotations.ApiStatus
@@ -41,7 +42,7 @@ data class KtClassMemberInfo internal constructor(
     val symbolPointer: KtSymbolPointer<KtCallableSymbol>,
     @NlsSafe val memberText: String,
     val memberIcon: Icon?,
-    val containingSymbolText: String?,
+    @NlsContexts.Label val containingSymbolText: String?,
     val containingSymbolIcon: Icon?,
     val isProperty: Boolean,
 ) {
@@ -51,7 +52,7 @@ data class KtClassMemberInfo internal constructor(
             symbol: KtCallableSymbol,
             memberText: @NlsSafe String,
             memberIcon: Icon?,
-            containingSymbolText: String?,
+            @NlsContexts.Label containingSymbolText: String?,
             containingSymbolIcon: Icon?,
         ): KtClassMemberInfo = KtClassMemberInfo(
             symbolPointer = symbol.createPointer(),
@@ -82,7 +83,7 @@ data class KtClassMember(
 }
 
 private data class KtClassOrObjectSymbolChooserObject(
-    val symbolText: String?,
+    @NlsContexts.Label val symbolText: String?,
     val symbolIcon: Icon?
 ) :
     MemberChooserObjectBase(symbolText, symbolIcon)

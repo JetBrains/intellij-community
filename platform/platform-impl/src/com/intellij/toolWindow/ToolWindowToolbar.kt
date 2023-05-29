@@ -2,7 +2,9 @@
 
 package com.intellij.toolWindow
 
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowManager
@@ -11,20 +13,25 @@ import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.LayoutData
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.JComponent
 import javax.swing.border.Border
 
-internal abstract class ToolWindowToolbar : JBPanel<ToolWindowToolbar>() {
+internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPanel<ToolWindowToolbar>() {
   lateinit var defaults: List<String>
 
   abstract val bottomStripe: StripeV2
   abstract val topStripe: StripeV2
+
+  abstract val moreButton: MoreSquareStripeButton
 
   protected fun init() {
     layout = BorderLayout()
@@ -42,6 +49,12 @@ internal abstract class ToolWindowToolbar : JBPanel<ToolWindowToolbar>() {
     topWrapper.add(topStripe, BorderLayout.NORTH)
     add(topWrapper, BorderLayout.NORTH)
     add(bottomStripe, BorderLayout.SOUTH)
+  }
+
+  fun initMoreButton() {
+    if (isPrimary) {
+      topStripe.parent?.add(moreButton, BorderLayout.CENTER)
+    }
   }
 
   open fun createBorder():Border = JBUI.Borders.empty()
@@ -218,5 +231,18 @@ internal abstract class ToolWindowToolbar : JBPanel<ToolWindowToolbar>() {
     }
 
     override fun toString() = "StripeNewUi(anchor=$anchor)"
+  }
+
+  protected open val accessibleGroupName: @NlsSafe String get() = UIBundle.message("toolbar.group.default.accessible.group.name")
+
+  override fun getAccessibleContext(): AccessibleContext {
+    if (accessibleContext == null) accessibleContext = AccessibleToolWindowToolbar()
+    accessibleContext.accessibleName = accessibleGroupName
+
+    return accessibleContext
+  }
+
+  private inner class AccessibleToolWindowToolbar : AccessibleJPanel() {
+    override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
 }

@@ -163,10 +163,6 @@ public class StreamInlining {
     }
   }
 
-  Optional<String> testOptionalOfNullable(List<String> list) {
-    return list.stream().filter(Objects::isNull).map(Optional::<warning descr="Passing 'null' argument to 'Optional'">ofNullable</warning>).findFirst().orElse(Optional.empty());
-  }
-
   void testGenerate() {
     List<String> list1 = Stream.generate(() -> Math.random() > 0.5 ? "foo" : "baz")
       .limit(10).filter((xyz -> <warning descr="Result of '\"bar\".equals(xyz)' is always 'false'">"bar".equals(xyz)</warning>)).collect(Collectors.toList());

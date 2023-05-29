@@ -36,7 +36,7 @@ class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
     override fun update(e: AnActionEvent) {
       super.update(e)
       e.presentation.isEnabled = e.project != null
-      e.presentation.text = layoutName
+      e.presentation.setText({ layoutName }, false)
       e.presentation.description = ActionsBundle.message("action.RestoreNamedLayout.description", layoutName)
     }
 

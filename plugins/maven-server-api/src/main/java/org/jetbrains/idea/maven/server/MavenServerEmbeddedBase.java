@@ -11,18 +11,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implements MavenServerEmbedder {
-  private final Map<String, LongRunningTask> myLongRunningTasks = new ConcurrentHashMap<>();
+  private final Map<String, LongRunningTaskImpl> myLongRunningTasks = new ConcurrentHashMap<>();
 
   @NotNull
   @Override
   public LongRunningTaskStatus getLongRunningTaskStatus(@NotNull String longRunningTaskId, MavenToken token) {
     MavenServerUtil.checkToken(token);
 
-    LongRunningTask task = myLongRunningTasks.get(longRunningTaskId);
+    LongRunningTaskImpl task = myLongRunningTasks.get(longRunningTaskId);
 
-    if (null == task) return new LongRunningTaskStatus(0, 0);
+    if (null == task) return LongRunningTaskStatus.EMPTY;
 
-    return new LongRunningTaskStatus(task.getTotalRequests(), task.getFinishedRequests());
+    return new LongRunningTaskStatus(
+      task.getTotalRequests(),
+      task.getFinishedRequests(),
+      task.getIndicator().pullConsoleEvents(),
+      task.getIndicator().pullDownloadEvents()
+    );
   }
 
   @Override
@@ -37,39 +42,61 @@ public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implemen
     return true;
   }
 
-  protected class LongRunningTask implements AutoCloseable {
+  @NotNull
+  protected LongRunningTask newLongRunningTask(@NotNull String id,
+                                               int totalRequests,
+                                               @NotNull MavenServerConsoleIndicatorWrapper indicatorWrapper) {
+    return new LongRunningTaskImpl(id, totalRequests, indicatorWrapper);
+  }
+
+  protected class LongRunningTaskImpl implements LongRunningTask {
     @NotNull private final String myId;
     private final AtomicInteger myFinishedRequests = new AtomicInteger(0);
     private final AtomicInteger myTotalRequests;
     private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
-    public LongRunningTask(@NotNull String id, int totalRequests) {
+    @NotNull private final MavenServerConsoleIndicatorImpl myIndicator;
+
+    @NotNull private final MavenServerConsoleIndicatorWrapper myIndicatorWrapper;
+
+    public LongRunningTaskImpl(@NotNull String id, int totalRequests, @NotNull MavenServerConsoleIndicatorWrapper indicatorWrapper) {
       myId = id;
       myTotalRequests = new AtomicInteger(totalRequests);
+
+      myIndicator = new MavenServerConsoleIndicatorImpl();
+
+      myIndicatorWrapper = indicatorWrapper;
+      myIndicatorWrapper.setWrappee(myIndicator);
 
       myLongRunningTasks.put(myId, this);
     }
 
+    @Override
     public void incrementFinishedRequests() {
       myFinishedRequests.incrementAndGet();
     }
 
-    private int getFinishedRequests() {
+    @Override
+    public int getFinishedRequests() {
       return myFinishedRequests.get();
     }
 
-    private int getTotalRequests() {
+    @Override
+    public int getTotalRequests() {
       return myTotalRequests.get();
     }
 
+    @Override
     public void updateTotalRequests(int newValue) {
       myTotalRequests.set(newValue);
     }
 
-    private void cancel() {
+    @Override
+    public void cancel() {
       isCanceled.set(true);
     }
 
+    @Override
     public boolean isCanceled() {
       return isCanceled.get();
     }
@@ -77,6 +104,18 @@ public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implemen
     @Override
     public void close() {
       myLongRunningTasks.remove(myId);
+      myIndicatorWrapper.setWrappee(null);
     }
+
+    @Override
+    public MavenServerConsoleIndicatorImpl getIndicator() {
+      return myIndicator;
+    }
+  }
+
+  @Override
+  public boolean ping(MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    return true;
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -68,6 +69,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
@@ -134,7 +136,7 @@ public final class UIUtil {
     return 500;
   }
 
-  private static final NotNullLazyValue<Boolean> X_RENDER_ACTIVE = NotNullLazyValue.atomicLazy(() -> {
+  private static final Supplier<Boolean> X_RENDER_ACTIVE = new SynchronizedClearableLazy<>(() -> {
     if (!SystemInfoRt.isXWindow) {
       return false;
     }
@@ -402,22 +404,6 @@ public final class UIUtil {
         return ourRetina.get();
       }
     }
-  }
-
-  /**
-   * @deprecated use {@link ClientProperty#get(Component, Object)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static Object getWindowClientProperty(Window window, @NotNull Object key) {
-    return ClientProperty.get(window, key);
-  }
-
-  /**
-   * @deprecated use {@link ClientProperty#put(Window, Object, Object)}  instead
-   */
-  @Deprecated(forRemoval = true)
-  public static void putWindowClientProperty(Window window, @NotNull Object key, Object value) {
-    ClientProperty.put(window, key, value);
   }
 
   /**
@@ -1142,6 +1128,12 @@ public final class UIUtil {
     );
   }
 
+  /**
+   * @param c1 first color to mix
+   * @param c2 second color to mix
+   * @param factor impact of color specified in {@code c2}
+   * @return Mixed color
+   */
   public static @NotNull Color mix(@NotNull Color c1, final Color c2, final double factor) {
     assert 0 <= factor && factor <= 1.0 : factor;
     final double backFactor = 1.0 - factor;
@@ -1514,7 +1506,7 @@ public final class UIUtil {
    * @param g target graphics container
    */
   public static void setupComposite(@NotNull Graphics2D g) {
-    g.setComposite(X_RENDER_ACTIVE.getValue() ? AlphaComposite.SrcOver : AlphaComposite.Src);
+    g.setComposite(X_RENDER_ACTIVE.get() ? AlphaComposite.SrcOver : AlphaComposite.Src);
   }
 
   /**
@@ -1763,14 +1755,6 @@ public final class UIUtil {
 
   public static @Nullable Component findNearestOpaque(Component c) {
     return ComponentUtil.findParentByCondition(c, Component::isOpaque);
-  }
-
-  /**
-   * @deprecated use {@link ComponentUtil#findParentByCondition(Component, java.util.function.Predicate)}
-   */
-  @Deprecated(forRemoval = true)
-  public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<? super Component> condition) {
-    return ComponentUtil.findParentByCondition(c, it -> condition.value(it));
   }
 
   //x and y should be from {0, 0} to {parent.getWidth(), parent.getHeight()}

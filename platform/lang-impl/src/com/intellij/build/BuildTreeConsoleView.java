@@ -1246,7 +1246,8 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     private String myDurationText;
     private Color myDurationColor;
     private int myDurationWidth;
-    private int myDurationOffset;
+    private int myDurationLeftInset;
+    private int myDurationRightInset;
 
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
@@ -1260,7 +1261,8 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       myDurationText = null;
       myDurationColor = null;
       myDurationWidth = 0;
-      myDurationOffset = 0;
+      myDurationLeftInset = 0;
+      myDurationRightInset = 0;
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
       final Object userObj = node.getUserObject();
       if (userObj instanceof ExecutionNode) {
@@ -1268,7 +1270,8 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
         if (myDurationText != null) {
           FontMetrics metrics = getFontMetrics(RelativeFont.SMALL.derive(getFont()));
           myDurationWidth = metrics.stringWidth(myDurationText);
-          myDurationOffset = metrics.getHeight() / 2; // an empty area before and after the text
+          myDurationLeftInset = metrics.getHeight() / 4;
+          myDurationRightInset = ExperimentalUI.isNewUI() ? tree.getInsets().right + JBUI.scale(4) : myDurationLeftInset;
           myDurationColor = selected ? getTreeSelectionForeground(hasFocus) : GRAYED_ATTRIBUTES.getFgColor();
         }
       }
@@ -1286,11 +1289,11 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
         g.fillRect(0, 0, width, height);
       }
       if (myDurationWidth > 0) {
-        width -= myDurationWidth + myDurationOffset;
+        width -= myDurationWidth + myDurationLeftInset + myDurationRightInset;
         if (width > 0 && height > 0) {
           g.setColor(myDurationColor);
           g.setFont(RelativeFont.SMALL.derive(getFont()));
-          g.drawString(myDurationText, width + myDurationOffset / 2, getTextBaseLine(g.getFontMetrics(), height));
+          g.drawString(myDurationText, width + myDurationLeftInset, getTextBaseLine(g.getFontMetrics(), height));
           clip = g.getClip();
           g.clipRect(0, 0, width, height);
         }
@@ -1299,6 +1302,15 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       super.paintComponent(g);
       // restore clip area if needed
       if (clip != null) g.setClip(clip);
+    }
+
+    @Override
+    public @NotNull Dimension getPreferredSize() {
+      Dimension preferredSize = super.getPreferredSize();
+      if (myDurationWidth > 0) {
+        preferredSize.width += myDurationWidth + myDurationLeftInset + myDurationRightInset;
+      }
+      return preferredSize;
     }
   }
 

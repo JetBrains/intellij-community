@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -221,7 +222,7 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
       null,
       null,
       inverse,
-      effectType == null ? Collections.emptyList() : Collections.singletonList(effectType),
+      ContainerUtil.createMaybeSingletonList(effectType),
       fontType
     );
   }

@@ -212,6 +212,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
   }
 
   fun `test escaping 2`() {
+    inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
       class X {
@@ -554,6 +555,27 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
                LOGGER.info(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 9)">"abd" + a2</warning>, 1);
                LOGGER.info(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 9)">"abd" + a2</warning>, 1);
            }
+      }
+      """.trimIndent())
+  }
+
+  fun `test akka`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import akka.event.LoggingAdapter;
+      
+      class MyActor {
+
+        public void preStart(LoggingAdapter log) {
+            log.info("Starting 1 {} {}", 1, new RuntimeException());
+            log.log(2,"Starting 2 {} {}", 1, new RuntimeException());
+            log.log(2,<warning descr="Fewer arguments provided (1) than placeholders specified (2)">"Starting 3 {} {}"</warning>, 1);  //warn
+            log.log(2,<warning descr="More arguments provided (3) than placeholders specified (2)">"Starting 4 {} {}"</warning>, 1, 2, 3);  //warn
+            log.error(new RuntimeException(), "Starting 5 {} {}", 1, 2);
+            log.error(new RuntimeException(), <warning descr="More arguments provided (3) than placeholders specified (2)">"Starting 6 {} {}"</warning>, 1, 2, 3);  //warn
+            log.error( <warning descr="More arguments provided (2) than placeholders specified (1)">"Starting 7 {3} {}"</warning>, 1, 2);  //warn
+            log.error( new RuntimeException(), <warning descr="Fewer arguments provided (1) than placeholders specified (2)">"Starting 8 {} {}"</warning>, 1); //warn
+            log.error( "Starting 9 \\{} {}", 1, 2);
+        }
       }
       """.trimIndent())
   }

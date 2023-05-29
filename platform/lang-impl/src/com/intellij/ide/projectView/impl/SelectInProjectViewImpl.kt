@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.FileEditorProvider
+import com.intellij.ide.FileSelectInContext
 import com.intellij.ide.SmartSelectInContext
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.application.EDT
@@ -15,35 +16,42 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtilCore
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
 @Service
-@ApiStatus.Internal
-class SelectInProjectViewImpl(
+internal class SelectInProjectViewImpl(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) {
 
-  fun selectInCurrentTarget(fileEditor: FileEditor?, requestFocus: Boolean) {
-    coroutineScope.launch(CoroutineName("ProjectView.selectInCurrentTarget(requestFocus=$requestFocus,fileEditor=$fileEditor")) {
+  fun selectInCurrentTarget(fileEditor: FileEditor?, invokedManually: Boolean) {
+    coroutineScope.launch(CoroutineName("ProjectView.selectInCurrentTarget(invokedManually=$invokedManually,fileEditor=$fileEditor")) {
       val editorsToCheck = if (fileEditor == null) allEditors() else listOf(fileEditor)
-      selectInCurrentTarget(requestFocus, editorsToCheck)
+      selectInCurrentTarget(invokedManually, editorsToCheck)
     }
   }
 
-  private suspend fun selectInCurrentTarget(requestFocus: Boolean, editorsToCheck: List<FileEditor>) {
+  private suspend fun selectInCurrentTarget(invokedManually: Boolean, editorsToCheck: List<FileEditor>) {
     for (fileEditor in editorsToCheck) {
+      if (
+        !invokedManually &&
+        AdvancedSettings.getBoolean("project.view.do.not.autoscroll.to.libraries") &&
+        readAction { fileEditor.file?.let { file ->ProjectFileIndex.getInstance(project).isInLibrary(file) } == true }
+      ) {
+        continue
+      }
       val psiFilePointer = getPsiFilePointer(fileEditor)
       if (psiFilePointer != null) {
         withContext(Dispatchers.EDT) {
-          createSelectInContext(psiFilePointer, fileEditor).selectInCurrentTarget(requestFocus)
+          createSelectInContext(psiFilePointer, fileEditor).selectInCurrentTarget(requestFocus = invokedManually)
         }
         break
       }
@@ -93,9 +101,10 @@ class SelectInProjectViewImpl(
   fun ensureSelected(
     paneId: String,
     virtualFile: VirtualFile?,
-    elementSupplier: Supplier<Any>,
+    elementSupplier: Supplier<Any?>,
     requestFocus: Boolean,
-    result: ActionCallback?
+    allowSubIdChange: Boolean,
+    result: ActionCallback?,
   ) {
     coroutineScope.launch(CoroutineName("ProjectView.ensureSelected(pane=$paneId,virtualFile=$virtualFile,focus=$requestFocus))")) {
       val projectView = project.serviceOrNull<ProjectView>() as ProjectViewImpl?
@@ -103,8 +112,21 @@ class SelectInProjectViewImpl(
         result?.setRejected()
         return@launch
       }
+      val pane = if (requestFocus) null else projectView.getProjectViewPaneById(paneId)
+      val target = if (pane == null) null else projectView.getProjectViewSelectInTarget(pane)
+      if (!allowSubIdChange) {
+        val isSelectableInCurrentSubId =
+          pane != null &&
+          target != null &&
+          virtualFile != null &&
+          readAction {
+            target.isSubIdSelectable(pane.subId, FileSelectInContext(project, virtualFile, null))
+          }
+        if (!isSelectableInCurrentSubId) {
+          return@launch
+        }
+      }
       val visibleAndSelectedUserObject = withContext(Dispatchers.EDT) {
-        val pane = if (requestFocus) null else projectView.getProjectViewPaneById(paneId)
         pane?.visibleAndSelectedUserObject
       }
       data class SelectionContext(
@@ -112,13 +134,13 @@ class SelectInProjectViewImpl(
         val virtualFile: VirtualFile?,
       )
       val context = readAction {
-        val elementToSelect = elementSupplier.get()
+        val elementToSelect = elementSupplier.get() ?: virtualFile ?: return@readAction null
         SelectionContext(
 visibleAndSelectedUserObject != null && visibleAndSelectedUserObject.canRepresent(elementToSelect),
 virtualFile ?: (elementToSelect as? PsiElement)?.virtualFile
         )
       }
-      if (context.isAlreadyVisibleAndSelected || context.virtualFile == null) {
+      if (context == null || context.isAlreadyVisibleAndSelected || context.virtualFile == null) {
         result?.setDone()
         return@launch
       }
@@ -165,7 +187,7 @@ private class EditorSelectInContext(
         constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
           psiFile?.findElementAt(offset)
         }
-        if (editor.caretModel.offset == offset) {
+        if (editor.caretModel.offset == offset && PsiDocumentManager.getInstance(project).isCommitted(editor.document)) {
           super.selectInCurrentTarget(requestFocus)
           break
         }

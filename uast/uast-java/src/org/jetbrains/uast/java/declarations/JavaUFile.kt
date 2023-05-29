@@ -42,6 +42,6 @@ class JavaUFile(
   override fun equals(other: Any?): Boolean = (other as? JavaUFile)?.sourcePsi == sourcePsi
 
   @Suppress("OverridingDeprecatedMember")
-  override val psi
+  override val psi: PsiJavaFile
     get() = sourcePsi
 }

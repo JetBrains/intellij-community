@@ -15,13 +15,13 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.Function
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.getPackage
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
+import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.refactoring.invokeOnceOnCommandFinish
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.analyzeConflictsInFile
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.analyzeConflictsInFile
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -85,9 +85,9 @@ class KotlinMoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
             ProgressManager.getInstance().progressIndicator?.text2 = KotlinBundle.message("text.processing.file.0", usageInfo.psiFile.name)
 
             runReadAction {
-                analyzeConflictsInFile(usageInfo.psiFile, usageInfo.usages, moveTarget, files, conflicts) {
+                conflicts.putAllValues(analyzeConflictsInFile(usageInfo.psiFile, usageInfo.usages, moveTarget, files) {
                     infos[index] = usageInfo.copy(usages = it)
-                }
+                })
             }
         }
     }

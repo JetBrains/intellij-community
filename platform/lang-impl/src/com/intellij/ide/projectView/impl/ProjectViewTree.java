@@ -1,20 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.SelectInContextImpl;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.presentation.FilePresentationService;
 import com.intellij.psi.PsiElement;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.toolWindow.ToolWindowHeader;
-import com.intellij.ui.ClientProperty;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.popup.HintUpdateSupply;
@@ -38,7 +34,6 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.SpeedSearchLocator {
-  private static final Logger LOG = Logger.getInstance(ProjectViewTree.class);
 
   /**
    * @deprecated use another constructor instead
@@ -61,13 +56,6 @@ public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.S
     setModel(model);
     setCellRenderer(createCellRenderer());
     HintUpdateSupply.installDataContextHintUpdateSupply(this);
-    ClientProperty.put(this, SelectInContextImpl.CONTEXT_EDITOR_PROVIDER_KEY, event -> {
-      var editor = event.getData(PlatformCoreDataKeys.FILE_EDITOR);
-      if (editor == null) {
-        editor = event.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
-      }
-      return editor;
-    });
 
     DataManager.registerDataProvider(this, new DataProvider() {
       @Override
@@ -96,12 +84,6 @@ public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.S
   public DefaultMutableTreeNode getSelectedNode() {
     TreePath path = TreeUtil.getSelectedPathIfOne(this);
     return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
-  }
-
-  @Override
-  public void setToggleClickCount(int count) {
-    if (count != 2) LOG.info(new IllegalStateException("setToggleClickCount: unexpected count = " + count));
-    super.setToggleClickCount(count);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -100,7 +100,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private XmlElement myFeedbackForm;
 
   private String myDefaultLightLaf;
+  private String myDefaultClassicLightLaf;
   private String myDefaultDarkLaf;
+  private String myDefaultClassicDarkLaf;
 
   private static final Logger LOG = Logger.getInstance(ApplicationInfoImpl.class);
 
@@ -316,9 +318,19 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
             myDefaultLightLaf = laf.trim();
           }
 
+          laf = getAttributeValue(child, "light-classic");
+          if (laf != null) {
+            myDefaultClassicLightLaf = laf.trim();
+          }
+
           laf = getAttributeValue(child, "dark");
           if (laf != null) {
             myDefaultDarkLaf = laf.trim();
+          }
+
+          laf = getAttributeValue(child, "dark-classic");
+          if (laf != null) {
+            myDefaultClassicDarkLaf = laf.trim();
           }
         }
 
@@ -532,6 +544,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public boolean isMajorEAP() {
     return myEAP && (myMinorVersion == null || myMinorVersion.indexOf('.') < 0);
+  }
+
+  @Override
+  public boolean isPreview() {
+    return !myEAP && myVersionSuffix != null && ("Preview".equalsIgnoreCase(myVersionSuffix) || myVersionSuffix.startsWith("RC"));
   }
 
   @Override
@@ -840,8 +857,18 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
+  public @Nullable String getDefaultClassicLightLaf() {
+    return myDefaultClassicLightLaf;
+  }
+
+  @Override
   public @Nullable String getDefaultDarkLaf() {
     return myDefaultDarkLaf;
+  }
+
+  @Override
+  public @Nullable String getDefaultClassicDarkLaf() {
+    return myDefaultClassicDarkLaf;
   }
 
   public @Nullable ZenDeskForm getFeedbackForm() {

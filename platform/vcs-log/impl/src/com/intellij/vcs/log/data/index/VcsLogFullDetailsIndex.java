@@ -21,7 +21,6 @@ import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +31,6 @@ import java.util.function.ObjIntConsumer;
 
 public class VcsLogFullDetailsIndex<T, D> implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogFullDetailsIndex.class);
-  protected static final @NonNls String INDEX = "index";
   private final @NotNull MyMapReduceIndex myMapReduceIndex;
   protected final @NotNull StorageId.Directory myStorageId;
   protected final @NotNull String myName;

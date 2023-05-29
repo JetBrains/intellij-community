@@ -10,6 +10,10 @@ public enum ModStatus {
    */
   SUCCESS,
   /**
+   * Operation continues execution in background
+   */
+  DEFERRED,
+  /**
    * Operation aborted due to intermittent state change, no changes are introduced,
    * recreating the command and performing the operation again may be helpful
    */

@@ -183,7 +183,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
 
     new PopupChooserBuilder(treeTable).
       setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
-      setItemChoosenCallback(runnable).
+      setItemChosenCallback(runnable).
       setSouthComponent(createCommentsPanel(treeTable)).
       setResizable(true).
       setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").
@@ -304,7 +304,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
     }
 
     builder.setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
-        setItemChoosenCallback(runnable).
+        setItemChosenCallback(runnable).
         setResizable(true).
         setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").setMinSize(new JBDimension(300, 300));
     final JBPopup popup = builder.createPopup();

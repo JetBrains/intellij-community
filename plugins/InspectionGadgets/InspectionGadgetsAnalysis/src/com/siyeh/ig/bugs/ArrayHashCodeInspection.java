@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -10,7 +12,6 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +38,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiArrayType type = (PsiArrayType)infos[0];
     final boolean deepHashCode = type.getComponentType() instanceof PsiArrayType;
     return switch ((Kind)infos[1]) {
@@ -46,7 +47,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
     };
   }
 
-  private static class ArrayHashCodeFix extends InspectionGadgetsFix {
+  private static class ArrayHashCodeFix extends PsiUpdateModCommandQuickFix {
 
     private final boolean deepHashCode;
 
@@ -67,8 +68,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor){
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
       if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
@@ -93,7 +93,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
     }
   }
 
-  private static class ObjectsHashFix extends InspectionGadgetsFix {
+  private static class ObjectsHashFix extends PsiUpdateModCommandQuickFix {
     private final boolean deepHashCode;
 
     ObjectsHashFix(boolean deepHashCode) {
@@ -113,11 +113,11 @@ public class ArrayHashCodeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       CommentTracker tracker = new CommentTracker();
       String text =
-        (deepHashCode ? "java.util.Arrays.deepHashCode(" : "java.util.Arrays.hashCode(") + tracker.text(descriptor.getPsiElement()) + ')';
-      PsiElement result = tracker.replaceAndRestoreComments(descriptor.getPsiElement(), text);
+        (deepHashCode ? "java.util.Arrays.deepHashCode(" : "java.util.Arrays.hashCode(") + tracker.text(element) + ')';
+      PsiElement result = tracker.replaceAndRestoreComments(element, text);
       JavaCodeStyleManager.getInstance(result.getProject()).shortenClassReferences(result);
     }
   }

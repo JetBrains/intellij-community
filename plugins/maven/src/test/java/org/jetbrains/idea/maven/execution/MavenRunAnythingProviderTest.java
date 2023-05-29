@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.ide.actions.runAnything.RunAnythingContext;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.module.Module;
@@ -10,7 +11,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.junit.Test;
 
@@ -57,7 +57,19 @@ public class MavenRunAnythingProviderTest extends MavenMultiVersionImportingTest
     withVariantsFor("", variants -> {
       Function<String, String> classifier = it -> it.contains(":") ? substringBefore(it, ":") : startsWith(it, "-") ? "-" : "";
       Map<String, List<String>> groupedValues = variants.stream().collect(groupingBy(classifier));
-      assertSameElements(groupedValues.keySet(), "", "-", "clean", "compiler", "surefire", "resources", "jar", "install", "deploy", "site");
+      var expectedValues = arrayOfNotNull(
+        "",
+        "-",
+        "clean",
+        "compiler",
+        "surefire",
+        "resources",
+        "jar",
+        "install",
+        "deploy",
+        "site",
+        maven4orNull("wrapper"));
+      assertSameElements(groupedValues.keySet(), expectedValues);
       assertSameElements(groupedValues.get(""), MavenConstants.BASIC_PHASES);
       assertSameElements(groupedValues.get("clean"), "clean:clean", "clean:help");
       assertSameElements(groupedValues.get("compiler"), "compiler:testCompile", "compiler:compile", "compiler:help");

@@ -93,9 +93,11 @@ open class DebugOutputPrinter {
     substring(0, length.coerceAtMost(maxLength)) + if (length > maxLength) "…" else ""
 
   private fun String.removeOutputPathPrefix(): String {
-    val index = indexOf("/classes/production/")
+    val index = outputPathPrefixes.maxOfOrNull { this.indexOf(it) } ?: -1
     if (index < 0) return this
-    return "<build-output-directory>" + this.substring(index)
+    return "<output-path>" + this.substring(index)
   }
+
+  protected open val outputPathPrefixes: List<String> = listOf("/classes/production/")
 
 }

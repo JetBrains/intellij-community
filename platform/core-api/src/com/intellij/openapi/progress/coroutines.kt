@@ -271,7 +271,7 @@ suspend fun <T> coroutineToIndicator(action: () -> T): T {
  * ```
  * launch {
  *   // inside a coroutine
- *   withBackgroundProgressIndicator(...) { // installs ProgressReporter into coroutine context
+ *   withBackgroundProgress(...) { // installs ProgressReporter into coroutine context
  *     ...
  *     readAction { // installs coroutine context as thread context
  *       ...
@@ -285,7 +285,7 @@ suspend fun <T> coroutineToIndicator(action: () -> T): T {
  *   }
  * }
  * ```
- * In the example, either `readAction` call or the whole action, which was passed into `withBackgroundProgressIndicator`,
+ * In the example, either `readAction` call or the whole action, which was passed into [withBackgroundProgress][com.intellij.openapi.progress.withBackgroundProgress],
  * should be wrapped into [withRawProgressReporter].
  * - If [RawProgressReporter] is found in the coroutine context, updates of the installed indicator are sent into the reporter.
  */
@@ -379,29 +379,6 @@ private fun assertBackgroundThreadOrWriteAction() {
 )
 @RequiresBlockingContext
 fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
-  @Suppress("DEPRECATION")
-  return indicatorRunBlockingCancellable(indicator, action)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  message = "Method was renamed",
-  replaceWith = ReplaceWith("runBlockingCancellable(action)"),
-  level = DeprecationLevel.ERROR,
-)
-@RequiresBlockingContext
-fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
-  return runBlockingCancellable(action)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  message = "Method was renamed",
-  replaceWith = ReplaceWith("runBlockingCancellable(indicator, action)"),
-  level = DeprecationLevel.ERROR,
-)
-@RequiresBlockingContext
-fun <T> runSuspendingAction(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   @Suppress("DEPRECATION")
   return indicatorRunBlockingCancellable(indicator, action)
 }

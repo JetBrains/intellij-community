@@ -61,6 +61,8 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
       downloadJavadoc = ideaModule.isDownloadJavadoc();
       downloadSources = ideaModule.isDownloadSources();
     }
+    boolean forceDisableSourceDownload = Boolean.parseBoolean(System.getProperty("idea.disable.gradle.download.sources", "true"));
+    downloadSources = downloadSources && forceDisableSourceDownload;
 
     Project parent = project.getParent();
     if (parent != null) {

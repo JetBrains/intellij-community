@@ -26,9 +26,7 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Function
 import java.util.function.Predicate
 
 const val KEYMAPS_DIR_PATH = "keymaps"
@@ -54,7 +52,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     schemeManager = SchemeManagerFactory.getInstance().create(KEYMAPS_DIR_PATH, object : LazySchemeProcessor<Keymap, KeymapImpl>() {
       override fun createScheme(dataHolder: SchemeDataHolder<KeymapImpl>,
                                 name: String,
-                                attributeProvider: Function<in String, String?>,
+                                attributeProvider: (String) -> String?,
                                 isBundled: Boolean) = KeymapImpl(name, dataHolder)
       override fun onCurrentSchemeSwitched(oldScheme: Keymap?,
                                            newScheme: Keymap?,

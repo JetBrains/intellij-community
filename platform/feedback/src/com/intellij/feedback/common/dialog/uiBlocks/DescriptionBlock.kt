@@ -6,13 +6,20 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 
-class DescriptionBlock(@NlsContexts.Label val label: String) : BaseFeedbackBlock() {
+class DescriptionBlock(@NlsContexts.Label private val myLabel: String) : FeedbackBlock, TextDescriptionProvider {
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
       row {
-        cell(MultiLineLabel(label))
+        cell(MultiLineLabel(myLabel))
       }.bottomGap(BottomGap.SMALL)
+    }
+  }
+
+  override fun collectBlockTextDescription(stringBuilder: StringBuilder) {
+    stringBuilder.apply {
+      appendLine(myLabel)
+      appendLine()
     }
   }
 }

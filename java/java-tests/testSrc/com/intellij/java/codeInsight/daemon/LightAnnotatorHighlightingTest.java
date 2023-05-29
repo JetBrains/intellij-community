@@ -55,17 +55,21 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testAnnotatorWorksWithFileLevel() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyTopFileAnnotator()}, () -> {
-      configureByFile(LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(false) + ".java");
+    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyFileLevelAnnotator()}, () -> {
+      configureFromFileText("x.java", """
+        class X {
+          <caret>
+        }
+        """);
       ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
-      doHighlighting();
+      assertEmpty(highlightErrors());
       List<HighlightInfo> fileLevel =
         ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileLevelHighlights(getProject(), getFile());
       HighlightInfo info = assertOneElement(fileLevel);
       assertEquals("top level", info.getDescription());
 
       type("\n\n");
-      doHighlighting();
+      assertEmpty(highlightErrors());
       fileLevel =
         ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileLevelHighlights(getProject(), getFile());
       info = assertOneElement(fileLevel);
@@ -105,7 +109,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   // must stay public for PicoContainer to work
-  public static class MyTopFileAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+  public static class MyFileLevelAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
       if (psiElement instanceof PsiFile && !psiElement.getText().contains("xxx")) {
@@ -127,7 +131,8 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       """;
     configureFromFileText("x.java", text);
     ((EditorImpl)getEditor()).getScrollPane().getViewport().setSize(1000, 1000);
-    assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
+    @NotNull Editor editor = getEditor();
+    assertEquals(getFile().getTextRange(), editor.calculateVisibleRange());
 
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());

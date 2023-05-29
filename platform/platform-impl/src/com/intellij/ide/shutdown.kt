@@ -7,12 +7,14 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.TaskCancellation
-import com.intellij.openapi.progress.impl.pumpEventsUntilJobIsCompleted
+import com.intellij.openapi.progress.impl.pumpEventsForHierarchy
 import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
+import javax.swing.SwingUtilities
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -20,23 +22,43 @@ private val LOG = Logger.getInstance("#com.intellij.ide.shutdown")
 
 // todo convert ApplicationImpl and IdeEventQueue to kotlin
 
-internal fun joinBlocking(application: ApplicationImpl) {
+internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
   EDT.assertIsEdt()
   LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed)
-  joinBlocking(application.coroutineScope, debugString = "Application $application") { job ->
-    IdeEventQueue.getInstance().pumpEventsUntilJobIsCompleted(job)
+  cancelAndJoinBlocking(application.coroutineScope, debugString = "Application $application") { containerJob, dumpJob ->
+    containerJob.invokeOnCompletion {
+      // Unblock `getNextEvent()` in case it's blocked.
+      SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
+    }
+    IdeEventQueue.getInstance().pumpEventsForHierarchy {
+      containerJob.isCompleted
+      // This means container job is still not completed,
+      // delayUntilCoroutineDump has passed and dump was already logged
+      // => nothing we can do here, just exit the application and don't freeze forever.
+      //
+      // After returning from blocking, the app is disposed.
+      // Returning here means some coroutines leak beyond the scope, i.e. they may continue running.
+      // Running coroutines may result is various exceptions,
+      // e.g. NPEs once `ApplicationManager.setApplication(null)` is completed.
+      // The coroutine dump is logged and should be investigated before considering exceptions from leaked coroutines.
+      || dumpJob.isCompleted
+    }
   }
 }
 
-internal fun joinBlocking(project: ProjectImpl) {
-  joinBlocking(project.coroutineScope, debugString = "Project $project") { job ->
+internal fun cancelAndJoinBlocking(project: ProjectImpl) {
+  cancelAndJoinBlocking(project.coroutineScope, debugString = "Project $project") { job, _ ->
     runBlockingModal(ModalTaskOwner.guess(), IdeBundle.message("progress.closing.project"), TaskCancellation.nonCancellable()) {
       job.join()
     }
   }
 }
 
-internal fun joinBlocking(containerScope: CoroutineScope, debugString: String, pumpEvents: (Job) -> Unit) {
+internal fun cancelAndJoinBlocking(
+  containerScope: CoroutineScope,
+  debugString: String,
+  joinBlocking: (containerJob: Job, dumpJob: Job) -> Unit,
+) {
   if (!Registry.`is`("ide.await.scope.completion", true)) {
     return
   }
@@ -54,7 +76,7 @@ internal fun joinBlocking(containerScope: CoroutineScope, debugString: String, p
     LOG.warn("$debugString: scope was not completed in $delayUntilCoroutineDump.\n${dumpCoroutines(scope = containerScope)}")
   }
   try {
-    pumpEvents(containerJob)
+    joinBlocking(containerJob, dumpJob)
   }
   finally {
     dumpJob.cancel()

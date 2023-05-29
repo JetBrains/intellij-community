@@ -513,24 +513,6 @@ public class JavaDebugProcess extends XDebugProcess {
     return null;
   }
 
-  /**
-   * @deprecated use {@link #getCurrentDebugProcess(AnActionEvent)}
-   */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  public static DebugProcessImpl getCurrentDebugProcess(@Nullable Project project) {
-    if (project != null) {
-      XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-      if (session != null) {
-        XDebugProcess process = session.getDebugProcess();
-        if (process instanceof JavaDebugProcess) {
-          return ((JavaDebugProcess)process).getDebuggerSession().getProcess();
-        }
-      }
-    }
-    return null;
-  }
-
   public NodeManagerImpl getNodeManager() {
     return myNodeManager;
   }

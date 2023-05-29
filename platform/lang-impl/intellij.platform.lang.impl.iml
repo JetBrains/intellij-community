@@ -45,7 +45,7 @@
     <orderEntry type="library" name="xz" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
@@ -61,6 +61,7 @@
     <orderEntry type="library" name="jackson-jr-objects" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="module" module-name="intellij.platform.feedback" />
     <orderEntry type="library" name="kotlinx-html-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />

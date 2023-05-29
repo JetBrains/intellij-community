@@ -1,0 +1,9 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.k2.refactoring.move">
+  <dependencies>
+    <module name="kotlin.refactorings.k2"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.move.K2MoveRefactoringSupport"
+                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRefactoringSupport"/>
+  </extensions>
+</idea-plugin>

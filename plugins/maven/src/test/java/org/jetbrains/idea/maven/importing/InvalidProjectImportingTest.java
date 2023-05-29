@@ -164,7 +164,10 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
     assertModules("project");
     MavenProject root = getRootProjects().get(0);
-    assertProblems(root, "'artifactId' with value '${undefined}' does not match a valid id pattern.");
+    var problem = isMaven4()
+                  ? "'artifactId' with value '${undefined}' does not match a valid coordinate id pattern."
+                  : "'artifactId' with value '${undefined}' does not match a valid id pattern.";
+    assertProblems(root, problem);
   }
 
   @Test

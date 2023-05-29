@@ -22,7 +22,6 @@ import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
 import org.mockito.kotlin.*
 
-@OptIn(ExperimentalCoroutinesApi::class)
 internal class GitLabRepositoryAndAccountSelectorViewModelTest {
 
   companion object {

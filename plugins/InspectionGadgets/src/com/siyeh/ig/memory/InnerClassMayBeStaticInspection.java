@@ -21,6 +21,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.application.ReadAction;
@@ -78,12 +79,12 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new ArrayList<>();
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    final List<LocalQuickFix> fixes = new ArrayList<>();
     fixes.add(new InnerClassMayBeStaticFix());
     final PsiClass aClass = (PsiClass)infos[0];
     AddToIgnoreIfAnnotatedByListQuickFix.build(aClass, ignorableAnnotations, fixes);
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix implements BatchQuickFix {

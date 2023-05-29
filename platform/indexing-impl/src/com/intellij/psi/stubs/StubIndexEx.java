@@ -15,7 +15,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.util.*;
+import com.intellij.util.CachedValueImpl;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
@@ -25,6 +28,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.MeasurableIndexStore;
 import com.intellij.util.io.VoidDataExternalizer;
+import com.intellij.util.progress.CancellationUtil;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -389,8 +393,18 @@ public abstract class StubIndexEx extends StubIndex {
         }
       };
       trace.totalKeysIndexed(MeasurableIndexStore.keysCountApproximatelyIfPossible(index));
-      // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
-      FileBasedIndexEx.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(stubUpdatingIndex.getLock().readLock(), () -> index.getData(dataKey).forEach(action)));
+      // disable up-to-date check to avoid locks on an attempt to acquire index write lock
+      // while holding at the same time the readLock for this index
+      FileBasedIndexEx.disableUpToDateCheckIn(() -> {
+        Lock lock = stubUpdatingIndex.getLock().readLock();
+        CancellationUtil.lockMaybeCancellable(lock);
+        try {
+          return index.getData(dataKey).forEach(action);
+        }
+        finally {
+          lock.unlock();
+        }
+      });
       return action.result == null ? IntSets.EMPTY_SET : action.result;
     }
     catch (StorageException e) {

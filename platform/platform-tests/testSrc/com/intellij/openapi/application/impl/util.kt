@@ -7,9 +7,10 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.testFramework.LeakHunter
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertNotNull
-import java.lang.Runnable
 import java.util.function.Supplier
 import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
@@ -55,18 +56,6 @@ suspend fun pumpEDT() {
   return suspendCancellableCoroutine { continuation ->
     SwingUtilities.invokeLater {
       continuation.resume(Unit)
-    }
-  }
-}
-
-internal suspend fun withDifferentInitialModalities(action: suspend CoroutineScope.() -> Unit) {
-  coroutineScope {
-    action()
-    withContext(ModalityState.any().asContextElement()) {
-      action()
-    }
-    withContext(ModalityState.NON_MODAL.asContextElement()) {
-      action()
     }
   }
 }

@@ -7,22 +7,43 @@ import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/cancellationCheckInLoops")
 class CancellationCheckInLoopsInspectionTest : CancellationCheckInLoopsInspectionTestBase() {
 
-  override val fileType
-    get() = "java"
+  override fun getFileExtension(): String = "java"
 
-  override fun getBasePath(): String {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/cancellationCheckInLoops"
-  }
+  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/cancellationCheckInLoops"
 
   fun testRunCondition() {
     doTest()
   }
 
-  fun testMultipleNestedLoops() {
+  fun testRunConditionOnSuperMethod() {
     doTest()
   }
 
   fun testPresentCancellationCheck() {
+    doTest()
+  }
+
+  fun testCancellationCheckPresentNotInFirstLine() {
+    doTest()
+  }
+
+  fun testForEachLoops() {
+    doTest()
+  }
+
+  fun testForLoops() {
+    doTest()
+  }
+
+  fun testWhileLoops() {
+    doTest()
+  }
+
+  fun testDoWhileLoops() {
+    doTest()
+  }
+
+  fun testNestedLoops() {
     doTest()
   }
 

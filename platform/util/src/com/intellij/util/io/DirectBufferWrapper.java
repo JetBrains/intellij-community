@@ -94,16 +94,9 @@ public final class DirectBufferWrapper {
   }
 
   public ByteBuffer copy() {
-    //TODO RC: do we really need call to Allocator here? .duplicate() only creates a wrapper,
-    //         main buffer content (native memory chunk for direct buffer) is not allocated anew,
-    //         but shared with myBuffer -- hence neither caching, nor 'IDEA-222358 linux native memory
-    //         leak' are not applicable. Seems like plain call to .duplicate().order(...) should be
-    //         enough:
-    return DirectByteBufferAllocator.allocate(() -> {
-      ByteBuffer duplicate = myBuffer.duplicate();
-      duplicate.order(myBuffer.order());
-      return duplicate;
-    });
+    ByteBuffer duplicate = myBuffer.duplicate();
+    duplicate.order(myBuffer.order());
+    return duplicate;
   }
 
   public byte get(int index, boolean checkAccess) {

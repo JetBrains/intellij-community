@@ -42,14 +42,28 @@ object GradleXmlTestEventConverter {
       if ("comparison" == failureType) {
         val actualText = decode(eventXml.eventTestResultActual)
         val expectedText = decode(eventXml.eventTestResultExpected)
+        val failure = if (expectedText.isEmpty() && actualText.isEmpty()) {
+          TestFailure(exceptionName, message, stackTrace, description, emptyList(), false)
+        }
+        else {
+          TestAssertionFailure(
+            exceptionName, message, stackTrace, description, emptyList(),
+            expectedText, actualText,
+          )
+        }
+        return FailureResultImpl(startTime, endTime, listOf(failure))
+      }
+      if ("file-comparison" == failureType) {
+        val actualText = decode(eventXml.eventTestResultActual)
+        val expectedText = decode(eventXml.eventTestResultExpected)
         val expectedFilePath = decode(eventXml.eventTestResultFilePath).nullize()
         val actualFilePath = decode(eventXml.eventTestResultActualFilePath).nullize()
-        val assertionFailure = TestAssertionFailure(
+        val failure = TestAssertionFailure(
           exceptionName, message, stackTrace, description, emptyList(),
           expectedText, actualText,
           expectedFilePath, actualFilePath
         )
-        return FailureResultImpl(startTime, endTime, listOf(assertionFailure))
+        return FailureResultImpl(startTime, endTime, listOf(failure))
       }
       if ("assertionFailed" == failureType) {
         val failure = TestFailure(exceptionName, message, stackTrace, description, emptyList(), false)

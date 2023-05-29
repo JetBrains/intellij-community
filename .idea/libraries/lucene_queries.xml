@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="lucene-queries" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-queries:9.5.0" />
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-queries:9.6.0" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/9.5.0/lucene-queries-9.5.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/9.6.0/lucene-queries-9.6.0.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/9.5.0/lucene-queries-9.5.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/9.6.0/lucene-queries-9.6.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/9.5.0/lucene-queries-9.5.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/9.6.0/lucene-queries-9.6.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

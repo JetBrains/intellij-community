@@ -16,17 +16,17 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
+public class AddSerialVersionUIDFix extends PsiUpdateModCommandQuickFix {
 
   @Override
   @NotNull
@@ -35,8 +35,7 @@ public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement classIdentifier = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement classIdentifier, @NotNull EditorUpdater updater) {
     final PsiClass aClass = (PsiClass)classIdentifier.getParent();
     assert aClass != null;
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());

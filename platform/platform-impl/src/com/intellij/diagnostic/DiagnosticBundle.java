@@ -8,12 +8,12 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class DiagnosticBundle extends DynamicBundle {
+public final class DiagnosticBundle {
 
   public static final String BUNDLE = "messages.DiagnosticBundle";
-  private static final DiagnosticBundle INSTANCE = new DiagnosticBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(DiagnosticBundle.class, BUNDLE);
 
-  private DiagnosticBundle() { super(BUNDLE); }
+  private DiagnosticBundle() {}
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import org.jetbrains.annotations.NotNull;
@@ -102,8 +102,7 @@ public final class StringTokenizer implements Enumeration<String> {
     return newPosition < maxPosition;
   }
 
-  @NotNull
-  public String nextToken() {
+  public @NotNull String nextToken() {
     currentPosition = newPosition >= 0 && !delimsChanged ?
                       newPosition : skipDelimiters(currentPosition);
 
@@ -119,8 +118,7 @@ public final class StringTokenizer implements Enumeration<String> {
     return str.substring(start, currentPosition);
   }
 
-  @NotNull
-  public String nextToken(@NotNull String delim) {
+  public @NotNull String nextToken(@NotNull String delim) {
     delimiters = delim;
 
     /* delimiter string specified, so set the appropriate flag. */
@@ -136,8 +134,7 @@ public final class StringTokenizer implements Enumeration<String> {
   }
 
   @Override
-  @NotNull
-  public String nextElement() {
+  public @NotNull String nextElement() {
     return nextToken();
   }
 

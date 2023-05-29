@@ -9,7 +9,9 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParameter;
 import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
 import java.util.stream.Collector;
 
 public enum TaintValue implements RestrictionInfo {
@@ -65,6 +67,20 @@ public enum TaintValue implements RestrictionInfo {
   }
 
   public abstract @NotNull TaintValue join(@NotNull TaintValue other);
+
+  public @NotNull TaintValue joinUntil(@Nullable TaintValue until,
+                                       @SuppressWarnings("BoundedWildcard") @NotNull Supplier<TaintValue> callable) {
+    if (until == null) {
+      until = TAINTED;
+    }
+    if (until == this) {
+      return this;
+    }
+    if (until == UNKNOWN && this != UNTAINTED) {
+      return this;
+    }
+    return join(callable.get());
+  }
 
   public static @NotNull Collector<TaintValue, ?, TaintValue> joining() {
     return MoreCollectors.reducingWithZero(TAINTED, UNTAINTED, TaintValue::join);

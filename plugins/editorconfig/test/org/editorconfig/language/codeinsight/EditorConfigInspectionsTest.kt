@@ -16,7 +16,7 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   // Inspections
 
   fun testCharClassLetterRedundancy() = doTest(EditorConfigCharClassLetterRedundancyInspection::class)
-  fun testCharClassRedundancy() = doTest(EditorConfigCharClassRedundancyInspection::class)
+  fun testCharClassRedundancy() = doTest(EditorConfigCharClassPatternRedundancyInspection::class)
   fun testDeprecatedDescriptor() = doTest(EditorConfigDeprecatedDescriptorInspection::class)
   fun testEmptyHeader() = doTest(EditorConfigEmptyHeaderInspection::class)
   fun testEmptySection() = doTest(EditorConfigEmptySectionInspection::class)
@@ -89,8 +89,16 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
     EditorConfigValueUniquenessInspection::class
   )
 
-  fun _testHeaderProcessingPerformance() {
+  fun testHeaderProcessingPerformance() {
     doTestPerf(5000, EditorConfigNoMatchingFilesInspection::class)
+  }
+
+  fun testHeaderProcessingPerformance2() {
+    doTestPerf(7000, EditorConfigPatternRedundancyInspection::class)
+  }
+
+  fun testHeaderProcessingPerformance3() {
+    doTestPerf(5000, EditorConfigHeaderUniquenessInspection::class)
   }
 
   private fun doTestPerf(expectedMs: Int, inspection: KClass<out LocalInspectionTool>) {

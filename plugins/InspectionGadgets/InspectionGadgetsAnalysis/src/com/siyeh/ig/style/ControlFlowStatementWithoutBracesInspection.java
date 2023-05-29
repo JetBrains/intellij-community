@@ -16,8 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -41,14 +40,14 @@ public class ControlFlowStatementWithoutBracesInspection extends BaseInspection 
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     if (infos.length == 1 && infos[0] instanceof String) {
       return new ControlFlowStatementFix((String)infos[0]);
     }
     return null;
   }
 
-  private static class ControlFlowStatementFix extends InspectionGadgetsFix {
+  private static class ControlFlowStatementFix extends PsiUpdateModCommandQuickFix {
     private final String myKeywordText;
 
     ControlFlowStatementFix(String keywordText) {
@@ -70,8 +69,7 @@ public class ControlFlowStatementWithoutBracesInspection extends BaseInspection 
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement parent = element.getParent();
       final PsiStatement statement;
       if (element instanceof PsiStatement) {

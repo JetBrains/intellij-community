@@ -168,9 +168,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     topPanel.add(header, BorderLayout.NORTH);
     topPanel.add(mySearchField, BorderLayout.SOUTH);
 
-    WindowMoveListener moveListener = new WindowMoveListener(this);
-    topPanel.addMouseListener(moveListener);
-    topPanel.addMouseMotionListener(moveListener);
+    new WindowMoveListener(this).installTo(topPanel);
 
     addToTop(topPanel);
     addToCenter(suggestionsPanel);

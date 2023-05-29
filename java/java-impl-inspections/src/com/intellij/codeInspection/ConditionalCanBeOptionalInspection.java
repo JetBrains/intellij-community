@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -63,7 +63,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
                                new ReplaceConditionWithOptionalFix(mayChangeSemantics));
       }
 
-      private boolean areTypesCompatible(PsiExpression nullBranch, PsiExpression notNullBranch) {
+      private static boolean areTypesCompatible(PsiExpression nullBranch, PsiExpression notNullBranch) {
         PsiType notNullType = ((PsiExpression)notNullBranch.copy()).getType();
         PsiType nullType = ((PsiExpression)nullBranch.copy()).getType();
         if (nullType == null || notNullType == null) return false;
@@ -75,7 +75,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
     };
   }
 
-  private static class ReplaceConditionWithOptionalFix implements LocalQuickFix {
+  private static class ReplaceConditionWithOptionalFix extends PsiUpdateModCommandQuickFix {
     private final boolean myChangesSemantics;
 
     ReplaceConditionWithOptionalFix(boolean changesSemantics) {
@@ -97,8 +97,8 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiConditionalExpression ternary = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiConditionalExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiConditionalExpression ternary = PsiTreeUtil.getNonStrictParentOfType(element, PsiConditionalExpression.class);
       TernaryNullCheck ternaryNullCheck = TernaryNullCheck.from(ternary);
       if (ternaryNullCheck == null) return;
       PsiVariable variable = ternaryNullCheck.myVariable;

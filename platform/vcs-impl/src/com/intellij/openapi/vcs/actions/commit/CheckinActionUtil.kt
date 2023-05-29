@@ -39,7 +39,10 @@ object CheckinActionUtil {
       return
     }
 
-    presentation.isEnabled = !ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning
+    val projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project)
+    val singleVcs = projectLevelVcsManager.singleVCS
+    presentation.isEnabled = !projectLevelVcsManager.isBackgroundVcsOperationRunning &&
+                             (singleVcs == null || !singleVcs.isCommitActionDisabled)
     presentation.isVisible = true
   }
 

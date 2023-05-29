@@ -14,17 +14,15 @@ import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.IOUtil;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.SingleTaskController;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.data.VcsLogStorageImpl;
 import com.intellij.vcs.log.impl.HeavyAwareListener;
 import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
@@ -52,9 +50,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-import static com.intellij.diagnostic.telemetry.ScopesExtensionsKt.tracer;
-import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
-import static com.intellij.vcs.log.data.util.VcsScopeKt.VCS;
+import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
 import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
 
 public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
@@ -87,6 +83,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   private final @NotNull List<IndexingFinishedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private @NotNull Map<VirtualFile, IntSet> myCommitsToIndex = new HashMap<>();
+
+  private final @NotNull IdleVcsLogIndexer myIdleIndexer;
 
   private VcsLogPersistentIndex(@NotNull Project project,
                                 @NotNull Map<VirtualFile, VcsLogProvider> providers,
@@ -121,6 +119,9 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     mySingleTaskController = new MySingleTaskController(this);
     myHeavyAwareListener = new MyHeavyAwareListener(100);
     myHeavyAwareListener.start();
+
+    myIdleIndexer = new IdleVcsLogIndexer(project, this, this);
+    myIdleIndexer.start();
 
     Disposer.register(disposableParent, this);
     Disposer.register(this, myDisposableFlag);
@@ -253,6 +254,11 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     myPostponedIndex.set(null);
   }
 
+  @Override
+  public @NotNull Set<VirtualFile> getIndexingRoots() {
+    return myRoots;
+  }
+
   private static @NotNull Map<VirtualFile, VcsLogIndexer> getAvailableIndexers(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
     Map<VirtualFile, VcsLogIndexer> indexers = new LinkedHashMap<>();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
@@ -277,35 +283,18 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
                                                        @NotNull Disposable disposableParent) {
     Map<VirtualFile, VcsLogIndexer> indexers = getAvailableIndexers(providers);
     LinkedHashSet<VirtualFile> roots = new LinkedHashSet<>(indexers.keySet());
-    VcsLogStorageBackend backend = createIndexStorageBackend(project, storage, roots, calcLogId(project, providers), errorHandler,
-                                                             disposableParent);
+
+    VcsLogStorageBackend backend;
+    String logId = calcLogId(project, providers);
+    if (storage instanceof VcsLogStorageBackend) {
+      backend = (VcsLogStorageBackend)storage;
+    }
+    else {
+      backend = PhmVcsLogStorageBackend.create(project, storage, roots, logId, errorHandler, disposableParent);
+    }
     if (backend == null) return null;
+
     return new VcsLogPersistentIndex(project, providers, indexers, roots, storage, backend, progress, errorHandler, disposableParent);
-  }
-
-  private static @Nullable VcsLogStorageBackend createIndexStorageBackend(@NotNull Project project,
-                                                                          @NotNull VcsLogStorage storage,
-                                                                          @NotNull Set<VirtualFile> roots,
-                                                                          @NotNull String logId,
-                                                                          @NotNull VcsLogErrorHandler errorHandler,
-                                                                          @NotNull Disposable parent) {
-    if (storage instanceof VcsLogStorageBackend) return (VcsLogStorageBackend)storage;
-
-    StorageId.Directory storageId = new StorageId.Directory(project.getName(), INDEX, logId, VcsLogStorageImpl.VERSION + VERSION);
-    VcsUserRegistry userRegistry = project.getService(VcsUserRegistry.class);
-    try {
-      return IOUtil.openCleanOrResetBroken(
-        () -> new PhmVcsLogStorageBackend(storageId, storage, roots, userRegistry, errorHandler, parent),
-        () -> {
-          if (!storageId.cleanupAllStorageFiles()) {
-            LOG.error("Could not clean up storage files in " + storageId.getStoragePath());
-          }
-        });
-    }
-    catch (IOException e) {
-      errorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
-    }
-    return null;
   }
 
   private final class MyHeavyAwareListener extends HeavyAwareListener {
@@ -350,7 +339,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
               throw reThrown;
             }
             catch (Throwable t) {
-              request.processException(t);
+              request.processException(indicator, t);
             }
           }
         }
@@ -422,7 +411,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      mySpan = tracer(VCS).spanBuilder("indexing").startSpan();
+      mySpan = TelemetryTracer.getInstance().getTracer(VcsScope).spanBuilder("git-log-indexing").startSpan();
       myScope = mySpan.makeCurrent();
       myStartTime = getCurrentTimeMillis();
 
@@ -454,7 +443,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         throw e;
       }
       catch (VcsException e) {
-        processException(e);
+        processException(indicator, e);
         scheduleReindex();
       }
       finally {
@@ -480,7 +469,9 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       }
     }
 
-    private void processException(@NotNull Throwable e) {
+    private void processException(@NotNull ProgressIndicator indicator, @NotNull Throwable e) {
+      indicator.checkCanceled();
+
       int errorHash = ThrowableInterner.computeTraceHashCode(e);
       int errors = myIndexingErrors.get(myRoot).cacheOrGet(errorHash, 0);
       myIndexingErrors.get(myRoot).put(errorHash, errors + 1);
@@ -584,12 +575,16 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     private void checkShouldCancel(@NotNull ProgressIndicator indicator) {
       long time = myIndexingTime.get(myRoot).get() + (getCurrentTimeMillis() - myStartTime);
       int limit = myIndexingLimit.get(myRoot).get();
-      boolean isOvertime = time >= (Math.max(limit, 1L) * 60 * 1000) && !myBigRepositoriesList.isBig(myRoot);
-      if (isOvertime || (myBigRepositoriesList.isBig(myRoot) && !indicator.isCanceled())) {
+      boolean isBigRoot = myBigRepositoriesList.isBig(myRoot);
+      boolean isOvertime = !myIdleIndexer.isEnabled()
+                           && (time >= (Math.max(limit, 1L) * 60 * 1000) && !isBigRoot);
+      if (isOvertime || (isBigRoot && !indicator.isCanceled())) {
         mySpan.setAttribute("cancelled", true);
         LOG.warn("Indexing " + myRoot.getName() + " was cancelled after " + StopWatch.formatTime(time));
-        if (isOvertime) {
+        if (!isBigRoot) {
           myBigRepositoriesList.addRepository(myRoot);
+        }
+        if (isOvertime) {
           myIndexingLimit.get(myRoot).compareAndSet(limit,
                                                     Math.max(limit + getIndexingLimit(),
                                                              (int)((time / (getIndexingLimit() * 60000) + 1) * getIndexingLimit())));

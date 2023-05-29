@@ -27,10 +27,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.jar.Attributes;
 
@@ -38,7 +35,6 @@ import static com.intellij.openapi.util.text.StringUtil.isDecimalDigit;
 import static com.intellij.psi.search.GlobalSearchScope.allScope;
 import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope;
 import static java.util.Collections.emptyMap;
-import static kotlin.text.StringsKt.removeSuffix;
 
 @ApiStatus.Experimental
 public final class JavaLibraryUtil {
@@ -123,11 +119,35 @@ public final class JavaLibraryUtil {
     return getProjectLibraries(project).contains(mavenCoords);
   }
 
+  public static boolean hasAnyLibraryJar(@Nullable Project project, @NotNull Collection<String> mavenCoords) {
+    if (project == null || project.isDisposed()) return false;
+    if (project.isDefault()) return false; // EA-396106
+
+    Libraries libraries = getProjectLibraries(project);
+    for (String coord : mavenCoords) {
+      if (libraries.contains(coord)) return true;
+    }
+
+    return false;
+  }
+
   public static boolean hasLibraryJar(@Nullable Module module, @NotNull String mavenCoords) {
     if (module == null || module.isDisposed()) return false;
     if (module.getProject().isDefault()) return false; // EA-396106
 
     return getModuleLibraries(module).contains(mavenCoords);
+  }
+
+  public static boolean hasAnyLibraryJar(@Nullable Module module, @NotNull Collection<String> mavenCoords) {
+    if (module == null || module.isDisposed()) return false;
+    if (module.getProject().isDefault()) return false; // EA-396106
+
+    Libraries libraries = getModuleLibraries(module);
+    for (String coord : mavenCoords) {
+      if (libraries.contains(coord)) return true;
+    }
+
+    return false;
   }
 
   public static @Nullable String getLibraryVersion(@NotNull Module module, @NotNull String mavenCoords) {
@@ -230,11 +250,26 @@ public final class JavaLibraryUtil {
           for (VirtualFile libraryFile : libraryFiles) {
             if (libraryFile.getFileSystem() != jarFileSystem) continue;
 
-            String nameWithoutExtension = removeSuffix(libraryFile.getNameWithoutExtension(), "-SNAPSHOT");
+            String nameWithoutExtension = libraryFile.getNameWithoutExtension();
 
             jarLibrariesIndex.put(nameWithoutExtension, nameWithoutExtension);
 
-            String indexNamePart = StringUtil.substringBeforeLast(nameWithoutExtension, "-");
+            String[] nameParts = nameWithoutExtension.split("-");
+            StringBuilder nameBuilder = new StringBuilder();
+
+            for (int i = 0; i < nameParts.length; i++) {
+              String part = nameParts[i];
+              if (!part.isEmpty() && isDecimalDigit(part.charAt(0))) {
+                break;
+              }
+
+              if (i > 0) {
+                nameBuilder.append("-");
+              }
+              nameBuilder.append(part);
+            }
+
+            String indexNamePart = nameBuilder.toString();
             if (!indexNamePart.equals(nameWithoutExtension)) {
               jarLibrariesIndex.put(indexNamePart, nameWithoutExtension);
             }

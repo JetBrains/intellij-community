@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring
 
@@ -695,18 +695,6 @@ internal abstract class CompositeRefactoringRunner(
         connection.subscribe(
             RefactoringEventListener.REFACTORING_EVENT_TOPIC,
             object : RefactoringEventListener {
-                override fun undoRefactoring(refactoringId: String) {
-
-                }
-
-                override fun refactoringStarted(refactoringId: String, beforeData: RefactoringEventData?) {
-
-                }
-
-                override fun conflictsDetected(refactoringId: String, conflictsData: RefactoringEventData) {
-
-                }
-
                 override fun refactoringDone(refactoringId: String, afterData: RefactoringEventData?) {
                     if (refactoringId == this@CompositeRefactoringRunner.refactoringId) {
                         WriteAction.run<Throwable> { onRefactoringDone() }

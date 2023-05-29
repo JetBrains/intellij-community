@@ -1,6 +1,6 @@
 package com.intellij.analysis.problemsView.toolWindow
 
-import java.util.WeakHashMap
+import java.util.*
 
 internal class ProblemsNodeCache<T>(private val producer: (T) -> Node) {
   private val nodesWeak = WeakHashMap<T, Node>()

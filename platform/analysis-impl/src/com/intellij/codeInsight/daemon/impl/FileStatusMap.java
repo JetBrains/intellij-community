@@ -31,7 +31,7 @@ public final class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileStatusMap.class);
   public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING = "PSI/document/model changes are not allowed during highlighting";
   private final Project myProject;
-  private final Map<@NotNull Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<>(); // all dirty if absent
+  private final Map<@NotNull Document, FileStatus> myDocumentToStatusMap = new WeakHashMap<>(); // all dirty if absent
   private volatile boolean myAllowDirt = true;
 
   FileStatusMap(@NotNull Project project) {
@@ -44,12 +44,23 @@ public final class FileStatusMap implements Disposable {
     markAllFilesDirty("FileStatusMap dispose");
   }
 
+  /**
+   * @deprecated use {@link #getDirtyTextRange(Document, PsiFile, int)} instead
+   */
   @Nullable("null means the file is clean")
+  @Deprecated
   public static TextRange getDirtyTextRange(@NotNull Editor editor, int passId) {
     Document document = editor.getDocument();
+    Project project = editor.getProject();
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    return psiFile == null ? null : getDirtyTextRange(document, psiFile, passId);
+  }
 
-    FileStatusMap me = DaemonCodeAnalyzerEx.getInstanceEx(editor.getProject()).getFileStatusMap();
-    TextRange dirtyScope = me.getFileDirtyScope(document, passId);
+  @Nullable("null means the file is clean")
+  public static TextRange getDirtyTextRange(@NotNull Document document, @NotNull PsiFile psiFile, int passId) {
+    Project project = psiFile.getProject();
+    FileStatusMap me = DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap();
+    TextRange dirtyScope = me.getFileDirtyScope(document, psiFile, passId);
     if (dirtyScope == null) return null;
     TextRange documentRange = TextRange.from(0, document.getTextLength());
     return documentRange.intersection(dirtyScope);
@@ -76,7 +87,7 @@ public final class FileStatusMap implements Disposable {
   }
 
   private static final class FileStatus {
-    private boolean defensivelyMarked; // file marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
+    private boolean defensivelyMarked; // The file was marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
     private boolean wolfPassFinished;
     // if contains the special value "WHOLE_FILE_MARKER" then the corresponding range is (0, document length)
     private final Int2ObjectMap<RangeMarker> dirtyScopes = new Int2ObjectOpenHashMap<>(); // guarded by myDocumentToStatusMap
@@ -211,14 +222,14 @@ public final class FileStatusMap implements Disposable {
   /**
    * @deprecated use {@link #getFileDirtyScope(Document, PsiFile, int)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public TextRange getFileDirtyScope(@NotNull Document document, int passId) {
     return getFileDirtyScope(document, PsiDocumentManager.getInstance(myProject).getPsiFile(document), passId);
   }
 
   /**
-   * @return null for up-to-date file, whole file for untouched or entirely dirty file, range(usually code block) for dirty region (optimization)
+   * @return null for up-to-date file, whole file for untouched or entirely dirty file, range(usually code block) for the dirty region (optimization)
    */
   @Nullable
   public TextRange getFileDirtyScope(@NotNull Document document, @Nullable PsiFile file, int passId) {
@@ -253,7 +264,7 @@ public final class FileStatusMap implements Disposable {
   void markFileScopeDirtyDefensively(@NotNull PsiFile file, @NotNull @NonNls Object reason) {
     assertAllowModifications();
     log("Mark dirty file defensively: ",file.getName(),reason);
-    // mark whole file dirty in case no subsequent PSI events will come, but file requires re-highlighting nevertheless
+    // mark the whole file dirty in case no subsequent PSI events will come, but file requires re-highlighting nevertheless
     // e.g., in the case of quick typing/backspacing char
     synchronized(myDocumentToStatusMap){
       Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);

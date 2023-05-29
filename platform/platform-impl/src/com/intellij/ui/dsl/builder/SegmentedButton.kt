@@ -32,6 +32,7 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
   override fun gap(rightGap: RightGap): SegmentedButton<T>
 
   @Deprecated("Use customize(UnscaledGaps) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): SegmentedButton<T>
 
   override fun customize(customGaps: UnscaledGaps): SegmentedButton<T>

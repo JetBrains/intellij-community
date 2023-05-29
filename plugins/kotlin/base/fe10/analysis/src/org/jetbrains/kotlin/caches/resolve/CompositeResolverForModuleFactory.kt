@@ -143,7 +143,6 @@ class CompositeResolverForModuleFactory(
         return listOfNotNull(metadataProvider, klibMetadataProvider)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun getJvmProvidersIfAny(container: StorageComponentContainer): List<PackageFragmentProvider> =
         buildList {
             if (targetPlatform.has<JvmPlatform>()) add(container.get<JavaDescriptorResolver>().packageFragmentProvider)

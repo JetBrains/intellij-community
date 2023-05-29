@@ -21,7 +21,7 @@ import kotlin.coroutines.coroutineContext
  *
  * Example usage:
  * ```
- * withBackgroundProgressIndicator(title = "Top Level", ...) {
+ * withBackgroundProgress(title = "Top Level", ...) {
  *   indeterminateStep("Indeterminate Stage") { ... }
  *   progressStep(endFraction = 0.3, text = "0.3 Part") { ... }
  *   progressStep(endFraction = 1.0, text = "0.7 Part") {
@@ -103,7 +103,7 @@ import kotlin.coroutines.coroutineContext
  * #### How to process a list sequentially
  * ```
  * val items: List<X> = ...
- * withBackgroundProgressIndicator(...) {
+ * withBackgroundProgress(...) {
  *   items.mapWithProgress {
  *     // will show the item string as progress text in the UI
  *     progressStep(endFraction = 1.0, text = item.presentableString()) {
@@ -127,7 +127,7 @@ import kotlin.coroutines.coroutineContext
  * The parallelism if controlled by the context coroutine dispatcher.
  * ```
  * val items: List<X> = ...
- * withBackgroundProgressIndicator(...) {
+ * withBackgroundProgress(...) {
  *   items.mapWithProgress(concurrent = true) {
  *     // will show the item string as progress text in the UI
  *     progressStep(text = item.presentableString()) {

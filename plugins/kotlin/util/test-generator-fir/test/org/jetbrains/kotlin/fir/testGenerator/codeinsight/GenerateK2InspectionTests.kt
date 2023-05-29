@@ -36,6 +36,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/inconsistentCommentForJavaParameter")
             model("${idea}/inspectionsLocal/whenWithOnlyElse")
             model("${idea}/inspectionsLocal/equalsOrHashCode")
+            model("${idea}/inspectionsLocal/removeRedundantQualifierName")
             model("${idea}/inspectionsLocal/equalsBetweenInconvertibleTypes")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
@@ -57,6 +58,8 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/redundantModalityModifier", pattern = pattern)
             model("${idea}/quickfix/removeToStringInStringTemplate", pattern = pattern)
             model("${idea}/quickfix/suppress", pattern = pattern)
+            model("${idea}/quickfix/removeAnnotation", pattern = pattern)
+            model("${idea}/quickfix/removeUseSiteTarget", pattern = pattern)
             model("${idea}/quickfix/protectedInFinal", pattern = pattern)
         }
     }

@@ -43,7 +43,7 @@ public class MoveIntoIfBranchesAction implements IntentionAction {
       int offset = editor.getCaretModel().getOffset();
       PsiElement pos = file.findElementAt(offset);
       PsiStatement statement = PsiTreeUtil.getParentOfType(pos, PsiStatement.class, false, PsiMember.class, PsiCodeBlock.class);
-      return statement == null ? Collections.emptyList() : Collections.singletonList(statement);
+      return ContainerUtil.createMaybeSingletonList(statement);
     }
     int startOffset = model.getSelectionStart();
     int endOffset = model.getSelectionEnd();

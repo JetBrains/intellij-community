@@ -4,29 +4,26 @@ package com.intellij.vcs.log.impl
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.EmptyRunnable
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
@@ -37,78 +34,90 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.util.VcsLogUtil
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
-import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.Supplier
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration.Companion.seconds
+
+private val LOG: Logger
+  get() = logger<VcsProjectLog>()
+
+private val CLOSE_LOG_TIMEOUT = 10.seconds
 
 @Service(Service.Level.PROJECT)
-class VcsProjectLog(private val project: Project) : Disposable {
-  private val uiProperties: VcsLogTabsProperties
-  val tabsManager: VcsLogTabsManager
-  private val errorHandler: VcsProjectLogErrorHandler
+class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineScope) {
+  private val uiProperties = project.service<VcsLogProjectTabsProperties>()
+  internal val tabManager = VcsLogTabsManager(project, uiProperties, coroutineScope)
+  private val errorHandler = VcsProjectLogErrorHandler(this)
 
-  private val lazyVcsLogManager = LazyVcsLogManager()
+  @Volatile
+  private var cachedLogManager: VcsLogManager? = null
 
-  private val disposable = Disposer.newDisposable()
-  private val executor: ExecutorService
   private val disposeStarted = AtomicBoolean(false)
 
-  val logManager: VcsLogManager? get() = lazyVcsLogManager.cached
-  val dataManager: VcsLogData? get() = lazyVcsLogManager.cached?.dataManager
-  val isDisposing: Boolean get() = disposeStarted.get()
+  // not-reentrant - invoking [lock] even from the same thread/coroutine that currently holds the lock still suspends the invoker
+  private val mutex = Mutex()
+
+  val logManager: VcsLogManager?
+    get() = cachedLogManager
+  val dataManager: VcsLogData?
+    get() = cachedLogManager?.dataManager
+  val isDisposing: Boolean
+    get() = disposeStarted.get()
 
   /** The instance of the [MainVcsLogUi] or null if the log was not initialized yet. */
-  val mainLogUi: VcsLogUiImpl? get() = VcsLogContentProvider.getInstance(project)?.ui as VcsLogUiImpl?
+  val mainLogUi: VcsLogUiImpl?
+    get() = VcsLogContentProvider.getInstance(project)?.ui as VcsLogUiImpl?
+
+  private val busConnection = project.messageBus.connect(coroutineScope)
 
   init {
-    uiProperties = project.getService(VcsLogProjectTabsProperties::class.java)
-    tabsManager = VcsLogTabsManager(project, uiProperties, this)
-    errorHandler = VcsProjectLogErrorHandler(this)
-    executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Vcs Log Initialization/Dispose", 1)
-    project.messageBus.connect(disposable).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-      override fun projectClosing(project: Project) {
-        if (this@VcsProjectLog.project === project) {
-          shutDown()
+    busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
+      coroutineScope.launch { disposeLog(recreate = true) }
+    })
+    busConnection.subscribe(DynamicPluginListener.TOPIC, MyDynamicPluginUnloader())
+
+    @Suppress("SSBasedInspection", "ObjectLiteralToLambda") val shutdownTask = object : Runnable {
+      override fun run() {
+        if (disposeStarted.get()) {
+          LOG.warn("unregisterShutdownTask should be called")
+          return
+        }
+
+        runBlocking {
+          shutDown(useRawSwingDispatcher = true)
         }
       }
-    })
-    ShutDownTracker.getInstance().registerShutdownTask({ shutDown() }, disposable)
-  }
-
-  private fun shutDown() {
-    if (!disposeStarted.compareAndSet(false, true)) {
-      return
     }
 
-    Disposer.dispose(disposable)
-    disposeLog(false)
-    executor.shutdown()
-    val awaitDisposal = Runnable {
-      try {
-        executor.awaitTermination(5, TimeUnit.SECONDS)
-      }
-      catch (ignored: InterruptedException) {
-      }
-    }
-    if (ApplicationManager.getApplication().isDispatchThread) {
-      @Suppress("DialogTitleCapitalization")
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(awaitDisposal,
-                                                                        VcsLogBundle.message("vcs.log.closing.process"),
-                                                                        false, project)
-    }
-    else {
-      awaitDisposal.run()
+    ShutDownTracker.getInstance().registerShutdownTask(shutdownTask)
+    coroutineScope.awaitCancellationAndInvoke(CoroutineName("Close VCS log")) {
+      ShutDownTracker.getInstance().unregisterShutdownTask(shutdownTask)
+      shutDown(useRawSwingDispatcher = false)
     }
   }
 
-  private fun subscribeToMappingsAndPluginChanges() {
-    val connection = project.messageBus.connect(disposable)
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener { disposeLog(true) })
-    connection.subscribe(DynamicPluginListener.TOPIC, MyDynamicPluginUnloader())
+  private suspend fun shutDown(useRawSwingDispatcher: Boolean) {
+    if (!disposeStarted.compareAndSet(false, true)) return
+
+    busConnection.disconnect()
+
+    try {
+      withTimeout(CLOSE_LOG_TIMEOUT) {
+        mutex.withLock {
+          disposeLogInternal(useRawSwingDispatcher = useRawSwingDispatcher)
+        }
+      }
+    }
+    catch (e: TimeoutCancellationException) {
+      LOG.error("Cannot close VCS log in ${CLOSE_LOG_TIMEOUT.inWholeSeconds} seconds")
+    }
   }
 
   @RequiresEdt
@@ -119,43 +128,39 @@ class VcsProjectLog(private val project: Project) : Disposable {
   @RequiresEdt
   fun openLogTab(filters: VcsLogFilterCollection, location: VcsLogTabLocation): MainVcsLogUi? {
     val logManager = logManager ?: return null
-    return tabsManager.openAnotherLogTab(manager = logManager, filters = filters, location = location)
+    return tabManager.openAnotherLogTab(manager = logManager, filters = filters, location = location)
   }
 
-  @CalledInAny
-  private fun disposeLog(recreate: Boolean) {
-    disposeLog(recreate, EmptyRunnable.getInstance())
-  }
+  @RequiresBackgroundThread
+  private suspend fun disposeLog(recreate: Boolean, beforeCreateLog: (suspend () -> Unit)? = null) {
+    mutex.withLock {
+      disposeLogInternal(false)
+      if (!recreate || isDisposing) return
 
-  @CalledInAny
-  private fun disposeLog(recreate: Boolean, beforeCreateLog: Runnable): Future<*> {
-    return executor.submit {
-      val logManager = invokeAndWait {
-        val manager = lazyVcsLogManager.dropValue()
-        manager?.disposeUi()
-        manager
+      try {
+        beforeCreateLog?.invoke()
       }
-      if (logManager != null) {
-        Disposer.dispose(logManager)
+      catch (e: Throwable) {
+        LOG.error("Unable to execute 'beforeCreateLog'", e)
       }
-      if (recreate) {
-        if (!isDisposing) {
-          try {
-            beforeCreateLog.run()
-          }
-          catch (e: Throwable) {
-            LOG.error("Unable to execute 'beforeCreateLog'", e)
-          }
-        }
 
-        try {
-          createLog(false)
-        }
-        catch (e: Throwable) {
-          LOG.error("Unable to execute 'createLog'", e)
-        }
+      try {
+        createLogInternal(forceInit = false)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error("Unable to execute 'createLog'", e)
       }
     }
+  }
+
+  private suspend fun disposeLogInternal(useRawSwingDispatcher: Boolean) {
+    val logManager = withContext(if (useRawSwingDispatcher) RawSwingDispatcher else Dispatchers.EDT) {
+      dropLogManager()?.also { it.disposeUi() }
+    }
+    if (logManager != null) Disposer.dispose(logManager)
   }
 
   /**
@@ -163,69 +168,63 @@ class VcsProjectLog(private val project: Project) : Disposable {
    */
   @ApiStatus.Internal
   @CalledInAny
-  fun runOnDisposedLog(task: Runnable): Future<*>? {
-    return try {
+  fun runOnDisposedLog(task: (suspend () -> Unit)? = null): Job {
+    return coroutineScope.launch {
       disposeLog(recreate = true, beforeCreateLog = task)
     }
-    catch (e: Exception) {
-      LOG.error("Unable to execute on disposed log: $task", e)
-      null
+  }
+
+  fun createLogInBackground(forceInit: Boolean) {
+    coroutineScope.async {
+      createLog(forceInit) != null
     }
   }
 
-  fun createLogInBackground(forceInit: Boolean): CompletableFuture<Boolean> {
-    return CompletableFuture.supplyAsync({ createLog(forceInit) }, executor).thenApply { obj -> obj != null }
+  private suspend fun createLog(forceInit: Boolean): VcsLogManager? {
+    if (isDisposing) return null
+
+    mutex.withLock {
+      return createLogInternal(forceInit)
+    }
   }
 
-  @RequiresBackgroundThread
-  private fun createLog(forceInit: Boolean): VcsLogManager? {
-    if (isDisposing) {
-      return null
-    }
+  private suspend fun createLogInternal(forceInit: Boolean): VcsLogManager? {
+    if (isDisposing) return null
 
-    val logProviders = getLogProviders(project)
-    if (!logProviders.isEmpty()) {
-      val logManager = lazyVcsLogManager.getValue(logProviders)
-      initialize(logManager = logManager, force = forceInit)
-      return logManager
-    }
-    return null
+    val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>()
+    val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
+    if (logProviders.isEmpty()) return null
+
+    val logManager = getOrCreateLogManager(logProviders)
+    initialize(logManager = logManager, force = forceInit)
+    return logManager
   }
 
-  override fun dispose() {}
-
-  private inner class LazyVcsLogManager {
-    @Volatile
-    var cached: VcsLogManager? = null
-      private set
-
-    @RequiresBackgroundThread
-    fun getValue(logProviders: Map<VirtualFile, VcsLogProvider>): VcsLogManager {
-      var result = cached
-      if (result == null) {
-        LOG.debug("Creating Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}")
-        result = VcsLogManager(project, uiProperties, logProviders, false) { s, t ->
-          errorHandler.recreateOnError(s, t)
-        }
-        cached = result
-        ApplicationManager.getApplication().invokeAndWait({ project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(result) },
-                                                          modality)
-      }
-      return result
+  private suspend fun getOrCreateLogManager(logProviders: Map<VirtualFile, VcsLogProvider>): VcsLogManager {
+    cachedLogManager?.let {
+      return it
     }
 
-    @RequiresEdt
-    fun dropValue(): VcsLogManager? {
-      ApplicationManager.getApplication().assertIsDispatchThread()
-      val oldValue = cached
-      if (oldValue != null) {
-        cached = null
-        LOG.debug("Disposing Vcs Log for ${VcsLogUtil.getProvidersMapText(oldValue.dataManager.logProviders)}")
-        project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue)
-        return oldValue
-      }
-      return null
+    LOG.debug { "Creating Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}" }
+    val result = VcsLogManager(project, uiProperties, logProviders, false) { s, t ->
+      errorHandler.recreateOnError(s, t)
     }
+    cachedLogManager = result
+    val publisher = project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED)
+    withContext(Dispatchers.EDT + modality()) {
+      publisher.logCreated(result)
+    }
+    return result
+  }
+
+  @RequiresEdt
+  private fun dropLogManager(): VcsLogManager? {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val oldValue = cachedLogManager ?: return null
+    cachedLogManager = null
+    LOG.debug { "Disposing Vcs Log for ${VcsLogUtil.getProvidersMapText(oldValue.dataManager.logProviders)}" }
+    project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue)
+    return oldValue
   }
 
   internal class InitLogStartupActivity : ProjectActivity {
@@ -237,36 +236,39 @@ class VcsProjectLog(private val project: Project) : Disposable {
     }
 
     override suspend fun execute(project: Project) {
-      val projectLog = getInstance(project)
-      projectLog.subscribeToMappingsAndPluginChanges()
-      withContext(projectLog.executor.asCoroutineDispatcher()) {
-        projectLog.createLog(forceInit = false)
-      }
+      getInstance(project).createLog(forceInit = false)
     }
   }
 
   private inner class MyDynamicPluginUnloader : DynamicPluginListener {
-    private val affectedPlugins: MutableSet<PluginId> = HashSet()
+    private val affectedPlugins = HashSet<PluginId>()
+
     override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
       if (hasLogExtensions(pluginDescriptor)) {
-        disposeLog(true)
+        coroutineScope.launch {
+          disposeLog(recreate = true)
+        }
       }
     }
 
     override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
       if (hasLogExtensions(pluginDescriptor)) {
         affectedPlugins.add(pluginDescriptor.pluginId)
-        LOG.debug("Disposing Vcs Log before unloading " + pluginDescriptor.pluginId)
-        disposeLog(false)
+        LOG.debug { "Disposing Vcs Log before unloading ${pluginDescriptor.pluginId}" }
+        coroutineScope.launch {
+          disposeLog(recreate = false)
+        }
       }
     }
 
     override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
       if (affectedPlugins.remove(pluginDescriptor.pluginId)) {
-        LOG.debug("Recreating Vcs Log after unloading " + pluginDescriptor.pluginId)
+        LOG.debug { "Recreating Vcs Log after unloading ${pluginDescriptor.pluginId}" }
         // createLog calls between beforePluginUnload and pluginUnloaded are technically not prohibited
-        //  so, just in case, recreating log here
-        disposeLog(true)
+        // so, just in case, recreating log here
+        coroutineScope.launch {
+          disposeLog(recreate = true)
+        }
       }
     }
 
@@ -294,33 +296,9 @@ class VcsProjectLog(private val project: Project) : Disposable {
   }
 
   companion object {
-    private val LOG = logger<VcsProjectLog>()
-
     @Topic.ProjectLevel
     @JvmField
     val VCS_PROJECT_LOG_CHANGED = Topic(ProjectLogListener::class.java, Topic.BroadcastDirection.NONE, true)
-
-    @RequiresBackgroundThread
-    private fun initialize(logManager: VcsLogManager, force: Boolean) {
-      if (force) {
-        logManager.scheduleInitialization()
-        return
-      }
-
-      if (PostponableLogRefresher.keepUpToDate()) {
-        val invalidator = CachesInvalidator.EP_NAME.findExtensionOrFail(VcsLogCachesInvalidator::class.java)
-        if (invalidator.isValid) {
-          HeavyAwareListener.executeOutOfHeavyProcessLater(5000) { logManager.scheduleInitialization() }
-          return
-        }
-      }
-
-      invokeLater(modality) {
-        if (logManager.isLogVisible) {
-          logManager.scheduleInitialization()
-        }
-      }
-    }
 
     @JvmStatic
     fun getLogProviders(project: Project): Map<VirtualFile, VcsLogProvider> {
@@ -330,75 +308,75 @@ class VcsProjectLog(private val project: Project) : Disposable {
     @JvmStatic
     fun getInstance(project: Project): VcsProjectLog = project.service<VcsProjectLog>()
 
-    private fun <T> invokeAndWait(computable: Supplier<T>): T {
-      val result = Ref<T>()
-      ApplicationManager.getApplication().invokeAndWait({ result.set(computable.get()) }, modality)
-      return result.get()
-    }
-
-    // Using "any" modality specifically is required in order to be able to wait for log initialization or disposal under modal progress.
-    // Otherwise, methods such as "VcsProjectLog#runWhenLogIsReady" or "VcsProjectLog.shutDown" won't be able to work
-    // when "disposeLog" is queued as "invokeAndWait"
-    // (used there in order to ensure sequential execution) will the app freeze when modal progress is displayed.
-    private val modality: ModalityState get() = ModalityState.any()
-
     /**
      * Executes the given action if the VcsProjectLog has been initialized. If not, then schedules the log initialization,
      * waits for it in a background task, and executes the action after the log is ready.
      */
     @RequiresEdt
     fun runWhenLogIsReady(project: Project, action: (VcsLogManager) -> Unit) {
-      val log = getInstance(project)
-      val manager = log.logManager
+      val projectLog = getInstance(project)
+      val manager = projectLog.logManager
       if (manager != null) {
         action(manager)
         return
       }
 
       // schedule showing the log, wait its initialization, and then open the tab
-      val futureResult = log.createLogInBackground(true)
-      object : Task.Backgroundable(project, VcsLogBundle.message("vcs.log.creating.process")) {
-        override fun run(indicator: ProgressIndicator) {
-          try {
-            futureResult.get(5, TimeUnit.SECONDS)
-          }
-          catch (ignored: InterruptedException) {
-          }
-          catch (e: ExecutionException) {
-            LOG.error(e)
-          }
-          catch (e: TimeoutException) {
-            LOG.warn(e)
-          }
-        }
+      projectLog.coroutineScope.launch {
+        withBackgroundProgress(project, VcsLogBundle.message("vcs.log.creating.process")) {
+          projectLog.createLog(forceInit = true)
 
-        override fun onSuccess() {
-          log.logManager?.let {
-            action(it)
+          withContext(Dispatchers.EDT) {
+            projectLog.logManager?.let {
+              action(it)
+            }
           }
         }
-      }.queue()
+      }
     }
 
-    fun waitWhenLogIsReady(project: Project): Future<Boolean> {
-      val log = getInstance(project)
-      val manager = log.logManager
-      return if (manager == null) log.createLogInBackground(true) else CompletableFuture.completedFuture(true)
+    suspend fun waitWhenLogIsReady(project: Project): Boolean {
+      val projectLog = getInstance(project)
+      if (projectLog.logManager != null) return true
+      return projectLog.createLog(true) != null
     }
 
     @ApiStatus.Internal
     @RequiresBackgroundThread
     fun ensureLogCreated(project: Project): Boolean {
       ApplicationManager.getApplication().assertIsNonDispatchThread()
-      try {
-        return waitWhenLogIsReady(project).get() == true
+      return runBlockingMaybeCancellable {
+        waitWhenLogIsReady(project)
       }
-      catch (ignored: InterruptedException) {
-      }
-      catch (e: ExecutionException) {
-        LOG.error(e)
-      }
-      return false
+    }
+  }
+}
+
+// Using "any" modality specifically is required in order to be able to wait for log initialization or disposal under modal progress.
+// Otherwise, methods such as "VcsProjectLog#runWhenLogIsReady" or "VcsProjectLog.shutDown" won't be able to work
+// when "disposeLog" is queued as "invokeAndWait"
+// (used there in order to ensure sequential execution) will the app freeze when modal progress is displayed.
+private suspend fun modality(): CoroutineContext {
+  return if (coroutineContext.contextModality() == null) ModalityState.any().asContextElement() else EmptyCoroutineContext
+}
+
+private suspend fun initialize(logManager: VcsLogManager, force: Boolean) {
+  if (force) {
+    logManager.scheduleInitialization()
+    return
+  }
+
+  if (PostponableLogRefresher.keepUpToDate()) {
+    val invalidator = CachesInvalidator.EP_NAME.findExtensionOrFail(VcsLogCachesInvalidator::class.java)
+    if (invalidator.isValid) {
+      logManager.scheduleInitialization()
+      return
+    }
+  }
+
+  withContext(Dispatchers.EDT + modality()) {
+    if (logManager.isLogVisible) {
+      logManager.scheduleInitialization()
     }
   }
 }

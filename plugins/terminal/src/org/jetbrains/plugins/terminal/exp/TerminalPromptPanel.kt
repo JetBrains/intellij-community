@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
 import com.intellij.util.SystemProperties
@@ -20,6 +21,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
+import org.jetbrains.plugins.terminal.util.SHELL_TYPE_KEY
 import java.awt.Color
 import java.awt.Dimension
 import javax.swing.*
@@ -57,6 +59,9 @@ class TerminalPromptPanel(private val project: Project,
 
     editor.putUserData(TerminalSession.KEY, session)
     editor.putUserData(TerminalCompletionManager.KEY, completionManager)
+    val psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document)
+                  ?: error("Psi file is null for prompt text field")
+    psiFile.putUserData(SHELL_TYPE_KEY, session.shellIntegration?.shellType)
 
     session.addCommandListener(this)
 

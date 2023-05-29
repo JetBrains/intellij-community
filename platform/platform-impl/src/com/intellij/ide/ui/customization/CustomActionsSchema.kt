@@ -8,17 +8,19 @@ import com.intellij.ide.ui.customization.CustomizableActionGroupProvider.Customi
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.icons.loadCustomIcon
 import com.intellij.util.SmartList
@@ -26,6 +28,10 @@ import com.intellij.util.ui.JBImageIcon
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.toPersistentMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -47,17 +53,17 @@ private const val ATTRIBUTE_ICON = "icon"
 private const val GROUP = "group"
 private val additionalIdToName = ConcurrentHashMap<String, String>()
 
+private val EP_NAME = ExtensionPointName<CustomizableActionGroupProvider>("com.intellij.customizableActionGroupProvider")
+
 @State(name = "com.intellij.ide.ui.customization.CustomActionsSchema",
        storages = [Storage(value = "customization.xml", usePathMacroManager = false)],
        category = SettingsCategory.UI)
-class CustomActionsSchema : PersistentStateComponent<Element?> {
+class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : PersistentStateComponent<Element?> {
   /**
    * Contain action id binding to some icon reference. It can be one of the following:
-   *
    *  * id of the other action that uses some icon
    *  * path to the SVG or PNG file of the icon
    *  * URL of the SVG or PNG icon
-   *
    */
   private val iconCustomizations = HashMap<String, String?>()
   private val lock = Any()
@@ -73,6 +79,9 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
   var modificationStamp = 0
     private set
 
+  @NonInjectable
+  constructor() : this(null)
+
   init {
     val idToName = LinkedHashMap<String, String>()
     idToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.getMainMenuTitle())
@@ -86,17 +95,17 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
     idToName.put(IdeActions.GROUP_NAVBAR_POPUP, ActionsTreeUtil.getNavigationBarPopupMenu())
     idToName.put(IdeActions.GROUP_NAVBAR_TOOLBAR, ActionsTreeUtil.getNavigationBarToolbar())
     fillExtGroups(idToName, extGroupIds)
-    CustomizableActionGroupProvider.EP_NAME.addChangeListener({ fillExtGroups(idToName, extGroupIds) }, null)
+    EP_NAME.addChangeListener({ fillExtGroups(idToName, extGroupIds) }, null)
     idToName.putAll(additionalIdToName)
     this.idToName = idToName.toPersistentMap()
   }
 
   companion object {
     /**
-     * Original icon should be saved in template presentation when one customizes action icon
+     * The original icon should be saved in template presentation when one customizes action icon
      */
     @JvmField
-    val PROP_ORIGINAL_ICON = Key.create<Icon?>("originalIcon")
+    val PROP_ORIGINAL_ICON: Key<Icon?> = Key.create("originalIcon")
 
     @JvmStatic
     fun addSettingsGroup(itemId: String, itemName: @Nls String) {
@@ -166,7 +175,7 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
     assert(actions !== newActions)
     actions.clear()
     actions.addAll(newActions)
-    actions.sortWith(ActionUrlComparator.INSTANCE)
+    actions.sortWith(ActionUrlComparator)
   }
 
   fun copyFrom(result: CustomActionsSchema) {
@@ -178,7 +187,7 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
       for (actionUrl in result.actions) {
         addAction(actionUrl.copy())
       }
-      actions.sortWith(ActionUrlComparator.INSTANCE)
+      actions.sortWith(ActionUrlComparator)
       iconCustomizations.putAll(result.iconCustomizations)
       ids.forEach(Consumer { id -> iconCustomizations.putIfAbsent(id, null) })
     }
@@ -232,21 +241,23 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
       }
 
       for (action in element.getChildren(ELEMENT_ACTION)) {
-        val actionId = action.getAttributeValue(ATTRIBUTE_ID)
-        val iconPath = action.getAttributeValue(ATTRIBUTE_ICON)
-        if (actionId != null) {
-          iconCustomizations.put(actionId, iconPath)
-        }
+        val actionId = action.getAttributeValue(ATTRIBUTE_ID) ?: continue
+        iconCustomizations.put(actionId, action.getAttributeValue(ATTRIBUTE_ICON))
       }
       reload = !isFirstLoadState
       if (isFirstLoadState) {
         isFirstLoadState = false
       }
     }
-    ApplicationManager.getApplication().invokeLater {
-      initActionIcons()
+    coroutineScope?.launch {
+      ApplicationManager.getApplication().serviceAsync<ActionManager>()
+      withContext(Dispatchers.EDT) {
+        initActionIcons(updateView = reload)
+      }
       if (reload) {
-        setCustomizationSchemaForCurrentProjects()
+        withContext(Dispatchers.EDT) {
+          setCustomizationSchemaForCurrentProjects()
+        }
       }
     }
   }
@@ -373,9 +384,7 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
     iconCustomizations.put(actionId, if (iconPath == null) null else FileUtil.toSystemIndependentName(iconPath))
   }
 
-  fun getIconPath(actionId: String): String {
-    return iconCustomizations.get(actionId) ?: ""
-  }
+  fun getIconPath(actionId: String): String = iconCustomizations.get(actionId) ?: ""
 
   fun getIconCustomizations(): Map<String, String?> {
     return Collections.unmodifiableMap(iconCustomizations)
@@ -393,7 +402,8 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
     }
   }
 
-  fun initActionIcons() {
+  @JvmOverloads
+  fun initActionIcons(updateView: Boolean = true) {
     if (!iconCustomizations.isEmpty()) {
       val actionManager = ActionManager.getInstance()
       for (actionId in iconCustomizations.keys) {
@@ -406,41 +416,55 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
         PresentationFactory.updatePresentation(action)
       }
     }
-    WindowManagerEx.getInstanceEx().getFrameHelper(null)?.updateView()
+    if (updateView) {
+      WindowManagerEx.getInstanceEx().getFrameHelper(null)?.updateView()
+    }
   }
 
   @ApiStatus.Internal
   fun initActionIcon(anAction: AnAction, actionId: String, actionManager: ActionManager) {
     LOG.assertTrue(anAction !is ActionStub)
-    val iconPath = iconCustomizations.get(actionId)
-    var icon: Icon? = CustomizationUtil.getIconForPath(actionManager, iconPath)
-
     val presentation = anAction.templatePresentation
     val originalIcon = presentation.icon
     if (presentation.getClientProperty(PROP_ORIGINAL_ICON) == null && anAction.isDefaultIcon && originalIcon != null) {
       presentation.putClientProperty(PROP_ORIGINAL_ICON, originalIcon)
     }
-    if (icon == null) {
-      icon = presentation.getClientProperty(PROP_ORIGINAL_ICON)
-    }
+
+    val icon = iconCustomizations.get(actionId)?.let { CustomizationUtil.getIconForPath(actionManager, it) }
+               ?: presentation.getClientProperty(PROP_ORIGINAL_ICON)
     presentation.icon = icon
     presentation.disabledIcon = if (icon == null) null else getDisabledIcon(icon)
     anAction.isDefaultIcon = icon == originalIcon
   }
 }
 
-private class ActionUrlComparator : Comparator<ActionUrl> {
-  companion object {
-    val INSTANCE: ActionUrlComparator = ActionUrlComparator()
+private fun fillExtGroups(idToName: MutableMap<String, String>, extGroupIds: MutableSet<String>) {
+  for (id in extGroupIds) {
+    idToName.remove(id)
+  }
+  extGroupIds.clear()
+  val extList = ArrayList<Pair<String, String>>()
+  val registrar = CustomizableActionGroupRegistrar { groupId, groupTitle ->
+    extList.add(groupId to groupTitle)
+  }
+  for (provider in EP_NAME.extensionList) {
+    provider.registerGroups(registrar)
+  }
+  extList.sortWith { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.second, o2.second) }
+  for (couple in extList) {
+    extGroupIds.add(couple.first)
+    idToName.put(couple.first, couple.second)
+  }
+}
 
-    var DELETED: Int = 1
+private object ActionUrlComparator : Comparator<ActionUrl> {
+  var DELETED: Int = 1
 
-    private fun getEquivalenceClass(url: ActionUrl): Int {
-      return when (url.actionType) {
-        ActionUrl.DELETED -> 1
-        ActionUrl.ADDED -> 2
-        else -> 3
-      }
+  private fun getEquivalenceClass(url: ActionUrl): Int {
+    return when (url.actionType) {
+      ActionUrl.DELETED -> 1
+      ActionUrl.ADDED -> 2
+      else -> 3
     }
   }
 
@@ -460,24 +484,5 @@ private class ActionUrlComparator : Comparator<ActionUrl> {
       // within ADDED equivalence class: urls with lower position go first
       return u1.absolutePosition - u2.absolutePosition
     }
-  }
-}
-
-private fun fillExtGroups(idToName: MutableMap<String, String>, extGroupIds: MutableSet<String>) {
-  for (id in extGroupIds) {
-    idToName.remove(id)
-  }
-  extGroupIds.clear()
-  val extList: MutableList<Pair<String, String>> = ArrayList()
-  val registrar = CustomizableActionGroupRegistrar { groupId, groupTitle ->
-    extList.add(Pair(groupId, groupTitle))
-  }
-  for (provider in CustomizableActionGroupProvider.EP_NAME.extensionList) {
-    provider.registerGroups(registrar)
-  }
-  extList.sortWith { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.second, o2.second) }
-  for (couple in extList) {
-    extGroupIds.add(couple.first)
-    idToName.put(couple.first, couple.second)
   }
 }

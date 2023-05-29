@@ -19,7 +19,6 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
-import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopUtilKt;
 import com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction;
@@ -223,8 +222,8 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   @Nullable
   @Override
   public XDebuggerTreeNodeHyperlink getLink() {
-    if (myFullValueEvaluator != null) {
-      return new XDebuggerTreeNodeHyperlink(myFullValueEvaluator.getLinkText()) {
+    if (myFullValueEvaluator != null && myFullValueEvaluator.isEnabled()) {
+      return new XDebuggerTreeNodeHyperlink(myFullValueEvaluator.getLinkText(), myFullValueEvaluator.getLinkAttributes()) {
         @Override
         public boolean alwaysOnScreen() {
           return true;

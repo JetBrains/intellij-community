@@ -56,7 +56,7 @@ public abstract class DaemonCodeAnalyzer {
      * Fired when the background code analysis is being scheduled for the specified set of files.
      * @param fileEditors The list of files that will be analyzed during the current execution of the daemon.
      */
-    default void daemonStarting(@NotNull Collection<? extends FileEditor> fileEditors) {
+    default void daemonStarting(@NotNull Collection<? extends @NotNull FileEditor> fileEditors) {
     }
 
     /**
@@ -69,10 +69,15 @@ public abstract class DaemonCodeAnalyzer {
      * Fired when the background code analysis is done.
      * @param fileEditors The list of files analyzed during the current execution of the daemon.
      */
-    default void daemonFinished(@NotNull Collection<? extends FileEditor> fileEditors) {
+    default void daemonFinished(@NotNull Collection<? extends @NotNull FileEditor> fileEditors) {
       daemonFinished();
     }
 
+    /**
+     * Fired when the daemon is canceled because of user tries to type something into the document or other reasons.
+     * Please don't do anything remotely expensive in your listener implementation because it's called in the background thread under the read action,
+     * and could slow down the highlighting process if it wasn't fast enough.
+     */
     default void daemonCancelEventOccurred(@NotNull String reason) {
     }
 

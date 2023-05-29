@@ -311,10 +311,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(BrowserLink(text, url))
   }
 
-  override fun <T> dropDownLink(item: T, items: List<T>, onSelected: ((T) -> Unit)?, updateText: Boolean): Cell<DropDownLink<T>> {
-    return cell(DropDownLink(item, items, onSelect = { t -> onSelected?.let { it(t) } }, updateText = updateText))
-  }
-
   override fun <T> dropDownLink(item: T, items: List<T>): Cell<DropDownLink<T>> {
     return cell(DropDownLink(item, items, onSelect = { }, updateText = true))
   }

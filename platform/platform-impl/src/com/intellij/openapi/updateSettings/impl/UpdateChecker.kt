@@ -332,7 +332,7 @@ object UpdateChecker {
     if (!PluginEnabler.HEADLESS.isIgnoredDisabledPlugins) {
       val brokenPlugins = MarketplaceRequests.getInstance().getBrokenPlugins(ApplicationInfo.getInstance().build)
       if (brokenPlugins.isNotEmpty()) {
-        PluginManagerCore.updateBrokenPlugins(brokenPlugins)
+        updateBrokenPlugins(brokenPlugins)
       }
     }
 

@@ -14,13 +14,13 @@ interface CredentialStoreUiService {
 
   fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project?, action: NotificationAction?)
 
-  fun showChangeMasterPasswordDialog(contextComponent: Component?,
-                                     setNewMasterPassword: (current: CharArray, new: CharArray) -> Boolean): Boolean
+  fun showChangeMainPasswordDialog(contextComponent: Component?,
+                                   setNewMainPassword: (current: CharArray, new: CharArray) -> Boolean): Boolean
 
-  fun showRequestMasterPasswordDialog(@DialogTitle title: String,
-                                      @DialogMessage topNote: String? = null,
-                                      contextComponent: Component? = null,
-                                      @DialogMessage ok: (value: ByteArray) -> String?): Boolean
+  fun showRequestMainPasswordDialog(@DialogTitle title: String,
+                                    @DialogMessage topNote: String? = null,
+                                    contextComponent: Component? = null,
+                                    @DialogMessage ok: (value: ByteArray) -> String?): Boolean
 
   fun showErrorMessage(parent: Component?, @DialogTitle title: String, @DialogMessage message: String)
 

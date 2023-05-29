@@ -13,6 +13,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,6 +21,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -65,6 +67,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     JavaCodeStyleSettings.getInstance(getProject()).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 100;
     DaemonCodeAnalyzer.getInstance(getProject()).setUpdateByTimerEnabled(false);
     enableInspectionTool(new UnusedImportInspection());
+    enableInspectionTool(new UnusedDeclarationInspection());
   }
 
   @Override
@@ -625,7 +628,8 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     UIUtil.dispatchAllInvocationEvents();
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
-    TextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(getEditor());
+    @NotNull Editor editor = getEditor();
+    TextRange visibleRange = editor.calculateVisibleRange();
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 5000 && visibleRange.getEndOffset() < 10_000); // sanity check that visible range has been indeed changed
 
     List<HighlightInfo> errors = highlightErrors();

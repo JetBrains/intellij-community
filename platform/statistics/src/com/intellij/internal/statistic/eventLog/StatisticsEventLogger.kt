@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
-import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -16,18 +15,6 @@ import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 
 interface StatisticsEventLogger {
-  @Deprecated("Use StatisticsEventLogger.logAsync()", ReplaceWith("logAsync(group, eventId, isState)"))
-  @ApiStatus.ScheduledForRemoval
-  fun log(group: EventLogGroup, eventId: String, isState: Boolean) {
-    logAsync(group, eventId, isState)
-  }
-
-  @Deprecated("Use StatisticsEventLogger.logAsync", ReplaceWith("logAsync(group, eventId, data, isState)"))
-  @ApiStatus.ScheduledForRemoval
-  fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) {
-    logAsync(group, eventId, data, isState)
-  }
-
   fun logAsync(group: EventLogGroup, eventId: String, isState: Boolean): CompletableFuture<Void> =
     logAsync(group, eventId, Collections.emptyMap(), isState)
 
@@ -44,7 +31,8 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              val version: Int,
                                              val sendFrequencyMs: Long,
                                              private val maxFileSizeInBytes: Int,
-                                             val sendLogsOnIdeClose: Boolean = false) {
+                                             val sendLogsOnIdeClose: Boolean = false,
+                                             val isCharsEscapingRequired: Boolean = true) {
 
   @Deprecated(message = "Use primary constructor instead")
   constructor(recorderId: String,
@@ -188,11 +176,4 @@ object EmptyEventLogFilesProvider: EventLogFilesProvider {
   override fun getLogFiles(): List<File> = emptyList()
 
   override fun getLogFilesExceptActive(): List<File> = emptyList()
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use StatisticsEventLogProviderUtil.getEventLogProvider(String)",
-            ReplaceWith("StatisticsEventLogProviderUtil.getEventLogProvider(recorderId)"))
-fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {
-  return StatisticsEventLogProviderUtil.getEventLogProvider(recorderId)
 }

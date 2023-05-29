@@ -127,6 +127,7 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public void onPaint(CefBrowser browser, boolean popup, Rectangle[] dirtyRects, ByteBuffer buffer, int width, int height) {
+    myFpsMeter.onPaintStarted();
     JBHiDPIScaledImage image = popup ? myPopupImage : myImage;
 
     Dimension size = getRealImageSize(image);
@@ -158,6 +159,13 @@ class JBCefOsrHandler implements CefRenderHandler {
       // NOTE: should mark area outside browser (otherwise background component won't be repainted)
       rm.addDirtyRegion(root, dirtyDst.x - dx, dirtyDst.y - dx, dirtyDst.width + dx * 2, dirtyDst.height + dx * 2);
     });
+
+    { // notify fps-meter
+      long pixCount = 0;
+      for (Rectangle r : dirtyRects)
+        pixCount += r.width * r.height;
+      myFpsMeter.onPaintFinished(pixCount);
+    }
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -54,6 +54,9 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    * Returns {@code true} only for EAP builds of "major" releases (i.e. for {@code 2018.3}, but not for {@code 2018.3.1}).
    */
   public abstract boolean isMajorEAP();
+
+  @ApiStatus.Experimental
+  public abstract boolean isPreview();
 
   public abstract @Nullable UpdateUrls getUpdateUrls();
 
@@ -135,12 +138,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract @NotNull List<PluginId> getEssentialPluginsIds();
 
-  /**
-   * @deprecated Not used anymore.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
   public abstract @Nullable String getDefaultLightLaf();
 
+  public abstract @Nullable String getDefaultClassicLightLaf();
+
   public abstract @Nullable String getDefaultDarkLaf();
+
+  public abstract @Nullable String getDefaultClassicDarkLaf();
 }

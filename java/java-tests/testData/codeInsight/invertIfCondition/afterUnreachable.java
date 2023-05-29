@@ -9,7 +9,7 @@ class A {
             if (!b) {
             }
             else {
-                break;
+              break;
             }
         }
       }

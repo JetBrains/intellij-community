@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -45,7 +48,7 @@ public class InstantiatingObjectToGetClassObjectInspection
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
     if (ExpressionUtils.isVoidContext(methodCallExpression)) {
       return null;
@@ -54,7 +57,7 @@ public class InstantiatingObjectToGetClassObjectInspection
   }
 
   private static class InstantiatingObjectToGetClassObjectFix
-    extends InspectionGadgetsFix {
+    extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -64,8 +67,8 @@ public class InstantiatingObjectToGetClassObjectInspection
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression expression = (PsiMethodCallExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiMethodCallExpression expression = (PsiMethodCallExpression)startElement;
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {

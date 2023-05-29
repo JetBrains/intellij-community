@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,8 +39,7 @@ public final class PropertyAccessor implements MutableAccessor {
     catch (SecurityException ignored) { }
   }
 
-  @NotNull
-  public String getGetterName() {
+  public @NotNull String getGetterName() {
     return myReadMethod.getName();
   }
 
@@ -162,21 +161,18 @@ public final class PropertyAccessor implements MutableAccessor {
     return annotation;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @NotNull
   @Override
-  public Class<?> getValueClass() {
+  public @NotNull Class<?> getValueClass() {
     return myType;
   }
 
-  @NotNull
   @Override
-  public Type getGenericType() {
+  public @NotNull Type getGenericType() {
     return myGenericType;
   }
 
@@ -185,8 +181,7 @@ public final class PropertyAccessor implements MutableAccessor {
     return myWriteMethod != null && myWriteMethod.isAccessible();
   }
 
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "PropertyAccessor(name=" + myName + ", class=" + myReadMethod.getDeclaringClass().getName() + ")";
   }
 }

@@ -399,6 +399,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../idea/tests/testData/findUsages/kotlin/findClassUsages/javaDerivedInterfaceUsages2.0.kt");
             }
 
+            @TestMetadata("javaInterfaceAllUsages.0.kt")
+            public void testJavaInterfaceAllUsages() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findClassUsages/javaInterfaceAllUsages.0.kt");
+            }
+
             @TestMetadata("kotlinAliasedClassAllUsages.0.kt")
             public void testKotlinAliasedClassAllUsages() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinAliasedClassAllUsages.0.kt");
@@ -507,6 +512,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
             @TestMetadata("kotlinInnerClassAllUsages.0.kt")
             public void testKotlinInnerClassAllUsages() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInnerClassAllUsages.0.kt");
+            }
+
+            @TestMetadata("kotlinInterfaceAllUsages.0.kt")
+            public void testKotlinInterfaceAllUsages() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInterfaceAllUsages.0.kt");
             }
 
             @TestMetadata("kotlinInterfaceDerivedAnonymousObjects.0.kt")

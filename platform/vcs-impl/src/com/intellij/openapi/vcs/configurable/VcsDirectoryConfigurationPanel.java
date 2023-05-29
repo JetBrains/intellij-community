@@ -29,6 +29,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -310,6 +311,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
   private void scheduleUnregisteredRootsLoading() {
     if (myProject.isDefault() || !TrustedProjects.isTrusted(myProject)) return;
     if (myRootDetectionIndicator != null) myRootDetectionIndicator.cancel();
+    if (!VcsUtil.shouldDetectVcsMappingsFor(myProject)) return;
 
     myRootDetectionIndicator = BackgroundTaskUtil.executeAndTryWait(indicator -> {
       List<VcsDirectoryMapping> unregisteredRoots = VcsRootErrorsFinder.getInstance(myProject).getOrFind().stream()

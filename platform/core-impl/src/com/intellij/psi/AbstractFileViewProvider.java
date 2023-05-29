@@ -15,7 +15,6 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -176,8 +175,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     Document document = com.intellij.reference.SoftReference.dereference(myDocument);
     if (document == null) {
       VirtualFile file = getVirtualFile();
-      document = ProjectLocator.computeWithPreferredProject(file, myManager.getProject(), () ->
-        FileDocumentManager.getInstance().getDocument(file));
+      document = FileDocumentManager.getInstance().getDocument(file, myManager.getProject());
       myDocument = document == null ? null : new SoftReference<>(document);
     }
     return document;

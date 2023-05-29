@@ -15,6 +15,9 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.15/delight-rhino-sandbox-0.0.15.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.0.18/proxy-vole-1.0.18-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.15/delight-rhino-sandbox-0.0.15-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

@@ -68,14 +68,6 @@ fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Cla
   (this as ComponentManagerImpl).replaceComponentInstance(componentInterface, instance, parentDisposable)
 }
 
-@Suppress("DeprecatedCallableAddReplaceWith")
-@TestOnly
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Pass parentDisposable")
-fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T) {
-  (this as ComponentManagerImpl).replaceComponentInstance(componentInterface, instance, null)
-}
-
 @TestOnly
 @JvmOverloads
 fun ComponentManager.registerComponentImplementation(key: Class<*>, implementation: Class<*>, shouldBeRegistered: Boolean = false) {

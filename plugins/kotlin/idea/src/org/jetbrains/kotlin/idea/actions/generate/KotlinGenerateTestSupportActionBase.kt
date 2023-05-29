@@ -65,7 +65,7 @@ abstract class KotlinGenerateTestSupportActionBase(
 
             PopupChooserBuilder(list).setFilteringEnabled { (it as TestFramework).name }
                 .setTitle(KotlinBundle.message("action.generate.test.support.choose.framework"))
-                .setItemChoosenCallback { consumer(list.selectedValue as TestFramework) }
+                .setItemChosenCallback(consumer)
                 .setMovable(true)
                 .createPopup()
                 .showInBestPositionFor(editor)

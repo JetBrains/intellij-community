@@ -2,10 +2,8 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,13 +12,6 @@ import javax.swing.event.HyperlinkListener;
 import java.util.Collection;
 
 public abstract class WritingAccessProvider {
-  /**
-   * @deprecated Use {@link #EP}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final ExtensionPointName<WritingAccessProvider> EP_NAME = ExtensionPointName.create("com.intellij.writingAccessProvider");
-
   public static final ProjectExtensionPointName<WritingAccessProvider> EP = new ProjectExtensionPointName<>("com.intellij.writingAccessProvider");
 
   /**

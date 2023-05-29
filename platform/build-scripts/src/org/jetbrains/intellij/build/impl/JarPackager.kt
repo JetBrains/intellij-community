@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.use
+import com.intellij.platform.diagnostic.telemetry.impl.use
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
@@ -17,8 +17,12 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JetBrainsClientModuleFilter
 import org.jetbrains.intellij.build.SignNativeFileMode
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
+import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
+import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.copyZipRaw
@@ -77,28 +81,28 @@ private val libsThatUsedInJps = java.util.Set.of(
 
 private val notImportantKotlinLibs = persistentSetOf(
   "kotlinx-coroutines-guava",
-  "kotlinx-coroutines-slf4j",
   "kotlinx-datetime-jvm",
   "kotlinx-html-jvm",
 )
 
-private val predefinedMergeRules = persistentMapOf<String, (String) -> Boolean>().mutate { map ->
-  map.put("groovy.jar") { it.startsWith("org.codehaus.groovy:") }
-  map.put("jsch-agent.jar") { it.startsWith("jsch-agent") }
-  map.put("rd.jar") { it.startsWith("rd-") }
+private val predefinedMergeRules = persistentMapOf<String, (String, JetBrainsClientModuleFilter) -> Boolean>().mutate { map ->
+  map.put("groovy.jar") { it, _ -> it.startsWith("org.codehaus.groovy:") }
+  map.put("jsch-agent.jar") { it, _ -> it.startsWith("jsch-agent") }
+  map.put("rd.jar") { it, _ -> it.startsWith("rd-") }
   // all grpc garbage into one jar
-  map.put("grpc.jar") { it.startsWith("grpc-") }
-  map.put("bouncy-castle.jar") { it.startsWith("bouncy-castle-") }
-  map.put(PRODUCT_JAR) { it.startsWith("License") }
+  map.put("grpc.jar") { it, _ -> it.startsWith("grpc-") }
+  map.put("bouncy-castle.jar") { it, _ -> it.startsWith("bouncy-castle-") }
+  map.put(PRODUCT_JAR) { name, filter -> name.startsWith("License") && !filter.isProjectLibraryIncluded(name) }
+  map.put(PRODUCT_CLIENT_JAR) { name, filter -> name.startsWith("License") && filter.isProjectLibraryIncluded(name) }
   // see ClassPathUtil.getUtilClassPath
-  map.put(UTIL_8_JAR) {
-    libsThatUsedInJps.contains(it) ||
+  map.put(UTIL_8_JAR) { it, _ ->
+  libsThatUsedInJps.contains(it) ||
     (it.startsWith("kotlinx-") && !notImportantKotlinLibs.contains(it)) ||
     it == "kotlin-reflect"
   }
 
   // used in external process - see ConsoleProcessListFetcher.getConsoleProcessCount
-  map.put(UTIL_JAR) { it == "pty4j" || it == "jvm-native-trusted-roots" }
+  map.put(UTIL_JAR) { it, _ -> it == "pty4j" || it == "jvm-native-trusted-roots" }
 }
 
 internal fun getLibraryFileName(library: JpsLibrary): String {
@@ -170,13 +174,21 @@ class JarPackager private constructor(private val outputDir: Path, private val c
       }
 
       if (layout != null) {
-        val libraryToMerge = packager.packProjectLibraries(outputDir = outputDir, layout = layout, copiedFiles = packager.copiedFiles)
+        val clientModuleFilter = context.jetBrainsClientModuleFilter
+        val libraryToMerge = packager.packProjectLibraries(outputDir = outputDir, layout = layout, copiedFiles = packager.copiedFiles, clientModuleFilter)
         if (isRootDir) {
           for ((key, value) in predefinedMergeRules) {
-            packager.mergeLibsByPredicate(key, libraryToMerge, outputDir, value)
+            packager.mergeLibsByPredicate(key, libraryToMerge, outputDir, value, clientModuleFilter)
           }
           if (!libraryToMerge.isEmpty()) {
-            packager.filesToSourceWithMappings(outputDir.resolve("lib.jar"), libraryToMerge)
+            val clientLibraries = libraryToMerge.filterKeys { clientModuleFilter.isProjectLibraryIncluded(it.name) }
+            if (clientLibraries.isNotEmpty()) {
+              packager.filesToSourceWithMappings(outputDir.resolve(PlatformJarNames.LIB_CLIENT_JAR), clientLibraries)
+            }
+            val nonClientLibraries = libraryToMerge.filterKeys { !clientModuleFilter.isProjectLibraryIncluded(it.name) }
+            if (nonClientLibraries.isNotEmpty()) {
+              packager.filesToSourceWithMappings(outputDir.resolve(PlatformJarNames.LIB_JAR), nonClientLibraries)
+            }
           }
         }
         else if (!libraryToMerge.isEmpty()) {
@@ -324,12 +336,13 @@ class JarPackager private constructor(private val outputDir: Path, private val c
   private fun mergeLibsByPredicate(jarName: String,
                                    libraryToMerge: MutableMap<JpsLibrary, List<Path>>,
                                    outputDir: Path,
-                                   predicate: (String) -> Boolean) {
+                                   predicate: (String, JetBrainsClientModuleFilter) -> Boolean,
+                                   clientModuleFilter: JetBrainsClientModuleFilter) {
     val result = LinkedHashMap<JpsLibrary, List<Path>>()
     val iterator = libraryToMerge.entries.iterator()
     while (iterator.hasNext()) {
       val (key, value) = iterator.next()
-      if (predicate(key.name)) {
+      if (predicate(key.name, clientModuleFilter)) {
         iterator.remove()
         result.put(key, value)
       }
@@ -349,7 +362,8 @@ class JarPackager private constructor(private val outputDir: Path, private val c
 
   private fun packProjectLibraries(outputDir: Path,
                                    layout: BaseLayout,
-                                   copiedFiles: MutableMap<Path, CopiedFor>): MutableMap<JpsLibrary, List<Path>> {
+                                   copiedFiles: MutableMap<Path, CopiedFor>,
+                                   clientModuleFilter: JetBrainsClientModuleFilter): MutableMap<JpsLibrary, List<Path>> {
     val toMerge = LinkedHashMap<JpsLibrary, List<Path>>()
     val projectLibs = if (layout.includedProjectLibraries.isEmpty()) {
       emptyList()
@@ -364,7 +378,7 @@ class JarPackager private constructor(private val outputDir: Path, private val c
       libToMetadata.put(library, libraryData)
       val libName = library.name
       var packMode = libraryData.packMode
-      if (packMode == LibraryPackMode.MERGED && !predefinedMergeRules.values.any { it(libName) } && !isLibraryMergeable(libName)) {
+      if (packMode == LibraryPackMode.MERGED && !predefinedMergeRules.values.any { it(libName, clientModuleFilter) } && !isLibraryMergeable(libName)) {
         packMode = LibraryPackMode.STANDALONE_MERGED
       }
 
@@ -464,8 +478,11 @@ private fun getLibraryFiles(library: JpsLibrary,
   // allow duplication if packed into the same target file and have the same common prefix
   files.removeIf {
     val alreadyCopiedFor = copiedFiles.get(it) ?: return@removeIf false
+    val alreadyCopiedLibraryName = alreadyCopiedFor.library.name
     alreadyCopiedFor.targetFile == targetFile &&
-    (alreadyCopiedFor.library.name.startsWith("ktor-") || (isModuleLevel && alreadyCopiedFor.library.name == libName))
+    (alreadyCopiedLibraryName.startsWith("ktor-") ||
+     alreadyCopiedLibraryName.startsWith("ai.grazie.") ||
+     (isModuleLevel && alreadyCopiedLibraryName == libName))
   }
 
   for (file in files) {
@@ -590,7 +607,7 @@ private suspend fun buildJars(descriptors: Collection<JarDescriptor>,
           }
 
         // app.jar is combined later with other JARs and then re-ordered
-        if (!dryRun && item.pathInClassLog.isNotEmpty() && item.pathInClassLog != "lib/app.jar") {
+        if (!dryRun && item.pathInClassLog.isNotEmpty() && item.pathInClassLog != "lib/$APP_JAR") {
           reorderJar(relativePath = item.pathInClassLog, file = file)
         }
         nativeFileHandler?.sourceToNativeFiles ?: emptyMap()
@@ -645,7 +662,7 @@ internal fun mergeProductJar(appFile: Path, libDir: Path) {
     return
   }
 
-  spanBuilder("merge product.jar into app.jar").setAttribute("file", appFile.toString()).use {
+  spanBuilder("merge $PRODUCT_JAR into $APP_JAR").setAttribute("file", appFile.toString()).use {
     transformZipUsingTempFile(appFile) { zipCreator ->
       val packageIndexBuilder = PackageIndexBuilder()
       copyZipRaw(appFile, packageIndexBuilder, zipCreator)

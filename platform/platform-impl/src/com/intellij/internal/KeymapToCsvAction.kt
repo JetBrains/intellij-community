@@ -55,7 +55,7 @@ internal class KeymapToCsvAction : AnAction() {
         append(key)
         for (column in columns) {
           append(",")
-          val actionsForShortcut = shortcutsForKey[column] ?: emptyList<String>()
+          val actionsForShortcut = shortcutsForKey[column] ?: emptyList()
           append(actionsForShortcut.joinToString("|"))
         }
         appendln()

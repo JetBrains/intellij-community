@@ -14,7 +14,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.UIBundle
 
 abstract class ZoomIdeAction : AnAction(), DumbAware {
-  protected val settingsUtils = UISettingsUtils.instance
+  protected val settingsUtils: UISettingsUtils = UISettingsUtils.getInstance()
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -25,7 +25,7 @@ abstract class ZoomIdeAction : AnAction(), DumbAware {
   }
 }
 
-class ZoomInIdeAction : ZoomIdeAction() {
+private class ZoomInIdeAction : ZoomIdeAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabled = IdeScaleTransformer.Settings.increasedScale() != null
@@ -38,7 +38,7 @@ class ZoomInIdeAction : ZoomIdeAction() {
   }
 }
 
-class ZoomOutIdeAction : ZoomIdeAction() {
+private class ZoomOutIdeAction : ZoomIdeAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabled = IdeScaleTransformer.Settings.decreasedScale() != null
@@ -52,7 +52,7 @@ class ZoomOutIdeAction : ZoomIdeAction() {
   }
 }
 
-class ResetIdeScaleAction : ZoomIdeAction() {
+internal class ResetIdeScaleAction : ZoomIdeAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabled =
@@ -65,12 +65,12 @@ class ResetIdeScaleAction : ZoomIdeAction() {
   }
 }
 
-class SwitchIdeScaleAction : AnAction(), DumbAware {
+private class SwitchIdeScaleAction : AnAction(), DumbAware {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = true
-    e.presentation.text = UIBundle.message("switch.ide.scale.action.format", UISettingsUtils.instance.currentIdeScale.percentValue)
+    e.presentation.text = UIBundle.message("switch.ide.scale.action.format", UISettingsUtils.getInstance().currentIdeScale.percentValue)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

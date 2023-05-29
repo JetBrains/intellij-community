@@ -8,31 +8,56 @@ import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/cancellationCheckInLoops")
 class KtCancellationCheckInLoopsInspectionTest : CancellationCheckInLoopsInspectionTestBase() {
-  override val fileType
-    get() = "kt"
 
-  override fun getBasePath(): String {
-    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/cancellationCheckInLoops"
-  }
+  override fun getFileExtension(): String = "kt"
+
+  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/cancellationCheckInLoops"
 
   override fun setUp() {
     super.setUp()
-    myFixture.addFileToProject("Coroutines.kt", """
+    myFixture.addFileToProject(
+      "Coroutines.kt",
+      //language=kotlin
+      """
       package com.intellij.openapi.progress
 
       suspend fun checkCancelled() { }
-    """.trimIndent())
+      """.trimIndent())
+  }
+
+  fun testRunCondition() {
+    doTest()
+  }
+
+  fun testRunConditionOnSuperMethod() {
+    doTest()
   }
 
   fun testSuspendingContext() {
     doTest()
   }
 
-  fun testMultipleNestedLoops() {
+  fun testPresentCancellationCheck() {
     doTest()
   }
 
-  fun testPresentCancellationCheck() {
+  fun testCancellationCheckPresentNotInFirstLine() {
+    doTest()
+  }
+
+  fun testForEachLoops() {
+    doTest()
+  }
+
+  fun testWhileLoops() {
+    doTest()
+  }
+
+  fun testDoWhileLoops() {
+    doTest()
+  }
+
+  fun testNestedLoops() {
     doTest()
   }
 

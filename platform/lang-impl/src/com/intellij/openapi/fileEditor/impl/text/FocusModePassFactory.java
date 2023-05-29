@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.*;
@@ -41,8 +41,7 @@ final class FocusModePassFactory implements TextEditorHighlightingPassFactory, T
   }
 
   @Override
-  @Nullable
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     return isEnabled() && EditorUtil.isRealFileEditor(editor) && editor instanceof EditorImpl
            ? new FocusModePass(editor, file)
            : null;
@@ -52,16 +51,19 @@ final class FocusModePassFactory implements TextEditorHighlightingPassFactory, T
     return EditorSettingsExternalizable.getInstance().isFocusMode();
   }
 
-  @Nullable
-  static List<? extends Segment> calcFocusZones(@Nullable PsiFile file) {
-    if (file == null || !isEnabled()) return null;
+  static @Nullable List<? extends Segment> calcFocusZones(@Nullable PsiFile file) {
+    if (file == null || !isEnabled()) {
+      return null;
+    }
+
     return CachedValuesManager.getCachedValue(file, () -> {
       FileViewProvider provider = file.getViewProvider();
 
-      List<Segment> segments = EP_NAME.allForLanguageOrAny(provider.getBaseLanguage()).stream()
-        .map(p -> calcFocusZones(p, file))
-        .map(l -> ContainerUtil.append(l, file.getTextRange()))
-        .findFirst().orElse(null);
+      List<Segment> segments = null;
+      for (FocusModeProvider p : EP_NAME.allForLanguageOrAny(provider.getBaseLanguage())) {
+        segments = ContainerUtil.append(calcFocusZones(p, file), file.getTextRange());
+        break;
+      }
       return CachedValueProvider.Result.create(segments, file);
     });
   }
@@ -70,8 +72,7 @@ final class FocusModePassFactory implements TextEditorHighlightingPassFactory, T
    * Computes focus zones for the {@code psiFile} using {@code focusModeProvider}. Additionally, warns if zones building took too long
    * (longer than {@link #MAX_ALLOWED_TIME} ms.
    */
-  @NotNull
-  private static List<? extends Segment> calcFocusZones(@NotNull FocusModeProvider focusModeProvider, @NotNull PsiFile psiFile) {
+  private static @NotNull List<? extends Segment> calcFocusZones(@NotNull FocusModeProvider focusModeProvider, @NotNull PsiFile psiFile) {
     Ref<List<? extends Segment>> resultRef = Ref.create();
     long executionTime = TimeoutUtil.measureExecutionTime(() -> resultRef.set(focusModeProvider.calcFocusZones(psiFile)));
     if (executionTime > MAX_ALLOWED_TIME) {
@@ -101,7 +102,7 @@ final class FocusModePassFactory implements TextEditorHighlightingPassFactory, T
       }
       else {
         if (focusRegions.contains(foundRegion)) {
-          // Region exists and belongs to this provider. Leave in focusRegions
+          // The region exists and belongs to this provider. Leave in focusRegions.
           invalidFocusRegions.remove(foundRegion);
         }
         else {

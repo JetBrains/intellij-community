@@ -59,14 +59,13 @@ import org.junit.Assert
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import java.io.File
-import java.io.File.pathSeparatorChar
 
-abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() {
+abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolders: Boolean = true) : KotlinMavenImportingTestCase() {
     protected val kotlinVersion = "1.1.3"
 
     override fun setUp() {
         super.setUp()
-        createStdProjectFolders()
+        if (createStdProjectFolders) createStdProjectFolders()
     }
 
     override fun tearDown() = runAll(
@@ -676,8 +675,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertSources("project", "src/main/kotlin")
             assertTestSources("project", "src/test/java")
-            assertResources("project", "src/main/resources")
-            assertTestResources("project", "src/test/resources")
+            assertDefaultResources("project")
+            assertDefaultTestResources("project")
         }
     }
 
@@ -743,8 +742,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertSources("project", "src/main/kotlin")
             assertTestSources("project", "src/test/java")
-            assertResources("project", "src/main/resources")
-            assertTestResources("project", "src/test/resources")
+            assertDefaultResources("project")
+            assertDefaultTestResources("project")
         }
     }
 
@@ -830,8 +829,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1167,8 +1166,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertSources("project", "src/main/kotlin")
             assertTestSources("project", "src/test/java")
-            assertResources("project", "src/main/resources")
-            assertTestResources("project", "src/test/resources")
+            assertDefaultResources("project")
+            assertDefaultTestResources("project")
         }
     }
 
@@ -1278,8 +1277,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertSources("project", "src/main/kotlin")
             assertTestSources("project", "src/test/java")
-            assertResources("project", "src/main/resources")
-            assertTestResources("project", "src/test/resources")
+            assertDefaultResources("project")
+            assertDefaultTestResources("project")
         }
     }
 
@@ -1338,8 +1337,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1398,8 +1397,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1466,8 +1465,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1520,8 +1519,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1532,7 +1531,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             importProject(
                 """
-            <groupId>test</groupId>0
+            <groupId>test</groupId>
             <artifactId>project</artifactId>
             <version>1.0.0</version>
 
@@ -1578,8 +1577,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1636,8 +1635,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1694,8 +1693,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1752,8 +1751,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -3173,8 +3172,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -3227,8 +3226,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -3498,7 +3497,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                             <plugin>
                                 <groupId>org.jetbrains.kotlin</groupId>
                                 <artifactId>kotlin-maven-plugin</artifactId>
-                                ${version?.let { "<version>$it</version>" }}
+                                ${version?.let { "<version>$it</version>" } ?: ""}
 
                                 <executions>
                                     <execution>
@@ -3638,25 +3637,25 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertModules(compoundModule, mainModule, testModule)
             assertImporterStatePresent()
 
-            val mainKotlinFolder = "$projectPath/src/main/kotlin"
+            val mainKotlinFolder = "src/main/kotlin"
             val mainContentRoots = arrayOf(
                 mainKotlinFolder,
-                "$projectPath/src/main/java",
-                "$projectPath/src/main/resources",
+                "src/main/java",
+                *defaultResources(),
             )
 
-            val testKotlinFolder = "$projectPath/src/test/kotlin"
+            val testKotlinFolder = "src/test/kotlin"
             val testContentRoots = arrayOf(
                 testKotlinFolder,
-                "$projectPath/src/test/java",
-                "$projectPath/src/test/resources",
+                "src/test/java",
+                *defaultTestResources(),
             )
 
-            assertContentRoots(mainModule, *mainContentRoots)
-            assertContentRootSources(mainModule, mainKotlinFolder, "")
+            assertRelativeContentRoots(mainModule, *mainContentRoots)
+            assertContentRootSources(mainModule, "$projectPath/$mainKotlinFolder", "")
 
-            assertContentRoots(testModule, *testContentRoots)
-            assertContentRootTestSources(testModule, testKotlinFolder, "")
+            assertRelativeContentRoots(testModule, *testContentRoots)
+            assertContentRootTestSources(testModule, "$projectPath/$testKotlinFolder", "")
         }
     }
 }

@@ -69,12 +69,12 @@ interface OperationLogStorage {
   fun persistentSize(): Long
 
   /**
-   * A [Iterator] that is initially positioned at the beginning of the storage.
+   * An [Iterator] that is initially positioned at the beginning of the storage.
    */
   fun begin(): Iterator
 
   /**
-   * A [Iterator] that is initially positioned at the end of the storage.
+   * An [Iterator] that is initially positioned at the end of the storage.
    */
   fun end(): Iterator
 
@@ -107,12 +107,12 @@ interface OperationLogStorage {
   /**
    * [Iterator] gets invalidated in case [OperationReadResult.Invalid] was read, and its [hasNext] and [hasPrevious]
    * will return false afterward in such case.
-   *
-   * Comparison is performed in terms of relative position, e.g. `iter1 < iter2` means that `iter1` is positioned strictly before `iter2`
    */
-  interface Iterator : Comparable<Iterator>, BiDiIterator<OperationReadResult> {
+  interface Iterator : BiDiIterator<OperationReadResult> {
+    fun getPosition(): Long
+
     /**
-     * Creates a complete and independent copy of an iterator.
+     * Creates a complete copy of the iterator.
      */
     fun copy(): Iterator
 
@@ -129,14 +129,9 @@ interface OperationLogStorage {
 
   enum class TraverseDirection {
     /** absolute position decreases */
-    RETREAT,
-    /** absolute position increases */
-    ADVANCE
-  }
+    REWIND,
 
-  fun Iterator.move(direction: TraverseDirection) =
-    when (direction) {
-      TraverseDirection.RETREAT -> previous()
-      TraverseDirection.ADVANCE -> next()
-    }
+    /** absolute position increases */
+    PLAY
+  }
 }

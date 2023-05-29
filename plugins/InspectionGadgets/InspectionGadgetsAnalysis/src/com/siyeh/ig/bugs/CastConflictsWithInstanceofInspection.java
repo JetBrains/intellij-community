@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.openapi.project.Project;
@@ -25,7 +27,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,10 +42,10 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(final Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(final Object... infos) {
     final String castExpressionType = ((PsiTypeElement)infos[1]).getText();
     final String instanceofType = ((PsiTypeElement)infos[2]).getText();
-    return new InspectionGadgetsFix[]{
+    return new LocalQuickFix[]{
       new ReplaceCastFix(instanceofType, castExpressionType),
       new ReplaceInstanceofFix(instanceofType, castExpressionType)
     };
@@ -77,14 +78,13 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
     }
   }
 
-  private abstract static class ReplaceFix extends InspectionGadgetsFix {
+  private abstract static class ReplaceFix extends PsiUpdateModCommandQuickFix {
 
     protected ReplaceFix() {
     }
 
     @Override
-    protected final void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiTypeElement castTypeElement;
       final PsiReferenceExpression reference;
       if (element instanceof PsiTypeCastExpression typeCastExpression) {

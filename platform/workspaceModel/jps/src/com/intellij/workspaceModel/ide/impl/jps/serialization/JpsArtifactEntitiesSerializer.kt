@@ -4,11 +4,13 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.jps.model.diagnostic.JpsMetrics
 import com.intellij.platform.workspaceModel.jps.*
-import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
-import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
+import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -16,12 +18,14 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import io.opentelemetry.api.metrics.Meter
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.artifact.ArtifactPropertiesState
 import org.jetbrains.jps.model.serialization.artifact.ArtifactState
 import org.jetbrains.jps.util.JpsPathUtil
+import java.util.concurrent.atomic.AtomicLong
 
 internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<ArtifactEntity> {
   override val componentName: String
@@ -103,9 +107,10 @@ internal class JpsArtifactsExternalFileSerializer(private val externalFile: JpsP
     val artifactName = XmlSerializer.deserialize(artifactTag, ArtifactState::class.java).name
     val existingInternalSource = fileInDirectorySourceNames.findSource(mainEntityClass, artifactName)
     val internalEntitySource = if (existingInternalSource != null && existingInternalSource.directory == internalArtifactsDirUrl) {
-      logger<JpsLibrariesExternalFileSerializer>().debug{ "Reuse existing source for artifact: ${existingInternalSource.fileNameId}=$artifactName" }
+      logger<JpsLibrariesExternalFileSerializer>().debug { "Reuse existing source for artifact: ${existingInternalSource.fileNameId}=$artifactName" }
       existingInternalSource
-    } else {
+    }
+    else {
       JpsProjectFileEntitySource.FileInDirectory(internalArtifactsDirUrl, externalFile.projectLocation)
     }
     return JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
@@ -116,7 +121,9 @@ internal class JpsArtifactsExternalFileSerializer(private val externalFile: JpsP
   }
 }
 
-internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl, entitySource: JpsFileEntitySource, virtualFileManager: VirtualFileUrlManager)
+internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl,
+                                          entitySource: JpsFileEntitySource,
+                                          virtualFileManager: VirtualFileUrlManager)
   : JpsArtifactEntitiesSerializer(fileUrl, entitySource, true, virtualFileManager), JpsFileEntityTypeSerializer<ArtifactEntity> {
   override val isExternalStorage: Boolean
     get() = false
@@ -145,6 +152,8 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
                             virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
+    val start = System.currentTimeMillis()
+
     val artifactListElement = runCatchingXmlIssues { reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME) }
       .onFailure { return LoadingResult(emptyMap(), it) }
       .getOrThrow()
@@ -174,12 +183,16 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
           artifactEntity
         }
       }
-    return LoadingResult(
+
+    val loadingResult: LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> = LoadingResult(
       mapOf(
         ArtifactsOrderEntity::class.java to listOf(ArtifactsOrderEntity(orderOfItems, internalEntitySource)),
         ArtifactEntity::class.java to artifactEntities.mapNotNull { it.getOrNull() },
       ),
       artifactEntities.firstOrNull { it.isFailure }?.exceptionOrNull())
+
+    loadEntitiesTimeMs.addElapsedTimeMs(start)
+    return loadingResult
   }
 
   override fun checkAndAddToBuilder(builder: MutableEntityStorage,
@@ -276,6 +289,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
                             entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                             storage: EntityStorage,
                             writer: JpsFileContentWriter) {
+    val start = System.currentTimeMillis()
     if (mainEntities.isEmpty()) return
 
     val componentTag = JDomSerializationUtil.createComponentElement(ARTIFACT_MANAGER_COMPONENT_NAME)
@@ -285,6 +299,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       componentTag.addContent(saveArtifact(it))
     }
     writer.saveComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME, componentTag)
+    saveEntitiesTimeMs.addElapsedTimeMs(start)
   }
 
   private fun saveArtifact(artifact: ArtifactEntity): Element {
@@ -393,4 +408,30 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   }
 
   override fun toString(): String = "${javaClass.simpleName.substringAfterLast('.')}($fileUrl)"
+
+  companion object {
+    private val loadEntitiesTimeMs: AtomicLong = AtomicLong()
+    private val saveEntitiesTimeMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val loadEntitiesTimeGauge = meter.gaugeBuilder("jps.artifact.entities.serializer.load.entities.ms")
+        .ofLongs().buildObserver()
+
+      val saveEntitiesTimeGauge = meter.gaugeBuilder("jps.artifact.entities.serializer.save.entities.ms")
+        .ofLongs().buildObserver()
+
+
+      meter.batchCallback(
+        {
+          loadEntitiesTimeGauge.record(loadEntitiesTimeMs.get())
+          saveEntitiesTimeGauge.record(saveEntitiesTimeMs.get())
+        },
+        loadEntitiesTimeGauge, saveEntitiesTimeGauge
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(JpsMetrics.getInstance().meter)
+    }
+  }
 }

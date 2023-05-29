@@ -36,7 +36,7 @@ final class LineMarkersPassFactory implements TextEditorHighlightingPassFactoryR
   @NotNull
   static TextEditorHighlightingPass createLineMarkersPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull LineMarkersPass.Mode myMode,
                                                           int passId) {
-    TextRange dirtyTextRange = FileStatusMap.getDirtyTextRange(editor, passId);
+    TextRange dirtyTextRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, passId);
     Document document = editor.getDocument();
     Project project = file.getProject();
     if (dirtyTextRange == null || myMode == LineMarkersPass.Mode.NONE) {

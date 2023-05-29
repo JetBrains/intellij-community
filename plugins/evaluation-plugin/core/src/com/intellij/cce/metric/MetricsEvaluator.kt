@@ -44,10 +44,20 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
   private fun registerMetrics(metrics: Collection<Metric>) = this.metrics.addAll(metrics)
 
   fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator = SuggestionsComparator.DEFAULT): List<MetricInfo> {
-    return metrics.map { MetricInfo(it.name, it.evaluate(sessions, comparator).toDouble(), evaluationType, it.valueType, it.showByDefault) }
+    val result =  metrics.map {
+      MetricInfo(
+        name = it.name,
+        value = it.evaluate(sessions, comparator).toDouble(),
+        confidenceInterval = null,
+        evaluationType = evaluationType,
+        valueType = it.valueType,
+        showByDefault = it.showByDefault
+      )
+    }
+    return result
   }
 
   fun result(): List<MetricInfo> {
-    return metrics.map { MetricInfo(it.name, it.value, evaluationType, it.valueType, it.showByDefault) }
+    return metrics.map { MetricInfo(it.name, it.value, it.confidenceInterval(), evaluationType, it.valueType, it.showByDefault) }
   }
 }

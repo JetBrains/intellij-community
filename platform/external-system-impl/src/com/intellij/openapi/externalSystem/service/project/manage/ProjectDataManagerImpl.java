@@ -206,7 +206,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
 
       Application app = ApplicationManager.getApplication();
       if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
-        StartUpPerformanceService.getInstance().reportStatistics(project);
+        StartUpPerformanceService.Companion.getInstance().reportStatistics(project);
       }
     }
   }

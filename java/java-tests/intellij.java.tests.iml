@@ -69,7 +69,7 @@
     <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jaxb-api" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />

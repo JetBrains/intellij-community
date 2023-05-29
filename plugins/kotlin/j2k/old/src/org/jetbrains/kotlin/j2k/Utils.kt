@@ -119,7 +119,7 @@ fun isFacadeClassFromLibrary(element: PsiElement?) = element is KtLightClass && 
 
 fun Converter.convertToKotlinAnalog(classQualifiedName: String?, mutability: Mutability): String? {
     if (classQualifiedName == null) return null
-    return (if (mutability.isMutable(settings)) toKotlinMutableTypesMap[classQualifiedName] else null)
+    return (if (mutability.isMutable()) toKotlinMutableTypesMap[classQualifiedName] else null)
            ?: toKotlinTypesMap[classQualifiedName]
 }
 

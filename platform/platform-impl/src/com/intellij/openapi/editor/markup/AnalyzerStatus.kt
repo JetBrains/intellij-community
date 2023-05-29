@@ -14,8 +14,7 @@ import javax.swing.Icon
 @Internal
 class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:Nls val details: String, val controller: UIController) {
   @Deprecated("use primary constructor")
-  constructor(icon: Icon, @Nls title: String, @Nls details: String, controllerCreator: () -> UIController) : this(icon, title, details, controllerCreator.invoke()) {
-  }
+  constructor(icon: Icon, @Nls title: String, @Nls details: String, controllerCreator: () -> UIController) : this(icon, title, details, controllerCreator.invoke())
 
   var showNavigation : Boolean = false
   var expandedStatus: List<StatusItem> = emptyList()

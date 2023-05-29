@@ -7,7 +7,6 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.*;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.GitSilentFileAdderProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,7 +25,6 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
@@ -38,11 +36,11 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.impl.DependentSdkType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -79,8 +77,8 @@ import java.util.function.Consumer;
 
 import static com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC;
 
-@SuppressWarnings("unused")
 public abstract class AbstractGradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
+
   private static final Logger LOG = Logger.getInstance(AbstractGradleModuleBuilder.class);
 
   private static final String TEMPLATE_GRADLE_SETTINGS = "Gradle Settings.gradle";
@@ -281,19 +279,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   }
 
   @Override
-  public abstract ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider);
-
-  @Override
-  public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
-    return new GradleSdkSettingsStep(settingsStep, this);
-  }
-
-  @Nullable
-  @Override
-  public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
-    final GradleFrameworksWizardStep step = new GradleFrameworksWizardStep(context, this);
-    Disposer.register(parentDisposable, step);
-    return step;
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
+    return ModuleWizardStep.EMPTY_ARRAY;
   }
 
   @Override
@@ -458,6 +445,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     return virtualFile;
   }
 
+  @SuppressWarnings("unused") // Kotlin
   public @Nullable ProjectData getParentProject() {
     return myParentProject;
   }
@@ -470,6 +458,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     return myParentProject == null;
   }
 
+  @SuppressWarnings("unused") // Kotlin
   public boolean isInheritGroupId() {
     return myInheritGroupId;
   }
@@ -478,6 +467,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     myInheritGroupId = inheritGroupId;
   }
 
+  @SuppressWarnings("unused") // Kotlin
   public boolean isInheritVersion() {
     return myInheritVersion;
   }

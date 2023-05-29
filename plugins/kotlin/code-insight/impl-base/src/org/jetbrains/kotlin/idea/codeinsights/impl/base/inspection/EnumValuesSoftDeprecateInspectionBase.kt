@@ -11,13 +11,14 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.codeInsight.getEntriesPropertyOfEnumClass
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.base.codeInsight.isSoftDeprecatedEnumValuesMethod
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -47,23 +48,31 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
                     return
                 }
                 analyze(callExpression) {
-                    if (!isOptInAllowed(callExpression, EXPERIMENTAL_ANNOTATION_CLASS_ID)) {
-                        return
-                    }
                     val resolvedCall = callExpression.resolveCall().successfulFunctionCallOrNull() ?: return
                     val resolvedCallSymbol = resolvedCall.partiallyAppliedSymbol.symbol
-                    if (isSoftDeprecatedEnumValuesMethod(resolvedCallSymbol)) {
-                        val quickFix = createQuickFix(callExpression, resolvedCallSymbol) ?: return
-                        session.updateDeprecationData { it.withDeprecatedFeature() }
-                        holder.registerProblem(
-                            callExpression,
-                            KotlinBundle.message("inspection.enum.values.method.soft.deprecate.migration.display.name"),
-                            quickFix
-                        )
+                    val enumClassSymbol = (resolvedCallSymbol.getContainingSymbol() as? KtClassOrObjectSymbol) ?: return
+
+                    if (!isSoftDeprecatedEnumValuesMethod(resolvedCallSymbol, enumClassSymbol)) {
+                        return
                     }
+                    val enumEntriesPropertySymbol = getEntriesPropertyOfEnumClass(enumClassSymbol) ?: return
+                    val optInRequired = isOptInRequired(enumEntriesPropertySymbol) ?: return
+                    if (optInRequired && !isOptInAllowed(callExpression, EXPERIMENTAL_ANNOTATION_CLASS_ID)) {
+                        return
+                    }
+                    val quickFix = createQuickFix(callExpression, resolvedCallSymbol) ?: return
+                    session.updateDeprecationData { it.withDeprecatedFeature() }
+                    holder.registerProblem(
+                        callExpression,
+                        KotlinBundle.message("inspection.enum.values.method.soft.deprecate.migration.display.name"),
+                        quickFix
+                    )
                 }
             })
         }
+
+    private fun KtAnalysisSession.isOptInRequired(enumEntriesPropertySymbol: KtCallableSymbol): Boolean? =
+        enumEntriesPropertySymbol.returnType.expandedClassSymbol?.hasAnnotation(EXPERIMENTAL_ANNOTATION_CLASS_ID)
 
     protected abstract fun KtAnalysisSession.isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean
 
@@ -82,7 +91,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         val parent = qualifiedOrSimpleCall.parent
         // Special handling for most popular use cases where `entries` can be used without cast to Array
         when {
-            parent is KtBlockExpression -> return ReplaceFixType.WITHOUT_CAST
+            parent is KtBlockExpression && parent.parent is KtNamedFunction -> return ReplaceFixType.WITHOUT_CAST
 
             // values()[index]
             parent is KtArrayAccessExpression && parent.parent !is KtBinaryExpression -> return ReplaceFixType.WITHOUT_CAST
@@ -166,27 +175,37 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         // programmatically search method overload suitable for use with List.
         // These are not all the collections methods, but only methods which chosen based on usages found in intellij and kotlin repositories.
         private val METHOD_IDS_SUITABLE_FOR_LIST = setOf(
-            "kotlin/Array.size",
             "kotlin/Array.get",
             "kotlin/Array.iterator",
+            "kotlin/Array.size",
             "kotlin/collections/any",
             "kotlin/collections/asIterable",
             "kotlin/collections/asSequence",
             "kotlin/collections/associate",
             "kotlin/collections/associateBy",
             "kotlin/collections/associateWith",
+            "kotlin/collections/drop",
+            "kotlin/collections/dropLast",
+            "kotlin/collections/dropLastWhile",
+            "kotlin/collections/dropWhile",
             "kotlin/collections/filter",
             "kotlin/collections/filterNot",
+            "kotlin/collections/filterTo",
             "kotlin/collections/find",
             "kotlin/collections/first",
             "kotlin/collections/firstNotNullOfOrNull",
             "kotlin/collections/firstOrNull",
             "kotlin/collections/flatMap",
+            "kotlin/collections/fold",
+            "kotlin/collections/foldIndexed",
+            "kotlin/collections/foldRight",
+            "kotlin/collections/foldRightIndexed",
             "kotlin/collections/forEach",
             "kotlin/collections/forEachIndexed",
             "kotlin/collections/getOrNull",
             "kotlin/collections/groupBy",
             "kotlin/collections/indexOf",
+            "kotlin/collections/joinTo",
             "kotlin/collections/joinToString",
             "kotlin/collections/last",
             "kotlin/collections/map",

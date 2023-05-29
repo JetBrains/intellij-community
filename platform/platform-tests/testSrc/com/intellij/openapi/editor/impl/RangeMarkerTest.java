@@ -393,7 +393,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     WriteAction.run(() -> {
       synchronizer.startTransaction(getProject(), document, psiFile);
 
-      String newText = StringUtil.replaceSubstring(document.getText(), TextRange.create(marker), "");
+      String newText = StringUtil.replaceSubstring(document.getText(), marker.getTextRange(), "");
       synchronizer.replaceString(document, 0, document.getTextLength(), newText);
 
       final List<DocumentEvent> events = new ArrayList<>();
@@ -887,7 +887,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
             int x = gen.nextInt(N);
             int y = x + gen.nextInt(N - x);
             RangeMarkerEx r = (RangeMarkerEx)finalDocument.createRangeMarker(x, y);
-            adds.add(Pair.create(r, TextRange.create(r)));
+            adds.add(Pair.create(r, r.getTextRange()));
           }
 
           for (int i = 0; i < 10; i++) {
@@ -1438,9 +1438,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     WriteCommandAction.runWriteCommandAction(getProject(), ()->document.insertString(2,"000"));
     assertTrue(marker[0].isValid());
-    assertEquals("bl000ah", TextRange.create(marker[0]).substring(document.getText()));
+    assertEquals("bl000ah", marker[0].getTextRange().substring(document.getText()));
     assertTrue(persistentMarker[0].isValid());
-    assertEquals("bl000ah", TextRange.create(persistentMarker[0]).substring(document.getText()));
+    assertEquals("bl000ah", persistentMarker[0].getTextRange().substring(document.getText()));
     gcDocument();
     checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(vf, marker, persistentMarker);
   }
@@ -1490,9 +1490,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertEquals(newText, document.getText());
 
     assertTrue(marker[0].isValid());
-    assertEquals("la", TextRange.create(marker[0]).substring(document.getText()));
+    assertEquals("la", marker[0].getTextRange().substring(document.getText()));
     assertTrue(persistentMarker[0].isValid());
-    assertEquals("la", TextRange.create(persistentMarker[0]).substring(document.getText()));
+    assertEquals("la", persistentMarker[0].getTextRange().substring(document.getText()));
     gcDocument();
     checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(vf, marker, persistentMarker);
   }
@@ -1570,9 +1570,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     RangeMarker[] marker = {createMarker(psiFile, 1, 3)};
     RangeMarker[] persistentMarker = {document.createRangeMarker(1, 3, true)};
     assertTrue(marker[0].isValid());
-    assertEquals("la", TextRange.create(marker[0]).substring(document.getText()));
+    assertEquals("la", marker[0].getTextRange().substring(document.getText()));
     assertTrue(persistentMarker[0].isValid());
-    assertEquals("la", TextRange.create(persistentMarker[0]).substring(document.getText()));
+    assertEquals("la", persistentMarker[0].getTextRange().substring(document.getText()));
     int docHash1 = System.identityHashCode(document);
     assertNotSame(docHash0, docHash1);
     assertTrue(oldmarker[0].isValid());
@@ -1592,9 +1592,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     WriteCommandAction.runWriteCommandAction(getProject(), ()->document.insertString(2,"000"));
 
     assertTrue(marker[0].isValid());
-    assertEquals("l000a", TextRange.create(marker[0]).substring(document.getText()));
+    assertEquals("l000a", marker[0].getTextRange().substring(document.getText()));
     assertTrue(persistentMarker[0].isValid());
-    assertEquals("l000a", TextRange.create(persistentMarker[0]).substring(document.getText()));
+    assertEquals("l000a", persistentMarker[0].getTextRange().substring(document.getText()));
     assertTrue(oldmarker[0].isValid());
     oldmarker[0] = null;
     gcDocument();

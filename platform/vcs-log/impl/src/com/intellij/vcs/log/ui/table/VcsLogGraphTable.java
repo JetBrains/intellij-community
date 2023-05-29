@@ -890,7 +890,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       getExpandableItemsHandler().setEnabled(true);
     }
 
-    private class MyLinkMouseListener extends SimpleColoredComponentLinkMouseListener {
+    private static class MyLinkMouseListener extends SimpleColoredComponentLinkMouseListener {
       @Override
       public @Nullable Object getTagAt(@NotNull MouseEvent e) {
         return ObjectUtils.tryCast(super.getTagAt(e), SimpleColoredComponent.BrowserLauncherTag.class);

@@ -25,11 +25,11 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
   @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.EXTERNAL_TOOLS) == null ? null : file.getTextRange();
+    TextRange textRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.EXTERNAL_TOOLS) == null ? null : file.getTextRange();
     if (textRange == null || !externalAnnotatorsDefined(file)) {
       return null;
     }
-    return new ExternalToolPass(file, editor.getDocument(), editor, textRange.getStartOffset(), textRange.getEndOffset(), new DefaultHighlightInfoProcessor(), false);
+    return new ExternalToolPass(file, editor.getDocument(), editor, textRange.getStartOffset(), textRange.getEndOffset(), new DefaultHighlightInfoProcessor());
   }
 
   private static boolean externalAnnotatorsDefined(@NotNull PsiFile file) {
@@ -51,6 +51,6 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
     if (range == null || !externalAnnotatorsDefined(file)) {
       return null;
     }
-    return new ExternalToolPass(file, document, null, range.getStartOffset(), range.getEndOffset(), highlightInfoProcessor, true);
+    return new ExternalToolPass(file, document, null, range.getStartOffset(), range.getEndOffset(), highlightInfoProcessor);
   }
 }

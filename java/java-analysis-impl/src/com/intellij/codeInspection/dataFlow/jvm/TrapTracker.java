@@ -29,14 +29,6 @@ public class TrapTracker {
   private final @NotNull DfaValueFactory myFactory;
   private final @NotNull Map<String, ExceptionTransfer> myExceptionCache;
 
-  /**
-   * @deprecated use {@link #TrapTracker(DfaValueFactory, TypeConstraints.TypeConstraintFactory)}
-   */
-  @Deprecated(forRemoval = true)
-  public TrapTracker(@NotNull DfaValueFactory factory, @NotNull PsiElement context) {
-    this(factory, JavaClassDef.typeConstraintFactory(context));
-  }
-
   public TrapTracker(@NotNull DfaValueFactory factory, @NotNull TypeConstraints.TypeConstraintFactory typeConstraintFactory) {
     myFactory = factory;
     myExceptionCache = FactoryMap.create(fqn -> new ExceptionTransfer(typeConstraintFactory.create(fqn).instanceOf()));

@@ -13,8 +13,8 @@ import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -760,7 +760,9 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
     Set<MavenRemoteRepository> repositories = myProjectsManager.getRemoteRepositories();
     MavenEmbeddersManager embeddersManager = myProjectsManager.getEmbeddersManager();
-    MavenEmbedderWrapper mavenEmbedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, "");
+    var mavenEmbedderWrapper = embeddersManager.getEmbedder(
+      MavenEmbeddersManager.FOR_POST_PROCESSING,
+      MavenUtil.getBaseDir(projectPom).toString());
 
     Set<String> repoIds = mavenEmbedderWrapper.resolveRepositories(repositories).stream()
       .map(r -> r.getId())
@@ -1029,8 +1031,12 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
       p("org.apache.maven.plugins", "maven-surefire-plugin"));
     List<PluginInfo> expectedList = new ArrayList<>();
     expectedList.addAll(defaultPlugins);
+    if (isMaven4()) {
+      expectedList.add(p("org.apache.maven.plugins", "maven-wrapper-plugin"));
+    }
     expectedList.addAll(Arrays.asList(expected));
-    assertUnorderedElementsAreEqual(p(getMavenProject().getDeclaredPlugins()), expectedList);
+    List<PluginInfo> actualList = p(getMavenProject().getDeclaredPlugins());
+    assertUnorderedElementsAreEqual(actualList, expectedList);
   }
 
   private MavenPlugin findPlugin(String groupId, String artifactId) {

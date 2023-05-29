@@ -119,7 +119,7 @@ public abstract class NonCodeMembersContributor {
   @NotNull
   protected Collection<String> getClassNames() {
     String className = getParentClassName();
-    return className == null ? Collections.emptyList() : Collections.singletonList(className);
+    return ContainerUtil.createMaybeSingletonList(className);
   }
 
   private static void dropCache() {

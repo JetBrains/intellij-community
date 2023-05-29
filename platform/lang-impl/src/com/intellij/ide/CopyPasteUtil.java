@@ -8,7 +8,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.util.function.Consumer;
 
@@ -16,10 +15,6 @@ import static com.intellij.openapi.application.ApplicationManager.getApplication
 
 public final class CopyPasteUtil {
   private CopyPasteUtil() { }
-
-  public static void copyTextToClipboard(@NotNull String text) {
-    CopyPasteManager.getInstance().setContents(new StringSelection(text));
-  }
 
   public static PsiElement[] getElementsInTransferable(Transferable t) {
     final PsiElement[] elts = PsiCopyPasteManager.getElements(t);

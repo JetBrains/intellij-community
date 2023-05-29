@@ -1,13 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared
 
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.common.runAll
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection
+import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
-
     fun `test elvis elvis`() = doTest("fun foo(i: Int?, j: Int?, k: Int?) = i ?: j <caret>?: k")
 
     fun `test elvis as`() = doTest(
@@ -113,4 +116,15 @@ class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsight
     }
 
     override fun isFirPlugin(): Boolean = true
+
+    override fun getProjectDescriptor(): LightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    }
+
+    override fun tearDown() {
+        runAll(
+          { project.invalidateCaches() },
+          { super.tearDown() }
+        )
+    }
 }

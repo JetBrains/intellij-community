@@ -98,8 +98,7 @@ internal class ProgressDialogUI : Disposable {
         return SwingUtilities.getAncestorOfClass(DialogWrapperDialog::class.java, component)
       }
     }
-    titlePanel.addMouseListener(moveListener)
-    titlePanel.addMouseMotionListener(moveListener)
+    moveListener.installTo(titlePanel)
   }
 
   override fun dispose() {

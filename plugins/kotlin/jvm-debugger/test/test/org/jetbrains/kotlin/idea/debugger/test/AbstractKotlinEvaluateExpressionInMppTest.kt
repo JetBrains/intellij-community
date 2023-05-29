@@ -7,12 +7,17 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.addRoot
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -73,16 +78,24 @@ import java.io.File
  * ```
  */
 abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluateExpressionTest() {
+    private lateinit var context: ConfigurationContext
+    private lateinit var perModuleLibraryOutputDirectory: File
+    private lateinit var perModuleLibrarySourceDirectory: File
+
     override fun useIrBackend() = true
 
     override fun fragmentCompilerBackend() =
         FragmentCompilerBackend.JVM_IR
 
-    override fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>) {
-        val context = ConfigurationContext(
+    override fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>, testAppDirectory: File) {
+        perModuleLibraryOutputDirectory = File(testAppDirectory, "perModuleLibs").apply { mkdirs() }
+        perModuleLibrarySourceDirectory = File(testAppDirectory, "perModuleLibsSrc").apply { mkdirs() }
+
+        context = ConfigurationContext(
             filesByModules = testFiles.groupBy(TestFileWithModule::module),
             dependsOnEdges = MultiMap.create(),
             workspaceModuleMap = mutableMapOf(),
+            librariesByModule = mutableMapOf()
         )
 
         check(context.filesByModules.keys.filterIsInstance<DebuggerTestModule.Jvm>().size == 1) {
@@ -93,7 +106,46 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
             configureModuleByTestFiles(module, files, context)
         }
 
+        for ((module, library) in context.librariesByModule) {
+            configureModuleLibraryDependency(library, context.workspaceModuleMap[module]!!)
+        }
+
         setUpExtraModuleDependenciesFromDependsOnEdges(context)
+    }
+
+    private fun configureModuleLibraryDependency(library: String, module: Module) {
+        if (library.startsWith("maven(")) {
+            configureModuleMavenLibraryDependency(library, module)
+        } else {
+            configureModuleCustomBuiltLibraryDependency(library, module)
+        }
+    }
+
+    private fun configureModuleCustomBuiltLibraryDependency(library: String, module: Module) {
+        val libraryPath = File(perModuleLibraryOutputDirectory, module.name).apply { mkdirs() }
+        runInEdtAndWait {
+            ConfigLibraryUtil.addLibrary(module, library) {
+                addRoot(libraryPath, OrderRootType.CLASSES)
+            }
+        }
+    }
+
+    private fun configureModuleMavenLibraryDependency(library: String, module: Module) {
+        val regex = Regex(MAVEN_DEPENDENCY_REGEX)
+        val match = regex.matchEntire(library)
+        check(match != null) {
+            "Cannot parse maven dependency: '$library'"
+        }
+        val (_, groupId: String, artifactId: String, version: String) = match.groupValues
+        val description = JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version)
+        val artifacts = loadDependencies(description)
+        runInEdtAndWait {
+            ConfigLibraryUtil.addLibrary(module, "ARTIFACTS") {
+                for (artifact in artifacts) {
+                    addRoot(artifact.file, artifact.type)
+                }
+            }
+        }
     }
 
     private fun configureModuleByTestFiles(
@@ -161,6 +213,12 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
             }
         }
 
+        val library = findAtMostOneDirectiveInModuleFiles(moduleFiles, ATTACH_LIBRARY_TO_IDE_MODULE.toPrefix())
+
+        if (library != null) {
+            context.librariesByModule[module] = library
+        }
+
         val allModuleNames = context.filesByModules.keys.map(DebuggerTestModule::name)
         val dependsOnModuleNames = module.dependenciesSymbols
 
@@ -206,10 +264,20 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
         return MppDebuggerCompilerFacility(project, testFiles, jvmTarget, compileConfig)
     }
 
+    // Compile the ATTACH_LIBRARY_TO_IDE_MODULE libraries into per module output directories
+    // so that individual modules can depend on a subset of the libraries.
+    override fun compileAdditionalLibraries(compilerFacility: DebuggerTestCompilerFacility) {
+        for ((module, library) in context.librariesByModule) {
+            val moduleLibOutput = File(perModuleLibraryOutputDirectory, module.name).apply { mkdirs() }
+            compilerFacility.compileExternalLibrary(library, perModuleLibrarySourceDirectory, moduleLibOutput)
+        }
+    }
+
     private class ConfigurationContext(
         val filesByModules: Map<DebuggerTestModule, List<TestFileWithModule>>,
         val dependsOnEdges: MultiMap<DebuggerTestModule, DebuggerTestModule>,
-        val workspaceModuleMap: MutableMap<DebuggerTestModule, Module>
+        val workspaceModuleMap: MutableMap<DebuggerTestModule, Module>,
+        val librariesByModule: MutableMap<DebuggerTestModule, String>
     )
 
     companion object {
@@ -225,6 +293,26 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
         private const val PLATFORM_DIRECTIVE = "PLATFORM"
         private const val JVM_PLATFORM = "JVM"
         private const val COMMON_PLATFORM = "COMMON"
+
+        // This directive attaches a library to the IDE module only. It does not add the library
+        // to the initial compilation classpath. This allows the creation of modules with
+        // dependencies in the project that are independent of the code being compiled and run.
+        //
+        // The expected format of the directive is either:
+        //
+        //   ATTACH_LIBRARY_TO_IDE_MODULE: directory
+        //
+        // where `directory` is a directory under `plugins/kotlin/jvm-debugger/test/testData/lib`
+        // that contains the code for the library. The directive itself must appear in the module
+        // to which the library should be added as a dependency.
+        //
+        // Or:
+        //
+        //  ATTACH_LIBRARY_TO_IDE_MODULE: maven(maven:coordinates:version)
+        //
+        // with maven coordinates for the library to attach to the IDE module the directive
+        // appears in.
+        private const val ATTACH_LIBRARY_TO_IDE_MODULE = "ATTACH_LIBRARY_TO_IDE_MODULE"
 
         private fun String.toPrefix() = "// $this:"
     }

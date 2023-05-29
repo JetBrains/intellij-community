@@ -251,7 +251,7 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
             resultElements.forEach { deleteCommentsInside(it) }
 
             if (commentsToRestore.isNotEmpty() || lineBreaksToRestore.isNotEmpty()) {
-                toNewPsiElementMap = HashMap<TreeElement, MutableCollection<PsiElement>>()
+                toNewPsiElementMap = HashMap()
                 for (element in resultElements) {
                     element.accept(object : PsiRecursiveElementVisitor() {
                         override fun visitElement(element: PsiElement) {

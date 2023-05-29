@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.configurationStore.StoreReloadManager
@@ -8,8 +8,6 @@ import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -30,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspaceModel.jps.*
 import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.project.stateStore
@@ -49,8 +48,6 @@ import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -187,7 +184,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       }
     }
 
-    reloadProjectEntitiesTimeMs.addAndGet(System.currentTimeMillis() - start)
+    reloadProjectEntitiesTimeMs.addElapsedTimeMs(start)
   }
 
   private inline fun <T> loadAndReportErrors(action: (ErrorReporter) -> T): T {
@@ -318,7 +315,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       null
     }
 
-    jpsLoadProjectToEmptyStorageTimeMs.addAndGet(System.currentTimeMillis() - start)
+    jpsLoadProjectToEmptyStorageTimeMs.addElapsedTimeMs(start)
     return loadedProjectEntities
   }
 
@@ -329,35 +326,32 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       return
     }
 
-    withContext(Dispatchers.EDT) {
+    writeAction {
       // add logs
-      ApplicationManager.getApplication().runWriteAction {
-        if (project.isDisposed) return@runWriteAction
-        childActivity = childActivity?.endAndStart("applying loaded changes")
-        val description = "Apply JPS storage (iml files)"
-        val sourceFilter = { entitySource: EntitySource ->
-          entitySource is JpsFileEntitySource || entitySource is JpsFileDependentEntitySource || entitySource is CustomModuleEntitySource
-          || entitySource is DummyParentEntitySource
-        }
-        if (projectEntities.unloadedEntitiesBuilder.hasChanges()) {
-          WorkspaceModel.getInstance(project).updateUnloadedEntities(description) { updater ->
-            updater.replaceBySource(sourceFilter, projectEntities.unloadedEntitiesBuilder)
-          }
-        }
-        val unloadedBuilder = MutableEntityStorage.from(WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities)
-        WorkspaceModel.getInstance(project).updateProjectModel(description) { updater ->
-          updater.replaceBySource(sourceFilter, projectEntities.builder)
-          childActivity = childActivity?.endAndStart("unloaded modules loading")
-          runAutomaticModuleUnloader(updater, unloadedBuilder)
-        }
-        addUnloadedModuleEntities(unloadedBuilder)
-
-        EntitiesOrphanage.getInstance(project).update {
-          it.addDiff(projectEntities.orphanageBuilder)
-        }
-        childActivity?.end()
-        childActivity = null
+      childActivity = childActivity?.endAndStart("applying loaded changes")
+      val description = "Apply JPS storage (iml files)"
+      val sourceFilter = { entitySource: EntitySource ->
+        entitySource is JpsFileEntitySource || entitySource is JpsFileDependentEntitySource || entitySource is CustomModuleEntitySource
+        || entitySource is DummyParentEntitySource
       }
+      if (projectEntities.unloadedEntitiesBuilder.hasChanges()) {
+        WorkspaceModel.getInstance(project).updateUnloadedEntities(description) { updater ->
+          updater.replaceBySource(sourceFilter, projectEntities.unloadedEntitiesBuilder)
+        }
+      }
+      val unloadedBuilder = MutableEntityStorage.from(WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities)
+      WorkspaceModel.getInstance(project).updateProjectModel(description) { updater ->
+        updater.replaceBySource(sourceFilter, projectEntities.builder)
+        childActivity = childActivity?.endAndStart("unloaded modules loading")
+        runAutomaticModuleUnloader(updater, unloadedBuilder)
+      }
+      addUnloadedModuleEntities(unloadedBuilder)
+
+      EntitiesOrphanage.getInstance(project).update {
+        it.addDiff(projectEntities.orphanageBuilder)
+      }
+      childActivity?.end()
+      childActivity = null
     }
     sourcesToSave.clear()
     sourcesToSave.addAll(projectEntities.sourcesToUpdate)
@@ -365,7 +359,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     activity?.end()
     activity = null
 
-    applyLoadedStorageTimeMs.addAndGet(System.currentTimeMillis() - start)
+    applyLoadedStorageTimeMs.addElapsedTimeMs(start)
   }
 
   suspend fun loadProject(project: Project) {
@@ -428,7 +422,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     LOG.debugValues("Saving affected entities", affectedSources)
     data.saveEntities(storage, unloadedEntitiesStorage, affectedSources, writer)
 
-    saveChangedProjectEntitiesTimeMs.addAndGet(System.currentTimeMillis() - start)
+    saveChangedProjectEntitiesTimeMs.addElapsedTimeMs(start)
   }
 
   fun convertToDirectoryBasedFormat() {

@@ -188,6 +188,10 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
           }
         ).bindItem(codeInsightSettings::REFORMAT_ON_PASTE.toNullableProperty())
       }
+      row {
+        checkBox(ApplicationBundle.message("reformat.again.to.remove.custom.line.breaks")).
+          bindSelected(codeInsightSettings::ENABLE_SECOND_REFORMAT)
+      }
       for (configurable in configurables) {
         appendDslConfigurable(configurable)
       }

@@ -2,39 +2,27 @@
 @file:JvmName("ApplicationLoader")
 @file:Internal
 @file:Suppress("RAW_RUN_BLOCKING")
+
 package com.intellij.idea
 
 import com.intellij.diagnostic.*
-import com.intellij.history.LocalHistory
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.plugins.PluginSet
-import com.intellij.ide.ui.IconMapLoader
-import com.intellij.ide.ui.LafManager
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
-import com.intellij.openapi.components.service
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
-import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.ManagingFS
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
@@ -55,89 +43,18 @@ import java.util.function.BiFunction
 import kotlin.system.exitProcess
 
 @Suppress("SSBasedInspection")
-private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
+private val LOG: Logger
+  get() = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 fun initApplication(context: InitAppContext) {
   runBlocking(context.context) {
-    doInitApplication(rawArgs = context.args,
-                      appDeferred = context.appDeferred,
-                      initLafJob = context.initLafJob,
-                      euaTaskDeferred = context.euaTaskDeferred)
-  }
-}
-
-// executed in the main scope with a sequential dispatcher - don't forget this
-private suspend fun doInitApplication(rawArgs: List<String>,
-                                      appDeferred: Deferred<Application>,
-                                      initLafJob: Job,
-                                      euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
-  val initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization")
-  val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
-    PluginManagerCore.getInitPluginFuture().await()
-  }
-
-  val app = initAppActivity.runChild("app waiting") {
-    appDeferred.await() as ApplicationImpl
-  }
-
-  initAppActivity.runChild("app component registration") {
-    app.registerComponents(modules = pluginSet.getEnabledModules(),
-                           app = app,
-                           precomputedExtensionModel = null,
-                           listenerCallbacks = null)
-  }
-
-  val loadIconMapping = if (app.isHeadlessEnvironment) null else app.coroutineScope.launchAndMeasure("icon mapping loading") {
-    try {
-      service<IconMapLoader>().preloadIconMapping()
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-    }
-  }
-
-  withContext(Dispatchers.IO) {
-    initConfigurationStore(app)
-  }
-
-  coroutineScope {
-    // LaF must be initialized before app init because icons maybe requested and, as a result,
-    // a scale must be already initialized (especially important for Linux)
-    runActivity("init laf waiting") {
-      initLafJob.join()
-    }
-
-    euaTaskDeferred?.await()?.invoke()
-
-    // executed in the main scope
-    launch {
-      loadIconMapping?.join()
-      val lafManagerDeferred = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
-        app.getServiceAsync(LafManager::class.java)
-      }
-      if (!app.isHeadlessEnvironment) {
-        // preload only when LafManager is ready
-        lafManagerDeferred.join()
-        app.getServiceAsync(EditorColorsManager::class.java)
-      }
-    }
-
-    withContext(Dispatchers.Default) {
-      val args = rawArgs.filterNot { CommandLineArgs.isKnownArgument(it) }
-
-      val deferredStarter = runActivity("app starter creation") {
-        createAppStarterAsync(args)
-      }
-
-      initApplicationImpl(args = args,
-                          initAppActivity = initAppActivity,
-                          pluginSet = pluginSet,
-                          app = app,
-                          deferredStarter = deferredStarter)
-    }
+    val (app, preloadCriticalServicesJob) = context.appDeferred.await()
+    initApplicationImpl(args = context.args.filterNot { CommandLineArgs.isKnownArgument(it) },
+                        initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization"),
+                        pluginSet = PluginManagerCore.getPluginSet(),
+                        app = app as ApplicationImpl,
+                        preloadCriticalServicesJob = preloadCriticalServicesJob,
+                        asyncScope = this)
   }
 }
 
@@ -145,11 +62,20 @@ private suspend fun initApplicationImpl(args: List<String>,
                                         initAppActivity: Activity,
                                         pluginSet: PluginSet,
                                         app: ApplicationImpl,
-                                        deferredStarter: Deferred<ApplicationStarter>) {
-  val appInitializedListeners = coroutineScope {
-    preloadCriticalServices(app)
+                                        asyncScope: CoroutineScope,
+                                        preloadCriticalServicesJob: Deferred<Job>) {
+  val deferredStarter = subtask("app starter creation") {
+    createAppStarterAsync(args)
+  }
 
-    app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this, asyncScope = app.coroutineScope)
+  val appInitializedListeners = subtask("app preloading") {
+    subtask("app service preloading (sync)") {
+      app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this, asyncScope = asyncScope)
+    }
+
+    val appInitListeners = async(CoroutineName("app init listener preload")) {
+      getAppInitializedListeners(app)
+    }
 
     launch {
       initAppActivity.runChild("old component init task creating", app::createInitOldComponentsTask)?.let { loadComponentInEdtTask ->
@@ -162,26 +88,25 @@ private suspend fun initApplicationImpl(args: List<String>,
       StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
     }
 
-    runActivity("app init listener preload") {
-      getAppInitializedListeners(app)
+    // doesn't block app start-up
+    asyncScope.launch(CoroutineName("post app init tasks")) {
+      runPostAppInitTasks(app)
     }
+
+    asyncScope.launch {
+      addActivateAndWindowsCliListeners()
+    }
+
+    preloadCriticalServicesJob.await().join()
+    appInitListeners.await()
   }
 
-  val asyncScope = app.coroutineScope
-  coroutineScope {
-    initAppActivity.runChild("app initialized callback") {
-      callAppInitialized(appInitializedListeners, asyncScope)
-    }
-
-    // doesn't block app start-up
-    asyncScope.runPostAppInitTasks(app)
+  subtask("app initialized callback") {
+    // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
+    callAppInitialized(listeners = appInitializedListeners, asyncScope = app.coroutineScope)
   }
 
   initAppActivity.end()
-
-  asyncScope.launch {
-    addActivateAndWindowsCliListeners()
-  }
 
   val starter = deferredStarter.await()
   if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
@@ -204,33 +129,6 @@ private suspend fun initApplicationImpl(args: List<String>,
   }
   // no need to use a pool once started
   ZipFilePool.POOL = null
-}
-
-fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
-  launch {
-    // LocalHistory wants ManagingFS.
-    // It should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner.
-    app.getServiceAsync(ManagingFS::class.java).join()
-    // PlatformVirtualFileManager also wants ManagingFS
-    launch { app.getServiceAsync(VirtualFileManager::class.java) }
-    launch { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
-  }
-  launch {
-    // required for indexing tasks (see JavaSourceModuleNameIndex for example)
-    // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
-    app.getServiceAsync(PropertiesComponent::class.java).join()
-    app.getServiceAsync(FileTypeManager::class.java).join()
-
-    // ProjectJdkTable wants FileTypeManager
-    launch {
-      // and VirtualFilePointerManager
-      app.getServiceAsync(VirtualFilePointerManager::class.java).join()
-      app.getServiceAsync(ProjectJdkTable::class.java)
-    }
-
-    // wants PropertiesComponent
-    launch { app.getServiceAsync(DebugLogManager::class.java) }
-  }
 }
 
 fun getAppInitializedListeners(app: Application): List<ApplicationInitializedListener> {
@@ -271,15 +169,16 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
     AnimatedIcon.FS()
   }
 
-  if (!app.isUnitTestMode && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
-    val extensionPoint = app.extensionArea.getExtensionPoint<PreloadingActivity>("com.intellij.preloadingActivity")
-    val isDebugEnabled = LOG.isDebugEnabled
-    ExtensionPointName<PreloadingActivity>("com.intellij.preloadingActivity").processExtensions { preloadingActivity, pluginDescriptor ->
-      launch {
-        executePreloadActivity(preloadingActivity, pluginDescriptor, isDebugEnabled)
+  launch {
+    if (!app.isUnitTestMode && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
+      val extensionPoint = app.extensionArea.getExtensionPoint<PreloadingActivity>("com.intellij.preloadingActivity")
+      ExtensionPointName<PreloadingActivity>("com.intellij.preloadingActivity").processExtensions { preloadingActivity, pluginDescriptor ->
+        launch {
+          executePreloadActivity(preloadingActivity, pluginDescriptor)
+        }
       }
+      extensionPoint.reset()
     }
-    extensionPoint.reset()
   }
 }
 
@@ -393,29 +292,6 @@ fun findStarter(key: String): ApplicationStarter? {
   return ApplicationStarter.EP_NAME.findByIdOrFromInstance(key) { it.commandName }
 }
 
-fun initConfigurationStore(app: ApplicationImpl) {
-  var activity = StartUpMeasurer.startActivity("beforeApplicationLoaded")
-  val configPath = PathManager.getConfigDir()
-  for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
-    try {
-      (listener ?: break).beforeApplicationLoaded(app, configPath)
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-    }
-  }
-
-  activity = activity.endAndStart("init app store")
-
-  // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
-  app.stateStore.setPath(configPath)
-  StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
-  activity.end()
-}
-
 fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedListener>, asyncScope: CoroutineScope) {
   for (listener in listeners) {
     launch {
@@ -424,7 +300,7 @@ fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedList
   }
 }
 
-private suspend fun executePreloadActivity(activity: PreloadingActivity, descriptor: PluginDescriptor?, isDebugEnabled: Boolean) {
+private suspend fun executePreloadActivity(activity: PreloadingActivity, descriptor: PluginDescriptor?) {
   val measureActivity = if (descriptor == null) {
     null
   }
@@ -434,9 +310,6 @@ private suspend fun executePreloadActivity(activity: PreloadingActivity, descrip
 
   try {
     activity.execute()
-    if (isDebugEnabled) {
-      LOG.debug("${activity.javaClass.name} finished")
-    }
   }
   catch (e: CancellationException) {
     throw e

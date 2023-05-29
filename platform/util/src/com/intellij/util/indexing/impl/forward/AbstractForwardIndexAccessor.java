@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
@@ -14,8 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 
 public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> implements ForwardIndexAccessor<Key, Value> {
-  @NotNull
-  private final DataExternalizer<DataType> myDataTypeExternalizer;
+  private final @NotNull DataExternalizer<DataType> myDataTypeExternalizer;
 
   public AbstractForwardIndexAccessor(@NotNull DataExternalizer<DataType> externalizer) {
     myDataTypeExternalizer = externalizer;
@@ -23,29 +22,24 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> impleme
 
   protected abstract InputDataDiffBuilder<Key, Value> createDiffBuilder(int inputId, @Nullable DataType inputData) throws IOException;
 
-  @Nullable
-  public DataType deserializeData(@Nullable ByteArraySequence sequence) throws IOException {
+  public @Nullable DataType deserializeData(@Nullable ByteArraySequence sequence) throws IOException {
     if (sequence == null) return null;
     return deserializeFromByteSeq(sequence, myDataTypeExternalizer);
   }
 
-  @NotNull
   @Override
-  public InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
+  public @NotNull InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
     return createDiffBuilder(inputId, deserializeData(sequence));
   }
 
-  @Nullable
-  public abstract DataType convertToDataType(@NotNull InputData<Key, Value> data);
+  public abstract @Nullable DataType convertToDataType(@NotNull InputData<Key, Value> data);
 
-  @Nullable
   @Override
-  public ByteArraySequence serializeIndexedData(@NotNull InputData<Key, Value> data) throws IOException {
+  public @Nullable ByteArraySequence serializeIndexedData(@NotNull InputData<Key, Value> data) throws IOException {
     return serializeIndexedData(convertToDataType(data));
   }
 
-  @Nullable
-  public ByteArraySequence serializeIndexedData(@Nullable DataType data) throws IOException {
+  public @Nullable ByteArraySequence serializeIndexedData(@Nullable DataType data) throws IOException {
     if (data == null) return null;
     return serializeValueToByteSeq(data, myDataTypeExternalizer, getBufferInitialSize(data));
   }
@@ -69,11 +63,10 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> impleme
     return serializeToByteSeq(data, externalizer, bufferInitialSize, ourSpareByteArrayForValues);
   }
 
-  @Nullable
-  public static <Data> ByteArraySequence serializeToByteSeq(Data data,
-                                                             @NotNull DataExternalizer<Data> externalizer,
-                                                             int bufferInitialSize,
-                                                             @NotNull ThreadLocalCachedByteArray cachedBufferToUse) throws IOException {
+  public static @Nullable <Data> ByteArraySequence serializeToByteSeq(Data data,
+                                                                      @NotNull DataExternalizer<Data> externalizer,
+                                                                      int bufferInitialSize,
+                                                                      @NotNull ThreadLocalCachedByteArray cachedBufferToUse) throws IOException {
     BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(s -> {
       return cachedBufferToUse.getBuffer(s);
     }, bufferInitialSize);

@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -34,8 +34,7 @@ public class MavenPluginResolver {
                              @NotNull MavenEmbeddersManager embeddersManager,
                              @NotNull MavenConsole console,
                              @NotNull MavenProgressIndicator process,
-                             boolean reportUnresolvedToSyncConsole,
-                             boolean forceUpdateSnapshots) throws MavenProcessCanceledException {
+                             boolean reportUnresolvedToSyncConsole) throws MavenProcessCanceledException {
     if (mavenProjects.isEmpty()) return;
 
     var firstProject = sortAndGetFirst(mavenProjects).mavenProject();
@@ -43,14 +42,13 @@ public class MavenPluginResolver {
     process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", firstProject.getDisplayName()));
 
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_PLUGINS_RESOLVE, baseDir);
-    embedder.customizeForResolve(console, process, forceUpdateSnapshots,  null,  null);
 
     Set<MavenId> unresolvedPluginIds;
     Set<Path> filesToRefresh = new HashSet<>();
 
     try {
       var mavenPluginIdsToResolve = collectMavenPluginIdsToResolve(mavenProjects);
-      var resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve);
+      var resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve, process, console);
       var artifacts = resolutionResults.stream()
         .flatMap(resolutionResult -> resolutionResult.getArtifacts().stream())
         .collect(Collectors.toSet());
@@ -121,7 +119,7 @@ public class MavenPluginResolver {
     if (!unresolvedPluginIds.isEmpty()) {
       for (var mavenPluginId : unresolvedPluginIds) {
         MavenProjectsManager.getInstance(myProject)
-          .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN)
+          .getSyncConsole().getListener(MavenServerConsoleIndicator.ResolveType.PLUGIN)
           .showArtifactBuildIssue(mavenPluginId.getKey(), null);
       }
     }

@@ -221,14 +221,7 @@ public final class DateFormatUtil {
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NlsSafe @NotNull String formatAboutDialogDate(@NotNull Date date) {
-    return formatAboutDialogDate(date.getTime());
-  }
-
-  /** @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatDateLong} */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static @NlsSafe @NotNull String formatAboutDialogDate(long time) {
-    return DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(time);
+    return DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(date.getTime());
   }
 
   /**

@@ -16,12 +16,9 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,15 +26,15 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class StringEqualsEmptyStringInspection extends BaseInspection {
   public boolean SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL = false;
@@ -61,7 +58,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final boolean useIsEmpty = ((Boolean)infos[0]).booleanValue();
     final boolean addNullCheck = ((Boolean)infos[1]).booleanValue();
     StringEqualsEmptyStringFix mainFix = new StringEqualsEmptyStringFix(useIsEmpty, addNullCheck);
@@ -69,9 +66,9 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
       SetInspectionOptionFix disableFix = new SetInspectionOptionFix(
         this, "SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL",
         InspectionGadgetsBundle.message("string.equals.empty.string.option.do.not.add.null.check"), true);
-      return new InspectionGadgetsFix[]{mainFix, new DelegatingFix(disableFix)};
+      return new LocalQuickFix[]{mainFix, disableFix};
     }
-    return new InspectionGadgetsFix[]{mainFix};
+    return new LocalQuickFix[]{mainFix};
   }
 
   private static PsiExpression getCheckedExpression(boolean useIsEmpty, PsiExpression expression) {
@@ -96,7 +93,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     }
   }
 
-  private static class StringEqualsEmptyStringFix extends InspectionGadgetsFix {
+  private static class StringEqualsEmptyStringFix extends PsiUpdateModCommandQuickFix {
 
     private final boolean myUseIsEmpty;
     private final boolean myAddNullCheck;
@@ -124,8 +121,8 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiReferenceExpression expression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiReferenceExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiReferenceExpression expression = PsiTreeUtil.getParentOfType(startElement, PsiReferenceExpression.class);
       if (expression == null) return;
       final PsiMethodCallExpression call = (PsiMethodCallExpression)expression.getParent();
       final PsiExpression[] arguments = call.getArgumentList().getExpressions();

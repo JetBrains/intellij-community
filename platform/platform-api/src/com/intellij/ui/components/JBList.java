@@ -42,6 +42,8 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   private @Nullable AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
 
+  private int myDropTargetIndex = -1;
+
   public JBList() {
     init();
   }
@@ -169,10 +171,36 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     }
   }
 
+  public void setDropTargetIndex(int index) {
+    if (index != myDropTargetIndex) {
+      myDropTargetIndex = index;
+      repaint();
+    }
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
     myEmptyText.paint(this, g);
+    if (myDropTargetIndex < 0) {
+      return;
+    }
+    int dropLineY;
+    Rectangle rc;
+    if (myDropTargetIndex == getModel().getSize()) {
+      rc = getCellBounds(myDropTargetIndex-1, myDropTargetIndex-1);
+      dropLineY = (int)rc.getMaxY()-1;
+    }
+    else {
+      rc = getCellBounds(myDropTargetIndex, myDropTargetIndex);
+      dropLineY = rc.y;
+    }
+    Graphics2D g2d = (Graphics2D) g;
+    g2d.setColor(PlatformColors.BLUE);
+    g2d.setStroke(new BasicStroke(2.0f));
+    g2d.drawLine(rc.x, dropLineY, rc.x+rc.width, dropLineY);
+    g2d.drawLine(rc.x, dropLineY-2, rc.x, dropLineY+2);
+    g2d.drawLine(rc.x+rc.width, dropLineY-2, rc.x+rc.width, dropLineY+2);
   }
 
   @Override

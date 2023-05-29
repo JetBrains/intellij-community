@@ -8,6 +8,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,10 @@ public class ToggleSelectionOnlyAction extends ToggleAction implements ContextAw
     if (KeymapUtil.isEmacsKeymap()) return null;
     SearchSession search = context.getData(SearchSession.KEY);
     if (search != null) {
-      AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_FIND_IN_SELECTION_ONLY);
+      boolean replaceState = search.getFindModel().isReplaceState() &&
+                             !Registry.is("ide.find.use.search.in.selection.keyboard.shortcut.for.replace");
+      AnAction action = ActionManager.getInstance().getAction(
+        replaceState ? IdeActions.ACTION_REPLACE : IdeActions.ACTION_TOGGLE_FIND_IN_SELECTION_ONLY);
       return action != null ? action.getShortcutSet() : null;
     }
     return null;

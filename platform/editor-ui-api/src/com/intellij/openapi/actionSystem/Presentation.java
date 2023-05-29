@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.DynamicBundle;
@@ -12,10 +12,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,51 +41,51 @@ public final class Presentation implements Cloneable {
    * Defines tool tip for button at toolbar or text for element at menu
    * value: String
    */
-  @NonNls public static final String PROP_TEXT = "text";
+  public static final @NonNls String PROP_TEXT = "text";
   /**
    * Defines tool tip for button at toolbar or text for element at menu
    * that includes mnemonic suffix, like "Git(G)"
    * value: String
    */
-  @NonNls public static final String PROP_TEXT_WITH_SUFFIX = "textWithSuffix";
+  public static final @NonNls String PROP_TEXT_WITH_SUFFIX = "textWithSuffix";
   /**
    * value: Integer
    */
-  @NonNls public static final String PROP_MNEMONIC_KEY = "mnemonicKey";
+  public static final @NonNls String PROP_MNEMONIC_KEY = "mnemonicKey";
   /**
    * value: Integer
    */
-  @NonNls public static final String PROP_MNEMONIC_INDEX = "mnemonicIndex";
+  public static final @NonNls String PROP_MNEMONIC_INDEX = "mnemonicIndex";
   /**
    * value: String
    */
-  @NonNls public static final String PROP_DESCRIPTION = "description";
+  public static final @NonNls String PROP_DESCRIPTION = "description";
   /**
    * value: Icon
    */
-  @NonNls public static final String PROP_ICON = "icon";
+  public static final @NonNls String PROP_ICON = "icon";
   /**
    * value: Icon
    */
-  @NonNls public static final String PROP_DISABLED_ICON = "disabledIcon";
+  public static final @NonNls String PROP_DISABLED_ICON = "disabledIcon";
   /**
    * value: Icon
    */
-  @NonNls public static final String PROP_SELECTED_ICON = "selectedIcon";
+  public static final @NonNls String PROP_SELECTED_ICON = "selectedIcon";
   /**
    * value: Icon
    */
-  @NonNls public static final String PROP_HOVERED_ICON = "hoveredIcon";
+  public static final @NonNls String PROP_HOVERED_ICON = "hoveredIcon";
   /**
    * value: Boolean
    */
-  @NonNls public static final String PROP_VISIBLE = "visible";
+  public static final @NonNls String PROP_VISIBLE = "visible";
   /**
    * The actual value is a Boolean.
    */
-  @NonNls public static final String PROP_ENABLED = "enabled";
+  public static final @NonNls String PROP_ENABLED = "enabled";
 
-  @NonNls public static final Key<@Nls String> PROP_VALUE = Key.create("value");
+  public static final @NonNls Key<@Nls String> PROP_VALUE = Key.create("value");
 
   public static final double DEFAULT_WEIGHT = 0;
   public static final double HIGHER_WEIGHT = 42;
@@ -105,7 +102,7 @@ public final class Presentation implements Cloneable {
 
   private int myFlags = IS_ENABLED | IS_VISIBLE | IS_DISABLE_GROUP_IF_EMPTY;
   private @NotNull Supplier<@ActionDescription String> myDescriptionSupplier = () -> null;
-  private @NotNull Supplier<? extends TextWithMnemonic> myTextWithMnemonicSupplier = () -> null;
+  private @NotNull Supplier<TextWithMnemonic> myTextWithMnemonicSupplier = () -> null;
   private @NotNull SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
 
   private Icon myIcon;
@@ -130,7 +127,8 @@ public final class Presentation implements Cloneable {
   }
 
   public Presentation(@NotNull @ActionText String text) {
-    myTextWithMnemonicSupplier = () -> TextWithMnemonic.fromPlainText(text);
+    TextWithMnemonic textWithMnemonic = TextWithMnemonic.fromPlainText(text);
+    myTextWithMnemonicSupplier = () -> textWithMnemonic;
   }
 
   public Presentation(@NotNull Supplier<@ActionText String> dynamicText) {
@@ -173,6 +171,11 @@ public final class Presentation implements Cloneable {
     return textWithMnemonic == null ? null : textWithMnemonic.getText(withSuffix);
   }
 
+  @ApiStatus.Internal
+  public boolean hasText() {
+    return myTextWithMnemonicSupplier.get() != null;
+  }
+
   /**
    * Sets the presentation text.
    *
@@ -180,8 +183,7 @@ public final class Presentation implements Cloneable {
    * @param mayContainMnemonic if true, the text has {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format, otherwise
    *                           it's a plain text and no mnemonic will be used.
    */
-  public void setText(@NotNull @Nls(capitalization = Nls.Capitalization.Title) Supplier<String> text,
-                      boolean mayContainMnemonic) {
+  public void setText(@NotNull @Nls(capitalization = Nls.Capitalization.Title) Supplier<String> text, boolean mayContainMnemonic) {
     setTextWithMnemonic(getTextWithMnemonic(text, mayContainMnemonic));
   }
 
@@ -196,13 +198,14 @@ public final class Presentation implements Cloneable {
     setTextWithMnemonic(getTextWithMnemonic(() -> text, mayContainMnemonic));
   }
 
-  @NotNull
-  public Supplier<TextWithMnemonic> getTextWithMnemonic(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> text,
-                                                        boolean mayContainMnemonic) {
+  public @NotNull Supplier<TextWithMnemonic> getTextWithMnemonic(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> text,
+                                                                 boolean mayContainMnemonic) {
     if (mayContainMnemonic) {
       return () -> {
         String s = text.get();
-        if (s == null) return null;
+        if (s == null) {
+          return null;
+        }
         TextWithMnemonic parsed = TextWithMnemonic.parse(s);
         UISettings uiSettings = UISettings.getInstanceOrNull();
         boolean mnemonicsDisabled = uiSettings != null && uiSettings.getDisableMnemonicsInControls();
@@ -222,7 +225,12 @@ public final class Presentation implements Cloneable {
    *
    * @param textWithMnemonicSupplier text with mnemonic to set
    */
-  public void setTextWithMnemonic(@NotNull Supplier<? extends TextWithMnemonic> textWithMnemonicSupplier) {
+  public void setTextWithMnemonic(@NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier) {
+    if (myChangeSupport == null) {
+      myTextWithMnemonicSupplier = textWithMnemonicSupplier;
+      return;
+    }
+
     String oldText = getText();
     String oldTextWithSuffix = getText(true);
     int oldMnemonic = getMnemonic();
@@ -254,15 +262,12 @@ public final class Presentation implements Cloneable {
   /**
    * @return the text with mnemonic, properly escaped, so it could be passed to {@link #setText(String)} (e.g. to copy the presentation).
    */
-  @ActionText
-  @Nullable
-  public String getTextWithMnemonic() {
+  public @ActionText @Nullable String getTextWithMnemonic() {
     TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
     return textWithMnemonic == null ? null : textWithMnemonic.toString();
   }
 
-  @NotNull
-  public Supplier<? extends TextWithMnemonic> getTextWithPossibleMnemonic() {
+  public @NotNull Supplier<TextWithMnemonic> getTextWithPossibleMnemonic() {
     return myTextWithMnemonicSupplier;
   }
 
@@ -310,7 +315,7 @@ public final class Presentation implements Cloneable {
     return myHoveredIcon;
   }
 
-  public void setHoveredIcon(@Nullable final Icon hoveredIcon) {
+  public void setHoveredIcon(final @Nullable Icon hoveredIcon) {
     Icon old = myHoveredIcon;
     myHoveredIcon = hoveredIcon;
     fireObjectPropertyChange(PROP_HOVERED_ICON, old, myHoveredIcon);
@@ -528,8 +533,7 @@ public final class Presentation implements Cloneable {
     }
   }
 
-  @Nullable
-  public <T> T getClientProperty(@NotNull Key<T> key) {
+  public @Nullable <T> T getClientProperty(@NotNull Key<T> key) {
     //noinspection unchecked
     return (T)myUserMap.get(key.toString());
   }
@@ -540,8 +544,7 @@ public final class Presentation implements Cloneable {
 
   /** @deprecated Use {@link #getClientProperty(Key)} instead */
   @Deprecated
-  @Nullable
-  public Object getClientProperty(@NonNls @NotNull String key) {
+  public @Nullable Object getClientProperty(@NonNls @NotNull String key) {
     return myUserMap.get(key);
   }
 
@@ -588,9 +591,8 @@ public final class Presentation implements Cloneable {
     return BitUtil.isSet(myFlags, IS_MULTI_CHOICE);
   }
 
-  @Nls
   @Override
-  public String toString() {
+  public @Nls String toString() {
     return getText() + " (" + myDescriptionSupplier.get() + ")";
   }
 }

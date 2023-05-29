@@ -84,9 +84,7 @@ public class EmojiPicker extends JLayeredPane {
   }
 
   private static void applyWindowMoveListener(Component c) {
-    WindowMoveListener listener = new WindowMoveListener(c);
-    c.addMouseListener(listener);
-    c.addMouseMotionListener(listener);
+    new WindowMoveListener(c).installTo(c);
   }
 
   void selectCategory(EmojiCategory category, boolean scrollToCategory) {
@@ -261,7 +259,7 @@ public class EmojiPicker extends JLayeredPane {
       return false;
     }
 
-    private int keyToOffset(int key, int positive, int negative) {
+    private static int keyToOffset(int key, int positive, int negative) {
       if (key == positive) return 1;
       if (key == negative) return -1;
       return 0;

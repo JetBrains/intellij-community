@@ -255,7 +255,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
     //rebuild();
   }
 
-  override fun selectCurrentElement(fileEditor: FileEditor, file: VirtualFile, requestFocus: Boolean): Boolean {
+  override fun selectCurrentElement(fileEditor: FileEditor?, file: VirtualFile?, requestFocus: Boolean): Boolean {
     //todo [kirillk]
     // this is dirty hack since some bright minds decided to used different TreeUi every time, so selection may be followed
     // by rebuild on completely different instance of TreeUi
@@ -297,6 +297,9 @@ class StructureViewWrapperImpl(private val myProject: Project,
   fun rebuildNow(why: String) {
     scheduleRebuild(RebuildDelay.NOW, why)
   }
+
+  @Deprecated(message = "Every update/rebuild is async now, use scheduleRebuild() to do rebuild at earliest possible time")
+  fun rebuild() = scheduleRebuild()
 
   private fun scheduleRebuild(delay: RebuildDelay, why: String) {
     LOG.debug("request to rebuild a structure view $delay: $why")

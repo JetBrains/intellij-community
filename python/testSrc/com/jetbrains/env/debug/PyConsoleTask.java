@@ -6,6 +6,7 @@ import com.google.common.collect.Sets;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -50,7 +51,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   private boolean myProcessCanTerminate;
 
-  protected PyConsoleProcessHandler myProcessHandler;
+  protected ProcessHandler myProcessHandler;
   protected PydevConsoleCommunication myCommunication;
 
   private boolean shouldPrintOutput = false;

@@ -140,7 +140,7 @@ public final class MavenSelectProjectPopup {
         JBPopup popup = new PopupChooserBuilder(projectTree)
           .setTitle(RunnerBundle.message("maven.select.project"))
           .setResizable(true)
-          .setItemChoosenCallback(clickCallBack).setAutoselectOnMouseMove(true)
+          .setItemChosenCallback(clickCallBack).setAutoselectOnMouseMove(true)
           .setCloseOnEnter(false)
           .createPopup();
 

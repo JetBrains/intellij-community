@@ -4,6 +4,7 @@ package com.intellij.ide.ui
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.ReportValue
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -120,6 +121,9 @@ class UISettingsState : BaseState() {
   @get:OptionTag("UI_DENSITY")
   var uiDensity by enum(UIDensity.DEFAULT)
 
+  @get:OptionTag("DIFFERENTIATE_PROJECTS")
+  var differentiateProjects by property(true)
+
   @get:OptionTag("SORT_TABS_ALPHABETICALLY")
   var sortTabsAlphabetically by property(false)
   @get:OptionTag("KEEP_TABS_ALPHABETICALLY_SORTED")
@@ -160,11 +164,11 @@ class UISettingsState : BaseState() {
   var showIconsInMenus by property(true)
   // IDEADEV-33409, should be disabled by default on MacOS
   @get:OptionTag("DISABLE_MNEMONICS")
-  var disableMnemonics by property(SystemInfo.isMac)
+  var disableMnemonics by property(SystemInfoRt.isMac)
   @get:OptionTag("DISABLE_MNEMONICS_IN_CONTROLS")
   var disableMnemonicsInControls by property(false)
   @get:OptionTag("USE_SMALL_LABELS_ON_TABS")
-  var useSmallLabelsOnTabs by property(SystemInfo.isMac)
+  var useSmallLabelsOnTabs by property(SystemInfoRt.isMac)
   @get:OptionTag("MAX_LOOKUP_WIDTH2")
   var maxLookupWidth by property(500)
   @get:OptionTag("MAX_LOOKUP_LIST_HEIGHT")
@@ -193,18 +197,18 @@ class UISettingsState : BaseState() {
   @get:OptionTag("BORDERLESS_MODE")
   var mergeMainMenuWithWindowTitle by property(SystemInfo.isWin10OrNewer && SystemInfo.isJetBrainsJvm)
 
-  var animatedScrolling by property(!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm)
+  var animatedScrolling by property(!SystemInfoRt.isMac || !SystemInfo.isJetBrainsJvm)
   var animatedScrollingDuration by property(
     when {
-      SystemInfo.isWindows -> 200
-      SystemInfo.isMac -> 50
+      SystemInfoRt.isWindows -> 200
+      SystemInfoRt.isMac -> 50
       else -> 150
     }
   )
   var animatedScrollingCurvePoints by property(
     when {
-      SystemInfo.isWindows -> 1684366536
-      SystemInfo.isMac -> 845374563
+      SystemInfoRt.isWindows -> 1684366536
+      SystemInfoRt.isMac -> 845374563
       else -> 729434056
     }
   )

@@ -7,7 +7,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.VfsUsageCollector
+import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
 import com.intellij.openapi.vfs.newvfs.refreshVFSAsync
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit

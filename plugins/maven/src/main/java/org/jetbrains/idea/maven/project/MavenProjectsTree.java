@@ -1077,6 +1077,21 @@ public final class MavenProjectsTree {
     return withReadLock(() -> myModuleToAggregatorMapping.get(project));
   }
 
+  @NotNull
+  public Collection<MavenProject> collectAggregators(@NotNull Collection<MavenProject> mavenProjects) {
+    var mavenProjectsToSkip = new HashSet<MavenProject>();
+    for (var mavenProject : mavenProjects) {
+      var aggregator = mavenProject;
+      while ((aggregator = findAggregator(aggregator)) != null) {
+        if (mavenProjects.contains(aggregator)) {
+          mavenProjectsToSkip.add(mavenProject);
+          break;
+        }
+      }
+    }
+    return mavenProjects.stream().filter(mavenProject -> !mavenProjectsToSkip.contains(mavenProject)).toList();
+  }
+
   public @NotNull MavenProject findRootProject(@NotNull MavenProject project) {
     return withReadLock(() -> {
       MavenProject rootProject = project;

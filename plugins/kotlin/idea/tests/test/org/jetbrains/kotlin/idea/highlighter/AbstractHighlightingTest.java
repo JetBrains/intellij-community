@@ -12,10 +12,7 @@ import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
-import org.jetbrains.kotlin.idea.test.TagsTestDataUtil;
+import org.jetbrains.kotlin.idea.test.*;
 
 import java.io.File;
 import java.util.List;
@@ -49,6 +46,7 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
         String fileText = FileUtil.loadFile(new File(dataFilePath(fileName())), true);
         boolean expectedDuplicatedHighlighting = InTextDirectivesUtils.isDirectiveDefined(fileText, EXPECTED_DUPLICATED_HIGHLIGHTING_PREFIX);
 
+        ConfigLibraryUtil.INSTANCE.configureLibrariesByDirective(myFixture.getModule(), fileText);
         myFixture.configureByFile(fileName());
         List<String> tools = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, TOOL_PREFIX);
         if (!tools.isEmpty()) {

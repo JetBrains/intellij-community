@@ -11,7 +11,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 
 import java.io.File;
 
@@ -59,9 +58,6 @@ public class SameSourceRootInTwoModulesTest extends JavaPsiTestCase {
       PsiTestUtil.addSourceRoot(anotherModule, mySrcDir1);
 
       assertNotNull(ModuleUtilCore.findModuleForFile(file, myProject));
-      if (!WorkspaceFileIndexEx.IS_ENABLED) {
-        assertEquals(anotherModule, ModuleUtilCore.findModuleForFile(file, myProject));
-      }
     });
   }
 }

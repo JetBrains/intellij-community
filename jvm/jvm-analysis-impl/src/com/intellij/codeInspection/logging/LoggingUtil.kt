@@ -20,6 +20,8 @@ internal class LoggingUtil {
     private const val LEGACY_APACHE_COMMON_LOGGER = "org.apache.commons.logging.Log"
     private const val LEGACY_JAVA_LOGGER = "java.util.logging.Logger"
 
+    internal const val AKKA_LOGGING = "akka.event.LoggingAdapter"
+
     private val LOGGER_CLASSES = setOf(SLF4J_LOGGER, LOG4J_LOGGER)
     private val LEGACY_LOGGER_CLASSES = setOf(LEGACY_LOG4J_LOGGER, LEGACY_CATEGORY_LOGGER,
                                               LEGACY_APACHE_COMMON_LOGGER, LEGACY_JAVA_LOGGER)

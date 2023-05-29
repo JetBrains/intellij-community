@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
-import org.jetbrains.kotlin.idea.completion.lookups.withSymbolInfo
+import org.jetbrains.kotlin.idea.completion.lookups.withClassifierSymbolInfo
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.Variance
 
@@ -32,7 +32,7 @@ class TypeLookupElementFactory {
 
         val element = LookupElementBuilder.create(lookupObject, renderedType)
             .withInsertHandler(TypeInsertHandler)
-            .let { if (symbol != null) withSymbolInfo(symbol, it) else it }
+            .let { if (symbol != null) withClassifierSymbolInfo(symbol, it) else it }
 
         return when (type) {
             is KtTypeParameterType -> element
@@ -62,7 +62,7 @@ class TypeLookupElementFactory {
 
         return LookupElementBuilder.create(TypeLookupObject(fqNameAsString), relativeNameAsString)
             .withInsertHandler(TypeInsertHandler)
-            .let { withSymbolInfo(symbol, it) }
+            .let { withClassifierSymbolInfo(symbol, it) }
             .withTailText(tailText)
     }
 

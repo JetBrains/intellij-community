@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
@@ -14,13 +15,13 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandActionWrapper;
 import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -44,7 +45,10 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
     final QuickFix<?> fix = fixes[fixNumber];
     if (fix instanceof ModCommandQuickFix modCommandFix) {
-      return new ModCommandQuickFixAction(descriptor, modCommandFix).asIntention();
+      IntentionAction intention = new ModCommandQuickFixAction(descriptor, modCommandFix).asIntention();
+      PsiFile file = descriptor.getPsiElement().getContainingFile();
+      intention.isAvailable(file.getProject(), null, file); // cache presentation in wrapper
+      return intention;
     }
     return fix instanceof IntentionAction ? (IntentionAction)fix : new QuickFixWrapper(descriptor, (LocalQuickFix)fix);
   }
@@ -53,12 +57,13 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
    * @param action action previously wrapped with {@link #wrap(ProblemDescriptor, int)}
    * @return a {@link LocalQuickFix} wrapped inside that action; null if the action was not created via {@link QuickFixWrapper}
    */
-  public static @Nullable LocalQuickFix unwrap(@NotNull IntentionAction action) {
+  public static @Nullable LocalQuickFix unwrap(@NotNull CommonIntentionAction action) {
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.myFix;
     }
-    if (action instanceof ModCommandActionWrapper wrapper &&
-        wrapper.action() instanceof ModCommandQuickFixAction qfAction) {
+    ModCommandAction modCommand = action instanceof ModCommandAction mc ? mc:
+                                  ModCommandAction.unwrap((IntentionAction)action);                              
+    if (modCommand instanceof ModCommandQuickFixAction qfAction) {
       return qfAction.myFix;
     }
     return null;
@@ -72,8 +77,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.getFile();
     }
-    if (action instanceof ModCommandActionWrapper wrapper &&
-        wrapper.action() instanceof ModCommandQuickFixAction qfAction) {
+    if (ModCommandAction.unwrap(action) instanceof ModCommandQuickFixAction qfAction) {
       PsiElement element = qfAction.myDescriptor.getPsiElement();
       return element == null ? null : element.getContainingFile();
     }
@@ -133,7 +137,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
   /**
    * @return fix wrapped by this {@link QuickFixWrapper}
-   * @deprecated use {@link QuickFixWrapper#unwrap(IntentionAction)} instead. Avoid {@code instanceof QuickFixWrapper} checks,
+   * @deprecated use {@link QuickFixWrapper#unwrap(CommonIntentionAction)} instead. Avoid {@code instanceof QuickFixWrapper} checks,
    * as the implementation may be different in the future
    */
   @Deprecated
@@ -149,8 +153,14 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   }
 
   @TestOnly
-  public ProblemHighlightType getHighlightType() {
-    return myDescriptor.getHighlightType();
+  public static @Nullable ProblemHighlightType getHighlightType(@NotNull IntentionAction action) {
+    if (action instanceof QuickFixWrapper wrapper) {
+      return wrapper.myDescriptor.getHighlightType();
+    }
+    if (ModCommandAction.unwrap(action) instanceof ModCommandQuickFixAction qfAction) {
+      return qfAction.myDescriptor.getHighlightType();
+    }
+    return null;
   }
 
   @Nullable
@@ -188,7 +198,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
   @Override
   public @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
-    return myFix.getRangesToHighlight(editor.getProject(), myDescriptor);
+    return myFix.getRangesToHighlight(file.getProject(), myDescriptor);
   }
 
   private static class ModCommandQuickFixAction implements ModCommandAction {
@@ -206,12 +216,17 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     }
 
     @Override
-    public boolean isAvailable(@NotNull ActionContext context) {
+    public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
       PsiElement psiElement = myDescriptor.getPsiElement();
-      if (psiElement == null || !psiElement.isValid()) return false;
+      if (psiElement == null || !psiElement.isValid()) return null;
       PsiFile containingFile = psiElement.getContainingFile();
-      return containingFile == context.file() || containingFile == null ||
-             containingFile.getViewProvider().getVirtualFile().equals(context.file().getViewProvider().getVirtualFile());
+      if (!(containingFile == context.file() || containingFile == null ||
+             containingFile.getViewProvider().getVirtualFile().equals(context.file().getViewProvider().getVirtualFile()))) {
+        return null;
+      }
+      return Presentation.of(myFix.getName())
+        .withPriority(myFix instanceof PriorityAction ? ((PriorityAction)myFix).getPriority() : Priority.NORMAL)
+        .withIcon(myFix instanceof Iconable ? ((Iconable)myFix).getIcon(0) : null);
     }
 
     @Override
@@ -220,13 +235,13 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     }
 
     @Override
-    public @NotNull Priority getPriority() {
-      return myFix instanceof PriorityAction ? ((PriorityAction)myFix).getPriority() : Priority.NORMAL;
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
+      return myFix.generatePreview(context.project(), myDescriptor.getDescriptorForPreview(context.file()));
     }
 
     @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
-      return myFix.generatePreview(context.project(), myDescriptor.getDescriptorForPreview(context.file()));
+    public String toString() {
+      return "ModCommandQuickFixAction[fix=" + myFix + "]";
     }
   }
 }

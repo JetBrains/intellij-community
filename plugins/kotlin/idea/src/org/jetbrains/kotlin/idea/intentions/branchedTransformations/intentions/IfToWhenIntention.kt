@@ -199,11 +199,18 @@ class IfToWhenIntention : SelfTargetingRangeIntention<KtIfExpression>(
             whenExpression = whenExpression.introduceSubject(checkConstants = false) ?: return
         }
 
+        val parent = ifExpression.parent
         val result = ifExpression.replaced(whenExpression)
         editor?.caretModel?.moveToOffset(result.startOffset)
 
         (if (applyFullCommentSaver) fullCommentSaver else elementCommentSaver).restore(result)
-        toDelete.forEach(PsiElement::delete)
+
+        if (toDelete.isNotEmpty()) {
+            parent.deleteChildRange(
+                toDelete.first().let { it.prevSibling as? PsiWhiteSpace ?: it },
+                toDelete.last()
+            )
+        }
 
         result.accept(loopJumpVisitor)
         val labelName = loopJumpVisitor.labelName

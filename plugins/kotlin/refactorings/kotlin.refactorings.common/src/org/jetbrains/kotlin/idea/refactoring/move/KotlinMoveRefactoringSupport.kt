@@ -5,9 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
-import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.*
 
 interface KotlinMoveRefactoringSupport {
     companion object {
@@ -29,4 +27,18 @@ interface KotlinMoveRefactoringSupport {
         stopAtFirst: Boolean,
         body: (OuterInstanceReferenceUsageInfo) -> Unit = {}
     ): Boolean
+
+    fun addDelayedImportRequest(elementToImport: PsiElement, file: KtFile)
+
+    fun addDelayedShorteningRequest(element: KtElement)
+
+    fun processInternalReferencesToUpdateOnPackageNameChange(
+        element: KtElement,
+        containerChangeInfo: MoveContainerChangeInfo,
+        body: (originalRefExpr: KtSimpleNameExpression, usageFactory: KotlinUsageInfoFactory) -> Unit
+    )
+
+    fun isValidTargetForImplicitCompanionAsDispatchReceiver(moveTarget: KotlinMoveTarget, companionObject: KtObjectDeclaration): Boolean
+
+    fun renderType(ktObjectDeclaration: KtClassOrObject): String
 }

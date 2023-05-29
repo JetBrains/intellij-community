@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.maven.testFramework.MavenTestCase;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.maven.testFramework.utils.MavenImportingTestCaseKt;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -29,7 +29,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -183,7 +182,7 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
   }
 
 
-  public void testShouldStoreImlFileInSameDirAsPomXml() throws IOException {
+  public void testShouldStoreImlFileInSameDirAsPomXml() {
     Path dir = getTempDir().newPath("", true);
     String projectName = dir.toFile().getName();
     Path pom = dir.resolve("pom.xml");
@@ -210,10 +209,7 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
     if (!MavenUtil.isLinearImportEnabled()) {
       manager.waitForImportCompletion();
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        manager.scheduleImportInTests(Collections.singletonList(file));
-        manager.importProjects();
-      });
+      MavenImportingTestCaseKt.importMavenProjectsSync(manager, List.of(file));
     }
 
     Promise<?> promise = manager.waitForImportCompletion();

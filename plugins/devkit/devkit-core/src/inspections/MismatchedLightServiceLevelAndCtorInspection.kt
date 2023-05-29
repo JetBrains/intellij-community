@@ -23,19 +23,28 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
     return object : DefaultJvmElementVisitor<Boolean> {
       override fun visitMethod(method: JvmMethod): Boolean {
         if (!method.isConstructor) return true
+        val clazz = method.containingClass ?: return true
+        if (clazz.classKind != JvmClassKind.CLASS ||
+            clazz.hasModifier(JvmModifier.ABSTRACT) ||
+            clazz.isLocalOrAnonymous()) {
+          return true
+        }
+        val annotation = clazz.getAnnotation(Service::class.java.canonicalName) ?: return true
         val sourceElement = method.sourceElement ?: return true
         val file = sourceElement.containingFile ?: return true
-        val containingClass = method.containingClass ?: return true
-        val annotation = containingClass.getAnnotation(Service::class.java.canonicalName) ?: return true
-        val elementToReport = (annotation as? PsiAnnotation)?.nameReferenceElement ?: return true
-        val levelType = ServiceUtil.getLevelType(annotation, sourceElement.language.id == "kotlin")
+        val levelType = getLevelType(annotation, sourceElement.language)
         if (!levelType.isProject() && isProjectParamCtor(method)) {
+          val elementToReport = (annotation as? PsiAnnotation)?.nameReferenceElement ?: return true
           registerProblemProjectLevelRequired(annotation, elementToReport, file)
         }
-        if (levelType.isApp() && !isAppLevelServiceCtor(method) && !hasAppLevelServiceCtor(containingClass)) {
+        if (levelType.isApp() && !isAppLevelServiceCtor(method) && !hasAppLevelServiceCtor(clazz)) {
           registerProblemApplicationLevelRequired(method, file)
         }
         return true
+      }
+
+      private fun JvmClass.isLocalOrAnonymous(): Boolean {
+        return this.qualifiedName == null
       }
 
       private fun hasAppLevelServiceCtor(clazz: JvmClass): Boolean {

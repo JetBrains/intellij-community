@@ -11,14 +11,12 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.i18n.GitBundle
 import git4idea.log.GitLogIndexDataUtils
 
-internal class GitUseSharedLogAction : DumbAwareAction(GitBundle.messagePointer("vcs.log.use.log.index.data")) {
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+private class GitUseSharedLogAction : DumbAwareAction(GitBundle.messagePointer("vcs.log.use.log.index.data")) {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val project = e.project ?: disable(e) ?: return
-    val vcsProjectLog = VcsProjectLog.getInstance(project) ?: disable(e) ?: return
+    val vcsProjectLog = VcsProjectLog.getInstance(project)
     val data = vcsProjectLog.dataManager
     val isDataPackFull = data?.dataPack?.isFull ?: false
 

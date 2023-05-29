@@ -15,9 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -74,14 +72,14 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseIn
 
   @Override
   @Nullable
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     final String replacementExpression = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker(), false);
     if (replacementExpression == null) return null;
     final String name = CommonQuickFixBundle.message("fix.replace.with.x", replacementExpression);
     return new UnnecessaryTemporaryObjectFix(name);
   }
 
-  private static final class UnnecessaryTemporaryObjectFix extends InspectionGadgetsFix {
+  private static final class UnnecessaryTemporaryObjectFix extends PsiUpdateModCommandQuickFix {
 
     private final @IntentionName String m_name;
 
@@ -103,8 +101,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseIn
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement grandParent = element.getParent().getParent();
       if (!(grandParent instanceof PsiMethodCallExpression expression)) {
         return;

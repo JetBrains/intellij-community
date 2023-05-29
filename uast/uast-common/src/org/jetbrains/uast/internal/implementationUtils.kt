@@ -40,7 +40,7 @@ fun <U : UElement> Class<out UElement>.accommodate(a1: UElementAlternative<out U
   else null
 }
 
-inline fun <reified U : UElement> alternative(noinline make: () -> U?) = UElementAlternative(U::class.java, make)
+inline fun <reified U : UElement> alternative(noinline make: () -> U?): UElementAlternative<U> = UElementAlternative(U::class.java, make)
 
 class UElementAlternative<U : UElement>(val uType: Class<U>, val make: () -> U?)
 
@@ -52,7 +52,7 @@ private val isInsideReporting = ThreadLocal<Boolean>()
 
 private val conversionLoggerCollector = ThreadLocalTroubleCollector()
 
-val CONVERSION_LOGGER = conversionLoggerCollector.logger
+val CONVERSION_LOGGER: ThreadLocalTroubleCollector.Logger = conversionLoggerCollector.logger
 
 fun <T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement, expectedType: Class<T>): T? {
 

@@ -36,6 +36,7 @@ import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
@@ -160,20 +161,20 @@ object GitLabMergeRequestTimelineComponentFactory {
           withHeader(createTitleTextPane(immutatebleItem.actor, immutatebleItem.date))
         }
       }
-      is GitLabMergeRequestTimelineItemViewModel.Discussion -> {
+      is GitLabMergeRequestTimelineDiscussionViewModel -> {
         GitLabMergeRequestTimelineDiscussionComponentFactory.create(project, cs, avatarIconsProvider, item)
       }
     }
 
   private fun createContent(item: GitLabMergeRequestTimelineItem.Immutable): JComponent =
     when (item) {
-      is GitLabMergeRequestTimelineItem.SystemDiscussion -> createSystemDiscussionContent(item)
+      is GitLabMergeRequestTimelineItem.SystemNote -> createSystemDiscussionContent(item)
       is GitLabMergeRequestTimelineItem.LabelEvent -> createLabeledEventContent(item)
       is GitLabMergeRequestTimelineItem.MilestoneEvent -> createMilestonedEventContent(item)
       is GitLabMergeRequestTimelineItem.StateEvent -> createStateChangeContent(item)
     }
 
-  private fun createSystemDiscussionContent(item: GitLabMergeRequestTimelineItem.SystemDiscussion): JComponent {
+  private fun createSystemDiscussionContent(item: GitLabMergeRequestTimelineItem.SystemNote): JComponent {
     val content = item.content
     if (content.contains("Compare with previous version")) {
       try {

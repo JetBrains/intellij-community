@@ -26,11 +26,14 @@ import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.checkAttributeValueSize;
+
 /**
- *
+ * Attribute storage implemented on the top of {@link StreamlinedBlobStorage}
  */
 public class AttributesStorageOverBlobStorage implements AbstractAttributesStorage {
   public static final int MAX_ATTRIBUTE_ID = Byte.MAX_VALUE;
+
   //Persistent format (see AttributesRecord/AttributeEntry):
   //  Storage := (AttributeDirectoryRecord | AttributeDedicatedRecord)*
   //
@@ -671,16 +674,20 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     @Override
     public void close() throws IOException {
       super.close();
+
+      final BufferExposingByteArrayOutputStream attributeValueHolder = (BufferExposingByteArrayOutputStream)out;
+      final int attributeValueSize = attributeValueHolder.size();
+      checkAttributeValueSize(attribute, attributeValueSize);
+
       lock.writeLock().lock();
       try {
         final int encodedAttributeId = connection.getAttributeId(attribute.getId());
         final int attributesRecordId = connection.getRecords().getAttributeRecordId(fileId);
-        final BufferExposingByteArrayOutputStream valueHolder = (BufferExposingByteArrayOutputStream)out;
 
         final int updatedAttributesRecordId = updateAttribute(
           attributesRecordId,
           fileId, encodedAttributeId,
-          valueHolder.getInternalBuffer(), valueHolder.size()
+          attributeValueHolder.getInternalBuffer(), attributeValueSize
         );
 
         if (updatedAttributesRecordId != attributesRecordId) {

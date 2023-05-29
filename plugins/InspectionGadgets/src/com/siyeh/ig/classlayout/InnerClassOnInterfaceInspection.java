@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -44,7 +45,7 @@ public class InnerClassOnInterfaceInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new MoveClassFix();
   }
 

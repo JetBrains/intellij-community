@@ -47,10 +47,10 @@ class TopHitProvidersTest {
       try {
         val enabled = option.isOptionEnabled
 
-        // we can't reliably restore original state for non-boolean options
+        // we can't reliably restore the original state for non-boolean options
         if (option is NotABooleanOptionDescription ||
             // makes sense only on Windows
-            option.option == "UI: Show main menu in separate toolbar") {
+            option.option == "UI: Show main menu in a separate toolbar") {
           continue
         }
 

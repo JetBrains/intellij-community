@@ -2,11 +2,17 @@
 package com.intellij.util.indexing;
 
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
+import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
@@ -17,6 +23,8 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.LibraryIndexableEntityProvider;
 import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
+import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder;
+import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription;
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
@@ -39,10 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
@@ -102,7 +107,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
         builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, entities, entityStorage));
       }
       else if (change instanceof BuildableRootsChangeRescanningInfo) {
-        builders.addAll(getBuildersOnBuildableChangeInfo((BuildableRootsChangeRescanningInfo)change));
+        builders.addAll(getBuildersOnBuildableChangeInfo((BuildableRootsChangeRescanningInfo)change, project, entityStorage));
       }
       else {
         LOG.warn("Unexpected change " + change.getClass() + " " + change + ", full reindex requested");
@@ -347,8 +352,9 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   }
 
   private static Collection<? extends IndexableIteratorBuilder> getBuildersOnWorkspaceEntitiesRootsChange(@NotNull Project project,
-                                                                                                          @NotNull List<? extends WorkspaceEntity> entities,
+                                                                                                          @NotNull Collection<? extends WorkspaceEntity> entities,
                                                                                                           @NotNull EntityStorage entityStorage) {
+    if (entities.isEmpty()) return Collections.emptyList();
     List<IndexableIteratorBuilder> builders = new SmartList<>();
 
     WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder();
@@ -360,7 +366,9 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   }
 
   @NotNull
-  private static Collection<? extends IndexableIteratorBuilder> getBuildersOnBuildableChangeInfo(@NotNull BuildableRootsChangeRescanningInfo buildableInfo) {
+  private static Collection<? extends IndexableIteratorBuilder> getBuildersOnBuildableChangeInfo(@NotNull BuildableRootsChangeRescanningInfo buildableInfo,
+                                                                                                 @NotNull Project project,
+                                                                                                 @NotNull EntityStorage entityStorage) {
     BuildableRootsChangeRescanningInfoImpl info = (BuildableRootsChangeRescanningInfoImpl)buildableInfo;
     List<IndexableIteratorBuilder> builders = new SmartList<>();
     IndexableIteratorBuilders instance = IndexableIteratorBuilders.INSTANCE;
@@ -376,6 +384,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     for (LibraryId library : info.getLibraries()) {
       builders.addAll(instance.forLibraryEntity(library, true));
     }
+    builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, info.getWorkspaceEntities(), entityStorage));
     return builders;
   }
 
@@ -428,5 +437,65 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     private WorkspaceEntitiesRootsChangedRescanningInfo(@NotNull List<EntityReference<WorkspaceEntity>> entities) {
       this.references = entities;
     }
+  }
+
+  @Override
+  public @NotNull Collection<IndexableFilesIterator> createIteratorsForOrigins(@NotNull Project project,
+                                                                               @NotNull EntityStorage entityStorage,
+                                                                               @NotNull Collection<EntityReference<?>> entityReferences,
+                                                                               @NotNull Collection<Sdk> sdks,
+                                                                               @NotNull Collection<LibraryId> libraryIds,
+                                                                               @NotNull Collection<VirtualFile> filesFromAdditionalLibraryRootsProviders,
+                                                                               @NotNull Collection<VirtualFile> filesFromIndexableSetContributors) {
+    List<WorkspaceEntity> entities = ContainerUtil.mapNotNull(entityReferences, (ref) -> ref.resolve(entityStorage));
+    List<IndexableIteratorBuilder> builders = new ArrayList<>(getBuildersOnWorkspaceEntitiesRootsChange(project, entities, entityStorage));
+
+    for (Sdk sdk : sdks) {
+      builders.addAll(IndexableIteratorBuilders.INSTANCE.forSdk(sdk.getName(), sdk.getSdkType().getName()));
+    }
+    for (LibraryId id : libraryIds) {
+      builders.addAll(IndexableIteratorBuilders.INSTANCE.forLibraryEntity(id, true));
+    }
+
+    if (!filesFromAdditionalLibraryRootsProviders.isEmpty()) {
+      List<VirtualFile> roots = new ArrayList<>(filesFromAdditionalLibraryRootsProviders);
+      for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
+        for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(project)) {
+          boolean removed = roots.removeIf(file -> library.contains(file));
+          if (removed) {
+            String name = library instanceof ItemPresentation ? ((ItemPresentation)library).getPresentableText() : null;
+            builders.add(new SyntheticLibraryIteratorBuilder(library, name, library.getAllRoots()));
+          }
+          if (roots.isEmpty()) {
+            break;
+          }
+        }
+      }
+      if (!roots.isEmpty()) {
+        LOG.error("Failed fo find any SyntheticLibrary roots for " + StringUtil.join(roots, "\n"));
+      }
+    }
+
+    if (!filesFromIndexableSetContributors.isEmpty()) {
+      List<VirtualFile> roots = new ArrayList<>(filesFromIndexableSetContributors);
+      for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
+        Set<VirtualFile> applicationRoots = contributor.getAdditionalRootsToIndex();
+        boolean removedApp = roots.removeIf(file -> VfsUtilCore.isUnder(file, applicationRoots));
+        if (removedApp) {
+          builders.add(
+            new IndexableSetContributorFilesIteratorBuilder(null, contributor.getDebugName(), applicationRoots, false, contributor));
+        }
+        Set<VirtualFile> projectRoots = contributor.getAdditionalProjectRootsToIndex(project);
+        boolean removedProject = roots.removeIf(file -> VfsUtilCore.isUnder(file, projectRoots));
+        if (removedProject) {
+          builders.add(new IndexableSetContributorFilesIteratorBuilder(null, contributor.getDebugName(), projectRoots, true, contributor));
+        }
+        if (roots.isEmpty()) {
+          break;
+        }
+      }
+    }
+
+    return IndexableIteratorBuilders.INSTANCE.instantiateBuilders(builders, project, entityStorage);
   }
 }

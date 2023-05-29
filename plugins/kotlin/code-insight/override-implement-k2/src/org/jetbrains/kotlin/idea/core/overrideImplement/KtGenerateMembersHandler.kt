@@ -254,7 +254,6 @@ abstract class KtGenerateMembersHandler(
         return sentinelHeadNode.toListSkippingNulls()
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun insertMembersAccordingToPreferredOrder(
         symbolsInPreferredOrder: List<MemberEntry>,
         editor: Editor,
@@ -318,7 +317,6 @@ abstract class KtGenerateMembersHandler(
             prev?.next = node
         }
 
-        @OptIn(ExperimentalStdlibApi::class)
         fun toListSkippingNulls(): List<T> {
             var current: DoublyLinkedNode<T>? = this
             return buildList {

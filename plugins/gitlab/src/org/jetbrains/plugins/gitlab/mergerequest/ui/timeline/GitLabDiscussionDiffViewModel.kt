@@ -15,15 +15,15 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussionChangeMapping
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNotePositionMapping
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabDiscussionDiffViewModel.FullDiffRequest
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabDiscussionDiffViewModel.PatchHunkResult
 
 interface GitLabDiscussionDiffViewModel {
-  val position: GitLabDiscussionPosition
-  val mapping: Flow<GitLabMergeRequestDiscussionChangeMapping>
+  val position: GitLabNotePosition
+  val mapping: Flow<GitLabMergeRequestNotePositionMapping>
   val patchHunk: Flow<PatchHunkResult>
 
   val showDiffRequests: Flow<FullDiffRequest>
@@ -44,18 +44,18 @@ private val LOG = logger<GitLabDiscussionDiffViewModel>()
 class GitLabDiscussionDiffViewModelImpl(
   parentCs: CoroutineScope,
   private val mr: GitLabMergeRequest,
-  override val position: GitLabDiscussionPosition
+  override val position: GitLabNotePosition
 ) : GitLabDiscussionDiffViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
-  override val mapping: Flow<GitLabMergeRequestDiscussionChangeMapping> = mr.changes.mapLatest {
+  override val mapping: Flow<GitLabMergeRequestNotePositionMapping> = mr.changes.mapLatest {
     try {
       val allChanges = it.getParsedChanges()
-      GitLabMergeRequestDiscussionChangeMapping.map(allChanges, position)
+      GitLabMergeRequestNotePositionMapping.map(allChanges, position)
     }
     catch (e: Exception) {
-      GitLabMergeRequestDiscussionChangeMapping.Error(e)
+      GitLabMergeRequestNotePositionMapping.Error(e)
     }
   }.modelFlow(cs, LOG)
 
@@ -65,7 +65,7 @@ class GitLabDiscussionDiffViewModelImpl(
       send(PatchHunkResult.Error(e))
     }.combine(mapping) { allChanges, mapping ->
       when {
-        mapping is GitLabMergeRequestDiscussionChangeMapping.Actual && mapping.location != null -> {
+        mapping is GitLabMergeRequestNotePositionMapping.Actual && mapping.location != null -> {
           val patch = allChanges.patchesByChange[mapping.change]?.patch ?: run {
             LOG.warn("Can't find patch for ${mapping.change}")
             return@combine PatchHunkResult.NotLoaded
@@ -77,7 +77,7 @@ class GitLabDiscussionDiffViewModelImpl(
           }
           PatchHunkResult.Loaded(hunk, anchor)
         }
-        mapping is GitLabMergeRequestDiscussionChangeMapping.Error -> PatchHunkResult.Error(mapping.error)
+        mapping is GitLabMergeRequestNotePositionMapping.Error -> PatchHunkResult.Error(mapping.error)
         else -> PatchHunkResult.NotLoaded
       }
     }.collectLatest {
@@ -93,10 +93,10 @@ class GitLabDiscussionDiffViewModelImpl(
 
   override val showDiffHandler: Flow<(() -> Unit)?> = mapping.map {
     when (it) {
-      is GitLabMergeRequestDiscussionChangeMapping.Actual -> {
+      is GitLabMergeRequestNotePositionMapping.Actual -> {
         { requestFullDiff(it.change, it.location) }
       }
-      is GitLabMergeRequestDiscussionChangeMapping.Outdated -> {
+      is GitLabMergeRequestNotePositionMapping.Outdated -> {
         { requestFullDiff(it.change, it.originalLocation) }
       }
       else -> null

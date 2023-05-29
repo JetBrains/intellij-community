@@ -31,7 +31,7 @@ class VcsCloneDialog private constructor(private val project: Project) : DialogW
   private val cardLayout = CardLayout()
   private val mainPanel = JPanel(cardLayout)
   private val extensionComponents: MutableMap<String, VcsCloneDialogExtensionComponent> = HashMap()
-  private val listModel = CollectionListModel<VcsCloneDialogExtension>(VcsCloneDialogExtension.EP_NAME.extensionList)
+  private val listModel = CollectionListModel(VcsCloneDialogExtension.EP_NAME.extensionList)
 
   private val listener = object : VcsCloneDialogComponentStateListener {
     override fun onOkActionNameChanged(name: String) = setOKButtonText(name)

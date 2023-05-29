@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
@@ -11,7 +12,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
@@ -19,11 +20,10 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
+import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
@@ -31,6 +31,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import java.awt.*
 import java.beans.PropertyChangeListener
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -38,24 +40,32 @@ import javax.swing.JPanel
 private const val MAIN_TOOLBAR_ID = IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
 
 internal class MainToolbar: JPanel(HorizontalLayout(10)) {
-
   private val disposable = Disposer.newDisposable()
   private val mainMenuButton: MainMenuButton?
+  private val expandableMenu: ExpandableMenu?
 
   var layoutCallBack : LayoutCallBack? = null
 
   init {
     background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
     isOpaque = true
-    mainMenuButton = if (IdeRootPane.isMenuButtonInToolbar) MainMenuButton(null) else null
+    if (IdeRootPane.isMenuButtonInToolbar) {
+      mainMenuButton = MainMenuButton()
+      expandableMenu = ExpandableMenu(this)
+      mainMenuButton.expandableMenu = expandableMenu
+    }
+    else {
+      mainMenuButton = null
+      expandableMenu = null
+    }
     ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
   }
 
   companion object {
-    suspend fun computeActionGroups(): List<Pair<ActionGroup, String>> {
-      val app = ApplicationManager.getApplication() as ComponentManagerEx
-      app.getServiceAsync(ActionManager::class.java).await()
-      val customActionSchema = app.getServiceAsync(CustomActionsSchema::class.java).await()
+    internal suspend fun computeActionGroups(): List<Pair<ActionGroup, String>> {
+      val app = ApplicationManager.getApplication()
+      app.serviceAsync<ActionManager>()
+      val customActionSchema = app.serviceAsync<CustomActionsSchema>()
       return computeActionGroups(customActionSchema)
     }
 
@@ -121,6 +131,22 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     component.isOpaque = false
     return component
   }
+
+  override fun getAccessibleContext(): AccessibleContext {
+    if (accessibleContext == null) accessibleContext = AccessibleMainToolbar()
+    accessibleContext.accessibleName =
+      if (ExperimentalUI.isNewUI() && UISettings.getInstance().separateMainMenu) {
+        UIBundle.message("main.toolbar.accessible.group.name")
+      }
+      else {
+        ""
+      }
+    return accessibleContext
+  }
+
+  private inner class AccessibleMainToolbar : AccessibleJPanel() {
+    override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
+  }
 }
 
 typealias LayoutCallBack = () -> Unit
@@ -151,9 +177,13 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
 
   private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component) {
     val minSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
-    if (!isSeparator(cmp)) currRect.width = Integer.max(currRect.width, minSize.width)
+    if (!isSeparator(cmp)) {
+      currRect.width = Integer.max(currRect.width, minSize.width)
+    }
     currRect.height = Integer.max(currRect.height, minSize.height)
-    if (prevRect != null && prevRect.maxX > currRect.minX) currRect.x = prevRect.maxX.toInt()
+    if (prevRect != null && prevRect.maxX > currRect.minX) {
+      currRect.x = prevRect.maxX.toInt()
+    }
     currRect.y = 0
   }
 
@@ -169,7 +199,7 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
     if (action is ComboBoxAction) {
       findComboButton(component)?.apply {
         setUI(MainToolbarComboBoxButtonUI())
-        addPropertyChangeListener("UI") { evt -> if (evt.newValue !is MainToolbarComboBoxButtonUI) setUI(MainToolbarComboBoxButtonUI())}
+        addPropertyChangeListener("UI") { event -> if (event.newValue !is MainToolbarComboBoxButtonUI) setUI(MainToolbarComboBoxButtonUI())}
       }
     }
     return component
@@ -190,9 +220,13 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
     if (c is ComboBoxButton) return c
 
     for (child in c.components) {
-      if (child is ComboBoxButton) return child
+      if (child is ComboBoxButton) {
+        return child
+      }
       val childCombo = (child as? Container)?.let { findComboButton(it) }
-      if (childCombo != null) return childCombo
+      if (childCombo != null) {
+        return childCombo
+      }
     }
     return null
   }
@@ -216,27 +250,27 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
       component.font = font
     }
   }
-
 }
 
 internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {
   return IdeFrameDecorator.isCustomDecorationAvailable() &&
          (SystemInfoRt.isMac || (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle))
+         || IdeRootPane.hideNativeLinuxTitle && !settings.separateMainMenu
 }
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
 
-fun adjustIconForHeader(icon: Icon) = if (isDarkHeader()) IconLoader.getDarkIcon(icon, true) else icon
+fun adjustIconForHeader(icon: Icon): Icon = if (isDarkHeader()) IconLoader.getDarkIcon(icon, true) else icon
 
 private class HeaderIconUpdater {
-  private val iconsCache = ContainerUtil.createWeakSet<Icon>()
+  private val iconCache = ContainerUtil.createWeakSet<Icon>()
 
   private fun updateIcon(p: Presentation, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
     if (!isDarkHeader()) return
 
     getter(p)?.let { icon ->
       val replaceIcon = adjustIconForHeader(icon)
-      iconsCache.add(replaceIcon)
+      iconCache.add(replaceIcon)
       setter(p, replaceIcon)
     }
   }
@@ -245,7 +279,7 @@ private class HeaderIconUpdater {
     updateIcon(presentation, getter, setter)
     presentation.addPropertyChangeListener(PropertyChangeListener { evt ->
       if (evt.propertyName != propName) return@PropertyChangeListener
-      if (evt.newValue != null && evt.newValue in iconsCache) return@PropertyChangeListener
+      if (evt.newValue != null && evt.newValue in iconCache) return@PropertyChangeListener
       updateIcon(presentation, getter, setter)
     })
   }

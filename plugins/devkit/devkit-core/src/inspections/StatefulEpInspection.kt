@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
@@ -34,21 +35,18 @@ class StatefulEpInspection : DevKitUastInspectionBase(UField::class.java, UClass
     val holder = createProblemsHolder(field, manager, isOnTheFly)
 
     if (isHoldingElement(field.type, PsiElement::class.java.canonicalName)) {
-      val anchor = field.getAnchorPsi() ?: return ProblemDescriptor.EMPTY_ARRAY
-      holder.registerProblem(anchor, getMessage(isQuickFix))
+      holder.registerUProblem(field, getMessage(isQuickFix))
       return holder.resultsArray
     }
 
     if (isHoldingElement(field.type, PsiReference::class.java.canonicalName)) {
-      val anchor = field.getAnchorPsi() ?: return ProblemDescriptor.EMPTY_ARRAY
-      holder.registerProblem(anchor, message(PsiReference::class.java.simpleName, isQuickFix))
+      holder.registerUProblem(field, message(PsiReference::class.java.simpleName, isQuickFix))
       return holder.resultsArray
     }
 
     val fieldTypeClass = PsiTypesUtil.getPsiClass(field.type) ?: return ProblemDescriptor.EMPTY_ARRAY
     if (!isProjectFieldAllowed(field, uClass, targets) && InheritanceUtil.isInheritor(fieldTypeClass, Project::class.java.canonicalName)) {
-      val anchor = field.getAnchorPsi() ?: return ProblemDescriptor.EMPTY_ARRAY
-      holder.registerProblem(anchor, message(Project::class.java.simpleName, isQuickFix))
+      holder.registerUProblem(field, message(Project::class.java.simpleName, isQuickFix))
       return holder.resultsArray
     }
 
@@ -89,10 +87,6 @@ class StatefulEpInspection : DevKitUastInspectionBase(UField::class.java, UClass
       }
     }
     return false
-  }
-
-  private fun UField.getAnchorPsi(): PsiElement? {
-    return this.uastAnchor?.sourcePsi
   }
 
   private fun getMessage(isQuickFix: Boolean): @Nls String {

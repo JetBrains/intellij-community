@@ -761,7 +761,7 @@ open class EditorsSplitters internal constructor(
 
       if (cause.cause == FocusEvent.Cause.ACTIVATION) {
         // Window activation mistakenly puts focus to editor as 'last focused component in this window'
-        // even if you activate the window by clicking some other place (e.g. Project View)
+        // even if you activate the window by clicking some other place (e.g., Project View)
         SwingUtilities.invokeLater {
           if (component!!.isFocusOwner) {
             lastFocusGainedTime = System.currentTimeMillis()
@@ -962,7 +962,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
           }
           else {
             ClientSessionsManager.getProjectSession(fileEditorManager.project, clientId)
-              ?.serviceOrNull<ClientFileEditorManager>()?.openFile(file = file, forceCreate = false)
+              ?.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, forceCreate = false, requestFocus = true)
           }
 
           // This is just to make sure document reference is kept on stack till this point
@@ -1005,17 +1005,18 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
       val firstComponent = process(state = state.firstSplitter!!, context = null)
       val secondComponent = process(state = state.secondSplitter!!, context = null)
       return withContext(Dispatchers.EDT) {
-        val panel = JPanel(BorderLayout())
-        panel.isFocusable = false
-        panel.isOpaque = false
         val splitter = createSplitter(orientation = state.isVertical,
                                       proportion = state.proportion,
                                       minProp = 0.1f,
                                       maxProp = 0.9f)
         splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, true)
-        panel.add(splitter, BorderLayout.CENTER)
         splitter.firstComponent = firstComponent
         splitter.secondComponent = secondComponent
+
+        val panel = JPanel(BorderLayout())
+        panel.isFocusable = false
+        panel.isOpaque = false
+        panel.add(splitter, BorderLayout.CENTER)
         panel
       }
     }

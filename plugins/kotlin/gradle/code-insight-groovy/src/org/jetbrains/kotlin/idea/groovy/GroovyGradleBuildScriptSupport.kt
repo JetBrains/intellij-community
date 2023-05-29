@@ -72,6 +72,7 @@ class GroovyBuildScriptManipulator(
         kotlinPluginName: String,
         kotlinPluginExpression: String,
         stdlibArtifactName: String,
+        addVersion: Boolean,
         version: IdeKotlinVersion,
         jvmTarget: String?
     ): Boolean {
@@ -81,7 +82,11 @@ class GroovyBuildScriptManipulator(
         if (useNewSyntax) {
             scriptFile
                 .getPluginsBlock()
-                .addLastExpressionInBlockIfNeeded("$kotlinPluginExpression version '${version.artifactVersion}'")
+                .addLastExpressionInBlockIfNeeded(
+                    if (addVersion) {
+                        "$kotlinPluginExpression version '${version.artifactVersion}'"
+                    } else kotlinPluginExpression
+                )
             scriptFile.getRepositoriesBlock().apply {
                 val repository = getRepositoryForVersion(version)
                 val gradleFacade = KotlinGradleFacade.getInstance()
@@ -153,6 +158,10 @@ class GroovyBuildScriptManipulator(
         }
 
         return oldText != scriptFile.text
+    }
+
+    override fun isKotlinConfiguredInBuildScript(): Boolean {
+        return DifferentKotlinGradleVersionInspection.getKotlinPluginVersion(scriptFile) != null
     }
 
     override fun changeLanguageFeatureConfiguration(

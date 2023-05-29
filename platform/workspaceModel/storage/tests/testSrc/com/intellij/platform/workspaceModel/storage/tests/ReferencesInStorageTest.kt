@@ -158,7 +158,7 @@ class ReferencesInStorageTest {
     val child1 = builder addEntity XChildEntity("child", MySource) {
       parentEntity = builder addEntity XParentEntity("parent", MySource)
       dataClass = null
-      childChild = emptyList<XChildChildEntity>()
+      childChild = emptyList()
     }
     builder addEntity XChildEntity("child", MySource) {
       parentEntity = child1.parentEntity

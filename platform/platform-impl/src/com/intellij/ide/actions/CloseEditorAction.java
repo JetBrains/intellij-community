@@ -29,7 +29,7 @@ public class CloseEditorAction extends AnAction implements DumbAware {
       file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     }
     if (file != null) {
-      editorManager.closeFile(file, window);
+      editorManager.closeFileWithChecks(file, window);
     }
   }
 

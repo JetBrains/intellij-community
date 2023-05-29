@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.tools.projectWizard.templates
 
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.Versions
+import org.jetbrains.kotlin.tools.projectWizard.Dependencies
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.Writer
 import org.jetbrains.kotlin.tools.projectWizard.core.asPath
@@ -46,8 +46,7 @@ object SimpleJsClientTemplate : JsClientTemplate() {
         buildList {
             if (useKotlinxHtml.reference.settingValue()) {
                 +ArtifactBasedLibraryDependencyIR(
-                    MavenArtifact(Repositories.KOTLINX_HTML, "org.jetbrains.kotlinx", "kotlinx-html"),
-                    Versions.KOTLINX.KOTLINX_HTML,
+                    Dependencies.KOTLINX.KOTLINX_HTML,
                     DependencyType.MAIN
                 )
             }

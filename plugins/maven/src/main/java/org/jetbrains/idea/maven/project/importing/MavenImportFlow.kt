@@ -34,6 +34,7 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.FileFinder
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.runBlockingCancellableUnderIndicator
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -122,8 +123,6 @@ class MavenImportFlow {
 
         errorsSet.addAll(toResolve.filter { it.hasReadingProblems() })
         toResolve.removeIf { it.hasReadingProblems() }
-
-        runLegacyListeners(context) { projectsScheduled() }
       }
     }, d)
 
@@ -222,8 +221,7 @@ class MavenImportFlow {
       embeddersManager,
       consoleToBeRemoved,
       context.initialContext.indicator,
-      false,
-      projectManager.forceUpdateSnapshots)
+      false)
 
     return MavenPluginResolvedContext(context.project, context)
   }
@@ -264,24 +262,19 @@ class MavenImportFlow {
   fun resolveFolders(projects: Collection<MavenProject>, project: Project, indicator: MavenProgressIndicator): Collection<MavenProject> {
     assertNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(project)
-    val embeddersManager = projectManager.embeddersManager
     val projectTree = loadOrCreateProjectTree(projectManager)
-    val generalSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings()
-    val importingSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getImportingSettings()
-    val consoleToBeRemoved = BTWMavenConsole(project, generalSettings.outputLevel,
-                                             generalSettings.isPrintErrorStackTraces)
     val d = Disposer.newDisposable("MavenImportFlow:resolveFolders:treeListener")
     val projectsFoldersResolved = Collections.synchronizedList(ArrayList<MavenProject>())
     Disposer.register(MavenDisposable.getInstance(project), d)
-    projectTree.addListener(object : MavenProjectsTree.Listener {
-      override fun foldersResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
-        if (projectWithChanges.second.hasChanges()) {
-          projectsFoldersResolved.add(projectWithChanges.first)
-        }
+    val folderResolver = MavenFolderResolver(project)
+    val projectsWithChanges = runBlockingCancellableUnderIndicator {
+      return@runBlockingCancellableUnderIndicator folderResolver.resolveFolders(projects)
+    }
+    for (projectWithChanges in projectsWithChanges) {
+      if (projectWithChanges.value.hasChanges()) {
+        projectsFoldersResolved.add(projectWithChanges.key)
       }
-    }, d)
-    val folderResolver = MavenFolderResolver()
-    folderResolver.resolveFolders(projects, projectTree, importingSettings, embeddersManager, consoleToBeRemoved, indicator)
+    }
 
     Disposer.dispose(d)
     return projectsFoldersResolved

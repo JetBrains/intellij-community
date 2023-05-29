@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -29,11 +29,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.xml.util.XmlStringUtil;
+import com.jetbrains.JBR;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +51,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 
 /**
  * @author Alexander Lobas
@@ -601,6 +607,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       if (success) {
         appendOrUpdateDescriptor(installedDescriptor != null ? installedDescriptor : descriptor, restartRequired);
         appendDependsAfterInstall();
+        if (installedDescriptor == null && descriptor instanceof PluginNode && myDownloaded != null && myDownloaded.ui != null) {
+          ListPluginComponent component = myDownloaded.ui.findComponent(descriptor);
+          if (component != null) {
+            component.setInstalledPluginMarketplaceNode((PluginNode)descriptor);
+          }
+        }
       }
       else if (myCancelInstallCallback != null) {
         myCancelInstallCallback.accept(descriptor);
@@ -619,6 +631,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
 
     info.indicator.cancel();
+
+    if (ScreenReader.isActive() && JBR.isAccessibleAnnouncerSupported()) {
+      JFrame frame = WindowManager.getInstance().findVisibleFrame();
+      String key = success ? "plugins.configurable.plugin.installing.success" : "plugins.configurable.plugin.installing.failed";
+      String message = IdeBundle.message(key, descriptor.getName());
+      AccessibleAnnouncerUtil.announce(frame, message, true);
+    }
 
     if (success) {
       needRestart |= restartRequired;
@@ -928,7 +947,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
 
     if (PluginManagerCore.isIncompatible(descriptor) ||
-        PluginManagerCore.isBrokenPlugin(descriptor) ||
+        isBrokenPlugin(descriptor) ||
         hasProblematicDependencies(pluginId)) {
       myErrorPluginsToDisable.add(pluginId);
     }

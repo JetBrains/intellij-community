@@ -68,15 +68,16 @@
                     serviceImplementation="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"/>
     <customizableActionGroupProvider implementation="com.intellij.execution.ui.RunTabCustomizableActionGroupProvider"/>
     <postStartupActivity implementation="com.intellij.execution.ui.ExecutionReasonableHistoryManager" order="last"/>
-    <registryKey key="ide.experimental.ui.contrast.run.widget"
-                 description="Use contrast run widget in the new UI"
-                 defaultValue="FALSE"
-                 restartRequired="false"/>
 
     <postStartupActivity implementation="com.intellij.execution.runToolbar.RunToolbarInitializeService"/>
 
     <actionConfigurationCustomizer implementation="com.intellij.execution.runToolbar.MyActionConfigurationCustomizer"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint interface="com.intellij.execution.DisplayDescriptorChooser"
+                    dynamic="true"
+                    qualifiedName="com.intellij.execution.displayDescriptorChooser" />
+  </extensionPoints>
   <projectListeners>
     <listener class="com.intellij.execution.runToolbar.RunToolbarComponentService$MyExecutionListener"
               topic="com.intellij.execution.ExecutionListener"/>

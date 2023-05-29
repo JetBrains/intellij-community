@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.comment
 
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.diff.DiffMappedValue
+import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
@@ -55,11 +56,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
   override val isLoadingReviewData: Boolean
     get() = reviewThreadsLoadingModel?.loading == true || pendingReviewLoadingModel?.loading == true
 
-  override var showReviewThreads by observable(true) { _, _, _ ->
-    updateReviewThreads()
-  }
-
-  override var showResolvedReviewThreads by observable(false) { _, _, _ ->
+  override var discussionsViewOption by observable(DiscussionsViewOption.UNRESOLVED_ONLY) { _, _, _ ->
     updateReviewThreads()
   }
 
@@ -152,15 +149,14 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
   }
 
   private fun mapThread(thread: GHPullRequestReviewThread): DiffMappedValue<GHPullRequestReviewThread>? {
-    val originalCommitSha = thread.originalCommit?.oid ?: return null
-    if (!diffData.contains(originalCommitSha, thread.path)) return null
     if (thread.line == null && thread.originalLine == null) return null
 
     val mappedLocation = if (thread.line != null) {
-      val commit = thread.commit?.oid ?: return null
+      val commitSha = thread.commit?.oid ?: return null
+      if (!diffData.contains(commitSha, thread.path)) return null
       when (thread.side) {
         Side.RIGHT -> {
-          diffData.mapLine(commit, thread.line - 1, Side.RIGHT)
+          diffData.mapLine(commitSha, thread.line - 1, Side.RIGHT)
         }
         Side.LEFT -> {
           diffData.fileHistory.findStartCommit()?.let { baseSha ->
@@ -170,6 +166,8 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
       }
     }
     else if (thread.originalLine != null) {
+      val originalCommitSha = thread.originalCommit?.oid ?: return null
+      if (!diffData.contains(originalCommitSha, thread.path)) return null
       when (thread.side) {
         Side.RIGHT -> {
           diffData.mapLine(originalCommitSha, thread.originalLine - 1, Side.RIGHT)
@@ -192,7 +190,11 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
   private fun updateReviewThreads() {
     val loadingModel = reviewThreadsLoadingModel ?: return
     if (loadingModel.loading) return
-    reviewThreadsModel.value = if (showReviewThreads) loadingModel.result?.filter { showResolvedReviewThreads || !it.value.isResolved } else null
+    reviewThreadsModel.value = when (discussionsViewOption) {
+      DiscussionsViewOption.ALL -> loadingModel.result
+      DiscussionsViewOption.UNRESOLVED_ONLY -> loadingModel.result?.filter { !it.value.isResolved }
+      DiscussionsViewOption.DONT_SHOW -> null
+    }
   }
 }
 

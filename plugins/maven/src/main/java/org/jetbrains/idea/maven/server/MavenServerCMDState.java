@@ -85,8 +85,8 @@ public class MavenServerCMDState extends CommandLineState {
     params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
 
     if (myDebugPort != null) {
-      params.getVMParametersList()
-        .addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=*:" + myDebugPort);
+      params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=*:" + myDebugPort);
+      params.getProgramParametersList().add("runWithDebugger");
     }
 
     params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");

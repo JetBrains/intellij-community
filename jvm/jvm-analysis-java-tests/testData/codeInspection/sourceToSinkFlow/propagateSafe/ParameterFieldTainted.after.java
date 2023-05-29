@@ -9,7 +9,7 @@ class Simple {
     test(s);
   }
 
-  void test(String s) {
+  void test(@Untainted String s) {
     sink(s);
   }
 

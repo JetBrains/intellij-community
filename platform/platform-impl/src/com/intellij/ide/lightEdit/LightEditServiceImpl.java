@@ -381,9 +381,14 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   private void closeAndDisposeFrame() {
-    myFrameWrapper.closeAndDispose(this);
+    if (myFrameWrapper != null) {
+      Disposer.dispose(myFrameWrapper);
+      LOG.info("Frame disposed");
+    }
+  }
+
+  void frameDisposed() {
     myFrameWrapper = null;
-    LOG.info("Frame disposed");
   }
 
   @Override

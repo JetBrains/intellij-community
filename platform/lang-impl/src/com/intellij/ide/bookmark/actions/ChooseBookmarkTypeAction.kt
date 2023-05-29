@@ -32,7 +32,17 @@ internal class ChooseBookmarkTypeAction : DumbAwareAction() {
     val manager = event.bookmarksManager ?: return
     val bookmark = event.contextBookmark ?: return
     val type = manager.getType(bookmark)
-    val chooser = BookmarkTypeChooser(type, manager.assignedTypes, bookmark.firstGroupWithDescription?.getDescription(bookmark)) { chosenType, description ->
+    val chooser = BookmarkTypeChooser(type, manager.assignedTypes, bookmark.firstGroupWithDescription?.getDescription(bookmark))
+    val title = when (type) {
+      BookmarkType.DEFAULT -> BookmarkBundle.message("mnemonic.chooser.mnemonic.assign.popup.title")
+      null -> BookmarkBundle.message("mnemonic.chooser.bookmark.create.popup.title")
+      else -> BookmarkBundle.message("mnemonic.chooser.mnemonic.change.popup.title")
+    }
+    val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(chooser.content, chooser.firstButton)
+      .setFocusable(true).setRequestFocus(true)
+      .setMovable(false).setResizable(false)
+      .setTitle(title).createPopup()
+    chooser.onChosen = { chosenType, description ->
       if (manager.getType(bookmark) == null) {
         manager.toggle(bookmark, chosenType)
       } else {
@@ -41,17 +51,9 @@ internal class ChooseBookmarkTypeAction : DumbAwareAction() {
       if (description != "") {
         manager.getGroups(bookmark).firstOrNull()?.setDescription(bookmark, description)
       }
+      popup.closeOk(null)
     }
-    val title = when (type) {
-      BookmarkType.DEFAULT -> BookmarkBundle.message("mnemonic.chooser.mnemonic.assign.popup.title")
-      null -> BookmarkBundle.message("mnemonic.chooser.bookmark.create.popup.title")
-      else -> BookmarkBundle.message("mnemonic.chooser.mnemonic.change.popup.title")
-    }
-    JBPopupFactory.getInstance().createComponentPopupBuilder(chooser.content, chooser.firstButton)
-      .setFocusable(true).setRequestFocus(true)
-      .setMovable(false).setResizable(false)
-      .setTitle(title).createPopup()
-      .showInBestPositionFor(event.dataContext)
+    popup.showInBestPositionFor(event.dataContext)
   }
 
   init {

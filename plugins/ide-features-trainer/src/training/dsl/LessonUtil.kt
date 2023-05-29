@@ -415,7 +415,7 @@ fun LessonContext.highlightRunToolbar(highlightInside: Boolean = true, usePulsat
       this.usePulsation = usePulsation
     }.component { toolbar: ActionToolbarImpl ->
       val actionId = ActionManager.getInstance().getId(toolbar.actionGroup)
-      actionId == "RunToolbarMainActionGroup" || actionId == "ContrastRunToolbarMainActionGroup"
+      actionId == "RunToolbarMainActionGroup"
     }
   }
 }

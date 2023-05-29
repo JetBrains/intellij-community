@@ -23,9 +23,10 @@
     <orderEntry type="library" name="JUnit5" level="project" />
     <orderEntry type="library" name="assertJ" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="module" module-name="intellij.platform.reproducibleBuilds.diffTool" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.devkit.runtimeModuleRepository.jps" />

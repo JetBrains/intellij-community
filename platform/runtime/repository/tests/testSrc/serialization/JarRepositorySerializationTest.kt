@@ -29,11 +29,11 @@ class JarRepositorySerializationTest {
   
   @Test
   fun `single module`() {
-    check(listOf(RawRuntimeModuleDescriptor("ij.platform.util", listOf("../ij-util.jar"), emptyList()))) {
+    check(listOf(RawRuntimeModuleDescriptor("ij.platform.util", listOf("ij-util.jar"), emptyList()))) {
       xml("ij.platform.util.xml", """
           <module name="ij.platform.util">
             <resources>
-              <resource-root path="../ij-util.jar"/>
+              <resource-root path="ij-util.jar"/>
             </resources>
           </module>
         """.trimIndent())
@@ -43,7 +43,7 @@ class JarRepositorySerializationTest {
   @Test
   fun `two modules`() {
     check(listOf(
-      RawRuntimeModuleDescriptor("ij.platform.util.rt", listOf("../ij-util-rt.jar"), emptyList()),
+      RawRuntimeModuleDescriptor("ij.platform.util.rt", listOf("ij-util-rt.jar"), emptyList()),
       RawRuntimeModuleDescriptor("ij.platform.util", emptyList(), listOf("ij.platform.util.rt")),
     )) {
       xml("ij.platform.util.xml", """
@@ -56,7 +56,7 @@ class JarRepositorySerializationTest {
       xml("ij.platform.util.rt.xml", """
           <module name="ij.platform.util.rt">
             <resources>
-              <resource-root path="../ij-util-rt.jar"/>
+              <resource-root path="ij-util-rt.jar"/>
             </resources>
           </module>
         """.trimIndent())

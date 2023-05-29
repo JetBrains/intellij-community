@@ -231,7 +231,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
 
     // todo it means that order of subscribers is not preserved
-    // it is very minor requirement, but still, makes sense to comply it
+    // it is a very minor requirement, but still, makes sense to comply it
     if (newSubscribers != null) {
       subscribers.addAll(newSubscribers)
     }

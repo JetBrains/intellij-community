@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
@@ -35,8 +36,9 @@ import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-internal class MainMenuButton(private val expandableMenu: ExpandableMenu?) {
+internal class MainMenuButton {
 
+  var expandableMenu: ExpandableMenu? = null
   private val menuAction = ShowMenuAction()
   private var disposable: Disposable? = null
   private var shortcutsChangeConnection: MessageBusConnection? = null
@@ -129,13 +131,13 @@ internal class MainMenuButton(private val expandableMenu: ExpandableMenu?) {
     }
   }
 
-  private inner class ShowMenuAction : DumbAwareAction(
+  private inner class ShowMenuAction : LightEditCompatible, DumbAwareAction (
     IdeBundle.messagePointer("main.toolbar.menu.button"),
     ExpUiIcons.General.WindowsMenu_20x20) {
 
     override fun actionPerformed(e: AnActionEvent) {
       if (expandableMenu?.isEnabled() == true) {
-        expandableMenu.switchState()
+        expandableMenu!!.switchState(button.size)
       } else {
         showPopup(e.dataContext)
       }
@@ -170,7 +172,7 @@ internal class MainMenuButton(private val expandableMenu: ExpandableMenu?) {
     override fun actionPerformed(e: ActionEvent?) {
       if (!UISettings.getInstance().disableMnemonics) {
         if (expandableMenu?.isEnabled() == true) {
-          expandableMenu.switchState(actionToShow)
+          expandableMenu!!.switchState(button.size, actionToShow)
         } else {
           val component = IdeFocusManager.getGlobalInstance().focusOwner ?: button
           showPopup(DataManager.getInstance().getDataContext(component), actionToShow)

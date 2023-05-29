@@ -21,5 +21,9 @@
     <orderEntry type="module" module-name="kotlin.searching.base" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" />
     <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="kotlin.base.resources" />
+    <orderEntry type="module" module-name="kotlin.base.util" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
   </component>
 </module>

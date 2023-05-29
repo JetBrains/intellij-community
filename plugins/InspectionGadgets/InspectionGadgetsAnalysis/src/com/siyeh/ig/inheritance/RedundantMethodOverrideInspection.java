@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,7 +19,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.migration.TryWithIdenticalCatchesInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -56,14 +57,14 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     if (infos.length > 0 && infos[0] instanceof Boolean isDelegate && isDelegate) {
-      return new InspectionGadgetsFix[] { new RedundantMethodOverrideFix() };
+      return new LocalQuickFix[] { new RedundantMethodOverrideFix() };
     }
-    return new InspectionGadgetsFix[] { new RedundantMethodOverrideFix(), new ReplaceWithSuperDelegateFix() };
+    return new LocalQuickFix[] { new RedundantMethodOverrideFix(), new ReplaceWithSuperDelegateFix() };
   }
 
-  private static class ReplaceWithSuperDelegateFix extends InspectionGadgetsFix {
+  private static class ReplaceWithSuperDelegateFix extends PsiUpdateModCommandQuickFix {
 
     private static @Nullable PsiClassType findRequiredSuperQualifier(@Nullable PsiClass contextClass, PsiMethod methodToCall) {
       if (contextClass == null) return null;
@@ -88,8 +89,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement methodNameIdentifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameIdentifier, @NotNull EditorUpdater updater) {
       if (!(methodNameIdentifier.getParent() instanceof PsiMethod method)) return;
       PsiMethod superMethod = findSuperMethod(method);
       if (superMethod == null) return;
@@ -137,7 +137,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     }
   }
 
-  private static class RedundantMethodOverrideFix extends InspectionGadgetsFix {
+  private static class RedundantMethodOverrideFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -146,11 +146,10 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement methodNameIdentifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameIdentifier, @NotNull EditorUpdater updater) {
       final PsiElement method = methodNameIdentifier.getParent();
       assert method != null;
-      deleteElement(method);
+      method.delete();
     }
   }
 

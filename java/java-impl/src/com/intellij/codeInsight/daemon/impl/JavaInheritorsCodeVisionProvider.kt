@@ -69,8 +69,6 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
   }
 
   override fun handleClick(editor: Editor, element: PsiElement, event: MouseEvent?) {
-    val containingFile = element.containingFile ?: return
-    if (PsiDocumentManager.getInstance(containingFile.project).getDocument(containingFile) == null) return
     val markerType = if (element is PsiClass) MarkerType.SUBCLASSED_CLASS else MarkerType.OVERRIDDEN_METHOD
     val navigationHandler = markerType.navigationHandler
     if (element is PsiNameIdentifierOwner) {

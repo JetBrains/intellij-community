@@ -16,7 +16,9 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,7 +28,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -58,7 +59,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new StringBufferMayBeStringBuilderFix();
   }
 
@@ -81,7 +82,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
     return null;
   }
 
-  private static class StringBufferMayBeStringBuilderFix extends InspectionGadgetsFix {
+  private static class StringBufferMayBeStringBuilderFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -90,8 +91,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement parent = element.getParent();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiClass stringBuilderClass = psiFacade.findClass(CommonClassNames.JAVA_LANG_STRING_BUILDER, element.getResolveScope());
@@ -140,10 +140,12 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
         return;
       }
       final PsiJavaCodeReferenceElement oldReferenceElement = typeElement.getInnermostComponentReferenceElement();
-      if (oldReferenceElement == null) {
+      if (oldReferenceElement == null && !typeElement.isInferredType()) {
         return;
       }
-      oldReferenceElement.replace(newClassReference);
+      if (oldReferenceElement != null && !typeElement.isInferredType()) {
+        oldReferenceElement.replace(newClassReference);
+      }
       final PsiExpression newExpression = getNewStringBuffer(variable.getInitializer());
       if (!(newExpression instanceof PsiNewExpression)) {
         return;
@@ -236,7 +238,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
           if ("appendTail".equals(methodName)) {
             return call instanceof PsiExpression && isSafeStringBufferUsage((PsiExpression)call);
           }
-          else if ("appendReplacement".equals(methodName)){
+          else if ("appendReplacement".equals(methodName)) {
             return true;
           }
         }

@@ -68,7 +68,7 @@ fun main(args: Array<String>) {
 
 private fun regenerateProjectLibraries(dotIdea: File, libraries: List<JpsLibrary>) {
     val librariesDir = dotIdea.resolve("libraries")
-    librariesDir.listFiles { file -> file.startsWith("kotlinc_") }!!.forEach { it.delete() }
+    librariesDir.listFiles { file -> file.name.startsWith("kotlinc_") }!!.forEach { it.delete() }
 
     for (library in libraries) {
         val libraryFileName = library.name.replace("\\W".toRegex(), "_") + ".xml"

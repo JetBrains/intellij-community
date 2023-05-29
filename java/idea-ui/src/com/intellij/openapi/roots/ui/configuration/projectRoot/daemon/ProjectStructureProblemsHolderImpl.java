@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
                               @NotNull ProjectStructureProblemType problemType,
                               @NotNull PlaceInProjectStructure place,
                               @Nullable ConfigurationErrorQuickFix fix) {
-    final List<ConfigurationErrorQuickFix> fixes = fix != null ? Collections.singletonList(fix) : Collections.emptyList();
+    final List<ConfigurationErrorQuickFix> fixes = ContainerUtil.createMaybeSingletonList(fix);
     registerProblem(new ProjectStructureProblemDescription(message,
                                                            description != null ? HtmlChunk.raw(description) : HtmlChunk.empty(),
                                                            place,

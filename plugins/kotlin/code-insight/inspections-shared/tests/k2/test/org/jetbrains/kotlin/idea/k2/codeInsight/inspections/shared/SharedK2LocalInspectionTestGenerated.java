@@ -256,6 +256,11 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/redundantReturnLabel/inAnonymousFunction.kt");
         }
 
+        @TestMetadata("inAnonymousFunction2.kt")
+        public void testInAnonymousFunction2() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantReturnLabel/inAnonymousFunction2.kt");
+        }
+
         @TestMetadata("inFunction.kt")
         public void testInFunction() throws Exception {
             runTest("../testData/inspectionsLocal/redundantReturnLabel/inFunction.kt");

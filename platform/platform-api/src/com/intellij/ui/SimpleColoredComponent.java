@@ -524,7 +524,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     Font baseFont = getBaseFont();
     if (!baseFont.equals(myLayoutFont) || !frc.equals(myLayoutFRC)) {
       myFragments.forEach(ColoredFragment::invalidateLayout);
-      myLayoutFont = baseFont;
+      myLayoutFont = new ImmutableFont(baseFont);
       myLayoutFRC = frc;
     }
     return frc;

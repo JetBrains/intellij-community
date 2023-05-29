@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
@@ -26,7 +28,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class InlineGetterSetterCallFix extends InspectionGadgetsFix {
+public class InlineGetterSetterCallFix extends PsiUpdateModCommandQuickFix {
   private final boolean myGetter;
 
   public InlineGetterSetterCallFix(boolean getter) {
@@ -49,8 +51,7 @@ public class InlineGetterSetterCallFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement nameElement = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement nameElement, @NotNull EditorUpdater updater) {
     final PsiReferenceExpression methodExpression = (PsiReferenceExpression)nameElement.getParent();
     if (methodExpression == null) return;
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)methodExpression.getParent();

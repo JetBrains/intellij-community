@@ -15,8 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
@@ -78,7 +77,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new IntegerMultiplicationImplicitCastToLongInspectionFix();
   }
 
@@ -153,7 +152,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     return ExpressionParser.SHIFT_OPS.contains(tokenType);
   }
 
-  private static class IntegerMultiplicationImplicitCastToLongInspectionFix extends InspectionGadgetsFix {
+  private static class IntegerMultiplicationImplicitCastToLongInspectionFix extends PsiUpdateModCommandQuickFix {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -163,8 +162,8 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiPolyadicExpression expression = (PsiPolyadicExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiPolyadicExpression expression = (PsiPolyadicExpression)startElement;
 
       final PsiExpression[] operands = expression.getOperands();
       if (operands.length < 2) {

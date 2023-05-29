@@ -2,15 +2,12 @@
 package org.jetbrains.idea.maven.plugins.groovy.wizard
 
 import com.intellij.ide.util.EditorHelper
-import com.intellij.ide.util.projectWizard.ModuleWizardStep
-import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.GitSilentFileAdderProvider
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -20,10 +17,9 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder
-import org.jetbrains.idea.maven.wizards.MavenStructureWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
-import org.jetbrains.idea.maven.wizards.SelectPropertiesStep
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
+import org.jetbrains.plugins.groovy.config.wizard.GROOVY_SDK_FALLBACK_VERSION
 import org.jetbrains.plugins.groovy.config.wizard.createSampleGroovyCodeFile
 import java.util.*
 import kotlin.io.path.Path
@@ -32,14 +28,10 @@ import kotlin.io.path.createDirectories
 /**
  * Currently used only for new project wizard, thus the functionality is rather limited
  */
-class MavenGroovyNewProjectBuilder(private val groovySdkVersion: String) : AbstractMavenModuleBuilder() {
+class MavenGroovyNewProjectBuilder : AbstractMavenModuleBuilder() {
 
   var createSampleCode = false
-
-  override fun createWizardSteps(wizardContext: WizardContext, modulesProvider: ModulesProvider): Array<ModuleWizardStep> = arrayOf(
-    MavenStructureWizardStep(this, wizardContext),
-    SelectPropertiesStep(wizardContext.project, this),
-  )
+  var groovySdkVersion = GROOVY_SDK_FALLBACK_VERSION
 
   override fun setupRootModel(rootModel: ModifiableRootModel) {
     val project = rootModel.project

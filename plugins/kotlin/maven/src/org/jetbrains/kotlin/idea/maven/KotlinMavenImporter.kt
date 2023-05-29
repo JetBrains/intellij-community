@@ -530,7 +530,7 @@ private enum class SourceType {
 class KotlinImporterComponent : PersistentStateComponent<KotlinImporterComponent.State> {
     class State(var directories: List<String> = ArrayList())
 
-    val addedSources: MutableSet<String> = Collections.synchronizedSet(HashSet<String>())
+    val addedSources: MutableSet<String> = Collections.synchronizedSet(HashSet())
 
     override fun loadState(state: State) {
         addedSources.clear()

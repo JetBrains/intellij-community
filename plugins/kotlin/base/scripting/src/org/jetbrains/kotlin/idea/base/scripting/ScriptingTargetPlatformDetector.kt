@@ -96,7 +96,7 @@ internal class ScriptingTargetPlatformDetector : TargetPlatformDetector {
                         MessageCollector.NONE,
                         mapOf(AnalysisFlags.ideMode to true)
                     )
-                    val scriptModule = getScriptModule(project, virtualFile)
+                    val scriptModule = getScriptModule(project, virtualFile)?.takeIf { !it.isDisposed }
                     val platformVersion = compilerArguments.jvmTarget?.let { JvmTarget.fromString(it) }
                         ?: detectDefaultTargetPlatformVersion(scriptModule?.platform)
 

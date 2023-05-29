@@ -6,9 +6,9 @@ import serviceDeclarations.RegisteredApplicationService;
 
 class MyClass {
 
-  <warning descr="Application service must not be assigned to a static final field">static final RegisteredApplicationService myAppService1 = RegisteredApplicationService.getInstance();</warning>
+  static final RegisteredApplicationService <warning descr="Application service must not be assigned to a static final field">myAppService1</warning> = RegisteredApplicationService.getInstance();
 
-  <warning descr="Application service must not be assigned to a static final field">static final RegisteredApplicationService myAppService2 = ApplicationManager.getApplication().getService(RegisteredApplicationService.class);</warning>
+  static final RegisteredApplicationService <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = ApplicationManager.getApplication().getService(RegisteredApplicationService.class);
 
   // non-final
   static RegisteredApplicationService myAppService3 = RegisteredApplicationService.getInstance();

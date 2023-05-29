@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.actions.ShowCommitOptionsAction
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
@@ -32,9 +31,9 @@ import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.vcsUtil.VcsUIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Color
-import java.awt.Point
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
@@ -188,19 +187,9 @@ abstract class NonModalCommitPanel(
     internal const val COMMIT_TOOLBAR_PLACE: String = "ChangesView.CommitToolbar"
     internal const val COMMIT_EDITOR_PLACE: String = "ChangesView.Editor"
 
-    fun JBPopup.showAbove(component: JComponent) {
-      val northWest = RelativePoint(component, Point())
-
-      addListener(object : JBPopupListener {
-        override fun beforeShown(event: LightweightWindowEvent) {
-          val popup = event.asPopup()
-          val location = Point(popup.locationOnScreen).apply { y = northWest.screenPoint.y - popup.size.height }
-
-          popup.setLocation(location)
-        }
-      })
-      show(northWest)
-    }
+    @Deprecated("Extracted to a separate file",
+                replaceWith = ReplaceWith("showAbove(component)", "com.intellij.vcsUtil.showAbove"))
+    fun JBPopup.showAbove(component: JComponent) = VcsUIUtil.showPopupAbove(this, component)
   }
 }
 

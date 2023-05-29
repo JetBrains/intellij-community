@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -21,6 +21,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -285,13 +286,9 @@ public class DependencyConfigurable implements Configurable, Configurable.NoScro
   /**
    * @return a JButton to open a dialog to edit this configurable
    */
-  public static JButton getConfigureButton() {
+  public static JButton getConfigureButton(@NotNull Project project) {
     var button = new JButton(CodeInsightBundle.message("jvm.inspections.dependency.configure.button.text"));
     button.addActionListener(e -> {
-      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
-      if (project == null) {
-        project = ProjectManager.getInstance().getDefaultProject();
-      }
       ShowSettingsUtil.getInstance().editConfigurable(button, new DependencyConfigurable(project));
     });
     return button;

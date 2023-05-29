@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.icons.ImageDescriptor
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
@@ -107,7 +108,7 @@ internal class ImageCollector(private val projectHome: Path,
   // files processed in parallel, so, concurrent data structures must be used
   private val icons = ConcurrentHashMap<String, ImageInfo>()
   private val phantomIcons = ConcurrentHashMap<String, ImageInfo>()
-  private val usedIconRobots: MutableSet<Path> = Collections.newSetFromMap(ConcurrentHashMap())
+  private val usedIconRobots: MutableSet<Path> = ContainerUtil.newConcurrentSet()
 
   fun collect(module: JpsModule, includePhantom: Boolean = false): Collection<ImageInfo> {
     for (sourceRoot in module.sourceRoots) {

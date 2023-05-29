@@ -65,7 +65,7 @@ object OptInAnnotationWrongTargetFixesFactory : KotlinIntentionActionsFactory() 
         }
 
         // 'Remove annotation' action is the universal fallback
-        result.addAll(RemoveAnnotationFix.createActions(diagnostic))
+        result.addAll(RemoveAnnotationFix.createQuickFix(diagnostic.psiElement))
         return result
     }
 }

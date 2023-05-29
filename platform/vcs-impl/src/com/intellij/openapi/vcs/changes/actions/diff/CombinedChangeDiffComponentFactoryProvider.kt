@@ -14,7 +14,7 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
   private inner class MyFactory(model: CombinedDiffModel) : CombinedDiffComponentFactory(model) {
 
     init {
-      model.init()
+      model.cleanBlocks()
     }
 
     override fun createGoToChangeAction(): AnAction = MyGoToChangePopupAction()
@@ -51,7 +51,7 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
           model.selected = change
         }
         else {
-          viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), ScrollPolicy.DIFF_BLOCK, true)
+          viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), true)
         }
       }
     }

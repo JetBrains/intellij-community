@@ -16,9 +16,10 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -29,7 +30,6 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -38,10 +38,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.function.Predicate;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
   private static final CallMatcher THREAD_ON_SPIN_WAIT = CallMatcher.staticCall("java.lang.Thread", "onSpinWait");
@@ -57,7 +57,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new SpinLoopFix((PsiField)infos[0], (boolean)infos[1]);
   }
 
@@ -172,7 +172,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     }
   }
 
-  private static class SpinLoopFix extends InspectionGadgetsFix {
+  private static class SpinLoopFix extends PsiUpdateModCommandQuickFix {
     private final String myFieldName;
     private final boolean myAddOnSpinWait;
     private final boolean myAddVolatile;
@@ -204,12 +204,12 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
       if (myAddVolatile) {
-        addVolatile(descriptor.getPsiElement());
+        addVolatile(startElement);
       }
       if (myAddOnSpinWait) {
-        addOnSpinWait(descriptor.getPsiElement());
+        addOnSpinWait(startElement);
       }
     }
 

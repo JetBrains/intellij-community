@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
@@ -12,6 +13,7 @@ import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.mac.foundation.MacUtil
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
@@ -20,6 +22,8 @@ import java.awt.Graphics
 import java.awt.Insets
 import java.awt.Rectangle
 import java.awt.Window
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -34,14 +38,23 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
       get() = getFrames().firstOrNull { it.isActive }
   }
 
+  init {
+    val log = Logger.getInstance("ide.frame.events")
+    if (log.isDebugEnabled) {
+      addComponentListener(EventLogger(frame = this, log = log))
+    }
+  }
+
   var frameHelper: FrameHelper? = null
     private set
 
   var reusedFullScreenState = false
 
   var normalBounds: Rectangle? = null
+
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
-  var togglingFullScreenInProgress: Boolean = false
+  @JvmField
+  internal var togglingFullScreenInProgress: Boolean = false
 
   override fun getData(dataId: String): Any? = frameHelper?.getData(dataId)
 
@@ -136,7 +149,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   override fun suggestChildFrameBounds(): Rectangle = frameHelper!!.helper.suggestChildFrameBounds()
 
   override fun setFrameTitle(title: String) {
-    frameHelper?.helper?.setFrameTitle(title)
+    this.title = title
   }
 
   override fun getComponent(): JComponent = getRootPane()
@@ -147,3 +160,35 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
     getFrameHelper(this)?.notifyProjectActivation()
   }
 }
+
+private class EventLogger(private val frame: IdeFrameImpl, private val log: Logger) : ComponentAdapter() {
+  companion object {
+    private fun toDebugString(rectangle: Rectangle): String {
+      return "${rectangle.width}x${rectangle.height} @ (${rectangle.x},${rectangle.y})"
+    }
+  }
+
+  override fun componentResized(e: ComponentEvent) {
+    logBounds("resized")
+  }
+
+  override fun componentMoved(e: ComponentEvent) {
+    logBounds("moved")
+  }
+
+  private fun logBounds(action: String) {
+    val windowBounds = frame.bounds
+    val gc = frame.graphicsConfiguration ?: return
+    val mode = gc.device?.displayMode ?: return
+    val scale = JBUIScale.sysScale(gc)
+    val screenBounds = gc.bounds
+    log.debug(
+      "IDE frame '${frame.frameHelper?.project?.name}' $action; " +
+      "frame bounds: ${toDebugString(windowBounds)}; " +
+      "resolution: ${mode.width}x${mode.height}; " +
+      "scale: $scale; " +
+      "screen bounds: ${toDebugString(screenBounds)}"
+    )
+  }
+}
+

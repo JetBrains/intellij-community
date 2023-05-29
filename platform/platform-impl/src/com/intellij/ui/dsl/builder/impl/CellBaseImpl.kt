@@ -57,14 +57,14 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
     return this
   }
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T> {
     this.horizontalAlign = horizontalAlign
     return this
   }
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T> {
     this.verticalAlign = verticalAlign
@@ -93,6 +93,7 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
   }
 
   @Deprecated("Use customize(UnscaledGaps) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): CellBase<T> {
     return customize(customGaps.toUnscaled())
   }

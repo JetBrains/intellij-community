@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
+import com.intellij.ide.util.PSIRenderingUtils;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.navigation.PsiElementNavigationItem;
@@ -10,7 +11,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.backend.presentation.TargetPresentation;
@@ -22,7 +22,6 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -166,7 +164,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
                                     - getPreferredSize().width;
             if (locationLabel != null) containerMaxWidth -= locationLabel.getPreferredSize().width;
 
-            @NlsSafe String containerText = cutContainerText(presentation.getContainerText(), containerMaxWidth, fm);
+            @NlsSafe String containerText = PSIRenderingUtils.cutContainerText(presentation.getContainerText(), containerMaxWidth, fm);
             SimpleTextAttributes containerAttributes = presentation.getContainerTextAttributes() != null
                                                        ? SimpleTextAttributes.fromTextAttributes(presentation.getContainerTextAttributes())
                                                        : SimpleTextAttributes.GRAYED_ATTRIBUTES;
@@ -180,46 +178,11 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
       return this;
     }
 
-    protected PsiElementListCellRenderer.ItemMatchers getItemMatchers(@NotNull JList<?> list, @Nullable PsiItemWithPresentation value) {
+    private PsiElementListCellRenderer.ItemMatchers getItemMatchers(@NotNull JList<?> list, @Nullable PsiItemWithPresentation value) {
       if (value == null) return new PsiElementListCellRenderer.ItemMatchers(null, null);
       return delegateRenderer.getItemMatchers(list, value.getItem());
     }
 
-    @Contract("!null, _, _ -> !null")
-    private static @Nullable String cutContainerText(@Nullable String text, int maxWidth, FontMetrics fm) {
-      if (text == null) return null;
-
-      if (text.startsWith("(") && text.endsWith(")")) {
-        text = text.substring(1, text.length() - 1);
-      }
-
-      if (maxWidth < 0) return text;
-
-      boolean in = text.startsWith("in ");
-      if (in) text = text.substring(3);
-      String left = in ? "in " : "";
-      String adjustedText = left + text;
-
-      int fullWidth = fm.stringWidth(adjustedText);
-      if (fullWidth < maxWidth) return adjustedText;
-
-      String separator = text.contains("/") ? "/" :
-                         SystemInfo.isWindows && text.contains("\\") ? "\\" :
-                         text.contains(".") ? "." :
-                         text.contains("-") ? "-" : " ";
-      LinkedList<String> parts = new LinkedList<>(StringUtil.split(text, separator));
-      int index;
-      while (parts.size() > 1) {
-        index = parts.size() / 2 - 1;
-        parts.remove(index);
-        if (fm.stringWidth(left + StringUtil.join(parts, separator) + "...") < maxWidth) {
-          parts.add(index, "...");
-          return left + StringUtil.join(parts, separator);
-        }
-      }
-      int adjustedWidth = Math.max(adjustedText.length() * maxWidth / fullWidth - 1, left.length() + 3);
-      return StringUtil.trimMiddle(adjustedText, adjustedWidth);
-    }
   }
 
   @Override

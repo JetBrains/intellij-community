@@ -65,4 +65,6 @@ class RecentProjectManagerState : BaseState() {
   var lastProjectLocation by string()
 
   var lastOpenedProject by string()
+
+  var forceReopenProjects by property(false)
 }

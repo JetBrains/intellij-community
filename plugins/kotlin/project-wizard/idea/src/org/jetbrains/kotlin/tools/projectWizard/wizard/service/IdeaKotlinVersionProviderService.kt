@@ -30,9 +30,7 @@ class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWiz
         }
         else {
             version = getPatchedKotlinVersion()
-                ?: getKotlinVersionFromCompiler()
-                        ?: VersionsDownloader.downloadLatestEapOrStableKotlinVersion()
-                        ?: Versions.KOTLIN
+                ?: Versions.KOTLIN
         }
 
         return kotlinVersionWithDefaultValues(version)

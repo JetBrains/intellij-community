@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleContextCache
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.StatusBar.Breadcrumbs
@@ -218,7 +219,7 @@ internal class NavBarItemComponent(
     return isSelected && isFocused
   }
 
-  private val cache: MutableMap<ImageType, ScaleContext.Cache<BufferedImage>> = EnumMap(ImageType::class.java)
+  private val cache: MutableMap<ImageType, ScaleContextCache<BufferedImage>> = EnumMap(ImageType::class.java)
 
   override fun doPaint(g: Graphics2D) {
     val paddings = JBInsets.create(navBarItemPadding(isFloating))
@@ -260,8 +261,8 @@ internal class NavBarItemComponent(
 
       // see: https://github.com/JetBrains/intellij-community/pull/1111
       val imageCache = cache.computeIfAbsent(type) {
-        ScaleContext.Cache { ctx: ScaleContext ->
-          AbstractNavBarUI.drawToBuffer(this, ctx, isFloating, toolbarVisible, selected, nextSelected, vm.isLast)
+        ScaleContextCache { scaleContext ->
+          AbstractNavBarUI.drawToBuffer(this, scaleContext, isFloating, toolbarVisible, selected, nextSelected, vm.isLast)
         }
       }
       val image = imageCache.getOrProvide(ScaleContext.create(g))

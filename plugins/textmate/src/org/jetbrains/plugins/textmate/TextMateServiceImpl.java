@@ -322,7 +322,7 @@ public final class TextMateServiceImpl extends TextMateService {
     Iterator<TextMateGrammar> grammarIterator = reader.readGrammars().iterator();
     while (grammarIterator.hasNext()) {
       TextMateGrammar grammar = grammarIterator.next();
-      CharSequence rootScopeName = mySyntaxTable.loadSyntax(grammar.getPlist(), myInterner);
+      CharSequence rootScopeName = mySyntaxTable.loadSyntax(grammar.getPlist().getValue(), myInterner);
       for (TextMateFileNameMatcher fileNameMatcher : grammar.getFileNameMatchers()) {
         extensionsMapping.put(fileNameMatcher, rootScopeName);
       }

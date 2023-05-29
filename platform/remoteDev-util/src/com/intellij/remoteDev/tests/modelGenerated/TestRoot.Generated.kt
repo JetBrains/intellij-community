@@ -57,4 +57,6 @@ class TestRoot private constructor(
         )
     }
     //contexts
+    //threading
+    override val extThreading: ExtThreadingKind get() = ExtThreadingKind.Default
 }

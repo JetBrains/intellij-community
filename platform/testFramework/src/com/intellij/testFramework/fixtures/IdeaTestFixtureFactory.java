@@ -44,15 +44,6 @@ public abstract class IdeaTestFixtureFactory {
   @NotNull
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor,
                                                                                        @NotNull String projectName);
-  /**
-   * @deprecated Use {@link #createLightFixtureBuilder(LightProjectDescriptor, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor) {
-    String message = "Use createLightFixtureBuilder(LightProjectDescriptor, String) instead";
-    Logger.getInstance(IdeaTestFixtureFactory.class).warn(new RuntimeException(message));
-    return createLightFixtureBuilder(projectDescriptor, message);
-  }
 
   @NotNull
   public abstract CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture);

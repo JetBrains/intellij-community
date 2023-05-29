@@ -58,7 +58,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     myEditor = editor;
     myVisibleRange = visibleRange;
     myFile = file;
-    hasDirtyTextRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL) != null;
+    hasDirtyTextRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.UPDATE_ALL) != null;
   }
 
   @Override

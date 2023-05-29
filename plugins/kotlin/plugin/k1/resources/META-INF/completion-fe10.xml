@@ -43,13 +43,6 @@
 
     <completion.confidence
             language="kotlin"
-            implementationClass="com.intellij.codeInsight.completion.UnfocusedNameIdentifier"/>
-    <completion.confidence
-            language="kotlin"
-            order="last"
-            implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup"/>
-    <completion.confidence
-            language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.completion.confidence.EnableAutopopupInStringTemplate"/>
     <completion.confidence
             language="kotlin"

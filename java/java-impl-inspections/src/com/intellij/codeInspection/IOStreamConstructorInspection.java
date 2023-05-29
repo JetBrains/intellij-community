@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -186,7 +185,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
     }
   }
 
-  private static class ReplaceWithNioCallFix implements LocalQuickFix {
+  private static class ReplaceWithNioCallFix extends PsiUpdateModCommandQuickFix {
 
     private final String myReplacement;
     private final boolean myIsOnTheFly;
@@ -202,8 +201,8 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiNewExpression newExpression = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiNewExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiNewExpression newExpression = ObjectUtils.tryCast(element, PsiNewExpression.class);
       if (newExpression == null) return;
       IOStreamConstructorModel constructorModel = IOStreamConstructorModel.create(newExpression);
       if (constructorModel == null) return;

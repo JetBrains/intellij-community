@@ -45,8 +45,6 @@ class FinishInlineRename(text: String, line: Int) : AbstractCommand(text, line) 
       override fun conflictsDetected(refactoringId: String, conflictsData: RefactoringEventData) {
         actionCallback.reject("Conflict was detected")
       }
-
-      override fun undoRefactoring(refactoringId: String) {}
     })
     connect.subscribe(CommandListener.TOPIC, object : CommandListener {
       fun executeIfRequiredEvent(event: CommandEvent, apply: () -> Unit) {

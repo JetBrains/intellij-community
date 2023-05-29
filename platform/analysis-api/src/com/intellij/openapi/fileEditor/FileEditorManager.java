@@ -185,8 +185,10 @@ public abstract class FileEditorManager {
    * To change the order of components, the specified component may implement the
    * {@link com.intellij.openapi.util.Weighted Weighted} interface.
    */
+  @RequiresEdt
   public abstract void addTopComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
 
+  @RequiresEdt
   public abstract void removeTopComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
 
   /**
@@ -200,8 +202,10 @@ public abstract class FileEditorManager {
    * To change the order of components, the specified component may implement the
    * {@link com.intellij.openapi.util.Weighted Weighted} interface.
    */
+  @RequiresEdt
   public abstract void addBottomComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
 
+  @RequiresEdt
   public abstract void removeBottomComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
 
   public static final Key<Boolean> SEPARATOR_DISABLED = Key.create("FileEditorSeparatorDisabled");
@@ -230,15 +234,12 @@ public abstract class FileEditorManager {
   public void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
   }
 
-  /**
-   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
-   *
-   * @return opened file editors
-   */
+  @RequiresEdt
   public final @NotNull List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     return openFileEditor(descriptor, focusEditor);
   }
 
+  @RequiresEdt
   public abstract @NotNull List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor);
 
   /**

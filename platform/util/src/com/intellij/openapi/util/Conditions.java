@@ -13,46 +13,38 @@ import java.util.Map;
 public final class Conditions {
   private Conditions() { }
 
-  @NotNull
-  public static <T> Condition<T> alwaysTrue() {
+  public static @NotNull <T> Condition<T> alwaysTrue() {
     //noinspection unchecked,deprecation
     return (Condition<T>)Condition.TRUE;
   }
 
-  @NotNull
-  public static <T> Condition<T> alwaysFalse() {
+  public static @NotNull <T> Condition<T> alwaysFalse() {
     //noinspection unchecked,deprecation
     return (Condition<T>)Condition.FALSE;
   }
 
-  @NotNull
-  public static <T> Condition<T> notNull() {
+  public static @NotNull <T> Condition<T> notNull() {
     //noinspection unchecked,deprecation
     return (Condition<T>)Condition.NOT_NULL;
   }
 
-  @NotNull
-  public static <T> Condition<T> constant(boolean value) {
+  public static @NotNull <T> Condition<T> constant(boolean value) {
     return value ? alwaysTrue() : alwaysFalse();
   }
 
-  @NotNull
-  public static <T> Condition<T> instanceOf(@NotNull final Class<?> clazz) {
+  public static @NotNull <T> Condition<T> instanceOf(final @NotNull Class<?> clazz) {
     return t -> clazz.isInstance(t);
   }
 
-  @NotNull
-  public static <T> Condition<T> notInstanceOf(@NotNull final Class<?> clazz) {
+  public static @NotNull <T> Condition<T> notInstanceOf(final @NotNull Class<?> clazz) {
     return t -> !clazz.isInstance(t);
   }
 
-  @NotNull
-  public static Condition<Class<?>> assignableTo(@NotNull final Class<?> clazz) {
+  public static @NotNull Condition<Class<?>> assignableTo(final @NotNull Class<?> clazz) {
     return t -> clazz.isAssignableFrom(t);
   }
 
-  @NotNull
-  public static <T> Condition<T> instanceOf(final Class<?>... clazz) {
+  public static @NotNull <T> Condition<T> instanceOf(final Class<?>... clazz) {
     return t -> {
       for (Class<?> aClass : clazz) {
         if (aClass.isInstance(t)) return true;
@@ -61,34 +53,28 @@ public final class Conditions {
     };
   }
 
-  @NotNull
-  public static <T> Condition<T> is(final T option) {
+  public static @NotNull <T> Condition<T> is(final T option) {
     return equalTo(option);
   }
 
-  @NotNull
-  public static <T> Condition<T> equalTo(final Object option) {
+  public static @NotNull <T> Condition<T> equalTo(final Object option) {
     return t -> Comparing.equal(t, option);
   }
 
-  @NotNull
-  public static <T> Condition<T> notEqualTo(final Object option) {
+  public static @NotNull <T> Condition<T> notEqualTo(final Object option) {
     return t -> !Comparing.equal(t, option);
   }
 
   @SafeVarargs
-  @NotNull
-  public static <T> Condition<T> oneOf(T @NotNull ... options) {
+  public static @NotNull <T> Condition<T> oneOf(T @NotNull ... options) {
     return oneOf(Arrays.asList(options));
   }
 
-  @NotNull
-  public static <T> Condition<T> oneOf(@NotNull final Collection<? extends T> options) {
+  public static @NotNull <T> Condition<T> oneOf(final @NotNull Collection<? extends T> options) {
     return t -> options.contains(t);
   }
 
-  @NotNull
-  public static <T> Condition<T> not(@NotNull Condition<? super T> c) {
+  public static @NotNull <T> Condition<T> not(@NotNull Condition<? super T> c) {
     if (c == alwaysTrue()) return alwaysFalse();
     if (c == alwaysFalse()) return alwaysTrue();
     if (c instanceof Not) {
@@ -98,8 +84,7 @@ public final class Conditions {
     return new Not<>(c);
   }
 
-  @NotNull
-  public static <T> Condition<T> and(@NotNull Condition<? super T> c1, @NotNull Condition<? super T> c2) {
+  public static @NotNull <T> Condition<T> and(@NotNull Condition<? super T> c1, @NotNull Condition<? super T> c2) {
     if (c1 == alwaysTrue() || c2 == alwaysFalse()) {
       //noinspection unchecked
       return (Condition<T>)c2;
@@ -111,8 +96,7 @@ public final class Conditions {
     return new And<>(c1, c2);
   }
 
-  @NotNull
-  public static <T> Condition<T> or(@NotNull Condition<? super T> c1, @NotNull Condition<? super T> c2) {
+  public static @NotNull <T> Condition<T> or(@NotNull Condition<? super T> c1, @NotNull Condition<? super T> c2) {
     if (c1 == alwaysFalse()|| c2 == alwaysTrue()) {
       //noinspection unchecked
       return (Condition<T>)c2;
@@ -124,13 +108,11 @@ public final class Conditions {
     return new Or<>(c1, c2);
   }
 
-  @NotNull
-  public static <A, B> Condition<A> compose(@NotNull final Function<? super A, B> fun, @NotNull final Condition<? super B> condition) {
+  public static @NotNull <A, B> Condition<A> compose(final @NotNull Function<? super A, B> fun, final @NotNull Condition<? super B> condition) {
     return o -> condition.value(fun.fun(o));
   }
 
-  @NotNull
-  public static <T> Condition<T> cached(@NotNull Condition<? super T> c) {
+  public static @NotNull <T> Condition<T> cached(@NotNull Condition<? super T> c) {
     return new SoftRefCache<>(c);
   }
 

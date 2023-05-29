@@ -3,52 +3,48 @@
 
 package com.jetbrains.python.console
 
-import com.google.common.net.HostAndPort
-import com.intellij.execution.KillableProcess
+import com.intellij.execution.process.KillableProcessHandler
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
-import com.intellij.openapi.util.Pair
-import com.intellij.util.PathMappingSettings
-import com.jetbrains.python.debugger.PyDebugProcess
-import com.jetbrains.python.debugger.PyPositionConverter
-import com.jetbrains.python.remote.PyRemoteSocketToLocalHostProvider
-import com.jetbrains.python.remote.RemoteDebuggableProcessHandler
-import java.nio.charset.Charset
+import com.intellij.execution.process.ProcessListener
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.util.ui.UIUtil
 
-/**
- * Returns an instance of [PyConsoleProcessHandler] that either:
- * - delegates base methods to provided [processHandler] *if it implements [RemoteDebuggableProcessHandler]*,
- * - or uses [process] to create [PyConsoleProcessHandler] *in other case*.
- */
-internal fun createPythonConsoleProcessHandler(processHandler: ProcessHandler,
-                                               process: Process,
-                                               consoleView: PythonConsoleView,
-                                               pydevConsoleCommunication: PydevConsoleCommunication,
-                                               commandLine: String,
-                                               charset: Charset): PyConsoleProcessHandler =
-  if (processHandler is RemoteDebuggableProcessHandler) {
-    PyConsoleProcessHandlerWrapper(processHandler, process, consoleView, pydevConsoleCommunication, commandLine, charset)
+@JvmField
+val pydevConsoleCommunicationKey: Key<PydevConsoleCommunication> = Key("PydevConsoleCommunication")
+
+internal fun configureProcessHandlerForPythonConsole(processHandler: ProcessHandler,
+                                                     consoleView: PythonConsoleView,
+                                                     consoleCommunication: PydevConsoleCommunication) {
+  Disposer.register(consoleView) {
+    if (!processHandler.isProcessTerminated) {
+      processHandler.destroyProcess()
+    }
   }
-  else {
-    PyConsoleProcessHandler(process, consoleView, pydevConsoleCommunication, commandLine, charset)
+  processHandler.addProcessListener(object : ProcessListener {
+    override fun processTerminated(event: ProcessEvent) {
+      doCloseCommunication(consoleCommunication)
+    }
+  })
+
+  if (processHandler is KillableProcessHandler) {
+    processHandler.setShouldKillProcessSoftly(false)
   }
 
-private class PyConsoleProcessHandlerWrapper(private val processHandler: RemoteDebuggableProcessHandler,
-                                             process: Process,
-                                             consoleView: PythonConsoleView,
-                                             pydevConsoleCommunication: PydevConsoleCommunication,
-                                             commandLine: String,
-                                             charset: Charset)
-  : PyConsoleProcessHandler(process, consoleView, pydevConsoleCommunication, commandLine, charset),
-    RemoteDebuggableProcessHandler,
-    KillableProcess {
-  override fun getFileMappings(): List<PathMappingSettings.PathMapping> = processHandler.fileMappings
+  processHandler.putUserData(pydevConsoleCommunicationKey, consoleCommunication)
+}
 
-  override fun getRemoteSocket(localPort: Int): Pair<String, Int> = processHandler.getRemoteSocket(localPort)
+private fun doCloseCommunication(consoleCommunication: PydevConsoleCommunication) {
+  UIUtil.invokeAndWaitIfNeeded {
+    try {
+      consoleCommunication.close()
+      Thread.sleep(300)
+    }
+    catch (e: Exception) {
+      // Ignore
+    }
+  }
 
-  override fun getLocalTunnel(remotePort: Int): HostAndPort? = processHandler.getLocalTunnel(remotePort)
-
-  override fun getRemoteSocketToLocalHostProvider(): PyRemoteSocketToLocalHostProvider = processHandler.remoteSocketToLocalHostProvider
-
-  override fun createPositionConverter(debugProcess: PyDebugProcess): PyPositionConverter =
-    processHandler.createPositionConverter(debugProcess)
+  // waiting for REPL communication before destroying process handler
 }

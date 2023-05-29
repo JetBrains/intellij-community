@@ -28,6 +28,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
@@ -272,6 +273,6 @@ public class GradleTestsExecutionConsoleManager
     JavaRerunFailedTestsAction rerunFailedTestsAction =
       new GradleRerunFailedTestsAction(consoleView);
     rerunFailedTestsAction.setModelProvider(() -> consoleView.getResultsViewer());
-    return new AnAction[]{rerunFailedTestsAction};
+    return new AnAction[]{rerunFailedTestsAction, new JvmToggleAutoTestAction()};
   }
 }

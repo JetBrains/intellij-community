@@ -1,7 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.testFrameworks;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -38,11 +41,11 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
   }
 
   @Override
-  public final InspectionGadgetsFix buildFix(Object... infos) {
+  public final LocalQuickFix buildFix(Object... infos) {
     return new FlipArgumentsFix();
   }
 
-  private class FlipArgumentsFix extends InspectionGadgetsFix {
+  private class FlipArgumentsFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -51,8 +54,7 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement methodNameIdentifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameIdentifier, @NotNull EditorUpdater updater) {
       final PsiElement parent = methodNameIdentifier.getParent();
       if (parent == null) {
         return;

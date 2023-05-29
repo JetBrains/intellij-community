@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting.highlighters
 
-import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiTreeUtil
@@ -14,37 +14,36 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
 internal class TypeHighlighter(
-    holder: AnnotationHolder,
-    project: Project,
-) : AfterResolveHighlighter(holder, project) {
+  project: Project,
+) : AfterResolveHighlighter(project) {
 
     context(KtAnalysisSession)
-    override fun highlight(element: KtElement) {
-        when (element) {
+    override fun highlight(element: KtElement): List<HighlightInfo.Builder> {
+        return when (element) {
             is KtSimpleNameExpression -> highlightSimpleNameExpression(element)
-            else -> {}
+            else -> emptyList()
         }
     }
 
     context(KtAnalysisSession)
-    private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression) {
-        if (!expression.project.isNameHighlightingEnabled) return
-        if (expression.isCalleeExpression()) return
+    private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression): List<HighlightInfo.Builder> {
+        if (!expression.project.isNameHighlightingEnabled) return emptyList()
+        if (expression.isCalleeExpression()) return emptyList()
         val parent = expression.parent
 
         if (parent is KtInstanceExpressionWithLabel) {
             // Do nothing: 'super' and 'this' are highlighted as a keyword
-            return
+            return emptyList()
         }
         if (expression.isConstructorCallReference()) {
             // Do not highlight constructor call as class reference
-            return
+            return emptyList()
         }
 
-        val symbol = expression.mainReference.resolveToSymbol() as? KtClassifierSymbol ?: return
+        val symbol = expression.mainReference.resolveToSymbol() as? KtClassifierSymbol ?: return emptyList()
         if (isAnnotationCall(expression, symbol)) {
             // higlighted by AnnotationEntryHiglightingVisitor
-            return
+            return emptyList()
         }
 
         val color = when (symbol) {
@@ -66,7 +65,7 @@ internal class TypeHighlighter(
             is KtTypeParameterSymbol -> Colors.TYPE_PARAMETER
         }
 
-        highlightName(expression.textRange, color)
+        return listOfNotNull(highlightName (expression.textRange, color))
     }
 
     context(KtAnalysisSession)

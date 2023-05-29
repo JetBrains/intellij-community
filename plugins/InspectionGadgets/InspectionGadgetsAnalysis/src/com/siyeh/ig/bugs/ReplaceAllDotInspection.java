@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -24,7 +26,6 @@ import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -69,7 +70,7 @@ public class ReplaceAllDotInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[1];
     if (!(expression instanceof PsiLiteralExpression)) {
       return null;
@@ -77,7 +78,7 @@ public class ReplaceAllDotInspection extends BaseInspection {
     return new EscapeCharacterFix();
   }
 
-  private static class EscapeCharacterFix extends InspectionGadgetsFix {
+  private static class EscapeCharacterFix extends PsiUpdateModCommandQuickFix {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -87,8 +88,7 @@ public class ReplaceAllDotInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiLiteralExpression expression)) {
         return;
       }

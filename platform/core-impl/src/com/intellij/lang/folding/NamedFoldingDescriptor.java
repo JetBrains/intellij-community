@@ -18,7 +18,6 @@ package com.intellij.lang.folding;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,15 +30,6 @@ import java.util.Set;
 @Deprecated
 @ApiStatus.ScheduledForRemoval
 public final class NamedFoldingDescriptor extends FoldingDescriptor {
-  /**
-   * @deprecated Use {@link FoldingDescriptor#FoldingDescriptor(PsiElement, int, int, FoldingGroup, String)} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public NamedFoldingDescriptor(@NotNull PsiElement e, int start, int end, @Nullable FoldingGroup group, @NotNull String placeholderText) {
-    super(e, start, end, group, placeholderText);
-  }
-
   /**
    * @deprecated Use {@link FoldingDescriptor#FoldingDescriptor(ASTNode, TextRange, FoldingGroup, String)} instead.
    */

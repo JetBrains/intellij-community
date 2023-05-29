@@ -299,6 +299,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   @Deprecated("Use customize(UnscaledGaps) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): PanelImpl {
     return customize(customGaps.toUnscaled())
   }
@@ -360,14 +361,14 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return visible && isRowFromVisibleRange(rowIndex) && (parent == null || parent.isVisible())
   }
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelImpl {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): PanelImpl {
     super.verticalAlign(verticalAlign)
@@ -472,7 +473,7 @@ private fun Panel.createSeparatorRow(@NlsContexts.Separator title: String?): Row
 private fun Panel.createSeparatorRow(title: JBLabel?, background: Color? = null): Row {
   val separator: JComponent
   if (title == null) {
-    separator = SeparatorComponent(0, background ?: OnePixelDivider.BACKGROUND, null)
+    separator = SeparatorComponent(0, 0, background ?: OnePixelDivider.BACKGROUND, null)
   }
   else {
     separator = object : TitledSeparator(title.text) {

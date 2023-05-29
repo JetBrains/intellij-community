@@ -33,6 +33,7 @@ import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -467,7 +468,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     PopupStep<?> nextStep;
-    try (AccessToken ignore = PopupImplUtil.prohibitFocusEventsInHandleSelect()) {
+    try (AccessToken ignore = PopupImplUtil.prohibitFocusEventsInHandleSelect();
+         AccessToken ignore2 = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       if (listStep instanceof MultiSelectionListPopupStep<?>) {
         nextStep = ((MultiSelectionListPopupStep<Object>)listStep).onChosen(Arrays.asList(selectedValues), handleFinalChoices);
       }

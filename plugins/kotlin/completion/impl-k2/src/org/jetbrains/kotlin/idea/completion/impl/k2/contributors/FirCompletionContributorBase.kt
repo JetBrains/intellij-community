@@ -3,25 +3,29 @@
 package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
+import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.fir.codeInsight.HLIndexHelper
 import org.jetbrains.kotlin.idea.completion.ItemPriority
+import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
@@ -29,6 +33,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupEle
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -84,8 +89,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     protected fun KtAnalysisSession.addClassifierSymbolToCompletion(
         symbol: KtClassifierSymbol,
         context: WeighingContext,
-        scopeKind: KtScopeKind?,
-        importingStrategy: ImportStrategy = importStrategyDetector.detectImportStrategy(symbol),
+        symbolOrigin: CompletionSymbolOrigin,
+        importingStrategy: ImportStrategy = importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol),
     ) {
         if (symbol !is KtNamedSymbol) return
         // Don't offer any deprecated items that could leads to compile errors.
@@ -97,19 +102,19 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
             }
         } ?: return
 
-        applyWeighers(context, lookup, symbol, scopeKind, KtSubstitutor.Empty(token))
+        applyWeighsToLookupElement(context, lookup, KtSymbolWithOrigin(symbol, symbolOrigin))
         sink.addElement(lookup)
     }
 
     protected fun KtAnalysisSession.addCallableSymbolToCompletion(
         context: WeighingContext,
-        symbol: KtCallableSymbol,
+        signature: KtCallableSignature<*>,
         options: CallableInsertionOptions,
-        scopeKind: KtScopeKind?,
-        substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
+        symbolOrigin: CompletionSymbolOrigin,
         priority: ItemPriority? = null,
         explicitReceiverTypeHint: KtType? = null,
     ) {
+        val symbol = signature.symbol
         val name = when (symbol) {
             is KtNamedSymbol -> symbol.name
             is KtConstructorSymbol -> (symbol.getContainingSymbol() as? KtNamedClassOrObjectSymbol)?.name
@@ -119,11 +124,11 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         // Don't offer any deprecated items that could leads to compile errors.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
         val lookup = with(lookupElementFactory) {
-            createCallableLookupElement(name, symbol, options, substitutor, context.expectedType)
+            createCallableLookupElement(name, signature, options, context.expectedType)
         }
         priority?.let { lookup.priority = it }
 
-        applyWeighers(context, lookup, symbol, scopeKind, substitutor)
+        Weighers.applyWeighsToLookupElementForCallable(context, lookup, signature, symbolOrigin)
         sink.addElement(lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render(position = Variance.INVARIANT)))
     }
 
@@ -140,33 +145,32 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
                     }
                 }
 
-            // TODO this code should be uncommented when KTIJ-20913 is fixed
-            //// Make the text gray and insert type cast if the receiver type does not match.
-            //is CallableMetadataProvider.CallableKind.ReceiverCastRequired -> object : LookupElementDecorator<LookupElement>(this) {
-            //    override fun renderElement(presentation: LookupElementPresentation) {
-            //        super.renderElement(presentation)
-            //        presentation.itemTextForeground = KOTLIN_CAST_REQUIRED_COLOR
-            //        // gray all tail fragments too:
-            //        val fragments = presentation.tailFragments
-            //        presentation.clearTail()
-            //        for (fragment in fragments) {
-            //            presentation.appendTailText(fragment.text, true)
-            //        }
-            //    }
-            //
-            //    override fun handleInsert(context: InsertionContext) {
-            //        super.handleInsert(context)
-            //        if (explicitReceiverRange == null || explicitReceiverText == null) return
-            //        val castType = explicitReceiverTypeHint ?: return
-            //        val newReceiver = "(${explicitReceiverText} as $castType)"
-            //        context.document.replaceString(explicitReceiverRange.startOffset, explicitReceiverRange.endOffset, newReceiver)
-            //        context.commitDocument()
-            //        shortenReferencesInRange(
-            //            context.file as KtFile,
-            //            explicitReceiverRange.grown(newReceiver.length)
-            //        )
-            //    }
-            //}
+            // Make the text gray and insert type cast if the receiver type does not match.
+            is CallableMetadataProvider.CallableKind.ReceiverCastRequired -> object : LookupElementDecorator<LookupElement>(this) {
+                override fun renderElement(presentation: LookupElementPresentation) {
+                    super.renderElement(presentation)
+                    presentation.itemTextForeground = KOTLIN_CAST_REQUIRED_COLOR
+                    // gray all tail fragments too:
+                    val fragments = presentation.tailFragments
+                    presentation.clearTail()
+                    for (fragment in fragments) {
+                        presentation.appendTailText(fragment.text, true)
+                    }
+                }
+
+                override fun handleInsert(context: InsertionContext) {
+                    super.handleInsert(context)
+                    if (explicitReceiverRange == null || explicitReceiverText == null) return
+                    val castType = explicitReceiverTypeHint ?: return
+                    val newReceiver = "(${explicitReceiverText} as $castType)"
+                    context.document.replaceString(explicitReceiverRange.startOffset, explicitReceiverRange.endOffset, newReceiver)
+                    context.commitDocument()
+                    shortenReferencesInRange(
+                        context.file as KtFile,
+                        explicitReceiverRange.grown(newReceiver.length)
+                    )
+                }
+            }
 
             else -> this
         }
@@ -175,16 +179,6 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     protected fun KtExpression.reference() = when (this) {
         is KtDotQualifiedExpression -> selectorExpression?.mainReference
         else -> mainReference
-    }
-
-    private fun KtAnalysisSession.applyWeighers(
-        context: WeighingContext,
-        lookupElement: LookupElement,
-        symbol: KtSymbol,
-        scopeKind: KtScopeKind?,
-        substitutor: KtSubstitutor,
-    ): LookupElement = lookupElement.apply {
-        with(Weighers) { applyWeighsToLookupElement(context, lookupElement, symbol, scopeKind, substitutor) }
     }
 }
 

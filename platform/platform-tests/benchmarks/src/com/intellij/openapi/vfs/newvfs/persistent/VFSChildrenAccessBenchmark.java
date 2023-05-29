@@ -48,7 +48,7 @@ public class VFSChildrenAccessBenchmark {
     public PersistentFSTreeRawAccessor newTreeAccessor;
 
     @Setup
-    public void setup(final ApplicationContext application) throws Exception {
+    public void setup(final ApplicationContext applicationContext) throws Exception {
       folder = FileUtil.createTempDirectory("VFSChildrenAccessBenchmark", "tst", /*deleteOnExit: */ true);
       CHILDREN_COUNT = 16;
       for (int i = 0; i < CHILDREN_COUNT; i++) {
@@ -59,13 +59,16 @@ public class VFSChildrenAccessBenchmark {
       final VirtualFile vFile = refreshAndFind(folder);
       folderId = ((VirtualFileWithId)vFile).getId();
 
-      final Field connectionField = FSRecords.class.getDeclaredField("ourConnection");
-      final Field attributeAccessorField = FSRecords.class.getDeclaredField("ourAttributeAccessor");
+      final Field implField = FSRecords.class.getDeclaredField("impl");
+      final Field attributeAccessorField = FSRecordsImpl.class.getDeclaredField("attributeAccessor");
+      final Field connectionField = FSRecordsImpl.class.getDeclaredField("connection");
+      implField.setAccessible(true);
       connectionField.setAccessible(true);
       attributeAccessorField.setAccessible(true);
 
-      final PersistentFSConnection connection = (PersistentFSConnection)connectionField.get(null);
-      final PersistentFSAttributeAccessor attributeAccessor = (PersistentFSAttributeAccessor)attributeAccessorField.get(null);
+      final FSRecordsImpl impl = (FSRecordsImpl)implField.get(null);
+      final PersistentFSConnection connection = (PersistentFSConnection)connectionField.get(impl);
+      final PersistentFSAttributeAccessor attributeAccessor = (PersistentFSAttributeAccessor)attributeAccessorField.get(impl);
       oldTreeAccessor = new PersistentFSTreeAccessor(attributeAccessor, connection);
       newTreeAccessor = new PersistentFSTreeRawAccessor(attributeAccessor, connection);
     }

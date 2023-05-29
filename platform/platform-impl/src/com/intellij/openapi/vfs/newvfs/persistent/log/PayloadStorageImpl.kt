@@ -64,6 +64,7 @@ class PayloadStorageImpl(
   override fun readAt(ref: PayloadRef): ByteArray? {
     if (ref == PayloadRef.ZERO_SIZE) return ByteArray(0)
     // TODO: revisit unexpected value cases
+    if (ref.offset < 0 || ref.offset >= position.getReadyPosition()) return null
     val buf = ByteArray(10) // 1 + (64 - 6) / 7 < 10
     storageIO.read(ref.offset, buf)
     val inp = ByteArrayInputStream(buf)

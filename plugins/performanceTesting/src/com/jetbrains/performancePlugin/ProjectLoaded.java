@@ -75,14 +75,6 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     System.getProperty("testscript.must.report.teamcity.test.failure.on.error", "true")
   );
 
-  /**
-   * If an IDE error occurs during test script execution, the IDE will exit.
-   * This flag determines whether the status code of the exiting process will be 0 (if false) or 1 (if true).
-   */
-  private static final boolean MUST_EXIT_PROCESS_WITH_NON_SUCCESS_CODE_ON_IDE_ERROR = Boolean.parseBoolean(
-    System.getProperty("testscript.must.exist.process.with.non.success.code.on.ide.error", "false")
-  );
-
   private static final String INDEXING_PROFILER_PREFIX = "%%profileIndexing";
   private static ScheduledExecutorService screenshotExecutor;
   private final Alarm myAlarm = new Alarm();
@@ -107,7 +99,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
         }
         catch (Exception e) {
           System.err.println("Start profile failed: " + e.getMessage());
-          ApplicationManagerEx.getApplicationEx().exit(true, true);
+          ApplicationManagerEx.getApplicationEx().exit(true, true, 1);
         }
       }
       if (OpenProjectCommand.Companion.shouldOpenInSmartMode(project)) {
@@ -149,7 +141,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     }
     catch (IOException ignored) {
       System.err.println(PerformanceTestingBundle.message("startup.script.read.error"));
-      ApplicationManagerEx.getApplicationEx().exit(true, true);
+      ApplicationManagerEx.getApplicationEx().exit(true, true, 1);
     }
     return null;
   }
@@ -158,7 +150,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     File file = new File(TEST_SCRIPT_FILE_PATH);
     if (!file.isFile()) {
       System.err.println(PerformanceTestingBundle.message("startup.noscript", file.getAbsolutePath()));
-      ApplicationManagerEx.getApplicationEx().exit(true, true);
+      ApplicationManagerEx.getApplicationEx().exit(true, true, 1);
     }
 
     return file;
@@ -260,11 +252,6 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
   }
 
   private static void writeAttachmentToErrorDir(Attachment attachment, Path path) {
-    var executor = AppExecutorUtil.getAppScheduledExecutorService();
-    var counter = new AtomicInteger(0);
-    var isDone = new AtomicBoolean(false);
-
-    Path attachmentPath = Paths.get(attachment.getPath());
     try {
       Files.writeString(path, attachment.getDisplayText(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
       Files.writeString(path, System.lineSeparator(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
@@ -272,44 +259,6 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     catch (Exception e) {
       LOG.warn("Failed to write attachment `display text`", e);
     }
-
-    var task = new Runnable() {
-      @Override
-      public void run() {
-        if (isDone.get()) return;
-
-        try (FileChannel channel = FileChannel.open(attachmentPath, StandardOpenOption.READ)) {
-          channel.lock();
-
-          int bufferSize = 1024;
-          if (bufferSize > channel.size()) {
-            bufferSize = (int)channel.size();
-          }
-          ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
-
-          try (var writer = Files.newByteChannel(path)) {
-            while (channel.read(buffer) > 0) {
-              writer.write(buffer);
-              buffer.clear();
-            }
-          }
-
-          isDone.set(true);
-        }
-        catch (Exception e) {
-          LOG.warn("Failed to store attachment", e);
-        }
-        finally {
-          if (counter.getAndIncrement() >= 5) {
-            LOG.warn(String.format("Unable to store attachment %s %s to path %s",
-                                   attachment.getName(), attachment.getPath(), path.toString()));
-            isDone.set(true);
-          }
-        }
-      }
-    };
-
-    executor.scheduleWithFixedDelay(task, 0, 200, TimeUnit.MILLISECONDS);
   }
 
   @NotNull
@@ -367,7 +316,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
   private void runScriptWhenInitializedAndIndexed(Project project) {
     DumbService.getInstance(project).smartInvokeLater(Context.current().wrap(() -> {
       myAlarm.addRequest(Context.current().wrap(() -> {
-        if (DumbService.isDumb(project) || CoreProgressManager.getCurrentIndicators().size() != 0 ||
+        if (DumbService.isDumb(project) || !CoreProgressManager.getCurrentIndicators().isEmpty() ||
             !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished()) {
           runScriptWhenInitializedAndIndexed(project);
         }
@@ -443,12 +392,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
         LOG.info(threadDump);
 
         if (mustExitOnFailure) {
-          if (MUST_EXIT_PROCESS_WITH_NON_SUCCESS_CODE_ON_IDE_ERROR) {
-            System.exit(1);
-          }
-          else {
-            ApplicationManagerEx.getApplicationEx().exit(true, true);
-          }
+            ApplicationManagerEx.getApplicationEx().exit(true, true, 1);
         }
       });
   }

@@ -28,7 +28,7 @@ public final class LocalInspectionsPassFactory implements MainHighlightingPassFa
   @NotNull
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.LOCAL_INSPECTIONS);
+    TextRange textRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.LOCAL_INSPECTIONS);
     if (textRange == null){
       return new ProgressableTextEditorHighlightingPass.EmptyPass(file.getProject(), editor.getDocument());
     }

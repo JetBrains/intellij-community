@@ -15,14 +15,15 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -42,11 +43,11 @@ public class SingleCharacterStartsWithInspection extends BaseInspection {
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new SingleCharacterStartsWithFix();
   }
 
-  private static class SingleCharacterStartsWithFix extends InspectionGadgetsFix {
+  private static class SingleCharacterStartsWithFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -56,8 +57,7 @@ public class SingleCharacterStartsWithInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiReferenceExpression methodExpression = (PsiReferenceExpression)element.getParent();
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)methodExpression.getParent();
       final PsiElement qualifier = methodExpression.getQualifier();

@@ -123,11 +123,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   private fun openFileImpl3(openFileDescriptor: FileEditorNavigatable): FileEditorComposite {
     val file = openFileDescriptor.file
     if (!isCurrentlyUnderLocalId) {
-      val clientManager = clientFileEditorManager ?: return FileEditorComposite.EMPTY
-      val result = clientManager.openFile(file, false)
-      val fileEditors = result.map { it.fileEditor }.toTypedArray()
-      val providers = result.map { it.provider }.toTypedArray()
-      return FileEditorComposite.fromPair(kotlin.Pair(fileEditors, providers))
+      clientFileEditorManager?.openFile(file, false, true) ?: return FileEditorComposite.EMPTY
     }
 
     val isNewEditor = !virtualFileToEditor.containsKey(file)
@@ -358,6 +354,11 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
 
   override fun closeFile(file: VirtualFile, window: EditorWindow) {
     closeFile(file)
+  }
+
+  override fun closeFileWithChecks(file: VirtualFile, window: EditorWindow): Boolean {
+    closeFile(file)
+    return true
   }
 
   override fun getSelectedFiles(): Array<VirtualFile> {

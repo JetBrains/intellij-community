@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -19,7 +19,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.JavaOverridingMethodUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -59,11 +61,11 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[0];
     final boolean annotateMethod = (boolean)infos[1];
     final boolean annotateHierarchy = (boolean)infos[2];
-    return new DelegatingFix(createAnnotateFix(method, annotateMethod, annotateHierarchy));
+    return createAnnotateFix(method, annotateMethod, annotateHierarchy);
   }
 
   @Override

@@ -5,9 +5,9 @@ import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.openapi.project.Project
+import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.gitlab.api.data.GitLabHttpStatusError
 import org.jetbrains.plugins.gitlab.api.data.GitLabHttpStatusError.HttpStatusErrorType
 import org.jetbrains.plugins.gitlab.api.data.asGitLabStatusError
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
@@ -25,23 +25,23 @@ internal class GitLabMergeRequestErrorStatusPresenter(
   override fun getErrorTitle(error: Throwable): @Nls String = GitLabBundle.message("merge.request.list.error")
 
   override fun getErrorDescription(error: Throwable): @Nls String {
-    val httpStatusError = parseHttpStatusError(error) ?: return CollaborationToolsBundle.message("http.status.error.unknown")
-    return when (httpStatusError.statusErrorType) {
-      HttpStatusErrorType.INVALID_TOKEN -> CollaborationToolsBundle.message("http.status.error.refresh.token")
-      HttpStatusErrorType.UNKNOWN -> CollaborationToolsBundle.message("http.status.error.unknown")
+    return when (error) {
+      is HttpStatusErrorException -> {
+        val actualError = error.asGitLabStatusError() ?: return error.localizedMessage
+        when (actualError.statusErrorType) {
+          HttpStatusErrorType.INVALID_TOKEN -> CollaborationToolsBundle.message("http.status.error.refresh.token")
+          HttpStatusErrorType.UNKNOWN -> CollaborationToolsBundle.message("http.status.error.unknown")
+        }
+      }
+      else -> CollaborationToolsBundle.message("http.status.error.unknown")
     }
   }
 
   override fun getErrorAction(error: Throwable): Action? {
-    val httpStatusError = parseHttpStatusError(error) ?: return null
-    return when (httpStatusError.statusErrorType) {
+    val actualError = error.asSafely<HttpStatusErrorException>()?.asGitLabStatusError() ?: return null
+    return when (actualError.statusErrorType) {
       HttpStatusErrorType.INVALID_TOKEN -> GitLabHttpStatusErrorAction.LogInAgain(project, scope, account, accountManager)
       HttpStatusErrorType.UNKNOWN -> null
     }
-  }
-
-  private fun parseHttpStatusError(error: Throwable): GitLabHttpStatusError? = when (error) {
-    is HttpStatusErrorException -> error.asGitLabStatusError()
-    else -> null
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.asSafely
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
@@ -14,8 +15,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 object WorkspaceFileSetRecognizer {
 
   fun getModuleForContent(fileSet: WorkspaceFileSet): Module? {
-    if (fileSet.kind != WorkspaceFileKind.CONTENT) return null
-    return fileSet.asSafely<WorkspaceFileSetImpl>()?.data.asSafely<ModuleContentOrSourceRootData>()?.module
+    if (fileSet.kind != WorkspaceFileKind.CONTENT && fileSet.kind != WorkspaceFileKind.TEST_CONTENT) return null
+    return fileSet.asSafely<WorkspaceFileSetWithCustomData<*>>()?.data.asSafely<ModuleRelatedRootData>()?.module
   }
 
   fun getEntityReference(fileSet: WorkspaceFileSet): EntityReference<*>? {

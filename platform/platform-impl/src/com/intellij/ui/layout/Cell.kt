@@ -90,7 +90,7 @@ internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Cla
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use MutableProperty and Kotlin UI DSL 2")
 fun <T> PropertyBinding<T>.toNullable(): PropertyBinding<T?> {
-  return PropertyBinding<T?>({ get() }, { set(it!!) })
+  return PropertyBinding({ get() }, { set(it!!) })
 }
 
 @ApiStatus.ScheduledForRemoval
@@ -502,7 +502,7 @@ abstract class Cell : BaseBuilder {
 
   @JvmOverloads
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
     val binding = prop.toBinding()
     return textField(

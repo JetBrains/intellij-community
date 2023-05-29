@@ -10,6 +10,7 @@ import com.intellij.diff.util.DiffNotificationProvider;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -51,86 +52,74 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class DiffContentFactoryImpl extends DiffContentFactoryEx {
+public final class DiffContentFactoryImpl extends DiffContentFactoryEx {
   private static final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
 
-  @NotNull
   @Override
-  public EmptyContent createEmpty() {
+  public @NotNull EmptyContent createEmpty() {
     return new EmptyContent();
   }
 
 
-  @NotNull
   @Override
-  public DocumentContent create(@NotNull String text) {
+  public @NotNull DocumentContent create(@NotNull String text) {
     return create(null, text);
   }
 
-  @NotNull
   @Override
-  public DocumentContent create(@NotNull String text, @Nullable FileType type) {
+  public @NotNull DocumentContent create(@NotNull String text, @Nullable FileType type) {
     return create(null, text, type);
   }
 
-  @NotNull
   @Override
-  public DocumentContent create(@NotNull String text, @Nullable FileType type, boolean respectLineSeparators) {
+  public @NotNull DocumentContent create(@NotNull String text, @Nullable FileType type, boolean respectLineSeparators) {
     return create(null, text, type, respectLineSeparators);
   }
 
-  @NotNull
   @Override
-  public DocumentContent create(@NotNull String text, @Nullable VirtualFile highlightFile) {
+  public @NotNull DocumentContent create(@NotNull String text, @Nullable VirtualFile highlightFile) {
     return create(null, text, highlightFile);
   }
 
-  @NotNull
   @Override
-  public DocumentContent create(@NotNull String text, @Nullable DocumentContent referent) {
+  public @NotNull DocumentContent create(@NotNull String text, @Nullable DocumentContent referent) {
     return create(null, text, referent);
   }
 
 
-  @NotNull
   @Override
-  public DocumentContent create(@Nullable Project project, @NotNull String text) {
+  public @NotNull DocumentContent create(@Nullable Project project, @NotNull String text) {
     return create(project, text, (FileType)null);
   }
 
-  @NotNull
   @Override
-  public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type) {
+  public @NotNull DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type) {
     return create(project, text, type, true);
   }
 
-  @NotNull
   @Override
-  public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type, boolean respectLineSeparators) {
+  public @NotNull DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type, boolean respectLineSeparators) {
     return readOnlyDocumentContent(project)
       .contextByFileType(type)
       .buildFromText(text, respectLineSeparators);
   }
 
-  @NotNull
   @Override
-  public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FilePath filePath) {
+  public @NotNull DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FilePath filePath) {
     return readOnlyDocumentContent(project)
       .contextByFilePath(filePath)
       .buildFromText(text, true);
   }
 
-  @NotNull
   @Override
-  public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable VirtualFile highlightFile) {
+  public @NotNull DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable VirtualFile highlightFile) {
     return readOnlyDocumentContent(project)
       .contextByHighlightFile(highlightFile)
       .buildFromText(text, true);
   }
 
-  @NotNull
   @Override
-  public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable DocumentContent referent) {
+  public @NotNull DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable DocumentContent referent) {
     if (referent == null) return create(text);
     return readOnlyDocumentContent(project)
       .contextByReferent(referent)
@@ -138,88 +127,76 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   }
 
 
-  @NotNull
   @Override
-  public DocumentContent createEditable(@Nullable Project project, @NotNull String text, @Nullable FileType fileType) {
+  public @NotNull DocumentContent createEditable(@Nullable Project project, @NotNull String text, @Nullable FileType fileType) {
     return documentContent(project, false)
       .contextByFileType(fileType)
       .buildFromText(text, true);
   }
 
-  @NotNull
   @Override
-  public DocumentContent create(@NotNull Document document, @Nullable DocumentContent referent) {
+  public @NotNull DocumentContent create(@NotNull Document document, @Nullable DocumentContent referent) {
     return create(null, document, referent);
   }
 
 
-  @NotNull
   @Override
-  public DocumentContent create(@Nullable Project project, @NotNull Document document) {
+  public @NotNull DocumentContent create(@Nullable Project project, @NotNull Document document) {
     return create(project, document, (FileType)null);
   }
 
-  @NotNull
   @Override
-  public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable FileType fileType) {
+  public @NotNull DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable FileType fileType) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) return new FileDocumentContentImpl(project, document, file);
     return new DocumentContentImpl(project, document, fileType);
   }
 
-  @NotNull
   @Override
-  public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable VirtualFile highlightFile) {
+  public @NotNull DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable VirtualFile highlightFile) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null && file.equals(highlightFile)) return new FileDocumentContentImpl(project, document, file);
     if (highlightFile == null) return new DocumentContentImpl(document);
     return new FileReferentDocumentContent(project, document, highlightFile);
   }
 
-  @NotNull
   @Override
-  public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable DocumentContent referent) {
+  public @NotNull DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable DocumentContent referent) {
     if (referent == null) return new DocumentContentImpl(document);
     return new ContentReferentDocumentContent(project, document, referent);
   }
 
 
-  @NotNull
   @Override
-  public DiffContent create(@Nullable Project project, @NotNull VirtualFile file) {
+  public @NotNull DiffContent create(@Nullable Project project, @NotNull VirtualFile file) {
     return createContentFromFile(project, file);
   }
 
-  @NotNull
   @Override
-  public DiffContent create(@Nullable Project project, @NotNull VirtualFile file, @Nullable VirtualFile highlightFile) {
+  public @NotNull DiffContent create(@Nullable Project project, @NotNull VirtualFile file, @Nullable VirtualFile highlightFile) {
     return createContentFromFile(project, file, highlightFile);
   }
 
-  @Nullable
   @Override
-  public DocumentContent createDocument(@Nullable Project project, @NotNull final VirtualFile file) {
+  public @Nullable DocumentContent createDocument(@Nullable Project project, final @NotNull VirtualFile file) {
     return ObjectUtils.tryCast(createContentFromFile(project, file), DocumentContent.class);
   }
 
-  @Nullable
   @Override
-  public FileContent createFile(@Nullable Project project, @NotNull VirtualFile file) {
+  public @Nullable FileContent createFile(@Nullable Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) return null;
     return (FileContent)create(project, file);
   }
 
 
-  @NotNull
   @Override
-  public DocumentContent createFragment(@Nullable Project project, @NotNull Document document, @NotNull TextRange range) {
+  public @NotNull DocumentContent createFragment(@Nullable Project project, @NotNull Document document, @NotNull TextRange range) {
     DocumentContent content = create(project, document);
     return createFragment(project, content, range);
   }
 
-  @NotNull
   @Override
-  public DocumentContent createFragment(@Nullable Project project, @NotNull DocumentContent content, @NotNull TextRange range) {
+  public @NotNull DocumentContent createFragment(@Nullable Project project, @NotNull DocumentContent content, @NotNull TextRange range) {
     Document document = content.getDocument();
     if (document instanceof DocumentImpl && ((DocumentImpl)document).acceptsSlashR()) {
       LOG.warn("Create immutable fragment content - can't handle CR");
@@ -230,27 +207,23 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   }
 
 
-  @NotNull
   @Override
-  public DiffContent createClipboardContent() {
+  public @NotNull DiffContent createClipboardContent() {
     return createClipboardContent(null, null);
   }
 
-  @NotNull
   @Override
-  public DocumentContent createClipboardContent(@Nullable DocumentContent referent) {
+  public @NotNull DocumentContent createClipboardContent(@Nullable DocumentContent referent) {
     return createClipboardContent(null, referent);
   }
 
-  @NotNull
   @Override
-  public DiffContent createClipboardContent(@Nullable Project project) {
+  public @NotNull DiffContent createClipboardContent(@Nullable Project project) {
     return createClipboardContent(project, null);
   }
 
-  @NotNull
   @Override
-  public DocumentContent createClipboardContent(@Nullable Project project, @Nullable DocumentContent referent) {
+  public @NotNull DocumentContent createClipboardContent(@Nullable Project project, @Nullable DocumentContent referent) {
     String text = StringUtil.notNullize(CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor));
     return documentContent(project, false)
       .contextByReferent(referent)
@@ -259,20 +232,18 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   }
 
 
-  @NotNull
   @Override
-  public DiffContent createFromBytes(@Nullable Project project,
-                                     byte @NotNull [] content,
-                                     @NotNull FilePath filePath) throws IOException {
+  public @NotNull DiffContent createFromBytes(@Nullable Project project,
+                                              byte @NotNull [] content,
+                                              @NotNull FilePath filePath) throws IOException {
     return createFromBytes(project, content, filePath, null);
   }
 
-  @NotNull
   @Override
-  public DiffContent createFromBytes(@Nullable Project project,
-                                     byte @NotNull [] content,
-                                     @NotNull FilePath filePath,
-                                     @Nullable Charset defaultCharset) throws IOException {
+  public @NotNull DiffContent createFromBytes(@Nullable Project project,
+                                              byte @NotNull [] content,
+                                              @NotNull FilePath filePath,
+                                              @Nullable Charset defaultCharset) throws IOException {
     if (defaultCharset == null && isBinaryContent(content, filePath.getFileType())) {
       return createBinaryImpl(project, content, filePath.getFileType(), filePath.getPath(), filePath.getVirtualFile());
     }
@@ -280,12 +251,11 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return createDocumentFromBytes(project, content, filePath, defaultCharset);
   }
 
-  @NotNull
   @Override
-  public DiffContent createFromBytes(@Nullable Project project,
-                                     byte @NotNull [] content,
-                                     @NotNull FileType fileType,
-                                     @NotNull String fileName) throws IOException {
+  public @NotNull DiffContent createFromBytes(@Nullable Project project,
+                                              byte @NotNull [] content,
+                                              @NotNull FileType fileType,
+                                              @NotNull String fileName) throws IOException {
     if (isBinaryContent(content, fileType)) {
       return createBinary(project, content, fileType, fileName);
     }
@@ -293,11 +263,10 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return createDocumentFromBytes(project, content, fileType, fileName);
   }
 
-  @NotNull
   @Override
-  public DiffContent createFromBytes(@Nullable Project project,
-                                     byte @NotNull [] content,
-                                     @NotNull VirtualFile highlightFile) throws IOException {
+  public @NotNull DiffContent createFromBytes(@Nullable Project project,
+                                              byte @NotNull [] content,
+                                              @NotNull VirtualFile highlightFile) throws IOException {
     if (isBinaryContent(content, highlightFile.getFileType())) {
       return createBinaryImpl(project, content, highlightFile.getFileType(), highlightFile.getPath(), highlightFile);
     }
@@ -305,65 +274,58 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return createDocumentFromBytes(project, content, highlightFile);
   }
 
-  @NotNull
   @Override
-  public DocumentContent createDocumentFromBytes(@Nullable Project project,
-                                                 byte @NotNull [] content,
-                                                 @NotNull FileType fileType,
-                                                 @NotNull String fileName) {
+  public @NotNull DocumentContent createDocumentFromBytes(@Nullable Project project,
+                                                          byte @NotNull [] content,
+                                                          @NotNull FileType fileType,
+                                                          @NotNull String fileName) {
     return readOnlyDocumentContent(project)
       .contextByFileType(fileType)
       .withFileName(fileName)
       .buildFromBytes(content);
   }
 
-  @NotNull
   @Override
-  public DocumentContent createDocumentFromBytes(@Nullable Project project, byte @NotNull [] content, @NotNull FilePath filePath) {
+  public @NotNull DocumentContent createDocumentFromBytes(@Nullable Project project, byte @NotNull [] content, @NotNull FilePath filePath) {
     return readOnlyDocumentContent(project)
       .contextByFilePath(filePath)
       .buildFromBytes(content);
   }
 
-  @NotNull
-  private DocumentContent createDocumentFromBytes(@Nullable Project project,
-                                                  byte @NotNull [] content,
-                                                  @NotNull FilePath filePath,
-                                                  @Nullable Charset defaultCharset) {
+  private @NotNull DocumentContent createDocumentFromBytes(@Nullable Project project,
+                                                           byte @NotNull [] content,
+                                                           @NotNull FilePath filePath,
+                                                           @Nullable Charset defaultCharset) {
     return readOnlyDocumentContent(project)
       .contextByFilePath(filePath)
       .withDefaultCharset(defaultCharset)
       .buildFromBytes(content);
   }
 
-  @NotNull
   @Override
-  public DocumentContent createDocumentFromBytes(@Nullable Project project, byte @NotNull [] content, @NotNull VirtualFile highlightFile) {
+  public @NotNull DocumentContent createDocumentFromBytes(@Nullable Project project, byte @NotNull [] content, @NotNull VirtualFile highlightFile) {
     return readOnlyDocumentContent(project)
       .contextByHighlightFile(highlightFile)
       .buildFromBytes(content);
   }
 
-  @NotNull
   @Override
-  public DiffContent createBinary(@Nullable Project project,
-                                  byte @NotNull [] content,
-                                  @NotNull FileType type,
-                                  @NotNull String fileName) throws IOException {
+  public @NotNull DiffContent createBinary(@Nullable Project project,
+                                           byte @NotNull [] content,
+                                           @NotNull FileType type,
+                                           @NotNull String fileName) throws IOException {
     return createBinaryImpl(project, content, type, fileName, null);
   }
 
 
-  @NotNull
-  private static DiffContent createContentFromFile(@Nullable Project project,
-                                                   @NotNull VirtualFile file) {
+  private static @NotNull DiffContent createContentFromFile(@Nullable Project project,
+                                                            @NotNull VirtualFile file) {
     return createContentFromFile(project, file, file);
   }
 
-  @NotNull
-  private static DiffContent createContentFromFile(@Nullable Project project,
-                                                   @NotNull VirtualFile file,
-                                                   @Nullable VirtualFile highlightFile) {
+  private static @NotNull DiffContent createContentFromFile(@Nullable Project project,
+                                                            @NotNull VirtualFile file,
+                                                            @Nullable VirtualFile highlightFile) {
     if (file.isDirectory()) return new DirectoryContentImpl(project, file, highlightFile);
 
     Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
@@ -376,12 +338,11 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
   }
 
-  @NotNull
-  private static DiffContent createBinaryImpl(@Nullable Project project,
-                                              byte @NotNull [] content,
-                                              @NotNull FileType type,
-                                              @NotNull @NonNls @SystemIndependent String lightFilePath,
-                                              @Nullable VirtualFile highlightFile) throws IOException {
+  private static @NotNull DiffContent createBinaryImpl(@Nullable Project project,
+                                                       byte @NotNull [] content,
+                                                       @NotNull FileType type,
+                                                       @NotNull @NonNls @SystemIndependent String lightFilePath,
+                                                       @Nullable VirtualFile highlightFile) throws IOException {
     // workaround - our JarFileSystem and decompilers can't process non-local files
     boolean useTemporalFile = type instanceof ArchiveFileType || BinaryFileTypeDecompilers.getInstance().forFileType(type) != null;
 
@@ -399,8 +360,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   }
 
 
-  @NotNull
-  private static VirtualFile createTemporalFile(@NonNls @NotNull String suffix, byte @NotNull [] content) throws IOException {
+  private static @NotNull VirtualFile createTemporalFile(@NonNls @NotNull String suffix, byte @NotNull [] content) throws IOException {
     File tempFile = FileUtil.createTempFile("tmp_", PathUtil.suggestFileName("_" + suffix, true, false), true);
     if (content.length != 0) {
       FileUtil.writeToFile(tempFile, content);
@@ -415,12 +375,11 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return file;
   }
 
-  @NotNull
-  private static Document createDocument(@Nullable Project project,
-                                         @NotNull String content,
-                                         @Nullable FileType fileType,
-                                         @NotNull @NonNls @SystemIndependent String lightFilePath,
-                                         boolean readOnly) {
+  private static @NotNull Document createDocument(@Nullable Project project,
+                                                  @NotNull String content,
+                                                  @Nullable FileType fileType,
+                                                  @NotNull @NonNls @SystemIndependent String lightFilePath,
+                                                  boolean readOnly) {
     Document document = createPsiDocument(project, content, fileType, lightFilePath, readOnly);
     if (document == null) {
       document = EditorFactory.getInstance().createDocument(content);
@@ -429,12 +388,11 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return document;
   }
 
-  @Nullable
-  private static Document createPsiDocument(@Nullable Project project,
-                                            @NotNull String content,
-                                            @Nullable FileType fileType,
-                                            @NotNull @NonNls @SystemIndependent String lightFilePath,
-                                            boolean readOnly) {
+  private static @Nullable Document createPsiDocument(@Nullable Project project,
+                                                      @NotNull String content,
+                                                      @Nullable FileType fileType,
+                                                      @NotNull @NonNls @SystemIndependent String lightFilePath,
+                                                      boolean readOnly) {
     if (project == null || project.isDefault()) return null;
     if (fileType != null && fileType.isBinary()) return null;
 
@@ -442,9 +400,10 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     file.setWritable(!readOnly);
 
     return ReadAction.compute(() -> {
-      Document document = ProjectLocator.computeWithPreferredProject(file, project, () ->
-        FileDocumentManager.getInstance().getDocument(file));
-      if (document == null) return null;
+      Document document = FileDocumentManager.getInstance().getDocument(file, project);
+      if (document == null) {
+        return null;
+      }
       PsiDocumentManager.getInstance(project).getPsiFile(document);
       return document;
     });
@@ -468,18 +427,16 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   }
 
 
-  @NotNull
-  public static Charset guessCharset(@Nullable Project project, byte @NotNull [] content, @NotNull FilePath filePath) {
+  public static @NotNull Charset guessCharset(@Nullable Project project, byte @NotNull [] content, @NotNull FilePath filePath) {
     return guessCharset(project, content, filePath.getFileType(), filePath.getPath(), filePath.getVirtualFile(), null);
   }
 
-  @NotNull
-  private static Charset guessCharset(@Nullable Project project,
-                                      byte @NotNull [] content,
-                                      @Nullable FileType fileType,
-                                      @NotNull @NonNls @SystemIndependent String lightFilePath,
-                                      @Nullable VirtualFile highlightFile,
-                                      @Nullable Charset defaultCharset) {
+  private static @NotNull Charset guessCharset(@Nullable Project project,
+                                               byte @NotNull [] content,
+                                               @Nullable FileType fileType,
+                                               @NotNull @NonNls @SystemIndependent String lightFilePath,
+                                               @Nullable VirtualFile highlightFile,
+                                               @Nullable Charset defaultCharset) {
     Charset bomCharset = CharsetToolkit.guessFromBOM(content);
     if (bomCharset != null) return bomCharset;
 
@@ -501,8 +458,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
   }
 
-  @NotNull
-  private static Charset takeCharsetOrGuessUTF(@NotNull Charset charset, byte @NotNull [] content) {
+  private static @NotNull Charset takeCharsetOrGuessUTF(@NotNull Charset charset, byte @NotNull [] content) {
     if (StandardCharsets.UTF_8.equals(charset)) {
       // GuessedEncoding can't detect UTF8-incompatible charsets, verification can be skipped
       return charset;
@@ -522,8 +478,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return charset;
   }
 
-  @Nullable
-  private static Charset guessCharsetFromContent(byte @NotNull [] content) {
+  private static @Nullable Charset guessCharsetFromContent(byte @NotNull [] content) {
     if (content.length == 0) return null;
     // can't use CharsetToolkit.guessEncoding here because of false-positive INVALID_UTF8
     CharsetToolkit toolkit = new CharsetToolkit(content, Charset.defaultCharset(), false);
@@ -539,31 +494,28 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     };
   }
 
-  @Nullable
-  private static Charset guessFileTypeCharset(@Nullable Project project,
-                                              byte @NotNull [] content,
-                                              @NotNull FileType fileType,
-                                              @NotNull @NonNls @SystemIndependent String lightFilePath) {
+  private static @Nullable Charset guessFileTypeCharset(@Nullable Project project,
+                                                        byte @NotNull [] content,
+                                                        @NotNull FileType fileType,
+                                                        @NotNull @NonNls @SystemIndependent String lightFilePath) {
     LightVirtualFileBase file = new MyBinaryLightVirtualFile(lightFilePath, fileType, content);
     if (project != null) {
       // pass Project to the EncodingManagerImpl to delegate to the EncodingProjectManagerImpl when needed
-      return ProjectLocator.computeWithPreferredProject(file, project, () -> {
+      try (AccessToken ignored = ProjectLocator.withPreferredProject(file, project)) {
         return CharsetToolkit.forName(fileType.getCharset(file, content));
-      });
+      }
     }
     else {
       return CharsetToolkit.forName(fileType.getCharset(file, content));
     }
   }
 
-  @NotNull
-  private DocumentContentBuilder readOnlyDocumentContent(@Nullable Project project) {
+  private @NotNull DocumentContentBuilder readOnlyDocumentContent(@Nullable Project project) {
     return documentContent(project, true);
   }
 
   @Override
-  @NotNull
-  public DocumentContentBuilder documentContent(@Nullable Project project, boolean readOnly) {
+  public @NotNull DocumentContentBuilder documentContent(@Nullable Project project, boolean readOnly) {
     return new DocumentContentBuilderImpl(project).withReadOnly(readOnly);
   }
 
@@ -580,15 +532,13 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       this.project = project;
     }
 
-    @NotNull
-    public DocumentContentBuilder withReadOnly(boolean readOnly) {
+    public @NotNull DocumentContentBuilder withReadOnly(boolean readOnly) {
       this.readOnly = readOnly;
       return this;
     }
 
     @Override
-    @NotNull
-    public DocumentContentBuilder withFileName(@Nullable String fileName) {
+    public @NotNull DocumentContentBuilder withFileName(@Nullable String fileName) {
       this.fileName = fileName;
       return this;
     }
@@ -600,8 +550,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
 
     @Override
-    @NotNull
-    public DocumentContentBuilder contextByFileType(@Nullable FileType fileType) {
+    public @NotNull DocumentContentBuilder contextByFileType(@Nullable FileType fileType) {
       if (fileType != null) {
         context = new Context.ByFileType(fileType);
       }
@@ -609,8 +558,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
 
     @Override
-    @NotNull
-    public DocumentContentBuilder contextByFilePath(@Nullable FilePath filePath) {
+    public @NotNull DocumentContentBuilder contextByFilePath(@Nullable FilePath filePath) {
       if (filePath != null) {
         context = new Context.ByFilePath(filePath);
         originalFilePath = filePath.getPath();
@@ -620,8 +568,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
 
     @Override
-    @NotNull
-    public DocumentContentBuilder contextByHighlightFile(@Nullable VirtualFile file) {
+    public @NotNull DocumentContentBuilder contextByHighlightFile(@Nullable VirtualFile file) {
       if (file != null) {
         context = new Context.ByHighlightFile(file);
         originalFilePath = file.getPath();
@@ -631,8 +578,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
 
     @Override
-    @NotNull
-    public DocumentContentBuilder contextByReferent(@Nullable DocumentContent referent) {
+    public @NotNull DocumentContentBuilder contextByReferent(@Nullable DocumentContent referent) {
       if (referent != null) {
         context = new Context.ByReferent(referent);
         VirtualFile file = referent.getHighlightFile();
@@ -645,8 +591,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
 
     @Override
-    @NotNull
-    public DocumentContent buildFromText(@NotNull String text, boolean respectLineSeparators) {
+    public @NotNull DocumentContent buildFromText(@NotNull String text, boolean respectLineSeparators) {
       FileType fileType = guessFileType();
       String lightFilePath = constructLightFilePath();
 
@@ -657,8 +602,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
 
     @Override
-    @NotNull
-    public DocumentContent buildFromBytes(byte @NotNull [] content) {
+    public @NotNull DocumentContent buildFromBytes(byte @NotNull [] content) {
       FileType fileType = guessFileType();
       String lightFilePath = constructLightFilePath();
       VirtualFile highlightFile = constructHighlightFile();
@@ -671,8 +615,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       return build(document, textContent);
     }
 
-    @NotNull
-    private DocumentContent build(@NotNull Document document, @NotNull TextContent textContent) {
+    private @NotNull DocumentContent build(@NotNull Document document, @NotNull TextContent textContent) {
       DocumentContent documentContent = new ContextReferentDocumentContent(project, document, textContent, context);
 
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
@@ -691,13 +634,11 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       return documentContent;
     }
 
-    @Nullable
-    private FileType guessFileType() {
+    private @Nullable FileType guessFileType() {
       return context != null ? context.guessContentType() : null;
     }
 
-    @NotNull
-    private @NonNls String constructLightFilePath() {
+    private @NotNull @NonNls String constructLightFilePath() {
       if (originalFilePath != null) {
         return originalFilePath;
       }
@@ -710,8 +651,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       return name;
     }
 
-    @Nullable
-    private VirtualFile constructHighlightFile() {
+    private @Nullable VirtualFile constructHighlightFile() {
       return context != null ? context.getHighlightFile() : null;
     }
   }
@@ -724,9 +664,8 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       myPath = path;
     }
 
-    @NotNull
     @Override
-    public String getPath() {
+    public @NotNull String getPath() {
       return myPath;
     }
 
@@ -744,9 +683,8 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       myPath = path;
     }
 
-    @NotNull
     @Override
-    public String getPath() {
+    public @NotNull String getPath() {
       return myPath;
     }
 
@@ -757,7 +695,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   }
 
   private static final class FileReferentDocumentContent extends DocumentContentBase {
-    @NotNull private final VirtualFile myHighlightFile;
+    private final @NotNull VirtualFile myHighlightFile;
 
     private FileReferentDocumentContent(@Nullable Project project, @NotNull Document document, @NotNull VirtualFile highlightFile) {
       super(project, document);
@@ -776,7 +714,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   }
 
   private static final class ContentReferentDocumentContent extends DocumentContentBase {
-    @NotNull private final DocumentContent myReferent;
+    private final @NotNull DocumentContent myReferent;
 
     private ContentReferentDocumentContent(@Nullable Project project, @NotNull Document document, @NotNull DocumentContent referent) {
       super(project, document);
@@ -795,11 +733,11 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   }
 
   private static final class ContextReferentDocumentContent extends DocumentContentBase {
-    @Nullable private final LineSeparator mySeparator;
-    @Nullable private final Charset myCharset;
-    @Nullable private final Boolean myBOM;
+    private final @Nullable LineSeparator mySeparator;
+    private final @Nullable Charset myCharset;
+    private final @Nullable Boolean myBOM;
 
-    @Nullable private final Context myReferent;
+    private final @Nullable Context myReferent;
 
     private ContextReferentDocumentContent(@Nullable Project project, @NotNull Document document,
                                            @NotNull TextContent content, @Nullable Context referent) {
@@ -824,21 +762,18 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       return myReferent != null ? myReferent.getHighlightFile() : null;
     }
 
-    @Nullable
     @Override
-    public LineSeparator getLineSeparator() {
+    public @Nullable LineSeparator getLineSeparator() {
       return mySeparator;
     }
 
-    @Nullable
     @Override
-    public Charset getCharset() {
+    public @Nullable Charset getCharset() {
       return myCharset;
     }
 
     @Override
-    @Nullable
-    public Boolean hasBom() {
+    public @Nullable Boolean hasBom() {
       return myBOM;
     }
   }
@@ -854,8 +789,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       this.text = text;
     }
 
-    @NotNull
-    public static TextContent fromText(@NotNull String text, boolean respectLineSeparators) {
+    public static @NotNull TextContent fromText(@NotNull String text, boolean respectLineSeparators) {
       // TODO: detect invalid (different across the file) separators ?
       String correctedContent = StringUtil.convertLineSeparators(text);
 
@@ -866,8 +800,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       return textContent;
     }
 
-    @NotNull
-    public static TextContent fromBytes(byte @NotNull [] content, @NotNull Charset charset) {
+    public static @NotNull TextContent fromBytes(byte @NotNull [] content, @NotNull Charset charset) {
       boolean isBom = CharsetToolkit.guessFromBOM(content) != null;
 
       boolean malformedContent = false;

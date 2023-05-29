@@ -432,12 +432,20 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return if (path.endsWith(".ipr")) FileUtilRt.getNameWithoutExtension(name) else name
   }
 
+  fun forceReopenProjects() {
+    synchronized(stateLock) {
+      state.forceReopenProjects = true
+    }
+  }
+
   override fun willReopenProjectOnStart(): Boolean {
-    if (!GeneralSettings.getInstance().isReopenLastProject || AppMode.isDontReopenProjects()) {
+    if (!synchronized(stateLock) { state.forceReopenProjects }
+        && (!GeneralSettings.getInstance().isReopenLastProject || AppMode.isDontReopenProjects())) {
       return false
     }
 
     synchronized(stateLock) {
+      state.forceReopenProjects = false
       return state.additionalInfo.values.any { canReopenProject(it) }
     }
   }
@@ -497,23 +505,28 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   override fun suggestNewProjectLocation() = ProjectUtil.getBaseDir()
 
   // open for Rider
-  protected open fun isValidProjectPath(file: Path) = ProjectUtilCore.isValidProjectPath(file)
+  @Suppress("MemberVisibilityCanBePrivate")
+  protected suspend fun isValidProjectPath(file: Path): Boolean {
+    return withContext(Dispatchers.IO) { ProjectUtilCore.isValidProjectPath(file) }
+  }
 
   private suspend fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): Boolean {
     val toOpen = openPaths.mapNotNull { entry ->
-      val path = Path.of(entry.key)
-      if (entry.value.frame != null && isValidProjectPath(path)) Pair(path, entry.value) else null
+      runCatching {
+        val path = Path.of(entry.key)
+        if (isValidProjectPath(path)) Pair(path, entry.value) else null
+      }.getOrLogException(LOG)
     }
 
+
     // ok, no non-existent project paths and every info has a frame
-    val activeInfo = toOpen.maxByOrNull { it.second.activationTimestamp }!!.second
+    val activeInfo = (toOpen.maxByOrNull { it.second.activationTimestamp } ?: return false).second
     val taskList = ArrayList<Pair<Path, OpenProjectTask>>(toOpen.size)
     subtask("project frame initialization", Dispatchers.EDT) {
       var activeTask: Pair<Path, OpenProjectTask>? = null
       for ((path, info) in toOpen) {
-        val frameInfo = info.frame!!
         val isActive = info == activeInfo
-        val ideFrame = createNewProjectFrame(frameInfo).create()
+        val ideFrame = createNewProjectFrame(info.frame).create()
         info.frameTitle?.let {
           ideFrame.title = it
         }

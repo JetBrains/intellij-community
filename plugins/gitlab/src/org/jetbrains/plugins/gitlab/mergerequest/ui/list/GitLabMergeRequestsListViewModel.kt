@@ -9,6 +9,8 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -70,16 +72,16 @@ internal class GitLabMergeRequestsListViewModelImpl(
   private val loaderState = MutableStateFlow(loaderSupplier(filterVm.searchState.value))
 
   override val canLoadMoreState: StateFlow<Boolean> =
-    combineState(scope, loaderHasMoreState, loadingState, errorState) { loaderHasMore, loading, error ->
-      loaderHasMore && !loading && error == null
+    combineState(scope, loaderHasMoreState, errorState) { loaderHasMore, error ->
+      loaderHasMore && error == null
     }
 
-  private val loadingRequestFlow = MutableSharedFlow<Unit>()
+  private val loadingRequestFlow = Channel<Unit>(1, BufferOverflow.DROP_LATEST)
 
   init {
     scope.launch {
       loaderState.collectLatest { loader ->
-        loadingRequestFlow.collect {
+        loadingRequestFlow.receiveAsFlow().collect {
           try {
             handleLoadingRequest(loader)
           }
@@ -126,7 +128,7 @@ internal class GitLabMergeRequestsListViewModelImpl(
 
   override fun requestMore() {
     scope.launch {
-      loadingRequestFlow.emit(Unit)
+      loadingRequestFlow.send(Unit)
     }
   }
 

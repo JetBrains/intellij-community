@@ -2,82 +2,111 @@
 package com.intellij.feedback.common.dialog.uiBlocks
 
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.put
 import javax.swing.SwingConstants
 
-class SegmentedButtonBlock<T>(myProperty: ObservableMutableProperty<T>,
-                              @NlsContexts.Label val mainLabel: String?,
-                              val items: List<T>,
-                              val renderer: (T) -> String,
-                              @NlsContexts.Label val leftBottomLabel: String? = null,
-                              @NlsContexts.Label val midBottomLabel: String? = null,
-                              @NlsContexts.Label val rightBottomLabel: String? = null) : SingleInputFeedbackBlock<T>(myProperty) {
+class SegmentedButtonBlock(@NlsContexts.Label private val myMainLabel: String?,
+                           private val myItems: List<String>,
+                           private val myJsonElementName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
+
+  private var myProperty: String = ""
+  private var myLeftBottomLabel: String? = null
+  private var myMiddleBottomLabel: String? = null
+  private var myRightBottomLabel: String? = null
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
-      panel {
-        if (mainLabel != null) {
-          row {
-            label(mainLabel)
-              .customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
-          }.bottomGap(BottomGap.SMALL)
-        }
+      if (myMainLabel != null) {
         row {
-          segmentedButton(items, renderer)
-            .apply {
-              maxButtonsCount(items.size)
-            }.customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
-            .whenItemSelected { myProperty.set(it) }
-            .align(Align.FILL)
-            .validation {
-              addApplyRule(CommonFeedbackBundle.message("dialog.feedback.segmentedButton.error")) { it.selectedItem == null }
-            }
-        }.apply {
-          if (leftBottomLabel == null && midBottomLabel == null && rightBottomLabel == null) {
-            this.bottomGap(BottomGap.MEDIUM)
-            return@panel
-          }
-        }
-
-        row {
-          if (leftBottomLabel != null) {
-            label(leftBottomLabel)
-              .applyToComponent {
-                font = ComponentPanelBuilder.getCommentFont(font)
-                foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-              }
-              .widthGroup("Group")
-              .apply {
-                if (midBottomLabel == null) {
-                  resizableColumn()
-                }
-              }
-          }
-          if (midBottomLabel != null) {
-            label(midBottomLabel)
-              .applyToComponent {
-                font = ComponentPanelBuilder.getCommentFont(font)
-                foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-              }
-              .align(AlignX.CENTER)
-              .resizableColumn()
-          }
-          if (rightBottomLabel != null) {
-            label(rightBottomLabel)
-              .applyToComponent {
-                font = ComponentPanelBuilder.getCommentFont(font)
-                foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-                horizontalAlignment = SwingConstants.RIGHT
-              }
-              .widthGroup("Group")
-          }
-        }.bottomGap(BottomGap.MEDIUM)
+          label(myMainLabel)
+            .customize(UnscaledGaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+        }.bottomGap(BottomGap.SMALL)
       }
+      row {
+        segmentedButton(myItems) { it }
+          .apply {
+            maxButtonsCount(myItems.size)
+          }.customize(UnscaledGaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+          .whenItemSelected { myProperty = it }
+          .align(Align.FILL)
+          .validation {
+            addApplyRule(CommonFeedbackBundle.message("dialog.feedback.segmentedButton.required")) { it.selectedItem == null }
+          }
+      }.apply {
+        if (myLeftBottomLabel == null && myMiddleBottomLabel == null && myRightBottomLabel == null) {
+          this.bottomGap(BottomGap.MEDIUM)
+          return
+        }
+      }
+
+      row {
+        if (myLeftBottomLabel != null) {
+          label(myLeftBottomLabel!!)
+            .applyToComponent {
+              font = ComponentPanelBuilder.getCommentFont(font)
+              foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+            }
+            .widthGroup("Group")
+            .apply {
+              if (myMiddleBottomLabel == null) {
+                resizableColumn()
+              }
+            }
+        }
+        if (myMiddleBottomLabel != null) {
+          label(myMiddleBottomLabel!!)
+            .applyToComponent {
+              font = ComponentPanelBuilder.getCommentFont(font)
+              foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+            }
+            .align(AlignX.CENTER)
+            .resizableColumn()
+        }
+        if (myRightBottomLabel != null) {
+          label(myRightBottomLabel!!)
+            .applyToComponent {
+              font = ComponentPanelBuilder.getCommentFont(font)
+              foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+              horizontalAlignment = SwingConstants.RIGHT
+            }
+            .widthGroup("Group")
+        }
+      }.bottomGap(BottomGap.MEDIUM)
     }
+  }
+
+  override fun collectBlockTextDescription(stringBuilder: StringBuilder) {
+    stringBuilder.apply {
+      appendLine(myMainLabel)
+      appendLine(myProperty)
+      appendLine()
+    }
+  }
+
+  override fun collectBlockDataToJson(jsonObjectBuilder: JsonObjectBuilder) {
+    jsonObjectBuilder.apply {
+      put(myJsonElementName, myProperty)
+    }
+  }
+
+  fun addLeftBottomLabel(@NlsContexts.Label leftBottomLabel: String): SegmentedButtonBlock {
+    myLeftBottomLabel = leftBottomLabel
+    return this
+  }
+
+  fun addMiddleBottomLabel(@NlsContexts.Label middleBottomLabel: String): SegmentedButtonBlock {
+    myMiddleBottomLabel = middleBottomLabel
+    return this
+  }
+
+  fun addRightBottomLabel(@NlsContexts.Label rightBottomLabel: String): SegmentedButtonBlock {
+    myRightBottomLabel = rightBottomLabel
+    return this
   }
 }

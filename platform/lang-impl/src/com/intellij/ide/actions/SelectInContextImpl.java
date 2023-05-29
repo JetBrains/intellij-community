@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -35,7 +34,6 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 
 public final class SelectInContextImpl extends FileSelectInContext {
-  public static final Key<ContextEditorProvider> CONTEXT_EDITOR_PROVIDER_KEY = Key.create("CONTEXT_EDITOR_PROVIDER");
   private final Object mySelector;
 
   private SelectInContextImpl(@NotNull PsiFile psiFile, @NotNull Object selector) {
@@ -51,22 +49,13 @@ public final class SelectInContextImpl extends FileSelectInContext {
 
   @Nullable
   public static SelectInContext createContext(AnActionEvent event) {
-    return createContext(event, null);
-  }
-
-  @Nullable
-  static SelectInContext createContext(AnActionEvent event, @Nullable FileEditor providedEditor) {
     SelectInContext result = event.getData(SelectInContext.DATA_KEY);
     if (result != null) {
       return result;
     }
 
     Project project = event.getProject();
-    FileEditor editor = providedEditor;
-    if (editor == null) {
-      editor = event.getData(PlatformCoreDataKeys.FILE_EDITOR);
-    }
-
+    FileEditor editor = event.getData(PlatformCoreDataKeys.FILE_EDITOR);
     VirtualFile virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE);
     result = createEditorContext(project, editor, virtualFile);
     if (result != null) {
@@ -220,9 +209,4 @@ public final class SelectInContextImpl extends FileSelectInContext {
       return component instanceof JComponent ? (JComponent)component : null;
     }
   }
-
-  public interface ContextEditorProvider {
-    @Nullable FileEditor getContextEditor(@NotNull AnActionEvent event);
-  }
-
 }

@@ -20,7 +20,7 @@ class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : Com
 }
 
 class VcsLogCombinedDiffPreviewModel(private val browser: VcsLogChangesBrowser) :
-  CombinedDiffPreviewModel(browser.viewer, emptyMap(), browser) {
+  CombinedDiffPreviewModel(browser.viewer, browser) {
 
   override fun iterateSelectedChanges(): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
    return VcsLogChangeProcessor.wrap(browser, VcsTreeModelData.selected(tree))

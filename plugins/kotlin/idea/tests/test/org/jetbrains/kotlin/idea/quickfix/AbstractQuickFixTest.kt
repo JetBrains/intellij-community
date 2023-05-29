@@ -50,12 +50,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             """.trimIndent(),
         )
 
-        private fun unwrapIntention(action: Any): Any {
-            return when (action) {
-                is IntentionActionDelegate -> unwrapIntention(action.delegate)
-                is IntentionAction -> QuickFixWrapper.unwrap(action) ?: action
-                else -> action
-            }
+        private fun unwrapIntention(action: IntentionAction): Any {
+            val original = IntentionActionDelegate.unwrap(action)
+            return QuickFixWrapper.unwrap(original) ?: original
         }
     }
 

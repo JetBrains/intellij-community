@@ -105,7 +105,7 @@ class JUnitRunConfigurationImporter : RunConfigurationImporter {
 
   override fun getConfigurationFactory(): ConfigurationFactory =
     ConfigurationTypeUtil
-      .findConfigurationType<JUnitConfigurationType>(JUnitConfigurationType::class.java)
+      .findConfigurationType(JUnitConfigurationType::class.java)
       .configurationFactories[0]
 
   companion object {

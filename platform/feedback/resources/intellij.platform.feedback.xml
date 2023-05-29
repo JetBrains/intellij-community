@@ -17,8 +17,6 @@
                  description="Explicitly sets the number of seconds until the feedback notification is displayed."/>
     <statistics.applicationUsagesCollector implementation="com.intellij.feedback.common.statistics.DontShowAgainValueCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector"/>
-    <statistics.counterUsagesCollector
-      implementationClass="com.intellij.feedback.productivityMetric.statistics.ProductivityMetricCountCollector"/>
   </extensions>
 
   <applicationListeners>
@@ -33,6 +31,8 @@
       <separator/>
       <action id="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogAction"
               class="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogAction" internal="true"/>
+      <action id="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogWithEmailAction"
+              class="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogWithEmailAction" internal="true"/>
       <action id="com.intellij.feedback.aqua.TestShowAquaNewUserFeedbackAction"
               class="com.intellij.feedback.aqua.TestShowAquaNewUserFeedbackAction" internal="true"/>
       <action id="com.intellij.feedback.aqua.TestShowAquaOldUserFeedbackAction"
@@ -40,8 +40,6 @@
       <action id="com.intellij.feedback.pycharmUi.TestShowNewUIFeedbackAction"
               class="com.intellij.feedback.pycharmUi.TestShowNewUIFeedbackAction"
               internal="true"/>
-      <action id="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction"
-              class="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction" internal="true"/>
       <action id="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
               class="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
               internal="true"/>

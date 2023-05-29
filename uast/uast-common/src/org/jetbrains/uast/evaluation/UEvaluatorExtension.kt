@@ -12,7 +12,7 @@ import org.jetbrains.uast.values.UValue
 interface UEvaluatorExtension {
 
   companion object {
-    val EXTENSION_POINT_NAME = ExtensionPointName<UEvaluatorExtension>("org.jetbrains.uast.evaluation.uastEvaluatorExtension")
+    val EXTENSION_POINT_NAME: ExtensionPointName<UEvaluatorExtension> = ExtensionPointName("org.jetbrains.uast.evaluation.uastEvaluatorExtension")
   }
 
   val language: Language

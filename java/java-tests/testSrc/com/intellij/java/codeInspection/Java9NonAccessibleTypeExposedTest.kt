@@ -107,9 +107,9 @@ public class Highlighted {
     highlight("""package apiPkg;
 @SuppressWarnings("ProtectedMemberInFinalClass")      
 public final class Highlighted {
-  protected <warning descr="Class 'PackageLocal' is exposed outside its defined scope">PackageLocal</warning> myVar;
-  protected <warning descr="Class 'PackageLocal' is exposed outside its defined scope">PackageLocal</warning> getVar() {return myVar;}
-  protected void setVar(<warning descr="Class 'PackageLocal' is exposed outside its defined scope">PackageLocal</warning> var) {myVar = var;}
+  protected <warning descr="Class 'PackageLocal' is exposed outside its defined visibility scope">PackageLocal</warning> myVar;
+  protected <warning descr="Class 'PackageLocal' is exposed outside its defined visibility scope">PackageLocal</warning> getVar() {return myVar;}
+  protected void setVar(<warning descr="Class 'PackageLocal' is exposed outside its defined visibility scope">PackageLocal</warning> var) {myVar = var;}
 }
 """)
   }

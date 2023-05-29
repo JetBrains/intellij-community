@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.configurationStore
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
@@ -102,7 +103,7 @@ abstract class ComponentStoreImpl : IComponentStore {
             return
           }
 
-          val componentInfo = createComponentInfo(component, null, serviceDescriptor)
+          val componentInfo = createComponentInfo(component = component, stateSpec = null, serviceDescriptor = serviceDescriptor)
           initComponent(info = componentInfo, changedStorages = null, reloadData = ThreeState.NO)
         }
         else {
@@ -117,13 +118,13 @@ abstract class ComponentStoreImpl : IComponentStore {
             return
           }
 
-          if (initComponent(componentInfo, changedStorages = null, reloadData = ThreeState.NO) && serviceDescriptor != null) {
+          if (initComponent(info = componentInfo, changedStorages = null, reloadData = ThreeState.NO) && serviceDescriptor != null) {
             // if not service, so, component manager will check it later for all components
             val project = project
-            if (project != null) {
+            if (project != null && project.isInitialized) {
               val app = ApplicationManager.getApplication()
-              if (!app.isHeadlessEnvironment && !app.isUnitTestMode && project.isInitialized) {
-                notifyUnknownMacros(this, project, componentName)
+              if (!app.isHeadlessEnvironment && !app.isUnitTestMode) {
+                notifyUnknownMacros(store = this, project = project, componentName = componentName)
               }
             }
           }
@@ -135,12 +136,19 @@ abstract class ComponentStoreImpl : IComponentStore {
         componentName = getComponentName(component)
         val componentInfo = createComponentInfo(component = component, stateSpec = null, serviceDescriptor = null)
         val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)
-          ?.getState(component, componentName, Element::class.java, null, false)
+          ?.getState(component = component,
+                     componentName = componentName,
+                     stateClass = Element::class.java,
+                     mergeInto = null,
+                     reload = false)
         if (element != null) {
           component.readExternal(element)
         }
         registerComponent(name = componentName, info = componentInfo)
       }
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Exception) {
       if (e is ControlFlowException) {

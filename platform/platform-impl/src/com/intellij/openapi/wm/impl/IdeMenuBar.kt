@@ -1,16 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(FlowPreview::class)
+
 package com.intellij.openapi.wm.impl
 
 import com.intellij.DynamicBundle
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.subtask
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx.Companion.withLazyActionManager
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
@@ -33,11 +34,14 @@ import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.mac.screenmenu.MenuBar
 import com.intellij.ui.plaf.beg.IdeaMenuUI
-import com.intellij.util.Alarm
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.childScope
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -50,6 +54,7 @@ import javax.swing.*
 import javax.swing.border.Border
 import kotlin.math.cos
 import kotlin.math.sqrt
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("LeakingThis")
 open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDispatcher, UISettingsListener {
@@ -75,7 +80,7 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
   private var button: MyExitFullScreenButton? = null
   private var animator: MyAnimator? = null
   private var activationWatcher: Timer? = null
-  private val updateAlarm = Alarm()
+  private val updateRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private var state = State.EXPANDED
   private var progress = 0.0
   private var activated = false
@@ -100,6 +105,17 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
     }
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       isOpaque = false
+    }
+
+    coroutineScope.launch {
+      updateRequests
+        .debounce(50.milliseconds)
+        .collectLatest {
+          withContext(Dispatchers.EDT) {
+            presentationFactory.reset()
+            updateMenuActionsAsync(forceRebuild = true)
+          }
+        }
     }
   }
 
@@ -278,35 +294,39 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
       screenMenuPeer = null
     }
 
-    coroutineScope.launch {
-      val app = ApplicationManager.getApplication()
-      val actionManager = app.serviceAsync<ActionManager>().await()
-      app.serviceAsync<CustomActionsSchema>().join()
-      updateActions(actionManager = actionManager, screenMenuPeer = screenMenuPeer)
-    }
+    scheduleUpdateActions(screenMenuPeer = screenMenuPeer)
     activity.end()
 
     IdeEventQueue.getInstance().addDispatcher(dispatcher = this, scope = coroutineScope)
   }
 
-  private suspend fun updateActions(actionManager: ActionManager, screenMenuPeer: MenuBar?) {
-    runActivity("ide menu bar actions init") {
-      val mainActionGroup = getMainMenuActionGroup()
-      withContext(Dispatchers.EDT) {
-        val actions = doUpdateMenuActions(mainActionGroup = mainActionGroup,
-                                          forceRebuild = false,
-                                          manager = actionManager,
-                                          screenMenuPeer = screenMenuPeer)
-        for (action in actions) {
-          if (action is ActionGroup) {
-            PopupMenuPreloader.install(this@IdeMenuBar, ActionPlaces.MAIN_MENU, null) { action }
-          }
-        }
+  private fun scheduleUpdateActions(screenMenuPeer: MenuBar?) {
+    coroutineScope.launch {
+      val app = ApplicationManager.getApplication()
+      launch {
+        app.serviceAsync<CustomActionsSchema>()
       }
 
-      actionManager.addTimerListener(timerListener)
-      coroutineScope.coroutineContext.job.invokeOnCompletion {
-        actionManager.removeTimerListener(timerListener)
+      val actionManager = app.serviceAsync<ActionManager>()
+
+      subtask("ide menu bar actions init") {
+        val mainActionGroup = getMainMenuActionGroupAsync()
+        withContext(Dispatchers.EDT) {
+          val actions = doUpdateMenuActions(mainActionGroup = mainActionGroup,
+                                            forceRebuild = false,
+                                            manager = actionManager,
+                                            screenMenuPeer = screenMenuPeer)
+          for (action in actions) {
+            if (action is ActionGroup) {
+              PopupMenuPreloader.install(this@IdeMenuBar, ActionPlaces.MAIN_MENU, null) { action }
+            }
+          }
+        }
+
+        actionManager.addTimerListener(timerListener)
+        coroutineScope.coroutineContext.job.invokeOnCompletion {
+          actionManager.removeTimerListener(timerListener)
+        }
       }
     }
   }
@@ -325,11 +345,7 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    updateAlarm.cancelAllRequests()
-    updateAlarm.addRequest({
-                             presentationFactory.reset()
-                             updateMenuActions(true)
-                           }, 50)
+    check(updateRequests.tryEmit(Unit))
   }
 
   override fun dispatch(e: AWTEvent): Boolean {
@@ -378,13 +394,23 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
                         screenMenuPeer = screenMenuPeer)
   }
 
-  protected fun updateMenuActionsLazily() {
-    withLazyActionManager(coroutineScope) { manager ->
-      doUpdateMenuActions(mainActionGroup = getMainMenuActionGroup(), forceRebuild = true, manager = manager, screenMenuPeer = screenMenuPeer)
+  suspend fun updateMenuActionsAsync(forceRebuild: Boolean = false) {
+    doUpdateMenuActions(mainActionGroup = getMainMenuActionGroupAsync(),
+                        forceRebuild = forceRebuild,
+                        manager = ApplicationManager.getApplication().serviceAsync<ActionManager>(),
+                        screenMenuPeer = screenMenuPeer)
+  }
+
+  internal fun scheduleUpdateMenuActionsWithForceRebuild() {
+    coroutineScope.launch(Dispatchers.EDT) {
+      updateMenuActionsAsync(forceRebuild = true)
     }
   }
 
-  private fun doUpdateMenuActions(mainActionGroup: ActionGroup?, forceRebuild: Boolean, manager: ActionManager, screenMenuPeer: MenuBar?): List<AnAction> {
+  private fun doUpdateMenuActions(mainActionGroup: ActionGroup?,
+                                  forceRebuild: Boolean,
+                                  manager: ActionManager,
+                                  screenMenuPeer: MenuBar?): List<AnAction> {
     val enableMnemonics = !UISettings.getInstance().disableMnemonics
     val newVisibleActions = ArrayList<AnAction>()
     val targetComponent = IJSwingUtilities.getFocusedComponentInWindowOrSelf(this)
@@ -445,10 +471,12 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-    paintBackground(g)
+    if (isOpaque) {
+      paintBackground(g)
+    }
   }
 
-  protected fun paintBackground(g: Graphics) {
+  private fun paintBackground(g: Graphics) {
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       val window = SwingUtilities.getWindowAncestor(this)
       if (window is IdeFrame) {
@@ -496,6 +524,13 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
     }
   }
 
+  open suspend fun getMainMenuActionGroupAsync(): ActionGroup? {
+    val rootPane = rootPane
+    val group = if (rootPane is IdeRootPane) rootPane.mainMenuActionGroup else null
+    return group ?:
+    ApplicationManager.getApplication().serviceAsync<CustomActionsSchema>().getCorrectedAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup?
+  }
+
   open fun getMainMenuActionGroup(): ActionGroup? {
     val rootPane = rootPane
     val group = if (rootPane is IdeRootPane) rootPane.mainMenuActionGroup else null
@@ -530,12 +565,13 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
         return
       }
 
-      // don't update toolbar if there is currently active modal dialog
-      val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
-      if (window is Dialog && window.isModal) {
-        return
+      coroutineScope.launch(Dispatchers.EDT) {
+        // don't update the toolbar if there is currently active modal dialog
+        val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
+        if (window !is Dialog || !window.isModal) {
+          updateMenuActionsAsync()
+        }
       }
-      updateMenuActions()
     }
   }
 

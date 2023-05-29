@@ -37,8 +37,8 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.q
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
 import org.jetbrains.idea.maven.server.MavenServerManager
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
@@ -275,10 +275,10 @@ class MavenSyncConsole(private val myProject: Project) {
     }
   }
 
-  fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {
+  fun getListener(type: MavenServerConsoleIndicator.ResolveType): ArtifactSyncListener {
     return when (type) {
-      MavenServerProgressIndicator.ResolveType.PLUGIN -> ArtifactSyncListenerImpl("maven.sync.plugins")
-      MavenServerProgressIndicator.ResolveType.DEPENDENCY -> ArtifactSyncListenerImpl("maven.sync.dependencies")
+      MavenServerConsoleIndicator.ResolveType.PLUGIN -> ArtifactSyncListenerImpl("maven.sync.plugins")
+      MavenServerConsoleIndicator.ResolveType.DEPENDENCY -> ArtifactSyncListenerImpl("maven.sync.dependencies")
     }
   }
 

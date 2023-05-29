@@ -13,21 +13,32 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 
 public final class PluginPathManager {
   private PluginPathManager() {
   }
 
-  private static class SubrepoHolder {
-    @NonNls private static final Set<String> ROOT_NAMES = Set.of("community", "contrib", "android", "CIDR");
-    private static final List<File> subrepos = findSubrepos();
+  private static class SubRepoHolder {
+    @NonNls private static final List<String> ROOT_NAMES =
+      List.of(
+        "android",
+        "community",
+        "community/android",
+        "contrib",
+        "CIDR",
+        "../ultimate",
+        "../ultimate/community",
+        "../ultimate/community/android",
+        "../ultimate/contrib",
+        "../ultimate/CIDR");
+    private static final List<File> subRepos = findSubRepos();
 
-    private static List<File> findSubrepos() {
+    private static List<File> findSubRepos() {
       List<File> result = new ArrayList<>();
-      File[] gitRoots = getSortedSubreposRoots(new File(PathManager.getHomePath()));
+      File[] gitRoots = getSortedSubReposRoots(new File(PathManager.getHomePath()));
       for (File subdir : gitRoots) {
+        //noinspection IdentifierGrammar
         File pluginsDir = new File(subdir, "plugins");
         if (pluginsDir.exists()) {
           result.add(pluginsDir);
@@ -35,32 +46,37 @@ public final class PluginPathManager {
         else {
           result.add(subdir);
         }
-        result.addAll(Arrays.asList(getSortedSubreposRoots(subdir)));
+        result.addAll(Arrays.asList(getSortedSubReposRoots(subdir)));
       }
       return result;
     }
 
-    private static File @NotNull [] getSortedSubreposRoots(@NotNull File dir) {
-      File[] gitRoots = dir.listFiles(child -> child.isDirectory() && ROOT_NAMES.contains(child.getName()));
-      if (gitRoots == null) {
-        return new File[0];
+    private static File @NotNull [] getSortedSubReposRoots(@NotNull File dir) {
+      ArrayList<File> result = new ArrayList<>();
+      for (String root : ROOT_NAMES) {
+        var subRepo = new File(dir, root);
+        if (subRepo.exists() && subRepo.isDirectory()) {
+          result.add(subRepo.toPath().normalize().toFile());
+        }
       }
-      Arrays.sort(gitRoots, (file, file2) -> FileUtil.compareFiles(file, file2));
+      File[] gitRoots = result.toArray(new File[0]);
+
+      Arrays.sort(gitRoots, FileUtil::compareFiles);
       return gitRoots;
     }
   }
 
   public static File getPluginHome(@NonNls String pluginName) {
-    File subrepo = findSubrepo(pluginName);
-    if (subrepo != null) {
-      return subrepo;
+    File subRepo = findSubRepo(pluginName);
+    if (subRepo != null) {
+      return subRepo;
     }
     return new File(PathManager.getHomePath(), "plugins/" + pluginName);
   }
 
-  private static File findSubrepo(String pluginName) {
-    for (File subrepo : SubrepoHolder.subrepos) {
-      File candidate = new File(subrepo, pluginName);
+  private static File findSubRepo(String pluginName) {
+    for (File subRepo : SubRepoHolder.subRepos) {
+      File candidate = new File(subRepo, pluginName);
       if (candidate.isDirectory()) {
         return candidate;
       }
@@ -73,10 +89,10 @@ public final class PluginPathManager {
   }
 
   public static String getPluginHomePathRelative(String pluginName) {
-    File subrepo = findSubrepo(pluginName);
-    if (subrepo != null) {
+    File subRepo = findSubRepo(pluginName);
+    if (subRepo != null) {
       String homePath = FileUtil.toSystemIndependentName(PathManager.getHomePath());
-      return "/" + FileUtil.getRelativePath(homePath, FileUtil.toSystemIndependentName(subrepo.getPath()), '/');
+      return "/" + FileUtil.getRelativePath(homePath, FileUtil.toSystemIndependentName(subRepo.getPath()), '/');
     }
     return "/plugins/" + pluginName;
   }

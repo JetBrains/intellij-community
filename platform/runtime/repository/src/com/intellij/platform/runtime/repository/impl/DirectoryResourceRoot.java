@@ -27,4 +27,9 @@ class DirectoryResourceRoot extends ResourceRoot {
   public @NotNull Path getRootPath() {
     return myDirectory;
   }
+
+  @Override
+  public String toString() {
+    return "DirectoryResourceRoot{directory=" + myDirectory + "}";
+  }
 }

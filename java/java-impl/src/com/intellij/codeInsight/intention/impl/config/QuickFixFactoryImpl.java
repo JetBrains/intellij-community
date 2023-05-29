@@ -228,7 +228,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddExceptionToCatchFix() {
-    return new AddExceptionToCatchFix(true);
+    return new AddExceptionToCatchFix(true).asIntention();
   }
 
   @NotNull
@@ -252,7 +252,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddExceptionToExistingCatch(@NotNull PsiElement element) {
-    return new AddExceptionToExistingCatchFix(element);
+    return new AddExceptionToExistingCatchFix(element).asIntention();
   }
 
   @NotNull
@@ -260,7 +260,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createChangeToAppendFix(@NotNull IElementType sign,
                                                  @NotNull PsiType type,
                                                  @NotNull PsiAssignmentExpression assignment) {
-    return new ChangeToAppendFix(sign, type, assignment);
+    return new ChangeToAppendFix(sign, type, assignment).asIntention();
   }
 
   @NotNull
@@ -338,7 +338,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddNewArrayExpressionFix(@NotNull PsiArrayInitializerExpression expression) {
-    return new AddNewArrayExpressionFix(expression);
+    return new AddNewArrayExpressionFix(expression).asIntention();
   }
 
   @NotNull
@@ -1038,7 +1038,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddEmptyRecordHeaderFix(@NotNull PsiClass psiClass) {
-    return new AddEmptyRecordHeaderFix(psiClass);
+    return new AddEmptyRecordHeaderFix(psiClass).asIntention();
   }
 
   @Override
@@ -1128,7 +1128,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createInsertReturnFix(@NotNull PsiExpression expression) {
-    return new ConvertExpressionToReturnFix(expression);
+    return new ConvertExpressionToReturnFix(expression).asIntention();
   }
 
   @Override
@@ -1153,7 +1153,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation,
                                                                @NotNull PsiAnnotation.TargetType target) {
-    return new AddAnnotationTargetFix(annotation, target);
+    return new AddAnnotationTargetFix(annotation, target).asIntention();
   }
 
   @Override

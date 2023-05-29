@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.SmartList;
@@ -29,9 +30,8 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.diagnostic.telemetry.ScopesExtensionsKt.tracer;
-import static com.intellij.diagnostic.telemetry.TraceUtil.runWithSpanThrows;
-import static com.intellij.vcs.log.data.util.VcsScopeKt.VCS;
+import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.runWithSpanThrows;
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
 @ApiStatus.Internal
@@ -182,7 +182,7 @@ public final class GitLogUtil {
       handler.addParameters("--decorate=full");
       handler.endOptions();
 
-      runWithSpanThrows(tracer(VCS), "loading commit metadata", span -> {
+      runWithSpanThrows(TelemetryTracer.getInstance().getTracer(VcsScope), "loading commit metadata", span -> {
         span.setAttribute("rootName", root.getName());
 
         GitLogOutputSplitter<GitLogRecord> handlerListener = new GitLogOutputSplitter<>(handler, parser, recordConsumer);
