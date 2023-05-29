@@ -4,6 +4,7 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrectorContributor
 
 val SE_TABS = listOf(
   "SearchEverywhereContributor.All", "ClassSearchEverywhereContributor",
@@ -13,7 +14,8 @@ val SE_TABS = listOf(
   "TopHitSEContributor", "com.intellij.ide.actions.searcheverywhere.CalculatorSEContributor",
   "TmsSearchEverywhereContributor", "YAMLKeysSearchEverywhereContributor",
   "UrlSearchEverywhereContributor", "Vcs.Git", "AutocompletionContributor",
-  "TextSearchContributor", "DbSETablesContributor", "third.party"
+  "TextSearchContributor", "DbSETablesContributor", "third.party",
+  SearchEverywhereSpellingCorrectorContributor::class.java.simpleName,
 )
 
 enum class SearchEverywhereTabWithMlRanking(val tabId: String) {
