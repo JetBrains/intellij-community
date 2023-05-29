@@ -1,14 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("CompanionObjectInExtension")
+
 package com.intellij.ide.plugins
 
-import com.intellij.execution.process.ProcessIOExecutorService
+import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -18,7 +26,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readLines
 
 @ApiStatus.Internal
-class BundledPluginsState {
+class BundledPluginsState : ApplicationInitializedListener {
   companion object {
     private const val SAVED_VERSION_KEY = "bundled.plugins.list.saved.version"
 
@@ -27,28 +35,22 @@ class BundledPluginsState {
       private set(value) = setValue(SAVED_VERSION_KEY, value?.asString())
 
     @ApiStatus.Internal
-    const val BUNDLED_PLUGINS_FILENAME = "bundled_plugins.txt"
+    const val BUNDLED_PLUGINS_FILENAME: String = "bundled_plugins.txt"
 
-    private val LOG = logger<BundledPluginsState>()
+    private val LOG: Logger
+      get() = logger<BundledPluginsState>()
 
     val loadedPlugins: Set<IdeaPluginDescriptor>
-      @VisibleForTesting get() = PluginManagerCore.getLoadedPlugins()
-        .asSequence()
-        .filter { it.isBundled }
-        .toSet()
+      @VisibleForTesting get() = PluginManagerCore.getLoadedPlugins().filterTo(HashSet()) { it.isBundled }
 
     @VisibleForTesting
-    fun writePluginIdsToFile(
-      pluginIds: Set<IdeaPluginDescriptor>,
-      configDir: Path = PathManager.getConfigDir(),
-    ) {
+    fun writePluginIdsToFile(pluginIds: Set<IdeaPluginDescriptor>, configDir: Path = PathManager.getConfigDir()) {
       PluginManagerCore.writePluginIdsToFile(
         configDir.resolve(BUNDLED_PLUGINS_FILENAME),
         pluginIds.map { "${it.pluginId.idString}|${it.category}\n" },
       )
     }
 
-    @JvmStatic
     fun readPluginIdsFromFile(path: Path = PathManager.getConfigDir()): Set<Pair<PluginId, Category>> {
       val file = path.resolve(BUNDLED_PLUGINS_FILENAME)
       if (!file.exists()) {
@@ -57,6 +59,7 @@ class BundledPluginsState {
       else if (!Files.isRegularFile(file)) {
         return emptySet()
       }
+
       val bundledPlugins = mutableSetOf<Pair<PluginId, Category>>()
       try {
         file.readLines().map(String::trim)
@@ -74,18 +77,23 @@ class BundledPluginsState {
     }
   }
 
-  init {
-    val savedBuildNumber = PropertiesComponent.getInstance().savedBuildNumber
-    val currentBuildNumber = ApplicationInfo.getInstance().build
+  override suspend fun execute(asyncScope: CoroutineScope) {
+    asyncScope.launch {
+      val app = ApplicationManager.getApplication()
+      val savedBuildNumber = app.serviceAsync<PropertiesComponent>().savedBuildNumber
+      val currentBuildNumber = ApplicationInfo.getInstance().build
 
-    val shouldSave = savedBuildNumber == null
-                     || savedBuildNumber < currentBuildNumber
-                     || (!ApplicationManager.getApplication().isUnitTestMode && PluginManagerCore.isRunningFromSources())
+      val shouldSave = savedBuildNumber == null
+                       || savedBuildNumber < currentBuildNumber
+                       || (!app.isUnitTestMode && PluginManagerCore.isRunningFromSources())
 
-    if (shouldSave) {
+      if (!shouldSave) {
+        return@launch
+      }
+
       val bundledPluginIds = loadedPlugins
 
-      ProcessIOExecutorService.INSTANCE.execute {
+      withContext(Dispatchers.IO) {
         try {
           writePluginIdsToFile(bundledPluginIds)
 
