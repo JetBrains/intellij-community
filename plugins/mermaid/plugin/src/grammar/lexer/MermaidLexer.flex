@@ -36,6 +36,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %state double_quoted_string
 %state back_quoted_string
+%state md_string
 
 %state directive
 %state directive_close
@@ -53,7 +54,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states journey, title,title_value,section_task, section, section_title
 
-%states flowchart, flowchart_body, node_text, node_quoted_text, link_text, link_quoted_text, direction_value, style, link_style, link_style_target, style_opt, style_value, flowchart_class, flowchart_class_target, flowchart_class_val
+%states flowchart, flowchart_body, node_text, node_quoted_text, link_text, link_quoted_text, direction_value, style, link_style, link_style_target, style_opt, style_value, flowchart_class, flowchart_class_target, flowchart_class_val, quoted_id
 
 %states sequence, sequence_id, sequence_alias, sequence_message, sequence_control_id, sequence_links, sequence_links_values, autonumbers
 
@@ -245,8 +246,10 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
   "&"/\s { return Flowchart.AMPERSAND; }
 
-  [^\s\n\r;:%\[({><\^\|\-\=\.~]+/[xo<]?\-\-|[xo<]?\=\=|[xo<]?\-\. { return ID; }
-  [^\s\n\r;:%\[({><\^\|\-\=\.~]+ { return ID; }
+  [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  [\"]/` { yypushstate(md_string); return DOUBLE_QUOTE; }
+  [^\s\n\r;:%\[({><\^\|\-\=\.~\"]+/[xo<]?\-\-|[xo<]?\=\=|[xo<]?\-\. { return ID; }
+  [^\s\n\r;:%\[({><\^\|\-\=\.~\"]+ { return ID; }
   [\-\=\.] { return ID; }
   :|:: { return ID; }
 
@@ -278,6 +281,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 <node_text> {
   [\"] { yybegin(node_quoted_text); return DOUBLE_QUOTE; }
+  [\"]/` { yypushstate(md_string); return DOUBLE_QUOTE; }
   [^\s\n\r;\])\"\}]+/[\s\])\"\}/\\] { return ALIAS; }
   [^\S\n\r]+ { return WHITE_SPACE; }
   "]" { yybegin(flowchart_body); return CLOSE_SQUARE; }
@@ -305,6 +309,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\S\n\r]+ { return WHITE_SPACE; }
   [^\S\n\r]+/\-\-+[-xo>]|\=\=+[=xo>]|\-?\.+\-[xo>] { yybegin(flowchart_body); return WHITE_SPACE; }
   [\"] { yybegin(link_quoted_text); return DOUBLE_QUOTE; }
+  [\"]/` { yypushstate(md_string); return DOUBLE_QUOTE; }
   "|" { yybegin(flowchart_body); return Flowchart.SEP; }
 }
 <link_quoted_text> {
@@ -897,6 +902,11 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <back_quoted_string> {
   [`] { yypopstate(); return BACK_QUOTE; }
   [^`]* { return STRING_VALUE; }
+}
+<md_string> {
+  [`] { return BACK_QUOTE; }
+  [\"] { yypopstate(); return DOUBLE_QUOTE; }
+  [^`\"]+ { return MD_STRING_VALUE; }
 }
 <click> {
   "call" { return CALL; }

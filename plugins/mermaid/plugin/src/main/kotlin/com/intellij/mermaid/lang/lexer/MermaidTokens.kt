@@ -86,6 +86,9 @@ object MermaidTokens {
   val STRING_VALUE = MermaidToken("STRING_VALUE")
 
   @JvmField
+  val MD_STRING_VALUE = MermaidToken("MD_STRING_VALUE")
+
+  @JvmField
   val LINE_COMMENT = MermaidToken("LINE_COMMENT")
 
   @JvmField

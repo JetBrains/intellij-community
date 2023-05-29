@@ -130,12 +130,19 @@ vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
   | TRAP_START nodeText TRAP_END
   | INV_TRAP_START nodeText INV_TRAP_END
   | DOUBLE_CIRCLE_START nodeText DOUBLE_CIRCLE_END
-nodeText ::= ALIAS+ | DOUBLE_QUOTE ALIAS+ DOUBLE_QUOTE
-complexLinkText ::= LINK_TEXT+
+nodeText ::= ALIAS+ | DOUBLE_QUOTE ALIAS+ DOUBLE_QUOTE | DOUBLE_QUOTE BACK_QUOTE MD_STRING_VALUE BACK_QUOTE DOUBLE_QUOTE
+complexLinkText ::= [quotedLinkText | mdText | LINK_TEXT] LINK_TEXT*
+private quotedLinkText ::= DOUBLE_QUOTE LINK_TEXT+ DOUBLE_QUOTE
+
+private mdText ::= DOUBLE_QUOTE BACK_QUOTE MD_STRING_VALUE BACK_QUOTE DOUBLE_QUOTE
+private maybeEmptyMdText ::= DOUBLE_QUOTE BACK_QUOTE [MD_STRING_VALUE] BACK_QUOTE DOUBLE_QUOTE
 
 subgraphStatement ::= subgraphHeader separator EOL* subgraphBlock? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+
 subgraphHeader ::= SUBGRAPH subgraphName
-subgraphName ::= complexIdentifier [OPEN_SQUARE nodeText CLOSE_SQUARE]
+subgraphName ::= subgraphId [OPEN_SQUARE nodeText CLOSE_SQUARE]
+private subgraphId ::= ((maybeEmptyString | maybeEmptyMdText) complexIdentifier*) | complexIdentifier
+
 subgraphBlock ::= subgraphLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private subgraphLines ::= (subgraphLine | IGNORED) [subgraphLines]
 private subgraphLine ::= subgraphInnerStatement [separator] | separator

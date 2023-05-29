@@ -4,4 +4,4 @@ import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler
 import com.intellij.mermaid.lang.lexer.MermaidTokens
 
 class MermaidQuoteHandler :
-  SimpleTokenSetQuoteHandler(MermaidTokens.DOUBLE_QUOTE)
+  SimpleTokenSetQuoteHandler(MermaidTokens.DOUBLE_QUOTE, MermaidTokens.BACK_QUOTE)
