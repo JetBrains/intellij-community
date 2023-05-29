@@ -1475,6 +1475,11 @@ public abstract class K2IdeK1CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/smartStepIntoNullSafeFunctionCalls.kt");
         }
 
+        @TestMetadata("smartStepIntoOnLambdaBreakpoint.kt")
+        public void testSmartStepIntoOnLambdaBreakpoint() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoOnLambdaBreakpoint.kt");
+        }
+
         @TestMetadata("smartStepIntoPropertyGetterReference.kt")
         public void testSmartStepIntoPropertyGetterReference() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoPropertyGetterReference.kt");

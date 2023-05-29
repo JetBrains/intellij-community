@@ -1476,6 +1476,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/smartStepIntoNullSafeFunctionCalls.kt");
         }
 
+        @TestMetadata("smartStepIntoOnLambdaBreakpoint.kt")
+        public void testSmartStepIntoOnLambdaBreakpoint() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoOnLambdaBreakpoint.kt");
+        }
+
         @TestMetadata("smartStepIntoPropertyGetterReference.kt")
         public void testSmartStepIntoPropertyGetterReference() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoPropertyGetterReference.kt");
