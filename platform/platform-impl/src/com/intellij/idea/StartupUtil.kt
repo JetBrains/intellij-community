@@ -519,22 +519,24 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
 }
 
 @VisibleForTesting
-fun initConfigurationStore(app: ApplicationImpl) {
-  var activity = StartUpMeasurer.startActivity("beforeApplicationLoaded")
+suspend fun initConfigurationStore(app: ApplicationImpl) {
   val configPath = PathManager.getConfigDir()
 
-  for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
-    runCatching {
-      listener.beforeApplicationLoaded(app, configPath)
-    }.getOrLogException(logger<AppStarter>())
+  subtask("beforeApplicationLoaded") {
+    for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
+      launch {
+        runCatching {
+          listener.beforeApplicationLoaded(app, configPath)
+        }.getOrLogException(logger<AppStarter>())
+      }
+    }
   }
 
-  activity = activity.endAndStart("init app store")
-
-  // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
-  app.stateStore.setPath(configPath)
-  StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
-  activity.end()
+  subtask("init app store") {
+    // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
+    app.stateStore.setPath(configPath)
+    StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
+  }
 }
 
 @Suppress("SpellCheckingInspection")
