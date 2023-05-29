@@ -4,6 +4,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -14,7 +15,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -31,7 +31,7 @@ import java.util.Objects;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-public class UnnecessaryCallToStringValueOfInspection extends BaseInspection implements CleanupLocalInspectionTool{
+public class UnnecessaryCallToStringValueOfInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private static final @NonNls CallMatcher STATIC_TO_STRING_CONVERTERS = CallMatcher.anyOf(
     staticCall(JAVA_LANG_STRING, "valueOf").parameterTypes("boolean"),
     staticCall(JAVA_LANG_STRING, "valueOf").parameterTypes("char"),
@@ -51,20 +51,39 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     staticCall(JAVA_UTIL_OBJECTS, "toString").parameterTypes(JAVA_LANG_OBJECT)
   );
 
+  public boolean reportWithEmptyString = false;
+
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
+    if (infos[1] == Boolean.TRUE) {
+      return InspectionGadgetsBundle.message("unnecessary.tostring.call.problem.empty.string.descriptor");
+    }
     return InspectionGadgetsBundle.message("unnecessary.tostring.call.problem.descriptor");
+  }
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(
+      OptPane.checkbox("reportWithEmptyString", InspectionGadgetsBundle.message("unnecessary.tostring.call.option.report.with.empty.string"))
+    );
   }
 
   @Override
   @Nullable
   protected LocalQuickFix buildFix(Object... infos) {
     final String text = (String)infos[0];
-    return new UnnecessaryCallToStringValueOfFix(text);
+    final Boolean useEmptyString = (Boolean)infos[1];
+    return new UnnecessaryCallToStringValueOfFix(text, useEmptyString);
   }
 
-  private static String calculateReplacementText(@NotNull PsiMethodCallExpression call, PsiExpression expression) {
+  private static String calculateReplacementText(@NotNull PsiMethodCallExpression call, PsiExpression expression, boolean withEmptyString) {
+    if (withEmptyString) {
+      String text = ParenthesesUtils.getText(expression, ParenthesesUtils.ADDITIVE_PRECEDENCE);
+      text = "\"\" + " + text;
+      return text;
+    }
+
     if (!(expression instanceof PsiPolyadicExpression)) {
       return expression.getText();
     }
@@ -84,9 +103,11 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
   private static class UnnecessaryCallToStringValueOfFix extends PsiUpdateModCommandQuickFix {
 
     private final String replacementText;
+    private final boolean useEmptyString;
 
-    UnnecessaryCallToStringValueOfFix(String replacementText) {
+    UnnecessaryCallToStringValueOfFix(String replacementText, boolean useEmptyString) {
       this.replacementText = replacementText;
+      this.useEmptyString = useEmptyString;
     }
 
     @Override
@@ -105,10 +126,15 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
       final PsiMethodCallExpression call = ObjectUtils.tryCast(startElement, PsiMethodCallExpression.class);
       if (call == null) return;
-      PsiExpression arg = tryUnwrapRedundantConversion(call);
+      PsiExpression arg = getArgument(call);
       if (arg == null) return;
       CommentTracker tracker = new CommentTracker();
-      PsiReplacementUtil.replaceExpression(call, calculateReplacementText(call, tracker.markUnchanged(arg)), tracker);
+      boolean couldBeUnwrappedRedundantConversion = couldBeUnwrappedRedundantConversion(arg, call);
+      if (!couldBeUnwrappedRedundantConversion && !useEmptyString) {
+        return;
+      }
+      PsiReplacementUtil.replaceExpression(call, calculateReplacementText(call, tracker.markUnchanged(arg),
+                                                                          !couldBeUnwrappedRedundantConversion), tracker);
     }
   }
 
@@ -117,39 +143,48 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     return new UnnecessaryCallToStringValueOfVisitor();
   }
 
-  private static class UnnecessaryCallToStringValueOfVisitor extends BaseInspectionVisitor {
+  private class UnnecessaryCallToStringValueOfVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
-      final PsiExpression argument = tryUnwrapRedundantConversion(call);
+      PsiExpression argument = getArgument(call);
       if (argument == null) return;
+      if (!couldBeUnwrappedRedundantConversion(argument, call)) {
+        ProblemHighlightType highlightType = reportWithEmptyString ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.INFORMATION;
+        registerErrorAtOffset(call, 0, call.getArgumentList().getStartOffsetInParent(), highlightType,
+                              calculateReplacementText(call, argument, true), Boolean.TRUE);
+        return;
+      }
+
       registerErrorAtOffset(call, 0, call.getArgumentList().getStartOffsetInParent(),
-                    calculateReplacementText(call, argument));
+                            calculateReplacementText(call, argument, false), Boolean.FALSE);
     }
   }
 
   @Nullable
-  private static PsiExpression tryUnwrapRedundantConversion(PsiMethodCallExpression call) {
+  private static PsiExpression getArgument(@NotNull PsiMethodCallExpression call) {
     if (!STATIC_TO_STRING_CONVERTERS.test(call)) return null;
-    final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]);
-    if (argument == null) return null;
+    return PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]);
+  }
+
+  private static boolean couldBeUnwrappedRedundantConversion(@NotNull PsiExpression argument,
+                                                             @NotNull PsiMethodCallExpression call) {
     PsiType argumentType = argument.getType();
     if (argumentType instanceof PsiPrimitiveType) {
       PsiMethod method = call.resolveMethod();
       assert method != null; // otherwise the matcher above won't match
       if (!Objects.requireNonNull(method.getParameterList().getParameter(0)).getType().equals(argumentType)) {
-        return null;
+        return false;
       }
     }
-    final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(argument, CommonClassNames.JAVA_LANG_THROWABLE);
+    final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(argument, JAVA_LANG_THROWABLE);
     if (ExpressionUtils.isConversionToStringNecessary(call, throwable)) {
       if (!TypeUtils.isJavaLangString(argumentType) ||
           NullabilityUtil.getExpressionNullability(argument, true) != Nullability.NOT_NULL) {
-        return null;
+        return false;
       }
     }
-    if (isReplacementAmbiguous(call, argument)) return null;
-    return argument;
+    return !isReplacementAmbiguous(call, argument);
   }
 
   private static boolean isReplacementAmbiguous(PsiMethodCallExpression call, PsiExpression argument) {
