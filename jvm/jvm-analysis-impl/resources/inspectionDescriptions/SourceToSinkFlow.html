@@ -4,7 +4,7 @@ Reports cases when a non-safe string is passed to a method with a parameter mark
 annotated methods or assigned to annotated fields, parameters, or local variables. Kotlin <code>set</code> and <code>get</code> methods for fields are not
 supported as entry points.
 <p>
-  A safe object is:
+  A safe object (in the same class) is:
 <ul>
   <li>a string literal, interface instance, or enum object</li>
   <li>a result of a call of a method that is marked as <code>@Untainted</code></li>
@@ -14,6 +14,7 @@ supported as entry points.
   This field, local variable, or parameter must not be passed as arguments to methods or used as a qualifier or must be a primitive, its
   wrapper or immutable.
 </ul>
+Also static final fields are considered as safe.
 <p>
   The analysis is performed only inside one file. To process dependencies from other classes, use options.
   The analysis extends to private or static methods and has a limit of depth propagation.

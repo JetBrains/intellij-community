@@ -149,10 +149,6 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       return this
     }
 
-    fun minusOutside(): AnalyzeContext {
-      return this.copy(processOnlyConstant = true, depthOutside = depthOutside - 1)
-    }
-
     fun notCheckPropagationNext(): AnalyzeContext {
       if (checkPropagationNext) {
         return this.copy(checkPropagationNext = false)
@@ -454,8 +450,9 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       if (uastInitializer == null) return TaintValue.UNTAINTED
       return fromExpressionWithoutCollection(uElement.uastInitializer, analyzeContext.notCheckPropagationNext())
     }
-    if (!equalFiles && jvmModifiersOwner.hasModifier(JvmModifier.FINAL) && uElement.uastInitializer != null) {
-      return fromExpressionWithoutCollection(uElement.uastInitializer, analyzeContext.notCheckPropagationNext().minusOutside())
+    if (!equalFiles && jvmModifiersOwner.hasModifier(JvmModifier.FINAL) && jvmModifiersOwner.hasModifier(JvmModifier.STATIC)) {
+      //simplify and not to check
+      return TaintValue.UNTAINTED
     }
     if (analyzeContext.processOnlyConstant) {
       return null

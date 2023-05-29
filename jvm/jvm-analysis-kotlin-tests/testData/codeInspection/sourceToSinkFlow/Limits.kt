@@ -18,10 +18,10 @@ object Limit {
     sink(<warning descr="Unknown string is used as safe parameter">"${dirty} test dirty"</warning>) //warn
     sink("$clear test clear")
     sink(fromAnotherFile)
-    sink(<warning descr="Unknown string is used as safe parameter">fromAnotherFile2</warning>) //warn
-    sink(<warning descr="Unknown string is used as safe parameter">fromAnotherFile3</warning>) //warn
+    sink(fromAnotherFile2) //not warn, because static and final fields are considered as safe
+    sink(fromAnotherFile3) //not warn, because static and final fields are considered as safe
     sink(<warning descr="Unknown string is used as safe parameter">fromAnotherFile4</warning>) //warn
-    sink(fromAnotherFile5)
+    sink(<warning descr="Unknown string is used as safe parameter">fromAnotherFile5</warning>) //warn because we don't process outer files
     sink(<warning descr="Unknown string is used as safe parameter">fromAnotherFile6</warning>) //warn
     val cleanLongString = "sdafjhasdfkhaskjdfh" +
                           "sdafjhasdfkhaskjdfh" +
