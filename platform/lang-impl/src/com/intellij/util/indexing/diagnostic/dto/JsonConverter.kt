@@ -55,7 +55,6 @@ fun IndexingFileSetStatistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio:
     filesFullyIndexedByExtensions = listOfFilesFullyIndexedByExtensions,
     totalIndexingVisibleTime = convertAllThreadsTimeToVisibleDuration(processingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
     contentLoadingVisibleTime = convertAllThreadsTimeToVisibleDuration(contentLoadingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
-    readActionWaitingVisibleTime = convertAllThreadsTimeToVisibleDuration(readActionWaitingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
     slowIndexedFiles = slowIndexedFiles.biggestElements.map { it.toJson() },
     isAppliedAllValuesSeparately = allValuesAppliedSeparately,
@@ -72,8 +71,7 @@ fun SlowIndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonSlowIndexedFi
   fileName = fileName,
   processingTime = JsonDuration(processingTime),
   evaluationOfIndexValueChangerTime = JsonDuration(evaluationOfIndexValueChangerTime),
-  contentLoadingTime = JsonDuration(contentLoadingTime),
-  readLockWaitingTime = JsonDuration(readLockWaitingTime)
+  contentLoadingTime = JsonDuration(contentLoadingTime)
 )
 
 fun IndexingFileSetStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonIndexedFile(
@@ -124,7 +122,6 @@ fun DumbIndexingTimes.toJson() =
     scanningIds = scanningIds.toSortedSet(),
     totalWallTimeWithPauses = JsonDuration(totalUpdatingTime),
     contentLoadingVisibleTime = JsonDuration(contentLoadingVisibleDuration.toNanos()),
-    readLockWaitingVisibleTime = JsonDuration(readLockWaitingVisibleDuration.toNanos()),
     refreshedFilesScanTime = JsonDuration(refreshedScanFilesDuration.toNanos()),
     isAppliedAllValuesSeparately = appliedAllValuesSeparately,
     separateApplyingIndexesVisibleTime = JsonDuration(separateValueApplicationVisibleTime),
@@ -176,7 +173,6 @@ private fun ProjectScanningHistoryImpl.changeToJson(): JsonProjectScanningHistor
 private fun ProjectDumbIndexingHistoryImpl.changeToJson(): JsonProjectDumbIndexingHistory {
   val timesImpl = times as ProjectDumbIndexingHistoryImpl.DumbIndexingTimesImpl
   timesImpl.contentLoadingVisibleDuration = Duration.ofNanos(providerStatistics.sumOf { it.contentLoadingVisibleTime.nano })
-  timesImpl.readLockWaitingVisibleDuration = Duration.ofNanos(providerStatistics.sumOf { it.readActionWaitingVisibleTime.nano })
   if (providerStatistics.all { it.isAppliedAllValuesSeparately }) {
     timesImpl.appliedAllValuesSeparately = true
     timesImpl.separateValueApplicationVisibleTime = providerStatistics.sumOf { it.separateApplyingIndexesVisibleTime.nano }

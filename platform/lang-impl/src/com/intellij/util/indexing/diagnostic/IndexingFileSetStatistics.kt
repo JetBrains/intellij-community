@@ -26,8 +26,6 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
 
   var contentLoadingTimeInAllThreads: TimeNano = 0
 
-  var readActionWaitingTimeInAllThreads: TimeNano = 0
-
   var numberOfIndexedFiles: Int = 0
 
   var listOfFilesFullyIndexedByExtensions = arrayListOf<String>()
@@ -77,7 +75,6 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     fileStatistics: FileIndexingStatistics,
     processingTime: TimeNano,
     contentLoadingTime: TimeNano,
-    readActionWaitingTime: Long,
     fileSize: BytesNumber,
     valuesAppliedSeparately: Boolean,
     separateApplicationTime: TimeNano
@@ -91,7 +88,6 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     }
     processingTimeInAllThreads += processingTime
     contentLoadingTimeInAllThreads += contentLoadingTime
-    readActionWaitingTimeInAllThreads += readActionWaitingTime
     val perIndexerEvaluationOfValueChangerTimes = fileStatistics.perIndexerEvaluateIndexValueTimes.toMutableMap()
     fileStatistics.perIndexerEvaluatingIndexValueRemoversTimes.forEach { (indexId, time) ->
       perIndexerEvaluationOfValueChangerTimes[indexId] = time + perIndexerEvaluationOfValueChangerTimes.getOrDefault(indexId, 0)
@@ -120,8 +116,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
       indexedFiles += IndexedFile(getIndexedFilePath(file), fileStatistics.wasFullyIndexedByExtensions)
     }
     if (processingTime > SLOW_FILE_PROCESSING_THRESHOLD_MS * 1_000_000) {
-      slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime,
-                                                  evaluationOfIndexValueChangerTime, contentLoadingTime, readActionWaitingTime))
+      slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime, evaluationOfIndexValueChangerTime, contentLoadingTime))
     }
     allValuesAppliedSeparately = allValuesAppliedSeparately && valuesAppliedSeparately
     allSeparateApplicationTimeInAllThreads += separateApplicationTime

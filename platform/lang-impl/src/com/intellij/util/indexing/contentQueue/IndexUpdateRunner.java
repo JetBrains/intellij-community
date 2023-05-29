@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -316,11 +315,8 @@ public final class IndexUpdateRunner {
       indexingJob.setLocationBeingIndexed(fileIndexingJob);
       @NotNull Supplier<@NotNull Boolean> fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker();
       FileType type = FileTypeRegistry.getInstance().getFileTypeByFile(file, fileContent.getBytes());
-      long timeBeforeReadAction = System.nanoTime();
-      AtomicLong readActionWaitingTime = new AtomicLong();
       FileIndexesValuesApplier applier = ReadAction
         .nonBlocking(() -> {
-          readActionWaitingTime.set(System.nanoTime() - timeBeforeReadAction);
           myIndexingAttemptCount.incrementAndGet();
           FileType fileType = fileTypeChangeChecker.get() ? type : null;
           return myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent, fileType);
@@ -333,7 +329,7 @@ public final class IndexUpdateRunner {
         LOG.trace("File indexing attempts = " + myIndexingAttemptCount.longValue() + ", indexed file count = " + myIndexingSuccessfulCount.longValue());
       }
 
-      writeIndexesForFile(indexingJob, fileIndexingJob, applier, startTime, length, contentLoadingTime, readActionWaitingTime.get());
+      writeIndexesForFile(indexingJob, fileIndexingJob, applier, startTime, length, contentLoadingTime);
     }
     catch (ProcessCanceledException e) {
       // Push back the file.
@@ -354,14 +350,12 @@ public final class IndexUpdateRunner {
                                    @NotNull FileIndexesValuesApplier applier,
                                    long startTime,
                                    long length,
-                                   long contentLoadingTime,
-                                   long readActionWaitingTime) {
+                                   long contentLoadingTime) {
     if (myIndexWriteExecutor != null) {
-      myIndexWriteExecutor.execute(() -> doWriteIndexesForFile(indexingJob, fileIndexingJob, applier, startTime, length,
-                                                               contentLoadingTime, readActionWaitingTime));
+      myIndexWriteExecutor.execute(() -> doWriteIndexesForFile(indexingJob, fileIndexingJob, applier, startTime, length, contentLoadingTime));
     }
     else {
-      doWriteIndexesForFile(indexingJob, fileIndexingJob, applier, startTime, length, contentLoadingTime, readActionWaitingTime);
+      doWriteIndexesForFile(indexingJob, fileIndexingJob, applier, startTime, length, contentLoadingTime);
     }
   }
 
@@ -370,8 +364,7 @@ public final class IndexUpdateRunner {
                                             @NotNull FileIndexesValuesApplier applier,
                                             long startTime,
                                             long length,
-                                            long contentLoadingTime,
-                                            long readActionWaitingTime) {
+                                            long contentLoadingTime) {
     VirtualFile file = fileIndexingJob.file;
     try {
       applier.apply(file);
@@ -383,7 +376,6 @@ public final class IndexUpdateRunner {
                                      applier.stats,
                                      processingTime,
                                      contentLoadingTime,
-                                     readActionWaitingTime,
                                      length,
                                      applier.isWriteValuesSeparately,
                                      applier.getSeparateApplicationTimeNanos()

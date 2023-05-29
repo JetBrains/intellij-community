@@ -737,7 +737,6 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     override var totalUpdatingTime: TimeNano,
     override var updatingEnd: ZonedDateTime = updatingStart,
     override var contentLoadingVisibleDuration: Duration = Duration.ZERO,
-    override var readLockWaitingVisibleDuration: Duration = Duration.ZERO,
     override var refreshedScanFilesDuration: Duration = Duration.ZERO,
     override var pausedDuration: Duration = Duration.ZERO,
     override var appliedAllValuesSeparately: Boolean = true,

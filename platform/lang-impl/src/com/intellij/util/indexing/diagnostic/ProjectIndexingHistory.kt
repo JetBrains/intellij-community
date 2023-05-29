@@ -185,7 +185,6 @@ interface DumbIndexingTimes {
   val totalUpdatingTime: TimeNano
   val updatingEnd: ZonedDateTime
   val contentLoadingVisibleDuration: Duration
-  val readLockWaitingVisibleDuration: Duration
   val refreshedScanFilesDuration: Duration
   val pausedDuration: Duration
   val appliedAllValuesSeparately: Boolean
