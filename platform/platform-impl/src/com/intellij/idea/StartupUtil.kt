@@ -510,6 +510,8 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
 
       launch(CoroutineName("UISettings preloading")) { app.serviceAsync<UISettings>() }
       launch(CoroutineName("CustomActionsSchema preloading")) { app.serviceAsync<CustomActionsSchema>() }
+      // wants PathMacros
+      launch(CoroutineName("GeneralSettings preloading")) { app.serviceAsync<GeneralSettings>() }
 
       // ActionManager uses KeymapManager
       subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
