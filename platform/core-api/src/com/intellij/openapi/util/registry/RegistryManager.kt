@@ -3,7 +3,10 @@ package com.intellij.openapi.util.registry
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.util.messages.Topic
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 interface RegistryManager {
@@ -17,6 +20,15 @@ interface RegistryManager {
     @JvmField
     // only afterValueChanged is dispatched
     val TOPIC: Topic<RegistryValueListener> = Topic(RegistryValueListener::class.java, Topic.BroadcastDirection.NONE, true)
+
+    @ApiStatus.Experimental
+    @ApiStatus.Internal
+    fun CoroutineScope.executeWhenReady(task: (RegistryManager) -> Unit) {
+      launch {
+        val registryManager = ApplicationManager.getApplication().serviceAsync<RegistryManager>()
+        task(registryManager)
+      }
+    }
   }
 
   fun `is`(key: String): Boolean
