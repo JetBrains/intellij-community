@@ -461,9 +461,7 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
 
   launch {
     // loading is started by StartupUtil, here we just "join" it
-    subtask("ManagingFS preloading") {
-      app.serviceAsync<ManagingFS>()
-    }
+    subtask("ManagingFS preloading") { app.serviceAsync<ManagingFS>() }
 
     // PlatformVirtualFileManager also wants ManagingFS
     launch { app.serviceAsync<VirtualFileManager>() }
@@ -505,14 +503,17 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
   }
 
   if (!app.isHeadlessEnvironment) {
-    asyncScope.launch(CoroutineName("ActionManager preloading")) { app.serviceAsync<ActionManager>() }
-    asyncScope.launch(CoroutineName("CustomActionsSchema preloading")) { app.serviceAsync<CustomActionsSchema>() }
     asyncScope.launch {
       // loading is started above, here we just "join" it
+      // KeymapManager is a PersistentStateComponent
       app.serviceAsync<PathMacros>()
 
-      subtask("UISettings preloading") { app.serviceAsync<UISettings>() }
+      launch(CoroutineName("UISettings preloading")) { app.serviceAsync<UISettings>() }
+      launch(CoroutineName("CustomActionsSchema preloading")) { app.serviceAsync<CustomActionsSchema>() }
+
+      // ActionManager uses KeymapManager
       subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
+      subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
     }
   }
 }
