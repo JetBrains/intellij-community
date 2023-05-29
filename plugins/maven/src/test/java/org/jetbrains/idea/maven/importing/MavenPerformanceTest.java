@@ -49,7 +49,7 @@ public abstract class MavenPerformanceTest extends MavenMultiVersionImportingTes
     myProjectsManager.unscheduleAllTasksInTests();
 
     myProjectsManager.scheduleResolveInTests(mavenProjects.subList(0, 100));
-    measure(50000, () -> myProjectsManager.waitForResolvingCompletion());
+    measure(50000, () -> myProjectsManager.waitForReadingCompletion());
   }
 
   private static void measure(long expected, Runnable r) {

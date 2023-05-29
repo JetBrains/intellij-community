@@ -73,7 +73,7 @@ open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
     }
 
     ApplicationManager.getApplication().invokeAndWait {
-      myProjectsManager.waitForResolvingCompletion()
+      myProjectsManager.waitForReadingCompletion()
     }
     importMavenProjectsSync(myProjectsManager, files)
   }

@@ -1104,7 +1104,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
     waitForReadingCompletion();
-    myProjectsManager.waitForResolvingCompletion();
+    myProjectsManager.waitForReadingCompletion();
     myProjectsManager.performScheduledImportInTests();
 
     assertSources("project", "src/main/java");

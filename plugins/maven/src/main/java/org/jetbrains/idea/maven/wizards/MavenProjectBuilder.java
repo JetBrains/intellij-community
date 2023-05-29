@@ -245,7 +245,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
          Registry.is("ide.force.maven.import", false)) // workaround for inspection integration test
     ) {
       Promise<List<Module>> promise = manager.scheduleImportAndResolve();
-      manager.waitForResolvingCompletion();
+      manager.waitForReadingCompletion();
       try {
         return promise.blockingGet(0);
       }
