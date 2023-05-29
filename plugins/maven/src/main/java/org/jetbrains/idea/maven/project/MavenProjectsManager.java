@@ -1110,10 +1110,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     waitForTasksCompletion(null);
   }
 
-  public void waitForPluginsResolvingCompletion() {
-    waitForTasksCompletion(null);
-  }
-
   public void waitForArtifactsDownloadingCompletion() {
     waitForTasksCompletion(myArtifactsDownloadingProcessor);
   }

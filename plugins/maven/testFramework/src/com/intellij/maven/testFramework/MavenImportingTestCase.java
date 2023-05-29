@@ -655,7 +655,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       return;
     }
 
-    myProjectsManager.waitForPluginsResolvingCompletion();
+    myProjectsManager.waitForReadingCompletion();
   }
 
   protected void downloadArtifacts() {
