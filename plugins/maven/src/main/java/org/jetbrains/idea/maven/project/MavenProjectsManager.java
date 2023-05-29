@@ -34,7 +34,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,7 +61,6 @@ import org.jetbrains.idea.maven.project.importing.FilesList;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.project.importing.MavenProjectManagerListenerToBusBridge;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
@@ -1010,43 +1008,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   protected abstract AsyncPromise<List<Module>> scheduleResolveSync(Runnable callback);
-
-  public void evaluateEffectivePom(@NotNull final MavenProject mavenProject, @NotNull final NullableConsumer<? super String> consumer) {
-    runWhenFullyOpen(() -> myResolvingProcessor.scheduleTask(new MavenProjectsProcessorTask() {
-      @Override
-      public void perform(Project project,
-                          MavenEmbeddersManager embeddersManager,
-                          MavenConsole console,
-                          MavenProgressIndicator indicator)
-        throws MavenProcessCanceledException {
-
-        indicator.setText(MavenProjectBundle.message("maven.project.importing.evaluating.effective.pom"));
-
-        MavenEmbeddersManager.EmbedderTask task = new MavenEmbeddersManager.EmbedderTask() {
-          @Override
-          public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
-            try {
-              MavenExplicitProfiles profiles = mavenProject.getActivatedProfilesIds();
-              VirtualFile virtualFile = mavenProject.getFile();
-              File projectFile = MavenWslUtil.resolveWslAware(
-                myProject,
-                () -> new File(virtualFile.getPath()),
-                wsl -> MavenWslUtil.getWslFile(wsl, new File(virtualFile.getPath()))
-              );
-              String res = embedder.evaluateEffectivePom(projectFile, profiles.getEnabledProfiles(), profiles.getDisabledProfiles());
-              consumer.consume(res);
-            }
-            catch (UnsupportedOperationException e) {
-              MavenLog.LOG.error(e);
-              consumer.consume(null); // null means UnsupportedOperationException
-            }
-          }
-        };
-
-        getEmbeddersManager().execute(mavenProject, MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, task);
-      }
-    }));
-  }
 
   @TestOnly
   public void scheduleResolveInTests(Collection<MavenProject> projects) {
