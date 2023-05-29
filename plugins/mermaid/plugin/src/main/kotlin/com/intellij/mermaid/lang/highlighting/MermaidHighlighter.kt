@@ -141,6 +141,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.EntityRelationship.ONE_OR_MORE,
         MermaidTokens.EntityRelationship.ZERO_OR_MORE,
         MermaidTokens.EntityRelationship.ONLY_ONE,
+        MermaidTokens.EntityRelationship.MD_PARENT,
         MermaidTokens.EntityRelationship.IDENTIFYING,
         MermaidTokens.EntityRelationship.NON_IDENTIFYING
       )

@@ -533,6 +533,9 @@ object MermaidTokens {
     val ONLY_ONE = MermaidToken("EntityRelationship.ONLY_ONE")
 
     @JvmField
+    val MD_PARENT = MermaidToken("EntityRelationship.MD_PARENT")
+
+    @JvmField
     val IDENTIFYING = MermaidToken("EntityRelationship.IDENTIFYING")
 
     @JvmField

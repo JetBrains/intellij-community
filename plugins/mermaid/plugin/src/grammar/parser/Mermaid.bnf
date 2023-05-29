@@ -406,7 +406,7 @@ erIdentifier ::= ID | string {
 entityDeclaration ::= erIdentifier erEntityBlock
 
 relationship ::= erCardinality (IDENTIFYING | NON_IDENTIFYING) erCardinality
-private erCardinality ::= ZERO_OR_ONE | ONE_OR_MORE | ZERO_OR_MORE | ONLY_ONE
+private erCardinality ::= ZERO_OR_ONE | ONE_OR_MORE | ZERO_OR_MORE | ONLY_ONE | MD_PARENT
 
 erEntityBlock ::= OPEN_CURLY EOL* erAttributes? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private erAttributes ::= erAttributesLines

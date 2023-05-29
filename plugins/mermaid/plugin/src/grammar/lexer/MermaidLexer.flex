@@ -637,6 +637,9 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "only one" |
   "1" { return EntityRelationship.ONLY_ONE; }
 
+  "u" |
+  "u"/[^\S\r\n]*("--"|"to"|".."|".-"|"-."|"optionally to") { return EntityRelationship.MD_PARENT; }
+
   "--" |
   "to" { return EntityRelationship.IDENTIFYING; }
 

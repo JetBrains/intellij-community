@@ -89,4 +89,13 @@ class EntityRelationshipTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test parent-child relationship`() {
+    val content = """
+    erDiagram
+      PROJECT u--|{ TEAM_MEMBER : parent
+      TEAM_MEMBER }|--u PROJECT : child
+    """.trimIndent()
+    doTest(content)
+  }
 }
