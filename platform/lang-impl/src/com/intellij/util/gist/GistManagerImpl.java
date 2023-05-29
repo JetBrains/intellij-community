@@ -16,6 +16,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.storage.GistStorage;
 import com.intellij.util.io.DataExternalizer;
@@ -28,10 +29,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 public final class GistManagerImpl extends GistManager {
   private static final Logger LOG = Logger.getInstance(GistManagerImpl.class);
 
-  private static final boolean USE_NEW_IMPLEMENTATION = SystemProperties.getBooleanProperty("idea.gist.use-new-impl", true);
+  private static final boolean USE_NEW_GIST_STORAGE_IMPLEMENTATION = SystemProperties.getBooleanProperty("idea.gist.use-new-impl", true);
+
+  private static final int INTERNAL_VERSION = 2;
 
   private static final String GIST_REINDEX_COUNT_PROPERTY_NAME = "file.gist.reindex.count";
   private static final Key<AtomicInteger> GIST_INVALIDATION_COUNT_KEY = Key.create("virtual.file.gist.invalidation.count");
@@ -39,11 +44,12 @@ public final class GistManagerImpl extends GistManager {
   private static final Map<String, VirtualFileGist<?>> ourGists = ContainerUtil.createConcurrentWeakValueMap();
 
 
-  private final AtomicInteger myReindexCount =
-    new AtomicInteger(PropertiesComponent.getInstance().getInt(GIST_REINDEX_COUNT_PROPERTY_NAME, 0));
+  private final AtomicInteger myReindexCount = new AtomicInteger(
+    PropertiesComponent.getInstance().getInt(GIST_REINDEX_COUNT_PROPERTY_NAME, 0)
+  );
 
-  private final MergingUpdateQueue myDropCachesQueue = new MergingUpdateQueue("gist-manager-drop-caches", 500, USE_NEW_IMPLEMENTATION, null)
-    .setRestartTimerOnAdd(USE_NEW_IMPLEMENTATION);
+  private final MergingUpdateQueue myDropCachesQueue = new MergingUpdateQueue("gist-manager-drop-caches", 500, true, null)
+    .setRestartTimerOnAdd(true);
   private final AtomicInteger myMergingDropCachesRequestors = new AtomicInteger();
 
   private final GistStorage gistStorage;
@@ -65,7 +71,18 @@ public final class GistManagerImpl extends GistManager {
   }
 
   public GistManagerImpl() {
-    gistStorage = GistStorage.getInstance();
+    if (USE_NEW_GIST_STORAGE_IMPLEMENTATION) {
+      gistStorage = GistStorage.getInstance();
+    }
+    else {
+      gistStorage = null;
+      //Setup cleanup task for old Gists:
+      // remove <caches>/huge-gists/<fsrecords-timestamp> dirs there <fsrecords-timestamp> != FSRecords.getCreatedTimestamp()
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(
+        (Runnable)VirtualFileGistImpl::cleanupAncientGistsDirs,
+        1, MINUTES
+      );
+    }
   }
 
   @NotNull
@@ -80,7 +97,7 @@ public final class GistManagerImpl extends GistManager {
 
     //noinspection unchecked
     return (VirtualFileGist<Data>)ourGists.computeIfAbsent(id, __ -> {
-      if (USE_NEW_IMPLEMENTATION) {
+      if (USE_NEW_GIST_STORAGE_IMPLEMENTATION) {
         return new VirtualFileGistOverGistStorage<>(gistStorage.newGist(id, version, externalizer), calcData);
       }
       else {
@@ -156,25 +173,14 @@ public final class GistManagerImpl extends GistManager {
     AtomicInteger invalidationCount = file.getUserData(GIST_INVALIDATION_COUNT_KEY);
     int reindexCount = ((GistManagerImpl)getInstance()).getReindexCount();
     long fileModificationCount = file.getModificationCount();
-    return mix(
-      mix(
-        mix(Long.hashCode(fileModificationCount))
-        + reindexCount
-      )
-      + (invalidationCount != null ? invalidationCount.get() : 0)
-    );
-
-    //return Objects.hash(file.getModificationCount(),
-    //                    ((GistManagerImpl)getInstance()).getReindexCount(),
-    //                    invalidationCount != null ? invalidationCount.get() : 0);
+    //mix the bits in all 4 components so that there is little chance change in one counter
+    //  'compensate' change in another, and the resulting stamp happens to be the same:
+    return mixBits(
+        mixBits(Long.hashCode(fileModificationCount), reindexCount),
+        mixBits(invalidationCount != null ? invalidationCount.get() : 0, INTERNAL_VERSION)
+      );
   }
 
-  private static final int INT_PHI = 0x9E3779B9;
-
-  static int mix(int x) {
-    final int h = x * INT_PHI;
-    return h ^ (h >>> 16);
-  }
 
   @TestOnly
   public void clearQueueInTests() {
@@ -186,5 +192,17 @@ public final class GistManagerImpl extends GistManager {
     //this changes getGistStamp() thus invalidating .stamps of all currently cached Gists
     myReindexCount.set(0);
     PropertiesComponent.getInstance().unsetValue(GIST_REINDEX_COUNT_PROPERTY_NAME);
+  }
+
+  private static final int INT_PHI = 0x9E3779B9;
+
+  /** aka 'fibonacci hashing' */
+  private static int mixBits(int x) {
+    final int h = x * INT_PHI;
+    return h ^ (h >>> 16);
+  }
+
+  private static int mixBits(int x, int y) {
+    return mixBits(mixBits(x) + y);
   }
 }

@@ -31,9 +31,9 @@ import java.io.IOException;
 import java.util.function.Supplier;
 
 class VirtualFileGistOverGistStorage<Data> implements VirtualFileGist<Data> {
-  private static final Logger LOG = Logger.getInstance(VirtualFileGist.class);
+  private static final Logger LOG = Logger.getInstance(VirtualFileGistOverGistStorage.class);
 
-  private static final int INTERNAL_VERSION = 2;
+
 
   private final @NotNull GistStorage.Gist<Data> gist;
 
@@ -75,9 +75,7 @@ class VirtualFileGistOverGistStorage<Data> implements VirtualFileGist<Data> {
       }
     }
 
-    //MAYBE RC: addition is too plain -- better mix INTERNAL_VERSION with gistStamp in a more hash-like way?
-    //          move INTERNAL_VERSION into GistManagerImpl, and mix it with others components in unified way
-    int expectedGistStamp = GistManagerImpl.getGistStamp(file) + INTERNAL_VERSION;
+    int expectedGistStamp = GistManagerImpl.getGistStamp(file);
     try {
       GistStorage.GistData<Data> gistData = gist.getProjectData(project, file, expectedGistStamp);
       if (gistData.hasData()) {

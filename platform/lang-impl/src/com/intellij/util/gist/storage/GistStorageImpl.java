@@ -13,13 +13,16 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,30 +36,32 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static com.intellij.util.io.IOUtil.KiB;
 import static java.nio.file.StandardOpenOption.*;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
- * Implementation stores small gists (<= {@link #MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES} in a VFS file attributes,
+ * Implementation stores small gists (<= {@link #MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES} in VFS file attributes,
  * and uses dedicated files in a {system}/huge-hists/ folder to store larger gists.
  */
 public class GistStorageImpl extends GistStorage {
-  private static final Logger LOG = Logger.getInstance(GistStorage.class);
+  private static final Logger LOG = Logger.getInstance(GistStorageImpl.class);
 
   /**
    * If  > 0: only store in VFS attributes gists <= this size. Store larger gists in dedicated files.
    * If == 0: store all gists in VFS attributes.
-   * Value should be <= {@link com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage#MAX_ATTRIBUTE_VALUE_SIZE}
+   * Value should be < {@link com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage#MAX_ATTRIBUTE_VALUE_SIZE}
    */
+  @VisibleForTesting
   public static final int MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES = getIntProperty("idea.gist.max-size-to-store-in-attributes", 50 * KiB);
 
   private static final String HUGE_GISTS_DIR_NAME = "huge-gists";
 
   /** `{caches}/huge-gists/{FSRecords.createdTimestamp}/' */
-  static final NotNullLazyValue<Path> DIR_FOR_HUGE_GISTS = NotNullLazyValue.atomicLazy(() -> {
+  private static final NotNullLazyValue<Path> DIR_FOR_HUGE_GISTS = NotNullLazyValue.atomicLazy(() -> {
     final String vfsStamp = Long.toString(FSRecords.getCreationTimestamp());
     Path gistsDir = Paths.get(FSRecords.getCachesDir(), HUGE_GISTS_DIR_NAME, vfsStamp);
     try {
@@ -74,12 +79,25 @@ public class GistStorageImpl extends GistStorage {
 
   private static final Map<String, GistImpl<?>> knownGists = ContainerUtil.createConcurrentWeakValueMap();
 
+  private static final Map<Pair<String, Integer>, FileAttribute> knownAttributes = FactoryMap.create(
+    key -> new FileAttribute(key.first, key.second, false)
+  );
+
   public GistStorageImpl() {
+    // Gist uses up to 6 bytes for its header, in addition to payload:
+    if (MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES > AbstractAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE + 6) {
+      throw new AssertionError(
+        "Configuration mismatch: " +
+        "MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES(=" + MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES + ")" +
+        " > " +
+        "AbstractAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE(=" + AbstractAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE + ") + 6");
+    }
+
     //Setup cleanup task for old Gists:
-    // remove <caches>/huge-gists/<fsrecords-timestamp> dirs there <fsrecords-timestamp> != FSRecords.getCreatedTimestamp()
+    // remove {caches}/huge-gists/{fsrecords-timestamp} dirs there {fsrecords-timestamp} != FSRecords.getCreatedTimestamp()
     AppExecutorUtil.getAppScheduledExecutorService().schedule(
       GistStorageImpl::cleanupAncientGistsDirs,
-      15, SECONDS
+      1, MINUTES
     );
   }
 
@@ -103,10 +121,22 @@ public class GistStorageImpl extends GistStorage {
     return gist;
   }
 
+  private static FileAttribute fileAttributeFor(@Nullable Project project,
+                                                @NotNull @NonNls String id,
+                                                int version) {
+    //TODO RC: we create a new VFS attribute for each project -- but never clean up
+    //         attributes for projects that are e.g. deleted. This may lead to VFS attributes
+    //         trashing.
+    synchronized (knownAttributes) {
+      return knownAttributes.get(
+        Pair.create(id + (project == null ? "###noProject###" : project.getLocationHash()), version));
+    }
+  }
+
   /**
    * When VFS gets rebuild, {@link FSRecords#getCreationTimestamp()} is changed, so we start to use
    * new {@link #DIR_FOR_HUGE_GISTS} -- but previously used directory is better to be removed at some point.
-   * The method finds and removes such old '<caches>/huge-gists/<fsrecords-timestamp>' directories,
+   * The method finds and removes such old '{caches}/huge-gists/{fsrecords-timestamp}' directories,
    * there {fsrecords-timestamp} != FSRecords.creationTimestamp
    */
   private static void cleanupAncientGistsDirs() {
@@ -139,20 +169,6 @@ public class GistStorageImpl extends GistStorage {
     }
     catch (IOException e) {
       LOG.info("Can't list huge-gists dir [" + hugeGistsParentDir.toAbsolutePath() + "] children", e);
-    }
-  }
-
-  private static final Map<Pair<String, Integer>, FileAttribute> attributes =
-    FactoryMap.create(key -> new FileAttribute(key.first, key.second, false));
-
-  private static FileAttribute lookupFileAttribute(@Nullable Project project,
-                                                   @NotNull @NonNls String id,
-                                                   int version) {
-    //TODO RC: we create a new VFS attribute for each project -- but never clean up
-    //         attributes for projects that are e.g. deleted.
-    synchronized (attributes) {
-      return attributes.get(
-        Pair.create(id + (project == null ? "###noProject###" : project.getLocationHash()), version));
     }
   }
 
@@ -194,9 +210,9 @@ public class GistStorageImpl extends GistStorage {
       ApplicationManager.getApplication().assertReadAccessAllowed();
       ProgressManager.checkCanceled();
 
-      try (DataInputStream stream = lookupFileAttribute(project, id, version).readFileAttribute(file)) {
+      try (DataInputStream stream = fileAttributeFor(project, id, version).readFileAttribute(file)) {
         if (stream == null) {
-          return GistData.noData();
+          return GistData.empty();
         }
         int persistedGistStamp = DataInputOutputUtil.readINT(stream);
         int persistedGistValueKind = stream.read();
@@ -206,25 +222,26 @@ public class GistStorageImpl extends GistStorage {
         }
         switch (persistedGistValueKind) {
           case VALUE_KIND_NULL -> {
-            return GistData.withData(
+            return GistData.valid(
               null,
               persistedGistStamp
             );
           }
           case VALUE_KIND_INLINE -> {
-            return GistData.withData(
+            return GistData.valid(
               externalizer.read(stream),
               persistedGistStamp
             );
           }
           case VALUE_KIND_IN_DEDICATED_FILE -> {
-            Path gistPath = dedicatedGistFilePath(file);
+            String gistPathSuffix = IOUtil.readUTF(stream);
+            Path gistPath = dedicatedGistFilePath(file, gistPathSuffix);
             if (!Files.exists(gistPath)) {
               //looks like data corruption: if gist value was indeed null, we would have stored it as VALUE_KIND_NULL
               throw new IOException("Gist file [" + gistPath + "] doesn't exists -> looks like data corruption?");
             }
             try (DataInputStream gistStream = new DataInputStream(Files.newInputStream(gistPath, READ))) {
-              return GistData.withData(
+              return GistData.valid(
                 externalizer.read(gistStream),
                 persistedGistStamp
               );
@@ -235,7 +252,7 @@ public class GistStorageImpl extends GistStorage {
             throw new IOException("Unrecognized gist.valueKind(=" + persistedGistValueKind + "): incorrect (outdated?) gist format");
         }
       }
-      catch (ProcessCanceledException pce){
+      catch (ProcessCanceledException pce) {
         throw pce;
       }
       catch (Exception e) {
@@ -248,58 +265,89 @@ public class GistStorageImpl extends GistStorage {
                                @NotNull VirtualFile file,
                                @Nullable Data data,
                                int gistStamp) throws IOException {
-      //RC: Do we want to allow put-operations under read-action only?
-      //    Maybe assert_Write_AccessAllowed()?
+      //MAYBE RC: Do we want to allow put-operations under read-action?
+      //          Maybe assert_Write_AccessAllowed()? -- but now all the tests are under read-action only
       ApplicationManager.getApplication().assertReadAccessAllowed();
       ProgressManager.checkCanceled();
 
-      //attribute content: <valueKind>, <gistData>?
+      //attribute content: <gistStamp:int>, <valueKind:byte>, <gistData:byte[]>?
+      //  gistStamp: int
       //  valueKind: byte (0,1,2)
       //             0: (gist value is null)
       //             1: (gist value is stored inline, in VFS attribute)
       //                gistData: byte[]
-      //             2: (gist value is stored in a dedicated file '<HUGE_GIST_DIR>/<fileId>.<gistId>')
-      //                MAYBE: put <gistId> here also?
+      //             2: (gist value is stored in a dedicated file '<HUGE_GIST_DIR>/<fileId>.<gistPathSuffix>')
+      //                gistPathSuffix: UTF8 string
 
-      FileAttribute fileAttribute = lookupFileAttribute(project, id, version);
-      try (DataOutputStream attributeStream = fileAttribute.writeFileAttribute(file)) {
-        DataInputOutputUtil.writeINT(attributeStream, gistStamp);
+      FileAttribute fileAttribute = fileAttributeFor(project, id, version);
+      try {
         if (data == null) {
-          attributeStream.writeByte(VALUE_KIND_NULL);
+          try (DataOutputStream attributeStream = fileAttribute.writeFileAttribute(file)) {
+            DataInputOutputUtil.writeINT(attributeStream, gistStamp);
+            attributeStream.writeByte(VALUE_KIND_NULL);
+          }
           return;
         }
 
         if (MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES <= 0) {
           //fast path: avoid temporary intermediate buffers
-          attributeStream.writeByte(VALUE_KIND_INLINE);
-          externalizer.save(attributeStream, data);
-          return;
+          try (DataOutputStream attributeStream = fileAttribute.writeFileAttribute(file)) {
+            DataInputOutputUtil.writeINT(attributeStream, gistStamp);
+
+            attributeStream.writeByte(VALUE_KIND_INLINE);
+            externalizer.save(attributeStream, data);
+            return;
+          }
         }
 
-        //slow path: first save gist into a temporary buffer, check gist size, and decide
-        //           there to store the gist content
-        BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
-        DataOutputStream temporaryStream = new DataOutputStream(outputStream);
-        externalizer.save(temporaryStream, data);
-        temporaryStream.flush();
+        //slow path: 1) read dedicated file name from current attribute
+        //           2) write gist content into a memory buffer
+        //           3) check gist content size and decide where to put it
 
-        if (outputStream.size() <= MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES) {
-          attributeStream.writeByte(VALUE_KIND_INLINE);
-          attributeStream.write(outputStream.getInternalBuffer(), 0, outputStream.size());
-
-          //TODO RC: if use previously huge-file -> remove it
-          //         Maybe clean up outdated files on app.exit? I.e. scan knownGists, and check
-          //         do they still need huge files?
-          //if (wasStoredInDedicatedFileBefore) {
-          //  Path gistPath = dedicatedGistFilePath(file);
-          //  FileUtilRt.deleteRecursively(gistPath);
-          //}
+        String gistFileSuffix = null;
+        try (AttributeInputStream attributeStream = fileAttribute.readFileAttribute(file)) {
+          if (attributeStream != null) {
+            DataInputOutputUtil.readINT(attributeStream);//gistStamp
+            byte valueKind = attributeStream.readByte();
+            if (valueKind == VALUE_KIND_IN_DEDICATED_FILE) {
+              gistFileSuffix = IOUtil.readUTF(attributeStream);
+            }
+          }
         }
-        else {
-          attributeStream.writeByte(VALUE_KIND_IN_DEDICATED_FILE);
-          Path gistPath = dedicatedGistFilePath(file);
-          try (DataOutputStream gistFileStream = new DataOutputStream(Files.newOutputStream(gistPath, WRITE, CREATE))) {
-            gistFileStream.write(outputStream.getInternalBuffer(), 0, outputStream.size());
+
+        try (DataOutputStream attributeStream = fileAttribute.writeFileAttribute(file)) {
+          DataInputOutputUtil.writeINT(attributeStream, gistStamp);
+
+          //slow path: first save gist into a temporary buffer, check gist size, and decide
+          //           there to store the gist content -- inline in attribute, or in a dedicated file
+          
+          BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
+          DataOutputStream temporaryStream = new DataOutputStream(outputStream);
+          externalizer.save(temporaryStream, data);
+          temporaryStream.flush();
+
+          if (outputStream.size() <= MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES) {
+            attributeStream.writeByte(VALUE_KIND_INLINE);
+            attributeStream.write(outputStream.getInternalBuffer(), 0, outputStream.size());
+
+            //if huge-file used previously -> remove the file
+            if (gistFileSuffix != null) {
+              Path gistPath = dedicatedGistFilePath(file, gistFileSuffix);
+              FileUtilRt.deleteRecursively(gistPath);
+            }
+          }
+          else {
+            attributeStream.writeByte(VALUE_KIND_IN_DEDICATED_FILE);
+            if (gistFileSuffix == null) {
+              //lets hope random UUID is random enough for avoiding collisions
+              gistFileSuffix = UUID.randomUUID().toString();
+            }
+            IOUtil.writeUTF(attributeStream, gistFileSuffix);
+
+            Path gistPath = dedicatedGistFilePath(file, gistFileSuffix);
+            try (DataOutputStream gistFileStream = new DataOutputStream(Files.newOutputStream(gistPath, WRITE, CREATE))) {
+              gistFileStream.write(outputStream.getInternalBuffer(), 0, outputStream.size());
+            }
           }
         }
       }
@@ -312,8 +360,9 @@ public class GistStorageImpl extends GistStorage {
     }
 
     @VisibleForTesting
-    @NotNull Path dedicatedGistFilePath(@NotNull VirtualFile file) throws IOException {
-      String gistFileName = ((VirtualFileWithId)file).getId() + "." + id;
+    @NotNull Path dedicatedGistFilePath(@NotNull VirtualFile file,
+                                        @Nullable String gistPathSuffix) throws UncheckedIOException {
+      String gistFileName = ((VirtualFileWithId)file).getId() + "." + gistPathSuffix;
       return DIR_FOR_HUGE_GISTS.get().resolve(gistFileName);
     }
 

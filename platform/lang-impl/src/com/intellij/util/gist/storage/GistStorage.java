@@ -18,13 +18,22 @@ import java.util.NoSuchElementException;
  * Service allows attaching named blobs ('gists') to a {@link VirtualFile}.
  * <p>
  * It is a direct analog of VFS file attributes, but VFS attributes are considered very low-level,
- * and have some implementation limitations (e.g. max size) -- this service is designed to be used
- * from upper levels, and to have no such limitations.
+ * and have some implementation limitations (e.g. max size) -- and generally we want to limit VFS
+ * file attributes use outside the core platform code. This service is designed to be used instead
+ * of VFS file attributes, from 'middle level' code.
  * <p>
- * It is initially created for storing {@link VirtualFileGist}, hence some API peculiarities, and
- * hence it is marked as @Internal.
- * If you're about to use {@link GistStorage} service to cache something -- please, consider
- * {@link VirtualFileGist} first: likely {@link VirtualFileGist} fits better.
+ * Versioning: {@link Gist} has a 'version' -- think of it as a version of a _binary format_ used.
+ * Also specific gist's data _value_ assigned a 'stamp' -- think of it as a _value_ 'version'. I.e.
+ * you store value with specific .stamp, and read value expected .stamp given -- and if the expected
+ * stamp is not the same as was really stored along with the value -- then you get 'no value' back.
+ * (If you don't need to track value stamps -- you could just ignore it and always use stamp=0)
+ * <p>
+ * ({@link GistStorage} is initially created for storing {@link VirtualFileGist}, hence some API peculiarities,
+ * and hence it is marked as @Internal)
+ * <p>
+ * If you're about to use {@link GistStorage} service to _cache_ something file-associated -- please,
+ * consider {@link VirtualFileGist} first: likely {@link VirtualFileGist} fits better, and it is more
+ * high-level API.
  *
  * @see VirtualFileGist
  */
@@ -42,7 +51,8 @@ public abstract class GistStorage {
    * @param version      should be incremented each time the {@code externalizer} logic changes.
    * @param externalizer used to store the data to the disk and retrieve it
    * @param <Data>       the type of the data to cache
-   * @return the gist object, where {@link Gist#getGlobalData} can later be used to retrieve the cached data
+   * @return the gist object, where {@link Gist#getGlobalData}/{@link Gist#getProjectData(Project, VirtualFile, int)} can
+   * later be used to retrieve the data stored
    */
   @NotNull
   public abstract <Data> Gist<Data> newGist(@NotNull @NonNls String id,
@@ -60,11 +70,11 @@ public abstract class GistStorage {
      * i.e. it is global (application-wise) data
      */
     @NotNull GistData<Data> getProjectData(@Nullable Project project,
-                                            @NotNull VirtualFile file,
-                                            int expectedGistStamp) throws IOException;
+                                           @NotNull VirtualFile file,
+                                           int expectedGistStamp) throws IOException;
 
     default @NotNull GistData<Data> getGlobalData(@NotNull VirtualFile file,
-                                                   int expectedGistStamp) throws IOException {
+                                                  int expectedGistStamp) throws IOException {
       return getProjectData(null, file, expectedGistStamp);
     }
 
@@ -84,6 +94,22 @@ public abstract class GistStorage {
     }
   }
 
+  /**
+   * GistData is basically a union:
+   * <ol>
+   *   <li>
+   *     <b>valid</b>: hasData=true, data=(whatever data Gist really has, including null), stamp=(whatever stamp Gist has)
+   *   </li>
+   *   <li>
+   *     <b>outdated</b>: hasData=false, stamp=(whatever stamp Gist has), data=null
+   *   </li>
+   *   <li>
+   *     <b>empty</b>: hasData=false, stamp=NULL_STAMP, data=null
+   *   </li>
+   * </ol>
+   * For the most use-cases 'outdated' and 'empty' are indistinguishable, so it is enough to check
+   * {@link #hasData()}, or just use methods like {@link #dataIfExists()}, {@link #dataOr(Object)}
+   */
   public static final class GistData<Data> {
     public static final int NULL_STAMP = -1;
 
@@ -111,6 +137,10 @@ public abstract class GistStorage {
       return hasData;
     }
 
+    /**
+     * @return true if gist has no data because stored data is already outdated. Outdated gist
+     * has no data, but has gistStamp
+     */
     public boolean isOutdated() {
       return !hasData && stamp != NULL_STAMP;
     }
@@ -144,16 +174,23 @@ public abstract class GistStorage {
       }
     }
 
-    static <Data> GistData<Data> noData() {
+
+    static <Data> GistData<Data> empty() {
       return new GistData<>(null, NULL_STAMP, false);
     }
 
     static <Data> GistData<Data> outdated(int gistStamp) {
+      if (gistStamp == NULL_STAMP) {
+        throw new IllegalArgumentException("gistStamp(=" + gistStamp + ") must be valid (!=" + NULL_STAMP + ")");
+      }
       return new GistData<>(null, gistStamp, false);
     }
 
-    static <Data> GistData<Data> withData(@Nullable Data gistData,
-                                          int gistStamp) {
+    static <Data> GistData<Data> valid(@Nullable Data gistData,
+                                       int gistStamp) {
+      if (gistStamp == NULL_STAMP) {
+        throw new IllegalArgumentException("gistStamp(=" + gistStamp + ") must be valid (!=" + NULL_STAMP + ")");
+      }
       return new GistData<>(gistData, gistStamp, true);
     }
   }

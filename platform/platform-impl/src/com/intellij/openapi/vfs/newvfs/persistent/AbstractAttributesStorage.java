@@ -77,14 +77,14 @@ public interface AbstractAttributesStorage extends Forceable, Closeable {
       throw new FileTooBigException(
         "Attribute " + attribute + " value is too large: " +
         attributeValueSize + " b > max(" + MAX_ATTRIBUTE_VALUE_SIZE + ")" +
-        " -> please, do not use VFS file attributes for huge blobs of data"
+        " -> please, do not use VFS file attributes for huge blobs of data. Consider using GistManager or GistStorage."
       );
     }
     else if (attributeValueSize > WARN_ATTRIBUTE_VALUE_SIZE) {
       FSRecords.LOG.warn(
         "Attribute " + attribute + " value is quite large: " +
         attributeValueSize + " b > warn threshold(" + WARN_ATTRIBUTE_VALUE_SIZE + ")" +
-        " -> please, do not use VFS file attributes for huge blobs of data"
+        " -> please, do not use VFS file attributes for huge blobs of data. Consider using GistManager or GistStorage."
       );
     }
   }
