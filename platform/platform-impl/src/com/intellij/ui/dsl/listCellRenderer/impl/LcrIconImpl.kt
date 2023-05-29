@@ -22,5 +22,6 @@ internal class LcrIconImpl : LcrCellBaseImpl(), LcrIcon {
     get() = component.icon
     set(value) {
       component.icon = value
+      visible = value != null
     }
 }

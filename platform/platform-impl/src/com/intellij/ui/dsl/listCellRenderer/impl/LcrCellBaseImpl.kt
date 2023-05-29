@@ -18,6 +18,5 @@ internal sealed class LcrCellBaseImpl : LcrCellBase {
   abstract val component: JComponent
 
   open fun init(list: JList<*>, isSelected: Boolean, cellHasFocus: Boolean) {
-    visible = true
   }
 }

@@ -48,11 +48,8 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
     @JvmStatic
     @JvmOverloads
     fun wrap(component: Component, background: Color? = null): SelectablePanel {
-      val result = object : SelectablePanel(background) {
-        override fun getAccessibleContext(): AccessibleContext {
-          return component.accessibleContext
-        }
-      }
+      val result = SelectablePanel(background)
+      result.accessibleContextProvider = component
       result.layout = BorderLayout()
       result.add(component, BorderLayout.CENTER)
       return result
@@ -75,10 +72,19 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
       invalidate()
     }
 
+  var accessibleContextProvider: Component? = null
+
   init {
     if (background != null) {
       this.background = background
     }
+  }
+
+  override fun getAccessibleContext(): AccessibleContext {
+    accessibleContextProvider?.let {
+      return it.accessibleContext
+    }
+    return super.getAccessibleContext()
   }
 
   override fun getPreferredSize(): Dimension {

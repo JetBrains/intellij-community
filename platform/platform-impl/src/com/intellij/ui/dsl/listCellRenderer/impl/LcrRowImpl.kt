@@ -86,6 +86,8 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
       component.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
     }
 
+    component.isOpaque = initParams.opaque
+
     val result = LcrCellImpl(component)
     add(result, initParams, isBaselineComponent(component))
     return result

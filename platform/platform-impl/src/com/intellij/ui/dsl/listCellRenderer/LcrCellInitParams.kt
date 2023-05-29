@@ -14,4 +14,9 @@ interface LcrCellInitParams : LcrInitParams {
    * Default value is true
    */
   var stripHorizontalInsets: Boolean
+
+  /**
+   * Default value is false
+   */
+  var opaque: Boolean
 }

@@ -8,4 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 internal class LcrCellInitParamsImpl : LcrInitParamsImpl(), LcrCellInitParams {
 
   override var stripHorizontalInsets: Boolean = true
+
+  override var opaque: Boolean = false
 }

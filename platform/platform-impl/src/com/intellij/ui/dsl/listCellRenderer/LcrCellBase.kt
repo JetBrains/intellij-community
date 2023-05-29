@@ -7,8 +7,5 @@ import org.jetbrains.annotations.ApiStatus
 @LcrDslMarker
 interface LcrCellBase {
 
-  /**
-   * Default value is true
-   */
   var visible: Boolean
 }

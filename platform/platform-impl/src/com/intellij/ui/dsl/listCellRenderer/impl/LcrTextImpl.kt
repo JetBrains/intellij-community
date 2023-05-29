@@ -31,6 +31,7 @@ internal class LcrTextImpl(private val initParams: LcrTextInitParamsImpl) : LcrC
     get() = component.text
     set(value) {
       component.text = value
+      visible = value != null
     }
 
   override var color: Color?
