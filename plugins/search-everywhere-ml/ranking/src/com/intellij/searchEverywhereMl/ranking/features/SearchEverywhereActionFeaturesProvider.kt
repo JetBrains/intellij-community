@@ -20,10 +20,12 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereGeneralActionFeaturesProvider.Companion.IS_ENABLED
+import com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSearchEverywhereContributor
 import com.intellij.util.Time
 
 internal class SearchEverywhereActionFeaturesProvider :
-  SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
+  SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java,
+                                          SemanticActionSearchEverywhereContributor::class.java) {
   companion object {
     internal val IS_ACTION_DATA_KEY = EventFields.Boolean("isAction")
     internal val IS_TOGGLE_ACTION_DATA_KEY = EventFields.Boolean("isToggleAction")
@@ -198,7 +200,7 @@ internal class SearchEverywhereActionFeaturesProvider :
 
     fun getFieldsDeclaration(): List<EventField<*>> = arrayListOf(globalUsage, globalUsageToMax, usersRatio, usagesPerUserRatio)
 
-    fun getGlobalUsageStatistics(actionGlobalStatistics: ActionGlobalUsageInfo?, maxUsageCount: Long) : List<EventPair<*>> {
+    fun getGlobalUsageStatistics(actionGlobalStatistics: ActionGlobalUsageInfo?, maxUsageCount: Long): List<EventPair<*>> {
       val result = arrayListOf<EventPair<*>>()
       actionGlobalStatistics?.let {
         result.add(globalUsage.with(it.usagesCount))

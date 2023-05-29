@@ -9,20 +9,23 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSearchEverywhereContributor
 
 internal class SearchEverywhereGeneralActionFeaturesProvider
-  : SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
+  : SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java,
+                                            SemanticActionSearchEverywhereContributor::class.java) {
   companion object {
     internal val IS_ENABLED = EventFields.Boolean("isEnabled")
 
     internal val ITEM_TYPE = EventFields.Enum<GotoActionModel.MatchedValueType>("type")
     internal val TYPE_WEIGHT = EventFields.Int("typeWeight")
+    internal val SIMILARITY_SCORE = EventFields.Double("similarityScore")
     internal val IS_HIGH_PRIORITY = EventFields.Boolean("isHighPriority")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
     return arrayListOf(
-      IS_ENABLED, ITEM_TYPE, TYPE_WEIGHT, IS_HIGH_PRIORITY
+      IS_ENABLED, ITEM_TYPE, TYPE_WEIGHT, IS_HIGH_PRIORITY, SIMILARITY_SCORE
     )
   }
 
@@ -39,6 +42,10 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
     if (element is GotoActionModel.MatchedValue) {
       data.add(ITEM_TYPE.with(element.type))
       data.add(TYPE_WEIGHT.with(element.valueTypeWeight))
+
+      if (element.isSemantic) {
+        data.add(SIMILARITY_SCORE.with(element.similarityScore))
+      }
     }
 
     val value = if (element is GotoActionModel.MatchedValue) element.value else element
