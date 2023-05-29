@@ -34,8 +34,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     return settings.isSortingByMlEnabledInAnyTab() || experiment.isAllowed
   }
 
-  internal fun shouldUseExperimentalModel(tabId: String): Boolean {
-    val tab = SearchEverywhereTabWithMlRanking.findById(tabId) ?: return false
+  internal fun shouldUseExperimentalModel(tab: SearchEverywhereTabWithMlRanking): Boolean {
     return experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
   }
 

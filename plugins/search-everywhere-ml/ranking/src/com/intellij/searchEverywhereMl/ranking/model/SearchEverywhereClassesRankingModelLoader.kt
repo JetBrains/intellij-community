@@ -1,6 +1,6 @@
 package com.intellij.searchEverywhereMl.ranking.model
 
-import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereTabWithMl
 import com.intellij.internal.ml.DecisionFunction
 
 internal class SearchEverywhereClassesRankingModelLoader : SearchEverywhereMLRankingModelLoader() {
@@ -9,8 +9,7 @@ internal class SearchEverywhereClassesRankingModelLoader : SearchEverywhereMLRan
   private val expResourceDirectory = "classes_features_exp"
   private val expModelDirectory = "classes_model_exp"
 
-
-  override val supportedTab: String = ClassSearchEverywhereContributor::class.java.simpleName
+  override val supportedTab = SearchEverywhereTabWithMl.CLASSES
 
   override fun getBundledModel(): DecisionFunction {
     return if (shouldProvideExperimentalModel())
