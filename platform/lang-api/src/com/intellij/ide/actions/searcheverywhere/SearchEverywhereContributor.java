@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,6 +116,9 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
   @Nullable
   @Nls
   default String getAdvertisement() { return null; }
+
+  @ApiStatus.Experimental
+  default boolean isSemantic() { return false; }
 
   @NotNull
   default List<AnAction> getActions(@NotNull Runnable onChanged) {

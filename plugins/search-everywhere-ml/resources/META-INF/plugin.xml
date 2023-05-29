@@ -17,6 +17,7 @@
     <module name="intellij.searchEverywhereMl.ranking"/>
     <module name="intellij.searchEverywhereMl.ranking.yaml"/>
     <module name="intellij.searchEverywhereMl.ranking.vcs"/>
+    <module name="intellij.searchEverywhereMl.semantics"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

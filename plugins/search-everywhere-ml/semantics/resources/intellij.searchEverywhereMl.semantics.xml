@@ -1,0 +1,27 @@
+<idea-plugin package="com.intellij.searchEverywhereMl.semantics">
+
+  <resource-bundle>messages.searchEverywhereMlSemanticsBundle</resource-bundle>
+
+  <incompatible-with>com.intellij.modules.androidstudio</incompatible-with>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <searchEverywhereContributor
+      implementation="com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSearchEverywhereContributor$Companion$Factory" />
+
+    <registryKey defaultValue="true"
+                 description="Use remote model for Action candidates retrieval"
+                 key="search.everywhere.ml.semantic.actions.use.server.model"/>
+
+    <registryKey defaultValue="true"
+                 description="Use remote model for Action candidates retrieval"
+                 key="search.everywhere.ml.semantic.actions.use.remote.model"/>
+
+    <registryKey defaultValue="http://localhost:8239/actions/similarity"
+                 description="Remote semantic model host for the Actions tab"
+                 key="search.everywhere.ml.semantic.actions.local.host"/>
+
+    <registryKey defaultValue="https://se-semantics.labs.jb.gg/actions/similarity"
+                 description="Remote semantic model host for the Actions tab"
+                 key="search.everywhere.ml.semantic.actions.remote.host"/>
+  </extensions>
+</idea-plugin>

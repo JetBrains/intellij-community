@@ -7,6 +7,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.actions.searcheverywhere.PossiblySemanticElement;
 import com.intellij.ide.ui.RegistryTextOptionDescriptor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -98,7 +99,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return event.getUpdateSession();
   }
 
-  void buildGroupMappings() {
+  public void buildGroupMappings() {
     if (!myActionGroups.isEmpty()) return;
     ActionGroup mainMenu = Objects.requireNonNull((ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU));
     ActionGroup keymapOthers = Objects.requireNonNull((ActionGroup)myActionManager.getActionOrStub("Other.KeymapGroup"));
@@ -169,20 +170,27 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     myUpdateSession = newUpdateSession();
   }
 
-  public enum MatchedValueType {ABBREVIATION, INTENTION, TOP_HIT, OPTION, ACTION}
+  public enum MatchedValueType {ABBREVIATION, INTENTION, TOP_HIT, OPTION, ACTION, SEMANTIC}
 
-  public static class MatchedValue implements UiInspectorContextProvider {
+  public static class MatchedValue implements PossiblySemanticElement, UiInspectorContextProvider {
     @NotNull public final Object value;
     @NotNull final MatchedValueType type;
     @NotNull final String pattern;
     final int matchingDegree;
 
-    MatchedValue(@NotNull Object value, @NotNull String pattern, @NotNull MatchedValueType type) {
+    public Double similarityScore = null;
+
+    public MatchedValue(@NotNull Object value, @NotNull String pattern, @NotNull MatchedValueType type) {
       assert value instanceof OptionDescription || value instanceof ActionWrapper;
       this.value = value;
       this.pattern = pattern;
       matchingDegree = calcMatchingDegree();
       this.type = type;
+    }
+
+    public MatchedValue(@NotNull Object value, @NotNull String pattern, @NotNull MatchedValueType type, double similarityScore) {
+      this(value, pattern, type);
+      this.similarityScore = similarityScore;
     }
 
     MatchedValue(@NotNull Object value, @NotNull String pattern, int degree, @NotNull MatchedValueType type) {
@@ -191,6 +199,20 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       this.pattern = pattern;
       matchingDegree = degree;
       this.type = type;
+    }
+
+    @Override
+    public void mergeWith(Object other) {
+      if (other instanceof MatchedValue otherMatchedValue) {
+        if (otherMatchedValue.type == MatchedValueType.SEMANTIC) {
+          similarityScore = otherMatchedValue.similarityScore;
+        }
+      }
+    }
+
+    @Override
+    public boolean isSemantic() {
+      return similarityScore != null;
     }
 
     @Nullable
@@ -406,7 +428,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   }
 
   @Nullable
-  GroupMapping getGroupMapping(@NotNull AnAction action) {
+  public GroupMapping getGroupMapping(@NotNull AnAction action) {
     return myActionGroups.get(action);
   }
 
