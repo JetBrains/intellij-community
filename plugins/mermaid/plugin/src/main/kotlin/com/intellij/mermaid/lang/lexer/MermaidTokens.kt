@@ -413,6 +413,9 @@ object MermaidTokens {
     val PAR = MermaidToken("Sequence.PAR")
 
     @JvmField
+    val PAR_OVER = MermaidToken("Sequence.PAR_OVER")
+
+    @JvmField
     val AND = MermaidToken("Sequence.AND")
 
     @JvmField

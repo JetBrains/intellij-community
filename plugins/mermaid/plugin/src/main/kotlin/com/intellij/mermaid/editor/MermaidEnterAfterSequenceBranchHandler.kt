@@ -43,6 +43,7 @@ internal class MermaidEnterAfterSequenceBranchHandler : EnterHandlerDelegateAdap
     position.moveBeforeNotAtOptionalMix(
       MermaidTokens.Sequence.ALT,
       MermaidTokens.Sequence.PAR,
+      MermaidTokens.Sequence.PAR_OVER,
       MermaidTokens.Sequence.CRITICAL
     )
     if (position.iterator.atEnd()) return Result.Continue

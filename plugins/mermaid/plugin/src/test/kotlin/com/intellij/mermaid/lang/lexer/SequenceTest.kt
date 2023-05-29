@@ -142,4 +142,27 @@ class SequenceTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test par_over`() {
+    val content = """
+    sequenceDiagram
+      participant Alice
+      participant Bob
+      participant John
+      par_over Section title
+        Alice ->> Bob: Message 1<br>Second line
+        Bob ->> John: Message 2
+      end
+      par_over Two line<br>section title
+        Note over Alice: Alice note
+        Note over Bob: Bob note<br>Second line
+        Note over John: John note
+      end
+      par_over Mixed section
+        Alice ->> Bob: Message 1
+        Note left of Bob: Alice/Bob Note
+      end
+    """.trimIndent()
+    doTest(content)
+  }
 }

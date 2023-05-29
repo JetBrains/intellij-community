@@ -181,6 +181,7 @@ sequenceStatement ::= actorStatement
   | boxStatement
   | altStatement
   | parStatement
+  | parOverStatement
   | criticalStatement
   | directive
   | accStatement
@@ -217,6 +218,9 @@ altHeader ::= ALT [complexControlId]
 
 parStatement ::= parHeader EOL+ [sequenceBody] [EOL* andSections] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
 parHeader ::= PAR [complexControlId]
+
+parOverStatement ::= parOverHeader EOL+ [sequenceBody] [EOL* andSections] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+parOverHeader ::= PAR_OVER [complexControlId]
 
 criticalStatement ::= criticalHeader EOL+ [sequenceBody] [EOL* optionSections] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
 criticalHeader ::= CRITICAL [complexControlId]

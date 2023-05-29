@@ -102,7 +102,7 @@ class DirectionCompletionProvider :
 class PieShowDataCompletionProvider : MermaidSimpleCompletionProvider(listOf("showData"))
 
 class SequenceBlockCompletionProvider : MermaidLiveTemplateCompletionProvider() {
-  private val keywords = listOf("loop", "alt", "opt", "par", "rect", "critical", "break", "box")
+  private val keywords = listOf("loop", "alt", "opt", "par", "par_over", "rect", "critical", "break", "box")
 
   override fun addCompletions(
     parameters: CompletionParameters,

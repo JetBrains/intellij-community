@@ -75,6 +75,7 @@ object MermaidTokenTypeSets {
     MermaidTokens.Sequence.ALT,
     MermaidTokens.Sequence.OPT,
     MermaidTokens.Sequence.PAR,
+    MermaidTokens.Sequence.PAR_OVER,
     MermaidTokens.Sequence.RECT,
     MermaidTokens.Sequence.CRITICAL,
     MermaidTokens.Sequence.ELSE,

@@ -81,6 +81,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.Sequence.ELSE,
         MermaidTokens.Sequence.OPT,
         MermaidTokens.Sequence.PAR,
+        MermaidTokens.Sequence.PAR_OVER,
         MermaidTokens.Sequence.AND,
         MermaidTokens.Sequence.RECT,
         MermaidTokens.Sequence.CRITICAL,

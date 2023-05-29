@@ -96,6 +96,11 @@ class MermaidCompletionContributor : CompletionContributor() {
     )
     extend(
       CompletionType.BASIC,
+      psiElement().insideBlock(psiElement(MermaidTokens.Sequence.PAR_OVER)),
+      SequenceSimpleCompletionProvider("and")
+    )
+    extend(
+      CompletionType.BASIC,
       psiElement().insideBlock(psiElement(MermaidTokens.Sequence.CRITICAL)),
       SequenceSimpleCompletionProvider("option")
     )
@@ -107,6 +112,7 @@ class MermaidCompletionContributor : CompletionContributor() {
           psiElement(MermaidTokens.Sequence.ALT),
           psiElement(MermaidTokens.Sequence.OPT),
           psiElement(MermaidTokens.Sequence.PAR),
+          psiElement(MermaidTokens.Sequence.PAR_OVER),
           psiElement(MermaidTokens.Sequence.CRITICAL),
           psiElement(MermaidTokens.Sequence.BREAK),
           psiElement(MermaidTokens.Sequence.RECT),

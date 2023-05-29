@@ -21,6 +21,7 @@ class MermaidPairMatcher : PairedBraceMatcherAdapter(MyPairedBraceMatcher(), Mer
         BracePair(MermaidTokens.Sequence.ALT, MermaidTokens.END, true),
         BracePair(MermaidTokens.Sequence.OPT, MermaidTokens.END, true),
         BracePair(MermaidTokens.Sequence.PAR, MermaidTokens.END, true),
+        BracePair(MermaidTokens.Sequence.PAR_OVER, MermaidTokens.END, true),
         BracePair(MermaidTokens.Sequence.RECT, MermaidTokens.END, true),
         BracePair(MermaidTokens.Sequence.CRITICAL, MermaidTokens.END, true),
         BracePair(MermaidTokens.Sequence.BREAK, MermaidTokens.END, true),

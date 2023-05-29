@@ -374,6 +374,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "else" { yybegin(sequence_control_id); return Sequence.ELSE; }
   "opt" { yybegin(sequence_control_id); return Sequence.OPT; }
   "par" { yybegin(sequence_control_id); return Sequence.PAR; }
+  "par_over" { yybegin(sequence_control_id); return Sequence.PAR_OVER; }
   "and" { yybegin(sequence_control_id); return Sequence.AND; }
   "rect" { yybegin(sequence_control_id); return Sequence.RECT; }
   "critical" { yybegin(sequence_control_id); return Sequence.CRITICAL; }

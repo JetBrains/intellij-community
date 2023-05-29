@@ -40,6 +40,7 @@ internal object MermaidSpacingBuilder {
     MermaidTokens.Sequence.OPT,
     MermaidTokens.Sequence.ALT,
     MermaidTokens.Sequence.PAR,
+    MermaidTokens.Sequence.PAR_OVER,
     MermaidTokens.Sequence.ELSE,
     MermaidTokens.Sequence.AND,
     MermaidTokens.Sequence.CRITICAL,

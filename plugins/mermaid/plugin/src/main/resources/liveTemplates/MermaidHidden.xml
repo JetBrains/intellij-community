@@ -54,6 +54,17 @@
     </context>
   </template>
 
+  <template id="mermaid_par_over" name="mermaid_par_over"
+            value="par_over $ID$ &#10;$INDENT$$END$$SELECTION$&#10;end"
+            description="par_over statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
   <template id="mermaid_rect" name="mermaid_rect"
             value="rect rgb($ID)$ &#10;$INDENT$$END$$SELECTION$&#10;end"
             description="rect statement"
