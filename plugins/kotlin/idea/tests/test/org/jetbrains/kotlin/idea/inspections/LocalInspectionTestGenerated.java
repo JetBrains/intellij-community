@@ -12739,6 +12739,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/toString/intToString2.kt");
             }
 
+            @TestMetadata("intToStringWithInvalidLiteralRadix.kt")
+            public void testIntToStringWithInvalidLiteralRadix() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/toString/intToStringWithInvalidLiteralRadix.kt");
+            }
+
+            @TestMetadata("intToStringWithLiteralRadix.kt")
+            public void testIntToStringWithLiteralRadix() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/toString/intToStringWithLiteralRadix.kt");
+            }
+
             @TestMetadata("longToString.kt")
             public void testLongToString() throws Exception {
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/toString/longToString.kt");

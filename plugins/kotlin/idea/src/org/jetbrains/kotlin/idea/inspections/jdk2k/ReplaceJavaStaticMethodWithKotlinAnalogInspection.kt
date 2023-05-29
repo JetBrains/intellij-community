@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
@@ -87,8 +88,19 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
             "Float" to "Float"
         ).flatMap { (javaPrimitive, kotlinPrimitive) ->
             listOf(
+                // If radix is not a literal, it is considered an unsafe replacement (Kotlin has checks for an invalid radix)
+                Replacement("java.lang.$javaPrimitive.toString", "kotlin.text.toString", ToExtensionFunctionWithNonNullableReceiver, mayChangeSemantics = true) {
+                    if (it.valueArguments.size != 2) return@Replacement false
+                    val radix = it.valueArguments.last().getArgumentExpression()
+                    radix !is KtConstantExpression
+                },
+                // If radix is an int literal within bounds, the conversion is safe
                 Replacement("java.lang.$javaPrimitive.toString", "kotlin.text.toString", ToExtensionFunctionWithNonNullableReceiver) {
-                    it.valueArguments.size == 2
+                    if (it.valueArguments.size != 2) return@Replacement false
+                    val radixExpr = it.valueArguments.last().getArgumentExpression()
+                    if (radixExpr !is KtConstantExpression) return@Replacement false
+                    val radix = radixExpr.text.toIntOrNull() ?: return@Replacement false
+                    radix in 2..36
                 },
                 Replacement(
                     "java.lang.$javaPrimitive.toString",
