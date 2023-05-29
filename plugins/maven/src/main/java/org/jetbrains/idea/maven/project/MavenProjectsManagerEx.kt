@@ -233,10 +233,10 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   override fun scheduleResolveSync(callback: Runnable?): AsyncPromise<List<Module>> {
-    return runBlockingCancellableUnderIndicator { scheduleResolve(callback) }
+    return runBlockingCancellableUnderIndicator { resolveAndImport(callback) }
   }
 
-  private suspend fun scheduleResolve(callback: Runnable?): AsyncPromise<List<Module>> {
+  private suspend fun resolveAndImport(callback: Runnable?): AsyncPromise<List<Module>> {
     val result = AsyncPromise<List<Module>>()
 
     val projectsToResolve = LinkedHashSet(myProjectsToResolve)
