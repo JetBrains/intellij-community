@@ -96,7 +96,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenProjectsManagerWatcher myWatcher;
 
   private MavenProjectsProcessor myReadingProcessor;
-  private MavenProjectsProcessor myPluginsResolvingProcessor;
   private MavenProjectsProcessor myArtifactsDownloadingProcessor;
 
   protected MavenMergingUpdateQueue myImportingQueue;
@@ -408,8 +407,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void initWorkers() {
     myReadingProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.reading"), false, myEmbeddersManager);
-    myPluginsResolvingProcessor =
-      new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true, myEmbeddersManager);
     myArtifactsDownloadingProcessor =
       new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.downloading"), true, myEmbeddersManager);
 
@@ -550,7 +547,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       myWatcher.stop();
 
       myReadingProcessor.stop();
-      myPluginsResolvingProcessor.stop();
       myArtifactsDownloadingProcessor.stop();
       mySaveQueue.flush();
 
@@ -974,9 +970,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       if (myArtifactsDownloadingProcessor != null) {
         myArtifactsDownloadingProcessor.waitForCompletion();
       }
-      if (myPluginsResolvingProcessor != null) {
-        myPluginsResolvingProcessor.waitForCompletion();
-      }
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         MavenProgressIndicator.MavenProgressTracker mavenProgressTracker =
           myProject.getServiceIfCreated(MavenProgressIndicator.MavenProgressTracker.class);
@@ -1118,7 +1111,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void waitForPluginsResolvingCompletion() {
-    waitForTasksCompletion(myPluginsResolvingProcessor);
+    waitForTasksCompletion(null);
   }
 
   public void waitForArtifactsDownloadingCompletion() {
