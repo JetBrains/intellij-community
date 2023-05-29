@@ -15,5 +15,7 @@
   <content>
     <module name="intellij.searchEverywhereMl.typos"/>
     <module name="intellij.searchEverywhereMl.ranking"/>
+    <module name="intellij.searchEverywhereMl.ranking.yaml"/>
+    <module name="intellij.searchEverywhereMl.ranking.vcs"/>
   </content>
 </idea-plugin>

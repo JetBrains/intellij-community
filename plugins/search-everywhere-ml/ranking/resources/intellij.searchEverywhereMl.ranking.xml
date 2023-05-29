@@ -8,11 +8,6 @@
     As an experiment, some portion of users will also have it enabled in the All tab.</i>
   ]]></description>
 
-  <content>
-    <module name="intellij.searchEverywhereMl.ranking.yaml"/>
-    <module name="intellij.searchEverywhereMl.ranking.vcs"/>
-  </content>
-
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
