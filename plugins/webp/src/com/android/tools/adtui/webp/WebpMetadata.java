@@ -20,7 +20,6 @@ import com.intellij.openapi.application.Application;
 import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Node;
 
-import javax.imageio.metadata.IIOInvalidTreeException;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.spi.IIORegistry;
@@ -69,7 +68,7 @@ public final class WebpMetadata extends IIOMetadata {
   }
 
   @Override
-  public void mergeTree(String formatName, Node root) throws IIOInvalidTreeException {
+  public void mergeTree(String formatName, Node root) {
   }
 
   @Override

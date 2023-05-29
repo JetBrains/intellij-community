@@ -41,7 +41,7 @@ import java.util.Locale;
  *
  * @see IIORegistry
  */
-public class WebpImageReaderSpi extends ImageReaderSpi {
+public final class WebpImageReaderSpi extends ImageReaderSpi {
   private static final byte[] RIFF_HEADER = {'R', 'I', 'F', 'F'};
   private static final byte[] WEBP_HEADER = {'W', 'E', 'B', 'P'};
 
