@@ -311,6 +311,17 @@
       "background": "Grey14"
     },
 
+    "Review": {
+      "Branch": {
+        "Background": "Grey12",
+        "Background.Hover": "Grey11"
+      },
+      "State": {
+        "Background": "Grey11",
+        "Foreground": "Grey6"
+      }
+    },
+
     "MenuItem.background": "Grey14",
 
     "MainMenu": {

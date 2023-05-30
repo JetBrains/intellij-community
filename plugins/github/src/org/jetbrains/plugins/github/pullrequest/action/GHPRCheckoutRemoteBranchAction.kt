@@ -3,6 +3,7 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.action.CodeReviewCheckoutRemoteBranchAction
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -12,7 +13,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsNotifier
@@ -29,11 +29,7 @@ import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubSettings
 
-class GHPRCheckoutRemoteBranchAction : DumbAwareAction(
-  CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action"),
-  CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description"),
-  null
-) {
+class GHPRCheckoutRemoteBranchAction : CodeReviewCheckoutRemoteBranchAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {

@@ -362,6 +362,17 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonMenuItemUI"
     },
 
+    "Review": {
+      "Branch": {
+        "Background": "#45494A",
+        "Background.Hover": "#525758"
+      },
+      "State": {
+        "Background": "#45494A",
+        "Foreground": "#8C8C8C"
+      }
+    },
+
     "RootPaneUI":{
       "os.windows": "com.intellij.ide.ui.laf.darcula.ui.DarculaRootPaneUI"
     },

@@ -377,6 +377,17 @@
     "PopupMenu": {
     },
 
+    "Review": {
+      "Branch": {
+        "Background": "Grey3",
+        "Background.Hover": "Grey4"
+      },
+      "State": {
+        "Background": "Grey3",
+        "Foreground": "Grey7"
+      }
+    },
+
     "ComplexPopup.Header.background": "Grey3",
 
     "CompletionPopup": {

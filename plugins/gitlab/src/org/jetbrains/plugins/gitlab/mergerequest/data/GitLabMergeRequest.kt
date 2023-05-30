@@ -36,7 +36,7 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val title: Flow<String>
   val description: Flow<String>
   val descriptionHtml: Flow<String>
-  val targetBranch: Flow<String>
+  val targetBranch: StateFlow<String>
   val sourceBranch: StateFlow<String>
   val hasConflicts: Flow<Boolean>
   val isDraft: Flow<Boolean>
@@ -113,7 +113,7 @@ internal class LoadedGitLabMergeRequest(
   override val title: Flow<String> = mergeRequestDetailsState.map { it.title }
   override val description: Flow<String> = mergeRequestDetailsState.map { it.description }
   override val descriptionHtml: Flow<String> = description.map { if(it.isNotBlank()) GitLabUIUtil.convertToHtml(it) else it }
-  override val targetBranch: Flow<String> = mergeRequestDetailsState.map { it.targetBranch }
+  override val targetBranch: StateFlow<String> = mergeRequestDetailsState.mapState(cs) { it.targetBranch }
   override val sourceBranch: StateFlow<String> = mergeRequestDetailsState.mapState(cs) { it.sourceBranch }
   override val hasConflicts: Flow<Boolean> = mergeRequestDetailsState.map { it.conflicts }
   override val isDraft: Flow<Boolean> = mergeRequestDetailsState.map { it.draft }
