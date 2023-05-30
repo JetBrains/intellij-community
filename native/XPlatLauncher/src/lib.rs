@@ -108,11 +108,11 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
 
 #[cfg(target_os = "macos")]
 fn restore_working_directory() -> Result<()> {
-    let (cmd_var, pwd_var) = (env::var("_"), env::var("PWD"));
-    debug!("Detecting launch via `/usr/bin/open`: _={:?} PWD={:?}", cmd_var, pwd_var);
+    let (cwd_res, pwd_var) = (env::current_dir(), env::var("PWD"));
+    debug!("Adjusting current directory (current={:?} $PWD={:?})", cwd_res, pwd_var);
 
-    if let Ok(cmd) = cmd_var {
-        if cmd == "/usr/bin/open" {
+    if let Ok(cwd) = cwd_res {
+        if cwd == PathBuf::from("/") {
             if let Ok(pwd) = pwd_var {
                 env::set_current_dir(&pwd)
                     .with_context(|| format!("Cannot set current directory to '{pwd}'"))?;
