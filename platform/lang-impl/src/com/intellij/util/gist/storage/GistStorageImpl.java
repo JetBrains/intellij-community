@@ -1,10 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.gist.storage;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
@@ -21,8 +19,8 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.progress.CancellationUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +35,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static com.intellij.util.io.IOUtil.KiB;
@@ -181,6 +180,9 @@ public class GistStorageImpl extends GistStorage {
     private final int version;
     private final DataExternalizer<Data> externalizer;
 
+    /** Protects put/get operations. So far it seems there is no need for RWLock here. */
+    private final transient ReentrantLock lock = new ReentrantLock();
+
     public GistImpl(@NotNull @NonNls String id,
                     int version,
                     @NotNull DataExternalizer<Data> externalizer) {
@@ -207,56 +209,71 @@ public class GistStorageImpl extends GistStorage {
     public @NotNull GistData<Data> getProjectData(@Nullable Project project,
                                                   @NotNull VirtualFile file,
                                                   int expectedGistStamp) throws IOException {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-      ProgressManager.checkCanceled();
+      FileAttribute fileAttribute = fileAttributeFor(project, id, version);
 
-      try (DataInputStream stream = fileAttributeFor(project, id, version).readFileAttribute(file)) {
-        if (stream == null) {
-          return GistData.empty();
-        }
-        int persistedGistStamp = DataInputOutputUtil.readINT(stream);
-        int persistedGistValueKind = stream.read();
-        boolean persistedGistValueIsActual = (persistedGistStamp == expectedGistStamp);
-        if (!persistedGistValueIsActual) {
-          return GistData.outdated(persistedGistStamp);
-        }
-        switch (persistedGistValueKind) {
-          case VALUE_KIND_NULL -> {
-            return GistData.valid(
-              null,
-              persistedGistStamp
-            );
+      CancellationUtil.lockMaybeCancellable(lock);
+      try {
+        try (DataInputStream stream = fileAttribute.readFileAttribute(file)) {
+          if (stream == null) {
+            return GistData.empty();
           }
-          case VALUE_KIND_INLINE -> {
-            return GistData.valid(
-              externalizer.read(stream),
-              persistedGistStamp
-            );
+
+          //attribute content: <gistStamp:int>, <valueKind:byte>, <payload...>?
+          //  gistStamp: int
+          //  valueKind: byte (0,1,2)
+          //             0: (gist value is null)
+          //             1: (gist value is stored inline, in VFS attribute)
+          //                gistData: byte[]
+          //             2: (gist value is stored in a dedicated file '<HUGE_GIST_DIR>/<fileId>.<gistPathSuffix>')
+          //                gistPathSuffix: UTF8 string (as per IOUtil.readUTF)
+
+          int persistedGistStamp = stream.readInt();
+          int persistedGistValueKind = stream.read();
+          boolean persistedGistValueIsActual = (persistedGistStamp == expectedGistStamp);
+          if (!persistedGistValueIsActual) {
+            return GistData.outdated(persistedGistStamp);
           }
-          case VALUE_KIND_IN_DEDICATED_FILE -> {
-            String gistPathSuffix = IOUtil.readUTF(stream);
-            Path gistPath = dedicatedGistFilePath(file, gistPathSuffix);
-            if (!Files.exists(gistPath)) {
-              //looks like data corruption: if gist value was indeed null, we would have stored it as VALUE_KIND_NULL
-              throw new IOException("Gist file [" + gistPath + "] doesn't exists -> looks like data corruption?");
-            }
-            try (DataInputStream gistStream = new DataInputStream(Files.newInputStream(gistPath, READ))) {
+          switch (persistedGistValueKind) {
+            case VALUE_KIND_NULL -> {
               return GistData.valid(
-                externalizer.read(gistStream),
+                null,
                 persistedGistStamp
               );
             }
-          }
+            case VALUE_KIND_INLINE -> {
+              return GistData.valid(
+                externalizer.read(stream),
+                persistedGistStamp
+              );
+            }
+            case VALUE_KIND_IN_DEDICATED_FILE -> {
+              String gistPathSuffix = IOUtil.readUTF(stream);
+              Path gistPath = dedicatedGistFilePath(file, gistPathSuffix);
+              if (!Files.exists(gistPath)) {
+                //looks like data corruption: if gist value was indeed null, we would have stored it as VALUE_KIND_NULL
+                throw new IOException("Gist file [" + gistPath + "] doesn't exists -> looks like data corruption?");
+              }
+              try (DataInputStream gistStream = new DataInputStream(Files.newInputStream(gistPath, READ))) {
+                return GistData.valid(
+                  externalizer.read(gistStream),
+                  persistedGistStamp
+                );
+              }
+            }
 
-          default ->
-            throw new IOException("Unrecognized gist.valueKind(=" + persistedGistValueKind + "): incorrect (outdated?) gist format");
+            default ->
+              throw new IOException("Unrecognized gist.valueKind(=" + persistedGistValueKind + "): incorrect (outdated?) gist format");
+          }
+        }
+        catch (ProcessCanceledException pce) {
+          throw pce;
+        }
+        catch (Exception e) {
+          throw new IOException("Can't read " + this, e);
         }
       }
-      catch (ProcessCanceledException pce) {
-        throw pce;
-      }
-      catch (Exception e) {
-        throw new IOException("Can't read " + this, e);
+      finally {
+        lock.unlock();
       }
     }
 
@@ -265,25 +282,20 @@ public class GistStorageImpl extends GistStorage {
                                @NotNull VirtualFile file,
                                @Nullable Data data,
                                int gistStamp) throws IOException {
-      //MAYBE RC: Do we want to allow put-operations under read-action?
-      //          Maybe assert_Write_AccessAllowed()? -- but now all the tests are under read-action only
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-      ProgressManager.checkCanceled();
-
-      //attribute content: <gistStamp:int>, <valueKind:byte>, <gistData:byte[]>?
-      //  gistStamp: int
-      //  valueKind: byte (0,1,2)
-      //             0: (gist value is null)
-      //             1: (gist value is stored inline, in VFS attribute)
-      //                gistData: byte[]
-      //             2: (gist value is stored in a dedicated file '<HUGE_GIST_DIR>/<fileId>.<gistPathSuffix>')
-      //                gistPathSuffix: UTF8 string
-
       FileAttribute fileAttribute = fileAttributeFor(project, id, version);
+      CancellationUtil.lockMaybeCancellable(lock);
       try {
+        //attribute content: <gistStamp:int>, <valueKind:byte>, <payload...>?
+        //  gistStamp: int
+        //  valueKind: byte (0,1,2)
+        //             0: (gist value is null)
+        //             1: (gist value is stored inline, in VFS attribute)
+        //                gistData: byte[]
+        //             2: (gist value is stored in a dedicated file '<HUGE_GIST_DIR>/<fileId>.<gistPathSuffix>')
+        //                gistPathSuffix: UTF8 string (as per IOUtil.readUTF)
         if (data == null) {
           try (DataOutputStream attributeStream = fileAttribute.writeFileAttribute(file)) {
-            DataInputOutputUtil.writeINT(attributeStream, gistStamp);
+            attributeStream.writeInt(gistStamp);
             attributeStream.writeByte(VALUE_KIND_NULL);
           }
           return;
@@ -292,8 +304,7 @@ public class GistStorageImpl extends GistStorage {
         if (MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES <= 0) {
           //fast path: avoid temporary intermediate buffers
           try (DataOutputStream attributeStream = fileAttribute.writeFileAttribute(file)) {
-            DataInputOutputUtil.writeINT(attributeStream, gistStamp);
-
+            attributeStream.writeInt(gistStamp);
             attributeStream.writeByte(VALUE_KIND_INLINE);
             externalizer.save(attributeStream, data);
             return;
@@ -307,7 +318,7 @@ public class GistStorageImpl extends GistStorage {
         String gistFileSuffix = null;
         try (AttributeInputStream attributeStream = fileAttribute.readFileAttribute(file)) {
           if (attributeStream != null) {
-            DataInputOutputUtil.readINT(attributeStream);//gistStamp
+            attributeStream.readInt();//gistStamp
             byte valueKind = attributeStream.readByte();
             if (valueKind == VALUE_KIND_IN_DEDICATED_FILE) {
               gistFileSuffix = IOUtil.readUTF(attributeStream);
@@ -316,11 +327,11 @@ public class GistStorageImpl extends GistStorage {
         }
 
         try (DataOutputStream attributeStream = fileAttribute.writeFileAttribute(file)) {
-          DataInputOutputUtil.writeINT(attributeStream, gistStamp);
+          attributeStream.writeInt(gistStamp);
 
-          //slow path: first save gist into a temporary buffer, check gist size, and decide
-          //           there to store the gist content -- inline in attribute, or in a dedicated file
-          
+          //save gist into a temporary buffer, check gist size, and decide there to store
+          // the gist content -- inline in attribute, or in a dedicated file:
+
           BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
           DataOutputStream temporaryStream = new DataOutputStream(outputStream);
           externalizer.save(temporaryStream, data);
@@ -356,6 +367,9 @@ public class GistStorageImpl extends GistStorage {
       }
       catch (Exception e) {
         throw new IOException("Can't store gist[" + id + "]@[" + file + "]", e);
+      }
+      finally {
+        lock.unlock();
       }
     }
 

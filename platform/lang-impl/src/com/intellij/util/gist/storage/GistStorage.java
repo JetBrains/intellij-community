@@ -23,15 +23,18 @@ import java.util.NoSuchElementException;
  * of VFS file attributes, from 'middle level' code.
  * <p>
  * Versioning: {@link Gist} has a 'version' -- think of it as a version of a _binary format_ used.
- * Also specific gist's data _value_ assigned a 'stamp' -- think of it as a _value_ 'version'. I.e.
- * you store value with specific .stamp, and read value expected .stamp given -- and if the expected
+ * Also, specific gist's data _value_ could be assigned a 'stamp' -- think of it as a _value_ 'version'.
+ * I.e. you store value with specific .stamp, and read value expected .stamp given -- and if the expected
  * stamp is not the same as was really stored along with the value -- then you get 'no value' back.
- * (If you don't need to track value stamps -- you could just ignore it and always use stamp=0)
+ * (If you don't need to track value stamps -- you could just always use stamp=0)
  * <p>
  * ({@link GistStorage} is initially created for storing {@link VirtualFileGist}, hence some API peculiarities,
  * and hence it is marked as @Internal)
  * <p>
- * If you're about to use {@link GistStorage} service to _cache_ something file-associated -- please,
+ * Locking: {@link GistStorage} and {@link Gist} themselves do not require any locking, nor read-write action.
+ * But externalizer could require locking, and it is up to the caller to ensure apt locks are acquired.
+ * <p>
+ * If you're about to use {@link GistStorage} service to _cache_ some file-associated computation -- please,
  * consider {@link VirtualFileGist} first: likely {@link VirtualFileGist} fits better, and it is more
  * high-level API.
  *
