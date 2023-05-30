@@ -201,7 +201,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
           override fun getBottom() = 1.2
           override fun getRight() = 1.2
         }
-        resultIcon = TextHoledIcon(icon.allLayers[0], text, JBUIScale.scale(12.0f), JBUI.CurrentTheme.RunWidget.FOREGROUND, provider)
+        resultIcon = TextHoledIcon(icon.allLayers[0], text, JBUIScale.scale(12.0f), JBUI.CurrentTheme.RunWidget.RUNNING_ICON_COLOR, provider)
       }
     }
 
