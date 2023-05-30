@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
@@ -18,7 +20,9 @@ import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.ProfileApplicationResult;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
-import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -520,7 +524,7 @@ public final class MavenProjectReader {
                                                              MavenExplicitProfiles explicitProfiles,
                                                              MavenProjectReaderProjectLocator locator)
     throws MavenProcessCanceledException {
-    return resolveProject(generalSettings, embedder, files, explicitProfiles, locator, null, null, null, false);
+    return resolveProject(generalSettings, embedder, files, explicitProfiles, locator, null, null, null, null, false);
   }
 
   public Collection<MavenProjectReaderResult> resolveProject(MavenGeneralSettings generalSettings,
@@ -528,14 +532,15 @@ public final class MavenProjectReader {
                                                              Collection<VirtualFile> files,
                                                              MavenExplicitProfiles explicitProfiles,
                                                              MavenProjectReaderProjectLocator locator,
-                                                             @Nullable MavenProgressIndicator process,
+                                                             @Nullable ProgressIndicator process,
+                                                             @Nullable MavenSyncConsole syncConsole,
                                                              @Nullable MavenConsole console,
                                                              @Nullable MavenWorkspaceMap workspaceMap,
                                                              boolean updateSnapshots)
     throws MavenProcessCanceledException {
     try {
       Collection<MavenServerExecutionResult> executionResults =
-        embedder.resolveProject(files, explicitProfiles, process, console, workspaceMap, updateSnapshots);
+        embedder.resolveProject(files, explicitProfiles, process, syncConsole, console, workspaceMap, updateSnapshots);
       Map<String, VirtualFile> filesMap = CollectionFactory.createFilePathMap();
       filesMap.putAll(files.stream().collect(toMap(VirtualFile::getPath, Function.identity())));
 

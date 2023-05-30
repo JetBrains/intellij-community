@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.ide.plugins.advertiser.PluginFeatureEnabler;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenConfigBuildIssue;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -20,7 +22,10 @@ import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
-import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.ParallelRunner;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -43,7 +48,8 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
                                               @NotNull MavenGeneralSettings generalSettings,
                                               @NotNull MavenEmbeddersManager embeddersManager,
                                               @NotNull MavenConsole console,
-                                              @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
+                                              @NotNull ProgressIndicator process,
+                                              @Nullable MavenSyncConsole syncConsole) throws MavenProcessCanceledException {
     boolean updateSnapshots = MavenProjectsManager.getInstance(myProject).getForceUpdateSnapshots() || generalSettings.isAlwaysUpdateSnapshots();
     var projectsWithUnresolvedPlugins = new HashMap<String, Collection<MavenProjectWithHolder>>();
     MultiMap<String, MavenProject> projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, tree);
@@ -57,7 +63,7 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
           mavenProject.setConfigFileError(null);
         }
         var projectsWithUnresolvedPluginsChunk =
-          doResolve(mavenProjectsInBaseDir, tree, generalSettings, embedder, process, console, tree.getWorkspaceMap(), updateSnapshots);
+          doResolve(mavenProjectsInBaseDir, tree, generalSettings, embedder, process, syncConsole, console, tree.getWorkspaceMap(), updateSnapshots);
         projectsWithUnresolvedPlugins.put(baseDir, projectsWithUnresolvedPluginsChunk);
       }
       catch (Throwable t) {
@@ -106,7 +112,8 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
                                                        @NotNull MavenProjectsTree tree,
                                                        @NotNull MavenGeneralSettings generalSettings,
                                                        @NotNull MavenEmbedderWrapper embedder,
-                                                       @NotNull MavenProgressIndicator process,
+                                                       @NotNull ProgressIndicator process,
+                                                       @Nullable MavenSyncConsole syncConsole,
                                                        @NotNull MavenConsole console,
                                                        @Nullable MavenWorkspaceMap workspaceMap,
                                                        boolean updateSnapshots)
@@ -128,6 +135,7 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
       explicitProfiles,
       tree.getProjectLocator(),
       process,
+      syncConsole,
       console,
       workspaceMap,
       updateSnapshots);

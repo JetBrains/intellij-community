@@ -54,7 +54,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   @NotNull
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<VirtualFile> files,
                                                                @NotNull MavenExplicitProfiles explicitProfiles,
-                                                               @Nullable MavenProgressIndicator progressIndicator,
+                                                               @Nullable ProgressIndicator indicator,
+                                                               @Nullable MavenSyncConsole syncConsole,
                                                                @Nullable MavenConsole console,
                                                                @Nullable MavenWorkspaceMap workspaceMap,
                                                                boolean updateSnapshots)
@@ -72,8 +73,6 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
       updateSnapshots
     );
 
-    var indicator = null == progressIndicator ? null : progressIndicator.getIndicator();
-    var syncConsole = null == progressIndicator ? null : progressIndicator.getSyncConsole();
     var results = runLongRunningTask(
       (embedder, taskId) -> embedder.resolveProjects(taskId, request, ourToken), indicator, syncConsole, console);
 

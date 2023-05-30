@@ -197,12 +197,14 @@ class MavenImportFlow {
     }, d)
 
     val resolver = MavenProjectResolver.getInstance(context.project)
+    val mavenProgressIndicator = context.initialContext.indicator
     val resolutionResult = resolver.resolve(context.toResolve,
                                             context.projectsTree,
                                             context.initialContext.generalSettings,
                                             embeddersManager,
                                             consoleToBeRemoved,
-                                            context.initialContext.indicator)
+                                            mavenProgressIndicator.indicator,
+                                            mavenProgressIndicator.syncConsole)
     Disposer.dispose(d)
     val projectsWithUnresolvedPlugins = resolutionResult.projectsWithUnresolvedPlugins.values.flatten()
     return MavenResolvedContext(context.project, projectsToImport.toList(), projectsWithUnresolvedPlugins, context)

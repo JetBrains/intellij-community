@@ -246,7 +246,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     val resolutionResult = withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.resolving"), true) {
       runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorResolvingTask::class.java) {
         return@runImportActivity resolver.resolve(
-          projectsToResolve, projectsTree, generalSettings, embeddersManager, mavenConsole, indicator)
+          projectsToResolve, projectsTree, generalSettings, embeddersManager, mavenConsole, indicator.indicator, indicator.syncConsole)
       }
     }
 

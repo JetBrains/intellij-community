@@ -75,7 +75,7 @@ class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
 
     val resolvedProjects = mutableListOf<MavenProject>()
 
-    val resolverMock = MavenProjectResolver { mavenProjects, _, _, _, _, _ ->
+    val resolverMock = MavenProjectResolver { mavenProjects, _, _, _, _, _, _ ->
       resolvedProjects.addAll(mavenProjects)
       MavenProjectResolver.MavenProjectResolutionResult(mapOf())
     }
