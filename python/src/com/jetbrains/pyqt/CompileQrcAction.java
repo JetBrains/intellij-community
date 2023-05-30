@@ -21,6 +21,7 @@ import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.nio.file.Path;
 
 
 public class CompileQrcAction extends AnAction {
@@ -30,9 +31,9 @@ public class CompileQrcAction extends AnAction {
     VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     assert vFiles != null;
     Module module = e.getData(PlatformCoreDataKeys.MODULE);
-    String path = QtFileType.findQtTool(module, "pyrcc4");
+    Path path = PyQtPathProvider.findQtToolImpl(module, "pyrcc4");
     if (path == null) {
-      path = QtFileType.findQtTool(module, "pyside-rcc");
+      path = PyQtPathProvider.findQtToolImpl(module, "pyside-rcc");
     }
     if (path == null) {
       //noinspection DialogTitleCapitalization
@@ -46,7 +47,7 @@ public class CompileQrcAction extends AnAction {
       return;
     }
 
-    GeneralCommandLine cmdLine = new GeneralCommandLine(path, "-o", dialog.getOutputPath());
+    GeneralCommandLine cmdLine = new GeneralCommandLine(path.toString(), "-o", dialog.getOutputPath());
     for (VirtualFile vFile : vFiles) {
       cmdLine.addParameter(vFile.getPath());
     }

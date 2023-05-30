@@ -41,5 +41,6 @@
     <orderEntry type="module" module-name="intellij.dev" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.python" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.qt.plugin" scope="RUNTIME" />
   </component>
 </module>
