@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
+import com.intellij.build.SyncViewManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -19,11 +21,15 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
+import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.runBlockingCancellableUnderIndicator
@@ -39,6 +45,15 @@ interface MavenAsyncProjectsManager {
   fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module>
   fun importMavenProjectsSync(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
   fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider, projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
+  suspend fun downloadArtifacts(projects: Collection<MavenProject>,
+                                artifacts: Collection<MavenArtifact>?,
+                                sources: Boolean,
+                                docs: Boolean): MavenArtifactDownloader.DownloadResult
+
+  fun downloadArtifactsSync(projects: Collection<MavenProject>,
+                            artifacts: Collection<MavenArtifact>?,
+                            sources: Boolean,
+                            docs: Boolean): MavenArtifactDownloader.DownloadResult
 }
 
 open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(project) {
@@ -284,4 +299,56 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       return BTWMavenConsole(project, generalSettings.outputLevel, generalSettings.isPrintErrorStackTraces)
     }
 
+  override fun downloadArtifactsSync(projects: Collection<MavenProject>,
+                                     artifacts: Collection<MavenArtifact>?,
+                                     sources: Boolean,
+                                     docs: Boolean): MavenArtifactDownloader.DownloadResult {
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      return doDownloadArtifacts(projects, artifacts, sources, docs)
+    }
+    return runBlockingCancellableUnderIndicator { downloadArtifacts(projects, artifacts, sources, docs) }
+  }
+
+  override suspend fun downloadArtifacts(projects: Collection<MavenProject>,
+                                         artifacts: Collection<MavenArtifact>?,
+                                         sources: Boolean,
+                                         docs: Boolean): MavenArtifactDownloader.DownloadResult {
+    if (!sources && !docs) return MavenArtifactDownloader.DownloadResult()
+
+    val result = withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.downloading"), true) {
+      withRawProgressReporter {
+        coroutineToIndicator {
+          doDownloadArtifacts(projects, artifacts, sources, docs)
+        }
+      }
+    }
+
+    withContext(Dispatchers.EDT) { VirtualFileManager.getInstance().asyncRefresh() }
+
+    return result
+  }
+
+  private fun doDownloadArtifacts(projects: Collection<MavenProject>,
+                                  artifacts: Collection<MavenArtifact>?,
+                                  sources: Boolean,
+                                  docs: Boolean): MavenArtifactDownloader.DownloadResult {
+    val indicator = ProgressManager.getGlobalProgressIndicator()
+    val progressListener = project.getService(SyncViewManager::class.java)
+    val downloadConsole = MavenDownloadConsole(project)
+    try {
+      downloadConsole.startDownload(progressListener, sources, docs)
+      downloadConsole.startDownloadTask()
+      val downloader = MavenArtifactDownloader(project, projectsTree, artifacts, indicator, null)
+      val result = downloader.downloadSourcesAndJavadocs(projects, sources, docs, embeddersManager, mavenConsole)
+      downloadConsole.finishDownloadTask()
+      return result
+    }
+    catch (e: Exception) {
+      downloadConsole.addException(e)
+      return MavenArtifactDownloader.DownloadResult()
+    }
+    finally {
+      downloadConsole.finishDownload()
+    }
+  }
 }

@@ -38,6 +38,6 @@ public class DownloadSelectedSourcesAndDocsAction extends MavenProjectsAction {
 
   @Override
   protected void perform(@NotNull MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e) {
-    manager.scheduleArtifactsDownloading(mavenProjects, getDependencies(e), mySources, myDocs, null);
+    manager.downloadArtifactsSync(mavenProjects, getDependencies(e), mySources, myDocs);
   }
 }

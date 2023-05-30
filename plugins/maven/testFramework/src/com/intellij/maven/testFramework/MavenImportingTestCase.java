@@ -667,14 +667,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     if (isNewImportingProcess) {
       return downloadArtifactAndWaitForResult(projects, artifacts);
     }
-    final MavenArtifactDownloader.DownloadResult[] unresolved = new MavenArtifactDownloader.DownloadResult[1];
-
-    AsyncPromise<MavenArtifactDownloader.DownloadResult> result = new AsyncPromise<>();
-    result.onSuccess(unresolvedArtifacts -> unresolved[0] = unresolvedArtifacts);
-
-    myProjectsManager.scheduleArtifactsDownloading(projects, artifacts, true, true, result);
+    var result = myProjectsManager.downloadArtifactsSync(projects, artifacts, true, true);
     myProjectsManager.waitForArtifactsDownloadingCompletion();
-    return unresolved[0];
+    return result;
   }
 
   @NotNull

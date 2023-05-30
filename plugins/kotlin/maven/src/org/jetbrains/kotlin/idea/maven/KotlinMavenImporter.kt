@@ -25,7 +25,6 @@ import com.intellij.util.PairConsumer
 import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jdom.Text
-import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
@@ -183,7 +182,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
 
         if (toBeDownloaded.isNotEmpty()) {
             MavenProjectsManager.getInstance(module.project)
-                .scheduleArtifactsDownloading(listOf(mavenProject), toBeDownloaded, true, false, AsyncPromise())
+                .downloadArtifactsSync(listOf(mavenProject), toBeDownloaded, true, false)
         }
     }
 

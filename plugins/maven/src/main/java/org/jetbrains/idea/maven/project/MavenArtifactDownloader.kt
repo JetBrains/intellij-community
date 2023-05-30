@@ -69,7 +69,7 @@ class MavenArtifactDownloader(private val myProject: Project,
       val caption = if (downloadSources && downloadDocs) MavenProjectBundle.message("maven.downloading")
       else if (downloadSources) MavenProjectBundle.message("maven.downloading.sources")
       else MavenProjectBundle.message("maven.downloading.docs")
-      myIndicator!!.text = caption
+      myIndicator?.text = caption
       val artifacts = collectArtifactsToDownload(mavenProjects, types, console)
       download(embedder, artifacts, downloadedFiles, console)
     }
@@ -137,7 +137,7 @@ class MavenArtifactDownloader(private val myProject: Project,
     result.unresolvedDocs.addAll(toDownload.keys)
     val requests = ArrayList<MavenArtifactResolutionRequest>()
     for ((id, data) in toDownload) {
-      myIndicator!!.checkCanceled()
+      myIndicator?.checkCanceled()
       for (eachElement in data.classifiersWithExtensions) {
         val info = MavenArtifactInfo(id, eachElement.extension, eachElement.classifier)
         val request = MavenArtifactResolutionRequest(info, ArrayList(data.repositories))

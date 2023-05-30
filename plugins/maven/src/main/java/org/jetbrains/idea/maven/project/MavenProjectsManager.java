@@ -56,7 +56,6 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
-import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
 import org.jetbrains.idea.maven.project.importing.FilesList;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.project.importing.MavenProjectManagerListenerToBusBridge;
@@ -500,11 +499,10 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
             importingSettings = ReadAction.compute(() -> myProject.isDisposed() ? null : getImportingSettings());
             if (importingSettings == null) return;
 
-            scheduleArtifactsDownloading(Collections.singleton(project),
-                                         null,
-                                         importingSettings.isDownloadSourcesAutomatically(),
-                                         importingSettings.isDownloadDocsAutomatically(),
-                                         null);
+            downloadArtifactsSync(Collections.singleton(project),
+                                  List.of(),
+                                  importingSettings.isDownloadSourcesAutomatically(),
+                                  importingSettings.isDownloadDocsAutomatically());
           }
         }
       }
@@ -1000,7 +998,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenProjectsManagerUtilKt.scheduleFoldersResolveForAllProjects(myProject);
   }
 
-  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects,
+/*  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects,
                                            @Nullable final Collection<MavenArtifact> artifacts,
                                            final boolean sources, final boolean docs,
                                            @Nullable final AsyncPromise<DownloadResult> result) {
@@ -1009,7 +1007,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     runWhenFullyOpen(() -> myArtifactsDownloadingProcessor
       .scheduleTask(
         new MavenProjectsProcessorArtifactsDownloadingTask(projects, myProjectsTree, artifacts, sources, docs, result)));
-  }
+  }*/
 
 
   // TODO merge [result] promises (now, promise will be lost after merge of import requests)

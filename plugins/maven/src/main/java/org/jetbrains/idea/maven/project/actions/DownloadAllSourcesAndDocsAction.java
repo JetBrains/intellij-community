@@ -20,6 +20,6 @@ public class DownloadAllSourcesAndDocsAction extends MavenProjectsManagerAction 
 
   @Override
   protected void perform(@NotNull MavenProjectsManager manager) {
-    manager.scheduleArtifactsDownloading(manager.getProjects(), null, mySources, myDocs, null);
+    manager.downloadArtifactsSync(manager.getProjects(), null, mySources, myDocs);
   }
 }
