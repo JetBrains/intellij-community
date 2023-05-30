@@ -819,6 +819,29 @@
         "labelBackground" : "Grey2",
         "foreground" : "Grey5"
       }
+    },
+    "HelpBrowser": {
+      "UserMessage": {
+        "background": "Blue2",
+        "Snippet": {
+          "MoreLines": {
+            "foreground": "Grey8",
+            "background": "Grey2",
+            "hoverForeground": "Grey8",
+            "hoverBackground": "Grey3"
+          }
+        }
+      },
+      "HelpBrowserMessage": {
+        "Snippet": {
+          "MoreLines": {
+            "foreground": "Grey8",
+            "background": "Grey2",
+            "hoverForeground": "Grey8",
+            "hoverBackground": "Grey3"
+          }
+        }
+      }
     }
   },
 
