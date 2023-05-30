@@ -50,23 +50,24 @@ internal object GitLogIndexDataUtils {
       }
       if (tempLogDataPath == null) return@launch
 
-      withContext(Dispatchers.EDT) {
-        val vcsProjectLog = VcsProjectLog.getInstance(project)
+      val vcsProjectLog = VcsProjectLog.getInstance(project)
+      val canApplySharedIndexData = withContext(Dispatchers.EDT) {
         val data = vcsProjectLog.dataManager
         val isDataPackFull = data?.dataPack?.isFull ?: false
-        if (isDataPackFull && indexingFinished(data)) {
-          LOG.info("Shared log index data wasn't applied because local indexing completed faster")
-          return@withContext
-        }
+        !isDataPackFull || !indexingFinished(data)
+      }
+      if (!canApplySharedIndexData) {
+        LOG.info("Shared log index data wasn't applied because local indexing completed faster")
+        return@launch
+      }
 
-        vcsProjectLog.runOnDisposedLog {
-          withContext(Dispatchers.IO) {
-            val currentLogDataPath = logCache.resolve(logIndexDirName)
-            val logDataBackupPath = logCache.resolve(logIndexDirName + "_backup")
-            FileUtil.rename(currentLogDataPath.toFile(), logDataBackupPath.fileName.toString())
-            FileUtil.rename(tempLogDataPath.toFile(), currentLogDataPath.fileName.toString())
-            FileUtil.delete(logDataBackupPath)
-          }
+      vcsProjectLog.runOnDisposedLog {
+        withContext(Dispatchers.IO) {
+          val currentLogDataPath = logCache.resolve(logIndexDirName)
+          val logDataBackupPath = logCache.resolve(logIndexDirName + "_backup")
+          FileUtil.rename(currentLogDataPath.toFile(), logDataBackupPath.fileName.toString())
+          FileUtil.rename(tempLogDataPath.toFile(), currentLogDataPath.fileName.toString())
+          FileUtil.delete(logDataBackupPath)
         }
       }
     }
