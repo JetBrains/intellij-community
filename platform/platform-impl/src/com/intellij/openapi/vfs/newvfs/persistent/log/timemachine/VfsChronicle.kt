@@ -323,7 +323,7 @@ object VfsChronicle {
     onInvalid: TraverseContext.(cause: Throwable) -> Unit = { throw it },
     onIncomplete: TraverseContext.(tag: VfsOperationTag) -> Unit = { if (toReadMask.contains(it)) stop() },
     onCompleteExceptional: TraverseContext.(operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { _, _ -> stop() },
-    onComplete: TraverseContext?.(operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit
+    onComplete: TraverseContext.(operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit
   ): LookupResult<T> {
     val result = LookupResultImpl<T>()
     traverseOperationsLog(
@@ -347,11 +347,11 @@ object VfsChronicle {
     onIncomplete: TraverseContext.(tag: VfsOperationTag) -> Unit = { if (propertyRule.relatedOperations.contains(it)) stop() },
     onCompleteExceptional: TraverseContext.(operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { _, _ -> stop() },
   ): LookupResult<T> {
-    val rule = propertyRule.forFileId(fileId)
+    val ifOverwrites = propertyRule.forFileId(fileId)
     return traverseOperationsLogForLookup(
       iterator, direction, propertyRule.relatedOperations, stopIf,
       onInvalid, onIncomplete, onCompleteExceptional,
-      onComplete = { op, detect -> op.rule(detect) }
+      onComplete = { op, detect -> op.ifOverwrites(detect) }
     )
   }
 

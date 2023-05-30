@@ -72,7 +72,7 @@ interface VfsSnapshot {
       inline fun <R> observe(onNotAvailable: (cause: Throwable) -> R, onReady: (value: T) -> R): R =
         observeState().mapCases(onNotAvailable, onReady)
 
-      fun get(): T = observe(onNotAvailable = { throw IllegalStateException("property expected to be Ready", it.cause) }) { it }
+      fun get(): T = observe(onNotAvailable = { throw AssertionError("property expected to be Ready", it.cause) }) { it }
       fun getOrNull(): T? = observe(onNotAvailable = { null }) { it }
 
       companion object {

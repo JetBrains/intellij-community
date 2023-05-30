@@ -57,8 +57,8 @@ private val defaultDeepEquals = { lhs: Any, rhs: Any ->
     is VirtualFileSnapshot.RecoveredChildrenIds -> {
       rhs as VirtualFileSnapshot.RecoveredChildrenIds
       var ok = true
-      if (lhs.isComplete) ok = ok and lhs.containsAll(rhs)
-      if (rhs.isComplete) ok = ok and rhs.containsAll(lhs)
+      if (lhs.isComplete) ok = ok && lhs.containsAll(rhs)
+      if (rhs.isComplete) ok = ok && rhs.containsAll(lhs)
       ok
     }
     else -> lhs == rhs
