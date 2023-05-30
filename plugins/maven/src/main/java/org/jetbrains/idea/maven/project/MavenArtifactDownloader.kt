@@ -1,262 +1,203 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.project;
+package org.jetbrains.idea.maven.project
 
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
-import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
-import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.MavenArtifactResolutionRequest;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
+import org.jetbrains.idea.maven.importing.MavenExtraArtifactType
+import org.jetbrains.idea.maven.model.*
+import org.jetbrains.idea.maven.server.MavenArtifactResolutionRequest
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
+import org.jetbrains.idea.maven.utils.MavenUtil
+import java.io.File
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 
-import java.io.File;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+class MavenArtifactDownloader(private val myProject: Project,
+                              private val myProjectsTree: MavenProjectsTree,
+                              artifacts: Collection<MavenArtifact>?,
+                              private val myIndicator: ProgressIndicator?,
+                              private val syncConsole: MavenSyncConsole?) {
+  private val myArtifacts: Collection<MavenArtifact>?
 
-public final class MavenArtifactDownloader {
-  private final Project myProject;
-  private final MavenProjectsTree myProjectsTree;
-  private final Collection<MavenArtifact> myArtifacts;
-  private final ProgressIndicator myIndicator;
-
-  public static DownloadResult download(@NotNull Project project,
-                                        MavenProjectsTree projectsTree,
-                                        Collection<MavenProject> mavenProjects,
-                                        @Nullable Collection<MavenArtifact> artifacts,
-                                        boolean downloadSources,
-                                        boolean downloadDocs,
-                                        MavenEmbedderWrapper embedder,
-                                        MavenProgressIndicator progressIndicator) throws MavenProcessCanceledException {
-    var indicator = null == progressIndicator ? null : progressIndicator.getIndicator();
-    var syncConsole = null == progressIndicator ? null : progressIndicator.getSyncConsole();
-    return new MavenArtifactDownloader(project, projectsTree, artifacts, indicator, syncConsole)
-      .download(mavenProjects, embedder, downloadSources, downloadDocs, null);
+  init {
+    myArtifacts = if (artifacts == null) null else HashSet(artifacts)
   }
 
-  public MavenArtifactDownloader(@NotNull Project project,
-                                 MavenProjectsTree projectsTree,
-                                 Collection<MavenArtifact> artifacts,
-                                 ProgressIndicator indicator,
-                                 MavenSyncConsole syncConsole) {
-    myProject = project;
-    myProjectsTree = projectsTree;
-    myArtifacts = artifacts == null ? null : new HashSet<>(artifacts);
-    myIndicator = indicator;
-  }
-
-  public @NotNull DownloadResult downloadSourcesAndJavadocs(Collection<MavenProject> mavenProjects,
-                                                            boolean downloadSources,
-                                                            boolean downloadDocs,
-                                                            @NotNull MavenEmbeddersManager embeddersManager,
-                                                            @NotNull MavenConsole console)
-    throws MavenProcessCanceledException {
-    var projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, myProjectsTree);
-    DownloadResult result = new DownloadResult();
-    for (var entry : projectMultiMap.entrySet()) {
-      var baseDir = entry.getKey();
-      var mavenProjectsForBaseDir = entry.getValue();
-      var embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir);
+  @Throws(MavenProcessCanceledException::class)
+  fun downloadSourcesAndJavadocs(mavenProjects: Collection<MavenProject>,
+                                 downloadSources: Boolean,
+                                 downloadDocs: Boolean,
+                                 embeddersManager: MavenEmbeddersManager,
+                                 console: MavenConsole): DownloadResult {
+    val projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, myProjectsTree)
+    val result = DownloadResult()
+    for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
+      val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir)
       try {
-        var chunk = download(mavenProjectsForBaseDir, embedder, downloadSources, downloadDocs, console);
-
-        for (MavenProject each : mavenProjectsForBaseDir) {
-          myProjectsTree.fireArtifactsDownloaded(each);
+        val chunk = download(mavenProjectsForBaseDir, embedder, downloadSources, downloadDocs, console)
+        for (each in mavenProjectsForBaseDir) {
+          myProjectsTree.fireArtifactsDownloaded(each!!)
         }
-
-        result.resolvedDocs.addAll(chunk.resolvedDocs);
-        result.resolvedSources.addAll(chunk.resolvedSources);
-        result.unresolvedDocs.addAll(chunk.unresolvedDocs);
-        result.unresolvedSources.addAll(chunk.unresolvedSources);
+        result.resolvedDocs.addAll(chunk.resolvedDocs)
+        result.resolvedSources.addAll(chunk.resolvedSources)
+        result.unresolvedDocs.addAll(chunk.unresolvedDocs)
+        result.unresolvedSources.addAll(chunk.unresolvedSources)
       }
       finally {
-        embeddersManager.release(embedder);
+        embeddersManager.release(embedder)
       }
     }
-    return result;
+    return result
   }
 
-  private DownloadResult download(Collection<MavenProject> mavenProjects,
-                                  MavenEmbedderWrapper embedder,
-                                  boolean downloadSources,
-                                  boolean downloadDocs,
-                                  MavenConsole console)
-    throws MavenProcessCanceledException {
-    Collection<File> downloadedFiles = new ConcurrentLinkedQueue<>();
-    try {
-      List<MavenExtraArtifactType> types = new ArrayList<>(2);
-      if (downloadSources) types.add(MavenExtraArtifactType.SOURCES);
-      if (downloadDocs) types.add(MavenExtraArtifactType.DOCS);
-
-      String caption = downloadSources && downloadDocs
-                       ? MavenProjectBundle.message("maven.downloading")
-                       : (downloadSources
-                          ? MavenProjectBundle.message("maven.downloading.sources")
-                          : MavenProjectBundle.message("maven.downloading.docs"));
-      myIndicator.setText(caption);
-
-      Map<MavenId, DownloadData> artifacts = collectArtifactsToDownload(mavenProjects, types, console);
-      return download(embedder, artifacts, downloadedFiles, console);
+  @Throws(MavenProcessCanceledException::class)
+  private fun download(mavenProjects: Collection<MavenProject>,
+                       embedder: MavenEmbedderWrapper,
+                       downloadSources: Boolean,
+                       downloadDocs: Boolean,
+                       console: MavenConsole?): DownloadResult {
+    val downloadedFiles: MutableCollection<File> = ConcurrentLinkedQueue()
+    return try {
+      val types: MutableList<MavenExtraArtifactType> = ArrayList(2)
+      if (downloadSources) types.add(MavenExtraArtifactType.SOURCES)
+      if (downloadDocs) types.add(MavenExtraArtifactType.DOCS)
+      val caption = if (downloadSources && downloadDocs) MavenProjectBundle.message("maven.downloading")
+      else if (downloadSources) MavenProjectBundle.message("maven.downloading.sources")
+      else MavenProjectBundle.message("maven.downloading.docs")
+      myIndicator!!.text = caption
+      val artifacts = collectArtifactsToDownload(mavenProjects, types, console)
+      download(embedder, artifacts, downloadedFiles, console)
     }
     finally {
-      boolean isAsync = !MavenUtil.isMavenUnitTestModeEnabled();
+      val isAsync = !MavenUtil.isMavenUnitTestModeEnabled()
 
       // We have to refresh parents of downloaded files, because some additional files may have been downloaded
-      Set<File> filesToRefresh = new HashSet<>();
-      for (File file : downloadedFiles) {
-        filesToRefresh.add(file);
-        filesToRefresh.add(file.getParentFile());
+      val filesToRefresh: MutableSet<File> = HashSet()
+      for (file in downloadedFiles) {
+        filesToRefresh.add(file)
+        filesToRefresh.add(file.parentFile)
       }
-
-      LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh, isAsync, false, null);
+      LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh, isAsync, false, null)
     }
   }
 
-  private Map<MavenId, DownloadData> collectArtifactsToDownload(Collection<MavenProject> mavenProjects,
-                                                                List<MavenExtraArtifactType> types,
-                                                                MavenConsole console) {
-    Map<MavenId, DownloadData> result = new HashMap<>();
-
-    Set<String> dependencyTypesFromSettings = new HashSet<>();
-
-    if (!ReadAction.compute(() -> {
-      if (myProject.isDisposed()) return false;
-      dependencyTypesFromSettings.addAll(MavenProjectsManager.getInstance(myProject).getImportingSettings().getDependencyTypesAsSet());
-      return true;
-    })) {
-      return result;
+  private fun collectArtifactsToDownload(mavenProjects: Collection<MavenProject>,
+                                         types: List<MavenExtraArtifactType>,
+                                         console: MavenConsole?): Map<MavenId, DownloadData> {
+    val result: MutableMap<MavenId, DownloadData> = HashMap()
+    val dependencyTypesFromSettings: MutableSet<String> = HashSet()
+    if (!ReadAction.compute<Boolean, RuntimeException> {
+        if (myProject.isDisposed) return@compute false
+        dependencyTypesFromSettings.addAll(MavenProjectsManager.getInstance(myProject).importingSettings.dependencyTypesAsSet)
+        true
+      }) {
+      return result
     }
-
-    for (MavenProject eachProject : mavenProjects) {
-      List<MavenRemoteRepository> repositories = eachProject.getRemoteRepositories();
-
-      for (MavenArtifact eachDependency : eachProject.getDependencies()) {
-        if (myArtifacts != null && !myArtifacts.contains(eachDependency)) continue;
-
-        if (MavenConstants.SCOPE_SYSTEM.equalsIgnoreCase(eachDependency.getScope())) continue;
-        if (myProjectsTree.findProject(eachDependency.getMavenId()) != null) continue;
-
-        String dependencyType = eachDependency.getType();
-
+    for (eachProject in mavenProjects) {
+      val repositories = eachProject.remoteRepositories
+      for (eachDependency in eachProject.dependencies) {
+        if (myArtifacts != null && !myArtifacts.contains(eachDependency)) continue
+        if (MavenConstants.SCOPE_SYSTEM.equals(eachDependency.scope, ignoreCase = true)) continue
+        if (myProjectsTree.findProject(eachDependency.mavenId) != null) continue
+        val dependencyType = eachDependency.type
         if (!dependencyTypesFromSettings.contains(dependencyType)
             && !eachProject.getDependencyTypesFromImporters(SupportedRequestType.FOR_IMPORT).contains(dependencyType)) {
-          continue;
+          continue
         }
-
-        MavenId id = eachDependency.getMavenId();
-        DownloadData data = result.get(id);
+        val id = eachDependency.mavenId
+        var data = result[id]
         if (data == null) {
-          data = new DownloadData();
-          result.put(id, data);
+          data = DownloadData()
+          result[id] = data
         }
-        data.repositories.addAll(repositories);
-        for (MavenExtraArtifactType eachType : types) {
-          Pair<String, String> classifierAndExtension = eachProject.getClassifierAndExtension(eachDependency, eachType);
-          String classifier = eachDependency.getFullClassifier(classifierAndExtension.first);
-          String extension = classifierAndExtension.second;
-          data.classifiersWithExtensions.add(new DownloadElement(classifier, extension, eachType));
+        data.repositories.addAll(repositories)
+        for (eachType in types) {
+          val classifierAndExtension = eachProject.getClassifierAndExtension(eachDependency, eachType)
+          val classifier = eachDependency.getFullClassifier(classifierAndExtension.first)
+          val extension = classifierAndExtension.second
+          data.classifiersWithExtensions.add(DownloadElement(classifier, extension, eachType))
         }
       }
     }
-    return result;
+    return result
   }
 
-  private DownloadResult download(MavenEmbedderWrapper embedder,
-                                  Map<MavenId, DownloadData> toDownload,
-                                  Collection<File> downloadedFiles,
-                                  MavenConsole console) throws MavenProcessCanceledException {
-    DownloadResult result = new DownloadResult();
-    result.unresolvedSources.addAll(toDownload.keySet());
-    result.unresolvedDocs.addAll(toDownload.keySet());
-
-    var requests = new ArrayList<MavenArtifactResolutionRequest>();
-    for (Map.Entry<MavenId, DownloadData> eachEntry : toDownload.entrySet()) {
-      myIndicator.checkCanceled();
-
-      DownloadData data = eachEntry.getValue();
-      MavenId id = eachEntry.getKey();
-
-      for (DownloadElement eachElement : data.classifiersWithExtensions) {
-        MavenArtifactInfo info = new MavenArtifactInfo(id, eachElement.extension, eachElement.classifier);
-        var request = new MavenArtifactResolutionRequest(info, new ArrayList<>(data.repositories));
-        requests.add(request);
+  @Throws(MavenProcessCanceledException::class)
+  private fun download(embedder: MavenEmbedderWrapper,
+                       toDownload: Map<MavenId, DownloadData>,
+                       downloadedFiles: MutableCollection<File>,
+                       console: MavenConsole?): DownloadResult {
+    val result = DownloadResult()
+    result.unresolvedSources.addAll(toDownload.keys)
+    result.unresolvedDocs.addAll(toDownload.keys)
+    val requests = ArrayList<MavenArtifactResolutionRequest>()
+    for ((id, data) in toDownload) {
+      myIndicator!!.checkCanceled()
+      for (eachElement in data.classifiersWithExtensions) {
+        val info = MavenArtifactInfo(id, eachElement.extension, eachElement.classifier)
+        val request = MavenArtifactResolutionRequest(info, ArrayList(data.repositories))
+        requests.add(request)
       }
     }
-
-    var artifacts = embedder.resolveArtifacts(requests, myIndicator, null, console);
-    for (var artifact : artifacts) {
-      File file = artifact.getFile();
+    val artifacts = embedder.resolveArtifacts(requests, myIndicator, syncConsole, console)
+    for (artifact in artifacts) {
+      val file = artifact.file
       if (file.exists()) {
-        downloadedFiles.add(file);
-
-        var mavenId = new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
-        if (MavenExtraArtifactType.SOURCES.getDefaultClassifier().equals(artifact.getClassifier())) {
-          result.resolvedSources.add(mavenId);
-          result.unresolvedSources.remove(mavenId);
+        downloadedFiles.add(file)
+        val mavenId = MavenId(artifact.groupId, artifact.artifactId, artifact.version)
+        if (MavenExtraArtifactType.SOURCES.defaultClassifier == artifact.classifier) {
+          result.resolvedSources.add(mavenId)
+          result.unresolvedSources.remove(mavenId)
         }
         else {
-          result.resolvedDocs.add(mavenId);
-          result.unresolvedDocs.remove(mavenId);
+          result.resolvedDocs.add(mavenId)
+          result.unresolvedDocs.remove(mavenId)
         }
       }
     }
-
-    return result;
+    return result
   }
 
-  private static class DownloadData {
-    public final LinkedHashSet<MavenRemoteRepository> repositories = new LinkedHashSet<>();
-    public final LinkedHashSet<DownloadElement> classifiersWithExtensions = new LinkedHashSet<>();
+  private class DownloadData {
+    val repositories = LinkedHashSet<MavenRemoteRepository>()
+    val classifiersWithExtensions = LinkedHashSet<DownloadElement>()
   }
 
-  private static class DownloadElement {
-    public final String classifier;
-    public final String extension;
-    public final MavenExtraArtifactType type;
-
-    DownloadElement(String classifier, String extension, MavenExtraArtifactType type) {
-      this.classifier = classifier;
-      this.extension = extension;
-      this.type = type;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      DownloadElement that = (DownloadElement)o;
-
-      if (classifier != null ? !classifier.equals(that.classifier) : that.classifier != null) return false;
-      if (extension != null ? !extension.equals(that.extension) : that.extension != null) return false;
-      if (type != that.type) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = classifier != null ? classifier.hashCode() : 0;
-      result = 31 * result + (extension != null ? extension.hashCode() : 0);
-      result = 31 * result + (type != null ? type.hashCode() : 0);
-      return result;
-    }
+  private data class DownloadElement(val classifier: String?, val extension: String?, val type: MavenExtraArtifactType?) {
   }
 
   // used by third-party plugins
-  public static class DownloadResult {
-    public final Set<MavenId> resolvedSources = ConcurrentHashMap.newKeySet();
-    public final Set<MavenId> resolvedDocs = ConcurrentHashMap.newKeySet();
+  class DownloadResult {
+    @JvmField
+    val resolvedSources: MutableSet<MavenId> = ConcurrentHashMap.newKeySet()
+    @JvmField
+    val resolvedDocs: MutableSet<MavenId> = ConcurrentHashMap.newKeySet()
+    @JvmField
+    val unresolvedSources: MutableSet<MavenId> = ConcurrentHashMap.newKeySet()
+    @JvmField
+    val unresolvedDocs: MutableSet<MavenId> = ConcurrentHashMap.newKeySet()
+  }
 
-    public final Set<MavenId> unresolvedSources = ConcurrentHashMap.newKeySet();
-    public final Set<MavenId> unresolvedDocs = ConcurrentHashMap.newKeySet();
+  companion object {
+    @Throws(MavenProcessCanceledException::class)
+    @JvmStatic
+    fun download(project: Project,
+                 projectsTree: MavenProjectsTree,
+                 mavenProjects: Collection<MavenProject>,
+                 artifacts: Collection<MavenArtifact>?,
+                 downloadSources: Boolean,
+                 downloadDocs: Boolean,
+                 embedder: MavenEmbedderWrapper,
+                 progressIndicator: MavenProgressIndicator?): DownloadResult {
+      val indicator = progressIndicator?.indicator
+      val syncConsole = progressIndicator?.syncConsole
+      return MavenArtifactDownloader(project, projectsTree, artifacts, indicator, syncConsole)
+        .download(mavenProjects, embedder, downloadSources, downloadDocs, null)
+    }
   }
 }
