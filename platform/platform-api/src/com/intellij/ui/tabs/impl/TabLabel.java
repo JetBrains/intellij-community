@@ -383,7 +383,8 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
         return cur.getY() != next.getY();
       }
     }
-    return infos.get(infos.size() - 1) == myInfo;
+    // can be empty in case of dragging tab label
+    return !infos.isEmpty() && infos.get(infos.size() - 1) == myInfo;
   }
 
   protected void handlePopup(final MouseEvent e) {
