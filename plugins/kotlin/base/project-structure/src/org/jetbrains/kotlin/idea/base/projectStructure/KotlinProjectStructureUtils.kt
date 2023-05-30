@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinProjectStructureUtils")
 
 package org.jetbrains.kotlin.idea.base.projectStructure
@@ -54,7 +54,7 @@ val KtSourceModule.ideaModule: Module
 
 fun Module.getMainKtSourceModule(): KtSourceModule? {
     val moduleInfo = productionSourceInfo ?: return null
-    return ProjectStructureProviderIdeImpl.getInstance(project).getKtModuleByModuleInfo(moduleInfo) as KtSourceModule
+    return moduleInfo.toKtModuleOfType<KtSourceModule>()
 }
 
 val ModuleInfo.kotlinSourceRootType: KotlinSourceRootType?

@@ -244,10 +244,10 @@ class ModuleInfoProvider(private val project: Project) {
     }
 
     private fun collectByOrderEntry(
-      virtualFile: VirtualFile,
-      orderEntry: OrderEntry,
-      isLibrarySource: Boolean,
-      visited: HashSet<IdeaModuleInfo>
+        virtualFile: VirtualFile,
+        orderEntry: OrderEntry,
+        isLibrarySource: Boolean,
+        visited: HashSet<IdeaModuleInfo>
     ): IdeaModuleInfo? {
         if (orderEntry is ModuleOrderEntry) {
             // Module-related entries are covered in 'collectModuleRelatedModuleInfosByFile()'

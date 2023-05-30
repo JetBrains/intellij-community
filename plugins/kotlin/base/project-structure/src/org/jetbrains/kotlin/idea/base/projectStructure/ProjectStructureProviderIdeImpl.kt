@@ -30,9 +30,7 @@ interface KtModuleFactory {
 }
 
 @ApiStatus.Internal
-fun IdeaModuleInfo.toKtModule(): KtModule {
-    return ProjectStructureProviderIdeImpl.getInstance(project).getKtModuleByModuleInfo(this)
-}
+fun IdeaModuleInfo.toKtModule(): KtModule = ProjectStructureProviderIdeImpl.getKtModuleByModuleInfo(this)
 
 @ApiStatus.Internal
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
@@ -57,45 +55,40 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
         }
     }
 
-    private fun cachedKtModule(psiFile: PsiFile): KtModule = CachedValuesManager.getCachedValue<KtModule>(psiFile) {
-        val project = psiFile.project
-        CachedValueProvider.Result.create(
-            calculateKtModule(psiFile),
-            ProjectRootModificationTracker.getInstance(project),
-            JavaLibraryModificationTracker.getInstance(project),
-            KotlinModificationTrackerFactory.getService(project).createProjectWideOutOfBlockModificationTracker(),
-        )
-    }
-
-    // TODO maybe introduce some cache?
-    fun getKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule =
-        createKtModuleByModuleInfo(moduleInfo)
-
-    private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
-        forEachModuleFactory {
-            createModule(moduleInfo)?.let { return it }
-        }
-
-        return when (moduleInfo) {
-            is ModuleSourceInfo -> KtSourceModuleByModuleInfo(moduleInfo)
-            is LibraryInfo -> KtLibraryModuleByModuleInfo(moduleInfo)
-            is SdkInfo -> SdkKtModuleByModuleInfo(moduleInfo)
-            is LibrarySourceInfo -> KtLibrarySourceModuleByModuleInfo(moduleInfo)
-            is NotUnderContentRootModuleInfo -> NotUnderContentRootModuleByModuleInfo(moduleInfo)
-            else -> NotUnderContentRootModuleByModuleInfo(moduleInfo as IdeaModuleInfo)
-        }
-    }
-
     companion object {
-        fun getInstance(project: Project): ProjectStructureProviderIdeImpl {
-            return ProjectStructureProvider.getInstance(project) as ProjectStructureProviderIdeImpl
-        }
+        // TODO maybe introduce some cache?
+        fun getKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule = createKtModuleByModuleInfo(moduleInfo)
     }
+}
+
+private fun cachedKtModule(psiFile: PsiFile): KtModule = CachedValuesManager.getCachedValue<KtModule>(psiFile) {
+    val project = psiFile.project
+    CachedValueProvider.Result.create(
+        calculateKtModule(psiFile),
+        ProjectRootModificationTracker.getInstance(project),
+        JavaLibraryModificationTracker.getInstance(project),
+        KotlinModificationTrackerFactory.getService(project).createProjectWideOutOfBlockModificationTracker(),
+    )
 }
 
 private inline fun forEachModuleFactory(action: KtModuleFactory.() -> Unit) {
     for (extension in KtModuleFactory.EP_NAME.extensions) {
         extension.action()
+    }
+}
+
+private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
+    forEachModuleFactory {
+        createModule(moduleInfo)?.let { return it }
+    }
+
+    return when (moduleInfo) {
+        is ModuleSourceInfo -> KtSourceModuleByModuleInfo(moduleInfo)
+        is LibraryInfo -> KtLibraryModuleByModuleInfo(moduleInfo)
+        is SdkInfo -> SdkKtModuleByModuleInfo(moduleInfo)
+        is LibrarySourceInfo -> KtLibrarySourceModuleByModuleInfo(moduleInfo)
+        is NotUnderContentRootModuleInfo -> NotUnderContentRootModuleByModuleInfo(moduleInfo)
+        else -> NotUnderContentRootModuleByModuleInfo(moduleInfo as IdeaModuleInfo)
     }
 }
 
@@ -113,5 +106,5 @@ private fun calculateKtModule(psiElement: PsiElement): KtModule {
         }
     }
 
-    return ProjectStructureProviderIdeImpl.getInstance(project).getKtModuleByModuleInfo(moduleInfo)
+    return ProjectStructureProviderIdeImpl.getKtModuleByModuleInfo(moduleInfo)
 }
