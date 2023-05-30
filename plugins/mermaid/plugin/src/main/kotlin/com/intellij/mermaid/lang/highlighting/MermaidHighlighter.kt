@@ -37,6 +37,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       addStateDiagramHighlights(holder)
       addSequenceHighlights(holder)
       addTimelineHighlights(holder)
+      addQuadrantHighlights(holder)
       return holder
     }
 
@@ -301,6 +302,10 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
 
     private fun addTimelineHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
       holder[MermaidTokens.Timeline.TIMELINE] = MermaidTextAttributes.diagram_name
+    }
+
+    private fun addQuadrantHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
+      holder[MermaidTokens.Quadrant.QUADRANT] = MermaidTextAttributes.diagram_name
     }
 
     private fun addBaseHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {

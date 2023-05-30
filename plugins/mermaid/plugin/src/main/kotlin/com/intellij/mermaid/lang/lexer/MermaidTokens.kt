@@ -868,4 +868,12 @@ object MermaidTokens {
     @JvmField
     val TIMELINE = MermaidToken("Timeline.TIMELINE")
   }
+
+  object Quadrant {
+    @JvmField
+    val QUADRANT = MermaidToken("Quadrant.QUADRANT")
+
+    @JvmField
+    val QUADRANT_DUMMY = MermaidToken("Quadrant.QUADRANT_DUMMY")
+  }
 }

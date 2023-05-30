@@ -76,6 +76,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states timeline
 
+%states quadrant
+
 %%
 
 <YYINITIAL> {
@@ -104,6 +106,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "C4Deployment" { yybegin (c4); return C4.C4_DEPLOYMENT; }
   "mindmap" { yybegin(mindmap); return Mindmap.MINDMAP; }
   "timeline" { yybegin(timeline); return Timeline.TIMELINE; }
+  "quadrantChart" { yybegin(quadrant); return Quadrant.QUADRANT; }
 
   --- { yybegin(frontmatter); return Frontmatter.FRONTMATTER_START; }
 
@@ -903,6 +906,12 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   ":" { yypushstate(section_task); return COLON; }
   [^\s#:;]+ { return TASK_NAME; }
   (#[^\n\r]*)/[\n\r]? { return IGNORED; }
+}
+
+//---quadrant---------------------------------------------------------------------
+<quadrant> {
+  "title" { yypushstate(title); return TITLE; }
+  [^\s]+ { return Quadrant.QUADRANT_DUMMY; }
 }
 
 //--------------------------------------------------------------------------------

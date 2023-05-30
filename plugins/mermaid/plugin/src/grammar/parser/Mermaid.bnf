@@ -24,6 +24,7 @@
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.C4.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Mindmap.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Timeline.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Quadrant.*'
   ]
   generateTokens=false
   implements="com.intellij.mermaid.lang.psi.MermaidPsiElement"
@@ -48,6 +49,7 @@ private diagram ::= pieHeader EOL* [pieBody]
   | c4Header EOL* c4Body
   | mindmapHeader EOL* mindmapBody
   | timelineHeader EOL* [timelineBody]
+  | quadrantHeader EOL* [quadrantBody]
 
 titleStatement ::= TITLE complexTitleValue
 complexTitleValue ::= TITLE_VALUE+
@@ -752,6 +754,14 @@ timelineSectionBlock ::= timelineSectionLines { implements="com.intellij.mermaid
 private timelineSectionLines ::= (timelineSectionLine | IGNORED) [timelineSectionLines]
 private timelineSectionLine ::= timelineSectionInnerStatement [EOL] | EOL
 timelineSectionInnerStatement ::= timelineDataStatement
+
+
+quadrantHeader ::= QUADRANT
+
+quadrantBody ::= quadrantLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private quadrantLines ::= quadrantLine [quadrantLines]
+private quadrantLine ::= quadrantStatement [EOL] | EOL
+quadrantStatement ::= titleStatement | QUADRANT_DUMMY+
 
 
 directive ::= OPEN_DIRECTIVE directiveContent? CLOSE_DIRECTIVE
