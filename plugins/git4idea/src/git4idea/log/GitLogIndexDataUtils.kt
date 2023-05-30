@@ -26,7 +26,7 @@ import java.nio.file.Path
 internal object GitLogIndexDataUtils {
   private val LOG = logger<GitIndexUtil>()
 
-  internal fun extractLogDataFromArchive(project: Project, virtualFile: VirtualFile) {
+  internal fun extractLogDataFromArchive(project: Project, zipFile: VirtualFile) {
     val logId = PersistentUtil.calcLogId(project, VcsProjectLog.getLogProviders(project))
     val logCache = PersistentUtil.LOG_CACHE
 
@@ -38,12 +38,12 @@ internal object GitLogIndexDataUtils {
           try {
             val tempLogDataPath = logCache.resolve(logIndexDirName + "_temp")
             FileUtil.delete(tempLogDataPath)
-            ZipUtil.extract(virtualFile.toNioPath(), tempLogDataPath, null, true)
+            ZipUtil.extract(zipFile.toNioPath(), tempLogDataPath, null, true)
             tempLogDataPath
             // TODO: add versions validation
           }
           catch (e: IOException) {
-            LOG.error("Unable to extract log index data from " + virtualFile.name, e)
+            LOG.error("Unable to extract log index data from " + zipFile.name, e)
             null
           }
         }
@@ -68,6 +68,7 @@ internal object GitLogIndexDataUtils {
           FileUtil.rename(currentLogDataPath.toFile(), logDataBackupPath.fileName.toString())
           FileUtil.rename(tempLogDataPath.toFile(), currentLogDataPath.fileName.toString())
           FileUtil.delete(logDataBackupPath)
+          LOG.info("Applied log index data from " + zipFile.name)
         }
       }
     }
