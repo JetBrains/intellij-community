@@ -2,6 +2,8 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
+import kotlinx.coroutines.CancellationException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -98,6 +100,10 @@ internal inline fun <R : Any> catchResult(crossinline processor: (result: Operat
     }
   }
   catch (e: Throwable) {
+    if (e is ProcessCanceledException || e is CancellationException) {
+      // catchResult is currently used in write interceptors for VFS storages, cancellation of such operations is something strange
+      OperationResult.LOG.error("unexpected cancellation exception in catchResult: $e")
+    }
     safeProcessor(OperationResult.fromException(e.javaClass.name))
     throw e
   }
