@@ -7,7 +7,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-public final class PerformanceTestTotalTimeTimer implements StartupActivity.DumbAware {
+final class PerformanceTestTotalTimeTimer implements StartupActivity.DumbAware {
   public static final String TOTAL_TEST_TIMER_NAME = "test";
 
   @Override

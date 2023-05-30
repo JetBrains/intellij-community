@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.openapi.project.DumbService.Companion.getInstance
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivityJavaShim
@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.Alarm
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SystemProperties
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand.Companion.shouldOpenInSmartMode
 import com.jetbrains.performancePlugin.commands.takeScreenshotOfFrame
@@ -37,58 +36,86 @@ import com.jetbrains.performancePlugin.profilers.ProfilersController
 import com.jetbrains.performancePlugin.utils.ReporterCommandAsTelemetrySpan
 import io.opentelemetry.context.Context
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.sql.Timestamp
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 import java.util.function.Function
 import kotlin.math.min
+import kotlin.time.Duration.Companion.minutes
+
+private const val MAX_DESCRIPTION_LENGTH = 7500
+private val LOG: Logger
+  get() = Logger.getInstance("PerformancePlugin")
+
+/**
+ * If an IDE error occurs and this flag is true, a failure of a TeamCity test will be printed
+ * to stdout using TeamCity Service Messages (see [.reportTeamCityFailedTestAndBuildProblem]).
+ * The name of the failed test will be inferred from the name of the script file
+ * (its name without an extension, see [.getTeamCityFailedTestName]).
+ */
+@Suppress("SpellCheckingInspection")
+private val MUST_REPORT_TEAMCITY_TEST_FAILURE_ON_IDE_ERROR =
+  System.getProperty("testscript.must.report.teamcity.test.failure.on.error", "true").toBoolean()
+
+private val teamCityFailedTestName: String
+  get() = FileUtilRt.getNameWithoutExtension(getTestFile().name)
+
+private fun getTestFile(): File {
+  val file = File(ProjectLoaded.TEST_SCRIPT_FILE_PATH!!)
+  if (!file.isFile) {
+    System.err.println(PerformanceTestingBundle.message("startup.noscript", file.absolutePath))
+    ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
+  }
+  return file
+}
 
 @Suppress("SpellCheckingInspection")
 class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListener {
-  private val myAlarm = Alarm()
+  private val alarm = Alarm()
 
   override fun runActivity(project: Project) {
-    if (TEST_SCRIPT_FILE_PATH != null && !ourScriptStarted) {
-      ourScriptStarted = true
-      if (System.getProperty("ide.performance.screenshot") != null) {
-        registerScreenshotTaking(System.getProperty("ide.performance.screenshot"))
-      }
-      LOG.info("Start Execution")
-      PerformanceTestSpan.startSpan()
-      val profilerSettings = initializeProfilerSettingsForIndexing()
-      if (profilerSettings != null) {
-        try {
-          ProfilersController.getInstance().currentProfilerHandler
-            .startProfiling(profilerSettings.first, profilerSettings.second)
-        }
-        catch (e: Exception) {
-          System.err.println("Start profile failed: " + e.message)
-          ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
-        }
-      }
-      if (shouldOpenInSmartMode(project)) {
-        runScriptWhenInitializedAndIndexed(project)
-      }
-      else if (SystemProperties.getBooleanProperty("performance.execute.script.after.scanning", false)) {
-        runScriptDuringIndexing(project)
-      }
-      else {
-        runScriptFromFile(project)
-      }
-    }
-    else {
+    if (TEST_SCRIPT_FILE_PATH == null || ourScriptStarted) {
       if (!ApplicationManager.getApplication().isUnitTestMode) {
         LOG.info(PerformanceTestingBundle.message("startup.silent"))
       }
+      return
+    }
+
+    ourScriptStarted = true
+    if (System.getProperty("ide.performance.screenshot") != null) {
+      @Suppress("DEPRECATION")
+      registerScreenshotTaking(System.getProperty("ide.performance.screenshot"), project.coroutineScope)
+    }
+
+    LOG.info("Start Execution")
+    PerformanceTestSpan.startSpan()
+    val profilerSettings = initializeProfilerSettingsForIndexing()
+    if (profilerSettings != null) {
+      try {
+        ProfilersController.getInstance().currentProfilerHandler.startProfiling(profilerSettings.first, profilerSettings.second)
+      }
+      catch (e: Exception) {
+        System.err.println("Start profile failed: ${e.message}")
+        ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
+      }
+    }
+    if (shouldOpenInSmartMode(project)) {
+      runScriptWhenInitializedAndIndexed(project)
+    }
+    else if (SystemProperties.getBooleanProperty("performance.execute.script.after.scanning", false)) {
+      runScriptDuringIndexing(project)
+    }
+    else {
+      runScriptFromFile(project)
     }
   }
 
@@ -104,9 +131,9 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
   }
 
   private fun runScriptWhenInitializedAndIndexed(project: Project) {
-    getInstance(project).smartInvokeLater(Context.current().wrap(
+    DumbService.getInstance(project).smartInvokeLater(Context.current().wrap(
       Runnable {
-        myAlarm.addRequest(Context.current().wrap(
+        alarm.addRequest(Context.current().wrap(
           Runnable {
             if (isDumb(project) || !CoreProgressManager.getCurrentIndicators().isEmpty() ||
                 !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished) {
@@ -122,11 +149,12 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
   private fun runScriptDuringIndexing(project: Project) {
     ApplicationManager.getApplication().executeOnPooledThread(Context.current().wrap(
       Runnable {
-        myAlarm.addRequest(Context.current().wrap(Runnable {
+        alarm.addRequest(Context.current().wrap(Runnable {
           val indicators = CoreProgressManager.getCurrentIndicators()
           var indexingInProgress = false
           for (indicator in indicators) {
             val indicatorText = indicator.text
+            @Suppress("HardCodedStringLiteral")
             if (indicatorText != null && indicatorText.contains("Indexing")) {
               indexingInProgress = true
               break
@@ -156,47 +184,43 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
     }
 
     override fun appClosing() {
-      val executor = screenshotExecutor
-      executor?.shutdown()
+      screenshotJob?.cancel()
       PerformanceTestSpan.endSpan()
       reportErrorsFromMessagePool()
     }
   }
 
   companion object {
-    private val LOG = Logger.getInstance("PerformancePlugin")
     private const val TIMEOUT = 500
-    val TEST_SCRIPT_FILE_PATH = System.getProperty("testscript.filename")
+    @JvmField
+    val TEST_SCRIPT_FILE_PATH: String? = System.getProperty("testscript.filename")
 
-    /**
-     * If an IDE error occurs and this flag is true, a failure of a TeamCity test will be printed
-     * to stdout using TeamCity Service Messages (see [.reportTeamCityFailedTestAndBuildProblem]).
-     * The name of the failed test will be inferred from the name of the script file
-     * (its name without extension, see [.getTeamCityFailedTestName]).
-     */
-    private val MUST_REPORT_TEAMCITY_TEST_FAILURE_ON_IDE_ERROR =
-      System.getProperty("testscript.must.report.teamcity.test.failure.on.error", "true")
-        .toBoolean()
     private const val INDEXING_PROFILER_PREFIX = "%%profileIndexing"
-    private var screenshotExecutor: ScheduledExecutorService? = null
+    private var screenshotJob: kotlinx.coroutines.Job? = null
     private var ourScriptStarted = false
-    private fun registerScreenshotTaking(fileName: String) {
-      screenshotExecutor = ConcurrencyUtil.newSingleScheduledThreadExecutor("Performance plugin screenshoter")
-      screenshotExecutor!!.scheduleWithFixedDelay(Runnable { takeScreenshotOfFrame(fileName) }, 0, 1, TimeUnit.MINUTES)
+
+    private fun registerScreenshotTaking(fileName: String, coroutineScope: CoroutineScope) {
+      screenshotJob = coroutineScope.launch {
+        while (true) {
+          delay(1.minutes)
+          takeScreenshotOfFrame(fileName)
+        }
+      }
     }
 
     private fun initializeProfilerSettingsForIndexing(): Pair<String, List<String>>? {
       try {
-        val lines = FileUtil.loadLines(
-          testFile)
+        val lines = FileUtil.loadLines(getTestFile())
         for (line in lines) {
           if (line.startsWith(INDEXING_PROFILER_PREFIX)) {
-            val command = line.substring(INDEXING_PROFILER_PREFIX.length).trim { it <= ' ' }.split("\\s+".toRegex(),
-                                                                                                   limit = 2).toTypedArray()
+            val command = line.substring(INDEXING_PROFILER_PREFIX.length).trim().split("\\s+".toRegex(), limit = 2)
             val indexingActivity = command[0]
-            val profilingParameters = if (command.size > 1) Arrays.asList(
-              *command[1].trim { it <= ' ' }.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
-            else ArrayList()
+            val profilingParameters = if (command.size > 1) {
+              command[1].trim().split(',').dropLastWhile { it.isEmpty() }
+            }
+            else {
+              ArrayList()
+            }
             return Pair(indexingActivity, profilingParameters)
           }
         }
@@ -207,16 +231,6 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
       }
       return null
     }
-
-    private val testFile: File
-      private get() {
-        val file = File(TEST_SCRIPT_FILE_PATH)
-        if (!file.isFile) {
-          System.err.println(PerformanceTestingBundle.message("startup.noscript", file.absolutePath))
-          ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
-        }
-        return file
-      }
 
     fun reportErrorsFromMessagePool() {
       val messagePool = MessagePool.getInstance()
@@ -234,7 +248,7 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
       }
     }
 
-    fun generifyErrorMessage(originalMessage: String): String {
+    internal fun generifyErrorMessage(originalMessage: String): String {
       return originalMessage // text@3ba5aac, text => text<ID>, text
         .replace("[$@#][A-Za-z0-9-_]+".toRegex(), "<ID>") // java-design-patterns-master.db451f59 => java-design-patterns-master.<HASH>
         .replace("[.]([A-Za-z]+[0-9]|[0-9]+[A-Za-z])[A-Za-z0-9]*".toRegex(), ".<HASH>") // 0x01 => <HEX>
@@ -242,113 +256,14 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
         .replace("[0-9]+".toRegex(), "<NUM>")
     }
 
-    @Throws(IOException::class)
-    private fun reportScriptError(errorMessage: AbstractMessage) {
-      val throwable = errorMessage.throwable
-      var cause: Throwable? = throwable
-      var causeMessage: String? = ""
-      while (cause!!.cause != null) {
-        cause = cause.cause
-        causeMessage = cause!!.message
-      }
-      if (causeMessage == null || causeMessage.isEmpty()) {
-        causeMessage = errorMessage.message
-        if (causeMessage == null || causeMessage.isEmpty()) {
-          val throwableMessage = getNonEmptyThrowableMessage(throwable)
-          val index = throwableMessage.indexOf("\tat ")
-          causeMessage = if (index != -1) {
-            throwableMessage.substring(0, index)
-          }
-          else {
-            throwableMessage
-          }
-        }
-      }
-      val scriptErrorsDir = Paths.get(PathManager.getLogPath(), "script-errors")
-      Files.createDirectories(scriptErrorsDir)
-      Files.walk(scriptErrorsDir).use { stream ->
-        val finalCauseMessage = causeMessage
-        val isDuplicated = stream.filter { path: Path -> path.fileName.toString() == "message.txt" }
-          .anyMatch { path: Path? ->
-            try {
-              return@anyMatch Files.readString(path) == finalCauseMessage
-            }
-            catch (ex: IOException) {
-              LOG.error(ex.message)
-              return@anyMatch false
-            }
-          }
-        if (isDuplicated) {
-          return
-        }
-      }
-      for (i in 1..999) {
-        val errorDir = scriptErrorsDir.resolve("error-$i")
-        if (Files.exists(errorDir)) {
-          continue
-        }
-        Files.createDirectories(errorDir)
-        Files.writeString(errorDir.resolve("message.txt"), causeMessage)
-        Files.writeString(errorDir.resolve("stacktrace.txt"), errorMessage.throwableText)
-        val attachments = errorMessage.allAttachments
-        for (j in attachments.indices) {
-          val attachment = attachments[j]
-          writeAttachmentToErrorDir(attachment, errorDir.resolve(j.toString() + "-" + attachment.name))
-        }
-        return
-      }
-      LOG.error("Too many errors have been reported during script execution. See $scriptErrorsDir")
-    }
-
-    private fun writeAttachmentToErrorDir(attachment: Attachment, path: Path) {
-      try {
-        Files.writeString(path, attachment.displayText, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
-        Files.writeString(path, System.lineSeparator(), StandardOpenOption.APPEND, StandardOpenOption.CREATE)
-      }
-      catch (e: Exception) {
-        LOG.warn("Failed to write attachment `display text`", e)
-      }
-    }
-
-    private fun getNonEmptyThrowableMessage(throwable: Throwable): String {
-      return if (throwable.message != null && !throwable.message!!.isEmpty()) {
-        throwable.message!!
-      }
-      else throwable.javaClass.name
-    }
-
-    private val teamCityFailedTestName: String
-      private get() = FileUtilRt.getNameWithoutExtension(testFile.name)
-
-    private fun reportTeamCityFailedTestAndBuildProblem(testName: String,
-                                                        failureMessage: String,
-                                                        failureDetails: String) {
-      var testName = testName
-      testName = generifyErrorMessage(testName)
-      System.out.printf("##teamcity[testFailed name='%s' message='%s' details='%s']\n",
-                        encodeStringForTC(testName),
-                        encodeStringForTC(failureMessage),
-                        encodeStringForTC(failureDetails))
-      System.out.printf("##teamcity[buildProblem description='%s' identity='%s'] ",
-                        encodeStringForTC(failureMessage),
-                        encodeStringForTC(testName))
-    }
-
-    private fun encodeStringForTC(line: String): String {
-      val MAX_DESCRIPTION_LENGTH = 7500
-      return line.substring(0, min(MAX_DESCRIPTION_LENGTH.toDouble(), line.length.toDouble()).toInt()).replace("\\|".toRegex(),
-                                                                                                               "||").replace(
-        "\\[".toRegex(), "|[").replace("]".toRegex(), "|]").replace("\n".toRegex(), "|n").replace("'".toRegex(), "|'").replace(
-        "\r".toRegex(), "|r")
-    }
-
+    @JvmStatic
     fun runScript(project: Project?, script: String?, mustExitOnFailure: Boolean) {
       val playback: PlaybackRunner = PlaybackRunnerExtended(script, CommandLogger(), project!!)
       val scriptCallback = playback.run()
-      val future: CompletableFuture<*> = CompletableFuture<Any>()
+      val future = CompletableFuture<Any>()
       scriptCallback.doWhenDone { future.complete(null) }
       scriptCallback.doWhenRejected { s: String? ->
-        if (s == null || s.isEmpty()) {
+        if (s.isNullOrEmpty()) {
           future.cancel(false)
         }
         else {
@@ -358,67 +273,173 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
       CommandsRunner.setActionCallback(future)
       registerOnFinishRunnables(future, mustExitOnFailure)
     }
+  }
+}
 
-    private fun runScriptFromFile(project: Project) {
-      val playback: PlaybackRunner = PlaybackRunnerExtended("%include " + testFile, CommandLogger(), project)
-      playback.scriptDir = testFile.parentFile
-      if (SystemProperties.getBooleanProperty(ReporterCommandAsTelemetrySpan.USE_SPAN_WRAPPER_FOR_COMMAND, false)) {
-        playback.setCommandStartStopProcessor(ReporterCommandAsTelemetrySpan())
-      }
-      val scriptCallback = playback.run()
-      CommandsRunner.setActionCallback(scriptCallback)
-      registerOnFinishRunnables(scriptCallback, true)
+@Throws(IOException::class)
+private fun reportScriptError(errorMessage: AbstractMessage) {
+  val throwable = errorMessage.throwable
+  var cause: Throwable? = throwable
+  var causeMessage: String? = ""
+  while (cause!!.cause != null) {
+    cause = cause.cause
+    causeMessage = cause!!.message
+  }
+  if (causeMessage.isNullOrEmpty()) {
+    causeMessage = errorMessage.message
+    if (causeMessage.isNullOrEmpty()) {
+      val throwableMessage = getNonEmptyThrowableMessage(throwable)
+      val index = throwableMessage.indexOf("\tat ")
+      causeMessage = if (index == -1) throwableMessage else throwableMessage.substring(0, index)
     }
-
-    private fun registerOnFinishRunnables(future: CompletableFuture<*>, mustExitOnFailure: Boolean) {
-      future
-        .thenRun { LOG.info("Execution of the script has been finished successfully") }
-        .exceptionally(Function<Throwable, Void> { e: Throwable ->
-          val message = "IDE will be terminated because some errors are detected while running the startup script: $e"
-          if (MUST_REPORT_TEAMCITY_TEST_FAILURE_ON_IDE_ERROR) {
-            val testName = teamCityFailedTestName
-            reportTeamCityFailedTestAndBuildProblem(testName, message, "")
-          }
-          if (SystemProperties.getBooleanProperty("startup.performance.framework", false)) {
-            storeFailureToFile(e.message)
-          }
-          LOG.error(message)
-          if (System.getProperty("ide.performance.screenshot.on.failure") != null) {
-            takeScreenshotOfFrame(System.getProperty("ide.performance.screenshot.on.failure"))
-          }
-          val threadDump = """
-                Thread dump before IDE termination:
-                ${ThreadDumper.dumpThreadsToString()}
-                """.trimIndent()
-          LOG.info(threadDump)
-          if (mustExitOnFailure) {
-            ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
-          }
-        })
-    }
-
-    private fun storeFailureToFile(errorMessage: String?) {
-      //TODO: if errorMessage = null -> very unclear message about 'String.codec()' is printed
-      try {
-        val logDir = Path.of(PathManager.getLogPath())
-        val ideaLogContent = Files.readString(logDir.resolve(LoggerFactory.LOG_FILE_NAME))
-        val substringBegin = ideaLogContent.substring(ideaLogContent.indexOf(errorMessage!!))
-        val timestamp = Timestamp(System.currentTimeMillis())
-        val date = timestamp.toString().substring(0, 10)
-        val endIndex = substringBegin.indexOf(date)
-        val errorMessageFromLog: String
-        errorMessageFromLog = if (endIndex != -1) {
-          substringBegin.substring(0, endIndex)
+  }
+  val scriptErrorsDir = Path.of(PathManager.getLogPath(), "script-errors")
+  Files.createDirectories(scriptErrorsDir)
+  Files.walk(scriptErrorsDir).use { stream ->
+    val finalCauseMessage = causeMessage
+    val isDuplicated = stream
+      .filter { path -> path.fileName.toString() == "message.txt" }
+      .anyMatch { path ->
+        try {
+          return@anyMatch Files.readString(path) == finalCauseMessage
         }
-        else {
-          substringBegin
+        catch (e: IOException) {
+          LOG.error(e.message)
+          return@anyMatch false
         }
-        val failureCause = logDir.resolve("failure_cause.txt")
-        Files.writeString(failureCause, errorMessageFromLog)
       }
-      catch (ex: Exception) {
-        LOG.error(ex.message)
-      }
+    if (isDuplicated) {
+      return
     }
+  }
+
+  for (i in 1..999) {
+    val errorDir = scriptErrorsDir.resolve("error-$i")
+    if (Files.exists(errorDir)) {
+      continue
+    }
+
+    Files.createDirectories(errorDir)
+    Files.writeString(errorDir.resolve("message.txt"), causeMessage)
+    Files.writeString(errorDir.resolve("stacktrace.txt"), errorMessage.throwableText)
+    val attachments = errorMessage.allAttachments
+    for (j in attachments.indices) {
+      val attachment = attachments[j]
+      writeAttachmentToErrorDir(attachment, errorDir.resolve("$j-${attachment.name}"))
+    }
+    return
+  }
+
+  LOG.error("Too many errors have been reported during script execution. See $scriptErrorsDir")
+}
+
+private fun writeAttachmentToErrorDir(attachment: Attachment, path: Path) {
+  try {
+    Files.writeString(path, attachment.displayText, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
+    Files.writeString(path, System.lineSeparator(), StandardOpenOption.APPEND, StandardOpenOption.CREATE)
+  }
+  catch (e: Exception) {
+    LOG.warn("Failed to write attachment `display text`", e)
+  }
+}
+
+private fun getNonEmptyThrowableMessage(throwable: Throwable): String {
+  if (throwable.message != null && !throwable.message!!.isEmpty()) {
+    return throwable.message!!
+  }
+  else {
+    return throwable.javaClass.name
+  }
+}
+
+private fun runScriptFromFile(project: Project) {
+  val playback = PlaybackRunnerExtended("%include " + getTestFile(), CommandLogger(), project)
+  playback.scriptDir = getTestFile().parentFile
+  if (SystemProperties.getBooleanProperty(ReporterCommandAsTelemetrySpan.USE_SPAN_WRAPPER_FOR_COMMAND, false)) {
+    playback.setCommandStartStopProcessor(ReporterCommandAsTelemetrySpan())
+  }
+  val scriptCallback = playback.run()
+
+  val future = CompletableFuture<Any>()
+  scriptCallback.doWhenDone { future.complete(null) }
+  scriptCallback.doWhenRejected { s ->
+    if (s.isNullOrEmpty()) {
+      future.cancel(false)
+    }
+    else {
+      future.completeExceptionally(CancellationException(s))
+    }
+  }
+  CommandsRunner.setActionCallback(future)
+  registerOnFinishRunnables(future = future, mustExitOnFailure = true)
+}
+
+private fun encodeStringForTC(line: String): String {
+  return line.substring(0, min(MAX_DESCRIPTION_LENGTH.toDouble(), line.length.toDouble()).toInt())
+    .replace("\\|", "||")
+    .replace("\\[", "|[")
+    .replace("]", "|]")
+    .replace("\n", "|n")
+    .replace("'", "|'")
+    .replace("\r", "|r")
+}
+
+private fun reportTeamCityFailedTestAndBuildProblem(testName: String, failureMessage: String, @Suppress("SameParameterValue") failureDetails: String) {
+  val generifiedTestName = ProjectLoaded.generifyErrorMessage(testName)
+  System.out.printf("##teamcity[testFailed name='%s' message='%s' details='%s']\n",
+                    encodeStringForTC(generifiedTestName),
+                    encodeStringForTC(failureMessage),
+                    encodeStringForTC(failureDetails))
+  System.out.printf("##teamcity[buildProblem description='%s' identity='%s'] ",
+                    encodeStringForTC(failureMessage),
+                    encodeStringForTC(generifiedTestName))
+}
+
+@Suppress("RAW_RUN_BLOCKING")
+private fun registerOnFinishRunnables(future: CompletableFuture<*>, mustExitOnFailure: Boolean) {
+  future
+    .thenRun { LOG.info("Execution of the script has been finished successfully") }
+    .exceptionally(Function { e ->
+      val message = "IDE will be terminated because some errors are detected while running the startup script: $e"
+      if (MUST_REPORT_TEAMCITY_TEST_FAILURE_ON_IDE_ERROR) {
+        val testName = teamCityFailedTestName
+        reportTeamCityFailedTestAndBuildProblem(testName, message, "")
+      }
+      if (SystemProperties.getBooleanProperty("startup.performance.framework", false)) {
+        storeFailureToFile(e.message)
+      }
+      LOG.error(message)
+      if (System.getProperty("ide.performance.screenshot.on.failure") != null) {
+        runBlocking {
+          takeScreenshotOfFrame(System.getProperty("ide.performance.screenshot.on.failure"))
+        }
+      }
+      val threadDump = """
+            Thread dump before IDE termination:
+            ${ThreadDumper.dumpThreadsToString()}
+            """.trimIndent()
+      LOG.info(threadDump)
+      if (mustExitOnFailure) {
+        ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
+      }
+      null
+    })
+}
+
+private fun storeFailureToFile(errorMessage: String?) {
+  //TODO: if errorMessage = null -> very unclear message about 'String.codec()' is printed
+  try {
+    val logDir = Path.of(PathManager.getLogPath())
+    val ideaLogContent = Files.readString(logDir.resolve(LoggerFactory.LOG_FILE_NAME))
+    val substringBegin = ideaLogContent.substring(ideaLogContent.indexOf(errorMessage!!))
+    val timestamp = Timestamp(System.currentTimeMillis())
+    val date = timestamp.toString().substring(0, 10)
+    val endIndex = substringBegin.indexOf(date)
+    val errorMessageFromLog = if (endIndex == -1) substringBegin else substringBegin.substring(0, endIndex)
+    val failureCause = logDir.resolve("failure_cause.txt")
+    Files.writeString(failureCause, errorMessageFromLog)
+  }
+  catch (e: Exception) {
+    LOG.error(e.message)
   }
 }

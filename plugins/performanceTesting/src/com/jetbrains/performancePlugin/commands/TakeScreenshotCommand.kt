@@ -75,7 +75,7 @@ fun takeScreenshotWithAwtRobot(fullPathToFile: String) {
   }
 }
 
-suspend fun takeScreenshotOfFrame(fileName: String) {
+internal suspend fun takeScreenshotOfFrame(fileName: String) {
   val projects = ProjectManager.getInstance().openProjects
   for (project in projects) {
     try {
