@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions
 
 import com.google.common.collect.HashMultiset
-import com.google.gson.GsonBuilder
 import com.intellij.BundleBase
 import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.util.gotoByName.ChooseByNameItem
@@ -11,6 +10,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent
 import com.intellij.ide.util.gotoByName.ListChooseByNameModel
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil
 import com.intellij.internal.statistic.eventLog.LogEventSerializer
+import com.intellij.internal.statistic.config.SerializationHelper
 import com.intellij.internal.statistic.eventLog.newLogEvent
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
@@ -87,7 +87,6 @@ internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
       is ProjectUsagesCollector -> collector.getMetrics(project, indicator)
       else -> throw IllegalArgumentException("Unsupported collector: $collector")
     }
-    val gson = GsonBuilder().setPrettyPrinting().create()
     val result = StringBuilder()
 
     metricsPromise.onSuccess { metrics ->
@@ -109,7 +108,7 @@ internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
           result.append("\"")
           result.append(metric.eventId)
           result.append("\" : ")
-          val presentation = gson.toJsonTree(metric.data.build())
+          val presentation = SerializationHelper.serializeToSingleLine(metric.data.build())
           result.append(presentation)
           result.append(",\n")
         }

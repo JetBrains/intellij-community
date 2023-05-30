@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions
 
-import com.google.gson.GsonBuilder
 import com.intellij.icons.AllIcons
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil
+import com.intellij.internal.statistic.config.SerializationHelper
 import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.json.JsonLanguage
@@ -31,8 +31,10 @@ internal class GenerateEventsScheme(private val recorderId: String = StatisticsD
     val project = e.project ?: return
 
     val eventsScheme = EventsSchemeBuilder.buildEventsScheme(recorderId)
-    val text = GsonBuilder().setPrettyPrinting().create().toJson(eventsScheme)
-    val scratchFile = ScratchRootType.getInstance().createScratchFile(project, "statistics_events_scheme.json", JsonLanguage.INSTANCE, text)
+    val text = SerializationHelper.serialize(eventsScheme)
+    val scratchFile = ScratchRootType.getInstance()
+      .createScratchFile(project, "statistics_events_scheme.json", JsonLanguage.INSTANCE, text)
+
     if (scratchFile == null) {
       StatisticsDevKitUtil.showNotification(project, NotificationType.ERROR, "Scratch file creation failed for unknown reasons")
       return

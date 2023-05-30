@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.actions.devkit.scheme
 
+import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.devkit.actions.scheme.EventsTestSchemeGroupConfiguration
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -13,6 +14,20 @@ class EventsTestSchemeGroupConfigurationTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
     System.setProperty("fus.internal.test.mode", "true")
+  }
+
+  fun testNotValidJson() {
+    val rules = """
+      {
+        "event_id": [,
+        "event_data": {
+          "data": ["testRule"]       
+      }
+    """.trimIndent()
+    val validationInfo = EventsTestSchemeGroupConfiguration.validateCustomValidationRules(project, rules, null)
+    UsefulTestCase.assertSize(1, validationInfo)
+    TestCase.assertTrue("Validation info should contains incorrect eventId",
+                        validationInfo.first().message.contains(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
   }
 
   fun testValidation() {
