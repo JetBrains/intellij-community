@@ -573,7 +573,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     }
     else {
       readProjects(files);
-      myProjectsManager.performScheduledImportInTests();
+      //myProjectsManager.performScheduledImportInTests();
     }
   }
 
