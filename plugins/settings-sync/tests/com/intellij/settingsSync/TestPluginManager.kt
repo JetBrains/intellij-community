@@ -74,10 +74,7 @@ internal class TestPluginManager : AbstractPluginManagerProxy() {
   }
 
   override fun findPlugin(pluginId: PluginId): IdeaPluginDescriptor? {
-    return if (ownPluginDescriptors.containsKey(pluginId)) {
-      ownPluginDescriptors[pluginId]
-    }
-    else PluginManagerCore.findPlugin(pluginId)
+    return ownPluginDescriptors[pluginId]
   }
 
   override fun createInstaller(notifyErrors: Boolean): SettingsSyncPluginInstaller {

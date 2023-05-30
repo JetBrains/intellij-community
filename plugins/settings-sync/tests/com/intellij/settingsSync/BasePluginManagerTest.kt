@@ -56,6 +56,7 @@ abstract class BasePluginManagerTest {
   @BeforeEach
   fun setUp() {
     SettingsSyncSettings.getInstance().syncEnabled = true
+    SettingsSyncSettings.getInstance().loadState(SettingsSyncSettings.SettingsSyncSettingsState())
     testPluginManager = TestPluginManager()
     ApplicationManager.getApplication().replaceService(PluginManagerProxy::class.java, testPluginManager, testRootDisposable)
     pluginManager = SettingsSyncPluginManager()

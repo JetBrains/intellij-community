@@ -3,23 +3,30 @@ package com.intellij.settingsSync
 import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.settingsSync.plugins.SettingsSyncPluginInstaller
+import com.intellij.settingsSync.plugins.SettingsSyncPluginInstallerImpl
 import java.nio.file.Path
 import java.util.*
 
-class TestPluginInstaller(private val afterInstallPluginCallback: (PluginId) -> Unit) : SettingsSyncPluginInstaller {
+internal class TestPluginInstaller(private val afterInstallPluginCallback: (PluginId) -> Unit) : SettingsSyncPluginInstallerImpl(true) {
   val installedPluginIds = HashSet<PluginId>()
+  var installPluginExceptionThrower: ((PluginId) -> Unit)? = null
 
   // there's no marketplace to find plugin descriptors, so we'll just populate that in advance
 
-  internal fun justInstalledPlugins(): Collection<IdeaPluginDescriptor> =
-    TestPluginDescriptor.ALL.filter { installedPluginIds.contains(it.key) }.values
+  override fun install(installer: PluginDownloader): Boolean {
+    val pluginId = installer.id
+    installPluginExceptionThrower?.invoke(pluginId)
+    installedPluginIds += pluginId
+    afterInstallPluginCallback.invoke(pluginId)
+    return true
+  }
 
-  override fun installPlugins(pluginsToInstall: List<PluginId>) {
-    for (pluginId in pluginsToInstall) {
-      installedPluginIds += pluginId
-      afterInstallPluginCallback.invoke(pluginId)
-    }
+  override fun createDownloader(pluginId: PluginId, indicator: ProgressIndicator): PluginDownloader? {
+    val descriptor = TestPluginDescriptor.ALL[pluginId] ?: return null
+    return PluginDownloader.createDownloader(descriptor)
   }
 }
 

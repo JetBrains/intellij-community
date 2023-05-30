@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
+import org.junit.Assert
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
@@ -275,5 +276,33 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
 
     assertIdeState(pushedState)
     assertPluginManagerState(pushedState)
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-303581"])
+  fun `turn-off sync of plugin that fails to install`() {
+    testPluginManager.addPluginDescriptors(git4idea)
+    pluginManager.updateStateFromIdeOnStart(null)
+
+    testPluginManager.installer.installPluginExceptionThrower = {
+      if (it == quickJump.pluginId)
+        throw RuntimeException("Some arbitrary install exception")
+    }
+
+    val pushedState = state {
+      git4idea(enabled = false)
+      quickJump(enabled = true)
+      typengo(enabled = true)
+    }
+
+    pluginManager.pushChangesToIde(pushedState)
+
+    assertIdeState{
+      git4idea(enabled = false)
+      typengo(enabled = true)
+    }
+    assertPluginManagerState(pushedState)
+    Thread.sleep(100)
+    assertFalse(SettingsSyncSettings.getInstance().isSubcategoryEnabled(SettingsCategory.PLUGINS, quickJump.idString))
   }
 }
