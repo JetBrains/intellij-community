@@ -349,7 +349,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   internal suspend fun projectOpened(project: Project, openTimestamp: Long) {
-    if (LightEdit.owns(project)) {
+    if (disableUpdatingRecentInfo.get() || LightEdit.owns(project)) {
       return
     }
 
