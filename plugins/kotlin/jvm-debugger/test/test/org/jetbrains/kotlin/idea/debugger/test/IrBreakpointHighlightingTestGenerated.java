@@ -23,6 +23,11 @@ public class IrBreakpointHighlightingTestGenerated extends AbstractIrBreakpointH
         KotlinTestUtils.runTest(this::doCustomTest, this, testDataFilePath);
     }
 
+    @TestMetadata("lambdasOnSameLine.kt")
+    public void testLambdasOnSameLine() throws Exception {
+        runTest("testData/highlighting/lambdasOnSameLine.kt");
+    }
+
     @TestMetadata("multiLineLambda.kt")
     public void testMultiLineLambda() throws Exception {
         runTest("testData/highlighting/multiLineLambda.kt");

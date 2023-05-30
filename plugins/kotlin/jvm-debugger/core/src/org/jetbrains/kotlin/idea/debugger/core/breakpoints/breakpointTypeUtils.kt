@@ -144,7 +144,7 @@ fun getLambdasAtLineIfAny(file: KtFile, line: Int): List<KtFunction> {
         .filter { (it is KtFunctionLiteral || it.name == null) && it.getLineNumber() == line }
 }
 
-internal fun getLambdasStartingOrEndingAtLineIfAny(file: KtFile, line: Int): List<KtFunction> {
+internal fun getLambdasAtLine(file: KtFile, line: Int): List<KtFunction> {
     val start = file.getLineStartOffset(line)
     val end = file.getLineEndOffset(line)
     if (start == null || end == null) {
@@ -165,11 +165,10 @@ internal fun getLambdasStartingOrEndingAtLineIfAny(file: KtFile, line: Int): Lis
             offset++
         }
     }
-    return result.filter {
-        (it is KtFunctionLiteral || it.name == null) && it.isStartingOrEndingOnLine(line) }
+    return result.filter { it is KtFunctionLiteral || it.name == null }
 }
 
-private fun KtFunction.isStartingOrEndingOnLine(line: Int): Boolean {
+internal fun KtFunction.isStartingOrEndingOnLine(line: Int): Boolean {
     return line == getLineNumber(start = true) || line == getLineNumber(start = false)
 }
 

@@ -179,7 +179,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun createSourcePosition(location: Location, file: KtFile, sourceLineNumber: Int): SourcePosition? {
-        val lambdaOrFunIfInside = getLambdaOrFunStartingOrEndingOnLineIfInside(location, file, sourceLineNumber)
+        val lambdaOrFunIfInside = getLambdaOrFunOnLineIfInside(location, file, sourceLineNumber)
         if (lambdaOrFunIfInside != null) {
             val elementAt = getFirstElementInsideLambdaOnLine(file, lambdaOrFunIfInside, sourceLineNumber)
             if (elementAt != null) {
@@ -295,30 +295,32 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
     }
 
-    // We are not interested in lambdas when we in the middle of them
-    // because in such case there is only one possible source position on the line.
-    private fun getLambdaOrFunStartingOrEndingOnLineIfInside(location: Location, file: KtFile, lineNumber: Int): KtFunction? {
+    private fun getLambdaOrFunOnLineIfInside(location: Location, file: KtFile, lineNumber: Int): KtFunction? {
         val currentLocationClassName = location.getClassName() ?: return null
 
         val start = getStartLineOffset(file, lineNumber)
         val end = getEndLineOffset(file, lineNumber)
         if (start == null || end == null) return null
 
-        val literalsOrFunctions = getLambdasStartingOrEndingAtLineIfAny(file, lineNumber)
-        if (literalsOrFunctions.isEmpty()) {
+        val literalsOrFunctions = getLambdasAtLine(file, lineNumber)
+        // We are not interested in lambdas when we're in the middle of them and no more lambdas on the line
+        // because in such case there is only one possible source position on the line.
+        if (literalsOrFunctions.none { it.isStartingOrEndingOnLine(lineNumber) }) {
             return null
         }
         analyze(literalsOrFunctions.first()) {
             val notInlinedLambdas = mutableListOf<KtFunction>()
+            var innermostContainingLiteral: KtFunction? = null
             for (literal in literalsOrFunctions) {
                 if (isInlinedArgument(literal, checkNonLocalReturn = true)) {
                     if (isInsideInlineArgument(literal, location, debugProcess as DebugProcessImpl)) {
-                        return literal
+                        innermostContainingLiteral = literal
                     }
                 } else {
                     notInlinedLambdas.add(literal)
                 }
             }
+            if (innermostContainingLiteral != null) return innermostContainingLiteral
 
             return notInlinedLambdas.getAppropriateLiteralBasedOnDeclaringClassName(currentLocationClassName) ?:
                    notInlinedLambdas.getAppropriateLiteralBasedOnLambdaName(location, lineNumber)
@@ -351,6 +353,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
               !it.isGeneratedErasedLambdaMethod() &&
               DebuggerUtilsEx.locationsOfLine(it, lineNumber + 1).isNotEmpty()
             }
+            // Kotlin indy lambdas can come in wrong order, sort by order and hierarchy
+            .sortedBy { IrLambdaDescriptor(it.name()) }
 
         // To bring the list of fun literals into conformity with list of lambda-methods in bytecode above
         // it is needed to filter out literals without executable code on current line.
@@ -683,5 +687,22 @@ private fun KtFunction.isSamLambda(): Boolean {
         val valueArgument = parentCall.getContainingValueArgument(this@isSamLambda) ?: return false
         val argument = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
         return argument.returnType is KtUsualClassType
+    }
+}
+
+private class IrLambdaDescriptor(name: String) : Comparable<IrLambdaDescriptor> {
+    private val lambdaId: List<Int>
+
+    init {
+        require(name.isGeneratedIrBackendLambdaMethodName())
+        val parts = name.split("\\\$lambda[$-]".toRegex())
+        lambdaId = if (parts.isEmpty()) emptyList() else parts.drop(1).mapNotNull { it.toIntOrNull() }
+    }
+
+    override fun compareTo(other: IrLambdaDescriptor): Int {
+        for ((left, right) in lambdaId.zip(other.lambdaId)) {
+            if (left != right) return left - right
+        }
+        return lambdaId.size - other.lambdaId.size
     }
 }
