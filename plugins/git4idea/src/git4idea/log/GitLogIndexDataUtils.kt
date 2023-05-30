@@ -31,23 +31,25 @@ internal object GitLogIndexDataUtils {
     val logCache = PersistentUtil.LOG_CACHE
 
     val logIndexDirName = PersistentUtil.getProjectLogDataDirectoryName(project.name, logId)
-    val currentLogDataPath = logCache.resolve(logIndexDirName)
-    val tempLogDataPath = logCache.resolve(logIndexDirName + "_temp")
-    val logDataBackupPath = logCache.resolve(logIndexDirName + "_backup")
 
     VcsProjectLog.getInstance(project).coroutineScope.launch {
-      withBackgroundProgress(project, GitBundle.message("vcs.log.status.bar.extracting.log.index.data")) {
+      val tempLogDataPath = withBackgroundProgress(project, GitBundle.message("vcs.log.status.bar.extracting.log.index.data")) {
         withContext(Dispatchers.IO) {
           try {
+            val tempLogDataPath = logCache.resolve(logIndexDirName + "_temp")
             FileUtil.delete(tempLogDataPath)
             ZipUtil.extract(virtualFile.toNioPath(), tempLogDataPath, null, true)
+            tempLogDataPath
             // TODO: add versions validation
           }
           catch (e: IOException) {
             LOG.error("Unable to extract log index data from " + virtualFile.name, e)
+            null
           }
         }
       }
+      if (tempLogDataPath == null) return@launch
+
       withContext(Dispatchers.EDT) {
         val vcsProjectLog = VcsProjectLog.getInstance(project)
         val data = vcsProjectLog.dataManager
@@ -59,6 +61,8 @@ internal object GitLogIndexDataUtils {
 
         vcsProjectLog.runOnDisposedLog {
           withContext(Dispatchers.IO) {
+            val currentLogDataPath = logCache.resolve(logIndexDirName)
+            val logDataBackupPath = logCache.resolve(logIndexDirName + "_backup")
             FileUtil.rename(currentLogDataPath.toFile(), logDataBackupPath.fileName.toString())
             FileUtil.rename(tempLogDataPath.toFile(), currentLogDataPath.fileName.toString())
             FileUtil.delete(logDataBackupPath)
