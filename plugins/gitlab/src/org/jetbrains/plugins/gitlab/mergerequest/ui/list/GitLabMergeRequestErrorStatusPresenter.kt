@@ -30,10 +30,10 @@ internal class GitLabMergeRequestErrorStatusPresenter(
         val actualError = error.asGitLabStatusError() ?: return error.localizedMessage
         when (actualError.statusErrorType) {
           HttpStatusErrorType.INVALID_TOKEN -> CollaborationToolsBundle.message("http.status.error.refresh.token")
-          HttpStatusErrorType.UNKNOWN -> CollaborationToolsBundle.message("http.status.error.unknown")
+          HttpStatusErrorType.UNKNOWN -> CollaborationToolsBundle.message("http.request.error") + "\n" + actualError.error
         }
       }
-      else -> CollaborationToolsBundle.message("http.status.error.unknown")
+      else -> error.localizedMessage
     }
   }
 
