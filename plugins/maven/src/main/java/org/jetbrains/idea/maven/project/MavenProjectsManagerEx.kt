@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.externalSystem.statistics.importActivityStarted
+import com.intellij.openapi.externalSystem.statistics.runImportActivity
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.withBackgroundProgress
@@ -169,7 +170,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     private fun doImport(): ImportResult {
       project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).importStarted()
 
-      val importResult = this.runImportActivity()
+      val importResult = runImportProjectActivity()
 
       // do not block user too often
       myImportingQueue.restartTimer()
@@ -181,7 +182,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       return importResult
     }
 
-    private fun runImportActivity(): ImportResult {
+    private fun runImportProjectActivity(): ImportResult {
       val activity = importActivityStarted(project, MavenUtil.SYSTEM_ID) {
         listOf(ProjectImportCollector.TASK_CLASS.with(MavenImportStats.ImportingTaskOld::class.java))
       }
@@ -246,31 +247,19 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
 
     val resolutionResult = withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.resolving"), true) {
-      val activity = importActivityStarted(project, MavenUtil.SYSTEM_ID) {
-        listOf(ProjectImportCollector.TASK_CLASS.with(MavenProjectsProcessorResolvingTask::class.java))
-      }
-      try {
-        return@withBackgroundProgressIfApplicable resolver.resolve(
+      runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorResolvingTask::class.java) {
+        return@runImportActivity resolver.resolve(
           projectsToResolve, projectsTree, generalSettings, embeddersManager, mavenConsole, indicator)
-      }
-      finally {
-        activity.finished()
       }
     }
 
     // TODO: plugins can be resolved in parallel with import
     val pluginResolver = MavenPluginResolver(projectsTree)
     withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
-      val activity = importActivityStarted(project, MavenUtil.SYSTEM_ID) {
-        listOf(ProjectImportCollector.TASK_CLASS.with(MavenProjectsProcessorPluginsResolvingTask::class.java))
-      }
-      try {
+      runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorPluginsResolvingTask::class.java) {
         for (entry in resolutionResult.projectsWithUnresolvedPlugins) {
           pluginResolver.resolvePlugins(entry.value, embeddersManager, mavenConsole, indicator, true)
         }
-      }
-      finally {
-        activity.finished()
       }
     }
 

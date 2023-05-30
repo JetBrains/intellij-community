@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
+import com.intellij.openapi.externalSystem.statistics.runImportActivitySync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -52,6 +53,12 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
                          embeddersManager: MavenEmbeddersManager,
                          console: MavenConsole,
                          indicator: MavenProgressIndicator) {
+      runImportActivitySync(project, MavenUtil.SYSTEM_ID, RefreshingFilesTask::class.java) {
+        doPerform(indicator)
+      }
+    }
+
+    private fun doPerform(indicator: MavenProgressIndicator) {
       indicator.setText(MavenProjectBundle.message("progress.text.refreshing.files"))
       doRefreshFiles(myFiles)
     }
