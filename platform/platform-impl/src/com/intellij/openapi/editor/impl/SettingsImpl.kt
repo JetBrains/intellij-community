@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorCoreUtil
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.EditorSettings
+import com.intellij.openapi.editor.EditorSettings.LineNumerationType
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
@@ -86,6 +87,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   private var myShowIntentionBulb: Boolean? = null
   private var showingSpecialCharacters: Boolean? = null
   private val myComputableSettings = ArrayList<CacheableBackgroundComputable<*>>()
+  private var myLineNumeration: EditorSettings.LineNumerationType? = null
 
   private val softMargins: CacheableBackgroundComputable<List<Int>> = object : CacheableBackgroundComputable<List<Int>>(emptyList()) {
     override fun computeValue(project: Project?): List<Int> {
@@ -729,6 +731,14 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (newState != oldState) {
       fireEditorRefresh()
     }
+  }
+
+  override fun getLineNumerationType(): EditorSettings.LineNumerationType {
+    return myLineNumeration ?: EditorSettingsExternalizable.getInstance().lineNumeration
+  }
+
+  override fun setLineNumerationType(value: LineNumerationType) {
+    myLineNumeration = value
   }
 
   override fun isInsertParenthesesAutomatically(): Boolean {

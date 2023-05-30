@@ -202,6 +202,9 @@ public interface EditorSettings {
   boolean isShowingSpecialChars();
   void setShowingSpecialChars(boolean value);
 
+  LineNumerationType getLineNumerationType();
+  void setLineNumerationType(LineNumerationType value);
+
   /**
    * @deprecated This method is a stub. Related functionality has been moved to {@code VisualFormattingLayerService}.
    */
@@ -215,4 +218,10 @@ public interface EditorSettings {
   default void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer) {}
 
   boolean isInsertParenthesesAutomatically();
+
+  public enum LineNumerationType {
+    ABSOLUTE,
+    RELATIVE,
+    HYBRID,
+  }
 }

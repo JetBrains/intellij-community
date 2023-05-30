@@ -1707,7 +1707,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @NotNull LineNumberConverter getPrimaryLineNumberConverter() {
     if (myLineNumberConverter != null) return myLineNumberConverter;
 
-    EditorSettingsExternalizable.LineNumerationType numeration = EditorSettingsExternalizable.getInstance().getLineNumeration();
+    EditorSettings.LineNumerationType numeration = myEditor.getSettings().getLineNumerationType();
     switch (numeration) {
       case RELATIVE -> {
         return RelativeLineNumberConverter.INSTANCE;
@@ -2847,7 +2847,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private class LineNumbersRepainter implements CaretListener {
     @Override
     public void caretPositionChanged(@NotNull CaretEvent event) {
-      if (getPrimaryLineNumberConverter().shouldRepaintOnCaretMovement()) {
+      if (event.getOldPosition().line != event.getNewPosition().line &&
+          event.getCaret() == event.getEditor().getCaretModel().getPrimaryCaret() &&
+          getPrimaryLineNumberConverter().shouldRepaintOnCaretMovement()) {
         repaint();
       }
     }
