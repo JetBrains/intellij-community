@@ -75,7 +75,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     }
   }
 
-  private static class ProblemFileInfo {
+  private static final class ProblemFileInfo {
     private final Collection<Problem> problems = ConcurrentCollectionFactory.createConcurrentSet();
     private volatile boolean hasSyntaxErrors;
 
@@ -155,9 +155,8 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
       HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, (DaemonProgressIndicator)progressIndicator, visibleRange);
       GeneralHighlightingPass pass = new GeneralHighlightingPass(psiFile, document, 0, document.getTextLength(),
                                                                  false, visibleRange, null, HighlightInfoProcessor.getEmpty()) {
-        @NotNull
         @Override
-        protected HighlightInfoHolder createInfoHolder(@NotNull PsiFile file) {
+        protected @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile file) {
           return new HighlightInfoHolder(file) {
             @Override
             public boolean add(@Nullable HighlightInfo info) {
@@ -222,11 +221,6 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   @Override
   public boolean hasProblemFilesBeneath(@NotNull Module scope) {
     return hasProblemFilesBeneath(virtualFile -> ModuleUtilCore.moduleContainsFile(scope, virtualFile, false));
-  }
-
-  @Override
-  public void addProblemListener(@NotNull WolfTheProblemSolver.ProblemListener listener, @NotNull Disposable parentDisposable) {
-    myProject.getMessageBus().connect(parentDisposable).subscribe(com.intellij.problems.ProblemListener.TOPIC, listener);
   }
 
   @Override
@@ -396,10 +390,13 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     }
   }
 
-  @NotNull
-  private static TextRange getTextRange(@NotNull VirtualFile virtualFile, int line, int column) {
+  private static @NotNull TextRange getTextRange(@NotNull VirtualFile virtualFile, int line, int column) {
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    if (line > document.getLineCount()) line = document.getLineCount();
+    assert document != null;
+    int lineCount = document.getLineCount();
+    if (line > lineCount) {
+      line = lineCount;
+    }
     line = line <= 0 ? 0 : line - 1;
     int offset = document.getLineStartOffset(line) + (column <= 0 ? 0 : column - 1);
     return new TextRange(offset, offset);
@@ -412,9 +409,8 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     return ContainerUtil.process(myProblemsFromExternalSources.keySet(), processor);
   }
 
-  @NotNull
   @TestOnly
-  public static WolfTheProblemSolver createTestInstance(@NotNull Project project){
+  public static @NotNull WolfTheProblemSolver createTestInstance(@NotNull Project project){
     assert ApplicationManager.getApplication().isUnitTestMode();
     return new WolfTheProblemSolverImpl(project);
   }
