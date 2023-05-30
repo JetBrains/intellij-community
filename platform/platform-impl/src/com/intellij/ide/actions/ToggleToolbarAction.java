@@ -69,7 +69,8 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
       }
     });
     return new ToggleToolbarAction(properties, getShowToolbarProperty(toolWindow), () -> {
-      return Collections.singletonList(toolWindow.getContentManager().getComponent());
+      ContentManager manager = toolWindow.getContentManagerIfCreated();
+      return ContainerUtil.createMaybeSingletonList(manager == null ? null : manager.getComponent());
     });
   }
 
