@@ -151,6 +151,9 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
       if (argument == null) return;
       if (!couldBeUnwrappedRedundantConversion(argument, call)) {
         ProblemHighlightType highlightType = reportWithEmptyString ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.INFORMATION;
+        if (highlightType == ProblemHighlightType.INFORMATION && !isOnTheFly()) {
+          return;
+        }
         registerErrorAtOffset(call, 0, call.getArgumentList().getStartOffsetInParent(), highlightType,
                               calculateReplacementText(call, argument, true), Boolean.TRUE);
         return;
