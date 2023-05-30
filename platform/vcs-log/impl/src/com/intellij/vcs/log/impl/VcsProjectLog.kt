@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
@@ -54,7 +55,7 @@ private val CLOSE_LOG_TIMEOUT = 10.seconds
 class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineScope) {
   private val uiProperties = project.service<VcsLogProjectTabsProperties>()
   internal val tabManager = VcsLogTabsManager(project, uiProperties, coroutineScope)
-  private val errorHandler = VcsProjectLogErrorHandler(this)
+  private val errorHandler = VcsProjectLogErrorHandler(this, coroutineScope)
 
   @Volatile
   private var cachedLogManager: VcsLogManager? = null
@@ -216,6 +217,8 @@ class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineS
     return oldValue
   }
 
+  fun childScope(): CoroutineScope = coroutineScope.childScope()
+
   internal class InitLogStartupActivity : ProjectActivity {
     init {
       val app = ApplicationManager.getApplication()
@@ -301,11 +304,9 @@ class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineS
      * Disposes log and performs the given `task` before recreating the log
      */
     @ApiStatus.Internal
-    @CalledInAny
-    fun VcsProjectLog.runOnDisposedLog(task: (suspend () -> Unit)? = null): Job {
-      return coroutineScope.launch {
-        disposeLog(recreate = true, beforeCreateLog = task)
-      }
+    @RequiresBackgroundThread
+    suspend fun VcsProjectLog.runOnDisposedLog(task: (suspend () -> Unit)?) {
+      disposeLog(recreate = true, beforeCreateLog = task)
     }
 
     /**

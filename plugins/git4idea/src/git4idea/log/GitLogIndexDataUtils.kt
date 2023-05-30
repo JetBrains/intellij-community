@@ -32,7 +32,7 @@ internal object GitLogIndexDataUtils {
 
     val logIndexDirName = PersistentUtil.getProjectLogDataDirectoryName(project.name, logId)
 
-    VcsProjectLog.getInstance(project).coroutineScope.launch {
+    VcsProjectLog.getInstance(project).childScope().launch {
       val tempLogDataPath = withBackgroundProgress(project, GitBundle.message("vcs.log.status.bar.extracting.log.index.data")) {
         withContext(Dispatchers.IO) {
           try {
@@ -61,30 +61,34 @@ internal object GitLogIndexDataUtils {
         return@launch
       }
 
-      vcsProjectLog.runOnDisposedLog {
-        withContext(Dispatchers.IO) {
-          val currentLogDataPath = logCache.resolve(logIndexDirName)
-          val logDataBackupPath = logCache.resolve(logIndexDirName + "_backup")
-          FileUtil.rename(currentLogDataPath.toFile(), logDataBackupPath.fileName.toString())
-          FileUtil.rename(tempLogDataPath.toFile(), currentLogDataPath.fileName.toString())
-          FileUtil.delete(logDataBackupPath)
-          LOG.info("Applied log index data from " + zipFile.name)
+      withBackgroundProgress(project, GitBundle.message("vcs.log.status.bar.replacing.log.index.data")) {
+        vcsProjectLog.runOnDisposedLog {
+          withContext(Dispatchers.IO) {
+            val currentLogDataPath = logCache.resolve(logIndexDirName)
+            val logDataBackupPath = logCache.resolve(logIndexDirName + "_backup")
+            FileUtil.rename(currentLogDataPath.toFile(), logDataBackupPath.fileName.toString())
+            FileUtil.rename(tempLogDataPath.toFile(), currentLogDataPath.fileName.toString())
+            FileUtil.delete(logDataBackupPath)
+            LOG.info("Applied log index data from " + zipFile.name)
+          }
         }
       }
     }
   }
 
   internal fun createArchiveWithLogData(project: Project, outputArchiveDir: Path) {
-    VcsProjectLog.getInstance(project).runOnDisposedLog {
-      withBackgroundProgress(project = project,
-                             title = GitBundle.message("vcs.log.archiving.log.index.data"),
-                             cancellation = TaskCancellation.nonCancellable()) {
-        val logId = PersistentUtil.calcLogId(project, VcsProjectLog.getLogProviders(project))
-        val logIndexDirName = PersistentUtil.getProjectLogDataDirectoryName(projectName = project.name, logId = logId)
-        withContext(Dispatchers.IO) {
-          val logCache = PersistentUtil.LOG_CACHE
-          Compressor.Zip(outputArchiveDir.resolve("$logIndexDirName.zip")).use { zip ->
-            zip.addDirectory(logCache.resolve(logIndexDirName))
+    VcsProjectLog.getInstance(project).childScope().launch {
+      VcsProjectLog.getInstance(project).runOnDisposedLog {
+        withBackgroundProgress(project = project,
+                               title = GitBundle.message("vcs.log.archiving.log.index.data"),
+                               cancellation = TaskCancellation.nonCancellable()) {
+          val logId = PersistentUtil.calcLogId(project, VcsProjectLog.getLogProviders(project))
+          val logIndexDirName = PersistentUtil.getProjectLogDataDirectoryName(projectName = project.name, logId = logId)
+          withContext(Dispatchers.IO) {
+            val logCache = PersistentUtil.LOG_CACHE
+            Compressor.Zip(outputArchiveDir.resolve("$logIndexDirName.zip")).use { zip ->
+              zip.addDirectory(logCache.resolve(logIndexDirName))
+            }
           }
         }
       }
