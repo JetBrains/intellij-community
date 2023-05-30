@@ -112,6 +112,6 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl, private v
   companion object {
     private val KEY = Key.create<InlineCompletionDocumentListener>("inline.completion.listener")
 
-    val minDelay = Registry.get("inline.completion.trigger.delay").asInteger().toLong()
+    val minDelay: Long = Registry.get("inline.completion.trigger.delay").asInteger().toLong()
   }
 }

@@ -119,14 +119,14 @@ fun ObservableMutableProperty<String>.toUiPathProperty(): ObservableMutablePrope
 
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated(message = "use joinCanonicalPath instead")
-fun ObservableProperty<@SystemDependent String>.joinSystemDependentPath(vararg properties: ObservableProperty<@SystemDependent String>) =
+fun ObservableProperty<@SystemDependent String>.joinSystemDependentPath(vararg properties: ObservableProperty<@SystemDependent String>): ObservableProperty<String> =
   operation(this, *properties) { it.joinToString(File.separator) }
 
 /**
  * Creates observable property that represents property with joined canonical path value.
  * Note: Value of source properties must be canonical.
  */
-fun ObservableProperty<@NlsSafe String>.joinCanonicalPath(vararg properties: ObservableProperty<@NlsSafe String>) =
+fun ObservableProperty<@NlsSafe String>.joinCanonicalPath(vararg properties: ObservableProperty<@NlsSafe String>): ObservableProperty<String> =
   operation(this, *properties) { it.joinToString("/") }
 
 /**

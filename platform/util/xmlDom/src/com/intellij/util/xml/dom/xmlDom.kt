@@ -31,9 +31,9 @@ interface XmlInterner {
 }
 
 object NoOpXmlInterner : XmlInterner {
-  override fun name(value: String) = value
+  override fun name(value: String): String = value
 
-  override fun value(name: String, value: String) = value
+  override fun value(name: String, value: String): String = value
 }
 
 fun readXmlAsModel(inputReader: Reader): XmlElement {

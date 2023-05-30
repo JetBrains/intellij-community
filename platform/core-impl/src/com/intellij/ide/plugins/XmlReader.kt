@@ -33,9 +33,9 @@ import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import javax.xml.stream.events.XMLEvent
 
-@ApiStatus.Internal const val PACKAGE_ATTRIBUTE = "package"
-@ApiStatus.Internal const val IMPLEMENTATION_DETAIL_ATTRIBUTE = "implementation-detail"
-@ApiStatus.Experimental const val ON_DEMAND_ATTRIBUTE = "on-demand"
+@ApiStatus.Internal const val PACKAGE_ATTRIBUTE: String = "package"
+@ApiStatus.Internal const val IMPLEMENTATION_DETAIL_ATTRIBUTE: String = "implementation-detail"
+@ApiStatus.Experimental const val ON_DEMAND_ATTRIBUTE: String = "on-demand"
 
 private const val defaultXPointerValue = "xpointer(/idea-plugin/*)"
 

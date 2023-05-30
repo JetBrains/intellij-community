@@ -52,9 +52,9 @@ class UISettingsUtils(private val settings: UISettings) {
     fun scaleFontSize(fontSize: Float, scale: Float): Float = JBFont.scaleFontSize(fontSize, scale)
 
     @JvmStatic
-    fun percentValue(value: Float) = value.percentValue
+    fun percentValue(value: Float): Int = value.percentValue
 
-    fun defaultScale(isPresentation: Boolean) = if (isPresentation) 1.75f else 1f
+    fun defaultScale(isPresentation: Boolean): Float = if (isPresentation) 1.75f else 1f
   }
 }
 

@@ -156,7 +156,7 @@ interface ColorPalette {
   }
   val gradients: Array<Pair<Color, Color>>
 
-  fun gradient(seed: String? = null) = select(gradients, seed)
+  fun gradient(seed: String? = null): Pair<Color, Color> = select(gradients, seed)
 }
 
 private object AvatarPalette : ColorPalette {

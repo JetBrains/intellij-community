@@ -1,7 +1,7 @@
 package com.intellij.util
 
 object TestRuntimeUtil {
-  val isRunningUnderUnitTest by lazy {
+  val isRunningUnderUnitTest: Boolean by lazy {
     Thread.getAllStackTraces()
       .values
       .flatMap { elements -> elements.map { it.className } }

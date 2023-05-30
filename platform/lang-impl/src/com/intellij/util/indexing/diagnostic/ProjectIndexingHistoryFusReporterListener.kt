@@ -171,5 +171,5 @@ class ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
     }
   }
 
-  override fun getGroup() = GROUP
+  override fun getGroup(): EventLogGroup = GROUP
 }

@@ -17,11 +17,11 @@ import kotlin.math.min
 @ApiStatus.Internal
 internal class GridImpl : Grid {
 
-  override val resizableColumns = mutableSetOf<Int>()
-  override val resizableRows = mutableSetOf<Int>()
+  override val resizableColumns: MutableSet<Int> = mutableSetOf<Int>()
+  override val resizableRows: MutableSet<Int> = mutableSetOf<Int>()
 
-  override val columnsGaps = mutableListOf<UnscaledGapsX>()
-  override val rowsGaps = mutableListOf<UnscaledGapsY>()
+  override val columnsGaps: MutableList<UnscaledGapsX> = mutableListOf<UnscaledGapsX>()
+  override val rowsGaps: MutableList<UnscaledGapsY> = mutableListOf<UnscaledGapsY>()
 
   val visible: Boolean
     get() = cells.any { it.visible }
@@ -641,7 +641,7 @@ internal class PreCalculationData(val minimumSize: Dimension, val preferredSize:
   /**
    * Preferred size based on minimum/preferred sizes and size groups
    */
-  var calculatedPreferredSize = Dimension(max(minimumSize.width, preferredSize.width), max(minimumSize.height, preferredSize.height))
+  var calculatedPreferredSize: Dimension = Dimension(max(minimumSize.width, preferredSize.width), max(minimumSize.height, preferredSize.height))
 }
 
 @ApiStatus.Internal

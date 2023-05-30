@@ -20,8 +20,8 @@ import training.util.getFeedbackLink
 import javax.swing.JList
 
 internal class JavaLangSupport : JavaBasedLangSupport() {
-  override val contentRootDirectoryName = "IdeaLearningProject"
-  override val projectResourcePath = "learnProjects/java/LearnProject"
+  override val contentRootDirectoryName: String = "IdeaLearningProject"
+  override val projectResourcePath: String = "learnProjects/java/LearnProject"
 
   override val primaryLanguage: String = "JAVA"
 
@@ -31,10 +31,10 @@ internal class JavaLangSupport : JavaBasedLangSupport() {
 
   override val sampleFilePath: String = "$sourcesDirectoryPath/Sample.java"
 
-  override val langCourseFeedback
+  override val langCourseFeedback: String?
     get() = getFeedbackLink(this, false)
 
-  override val readMeCreator by lazy { ReadMeCreator() }
+  override val readMeCreator: ReadMeCreator by lazy { ReadMeCreator() }
 
   override val sdkConfigurationTasks: LessonContext.(lesson: KLesson) -> Unit = {
     val setupSdkText = ProjectBundle.message("project.sdk.setup")

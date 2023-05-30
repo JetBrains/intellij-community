@@ -52,7 +52,7 @@ class VcsCloneDialog private constructor(private val project: Project) : DialogW
     }
   }
 
-  override fun getStyle() = DialogStyle.COMPACT
+  override fun getStyle(): DialogStyle = DialogStyle.COMPACT
 
   override fun createCenterPanel(): JComponent {
     extensionList = VcsCloneDialogExtensionList(listModel).apply {

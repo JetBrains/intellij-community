@@ -22,11 +22,11 @@ class AggregatedSpansProcessor(private val mainScope: CoroutineScope) : SpanProc
     batchSpanProcessor?.onStart(parentContext, span)
   }
 
-  override fun isStartRequired() = false
+  override fun isStartRequired(): Boolean = false
 
   override fun onEnd(span: ReadableSpan) {
     batchSpanProcessor?.onEnd(span)
   }
 
-  override fun isEndRequired() = true
+  override fun isEndRequired(): Boolean = true
 }

@@ -37,7 +37,7 @@ abstract class ProjectManagerEx : ProjectManager() {
     val IS_CHILD_PROCESS: Boolean by lazy { isChildProcessPath(PathManager.getSystemDir()) }
 
     @Experimental
-    const val PER_PROJECT_SUFFIX = "INTERNAL_perProject"
+    const val PER_PROJECT_SUFFIX: String = "INTERNAL_perProject"
 
     @JvmStatic
     fun getInstanceEx(): ProjectManagerEx = ApplicationManager.getApplication().getService(ProjectManager::class.java) as ProjectManagerEx

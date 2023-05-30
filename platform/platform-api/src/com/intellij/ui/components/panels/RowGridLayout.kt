@@ -22,10 +22,10 @@ open class RowGridLayout(
     require(alignment == LEFT || alignment == RIGHT || alignment == CENTER) { "unsupported alignment: $alignment" }
   }
 
-  override fun addLayoutComponent(name: String, comp: Component) = Unit
-  override fun removeLayoutComponent(comp: Component) = Unit
+  override fun addLayoutComponent(name: String, comp: Component) {}
+  override fun removeLayoutComponent(comp: Component) {}
 
-  override fun layoutContainer(parent: Container) = synchronized(parent.treeLock) {
+  override fun layoutContainer(parent: Container): Unit = synchronized(parent.treeLock) {
     val bounds = Rectangle(parent.width, parent.height)
     JBInsets.removeFrom(bounds, parent.insets)
     val count = parent.componentCount
@@ -57,8 +57,8 @@ open class RowGridLayout(
     }
   }
 
-  override fun preferredLayoutSize(parent: Container) = getSize(parent) { it.preferredSize }
-  override fun minimumLayoutSize(parent: Container) = getSize(parent) { it.minimumSize }
+  override fun preferredLayoutSize(parent: Container): Dimension = getSize(parent) { it.preferredSize }
+  override fun minimumLayoutSize(parent: Container): Dimension = getSize(parent) { it.minimumSize }
 
   private fun getSize(parent: Container, function: (Component) -> Dimension) = Dimension().also { size ->
     synchronized(parent.treeLock) {
@@ -93,7 +93,7 @@ open class RowGridLayout(
    * @param sizes a list of suggested sizes of all components
    * @return the size for every cell in the grid
    */
-  protected open fun getCellSize(sizes: List<Dimension>) = Dimension().also { size ->
+  protected open fun getCellSize(sizes: List<Dimension>): Dimension = Dimension().also { size ->
     if (sizes.isNotEmpty()) {
       size.width = sizes.maxOf { it.width }
       size.height = sizes.maxOf { it.height }

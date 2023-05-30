@@ -41,7 +41,7 @@ object DefaultIndexStorageLayout {
   }
 
   @JvmStatic
-  val usedLayoutId
+  val usedLayoutId: String?
     get() = indexLayout?.id
 
   val availableLayouts : List<FileBasedIndexLayoutProviderBean> get() {
@@ -158,7 +158,7 @@ object DefaultIndexStorageLayout {
       }
     }
 
-    override fun clearIndexData() = deleteIndexData()
+    override fun clearIndexData(): Unit = deleteIndexData()
   }
 
   class SingleEntryStorageLayout<K, V> internal constructor(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {

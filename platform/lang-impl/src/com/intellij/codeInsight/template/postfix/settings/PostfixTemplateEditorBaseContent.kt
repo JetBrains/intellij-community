@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template.postfix.settings
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Align
@@ -14,7 +15,7 @@ internal class PostfixTemplateEditorBaseContent(expressionTypesToolbar: ToolbarD
   lateinit var applyToTheTopmost: JBCheckBox
 
   @JvmField
-  val panel = panel {
+  val panel: DialogPanel = panel {
     if (expressionTypesToolbar != null) {
       row {
         cell(expressionTypesToolbar.createPanel())

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus.Obsolete
 interface StartupActivity {
   companion object {
     @Internal
-    val POST_STARTUP_ACTIVITY = ExtensionPointName<Any>("com.intellij.postStartupActivity")
+    val POST_STARTUP_ACTIVITY: ExtensionPointName<Any> = ExtensionPointName<Any>("com.intellij.postStartupActivity")
   }
 
   fun runActivity(project: Project)
@@ -71,5 +71,5 @@ interface InitProjectActivity {
 abstract class InitProjectActivityJavaShim : InitProjectActivity {
   abstract fun runActivity(project: Project)
 
-  override suspend fun run(project: Project) = runActivity(project)
+  override suspend fun run(project: Project): Unit = runActivity(project)
 }

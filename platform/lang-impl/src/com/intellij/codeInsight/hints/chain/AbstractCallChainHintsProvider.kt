@@ -168,7 +168,7 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
 
   private fun <T> Any.safeCastUsing(clazz: Class<T>) = if (clazz.isInstance(this)) clazz.cast(this) else null
 
-  final override fun createSettings() = Settings()
+  final override fun createSettings(): Settings = Settings()
 
   data class Settings(var uniqueTypeCount: Int) {
     constructor() : this(2)

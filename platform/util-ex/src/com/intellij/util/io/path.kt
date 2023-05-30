@@ -122,10 +122,10 @@ fun Path.readChars(): CharSequence {
 }
 
 @Throws(IOException::class)
-fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePath).write(data)
+fun Path.writeChild(relativePath: String, data: ByteArray): Path = resolve(relativePath).write(data)
 
 @Throws(IOException::class)
-fun Path.writeChild(relativePath: String, data: String) = writeChild(relativePath, data.toByteArray())
+fun Path.writeChild(relativePath: String, data: String): Path = writeChild(relativePath, data.toByteArray())
 
 @Throws(IOException::class)
 @JvmOverloads

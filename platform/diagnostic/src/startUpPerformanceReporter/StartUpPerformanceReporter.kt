@@ -67,11 +67,11 @@ open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope
     }
   }
 
-  override fun getMetrics() = lastMetrics
+  override fun getMetrics(): Object2IntMap<String>? = lastMetrics
 
-  override fun getPluginCostMap() = pluginCostMap!!
+  override fun getPluginCostMap(): Map<String, Object2LongMap<String>> = pluginCostMap!!
 
-  override fun getLastReport() = lastReport
+  override fun getLastReport(): ByteBuffer? = lastReport
 
   override fun reportStatistics(project: Project) {
     keepAndLogStats(project.name)

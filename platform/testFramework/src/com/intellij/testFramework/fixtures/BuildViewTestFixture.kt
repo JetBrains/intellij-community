@@ -39,7 +39,7 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
   }
 
   @Throws(Exception::class)
-  override fun tearDown() = RunAll(
+  override fun tearDown(): Unit = RunAll(
     ThrowableRunnable { if (::syncViewManager.isInitialized) syncViewManager.waitForPendingBuilds() },
     ThrowableRunnable { if (::buildViewManager.isInitialized) buildViewManager.waitForPendingBuilds() },
     ThrowableRunnable { Disposer.dispose(fixtureDisposable) }

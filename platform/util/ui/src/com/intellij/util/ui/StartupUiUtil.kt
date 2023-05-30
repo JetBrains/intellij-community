@@ -37,16 +37,16 @@ import kotlin.math.roundToInt
 object StartupUiUtil {
   @Internal
   @JvmField
-  val patchableFontResources = arrayOf("Button.font", "ToggleButton.font", "RadioButton.font",
-                                       "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font",
-                                       "MenuItem.font",
-                                       "MenuItem.acceleratorFont", "RadioButtonMenuItem.font", "CheckBoxMenuItem.font", "Menu.font",
-                                       "PopupMenu.font", "OptionPane.font",
-                                       "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font", "TabbedPane.font",
-                                       "Table.font", "TableHeader.font",
-                                       "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font",
-                                       "TextArea.font", "TextPane.font", "EditorPane.font",
-                                       "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font")
+  val patchableFontResources: Array<String> = arrayOf("Button.font", "ToggleButton.font", "RadioButton.font",
+                                                      "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font",
+                                                      "MenuItem.font",
+                                                      "MenuItem.acceleratorFont", "RadioButtonMenuItem.font", "CheckBoxMenuItem.font", "Menu.font",
+                                                      "PopupMenu.font", "OptionPane.font",
+                                                      "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font", "TabbedPane.font",
+                                                      "Table.font", "TableHeader.font",
+                                                      "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font",
+                                                      "TextArea.font", "TextPane.font", "EditorPane.font",
+                                                      "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font")
   @JvmStatic
   val isUnderDarcula: Boolean
     get() = UIManager.getLookAndFeel().name.contains("Darcula")

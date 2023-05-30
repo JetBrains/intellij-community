@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 open class AsyncActionExecutionService {
 
   companion object {
-    fun getInstance(project: Project) = project.service<AsyncActionExecutionService>()
+    fun getInstance(project: Project): AsyncActionExecutionService = project.service<AsyncActionExecutionService>()
   }
 
 

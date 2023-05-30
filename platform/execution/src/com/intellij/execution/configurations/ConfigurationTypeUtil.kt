@@ -26,7 +26,7 @@ object ConfigurationTypeUtil {
   }
 
   @JvmStatic
-  fun isEditableInDumbMode(runConfigurationType: ConfigurationType) = runConfigurationType.configurationFactories.any { it.isEditableInDumbMode }
+  fun isEditableInDumbMode(runConfigurationType: ConfigurationType): Boolean = runConfigurationType.configurationFactories.any { it.isEditableInDumbMode }
 
   @JvmStatic
   fun isEditableInDumbMode(runConfiguration: RunConfiguration): Boolean {
@@ -34,5 +34,5 @@ object ConfigurationTypeUtil {
   }
 
   @JvmStatic
-  fun isEditableInDumbMode(settings: RunnerAndConfigurationSettings) = settings.factory.isEditableInDumbMode
+  fun isEditableInDumbMode(settings: RunnerAndConfigurationSettings): Boolean = settings.factory.isEditableInDumbMode
 }

@@ -17,12 +17,12 @@ class KeyHashLogTest {
   companion object {
     @JvmField
     @ClassRule
-    val appRule = ApplicationRule()
+    val appRule: ApplicationRule = ApplicationRule()
   }
 
   @Rule
   @JvmField
-  val temporaryDirectory = TemporaryDirectory()
+  val temporaryDirectory: TemporaryDirectory = TemporaryDirectory()
 
   @Test
   fun testAdd() {

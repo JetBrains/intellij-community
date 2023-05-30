@@ -89,18 +89,18 @@ open class JBTabsImpl(private var project: Project?,
                                                       QuickActionProvider, MorePopupAware, Accessible {
   companion object {
     @JvmField
-    val PINNED = Key.create<Boolean>("pinned")
+    val PINNED: Key<Boolean> = Key.create<Boolean>("pinned")
 
     @JvmField
-    val SIDE_TABS_SIZE_LIMIT_KEY = Key.create<Int>("SIDE_TABS_SIZE_LIMIT_KEY")
+    val SIDE_TABS_SIZE_LIMIT_KEY: Key<Int> = Key.create<Int>("SIDE_TABS_SIZE_LIMIT_KEY")
 
     private val HIDDEN_INFOS_SELECT_INDEX_KEY = Key.create<Int>("HIDDEN_INFOS_SELECT_INDEX")
 
     @JvmField
-    val MIN_TAB_WIDTH = scale(75)
+    val MIN_TAB_WIDTH: Int = scale(75)
 
     @JvmField
-    val DEFAULT_MAX_TAB_WIDTH = scale(300)
+    val DEFAULT_MAX_TAB_WIDTH: Int = scale(300)
 
     @JvmField
     internal val defaultDecorator: UiDecorator = DefaultDecorator()
@@ -164,7 +164,7 @@ open class JBTabsImpl(private var project: Project?,
 
   val moreToolbar: ActionToolbar?
   var entryPointToolbar: ActionToolbar? = null
-  val titleWrapper = NonOpaquePanel()
+  val titleWrapper: NonOpaquePanel = NonOpaquePanel()
 
   var headerFitSize: Dimension? = null
 
@@ -179,10 +179,10 @@ open class JBTabsImpl(private var project: Project?,
   private val myNavigationActions: DefaultActionGroup
   val popupListener: PopupMenuListener
   var activePopup: JPopupMenu? = null
-  var horizontalSide = true
-  var isSideComponentOnTabs = true
+  var horizontalSide: Boolean = true
+  var isSideComponentOnTabs: Boolean = true
     private set
-  var isSideComponentBefore = true
+  var isSideComponentBefore: Boolean = true
     private set
   @JvmField
   internal val separatorWidth: Int = JBUI.scale(1)
@@ -232,20 +232,20 @@ open class JBTabsImpl(private var project: Project?,
     private set
 
   private var removeDeferredRequest: Long = 0
-  var position = JBTabsPosition.top
+  var position: JBTabsPosition = JBTabsPosition.top
     private set
   private val myBorder = createTabBorder()
   private val nextAction: BaseNavigationAction?
   private val prevAction: BaseNavigationAction?
-  var isTabDraggingEnabled = false
+  var isTabDraggingEnabled: Boolean = false
     private set
   protected var dragHelper: DragHelper? = null
   private var navigationActionsEnabled = true
   protected var dropInfo: TabInfo? = null
 
-  override var dropInfoIndex = 0
+  override var dropInfoIndex: Int = 0
 
-  override var dropSide = -1
+  override var dropSide: Int = -1
   protected var showDropLocation: Boolean = true
   private var oldSelection: TabInfo? = null
   private var mySelectionChangeHandler: JBTabs.SelectionChangeHandler? = null
@@ -262,7 +262,7 @@ open class JBTabsImpl(private var project: Project?,
   private var supportCompression = false
   private var emptyText: String? = null
 
-  var isMouseInsideTabsArea = false
+  var isMouseInsideTabsArea: Boolean = false
     private set
 
   private var removeNotifyInProgress = false
@@ -508,7 +508,7 @@ open class JBTabsImpl(private var project: Project?,
   protected open fun createSingleRowLayout(): SingleRowLayout = ScrollableSingleRowLayout(this)
 
   @Deprecated("override {@link JBTabsImpl#createMultiRowLayout()} instead", ReplaceWith("createMultiRowLayout()"))
-  protected open fun createTableLayout() = createMultiRowLayout()
+  protected open fun createTableLayout(): MultiRowLayout = createMultiRowLayout()
 
   override fun setNavigationActionBinding(prevActionId: String, nextActionId: String) {
     nextAction?.reconnect(nextActionId)

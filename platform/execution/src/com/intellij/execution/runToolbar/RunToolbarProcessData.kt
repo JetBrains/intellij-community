@@ -14,15 +14,15 @@ class RunToolbarProcessData {
   companion object {
     @ApiStatus.Internal
     @JvmField
-    val RW_SLOT = DataKey.create<String>("RunWidgetSlot")
+    val RW_SLOT: DataKey<String> = DataKey.create<String>("RunWidgetSlot")
 
     @ApiStatus.Internal
     @JvmField
-    val RW_MAIN_CONFIGURATION_ID = Key<String>("RunWidgetMainRunConfigurationId")
+    val RW_MAIN_CONFIGURATION_ID: Key<String> = Key<String>("RunWidgetMainRunConfigurationId")
 
     @ApiStatus.Internal
     @JvmField
-    val RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY = Key<Boolean>("RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY")
+    val RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY: Key<Boolean> = Key<Boolean>("RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY")
 
     @ApiStatus.Internal
     @JvmStatic

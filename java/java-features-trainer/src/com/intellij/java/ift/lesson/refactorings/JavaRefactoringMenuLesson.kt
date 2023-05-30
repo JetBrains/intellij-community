@@ -13,7 +13,7 @@ import training.util.adaptToNotNativeLocalization
 import javax.swing.JDialog
 
 class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.menu") {
-  override val sample = parseLessonSample("""
+  override val sample: LessonSample = parseLessonSample("""
     import java.io.BufferedReader;
     import java.io.FileReader;
     import java.io.IOException;

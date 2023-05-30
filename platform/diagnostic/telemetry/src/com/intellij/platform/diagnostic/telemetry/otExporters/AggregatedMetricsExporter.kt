@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.otExporters
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.diagnostic.telemetry.MetricsExporterEntry
 import com.intellij.openapi.diagnostic.logger
 import io.opentelemetry.sdk.common.CompletableResultCode
@@ -13,7 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 class AggregatedMetricsExporter : MetricExporter {
 
   companion object {
-    val LOG = logger<AggregatedMetricsExporter>()
+    val LOG: Logger = logger<AggregatedMetricsExporter>()
   }
 
   private val metricsExporters: CopyOnWriteArrayList<MetricsExporterEntry> = CopyOnWriteArrayList<MetricsExporterEntry>()

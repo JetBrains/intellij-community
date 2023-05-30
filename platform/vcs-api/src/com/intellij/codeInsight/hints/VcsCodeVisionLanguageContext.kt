@@ -18,8 +18,8 @@ import java.awt.event.MouseEvent
 @ApiStatus.Experimental
 interface VcsCodeVisionLanguageContext {
   companion object {
-    const val EXTENSION = "com.intellij.vcs.codeVisionLanguageContext"
-    val providersExtensionPoint = LanguageExtension<VcsCodeVisionLanguageContext>(EXTENSION)
+    const val EXTENSION: String = "com.intellij.vcs.codeVisionLanguageContext"
+    val providersExtensionPoint: LanguageExtension<VcsCodeVisionLanguageContext> = LanguageExtension<VcsCodeVisionLanguageContext>(EXTENSION)
   }
 
   /**

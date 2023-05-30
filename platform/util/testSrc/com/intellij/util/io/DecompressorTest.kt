@@ -29,7 +29,7 @@ import java.util.zip.ZipException
 import java.util.zip.ZipOutputStream
 
 class DecompressorTest {
-  @Rule @JvmField var tempDir = TempDirectory()
+  @Rule @JvmField var tempDir: TempDirectory = TempDirectory()
 
   @Test fun noInternalTraversalInZip() {
     val zip = tempDir.newFile("test.zip")

@@ -18,11 +18,11 @@ interface InlineCompletionProvider {
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<InlineCompletionProvider>("com.intellij.inline.completion.provider")
-    fun extensions() = EP_NAME.extensionList
+    fun extensions(): List<InlineCompletionProvider> = EP_NAME.extensionList
   }
 
   object DUMMY : InlineCompletionProvider {
-    override suspend fun getProposals(request: InlineCompletionRequest) = emptyList<InlineCompletionElement>()
-    override fun isEnabled(event: DocumentEvent) = true
+    override suspend fun getProposals(request: InlineCompletionRequest): List<InlineCompletionElement> = emptyList<InlineCompletionElement>()
+    override fun isEnabled(event: DocumentEvent): Boolean = true
   }
 }

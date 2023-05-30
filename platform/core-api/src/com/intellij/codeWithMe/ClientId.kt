@@ -42,7 +42,7 @@ data class ClientId(val value: String) {
 
   companion object {
     private val LOG = Logger.getInstance(ClientId::class.java)
-    fun getClientIdLogger() = LOG
+    fun getClientIdLogger(): Logger = LOG
 
     /**
      * Default client id for local application

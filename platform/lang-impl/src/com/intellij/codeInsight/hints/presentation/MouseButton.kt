@@ -20,5 +20,5 @@ enum class MouseButton {
   }
 }
 
-val MouseEvent.mouseButton
+val MouseEvent.mouseButton: MouseButton?
   get() = MouseButton.fromEvent(this)

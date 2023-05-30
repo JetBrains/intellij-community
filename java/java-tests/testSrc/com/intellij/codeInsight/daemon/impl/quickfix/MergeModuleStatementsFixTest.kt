@@ -9,19 +9,19 @@ import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescripto
 
 class MergeModuleStatementsFixTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
-  override fun getBasePath() = getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/mergeModuleStatementsFix"
+  override fun getBasePath(): String = getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/mergeModuleStatementsFix"
 
-  fun testExports1() = doTest("exports", "my.api")
-  fun testExports2() = doTest("exports", "my.api")
-  fun testExports3() = doTest("exports", "my.api")
+  fun testExports1(): Unit = doTest("exports", "my.api")
+  fun testExports2(): Unit = doTest("exports", "my.api")
+  fun testExports3(): Unit = doTest("exports", "my.api")
 
-  fun testProvides1() = doTest("provides", "my.api.MyService")
-  fun testProvides2() = doTest("provides", "my.api.MyService")
-  fun testProvides3() = doTest("provides", "my.api.MyService")
+  fun testProvides1(): Unit = doTest("provides", "my.api.MyService")
+  fun testProvides2(): Unit = doTest("provides", "my.api.MyService")
+  fun testProvides3(): Unit = doTest("provides", "my.api.MyService")
 
-  fun testOpens1() = doTest("opens", "my.api")
-  fun testOpens2() = doTest("opens", "my.api")
-  fun testOpens3() = doTest("opens", "my.api")
+  fun testOpens1(): Unit = doTest("opens", "my.api")
+  fun testOpens2(): Unit = doTest("opens", "my.api")
+  fun testOpens3(): Unit = doTest("opens", "my.api")
 
 
   override fun setUp() {

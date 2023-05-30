@@ -14,11 +14,11 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 open class ComponentAdvertiser {
-  val component = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
-  protected val multiPanel = MyPanel()
-  protected var currentIndex = AtomicInteger(0)
+  val component: JPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
+  protected val multiPanel: MyPanel = MyPanel()
+  protected var currentIndex: AtomicInteger = AtomicInteger(0)
 
-  protected val nextLabel = ActionLink(CodeInsightBundle.message("label.next.tip")) {
+  protected val nextLabel: ActionLink = ActionLink(CodeInsightBundle.message("label.next.tip")) {
     val i = currentIndex.incrementAndGet()
     multiPanel.select(currentIndex.updateAndGet { i % multiPanel.list.size }, true).isDone
   }

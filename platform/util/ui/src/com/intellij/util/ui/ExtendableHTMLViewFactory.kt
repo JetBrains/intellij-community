@@ -47,15 +47,15 @@ class ExtendableHTMLViewFactory internal constructor(
 
   companion object {
     @JvmField
-    val DEFAULT_EXTENSIONS = listOf(Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES)
+    val DEFAULT_EXTENSIONS: List<Extension> = listOf(Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES)
 
     @JvmField
-    val DEFAULT = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS)
+    val DEFAULT: ExtendableHTMLViewFactory = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS)
 
     private val DEFAULT_EXTENSIONS_WORD_WRAP = DEFAULT_EXTENSIONS + Extensions.WORD_WRAP
 
     @JvmField
-    val DEFAULT_WORD_WRAP = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS_WORD_WRAP)
+    val DEFAULT_WORD_WRAP: ExtendableHTMLViewFactory = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS_WORD_WRAP)
   }
 
   @FunctionalInterface

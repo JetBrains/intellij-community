@@ -15,6 +15,7 @@ import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.awt.Color
 import java.awt.Component
 import java.awt.GridBagLayout
 import java.awt.Point
@@ -58,7 +59,7 @@ class AccountMenuPopupStep(items: List<AccountMenuItem>) : BaseListPopupStep<Acc
     is AccountMenuItem.Group -> AccountMenuPopupStep(selectedValue.actions)
   }
 
-  override fun getBackgroundFor(value: AccountMenuItem?) = UIUtil.getListBackground()
+  override fun getBackgroundFor(value: AccountMenuItem?): Color = UIUtil.getListBackground()
 }
 
 class AccountsMenuListPopup(
@@ -71,9 +72,9 @@ class AccountsMenuListPopup(
                   accountMenuPopupStep,
                   parentObject
 ) {
-  override fun getListElementRenderer() = AccountMenuItemRenderer()
+  override fun getListElementRenderer(): AccountMenuItemRenderer = AccountMenuItemRenderer()
 
-  override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?) = AccountsMenuListPopup(
+  override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): AccountsMenuListPopup = AccountsMenuListPopup(
     parent?.project,
     step as AccountMenuPopupStep,
     parent,

@@ -251,7 +251,7 @@ class ListLayout private constructor(
   override fun getLayoutAlignmentX(target: Container): Float = .5f
   override fun getLayoutAlignmentY(target: Container): Float = .5f
 
-  override fun invalidateLayout(target: Container) = Unit
+  override fun invalidateLayout(target: Container) {}
 
   override fun toString(): String =
     when (majorAxis) {

@@ -12,7 +12,7 @@ class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLangua
   var homePath: String = ""
   var javaVersionString: String = ""
 
-  override fun getState() = MyState().also {
+  override fun getState(): MyState = MyState().also {
     it.homePath = this.homePath
     it.javaVersionString = this.javaVersionString
 
@@ -41,11 +41,11 @@ class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLangua
   }
 
   class MyState : BaseState() {
-    var homePath by string()
-    var javaVersionString by string()
+    var homePath: String? by string()
+    var javaVersionString: String? by string()
 
-    var applicationFolder by property<VolumeState>()
-    var classpathFolder by property<VolumeState>()
-    var agentFolder by property<VolumeState>()
+    var applicationFolder: VolumeState? by property<VolumeState>()
+    var classpathFolder: VolumeState? by property<VolumeState>()
+    var agentFolder: VolumeState? by property<VolumeState>()
   }
 }

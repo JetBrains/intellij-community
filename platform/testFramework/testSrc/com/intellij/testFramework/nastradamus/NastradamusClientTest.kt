@@ -28,7 +28,7 @@ class NastradamusClientTest {
 
   @JvmField
   @Rule
-  val timeoutRule = Timeout(30, TimeUnit.SECONDS)
+  val timeoutRule: Timeout = Timeout(30, TimeUnit.SECONDS)
 
   @JvmField
   @Rule

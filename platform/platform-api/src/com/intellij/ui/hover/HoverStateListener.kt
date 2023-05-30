@@ -8,7 +8,7 @@ import java.awt.Component
 abstract class HoverStateListener : HoverListener() {
   protected abstract fun hoverChanged(component: Component, hovered: Boolean)
 
-  override fun mouseEntered(component: Component, x: Int, y: Int) = hoverChanged(component, true)
-  override fun mouseMoved(component: Component, x: Int, y: Int) = Unit
-  override fun mouseExited(component: Component) = hoverChanged(component, false)
+  override fun mouseEntered(component: Component, x: Int, y: Int): Unit = hoverChanged(component, true)
+  override fun mouseMoved(component: Component, x: Int, y: Int) {}
+  override fun mouseExited(component: Component): Unit = hoverChanged(component, false)
 }

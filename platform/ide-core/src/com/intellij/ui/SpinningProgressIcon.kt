@@ -36,7 +36,7 @@ open class SpinningProgressIcon : AnimatedIcon() {
                     """ x="9.41016" y="10.8242" width="2" height="4" rx="1" transform="rotate(-45 9.41016 10.8242)" """,
                     """ x="11"      y="7"       width="4" height="2" rx="1" """,
                     """ x="12.2383" y="2.3501"  width="2" height="4" rx="1" transform="rotate(45 12.2383 2.3501)" """)
-  open val size
+  open val size: Int
     get() = 16
 
   private var iconColor: Color = JBColor.namedColor("ProgressIcon.color", JBColor(0xA8ADBD, 0x6F737A))
@@ -46,13 +46,13 @@ open class SpinningProgressIcon : AnimatedIcon() {
   private val iconCache = arrayOfNulls<Icon>(paths.size)
   private var iconCacheKey = ""
 
-  override fun createFrames() = Array(paths.size) { createFrame(it) }
+  override fun createFrames(): Array<Frame> = Array(paths.size) { createFrame(it) }
 
   fun setIconColor(color: Color) {
     iconColor = color
   }
 
-  fun getIconColor() = iconColor
+  fun getIconColor(): Color = iconColor
   fun createFrame(i: Int): Frame {
     return object : Frame {
       override fun getIcon() = CashedDelegateIcon(i)
@@ -62,9 +62,9 @@ open class SpinningProgressIcon : AnimatedIcon() {
 
   inner class CashedDelegateIcon(val index: Int) : Icon {
     private fun getDelegate() = getIconFromCache(index)
-    override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) = getDelegate().paintIcon(c, g, x, y)
-    override fun getIconWidth() = getDelegate().iconWidth
-    override fun getIconHeight() = getDelegate().iconHeight
+    override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int): Unit = getDelegate().paintIcon(c, g, x, y)
+    override fun getIconWidth(): Int = getDelegate().iconWidth
+    override fun getIconHeight(): Int = getDelegate().iconHeight
   }
 
   private fun getIconFromCache(i: Int): Icon {

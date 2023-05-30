@@ -21,7 +21,7 @@ import kotlin.io.path.name
 class PluginLoadingResult(private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ()) {
   private val incompletePlugins = HashMap<PluginId, IdeaPluginDescriptorImpl>()
 
-  @JvmField val enabledPluginsById = HashMap<PluginId, IdeaPluginDescriptorImpl>()
+  @JvmField val enabledPluginsById: HashMap<PluginId, IdeaPluginDescriptorImpl> = HashMap<PluginId, IdeaPluginDescriptorImpl>()
 
   private val idMap = HashMap<PluginId, IdeaPluginDescriptorImpl>()
   @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null

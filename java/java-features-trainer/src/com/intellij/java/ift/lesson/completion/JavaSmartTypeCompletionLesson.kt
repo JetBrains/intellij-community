@@ -2,16 +2,13 @@
 package com.intellij.java.ift.lesson.completion
 
 import com.intellij.java.ift.JavaLessonsBundle
-import training.dsl.LessonContext
-import training.dsl.LessonUtil
+import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
-import training.dsl.TaskContext
-import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
 class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", LessonsBundle.message("smart.completion.lesson.name")) {
-  val sample = parseLessonSample("""
+  val sample: LessonSample = parseLessonSample("""
     import java.lang.String;
     import java.util.HashSet;
     import java.util.LinkedList;

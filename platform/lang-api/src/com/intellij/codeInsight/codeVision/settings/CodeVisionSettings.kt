@@ -29,10 +29,10 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
     get() = ApplicationManager.getApplication().messageBus.syncPublisher(CODE_LENS_SETTINGS_CHANGED)
 
   class State {
-    var isEnabled = true
-    var defaultPosition = "Top"
-    var visibleMetricsAboveDeclarationCount = 5
-    var visibleMetricsNextToDeclarationCount = 5
+    var isEnabled: Boolean = true
+    var defaultPosition: String = "Top"
+    var visibleMetricsAboveDeclarationCount: Int = 5
+    var visibleMetricsNextToDeclarationCount: Int = 5
 
     var disabledCodeVisionProviderIds: TreeSet<String> = sortedSetOf()
     var codeVisionGroupToPosition: MutableMap<String, String> = mutableMapOf()
@@ -117,7 +117,7 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
     return state
   }
 
-  override fun loadState(state: State) = synchronized(stateLock) {
+  override fun loadState(state: State): Unit = synchronized(stateLock) {
     this.state = state
   }
 

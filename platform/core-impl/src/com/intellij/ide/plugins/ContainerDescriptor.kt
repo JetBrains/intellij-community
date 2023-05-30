@@ -20,7 +20,7 @@ class ContainerDescriptor {
 
   @JvmField var extensionPoints: MutableList<ExtensionPointDescriptor>? = null
 
-  @Transient var distinctExtensionPointCount = -1
+  @Transient var distinctExtensionPointCount: Int = -1
   @Transient @JvmField var extensions: Map<String, MutableList<ExtensionDescriptor>>? = null
 
   fun addService(serviceDescriptor: ServiceDescriptor) {

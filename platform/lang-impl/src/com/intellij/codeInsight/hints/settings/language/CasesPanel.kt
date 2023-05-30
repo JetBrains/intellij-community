@@ -49,7 +49,7 @@ internal class CasesPanel(
   }
 }
 class CaseListPanel(val cases: List<ImmediateConfigurable.Case>, listener: ChangeListener) : JPanel() {
-  val checkBoxes = mutableListOf<JCheckBox>()
+  val checkBoxes: MutableList<JCheckBox> = mutableListOf<JCheckBox>()
 
   init {
     layout = BoxLayout(this, BoxLayout.Y_AXIS)

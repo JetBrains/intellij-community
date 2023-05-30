@@ -52,7 +52,7 @@ class IndexDiagnosticDumper : Disposable {
     private const val FILE_NAME_PREFIX = "diagnostic-"
 
     @JvmStatic
-    val projectIndexingHistoryListenerEpName =
+    val projectIndexingHistoryListenerEpName: ExtensionPointName<ProjectIndexingHistoryListener> =
       ExtensionPointName.create<ProjectIndexingHistoryListener>("com.intellij.projectIndexingHistoryListener")
 
     @JvmStatic
@@ -119,12 +119,12 @@ class IndexDiagnosticDumper : Disposable {
     var shouldDumpInUnitTestMode: Boolean = false
 
     @JvmStatic
-    val shouldDumpPathsOfFilesIndexedByInfrastructureExtensions =
+    val shouldDumpPathsOfFilesIndexedByInfrastructureExtensions: Boolean =
       SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.indexed.by.infrastructure.extensions",
                                           ApplicationManagerEx.isInIntegrationTest())
 
     @JvmStatic
-    val shouldPrintScanningRefreshedFilesInformationDuringIndexingActionInAggregateHtml = false
+    val shouldPrintScanningRefreshedFilesInformationDuringIndexingActionInAggregateHtml: Boolean = false
 
     @JvmStatic
     private val shouldDumpOldDiagnostics: Boolean

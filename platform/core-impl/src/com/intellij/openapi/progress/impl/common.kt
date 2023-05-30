@@ -27,7 +27,7 @@ internal data class TextDetails(
   val details: ProgressText?,
 ) {
   companion object {
-    val NULL = TextDetails(null, null)
+    val NULL: TextDetails = TextDetails(null, null)
   }
 }
 

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val right: Int = 0) {
   companion object {
     @JvmField
-    val EMPTY = Gaps(0)
+    val EMPTY: Gaps = Gaps(0)
   }
 
   init {
@@ -40,4 +40,4 @@ fun JBGaps(top: Int = 0, left: Int = 0, bottom: Int = 0, right: Int = 0): Gaps {
 @Internal
 @Deprecated("Use UnscaledGaps", replaceWith = ReplaceWith("UnscaledGaps()"))
 @ApiStatus.ScheduledForRemoval
-fun Gaps.toUnscaled() = UnscaledGaps(top = top.unscale(), left = left.unscale(), bottom = bottom.unscale(), right = right.unscale())
+fun Gaps.toUnscaled(): UnscaledGaps = UnscaledGaps(top = top.unscale(), left = left.unscale(), bottom = bottom.unscale(), right = right.unscale())

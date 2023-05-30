@@ -71,6 +71,6 @@ interface AdvancedSettingsChangeListener {
   companion object {
     @JvmField
     @Topic.AppLevel
-    val TOPIC = Topic(AdvancedSettingsChangeListener::class.java, BroadcastDirection.NONE)
+    val TOPIC: Topic<AdvancedSettingsChangeListener> = Topic(AdvancedSettingsChangeListener::class.java, BroadcastDirection.NONE)
   }
 }

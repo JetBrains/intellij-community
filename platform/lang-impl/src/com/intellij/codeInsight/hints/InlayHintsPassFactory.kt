@@ -61,7 +61,7 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
       editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationStamp(file))
     }
 
-    fun clearModificationStamp(editor: Editor) = editor.putUserData(PSI_MODIFICATION_STAMP, null)
+    fun clearModificationStamp(editor: Editor): Unit = editor.putUserData(PSI_MODIFICATION_STAMP, null)
 
     private fun getCurrentModificationStamp(file: PsiFile): Long {
       return file.manager.modificationTracker.modificationCount
@@ -112,6 +112,6 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
 
     @ApiStatus.Internal
     @RequiresEdt
-    fun applyPlaceholders(file: PsiFile, editor: Editor, hints: HintsBuffer) = InlayHintsPass.applyCollected(hints, file, editor, true)
+    fun applyPlaceholders(file: PsiFile, editor: Editor, hints: HintsBuffer): Unit = InlayHintsPass.applyCollected(hints, file, editor, true)
   }
 }

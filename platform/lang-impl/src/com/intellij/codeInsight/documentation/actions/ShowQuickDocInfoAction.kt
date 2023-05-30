@@ -20,7 +20,7 @@ open class ShowQuickDocInfoAction : AnAction(),
     setInjectedContext(true)
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.dataContext.getData(DOCUMENTATION_TARGETS)?.isNotEmpty() ?: false
@@ -34,8 +34,8 @@ open class ShowQuickDocInfoAction : AnAction(),
 
   @Suppress("SpellCheckingInspection")
   companion object {
-    const val CODEASSISTS_QUICKJAVADOC_FEATURE = "codeassists.quickjavadoc"
-    const val CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE = "codeassists.quickjavadoc.lookup"
-    const val CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE = "codeassists.quickjavadoc.ctrln"
+    const val CODEASSISTS_QUICKJAVADOC_FEATURE: String = "codeassists.quickjavadoc"
+    const val CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE: String = "codeassists.quickjavadoc.lookup"
+    const val CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE: String = "codeassists.quickjavadoc.ctrln"
   }
 }

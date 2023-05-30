@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.DocumentAdapter
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import java.awt.event.ActionListener
 import java.awt.event.FocusAdapter
@@ -25,9 +26,9 @@ import javax.swing.plaf.basic.BasicComboBoxEditor
 class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnAction(), CustomComponentAction {
   private val latestMaskProperty: AtomicProperty<String?> = AtomicProperty(FindSettings.getInstance().fileMask)
   private var latestMask: String? by latestMaskProperty
-  val saveMask = { FindSettings.getInstance().fileMask = latestMask }
+  val saveMask: () -> Unit = { FindSettings.getInstance().fileMask = latestMask }
 
-  override fun createCustomComponent(presentation: Presentation) =
+  override fun createCustomComponent(presentation: Presentation): ComboboxActionComponent =
     ComboboxActionComponent(project, latestMaskProperty) { onChanged() }.also { it.isEditable = true }
 
   override fun actionPerformed(e: AnActionEvent) {}
@@ -78,7 +79,7 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
       }
     }
 
-    override fun getPreferredSize() = Dimension(JBUI.scale(120),
+    override fun getPreferredSize(): Dimension = Dimension(JBUI.scale(120),
                                                 ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE.height + insets.top + insets.bottom - JBUI.scale(
                                                   1))
 
@@ -89,6 +90,6 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
   }
 
   companion object {
-    val emptyText = FindBundle.message("se.text.header.action.all.filetypes")
+    val emptyText: @Nls String = FindBundle.message("se.text.header.action.all.filetypes")
   }
 }

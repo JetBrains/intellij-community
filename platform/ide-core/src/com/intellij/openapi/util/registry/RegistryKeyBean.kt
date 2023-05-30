@@ -88,17 +88,17 @@ class RegistryKeyBean private constructor() {
 
   @RequiredElement
   @Attribute("key")
-  @JvmField var key = ""
+  @JvmField var key: String = ""
 
   @RequiredElement
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Attribute("description")
-  @JvmField var description = ""
+  @JvmField var description: String = ""
 
   @RequiredElement(allowEmpty = true)
   @Attribute("defaultValue")
-  @JvmField var defaultValue = ""
+  @JvmField var defaultValue: String = ""
 
   @Attribute("restartRequired")
-  @JvmField var restartRequired = false
+  @JvmField var restartRequired: Boolean = false
 }

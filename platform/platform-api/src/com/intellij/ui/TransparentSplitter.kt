@@ -13,5 +13,5 @@ class TransparentSplitter : OnePixelSplitter {
   constructor(proportion: Float) : super(proportion)
   constructor(vertical: Boolean, proportion: Float, minProp: Float, maxProp: Float) : super(vertical, proportion, minProp, maxProp)
 
-  override fun getDividerWidth() = 0
+  override fun getDividerWidth(): Int = 0
 }

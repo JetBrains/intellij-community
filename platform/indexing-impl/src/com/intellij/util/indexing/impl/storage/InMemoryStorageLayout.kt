@@ -31,5 +31,5 @@ class InMemoryStorageLayout<K, V>(private val myExtension: FileBasedIndexExtensi
     return MapForwardIndexAccessor(InputMapExternalizer(myExtension))
   }
 
-  override fun clearIndexData() = Unit
+  override fun clearIndexData() {}
 }

@@ -125,7 +125,7 @@ object JavaCompletionFeatures {
     return null
   }
 
-  fun calculateVariables(environment: CompletionEnvironment) = try {
+  fun calculateVariables(environment: CompletionEnvironment): Unit? = try {
     PsiTreeUtil.getParentOfType(environment.parameters.position, PsiMethod::class.java)?.let { enclosingMethod ->
       val variables = getVariablesInScope(environment.parameters.position, enclosingMethod)
       val names = variables.mapNotNull { it.name }.toSet()

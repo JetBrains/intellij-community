@@ -86,7 +86,7 @@ class TargetGTDActionData(private val project: Project, private val targetData: 
     }
   }
 
-  fun isDeclared() = targetData is TargetData.Declared
+  fun isDeclared(): Boolean = targetData is TargetData.Declared
 
   private fun extractSingleTargetResult(symbol: Symbol, navigationProvider: Any?): SingleTarget? {
     val el = PsiSymbolService.getInstance().extractElementFromSymbol(symbol) ?: return null

@@ -160,13 +160,13 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     }
   }
 
-  override fun isIgnoredDisabledPlugins() = isDisabledStateIgnored
+  override fun isIgnoredDisabledPlugins(): Boolean = isDisabledStateIgnored
 
   override fun setIgnoredDisabledPlugins(ignoredDisabledPlugins: Boolean) {
     isDisabledStateIgnored = ignoredDisabledPlugins
   }
 
-  override fun isDisabled(pluginId: PluginId) = getDisabledIds().contains(pluginId)
+  override fun isDisabled(pluginId: PluginId): Boolean = getDisabledIds().contains(pluginId)
 
   override fun enable(descriptors: Collection<IdeaPluginDescriptor>): Boolean = setEnabledState(descriptors, enabled = true)
 

@@ -27,7 +27,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     val log = thisLogger()
   }
 
-  override val indexingSessionId = indexingSessionIdSequencer.getAndIncrement()
+  override val indexingSessionId: Long = indexingSessionIdSequencer.getAndIncrement()
 
   private val biggestContributorsPerFileTypeLimit = 10
 
@@ -36,13 +36,13 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
   private val timesImpl = IndexingTimesImpl(indexingReason = indexingReason, scanningType = scanningType,
                                             updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
-  override val scanningStatistics = arrayListOf<JsonScanningStatistics>()
+  override val scanningStatistics: ArrayList<JsonScanningStatistics> = arrayListOf<JsonScanningStatistics>()
 
-  override val providerStatistics = arrayListOf<JsonFileProviderIndexStatistics>()
+  override val providerStatistics: ArrayList<JsonFileProviderIndexStatistics> = arrayListOf<JsonFileProviderIndexStatistics>()
 
-  override val totalStatsPerFileType = hashMapOf<String /* File type name */, StatsPerFileTypeImpl>()
+  override val totalStatsPerFileType: HashMap<String, StatsPerFileTypeImpl> = hashMapOf<String /* File type name */, StatsPerFileTypeImpl>()
 
-  override val totalStatsPerIndexer = hashMapOf<String /* Index ID */, StatsPerIndexerImpl>()
+  override val totalStatsPerIndexer: HashMap<String, StatsPerIndexerImpl> = hashMapOf<String /* Index ID */, StatsPerIndexerImpl>()
 
   override var visibleTimeToAllThreadsTimeRatio: Double = 0.0
 
@@ -129,9 +129,9 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     }
   }
 
-  fun suspendStages(instant: Instant) = doSuspend(instant, true)
+  fun suspendStages(instant: Instant): Unit = doSuspend(instant, true)
 
-  fun stopSuspendingStages(instant: Instant) = doSuspend(instant, false)
+  fun stopSuspendingStages(instant: Instant): Unit = doSuspend(instant, false)
 
   private fun doSuspend(instant: Instant, start: Boolean) {
     synchronized(events) {
@@ -259,19 +259,19 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
       override fun getProperty(): KMutableProperty1<IndexingTimesImpl, Duration> = IndexingTimesImpl::creatingIteratorsDuration
     },
     Scanning {
-      override fun getProperty() = IndexingTimesImpl::scanFilesDuration
+      override fun getProperty(): KMutableProperty1<IndexingTimesImpl, Duration> = IndexingTimesImpl::scanFilesDuration
     },
 
     Indexing {
-      override fun getProperty() = IndexingTimesImpl::indexingDuration
+      override fun getProperty(): KMutableProperty1<IndexingTimesImpl, Duration> = IndexingTimesImpl::indexingDuration
     },
 
     PushProperties {
-      override fun getProperty() = IndexingTimesImpl::pushPropertiesDuration
+      override fun getProperty(): KMutableProperty1<IndexingTimesImpl, Duration> = IndexingTimesImpl::pushPropertiesDuration
     },
 
     DumbMode {
-      override fun getProperty() = IndexingTimesImpl::dumbModeDuration
+      override fun getProperty(): KMutableProperty1<IndexingTimesImpl, Duration> = IndexingTimesImpl::dumbModeDuration
     };
 
 
@@ -361,14 +361,14 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     }
   }
 
-  override val scanningSessionId = scanningSessionIdSequencer.getAndIncrement()
+  override val scanningSessionId: Long = scanningSessionIdSequencer.getAndIncrement()
 
   override val times: ScanningTimes by ::timesImpl
 
   private val timesImpl = ScanningTimesImpl(scanningReason = scanningReason, scanningType = scanningType, scanningId = scanningSessionId,
                                             updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
-  override val scanningStatistics = arrayListOf<JsonScanningStatistics>()
+  override val scanningStatistics: ArrayList<JsonScanningStatistics> = arrayListOf<JsonScanningStatistics>()
 
   private val events = mutableListOf<Event>()
 
@@ -398,9 +398,9 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     }
   }
 
-  fun suspendStages(instant: Instant) = doSuspend(instant, true)
+  fun suspendStages(instant: Instant): Unit = doSuspend(instant, true)
 
-  fun stopSuspendingStages(instant: Instant) = doSuspend(instant, false)
+  fun stopSuspendingStages(instant: Instant): Unit = doSuspend(instant, false)
 
   private fun doSuspend(instant: Instant, start: Boolean) {
     synchronized(events) {
@@ -535,13 +535,13 @@ data class ProjectScanningHistoryImpl(override val project: Project,
       override fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration> = ScanningTimesImpl::creatingIteratorsDuration
     },
     CollectingIndexableFiles {
-      override fun getProperty() = ScanningTimesImpl::collectingIndexableFilesDuration
+      override fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration> = ScanningTimesImpl::collectingIndexableFilesDuration
     },
     DelayedPushProperties {
-      override fun getProperty() = ScanningTimesImpl::delayedPushPropertiesStageDuration
+      override fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration> = ScanningTimesImpl::delayedPushPropertiesStageDuration
     },
     DumbMode {
-      override fun getProperty() = ScanningTimesImpl::dumbModeWithoutPausesDuration
+      override fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration> = ScanningTimesImpl::dumbModeWithoutPausesDuration
     };
 
     abstract fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration>
@@ -572,7 +572,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     val indexingSessionIdSequencer = AtomicLong()
   }
 
-  override val indexingSessionId = indexingSessionIdSequencer.getAndIncrement()
+  override val indexingSessionId: Long = indexingSessionIdSequencer.getAndIncrement()
 
   private val biggestContributorsPerFileTypeLimit = 10
 
@@ -582,11 +582,11 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
 
   override var refreshedScanningStatistics: JsonScanningStatistics = JsonScanningStatistics()
 
-  override val providerStatistics = arrayListOf<JsonFileProviderIndexStatistics>()
+  override val providerStatistics: ArrayList<JsonFileProviderIndexStatistics> = arrayListOf<JsonFileProviderIndexStatistics>()
 
-  override val totalStatsPerFileType = hashMapOf<String /* File type name */, StatsPerFileTypeImpl>()
+  override val totalStatsPerFileType: HashMap<String, StatsPerFileTypeImpl> = hashMapOf<String /* File type name */, StatsPerFileTypeImpl>()
 
-  override val totalStatsPerIndexer = hashMapOf<String /* Index ID */, StatsPerIndexerImpl>()
+  override val totalStatsPerIndexer: HashMap<String, StatsPerIndexerImpl> = hashMapOf<String /* Index ID */, StatsPerIndexerImpl>()
 
   override var visibleTimeToAllThreadsTimeRatio: Double = 0.0
 
@@ -657,9 +657,9 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
 
   data class SuspensionEvent(val started: Boolean, val instant: Instant)
 
-  fun suspendStages(instant: Instant) = registerSuspension(true, instant)
+  fun suspendStages(instant: Instant): Unit = registerSuspension(true, instant)
 
-  fun stopSuspendingStages(instant: Instant) = registerSuspension(false, instant)
+  fun stopSuspendingStages(instant: Instant): Unit = registerSuspension(false, instant)
 
   private fun registerSuspension(started: Boolean, instant: Instant) {
     synchronized(events) {

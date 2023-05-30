@@ -71,7 +71,7 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 private var applicationInitializationResult: Result<Unit>? = null
-const val LEAKED_PROJECTS = "leakedProjects"
+const val LEAKED_PROJECTS: String = "leakedProjects"
 
 val isApplicationInitialized: Boolean
   get() = applicationInitializationResult?.isSuccess == true

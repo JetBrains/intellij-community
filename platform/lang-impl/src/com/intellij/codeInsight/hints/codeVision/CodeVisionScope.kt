@@ -4,4 +4,4 @@ package com.intellij.codeInsight.hints.codeVision
 import com.intellij.platform.diagnostic.telemetry.Scope
 
 @JvmField
-val CodeVision = Scope("CodeVision")
+val CodeVision: Scope = Scope("CodeVision")

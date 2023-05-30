@@ -29,11 +29,11 @@ abstract class TargetEnvironmentConfiguration(typeId: String) : ContributedConfi
   var uuid: String = UUID.randomUUID().toString()
     internal set
 
-  val runtimes = ContributedConfigurationsList(LanguageRuntimeType.EXTENSION_NAME)
+  val runtimes: ContributedConfigurationsList<LanguageRuntimeConfiguration, LanguageRuntimeType<*>> = ContributedConfigurationsList(LanguageRuntimeType.EXTENSION_NAME)
 
-  fun addLanguageRuntime(runtime: LanguageRuntimeConfiguration) = runtimes.addConfig(runtime)
+  fun addLanguageRuntime(runtime: LanguageRuntimeConfiguration): Unit = runtimes.addConfig(runtime)
 
-  fun removeLanguageRuntime(runtime: LanguageRuntimeConfiguration) = runtimes.removeConfig(runtime)
+  fun removeLanguageRuntime(runtime: LanguageRuntimeConfiguration): Boolean = runtimes.removeConfig(runtime)
 
   fun createEnvironmentRequest(project: Project?): TargetEnvironmentRequest = getTargetType().createEnvironmentRequest(project, this)
 
@@ -57,7 +57,7 @@ abstract class TargetEnvironmentConfiguration(typeId: String) : ContributedConfi
   }
 
   abstract class TargetBaseState : BaseState() {
-    var uuid by string()
+    var uuid: String? by string()
   }
 }
 

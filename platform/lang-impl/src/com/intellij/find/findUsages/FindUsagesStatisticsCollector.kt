@@ -15,9 +15,9 @@ class FindUsagesStatisticsCollector : CounterUsagesCollector() {
 
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("find.usages", 3)
+    val GROUP: EventLogGroup = EventLogGroup("find.usages", 3)
 
-    const val OPTIONS_EVENT_ID = "options"
+    const val OPTIONS_EVENT_ID: String = "options"
 
     private val SEARCHABLE_SCOPE_EVENT_FIELD = EventFields.StringValidatedByCustomRule("searchScope", ScopeRuleValidator::class.java)
     private val SEARCH_FOR_TEXT_OCCURRENCES_FIELD = EventFields.Boolean("isSearchForTextOccurrences")

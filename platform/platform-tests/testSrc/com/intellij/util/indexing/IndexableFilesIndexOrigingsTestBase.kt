@@ -36,24 +36,24 @@ open class IndexableFilesIndexOriginsTestBase {
   companion object {
     @JvmField
     @ClassRule
-    val appRule = ApplicationRule()
+    val appRule: ApplicationRule = ApplicationRule()
   }
 
   @Rule
   @JvmField
-  val edtRule = EdtRule()
+  val edtRule: EdtRule = EdtRule()
 
   @Rule
   @JvmField
-  val projectModelRule = ProjectModelRule()
+  val projectModelRule: ProjectModelRule = ProjectModelRule()
 
   @Rule
   @JvmField
-  val disposableRule = DisposableRule()
+  val disposableRule: DisposableRule = DisposableRule()
 
   @Rule
   @JvmField
-  val tempDirectory = TempDirectory()
+  val tempDirectory: TempDirectory = TempDirectory()
 
   val project: Project get() = projectModelRule.project
 
@@ -71,7 +71,7 @@ open class IndexableFilesIndexOriginsTestBase {
   protected fun createLibraryOrigin(library: Library): IndexableSetOrigin =
     LibraryIndexableFilesIteratorImpl.createIteratorList(library).also { assertSize(1, it) }.first().origin
 
-  protected fun createSdkOrigin(sdk: Sdk) = SdkIndexableFilesIteratorImpl.createIterator(sdk).origin
+  protected fun createSdkOrigin(sdk: Sdk): IndexableSetOrigin = SdkIndexableFilesIteratorImpl.createIterator(sdk).origin
 
   protected fun createIndexableSetOrigin(contributor: IndexableSetContributor,
                                        project: Project?): IndexableSetOrigin =

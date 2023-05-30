@@ -21,7 +21,7 @@ typealias MutableMap3<K1, K2, K3, V> = MutableMap2<K1, K2, MutableMap<K3, V>>
 /* ------------------------------------------------------------------------------------------- */
 //region MapK extensions
 
-internal inline fun <K, V, R> buildLinkedHashMapOf(pairs: Iterable<Pair<K, V>>, transformValue: (V) -> R) =
+internal inline fun <K, V, R> buildLinkedHashMapOf(pairs: Iterable<Pair<K, V>>, transformValue: (V) -> R): LinkedHashMap<K, R> =
   LinkedHashMap<K, R>().apply {
     for (pair in pairs)
       put(pair.first, transformValue(pair.second))

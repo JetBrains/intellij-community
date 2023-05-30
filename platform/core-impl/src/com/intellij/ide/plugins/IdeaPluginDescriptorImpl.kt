@@ -67,7 +67,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   private val vendorEmail = raw.vendorEmail
   private val vendorUrl = raw.vendorUrl
   private var category: String? = raw.category
-  @JvmField internal val url = raw.url
+  @JvmField internal val url: String? = raw.url
   @JvmField val pluginDependencies: List<PluginDependency>
   @JvmField val incompatibilities: List<PluginId> = raw.incompatibilities ?: Collections.emptyList()
 
@@ -100,38 +100,38 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   // extension point name -> list of extension descriptors
   val epNameToExtensions: Map<String, MutableList<ExtensionDescriptor>>? = raw.epNameToExtensions
 
-  @JvmField val appContainerDescriptor = raw.appContainerDescriptor
-  @JvmField val projectContainerDescriptor = raw.projectContainerDescriptor
-  @JvmField val moduleContainerDescriptor = raw.moduleContainerDescriptor
+  @JvmField val appContainerDescriptor: ContainerDescriptor = raw.appContainerDescriptor
+  @JvmField val projectContainerDescriptor: ContainerDescriptor = raw.projectContainerDescriptor
+  @JvmField val moduleContainerDescriptor: ContainerDescriptor = raw.moduleContainerDescriptor
 
   @JvmField val content: PluginContentDescriptor = raw.contentModules?.let { PluginContentDescriptor(it) } ?: PluginContentDescriptor.EMPTY
-  @JvmField val dependencies = raw.dependencies
+  @JvmField val dependencies: ModuleDependenciesDescriptor = raw.dependencies
   @JvmField var modules: List<PluginId> = raw.modules ?: Collections.emptyList()
 
   private val descriptionChildText = raw.description
 
-  @JvmField val isUseIdeaClassLoader = raw.isUseIdeaClassLoader
-  @JvmField val isBundledUpdateAllowed = raw.isBundledUpdateAllowed
-  @JvmField internal val implementationDetail = raw.implementationDetail
-  @ApiStatus.Experimental @JvmField internal val onDemand = raw.onDemand && isOnDemandPluginEnabled
-  @JvmField internal val isRestartRequired = raw.isRestartRequired
-  @JvmField val packagePrefix = raw.`package`
+  @JvmField val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
+  @JvmField val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
+  @JvmField internal val implementationDetail: Boolean = raw.implementationDetail
+  @ApiStatus.Experimental @JvmField internal val onDemand: Boolean = raw.onDemand && isOnDemandPluginEnabled
+  @JvmField internal val isRestartRequired: Boolean = raw.isRestartRequired
+  @JvmField val packagePrefix: String? = raw.`package`
 
   private val sinceBuild = raw.sinceBuild
   private val untilBuild = raw.untilBuild
   private var isEnabled = true
 
-  var isDeleted = false
+  var isDeleted: Boolean = false
 
   @JvmField internal var isIncomplete: PluginLoadingError? = null
 
-  override fun getDescriptorPath() = descriptorPath
+  override fun getDescriptorPath(): String? = descriptorPath
 
   override fun getDependencies(): List<IdeaPluginDependency> {
     return if (pluginDependencies.isEmpty()) Collections.emptyList() else Collections.unmodifiableList(pluginDependencies)
   }
 
-  override fun getPluginPath() = path
+  override fun getPluginPath(): Path = path
 
   private fun createSub(raw: RawPluginDescriptor,
                         descriptorPath: String,
@@ -431,17 +431,17 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     return result
   }
 
-  override fun getChangeNotes() = changeNotes
+  override fun getChangeNotes(): String? = changeNotes
 
   override fun getName(): String = name!!
 
-  override fun getProductCode() = productCode
+  override fun getProductCode(): String? = productCode
 
-  override fun getReleaseDate() = releaseDate
+  override fun getReleaseDate(): Date? = releaseDate
 
-  override fun getReleaseVersion() = releaseVersion
+  override fun getReleaseVersion(): Int = releaseVersion
 
-  override fun isLicenseOptional() = isLicenseOptional
+  override fun isLicenseOptional(): Boolean = isLicenseOptional
 
   override fun getOptionalDependentPluginIds(): Array<PluginId> {
     val pluginDependencies = pluginDependencies
@@ -455,13 +455,13 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
         .toTypedArray()
   }
 
-  override fun getVendor() = vendor
+  override fun getVendor(): String? = vendor
 
-  override fun getVersion() = version
+  override fun getVersion(): String? = version
 
-  override fun getResourceBundleBaseName() = resourceBundleBaseName
+  override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
-  override fun getCategory() = category
+  override fun getCategory(): String? = category
 
   /*
      This setter was explicitly defined to be able to set a category for a
@@ -479,13 +479,13 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       return Collections.unmodifiableMap(epNameToExtensions ?: return Collections.emptyMap())
     }
 
-  override fun getVendorEmail() = vendorEmail
+  override fun getVendorEmail(): String? = vendorEmail
 
-  override fun getVendorUrl() = vendorUrl
+  override fun getVendorUrl(): String? = vendorUrl
 
-  override fun getUrl() = url
+  override fun getUrl(): String? = url
 
-  override fun getPluginId() = id
+  override fun getPluginId(): PluginId = id
 
   override fun getPluginClassLoader(): ClassLoader? = _pluginClassLoader
 
@@ -494,25 +494,25 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     _pluginClassLoader = classLoader
   }
 
-  override fun isEnabled() = isEnabled
+  override fun isEnabled(): Boolean = isEnabled
 
   override fun setEnabled(enabled: Boolean) {
     isEnabled = enabled
   }
 
-  override fun getSinceBuild() = sinceBuild
+  override fun getSinceBuild(): String? = sinceBuild
 
-  override fun getUntilBuild() = untilBuild
+  override fun getUntilBuild(): String? = untilBuild
 
-  override fun isBundled() = isBundled
+  override fun isBundled(): Boolean = isBundled
 
-  override fun allowBundledUpdate() = isBundledUpdateAllowed
+  override fun allowBundledUpdate(): Boolean = isBundledUpdateAllowed
 
-  override fun isImplementationDetail() = implementationDetail
+  override fun isImplementationDetail(): Boolean = implementationDetail
 
-  override fun isOnDemand() = onDemand
+  override fun isOnDemand(): Boolean = onDemand
 
-  override fun isRequireRestart() = isRestartRequired
+  override fun isRequireRestart(): Boolean = isRestartRequired
 
   override fun equals(other: Any?): Boolean {
     if (this === other) {

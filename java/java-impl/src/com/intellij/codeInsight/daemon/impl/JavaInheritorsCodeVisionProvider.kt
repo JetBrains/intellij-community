@@ -17,7 +17,7 @@ import java.awt.event.MouseEvent
 
 class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
   companion object {
-    const val ID = "java.inheritors"
+    const val ID: String = "java.inheritors"
   }
 
   override fun acceptsFile(file: PsiFile): Boolean = file.language == JavaLanguage.INSTANCE

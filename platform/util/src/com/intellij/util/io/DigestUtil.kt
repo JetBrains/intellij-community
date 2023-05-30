@@ -36,7 +36,7 @@ object DigestUtil {
   fun sha512(): MessageDigest = sha2_512()
 
   @JvmStatic
-  fun digestToHash(digest: MessageDigest) = bytesToHex(digest.digest())
+  fun digestToHash(digest: MessageDigest): String = bytesToHex(digest.digest())
 
   @JvmStatic
   fun sha256Hex(input: ByteArray): String = bytesToHex(sha256().digest(input))

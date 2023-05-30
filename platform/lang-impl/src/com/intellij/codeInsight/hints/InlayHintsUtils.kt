@@ -140,7 +140,7 @@ fun InlayPresentation.fireUpdateEvent(previousDimension: Dimension) {
   fireContentChanged()
 }
 
-fun InlayPresentation.dimension() = Dimension(width, height)
+fun InlayPresentation.dimension(): Dimension = Dimension(width, height)
 
 private typealias ConstrPresent<C> = ConstrainedPresentation<*, C>
 

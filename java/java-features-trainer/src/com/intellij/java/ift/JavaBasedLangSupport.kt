@@ -20,7 +20,7 @@ import training.project.ProjectUtils
 import java.nio.file.Path
 
 abstract class JavaBasedLangSupport : AbstractLangSupport() {
-  protected val sourcesDirectoryPath = "src"
+  protected val sourcesDirectoryPath: String = "src"
 
   override fun installAndOpenLearningProject(contentRoot: Path,
                                              projectToClose: Project?,
@@ -69,5 +69,5 @@ abstract class JavaBasedLangSupport : AbstractLangSupport() {
 
   override fun blockProjectFileModification(project: Project, file: VirtualFile): Boolean = true
 
-  override fun isSdkConfigured(project: Project) = ProjectRootManager.getInstance(project).projectSdk?.sdkType is JavaSdkType
+  override fun isSdkConfigured(project: Project): Boolean = ProjectRootManager.getInstance(project).projectSdk?.sdkType is JavaSdkType
 }

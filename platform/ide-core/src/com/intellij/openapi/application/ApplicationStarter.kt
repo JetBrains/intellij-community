@@ -30,11 +30,11 @@ abstract class ModernApplicationStarter : ApplicationStarter {
  */
 interface ApplicationStarter {
   companion object {
-    val EP_NAME = ExtensionPointName<ApplicationStarter>("com.intellij.appStarter")
+    val EP_NAME: ExtensionPointName<ApplicationStarter> = ExtensionPointName<ApplicationStarter>("com.intellij.appStarter")
 
-    const val NON_MODAL = 1
-    const val ANY_MODALITY = 2
-    const val NOT_IN_EDT = 3
+    const val NON_MODAL: Int = 1
+    const val ANY_MODALITY: Int = 2
+    const val NOT_IN_EDT: Int = 3
   }
 
   /**
@@ -61,7 +61,7 @@ interface ApplicationStarter {
    *
    * @param args program arguments (including the command)
    */
-  fun premain(args: List<String>) = Unit
+  fun premain(args: List<String>) {}
 
   /**
    *
@@ -71,7 +71,7 @@ interface ApplicationStarter {
    *
    * @param args program arguments (including the selector)
    */
-  fun main(args: List<String>) = Unit
+  fun main(args: List<String>) {}
 
   /**
    * Applications that are incapable of working in a headless mode should override the method and return `false`.

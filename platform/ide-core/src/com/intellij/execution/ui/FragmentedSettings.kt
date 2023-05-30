@@ -14,10 +14,10 @@ interface FragmentedSettings {
     }
 
     @get:Attribute("name")
-    var name by string()
+    var name: String? by string()
 
     @get:Attribute("visible")
-    var visible by property(true)
+    var visible: Boolean by property(true)
   }
 
   var selectedOptions: MutableList<Option>

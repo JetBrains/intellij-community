@@ -10,9 +10,9 @@ import it.unimi.dsi.fastutil.ints.IntSet
  * Utility class to accumulate hints. Non thread-safe.
  */
 class HintsBuffer {
-  val inlineHints = Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, HorizontalConstraints>>>()
-  internal val blockBelowHints = Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>()
-  internal val blockAboveHints = Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>()
+  val inlineHints: Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, HorizontalConstraints>>> = Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, HorizontalConstraints>>>()
+  internal val blockBelowHints: Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>> = Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>()
+  internal val blockAboveHints: Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>> = Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>()
 
   internal fun mergeIntoThis(another: HintsBuffer) {
     mergeIntoThis(inlineHints, another.inlineHints)

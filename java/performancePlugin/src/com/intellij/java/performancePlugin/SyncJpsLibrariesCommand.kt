@@ -10,7 +10,7 @@ import org.jetbrains.concurrency.resolvedPromise
 
 class SyncJpsLibrariesCommand(text: String, line: Int) : AbstractCommand(text, line) {
   companion object {
-    const val PREFIX = "${CMD_PREFIX}syncJpsLibraries"
+    const val PREFIX: String = "${CMD_PREFIX}syncJpsLibraries"
   }
 
   override fun _execute(context: PlaybackContext): Promise<Any?> {

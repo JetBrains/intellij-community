@@ -65,8 +65,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     request.onEnvironmentPrepared { environment, progressIndicator -> provideEnvironment(environment, progressIndicator) }
   }
 
-  val commandLine = TargetedCommandLineBuilder(request)
-  val platform = request.targetPlatform.platform
+  val commandLine: TargetedCommandLineBuilder = TargetedCommandLineBuilder(request)
+  val platform: Platform = request.targetPlatform.platform
 
   private val languageRuntime: JavaLanguageRuntimeConfiguration? = request.configuration?.runtimes?.findByType(
     JavaLanguageRuntimeConfiguration::class.java)
@@ -804,7 +804,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
 
     private val manifest = Manifest()
     private val manifestText = StringBuilder()
-    internal val file = FileUtil.createTempFile(
+    internal val file: File = FileUtil.createTempFile(
       CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX + abs(Random().nextInt()), ".jar", true)
 
     fun addToManifest(key: String, value: String, skipInCommandLineContent: Boolean = false) {

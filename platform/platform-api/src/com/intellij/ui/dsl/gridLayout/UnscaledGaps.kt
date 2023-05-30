@@ -13,7 +13,7 @@ import java.awt.Insets
 interface UnscaledGaps {
   companion object {
     @JvmField
-    val EMPTY = UnscaledGaps(0)
+    val EMPTY: UnscaledGaps = UnscaledGaps(0)
   }
 
   val top: Int

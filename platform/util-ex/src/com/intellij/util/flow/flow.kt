@@ -140,7 +140,7 @@ fun <T> Flow<T>.zipWithNext(): Flow<Pair<T, T>> = zipWithNext { a, b -> a to b }
  * [1, 2], [3], [4]
  * ```
  */
-fun <T> Flow<T>.debounceBatch(duration: Duration) = channelFlow {
+fun <T> Flow<T>.debounceBatch(duration: Duration): Flow<List<T>> = channelFlow {
   val mutex = Mutex()
   val buffer = mutableListOf<T>()
   var job: Job? = null

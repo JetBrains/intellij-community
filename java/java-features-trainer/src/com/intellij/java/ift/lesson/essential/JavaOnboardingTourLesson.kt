@@ -94,12 +94,12 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
   private val uiSettings get() = UISettings.getInstance()
 
-  override val properties = LessonProperties(
+  override val properties: LessonProperties = LessonProperties(
     canStartInDumbMode = true,
     openFileAtStart = false
   )
 
-  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
+  override val testScriptProperties: TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   private var backupPopupLocation: Point? = null
   private var hideToolStripesPreference = false

@@ -10,10 +10,10 @@ import org.junit.Test
 
 class PersistentDirtyFilesQueueTest {
   @get: Rule
-  val tempDir = TempDirectory()
+  val tempDir: TempDirectory = TempDirectory()
 
   @get: Rule
-  val app = ApplicationRule()
+  val app: ApplicationRule = ApplicationRule()
 
   @Test
   fun `test store and load if vfs version`() {

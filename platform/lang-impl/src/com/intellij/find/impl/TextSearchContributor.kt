@@ -35,6 +35,7 @@ import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import javax.swing.ListCellRenderer
@@ -79,11 +80,11 @@ class TextSearchContributor(
     return if (secondScope != null) secondScope.scope as GlobalSearchScope? else everywhereScope
   }
 
-  override fun getSearchProviderId() = ID
-  override fun getGroupName() = FindBundle.message("search.everywhere.group.name")
-  override fun getSortWeight() = 1500
-  override fun showInFindResults() = enabled()
-  override fun isShownInSeparateTab() = true
+  override fun getSearchProviderId(): String = ID
+  override fun getGroupName(): @Nls String = FindBundle.message("search.everywhere.group.name")
+  override fun getSortWeight(): Int = 1500
+  override fun showInFindResults(): Boolean = enabled()
+  override fun isShownInSeparateTab(): Boolean = true
 
   override fun fetchWeightedElements(pattern: String,
                                      indicator: ProgressIndicator,
@@ -175,8 +176,8 @@ class TextSearchContributor(
                                           setOf(ScopeModel.Option.LIBRARIES, ScopeModel.Option.EMPTY_SCOPES)))
   }
 
-  override fun getScope() = selectedScopeDescriptor
-  override fun getSupportedScopes() = createScopes()
+  override fun getScope(): ScopeDescriptor = selectedScopeDescriptor
+  override fun getSupportedScopes(): MutableList<ScopeDescriptor> = createScopes()
 
   override fun setScope(scope: ScopeDescriptor) {
     setSelectedScope(scope)
@@ -217,8 +218,8 @@ class TextSearchContributor(
     private fun enabled() = AdvancedSettings.getBoolean(ADVANCED_OPTION_ID)
 
     class Factory : SearchEverywhereContributorFactory<SearchEverywhereItem> {
-      override fun isAvailable(project: Project) = enabled()
-      override fun createContributor(event: AnActionEvent) = TextSearchContributor(event)
+      override fun isAvailable(project: Project): Boolean = enabled()
+      override fun createContributor(event: AnActionEvent): TextSearchContributor = TextSearchContributor(event)
     }
 
     class TextSearchAction : SearchEverywhereBaseAction(), DumbAware {

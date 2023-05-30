@@ -31,7 +31,7 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
                                    private val pluginCostMap: MutableMap<String, Object2LongMap<String>>,
                                    threadNameManager: ThreadNameManager) : IdeaFormatWriter(activities, threadNameManager,
                                                                                             StartUpPerformanceReporter.VERSION) {
-  val publicStatMetrics = Object2IntOpenHashMap<String>()
+  val publicStatMetrics: Object2IntOpenHashMap<String> = Object2IntOpenHashMap<String>()
 
   init {
     publicStatMetrics.defaultReturnValue(-1)

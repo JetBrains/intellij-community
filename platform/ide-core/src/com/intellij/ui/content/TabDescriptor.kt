@@ -22,7 +22,7 @@ class TabDescriptor(val component: JComponent, private val displayNamePointer: S
     }
   }
 
-  override fun dispose() = Unit
+  override fun dispose() {}
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

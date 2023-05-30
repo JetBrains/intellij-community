@@ -16,7 +16,7 @@ interface JBTabPainter {
     @JvmStatic
     val DEFAULT: JBTabPainter = JBDefaultTabPainter()
     @JvmStatic
-    val EDITOR = JBEditorTabPainter()
+    val EDITOR: JBEditorTabPainter = JBEditorTabPainter()
     @JvmStatic
     val TOOL_WINDOW: JBTabPainter = ToolWindowTabPainter()
     @JvmStatic

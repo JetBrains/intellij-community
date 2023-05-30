@@ -16,14 +16,14 @@ class SingleComponentCenteringLayout : LayoutManager2 {
     component.bounds = getBoundsForCentered(parent, component)
   }
 
-  override fun maximumLayoutSize(target: Container) = component?.maximumSize?.also { JBInsets.addTo(it, target.insets) }
-                                                      ?: Dimension(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
+  override fun maximumLayoutSize(target: Container): Dimension = component?.maximumSize?.also { JBInsets.addTo(it, target.insets) }
+                                                                 ?: Dimension(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
 
-  override fun preferredLayoutSize(parent: Container) = component?.preferredSize?.also { JBInsets.addTo(it, parent.insets) }
-                                                        ?: Dimension(0, 0)
+  override fun preferredLayoutSize(parent: Container): Dimension = component?.preferredSize?.also { JBInsets.addTo(it, parent.insets) }
+                                                                   ?: Dimension(0, 0)
 
-  override fun minimumLayoutSize(parent: Container) = component?.minimumSize?.also { JBInsets.addTo(it, parent.insets) }
-                                                      ?: Dimension(0, 0)
+  override fun minimumLayoutSize(parent: Container): Dimension = component?.minimumSize?.also { JBInsets.addTo(it, parent.insets) }
+                                                                 ?: Dimension(0, 0)
 
   override fun addLayoutComponent(comp: Component?, constraints: Any?) {
     component = comp

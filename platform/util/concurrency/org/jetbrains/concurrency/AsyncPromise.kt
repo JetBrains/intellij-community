@@ -19,7 +19,7 @@ open class AsyncPromise<T> private constructor(internal val f: CompletableFuture
 
     @Internal
     @JvmField
-    val CANCELED = object: CancellationException() {
+    val CANCELED: CancellationException = object: CancellationException() {
       override fun fillInStackTrace(): Throwable = this
     }
   }
@@ -168,9 +168,9 @@ open class AsyncPromise<T> private constructor(internal val f: CompletableFuture
     return true
   }
 
-  protected open fun shouldLogErrors() = !hasErrorHandler.get()
+  protected open fun shouldLogErrors(): Boolean = !hasErrorHandler.get()
 
-  fun setError(error: String) = setError(createError(error))
+  fun setError(error: String): Boolean = setError(createError(error))
 }
 
 inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {

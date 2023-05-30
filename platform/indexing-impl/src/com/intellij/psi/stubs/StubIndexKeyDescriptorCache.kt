@@ -16,7 +16,7 @@ object StubIndexKeyDescriptorCache {
   private val charSeqExtensions: MutableMap<StubIndexKey<*, *>, Any?> = ConcurrentHashMap()
 
   @Suppress("UNCHECKED_CAST")
-  fun <K> getKeyHashingStrategy(indexKey: StubIndexKey<K, *>) = getOrCache(indexKey).first as HashingStrategy<K>
+  fun <K> getKeyHashingStrategy(indexKey: StubIndexKey<K, *>): HashingStrategy<K> = getOrCache(indexKey).first as HashingStrategy<K>
 
   @Suppress("UNCHECKED_CAST")
   fun <K> getKeyDescriptor(indexKey: StubIndexKey<K, *>): KeyDescriptor<K> {

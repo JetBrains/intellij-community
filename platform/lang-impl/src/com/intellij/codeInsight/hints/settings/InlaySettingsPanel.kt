@@ -38,7 +38,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeNode
 
-val CASE_KEY = Key.create<ImmediateConfigurable.Case>("inlay.case.key")
+val CASE_KEY: Key<ImmediateConfigurable.Case> = Key.create<ImmediateConfigurable.Case>("inlay.case.key")
 
 class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
 
@@ -49,7 +49,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
 
   companion object {
     @kotlin.jvm.JvmField
-    val PREVIEW_KEY = Key.create<Any>("inlay.preview.key")
+    val PREVIEW_KEY: Key<Any> = Key.create<Any>("inlay.preview.key")
 
     fun getFileTypeForPreview(model: InlayProviderSettingsModel): LanguageFileType {
       return model.getCasePreviewLanguage(null)?.associatedFileType ?: PlainTextFileType.INSTANCE

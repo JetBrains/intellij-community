@@ -12,6 +12,7 @@ import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import com.jetbrains.performancePlugin.utils.VcsTestUtil
 import io.opentelemetry.context.Context
+import org.jetbrains.annotations.Nls
 
 /**
  * Command to add Java file to project
@@ -20,9 +21,9 @@ import io.opentelemetry.context.Context
 class CreateJavaFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {
-    const val NAME = "createJavaFile"
-    const val PREFIX = CMD_PREFIX + NAME
-    val POSSIBLE_FILE_TYPES = mapOf(
+    const val NAME: String = "createJavaFile"
+    const val PREFIX: String = CMD_PREFIX + NAME
+    val POSSIBLE_FILE_TYPES: Map<String, @Nls String> = mapOf(
       Pair(message("node.class.tooltip").lowercase(), message("node.class.tooltip")),
       Pair(message("node.record.tooltip").lowercase(), message("node.record.tooltip")),
       Pair(message("node.interface.tooltip").lowercase(), message("node.interface.tooltip")),

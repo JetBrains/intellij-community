@@ -30,24 +30,24 @@ abstract class AbstractObservableOperationTrace : ObservableTaskOperationTrace {
   override val startObservable: SingleEventDispatcher0 = startMulticaster
   override val finishObservable: SingleEventDispatcher0 = finishMulticaster
 
-  protected fun fireOperationScheduled() =
+  protected fun fireOperationScheduled(): Unit =
     scheduleMulticaster.fireEvent()
 
-  protected fun fireOperationStarted() =
+  protected fun fireOperationStarted(): Unit =
     startMulticaster.fireEvent()
 
-  protected fun fireOperationFinished() =
+  protected fun fireOperationFinished(): Unit =
     finishMulticaster.fireEvent()
 
-  protected fun fireTaskScheduled(id: OperationExecutionId) =
+  protected fun fireTaskScheduled(id: OperationExecutionId): Unit =
     scheduleTaskMulticaster.fireEvent(id)
 
-  protected fun fireTaskStarted(id: OperationExecutionId) =
+  protected fun fireTaskStarted(id: OperationExecutionId): Unit =
     startTaskMulticaster.fireEvent(id)
 
-  protected fun fireTaskFinished(id: OperationExecutionId, status: OperationExecutionStatus) =
+  protected fun fireTaskFinished(id: OperationExecutionId, status: OperationExecutionStatus): Unit =
     finishTaskMulticaster.fireEvent(id, status)
 
-  protected fun fireTaskDetached(id: OperationExecutionId) =
+  protected fun fireTaskDetached(id: OperationExecutionId): Unit =
     detachTaskMulticaster.fireEvent(id)
 }

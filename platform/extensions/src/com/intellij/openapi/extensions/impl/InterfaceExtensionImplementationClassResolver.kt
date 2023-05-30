@@ -11,7 +11,7 @@ internal fun interface ImplementationClassResolver {
 internal class InterfaceExtensionImplementationClassResolver private constructor() : ImplementationClassResolver {
   companion object {
     @JvmField
-    val INSTANCE = InterfaceExtensionImplementationClassResolver()
+    val INSTANCE: InterfaceExtensionImplementationClassResolver = InterfaceExtensionImplementationClassResolver()
   }
 
   override fun resolveImplementationClass(componentManager: ComponentManager, adapter: ExtensionComponentAdapter): Class<*> {

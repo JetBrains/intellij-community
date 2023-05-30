@@ -9,7 +9,7 @@ import com.intellij.refactoring.RefactoringBundle
 abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFixtureTestCaseWithUtils() {
   protected abstract val fileType: LanguageFileType
 
-  protected var ignoreErrors = false
+  protected var ignoreErrors: Boolean = false
 
   override fun setUp() {
     ignoreErrors = false

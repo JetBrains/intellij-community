@@ -175,7 +175,7 @@ class ThreadContextPropagationTest {
   }
 
   @Test
-  fun `EDT dispatcher does not capture thread context`() = timeoutRunBlocking {
+  fun `EDT dispatcher does not capture thread context`(): Unit = timeoutRunBlocking {
     blockingContext {
       launch(Dispatchers.EDT) {
         assertNull(currentThreadContextOrNull())

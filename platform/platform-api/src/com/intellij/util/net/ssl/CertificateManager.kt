@@ -79,7 +79,7 @@ class CertificateManager : PersistentStateComponent<CertificateManager.Config?> 
    *
    * @return instance of SSLContext with described behavior or default SSL context in case of error
    */
-  val sslContext by lazy { calcSslContext() } // hot path, do not use method reference
+  val sslContext: SSLContext by lazy { calcSslContext() } // hot path, do not use method reference
 
   /**
    * Component initialization constructor
@@ -298,7 +298,7 @@ class CertificateManager : PersistentStateComponent<CertificateManager.Config?> 
   val customTrustManager: MutableTrustManager
     get() = trustManager.customManager
 
-  override fun getState() = config
+  override fun getState(): Config = config
 
   override fun loadState(state: Config) {
     config = state

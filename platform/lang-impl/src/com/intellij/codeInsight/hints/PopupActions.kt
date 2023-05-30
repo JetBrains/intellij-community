@@ -40,7 +40,7 @@ class ShowSettingsWithAddedPattern : AnAction() {
     templatePresentation.text = CodeInsightBundle.message("inlay.hints.show.settings", "_")
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
@@ -67,7 +67,7 @@ class ShowSettingsWithAddedPattern : AnAction() {
 
 class ShowParameterHintsSettings : AnAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     showParameterHintsDialog(e) {null}
@@ -264,7 +264,7 @@ private fun InlayParameterHintsProvider.hasDisabledOptionHintInfo(element: PsiEl
 
 class ToggleInlineHintsAction : AnAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     if (!InlayParameterHintsExtension.hasAnyExtensions()) {

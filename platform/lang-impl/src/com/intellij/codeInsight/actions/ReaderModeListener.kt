@@ -30,7 +30,7 @@ class ReaderModeSettingsListener : ReaderModeListener {
   companion object {
     @Topic.ProjectLevel
     @JvmField
-    val TOPIC = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
+    val TOPIC: Topic<ReaderModeListener> = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
 
     @RequiresEdt
     fun applyToAllEditors(project: Project) {

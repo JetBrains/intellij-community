@@ -3,7 +3,7 @@ package com.intellij.ide.projectView
 
 import com.intellij.util.messages.Topic
 
-@JvmField val PROJECT_VIEW_SELECTION_TOPIC = Topic(ProjectViewSelectionListener::class.java)
+@JvmField val PROJECT_VIEW_SELECTION_TOPIC: Topic<ProjectViewSelectionListener> = Topic(ProjectViewSelectionListener::class.java)
 interface ProjectViewSelectionListener {
   fun onChanged()
 }

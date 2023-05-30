@@ -55,7 +55,7 @@ fun ObservableOperationTrace.getOperationInProgressProperty(): ObservableBoolean
 inline fun <R> MutableOperationTrace.traceRun(
   id: OperationExecutionId = OperationExecutionId.NONE,
   execution: () -> R
-) = traceRun({ traceStart(id) }, { traceFinish(id) }, execution)
+): R = traceRun({ traceStart(id) }, { traceFinish(id) }, execution)
 
 @ApiStatus.Internal
 inline fun <R> traceRun(

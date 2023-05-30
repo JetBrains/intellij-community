@@ -102,7 +102,7 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
    * @param listener is callback which will be called when properties changes are finished.
    * @see PropertyGraph
    */
-  fun afterPropagation(listener: () -> Unit) = afterPropagation(null, listener)
+  fun afterPropagation(listener: () -> Unit): Unit = afterPropagation(null, listener)
 
   /**
    * Registers callback on propagation process.

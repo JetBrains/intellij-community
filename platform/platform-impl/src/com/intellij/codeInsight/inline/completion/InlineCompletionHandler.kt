@@ -71,8 +71,8 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   }
 
   companion object {
-    val isMuted = AtomicBoolean(false)
-    fun mute() = isMuted.set(true)
-    fun unmute() = isMuted.set(false)
+    val isMuted: AtomicBoolean = AtomicBoolean(false)
+    fun mute(): Unit = isMuted.set(true)
+    fun unmute(): Unit = isMuted.set(false)
   }
 }

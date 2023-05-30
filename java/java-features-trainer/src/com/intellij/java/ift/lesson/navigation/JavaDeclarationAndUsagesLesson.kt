@@ -5,7 +5,7 @@ import training.dsl.LessonContext
 import training.learn.lesson.general.navigation.DeclarationAndUsagesLesson
 
 class JavaDeclarationAndUsagesLesson : DeclarationAndUsagesLesson() {
-  override fun LessonContext.setInitialPosition() = caret("foo()")
+  override fun LessonContext.setInitialPosition(): Unit = caret("foo()")
   override val sampleFilePath: String get() = "src/DerivedClass2.java"
-  override val entityName = "foo"
+  override val entityName: String = "foo"
 }

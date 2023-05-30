@@ -35,7 +35,7 @@ abstract class ContributedTypeBase<C : ContributedConfigurationBase>(val id: Str
   open val helpTopic: String? = null
 
   @Suppress("UNCHECKED_CAST")
-  internal fun castConfiguration(config: ContributedConfigurationBase) = config as C
+  internal fun castConfiguration(config: ContributedConfigurationBase): C = config as C
 
   companion object {
     @JvmStatic

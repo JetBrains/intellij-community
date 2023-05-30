@@ -36,9 +36,9 @@ open class OpenTelemetryDefaultConfigurator(protected val mainScope: CoroutineSc
     ResourceAttributes.SERVICE_INSTANCE_ID, DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
   ))
 
-  val aggregatedMetricsExporter = AggregatedMetricsExporter()
-  val aggregatedSpansProcessor = AggregatedSpansProcessor(mainScope)
-  protected val spanExporters = mutableListOf<AsyncSpanExporter>()
+  val aggregatedMetricsExporter: AggregatedMetricsExporter = AggregatedMetricsExporter()
+  val aggregatedSpansProcessor: AggregatedSpansProcessor = AggregatedSpansProcessor(mainScope)
+  protected val spanExporters: MutableList<AsyncSpanExporter> = mutableListOf<AsyncSpanExporter>()
   private val metricsExporters = mutableListOf<MetricsExporterEntry>()
 
   private fun isMetricsEnabled(): Boolean {

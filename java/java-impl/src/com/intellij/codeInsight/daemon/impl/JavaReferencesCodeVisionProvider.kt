@@ -13,7 +13,7 @@ import com.intellij.psi.PsiTypeParameter
 
 class JavaReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
   companion object{
-    const val ID = "java.references"
+    const val ID: String = "java.references"
   }
 
   override fun acceptsFile(file: PsiFile): Boolean = file.language == JavaLanguage.INSTANCE

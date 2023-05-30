@@ -162,7 +162,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     originalPopup = popup
   }
 
-  fun isShown() = show && popupWindow?.isVisible != false
+  fun isShown(): Boolean = show && popupWindow?.isVisible != false
 
   fun hide() {
     if (::popup.isInitialized && !popup.isDisposed) {
@@ -231,8 +231,8 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   }
 
   companion object {
-    internal const val MAX_HEIGHT = 300
-    internal const val MIN_WIDTH = 300
+    internal const val MAX_HEIGHT: Int = 300
+    internal const val MIN_WIDTH: Int = 300
 
     fun getShortcutText(): String = KeymapUtil.getPreferredShortcutText(getShortcutSet().shortcuts)
     fun getShortcutSet(): ShortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_QUICK_JAVADOC)

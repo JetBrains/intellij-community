@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.ResourceUtil
 import com.intellij.util.xmlb.SerializationFilter
+import javax.swing.JComponent
 
 internal class NewInlayProviderSettingsModel<T : Any>(
   private val providerWithSettings: ProviderWithSettings<T>,
@@ -37,7 +38,7 @@ internal class NewInlayProviderSettingsModel<T : Any>(
   override val description: String?
     get() = providerWithSettings.provider.description
 
-  override val component by lazy {
+  override val component: JComponent by lazy {
     providerWithSettings.configurable.createComponent(onChangeListener!!)
   }
 

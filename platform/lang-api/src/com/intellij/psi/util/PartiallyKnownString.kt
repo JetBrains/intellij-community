@@ -274,7 +274,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
   }
 
   companion object {
-    val empty = PartiallyKnownString(emptyList())
+    val empty: PartiallyKnownString = PartiallyKnownString(emptyList())
   }
 
 }

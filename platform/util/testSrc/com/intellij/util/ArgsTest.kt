@@ -12,7 +12,7 @@ import org.junit.Test
 class ArgsTest {
   @JvmField
   @Rule
-  val tempDir = TemporaryDirectory()
+  val tempDir: TemporaryDirectory = TemporaryDirectory()
 
   @Test
   fun testInt() {

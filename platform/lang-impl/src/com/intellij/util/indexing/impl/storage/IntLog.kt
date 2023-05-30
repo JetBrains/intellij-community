@@ -154,7 +154,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
     withLock(false) { myKeyHashToVirtualFileMapping.force() }
   }
 
-  override val modificationStamp = myKeyHashToVirtualFileMapping.currentLength.toLong()
+  override val modificationStamp: Long = myKeyHashToVirtualFileMapping.currentLength.toLong()
 
   private fun <T> withLock(read: Boolean, operation: () -> T): T {
     if (read) {

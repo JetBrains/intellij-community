@@ -41,13 +41,13 @@ open class MessageBusImpl : MessageBus {
 
   companion object {
     @JvmField
-    internal val LOG = Logger.getInstance(MessageBusImpl::class.java)
+    internal val LOG: Logger = Logger.getInstance(MessageBusImpl::class.java)
   }
 
   @JvmField
   internal val publisherCache: ConcurrentMap<Topic<*>, Any> = ConcurrentHashMap()
   @JvmField
-  internal val subscribers = ConcurrentLinkedQueue<MessageHandlerHolder>()
+  internal val subscribers: ConcurrentLinkedQueue<MessageHandlerHolder> = ConcurrentLinkedQueue<MessageHandlerHolder>()
 
   // caches subscribers for this bus and its children or parents, depending on the topic's broadcast policy
   @JvmField
@@ -368,7 +368,7 @@ class RootBus(owner: MessageBusOwner) : CompositeMessageBus(owner) {
 
 internal class MessageQueue {
   @JvmField
-  val queue = ArrayDeque<Message>()
+  val queue: ArrayDeque<Message> = ArrayDeque<Message>()
 
   @JvmField
   var current: Message? = null

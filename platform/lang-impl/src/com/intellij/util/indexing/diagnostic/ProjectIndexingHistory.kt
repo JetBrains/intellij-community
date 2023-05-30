@@ -21,9 +21,9 @@ typealias BytesNumber = Long
 interface ProjectIndexingHistoryListener {
   companion object {
     @Topic.AppLevel
-    val TOPIC = Topic(ProjectIndexingHistoryListener::class.java, Topic.BroadcastDirection.NONE)
+    val TOPIC: Topic<ProjectIndexingHistoryListener> = Topic(ProjectIndexingHistoryListener::class.java, Topic.BroadcastDirection.NONE)
   }
-  fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) = Unit
+  fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) {}
 
   fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory)
 }
@@ -54,7 +54,7 @@ interface ProjectScanningHistory : ProjectIndexingActivityHistory {
   val times: ScanningTimes
   val scanningStatistics: List<JsonScanningStatistics>
 
-  override val type
+  override val type: IndexDiagnosticDumper.IndexingActivityType
     get() = IndexDiagnosticDumper.IndexingActivityType.Scanning
 }
 
@@ -68,7 +68,7 @@ interface ProjectDumbIndexingHistory : ProjectIndexingActivityHistory {
   val totalStatsPerIndexer: Map<String, StatsPerIndexer>
   val visibleTimeToAllThreadsTimeRatio: Double
 
-  override val type
+  override val type: IndexDiagnosticDumper.IndexingActivityType
     get() = IndexDiagnosticDumper.IndexingActivityType.DumbIndexing
 }
 

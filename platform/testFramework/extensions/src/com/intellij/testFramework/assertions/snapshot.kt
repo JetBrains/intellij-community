@@ -25,7 +25,7 @@ internal interface SnapshotFileUsageListener {
   fun beforeMatch(file: Path)
 }
 
-internal val snapshotFileUsageListeners = ConcurrentCollectionFactory.createConcurrentSet<SnapshotFileUsageListener>()
+internal val snapshotFileUsageListeners: MutableSet<SnapshotFileUsageListener> = ConcurrentCollectionFactory.createConcurrentSet<SnapshotFileUsageListener>()
 
 class ListAssertEx<ELEMENT>(actual: List<ELEMENT>?) : ListAssert<ELEMENT>(actual) {
   fun toMatchSnapshot(snapshotFile: Path) {

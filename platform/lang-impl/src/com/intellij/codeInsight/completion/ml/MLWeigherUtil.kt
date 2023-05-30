@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object MLWeigherUtil {
-  const val ML_COMPLETION_WEIGHER_ID = "ml_weigh"
+  const val ML_COMPLETION_WEIGHER_ID: String = "ml_weigh"
 
   @JvmStatic
   fun findMLWeigher(location: CompletionLocation): LookupElementWeigher? {

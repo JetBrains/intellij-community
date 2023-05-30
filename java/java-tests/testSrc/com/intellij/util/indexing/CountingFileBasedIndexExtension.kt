@@ -14,15 +14,15 @@ import java.util.concurrent.atomic.AtomicInteger
 internal class CountingFileBasedIndexExtension : CountingIndexBase("counting.file.based.index", true) {
   companion object {
     @JvmStatic
-    val INDEX_ID
+    val INDEX_ID: ID<Int, Void>
       get() = INSTANCE.name
 
     @JvmStatic
-    val COUNTER
+    val COUNTER: AtomicInteger
       get() = INSTANCE.counter
 
     @JvmStatic
-    val INSTANCE
+    val INSTANCE: CountingFileBasedIndexExtension
       get() = EXTENSION_POINT_NAME.findExtensionOrFail(CountingFileBasedIndexExtension::class.java)
 
     @JvmStatic
@@ -34,7 +34,7 @@ internal class CountingFileBasedIndexExtension : CountingIndexBase("counting.fil
 @InternalIgnoreDependencyViolation
 internal class CountingContentIndependentFileBasedIndexExtension :
   CountingIndexBase("counting.content.independent.file.based.index", false) {
-  override fun getDefaultValue() = mapOf(2 to null)
+  override fun getDefaultValue(): Map<Int, Nothing?> = mapOf(2 to null)
 
   companion object {
     @JvmStatic
@@ -50,7 +50,7 @@ private fun <T : CountingIndexBase> registerCountingFileBasedIndex(clazz: Class<
 }
 
 internal open class CountingIndexBase(id: String, private val dependsOnFileContent: Boolean) : ScalarIndexExtension<Int>() {
-  internal val counter = AtomicInteger()
+  internal val counter: AtomicInteger = AtomicInteger()
 
   override fun getIndexer(): DataIndexer<Int, Void, FileContent> {
     return DataIndexer {
@@ -65,5 +65,5 @@ internal open class CountingIndexBase(id: String, private val dependsOnFileConte
   override fun getVersion(): Int = 0
   override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { f: VirtualFile -> f.name.contains("Foo") }
   override fun dependsOnFileContent(): Boolean = dependsOnFileContent
-  open fun getDefaultValue() = mapOf(1 to null)
+  open fun getDefaultValue(): Map<Int, Nothing?> = mapOf(1 to null)
 }

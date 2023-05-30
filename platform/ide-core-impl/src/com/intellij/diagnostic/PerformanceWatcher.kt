@@ -16,7 +16,7 @@ abstract class PerformanceWatcher : Disposable {
   }
 
   companion object {
-    const val DUMP_PREFIX = "threadDump-"
+    const val DUMP_PREFIX: String = "threadDump-"
 
     private var instance: PerformanceWatcher? = null
 

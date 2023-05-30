@@ -4,4 +4,4 @@ package com.intellij.codeInsight.util
 import com.intellij.platform.diagnostic.telemetry.Scope
 
 @JvmField
-val CodeCompletion = Scope("codeCompletion")
+val CodeCompletion: Scope = Scope("codeCompletion")

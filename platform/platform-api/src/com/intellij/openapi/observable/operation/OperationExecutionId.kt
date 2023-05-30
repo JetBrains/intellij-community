@@ -16,12 +16,12 @@ interface OperationExecutionId {
 
   companion object {
 
-    val NONE = createId("NONE")
+    val NONE: OperationExecutionId = createId("NONE")
 
     fun createId(
       debugName: String? = null,
       configure: OperationExecutionContext.Builder.() -> Unit = {}
-    ) = createId(debugName, OperationExecutionContext.create(configure))
+    ): OperationExecutionId = createId(debugName, OperationExecutionContext.create(configure))
 
     fun createId(
       debugName: String? = null,

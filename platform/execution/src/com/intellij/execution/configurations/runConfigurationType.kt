@@ -38,17 +38,17 @@ abstract class ConfigurationTypeBase protected constructor(@NonNls private val i
     factories = ArrayUtil.append(factories, factory)
   }
 
-  override fun getDisplayName() = displayName
+  override fun getDisplayName(): String = displayName
 
-  final override fun getConfigurationTypeDescription() = description.nullize() ?: displayName
-
-  /** DO NOT override (not sealed because of backward compatibility) */
-  override fun getIcon() = icon?.value
-
-  final override fun getId() = id
+  final override fun getConfigurationTypeDescription(): String = description.nullize() ?: displayName
 
   /** DO NOT override (not sealed because of backward compatibility) */
-  override fun getConfigurationFactories() = factories
+  override fun getIcon(): Icon? = icon?.value
+
+  final override fun getId(): String = id
+
+  /** DO NOT override (not sealed because of backward compatibility) */
+  override fun getConfigurationFactories(): Array<ConfigurationFactory> = factories
 }
 
 abstract class SimpleConfigurationType protected constructor(@NonNls private val id: String,
@@ -58,19 +58,19 @@ abstract class SimpleConfigurationType protected constructor(@NonNls private val
   @Suppress("LeakingThis")
   private val factories: Array<ConfigurationFactory> = arrayOf(this)
 
-  final override fun getId() = id
+  final override fun getId(): String = id
 
-  final override fun getDisplayName() = name
+  final override fun getDisplayName(): String = name
 
-  final override fun getName() = name
+  final override fun getName(): String = name
 
-  final override fun getConfigurationTypeDescription() = description.nullize() ?: displayName
+  final override fun getConfigurationTypeDescription(): String = description.nullize() ?: displayName
 
-  final override fun getIcon() = icon.value
+  final override fun getIcon(): Icon = icon.value
 
-  final override fun getConfigurationFactories() = factories
+  final override fun getConfigurationFactories(): Array<ConfigurationFactory> = factories
 
-  final override fun getType() = this
+  final override fun getType(): SimpleConfigurationType = this
 
-  final override fun getIcon(configuration: RunConfiguration) = getIcon()
+  final override fun getIcon(configuration: RunConfiguration): Icon = getIcon()
 }

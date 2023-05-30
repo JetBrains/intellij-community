@@ -13,7 +13,7 @@ class JavaRecentFilesLesson : RecentFilesLesson() {
   override val transitionFileName: String = "PrintStream"
   override val stringForRecentFilesSearch: String = "print"
 
-  override fun LessonContext.setInitialPosition() = caret("println")
+  override fun LessonContext.setInitialPosition(): Unit = caret("println")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("recent.files.locations.help.link"),

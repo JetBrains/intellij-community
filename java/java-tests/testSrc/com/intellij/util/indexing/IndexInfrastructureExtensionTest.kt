@@ -42,7 +42,7 @@ class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
   }
 }
 
-const val testInfraExtensionFile = "_test_extension"
+const val testInfraExtensionFile: String = "_test_extension"
 
 @InternalIgnoreDependencyViolation
 class TestIndexInfrastructureExtension : FileBasedIndexInfrastructureExtension {
@@ -55,18 +55,18 @@ class TestIndexInfrastructureExtension : FileBasedIndexInfrastructureExtension {
     return null
   }
 
-  override fun onFileBasedIndexVersionChanged(indexId: ID<*, *>) = Unit
+  override fun onFileBasedIndexVersionChanged(indexId: ID<*, *>) {}
 
-  override fun onStubIndexVersionChanged(indexId: StubIndexKey<*, *>) = Unit
+  override fun onStubIndexVersionChanged(indexId: StubIndexKey<*, *>) {}
 
   override fun initialize(indexLayoutId: String?): FileBasedIndexInfrastructureExtension.InitializationResult
   = FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED
 
-  override fun resetPersistentState() = Unit
+  override fun resetPersistentState() {}
 
-  override fun resetPersistentState(indexId: ID<*, *>) = Unit
+  override fun resetPersistentState(indexId: ID<*, *>) {}
 
-  override fun shutdown() = Unit
+  override fun shutdown() {}
 
   override fun getVersion(): Int = 0
 

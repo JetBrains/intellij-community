@@ -8,10 +8,10 @@ import org.jetbrains.annotations.ApiStatus
 class PluginDependency internal constructor(override val pluginId: PluginId,
                                             configFile: String?,
                                             isOptional: Boolean) : IdeaPluginDependency {
-  var configFile = configFile
+  var configFile: String? = configFile
     internal set
 
-  override var isOptional = isOptional
+  override var isOptional: Boolean = isOptional
     internal set
 
   @Transient

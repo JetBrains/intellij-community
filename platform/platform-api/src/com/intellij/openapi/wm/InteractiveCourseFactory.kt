@@ -7,7 +7,7 @@ import javax.swing.JComponent
 interface InteractiveCourseFactory {
 
   companion object {
-    val INTERACTIVE_COURSE_FACTORY_EP = ExtensionPointName<InteractiveCourseFactory>("com.intellij.interactiveCourseFactory")
+    val INTERACTIVE_COURSE_FACTORY_EP: ExtensionPointName<InteractiveCourseFactory> = ExtensionPointName<InteractiveCourseFactory>("com.intellij.interactiveCourseFactory")
   }
 
   val isActive: Boolean

@@ -64,7 +64,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     return calcHintTextWidth(text, fontMetrics)
   }
 
-  protected open fun useEditorFont() = useEditorFontFromSettings()
+  protected open fun useEditorFont(): Boolean = useEditorFontFromSettings()
 
   companion object {
     @JvmStatic
@@ -256,7 +256,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     }
 
     @JvmStatic
-    fun useEditorFontFromSettings() = EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays
+    fun useEditorFontFromSettings(): Boolean = EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays
 
     private fun getFont(editor: Editor, useEditorFont: Boolean): Font {
       return getFontMetrics(editor, useEditorFont).font

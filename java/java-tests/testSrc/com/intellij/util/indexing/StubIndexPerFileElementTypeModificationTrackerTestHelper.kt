@@ -23,7 +23,7 @@ class StubIndexPerFileElementTypeModificationTrackerTestHelper() {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project))
   }
 
-  fun getModCount(type: StubFileElementType<*>) = (StubIndex.getInstance() as StubIndexEx)
+  fun getModCount(type: StubFileElementType<*>): Long = (StubIndex.getInstance() as StubIndexEx)
     .getPerFileElementTypeModificationTracker(type).modificationCount
 
   fun initModCounts(vararg types: StubFileElementType<*>) {
@@ -38,7 +38,7 @@ class StubIndexPerFileElementTypeModificationTrackerTestHelper() {
     lastSeenModCounts[type] = modCount
   }
 
-  fun checkModCountHasChanged(type: StubFileElementType<*>) = checkModCountIncreasedAtLeast(type, 1)
+  fun checkModCountHasChanged(type: StubFileElementType<*>): Unit = checkModCountIncreasedAtLeast(type, 1)
 
   fun checkModCountIsSame(type: StubFileElementType<*>) {
     val modCount = getModCount(type)

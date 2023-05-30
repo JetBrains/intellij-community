@@ -16,7 +16,7 @@ interface SingleEventDispatcher<T> {
    * @param parentDisposable is used for early unsubscription when the listener isn't called.
    */
   fun whenEventHappened(parentDisposable: Disposable?, listener: (T) -> Unit)
-  fun whenEventHappened(listener: (T) -> Unit) = whenEventHappened(null, listener)
+  fun whenEventHappened(listener: (T) -> Unit): Unit = whenEventHappened(null, listener)
 
   /**
    * Subscribes listener with TTL on event. This listener will be automatically unsubscribed
@@ -28,7 +28,7 @@ interface SingleEventDispatcher<T> {
    * @param parentDisposable is a subscription disposable.
    */
   fun whenEventHappened(ttl: Int, parentDisposable: Disposable?, listener: (T) -> Unit)
-  fun whenEventHappened(ttl: Int, listener: (T) -> Unit) = whenEventHappened(ttl, null, listener)
+  fun whenEventHappened(ttl: Int, listener: (T) -> Unit): Unit = whenEventHappened(ttl, null, listener)
 
   /**
    * Subscribes listener on event. This listener will be unsubscribed immediately after execution.
@@ -37,7 +37,7 @@ interface SingleEventDispatcher<T> {
    * @param parentDisposable is used for early unsubscription when the listener isn't called.
    */
   fun onceWhenEventHappened(parentDisposable: Disposable?, listener: (T) -> Unit)
-  fun onceWhenEventHappened(listener: (T) -> Unit) = onceWhenEventHappened(null, listener)
+  fun onceWhenEventHappened(listener: (T) -> Unit): Unit = onceWhenEventHappened(null, listener)
 
   fun filterEvents(filter: (T) -> Boolean): SingleEventDispatcher<T>
 

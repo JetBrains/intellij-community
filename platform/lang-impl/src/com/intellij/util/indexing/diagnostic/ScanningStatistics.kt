@@ -20,7 +20,7 @@ class ScanningStatistics(val fileSetName: String) {
 
   var numberOfFilesForIndexing: Int = 0
   var numberOfFilesFullyIndexedByInfrastructureExtension: Int = 0
-  var listOfFilesFullyIndexedByInfrastructureExtension = arrayListOf<String>()
+  var listOfFilesFullyIndexedByInfrastructureExtension: ArrayList<String> = arrayListOf<String>()
 
   var scanningTime: TimeNano = 0
   var statusTime: TimeNano = 0
@@ -29,8 +29,8 @@ class ScanningStatistics(val fileSetName: String) {
   var timeUpdatingContentLessIndexes: TimeNano = 0
   var timeIndexingWithoutContentViaInfrastructureExtension: TimeNano = 0
 
-  var providerRoots = emptyList<String>()
-  val scannedFiles = arrayListOf<ScannedFile>()
+  var providerRoots: List<String> = emptyList<String>()
+  val scannedFiles: ArrayList<ScannedFile> = arrayListOf<ScannedFile>()
 
   data class ScannedFile(val portableFilePath: PortableFilePath, val isUpToDate: Boolean, val wasFullyIndexedByInfrastructureExtension: Boolean)
 

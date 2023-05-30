@@ -34,7 +34,7 @@ interface MapIndexStorageCacheProvider {
 
   companion object {
     @JvmStatic
-    val actualProvider by lazy {
+    val actualProvider: MapIndexStorageCacheProvider by lazy {
       ServiceLoader.load(MapIndexStorageCacheProvider::class.java).firstOrNull()
       ?: MapIndexStorageCacheSlruProvider
     }

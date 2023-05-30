@@ -27,11 +27,11 @@ class SignatureChangePresentationModel(
         action(this)
       }
 
-      override fun anySelfOrDescendants(predicate: (TextFragment) -> Boolean) = predicate(this)
+      override fun anySelfOrDescendants(predicate: (TextFragment) -> Boolean): Boolean = predicate(this)
 
-      override fun withConnectionId(connectionId: Any?) = Leaf(text, effect, connectionId)
+      override fun withConnectionId(connectionId: Any?): Leaf = Leaf(text, effect, connectionId)
 
-      override fun withEffect(effect: Effect) = Leaf(text, effect, connectionId)
+      override fun withEffect(effect: Effect): Leaf = Leaf(text, effect, connectionId)
     }
 
     class Group(
@@ -45,13 +45,12 @@ class SignatureChangePresentationModel(
         children.forAllFragments(action)
       }
 
-      override fun anySelfOrDescendants(predicate: (TextFragment) -> Boolean)
-              = predicate(this) || children.any { it.anySelfOrDescendants(predicate) }
+      override fun anySelfOrDescendants(predicate: (TextFragment) -> Boolean): Boolean = predicate(this) || children.any { it.anySelfOrDescendants(predicate) }
 
-      override fun withConnectionId(connectionId: Any?) =
+      override fun withConnectionId(connectionId: Any?): Group =
         Group(children, effect, connectionId)
 
-      override fun withEffect(effect: Effect) =
+      override fun withEffect(effect: Effect): Group =
         Group(children, effect, connectionId)
     }
 
@@ -60,7 +59,7 @@ class SignatureChangePresentationModel(
         action(this)
       }
 
-      override fun anySelfOrDescendants(predicate: (TextFragment) -> Boolean) = predicate(this)
+      override fun anySelfOrDescendants(predicate: (TextFragment) -> Boolean): Boolean = predicate(this)
 
       override fun withConnectionId(connectionId: Any?): TextFragment {
         throw UnsupportedOperationException()

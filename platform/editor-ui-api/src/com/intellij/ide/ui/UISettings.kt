@@ -500,10 +500,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       }
     }
 
-    const val ANIMATION_DURATION = 300 // Milliseconds
+    const val ANIMATION_DURATION: Int = 300 // Milliseconds
 
     /** Not tabbed pane.  */
-    const val TABS_NONE = 0
+    const val TABS_NONE: Int = 0
 
     @Volatile
     private var cachedInstance: UISettings? = null
@@ -652,11 +652,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       return size
     }
 
-    const val MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY = "ide.win.frame.decoration"
+    const val MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY: String = "ide.win.frame.decoration"
 
     @JvmStatic
-    val mergeMainMenuWithWindowTitleOverrideValue = System.getProperty(MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY)?.toBoolean()
-    val isMergeMainMenuWithWindowTitleOverridden = mergeMainMenuWithWindowTitleOverrideValue != null
+    val mergeMainMenuWithWindowTitleOverrideValue: Boolean? = System.getProperty(MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY)?.toBoolean()
+    val isMergeMainMenuWithWindowTitleOverridden: Boolean = mergeMainMenuWithWindowTitleOverrideValue != null
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
@@ -698,7 +698,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     EDITOR_TAB_LIMIT = editorTabLimit
   }
 
-  override fun getState() = state
+  override fun getState(): UISettingsState = state
 
   override fun noStateLoaded() {
     super.noStateLoaded()
@@ -788,6 +788,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   @JvmField
   @Transient
   @ScheduledForRemoval
-  var EDITOR_TAB_LIMIT = editorTabLimit
+  var EDITOR_TAB_LIMIT: Int = editorTabLimit
   //</editor-fold>
 }

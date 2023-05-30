@@ -6,5 +6,5 @@ import com.intellij.util.indexing.FileBasedIndex
 open class ConfigurableNoFiletypeFileIndexer(private val dependsOnContent: Boolean) : ConfigurableFileIndexerBase() {
   override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { file -> additionalInputFilter(file) }
 
-  override fun dependsOnFileContent() = dependsOnContent
+  override fun dependsOnFileContent(): Boolean = dependsOnContent
 }

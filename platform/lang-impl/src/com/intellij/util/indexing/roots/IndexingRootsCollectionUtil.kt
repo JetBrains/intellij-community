@@ -392,7 +392,7 @@ internal class WorkspaceIndexingRootsBuilder {
 
     internal class Settings {
       companion object {
-        val DEFAULT = Settings()
+        val DEFAULT: Settings = Settings()
 
         init {
           DEFAULT.retainCondition = Condition<WorkspaceFileIndexContributor<*>> { contributor -> contributor.storageKind == EntityStorageKind.MAIN }

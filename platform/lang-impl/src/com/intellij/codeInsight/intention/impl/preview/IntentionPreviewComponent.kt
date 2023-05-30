@@ -10,10 +10,7 @@ import com.intellij.ui.PopupBorder
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.system.OS
-import com.intellij.util.ui.ExtendableHTMLViewFactory
-import com.intellij.util.ui.HTMLEditorKitBuilder
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Container
@@ -91,9 +88,9 @@ internal class IntentionPreviewComponent(parent: Disposable) :
   }
 
   companion object {
-    const val NO_PREVIEW = -1
-    const val LOADING_PREVIEW = -2
-    val BORDER = JBUI.Borders.empty(6, 10)
+    const val NO_PREVIEW: Int = -1
+    const val LOADING_PREVIEW: Int = -2
+    val BORDER: JBEmptyBorder = JBUI.Borders.empty(6, 10)
 
     private fun setupLabel(text: @Nls String): JComponent {
       val label = SimpleColoredComponent()
