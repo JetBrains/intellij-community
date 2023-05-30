@@ -29,6 +29,7 @@ import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.Nls;
@@ -51,7 +52,7 @@ public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
     super(injection, project);
     $$$setupUI$$$();
 
-    final String[] languageIDs = InjectedLanguage.getAvailableLanguageIDs();
+    final String[] languageIDs = ContainerUtil.map2Array(InjectedLanguage.getAvailableLanguages(), String.class, Language::getID);
     Arrays.sort(languageIDs, String::compareToIgnoreCase);
 
     myLanguage.setModel(new DefaultComboBoxModel<>(languageIDs));

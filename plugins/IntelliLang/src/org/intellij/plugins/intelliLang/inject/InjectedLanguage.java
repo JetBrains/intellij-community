@@ -84,6 +84,10 @@ public final class InjectedLanguage {
     }
   }
 
+  /**
+   * @deprecated use {@link #getAvailableLanguages()}
+   */
+  @Deprecated(forRemoval = true)
   public static String @NotNull [] getAvailableLanguageIDs() {
     synchronized (InjectedLanguage.class) {
       if (ourLanguageCache == null || ourLanguageCount != Language.getRegisteredLanguages().size()) {
