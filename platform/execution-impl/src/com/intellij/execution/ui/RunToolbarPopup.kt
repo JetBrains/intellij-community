@@ -517,7 +517,16 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
   }
 
   fun togglePin(setting: RunnerAndConfigurationSettings) {
-    val newPinned = (_state.pinned.toMutableList().also { it.add(0, Element(setting.uniqueID)) }).toMutableSet()
+    val element = Element(setting.uniqueID)
+    val wasPinned = _state.pinned.contains(element)
+    val newPinned = _state.pinned.toMutableList().also {
+      if (wasPinned) {
+        it.remove(element)
+      }
+      else {
+        it.add(0, element)
+      }
+    }.toMutableSet()
     _state = State(_state.history, newPinned, _state.allConfigurationsExpanded)
   }
 
