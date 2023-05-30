@@ -294,6 +294,29 @@ public final class ScreenUtil {
     return x * x + y * y;
   }
 
+  public static void moveAndScale(@NotNull Point location, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    location.setLocation(toScreen.x + (location.x - fromScreen.x) * kw, toScreen.y + (location.y - fromScreen.y) * kh);
+  }
+
+  public static void moveAndScale(@NotNull Dimension size, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    size.setSize(size.width * kw, size.height * kh);
+  }
+
+  private static void checkScreensNonEmpty(@NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    if (fromScreen.isEmpty()) {
+      throw new IllegalArgumentException("Can't move from an empty screen: " + fromScreen);
+    }
+    if (toScreen.isEmpty()) {
+      throw new IllegalArgumentException("Can't move to an empty screen: " + toScreen);
+    }
+  }
+
   public static void moveRectangleToFitTheScreen(Rectangle aRectangle) {
     int screenX = aRectangle.x + aRectangle.width / 2;
     int screenY = aRectangle.y + aRectangle.height / 2;

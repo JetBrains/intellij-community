@@ -310,11 +310,9 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
       Point location = apply(Point::new, myLocation);
       Dimension size = apply(Dimension::new, mySize);
       // convert location and size according to the given screen
-      if (myScreen != null && screen != null && !screen.isEmpty()) {
-        double w = myScreen.getWidth() / screen.getWidth();
-        double h = myScreen.getHeight() / screen.getHeight();
-        if (location != null) location.setLocation(screen.x + (location.x - myScreen.x) / w, screen.y + (location.y - myScreen.y) / h);
-        if (size != null) size.setSize(size.width / w, size.height / h);
+      if (myScreen != null && !myScreen.isEmpty() && screen != null && !screen.isEmpty()) {
+        if (location != null) ScreenUtil.moveAndScale(location, myScreen, screen);
+        if (size != null) ScreenUtil.moveAndScale(size, myScreen, screen);
         if (!isVisible(location, size)) return null; // adjusted state is not visible
       }
       if (type == Point.class) return (T)location;
