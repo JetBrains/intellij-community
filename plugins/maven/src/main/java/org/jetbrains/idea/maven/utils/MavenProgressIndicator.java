@@ -17,8 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
-import org.jetbrains.idea.maven.server.MavenArtifactEvent;
-import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -60,6 +58,11 @@ public class MavenProgressIndicator {
   @NotNull
   public synchronized ProgressIndicator getIndicator() {
     return myIndicator;
+  }
+
+  @Nullable
+  public synchronized MavenSyncConsole getSyncConsole() {
+    return null == mySyncSupplier ? null : mySyncSupplier.get();
   }
 
   public synchronized void setText(@NlsContexts.ProgressText String text) {
@@ -109,38 +112,6 @@ public class MavenProgressIndicator {
 
   public void checkCanceled() throws MavenProcessCanceledException {
     if (isCanceled()) throw new MavenProcessCanceledException();
-  }
-
-  public void startedDownload(MavenServerConsoleIndicator.ResolveType type, String id) {
-
-    if (mySyncSupplier != null) {
-      mySyncSupplier.get().getListener(type).downloadStarted(id);
-    }
-  }
-
-  public void completedDownload(MavenServerConsoleIndicator.ResolveType type, String id) {
-    if (mySyncSupplier != null) {
-      mySyncSupplier.get().getListener(type).downloadCompleted(id);
-    }
-  }
-
-  public void failedDownload(MavenServerConsoleIndicator.ResolveType type,
-                             String id,
-                             String message,
-                             String trace) {
-    if (mySyncSupplier != null) {
-      mySyncSupplier.get().getListener(type).downloadFailed(id, message, trace);
-    }
-  }
-
-  public void handleDownloadEvents(@NotNull List<MavenArtifactEvent> downloadEvents) {
-    for (var e : downloadEvents) {
-      switch (e.getArtifactEventType()) {
-        case DOWNLOAD_STARTED -> startedDownload(e.getResolveType(), e.getDependencyId());
-        case DOWNLOAD_COMPLETED -> completedDownload(e.getResolveType(), e.getDependencyId());
-        case DOWNLOAD_FAILED -> failedDownload(e.getResolveType(), e.getDependencyId(), e.getErrorMessage(), e.getStackTrace());
-      }
-    }
   }
 
   private static class MyEmptyProgressIndicator extends EmptyProgressIndicator {
