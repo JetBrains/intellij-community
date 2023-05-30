@@ -1,4 +1,4 @@
-// "Remove 'get:' target to make the annotation effective (changes semantics, see: https://youtrack.jetbrains.com/issue/KT-48141)" "false"
+// "Remove 'get:' to make the annotation effective. (changes semantics. See: https://youtrack.jetbrains.com/issue/KT-48141)" "false"
 // IGNORE_FIR
 // ACTION: Create test
 // ACTION: Make internal
