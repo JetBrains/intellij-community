@@ -14,6 +14,18 @@ class KtInsertCancellationCheckFixTest : CancellationCheckInLoopsInspectionTestB
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/insertCancellationCheckFix"
 
+  override fun setUp() {
+    super.setUp()
+    myFixture.addFileToProject(
+      "Coroutines.kt",
+      //language=kotlin
+      """
+      package com.intellij.openapi.progress
+
+      suspend fun checkCancelled() { }
+      """.trimIndent())
+  }
+
   private val fixName = DevKitBundle.message("inspection.insert.cancellation.check.fix.message")
   
   fun testBlockDoWhileLoop() {

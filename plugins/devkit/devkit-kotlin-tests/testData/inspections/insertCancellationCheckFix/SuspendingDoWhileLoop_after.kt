@@ -1,5 +1,6 @@
 package inspections.insertCancellationCheckFix
 
+import com.intellij.openapi.progress.checkCancelled
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 import inspections.cancellationCheckInLoops.Foo.doSomething
@@ -9,7 +10,7 @@ import inspections.cancellationCheckInLoops.Foo.doSomething
 suspend fun main() {
   var i = 0
   do {
-      com.intellij.openapi.progress.checkCancelled()
+      checkCancelled()
       // comments
       doSomething()
       i++
