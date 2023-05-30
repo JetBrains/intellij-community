@@ -7,11 +7,11 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.ReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEachContainedOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.PerPropertyCachingVfsTimeMachine
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsTimeMachineImpl
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.withOracle
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -186,7 +186,7 @@ private fun vfsRecoveryDraft(log: VfsLog,
     if (data == null) State.NotAvailable(NotEnoughInformationCause("data is not available anymore"))
     else State.Ready(data)
   }
-  val vfsTimeMachine = VfsTimeMachineImpl(
+  val vfsTimeMachine = PerPropertyCachingVfsTimeMachine(
     log.context,
     id2filename = fsRecordsOracle::getNameByNameId,
     payloadReader = payloadReader,
