@@ -9,8 +9,11 @@ import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.externalSystem.statistics.importActivityStarted
 import com.intellij.openapi.externalSystem.statistics.runImportActivity
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.withBackgroundProgress
+import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -241,21 +244,29 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     myProjectsToResolve.removeAll(projectsToResolve)
 
     val resolver = MavenProjectResolver.getInstance(project)
-    val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
 
     val resolutionResult = withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.resolving"), true) {
       runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorResolvingTask::class.java) {
-        return@runImportActivity resolver.resolve(
-          projectsToResolve, projectsTree, generalSettings, embeddersManager, mavenConsole, indicator.indicator, indicator.syncConsole)
+        withRawProgressReporter {
+          coroutineToIndicator {
+            val indicator = ProgressManager.getGlobalProgressIndicator()
+            resolver.resolve(projectsToResolve, projectsTree, generalSettings, embeddersManager, mavenConsole, indicator, syncConsole)
+          }
+        }
       }
     }
 
     // TODO: plugins can be resolved in parallel with import
+    val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
     val pluginResolver = MavenPluginResolver(projectsTree)
     withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
       runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorPluginsResolvingTask::class.java) {
-        for (entry in resolutionResult.projectsWithUnresolvedPlugins) {
-          pluginResolver.resolvePlugins(entry.value, embeddersManager, mavenConsole, indicator, true)
+        withRawProgressReporter {
+          coroutineToIndicator {
+            for (entry in resolutionResult.projectsWithUnresolvedPlugins) {
+              pluginResolver.resolvePlugins(entry.value, embeddersManager, mavenConsole, indicator, true)
+            }
+          }
         }
       }
     }
