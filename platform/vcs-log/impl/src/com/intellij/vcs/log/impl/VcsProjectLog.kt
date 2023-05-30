@@ -73,7 +73,7 @@ class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineS
 
   /** The instance of the [MainVcsLogUi] or null if the log was not initialized yet. */
   val mainLogUi: VcsLogUiImpl?
-    get() = VcsLogContentProvider.getInstance(project)?.ui as VcsLogUiImpl?
+    get() = getVcsLogContentProvider(project)?.ui as VcsLogUiImpl?
 
   private val busConnection = project.messageBus.connect(coroutineScope)
 

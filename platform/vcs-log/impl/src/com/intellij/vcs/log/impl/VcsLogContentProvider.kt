@@ -1,135 +1,112 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.impl;
+package com.intellij.vcs.log.impl
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
-import com.intellij.ui.components.JBPanel;
-import com.intellij.ui.content.Content;
-import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.messages.SimpleMessageBusConnection;
-import com.intellij.vcs.log.VcsLogBundle;
-import com.intellij.vcs.log.ui.MainVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogPanel;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.MoreExecutors
+import com.google.common.util.concurrent.SettableFuture
+import com.intellij.ide.DataManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
+import com.intellij.ui.components.JBPanel
+import com.intellij.ui.content.Content
+import com.intellij.util.Consumer
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.generateDisplayName
+import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getLogProviders
+import com.intellij.vcs.log.impl.VcsProjectLog.ProjectLogListener
+import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogPanel
+import org.jetbrains.annotations.NonNls
+import java.awt.BorderLayout
+import java.util.concurrent.ExecutionException
+import java.util.function.Predicate
+import java.util.function.Supplier
 
 /**
  * Provides the Content tab to the ChangesView log toolwindow.
- * <p/>
+ *
  * Delegates to the VcsLogManager.
  */
-public final class VcsLogContentProvider implements ChangesViewContentProvider {
-  public static final @NonNls String TAB_NAME = "Log"; // used as tab id, not user-visible
-  public static final @NonNls String MAIN_LOG_ID = "MAIN";
+class VcsLogContentProvider(project: Project) : ChangesViewContentProvider {
+  private val projectLog = VcsProjectLog.getInstance(project)
+  private val container = JBPanel<JBPanel<*>>(BorderLayout())
 
-  private final @NotNull VcsProjectLog myProjectLog;
-  private final @NotNull JPanel myContainer = new JBPanel<>(new BorderLayout());
-  private @Nullable SettableFuture<MainVcsLogUi> myLogCreationCallback;
+  private var tabContent: Content? = null
+  var ui: MainVcsLogUi? = null
+    private set
+  private var logCreationCallback: SettableFuture<MainVcsLogUi>? = null
 
-  private @Nullable MainVcsLogUi myUi;
-  private @Nullable Content myContent;
-
-  public VcsLogContentProvider(@NotNull Project project) {
-    myProjectLog = VcsProjectLog.getInstance(project);
-
-    SimpleMessageBusConnection connection = project.getMessageBus().connect(myProjectLog.getCoroutineScope());
-    connection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
-      @Override
-      public void logCreated(@NotNull VcsLogManager logManager) {
-        addMainUi(logManager);
-      }
-
-      @Override
-      public void logDisposed(@NotNull VcsLogManager logManager) {
-        disposeMainUi();
-      }
-    });
-
-    VcsLogManager manager = myProjectLog.getLogManager();
-    if (manager != null) {
-      addMainUi(manager);
-    }
+  init {
+    project.messageBus.connect(projectLog.coroutineScope).subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, object : ProjectLogListener {
+      override fun logCreated(manager: VcsLogManager) = addMainUi(manager)
+      override fun logDisposed(manager: VcsLogManager) = disposeMainUi()
+    })
+    projectLog.logManager?.let { addMainUi(it) }
   }
 
-  public @Nullable MainVcsLogUi getUi() {
-    return myUi;
-  }
+  override fun initTabContent(content: Content) {
+    if (projectLog.isDisposing) return
 
-  @Override
-  public void initTabContent(@NotNull Content content) {
-    if (myProjectLog.isDisposing()) return;
+    tabContent = content
 
-    myContent = content;
     // Display name is always used for presentation, tab name is used as an id.
     // See com.intellij.vcs.log.impl.VcsLogContentUtil.selectMainLog.
-    myContent.setTabName(TAB_NAME); //NON-NLS
-    updateDisplayName();
+    tabContent!!.tabName = TAB_NAME //NON-NLS
+    updateDisplayName()
 
-    myProjectLog.createLogInBackground(true);
+    projectLog.createLogInBackground(true)
 
-    content.setComponent(myContainer);
-    content.setDisposer(() -> {
-      disposeContent();
-      myContent = null;
-    });
+    content.component = container
+    content.setDisposer {
+      disposeContent()
+      tabContent = null
+    }
   }
 
   @RequiresEdt
-  private void addMainUi(@NotNull VcsLogManager logManager) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myUi == null) {
-      myUi = logManager.createLogUi(MAIN_LOG_ID, VcsLogTabLocation.TOOL_WINDOW, false);
-      VcsLogPanel panel = new VcsLogPanel(logManager, myUi);
-      myContainer.add(panel, BorderLayout.CENTER);
-      DataManager.registerDataProvider(myContainer, panel);
+  private fun addMainUi(logManager: VcsLogManager) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    if (ui == null) {
+      ui = logManager.createLogUi(MAIN_LOG_ID, VcsLogTabLocation.TOOL_WINDOW, false)
+      val panel = VcsLogPanel(logManager, ui!!)
+      container.add(panel, BorderLayout.CENTER)
+      DataManager.registerDataProvider(container, panel)
 
-      updateDisplayName();
-      myUi.getFilterUi().addFilterListener(this::updateDisplayName);
+      updateDisplayName()
+      ui!!.filterUi.addFilterListener { updateDisplayName() }
 
-      if (myLogCreationCallback != null) {
-        myLogCreationCallback.set(myUi);
-        myLogCreationCallback = null;
+      if (logCreationCallback != null) {
+        logCreationCallback!!.set(ui)
+        logCreationCallback = null
       }
     }
   }
 
-  private void updateDisplayName() {
-    if (myContent != null && myUi != null) {
-      myContent.setDisplayName(VcsLogTabsManager.generateDisplayName(myUi));
+  private fun updateDisplayName() {
+    if (tabContent != null && ui != null) {
+      tabContent!!.displayName = generateDisplayName(ui!!)
     }
   }
 
   @RequiresEdt
-  private void disposeMainUi() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  private fun disposeMainUi() {
+    ApplicationManager.getApplication().assertIsDispatchThread()
 
-    myContainer.removeAll();
-    DataManager.removeDataProvider(myContainer);
-    if (myLogCreationCallback != null) {
-      myLogCreationCallback.set(null);
-      myLogCreationCallback = null;
+    container.removeAll()
+    DataManager.removeDataProvider(container)
+    logCreationCallback?.let { callback ->
+      logCreationCallback = null
+      callback.set(null)
     }
-    if (myUi != null) {
-      MainVcsLogUi ui = myUi;
-      myUi = null;
-      Disposer.dispose(ui);
+    ui?.let { oldUi ->
+      ui = null
+      Disposer.dispose(oldUi)
     }
   }
 
@@ -140,69 +117,66 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
    * @param consumer consumer to execute.
    */
   @RequiresEdt
-  public void executeOnMainUiCreated(@NotNull Consumer<? super MainVcsLogUi> consumer) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    ListenableFuture<MainVcsLogUi> future = waitMainUiCreation();
-    future.addListener(() -> {
-      try {
-        MainVcsLogUi result = future.get();
-        if (result != null) consumer.consume(result);
-      }
-      catch (InterruptedException | ExecutionException ignore) {
-      }
-    }, MoreExecutors.directExecutor());
+  fun executeOnMainUiCreated(consumer: Consumer<in MainVcsLogUi>) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val future = waitMainUiCreation()
+    future.addListener({
+                         try {
+                           val result = future.get()
+                           if (result != null) consumer.consume(result)
+                         }
+                         catch (ignore: InterruptedException) {
+                         }
+                         catch (ignore: ExecutionException) {
+                         }
+                       }, MoreExecutors.directExecutor())
   }
 
   @RequiresEdt
-  public ListenableFuture<MainVcsLogUi> waitMainUiCreation() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  fun waitMainUiCreation(): ListenableFuture<MainVcsLogUi> {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    if (ui != null) {
+      return Futures.immediateFuture(ui)
+    }
 
-    if (myUi == null) {
-      if (myLogCreationCallback != null) {
-        myLogCreationCallback.set(null);
-      }
-      myLogCreationCallback = SettableFuture.create();
-      return myLogCreationCallback;
+    if (logCreationCallback != null) {
+      logCreationCallback!!.set(null)
     }
-    else {
-      return Futures.immediateFuture(myUi);
-    }
+    val settableFuture = SettableFuture.create<MainVcsLogUi>()
+    logCreationCallback = settableFuture
+    return settableFuture
   }
 
-  @Override
-  public void disposeContent() {
-    disposeMainUi();
-  }
+  override fun disposeContent() = disposeMainUi()
 
-  public static @Nullable VcsLogContentProvider getInstance(@NotNull Project project) {
-    for (ChangesViewContentEP ep : ChangesViewContentEP.EP_NAME.getExtensions(project)) {
-      if (ep.getClassName().equals(VcsLogContentProvider.class.getName())) {
-        return (VcsLogContentProvider)ep.getCachedInstance();
-      }
-    }
-    return null;
-  }
-
-  static final class VcsLogVisibilityPredicate implements Predicate<Project> {
-    @Override
-    public boolean test(@NotNull Project project) {
-      return !VcsProjectLog.getLogProviders(project).isEmpty();
+  internal class VcsLogVisibilityPredicate : Predicate<Project> {
+    override fun test(project: Project): Boolean {
+      return !getLogProviders(project).isEmpty()
     }
   }
 
-  static final class VcsLogContentPreloader implements ChangesViewContentProvider.Preloader {
-    @Override
-    public void preloadTabContent(@NotNull Content content) {
+  internal class VcsLogContentPreloader : ChangesViewContentProvider.Preloader {
+    override fun preloadTabContent(content: Content) {
       content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
-                          ChangesViewContentManager.TabOrderWeight.BRANCHES.getWeight());
+                          ChangesViewContentManager.TabOrderWeight.BRANCHES.weight)
     }
   }
 
-  static final class DisplayNameSupplier implements Supplier<String> {
-    @Override
-    public String get() {
-      return VcsLogBundle.message("vcs.log.tab.name");
+  internal class DisplayNameSupplier : Supplier<String> {
+    override fun get(): String = VcsLogBundle.message("vcs.log.tab.name")
+  }
+
+  companion object {
+    const val TAB_NAME: @NonNls String = "Log" // used as tab id, not user-visible
+    const val MAIN_LOG_ID: @NonNls String = "MAIN"
+  }
+}
+
+internal fun getVcsLogContentProvider(project: Project): VcsLogContentProvider? {
+  for (ep in ChangesViewContentEP.EP_NAME.getExtensions(project)) {
+    if (ep.getClassName() == VcsLogContentProvider::class.java.name) {
+      return ep.cachedInstance as VcsLogContentProvider?
     }
   }
+  return null
 }

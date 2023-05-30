@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.project.Project
@@ -82,7 +82,7 @@ object VcsLogContentUtil {
       return
     }
 
-    val runConsumer = Runnable { VcsLogContentProvider.getInstance(project)!!.executeOnMainUiCreated(consumer) }
+    val runConsumer = Runnable { getVcsLogContentProvider(project)!!.executeOnMainUiCreated(consumer) }
     if (!window.isVisible) {
       window.activate(runConsumer)
     }
