@@ -525,6 +525,20 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
       }
     }
+
+    companion object {
+      val <T: Any> ContentsOperation<T>.contentRecordId: Int? get() = when (this) {
+        is AcquireNewRecord -> if (result.hasValue) result.value else null
+        is AcquireRecord -> recordId
+        is AppendStream -> recordId
+        is ReleaseRecord -> recordId
+        is ReplaceBytes -> recordId
+        is WriteBytes -> recordId
+        is WriteStream -> recordId
+        is WriteStream2 -> recordId
+        is SetVersion -> null
+      }
+    }
   }
 
   sealed class VFileEventOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>)
