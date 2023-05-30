@@ -2,14 +2,14 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
-import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
-import com.jetbrains.CustomWindowDecoration.CLOSE_BUTTON
-import com.jetbrains.CustomWindowDecoration.OTHER_HIT_SPOT
-import net.miginfocom.swing.MigLayout
 import java.awt.Dialog
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import java.awt.Window
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JLabel
 import javax.swing.UIManager
@@ -23,27 +23,37 @@ internal class DialogHeader(val window: Window) : CustomHeader(window) {
     }
 
     init {
-        layout = MigLayout("novisualpadding, ins 0, fillx, gap 0", "[min!][][pref!]")
+        layout = GridBagLayout()
         titleLabel.text = getTitle()
 
         productIcon.border = JBUI.Borders.empty(0, H, 0, H)
 
-        add(productIcon)
-        add(titleLabel, "wmin 0, left")
-        add(buttonPanes.getView(), "top, wmin pref")
+        val gb = GridBag().setDefaultFill(GridBagConstraints.VERTICAL).setDefaultAnchor(GridBagConstraints.WEST)
+        add(productIcon, gb.next())
+        add(titleLabel, gb.next().fillCell().weightx(1.0))
+
+        preferredSize = preferredSize.apply { height = 40 }
+    }
+
+    private val dragListener = object : MouseAdapter() { //passing events to OS handler to make it draggable
+      override fun mouseDragged(e: MouseEvent?) { customTitleBar?.forceHitTest(false) }
+      override fun mouseClicked(e: MouseEvent?) { customTitleBar?.forceHitTest(false) }
+      override fun mouseMoved(e: MouseEvent?) { customTitleBar?.forceHitTest(false) }
     }
 
     override fun installListeners() {
         super.installListeners()
         window.addPropertyChangeListener("title", titleChangeListener)
+        addMouseListener(dragListener)
+        addMouseMotionListener(dragListener)
     }
 
     override fun uninstallListeners() {
         super.uninstallListeners()
         window.removePropertyChangeListener(titleChangeListener)
+        removeMouseListener(dragListener)
+        removeMouseMotionListener(dragListener)
     }
-
-    override fun createButtonsPane(): CustomFrameTitleButtons = CustomFrameTitleButtons.create(myCloseAction)
 
     override fun updateActive() {
         titleLabel.foreground = if (myActive) UIManager.getColor("Panel.foreground") else UIManager.getColor("Label.disabledForeground")
@@ -66,12 +76,5 @@ internal class DialogHeader(val window: Window) : CustomHeader(window) {
             is Dialog -> return window.title
             else -> return ""
         }
-    }
-
-    override fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>> {
-        return sequenceOf(
-          Pair(RelativeRectangle(productIcon), OTHER_HIT_SPOT),
-          Pair(RelativeRectangle(buttonPanes.closeButton), CLOSE_BUTTON)
-        )
     }
 }
