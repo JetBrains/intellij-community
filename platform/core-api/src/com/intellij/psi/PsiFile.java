@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A PSI element representing a file.
  * <p/>
- * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/psi_files.html">PSI Files</a>
+ * Please see <a href="https://plugins.jetbrains.com/docs/intellij/psi-files.html">PSI Files</a>
  * for high-level overview.
  *
  * @see com.intellij.openapi.actionSystem.LangDataKeys#PSI_FILE
