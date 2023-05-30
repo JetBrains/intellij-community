@@ -391,6 +391,12 @@
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      shortName="CallingMethodShouldBeRequiresBlockingContext"
                      implementationClass="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection"/>
+    <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.IncorrectProcessCanceledExceptionHandlingInspection"
+                     key="inspections.incorrect.process.canceled.exception.handling.display.name"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
