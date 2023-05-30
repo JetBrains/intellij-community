@@ -7,6 +7,11 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 
+/**
+ * Extension point to enable floating code toolbar for specific language.
+ * @see CodeFloatingToolbar
+ * @see FloatingToolbarFilter.ENABLED
+ */
 interface FloatingToolbarFilter {
 
   LanguageExtension<FloatingToolbarFilter> EP = new LanguageExtension<>("com.intellij.lang.floatingToolbarFilter");

@@ -13,6 +13,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.LightweightHint
 import java.awt.Point
 
+/**
+ * Represents floating toolbar which is shown for selected text inside editor.
+ * Toolbar is visible only if mouse was used for the selection.
+ */
 class CodeFloatingToolbar(editor: Editor): FloatingToolbar(editor, "Floating.CodeToolbar") {
 
   override fun hasIgnoredParent(element: PsiElement): Boolean {
