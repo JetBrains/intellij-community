@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import javax.swing.tree.DefaultTreeModel
 
 object NoneChangesGroupingPolicy : ChangesGroupingPolicy {
@@ -23,9 +22,7 @@ class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeM
   override fun getParentNodeFor(nodePath: StaticFilePath,
                                 node: ChangesBrowserNode<*>,
                                 subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
-    val vFile = nodePath.resolve() ?: return null
-    val status = ChangeListManager.getInstance(project).getStatus(vFile)
-    if (status == FileStatus.MERGED_WITH_CONFLICTS) {
+    if (isMergeConflict(nodePath, node)) {
       val cachingRoot = getCachingRoot(subtreeRoot, subtreeRoot)
       CONFLICTS_NODE_CACHE[cachingRoot]?.let { return it }
 
@@ -39,6 +36,13 @@ class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeM
     }
 
     return null
+  }
+
+  private fun isMergeConflict(nodePath: StaticFilePath, node: ChangesBrowserNode<*>): Boolean {
+    if (node is ChangesBrowserChangeNode) {
+      return node.userObject.fileStatus == FileStatus.MERGED_WITH_CONFLICTS
+    }
+    return false
   }
 
   companion object {
