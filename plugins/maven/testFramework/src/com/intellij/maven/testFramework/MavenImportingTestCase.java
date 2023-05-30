@@ -624,7 +624,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       myProjectsManager.waitForReadingCompletion();
-      myProjectsManager.performScheduledImportInTests();
+      //myProjectsManager.performScheduledImportInTests();
     });
   }
 
