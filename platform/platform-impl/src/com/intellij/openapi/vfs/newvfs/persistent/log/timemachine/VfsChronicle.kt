@@ -6,15 +6,15 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.movableIn
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.moveFiltered
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.*
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation.Companion.fileId
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag.*
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsChronicle.PropertyOverwriteContract.OverwriteRule.Companion.forFileId
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.AttributeDataRule.Companion.forFileIdAndAttributeId
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.ContentModificationRule.Companion.forContentRecordId
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.ContentOperation
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.PropertyOverwriteRule.Companion.forFileId
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.VfsRecoveryException
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.RecoveredChildrenIds
 
 object VfsChronicle {
@@ -27,106 +27,53 @@ object VfsChronicle {
                           fileId: Int,
                           direction: TraverseDirection = TraverseDirection.REWIND,
                           crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<Int> =
-    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, PropertyOverwriteContract.nameId, stopIf)
+    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, VfsModificationContract.nameId, stopIf)
 
   inline fun lookupParentId(iterator: OperationLogStorage.Iterator,
                             fileId: Int,
                             direction: TraverseDirection = TraverseDirection.REWIND,
                             crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<Int> =
-    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, PropertyOverwriteContract.parentId, stopIf)
+    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, VfsModificationContract.parentId, stopIf)
 
   inline fun lookupLength(iterator: OperationLogStorage.Iterator,
                           fileId: Int,
                           direction: TraverseDirection = TraverseDirection.REWIND,
                           crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<Long> =
-    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, PropertyOverwriteContract.length, stopIf)
+    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, VfsModificationContract.length, stopIf)
 
   inline fun lookupTimestamp(iterator: OperationLogStorage.Iterator,
                              fileId: Int,
                              direction: TraverseDirection = TraverseDirection.REWIND,
                              crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<Long> =
-    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, PropertyOverwriteContract.timestamp, stopIf)
+    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, VfsModificationContract.timestamp, stopIf)
 
   inline fun lookupFlags(iterator: OperationLogStorage.Iterator,
                          fileId: Int,
                          direction: TraverseDirection = TraverseDirection.REWIND,
                          crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<Int> =
-    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, PropertyOverwriteContract.flags, stopIf)
+    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, VfsModificationContract.flags, stopIf)
 
   inline fun lookupContentRecordId(iterator: OperationLogStorage.Iterator,
                                    fileId: Int,
                                    direction: TraverseDirection = TraverseDirection.REWIND,
                                    crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<Int> =
-    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, PropertyOverwriteContract.contentRecordId, stopIf)
+    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, VfsModificationContract.contentRecordId, stopIf)
 
   inline fun lookupAttributeRecordId(iterator: OperationLogStorage.Iterator,
                                      fileId: Int,
                                      direction: TraverseDirection = TraverseDirection.REWIND,
                                      crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<Int> =
-    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, PropertyOverwriteContract.attributeRecordId, stopIf)
-
-  sealed interface ContentOperation {
-    fun interface Set : ContentOperation {
-      fun readContent(payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray>
-    }
-
-    fun interface Modify : ContentOperation {
-      fun modifyContent(previousContent: ByteArray,
-                        payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray>
-    }
-  }
+    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, VfsModificationContract.attributeRecordId, stopIf)
 
   fun lookupContentOperation(iterator: OperationLogStorage.Iterator,
                              contentRecordId: Int,
                              direction: TraverseDirection = TraverseDirection.REWIND,
-                             stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<ContentOperation> {
-    val rewriteContentCase: (Int, PayloadRef) -> ContentOperation? = { recordId: Int, dataPayloadRef: PayloadRef ->
-      if (recordId == contentRecordId) ContentOperation.Set { payloadReader -> payloadReader(dataPayloadRef) }
-      else null
-    }
-    return traverseOperationsLogForLookup(
+                             stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<ContentOperation> =
+    traverseOperationsLogForVfsModificationLookup(
       iterator, direction,
-      VfsOperationTagsMask(CONTENT_ACQUIRE_NEW_RECORD, CONTENT_WRITE_BYTES,
-                           CONTENT_WRITE_STREAM, CONTENT_WRITE_STREAM_2,
-                           CONTENT_REPLACE_BYTES, CONTENT_APPEND_STREAM),
-      stopIf,
-      onComplete = { operation, detect ->
-        when (operation) {
-          is ContentsOperation.AcquireNewRecord ->
-            if (operation.result.hasValue && operation.result.value == contentRecordId) {
-              detect(ContentOperation.Set { ByteArray(0).let(State::Ready) })
-            }
-          is ContentsOperation.WriteBytes -> rewriteContentCase(operation.recordId, operation.dataPayloadRef)?.let(detect)
-          is ContentsOperation.WriteStream -> rewriteContentCase(operation.recordId, operation.dataPayloadRef)?.let(detect)
-          is ContentsOperation.WriteStream2 -> rewriteContentCase(operation.recordId, operation.dataPayloadRef)?.let(detect)
-          is ContentsOperation.ReplaceBytes -> {
-            if (operation.recordId == contentRecordId) {
-              detect(ContentOperation.Modify { before, payloadReader ->
-                payloadReader(operation.dataPayloadRef).fmap { data ->
-                  if (operation.offset < 0 || operation.offset + data.size > before.size) { // from AbstractStorage.replaceBytes
-                    throw VfsRecoveryException("replaceBytes: replace is out of bounds: " +
-                                               "offset=${operation.offset} data.size=${data.size} before.size=${before.size}")
-                  }
-                  else {
-                    before.copyOfRange(0, operation.offset) +
-                    data +
-                    before.copyOfRange(operation.offset + data.size, before.size)
-                  }
-                }
-              })
-            }
-          }
-          is ContentsOperation.AppendStream -> {
-            if (operation.recordId == contentRecordId) {
-              detect(ContentOperation.Modify { before, payloadReader ->
-                payloadReader(operation.dataPayloadRef).fmap { before + it }
-              })
-            }
-          }
-          else -> throw IllegalStateException("filtered read is broken")
-        }
-      })
-  }
+      VfsModificationContract.content.relevantOperations, VfsModificationContract.content.forContentRecordId(contentRecordId),
+      stopIf
+    )
 
   fun restoreContent(iterator: OperationLogStorage.Iterator,
                      contentRecordId: Int,
@@ -159,16 +106,12 @@ object VfsChronicle {
                                  enumeratedAttrId: Int,
                                  direction: TraverseDirection = TraverseDirection.REWIND,
                                  crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<PayloadRef?> =
-    traverseOperationsLogForLookup(
-      iterator, direction, VfsOperationTagsMask(ATTR_DELETE_ATTRS, ATTR_WRITE_ATTR), stopIf,
-      onComplete = { operation, detect ->
-        when (operation) {
-          is AttributesOperation.DeleteAttributes -> if (operation.fileId == fileId) detect(null)
-          is AttributesOperation.WriteAttribute ->
-            if (operation.fileId == fileId && operation.attributeIdEnumerated == enumeratedAttrId) detect(operation.attrDataPayloadRef)
-          else -> throw IllegalStateException("filtered read is broken")
-        }
-      })
+    traverseOperationsLogForVfsModificationLookup(
+      iterator, direction,
+      VfsModificationContract.attributeData.relevantOperations,
+      VfsModificationContract.attributeData.forFileIdAndAttributeId(fileId, enumeratedAttrId),
+      stopIf
+    )
 
   private class RecoveredChildrenIdsImpl(val ids: List<Int>, override val isComplete: Boolean) : RecoveredChildrenIds, List<Int> by ids
 
@@ -334,133 +277,35 @@ object VfsChronicle {
     return result
   }
 
-  /**
-   * Default behaviour is same as [traverseOperationsLogForLookup].
-   */
+  inline fun <T> traverseOperationsLogForVfsModificationLookup(
+    iterator: OperationLogStorage.Iterator,
+    direction: TraverseDirection,
+    relevantOperations: VfsOperationTagsMask,
+    ifModifies: VfsModifier<T>,
+    crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
+    onInvalid: TraverseContext.(cause: Throwable) -> Unit = { throw it },
+    onIncomplete: TraverseContext.(tag: VfsOperationTag) -> Unit = { if (relevantOperations.contains(it)) stop() },
+    onCompleteExceptional: TraverseContext.(operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { _, _ -> stop() },
+  ): LookupResult<T> =
+    traverseOperationsLogForLookup(
+      iterator, direction, relevantOperations, stopIf,
+      onInvalid, onIncomplete, onCompleteExceptional,
+      onComplete = { op, detect -> op.ifModifies(detect) }
+    )
+
   inline fun <T> traverseOperationsLogForPropertyOverwriteLookup(
     iterator: OperationLogStorage.Iterator,
     direction: TraverseDirection,
     fileId: Int,
-    propertyRule: PropertyOverwriteContract.OverwriteRule<T>,
+    propertyRule: VfsModificationContract.PropertyOverwriteRule<T>,
     crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
     onInvalid: TraverseContext.(cause: Throwable) -> Unit = { throw it },
-    onIncomplete: TraverseContext.(tag: VfsOperationTag) -> Unit = { if (propertyRule.relatedOperations.contains(it)) stop() },
+    onIncomplete: TraverseContext.(tag: VfsOperationTag) -> Unit = { if (propertyRule.relevantOperations.contains(it)) stop() },
     onCompleteExceptional: TraverseContext.(operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { _, _ -> stop() },
-  ): LookupResult<T> {
-    val ifOverwrites = propertyRule.forFileId(fileId)
-    return traverseOperationsLogForLookup(
-      iterator, direction, propertyRule.relatedOperations, stopIf,
-      onInvalid, onIncomplete, onCompleteExceptional,
-      onComplete = { op, detect -> op.ifOverwrites(detect) }
+  ): LookupResult<T> =
+    traverseOperationsLogForVfsModificationLookup(
+      iterator, direction,
+      propertyRule.relevantOperations, propertyRule.forFileId(fileId), stopIf,
+      onInvalid, onIncomplete, onCompleteExceptional
     )
-  }
-
-  object PropertyOverwriteContract {
-    /**
-     * This a convenience class to keep logic about VFS transformations together
-     * @param relatedOperations a mask of operations that can possibly overwrite the property
-     */
-    class OverwriteRule<T>(
-      val relatedOperations: VfsOperationTagsMask,
-      val ifOverwrites: VfsOperation<*>.(setValue: (T) -> Unit) -> Unit,
-    ) {
-      init {
-        assert(relatedOperations.toList().all { it.isRecordOperation })
-      }
-
-      companion object {
-        fun <T> OverwriteRule<T>.forFileId(fileId: Int): VfsOperation<*>.(setValue: (T) -> Unit) -> Unit = { setValue ->
-          if (relatedOperations.contains(tag) && (this as RecordsOperation<*>).fileId == fileId) {
-            ifOverwrites(setValue)
-          }
-        }
-      }
-    }
-
-    val nameId = OverwriteRule(
-      VfsOperationTagsMask(REC_ALLOC, REC_SET_NAME_ID, REC_FILL_RECORD, REC_CLEAN_RECORD)
-    ) { setValue ->
-      when (this) {
-        is RecordsOperation.AllocateRecord -> setValue(0)
-        is RecordsOperation.SetNameId -> setValue(nameId)
-        is RecordsOperation.FillRecord -> setValue(nameId)
-        is RecordsOperation.CleanRecord -> setValue(0)
-        else -> throw AssertionError("operation $this does not overwrite nameId property")
-      }
-    }
-
-    val parentId = OverwriteRule(
-      VfsOperationTagsMask(REC_ALLOC, REC_SET_PARENT, REC_FILL_RECORD, REC_CLEAN_RECORD)
-    ) { setValue ->
-      when (this) {
-        is RecordsOperation.AllocateRecord -> setValue(0)
-        is RecordsOperation.SetParent -> setValue(parentId)
-        is RecordsOperation.FillRecord -> setValue(parentId)
-        is RecordsOperation.CleanRecord -> setValue(0)
-        else -> throw AssertionError("operation $this does not overwrite parentId property")
-      }
-    }
-
-    val length = OverwriteRule(
-      VfsOperationTagsMask(REC_ALLOC, REC_SET_LENGTH, REC_FILL_RECORD, REC_CLEAN_RECORD)
-    ) { setValue ->
-      when (this) {
-        is RecordsOperation.AllocateRecord -> setValue(0L)
-        is RecordsOperation.SetLength -> setValue(length)
-        is RecordsOperation.FillRecord -> setValue(length)
-        is RecordsOperation.CleanRecord -> setValue(0L)
-        else -> throw AssertionError("operation $this does not overwrite length property")
-      }
-    }
-
-    val timestamp = OverwriteRule(
-      VfsOperationTagsMask(REC_ALLOC, REC_SET_TIMESTAMP, REC_FILL_RECORD, REC_CLEAN_RECORD)
-    ) { setValue ->
-      when (this) {
-        is RecordsOperation.AllocateRecord -> setValue(0L)
-        is RecordsOperation.SetTimestamp -> setValue(timestamp)
-        is RecordsOperation.FillRecord -> setValue(timestamp)
-        is RecordsOperation.CleanRecord -> setValue(0L)
-        else -> throw AssertionError("operation $this does not overwrite timestamp property")
-      }
-    }
-
-    val flags = OverwriteRule(
-      VfsOperationTagsMask(REC_ALLOC, REC_SET_FLAGS, REC_FILL_RECORD, REC_CLEAN_RECORD)
-    ) { setValue ->
-      when (this) {
-        is RecordsOperation.AllocateRecord -> setValue(0)
-        is RecordsOperation.SetFlags -> setValue(flags)
-        is RecordsOperation.FillRecord -> setValue(flags)
-        is RecordsOperation.CleanRecord -> setValue(0)
-        else -> throw AssertionError("operation $this does not overwrite flags property")
-      }
-    }
-
-    val contentRecordId = OverwriteRule(
-      VfsOperationTagsMask(REC_ALLOC, REC_SET_CONTENT_RECORD_ID, REC_FILL_RECORD, REC_CLEAN_RECORD)
-    ) { setValue ->
-      when (this) {
-        is RecordsOperation.AllocateRecord -> setValue(0)
-        is RecordsOperation.SetContentRecordId -> setValue(recordId)
-        // it is not written explicitly in the code, because fillRecord is only used in two places where contentRecordId has no effect anyway,
-        // but semantically it should be treated like contentRecordId=0
-        is RecordsOperation.FillRecord -> setValue(0)
-        is RecordsOperation.CleanRecord -> setValue(0)
-        else -> throw AssertionError("operation $this does not overwrite contentRecordId property")
-      }
-    }
-
-    val attributeRecordId = OverwriteRule(
-      VfsOperationTagsMask(REC_ALLOC, REC_SET_ATTR_REC_ID, REC_FILL_RECORD, REC_CLEAN_RECORD)
-    ) { setValue ->
-      when (this) {
-        is RecordsOperation.AllocateRecord -> setValue(0)
-        is RecordsOperation.SetAttributeRecordId -> setValue(recordId)
-        is RecordsOperation.FillRecord -> if (overwriteAttrRef) setValue(0)
-        is RecordsOperation.CleanRecord -> setValue(0)
-        else -> throw AssertionError("operation $this does not overwrite attributeRecordId property")
-      }
-    }
-  }
 }
