@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicability
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.k2.codeinsight.branchedTransformations.combineWhenConditions
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.combineWhenConditions
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
