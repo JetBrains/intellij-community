@@ -27,7 +27,7 @@ fun getCompatiblePlatformVersionRange(compatibleBuildRange: CompatibleBuildRange
   else {
     sinceBuild = if (buildNumber.matches(Regex("\\d+\\.\\d+"))) buildNumber else buildNumber.substring(0, buildNumber.lastIndexOf("."))
     val end = if ((compatibleBuildRange == CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE)) {
-      buildNumber.lastIndexOf(".")
+      if (buildNumber.matches(Regex("\\d+\\.\\d+"))) buildNumber.length else buildNumber.lastIndexOf(".")
     }
     else {
       buildNumber.indexOf(".")
@@ -54,7 +54,7 @@ internal fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
   val isBundled = !pluginsToPublish.contains(plugin)
   val compatibleBuildRange = when {
     isBundled || plugin.pluginCompatibilityExactVersion || includeInBuiltinCustomRepository -> CompatibleBuildRange.EXACT
-    context.applicationInfo.isEAP -> CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
+    context.applicationInfo.isEAP || plugin.pluginCompatibilitySameRelease -> CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
   }
 
