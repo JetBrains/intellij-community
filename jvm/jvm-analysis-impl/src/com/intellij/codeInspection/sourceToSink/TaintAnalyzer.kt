@@ -265,12 +265,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       }
     }
     if (analyzeContext.processOuterMethodAsQualifierAndArguments || analyzeContext.processInnerMethodAsQualifierAndArguments) {
-      var taintValue = TaintValue.UNTAINTED
-      if (!(uMethod is JvmModifiersOwner && uMethod.hasModifier(JvmModifier.STATIC))) {
-        taintValue = taintValue.joinUntil(analyzeContext.untilTaintValue) {
-          fromExpressionWithoutCollection(expression.receiver, analyzeContext)
-        }
-      }
+      var taintValue = fromExpressionWithoutCollection(expression.receiver, analyzeContext)
       analyzeContext.checkInside(expression.valueArguments.size)
       expression.valueArguments.forEach { argument ->
         taintValue = taintValue.joinUntil(analyzeContext.untilTaintValue) { fromExpressionWithoutCollection(argument, analyzeContext) }
