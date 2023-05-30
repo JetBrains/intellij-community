@@ -80,6 +80,12 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     mini_logger::init(level).expect("Cannot initialize the logger");
     debug!("Executable: {exe_path:?}");
     debug!("Mode: {}", if remote_dev { "remote-dev" } else { "standard" });
+
+    #[cfg(target_os = "macos")]
+    {
+        // on macOS, `open` doesn't properly set a current working directory
+        restore_working_directory()?;
+    }
     debug!("Current directory: {:?}", env::current_dir());
 
     debug!("** Preparing launch configuration");
@@ -96,6 +102,23 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     debug!("** Launching JVM");
     let args = configuration.get_args();
     java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec()).context("Cannot start the runtime")?;
+
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn restore_working_directory() -> Result<()> {
+    let (cmd_var, pwd_var) = (env::var("_"), env::var("PWD"));
+    debug!("Detecting launch via `/usr/bin/open`: _={:?} PWD={:?}", cmd_var, pwd_var);
+
+    if let Ok(cmd) = cmd_var {
+        if cmd == "/usr/bin/open" {
+            if let Ok(pwd) = pwd_var {
+                env::set_current_dir(&pwd)
+                    .with_context(|| format!("Cannot set current directory to '{pwd}'"))?;
+            }
+        }
+    }
 
     Ok(())
 }
