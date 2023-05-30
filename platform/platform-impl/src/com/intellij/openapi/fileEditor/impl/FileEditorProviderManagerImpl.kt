@@ -17,7 +17,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.SlowOperations
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.TestOnly
 
@@ -88,11 +87,8 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
 
   override fun getProviderList(project: Project, file: VirtualFile): List<FileEditorProvider> {
     return doGetProviders { provider ->
-      @Suppress("DEPRECATION")
-      SlowOperations.allowSlowOperations(SlowOperations.GENERIC).use {
-        ApplicationManager.getApplication().runReadAction<Boolean, RuntimeException> {
-          checkProvider(project, file, provider)
-        }
+      ApplicationManager.getApplication().runReadAction<Boolean, RuntimeException> {
+        checkProvider(project, file, provider)
       }
     }
   }
